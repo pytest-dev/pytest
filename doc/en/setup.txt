@@ -33,7 +33,7 @@ you can do with the old-style and much more.  Specifically setup functions:
 - fully interoperate with parametrized resources,
 - can be defined in a plugin or :ref:`conftest.py <conftest.py>` file and get called 
   on a per-session, per-module, per-class or per-function basis,
-- can access the :ref:`testcontext <testcontext>` for which the setup is called,
+- can access the :ref:`request <request>` for which the setup is called,
 - can precisely control teardown by registering one or multiple 
   teardown functions as soon as they have performed some actions 
   which need undoing, eliminating the no need for a separate 
@@ -140,8 +140,8 @@ a per-module setup function.  We use a :ref:`resource factory
         return GlobalResource()
 
     @pytest.setup(scope="module")
-    def setresource(testcontext, globresource):
-        testcontext.module.globresource = globresource
+    def setresource(request, globresource):
+        request.module.globresource = globresource
        
 Now any test module can access ``globresource`` as a module global::
 
@@ -178,16 +178,16 @@ factory and also add a finalizer::
             self.param = param
 
     @pytest.factory(scope="session", params=[1,2])
-    def globresource(testcontext):
-        g = GlobalResource(testcontext.param)
+    def globresource(request):
+        g = GlobalResource(request.param)
         def fin():
             print "finalizing", g
-        testcontext.addfinalizer(fin)
+        request.addfinalizer(fin)
         return g
 
     @pytest.setup(scope="module")
-    def setresource(testcontext, globresource):
-        testcontext.module.globresource = globresource
+    def setresource(request, globresource):
+        request.module.globresource = globresource
 
 And then re-run our test module::
 

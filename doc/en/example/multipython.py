@@ -6,13 +6,13 @@ import py, pytest
 
 pythonlist = ['python2.4', 'python2.5', 'python2.6', 'python2.7', 'python2.8']
 @pytest.factory(params=pythonlist)
-def python1(testcontext, tmpdir):
+def python1(request, tmpdir):
     picklefile = tmpdir.join("data.pickle")
-    return Python(testcontext.param, picklefile)
+    return Python(request.param, picklefile)
 
 @pytest.factory(params=pythonlist)
-def python2(testcontext, python1):
-    return Python(testcontext.param, python1.picklefile)
+def python2(request, python1):
+    return Python(request.param, python1.picklefile)
 
 class Python:
     def __init__(self, version, picklefile):

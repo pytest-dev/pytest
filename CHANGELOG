@@ -9,19 +9,9 @@ Changes between 2.2.4 and 2.3.0.dev
   it is constructed correctly from the original current working dir.
 - fix "python setup.py test" example to cause a proper "errno" return
 - fix issue165 - fix broken doc links and mention stackoverflow for FAQ
-- fix issue139 - merge FuncargRequest and Item API such that 
-  funcarg-functionality is now directly available on the "item" 
-  object passed to the various pytest_runtest hooks.  This allows more 
-  sensitive behaviour of e.g. the pytest-django plugin which previously 
-  had no full access to all instantiated funcargs.
-  This internal API re-organisation is a fully backward compatible
-  change: existing factories accepting a "request" object will 
-  get a Function "item" object which carries the same API.  In fact,
-  the FuncargRequest API (or rather then a ResourceRequestAPI)
-  could be available for all collection and item nodes but this is
-  left for later consideration because it would render the documentation
-  invalid and the "funcarg" naming sounds odd in context of
-  directory, file, class, etc. nodes.
+- fix issue139 - introduce @pytest.factory which allows direct scoping
+  and parametrization of funcarg factories.  Introduce new @pytest.setup
+  marker to allow the writing of setup functions which accept funcargs.
 - catch unicode-issues when writing failure representations
   to terminal to prevent the whole session from crashing
 - fix xfail/skip confusion: a skip-mark or an imperative pytest.skip

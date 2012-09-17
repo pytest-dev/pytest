@@ -2,9 +2,9 @@
 import pytest
 
 @pytest.factory("session")
-def setup(testcontext):
+def setup(request):
     setup = CostlySetup()
-    testcontext.addfinalizer(setup.finalize)
+    request.addfinalizer(setup.finalize)
     return setup
 
 class CostlySetup:

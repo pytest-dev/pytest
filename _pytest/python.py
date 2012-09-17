@@ -912,31 +912,51 @@ class Function(FunctionMixin, pytest.Item):
     def __hash__(self):
         return hash((self.parent, self.name))
 
+scope2props = dict(session=())
+scope2props["module"] = ("fspath", "module")
+scope2props["class"] = scope2props["module"] + ("cls",)
+scope2props["instance"] = scope2props["class"] + ("instance", )
+scope2props["function"] = scope2props["instance"] + ("function", "keywords")
+
+def scopeproperty(name=None, doc=None):
+    def decoratescope(func):
+        scopename = name or func.__name__
+        def provide(self):
+            if func.__name__ in scope2props[self.scope]:
+                return func(self)
+            raise AttributeError("%s not available in %s-scoped context" % (
+                scopename, self.scope))
+        return property(provide, None, None, func.__doc__)
+    return decoratescope
+
+def pytest_funcarg__request(__request__):
+    return __request__
+
+#def pytest_funcarg__testcontext(__request__):
+#    return __request__
 
 class FuncargRequest:
-    """ (old-style) A request for function arguments from a test function.
+    """ A request for function arguments from a test or setup function.
 
-        Note that there is an optional ``param`` attribute in case
-        there was an invocation to metafunc.addcall(param=...).
-        If no such call was done in a ``pytest_generate_tests``
-        hook, the attribute will not be present.  Note that
-        as of pytest-2.3 you probably rather want to use the
-        testcontext object and mark your factory with a ``@pytest.factory``
-        marker.
+    A request object gives access to attributes of the requesting
+    test context.  It has an optional ``param`` attribute in case
+    of parametrization.
     """
 
     def __init__(self, pyfuncitem):
         self._pyfuncitem = pyfuncitem
         if hasattr(pyfuncitem, '_requestparam'):
             self.param = pyfuncitem._requestparam
+        #: Scope string, one of "function", "cls", "module", "session"
+        self.scope = "function"
         self.getparent = pyfuncitem.getparent
         self._funcargs  = self._pyfuncitem.funcargs.copy()
+        self._funcargs["__request__"] = self
         self._name2factory = {}
         self.funcargmanager = pyfuncitem.session.funcargmanager
         self._currentarg = None
         self.funcargnames = getfuncargnames(self.function)
         self.parentid = pyfuncitem.parent.nodeid
-        self.scope = "function"
         self._factorystack = []
 
     def _getfaclist(self, argname):
@@ -956,21 +976,42 @@ class FuncargRequest:
                                                    self.parentid)
         return facdeflist
 
-    def raiseerror(self, msg):
-        """ raise a FuncargLookupError with the given message. """
-        raise self.funcargmanager.FuncargLookupError(self.function, msg)
-
     @property
+    def config(self):
+        """ the pytest config object associated with this request. """
+        return self._pyfuncitem.config
+
+
+    @scopeproperty()
     def function(self):
-        """ function object of the test invocation. """
+        """ test function object if the request has a per-function scope. """
         return self._pyfuncitem.obj
+
+    @scopeproperty("class")
+    def cls(self):
+        """ class (can be None) where the test function was collected. """
+        clscol = self._pyfuncitem.getparent(pytest.Class)
+        if clscol:
+            return clscol.obj
+
+    @scopeproperty()
+    def instance(self):
+        """ instance (can be None) on which test function was collected. """
+        return py.builtin._getimself(self.function)
+
+    @scopeproperty()
+    def module(self):
+        """ python module object where the test function was collected. """
+        return self._pyfuncitem.getparent(pytest.Module).obj
+
+    @scopeproperty()
+    def fspath(self):
+        """ the file system path of the test module which collected this test. """
+        return self._pyfuncitem.fspath
 
     @property
     def keywords(self):
-        """ keywords of the test function item.
-
-        .. versionadded:: 2.0
-        """
+        """ keywords of the test function item.  """
         return self._pyfuncitem.keywords
 
     @property
@@ -978,41 +1019,23 @@ class FuncargRequest:
         """ pytest session object. """
         return self._pyfuncitem.session
 
-    @property
-    def module(self):
-        """ module where the test function was collected. """
-        return self._pyfuncitem.getparent(pytest.Module).obj
 
-    @property
-    def cls(self):
-        """ class (can be None) where the test function was collected. """
-        clscol = self._pyfuncitem.getparent(pytest.Class)
-        if clscol:
-            return clscol.obj
-    @property
-    def instance(self):
-        """ instance (can be None) on which test function was collected. """
-        return py.builtin._getimself(self.function)
 
-    @property
-    def config(self):
-        """ the pytest config object associated with this request. """
-        return self._pyfuncitem.config
+    def addfinalizer(self, finalizer):
+        """add finalizer/teardown function to be called after the
+        last test within the requesting test context finished
+        execution. """
+        self._addfinalizer(finalizer, scope=self.scope)
 
-    @property
-    def fspath(self):
-        """ the file system path of the test module which collected this test. """
-        return self._pyfuncitem.fspath
-
-    def _fillfuncargs(self):
-        if self.funcargnames:
-            assert not getattr(self._pyfuncitem, '_args', None), (
-                "yielded functions cannot have funcargs")
-        while self.funcargnames:
-            argname = self.funcargnames.pop(0)
-            if argname not in self._pyfuncitem.funcargs:
-                self._pyfuncitem.funcargs[argname] = \
-                        self.getfuncargvalue(argname)
+    def _addfinalizer(self, finalizer, scope):
+        if scope != "function" and hasattr(self, "param"):
+            # parametrized resources are sorted by param
+            # so we rather store finalizers per (argname, param)
+            colitem = (self._currentarg, self.param)
+        else:
+            colitem = self._getscopeitem(scope)
+        self._pyfuncitem.session._setupstate.addfinalizer(
+            finalizer=finalizer, colitem=colitem)
 
     def applymarker(self, marker):
         """ Apply a marker to a single test function invocation.
@@ -1026,11 +1049,33 @@ class FuncargRequest:
             raise ValueError("%r is not a py.test.mark.* object")
         self._pyfuncitem.keywords[marker.markname] = marker
 
+    def raiseerror(self, msg):
+        """ raise a FuncargLookupError with the given message. """
+        raise self.funcargmanager.FuncargLookupError(self.function, msg)
+
+
+    def _fillfuncargs(self):
+        if self.funcargnames:
+            assert not getattr(self._pyfuncitem, '_args', None), (
+                "yielded functions cannot have funcargs")
+        while self.funcargnames:
+            argname = self.funcargnames.pop(0)
+            if argname not in self._pyfuncitem.funcargs:
+                self._pyfuncitem.funcargs[argname] = \
+                        self.getfuncargvalue(argname)
+
+
+    def _callsetup(self):
+        self.funcargmanager.ensure_setupcalls(self)
+
     def cached_setup(self, setup, teardown=None, scope="module", extrakey=None):
-        """ Return a testing resource managed by ``setup`` &
+        """ (deprecated) Return a testing resource managed by ``setup`` &
         ``teardown`` calls.  ``scope`` and ``extrakey`` determine when the
         ``teardown`` function will be called so that subsequent calls to
-        ``setup`` would recreate the resource.
+        ``setup`` would recreate the resource.  With pytest-2.3 you
+        do not need ``cached_setup()`` as you can directly declare a scope
+        on a funcarg factory and register a finalizer through
+        ``request.addfinalizer()``.
 
         :arg teardown: function receiving a previously setup resource.
         :arg setup: a no-argument function creating a resource.
@@ -1061,16 +1106,19 @@ class FuncargRequest:
         return val
 
 
-    def _callsetup(self):
-        self.funcargmanager.ensure_setupcalls(self)
 
     def getfuncargvalue(self, argname):
-        """ Retrieve a function argument by name for this test
+        """ (deprecated) Retrieve a function argument by name for this test
         function invocation.  This allows one function argument factory
         to call another function argument factory.  If there are two
         funcarg factories for the same test function argument the first
         factory may use ``getfuncargvalue`` to call the second one and
         do something additional with the resource.
+
+        **Note**, however, that starting with
+        pytest-2.3 it is easier and better to directly state the needed
+        funcarg in the factory signature.  This will also work seemlessly
+        with parametrization and the new resource setup optimizations.
         """
         try:
             return self._funcargs[argname]
@@ -1091,12 +1139,7 @@ class FuncargRequest:
         factory_kwargs = {}
         def fillfactoryargs():
             for newname in newnames:
-                if newname == "testcontext":
-                    val = TestContextResource(self)
-                elif newname == "request" and not factorydef.new:
-                    val = self
-                else:
-                    val = self.getfuncargvalue(newname)
+                val = self.getfuncargvalue(newname)
                 factory_kwargs[newname] = val
 
         node = self._pyfuncitem
@@ -1160,21 +1203,6 @@ class FuncargRequest:
         if scope == "module":
             return self._pyfuncitem.getparent(pytest.Module)
         raise ValueError("unknown finalization scope %r" %(scope,))
-
-    def addfinalizer(self, finalizer):
-        """add finalizer function to be called after test function
-        finished execution. """
-        self._addfinalizer(finalizer, scope=self.scope)
-
-    def _addfinalizer(self, finalizer, scope):
-        if scope != "function" and hasattr(self, "param"):
-            # parametrized resources are sorted by param
-            # so we rather store finalizers per (argname, param)
-            colitem = (self._currentarg, self.param)
-        else:
-            colitem = self._getscopeitem(scope)
-        self._pyfuncitem.session._setupstate.addfinalizer(
-            finalizer=finalizer, colitem=colitem)
 
     def __repr__(self):
         return "<FuncargRequest for %r>" %(self._pyfuncitem)
@@ -1396,17 +1424,13 @@ class FuncargManager:
             if setupcall.active:
                 continue
             request._factorystack.append(setupcall)
+            mp = monkeypatch()
             try:
-                testcontext = TestContextSetup(request, setupcall)
+                #mp.setattr(request, "_setupcall", setupcall, raising=False)
+                mp.setattr(request, "scope", setupcall.scope)
                 kwargs = {}
                 for name in setupcall.funcargnames:
-                    try:
-                        kwargs[name] = request.getfuncargvalue(name)
-                    except FuncargLookupError:
-                        if name == "testcontext":
-                            kwargs[name] = testcontext
-                        else:
-                            raise
+                    kwargs[name] = request.getfuncargvalue(name)
                 scope = setupcall.scope or "function"
                 scol = setupcall.scopeitem = request._getscopeitem(scope)
                 self.session._setupstate.addfinalizer(setupcall.finish, scol)
@@ -1414,6 +1438,7 @@ class FuncargManager:
                     self.addargfinalizer(setupcall.finish, argname)
                 setupcall.execute(kwargs)
             finally:
+                mp.undo()
                 request._factorystack.remove(setupcall)
 
     def addargfinalizer(self, finalizer, argname):
@@ -1426,69 +1451,6 @@ class FuncargManager:
                 l.remove(finalizer)
             except ValueError:
                 pass
-
-scope2props = dict(session=())
-scope2props["module"] = ("fspath", "module")
-scope2props["class"] = scope2props["module"] + ("cls",)
-scope2props["function"] = scope2props["class"] + ("function", "keywords")
-
-def scopeprop(attr, name=None, doc=None):
-    if doc is None:
-        doc = ("%s of underlying test context, may not exist "
-               "if the testcontext has a higher scope" % (attr,))
-    name = name or attr
-    def get(self):
-        if name in scope2props[self.scope]:
-            return getattr(self._request, name)
-        raise AttributeError("%s not available in %s-scoped context" % (
-            name, self.scope))
-    return property(get, doc=doc)
-
-def rprop(attr, doc=None):
-    if doc is None:
-        doc = "%s of underlying test context" % attr
-    return property(lambda x: getattr(x._request, attr), doc=doc)
-
-class TestContext(object):
-    """ Basic objects of the current testing context. """
-    def __init__(self, request, scope):
-        self._request = request
-        self.scope = scope
-
-    # no getfuncargvalue(), cached_setup, applymarker helpers here
-    # on purpose
-
-    config = rprop("config", "pytest config object.")
-    session = rprop("session", "pytest session object.")
-
-    function = scopeprop("function")
-    module = scopeprop("module")
-    cls = scopeprop("class", "cls")
-    instance = scopeprop("instance")
-    fspath = scopeprop("fspath")
-    #keywords = scopeprop("keywords")
-
-class TestContextSetup(TestContext):
-    def __init__(self, request, setupcall):
-        self._setupcall = setupcall
-        self._finalizers = []
-        super(TestContextSetup, self).__init__(request, setupcall.scope)
-
-    def addfinalizer(self, finalizer):
-        """ Add a finalizer to be called after the last test in the
-        test context executes. """
-        self._setupcall.addfinalizer(finalizer)
-
-class TestContextResource(TestContext):
-    param = rprop("param")
-
-    def __init__(self, request):
-        super(TestContextResource, self).__init__(request, request.scope)
-
-    def addfinalizer(self, finalizer):
-        """ Add a finalizer to be called after the last test in the
-        test context executes. """
-        self._request.addfinalizer(finalizer)
 
 
 class SetupCall:

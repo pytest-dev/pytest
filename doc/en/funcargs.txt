@@ -9,44 +9,45 @@ funcargs: resource injection and parametrization
 
 .. note::
 
-    pytest-2.3 introduces major refinements to the original funcarg
-    mechanism introduced to pytest-2.0.  While the old way
-    remains fully supported, it is recommended to use the refined
-    mechanisms.  See also the `compatibility notes`_ and the detailed
-    :ref:`reasoning for the new funcarg and setup functions <funcargcompare>`.
+    pytest-2.3 introduces major refinements to the test setup and funcarg
+    mechanisms introduced to pytest-2.0.  All pre-2.3 usages remain
+    supported and several use cases, among them scoping and parametrization
+    of funcarg resources, are now easier to accomplish.  For more background, 
+    see `compatibility notes`_ and the detailed :ref:`reasoning for the new 
+    funcarg and setup functions <funcargcompare>`.
 
 .. _`Dependency injection`: http://en.wikipedia.org/wiki/Dependency_injection
 
 Introduction
 ====================
 
-py.test supports the injection of objects into test and setup functions 
+pytest supports the injection of test resources into test and setup functions 
 and flexibly control their life cycle in relation to the overall test
-execution.  Moreover, you can run a test function multiple times
-injecting different objects.
+execution.  Moreover, tests can get executed multiple times if you have
+different variants of test resources to test with.  
 
 The basic mechanism for injecting objects is called the *funcarg
-mechanism* because objects are **injected** when a test or setup
-function states it as an **argument**.  The injected argument is
-created by a call to a registered **funcarg factory**.  This approach is
-an example of `Dependency Injection`_ and helps to de-couple test code
-from the setup of required objects: at test writing time you do not need
-to care for the details of where and how your required resources are
-constructed, if they are shared on a per-class, module or session basis,
-or if your test function is invoked multiple times with differently
-configured resource instances.
+mechanism* because objects are injected when a test or setup
+**function** states it as an **argument**. The injected argument 
+is created by a call to a registered **funcarg factory** for each argument
+name.  This mechanism is an example of `Dependency Injection`_ 
+and helps to de-couple test code from the setup of required
+objects: at test writing time you do not need to care for the details of
+where and how your required test resources are constructed, if they are
+shared on a per-class, module or session basis, or if your test function
+is invoked multiple times with differently configured resource
+instances.
+
+Funcarg dependency injection allows to organise test resources 
+in a modular explicit way so that test functions state their needs
+in their signature.  pytest additionally offers powerful xunit-style 
+:ref:`setup functions <setup functions>` for the cases where you need 
+to create implicit test state that is not passed explicitely to test functions.
 
 When a test function is invoked multiple times with different arguments we
-speak of **parametrized testing**.  This is useful if you want to test
-e.g. against different database backends or want to write a parametrized
-test function, checking that certain inputs lead to certain outputs.
-You can parametrize funcarg factories, parametrize test function
-arguments or even implement your own parametrization scheme through a
-plugin hook.
-
-pytest additionally offers powerful xunit-style :ref:`setup functions <setup
-functions>` for the cases where you need to create implicit test state
-that is not passed explicitely to test functions.
+speak of **parametrized testing**.  You can use it e. g. to repeatedly run test
+functions against different database backends or to check that certain
+inputs lead to certain outputs.
 
 Concretely, there are three main means of funcarg management:
 
@@ -54,7 +55,7 @@ Concretely, there are three main means of funcarg management:
   their scoping and parametrization.   Factories can themselves 
   receive resources through their function arguments, easing
   the setup of `interdependent resources`_.  Factories can use
-  the special `testcontext`_ object to access details from where
+  the special `request`_ object to access details from where
   the factory or setup function is called and for registering finalizers.
 
 * a `@pytest.mark.parametrize`_ marker for executing test functions
@@ -103,8 +104,8 @@ factory function.  Running the tests looks like this::
 
     $ py.test test_simplefactory.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev8
-    plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev11
+    plugins: xdist, bugzilla, cache, oejskit, cli, timeout, pep8, cov
     collecting ... collected 1 items
     
     test_simplefactory.py F
@@ -119,7 +120,7 @@ factory function.  Running the tests looks like this::
     E       assert 42 == 17
     
     test_simplefactory.py:8: AssertionError
-    ========================= 1 failed in 0.02 seconds =========================
+    ========================= 1 failed in 0.01 seconds =========================
 
 This shows that the test function was called with a ``myfuncarg``
 argument value of ``42`` and the assert fails as expected.  Here is 
@@ -186,7 +187,7 @@ test session::
     import smtplib
 
     @pytest.factory(scope="session")
-    def smtp(testcontext):
+    def smtp(request):
         return smtplib.SMTP("merlinux.eu")
 
 The name of the factory is ``smtp`` (the factory function name) 
@@ -214,7 +215,7 @@ inspect what is going on and can now run the tests::
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x25e7b48>
+    smtp = <smtplib.SMTP instance at 0x31bce18>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -226,7 +227,7 @@ inspect what is going on and can now run the tests::
     test_module.py:5: AssertionError
     ________________________________ test_noop _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x25e7b48>
+    smtp = <smtplib.SMTP instance at 0x31bce18>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -235,7 +236,7 @@ inspect what is going on and can now run the tests::
     E       assert 0
     
     test_module.py:10: AssertionError
-    2 failed in 0.20 seconds
+    2 failed in 0.26 seconds
 
 you see the two ``assert 0`` failing and can also see that
 the same (session-scoped) object was passed into the two test functions.
@@ -247,7 +248,7 @@ Parametrizing a session-shared funcarg resource
 Extending the previous example, we can flag the factory to create
 two ``smtp`` values which will cause all tests using it to
 run twice with two different values.  The factory function gets
-access to each parameter through the special `testcontext`_ object::
+access to each parameter through the special `request`_ object::
 
     # content of conftest.py
     import pytest
@@ -255,11 +256,11 @@ access to each parameter through the special `testcontext`_ object::
 
     @pytest.factory(scope="session", 
                     params=["merlinux.eu", "mail.python.org"])
-    def smtp(testcontext):
-        return smtplib.SMTP(testcontext.param)
+    def smtp(request):
+        return smtplib.SMTP(request.param)
 
 The main change is the definition of a ``params`` list in the
-``factory``-marker and the ``testcontext.param`` access within the
+``factory``-marker and the ``request.param`` access within the
 factory function.  No test function code needs to change.  
 So let's just do another run::
 
@@ -269,7 +270,7 @@ So let's just do another run::
     ================================= FAILURES =================================
     __________________________ test_ehlo[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP instance at 0x2960050>
+    smtp = <smtplib.SMTP instance at 0x28dc5a8>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -281,7 +282,7 @@ So let's just do another run::
     test_module.py:5: AssertionError
     __________________________ test_noop[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP instance at 0x2960050>
+    smtp = <smtplib.SMTP instance at 0x28dc5a8>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -292,7 +293,7 @@ So let's just do another run::
     test_module.py:10: AssertionError
     ________________________ test_ehlo[mail.python.org] ________________________
     
-    smtp = <smtplib.SMTP instance at 0x296a128>
+    smtp = <smtplib.SMTP instance at 0x28e3e18>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -303,7 +304,7 @@ So let's just do another run::
     test_module.py:4: AssertionError
     ________________________ test_noop[mail.python.org] ________________________
     
-    smtp = <smtplib.SMTP instance at 0x296a128>
+    smtp = <smtplib.SMTP instance at 0x28e3e18>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -312,7 +313,7 @@ So let's just do another run::
     E       assert 0
     
     test_module.py:10: AssertionError
-    4 failed in 6.00 seconds
+    4 failed in 6.17 seconds
 
 We get four failures because we are running the two tests twice with
 different ``smtp`` instantiations as defined on the factory.
@@ -324,7 +325,7 @@ Adding a finalizer to the parametrized resource
 
 Further extending the ``smtp`` example, we now want to properly
 close a smtp server connection after the last test using it
-has been run.  We can do this by calling the ``testcontext.addfinalizer()``
+has been run.  We can do this by calling the ``request.addfinalizer()``
 helper::
 
     # content of conftest.py
@@ -333,12 +334,12 @@ helper::
 
     @pytest.factory(scope="session", 
                     params=["merlinux.eu", "mail.python.org"])
-    def smtp(testcontext):
-        smtp = smtplib.SMTP(testcontext.param)
+    def smtp(request):
+        smtp = smtplib.SMTP(request.param)
         def fin():
             print ("finalizing %s" % smtp)
             smtp.close()
-        testcontext.addfinalizer(fin)
+        request.addfinalizer(fin)
         return smtp
 
 We also add a print call and then run py.test without the default
@@ -347,9 +348,9 @@ output capturing and disabled traceback reporting::
     $ py.test -s -q --tb=no
     collecting ... collected 4 items
     FFFF
-    4 failed in 5.62 seconds
-    finalizing <smtplib.SMTP instance at 0x2d60368>
-    finalizing <smtplib.SMTP instance at 0x2d68e60>
+    4 failed in 6.40 seconds
+    finalizing <smtplib.SMTP instance at 0x125d3b0>
+    finalizing <smtplib.SMTP instance at 0x1265b90>
 
 We see that the two ``smtp`` instances are finalized appropriately.
 
@@ -360,8 +361,8 @@ You can also look at what tests pytest collects without running them::
 
     $ py.test --collectonly
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev8
-    plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev11
+    plugins: xdist, bugzilla, cache, oejskit, cli, timeout, pep8, cov
     collecting ... collected 4 items
     <Module 'test_module.py'>
       <Function 'test_ehlo[merlinux.eu]'>
@@ -369,7 +370,7 @@ You can also look at what tests pytest collects without running them::
       <Function 'test_ehlo[mail.python.org]'>
       <Function 'test_noop[mail.python.org]'>
     
-    =============================  in 0.02 seconds =============================
+    =============================  in 0.01 seconds =============================
 
 Note that pytest orders your test run by resource usage, minimizing
 the number of active resources at any given time.
@@ -404,15 +405,15 @@ the ``smtp`` resource by listing it as an input parameter.  Let's run this::
 
     $ py.test -v test_appsetup.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev8 -- /home/hpk/venv/1/bin/python
-    cachedir: /home/hpk/tmp/doc-exec-414/.cache
-    plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev11 -- /home/hpk/venv/1/bin/python
+    cachedir: /home/hpk/tmp/doc-exec-423/.cache
+    plugins: xdist, bugzilla, cache, oejskit, cli, timeout, pep8, cov
     collecting ... collected 2 items
     
     test_appsetup.py:12: test_exists[merlinux.eu] PASSED
     test_appsetup.py:12: test_exists[mail.python.org] PASSED
     
-    ========================= 2 passed in 5.37 seconds =========================
+    ========================= 2 passed in 6.82 seconds =========================
 
 Due to the parametrization of ``smtp`` the test will run twice with two
 different ``App`` instances and respective smtp servers.  There is no
@@ -445,17 +446,17 @@ to show the flow of calls::
     import pytest
 
     @pytest.factory(scope="module", params=["mod1", "mod2"])
-    def modarg(testcontext):
-        param = testcontext.param
+    def modarg(request):
+        param = request.param
         print "create", param
         def fin():
             print "fin", param
-        testcontext.addfinalizer(fin)
+        request.addfinalizer(fin)
         return param
 
     @pytest.factory(scope="function", params=[1,2])
-    def otherarg(testcontext):
-        return testcontext.param
+    def otherarg(request):
+        return request.param
 
     def test_0(otherarg):
         print "  test0", otherarg
@@ -468,9 +469,9 @@ Let's run the tests in verbose mode and with looking at the print-output::
 
     $ py.test -v -s test_module.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev8 -- /home/hpk/venv/1/bin/python
-    cachedir: /home/hpk/tmp/doc-exec-414/.cache
-    plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev11 -- /home/hpk/venv/1/bin/python
+    cachedir: /home/hpk/tmp/doc-exec-423/.cache
+    plugins: xdist, bugzilla, cache, oejskit, cli, timeout, pep8, cov
     collecting ... collected 8 items
     
     test_module.py:16: test_0[1] PASSED
@@ -501,24 +502,27 @@ a re-ordering of test execution. The finalizer for the ``mod1`` parametrized
 resource was executed before the ``mod2`` resource was setup.
 
 .. currentmodule:: _pytest.python
-.. _`testcontext`:
+.. _`request`:
 
-``testcontext``: interacting with test context
----------------------------------------------------
+``request``: interacting with test invocation context
+-------------------------------------------------------
 
-The ``testcontext`` object may be used by `@pytest.factory`_ or
-:ref:`@pytest.setup <setup>` marked functions.  It contains
-information relating to the test context within which the marked
-function executes. Moreover, you can call
-``testcontext.addfinalizer(myfinalizer)`` in order to trigger a call to
-``myfinalizer`` after the last test in the test context has executed.
-If passed to a parametrized factory ``testcontext.param`` will contain a
-parameter (one value out of the ``params`` list specified with the
-`@pytest.factory`_ marker).
+The ``request`` object may be received by `@pytest.factory`_ or
+:ref:`@pytest.setup <setup>` marked functions and provides methods
 
-.. autoclass:: _pytest.python.TestContext()
+* to inspect attributes of the requesting test context, such as 
+  ``function``, ``cls``, ``module``, ``session`` and the pytest 
+  ``config`` object.  A request object passed to a parametrized factory
+  will also carry a ``request.param`` object (A parametrized factory and
+  all of its dependent tests will be called with each of the factory-specified
+  ``params``).
+
+* to add finalizers/teardowns to be invoked when the last
+  test of the requesting test context executes
+
+
+.. autoclass:: _pytest.python.FuncargRequest()
     :members:
-
 
 
 .. _`test generators`:
@@ -566,7 +570,6 @@ two ``(input, output)`` arguments of ``test_eval`` function so the latter
 will be run three times::
 
     $ py.test -q
-
     collecting ... collected 13 items
     ....F........
     ================================= FAILURES =================================
@@ -585,7 +588,7 @@ will be run three times::
     E        +  where 54 = eval('6*9')
     
     test_expectation.py:8: AssertionError
-    1 failed, 12 passed in 5.76 seconds
+    1 failed, 12 passed in 6.41 seconds
 
 As expected only one pair of input/output values fails the simple test function.
 As usual you can see the ``input`` and ``output`` values in the traceback.
@@ -662,11 +665,11 @@ This means that we only run two tests if no option is passed::
     $ py.test -q test_compute.py
     collecting ... collected 2 items
     ..
-    2 passed in 0.02 seconds
+    2 passed in 0.01 seconds
 
 And we run five tests if we add the ``--all`` option::
 
-    $ py.test -q --all
+    $ py.test -q --all test_compute.py
     collecting ... collected 5 items
     ....F
     ================================= FAILURES =================================
@@ -679,7 +682,7 @@ And we run five tests if we add the ``--all`` option::
     E       assert 4 < 4
     
     test_compute.py:3: AssertionError
-    1 failed, 4 passed in 0.03 seconds
+    1 failed, 4 passed in 0.02 seconds
 
 As expected when running the full range of ``param1`` values
 we'll get an error on the last one.
@@ -747,14 +750,5 @@ the mechanism was extended and refined:
     defining a funcarg factory is often termed "old-style".  Their
     use remains fully supported and existing code using it should run
     unmodified.
-
-.. _request:
-
-The request object passed to old-style factories
------------------------------------------------------------------
-
-Old-style funcarg factory definitions can receive a :py:class:`~_pytest.python.FuncargRequest` object which
-provides methods to manage caching and finalization in the context of the
-test invocation as well as several attributes of the the underlying test item.  
 
 

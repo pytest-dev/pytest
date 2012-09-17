@@ -66,15 +66,15 @@ Direct scoping of funcarg factories
 Instead of calling cached_setup(), you can use the :ref:`@pytest.factory <@pytest.factory>` decorator and directly state the scope::
 
     @pytest.factory(scope="session")
-    def db(testcontext):
+    def db(request):
         # factory will only be invoked once per session - 
         db = DataBase()
-        testcontext.addfinalizer(db.destroy)  # destroy when session is finished
+        request.addfinalizer(db.destroy)  # destroy when session is finished
         return db
 
 This factory implementation does not need to call ``cached_setup()`` anymore
 because it will only be invoked once per session.  Moreover, the 
-``testcontext.addfinalizer()`` registers a finalizer according to the specified
+``request.addfinalizer()`` registers a finalizer according to the specified
 resource scope on which the factory function is operating.
 
 
@@ -88,29 +88,29 @@ parametrization, i.e. calling a test multiple times with different value
 sets.  pytest-2.3 introduces a decorator for use on the factory itself::
 
     @pytest.factory(params=["mysql", "pg"])
-    def db(testcontext):
-        ... # use testcontext.param
+    def db(request):
+        ... # use request.param
 
 Here the factory will be invoked twice (with the respective "mysql" 
-and "pg" values set as ``testcontext.param`` attributes) and and all of 
+and "pg" values set as ``request.param`` attributes) and and all of 
 the tests requiring "db" will run twice as well.  The "mysql" and 
 "pg" values will also be used for reporting the test-invocation variants.
 
 This new way of parametrizing funcarg factories should in many cases
 allow to re-use already written factories because effectively
-``testcontext.param`` are already the parametrization attribute for test 
+``request.param`` are already the parametrization attribute for test 
 functions/classes were parametrized via
 :py:func:`~_pytest.python.Metafunc.parametrize(indirect=True)` calls.
 
 Of course it's perfectly fine to combine parametrization and scoping::
 
     @pytest.factory(scope="session", params=["mysql", "pg"])
-    def db(testcontext):
-        if testcontext.param == "mysql":
+    def db(request):
+        if request.param == "mysql":
             db = MySQL()
-        elif testcontext.param == "pg":
+        elif request.param == "pg":
             db = PG()
-        testcontext.addfinalizer(db.destroy)  # destroy when session is finished
+        request.addfinalizer(db.destroy)  # destroy when session is finished
         return db
 
 This would execute all tests requiring the per-session "db" resource twice,
@@ -126,7 +126,7 @@ denotes the name under which the resource can be accessed as a function
 argument::
 
     @pytest.factory()
-    def db(testcontext):
+    def db(request):
         ...
 
 The name under which the funcarg resource can be requested is ``db``.
