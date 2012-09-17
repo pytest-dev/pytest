@@ -962,8 +962,9 @@ class FuncargRequest:
         self._factorystack = []
 
     @property
-    def markers(self):
-        return self._getscopeitem(self.scope).markers
+    def node(self):
+        """ underlying collection node (depends on request scope)"""
+        return self._getscopeitem(self.scope)
 
     def _getfaclist(self, argname):
         facdeflist = self._name2factory.get(argname, None)
@@ -1017,7 +1018,7 @@ class FuncargRequest:
 
     @property
     def keywords(self):
-        """ dictionary of markers (readonly). """
+        """ (deprecated, use node.markers class) dictionary of markers. """
         return self._pyfuncitem.keywords
 
     @property
@@ -1051,8 +1052,7 @@ class FuncargRequest:
         """
         if not isinstance(marker, py.test.mark.XYZ.__class__):
             raise ValueError("%r is not a py.test.mark.* object")
-        setattr(self.markers, marker.markname, marker)
-        #self._pyfuncitem.keywords[marker.markname] = marker
+        setattr(self.node.markers, marker.markname, marker)
 
     def raiseerror(self, msg):
         """ raise a FuncargLookupError with the given message. """

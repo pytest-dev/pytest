@@ -741,7 +741,7 @@ class TestMarking:
             import pytest
             @pytest.factory()
             def markers(request):
-                return request.markers
+                return request.node.markers
             @pytest.mark.XYZ
             def test_function(markers):
                 assert markers.XYZ is not None
@@ -755,7 +755,7 @@ class TestMarking:
             import pytest
             @pytest.factory()
             def markers(request):
-                return request.markers
+                return request.node.markers
 
             @pytest.setup(scope="class")
             def marking(request):
