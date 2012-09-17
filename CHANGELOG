@@ -1,6 +1,9 @@
 Changes between 2.2.4 and 2.3.0.dev
 -----------------------------------
 
+- introduce a generic "markers" object on Nodes and request objects
+  to allow for reading and manipulation of MarkInfo objects previously
+  set with calls to pytest.mark.* classes.
 - fix issue185 monkeypatching time.time does not cause pytest to fail
 - fix issue172 duplicate call of pytest.setup-decoratored setup_module
   functions

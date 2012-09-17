@@ -609,7 +609,7 @@ class TestRequest:
         """)
         req = funcargs.FuncargRequest(item)
         assert req.function == item.obj
-        assert req.keywords is item.keywords
+        assert req.keywords == item.keywords
         assert hasattr(req.module, 'test_func')
         assert req.cls is None
         assert req.function.__name__ == "test_func"
@@ -716,24 +716,63 @@ class TestRequest:
         req = funcargs.FuncargRequest(item)
         assert req.fspath == modcol.fspath
 
-def test_applymarker(testdir):
-    item1,item2 = testdir.getitems("""
-        def pytest_funcarg__something(request):
-            pass
-        class TestClass:
-            def test_func1(self, something):
+class TestMarking:
+    def test_applymarker(self, testdir):
+        item1,item2 = testdir.getitems("""
+            def pytest_funcarg__something(request):
                 pass
-            def test_func2(self, something):
-                pass
-    """)
-    req1 = funcargs.FuncargRequest(item1)
-    assert 'xfail' not in item1.keywords
-    req1.applymarker(pytest.mark.xfail)
-    assert 'xfail' in item1.keywords
-    assert 'skipif' not in item1.keywords
-    req1.applymarker(pytest.mark.skipif)
-    assert 'skipif' in item1.keywords
-    pytest.raises(ValueError, "req1.applymarker(42)")
+            class TestClass:
+                def test_func1(self, something):
+                    pass
+                def test_func2(self, something):
+                    pass
+        """)
+        req1 = funcargs.FuncargRequest(item1)
+        assert 'xfail' not in item1.keywords
+        req1.applymarker(pytest.mark.xfail)
+        assert 'xfail' in item1.keywords
+        assert 'skipif' not in item1.keywords
+        req1.applymarker(pytest.mark.skipif)
+        assert 'skipif' in item1.keywords
+        pytest.raises(ValueError, "req1.applymarker(42)")
+
+    def test_accessmarker_function(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.factory()
+            def markers(request):
+                return request.markers
+            @pytest.mark.XYZ
+            def test_function(markers):
+                assert markers.XYZ is not None
+                assert not hasattr(markers, "abc")
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
+    def test_accessmarker_dynamic(self, testdir):
+        testdir.makeconftest("""
+            import pytest
+            @pytest.factory()
+            def markers(request):
+                return request.markers
+
+            @pytest.setup(scope="class")
+            def marking(request):
+                request.applymarker(pytest.mark.XYZ("hello"))
+        """)
+        testdir.makepyfile("""
+            import pytest
+            def test_fun1(markers):
+                assert markers.XYZ is not None
+                assert not hasattr(markers, "abc")
+            def test_fun2(markers):
+                assert markers.XYZ is not None
+                assert not hasattr(markers, "abc")
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
+
 
 class TestRequestCachedSetup:
     def test_request_cachedsetup_defaultmodule(self, testdir):
@@ -2365,13 +2404,14 @@ class TestFuncargMarker:
         reprec = testdir.inline_run("-v")
         reprec.assertoutcome(passed=6)
 
-@pytest.mark.parametrize(("scope", "ok", "error"),[
-    ["session", "", "fspath class function module"],
-    ["module", "module fspath", "cls function"],
-    ["class", "module fspath cls", "function"],
-    ["function", "module fspath cls function", ""]
-])
 class TestTestContextScopeAccess:
+    pytestmark = pytest.mark.parametrize(("scope", "ok", "error"),[
+        ["session", "", "fspath class function module"],
+        ["module", "module fspath", "cls function"],
+        ["class", "module fspath cls", "function"],
+        ["function", "module fspath cls function", ""]
+    ])
+
     def test_setup(self, testdir, scope, ok, error):
         testdir.makepyfile("""
             import pytest

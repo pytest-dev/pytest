@@ -318,7 +318,7 @@ class TestKeywordSelection:
             def pytest_pycollect_makeitem(__multicall__, name):
                 if name == "TestClass":
                     item = __multicall__.execute()
-                    item.keywords['xxx'] = True
+                    item.markers.xxx = True
                     return item
         """)
         for keyword in ('xxx', 'xxx test_2', 'TestClass', 'xxx -test_1',

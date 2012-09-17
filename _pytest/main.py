@@ -181,13 +181,20 @@ class Node(object):
         #: filesystem path where this node was collected from (can be None)
         self.fspath = getattr(parent, 'fspath', None)
 
-        #: keywords on this node (node name is always contained)
-        self.keywords = {self.name: True}
-
         #: fspath sensitive hook proxy used to call pytest hooks
         self.ihook = self.session.gethookproxy(self.fspath)
 
+        bases = parent and (parent.markers,) or ()
+
+        #: marker class with markers from all scopes accessible as attributes
+        self.markers = type("dynmarker", bases, {self.name: True})
+
         #self.extrainit()
+
+    @property
+    def keywords(self):
+        """ dictionary of Keywords / markers on this node. """
+        return vars(self.markers)
 
     #def extrainit(self):
     #    """"extra initialization after Node is initialized.  Implemented

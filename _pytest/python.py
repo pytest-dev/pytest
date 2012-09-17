@@ -859,9 +859,11 @@ class Function(FunctionMixin, pytest.Item):
             self.obj = callobj
         startindex = int(self.cls is not None)
         self.funcargnames = getfuncargnames(self.obj, startindex=startindex)
-        self.keywords.update(py.builtin._getfuncdict(self.obj) or {})
+        for name, val in (py.builtin._getfuncdict(self.obj) or {}).items():
+            setattr(self.markers, name, val)
         if keywords:
-            self.keywords.update(keywords)
+            for name, val in keywords.items():
+                setattr(self.markers, name, val)
 
     @property
     def function(self):
@@ -959,6 +961,10 @@ class FuncargRequest:
         self.parentid = pyfuncitem.parent.nodeid
         self._factorystack = []
 
+    @property
+    def markers(self):
+        return self._getscopeitem(self.scope).markers
+
     def _getfaclist(self, argname):
         facdeflist = self._name2factory.get(argname, None)
         if facdeflist is None:
@@ -1011,15 +1017,13 @@ class FuncargRequest:
 
     @property
     def keywords(self):
-        """ keywords of the test function item.  """
+        """ dictionary of markers (readonly). """
         return self._pyfuncitem.keywords
 
     @property
     def session(self):
         """ pytest session object. """
         return self._pyfuncitem.session
-
-
 
     def addfinalizer(self, finalizer):
         """add finalizer/teardown function to be called after the
@@ -1047,7 +1051,8 @@ class FuncargRequest:
         """
         if not isinstance(marker, py.test.mark.XYZ.__class__):
             raise ValueError("%r is not a py.test.mark.* object")
-        self._pyfuncitem.keywords[marker.markname] = marker
+        setattr(self.markers, marker.markname, marker)
+        #self._pyfuncitem.keywords[marker.markname] = marker
 
     def raiseerror(self, msg):
         """ raise a FuncargLookupError with the given message. """
