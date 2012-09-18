@@ -1507,9 +1507,12 @@ class FactoryDef:
 
 def getfuncargnames(function, startindex=None):
     # XXX merge with main.py's varnames
-    argnames = py.std.inspect.getargs(py.code.getrawcode(function))[0]
-    if startindex is None:
-        startindex = py.std.inspect.ismethod(function) and 1 or 0
+    if inspect.isclass(function):
+        function = function.__init__
+        startindex = 1
+    elif startindex is None:
+        startindex = inspect.ismethod(function) and 1 or 0
+    argnames = inspect.getargs(py.code.getrawcode(function))[0]
     defaults = getattr(function, 'func_defaults',
                        getattr(function, '__defaults__', None)) or ()
     numdefaults = len(defaults)

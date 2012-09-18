@@ -535,6 +535,11 @@ def test_getfuncargnames():
     if sys.version_info < (3,0):
         assert funcargs.getfuncargnames(A.f) == ['arg1']
 
+    class A:
+        def __init__(self, x):
+            pass
+    assert funcargs.getfuncargnames(A) == ["x"]
+
 class TestFillFuncArgs:
     def test_fillfuncargs_exposed(self):
         # used by oejskit
@@ -1726,6 +1731,26 @@ class TestFuncargFactory:
             "*LookupError: no factory found for argument 'missing'",
         ])
 
+
+    def test_factory_setup_as_classes(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            class arg1:
+                def __init__(self, request):
+                    self.x = 1
+            arg1 = pytest.factory()(arg1)
+
+            class MySetup:
+                def __init__(self, request, arg1):
+                    request.instance.arg1 = arg1
+            pytest.setup()(MySetup)
+
+            class TestClass:
+                def test_method(self):
+                    assert self.arg1.x == 1
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
 
 
 class TestResourceIntegrationFunctional:

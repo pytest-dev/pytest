@@ -389,19 +389,16 @@ object ``app`` and stick the ``smtp`` resource into it like this::
    
     import pytest
 
-    class App:
+    @pytest.factory(scope="module")
+    class app:
         def __init__(self, smtp):
             self.smtp = smtp
-
-    @pytest.factory(scope="module")
-    def app(smtp):
-        return App(smtp)
 
     def test_exists(app):
         assert app.smtp
 
-Here we define the factory local to the test module and make it access
-the ``smtp`` resource by listing it as an input parameter.  Let's run this::
+Here we declare an ``app`` class to be a factory and have its init-method
+use the previously defined ``smtp`` resource.  Let's run it::
 
     $ py.test -v test_appsetup.py
     =========================== test session starts ============================
@@ -418,7 +415,7 @@ the ``smtp`` resource by listing it as an input parameter.  Let's run this::
 Due to the parametrization of ``smtp`` the test will run twice with two
 different ``App`` instances and respective smtp servers.  There is no
 need for the ``app`` factory to be aware of the parametrization.  Note
-that the ``app`` factory has a scope of ``module`` whereas it uses the
+that the ``app`` factory has a scope of ``module`` but uses the
 session-scoped ``smtp`` object: it is fine for factories to use
 "broader" scoped resources but not the other way round.  A
 session-scoped resource could not use a module-scoped resource in a
@@ -498,8 +495,8 @@ Let's run the tests in verbose mode and with looking at the print-output::
     fin mod2
 
 You can see that the parametrized module-scoped ``modarg`` resource caused
-a re-ordering of test execution. The finalizer for the ``mod1`` parametrized 
-resource was executed before the ``mod2`` resource was setup.
+an ordering of test execution that lead to the fewest possible "active" resources. The finalizer for the ``mod1`` parametrized resource was executed 
+before the ``mod2`` resource was setup.
 
 .. currentmodule:: _pytest.python
 .. _`request`:
@@ -519,7 +516,6 @@ The ``request`` object may be received by `@pytest.factory`_ or
 
 * to add finalizers/teardowns to be invoked when the last
   test of the requesting test context executes
-
 
 .. autoclass:: _pytest.python.FuncargRequest()
     :members:
