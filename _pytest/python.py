@@ -1363,12 +1363,10 @@ class FuncargManager:
                 argname = name
                 scope = marker.scope
                 params = marker.params
-                new = True
             elif name.startswith(self._argprefix):
                 argname = name[len(self._argprefix):]
                 scope = None
                 params = None
-                new = False
             else:
                 # no funcargs. check if we have a setup function.
                 setup = getattr(obj, "_pytestsetup", None)
@@ -1378,8 +1376,7 @@ class FuncargManager:
                     self.setuplist.append(sf)
                 continue
             faclist = self.arg2facspec.setdefault(argname, [])
-            factorydef = FactoryDef(self, nodeid, argname, obj, scope, params,
-                                    new)
+            factorydef = FactoryDef(self, nodeid, argname, obj, scope, params)
             faclist.append(factorydef)
             ### check scope/params mismatch?
 
@@ -1489,15 +1486,13 @@ class SetupCall:
 
 class FactoryDef:
     """ A container for a factory definition. """
-    def __init__(self, funcargmanager, baseid, argname, func, scope, params,
-                 new):
+    def __init__(self, funcargmanager, baseid, argname, func, scope, params):
         self.funcargmanager = funcargmanager
         self.baseid = baseid
         self.func = func
         self.argname = argname
         self.scope = scope
         self.params = params
-        self.new = new
         self.funcargnames = getfuncargnames(func)
 
 def getfuncargnames(function, startindex=None):
