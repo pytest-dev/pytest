@@ -1469,7 +1469,8 @@ class SetupCall:
         self.funcargmanager = funcargmanager
         self.baseid = baseid
         self.func = func
-        self.funcargnames = getfuncargnames(func, startindex=int(unittest))
+        startindex = unittest and 1 or None
+        self.funcargnames = getfuncargnames(func, startindex=startindex)
         self.scope = scope
         self.scopenum = scopes.index(scope)
         self.active = False
