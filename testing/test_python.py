@@ -1792,8 +1792,7 @@ class TestFuncargManager:
         reprec.assertoutcome(passed=1)
 
 class TestSetupDiscovery:
-    def pytest_funcarg__testdir(self, request):
-        testdir = request.getfuncargvalue("testdir")
+    def pytest_funcarg__testdir(self, testdir):
         testdir.makeconftest("""
             import pytest
             @pytest.setup()
@@ -1831,6 +1830,21 @@ class TestSetupDiscovery:
         """)
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=1)
+
+    def test_setup_at_classlevel(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            class TestClass:
+                @pytest.setup()
+                def permethod(self, request):
+                    request.instance.funcname = request.function.__name__
+                def test_method1(self):
+                    assert self.funcname == "test_method1"
+                def test_method2(self):
+                    assert self.funcname == "test_method2"
+        """)
+        reprec = testdir.inline_run("-s")
+        reprec.assertoutcome(passed=2)
 
     def test_callables_nocode(self, testdir):
         """

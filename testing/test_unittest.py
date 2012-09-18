@@ -480,3 +480,28 @@ def test_unittest_unexpected_failure(testdir):
     ])
 
 
+
+def test_unittest_setup_interaction(testdir):
+    testdir.makepyfile("""
+        import unittest
+        import pytest
+        class MyTestCase(unittest.TestCase):
+            @pytest.setup(scope="class")
+            def perclass(self, request):
+                request.cls.hello = "world"
+            @pytest.setup(scope="function")
+            def perfunction(self, request):
+                request.instance.funcname = request.function.__name__
+
+            def test_method1(self):
+                assert self.funcname == "test_method1"
+                assert self.hello == "world"
+
+            def test_method2(self):
+                assert self.funcname == "test_method2"
+
+            def test_classattr(self):
+                assert self.__class__.hello == "world"
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines("*3 passed*")

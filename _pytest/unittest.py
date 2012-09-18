@@ -21,6 +21,8 @@ def pytest_pycollect_makeitem(collector, name, obj):
 
 class UnitTestCase(pytest.Class):
     def collect(self):
+        self.session.funcargmanager._parsefactories(self.obj, self.nodeid,
+                unittest=True)
         loader = py.std.unittest.TestLoader()
         module = self.getparent(pytest.Module).obj
         cls = self.obj
@@ -56,6 +58,8 @@ class TestCaseFunction(pytest.Function):
             pytest.skip(self._obj.skip)
         if hasattr(self._testcase, 'setup_method'):
             self._testcase.setup_method(self._obj)
+        if hasattr(self, "_request"):
+            self._request._callsetup()
 
     def teardown(self):
         if hasattr(self._testcase, 'teardown_method'):

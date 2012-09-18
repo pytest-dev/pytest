@@ -1001,10 +1001,14 @@ class FuncargRequest:
         if clscol:
             return clscol.obj
 
-    @scopeproperty()
+    @property
     def instance(self):
         """ instance (can be None) on which test function was collected. """
-        return py.builtin._getimself(self.function)
+        # unittest support hack, see _pytest.unittest.TestCaseFunction
+        try:
+            return self._pyfuncitem._testcase
+        except AttributeError:
+            return py.builtin._getimself(self.function)
 
     @scopeproperty()
     def module(self):
@@ -1341,7 +1345,7 @@ class FuncargManager:
                 for fin in l:
                     fin()
 
-    def _parsefactories(self, holderobj, nodeid):
+    def _parsefactories(self, holderobj, nodeid, unittest=False):
         if holderobj in self._holderobjseen:
             return
         #print "parsefactories", holderobj
@@ -1372,7 +1376,7 @@ class FuncargManager:
                 setup = getattr(obj, "_pytestsetup", None)
                 if setup is not None:
                     scope = setup.scope
-                    sf = SetupCall(self, nodeid, obj, scope)
+                    sf = SetupCall(self, nodeid, obj, scope, unittest)
                     self.setuplist.append(sf)
                 continue
             faclist = self.arg2facspec.setdefault(argname, [])
@@ -1428,7 +1432,6 @@ class FuncargManager:
             request._factorystack.append(setupcall)
             mp = monkeypatch()
             try:
-                #mp.setattr(request, "_setupcall", setupcall, raising=False)
                 mp.setattr(request, "scope", setupcall.scope)
                 kwargs = {}
                 for name in setupcall.funcargnames:
@@ -1438,7 +1441,12 @@ class FuncargManager:
                 self.session._setupstate.addfinalizer(setupcall.finish, scol)
                 for argname in setupcall.funcargnames: # XXX all deps?
                     self.addargfinalizer(setupcall.finish, argname)
-                setupcall.execute(kwargs)
+                # for unittest-setup methods we need to provide
+                # the correct instance
+                posargs = ()
+                if setupcall.unittest:
+                    posargs = (request.instance,)
+                setupcall.execute(posargs, kwargs)
             finally:
                 mp.undo()
                 request._factorystack.remove(setupcall)
@@ -1457,20 +1465,21 @@ class FuncargManager:
 
 class SetupCall:
     """ a container/helper for managing calls to setup functions. """
-    def __init__(self, funcargmanager, baseid, func, scope):
+    def __init__(self, funcargmanager, baseid, func, scope, unittest):
         self.funcargmanager = funcargmanager
         self.baseid = baseid
         self.func = func
-        self.funcargnames = getfuncargnames(func)
+        self.funcargnames = getfuncargnames(func, startindex=int(unittest))
         self.scope = scope
         self.scopenum = scopes.index(scope)
         self.active = False
+        self.unittest= unittest
         self._finalizer = []
 
-    def execute(self, kwargs):
+    def execute(self, posargs, kwargs):
         assert not self.active
         self.active = True
-        self.func(**kwargs)
+        self.func(*posargs, **kwargs)
 
     def addfinalizer(self, finalizer):
         assert self.active

@@ -24,8 +24,8 @@ Running it yields::
 
     $ py.test test_unittest.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev2
-    plugins: xdist, bugzilla, cache, oejskit, pep8, cov
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev12
+    plugins: xdist, bugzilla, cache, oejskit, cli, timeout, pep8, cov
     collecting ... collected 1 items
     
     test_unittest.py F
@@ -47,3 +47,64 @@ Running it yields::
 
 .. _`unittest.py style`: http://docs.python.org/library/unittest.html
 
+Moreover, you can use the new :ref:`@pytest.setup functions <@pytest.setup>` 
+functions and make use of pytest's unique :ref:`funcarg mechanism` in your
+test suite::
+
+    # content of test_unittest_funcargs.py
+    import pytest
+    import unittest
+
+    class MyTest(unittest.TestCase):
+        @pytest.setup()
+        def chdir(self, tmpdir):
+            tmpdir.chdir() # change to pytest-provided temporary directory
+            tmpdir.join("samplefile.ini").write("# testdata")
+
+        def test_method(self):
+            s = open("samplefile.ini").read() 
+            assert "testdata" in s
+
+Running this file should give us one passed test because the setup
+function took care to prepare a directory with some test data
+which the unittest-testcase method can now use::
+
+    $ py.test -q test_unittest_funcargs.py
+    collecting ... collected 1 items
+    .
+    1 passed in 0.28 seconds
+
+If you want to make a database attribute available on unittest.TestCases
+instances, based on a marker, you can do it using :ref:`pytest.mark`` and
+:ref:`setup functions`::
+
+    # content of test_unittest_marked_db.py
+    import pytest
+    import unittest
+
+    @pytest.factory()
+    def db():
+        class DummyDB:
+            x = 1
+        return DummyDB()
+
+    @pytest.setup()
+    def stick_db_to_self(request, db):
+        if hasattr(request.node.markers, "needsdb"):
+            request.instance.db = db
+
+    class MyTest(unittest.TestCase):
+        def test_method(self):
+            assert not hasattr(self, "db")
+
+        @pytest.mark.needsdb
+        def test_method2(self):
+            assert self.db.x == 1
+
+Running it passes both tests, one of which will see a ``db`` attribute
+because of the according ``needsdb`` marker::
+
+    $ py.test -q test_unittest_marked_db.py
+    collecting ... collected 2 items
+    ..
+    2 passed in 0.03 seconds
