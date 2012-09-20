@@ -2,6 +2,7 @@
 
 import py, pytest
 import sys, os
+import codecs
 import re
 import inspect
 import time
@@ -244,8 +245,10 @@ class TmpTestdir:
         ret = None
         for name, value in items:
             p = self.tmpdir.join(name).new(ext=ext)
-            source = py.builtin._totext(py.code.Source(value)).lstrip()
-            p.write(source.encode("utf-8"), "wb")
+            source = py.builtin._totext(py.code.Source(value)).strip()
+            content = source.encode("utf-8") # + "\n"
+            #content = content.rstrip() + "\n"
+            p.write(content, "wb")
             if ret is None:
                 ret = p
         return ret
@@ -440,27 +443,34 @@ class TmpTestdir:
         p1 = self.tmpdir.join("stdout")
         p2 = self.tmpdir.join("stderr")
         print_("running", cmdargs, "curdir=", py.path.local())
-        f1 = p1.open("wb")
-        f2 = p2.open("wb")
-        now = time.time()
-        popen = self.popen(cmdargs, stdout=f1, stderr=f2,
-            close_fds=(sys.platform != "win32"))
-        ret = popen.wait()
-        f1.close()
-        f2.close()
-        out = p1.read("rb")
-        out = getdecoded(out).splitlines()
-        err = p2.read("rb")
-        err = getdecoded(err).splitlines()
-        def dump_lines(lines, fp):
-            try:
-                for line in lines:
-                    py.builtin.print_(line, file=fp)
-            except UnicodeEncodeError:
-                print("couldn't print to %s because of encoding" % (fp,))
-        dump_lines(out, sys.stdout)
-        dump_lines(err, sys.stderr)
+        f1 = codecs.open(str(p1), "w", encoding="utf8")
+        f2 = codecs.open(str(p2), "w", encoding="utf8")
+        try:
+            now = time.time()
+            popen = self.popen(cmdargs, stdout=f1, stderr=f2,
+                close_fds=(sys.platform != "win32"))
+            ret = popen.wait()
+        finally:
+            f1.close()
+            f2.close()
+        f1 = codecs.open(str(p1), "r", encoding="utf8")
+        f2 = codecs.open(str(p2), "r", encoding="utf8")
+        try:
+            out = f1.read().splitlines()
+            err = f2.read().splitlines()
+        finally:
+            f1.close()
+            f2.close()
+        self._dump_lines(out, sys.stdout)
+        self._dump_lines(err, sys.stderr)
         return RunResult(ret, out, err, time.time()-now)
+
+    def _dump_lines(self, lines, fp):
+        try:
+            for line in lines:
+                py.builtin.print_(line, file=fp)
+        except UnicodeEncodeError:
+            print("couldn't print to %s because of encoding" % (fp,))
 
     def runpybin(self, scriptname, *args):
         fullargs = self._getpybinargs(scriptname) + args
