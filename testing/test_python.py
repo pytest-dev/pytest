@@ -1095,6 +1095,44 @@ class TestMetafunc:
             "*6 fail*",
         ])
 
+    def test_parametrize_class_scenarios(self, testdir):
+        testdir.makepyfile("""
+        # same as doc/en/example/parametrize scenario example
+        def pytest_generate_tests(metafunc):
+            idlist = []
+            argvalues = []
+            for scenario in metafunc.cls.scenarios:
+                idlist.append(scenario[0])
+                items = scenario[1].items()
+                argnames = [x[0] for x in items]
+                argvalues.append(([x[1] for x in items]))
+            metafunc.parametrize(argnames, argvalues, ids=idlist, scope="class")
+
+        class Test(object):
+               scenarios = [['1', {'arg': {1: 2}, "arg2": "value2"}],
+                            ['2', {'arg':'value2', "arg2": "value2"}]]
+
+               def test_1(self, arg, arg2):
+                  pass
+
+               def test_2(self, arg2, arg):
+                  pass
+
+               def test_3(self, arg, arg2):
+                  pass
+        """)
+        result = testdir.runpytest("-v")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines("""
+            *test_1*1*
+            *test_2*1*
+            *test_3*1*
+            *test_1*2*
+            *test_2*2*
+            *test_3*2*
+            *6 passed*
+        """)
+
 class TestMetafuncFunctional:
     def test_attributes(self, testdir):
         p = testdir.makepyfile("""

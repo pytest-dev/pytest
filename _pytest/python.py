@@ -574,6 +574,10 @@ class CallSpec2(object):
         for arg,val in zip(argnames, valset):
             self._checkargnotcontained(arg)
             getattr(self, valtype)[arg] = val
+            # we want self.params to be always set because of
+            # parametrize_sorted() which groups tests by params/scope
+            if valtype == "funcargs":
+                self.params[arg] = id
             self._arg2scopenum[arg] = scopenum
         self._idlist.append(id)
 

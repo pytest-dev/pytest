@@ -96,7 +96,7 @@ This means that we only run 2 tests if we do not pass ``--all``::
     $ py.test -q test_compute.py
     collecting ... collected 2 items
     ..
-    2 passed in 0.02 seconds
+    2 passed in 0.01 seconds
 
 We run only two computations, so we see two dots.
 let's run the full monty::
@@ -139,7 +139,7 @@ only have to work a bit to construct the correct arguments for pytest's
             items = scenario[1].items()
             argnames = [x[0] for x in items]
             argvalues.append(([x[1] for x in items]))
-        metafunc.parametrize(argnames, argvalues, ids=idlist)
+        metafunc.parametrize(argnames, argvalues, ids=idlist, scope="class")
 
     scenario1 = ('basic', {'attribute': 'value'})
     scenario2 = ('advanced', {'attribute': 'value2'})
@@ -147,36 +147,45 @@ only have to work a bit to construct the correct arguments for pytest's
     class TestSampleWithScenarios:
         scenarios = [scenario1, scenario2]
 
-        def test_demo(self, attribute):
+        def test_demo1(self, attribute):
+            assert isinstance(attribute, str)
+
+        def test_demo2(self, attribute):
             assert isinstance(attribute, str)
 
 this is a fully self-contained example which you can run with::
 
     $ py.test test_scenarios.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev3
-    plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov
-    collecting ... collected 2 items
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev14
+    plugins: xdist, bugzilla, cache, oejskit, cli, timeout, pep8, cov
+    collecting ... collected 4 items
     
-    test_scenarios.py ..
+    test_scenarios.py ....
     
-    ========================= 2 passed in 0.02 seconds =========================
+    ========================= 4 passed in 0.02 seconds =========================
 
 If you just collect tests you'll also nicely see 'advanced' and 'basic' as variants for the test function::
 
 
     $ py.test --collectonly test_scenarios.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev3
-    plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov
-    collecting ... collected 2 items
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev14
+    plugins: xdist, bugzilla, cache, oejskit, cli, timeout, pep8, cov
+    collecting ... collected 4 items
     <Module 'test_scenarios.py'>
       <Class 'TestSampleWithScenarios'>
         <Instance '()'>
-          <Function 'test_demo[basic]'>
-          <Function 'test_demo[advanced]'>
+          <Function 'test_demo1[basic]'>
+          <Function 'test_demo2[basic]'>
+          <Function 'test_demo1[advanced]'>
+          <Function 'test_demo2[advanced]'>
     
-    =============================  in 0.02 seconds =============================
+    =============================  in 0.01 seconds =============================
+
+Note that we told ``metafunc.parametrize()`` that your scenario values
+should be considered class-scoped.  With pytest-2.3 this leads to a
+resource-based ordering.
 
 Deferring the setup of parametrized resources
 ---------------------------------------------------
@@ -224,14 +233,14 @@ Let's first see how it looks like at collection time::
 
     $ py.test test_backends.py --collectonly
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev3
-    plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev14
+    plugins: xdist, bugzilla, cache, oejskit, cli, timeout, pep8, cov
     collecting ... collected 2 items
     <Module 'test_backends.py'>
       <Function 'test_db_initialized[d1]'>
       <Function 'test_db_initialized[d2]'>
     
-    =============================  in 0.02 seconds =============================
+    =============================  in 0.01 seconds =============================
 
 And then when we run the test::
 
@@ -241,7 +250,7 @@ And then when we run the test::
     ================================= FAILURES =================================
     _________________________ test_db_initialized[d2] __________________________
     
-    db = <conftest.DB2 instance at 0x26bcea8>
+    db = <conftest.DB2 instance at 0x17dd440>
     
         def test_db_initialized(db):
             # a dummy test
@@ -250,7 +259,7 @@ And then when we run the test::
     E           Failed: deliberately failing for demo purposes
     
     test_backends.py:6: Failed
-    1 failed, 1 passed in 0.02 seconds
+    1 failed, 1 passed in 0.01 seconds
 
 The first invocation with ``db == "DB1"`` passed while the second with ``db == "DB2"`` failed.  Our ``pytest_funcarg__db`` factory has instantiated each of the DB values during the setup phase while the ``pytest_generate_tests`` generated two according calls to the ``test_db_initialized`` during the collection phase.
 
@@ -298,7 +307,7 @@ argument sets to use for each test function.  Let's run it::
     ================================= FAILURES =================================
     ________________________ TestClass.test_equals[1-2] ________________________
     
-    self = <test_parametrize.TestClass instance at 0x2fa9050>, a = 1, b = 2
+    self = <test_parametrize.TestClass instance at 0x19a6d88>, a = 1, b = 2
     
         def test_equals(self, a, b):
     >       assert a == b
@@ -327,5 +336,5 @@ Running it results in some skips if we don't have all the python interpreters in
    collecting ... collected 75 items
    ............sss............sss............sss............ssssssssssssssssss
    ========================= short test summary info ==========================
-   SKIP [27] /home/hpk/p/pytest/doc/en/example/multipython.py:36: 'python2.8' not found
-   48 passed, 27 skipped in 1.70 seconds
+   SKIP [27] /home/hpk/p/pytest/doc/en/example/multipython.py:21: 'python2.8' not found
+   48 passed, 27 skipped in 3.11 seconds

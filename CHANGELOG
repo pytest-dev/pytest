@@ -6,6 +6,8 @@ Changes between 2.2.4 and 2.3.0.dev
   node.markers allows reading and manipulating of MarkInfo objects
   previously attached with @pytest.mark.* or request.applymarker or
   setattr(node.markers, name, pytest.mark.*) calls.
+- introduce re-ordering of tests by resource and parametrization setup
+  which takes precedence to the usual file-ordering
 - fix issue185 monkeypatching time.time does not cause pytest to fail
 - fix issue172 duplicate call of pytest.setup-decoratored setup_module
   functions
