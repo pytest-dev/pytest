@@ -41,7 +41,7 @@ def pytest_make_collect_report(collector):
 
 def call_optional(obj, name):
     method = getattr(obj, name, None)
-    if method:
+    if method is not None and not hasattr(method, "_pytestsetup"):
         # If there's any problems allow the exception to raise rather than
         # silently ignoring them
         method()

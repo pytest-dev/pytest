@@ -24,6 +24,17 @@ def test_nose_setup(testdir):
     ])
 
 
+def test_setup_func_with_setup_decorator():
+    from _pytest.nose import call_optional
+    l = []
+    class A:
+        @pytest.setup()
+        def f(self):
+            l.append(1)
+    call_optional(A(), "f")
+    assert not l
+
+
 def test_nose_setup_func(testdir):
     p = testdir.makepyfile("""
         from nose.tools import with_setup
