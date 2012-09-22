@@ -14,6 +14,17 @@ def test_simple_unittest(testdir):
     assert reprec.matchreport("testpassing").passed
     assert reprec.matchreport("test_failing").failed
 
+def test_runTest_method(testdir):
+    testpath=testdir.makepyfile("""
+        import unittest
+        pytest_plugins = "pytest_unittest"
+        class MyTestCase(unittest.TestCase):
+            def runTest(self):
+                self.assertEquals('foo', 'foo')
+        """)
+    reprec = testdir.inline_run(testpath)
+    assert reprec.matchreport('runTest').passed
+
 def test_isclasscheck_issue53(testdir):
     testpath = testdir.makepyfile("""
         import unittest

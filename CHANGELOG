@@ -56,6 +56,8 @@ Changes between 2.2.4 and 2.3.0.dev
 - fix issue 188: ensure sys.exc_info is clear on python2
                  before calling into a test
 
+- fix issue 191: addd unittest TestCase runTest method support
+
 - reporting refinements:
 
   - pytest_report_header now receives a "startdir" so that
