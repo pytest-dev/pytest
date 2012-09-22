@@ -34,6 +34,9 @@ class UnitTestCase(pytest.Class):
                 pytest.mark.xfail(reason=str(funcobj.todo))(funcobj)
             yield TestCaseFunction(name, parent=self)
 
+        if getattr(self.obj, 'runTest', None) is not None:
+            yield TestCaseFunction('runTest', parent=self)
+
     def setup(self):
         meth = getattr(self.obj, 'setUpClass', None)
         if meth is not None:
