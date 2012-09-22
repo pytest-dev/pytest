@@ -17,11 +17,13 @@ def test_version(testdir, pytestconfig):
 def test_help(testdir):
     result = testdir.runpytest("--help")
     assert result.ret == 0
-    result.stdout.fnmatch_lines([
-        "*-v*verbose*",
-        "*setup.cfg*",
-        "*minversion*",
-    ])
+    result.stdout.fnmatch_lines("""
+        *-v*verbose*
+        *setup.cfg*
+        *minversion*
+        *to see*markers*py.test --markers*
+        *to see*funcargs*py.test --funcargs*
+    """)
 
 def test_collectattr():
     class A:

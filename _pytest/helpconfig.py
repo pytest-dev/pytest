@@ -79,6 +79,8 @@ def showhelp(config):
 
     tw.line() ; tw.line()
     #tw.sep("=")
+    tw.line("to see available markers type: py.test --markers")
+    tw.line("to see available funcargs type: py.test --funcargs")
     return
 
     tw.line("conftest.py options:")
