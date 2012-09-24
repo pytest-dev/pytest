@@ -244,7 +244,7 @@ class TeardownErrorReport(BaseReport):
         self.__dict__.update(extra)
 
 def pytest_make_collect_report(collector):
-    call = CallInfo(collector._memocollect, "memocollect")
+    call = CallInfo(lambda: list(collector.collect()), "collect")
     longrepr = None
     if not call.excinfo:
         outcome = "passed"

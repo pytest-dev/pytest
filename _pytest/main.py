@@ -251,24 +251,6 @@ class Node(object):
     def teardown(self):
         pass
 
-    def _memoizedcall(self, attrname, function):
-        exattrname = "_ex_" + attrname
-        failure = getattr(self, exattrname, None)
-        if failure is not None:
-            py.builtin._reraise(failure[0], failure[1], failure[2])
-        if hasattr(self, attrname):
-            return getattr(self, attrname)
-        try:
-            res = function()
-        except py.builtin._sysex:
-            raise
-        except:
-            failure = py.std.sys.exc_info()
-            setattr(self, exattrname, failure)
-            raise
-        setattr(self, attrname, res)
-        return res
-
     def listchain(self):
         """ return list of all parent collectors up to self,
             starting from root of collection tree. """
@@ -344,10 +326,6 @@ class Collector(Node):
             exc = excinfo.value
             return str(exc.args[0])
         return self._repr_failure_py(excinfo, style="short")
-
-    def _memocollect(self):
-        """ internal helper method to cache results of calling collect(). """
-        return self._memoizedcall('_collected', lambda: list(self.collect()))
 
     def _prunetraceback(self, excinfo):
         if hasattr(self, 'fspath'):

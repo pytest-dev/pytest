@@ -332,8 +332,12 @@ def transfer_markers(funcobj, cls, mod):
 
 class Module(pytest.File, PyCollector):
     """ Collector for test classes and functions. """
+    _obj = None
+
     def _getobj(self):
-        return self._memoizedcall('_obj', self._importtestmodule)
+        if self._obj is None:
+            self._obj = self._importtestmodule()
+        return _obj
 
     def collect(self):
         self.session.funcargmanager._parsefactories(self.obj, self.nodeid)
