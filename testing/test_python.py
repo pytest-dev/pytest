@@ -2633,3 +2633,20 @@ def test_request_can_be_overridden(testdir):
     """)
     reprec = testdir.inline_run()
     reprec.assertoutcome(passed=1)
+
+def test_setup_funcarg_order(testdir):
+    testdir.makepyfile("""
+        import pytest
+
+        l = []
+        @pytest.setup()
+        def fix1():
+            l.append(1)
+        @pytest.factory()
+        def arg1():
+            l.append(2)
+        def test_hello(arg1):
+            assert l == [1,2]
+    """)
+    reprec = testdir.inline_run()
+    reprec.assertoutcome(passed=1)

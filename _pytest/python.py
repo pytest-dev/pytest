@@ -895,9 +895,9 @@ class Function(FunctionMixin, pytest.Item):
 
     def setup(self):
         super(Function, self).setup()
-        fillfuncargs(self)
         if hasattr(self, "_request"):
             self._request._callsetup()
+        fillfuncargs(self)
 
     def __eq__(self, other):
         try:
