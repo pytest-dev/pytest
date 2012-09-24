@@ -296,7 +296,7 @@ class PyCollector(PyobjMixin, pytest.Collector):
         clscol = self.getparent(Class)
         cls = clscol and clscol.obj or None
         transfer_markers(funcobj, cls, module)
-        metafunc = Metafunc(funcobj, parentid=self.nodeid, config=self.config,
+        metafunc = Metafunc(funcobj, parentnode=self, config=self.config,
             cls=cls, module=module)
         gentesthook = self.config.hook.pytest_generate_tests
         extra = [module]
@@ -594,13 +594,19 @@ class CallSpec2(object):
 
 class Metafunc:
     def __init__(self, function, config=None, cls=None, module=None,
-                 parentid=""):
+                 parentnode=None):
         self.config = config
         self.module = module
         self.function = function
-        self.parentid = parentid
-        self.funcargnames = getfuncargnames(function,
-                                            startindex=int(cls is not None))
+        self.parentnode = parentnode
+        self.parentid = getattr(parentnode, "nodeid", "")
+        argnames = getfuncargnames(function, startindex=int(cls is not None))
+        if parentnode is not None:
+            fm = parentnode.session.funcargmanager
+            self.funcargnames, self._arg2facdeflist = fm.getallfuncargnames(
+                argnames, parentnode)
+        else:
+            self.funcargnames = argnames
         self.cls = cls
         self.module = module
         self._calls = []
@@ -961,8 +967,11 @@ class FuncargRequest:
         self._name2factory = {}
         self.funcargmanager = pyfuncitem.session.funcargmanager
         self._currentarg = None
-        self.funcargnames = getfuncargnames(self.function)
         self.parentid = pyfuncitem.parent.nodeid
+        self.funcargnames, self._arg2facdeflist_ = \
+            self.funcargmanager.getallfuncargnames(
+                getfuncargnames(self.function), # XXX _pyfuncitem...
+                pyfuncitem.parent)
         self._factorystack = []
 
     @property
@@ -972,19 +981,20 @@ class FuncargRequest:
 
     def _getfaclist(self, argname):
         facdeflist = self._name2factory.get(argname, None)
+        getfactb = None
+        function = None
         if facdeflist is None:
             if self._factorystack:
                 function = self._factorystack[-1].func
                 getfactb = lambda: self._factorystack[:-1]
             else:
                 function = self.function
-                getfactb = None
             facdeflist = self.funcargmanager.getfactorylist(
-                            argname, self.parentid, function, getfactb)
+                            argname, self.parentid)
             self._name2factory[argname] = facdeflist
-        elif not facdeflist:
-            self.funcargmanager._raiselookupfailed(argname, self.function,
-                                                   self.parentid)
+        if not facdeflist:
+            self.funcargmanager._raiselookupfailed(argname, function,
+                                                   self.parentid, getfactb)
         return facdeflist
 
     @property
@@ -1068,15 +1078,14 @@ class FuncargRequest:
 
 
     def _fillfuncargs(self):
-        if self.funcargnames:
-            assert not getattr(self._pyfuncitem, '_args', None), (
+        item = self._pyfuncitem
+        funcargnames = getattr(item, "funcargnames", self.funcargnames)
+        if funcargnames:
+            assert not getattr(item, '_args', None), (
                 "yielded functions cannot have funcargs")
-        while self.funcargnames:
-            argname = self.funcargnames.pop(0)
-            if argname not in self._pyfuncitem.funcargs:
-                self._pyfuncitem.funcargs[argname] = \
-                        self.getfuncargvalue(argname)
-
+        for argname in funcargnames:
+            if argname not in item.funcargs:
+                item.funcargs[argname] = self.getfuncargvalue(argname)
 
     def _callsetup(self):
         self.funcargmanager.ensure_setupcalls(self)
@@ -1305,26 +1314,47 @@ class FuncargManager:
         for plugin in plugins:
             self.pytest_plugin_registered(plugin)
 
+    def getallfuncargnames(self, funcargnames, parentnode):
+        # collect the closure of all funcargs, starting with
+        # funcargnames as the initial set
+        # we populate and return a arg2facdeflist mapping
+        # so that the caller can reuse it and does not have to re-discover
+        # factories again for each funcargname
+        parentid = parentnode.nodeid
+        funcargnames = list(funcargnames)
+        _, setupargs = self.getsetuplist(parentnode)
+        def merge(otherlist):
+            for arg in otherlist:
+                if arg not in funcargnames:
+                    funcargnames.append(arg)
+        merge(setupargs)
+        arg2facdeflist = {}
+        lastlen = -1
+        while lastlen != len(funcargnames):
+            lastlen = len(funcargnames)
+            for argname in list(funcargnames):
+                if argname in arg2facdeflist:
+                    continue
+                facdeflist = self.getfactorylist(argname, parentid)
+                arg2facdeflist[argname] = facdeflist
+                if facdeflist is not None:
+                    for facdef in facdeflist:
+                        merge(facdef.funcargnames)
+        try:
+            funcargnames.remove("__request__")
+        except ValueError:
+            pass
+        return funcargnames, arg2facdeflist
+
     def pytest_generate_tests(self, metafunc):
-        funcargnames = list(metafunc.funcargnames)
-        _, allargnames = self.getsetuplist(metafunc.parentid)
-        #print "setuplist, allargnames", setuplist, allargnames
-        funcargnames.extend(allargnames)
-        seen = set()
-        while funcargnames:
-            argname = funcargnames.pop(0)
-            if argname in seen or argname == "request":
-                continue
-            seen.add(argname)
-            faclist = self.getfactorylist(argname, metafunc.parentid,
-                                          metafunc.function, raising=False)
+        for argname in metafunc.funcargnames:
+            faclist = metafunc._arg2facdeflist[argname]
             if faclist is None:
                 continue # will raise FuncargLookupError at setup time
             for facdef in faclist:
                 if facdef.params is not None:
                     metafunc.parametrize(argname, facdef.params, indirect=True,
-                                             scope=facdef.scope)
-                funcargnames.extend(facdef.funcargnames)
+                                         scope=facdef.scope)
 
     def pytest_collection_modifyitems(self, items):
         # separate parametrized setups
@@ -1388,7 +1418,8 @@ class FuncargManager:
             faclist.append(factorydef)
             ### check scope/params mismatch?
 
-    def getsetuplist(self, nodeid):
+    def getsetuplist(self, node):
+        nodeid = node.nodeid
         l = []
         allargnames = set()
         for setupcall in self.setuplist:
@@ -1399,12 +1430,11 @@ class FuncargManager:
         return l, allargnames
 
 
-    def getfactorylist(self, argname, nodeid, function, getfactb=None, raising=True):
+    def getfactorylist(self, argname, nodeid):
         try:
             factorydeflist = self.arg2facspec[argname]
         except KeyError:
-            if raising:
-                self._raiselookupfailed(argname, function, nodeid, getfactb)
+            return None
         else:
             return self._matchfactories(factorydeflist, nodeid)
 
@@ -1429,7 +1459,7 @@ class FuncargManager:
         raise FuncargLookupError(function, msg, lines)
 
     def ensure_setupcalls(self, request):
-        setuplist, allnames = self.getsetuplist(request._pyfuncitem.nodeid)
+        setuplist, allnames = self.getsetuplist(request._pyfuncitem)
         for setupcall in setuplist:
             if setupcall.active:
                 continue

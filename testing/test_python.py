@@ -1340,6 +1340,27 @@ class TestMetafuncFunctional:
             "*1 passed*"
         ])
 
+    def test_parametrize_on_setup_arg(self, testdir):
+        p = testdir.makepyfile("""
+            def pytest_generate_tests(metafunc):
+                assert "arg1" in metafunc.funcargnames
+                metafunc.parametrize("arg1", [1], indirect=True)
+
+            def pytest_funcarg__arg1(request):
+                return request.param
+
+            def pytest_funcarg__arg2(request, arg1):
+                return 10 * arg1
+
+            def test_func(arg2):
+                assert arg2 == 10
+        """)
+        result = testdir.runpytest("-v", p)
+        result.stdout.fnmatch_lines([
+            "*test_func*1*PASS*",
+            "*1 passed*"
+        ])
+
 
 def test_conftest_funcargs_only_available_in_subdir(testdir):
     sub1 = testdir.mkpydir("sub1")
@@ -1648,38 +1669,6 @@ def test_issue117_sessionscopeteardown(testdir):
         "*ZeroDivisionError*",
     ])
 
-class TestRequestAPI:
-    @pytest.mark.xfail(reason="consider flub feedback")
-    def test_setup_can_query_funcargs(self, testdir):
-        testdir.makeconftest("""
-            def pytest_runtest_setup(item):
-                assert not hasattr(item, "_request")
-        """)
-        testdir.makepyfile("""
-            def pytest_funcarg__a(request):
-                return 1
-            def pytest_funcarg__b(request):
-                return request.getfuncargvalue("a") + 1
-            def test_hello(b):
-                assert b == 2
-        """)
-        result = testdir.runpytest()
-        assert result.ret == 0
-        result.stdout.fnmatch_lines([
-            "*1 passed*",
-        ])
-
-        result = testdir.makeconftest("""
-            import pytest
-            @pytest.setup()
-            def mysetup(request):
-                request.uses_funcarg("db")
-        """)
-        result = testdir.runpytest()
-        assert result.ret == 0
-        result.stdout.fnmatch_lines([
-            "*1 passed*",
-        ])
 
 class TestFuncargFactory:
     def test_receives_funcargs(self, testdir):
@@ -1828,7 +1817,7 @@ class TestFuncargManager:
         testdir.makepyfile("""
             def test_hello(item, fm):
                 for name in ("fm", "hello", "item"):
-                    faclist = fm.getfactorylist(name, item.nodeid, item.obj)
+                    faclist = fm.getfactorylist(name, item.nodeid)
                     assert len(faclist) == 1
                     fac = faclist[0]
                     assert fac.func.__name__ == "pytest_funcarg__" + name
@@ -1844,7 +1833,7 @@ class TestFuncargManager:
                 def pytest_funcarg__hello(self, request):
                     return "class"
                 def test_hello(self, item, fm):
-                    faclist = fm.getfactorylist("hello", item.nodeid, item.obj)
+                    faclist = fm.getfactorylist("hello", item.nodeid)
                     print (faclist)
                     assert len(faclist) == 3
                     assert faclist[0].func(item._request) == "conftest"
@@ -1880,7 +1869,7 @@ class TestSetupDiscovery:
     def test_parsefactories_conftest(self, testdir):
         testdir.makepyfile("""
             def test_check_setup(item, fm):
-                setupcalls, allnames = fm.getsetuplist(item.nodeid)
+                setupcalls, allnames = fm.getsetuplist(item)
                 assert len(setupcalls) == 2
                 assert setupcalls[0].func.__name__ == "perfunction"
                 assert "request" in setupcalls[0].funcargnames
@@ -2647,6 +2636,26 @@ def test_setup_funcarg_order(testdir):
             l.append(2)
         def test_hello(arg1):
             assert l == [1,2]
+    """)
+    reprec = testdir.inline_run()
+    reprec.assertoutcome(passed=1)
+
+
+def test_request_funcargnames(testdir):
+    testdir.makepyfile("""
+        import pytest
+        @pytest.factory()
+        def arg1():
+            pass
+        @pytest.factory()
+        def farg(arg1):
+            pass
+        @pytest.setup()
+        def sarg(tmpdir):
+            pass
+        def test_function(request, farg):
+            assert set(request.funcargnames) == \
+                   set(["tmpdir", "arg1", "request", "farg"])
     """)
     reprec = testdir.inline_run()
     reprec.assertoutcome(passed=1)
