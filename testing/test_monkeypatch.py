@@ -206,3 +206,38 @@ def test_issue185_time_breaks(testdir):
     result.stdout.fnmatch_lines("""
         *1 passed*
     """)
+
+
+
+class SampleNew(object):
+    @staticmethod
+    def hello():
+        return True
+
+
+class SampleNewInherit(SampleNew):
+    pass
+
+
+class SampleOld:
+    #oldstyle on python2
+    @staticmethod
+    def hello():
+        return True
+
+class SampleOldInherit(SampleOld):
+    pass
+
+
+@pytest.mark.parametrize('Sample', [
+    SampleNew, SampleNewInherit,
+    SampleOld, SampleOldInherit,
+], ids=['new', 'new-inherit', 'old', 'old-inherit'])
+def test_issue156_undo_staticmethod(Sample):
+    monkeypatch = MonkeyPatch()
+
+    monkeypatch.setattr(Sample, 'hello', None)
+    assert Sample.hello is None
+
+    monkeypatch.undo()
+    assert Sample.hello()

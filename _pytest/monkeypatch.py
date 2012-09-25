@@ -1,6 +1,6 @@
 """ monkeypatching and mocking functionality.  """
 
-import os, sys
+import os, sys, inspect
 
 def pytest_funcarg__monkeypatch(request):
     """The returned ``monkeypatch`` funcarg provides these
@@ -39,6 +39,10 @@ class monkeypatch:
         oldval = getattr(obj, name, notset)
         if raising and oldval is notset:
             raise AttributeError("%r has no attribute %r" %(obj, name))
+
+        # avoid class descriptors like staticmethod/classmethod
+        if inspect.isclass(obj):
+            oldval = obj.__dict__.get(name, notset)
         self._setattr.insert(0, (obj, name, oldval))
         setattr(obj, name, value)
 
