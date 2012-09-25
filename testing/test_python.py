@@ -1898,6 +1898,32 @@ class TestSetupDiscovery:
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=2)
 
+    @pytest.mark.xfail(reason="'enabled' feature not implemented")
+    def test_setup_enabled_functionnode(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            def enabled(parentnode, markers):
+                return "needsdb" in markers
+
+            @pytest.factory(params=[1,2])
+            def db(request):
+                return request.param
+
+            @pytest.setup(enabled=enabled)
+            def createdb(db):
+                pass
+
+            def test_func1(request):
+                assert "db" not in request.funcargnames
+
+            @pytest.mark.needsdb
+            def test_func2(request):
+                assert "db" in request.funcargnames
+        """)
+        reprec = testdir.inline_run("-s")
+        reprec.assertoutcome(passed=2)
+
     def test_callables_nocode(self, testdir):
         """
         a imported mock.call would break setup/factory discovery

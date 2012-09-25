@@ -19,8 +19,10 @@ class FactoryMarker:
         return function
 
 class SetupMarker:
-    def __init__(self, scope):
+    def __init__(self, scope, enabled):
         self.scope = scope
+        self.enabled = enabled
+
     def __call__(self, function):
         function._pytestsetup = self
         return function
@@ -36,14 +38,17 @@ def factory(scope=None, params=None):
     """
     return FactoryMarker(scope, params)
 
-def setup(scope="function"):
+def setup(scope="function", enabled=None):
     """ return a decorator to mark functions as setup functions.
 
     :arg scope: the scope for which the setup function will be active, one
                 of "function", "class", "module", "session".
                 Defaults to "function".
+    :arg enabled: if a callable is specified, enabled(node) will be called
+                and if it returns a false value this setup function
+                will not be called and its funcargs will not be setup.
     """
-    return SetupMarker(scope)
+    return SetupMarker(scope, enabled)
 
 def cached_property(f):
     """returns a cached property that is calculated by function f.
