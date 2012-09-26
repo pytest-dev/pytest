@@ -2076,6 +2076,32 @@ class TestSetupManagement:
         reprec.assertoutcome(passed=1)
 
 
+    def test_parametrization_setup_teardown_ordering(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            l = []
+            def pytest_generate_tests(metafunc):
+                if metafunc.cls is not None:
+                    metafunc.parametrize("item", [1,2], scope="class")
+            class TestClass:
+                @pytest.setup(scope="class")
+                def addteardown(self, item, request):
+                    request.addfinalizer(lambda: l.append("teardown-%d" % item))
+                    l.append("setup-%d" % item)
+                def test_step1(self, item):
+                    l.append("step1-%d" % item)
+                def test_step2(self, item):
+                    l.append("step2-%d" % item)
+
+            def test_finish():
+                print l
+                assert l == ["setup-1", "step1-1", "step2-1", "teardown-1",
+                             "setup-2", "step1-2", "step2-2", "teardown-2",]
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=5)
+
+
 class TestFuncargMarker:
     def test_parametrize(self, testdir):
         testdir.makepyfile("""

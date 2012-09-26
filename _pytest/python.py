@@ -1475,6 +1475,9 @@ class FuncargManager:
                 self.session._setupstate.addfinalizer(setupcall.finish, scol)
                 for argname in setupcall.funcargnames: # XXX all deps?
                     self.addargfinalizer(setupcall.finish, argname)
+                req = kwargs.get("request", None)
+                if req is not None:
+                    mp.setattr(req, "addfinalizer", setupcall.addfinalizer)
                 # for unittest-setup methods we need to provide
                 # the correct instance
                 posargs = ()
