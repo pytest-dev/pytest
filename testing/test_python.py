@@ -2094,7 +2094,6 @@ class TestSetupManagement:
                     l.append("step2-%d" % item)
 
             def test_finish():
-                print l
                 assert l == ["setup-1", "step1-1", "step2-1", "teardown-1",
                              "setup-2", "step1-2", "step2-2", "teardown-2",]
         """)
