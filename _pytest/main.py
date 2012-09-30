@@ -196,6 +196,18 @@ class Node(object):
         """ dictionary of Keywords / markers on this node. """
         return vars(self.markers)
 
+    def applymarker(self, marker):
+        """ Apply a marker to this item.  This method is
+        useful if you have several parametrized function
+        and want to mark a single one of them.
+
+        :arg marker: a :py:class:`_pytest.mark.MarkDecorator` object
+            created by a call to ``py.test.mark.NAME(...)``.
+        """
+        if not isinstance(marker, pytest.mark.XYZ.__class__):
+            raise ValueError("%r is not a py.test.mark.* object")
+        setattr(self.markers, marker.markname, marker)
+
     #def extrainit(self):
     #    """"extra initialization after Node is initialized.  Implemented
     #    by some subclasses. """
@@ -389,19 +401,6 @@ class Item(Node):
 
     def reportinfo(self):
         return self.fspath, None, ""
-
-    def applymarker(self, marker):
-        """ Apply a marker to this item.  This method is
-        useful if you have several parametrized function
-        and want to mark a single one of them.
-
-        :arg marker: a :py:class:`_pytest.mark.MarkDecorator` object
-            created by a call to ``py.test.mark.NAME(...)``.
-        """
-        if not isinstance(marker, pytest.mark.XYZ.__class__):
-            raise ValueError("%r is not a py.test.mark.* object")
-        self.keywords[marker.markname] = marker
-
 
     @property
     def location(self):

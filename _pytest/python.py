@@ -1068,9 +1068,7 @@ class FuncargRequest:
         :arg marker: a :py:class:`_pytest.mark.MarkDecorator` object
             created by a call to ``py.test.mark.NAME(...)``.
         """
-        if not isinstance(marker, py.test.mark.XYZ.__class__):
-            raise ValueError("%r is not a py.test.mark.* object")
-        setattr(self.node.markers, marker.markname, marker)
+        self.node.applymarker(marker)
 
     def raiseerror(self, msg):
         """ raise a FuncargLookupError with the given message. """
