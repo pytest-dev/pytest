@@ -440,7 +440,7 @@ class TerminalReporter:
     def summary_stats(self):
         session_duration = py.std.time.time() - self._sessionstarttime
 
-        keys = "failed passed skipped deselected".split()
+        keys = "failed passed skipped deselected xfailed xpassed".split()
         for key in self.stats.keys():
             if key not in keys:
                 keys.append(key)

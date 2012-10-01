@@ -652,6 +652,7 @@ class Metafunc:
             for i, valset in enumerate(argvalues):
                 assert len(valset) == len(argnames)
                 newcallspec = callspec.copy(self)
+                #print ("setmulti %r id %r" % (argnames, ids[i]))
                 newcallspec.setmulti(valtype, argnames, valset, ids[i],
                                      scopenum)
                 newcalls.append(newcallspec)
@@ -1113,8 +1114,6 @@ class FuncargRequest:
                 self._addfinalizer(finalizer, scope=scope)
         return val
 
-
-
     def getfuncargvalue(self, argname):
         """ Retrieve a function argument by name for this test
         function invocation.  This allows one function argument factory
@@ -1408,11 +1407,13 @@ class FuncargManager:
     def getsetuplist(self, node):
         nodeid = node.nodeid
         l = []
-        allargnames = set()
+        allargnames = []
         for setupcall in self.setuplist:
             if nodeid.startswith(setupcall.baseid):
                 l.append(setupcall)
-                allargnames.update(setupcall.funcargnames)
+                for arg in setupcall.funcargnames:
+                    if arg not in allargnames:
+                        allargnames.append(arg)
         l.sort(key=lambda x: x.scopenum)
         return l, allargnames
 

@@ -1,6 +1,8 @@
 Changes between 2.2.4 and 2.3.0.dev
 -----------------------------------
 
+- fix python3.3 compat, mostly reporting bits that previously depended
+  on dict ordering
 - introduce a generic "markers" object on Nodes and a request.node
   attribute pointing to the scope-specific collection node of a request.
   node.markers allows reading and manipulating of MarkInfo objects

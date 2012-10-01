@@ -71,7 +71,7 @@ class TestGeneralUsage:
             "*---configure",
             "*---unconfigure",
         ])
-        
+
 
     def test_config_preparse_plugin_option(self, testdir):
         testdir.makepyfile(pytest_xyz="""
@@ -357,13 +357,13 @@ class TestInvocationVariants:
     @pytest.mark.skipif("sys.version_info < (2,5)")
     def test_python_minus_m_invocation_ok(self, testdir):
         p1 = testdir.makepyfile("def test_hello(): pass")
-        res = testdir.run(py.std.sys.executable, "-m", "py.test", str(p1))
+        res = testdir.run(py.std.sys.executable, "-m", "pytest", str(p1))
         assert res.ret == 0
 
     @pytest.mark.skipif("sys.version_info < (2,5)")
     def test_python_minus_m_invocation_fail(self, testdir):
         p1 = testdir.makepyfile("def test_fail(): 0/0")
-        res = testdir.run(py.std.sys.executable, "-m", "py.test", str(p1))
+        res = testdir.run(py.std.sys.executable, "-m", "pytest", str(p1))
         assert res.ret == 1
 
     @pytest.mark.skipif("sys.version_info < (2,5)")

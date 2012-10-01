@@ -2391,7 +2391,7 @@ class TestFuncargMarker:
                 def test_3(self):
                     pass
         """)
-        result = testdir.runpytest("-v")
+        result = testdir.runpytest("-vs")
         result.stdout.fnmatch_lines("""
             test_class_ordering.py:4: TestClass2.test_1[1-a] PASSED
             test_class_ordering.py:4: TestClass2.test_1[2-a] PASSED
