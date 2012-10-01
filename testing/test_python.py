@@ -1758,7 +1758,6 @@ class TestFuncargFactory:
             "*LookupError: no factory found for argument 'missing'",
         ])
 
-
     def test_factory_setup_as_classes(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -1775,6 +1774,19 @@ class TestFuncargFactory:
             class TestClass:
                 def test_method(self):
                     assert self.arg1.x == 1
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
+    def test_request_can_be_overridden(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.factory()
+            def request(request):
+                request.a = 1
+                return request
+            def test_request(request):
+                assert request.a == 1
         """)
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
@@ -2661,18 +2673,7 @@ def test_setupdecorator_and_xunit(testdir):
     reprec = testdir.inline_run()
     reprec.assertoutcome(passed=3)
 
-def test_request_can_be_overridden(testdir):
-    testdir.makepyfile("""
-        import pytest
-        @pytest.factory()
-        def request(request):
-            request.a = 1
-            return request
-        def test_request(request):
-            assert request.a == 1
-    """)
-    reprec = testdir.inline_run()
-    reprec.assertoutcome(passed=1)
+
 
 def test_setup_funcarg_order(testdir):
     testdir.makepyfile("""

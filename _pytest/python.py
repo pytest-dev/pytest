@@ -519,11 +519,8 @@ def hasinit(obj):
 
 
 def fillfuncargs(function):
-    """ fill missing funcargs. """
-    #if not getattr(function, "_args", None) is not None:
-    #    request = FuncargRequest(pyfuncitem=function)
-    #    request._fillfuncargs()
-    if getattr(function, "_args", None) is None:
+    """ fill missing funcargs for a test function. """
+    if getattr(function, "_args", None) is None:  # not a yielded function
         try:
             request = function._request
         except AttributeError:
@@ -941,11 +938,6 @@ def scopeproperty(name=None, doc=None):
         return property(provide, None, None, func.__doc__)
     return decoratescope
 
-def pytest_funcarg__request(__request__):
-    return __request__
-
-#def pytest_funcarg__testcontext(__request__):
-#    return __request__
 
 class FuncargRequest:
     """ A request for function arguments from a test or setup function.
@@ -963,7 +955,6 @@ class FuncargRequest:
         self.scope = "function"
         self.getparent = pyfuncitem.getparent
         self._funcargs  = self._pyfuncitem.funcargs.copy()
-        self._funcargs["__request__"] = self
         self._name2factory = {}
         self.funcargmanager = pyfuncitem.session.funcargmanager
         self._currentarg = None
@@ -1078,9 +1069,6 @@ class FuncargRequest:
     def _fillfuncargs(self):
         item = self._pyfuncitem
         funcargnames = getattr(item, "funcargnames", self.funcargnames)
-        if funcargnames:
-            assert not getattr(item, '_args', None), (
-                "yielded functions cannot have funcargs")
         for argname in funcargnames:
             if argname not in item.funcargs:
                 item.funcargs[argname] = self.getfuncargvalue(argname)
@@ -1128,23 +1116,28 @@ class FuncargRequest:
 
 
     def getfuncargvalue(self, argname):
-        """ (deprecated) Retrieve a function argument by name for this test
+        """ Retrieve a function argument by name for this test
         function invocation.  This allows one function argument factory
         to call another function argument factory.  If there are two
         funcarg factories for the same test function argument the first
         factory may use ``getfuncargvalue`` to call the second one and
         do something additional with the resource.
 
-        **Note**, however, that starting with
-        pytest-2.3 it is easier and better to directly state the needed
-        funcarg in the factory signature.  This will also work seemlessly
+        **Note**, however, that starting with pytest-2.3 it is usually
+        easier and better to directly use the needed funcarg in the
+        factory function signature.  This will also work seemlessly
         with parametrization and the new resource setup optimizations.
         """
         try:
             return self._funcargs[argname]
         except KeyError:
             pass
-        factorydeflist = self._getfaclist(argname)
+        try:
+            factorydeflist = self._getfaclist(argname)
+        except FuncargLookupError:
+            if argname == "request":
+                return self
+            raise
         factorydef = factorydeflist.pop()
         self._factorystack.append(factorydef)
         try:
@@ -1338,10 +1331,6 @@ class FuncargManager:
                 if facdeflist is not None:
                     for facdef in facdeflist:
                         merge(facdef.funcargnames)
-        try:
-            funcargnames.remove("__request__")
-        except ValueError:
-            pass
         return funcargnames, arg2facdeflist
 
     def pytest_generate_tests(self, metafunc):
