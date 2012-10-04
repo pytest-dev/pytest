@@ -14,7 +14,8 @@ class TestCaptureManager:
         finally:
             monkeypatch.undo()
 
-    def test_configure_per_fspath(self, testdir):
+    @pytest.mark.parametrize("mode", "no fd sys".split())
+    def test_configure_per_fspath(self, testdir, mode):
         config = testdir.parseconfig(testdir.tmpdir)
         capman = CaptureManager()
         hasfd = hasattr(os, 'dup')
@@ -23,13 +24,12 @@ class TestCaptureManager:
         else:
             assert capman._getmethod(config, None) == "sys"
 
-        for name in ('no', 'fd', 'sys'):
-            if not hasfd and name == 'fd':
-                continue
-            sub = testdir.tmpdir.mkdir("dir" + name)
-            sub.ensure("__init__.py")
-            sub.join("conftest.py").write('option_capture = %r' % name)
-            assert capman._getmethod(config, sub.join("test_hello.py")) == name
+        if not hasfd and mode == 'fd':
+            return
+        sub = testdir.tmpdir.mkdir("dir" + mode)
+        sub.ensure("__init__.py")
+        sub.join("conftest.py").write('option_capture = %r' % mode)
+        assert capman._getmethod(config, sub.join("test_hello.py")) == mode
 
     @needsosdup
     @pytest.mark.multi(method=['no', 'fd', 'sys'])
