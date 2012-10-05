@@ -11,22 +11,18 @@ import _pytest
 cutdir = py.path.local(_pytest.__file__).dirpath()
 
 class FixtureFunctionMarker:
-    def __init__(self, scope, params):
+    def __init__(self, scope, params, autoactive=False):
         self.scope = scope
         self.params = params
+        self.autoactive = autoactive
+
     def __call__(self, function):
         function._pytestfixturefunction = self
         return function
 
-class SetupMarker:
-    def __init__(self, scope):
-        self.scope = scope
-    def __call__(self, function):
-        function._pytestsetup = self
-        return function
 
 # XXX a test fails when scope="function" how it should be, investigate
-def fixture(scope=None, params=None):
+def fixture(scope=None, params=None, autoactive=False):
     """ return a decorator to mark a fixture factory function.
 
     The name of the fixture function can be referenced in a test context
@@ -42,8 +38,11 @@ def fixture(scope=None, params=None):
                 invocations of the fixture functions and their dependent
                 tests.
     """
-    return FixtureFunctionMarker(scope, params)
+    return FixtureFunctionMarker(scope, params, autoactive=autoactive)
 
+defaultfuncargprefixmarker = fixture()
+
+# XXX remove in favour of fixture(autoactive=True)
 def setup(scope="function"):
     """ return a decorator to mark a function as providing a fixture for
     a testcontext.  A fixture function is executed for each scope and may
@@ -57,7 +56,7 @@ def setup(scope="function"):
                 of "function", "class", "module", "session".
                 Defaults to "function".
     """
-    return SetupMarker(scope)
+    return FixtureFunctionMarker(scope, params=None, autoactive=True)
 
 def cached_property(f):
     """returns a cached property that is calculated by function f.
@@ -163,7 +162,10 @@ def pytest_pyfunc_call(__multicall__, pyfuncitem):
             testfunction(*pyfuncitem._args)
         else:
             funcargs = pyfuncitem.funcargs
-            testfunction(**funcargs)
+            testargs = {}
+            for arg in getfuncargnames(testfunction):
+                testargs[arg] = funcargs[arg]
+            testfunction(**testargs)
 
 def pytest_collect_file(path, parent):
     ext = path.ext
@@ -666,7 +668,6 @@ class Metafunc:
             for i, valset in enumerate(argvalues):
                 assert len(valset) == len(argnames)
                 newcallspec = callspec.copy(self)
-                #print ("setmulti %r id %r" % (argnames, ids[i]))
                 newcallspec.setmulti(valtype, argnames, valset, ids[i],
                                      scopenum)
                 newcalls.append(newcallspec)
@@ -879,13 +880,18 @@ class Function(FunctionMixin, pytest.Item):
             #req._discoverfactories()
         if callobj is not _dummy:
             self.obj = callobj
-        startindex = int(self.cls is not None)
-        self.funcargnames = getfuncargnames(self.obj, startindex=startindex)
+        self.funcargnames = self._getfixturenames()
+
         for name, val in (py.builtin._getfuncdict(self.obj) or {}).items():
             setattr(self.markers, name, val)
         if keywords:
             for name, val in keywords.items():
                 setattr(self.markers, name, val)
+
+    def _getfixturenames(self):
+        startindex = int(self.cls is not None)
+        return (self.session.funcargmanager._autofixtures +
+                getfuncargnames(self.obj, startindex=startindex))
 
     @property
     def function(self):
@@ -913,8 +919,8 @@ class Function(FunctionMixin, pytest.Item):
 
     def setup(self):
         super(Function, self).setup()
-        if hasattr(self, "_request"):
-            self._request._callsetup()
+        #if hasattr(self, "_request"):
+        #    self._request._callsetup()
         fillfuncargs(self)
 
     def __eq__(self, other):
@@ -1054,6 +1060,7 @@ class FuncargRequest:
         """add finalizer/teardown function to be called after the
         last test within the requesting test context finished
         execution. """
+        # XXX usually this method is shadowed by factorydef specific ones
         self._addfinalizer(finalizer, scope=self.scope)
 
     def _addfinalizer(self, finalizer, scope):
@@ -1084,12 +1091,10 @@ class FuncargRequest:
     def _fillfuncargs(self):
         item = self._pyfuncitem
         funcargnames = getattr(item, "funcargnames", self.funcargnames)
+
         for argname in funcargnames:
             if argname not in item.funcargs:
                 item.funcargs[argname] = self.getfuncargvalue(argname)
-
-    def _callsetup(self):
-        self.funcargmanager.ensure_setupcalls(self)
 
     def cached_setup(self, setup, teardown=None, scope="module", extrakey=None):
         """ (deprecated) Return a testing resource managed by ``setup`` &
@@ -1154,20 +1159,19 @@ class FuncargRequest:
         factorydef = factorydeflist.pop()
         self._factorystack.append(factorydef)
         try:
-            return self._getfuncargvalue(factorydef)
+            result = self._getfuncargvalue(factorydef)
+            self._funcargs[argname] = result
+            return result
         finally:
             self._factorystack.pop()
 
     def _getfuncargvalue(self, factorydef):
-        # collect funcargs from the factory
-        newnames = factorydef.funcargnames
-        argname = factorydef.argname
-        factory_kwargs = {}
-        def fillfactoryargs():
-            for newname in newnames:
-                val = self.getfuncargvalue(newname)
-                factory_kwargs[newname] = val
+        if factorydef.active:
+            return factorydef.cached_result
 
+        # prepare request scope and param attributes before
+        # calling into factory
+        argname = factorydef.argname
         node = self._pyfuncitem
         mp = monkeypatch()
         mp.setattr(self, '_currentarg', argname)
@@ -1177,9 +1181,7 @@ class FuncargRequest:
             pass
         else:
             mp.setattr(self, 'param', param, raising=False)
-
         scope = factorydef.scope
-        funcargfactory = factorydef.func
         if scope is not None:
             __tracebackhide__ = True
             if scopemismatch(self.scope, scope):
@@ -1191,17 +1193,16 @@ class FuncargRequest:
                     (scope, argname, self.scope, "\n".join(lines))))
             __tracebackhide__ = False
             mp.setattr(self, "scope", scope)
-            kwargs = {}
-            if hasattr(self, "param"):
-                kwargs["extrakey"] = param
-            fillfactoryargs()
-            val = self.cached_setup(lambda: funcargfactory(**factory_kwargs),
-                                    scope=scope, **kwargs)
-        else:
-            fillfactoryargs()
-            val = funcargfactory(**factory_kwargs)
+
+        # prepare finalization according to scope
+        self.session._setupstate.addfinalizer(factorydef.finish, self.node)
+        self.funcargmanager.addargfinalizer(factorydef.finish, argname)
+        for subargname in factorydef.funcargnames: # XXX all deps?
+            self.funcargmanager.addargfinalizer(factorydef.finish, subargname)
+        mp.setattr(self, "addfinalizer", factorydef.addfinalizer)
+        # finally perform the factory call
+        val = factorydef.execute(request=self)
         mp.undo()
-        self._funcargs[argname] = val
         return val
 
     def _factorytraceback(self):
@@ -1291,8 +1292,8 @@ class FuncargManager:
         self.arg2facspec = {}
         self._seenplugins = set()
         self._holderobjseen = set()
-        self.setuplist = []
         self._arg2finish = {}
+        self._autofixtures = []
         session.config.pluginmanager.register(self, "funcmanage")
 
     ### XXX this hook should be called for historic events like pytest_configure
@@ -1325,13 +1326,11 @@ class FuncargManager:
         # so that the caller can reuse it and does not have to re-discover
         # factories again for each funcargname
         parentid = parentnode.nodeid
-        funcargnames = list(funcargnames)
-        _, setupargs = self.getsetuplist(parentnode)
+        funcargnames = self._autofixtures + list(funcargnames)
         def merge(otherlist):
             for arg in otherlist:
                 if arg not in funcargnames:
                     funcargnames.append(arg)
-        merge(setupargs)
         arg2facdeflist = {}
         lastlen = -1
         while lastlen != len(funcargnames):
@@ -1365,6 +1364,9 @@ class FuncargManager:
             cs1 = item.callspec
         except AttributeError:
             return
+
+        # determine which fixtures are not needed anymore for the next test
+        keylist = []
         for name in cs1.params:
             try:
                 if name in nextitem.callspec.params and \
@@ -1372,8 +1374,13 @@ class FuncargManager:
                     continue
             except AttributeError:
                 pass
-            key = (name, cs1.params[name])
-            item.session._setupstate._callfinalizers(key)
+            key = (-cs1._arg2scopenum[name], name, cs1.params[name])
+            keylist.append(key)
+
+        # sort by scope (function scope first, then higher ones)
+        keylist.sort()
+        for (scopenum, name, param) in keylist:
+            item.session._setupstate._callfinalizers((name, param))
             l = self._arg2finish.get(name)
             if l is not None:
                 for fin in l:
@@ -1382,55 +1389,36 @@ class FuncargManager:
     def _parsefactories(self, holderobj, nodeid, unittest=False):
         if holderobj in self._holderobjseen:
             return
-        #print "parsefactories", holderobj
         self._holderobjseen.add(holderobj)
         for name in dir(holderobj):
-            #print "check", holderobj, name
             obj = getattr(holderobj, name)
             if not callable(obj):
                 continue
-            # resource factories either have a pytest_funcarg__ prefix
-            # or are "funcarg" marked
+            # fixture functions have a pytest_funcarg__ prefix
+            # or are "@pytest.fixture" marked
             marker = getattr(obj, "_pytestfixturefunction", None)
-            if marker is not None:
-                if not isinstance(marker, FixtureFunctionMarker):
-                    # magic globals  with __getattr__
-                    # give us something thats wrong for that case
+            if marker is None:
+                if not name.startswith(self._argprefix):
                     continue
-                assert not name.startswith(self._argprefix)
-                argname = name
-                scope = marker.scope
-                params = marker.params
-            elif name.startswith(self._argprefix):
-                argname = name[len(self._argprefix):]
-                scope = None
-                params = None
-            else:
-                # no funcargs. check if we have a setup function.
-                setup = getattr(obj, "_pytestsetup", None)
-                if setup is not None:
-                    scope = setup.scope
-                    sf = SetupCall(self, nodeid, obj, scope, unittest)
-                    self.setuplist.append(sf)
+                marker = defaultfuncargprefixmarker
+                name = name[len(self._argprefix):]
+            elif not isinstance(marker, FixtureFunctionMarker):
+                # magic globals  with __getattr__ might have got us a wrong
+                # fixture attribute
                 continue
-            faclist = self.arg2facspec.setdefault(argname, [])
-            factorydef = FactoryDef(self, nodeid, argname, obj, scope, params)
+            else:
+                assert not name.startswith(self._argprefix)
+            factorydef = FactoryDef(self, nodeid, name, obj,
+                                    marker.scope, marker.params,
+                                    unittest=unittest)
+            faclist = self.arg2facspec.setdefault(name, [])
             faclist.append(factorydef)
-            ### check scope/params mismatch?
-
-    def getsetuplist(self, node):
-        nodeid = node.nodeid
-        l = []
-        allargnames = []
-        for setupcall in self.setuplist:
-            if nodeid.startswith(setupcall.baseid):
-                l.append(setupcall)
-                for arg in setupcall.funcargnames:
-                    if arg not in allargnames:
-                        allargnames.append(arg)
-        l.sort(key=lambda x: x.scopenum)
-        return l, allargnames
-
+            if marker.autoactive:
+                # make sure the self._autofixtures list is always sorted
+                # by scope, scopenum 0 is session
+                self._autofixtures.append(name)
+                self._autofixtures.sort(
+                    key=lambda x: self.arg2facspec[x][-1].scopenum)
 
     def getfactorylist(self, argname, nodeid):
         try:
@@ -1438,20 +1426,17 @@ class FuncargManager:
         except KeyError:
             return None
         else:
-            return self._matchfactories(factorydeflist, nodeid)
+            return list(self._matchfactories(factorydeflist, nodeid))
 
     def _matchfactories(self, factorydeflist, nodeid):
-        l = []
         for factorydef in factorydeflist:
-            #print "check", basepath, nodeid
             if nodeid.startswith(factorydef.baseid):
-                l.append(factorydef)
-        return l
+                yield factorydef
 
     def _raiselookupfailed(self, argname, function, nodeid, getfactb=None):
         available = []
         for name, facdef in self.arg2facspec.items():
-            faclist = self._matchfactories(facdef, nodeid)
+            faclist = list(self._matchfactories(facdef, nodeid))
             if faclist:
                 available.append(name)
         msg = "LookupError: no factory found for argument %r" % (argname,)
@@ -1459,36 +1444,6 @@ class FuncargManager:
         msg += "\n use 'py.test --funcargs [testpath]' for help on them."
         lines = getfactb and getfactb() or []
         raise FuncargLookupError(function, msg, lines)
-
-    def ensure_setupcalls(self, request):
-        setuplist, allnames = self.getsetuplist(request._pyfuncitem)
-        for setupcall in setuplist:
-            if setupcall.active:
-                continue
-            request._factorystack.append(setupcall)
-            mp = monkeypatch()
-            try:
-                mp.setattr(request, "scope", setupcall.scope)
-                kwargs = {}
-                for name in setupcall.funcargnames:
-                    kwargs[name] = request.getfuncargvalue(name)
-                scope = setupcall.scope or "function"
-                scol = setupcall.scopeitem = request._getscopeitem(scope)
-                self.session._setupstate.addfinalizer(setupcall.finish, scol)
-                for argname in setupcall.funcargnames: # XXX all deps?
-                    self.addargfinalizer(setupcall.finish, argname)
-                req = kwargs.get("request", None)
-                if req is not None:
-                    mp.setattr(req, "addfinalizer", setupcall.addfinalizer)
-                # for unittest-setup methods we need to provide
-                # the correct instance
-                posargs = ()
-                if setupcall.unittest:
-                    posargs = (request.instance,)
-                setupcall.execute(posargs, kwargs)
-            finally:
-                mp.undo()
-                request._factorystack.remove(setupcall)
 
     def addargfinalizer(self, finalizer, argname):
         l = self._arg2finish.setdefault(argname, [])
@@ -1501,28 +1456,24 @@ class FuncargManager:
             except ValueError:
                 pass
 
-
-class SetupCall:
-    """ a container/helper for managing calls to setup functions. """
-    def __init__(self, funcargmanager, baseid, func, scope, unittest):
+class FactoryDef:
+    """ A container for a factory definition. """
+    def __init__(self, funcargmanager, baseid, argname, func, scope, params,
+        unittest=False):
         self.funcargmanager = funcargmanager
         self.baseid = baseid
         self.func = func
+        self.argname = argname
+        self.scope = scope
+        self.scopenum = scopes.index(scope or "function")
+        self.params = params
         startindex = unittest and 1 or None
         self.funcargnames = getfuncargnames(func, startindex=startindex)
-        self.scope = scope
-        self.scopenum = scopes.index(scope)
+        self.unittest = unittest
         self.active = False
-        self.unittest= unittest
         self._finalizer = []
 
-    def execute(self, posargs, kwargs):
-        assert not self.active
-        self.active = True
-        self.func(*posargs, **kwargs)
-
     def addfinalizer(self, finalizer):
-        assert self.active
         self._finalizer.append(finalizer)
 
     def finish(self):
@@ -1532,17 +1483,23 @@ class SetupCall:
         # check neccesity of next commented call
         self.funcargmanager.removefinalizer(self.finish)
         self.active = False
+        #print "finished", self
+        #del self.cached_result
 
-class FactoryDef:
-    """ A container for a factory definition. """
-    def __init__(self, funcargmanager, baseid, argname, func, scope, params):
-        self.funcargmanager = funcargmanager
-        self.baseid = baseid
-        self.func = func
-        self.argname = argname
-        self.scope = scope
-        self.params = params
-        self.funcargnames = getfuncargnames(func)
+    def execute(self, request):
+        kwargs = {}
+        for newname in self.funcargnames:
+            kwargs[newname] = request.getfuncargvalue(newname)
+        if self.unittest:
+            result = self.func(request.instance, **kwargs)
+        else:
+            result = self.func(**kwargs)
+        self.active = True
+        self.cached_result = result
+        return result
+
+    def __repr__(self):
+        return "<FactoryDef name=%r scope=%r>" % (self.argname, self.scope)
 
 def getfuncargnames(function, startindex=None):
     # XXX merge with main.py's varnames
@@ -1634,5 +1591,5 @@ def getfuncargparams(item, ignore, scopenum, cache):
 def xunitsetup(obj, name):
     meth = getattr(obj, name, None)
     if meth is not None:
-        if not hasattr(meth, "_pytestsetup"):
+        if not hasattr(meth, "_pytestfixturefunction"):
             return meth

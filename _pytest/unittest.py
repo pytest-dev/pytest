@@ -52,6 +52,9 @@ class UnitTestCase(pytest.Class):
 class TestCaseFunction(pytest.Function):
     _excinfo = None
 
+    def _getfixturenames(self):
+        return list(self.session.funcargmanager._autofixtures)
+
     def setup(self):
         self._testcase = self.parent.obj(self.name)
         self._obj = getattr(self._testcase, self.name)
@@ -62,7 +65,7 @@ class TestCaseFunction(pytest.Function):
         if hasattr(self._testcase, 'setup_method'):
             self._testcase.setup_method(self._obj)
         if hasattr(self, "_request"):
-            self._request._callsetup()
+            self._request._fillfuncargs()
 
     def teardown(self):
         if hasattr(self._testcase, 'teardown_method'):

@@ -276,8 +276,10 @@ class TestFunction:
         assert hasattr(modcol.obj, 'test_func')
 
     def test_function_equality(self, testdir, tmpdir):
+        from _pytest.python import FuncargManager
         config = testdir.parseconfigure()
         session = testdir.Session(config)
+        session.funcargmanager = FuncargManager(session)
         def func1():
             pass
         def func2():
@@ -576,21 +578,18 @@ class TestFillFuncArgs:
         assert item.funcargs['other'] == 42
 
     def test_funcarg_lookup_modulelevel(self, testdir):
-        modcol = testdir.getmodulecol("""
+        testdir.makepyfile("""
             def pytest_funcarg__something(request):
                 return request.function.__name__
 
             class TestClass:
                 def test_method(self, something):
-                    pass
+                    assert something == "test_method"
             def test_func(something):
-                pass
+                assert something == "test_func"
         """)
-        item1, item2 = testdir.genitems([modcol])
-        funcargs.fillfuncargs(item1)
-        assert item1.funcargs['something'] ==  "test_method"
-        funcargs.fillfuncargs(item2)
-        assert item2.funcargs['something'] ==  "test_func"
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
 
     def test_funcarg_lookup_classlevel(self, testdir):
         p = testdir.makepyfile("""
@@ -1881,16 +1880,9 @@ class TestSetupDiscovery:
     def test_parsefactories_conftest(self, testdir):
         testdir.makepyfile("""
             def test_check_setup(item, fm):
-                setupcalls, allnames = fm.getsetuplist(item)
-                assert len(setupcalls) == 2
-                assert setupcalls[0].func.__name__ == "perfunction"
-                assert "request" in setupcalls[0].funcargnames
-                assert "tmpdir" in setupcalls[0].funcargnames
-                assert setupcalls[1].func.__name__ == "perfunction2"
-                assert "request" not in setupcalls[1].funcargnames
-                assert "arg1" in setupcalls[1].funcargnames
-                assert "tmpdir" not in setupcalls[1].funcargnames
-                #assert "tmpdir" in setupcalls[1].depfuncargs
+                assert len(fm._autofixtures) == 2
+                assert "perfunction2" in fm._autofixtures
+                assert "perfunction" in fm._autofixtures
         """)
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=1)
@@ -2098,8 +2090,8 @@ class TestSetupManagement:
             class TestClass:
                 @pytest.setup(scope="class")
                 def addteardown(self, item, request):
-                    request.addfinalizer(lambda: l.append("teardown-%d" % item))
                     l.append("setup-%d" % item)
+                    request.addfinalizer(lambda: l.append("teardown-%d" % item))
                 def test_step1(self, item):
                     l.append("step1-%d" % item)
                 def test_step2(self, item):
@@ -2436,17 +2428,18 @@ class TestFuncargMarker:
                 l.append("test4")
             def test_5():
                 assert len(l) == 12 * 3
-                import pprint
-                pprint.pprint(l)
-                assert l == [
+                expected = [
                     'create:1', 'test1', 'fin:1', 'create:2', 'test1',
                     'fin:2', 'create:mod1', 'test2', 'create:1', 'test3',
                     'fin:1', 'create:2', 'test3', 'fin:2', 'create:1',
-                    'test4', 'fin:1', 'create:2', 'test4', 'fin:mod1',
-                    'fin:2', 'create:mod2', 'test2', 'create:1', 'test3',
+                    'test4', 'fin:1', 'create:2', 'test4', 'fin:2',
+                    'fin:mod1', 'create:mod2', 'test2', 'create:1', 'test3',
                     'fin:1', 'create:2', 'test3', 'fin:2', 'create:1',
-                    'test4', 'fin:1', 'create:2', 'test4', 'fin:mod2',
-                'fin:2']
+                    'test4', 'fin:1', 'create:2', 'test4', 'fin:2',
+                'fin:mod2']
+                import pprint
+                pprint.pprint(list(zip(l, expected)))
+                assert l == expected
         """)
         reprec = testdir.inline_run("-v")
         reprec.assertoutcome(passed=12+1)
@@ -2707,7 +2700,7 @@ def test_request_funcargnames(testdir):
             pass
         def test_function(request, farg):
             assert set(request.funcargnames) == \
-                   set(["tmpdir", "arg1", "request", "farg"])
+                   set(["tmpdir", "sarg", "arg1", "request", "farg"])
     """)
     reprec = testdir.inline_run()
     reprec.assertoutcome(passed=1)
