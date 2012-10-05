@@ -118,10 +118,10 @@ receiving the values created by the two respective invocations to the
 factory function.
 
 
-No ``pytest_funcarg__`` prefix when using @factory decorator
+No ``pytest_funcarg__`` prefix when using @fixture decorator
 -------------------------------------------------------------------
 
-When using the ``@factory`` decorator the name of the function
+When using the ``@fixture`` decorator the name of the function
 denotes the name under which the resource can be accessed as a function
 argument::
 
