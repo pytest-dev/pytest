@@ -157,7 +157,7 @@ py.test には :ref:`builtinfuncargs` が付属していて、そのサンプル
 
 いつでも次のようにして::
 
-    py.test --funcargs test_simplefactory.py
+    py.test --fixtures test_simplefactory.py
 
 ..
     to see available function arguments (which you can also
@@ -171,7 +171,7 @@ py.test には :ref:`builtinfuncargs` が付属していて、そのサンプル
 .. _`xUnit style`: xunit_setup.html
 
 
-.. _`funcarg factory`:
+.. _`fixture function`:
 .. _factory:
 
 funcarg **request** オブジェクト
@@ -182,24 +182,24 @@ funcarg **request** オブジェクト
     =============================================
 
 ..
-    Each funcarg factory receives a **request** object tied to a specific test
-    function call.  A request object is passed to a funcarg factory and provides
+    Each fixture function receives a **request** object tied to a specific test
+    function call.  A request object is passed to a fixture function and provides
     access to test configuration and context:
 
 funcarg ファクトリー関数は、特別なテスト関数呼び出しに関連付けられた **request** オブジェクトを受け取ります。request オブジェクトは funcarg ファクトリーへ渡されて、テスト設定とコンテキストへのアクセスを提供します:
 
-.. autoclass:: _pytest.python.FuncargRequest()
+.. autoclass:: _pytest.python.FixtureRequest()
     :members: function,cls,module,keywords,config
 
 .. _`useful caching and finalization helpers`:
 
-.. automethod:: FuncargRequest.addfinalizer
+.. automethod:: FixtureRequest.addfinalizer
 
-.. automethod:: FuncargRequest.cached_setup
+.. automethod:: FixtureRequest.cached_setup
 
-.. automethod:: FuncargRequest.applymarker
+.. automethod:: FixtureRequest.applymarker
 
-.. automethod:: FuncargRequest.getfuncargvalue
+.. automethod:: FixtureRequest.getfuncargvalue
 
 
 .. _`test generators`:
@@ -236,7 +236,7 @@ funcarg ファクトリー関数は、特別なテスト関数呼び出しに関
 
     # test_example.py の内容
     def pytest_generate_tests(metafunc):
-        if "numiter" in metafunc.funcargnames:
+        if "numiter" in metafunc.fixturenames:
             metafunc.parametrize("numiter", range(10))
 
     def test_func(numiter):
@@ -329,9 +329,9 @@ funcarg ファクトリー関数は、特別なテスト関数呼び出しに関
 metafunc オブジェクトは ``pytest_generate_tests`` フックへ渡されます。これはテスト関数を検査したり、テスト設定またはテスト関数が定義されているクラスやモジュールで指定された値を取るテストを生成するのに役立ちます:
 
 ..
-    ``metafunc.funcargnames``: set of required function arguments for given function
+    ``metafunc.fixturenames``: set of required function arguments for given function
 
-``metafunc.funcargnames``: テスト関数へ渡される引数セット
+``metafunc.fixturenames``: テスト関数へ渡される引数セット
 
 ..
     ``metafunc.function``: underlying python test function

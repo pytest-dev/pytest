@@ -43,7 +43,7 @@ Python 2.5 か、それ以上のバージョンを使っているなら、コマ
 ::
 
     py.test --version   # pytest がインポートされた場所を表示
-    py.test --funcargs  # 利用できる組み込みの関数引数を表示
+    py.test --fixtures  # 利用できる組み込みの関数引数を表示
     py.test -h | --help # コマンドラインと設定ファイルオプションのヘルプを表示
 
 ..

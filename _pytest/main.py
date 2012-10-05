@@ -308,8 +308,8 @@ class Node(object):
         pass
 
     def _repr_failure_py(self, excinfo, style=None):
-        fm = self.session.funcargmanager
-        if excinfo.errisinstance(fm.FuncargLookupError):
+        fm = self.session._fixturemanager
+        if excinfo.errisinstance(fm.FixtureLookupError):
             function = excinfo.value.function
             factblines = excinfo.value.factblines
             if function is not None:
@@ -317,7 +317,7 @@ class Node(object):
                 lines, _ = inspect.getsourcelines(function)
                 for i, line in enumerate(lines):
                     if line.strip().startswith('def'):
-                        return fm.FuncargLookupErrorRepr(fspath,
+                        return fm.FixtureLookupErrorRepr(fspath,
                                     lineno, lines[:i+1],
                                     str(excinfo.value.msg), factblines)
         if self.config.option.fulltrace:

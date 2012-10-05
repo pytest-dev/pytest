@@ -84,7 +84,7 @@ Now we add a test configuration like this::
             help="run all combinations")
 
     def pytest_generate_tests(metafunc):
-        if 'param1' in metafunc.funcargnames:
+        if 'param1' in metafunc.fixturenames:
             if metafunc.config.option.all:
                 end = 5
             else:
@@ -213,7 +213,7 @@ creates a database object for the actual test invocations::
     # content of conftest.py
 
     def pytest_generate_tests(metafunc):
-        if 'db' in metafunc.funcargnames:
+        if 'db' in metafunc.fixturenames:
             metafunc.parametrize("db", ['d1', 'd2'], indirect=True)
 
     class DB1:

@@ -26,7 +26,7 @@ class Option:
         return l
 
 def pytest_generate_tests(metafunc):
-    if "option" in metafunc.funcargnames:
+    if "option" in metafunc.fixturenames:
         metafunc.addcall(id="default",
                          funcargs={'option': Option(verbose=False)})
         metafunc.addcall(id="verbose",

@@ -24,7 +24,7 @@ command line options
     traceback print mode (long/short/line/no).
 ``--fulltrace``
     don't cut any tracebacks (default is to cut).
-``--funcargs``
+``--fixtures``
     show available function arguments, sorted by plugin
 
 Start improving this plugin in 30 seconds

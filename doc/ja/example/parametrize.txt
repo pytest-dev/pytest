@@ -117,7 +117,7 @@ py.test は、簡単にパラメーターをテスト関数へ渡せます。パ
             help="run all combinations")
 
     def pytest_generate_tests(metafunc):
-        if 'param1' in metafunc.funcargnames:
+        if 'param1' in metafunc.fixturenames:
             if metafunc.config.option.all:
                 end = 5
             else:
@@ -266,7 +266,7 @@ Robert Collins による標準ライブラリの unittest フレームワーク�
     # conftest.py の内容
 
     def pytest_generate_tests(metafunc):
-        if 'db' in metafunc.funcargnames:
+        if 'db' in metafunc.fixturenames:
             metafunc.parametrize("db", ['d1', 'd2'], indirect=True)
 
     class DB1:

@@ -153,7 +153,7 @@ funcarg ファクトリー関数から複数の値を yield できますか？
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 ..
-    Can I yield multiple values from a funcarg factory function?
+    Can I yield multiple values from a fixture function function?
     ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 ..

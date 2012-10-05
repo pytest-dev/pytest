@@ -71,7 +71,7 @@ introduction of this new method needs to be _fully_ backward compatible -
 and the documentation needs to change along to mention this new way of
 doing things. 
 
-impl note: probably Request._fillfuncargs would be called from the
+impl note: probably Request._fillfixtures would be called from the
 python plugins own pytest_runtest_setup(item) and would call
 item.getresource(X) for all X in the funcargs of a function.
 

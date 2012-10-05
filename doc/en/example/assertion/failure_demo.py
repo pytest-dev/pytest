@@ -15,7 +15,7 @@ def test_generative(param1, param2):
     assert param1 * 2 < param2
 
 def pytest_generate_tests(metafunc):
-    if 'param1' in metafunc.funcargnames:
+    if 'param1' in metafunc.fixturenames:
         metafunc.addcall(funcargs=dict(param1=3, param2=6))
 
 class TestFailing(object):

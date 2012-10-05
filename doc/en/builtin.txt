@@ -25,7 +25,7 @@ Builtin resources / function arguments
 You can ask for available builtin or project-custom
 :ref:`function arguments <funcargs>` by typing::
 
-    $ py.test --funcargs
+    $ py.test --fixtures
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev2
     plugins: xdist, bugzilla, cache, oejskit, pep8, cov

@@ -676,6 +676,6 @@ and provides methods to:
 * to add finalizers/teardowns to be invoked when the last
   test of the requesting test context executes
 
-.. autoclass:: _pytest.python.FuncargRequest()
+.. autoclass:: _pytest.python.FixtureRequest()
     :members:
 

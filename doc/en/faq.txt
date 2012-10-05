@@ -126,11 +126,11 @@ the ``MYARG`` function argument.
 .. note::
 
     With pytest-2.3 you can use the :ref:`@pytest.fixture` decorator
-    to mark a function as a funcarg factory.  
+    to mark a function as a fixture function.  
 
 .. _`Convention over Configuration`: http://en.wikipedia.org/wiki/Convention_over_Configuration
 
-Can I yield multiple values from a funcarg factory function?
+Can I yield multiple values from a fixture function function?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 There are two conceptual reasons why yielding from a factory function

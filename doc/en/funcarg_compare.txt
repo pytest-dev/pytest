@@ -54,7 +54,7 @@ There are several limitations and difficulties with this approach:
 4. there is no way how you can make use of funcarg factories
    in xUnit setup methods.
 
-5. A non-parametrized funcarg factory cannot use a parametrized 
+5. A non-parametrized fixture function cannot use a parametrized 
    funcarg resource if it isn't stated in the test function signature.
 
 All of these limitations are addressed with pytest-2.3 and its

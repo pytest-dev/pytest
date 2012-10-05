@@ -22,7 +22,7 @@ def test_help(testdir):
         *setup.cfg*
         *minversion*
         *to see*markers*py.test --markers*
-        *to see*funcargs*py.test --funcargs*
+        *to see*fixtures*py.test --fixtures*
     """)
 
 def test_collectattr():

@@ -29,7 +29,7 @@ different variants of test resources to test with.
 The basic mechanism for injecting objects is called the *funcarg
 mechanism* because objects are injected when a test or setup
 **function** states it as an **argument**. The injected argument 
-is created by a call to a registered **funcarg factory** for each argument
+is created by a call to a registered **fixture function** for each argument
 name.  This mechanism is an example of `Dependency Injection`_ 
 and helps to de-couple test code from the setup of required
 objects: at test writing time you do not need to care for the details of
@@ -38,7 +38,7 @@ shared on a per-class, module or session basis, or if your test function
 is invoked multiple times with differently configured resource
 instances.
 
-Funcarg dependency injection allows to organise test resources 
+Fixture dependency injection allows to organise test resources 
 in a modular explicit way so that test functions state their needs
 in their signature.  pytest additionally offers powerful xunit-style 
 :ref:`setup functions <setup functions>` for the cases where you need 
@@ -144,7 +144,7 @@ with a list of available function arguments.
 
     You can always issue::
 
-        py.test --funcargs test_simplefactory.py
+        py.test --fixtures test_simplefactory.py
 
     to see available function arguments.
 
@@ -289,7 +289,7 @@ that option::
             help="run all combinations")
 
     def pytest_generate_tests(metafunc):
-        if 'param1' in metafunc.funcargnames:
+        if 'param1' in metafunc.fixturenames:
             if metafunc.config.option.all:
                 end = 5
             else:
@@ -336,7 +336,7 @@ They help to inspect a testfunction and to generate tests
 according to test configuration or values specified
 in the class or module where a test function is defined:
 
-``metafunc.funcargnames``: set of required function arguments for given function
+``metafunc.fixturenames``: set of required function arguments for given function
 
 ``metafunc.function``: underlying python test function
 
@@ -345,6 +345,8 @@ in the class or module where a test function is defined:
 ``metafunc.module``: the module object where the test function is defined in.
 
 ``metafunc.config``: access to command line opts and general config
+
+``metafunc.funcargnames``: alias for ``fixturenames``, for pre-2.3 compatibility
 
 .. automethod:: Metafunc.parametrize
 .. automethod:: Metafunc.addcall(funcargs=None,id=_notexists,param=_notexists)
@@ -360,7 +362,7 @@ in the class or module where a test function is defined:
 Compatibility notes
 ============================================================
 
-**Funcargs** were originally introduced to pytest-2.0.  In pytest-2.3 
+**Fixtures** were originally introduced to pytest-2.0.  In pytest-2.3 
 the mechanism was extended and refined:
 
 * previously funcarg factories were specified with a special 
@@ -376,14 +378,14 @@ the mechanism was extended and refined:
 
 * if you used parametrization and funcarg factories which made use of
   ``request.cached_setup()`` it is recommeneded to invest a few minutes
-  and simplify your funcarg factory code to use the `@pytest.fixture`_ 
+  and simplify your fixture function code to use the `@pytest.fixture`_ 
   decorator instead.  This will also allow to take advantage of 
   the `automatic per-resource grouping`_ of tests.
 
 .. note::
 
     Throughout the pytest documents the ``pytest_funcarg__NAME`` way of
-    defining a funcarg factory is often termed "old-style".  Their
+    defining a fixture function is often termed "old-style".  Their
     use remains fully supported and existing code using it should run
     unmodified.
 

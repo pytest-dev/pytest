@@ -2,7 +2,7 @@ import py, pytest
 from _pytest.config import Conftest
 
 def pytest_generate_tests(metafunc):
-    if "basedir" in metafunc.funcargnames:
+    if "basedir" in metafunc.fixturenames:
         metafunc.addcall(param="global")
         metafunc.addcall(param="inpackage")
 

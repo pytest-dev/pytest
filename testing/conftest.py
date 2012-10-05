@@ -64,7 +64,7 @@ def pytest_generate_tests(metafunc):
         for name, l in multi.kwargs.items():
             for val in l:
                 metafunc.addcall(funcargs={name: val})
-    elif 'anypython' in metafunc.funcargnames:
+    elif 'anypython' in metafunc.fixturenames:
         for name in ('python2.4', 'python2.5', 'python2.6',
                      'python2.7', 'python3.1', 'pypy', 'jython'):
             metafunc.addcall(id=name, param=name)

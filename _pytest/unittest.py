@@ -21,7 +21,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
 
 class UnitTestCase(pytest.Class):
     def collect(self):
-        self.session.funcargmanager._parsefactories(self.obj, self.nodeid,
+        self.session._fixturemanager._parsefactories(self.obj, self.nodeid,
                 unittest=True)
         loader = py.std.unittest.TestLoader()
         module = self.getparent(pytest.Module).obj
@@ -52,8 +52,8 @@ class UnitTestCase(pytest.Class):
 class TestCaseFunction(pytest.Function):
     _excinfo = None
 
-    def _getfixturenames(self):
-        return list(self.session.funcargmanager._autofixtures)
+    def _getfuncargnames(self):
+        return list(self.session._fixturemanager._autofixtures)
 
     def setup(self):
         self._testcase = self.parent.obj(self.name)
@@ -65,7 +65,7 @@ class TestCaseFunction(pytest.Function):
         if hasattr(self._testcase, 'setup_method'):
             self._testcase.setup_method(self._obj)
         if hasattr(self, "_request"):
-            self._request._fillfuncargs()
+            self._request._fillfixtures()
 
     def teardown(self):
         if hasattr(self._testcase, 'teardown_method'):

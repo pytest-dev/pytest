@@ -44,18 +44,7 @@ defaultfuncargprefixmarker = fixture()
 
 # XXX remove in favour of fixture(autoactive=True)
 def setup(scope="function"):
-    """ return a decorator to mark a function as providing a fixture for
-    a testcontext.  A fixture function is executed for each scope and may
-    receive funcargs which allows it to initialise and provide implicit
-    test state.  A fixture function may receive the "testcontext" object
-    and register a finalizer via "testcontext.addfinalizer(finalizer)"
-    which will be called when the last test in the testcontext has
-    executed.
-
-    :arg scope: the scope for which the setup function will be active, one
-                of "function", "class", "module", "session".
-                Defaults to "function".
-    """
+    """ alias for fixture(scope, autoactive=True) """
     return FixtureFunctionMarker(scope, params=None, autoactive=True)
 
 def cached_property(f):
@@ -85,9 +74,9 @@ def pyobj_property(name):
 
 def pytest_addoption(parser):
     group = parser.getgroup("general")
-    group.addoption('--funcargs',
-               action="store_true", dest="showfuncargs", default=False,
-               help="show available function arguments, sorted by plugin")
+    group.addoption('--fixtures', '--fixtures',
+               action="store_true", dest="showfixtures", default=False,
+               help="show available fixtures, sorted by plugin appearance")
     parser.addini("python_files", type="args",
         default=('test_*.py', '*_test.py'),
         help="glob-style file patterns for Python test module discovery")
@@ -97,8 +86,8 @@ def pytest_addoption(parser):
         help="prefixes for Python test function and method discovery")
 
 def pytest_cmdline_main(config):
-    if config.option.showfuncargs:
-        showfuncargs(config)
+    if config.option.showfixtures:
+        showfixtures(config)
         return 0
 
 
@@ -119,7 +108,7 @@ def pytest_configure(config):
     )
 
 def pytest_sessionstart(session):
-    session.funcargmanager = FuncargManager(session)
+    session._fixturemanager = FixtureManager(session)
 
 @pytest.mark.trylast
 def pytest_namespace():
@@ -131,10 +120,11 @@ def pytest_namespace():
         'collect': {
         'Module': Module, 'Class': Class, 'Instance': Instance,
         'Function': Function, 'Generator': Generator,
-        '_fillfuncargs': fillfuncargs}
+        '_fillfuncargs': fillfixtures}
     }
 
-def pytest_funcarg__pytestconfig(request):
+@fixture()
+def pytestconfig(request):
     """ the pytest config object with access to command line opts."""
     return request.config
 
@@ -146,12 +136,12 @@ def pytest_pyfunc_call(__multicall__, pyfuncitem):
             testfunction(*pyfuncitem._args)
         else:
             try:
-                funcargnames = pyfuncitem.funcargnames
+                fixturenames = pyfuncitem.fixturenames
             except AttributeError:
                 funcargs = pyfuncitem.funcargs
             else:
                 funcargs = {}
-                for name in funcargnames:
+                for name in fixturenames:
                     funcargs[name] = pyfuncitem.funcargs[name]
             testfunction(**funcargs)
 
@@ -352,7 +342,7 @@ class Module(pytest.File, PyCollector):
         return self._memoizedcall('_obj', self._importtestmodule)
 
     def collect(self):
-        self.session.funcargmanager._parsefactories(self.obj, self.nodeid)
+        self.session._fixturemanager._parsefactories(self.obj, self.nodeid)
         return super(Module, self).collect()
 
     def _importtestmodule(self):
@@ -425,7 +415,7 @@ class Instance(PyCollector):
         return obj
 
     def collect(self):
-        self.session.funcargmanager._parsefactories(self.obj, self.nodeid)
+        self.session._fixturemanager._parsefactories(self.obj, self.nodeid)
         return super(Instance, self).collect()
 
     def newinstance(self):
@@ -534,14 +524,14 @@ def hasinit(obj):
 
 
 
-def fillfuncargs(function):
+def fillfixtures(function):
     """ fill missing funcargs for a test function. """
     if getattr(function, "_args", None) is None:  # not a yielded function
         try:
             request = function._request
         except AttributeError:
-            request = function._request = FuncargRequest(function)
-        request._fillfuncargs()
+            request = function._request = FixtureRequest(function)
+        request._fillfixtures()
 
 _notexists = object()
 
@@ -605,21 +595,30 @@ class CallSpec2(object):
             self._globalparam = param
 
 
-class Metafunc:
+class FuncargnamesCompatAttr:
+    """ helper class so that Metafunc, Function and FixtureRequest
+    don't need to each define the "funcargnames" compatibility attribute.
+    """
+    @property
+    def funcargnames(self):
+        """ alias attribute for ``fixturenames`` for pre-2.3 compatibility"""
+        return self.fixturenames
+
+class Metafunc(FuncargnamesCompatAttr):
     def __init__(self, function, config=None, cls=None, module=None,
                  parentnode=None):
         self.config = config
         self.module = module
         self.function = function
         self.parentnode = parentnode
-        self.parentid = getattr(parentnode, "nodeid", "")
+        self._parentid = getattr(parentnode, "nodeid", "")
         argnames = getfuncargnames(function, startindex=int(cls is not None))
         if parentnode is not None:
-            fm = parentnode.session.funcargmanager
-            self.funcargnames, self._arg2facdeflist = fm.getallfuncargnames(
+            fm = parentnode.session._fixturemanager
+            self.fixturenames, self._arg2fixturedeflist = fm.getfixtureclosure(
                 argnames, parentnode)
         else:
-            self.funcargnames = argnames
+            self.fixturenames = argnames
         self.cls = cls
         self.module = module
         self._calls = []
@@ -631,7 +630,7 @@ class Metafunc:
         """ Add new invocations to the underlying test function using the list
         of argvalues for the given argnames.  Parametrization is performed
         during the collection phase.  If you need to setup expensive resources
-        you may pass indirect=True and implement a funcarg factory which can
+        you may pass indirect=True and implement a fixture function which can
         perform the expensive setup just before a test is actually run.
 
         :arg argnames: an argument name or a list of argument names
@@ -640,7 +639,7 @@ class Metafunc:
             values for the list of argument names.
 
         :arg indirect: if True each argvalue corresponding to an argument will
-            be passed as request.param to its respective funcarg factory so
+            be passed as request.param to its respective fixture function so
             that it can perform more expensive setups during the setup phase of
             a test rather than at collection time.
 
@@ -657,7 +656,7 @@ class Metafunc:
         if not indirect:
             #XXX should we also check for the opposite case?
             for arg in argnames:
-                if arg not in self.funcargnames:
+                if arg not in self.fixturenames:
                     raise ValueError("%r has no argument %r" %(self.function, arg))
         valtype = indirect and "params" or "funcargs"
         if not ids:
@@ -686,13 +685,13 @@ class Metafunc:
         :arg id: used for reporting and identification purposes.  If you
             don't supply an `id` an automatic unique id will be generated.
 
-        :arg param: a parameter which will be exposed to a later funcarg factory
+        :arg param: a parameter which will be exposed to a later fixture function
             invocation through the ``request.param`` attribute.
         """
         assert funcargs is None or isinstance(funcargs, dict)
         if funcargs is not None:
             for name in funcargs:
-                if name not in self.funcargnames:
+                if name not in self.fixturenames:
                     pytest.fail("funcarg %r not used in this function." % name)
         else:
             funcargs = {}
@@ -722,11 +721,11 @@ class IDMaker:
         return "-".join(l)
 
 
-def showfuncargs(config):
+def showfixtures(config):
     from _pytest.main import wrap_session
-    return wrap_session(config, _showfuncargs_main)
+    return wrap_session(config, _showfixtures_main)
 
-def _showfuncargs_main(config, session):
+def _showfixtures_main(config, session):
     session.perform_collect()
     if session.items:
         plugins = session.items[0].getplugins()
@@ -735,7 +734,7 @@ def _showfuncargs_main(config, session):
     curdir = py.path.local()
     tw = py.io.TerminalWriter()
     verbose = config.getvalue("verbose")
-    argprefix = session.funcargmanager._argprefix
+    argprefix = session._fixturemanager._argprefix
     for plugin in plugins:
         available = []
         for name, factory in vars(plugin).items():
@@ -854,7 +853,7 @@ class RaisesContext(object):
 #  the basic py.test Function item
 #
 _dummy = object()
-class Function(FunctionMixin, pytest.Item):
+class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
     """ a Function Item is responsible for setting up and executing a
     Python test function.
     """
@@ -876,11 +875,11 @@ class Function(FunctionMixin, pytest.Item):
                     self.param = callspec.param
             else:
                 self.funcargs = {}
-            self._request = req = FuncargRequest(self)
+            self._request = req = FixtureRequest(self)
             #req._discoverfactories()
         if callobj is not _dummy:
             self.obj = callobj
-        self.funcargnames = self._getfixturenames()
+        self.fixturenames = self._getfuncargnames()
 
         for name, val in (py.builtin._getfuncdict(self.obj) or {}).items():
             setattr(self.markers, name, val)
@@ -888,9 +887,10 @@ class Function(FunctionMixin, pytest.Item):
             for name, val in keywords.items():
                 setattr(self.markers, name, val)
 
-    def _getfixturenames(self):
+
+    def _getfuncargnames(self):
         startindex = int(self.cls is not None)
-        return (self.session.funcargmanager._autofixtures +
+        return (self.session._fixturemanager._autofixtures +
                 getfuncargnames(self.obj, startindex=startindex))
 
     @property
@@ -921,7 +921,7 @@ class Function(FunctionMixin, pytest.Item):
         super(Function, self).setup()
         #if hasattr(self, "_request"):
         #    self._request._callsetup()
-        fillfuncargs(self)
+        fillfixtures(self)
 
     def __eq__(self, other):
         try:
@@ -960,8 +960,8 @@ def scopeproperty(name=None, doc=None):
     return decoratescope
 
 
-class FuncargRequest:
-    """ A request for function arguments from a test or setup function.
+class FixtureRequest(FuncargnamesCompatAttr):
+    """ A request for fixtures from a test or setup function.
 
     A request object gives access to attributes of the requesting
     test context.  It has an optional ``param`` attribute in case
@@ -976,38 +976,38 @@ class FuncargRequest:
         self.scope = "function"
         self.getparent = pyfuncitem.getparent
         self._funcargs  = self._pyfuncitem.funcargs.copy()
-        self._name2factory = {}
-        self.funcargmanager = pyfuncitem.session.funcargmanager
+        self._arg2fixturedeflist = {}
+        self._fixturemanager = pyfuncitem.session._fixturemanager
         self._currentarg = None
-        self.parentid = pyfuncitem.parent.nodeid
-        self.funcargnames, self._arg2facdeflist_ = \
-            self.funcargmanager.getallfuncargnames(
+        self._parentid = pyfuncitem.parent.nodeid
+        self.fixturenames, self._arg2fixturedeflist_ = \
+            self._fixturemanager.getfixtureclosure(
                 getfuncargnames(self.function), # XXX _pyfuncitem...
                 pyfuncitem.parent)
-        self._factorystack = []
+        self._fixturestack = []
 
     @property
     def node(self):
         """ underlying collection node (depends on request scope)"""
         return self._getscopeitem(self.scope)
 
-    def _getfaclist(self, argname):
-        facdeflist = self._name2factory.get(argname, None)
-        getfactb = None
+    def _getfixturedeflist(self, argname):
+        fixturedeflist = self._arg2fixturedeflist.get(argname, None)
+        getfixturetb = None
         function = None
-        if facdeflist is None:
-            if self._factorystack:
-                function = self._factorystack[-1].func
-                getfactb = lambda: self._factorystack[:-1]
+        if fixturedeflist is None:
+            if self._fixturestack:
+                function = self._fixturestack[-1].func
+                getfixturetb = lambda: self._fixturestack[:-1]
             else:
                 function = self.function
-            facdeflist = self.funcargmanager.getfactorylist(
-                            argname, self.parentid)
-            self._name2factory[argname] = facdeflist
-        if not facdeflist:
-            self.funcargmanager._raiselookupfailed(argname, function,
-                                                   self.parentid, getfactb)
-        return facdeflist
+            fixturedeflist = self._fixturemanager.getfixturedeflist(
+                            argname, self._parentid)
+            self._arg2fixturedeflist[argname] = fixturedeflist
+        if not fixturedeflist:
+            self._fixturemanager._raiselookupfailed(argname, function,
+                                                   self._parentid, getfixturetb)
+        return fixturedeflist
 
     @property
     def config(self):
@@ -1060,7 +1060,7 @@ class FuncargRequest:
         """add finalizer/teardown function to be called after the
         last test within the requesting test context finished
         execution. """
-        # XXX usually this method is shadowed by factorydef specific ones
+        # XXX usually this method is shadowed by fixturedef specific ones
         self._addfinalizer(finalizer, scope=self.scope)
 
     def _addfinalizer(self, finalizer, scope):
@@ -1084,15 +1084,15 @@ class FuncargRequest:
         self.node.applymarker(marker)
 
     def raiseerror(self, msg):
-        """ raise a FuncargLookupError with the given message. """
-        raise self.funcargmanager.FuncargLookupError(self.function, msg)
+        """ raise a FixtureLookupError with the given message. """
+        raise self._fixturemanager.FixtureLookupError(self.function, msg)
 
 
-    def _fillfuncargs(self):
+    def _fillfixtures(self):
         item = self._pyfuncitem
-        funcargnames = getattr(item, "funcargnames", self.funcargnames)
+        fixturenames = getattr(item, "fixturenames", self.fixturenames)
 
-        for argname in funcargnames:
+        for argname in fixturenames:
             if argname not in item.funcargs:
                 item.funcargs[argname] = self.getfuncargvalue(argname)
 
@@ -1100,9 +1100,9 @@ class FuncargRequest:
         """ (deprecated) Return a testing resource managed by ``setup`` &
         ``teardown`` calls.  ``scope`` and ``extrakey`` determine when the
         ``teardown`` function will be called so that subsequent calls to
-        ``setup`` would recreate the resource.  With pytest-2.3 you
+        ``setup`` would recreate the resource.  With pytest-2.3 you often
         do not need ``cached_setup()`` as you can directly declare a scope
-        on a funcarg factory and register a finalizer through
+        on a fixture function and register a finalizer through
         ``request.addfinalizer()``.
 
         :arg teardown: function receiving a previously setup resource.
@@ -1151,27 +1151,27 @@ class FuncargRequest:
         except KeyError:
             pass
         try:
-            factorydeflist = self._getfaclist(argname)
-        except FuncargLookupError:
+            fixturedeflist = self._getfixturedeflist(argname)
+        except FixtureLookupError:
             if argname == "request":
                 return self
             raise
-        factorydef = factorydeflist.pop()
-        self._factorystack.append(factorydef)
+        fixturedef = fixturedeflist.pop()
+        self._fixturestack.append(fixturedef)
         try:
-            result = self._getfuncargvalue(factorydef)
+            result = self._getfuncargvalue(fixturedef)
             self._funcargs[argname] = result
             return result
         finally:
-            self._factorystack.pop()
+            self._fixturestack.pop()
 
-    def _getfuncargvalue(self, factorydef):
-        if factorydef.active:
-            return factorydef.cached_result
+    def _getfuncargvalue(self, fixturedef):
+        if fixturedef.active:
+            return fixturedef.cached_result
 
         # prepare request scope and param attributes before
         # calling into factory
-        argname = factorydef.argname
+        argname = fixturedef.argname
         node = self._pyfuncitem
         mp = monkeypatch()
         mp.setattr(self, '_currentarg', argname)
@@ -1181,7 +1181,7 @@ class FuncargRequest:
             pass
         else:
             mp.setattr(self, 'param', param, raising=False)
-        scope = factorydef.scope
+        scope = fixturedef.scope
         if scope is not None:
             __tracebackhide__ = True
             if scopemismatch(self.scope, scope):
@@ -1195,20 +1195,20 @@ class FuncargRequest:
             mp.setattr(self, "scope", scope)
 
         # prepare finalization according to scope
-        self.session._setupstate.addfinalizer(factorydef.finish, self.node)
-        self.funcargmanager.addargfinalizer(factorydef.finish, argname)
-        for subargname in factorydef.funcargnames: # XXX all deps?
-            self.funcargmanager.addargfinalizer(factorydef.finish, subargname)
-        mp.setattr(self, "addfinalizer", factorydef.addfinalizer)
+        self.session._setupstate.addfinalizer(fixturedef.finish, self.node)
+        self._fixturemanager.addargfinalizer(fixturedef.finish, argname)
+        for subargname in fixturedef.fixturenames: # XXX all deps?
+            self._fixturemanager.addargfinalizer(fixturedef.finish, subargname)
+        mp.setattr(self, "addfinalizer", fixturedef.addfinalizer)
         # finally perform the factory call
-        val = factorydef.execute(request=self)
+        val = fixturedef.execute(request=self)
         mp.undo()
         return val
 
     def _factorytraceback(self):
         lines = []
-        for factorydef in self._factorystack:
-            factory = factorydef.func
+        for fixturedef in self._fixturestack:
+            factory = fixturedef.func
             fs, lineno = getfslineno(factory)
             p = self._pyfuncitem.session.fspath.bestrelpath(fs)
             args = inspect.formatargspec(*inspect.getargspec(factory))
@@ -1232,10 +1232,10 @@ class FuncargRequest:
         raise ValueError("unknown finalization scope %r" %(scope,))
 
     def __repr__(self):
-        return "<FuncargRequest for %r>" %(self._pyfuncitem)
+        return "<FixtureRequest for %r>" %(self._pyfuncitem)
 
 class ScopeMismatchError(Exception):
-    """ A funcarg factory tries to access a funcargvalue/factory
+    """ A fixture function tries to use a different fixture function which
     which has a lower scope (e.g. a Session one calls a function one)
     """
 
@@ -1249,14 +1249,14 @@ def slice_kwargs(names, kwargs):
         new_kwargs[name] = kwargs[name]
     return new_kwargs
 
-class FuncargLookupError(LookupError):
+class FixtureLookupError(LookupError):
     """ could not find a factory. """
     def __init__(self, function, msg, factblines=None):
         self.function = function
         self.msg = msg
         self.factblines = factblines
 
-class FuncargLookupErrorRepr(TerminalRepr):
+class FixtureLookupErrorRepr(TerminalRepr):
     def __init__(self, filename, firstlineno, deflines, errorstring, factblines):
         self.deflines = deflines
         self.errorstring = errorstring
@@ -1268,10 +1268,10 @@ class FuncargLookupErrorRepr(TerminalRepr):
         tw.line()
         if self.factblines:
             tw.line('    dependency of:')
-            for factorydef in self.factblines:
+            for fixturedef in self.factblines:
                 tw.line('        %s in %s' % (
-                    factorydef.argname,
-                    factorydef.baseid,
+                    fixturedef.argname,
+                    fixturedef.baseid,
                 ))
             tw.line()
         for line in self.deflines:
@@ -1281,15 +1281,15 @@ class FuncargLookupErrorRepr(TerminalRepr):
         tw.line()
         tw.line("%s:%d" % (self.filename, self.firstlineno+1))
 
-class FuncargManager:
+class FixtureManager:
     _argprefix = "pytest_funcarg__"
-    FuncargLookupError = FuncargLookupError
-    FuncargLookupErrorRepr = FuncargLookupErrorRepr
+    FixtureLookupError = FixtureLookupError
+    FixtureLookupErrorRepr = FixtureLookupErrorRepr
 
     def __init__(self, session):
         self.session = session
         self.config = session.config
-        self.arg2facspec = {}
+        self.arg2fixturedeflist = {}
         self._seenplugins = set()
         self._holderobjseen = set()
         self._arg2finish = {}
@@ -1319,41 +1319,44 @@ class FuncargManager:
         for plugin in plugins:
             self.pytest_plugin_registered(plugin)
 
-    def getallfuncargnames(self, funcargnames, parentnode):
-        # collect the closure of all funcargs, starting with
-        # funcargnames as the initial set
-        # we populate and return a arg2facdeflist mapping
-        # so that the caller can reuse it and does not have to re-discover
-        # factories again for each funcargname
+    def getfixtureclosure(self, fixturenames, parentnode):
+        # collect the closure of all funcargs, starting with the given
+        # fixturenames as the initial set.  As we have to visit all
+        # factory definitions anyway, we also return a arg2fixturedeflist
+        # mapping so that the caller can reuse it and does not have
+        # to re-discover fixturedefs again for each fixturename
+        # (discovering matching fixtures for a given name/node is expensive)
+
         parentid = parentnode.nodeid
-        funcargnames = self._autofixtures + list(funcargnames)
+        fixturenames_closure = list(self._autofixtures)
         def merge(otherlist):
             for arg in otherlist:
-                if arg not in funcargnames:
-                    funcargnames.append(arg)
-        arg2facdeflist = {}
+                if arg not in fixturenames_closure:
+                    fixturenames_closure.append(arg)
+        merge(fixturenames)
+        arg2fixturedeflist = {}
         lastlen = -1
-        while lastlen != len(funcargnames):
-            lastlen = len(funcargnames)
-            for argname in list(funcargnames):
-                if argname in arg2facdeflist:
+        while lastlen != len(fixturenames_closure):
+            lastlen = len(fixturenames_closure)
+            for argname in fixturenames_closure:
+                if argname in arg2fixturedeflist:
                     continue
-                facdeflist = self.getfactorylist(argname, parentid)
-                arg2facdeflist[argname] = facdeflist
-                if facdeflist is not None:
-                    for facdef in facdeflist:
-                        merge(facdef.funcargnames)
-        return funcargnames, arg2facdeflist
+                fixturedeflist = self.getfixturedeflist(argname, parentid)
+                arg2fixturedeflist[argname] = fixturedeflist
+                if fixturedeflist is not None:
+                    for fixturedef in fixturedeflist:
+                        merge(fixturedef.fixturenames)
+        return fixturenames_closure, arg2fixturedeflist
 
     def pytest_generate_tests(self, metafunc):
-        for argname in metafunc.funcargnames:
-            faclist = metafunc._arg2facdeflist[argname]
+        for argname in metafunc.fixturenames:
+            faclist = metafunc._arg2fixturedeflist[argname]
             if faclist is None:
-                continue # will raise FuncargLookupError at setup time
-            for facdef in faclist:
-                if facdef.params is not None:
-                    metafunc.parametrize(argname, facdef.params, indirect=True,
-                                         scope=facdef.scope)
+                continue # will raise FixtureLookupError at setup time
+            for fixturedef in faclist:
+                if fixturedef.params is not None:
+                    metafunc.parametrize(argname, fixturedef.params, indirect=True,
+                                         scope=fixturedef.scope)
 
     def pytest_collection_modifyitems(self, items):
         # separate parametrized setups
@@ -1394,7 +1397,7 @@ class FuncargManager:
             obj = getattr(holderobj, name)
             if not callable(obj):
                 continue
-            # fixture functions have a pytest_funcarg__ prefix
+            # fixture functions have a pytest_funcarg__ prefix (pre-2.3 style)
             # or are "@pytest.fixture" marked
             marker = getattr(obj, "_pytestfixturefunction", None)
             if marker is None:
@@ -1408,42 +1411,42 @@ class FuncargManager:
                 continue
             else:
                 assert not name.startswith(self._argprefix)
-            factorydef = FactoryDef(self, nodeid, name, obj,
+            fixturedef = FixtureDef(self, nodeid, name, obj,
                                     marker.scope, marker.params,
                                     unittest=unittest)
-            faclist = self.arg2facspec.setdefault(name, [])
-            faclist.append(factorydef)
+            faclist = self.arg2fixturedeflist.setdefault(name, [])
+            faclist.append(fixturedef)
             if marker.autoactive:
                 # make sure the self._autofixtures list is always sorted
                 # by scope, scopenum 0 is session
                 self._autofixtures.append(name)
                 self._autofixtures.sort(
-                    key=lambda x: self.arg2facspec[x][-1].scopenum)
+                    key=lambda x: self.arg2fixturedeflist[x][-1].scopenum)
 
-    def getfactorylist(self, argname, nodeid):
+    def getfixturedeflist(self, argname, nodeid):
         try:
-            factorydeflist = self.arg2facspec[argname]
+            fixturedeflist = self.arg2fixturedeflist[argname]
         except KeyError:
             return None
         else:
-            return list(self._matchfactories(factorydeflist, nodeid))
+            return list(self._matchfactories(fixturedeflist, nodeid))
 
-    def _matchfactories(self, factorydeflist, nodeid):
-        for factorydef in factorydeflist:
-            if nodeid.startswith(factorydef.baseid):
-                yield factorydef
+    def _matchfactories(self, fixturedeflist, nodeid):
+        for fixturedef in fixturedeflist:
+            if nodeid.startswith(fixturedef.baseid):
+                yield fixturedef
 
-    def _raiselookupfailed(self, argname, function, nodeid, getfactb=None):
+    def _raiselookupfailed(self, argname, function, nodeid, getfixturetb=None):
         available = []
-        for name, facdef in self.arg2facspec.items():
-            faclist = list(self._matchfactories(facdef, nodeid))
+        for name, fixturedef in self.arg2fixturedeflist.items():
+            faclist = list(self._matchfactories(fixturedef, nodeid))
             if faclist:
                 available.append(name)
         msg = "LookupError: no factory found for argument %r" % (argname,)
         msg += "\n available funcargs: %s" %(", ".join(available),)
-        msg += "\n use 'py.test --funcargs [testpath]' for help on them."
-        lines = getfactb and getfactb() or []
-        raise FuncargLookupError(function, msg, lines)
+        msg += "\n use 'py.test --fixtures [testpath]' for help on them."
+        lines = getfixturetb and getfixturetb() or []
+        raise FixtureLookupError(function, msg, lines)
 
     def addargfinalizer(self, finalizer, argname):
         l = self._arg2finish.setdefault(argname, [])
@@ -1456,11 +1459,11 @@ class FuncargManager:
             except ValueError:
                 pass
 
-class FactoryDef:
+class FixtureDef:
     """ A container for a factory definition. """
-    def __init__(self, funcargmanager, baseid, argname, func, scope, params,
+    def __init__(self, fixturenanager, baseid, argname, func, scope, params,
         unittest=False):
-        self.funcargmanager = funcargmanager
+        self._fixturemanager = fixturenanager
         self.baseid = baseid
         self.func = func
         self.argname = argname
@@ -1468,7 +1471,7 @@ class FactoryDef:
         self.scopenum = scopes.index(scope or "function")
         self.params = params
         startindex = unittest and 1 or None
-        self.funcargnames = getfuncargnames(func, startindex=startindex)
+        self.fixturenames = getfuncargnames(func, startindex=startindex)
         self.unittest = unittest
         self.active = False
         self._finalizer = []
@@ -1481,14 +1484,14 @@ class FactoryDef:
             func = self._finalizer.pop()
             func()
         # check neccesity of next commented call
-        self.funcargmanager.removefinalizer(self.finish)
+        self._fixturemanager.removefinalizer(self.finish)
         self.active = False
         #print "finished", self
         #del self.cached_result
 
     def execute(self, request):
         kwargs = {}
-        for newname in self.funcargnames:
+        for newname in self.fixturenames:
             kwargs[newname] = request.getfuncargvalue(newname)
         if self.unittest:
             result = self.func(request.instance, **kwargs)
@@ -1499,7 +1502,7 @@ class FactoryDef:
         return result
 
     def __repr__(self):
-        return "<FactoryDef name=%r scope=%r>" % (self.argname, self.scope)
+        return "<FixtureDef name=%r scope=%r>" % (self.argname, self.scope)
 
 def getfuncargnames(function, startindex=None):
     # XXX merge with main.py's varnames

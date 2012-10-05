@@ -11,7 +11,7 @@ def pytest_generate_tests(metafunc):
     # over the python interpreters of our list above - the actual
     # setup and lookup of interpreters in the python1/python2 factories
     # respectively.
-    for arg in metafunc.funcargnames:
+    for arg in metafunc.fixturenames:
         if arg in ("python1", "python2"):
             metafunc.parametrize(arg, pythonlist, indirect=True)
 

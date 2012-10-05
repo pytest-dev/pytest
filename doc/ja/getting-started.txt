@@ -265,7 +265,7 @@ py.test は :ref:`標準的なテスト探索ルール <test discovery>` に従�
 
 組み込みの :ref:`funcargs` を把握するには、次のコマンドを実行します::
 
-    py.test --funcargs   # 組み込み/カスタムの関数の引数を表示する
+    py.test --fixtures   # 組み込み/カスタムの関数の引数を表示する
 
 ..
     Where to go next

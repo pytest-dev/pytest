@@ -189,7 +189,7 @@ def pytest_funcarg__capsys(request):
     """
     if "capfd" in request._funcargs:
         raise request.raiseerror(error_capsysfderror)
-    return CaptureFuncarg(py.io.StdCapture)
+    return CaptureFixture(py.io.StdCapture)
 
 def pytest_funcarg__capfd(request):
     """enables capturing of writes to file descriptors 1 and 2 and makes
@@ -200,9 +200,9 @@ def pytest_funcarg__capfd(request):
         request.raiseerror(error_capsysfderror)
     if not hasattr(os, 'dup'):
         pytest.skip("capfd funcarg needs os.dup")
-    return CaptureFuncarg(py.io.StdCaptureFD)
+    return CaptureFixture(py.io.StdCaptureFD)
 
-class CaptureFuncarg:
+class CaptureFixture:
     def __init__(self, captureclass):
         self.capture = captureclass(now=False)
 

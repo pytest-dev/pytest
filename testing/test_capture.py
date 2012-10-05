@@ -363,7 +363,7 @@ class TestLoggingInteraction:
         assert 'operation on closed file' not in result.stderr.str()
 
 
-class TestCaptureFuncarg:
+class TestCaptureFixture:
     def test_std_functional(self, testdir):
         reprec = testdir.inline_runsource("""
             def test_hello(capsys):
