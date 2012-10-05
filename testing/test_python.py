@@ -1791,6 +1791,51 @@ class TestFixtureFactory:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
+    def test_usefixtures_marker(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            l = []
+
+            @pytest.fixture(scope="class")
+            def myfix(request):
+                request.cls.hello = "world"
+                l.append(1)
+
+            class TestClass:
+                def test_one(self):
+                    assert self.hello == "world"
+                    assert len(l) == 1
+                def test_two(self):
+                    assert self.hello == "world"
+                    assert len(l) == 1
+            pytest.mark.usefixtures("myfix")(TestClass)
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
+
+    def test_usefixtures_ini(self, testdir):
+        testdir.makeini("""
+            [pytest]
+            usefixtures = myfix
+        """)
+        testdir.makeconftest("""
+            import pytest
+
+            @pytest.fixture(scope="class")
+            def myfix(request):
+                request.cls.hello = "world"
+
+        """)
+        testdir.makepyfile("""
+            class TestClass:
+                def test_one(self):
+                    assert self.hello == "world"
+                def test_two(self):
+                    assert self.hello == "world"
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
 
 class TestResourceIntegrationFunctional:
     def test_parametrize_with_ids(self, testdir):

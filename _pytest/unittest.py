@@ -53,7 +53,7 @@ class TestCaseFunction(pytest.Function):
     _excinfo = None
 
     def _getfuncargnames(self):
-        return list(self.session._fixturemanager._autofixtures)
+        return []
 
     def setup(self):
         self._testcase = self.parent.obj(self.name)

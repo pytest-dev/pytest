@@ -77,6 +77,8 @@ def pytest_addoption(parser):
     group.addoption('--fixtures', '--fixtures',
                action="store_true", dest="showfixtures", default=False,
                help="show available fixtures, sorted by plugin appearance")
+    parser.addini("usefixtures", type="args", default=(),
+        help="list of default fixtures to be used with this project")
     parser.addini("python_files", type="args",
         default=('test_*.py', '*_test.py'),
         help="glob-style file patterns for Python test module discovery")
@@ -879,7 +881,6 @@ class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
             #req._discoverfactories()
         if callobj is not _dummy:
             self.obj = callobj
-        self.fixturenames = self._getfuncargnames()
 
         for name, val in (py.builtin._getfuncdict(self.obj) or {}).items():
             setattr(self.markers, name, val)
@@ -887,11 +888,17 @@ class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
             for name, val in keywords.items():
                 setattr(self.markers, name, val)
 
+        # contstruct a list of all neccessary fixtures for this test function
+        if hasattr(self.markers, "usefixtures"):
+            usefixtures = list(self.markers.usefixtures.args)
+        else:
+            usefixtures = []
+        self.fixturenames = (self.session._fixturemanager.getdefaultfixtures() +
+                usefixtures + self._getfuncargnames())
 
     def _getfuncargnames(self):
         startindex = int(self.cls is not None)
-        return (self.session._fixturemanager._autofixtures +
-                getfuncargnames(self.obj, startindex=startindex))
+        return getfuncargnames(self.obj, startindex=startindex)
 
     @property
     def function(self):
@@ -1336,8 +1343,22 @@ class FixtureManager:
         for plugin in plugins:
             self.pytest_plugin_registered(plugin)
 
+    def getdefaultfixtures(self):
+        """ return a list of default fixture names (XXX for the given file path). """
+        try:
+            return self._defaultfixtures
+        except AttributeError:
+            defaultfixtures = list(self.config.getini("usefixtures"))
+            # make sure the self._autofixtures list is sorted
+            # by scope, scopenum 0 is session
+            self._autofixtures.sort(
+                key=lambda x: self.arg2fixturedeflist[x][-1].scopenum)
+            defaultfixtures.extend(self._autofixtures)
+            self._defaultfixtures = defaultfixtures
+            return defaultfixtures
+
     def getfixtureclosure(self, fixturenames, parentnode):
-        # collect the closure of all funcargs, starting with the given
+        # collect the closure of all fixtures , starting with the given
         # fixturenames as the initial set.  As we have to visit all
         # factory definitions anyway, we also return a arg2fixturedeflist
         # mapping so that the caller can reuse it and does not have
@@ -1345,7 +1366,7 @@ class FixtureManager:
         # (discovering matching fixtures for a given name/node is expensive)
 
         parentid = parentnode.nodeid
-        fixturenames_closure = list(self._autofixtures)
+        fixturenames_closure = list(self.getdefaultfixtures())
         def merge(otherlist):
             for arg in otherlist:
                 if arg not in fixturenames_closure:
@@ -1434,11 +1455,11 @@ class FixtureManager:
             faclist = self.arg2fixturedeflist.setdefault(name, [])
             faclist.append(fixturedef)
             if marker.autoactive:
-                # make sure the self._autofixtures list is always sorted
-                # by scope, scopenum 0 is session
                 self._autofixtures.append(name)
-                self._autofixtures.sort(
-                    key=lambda x: self.arg2fixturedeflist[x][-1].scopenum)
+                try:
+                    del self._defaultfixtures
+                except AttributeError:
+                    pass
 
     def getfixturedeflist(self, argname, nodeid):
         try:
