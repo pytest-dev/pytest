@@ -559,7 +559,7 @@ class TestFillFixtures:
         assert result.ret != 0
         result.stdout.fnmatch_lines([
             "*def test_func(some)*",
-            "*LookupError*",
+            "*fixture*some*not found*",
             "*xyzsomething*",
         ])
 
@@ -1416,8 +1416,8 @@ def test_funcarg_lookup_error(testdir):
     result.stdout.fnmatch_lines([
         "*ERROR*test_lookup_error*",
         "*def test_lookup_error(unknown):*",
-        "*LookupError: no factory found*unknown*",
-        "*available funcargs*",
+        "*fixture*unknown*not found*",
+        "*available fixtures*",
         "*1 error*",
     ])
     assert "INTERNAL" not in result.stdout.str()
@@ -1750,12 +1750,13 @@ class TestFixtureFactory:
                 pass
             """)
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines([
-            "*dependency of:*",
-            "*call_fail*",
-            "*def fail(*",
-            "*LookupError: no factory found for argument 'missing'",
-        ])
+        result.stdout.fnmatch_lines("""
+            *pytest.fixture()*
+            *def call_fail(fail)*
+            *pytest.fixture()*
+            *def fail*
+            *fixture*'missing'*not found*
+        """)
 
     def test_factory_setup_as_classes(self, testdir):
         testdir.makepyfile("""
@@ -2585,7 +2586,7 @@ class TestErrors:
         assert result.ret != 0
         result.stdout.fnmatch_lines([
             "*def gen(qwe123):*",
-            "*no factory*qwe123*",
+            "*fixture*qwe123*not found*",
             "*1 error*",
         ])
 
@@ -2602,7 +2603,7 @@ class TestErrors:
         assert result.ret != 0
         result.stdout.fnmatch_lines([
             "*def gen(qwe123):*",
-            "*no factory*qwe123*",
+            "*fixture*qwe123*not found*",
             "*1 error*",
         ])
 

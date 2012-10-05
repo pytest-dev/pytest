@@ -310,16 +310,7 @@ class Node(object):
     def _repr_failure_py(self, excinfo, style=None):
         fm = self.session._fixturemanager
         if excinfo.errisinstance(fm.FixtureLookupError):
-            function = excinfo.value.function
-            factblines = excinfo.value.factblines
-            if function is not None:
-                fspath, lineno = getfslineno(function)
-                lines, _ = inspect.getsourcelines(function)
-                for i, line in enumerate(lines):
-                    if line.strip().startswith('def'):
-                        return fm.FixtureLookupErrorRepr(fspath,
-                                    lineno, lines[:i+1],
-                                    str(excinfo.value.msg), factblines)
+            return excinfo.value.formatrepr()
         if self.config.option.fulltrace:
             style="long"
         else:

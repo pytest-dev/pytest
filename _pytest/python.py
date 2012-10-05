@@ -993,20 +993,12 @@ class FixtureRequest(FuncargnamesCompatAttr):
 
     def _getfixturedeflist(self, argname):
         fixturedeflist = self._arg2fixturedeflist.get(argname, None)
-        getfixturetb = None
-        function = None
         if fixturedeflist is None:
-            if self._fixturestack:
-                function = self._fixturestack[-1].func
-                getfixturetb = lambda: self._fixturestack[:-1]
-            else:
-                function = self.function
             fixturedeflist = self._fixturemanager.getfixturedeflist(
                             argname, self._parentid)
             self._arg2fixturedeflist[argname] = fixturedeflist
         if not fixturedeflist:
-            self._fixturemanager._raiselookupfailed(argname, function,
-                                                   self._parentid, getfixturetb)
+            raise FixtureLookupError(argname, self)
         return fixturedeflist
 
     @property
@@ -1085,8 +1077,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
 
     def raiseerror(self, msg):
         """ raise a FixtureLookupError with the given message. """
-        raise self._fixturemanager.FixtureLookupError(self.function, msg)
-
+        raise self._fixturemanager.FixtureLookupError(None, self, msg)
 
     def _fillfixtures(self):
         item = self._pyfuncitem
@@ -1250,32 +1241,58 @@ def slice_kwargs(names, kwargs):
     return new_kwargs
 
 class FixtureLookupError(LookupError):
-    """ could not find a factory. """
-    def __init__(self, function, msg, factblines=None):
-        self.function = function
+    """ could not return a requested Fixture (missing or invalid). """
+    def __init__(self, argname, request, msg=None):
+        self.argname = argname
+        self.request = request
+        self.fixturestack = list(request._fixturestack)
         self.msg = msg
-        self.factblines = factblines
+
+    def formatrepr(self):
+        tblines = []
+        addline = tblines.append
+        stack = [self.request._pyfuncitem.obj]
+        stack.extend(map(lambda x: x.func, self.fixturestack))
+        msg = self.msg
+        if msg is not None:
+            stack = stack[:-1] # the last fixture raise an error, let's present
+                               # it at the requesting side
+        for function in stack:
+            fspath, lineno = getfslineno(function)
+            lines, _ = inspect.getsourcelines(function)
+            addline("file %s, line %s" % (fspath, lineno+1))
+            for i, line in enumerate(lines):
+                line = line.rstrip()
+                addline("  " + line)
+                if line.lstrip().startswith('def'):
+                    break
+
+        if msg is None:
+            fm = self.request._fixturemanager
+            nodeid = self.request._parentid
+            available = []
+            for name, fixturedef in fm.arg2fixturedeflist.items():
+                faclist = list(fm._matchfactories(fixturedef, self.request._parentid))
+                if faclist:
+                    available.append(name)
+            msg = "fixture %r not found" % (self.argname,)
+            msg += "\n available fixtures: %s" %(", ".join(available),)
+            msg += "\n use 'py.test --fixtures [testpath]' for help on them."
+
+        return FixtureLookupErrorRepr(fspath, lineno, tblines, msg, self.argname)
 
 class FixtureLookupErrorRepr(TerminalRepr):
-    def __init__(self, filename, firstlineno, deflines, errorstring, factblines):
-        self.deflines = deflines
+    def __init__(self, filename, firstlineno, tblines, errorstring, argname):
+        self.tblines = tblines
         self.errorstring = errorstring
         self.filename = filename
         self.firstlineno = firstlineno
-        self.factblines = factblines
+        self.argname = argname
 
     def toterminal(self, tw):
-        tw.line()
-        if self.factblines:
-            tw.line('    dependency of:')
-            for fixturedef in self.factblines:
-                tw.line('        %s in %s' % (
-                    fixturedef.argname,
-                    fixturedef.baseid,
-                ))
-            tw.line()
-        for line in self.deflines:
-            tw.line("    " + line.strip())
+        #tw.line("FixtureLookupError: %s" %(self.argname), red=True)
+        for tbline in self.tblines:
+            tw.line(tbline.rstrip())
         for line in self.errorstring.split("\n"):
             tw.line("        " + line.strip(), red=True)
         tw.line()
@@ -1435,18 +1452,6 @@ class FixtureManager:
         for fixturedef in fixturedeflist:
             if nodeid.startswith(fixturedef.baseid):
                 yield fixturedef
-
-    def _raiselookupfailed(self, argname, function, nodeid, getfixturetb=None):
-        available = []
-        for name, fixturedef in self.arg2fixturedeflist.items():
-            faclist = list(self._matchfactories(fixturedef, nodeid))
-            if faclist:
-                available.append(name)
-        msg = "LookupError: no factory found for argument %r" % (argname,)
-        msg += "\n available funcargs: %s" %(", ".join(available),)
-        msg += "\n use 'py.test --fixtures [testpath]' for help on them."
-        lines = getfixturetb and getfixturetb() or []
-        raise FixtureLookupError(function, msg, lines)
 
     def addargfinalizer(self, finalizer, argname):
         l = self._arg2finish.setdefault(argname, [])
