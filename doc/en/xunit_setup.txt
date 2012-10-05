@@ -1,16 +1,16 @@
 
-.. _`old-style xunit`:
+.. _`classic xunit`:
 
-Old-style xunit-style setup
+classic xunit-style setup
 ========================================
 
 .. note:: 
 
     This section describes the old way how you can implement setup and
     teardown on a per-module/class/function basis.  It remains fully
-    supported but it is recommended to rather use :ref:`@setup functions
-    <setup>` or :ref:`injected resources <resources>` for implementing your
-    setup needs.
+    supported but it is recommended to rather use :ref:`fixture functions
+    <fixture>` or :ref:`funcargs <resources>` for implementing your
+    needs to prepare and fix the test state for your tests.
 
 Module level setup/teardown
 --------------------------------------
