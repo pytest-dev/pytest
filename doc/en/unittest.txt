@@ -82,7 +82,7 @@ instances, based on a marker, you can do it using :ref:`pytest.mark`` and
     import pytest
     import unittest
 
-    @pytest.factory()
+    @pytest.fixture()
     def db():
         class DummyDB:
             x = 1

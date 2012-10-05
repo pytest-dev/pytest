@@ -744,7 +744,7 @@ class TestMarking:
     def test_accessmarker_function(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.factory()
+            @pytest.fixture()
             def markers(request):
                 return request.node.markers
             @pytest.mark.XYZ
@@ -758,7 +758,7 @@ class TestMarking:
     def test_accessmarker_dynamic(self, testdir):
         testdir.makeconftest("""
             import pytest
-            @pytest.factory()
+            @pytest.fixture()
             def markers(request):
                 return request.node.markers
 
@@ -1674,11 +1674,11 @@ class TestFuncargFactory:
     def test_receives_funcargs(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.factory()
+            @pytest.fixture()
             def arg1():
                 return 1
 
-            @pytest.factory()
+            @pytest.fixture()
             def arg2(arg1):
                 return arg1 + 1
 
@@ -1694,11 +1694,11 @@ class TestFuncargFactory:
     def test_receives_funcargs_scope_mismatch(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.factory(scope="function")
+            @pytest.fixture(scope="function")
             def arg1():
                 return 1
 
-            @pytest.factory(scope="module")
+            @pytest.fixture(scope="module")
             def arg2(arg1):
                 return arg1 + 1
 
@@ -1717,12 +1717,12 @@ class TestFuncargFactory:
         testdir.makepyfile("""
             import pytest
             l = []
-            @pytest.factory(params=[1,2])
+            @pytest.fixture(params=[1,2])
             def arg1(request):
                 l.append(1)
                 return request.param
 
-            @pytest.factory()
+            @pytest.fixture()
             def arg2(arg1):
                 return arg1 + 1
 
@@ -1739,11 +1739,11 @@ class TestFuncargFactory:
         testdir.makepyfile("""
             import pytest
 
-            @pytest.factory()
+            @pytest.fixture()
             def fail(missing):
                 return
 
-            @pytest.factory()
+            @pytest.fixture()
             def call_fail(fail):
                 return
 
@@ -1764,7 +1764,7 @@ class TestFuncargFactory:
             class arg1:
                 def __init__(self, request):
                     self.x = 1
-            arg1 = pytest.factory()(arg1)
+            arg1 = pytest.fixture()(arg1)
 
             class MySetup:
                 def __init__(self, request, arg1):
@@ -1781,7 +1781,7 @@ class TestFuncargFactory:
     def test_request_can_be_overridden(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.factory()
+            @pytest.fixture()
             def request(request):
                 request.a = 1
                 return request
@@ -1863,7 +1863,7 @@ class TestSetupDiscovery:
             def perfunction(request, tmpdir):
                 pass
 
-            @pytest.factory()
+            @pytest.fixture()
             def arg1(tmpdir):
                 pass
             @pytest.setup()
@@ -1918,7 +1918,7 @@ class TestSetupDiscovery:
             def enabled(parentnode, markers):
                 return "needsdb" in markers
 
-            @pytest.factory(params=[1,2])
+            @pytest.fixture(params=[1,2])
             def db(request):
                 return request.param
 
@@ -1959,7 +1959,7 @@ class TestSetupManagement:
         testdir.makepyfile("""
             import pytest
             l = []
-            @pytest.factory(scope="module")
+            @pytest.fixture(scope="module")
             def arg():
                 l.append(1)
                 return 0
@@ -1984,7 +1984,7 @@ class TestSetupManagement:
         testdir.makepyfile("""
             import pytest
             l = []
-            @pytest.factory(params=[1,2])
+            @pytest.fixture(params=[1,2])
             def arg(request):
                 return request.param
 
@@ -2010,7 +2010,7 @@ class TestSetupManagement:
 
             l = []
 
-            @pytest.factory(scope="session", params=[1,2])
+            @pytest.fixture(scope="session", params=[1,2])
             def arg(request):
                return request.param
 
@@ -2036,11 +2036,11 @@ class TestSetupManagement:
 
             l = []
 
-            @pytest.factory(scope="function", params=[1,2])
+            @pytest.fixture(scope="function", params=[1,2])
             def farg(request):
                 return request.param
 
-            @pytest.factory(scope="class", params=list("ab"))
+            @pytest.fixture(scope="class", params=list("ab"))
             def carg(request):
                 return request.param
 
@@ -2117,7 +2117,7 @@ class TestFuncargMarker:
     def test_parametrize(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.factory(params=["a", "b", "c"])
+            @pytest.fixture(params=["a", "b", "c"])
             def arg(request):
                 return request.param
             l = []
@@ -2133,7 +2133,7 @@ class TestFuncargMarker:
         testdir.makepyfile("""
             import pytest
             l = []
-            @pytest.factory(scope="module")
+            @pytest.fixture(scope="module")
             def arg():
                 l.append(1)
                 return 1
@@ -2155,7 +2155,7 @@ class TestFuncargMarker:
         testdir.makepyfile("""
             import pytest
             l = []
-            @pytest.factory(scope="module")
+            @pytest.fixture(scope="module")
             def arg():
                 l.append(1)
                 return 1
@@ -2178,7 +2178,7 @@ class TestFuncargMarker:
             import pytest
             finalized = []
             created = []
-            @pytest.factory(scope="module")
+            @pytest.fixture(scope="module")
             def arg(request):
                 created.append(1)
                 assert request.scope == "module"
@@ -2217,14 +2217,14 @@ class TestFuncargMarker:
             import pytest
             finalized = []
             created = []
-            @pytest.factory(scope="function")
+            @pytest.fixture(scope="function")
             def arg(request):
                 pass
         """)
         testdir.makepyfile(
             test_mod1="""
                 import pytest
-                @pytest.factory(scope="session")
+                @pytest.fixture(scope="session")
                 def arg(request):
                     %s
                 def test_1(arg):
@@ -2239,14 +2239,14 @@ class TestFuncargMarker:
     def test_register_only_with_mark(self, testdir):
         testdir.makeconftest("""
             import pytest
-            @pytest.factory()
+            @pytest.fixture()
             def arg():
                 return 1
         """)
         testdir.makepyfile(
             test_mod1="""
                 import pytest
-                @pytest.factory()
+                @pytest.fixture()
                 def arg(arg):
                     return arg + 1
                 def test_1(arg):
@@ -2258,7 +2258,7 @@ class TestFuncargMarker:
     def test_parametrize_and_scope(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.factory(scope="module", params=["a", "b", "c"])
+            @pytest.fixture(scope="module", params=["a", "b", "c"])
             def arg(request):
                 return request.param
             l = []
@@ -2276,13 +2276,13 @@ class TestFuncargMarker:
     def test_scope_mismatch(self, testdir):
         testdir.makeconftest("""
             import pytest
-            @pytest.factory(scope="function")
+            @pytest.fixture(scope="function")
             def arg(request):
                 pass
         """)
         testdir.makepyfile("""
             import pytest
-            @pytest.factory(scope="session")
+            @pytest.fixture(scope="session")
             def arg(arg):
                 pass
             def test_mismatch(arg):
@@ -2298,7 +2298,7 @@ class TestFuncargMarker:
         testdir.makepyfile("""
             import pytest
 
-            @pytest.factory(scope="module", params=[1, 2])
+            @pytest.fixture(scope="module", params=[1, 2])
             def arg(request):
                 return request.param
 
@@ -2317,10 +2317,10 @@ class TestFuncargMarker:
         testdir.makeconftest("""
             import pytest
 
-            @pytest.factory(scope="session", params="s1 s2".split())
+            @pytest.fixture(scope="session", params="s1 s2".split())
             def sarg():
                 pass
-            @pytest.factory(scope="module", params="m1 m2".split())
+            @pytest.fixture(scope="module", params="m1 m2".split())
             def marg():
                 pass
         """)
@@ -2365,11 +2365,11 @@ class TestFuncargMarker:
 
             l = []
 
-            @pytest.factory(scope="function", params=[1,2])
+            @pytest.fixture(scope="function", params=[1,2])
             def farg(request):
                 return request.param
 
-            @pytest.factory(scope="class", params=list("ab"))
+            @pytest.fixture(scope="class", params=list("ab"))
             def carg(request):
                 return request.param
 
@@ -2411,14 +2411,14 @@ class TestFuncargMarker:
         testdir.makepyfile("""
             import pytest
 
-            @pytest.factory(scope="function", params=[1, 2])
+            @pytest.fixture(scope="function", params=[1, 2])
             def arg(request):
                 param = request.param
                 request.addfinalizer(lambda: l.append("fin:%s" % param))
                 l.append("create:%s" % param)
                 return request.param
 
-            @pytest.factory(scope="module", params=["mod1", "mod2"])
+            @pytest.fixture(scope="module", params=["mod1", "mod2"])
             def modarg(request):
                 param = request.param
                 request.addfinalizer(lambda: l.append("fin:%s" % param))
@@ -2455,7 +2455,7 @@ class TestFuncargMarker:
         testdir.makepyfile("""
             import pytest
 
-            @pytest.factory(scope="module", params=[1, 2])
+            @pytest.fixture(scope="module", params=[1, 2])
             def arg(request):
                 request.config.l = l # to access from outer
                 x = request.param
@@ -2484,7 +2484,7 @@ class TestFuncargMarker:
         testdir.makepyfile("""
             import pytest
 
-            @pytest.factory(scope="function", params=[1, 2])
+            @pytest.fixture(scope="function", params=[1, 2])
             def arg(request):
                 x = request.param
                 request.addfinalizer(lambda: l.append("fin%s" % x))
@@ -2506,7 +2506,7 @@ class TestFuncargMarker:
         testdir.makepyfile("""
             import pytest
 
-            @pytest.factory(scope="module", params=[1, 2])
+            @pytest.fixture(scope="module", params=[1, 2])
             def arg(request):
                 return request.param
 
@@ -2562,7 +2562,7 @@ class TestTestContextScopeAccess:
     def test_funcarg(self, testdir, scope, ok, error):
         testdir.makepyfile("""
             import pytest
-            @pytest.factory(scope=%r)
+            @pytest.fixture(scope=%r)
             def arg(request):
                 for x in %r:
                     assert hasattr(request, x)
@@ -2582,7 +2582,7 @@ class TestErrors:
     def test_subfactory_missing_funcarg(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.factory()
+            @pytest.fixture()
             def gen(qwe123):
                 return 1
             def test_something(gen):
@@ -2618,7 +2618,7 @@ class TestTestContextVarious:
     def test_newstyle_with_request(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.factory()
+            @pytest.fixture()
             def arg(request):
                 pass
             def test_1(arg):
@@ -2630,7 +2630,7 @@ class TestTestContextVarious:
     def test_setupcontext_no_param(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.factory(params=[1,2])
+            @pytest.fixture(params=[1,2])
             def arg(request):
                 return request.param
 
@@ -2683,7 +2683,7 @@ def test_setup_funcarg_order(testdir):
         @pytest.setup()
         def fix1():
             l.append(1)
-        @pytest.factory()
+        @pytest.fixture()
         def arg1():
             l.append(2)
         def test_hello(arg1):
@@ -2696,10 +2696,10 @@ def test_setup_funcarg_order(testdir):
 def test_request_funcargnames(testdir):
     testdir.makepyfile("""
         import pytest
-        @pytest.factory()
+        @pytest.fixture()
         def arg1():
             pass
-        @pytest.factory()
+        @pytest.fixture()
         def farg(arg1):
             pass
         @pytest.setup()

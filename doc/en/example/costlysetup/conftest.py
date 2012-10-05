@@ -1,7 +1,7 @@
 
 import pytest
 
-@pytest.factory("session")
+@pytest.fixture("session")
 def setup(request):
     setup = CostlySetup()
     request.addfinalizer(setup.finalize)

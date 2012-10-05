@@ -51,7 +51,7 @@ inputs lead to certain outputs.
 
 Concretely, there are three main means of funcarg management:
 
-* a `@pytest.factory`_ marker to define resource factories,
+* a `@pytest.fixture`_ marker to define resource factories,
   their scoping and parametrization.   Factories can themselves 
   receive resources through their function arguments, easing
   the setup of `interdependent resources`_.  Factories can use
@@ -77,9 +77,9 @@ be done with the classical xUnit style approach which encodes resource
 setup statically into the test source code, leading to duplicate and
 hard-to change fixtures.
 
-.. _`@pytest.factory`:
+.. _`@pytest.fixture`:
 
-``@pytest.factory``: Creating parametrized, scoped resources
+``@pytest.fixture``: Creating parametrized, scoped resources
 =====================================================================
 
 Basic funcarg injection example
@@ -91,7 +91,7 @@ and a funcarg::
     # content of ./test_simplefactory.py
     import pytest
 
-    @pytest.factory()
+    @pytest.fixture()
     def myfuncarg():
         return 42
 
@@ -99,7 +99,7 @@ and a funcarg::
         assert myfuncarg == 17
 
 Here, the ``test_function`` needs an object named ``myfuncarg`` and thus
-py.test will discover and call the ``@pytest.factory`` marked ``myfuncarg`` 
+py.test will discover and call the ``@pytest.fixture`` marked ``myfuncarg`` 
 factory function.  Running the tests looks like this::
 
     $ py.test test_simplefactory.py
@@ -168,7 +168,7 @@ funcarg factories starts at test classes, then test modules, then
 Parametrizing test functions
 ==========================================================================
 
-While the `@pytest.factory`_ decorator allows to define parametrization
+While the `@pytest.fixture`_ decorator allows to define parametrization
 of funcarg resources at the factory-level, there are also means to
 define parametrization at test functions directly:
 
@@ -365,18 +365,18 @@ the mechanism was extended and refined:
 
 * previously funcarg factories were specified with a special 
   ``pytest_funcarg__NAME`` prefix instead of using the 
-  ``@pytest.factory`` decorator.
+  ``@pytest.fixture`` decorator.
 
 * Factories received a `request`_ object which managed caching through
   ``request.cached_setup()`` calls and allowed using other funcargs via 
   ``request.getfuncargvalue()`` calls.  These intricate APIs made it hard 
   to do proper parametrization and implement resource caching. The
-  new ``@pytest.factory`` decorator allows to simply declare the scope
+  new ``@pytest.fixture`` decorator allows to simply declare the scope
   and let pytest figure things out for you.
 
 * if you used parametrization and funcarg factories which made use of
   ``request.cached_setup()`` it is recommeneded to invest a few minutes
-  and simplify your funcarg factory code to use the `@pytest.factory`_ 
+  and simplify your funcarg factory code to use the `@pytest.fixture`_ 
   decorator instead.  This will also allow to take advantage of 
   the `automatic per-resource grouping`_ of tests.
 

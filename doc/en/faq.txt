@@ -125,7 +125,7 @@ the ``MYARG`` function argument.
 
 .. note::
 
-    With pytest-2.3 you can use the :ref:`@pytest.factory` decorator
+    With pytest-2.3 you can use the :ref:`@pytest.fixture` decorator
     to mark a function as a funcarg factory.  
 
 .. _`Convention over Configuration`: http://en.wikipedia.org/wiki/Convention_over_Configuration
@@ -146,7 +146,7 @@ is not possible:
   policy - in real-world examples some combinations
   often should not run.
 
-However, with pytest-2.3 you can use the :ref:`@pytest.factory` decorator
+However, with pytest-2.3 you can use the :ref:`@pytest.fixture` decorator
 and specify ``params`` so that all tests depending on the factory-created
 resource will run multiple times with different parameters.
 

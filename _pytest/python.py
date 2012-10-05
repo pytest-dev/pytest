@@ -10,12 +10,12 @@ from py._code.code import TerminalRepr
 import _pytest
 cutdir = py.path.local(_pytest.__file__).dirpath()
 
-class FactoryMarker:
+class FixtureFunctionMarker:
     def __init__(self, scope, params):
         self.scope = scope
         self.params = params
     def __call__(self, function):
-        function._pytestfactory = self
+        function._pytestfixturefunction = self
         return function
 
 class SetupMarker:
@@ -26,18 +26,32 @@ class SetupMarker:
         return function
 
 # XXX a test fails when scope="function" how it should be, investigate
-def factory(scope=None, params=None):
-    """ return a decorator to mark functions as resource factories.
+def fixture(scope=None, params=None):
+    """ return a decorator to mark a fixture factory function.
 
-    :arg scope: the scope for which this resource is shared, one of
+    The name of the fixture function can be referenced in a test context
+    to cause activation ahead of running tests.  Test modules or classes
+    can use the pytest.mark.needsfixtures(fixturename) marker to specify
+    needed fixtures.  Test functions can use fixture names as input arguments
+    in which case the object returned from the fixture function will be
+    injected.
+
+    :arg scope: the scope for which this fixture is shared, one of
                 "function", "class", "module", "session". Defaults to "function".
     :arg params: an optional list of parameters which will cause multiple
-                invocations of tests depending on the resource.
+                invocations of the fixture functions and their dependent
+                tests.
     """
-    return FactoryMarker(scope, params)
+    return FixtureFunctionMarker(scope, params)
 
 def setup(scope="function"):
-    """ return a decorator to mark functions as setup functions.
+    """ return a decorator to mark a function as providing a fixture for
+    a testcontext.  A fixture function is executed for each scope and may
+    receive funcargs which allows it to initialise and provide implicit
+    test state.  A fixture function may receive the "testcontext" object
+    and register a finalizer via "testcontext.addfinalizer(finalizer)"
+    which will be called when the last test in the testcontext has
+    executed.
 
     :arg scope: the scope for which the setup function will be active, one
                 of "function", "class", "module", "session".
@@ -112,7 +126,7 @@ def pytest_sessionstart(session):
 def pytest_namespace():
     raises.Exception = pytest.fail.Exception
     return {
-        'factory': factory,
+        'fixture': fixture,
         'setup': setup,
         'raises' : raises,
         'collect': {
@@ -1377,9 +1391,9 @@ class FuncargManager:
                 continue
             # resource factories either have a pytest_funcarg__ prefix
             # or are "funcarg" marked
-            marker = getattr(obj, "_pytestfactory", None)
+            marker = getattr(obj, "_pytestfixturefunction", None)
             if marker is not None:
-                if not isinstance(marker, FactoryMarker):
+                if not isinstance(marker, FixtureFunctionMarker):
                     # magic globals  with __getattr__
                     # give us something thats wrong for that case
                     continue

@@ -63,9 +63,9 @@ new facilities.
 Direct scoping of funcarg factories
 --------------------------------------------------------
 
-Instead of calling cached_setup(), you can use the :ref:`@pytest.factory <@pytest.factory>` decorator and directly state the scope::
+Instead of calling cached_setup(), you can use the :ref:`@pytest.fixture <@pytest.fixture>` decorator and directly state the scope::
 
-    @pytest.factory(scope="session")
+    @pytest.fixture(scope="session")
     def db(request):
         # factory will only be invoked once per session - 
         db = DataBase()
@@ -87,7 +87,7 @@ or implement a ``pytest_generate_tests`` hook to perform
 parametrization, i.e. calling a test multiple times with different value
 sets.  pytest-2.3 introduces a decorator for use on the factory itself::
 
-    @pytest.factory(params=["mysql", "pg"])
+    @pytest.fixture(params=["mysql", "pg"])
     def db(request):
         ... # use request.param
 
@@ -104,7 +104,7 @@ functions/classes were parametrized via
 
 Of course it's perfectly fine to combine parametrization and scoping::
 
-    @pytest.factory(scope="session", params=["mysql", "pg"])
+    @pytest.fixture(scope="session", params=["mysql", "pg"])
     def db(request):
         if request.param == "mysql":
             db = MySQL()
@@ -125,7 +125,7 @@ When using the ``@factory`` decorator the name of the function
 denotes the name under which the resource can be accessed as a function
 argument::
 
-    @pytest.factory()
+    @pytest.fixture()
     def db(request):
         ...
 
