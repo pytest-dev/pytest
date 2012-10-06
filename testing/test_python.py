@@ -303,6 +303,16 @@ class TestFunction:
         assert f1 == f1_b
         assert not f1 != f1_b
 
+    def test_issue197_parametrize_emptyset(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.parametrize('arg', [])
+            def test_function(arg):
+                pass
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(skipped=1)
+
     def test_function_equality_with_callspec(self, testdir, tmpdir):
         items = testdir.getitems("""
             import pytest

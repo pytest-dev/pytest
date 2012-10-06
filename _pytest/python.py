@@ -95,11 +95,11 @@ def pytest_cmdline_main(config):
 
 def pytest_generate_tests(metafunc):
     try:
-        param = metafunc.function.parametrize
+        markers = metafunc.function.parametrize
     except AttributeError:
         return
-    for p in param:
-        metafunc.parametrize(*p.args, **p.kwargs)
+    for marker in markers:
+        metafunc.parametrize(*marker.args, **marker.kwargs)
 
 def pytest_configure(config):
     config.addinivalue_line("markers",
@@ -190,7 +190,7 @@ def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
         if is_generator(obj):
             return Generator(name, parent=collector)
         else:
-            return collector._genfunctions(name, obj)
+            return list(collector._genfunctions(name, obj))
 
 def is_generator(func):
     try:
@@ -313,16 +313,14 @@ class PyCollector(PyobjMixin, pytest.Collector):
         plugins = self.getplugins() + extra
         gentesthook.pcall(plugins, metafunc=metafunc)
         Function = self._getcustomclass("Function")
-        l = []
         if not metafunc._calls:
-            l.append(Function(name, parent=self))
-        for callspec in metafunc._calls:
-            subname = "%s[%s]" %(name, callspec.id)
-            function = Function(name=subname, parent=self,
-                callspec=callspec, callobj=funcobj,
-                keywords={callspec.id:True})
-            l.append(function)
-        return l
+            yield Function(name, parent=self)
+        else:
+            for callspec in metafunc._calls:
+                subname = "%s[%s]" %(name, callspec.id)
+                yield Function(name=subname, parent=self,
+                               callspec=callspec, callobj=funcobj,
+                               keywords={callspec.id:True})
 
 def transfer_markers(funcobj, cls, mod):
     # XXX this should rather be code in the mark plugin or the mark
@@ -584,6 +582,8 @@ class CallSpec2(object):
             if valtype == "funcargs":
                 self.params[arg] = id
             self._arg2scopenum[arg] = scopenum
+            if val == _notexists:
+                self._emptyparamspecified = True
         self._idlist.append(id)
 
     def setall(self, funcargs, id, param):
@@ -652,6 +652,9 @@ class Metafunc(FuncargnamesCompatAttr):
         if not isinstance(argnames, (tuple, list)):
             argnames = (argnames,)
             argvalues = [(val,) for val in argvalues]
+        if not argvalues:
+            argvalues = [(_notexists,) * len(argnames)]
+
         if scope is None:
             scope = "function"
         scopenum = scopes.index(scope)
@@ -659,7 +662,8 @@ class Metafunc(FuncargnamesCompatAttr):
             #XXX should we also check for the opposite case?
             for arg in argnames:
                 if arg not in self.fixturenames:
-                    raise ValueError("%r has no argument %r" %(self.function, arg))
+                    raise ValueError("%r uses no fixture %r" %(
+                                     self.function, arg))
         valtype = indirect and "params" or "funcargs"
         if not ids:
             idmaker = IDMaker()
@@ -925,6 +929,16 @@ class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
         self.ihook.pytest_pyfunc_call(pyfuncitem=self)
 
     def setup(self):
+        # check if parametrization happend with an empty list
+        try:
+            empty = self.callspec._emptyparamspecified
+        except AttributeError:
+            pass
+        else:
+            fs, lineno = self._getfslineno()
+            pytest.skip("got empty parameter set, function %s at %s:%d" %(
+                self.function.__name__, fs, lineno))
+
         super(Function, self).setup()
         #if hasattr(self, "_request"):
         #    self._request._callsetup()
