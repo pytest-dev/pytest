@@ -26,19 +26,27 @@ def fixture(scope=None, params=None, autoactive=False):
     """ return a decorator to mark a fixture factory function.
 
     The name of the fixture function can be referenced in a test context
-    to cause activation ahead of running tests.  Test modules or classes
-    can use the pytest.mark.needsfixtures(fixturename) marker to specify
-    needed fixtures.  Test functions can use fixture names as input arguments
-    in which case the object returned from the fixture function will be
-    injected.
+    to cause its invocation ahead of running tests.  Test modules or classes
+    can use the pytest.mark.usefixtures(fixturename) marker to specify
+    needed fixtures.  Test functions can also use fixture names as input
+    arguments in which case the fixture instance returned from the fixture
+    function will be injected.
 
     :arg scope: the scope for which this fixture is shared, one of
                 "function", "class", "module", "session". Defaults to "function".
     :arg params: an optional list of parameters which will cause multiple
                 invocations of the fixture functions and their dependent
                 tests.
+
+    :arg autoactive: if True, the fixture func is activated for all tests that
+                can see it.  If False (the default) then an explicit
+                reference is needed to activate the fixture.
     """
-    return FixtureFunctionMarker(scope, params, autoactive=autoactive)
+    if hasattr(scope, "__call__") and params is None and autoactive == False:
+        # direct decoration
+        return FixtureFunctionMarker(None, params, autoactive)(scope)
+    else:
+        return FixtureFunctionMarker(scope, params, autoactive=autoactive)
 
 defaultfuncargprefixmarker = fixture()
 

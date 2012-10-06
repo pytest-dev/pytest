@@ -1701,7 +1701,20 @@ def test_issue117_sessionscopeteardown(testdir):
     ])
 
 
-class TestFixtureFactory:
+class TestFixtureUsages:
+    def test_noargfixturedec(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture
+            def arg1():
+                return 1
+
+            def test_func(arg1):
+                assert arg1 == 1
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
     def test_receives_funcargs(self, testdir):
         testdir.makepyfile("""
             import pytest
