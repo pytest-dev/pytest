@@ -1370,6 +1370,28 @@ class TestMetafuncFunctional:
             "*1 passed*"
         ])
 
+    @pytest.mark.parametrize(("scope", "length"),
+                             [("module", 2), ("function", 4)])
+    def test_parametrize_scope_overrides(self, testdir, scope, length):
+        testdir.makepyfile("""
+            import pytest
+            l = []
+            def pytest_generate_tests(metafunc):
+                if "arg" in metafunc.funcargnames:
+                    metafunc.parametrize("arg", [1,2], indirect=True,
+                                         scope=%r)
+            def pytest_funcarg__arg(request):
+                l.append(request.param)
+                return request.param
+            def test_hello(arg):
+                assert arg in (1,2)
+            def test_world(arg):
+                assert arg in (1,2)
+            def test_checklength():
+                assert len(l) == %d
+        """ % (scope, length))
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=5)
 
 def test_conftest_funcargs_only_available_in_subdir(testdir):
     sub1 = testdir.mkpydir("sub1")

@@ -628,7 +628,7 @@ class Metafunc(FuncargnamesCompatAttr):
         self._arg2scopenum = {}
 
     def parametrize(self, argnames, argvalues, indirect=False, ids=None,
-        scope="function"):
+        scope=None):
         """ Add new invocations to the underlying test function using the list
         of argvalues for the given argnames.  Parametrization is performed
         during the collection phase.  If you need to setup expensive resources
@@ -648,6 +648,11 @@ class Metafunc(FuncargnamesCompatAttr):
         :arg ids: list of string ids each corresponding to the argvalues so
             that they are part of the test id. If no ids are provided they will
             be generated automatically from the argvalues.
+
+        :arg scope: if specified: denotes the scope of the parameters.
+            The scope is used for sorting tests by parameters.  It will
+            also override any fixture-function defined scope, allowing
+            to set a dynamic scope from test context and configuration.
         """
         if not isinstance(argnames, (tuple, list)):
             argnames = (argnames,)
@@ -656,7 +661,7 @@ class Metafunc(FuncargnamesCompatAttr):
             argvalues = [(_notexists,) * len(argnames)]
 
         if scope is None:
-            scope = "function"
+            scope = "subfunction"
         scopenum = scopes.index(scope)
         if not indirect:
             #XXX should we also check for the opposite case?
@@ -893,9 +898,9 @@ class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
                 setattr(self.markers, name, val)
 
         # contstruct a list of all neccessary fixtures for this test function
-        if hasattr(self.markers, "usefixtures"):
+        try:
             usefixtures = list(self.markers.usefixtures.args)
-        else:
+        except AttributeError:
             usefixtures = []
         self.fixturenames = (self.session._fixturemanager.getdefaultfixtures() +
                 usefixtures + self._getfuncargnames())
@@ -938,10 +943,7 @@ class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
             fs, lineno = self._getfslineno()
             pytest.skip("got empty parameter set, function %s at %s:%d" %(
                 self.function.__name__, fs, lineno))
-
         super(Function, self).setup()
-        #if hasattr(self, "_request"):
-        #    self._request._callsetup()
         fillfixtures(self)
 
     def __eq__(self, other):
@@ -1103,7 +1105,6 @@ class FixtureRequest(FuncargnamesCompatAttr):
     def _fillfixtures(self):
         item = self._pyfuncitem
         fixturenames = getattr(item, "fixturenames", self.fixturenames)
-
         for argname in fixturenames:
             if argname not in item.funcargs:
                 item.funcargs[argname] = self.getfuncargvalue(argname)
@@ -1146,7 +1147,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         return val
 
     def getfuncargvalue(self, argname):
-        """ Retrieve a function argument by name for this test
+        """ Retrieve a fixture function argument by name for this test
         function invocation.  This allows one function argument factory
         to call another function argument factory.  If there are two
         funcarg factories for the same test function argument the first
@@ -1181,8 +1182,8 @@ class FixtureRequest(FuncargnamesCompatAttr):
         if fixturedef.active:
             return fixturedef.cached_result
 
-        # prepare request scope and param attributes before
-        # calling into factory
+        # prepare request _currentarg and param attributes before
+        # calling into fixture function
         argname = fixturedef.argname
         node = self._pyfuncitem
         mp = monkeypatch()
@@ -1193,7 +1194,18 @@ class FixtureRequest(FuncargnamesCompatAttr):
             pass
         else:
             mp.setattr(self, 'param', param, raising=False)
+
+        # if a parametrize invocation set a scope it will override
+        # the static scope defined with the fixture function
         scope = fixturedef.scope
+        try:
+            paramscopenum = node.callspec._arg2scopenum[argname]
+        except (KeyError, AttributeError):
+            pass
+        else:
+            if paramscopenum != scopenum_subfunction:
+                scope = scopes[paramscopenum]
+
         if scope is not None:
             __tracebackhide__ = True
             if scopemismatch(self.scope, scope):
@@ -1251,7 +1263,8 @@ class ScopeMismatchError(Exception):
     which has a lower scope (e.g. a Session one calls a function one)
     """
 
-scopes = "session module class function".split()
+scopes = "session module class function subfunction".split()
+scopenum_subfunction = scopes.index("subfunction")
 def scopemismatch(currentscope, newscope):
     return scopes.index(newscope) > scopes.index(currentscope)
 
