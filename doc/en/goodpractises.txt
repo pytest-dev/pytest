@@ -91,9 +91,6 @@ required for calling the test command. You can also pass additional
 arguments to the subprocess-calls such as your test directory or other
 options.
 
-.. _`test discovery`:
-.. _`Python test discovery`:
-
 
 Integration with setuptools/distribute test commands
 ----------------------------------------------------
@@ -129,6 +126,8 @@ Now if you run::
 this will download py.test if needed and then run py.test
 as you would expect it to.
 
+.. _`test discovery`:
+.. _`Python test discovery`:
 
 Conventions for Python test discovery
 -------------------------------------------------

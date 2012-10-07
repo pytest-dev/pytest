@@ -130,9 +130,8 @@ Running it with the report-on-xfail option gives this output::
 
     example $ py.test -rx xfail_demo.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev2
-    plugins: xdist, bugzilla, cache, oejskit, pep8, cov
-    collecting ... collected 6 items
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev19
+    collected 6 items
     
     xfail_demo.py xxxxxx
     ========================= short test summary info ==========================
@@ -148,7 +147,7 @@ Running it with the report-on-xfail option gives this output::
     XFAIL xfail_demo.py::test_hello6
       reason: reason
     
-    ======================== 6 xfailed in 0.04 seconds =========================
+    ======================== 6 xfailed in 0.03 seconds =========================
 
 .. _`evaluation of skipif/xfail conditions`:
 

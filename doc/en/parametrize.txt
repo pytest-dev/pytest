@@ -1,0 +1,188 @@
+
+.. _`test generators`:
+.. _`parametrizing-tests`:
+.. _`parametrized test functions`:
+.. _`parametrize`:
+
+Parametrizing fixtures and test functions
+==========================================================================
+
+While the :ref:`@pytest.fixture` decorator allows to define parametrization
+at the level of fixture functions, there are two more parametrizations:
+
+* `@pytest.mark.parametrize`_ to provide multiple argument/fixture sets 
+  for a particular test function or class.
+
+* `pytest_generate_tests`_ to implement your own custom parametrization 
+  scheme or extensions.
+
+.. _`@pytest.mark.parametrize`:
+
+``@pytest.mark.parametrize``: parametrizing test functions
+---------------------------------------------------------------------
+
+.. regendoc: wipe
+
+.. versionadded:: 2.2
+
+The builtin ``pytest.mark.parametrize`` decorator enables
+parametrization of arguments for a test function.  Here is a typical example
+of a test function that wants check for expected output given a certain input::
+
+    # content of test_expectation.py
+    import pytest
+    @pytest.mark.parametrize(("input", "expected"), [
+        ("3+5", 8),
+        ("2+4", 6),
+        ("6*9", 42),
+    ])
+    def test_eval(input, expected):
+        assert eval(input) == expected
+
+The ``@parametrize`` decorator defines three different argument sets for the 
+two ``(input, output)`` arguments of ``test_eval`` function so the latter
+will be run three times::
+
+    $ py.test -q
+    ..F
+    ================================= FAILURES =================================
+    ____________________________ test_eval[6*9-42] _____________________________
+    
+    input = '6*9', expected = 42
+    
+        @pytest.mark.parametrize(("input", "expected"), [
+            ("3+5", 8),
+            ("2+4", 6),
+            ("6*9", 42),
+        ])
+        def test_eval(input, expected):
+    >       assert eval(input) == expected
+    E       assert 54 == 42
+    E        +  where 54 = eval('6*9')
+    
+    test_expectation.py:8: AssertionError
+
+As expected only one pair of input/output values fails the simple test function.
+As usual you can see the ``input`` and ``output`` values in the traceback.
+
+Note that there are various ways how you can mark groups of functions,
+see :ref:`mark`.
+
+
+.. _`pytest_generate_tests`:
+
+Basic ``pytest_generate_tests`` example
+---------------------------------------------
+
+..  XXX
+
+    > line 598 "Basic ``pytest_generate_tests`` example" - I think this is
+    > not a very basic example! I think it is copied from parametrize.txt
+    > page, where it might make more sense. Here is what I would consider a
+    > basic example.
+    > 
+    > # code
+    > def isSquare(n):
+    >     n = n ** 0.5
+    >     return int(n) == n
+    > 
+    > # test file
+    > def pytest_generate_tests(metafunc):
+    >     squares = [1, 4, 9, 16, 25, 36, 49]
+    >     for n in range(1, 50):
+    >         expected = n in squares
+    >         if metafunc.function.__name__ == 'test_isSquare':
+    >             metafunc.addcall(id=n, funcargs=dict(n=n,
+    >             expected=expected))
+    > 
+    > 
+    > def test_isSquare(n, expected):
+    >     assert isSquare(n) == expected
+
+
+.. XXX
+    consider adding more examples, also mixed (factory-parametrized/test-function-parametrized, see mail from Brianna)
+
+The ``pytest_generate_tests`` hook is typically used if you want
+to go beyond what ``@pytest.mark.parametrize`` offers.  For example,
+let's say we want to execute a test with different computation
+parameters and the parameter range shall be determined by a command
+line argument.  Let's first write a simple (do-nothing) computation test::
+
+    # content of test_compute.py
+
+    def test_compute(param1):
+        assert param1 < 4
+
+Now we add a ``conftest.py`` file containing the addition of a 
+command line option and the generation of tests depending on
+that option::
+
+    # content of conftest.py
+
+    def pytest_addoption(parser):
+        parser.addoption("--all", action="store_true",
+            help="run all combinations")
+
+    def pytest_generate_tests(metafunc):
+        if 'param1' in metafunc.fixturenames:
+            if metafunc.config.option.all:
+                end = 5
+            else:
+                end = 2
+            metafunc.parametrize("param1", range(end))
+
+This means that we only run two tests if no option is passed::
+
+    $ py.test -q test_compute.py
+    ..
+
+And we run five tests if we add the ``--all`` option::
+
+    $ py.test -q --all test_compute.py
+    ....F
+    ================================= FAILURES =================================
+    _____________________________ test_compute[4] ______________________________
+    
+    param1 = 4
+    
+        def test_compute(param1):
+    >       assert param1 < 4
+    E       assert 4 < 4
+    
+    test_compute.py:3: AssertionError
+
+As expected when running the full range of ``param1`` values
+we'll get an error on the last one.
+
+You might want to look at :ref:`more parametrization examples <paramexamples>`.
+
+
+.. _`metafunc object`:
+
+The **metafunc** object
+-------------------------------------------
+
+.. currentmodule:: _pytest.python
+
+metafunc objects are passed to the ``pytest_generate_tests`` hook.
+They help to inspect a testfunction and to generate tests
+according to test configuration or values specified
+in the class or module where a test function is defined:
+
+``metafunc.fixturenames``: set of required function arguments for given function
+
+``metafunc.function``: underlying python test function
+
+``metafunc.cls``: class object where the test function is defined in or None.
+
+``metafunc.module``: the module object where the test function is defined in.
+
+``metafunc.config``: access to command line opts and general config
+
+``metafunc.funcargnames``: alias for ``fixturenames``, for pre-2.3 compatibility
+
+.. automethod:: Metafunc.parametrize
+.. automethod:: Metafunc.addcall(funcargs=None,id=_notexists,param=_notexists)
+
+

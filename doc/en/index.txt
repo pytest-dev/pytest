@@ -1,11 +1,11 @@
 
 
-Welcome to pytest!
+pytest: makes you a better programmer
 =============================================
 
-- **a mature full-featured testing tool**
+- **a mature full-featured Python testing tool**
 
- - runs on Posix/Windows, Python 2.4-3.2, PyPy and Jython-2.5.1
+ - runs on Posix/Windows, Python 2.4-3.3, PyPy and Jython-2.5.1
  - :ref:`comprehensive online <toc>` and `PDF documentation <pytest.pdf>`_
  - continuously `tested on many Python interpreters <http://hudson.testrun.org/view/pytest/job/pytest/>`_
  - used in :ref:`many projects and organisations <projects>`, in test
@@ -25,12 +25,9 @@ Welcome to pytest!
 
 - **supports functional testing and complex test setups**
 
- - (new in 2.3) :ref:`easy test resource management, scoping and
-   parametrization <resources>`
- - (new in 2.3) :ref:`setup functions`.
- - (new in 2.2) :ref:`durations`
- - (much improved in 2.2) :ref:`marking and test selection <mark>`
- - (improved in 2.2) :ref:`parametrized test functions <parametrized test functions>`
+ - (new in 2.3) :ref:`modular parametrizeable fixtures <fixture>`
+ - :ref:`marking and test selection <mark>`
+ - :ref:`parametrized test functions <parametrized test functions>`
  - advanced :ref:`skip and xfail`
  - can :ref:`distribute tests to multiple CPUs <xdistcpu>` through :ref:`xdist plugin <xdist>`
  - can :ref:`continuously re-run failing tests <looponfailing>`

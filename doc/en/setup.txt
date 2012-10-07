@@ -1,12 +1,10 @@
 
-Page has moved to fixture
+setup: is now an "autoactive fixture"
 ========================================================
 
 During development prior to the pytest-2.3 release the name
 ``pytest.setup`` was used but before the release it was renamed
-to :ref:`pytest.fixture` mainly to avoid the misconception that there 
-should be a ``pytest.teardown`` as well. 
+and moved to become part of the general fixture mechanism,
+namely :ref:`autoactive fixtures`
 
-Please refer to :ref:`pytest.fixture` for information on the new
-fixture functions.
 

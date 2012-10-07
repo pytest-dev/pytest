@@ -18,12 +18,11 @@ Basic usage and funcargs:
 - `pycon 2010 tutorial PDF`_ and `tutorial1 repository`_
 
 
-Function arguments:
+Fixtures and Function arguments:
 
-- :ref:`mysetup`
-- `application setup in test functions with funcargs`_
+- :ref:`fixtures`
 - `monkey patching done right`_ (blog post, consult `monkeypatch
-  plugin`_ for actual 1.0 API)
+  plugin`_ for up-to-date API)
 
 Test parametrization:
 

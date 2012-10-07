@@ -1,18 +1,19 @@
 
 .. _`funcargcompare`:
 
-=============================================================
 pytest-2.3: reasoning for the new funcarg and setup functions
 =============================================================
 
 **Target audience**: Reading this document requires basic knowledge of 
 python testing, xUnit setup methods and the (previous) basic pytest 
 funcarg mechanism, see http://pytest.org/2.2.4/funcargs.html 
+If you are new to pytest, then you can simply ignore this
+section and read the other sections.
 
 .. currentmodule:: _pytest
 
-Shortcomings of the previous pytest_funcarg__ mechanism
-===========================================================
+Shortcomings of the previous ``pytest_funcarg__`` mechanism
+--------------------------------------------------------------
 
 The pre pytest-2.3 funcarg mechanism calls a factory each time a
 funcarg for a test function is required.  If a factory wants to
@@ -58,12 +59,15 @@ There are several limitations and difficulties with this approach:
    funcarg resource if it isn't stated in the test function signature.
 
 All of these limitations are addressed with pytest-2.3 and its
-new facilities.
+improved :ref:`fixture mechanism <fixture>`.
 
-Direct scoping of funcarg factories
+
+Direct scoping of fixture/funcarg factories
 --------------------------------------------------------
 
-Instead of calling cached_setup(), you can use the :ref:`@pytest.fixture <@pytest.fixture>` decorator and directly state the scope::
+Instead of calling cached_setup() with a cache scope, you can use the
+:ref:`@pytest.fixture <pytest.fixture>` decorator and directly state
+the scope::
 
     @pytest.fixture(scope="session")
     def db(request):
@@ -142,7 +146,7 @@ But it is then not possible to define scoping and parametrization.
 It is thus recommended to use the factory decorator.
 
 
-solving per-session setup / the new @setup marker
+solving per-session setup / autoactive fixtures
 --------------------------------------------------------------
 
 pytest for a long time offered a pytest_configure and a pytest_sessionstart
@@ -169,17 +173,44 @@ during test execution and parametrization happens at collection time.
 
 It follows that pytest_configure/session/runtest_setup are often not
 appropriate for implementing common fixture needs.  Therefore, 
-pytest-2.3 introduces a new :ref:`@pytest.setup <setup>` marker 
-for setup functions and it accepts an optional "scope" parameter.  
+pytest-2.3 introduces :ref:`autoactive fixtures` which fully
+integrate with the generic :ref:`fixture mechanism <fixture>` 
+and obsolete many prior uses of pytest hooks.
 
-See :ref:`setup` for more explanation and examples.
-
-funcarg and setup discovery now happens at collection time
+funcargs/fixture discovery now happens at collection time
 ---------------------------------------------------------------------
 
-pytest-2.3 takes care to discover funcarg factories and @setup methods
+pytest-2.3 takes care to discover fixture/funcarg factories
 at collection time.  This is more efficient especially for large test suites. 
 Moreover, a call to "py.test --collectonly" should be able to in the future
 show a lot of setup-information and thus presents a nice method to get an
-overview of resource management in your project.
+overview of fixture management in your project.
+
+.. _`compatibility notes`:
+
+.. _`funcargscompat`:
+
+Conclusion and compatibility notes
+---------------------------------------------------------
+
+**Fixtures** were originally introduced to pytest-2.0.  In pytest-2.3 
+the mechanism was extended and refined:
+
+* previously funcarg factories were specified with a special 
+  ``pytest_funcarg__NAME`` prefix instead of using the 
+  ``@pytest.fixture`` decorator.
+
+* Factories received a :ref:`request <request>` object which managed caching through
+  ``request.cached_setup()`` calls and allowed using other funcargs via 
+  ``request.getfuncargvalue()`` calls.  These intricate APIs made it hard 
+  to do proper parametrization and implement resource caching. The
+  new ``@pytest.fixture`` decorator allows to simply declare the scope
+  and let pytest figure things out for you.
+
+* if you used parametrization and funcarg factories which made use of
+  ``request.cached_setup()`` it is recommeneded to invest a few minutes
+  and simplify your fixture function code to use the :ref:`@pytest.fixture`
+  decorator instead.  This will also allow to take advantage of 
+  the automatic per-resource grouping of tests.
+
 

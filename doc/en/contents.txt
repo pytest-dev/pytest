@@ -17,12 +17,15 @@ Full pytest documentation
    plugins
    talks
    develop
+   funcarg_compare.txt
    announce/index
 
 .. toctree::
    :hidden:
 
    changelog.txt
-   resources
+   funcargs
    example/resources_attic
+   setup.txt
+   example/remoteinterp.txt
 

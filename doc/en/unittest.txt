@@ -1,7 +1,7 @@
 
 .. _`unittest.TestCase`:
 
-Support for unittest.TestCase
+Support for unittest.TestCase / Integration of fixtures
 =====================================================================
 
 py.test has limited support for running Python `unittest.py style`_ tests.
@@ -24,9 +24,8 @@ Running it yields::
 
     $ py.test test_unittest.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev12
-    plugins: xdist, bugzilla, cache, oejskit, cli, timeout, pep8, cov
-    collecting ... collected 1 items
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev19
+    collected 1 items
     
     test_unittest.py F
     
@@ -43,20 +42,20 @@ Running it yields::
     test_unittest.py:8: AssertionError
     ----------------------------- Captured stdout ------------------------------
     hello
-    ========================= 1 failed in 0.03 seconds =========================
+    ========================= 1 failed in 0.01 seconds =========================
 
 .. _`unittest.py style`: http://docs.python.org/library/unittest.html
 
-Moreover, you can use the new :ref:`@pytest.setup functions <@pytest.setup>` 
-functions and make use of pytest's unique :ref:`funcarg mechanism` in your
-test suite::
+Moreover, you can use pytest's new :ref:`autoactive fixtures` 
+functions, thereby connecting pytest's :ref:`fixture mechanism <fixture>`
+with a setup/teardown style::
 
     # content of test_unittest_funcargs.py
     import pytest
     import unittest
 
     class MyTest(unittest.TestCase):
-        @pytest.setup()
+        @pytest.fixture(autoactive=True)
         def chdir(self, tmpdir):
             tmpdir.chdir() # change to pytest-provided temporary directory
             tmpdir.join("samplefile.ini").write("# testdata")
@@ -70,41 +69,66 @@ function took care to prepare a directory with some test data
 which the unittest-testcase method can now use::
 
     $ py.test -q test_unittest_funcargs.py
-    collecting ... collected 1 items
     .
-    1 passed in 0.28 seconds
 
 If you want to make a database attribute available on unittest.TestCases
-instances, based on a marker, you can do it using :ref:`pytest.mark`` and
-:ref:`setup functions`::
+instances, you can do it using :ref:`usefixtures` and a simple 
+:ref:`fixture function`::
 
     # content of test_unittest_marked_db.py
     import pytest
     import unittest
 
-    @pytest.fixture()
-    def db():
+    @pytest.fixture
+    def db(request):
         class DummyDB:
-            x = 1
-        return DummyDB()
-
-    @pytest.setup()
-    def stick_db_to_self(request, db):
-        if hasattr(request.node.markers, "needsdb"):
+            entries = []
+        db = DummyDB()
+        if request.instance is not None:
             request.instance.db = db
+        return db
 
+    @pytest.mark.usefixtures("db")
     class MyTest(unittest.TestCase):
-        def test_method(self):
-            assert not hasattr(self, "db")
+        def test_append(self):
+            self.db.entries.append(1)
 
-        @pytest.mark.needsdb
         def test_method2(self):
-            assert self.db.x == 1
+            # check we have a fresh instance
+            assert len(self.db.entries) == 0
 
-Running it passes both tests, one of which will see a ``db`` attribute
-because of the according ``needsdb`` marker::
+Running it passes both tests::
 
     $ py.test -q test_unittest_marked_db.py
-    collecting ... collected 2 items
     ..
-    2 passed in 0.03 seconds
+
+If you rather want to provide a class-cached "db" attribute, you 
+can write a slightly different fixture using a ``scope`` parameter
+for the fixture decorator ::
+
+    # content of test_unittest_class_db.py
+    import pytest
+    import unittest
+
+    @pytest.fixture(scope="class")
+    def db_class(request):
+        class DummyDB:
+            entries = []
+        db = DummyDB()
+        if request.cls is not None:
+            request.cls.db = db
+        return db
+
+    @pytest.mark.usefixtures("db_class")
+    class MyTest(unittest.TestCase):
+        def test_append(self):
+            self.db.entries.append(1)
+
+        def test_method2(self):
+            # check we DONT have a fresh instance
+            assert len(self.db.entries) == 1
+
+Running it again passes both tests::
+
+    $ py.test -q test_unittest_class_db.py
+    ..

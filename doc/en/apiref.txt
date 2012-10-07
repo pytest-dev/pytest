@@ -10,16 +10,15 @@ py.test reference documentation
    builtin.txt
    customize.txt
    assert.txt
-   funcargs.txt
-   funcarg_compare.txt
-   setup.txt
+   fixture.txt
+   parametrize.txt
    xunit_setup.txt
    capture.txt
    monkeypatch.txt
    xdist.txt
    tmpdir.txt
-   skipping.txt
    mark.txt
+   skipping.txt
    recwarn.txt
    unittest.txt
    nose.txt

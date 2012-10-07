@@ -17,7 +17,8 @@ to get an overview on the globally available helpers.
 .. automodule:: pytest
     :members:
 
-.. _builtinresources:
+.. _builtinfixtures:
+.. _builtinfuncargs:
 
 Builtin resources / function arguments
 -----------------------------------------------------
@@ -27,11 +28,8 @@ You can ask for available builtin or project-custom
 
     $ py.test --fixtures
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev2
-    plugins: xdist, bugzilla, cache, oejskit, pep8, cov
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev19
     collected 0 items
-    pytestconfig
-        the pytest config object with access to command line opts.
     capsys
         enables capturing of writes to sys.stdout/sys.stderr and makes
         captured output available via ``capsys.readouterr()`` method calls
@@ -76,7 +74,5 @@ You can ask for available builtin or project-custom
         See http://docs.python.org/library/warnings.html for information
         on warning categories.
         
-    cov
-        A pytest funcarg that provides access to the underlying coverage object.
     
-    =============================  in 0.01 seconds =============================
+    =============================  in 0.00 seconds =============================

@@ -21,22 +21,23 @@ class FixtureFunctionMarker:
         return function
 
 
-# XXX a test fails when scope="function" how it should be, investigate
-def fixture(scope=None, params=None, autoactive=False):
-    """ return a decorator to mark a fixture factory function.
+def fixture(scope="function", params=None, autoactive=False):
+    """ (return a) decorator to mark a fixture factory function.
 
-    The name of the fixture function can be referenced in a test context
-    to cause its invocation ahead of running tests.  Test modules or classes
-    can use the pytest.mark.usefixtures(fixturename) marker to specify
-    needed fixtures.  Test functions can also use fixture names as input
+    This decorator can be used (directly or with parameters) to define
+    a fixture function.  The name of the fixture function can later be
+    referenced to cause its invocation ahead of running tests: test
+    modules or classes can use the pytest.mark.usefixtures(fixturename)
+    marker and test functions can directly use fixture names as input
     arguments in which case the fixture instance returned from the fixture
     function will be injected.
 
     :arg scope: the scope for which this fixture is shared, one of
-                "function", "class", "module", "session". Defaults to "function".
+                "function" (default), "class", "module", "session".
+
     :arg params: an optional list of parameters which will cause multiple
-                invocations of the fixture functions and their dependent
-                tests.
+                invocations of the fixture function and all of the tests
+                using it.
 
     :arg autoactive: if True, the fixture func is activated for all tests that
                 can see it.  If False (the default) then an explicit
@@ -992,7 +993,7 @@ def scopeproperty(name=None, doc=None):
 
 
 class FixtureRequest(FuncargnamesCompatAttr):
-    """ A request for fixtures from a test or setup function.
+    """ A request for fixtures from a test or fixture function.
 
     A request object gives access to attributes of the requesting
     test context.  It has an optional ``param`` attribute in case
@@ -1019,7 +1020,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
 
     @property
     def node(self):
-        """ underlying collection node (depends on request scope)"""
+        """ underlying collection node (depends on current request scope)"""
         return self._getscopeitem(self.scope)
 
     def _getfixturedeflist(self, argname):
@@ -1227,12 +1228,13 @@ class FixtureRequest(FuncargnamesCompatAttr):
             mp.setattr(self, "scope", scope)
 
         # prepare finalization according to scope
+        # (XXX analyse exact finalizing mechanics / cleanup)
         self.session._setupstate.addfinalizer(fixturedef.finish, self.node)
         self._fixturemanager.addargfinalizer(fixturedef.finish, argname)
         for subargname in fixturedef.fixturenames: # XXX all deps?
             self._fixturemanager.addargfinalizer(fixturedef.finish, subargname)
         mp.setattr(self, "addfinalizer", fixturedef.addfinalizer)
-        # finally perform the factory call
+        # finally perform the fixture call
         val = fixturedef.execute(request=self)
         mp.undo()
         return val

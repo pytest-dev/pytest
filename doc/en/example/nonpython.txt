@@ -27,18 +27,15 @@ now execute the test specification::
 
     nonpython $ py.test test_simple.yml
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev2
-    plugins: xdist, bugzilla, cache, oejskit, pep8, cov
-    collecting ... collected 2 items
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev19
+    collected 0 items / 1 errors
     
-    test_simple.yml .F
-    
-    ================================= FAILURES =================================
-    ______________________________ usecase: hello ______________________________
-    usecase execution failed
-       spec failed: 'some': 'other'
-       no further details known at this point.
-    ==================== 1 failed, 1 passed in 0.11 seconds ====================
+    ================================== ERRORS ==================================
+    _____________________ ERROR collecting test_simple.yml _____________________
+    conftest.py:11: in collect
+    >       import yaml # we need a yaml parser, e.g. PyYAML
+    E       ImportError: No module named yaml
+    ========================= 1 error in 0.00 seconds ==========================
 
 You get one dot for the passing ``sub1: sub1`` check and one failure.
 Obviously in the above ``conftest.py`` you'll want to implement a more
@@ -57,31 +54,27 @@ consulted when reporting in ``verbose`` mode::
 
     nonpython $ py.test -v
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev2 -- /home/hpk/venv/1/bin/python
-    cachedir: /home/hpk/p/pytest/doc/en/.cache
-    plugins: xdist, bugzilla, cache, oejskit, pep8, cov
-    collecting ... collected 2 items
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev19 -- /home/hpk/p/pytest/.tox/regen/bin/python
+    collecting ... collected 0 items / 1 errors
     
-    test_simple.yml:1: usecase: ok PASSED
-    test_simple.yml:1: usecase: hello FAILED
-    
-    ================================= FAILURES =================================
-    ______________________________ usecase: hello ______________________________
-    usecase execution failed
-       spec failed: 'some': 'other'
-       no further details known at this point.
-    ==================== 1 failed, 1 passed in 0.04 seconds ====================
+    ================================== ERRORS ==================================
+    _____________________ ERROR collecting test_simple.yml _____________________
+    conftest.py:11: in collect
+    >       import yaml # we need a yaml parser, e.g. PyYAML
+    E       ImportError: No module named yaml
+    ========================= 1 error in 0.01 seconds ==========================
 
 While developing your custom test collection and execution it's also
 interesting to just look at the collection tree::
 
     nonpython $ py.test --collectonly
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev2
-    plugins: xdist, bugzilla, cache, oejskit, pep8, cov
-    collecting ... collected 2 items
-    <YamlFile 'test_simple.yml'>
-      <YamlItem 'ok'>
-      <YamlItem 'hello'>
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev19
+    collected 0 items / 1 errors
     
-    =============================  in 0.04 seconds =============================
+    ================================== ERRORS ==================================
+    _____________________ ERROR collecting test_simple.yml _____________________
+    conftest.py:11: in collect
+    >       import yaml # we need a yaml parser, e.g. PyYAML
+    E       ImportError: No module named yaml
+    ========================= 1 error in 0.01 seconds ==========================

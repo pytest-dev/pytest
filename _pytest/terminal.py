@@ -209,7 +209,7 @@ class TerminalReporter:
                 self.currentfspath = -2
 
     def pytest_collection(self):
-        if not self.hasmarkup:
+        if not self.hasmarkup and self.config.option.verbose >=1:
             self.write("collecting ... ", bold=True)
 
     def pytest_collectreport(self, report):
@@ -224,6 +224,9 @@ class TerminalReporter:
             self.report_collect()
 
     def report_collect(self, final=False):
+        if self.config.option.verbose < 0:
+            return
+
         errors = len(self.stats.get('error', []))
         skipped = len(self.stats.get('skipped', []))
         if final:
@@ -455,8 +458,8 @@ class TerminalReporter:
         msg = "%s in %.2f seconds" %(line, session_duration)
         if self.verbosity >= 0:
             self.write_sep("=", msg, bold=True)
-        else:
-            self.write_line(msg, bold=True)
+        #else:
+        #    self.write_line(msg, bold=True)
 
     def summary_deselected(self):
         if 'deselected' in self.stats:

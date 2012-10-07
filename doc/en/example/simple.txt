@@ -22,20 +22,22 @@ Here is a basic pattern how to achieve this::
 
 
 For this to work we need to add a command line option and
-provide the ``cmdopt`` through a :ref:`function argument <funcarg>` factory::
+provide the ``cmdopt`` through a :ref:`fixture function <fixture function>`::
 
     # content of conftest.py
+    import pytest
+
     def pytest_addoption(parser):
         parser.addoption("--cmdopt", action="store", default="type1",
             help="my option: type1 or type2")
 
-    def pytest_funcarg__cmdopt(request):
+    @pytest.fixture
+    def cmdopt(request):
         return request.config.option.cmdopt
 
-Let's run this without supplying our new command line option::
+Let's run this without supplying our new option::
 
     $ py.test -q test_sample.py
-    collecting ... collected 1 items
     F
     ================================= FAILURES =================================
     _______________________________ test_answer ________________________________
@@ -53,12 +55,10 @@ Let's run this without supplying our new command line option::
     test_sample.py:6: AssertionError
     ----------------------------- Captured stdout ------------------------------
     first
-    1 failed in 0.01 seconds
 
 And now with supplying a command line option::
 
     $ py.test -q --cmdopt=type2
-    collecting ... collected 1 items
     F
     ================================= FAILURES =================================
     _______________________________ test_answer ________________________________
@@ -76,14 +76,11 @@ And now with supplying a command line option::
     test_sample.py:6: AssertionError
     ----------------------------- Captured stdout ------------------------------
     second
-    1 failed in 0.01 seconds
 
-Ok, this completes the basic pattern.  However, one often rather
-wants to process command line options outside of the test and
-rather pass in different or more complex objects.  See the
-next example or refer to :ref:`mysetup` for more information
-on real-life examples.
-
+You can see that the command line option arrived in our test.  This
+completes the basic pattern.  However, one often rather wants to process
+command line options outside of the test and rather pass in different or
+more complex objects.
 
 Dynamically adding command line options
 --------------------------------------------------------------
@@ -109,13 +106,10 @@ directory with the above conftest.py::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
-    gw0 I / gw1 I / gw2 I / gw3 I
-    gw0 [0] / gw1 [0] / gw2 [0] / gw3 [0]
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev19
+    collected 0 items
     
-    scheduling tests via LoadScheduling
-    
-    =============================  in 0.52 seconds =============================
+    =============================  in 0.00 seconds =============================
 
 .. _`excontrolskip`:
 
@@ -156,12 +150,12 @@ and when running it will see a skipped "slow" test::
 
     $ py.test -rs    # "-rs" means report details on the little 's'
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
-    collecting ... collected 2 items
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev19
+    collected 2 items
     
     test_module.py .s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-225/conftest.py:9: need --runslow option to run
+    SKIP [1] /tmp/doc-exec-264/conftest.py:9: need --runslow option to run
     
     =================== 1 passed, 1 skipped in 0.01 seconds ====================
 
@@ -169,8 +163,8 @@ Or run it including the ``slow`` marked test::
 
     $ py.test --runslow
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
-    collecting ... collected 2 items
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev19
+    collected 2 items
     
     test_module.py ..
     
@@ -203,7 +197,6 @@ unless the ``--fulltrace`` command line option is specified.
 Let's run our little function::
 
     $ py.test -q test_checkconfig.py
-    collecting ... collected 1 items
     F
     ================================= FAILURES =================================
     ______________________________ test_something ______________________________
@@ -213,7 +206,6 @@ Let's run our little function::
     E       Failed: not configured: 42
     
     test_checkconfig.py:8: Failed
-    1 failed in 0.01 seconds
 
 Detect if running from within a py.test run
 --------------------------------------------------------------
@@ -261,9 +253,9 @@ which will add the string to the test header accordingly::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev19
     project deps: mylib-1.1
-    collecting ... collected 0 items
+    collected 0 items
     
     =============================  in 0.00 seconds =============================
 
@@ -284,7 +276,7 @@ which will add info only when run with "--v"::
 
     $ py.test -v
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.1 -- pytest-2.2.4 -- /home/hpk/venv/0/bin/python
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev19 -- /home/hpk/p/pytest/.tox/regen/bin/python
     info1: did you know that ...
     did you?
     collecting ... collected 0 items
@@ -295,8 +287,8 @@ and nothing when run plainly::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
-    collecting ... collected 0 items
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev19
+    collected 0 items
     
     =============================  in 0.00 seconds =============================
 
@@ -327,13 +319,13 @@ Now we can profile which test functions execute the slowest::
 
     $ py.test --durations=3
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.1 -- pytest-2.2.4
-    collecting ... collected 3 items
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev19
+    collected 3 items
     
     test_some_are_slow.py ...
     
     ========================= slowest 3 test durations =========================
     0.20s call     test_some_are_slow.py::test_funcslow2
     0.10s call     test_some_are_slow.py::test_funcslow1
-    0.00s setup    test_some_are_slow.py::test_funcslow2
+    0.00s call     test_some_are_slow.py::test_funcfast
     ========================= 3 passed in 0.31 seconds =========================

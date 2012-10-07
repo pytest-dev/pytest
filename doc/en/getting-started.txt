@@ -1,7 +1,7 @@
 Installation and Getting Started
 ===================================
 
-**Pythons**: Python 2.4-3.2, Jython, PyPy
+**Pythons**: Python 2.4-3.3, Jython, PyPy
 
 **Platforms**: Unix/Posix and Windows
 
@@ -22,14 +22,7 @@ Installation options::
 To check your installation has installed the correct version::
 
     $ py.test --version
-    This is py.test version 2.3.0.dev2, imported from /home/hpk/p/pytest/pytest.pyc
-    setuptools registered plugins:
-      pytest-xdist-1.8 at /home/hpk/p/pytest-xdist/xdist/plugin.pyc
-      pytest-bugzilla-0.1 at /home/hpk/tmp/eanxgeek/pytest_bugzilla.pyc
-      pytest-cache-0.9 at /home/hpk/p/pytest-cache/pytest_cache.pyc
-      oejskit-0.9.0 at /home/hpk/p/js-infrastructure/oejskit/pytest_jstests.pyc
-      pytest-pep8-1.0.1 at /home/hpk/venv/1/local/lib/python2.7/site-packages/pytest_pep8.pyc
-      pytest-cov-1.6 at /home/hpk/venv/1/local/lib/python2.7/site-packages/pytest_cov.pyc
+    This is py.test version 2.3.0.dev19, imported from /home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/pytest.pyc
 
 If you get an error checkout :ref:`installation issues`.
 
@@ -51,9 +44,8 @@ That's it. You can execute the test function now::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev2
-    plugins: xdist, bugzilla, cache, oejskit, pep8, cov
-    collecting ... collected 1 items
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev19
+    collected 1 items
     
     test_sample.py F
     
@@ -66,7 +58,7 @@ That's it. You can execute the test function now::
     E        +  where 4 = func(3)
     
     test_sample.py:5: AssertionError
-    ========================= 1 failed in 0.02 seconds =========================
+    ========================= 1 failed in 0.01 seconds =========================
 
 py.test found the ``test_answer`` function by following :ref:`standard test discovery rules <test discovery>`, basically detecting the ``test_`` prefixes.  We got a failure report because our little ``func(3)`` call did not return ``5``.
 
@@ -99,9 +91,7 @@ use the ``raises`` helper::
 Running it with, this time in "quiet" reporting mode::
 
     $ py.test -q test_sysexit.py
-    collecting ... collected 1 items
     .
-    1 passed in 0.02 seconds
 
 .. todo:: For further ways to assert exceptions see the `raises`
 
@@ -127,12 +117,11 @@ There is no need to subclass anything.  We can simply
 run the module by passing its filename::
 
     $ py.test -q test_class.py
-    collecting ... collected 2 items
     .F
     ================================= FAILURES =================================
     ____________________________ TestClass.test_two ____________________________
     
-    self = <test_class.TestClass instance at 0x2343830>
+    self = <test_class.TestClass instance at 0x1ce8758>
     
         def test_two(self):
             x = "hello"
@@ -140,7 +129,6 @@ run the module by passing its filename::
     E       assert hasattr('hello', 'check')
     
     test_class.py:8: AssertionError
-    1 failed, 1 passed in 0.02 seconds
 
 The first test passed, the second failed. Again we can easily see
 the intermediate values used in the assertion, helping us to
@@ -150,9 +138,9 @@ Going functional: requesting a unique temporary directory
 --------------------------------------------------------------
 
 For functional tests one often needs to create some files
-and pass them to application objects.  py.test provides
-the versatile :ref:`funcarg mechanism` which allows to request
-arbitrary resources, for example a unique temporary directory::
+and pass them to application objects.  pytest provides
+:ref:`builtinfixtures` which allow to request arbitrary 
+resources, for example a unique temporary directory::
 
     # content of test_tmpdir.py
     def test_needsfiles(tmpdir):
@@ -160,16 +148,15 @@ arbitrary resources, for example a unique temporary directory::
         assert 0
 
 We list the name ``tmpdir`` in the test function signature and
-py.test will lookup and call a factory to create the resource
+py.test will lookup and call a fixture factory to create the resource
 before performing the test function call.  Let's just run it::
 
     $ py.test -q test_tmpdir.py
-    collecting ... collected 1 items
     F
     ================================= FAILURES =================================
     _____________________________ test_needsfiles ______________________________
     
-    tmpdir = local('/home/hpk/tmp/pytest-2885/test_needsfiles0')
+    tmpdir = local('/tmp/pytest-168/test_needsfiles0')
     
         def test_needsfiles(tmpdir):
             print tmpdir
@@ -178,15 +165,14 @@ before performing the test function call.  Let's just run it::
     
     test_tmpdir.py:3: AssertionError
     ----------------------------- Captured stdout ------------------------------
-    /home/hpk/tmp/pytest-2885/test_needsfiles0
-    1 failed in 0.22 seconds
+    /tmp/pytest-168/test_needsfiles0
 
 Before the test runs, a unique-per-test-invocation temporary directory
 was created.  More info at :ref:`tmpdir handling`.
 
-You can find out what kind of builtin :ref:`funcargs` exist by typing::
+You can find out what kind of builtin :ref:`fixtures` exist by typing::
 
-    py.test --fixtures   # shows builtin and custom function arguments
+    py.test --fixtures   # shows builtin and custom fixtures
 
 Where to go next
 -------------------------------------

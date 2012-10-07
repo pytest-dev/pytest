@@ -1,16 +1,17 @@
 
 .. _`classic xunit`:
+.. _xunitsetup:
 
 classic xunit-style setup
 ========================================
 
 .. note:: 
 
-    This section describes the old way how you can implement setup and
+    This section describes the classic way how you can implement setup and
     teardown on a per-module/class/function basis.  It remains fully
-    supported but it is recommended to rather use :ref:`fixture functions
-    <fixture>` or :ref:`funcargs <resources>` for implementing your
-    needs to prepare and fix the test state for your tests.
+    supported but it is recommended to rather use the more flexible,
+    more modular and more scalable :ref:`fixture functions
+    <fixture>` for implementing for fixing test state for your tests.
 
 Module level setup/teardown
 --------------------------------------

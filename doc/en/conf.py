@@ -17,7 +17,7 @@
 #
 # The full version, including alpha/beta/rc tags.
 # The short X.Y version.
-version = release = "2.3.0.dev18"
+version = release = "2.3.0.dev19"
 
 import sys, os
 
@@ -70,6 +70,7 @@ copyright = u'2011, holger krekel et alii'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 exclude_patterns = ['links.inc', '_build', 'naming20.txt', 'test/*',
+    "old_*",
     'example/attic.txt',
     ]
 
@@ -270,7 +271,7 @@ epub_copyright = u'2011, holger krekel et alii'
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'python': ('http://docs.python.org/', None),
-                       'lib': ("http://docs.python.org/library/", None),
+#                       'lib': ("http://docs.python.org/2.7library/", None),
                     }
 
 

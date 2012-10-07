@@ -1,0 +1,198 @@
+
+.. highlightlang:: python
+
+.. _myapp:
+
+Building an SSH connecting Application fixture
+==========================================================
+
+The goal of this tutorial-example is to show how you can put efficient
+test support and fixture code in one place, allowing test modules and 
+test functions to stay ignorant of importing, configuration or 
+setup/teardown details.
+
+The tutorial implements a simple ``RemoteInterpreter`` object that 
+allows evaluation of python expressions.  We are going to use
+the `execnet <http://codespeak.net/execnet>`_ package for the 
+underlying cross-python bridge functionality.
+
+
+Step 1: Implementing a first test
+--------------------------------------------------------------
+
+Let's write a simple test function using a not yet defined ``interp`` fixture::
+
+    # content of test_remoteinterpreter.py
+    
+    def test_eval_simple(interp):
+        assert interp.eval("6*9") == 42
+    
+The test function needs an argument named `interp` and therefore pytest will
+look for a :ref:`fixture function` that matches this name.  We'll define it 
+in a :ref:`local plugin <localplugin>` to make it available also to other
+test modules::
+
+    # content of conftest.py
+   
+    from remoteinterpreter import RemoteInterpreter
+
+    @pytest.fixture
+    def interp(request):
+        import execnet
+        gw = execnet.makegateway()
+        return RemoteInterpreter(gw)
+        
+To run the example we furthermore need to implement a RemoteInterpreter 
+object which working with the injected execnet-gateway connection::
+
+    # content of remoteintepreter.py
+    
+    class RemoteInterpreter:
+        def __init__(self, gateway):
+            self.gateway = gateway
+
+        def eval(self, expression):
+            # execnet open a "gateway" to the remote process 
+            # which enables to remotely execute code and communicate
+            # to and fro via channels
+            ch = self.gateway.remote_exec("channel.send(%s)" % expression)
+            return ch.receive()
+
+That's it, we can now run the test::
+
+    $ py.test test_remoteinterpreter.py
+    Traceback (most recent call last):
+      File "/home/hpk/p/pytest/.tox/regen/bin/py.test", line 9, in <module>
+        load_entry_point('pytest==2.3.0.dev19', 'console_scripts', 'py.test')()
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/core.py", line 469, in main
+        config = _prepareconfig(args, plugins)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/core.py", line 463, in _prepareconfig
+        pluginmanager=_pluginmanager, args=args)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/core.py", line 422, in __call__
+        return self._docall(methods, kwargs)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/core.py", line 433, in _docall
+        res = mc.execute()
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/core.py", line 351, in execute
+        res = method(**kwargs)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/helpconfig.py", line 25, in pytest_cmdline_parse
+        config = __multicall__.execute()
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/core.py", line 351, in execute
+        res = method(**kwargs)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/config.py", line 10, in pytest_cmdline_parse
+        config.parse(args)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/config.py", line 344, in parse
+        self._preparse(args)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/config.py", line 322, in _preparse
+        self._setinitialconftest(args)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/config.py", line 301, in _setinitialconftest
+        self._conftest.setinitial(args)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/config.py", line 160, in setinitial
+        self._try_load_conftest(anchor)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/config.py", line 166, in _try_load_conftest
+        self._path2confmods[None] = self.getconftestmodules(anchor)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/config.py", line 190, in getconftestmodules
+        clist[:0] = self.getconftestmodules(dp)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/config.py", line 189, in getconftestmodules
+        clist.append(self.importconftest(conftestpath))
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/config.py", line 218, in importconftest
+        self._conftestpath2mod[conftestpath] = mod = conftestpath.pyimport()
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/py/_path/local.py", line 532, in pyimport
+        __import__(modname)
+      File "/tmp/doc-exec-261/conftest.py", line 2, in <module>
+        from remoteinterpreter import RemoteInterpreter
+    ImportError: No module named remoteinterpreter
+
+.. _`tut-cmdlineoption`:
+
+Step 2: Adding command line configuration
+-----------------------------------------------------------
+
+To add a command line option we update the ``conftest.py`` of
+the previous example and add a command line option which
+is passed on to the MyApp object::
+
+    # content of ./conftest.py
+    import pytest
+    from myapp import MyApp
+
+    def pytest_addoption(parser):  # pytest hook called during initialisation
+        parser.addoption("--ssh", action="store", default=None,
+            help="specify ssh host to run tests with")
+
+    @pytest.fixture
+    def mysetup(request): # "mysetup" factory function
+        return MySetup(request.config)
+
+    class MySetup:
+        def __init__(self, config):
+            self.config = config
+            self.app = MyApp()
+
+        def getsshconnection(self):
+            import execnet
+            host = self.config.option.ssh
+            if host is None:
+                pytest.skip("specify ssh host with --ssh")
+            return execnet.SshGateway(host)
+
+
+Now any test function can use the ``mysetup.getsshconnection()`` method
+like this::
+
+    # content of test_ssh.py
+    class TestClass:
+        def test_function(self, mysetup):
+            conn = mysetup.getsshconnection()
+            # work with conn
+
+Running it yields::
+
+    $ py.test -q test_ssh.py -rs
+    Traceback (most recent call last):
+      File "/home/hpk/p/pytest/.tox/regen/bin/py.test", line 9, in <module>
+        load_entry_point('pytest==2.3.0.dev19', 'console_scripts', 'py.test')()
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/core.py", line 469, in main
+        config = _prepareconfig(args, plugins)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/core.py", line 463, in _prepareconfig
+        pluginmanager=_pluginmanager, args=args)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/core.py", line 422, in __call__
+        return self._docall(methods, kwargs)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/core.py", line 433, in _docall
+        res = mc.execute()
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/core.py", line 351, in execute
+        res = method(**kwargs)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/helpconfig.py", line 25, in pytest_cmdline_parse
+        config = __multicall__.execute()
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/core.py", line 351, in execute
+        res = method(**kwargs)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/config.py", line 10, in pytest_cmdline_parse
+        config.parse(args)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/config.py", line 344, in parse
+        self._preparse(args)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/config.py", line 322, in _preparse
+        self._setinitialconftest(args)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/config.py", line 301, in _setinitialconftest
+        self._conftest.setinitial(args)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/config.py", line 160, in setinitial
+        self._try_load_conftest(anchor)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/config.py", line 166, in _try_load_conftest
+        self._path2confmods[None] = self.getconftestmodules(anchor)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/config.py", line 190, in getconftestmodules
+        clist[:0] = self.getconftestmodules(dp)
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/config.py", line 189, in getconftestmodules
+        clist.append(self.importconftest(conftestpath))
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/config.py", line 218, in importconftest
+        self._conftestpath2mod[conftestpath] = mod = conftestpath.pyimport()
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/py/_path/local.py", line 532, in pyimport
+        __import__(modname)
+      File "/tmp/doc-exec-261/conftest.py", line 2, in <module>
+        from myapp import MyApp
+    ImportError: No module named myapp
+
+If you specify a command line option like ``py.test --ssh=python.org`` the test will execute as expected.
+
+Note that neither the ``TestClass`` nor the ``test_function`` need to
+know anything about how to setup the test state.  It is handled separately
+in the ``conftest.py`` file.  It is easy
+to extend the ``mysetup`` object for further needs in the test code - and for use by any other test functions in the files and directories below the ``conftest.py`` file.
+
