@@ -262,7 +262,7 @@ project can then easily depend or extend on, simply by referencing the
 name of the particular fixture. 
 
 
-**Fixture functions have limited visilibity** which depends on where they
+Fixture functions have limited visilibity which depends on where they
 are defined.  If they are defined on a test class, only its test methods 
 may use it. A fixture defined in a module can only be used
 from that test module.  A fixture defined in a conftest.py file
@@ -270,11 +270,12 @@ can only be used by the tests below the directory of that file.
 Lastly, plugins can define fixtures which are available across all
 projects.
 
+.. _`fixture-parametrize`:
 
 Parametrizing a session-shared fixture
 -----------------------------------------------------------------
 
-**Fixture functions can be parametrized** in which case they will be called
+Fixture functions can be parametrized in which case they will be called
 multiple times, each time executing the set of dependent tests, i. e. the
 tests that depend on this fixture.  Test functions do usually not need
 to be aware of their re-running.  Fixture parametrization helps to

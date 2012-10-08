@@ -7,14 +7,17 @@
 Parametrizing fixtures and test functions
 ==========================================================================
 
-While the :ref:`@pytest.fixture` decorator allows to define parametrization
-at the level of fixture functions, there are two more parametrizations:
+pytest supports test parametrization in several well-integrated ways:
 
-* `@pytest.mark.parametrize`_ to provide multiple argument/fixture sets 
+- :ref:`@pytest.fixture` allows to define :ref:`parametrization
+  at the level of fixture functions <fixture-parametrize>`.
+
+* `@pytest.mark.parametrize`_ allows to define parametrization at the
+  function or class level, provides multiple argument/fixture sets 
   for a particular test function or class.
 
-* `pytest_generate_tests`_ to implement your own custom parametrization 
-  scheme or extensions.
+* `pytest_generate_tests`_ enables implementing your own custom 
+  dynamic parametrization scheme or extensions.
 
 .. _`@pytest.mark.parametrize`:
 
@@ -27,7 +30,8 @@ at the level of fixture functions, there are two more parametrizations:
 
 The builtin ``pytest.mark.parametrize`` decorator enables
 parametrization of arguments for a test function.  Here is a typical example
-of a test function that wants check for expected output given a certain input::
+of a test function that implements checking that a certain input leads
+to an expected output::
 
     # content of test_expectation.py
     import pytest
@@ -74,89 +78,61 @@ see :ref:`mark`.
 Basic ``pytest_generate_tests`` example
 ---------------------------------------------
 
-..  XXX
+Sometimes you may want to implement your own parametrization scheme
+or implement some dynamism for determining the parameters or scope
+of a fixture.   For this, you can use the ``pytest_generate_tests`` hook 
+which is called for every test function.  Through the special `metafunc`
+object you can inspect the requesting test context and, most importantly,
+you can call ``metafunc.parametrize()`` to pass in parametrizatin.
+For example, let's say we want to execute a test that takes some string
+input and we want to pass that in with a command line option 
+``--stringinput=value``.  Let's first write a simple test accepting
+a ``stringinput`` fixture function argument::
 
-    > line 598 "Basic ``pytest_generate_tests`` example" - I think this is
-    > not a very basic example! I think it is copied from parametrize.txt
-    > page, where it might make more sense. Here is what I would consider a
-    > basic example.
-    > 
-    > # code
-    > def isSquare(n):
-    >     n = n ** 0.5
-    >     return int(n) == n
-    > 
-    > # test file
-    > def pytest_generate_tests(metafunc):
-    >     squares = [1, 4, 9, 16, 25, 36, 49]
-    >     for n in range(1, 50):
-    >         expected = n in squares
-    >         if metafunc.function.__name__ == 'test_isSquare':
-    >             metafunc.addcall(id=n, funcargs=dict(n=n,
-    >             expected=expected))
-    > 
-    > 
-    > def test_isSquare(n, expected):
-    >     assert isSquare(n) == expected
+    # content of test_strings.py
 
-
-.. XXX
-    consider adding more examples, also mixed (factory-parametrized/test-function-parametrized, see mail from Brianna)
-
-The ``pytest_generate_tests`` hook is typically used if you want
-to go beyond what ``@pytest.mark.parametrize`` offers.  For example,
-let's say we want to execute a test with different computation
-parameters and the parameter range shall be determined by a command
-line argument.  Let's first write a simple (do-nothing) computation test::
-
-    # content of test_compute.py
-
-    def test_compute(param1):
-        assert param1 < 4
+    def test_valid_string(stringinput):
+        assert stringinput.isalpha()
 
 Now we add a ``conftest.py`` file containing the addition of a 
-command line option and the generation of tests depending on
-that option::
+command line option and the parametrization of our test function::
 
     # content of conftest.py
 
     def pytest_addoption(parser):
-        parser.addoption("--all", action="store_true",
-            help="run all combinations")
+        parser.addoption("--stringinput", action="append",
+            help="list of stringinputs to pass to test functions")
 
     def pytest_generate_tests(metafunc):
-        if 'param1' in metafunc.fixturenames:
-            if metafunc.config.option.all:
-                end = 5
-            else:
-                end = 2
-            metafunc.parametrize("param1", range(end))
+        if 'stringinput' in metafunc.fixturenames:
+            metafunc.parametrize("stringinput", 
+                                 metafunc.config.option.stringinput)
 
-This means that we only run two tests if no option is passed::
+If we now pass two stringinput values, our test will run twice::
 
-    $ py.test -q test_compute.py
+    $ py.test -q --stringinput="hello" --stringinput="world" test_strings.py
     ..
 
-And we run five tests if we add the ``--all`` option::
+Let's run with a stringinput that will lead to an error::
 
-    $ py.test -q --all test_compute.py
-    ....F
+    $ py.test -q --stringinput="!" test_strings.py
+    F
     ================================= FAILURES =================================
-    _____________________________ test_compute[4] ______________________________
+    ___________________________ test_valid_string[!] ___________________________
     
-    param1 = 4
+    stringinput = '!'
     
-        def test_compute(param1):
-    >       assert param1 < 4
-    E       assert 4 < 4
+        def test_valid_string(stringinput):
+    >       assert stringinput.isalpha()
+    E       assert <built-in method isalpha of str object at 0x7fd0b71f2fd0>()
+    E        +  where <built-in method isalpha of str object at 0x7fd0b71f2fd0> = '!'.isalpha
     
-    test_compute.py:3: AssertionError
+    test_strings.py:3: AssertionError
 
-As expected when running the full range of ``param1`` values
-we'll get an error on the last one.
+As expected our test function will error out.
 
-You might want to look at :ref:`more parametrization examples <paramexamples>`.
-
+For further examples, you might want to look at :ref:`more
+parametrization examples <paramexamples>`.
 
 .. _`metafunc object`:
 

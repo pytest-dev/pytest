@@ -7,7 +7,6 @@ pytest: makes you a better programmer
 
  - runs on Posix/Windows, Python 2.4-3.3, PyPy and Jython-2.5.1
  - :ref:`comprehensive online <toc>` and `PDF documentation <pytest.pdf>`_
- - continuously `tested on many Python interpreters <http://hudson.testrun.org/view/pytest/job/pytest/>`_
  - used in :ref:`many projects and organisations <projects>`, in test
    suites ranging from 10 to 10s of thousands of tests
  - comes with many :ref:`tested examples <examples>`
