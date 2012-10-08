@@ -17,6 +17,8 @@ class FixtureFunctionMarker:
         self.autoactive = autoactive
 
     def __call__(self, function):
+        if inspect.isclass(function):
+            raise ValueError("class fixtures not supported (may be in the future)")
         function._pytestfixturefunction = self
         return function
 
@@ -43,7 +45,7 @@ def fixture(scope="function", params=None, autoactive=False):
                 can see it.  If False (the default) then an explicit
                 reference is needed to activate the fixture.
     """
-    if hasattr(scope, "__call__") and params is None and autoactive == False:
+    if py.builtin.callable(scope) and params is None and autoactive == False:
         # direct decoration
         return FixtureFunctionMarker("function", params, autoactive)(scope)
     else:
@@ -1563,10 +1565,8 @@ class FixtureDef:
 
 def getfuncargnames(function, startindex=None):
     # XXX merge with main.py's varnames
-    if inspect.isclass(function):
-        function = function.__init__
-        startindex = 1
-    elif startindex is None:
+    #assert not inspect.isclass(function)
+    if startindex is None:
         startindex = inspect.ismethod(function) and 1 or 0
     argnames = inspect.getargs(py.code.getrawcode(function))[0]
     defaults = getattr(function, 'func_defaults',

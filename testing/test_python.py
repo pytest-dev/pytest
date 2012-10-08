@@ -547,10 +547,6 @@ def test_getfuncargnames():
     if sys.version_info < (3,0):
         assert funcargs.getfuncargnames(A.f) == ['arg1']
 
-    class A:
-        def __init__(self, x):
-            pass
-    assert funcargs.getfuncargnames(A) == ["x"]
 
 class TestFillFixtures:
     def test_fillfuncargs_exposed(self):
@@ -1803,7 +1799,7 @@ class TestFixtureUsages:
             *fixture*'missing'*not found*
         """)
 
-    def test_factory_setup_as_classes(self, testdir):
+    def test_factory_setup_as_classes_fails(self, testdir):
         testdir.makepyfile("""
             import pytest
             class arg1:
@@ -1811,17 +1807,10 @@ class TestFixtureUsages:
                     self.x = 1
             arg1 = pytest.fixture()(arg1)
 
-            class MySetup:
-                def __init__(self, request, arg1):
-                    request.instance.arg1 = arg1
-            pytest.fixture(autoactive=True)(MySetup)
-
-            class TestClass:
-                def test_method(self):
-                    assert self.arg1.x == 1
         """)
         reprec = testdir.inline_run()
-        reprec.assertoutcome(passed=1)
+        l = reprec.getfailedcollections()
+        assert len(l) == 1
 
     def test_request_can_be_overridden(self, testdir):
         testdir.makepyfile("""

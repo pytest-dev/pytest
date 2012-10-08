@@ -569,14 +569,17 @@ self-contained implementation of this idea::
     
     import pytest
 
-    @pytest.fixture(scope="module")
-    class db:
+    class DB:
         def __init__(self):
             self.intransaction = []
         def begin(self, name):
             self.intransaction.append(name)
         def rollback(self):
             self.intransaction.pop()
+
+    @pytest.fixture(scope="module")
+    def db():
+        return DB()
 
     class TestClass:
         @pytest.fixture(autoactive=True)
@@ -590,9 +593,9 @@ self-contained implementation of this idea::
         def test_method2(self, db):
             assert db.intransaction == ["test_method2"]
 
-The class-level ``transact`` fixture is marked with *autoactive=true* which implies
-that all test methods in the class will use this fixture without a need to 
-specify it.
+The class-level ``transact`` fixture is marked with *autoactive=true*
+which implies that all test methods in the class will use this fixture
+without a need to specify it.
 
 If we run it, we get two passing tests::
 
@@ -614,11 +617,10 @@ And here is how autoactive fixtures work in other scopes:
   a global fixture should always quickly determine if it should do
   any work and avoid expensive imports or computation otherwise.
 
-Note that the above ``transact`` fixture may very well be something that
-you want to make available in your project but which requires an explicit using
-reference to have it activated.  The canonical way to do that is to put
-the transact definition into a conftest.py file without using
-``autoactive``::
+Note that the above ``transact`` fixture may very well be a fixture that
+you want to make available in your project without having it generally
+active.  The canonical way to do that is to put the transact definition 
+into a conftest.py file without using ``autoactive``::
 
     # content of conftest.py
     @pytest.fixture()
@@ -626,15 +628,16 @@ the transact definition into a conftest.py file without using
         db.begin()
         request.addfinalizer(db.rollback)
 
-and then have a TestClass using it by declaring the need::
+and then e.g. have a TestClass using it by declaring the need::
 
     @pytest.mark.usefixtures("transact")
     class TestClass:
         def test_method1(self):
             ...
 
-While all test methods in this TestClass will use the transaction
-fixture, other test classes or function will not do so without a marker or funcarg.
+All test methods in this TestClass will use the transaction fixture while
+other test classes or functions will not do so unless they also add
+a ``transact`` reference.
 
 controlled visibility of fixture functions
 ----------------------------------------------------
