@@ -383,15 +383,17 @@ def test_invalid_xml_escape():
     for i in valid:
         assert chr(i) == bin_xml_escape(unichr(i)).uniobj
 
-def test_logxml_path_expansion():
+def test_logxml_path_expansion(tmpdir, monkeypatch):
     from _pytest.junitxml import LogXML
 
     home_tilde = os.path.normpath(os.path.expanduser('~/test.xml'))
-    # this is here for when $HOME is not set correct
-    home_var = os.path.normpath(os.path.expandvars('$HOME/test.xml'))
 
     xml_tilde = LogXML('~/test.xml', None)
     assert xml_tilde.logfile == home_tilde
+
+    # this is here for when $HOME is not set correct
+    monkeypatch.setenv("HOME", tmpdir)
+    home_var = os.path.normpath(os.path.expandvars('$HOME/test.xml'))
 
     xml_var = LogXML('$HOME/test.xml', None)
     assert xml_var.logfile == home_var
