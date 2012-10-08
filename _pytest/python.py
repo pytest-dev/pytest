@@ -24,11 +24,11 @@ class FixtureFunctionMarker:
 def fixture(scope="function", params=None, autoactive=False):
     """ (return a) decorator to mark a fixture factory function.
 
-    This decorator can be used (directly or with parameters) to define
+    This decorator can be used (with or or without parameters) to define
     a fixture function.  The name of the fixture function can later be
     referenced to cause its invocation ahead of running tests: test
     modules or classes can use the pytest.mark.usefixtures(fixturename)
-    marker and test functions can directly use fixture names as input
+    marker.  Test functions can directly use fixture names as input
     arguments in which case the fixture instance returned from the fixture
     function will be injected.
 
@@ -45,16 +45,11 @@ def fixture(scope="function", params=None, autoactive=False):
     """
     if hasattr(scope, "__call__") and params is None and autoactive == False:
         # direct decoration
-        return FixtureFunctionMarker(None, params, autoactive)(scope)
+        return FixtureFunctionMarker("function", params, autoactive)(scope)
     else:
         return FixtureFunctionMarker(scope, params, autoactive=autoactive)
 
 defaultfuncargprefixmarker = fixture()
-
-# XXX remove in favour of fixture(autoactive=True)
-def setup(scope="function"):
-    """ alias for fixture(scope, autoactive=True) """
-    return FixtureFunctionMarker(scope, params=None, autoactive=True)
 
 def cached_property(f):
     """returns a cached property that is calculated by function f.
@@ -126,7 +121,6 @@ def pytest_namespace():
     raises.Exception = pytest.fail.Exception
     return {
         'fixture': fixture,
-        'setup': setup,
         'raises' : raises,
         'collect': {
         'Module': Module, 'Class': Class, 'Instance': Instance,
