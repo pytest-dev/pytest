@@ -1,5 +1,7 @@
 .. _`skip and xfail`:
 
+.. _skipping:
+
 Skip and xfail: dealing with tests that can not succeed
 =====================================================================
 
@@ -130,7 +132,7 @@ Running it with the report-on-xfail option gives this output::
 
     example $ py.test -rx xfail_demo.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev19
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev20
     collected 6 items
     
     xfail_demo.py xxxxxx

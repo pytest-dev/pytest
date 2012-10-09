@@ -1,48 +1,48 @@
 
 
-pytest: makes you a better programmer
+pytest: makes you write better programs
 =============================================
 
-- **a mature full-featured Python testing tool**
+**a mature full-featured Python testing tool**
 
  - runs on Posix/Windows, Python 2.4-3.3, PyPy and Jython-2.5.1
  - :ref:`comprehensive online <toc>` and `PDF documentation <pytest.pdf>`_
  - used in :ref:`many projects and organisations <projects>`, in test
    suites ranging from 10 to 10s of thousands of tests
  - comes with many :ref:`tested examples <examples>`
- - supports :ref:`good integration practises <goodpractises>`
 
-- **provides no-boilerplate testing**
+**provides easy no-boilerplate testing**
 
  - makes it :ref:`easy to get started <getstarted>`,
- - refined :ref:`usage options <usage>`
  - :ref:`assert with the assert statement`
  - helpful :ref:`traceback and failing assertion reporting <tbreportdemo>`
  - allows :ref:`print debugging <printdebugging>` and :ref:`the
    capturing of standard output during test execution <captures>`
  - supports :pep:`8` compliant coding styles in tests
+ - refined :ref:`usage options <usage>`
 
-- **supports functional testing and complex test setups**
+**scales from simple unit to complex functional testing**
 
  - (new in 2.3) :ref:`modular parametrizeable fixtures <fixture>`
- - :ref:`marking and test selection <mark>`
+ - :ref:`mark`
  - :ref:`parametrized test functions <parametrized test functions>`
- - advanced :ref:`skip and xfail`
+ - :ref:`skipping`
  - can :ref:`distribute tests to multiple CPUs <xdistcpu>` through :ref:`xdist plugin <xdist>`
  - can :ref:`continuously re-run failing tests <looponfailing>`
  - many :ref:`builtin helpers <pytest helpers>`
  - flexible :ref:`Python test discovery`
 
-- **integrates many common testing methods**
+**integrates many common testing methods**:
 
  - can run many ``nose``, ``unittest.py`` and ``doctest.py`` style
    tests, including running testcases made for Django and trial
+ - supports :ref:`good integration practises <goodpractises>`
  - supports extended :ref:`xUnit style setup <xunitsetup>`
  - supports domain-specific :ref:`non-python tests`
  - supports the generation of testing coverage reports
  - `Javascript unit- and functional testing`_
 
-- **extensive plugin and customization system**
+**extensive plugin and customization system**:
 
  - all collection, reporting, running aspects are delegated to hook functions
  - customizations can be per-directory, per-project or per PyPI released plugins

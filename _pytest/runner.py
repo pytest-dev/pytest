@@ -409,7 +409,9 @@ skip.Exception = Skipped
 
 def fail(msg="", pytrace=True):
     """ explicitely fail an currently-executing test with the given Message.
-    if @pytrace is not True the msg represents the full failure information.
+
+    :arg pytrace: if false the msg represents the full failure information
+                  and no python traceback will be reported.
     """
     __tracebackhide__ = True
     raise Failed(msg=msg, pytrace=pytrace)

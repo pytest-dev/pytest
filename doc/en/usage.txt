@@ -150,6 +150,8 @@ for example ``-x`` if you only want to send one particular failure.
 
 Currently only pasting to the http://bpaste.net service is implemented.
 
+.. _`pytest.main-usage`:
+
 Calling pytest from Python code
 ----------------------------------------------------
 

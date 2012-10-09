@@ -63,8 +63,8 @@ That's it, we can now run the test::
     $ py.test test_remoteinterpreter.py
     Traceback (most recent call last):
       File "/home/hpk/p/pytest/.tox/regen/bin/py.test", line 9, in <module>
-        load_entry_point('pytest==2.3.0.dev19', 'console_scripts', 'py.test')()
-      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/core.py", line 469, in main
+        load_entry_point('pytest==2.3.0.dev20', 'console_scripts', 'py.test')()
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/core.py", line 473, in main
         config = _prepareconfig(args, plugins)
       File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/core.py", line 463, in _prepareconfig
         pluginmanager=_pluginmanager, args=args)
@@ -98,7 +98,7 @@ That's it, we can now run the test::
         self._conftestpath2mod[conftestpath] = mod = conftestpath.pyimport()
       File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/py/_path/local.py", line 532, in pyimport
         __import__(modname)
-      File "/tmp/doc-exec-261/conftest.py", line 2, in <module>
+      File "/tmp/doc-exec-193/conftest.py", line 2, in <module>
         from remoteinterpreter import RemoteInterpreter
     ImportError: No module named remoteinterpreter
 
@@ -150,8 +150,8 @@ Running it yields::
     $ py.test -q test_ssh.py -rs
     Traceback (most recent call last):
       File "/home/hpk/p/pytest/.tox/regen/bin/py.test", line 9, in <module>
-        load_entry_point('pytest==2.3.0.dev19', 'console_scripts', 'py.test')()
-      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/core.py", line 469, in main
+        load_entry_point('pytest==2.3.0.dev20', 'console_scripts', 'py.test')()
+      File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/core.py", line 473, in main
         config = _prepareconfig(args, plugins)
       File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/core.py", line 463, in _prepareconfig
         pluginmanager=_pluginmanager, args=args)
@@ -185,7 +185,7 @@ Running it yields::
         self._conftestpath2mod[conftestpath] = mod = conftestpath.pyimport()
       File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/py/_path/local.py", line 532, in pyimport
         __import__(modname)
-      File "/tmp/doc-exec-261/conftest.py", line 2, in <module>
+      File "/tmp/doc-exec-193/conftest.py", line 2, in <module>
         from myapp import MyApp
     ImportError: No module named myapp
 

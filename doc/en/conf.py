@@ -17,7 +17,7 @@
 #
 # The full version, including alpha/beta/rc tags.
 # The short X.Y version.
-version = release = "2.3.0.dev19"
+version = release = "2.3.0.dev20"
 
 import sys, os
 
@@ -71,7 +71,11 @@ copyright = u'2011, holger krekel et alii'
 # directories to ignore when looking for source files.
 exclude_patterns = ['links.inc', '_build', 'naming20.txt', 'test/*',
     "old_*",
-    'example/attic.txt',
+    '*attic*',
+    '*/attic*',
+    'funcargs.txt',
+    'setup.txt',
+    'example/remoteinterp.txt',
     ]
 
 

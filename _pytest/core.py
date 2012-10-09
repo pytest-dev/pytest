@@ -463,9 +463,13 @@ def _prepareconfig(args=None, plugins=None):
             pluginmanager=_pluginmanager, args=args)
 
 def main(args=None, plugins=None):
-    """ returned exit code integer, after an in-process testing run
-    with the given command line arguments, preloading an optional list
-    of passed in plugin objects. """
+    """ return exit code, after performing an in-process test run.
+
+    :arg args: list of command line arguments.
+
+    :arg plugins: list of plugin objects to be auto-registered during
+                  initialization.
+    """
     config = _prepareconfig(args, plugins)
     exitstatus = config.hook.pytest_cmdline_main(config=config)
     return exitstatus

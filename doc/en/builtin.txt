@@ -1,35 +1,78 @@
 
 .. _`pytest helpers`:
 
-Pytest builtin helpers
+Pytest API and builtin fixtures
 ================================================
 
-builtin pytest.* functions and helping objects
------------------------------------------------------
+This is a list of ``pytest.*`` API functions and fixtures.
 
-You can always use an interactive Python prompt and type::
+For information on plugin hooks and objects, see :ref:`plugins`.
+
+For information on the ``pytest.mark`` mechanism, see :ref:`mark`.
+
+For the below objects, you can also interactively ask for help, e.g. by
+typing on the Python interactive prompt something like::
 
     import pytest
     help(pytest)
 
-to get an overview on the globally available helpers.
+.. currentmodule:: pytest
 
-.. automodule:: pytest
+Invoking pytest interactively
+---------------------------------------------------
+
+.. autofunction:: main
+
+More examples at :ref:`pytest.main-usage`
+
+
+Helpers for assertions about Exceptions/Warnings
+--------------------------------------------------------
+
+.. autofunction:: raises
+
+Examples at :ref:`assertraises`.
+
+.. autofunction:: deprecated_call
+
+Raising a specific test outcome
+--------------------------------------
+
+You can use the following functions in your test, fixture or setup
+functions to force a certain test outcome.  Note that most often
+you can rather use declarative marks, see :ref:`skipping`.
+
+.. autofunction:: fail
+.. autofunction:: skip
+.. autofunction:: importorskip
+.. autofunction:: xfail
+.. autofunction:: exit
+
+fixtures and requests
+-----------------------------------------------------
+
+To mark a fixture function:
+
+.. autofunction:: fixture
+
+Tutorial at :ref:`fixtures`.
+
+The ``request`` object that can be used from fixture functions.
+
+.. autoclass:: _pytest.python.FixtureRequest()
     :members:
+
 
 .. _builtinfixtures:
 .. _builtinfuncargs:
 
-Builtin resources / function arguments
------------------------------------------------------
+Builtin fixtures/function arguments
+-----------------------------------------
 
 You can ask for available builtin or project-custom
-:ref:`function arguments <funcargs>` by typing::
+:ref:`fixtures <fixtures>` by typing::
 
-    $ py.test --fixtures
-    =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev19
-    collected 0 items
+    $ py.test -q --fixtures
     capsys
         enables capturing of writes to sys.stdout/sys.stderr and makes
         captured output available via ``capsys.readouterr()`` method calls
@@ -75,4 +118,3 @@ You can ask for available builtin or project-custom
         on warning categories.
         
     
-    =============================  in 0.00 seconds =============================

@@ -637,27 +637,26 @@ class Metafunc(FuncargnamesCompatAttr):
         """ Add new invocations to the underlying test function using the list
         of argvalues for the given argnames.  Parametrization is performed
         during the collection phase.  If you need to setup expensive resources
-        you may pass indirect=True and implement a fixture function which can
-        perform the expensive setup just before a test is actually run.
+        see about setting indirect=True to do it rather at test setup time.
 
         :arg argnames: an argument name or a list of argument names
 
         :arg argvalues: a list of values for the argname or a list of tuples of
             values for the list of argument names.
 
-        :arg indirect: if True each argvalue corresponding to an argument will
-            be passed as request.param to its respective fixture function so
-            that it can perform more expensive setups during the setup phase of
-            a test rather than at collection time.
+        :arg indirect: if True each argvalue corresponding to an argname will
+            be passed as request.param to its respective argname fixture
+            function so that it can perform more expensive setups during the
+            setup phase of a test rather than at collection time.
 
         :arg ids: list of string ids each corresponding to the argvalues so
             that they are part of the test id. If no ids are provided they will
             be generated automatically from the argvalues.
 
-        :arg scope: if specified: denotes the scope of the parameters.
-            The scope is used for sorting tests by parameters.  It will
-            also override any fixture-function defined scope, allowing
-            to set a dynamic scope from test context and configuration.
+        :arg scope: if specified it denotes the scope of the parameters.
+            The scope is used for grouping tests by parameter instances.
+            It will also override any fixture-function defined scope, allowing
+            to set a dynamic scope using test context or configuration.
         """
         if not isinstance(argnames, (tuple, list)):
             argnames = (argnames,)
@@ -762,7 +761,7 @@ def _showfixtures_main(config, session):
             pluginname = plugin.__name__
             for name, factory in available:
                 loc = getlocation(factory, curdir)
-                if verbose:
+                if verbose > 0:
                     funcargspec = "%s -- %s" %(name, loc,)
                 else:
                     funcargspec = name
@@ -989,24 +988,25 @@ def scopeproperty(name=None, doc=None):
 
 
 class FixtureRequest(FuncargnamesCompatAttr):
-    """ A request for fixtures from a test or fixture function.
+    """ A request for a fixture from a test or fixture function.
 
-    A request object gives access to attributes of the requesting
-    test context.  It has an optional ``param`` attribute in case
-    of parametrization.
+    A request object gives access to the requesting test context
+    and has an optional ``param`` attribute in case
+    the fixture is parametrized indirectly.
     """
 
     def __init__(self, pyfuncitem):
         self._pyfuncitem = pyfuncitem
         if hasattr(pyfuncitem, '_requestparam'):
             self.param = pyfuncitem._requestparam
+        #: fixture for which this request is being performed
+        self.fixturename = None
         #: Scope string, one of "function", "cls", "module", "session"
         self.scope = "function"
         self.getparent = pyfuncitem.getparent
         self._funcargs  = self._pyfuncitem.funcargs.copy()
         self._arg2fixturedeflist = {}
         self._fixturemanager = pyfuncitem.session._fixturemanager
-        self._currentarg = None
         self._parentid = pyfuncitem.parent.nodeid
         self.fixturenames, self._arg2fixturedeflist_ = \
             self._fixturemanager.getfixtureclosure(
@@ -1087,7 +1087,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         if scope != "function" and hasattr(self, "param"):
             # parametrized resources are sorted by param
             # so we rather store finalizers per (argname, param)
-            colitem = (self._currentarg, self.param)
+            colitem = (self.fixturename, self.param)
         else:
             colitem = self._getscopeitem(scope)
         self._pyfuncitem.session._setupstate.addfinalizer(
@@ -1131,7 +1131,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         """
         if not hasattr(self.config, '_setupcache'):
             self.config._setupcache = {} # XXX weakref?
-        cachekey = (self._currentarg, self._getscopeitem(scope), extrakey)
+        cachekey = (self.fixturename, self._getscopeitem(scope), extrakey)
         cache = self.config._setupcache
         try:
             val = cache[cachekey]
@@ -1152,17 +1152,13 @@ class FixtureRequest(FuncargnamesCompatAttr):
         return val
 
     def getfuncargvalue(self, argname):
-        """ Retrieve a fixture function argument by name for this test
-        function invocation.  This allows one function argument factory
-        to call another function argument factory.  If there are two
-        funcarg factories for the same test function argument the first
-        factory may use ``getfuncargvalue`` to call the second one and
-        do something additional with the resource.
+        """ Dynamically retrieve a named fixture function argument.
 
-        **Note**, however, that starting with pytest-2.3 it is usually
-        easier and better to directly use the needed funcarg in the
-        factory function signature.  This will also work seemlessly
-        with parametrization and the new resource setup optimizations.
+        As of pytest-2.3, it is easier and usually better to access other
+        fixture values by stating it as an input argument in the fixture
+        function.  If you only can decide about using another fixture at test
+        setup time, you may use this function to retrieve it inside a fixture
+        function body.
         """
         try:
             return self._funcargs[argname]
@@ -1187,12 +1183,12 @@ class FixtureRequest(FuncargnamesCompatAttr):
         if fixturedef.active:
             return fixturedef.cached_result
 
-        # prepare request _currentarg and param attributes before
+        # prepare request fixturename and param attributes before
         # calling into fixture function
         argname = fixturedef.argname
         node = self._pyfuncitem
         mp = monkeypatch()
-        mp.setattr(self, '_currentarg', argname)
+        mp.setattr(self, 'fixturename', argname)
         try:
             param = node.callspec.getparam(argname)
         except (AttributeError, ValueError):
@@ -1246,7 +1242,6 @@ class FixtureRequest(FuncargnamesCompatAttr):
                 p, lineno, factory.__name__, args))
         return lines
 
-
     def _getscopeitem(self, scope):
         if scope == "function":
             return self._pyfuncitem
@@ -1262,7 +1257,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         raise ValueError("unknown finalization scope %r" %(scope,))
 
     def __repr__(self):
-        return "<FixtureRequest for %r>" %(self._pyfuncitem)
+        return "<FixtureRequest for %r>" %(self.node)
 
 class ScopeMismatchError(Exception):
     """ A fixture function tries to use a different fixture function which

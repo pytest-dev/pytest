@@ -102,8 +102,8 @@ the tests requiring "db" will run twice as well.  The "mysql" and
 
 This new way of parametrizing funcarg factories should in many cases
 allow to re-use already written factories because effectively
-``request.param`` are already the parametrization attribute for test 
-functions/classes were parametrized via
+``request.param`` was already used when test functions/classes were
+parametrized via
 :py:func:`~_pytest.python.Metafunc.parametrize(indirect=True)` calls.
 
 Of course it's perfectly fine to combine parametrization and scoping::
@@ -193,18 +193,19 @@ overview of fixture management in your project.
 Conclusion and compatibility notes
 ---------------------------------------------------------
 
-**Fixtures** were originally introduced to pytest-2.0.  In pytest-2.3 
-the mechanism was extended and refined:
+**funcargs** were originally introduced to pytest-2.0.  In pytest-2.3 
+the mechanism was extended and refined and is now described as
+fixtures:
 
 * previously funcarg factories were specified with a special 
   ``pytest_funcarg__NAME`` prefix instead of using the 
   ``@pytest.fixture`` decorator.
 
-* Factories received a :ref:`request <request>` object which managed caching through
+* Factories received a ``request`` object which managed caching through
   ``request.cached_setup()`` calls and allowed using other funcargs via 
   ``request.getfuncargvalue()`` calls.  These intricate APIs made it hard 
   to do proper parametrization and implement resource caching. The
-  new ``@pytest.fixture`` decorator allows to simply declare the scope
+  new :py:func:`pytest.fixture`` decorator allows to declare the scope
   and let pytest figure things out for you.
 
 * if you used parametrization and funcarg factories which made use of

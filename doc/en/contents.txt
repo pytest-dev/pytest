@@ -24,8 +24,4 @@ Full pytest documentation
    :hidden:
 
    changelog.txt
-   funcargs
-   example/resources_attic
-   setup.txt
-   example/remoteinterp.txt
 
