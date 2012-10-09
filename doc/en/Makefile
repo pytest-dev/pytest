@@ -43,7 +43,7 @@ install: html
 	 rsync -avz _build/html/ pytest.org:/www/pytest.org/dev
 
 installpdf: latexpdf
-	@scp $(BUILDDIR)/latex/pytest.pdf pytest.org:/www/pytest.org/latest
+	@scp $(BUILDDIR)/latex/pytest.pdf pytest.org:/www/pytest.org/dev
 
 installall: clean install installpdf
 	@echo "done"

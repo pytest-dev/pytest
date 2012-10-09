@@ -1515,13 +1515,50 @@ class TestReportInfo:
                     pass
        """
 
-def test_show_funcarg(testdir):
-    result = testdir.runpytest("--fixtures")
-    result.stdout.fnmatch_lines([
-            "*tmpdir*",
-            "*temporary directory*",
-        ]
-    )
+class TestShowFixtures:
+    def test_show_fixtures(self, testdir):
+        result = testdir.runpytest("--fixtures")
+        result.stdout.fnmatch_lines([
+                "*tmpdir*",
+                "*temporary directory*",
+            ]
+        )
+
+    def test_show_fixtures_testmodule(self, testdir):
+        p = testdir.makepyfile('''
+            import pytest
+            @pytest.fixture
+            def arg1():
+                """  hello world """
+        ''')
+        result = testdir.runpytest("--fixtures", p)
+        result.stdout.fnmatch_lines("""
+            *tmpdir*
+            *arg1*
+            *hello world*
+        """)
+
+    @pytest.mark.parametrize("testmod", [True, False])
+    def test_show_fixtures_conftest(self, testdir, testmod):
+        testdir.makeconftest('''
+            import pytest
+            @pytest.fixture
+            def arg1():
+                """  hello world """
+        ''')
+        if testmod:
+            testdir.makepyfile("""
+                def test_hello():
+                    pass
+            """)
+        result = testdir.runpytest("--fixtures")
+        result.stdout.fnmatch_lines("""
+            *tmpdir*
+            *arg1*
+            *hello world*
+        """)
+
+
 
 class TestRaises:
     def test_raises(self):

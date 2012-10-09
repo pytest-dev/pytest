@@ -742,37 +742,45 @@ def showfixtures(config):
 
 def _showfixtures_main(config, session):
     session.perform_collect()
-    if session.items:
-        plugins = session.items[0].getplugins()
-    else:
-        plugins = session.getplugins()
     curdir = py.path.local()
+    if session.items:
+        nodeid = session.items[0].nodeid
+    else:
+        part = session._initialparts[0]
+        nodeid = "::".join(map(str, [curdir.bestrelpath(part[0])] + part[1:]))
+
     tw = py.io.TerminalWriter()
     verbose = config.getvalue("verbose")
-    argprefix = session._fixturemanager._argprefix
-    for plugin in plugins:
-        available = []
-        for name, factory in vars(plugin).items():
-            if name.startswith(argprefix):
-                name = name[len(argprefix):]
-                if name not in available:
-                    available.append([name, factory])
-        if available:
-            pluginname = plugin.__name__
-            for name, factory in available:
-                loc = getlocation(factory, curdir)
-                if verbose > 0:
-                    funcargspec = "%s -- %s" %(name, loc,)
-                else:
-                    funcargspec = name
-                tw.line(funcargspec, green=True)
-                doc = factory.__doc__ or ""
-                if doc:
-                    for line in doc.split("\n"):
-                        tw.line("    " + line.strip())
-                else:
-                    tw.line("    %s: no docstring available" %(loc,),
-                        red=True)
+
+    fm = session._fixturemanager
+
+    available = []
+    for argname in fm.arg2fixturedeflist:
+        fixturedeflist = fm.getfixturedeflist(argname, nodeid)
+        assert fixturedeflist is not None
+        if not fixturedeflist:
+            continue
+        fixturedef = fixturedeflist[-1]
+        loc = getlocation(fixturedef.func, curdir)
+        available.append((len(fixturedef.baseid),
+                          curdir.bestrelpath(loc),
+                          fixturedef.argname, fixturedef))
+
+    available.sort()
+    for baseid, bestrel, argname, fixturedef in available:
+        if verbose > 0:
+            funcargspec = "%s -- %s" %(name, loc,)
+        else:
+            funcargspec = argname  # "%s %s" %(baseid, argname)
+        tw.line(funcargspec, green=True)
+        loc = getlocation(fixturedef.func, curdir)
+        doc = fixturedef.func.__doc__ or ""
+        if doc:
+            for line in doc.split("\n"):
+                tw.line("    " + line.strip())
+        else:
+            tw.line("    %s: no docstring available" %(loc,),
+                red=True)
 
 def getlocation(function, curdir):
     import inspect
