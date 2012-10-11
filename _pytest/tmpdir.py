@@ -40,7 +40,7 @@ class TempdirHandler:
                 basetemp.mkdir()
             else:
                 basetemp = py.path.local.make_numbered_dir(prefix='pytest-')
-            self._basetemp = t = basetemp
+            self._basetemp = t = basetemp.realpath()
             self.trace("new basetemp", t)
             return t
 

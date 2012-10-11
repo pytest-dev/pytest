@@ -72,14 +72,21 @@ def test_basetemp(testdir):
     assert mytemp.join('hello').check()
 
 @pytest.mark.skipif("not hasattr(py.path.local, 'mksymlinkto')")
-def test_tmpdir_keeps_symlinks(testdir):
+def test_tmpdir_always_is_realpath(testdir):
+    # the reason why tmpdir should be a realpath is that
+    # when you cd to it and do "os.getcwd()" you will anyway
+    # get the realpath.  Using the symlinked path can thus
+    # easily result in path-inequality
+    # XXX if that proves to be a problem, consider using
+    # os.environ["PWD"]
     realtemp = testdir.tmpdir.mkdir("myrealtemp")
     linktemp = testdir.tmpdir.join("symlinktemp")
     linktemp.mksymlinkto(realtemp)
     p = testdir.makepyfile("""
         def test_1(tmpdir):
             import os
-            assert os.path.realpath(str(tmpdir)) != str(tmpdir)
+            assert os.path.realpath(str(tmpdir)) == str(tmpdir)
     """)
     result = testdir.runpytest("-s", p, '--basetemp=%s/bt' % linktemp)
     assert not result.ret
+
