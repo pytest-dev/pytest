@@ -5,10 +5,12 @@ Running tests written for nose
 
 py.test has basic support for running tests written for nose_.
 
+.. _nosestyle:
+
 Usage
 -------------
 
-type::
+After :ref:`installation` type::
 
     py.test  # instead of 'nosetests'
 

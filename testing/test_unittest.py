@@ -497,10 +497,10 @@ def test_unittest_setup_interaction(testdir):
         import unittest
         import pytest
         class MyTestCase(unittest.TestCase):
-            @pytest.fixture(scope="class", autoactive=True)
+            @pytest.fixture(scope="class", autouse=True)
             def perclass(self, request):
                 request.cls.hello = "world"
-            @pytest.fixture(scope="function", autoactive=True)
+            @pytest.fixture(scope="function", autouse=True)
             def perfunction(self, request):
                 request.instance.funcname = request.function.__name__
 

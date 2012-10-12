@@ -1,5 +1,6 @@
 
 .. _`tmpdir handling`:
+.. _tmpdir:
 
 Temporary directories and files
 ================================================

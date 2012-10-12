@@ -146,7 +146,7 @@ But it is then not possible to define scoping and parametrization.
 It is thus recommended to use the factory decorator.
 
 
-solving per-session setup / autoactive fixtures
+solving per-session setup / autouse fixtures
 --------------------------------------------------------------
 
 pytest for a long time offered a pytest_configure and a pytest_sessionstart
@@ -173,7 +173,7 @@ during test execution and parametrization happens at collection time.
 
 It follows that pytest_configure/session/runtest_setup are often not
 appropriate for implementing common fixture needs.  Therefore, 
-pytest-2.3 introduces :ref:`autoactive fixtures` which fully
+pytest-2.3 introduces :ref:`autouse fixtures` which fully
 integrate with the generic :ref:`fixture mechanism <fixture>` 
 and obsolete many prior uses of pytest hooks.
 

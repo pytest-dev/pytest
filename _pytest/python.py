@@ -11,10 +11,10 @@ import _pytest
 cutdir = py.path.local(_pytest.__file__).dirpath()
 
 class FixtureFunctionMarker:
-    def __init__(self, scope, params, autoactive=False):
+    def __init__(self, scope, params, autouse=False):
         self.scope = scope
         self.params = params
-        self.autoactive = autoactive
+        self.autouse = autouse
 
     def __call__(self, function):
         if inspect.isclass(function):
@@ -23,7 +23,7 @@ class FixtureFunctionMarker:
         return function
 
 
-def fixture(scope="function", params=None, autoactive=False):
+def fixture(scope="function", params=None, autouse=False):
     """ (return a) decorator to mark a fixture factory function.
 
     This decorator can be used (with or or without parameters) to define
@@ -41,15 +41,15 @@ def fixture(scope="function", params=None, autoactive=False):
                 invocations of the fixture function and all of the tests
                 using it.
 
-    :arg autoactive: if True, the fixture func is activated for all tests that
+    :arg autouse: if True, the fixture func is activated for all tests that
                 can see it.  If False (the default) then an explicit
                 reference is needed to activate the fixture.
     """
-    if py.builtin.callable(scope) and params is None and autoactive == False:
+    if py.builtin.callable(scope) and params is None and autouse == False:
         # direct decoration
-        return FixtureFunctionMarker("function", params, autoactive)(scope)
+        return FixtureFunctionMarker("function", params, autouse)(scope)
     else:
-        return FixtureFunctionMarker(scope, params, autoactive=autoactive)
+        return FixtureFunctionMarker(scope, params, autouse=autouse)
 
 defaultfuncargprefixmarker = fixture()
 
@@ -1490,7 +1490,7 @@ class FixtureManager:
                                     unittest=unittest)
             faclist = self.arg2fixturedeflist.setdefault(name, [])
             faclist.append(fixturedef)
-            if marker.autoactive:
+            if marker.autouse:
                 self._autofixtures.append(name)
                 try:
                     del self._defaultfixtures

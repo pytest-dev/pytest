@@ -2,7 +2,7 @@
 .. _fixtures:
 .. _`fixture functions`:
 
-pytest fixtures: modular, explicit, scalable
+pytest fixtures: explicit, modular, scalable
 ========================================================
 
 .. currentmodule:: _pytest.python
@@ -13,20 +13,28 @@ pytest fixtures: modular, explicit, scalable
 .. _`general purpose of test fixtures`: http://en.wikipedia.org/wiki/Test_fixture#Software
 .. _`Dependency injection`: http://en.wikipedia.org/wiki/Dependency_injection#Definition
 
-pytest allows to create and use test fixtures in a modular and flexible
-manner, offering dramatic improvements over the classic xUnit style of
-setup/teardown functions.  The `general purpose of test fixtures`_ 
-is to provide a fixed baseline upon which tests can reliably
-and repeatedly execute.  With pytest, fixtures have names and can be
-activated by referencing them from test functions, modules, classes or
-whole projects.  Fixtures are implemented by *fixture functions* which
-have full access to the requesting test context and can use other
-fixtures, allowing a modular and flexible approach to organising
-and parametrizing fixtures for an application.  Complemented by
-pytest's generic :ref:`parametrize features <parametrize>`, pytest
-fixtures help to write test suites that scale from simple to complex 
-with minimal effort.
+The `general purpose of test fixtures`_ is to provide a fixed baseline
+upon which tests can reliably and repeatedly execute.   pytest-2.3 fixtures
+offer dramatic improvements over the classic xUnit style of setup/teardown 
+functions:
 
+* fixtures have explicit names and are activated by declaring their use
+  from test functions, modules, classes or whole projects.
+
+* fixtures are implemented in a modular manner, as each fixture name
+  triggers a *fixture function* which can itself easily use other 
+  fixtures.
+
+* fixture management scales from simple unit to complex
+  functional testing, allowing to parametrize fixtures or tests according
+  to configuration and component options.
+
+In addition to this next-generation (tm) style of organising test fixtures
+in Python, pytest continues to support :ref:`xunitsetup` which it
+originally introduced in 2005.  You can mix both styles, moving
+incrementally from classic to new style, if you prefer.  You can also
+start out from existing :ref:`unittest.TestCase style <unittest.TestCase>` 
+or :ref:`nose based <nosestyle>` projects.
 
 .. _`funcargs`:
 .. _`funcarg mechanism`:
@@ -39,9 +47,10 @@ Fixtures as Function arguments (funcargs)
 
 Test functions can receive fixture objects by naming them as an input
 argument. For each argument name, a fixture function with that name provides 
-a fixture object.  Fixture functions are registered by marking them with
-:py:func:`pytest.fixture`.  Let's look at a simple self-contained test
-module containing a fixture and a test function using it::
+the fixture object.  Fixture functions are registered by marking them with
+:py:func:`@pytest.fixture <pytest.fixture>`.  Let's look at a simple
+self-contained test module containing a fixture and a test function
+using it::
 
     # content of ./test_smtpsimple.py
     import pytest
@@ -111,10 +120,10 @@ with a list of available function arguments.
 
     to see available fixtures.
 
-    In versions prior to 2.3 there was no @pytest.fixture marker
+    In versions prior to 2.3 there was no ``@pytest.fixture`` marker
     and you had to use a magic ``pytest_funcarg__NAME`` prefix
     for the fixture factory.  This remains and will remain supported 
-    but is not advertised as the primary means of declaring fixture
+    but is not anymore advertised as the primary means of declaring fixture
     functions.
 
 Funcargs a prime example of dependency injection
@@ -134,6 +143,8 @@ details.  It's a prime example of `dependency injection`_ where fixture
 functions take the role of the *injector* and test functions are the
 *consumers* of fixture objects.
 
+.. _smtpshared:
+
 Working with a session-shared fixture
 -----------------------------------------------------------------
 
@@ -141,12 +152,12 @@ Working with a session-shared fixture
 
 Fixtures requiring network access depend on connectivity and are 
 usually time-expensive to create.  Extending the previous example, we
-can add a ``scope='session'`` parameter to the ``smtp`` fixture function
-to cause it to only be invoked once per session.  Multiple test
-functions will thus only involve a once-per-test session creation of the
-fixture instance.  Also, we now split the creation of the fixture into a
-``conftest.py`` file which will automatically loaded when running a test
-module::
+can add a ``scope='session'`` parameter to ``@pytest.fixture`` decorator.
+to cause the decorated ``smtp`` fixture function to only be invoked once 
+per test session.  Multiple test functions will thus each receive the
+same ``smtp`` fixture instance.  The next example also extracts
+the fixture function into a separate ``conftest.py`` file so that
+all tests in the directory can access the fixture function::
 
     # content of conftest.py
     import pytest
@@ -215,6 +226,7 @@ test functions because pytest shows the incoming argument values in the
 traceback.  As a result, the two test functions using ``smtp`` run as
 quick as a single one because they reuse the same instance.
 
+.. _`request-context`:
 
 Fixtures can interact with the requesting test context
 -------------------------------------------------------------
@@ -275,7 +287,7 @@ Running it::
     >       assert 0, smtp.helo()
     E       AssertionError: (250, 'hq.merlinux.eu')
 
-.. _`request`: :ref:pyclass:`_pytest.python.FixtureRequest`
+.. _`request`: :py:class:`_pytest.python.FixtureRequest`
 
 .. _`fixture-parametrize`:
 
@@ -289,10 +301,10 @@ to be aware of their re-running.  Fixture parametrization helps to
 write exhaustive functional tests for components which themselves can be 
 configured in multiple ways.
 
-Extending the previous example, we can flag the fixture to create
-two ``smtp`` fixture instances which will cause all tests using the
-fixture to run twice.  The fixture function gets
-access to each parameter through the special `request`_ object::
+Extending the previous example, we can flag the fixture to create two
+``smtp`` fixture instances which will cause all tests using the fixture
+to run twice.  The fixture function gets access to each parameter
+through the special `request`_ object::
 
     # content of conftest.py
     import pytest
@@ -565,9 +577,9 @@ into an ini-file::
     usefixtures = cleandir
 
 
-.. _`autoactive fixtures`:
+.. _`autouse fixtures`:
 
-autoactive fixtures (xUnit setup on steroids)
+autouse fixtures (xUnit setup on steroids)
 ----------------------------------------------------------------------
 
 .. regendoc:wipe
@@ -596,7 +608,7 @@ self-contained implementation of this idea::
         return DB()
 
     class TestClass:
-        @pytest.fixture(autoactive=True)
+        @pytest.fixture(autouse=True)
         def transact(self, request, db):
             db.begin(request.function.__name__)
             request.addfinalizer(db.rollback)
@@ -607,7 +619,7 @@ self-contained implementation of this idea::
         def test_method2(self, db):
             assert db.intransaction == ["test_method2"]
 
-The class-level ``transact`` fixture is marked with *autoactive=true*
+The class-level ``transact`` fixture is marked with *autouse=true*
 which implies that all test methods in the class will use this fixture
 without a need to state it in the test function signature or with a
 class-level ``usefixtures`` decorator.
@@ -617,15 +629,15 @@ If we run it, we get two passing tests::
     $ py.test -q
     ..
 
-Here is how autoactive fixtures work in other scopes:
+Here is how autouse fixtures work in other scopes:
 
-- if an autoactive fixture is defined in a test module, all its test 
+- if an autouse fixture is defined in a test module, all its test 
   functions automatically use it.  
 
-- if an autoactive fixture is defined in a conftest.py file then all tests in 
+- if an autouse fixture is defined in a conftest.py file then all tests in 
   all test modules belows its directory will invoke the fixture.  
 
-- lastly, and **please use that with care**: if you define an autoactive
+- lastly, and **please use that with care**: if you define an autouse
   fixture in a plugin, it will be invoked for all tests in all projects
   where the plugin is installed.  This can be useful if a fixture only
   anyway works in the presence of certain settings e. g. in the ini-file.  Such
@@ -635,7 +647,7 @@ Here is how autoactive fixtures work in other scopes:
 Note that the above ``transact`` fixture may very well be a fixture that
 you want to make available in your project without having it generally
 active.  The canonical way to do that is to put the transact definition 
-into a conftest.py file **without** using ``autoactive``::
+into a conftest.py file **without** using ``autouse``::
 
     # content of conftest.py
     @pytest.fixture()

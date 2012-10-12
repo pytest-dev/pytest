@@ -767,7 +767,7 @@ class TestMarking:
             def markers(request):
                 return request.node.markers
 
-            @pytest.fixture(scope="class", autoactive=True)
+            @pytest.fixture(scope="class", autouse=True)
             def marking(request):
                 request.applymarker(pytest.mark.XYZ("hello"))
         """)
@@ -1975,14 +1975,14 @@ class TestSetupDiscovery:
     def pytest_funcarg__testdir(self, testdir):
         testdir.makeconftest("""
             import pytest
-            @pytest.fixture( autoactive=True)
+            @pytest.fixture( autouse=True)
             def perfunction(request, tmpdir):
                 pass
 
             @pytest.fixture()
             def arg1(tmpdir):
                 pass
-            @pytest.fixture( autoactive=True)
+            @pytest.fixture( autouse=True)
             def perfunction2(arg1):
                 pass
 
@@ -2008,7 +2008,7 @@ class TestSetupDiscovery:
         testdir.makepyfile("""
             import pytest
             class TestClass:
-                @pytest.fixture(autoactive=True)
+                @pytest.fixture(autouse=True)
                 def permethod(self, request):
                     request.instance.funcname = request.function.__name__
                 def test_method1(self):
@@ -2031,7 +2031,7 @@ class TestSetupDiscovery:
             def db(request):
                 return request.param
 
-            @pytest.fixture(enabled=enabled, autoactive=True)
+            @pytest.fixture(enabled=enabled, autouse=True)
             def createdb(db):
                 pass
 
@@ -2072,7 +2072,7 @@ class TestSetupManagement:
             def arg():
                 l.append(1)
                 return 0
-            @pytest.fixture(scope="class", autoactive=True)
+            @pytest.fixture(scope="class", autouse=True)
             def something(arg):
                 l.append(2)
 
@@ -2097,7 +2097,7 @@ class TestSetupManagement:
             def arg(request):
                 return request.param
 
-            @pytest.fixture( autoactive=True)
+            @pytest.fixture( autouse=True)
             def something(arg):
                 l.append(arg)
 
@@ -2123,7 +2123,7 @@ class TestSetupManagement:
             def arg(request):
                return request.param
 
-            @pytest.fixture(scope="function", autoactive=True)
+            @pytest.fixture(scope="function", autouse=True)
             def append(request, arg):
                 if request.function.__name__ == "test_some":
                     l.append(arg)
@@ -2153,7 +2153,7 @@ class TestSetupManagement:
             def carg(request):
                 return request.param
 
-            @pytest.fixture(scope="function", autoactive=True)
+            @pytest.fixture(scope="function", autouse=True)
             def append(request, farg, carg):
                 def fin():
                     l.append("fin_%s%s" % (carg, farg))
@@ -2179,13 +2179,13 @@ class TestSetupManagement:
         testdir.makepyfile("""
             import pytest
             l = []
-            @pytest.fixture(scope="function", autoactive=True)
+            @pytest.fixture(scope="function", autouse=True)
             def fappend2():
                 l.append(2)
-            @pytest.fixture(scope="class", autoactive=True)
+            @pytest.fixture(scope="class", autouse=True)
             def classappend3():
                 l.append(3)
-            @pytest.fixture(scope="module", autoactive=True)
+            @pytest.fixture(scope="module", autouse=True)
             def mappend():
                 l.append(1)
 
@@ -2205,7 +2205,7 @@ class TestSetupManagement:
                 if metafunc.cls is not None:
                     metafunc.parametrize("item", [1,2], scope="class")
             class TestClass:
-                @pytest.fixture(scope="class", autoactive=True)
+                @pytest.fixture(scope="class", autouse=True)
                 def addteardown(self, item, request):
                     l.append("setup-%d" % item)
                     request.addfinalizer(lambda: l.append("teardown-%d" % item))
@@ -2482,7 +2482,7 @@ class TestFixtureMarker:
             def carg(request):
                 return request.param
 
-            @pytest.fixture(scope="function", autoactive=True)
+            @pytest.fixture(scope="function", autouse=True)
             def append(request, farg, carg):
                 def fin():
                     l.append("fin_%s%s" % (carg, farg))
@@ -2620,7 +2620,7 @@ class TestFixtureMarker:
             def arg(request):
                 return request.param
 
-            @pytest.fixture(scope="module", autoactive=True)
+            @pytest.fixture(scope="module", autouse=True)
             def mysetup(request, arg):
                 request.addfinalizer(lambda: l.append("fin%s" % arg))
                 l.append("setup%s" % arg)
@@ -2654,7 +2654,7 @@ class TestTestContextScopeAccess:
     def test_setup(self, testdir, scope, ok, error):
         testdir.makepyfile("""
             import pytest
-            @pytest.fixture(scope=%r, autoactive=True)
+            @pytest.fixture(scope=%r, autouse=True)
             def myscoped(request):
                 for x in %r:
                     assert hasattr(request, x)
@@ -2709,7 +2709,7 @@ class TestErrors:
     def test_setupfunc_missing_funcarg(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.fixture( autoactive=True)
+            @pytest.fixture( autouse=True)
             def gen(qwe123):
                 return 1
             def test_something():
@@ -2744,7 +2744,7 @@ class TestTestContextVarious:
             def arg(request):
                 return request.param
 
-            @pytest.fixture( autoactive=True)
+            @pytest.fixture( autouse=True)
             def mysetup(request, arg):
                 assert not hasattr(request, "param")
             def test_1(arg):
@@ -2757,10 +2757,10 @@ def test_setupdecorator_and_xunit(testdir):
     testdir.makepyfile("""
         import pytest
         l = []
-        @pytest.fixture(scope='module', autoactive=True)
+        @pytest.fixture(scope='module', autouse=True)
         def setup_module():
             l.append("module")
-        @pytest.fixture( autoactive=True)
+        @pytest.fixture( autouse=True)
         def setup_function():
             l.append("function")
 
@@ -2768,10 +2768,10 @@ def test_setupdecorator_and_xunit(testdir):
             pass
 
         class TestClass:
-            @pytest.fixture(scope="class", autoactive=True)
+            @pytest.fixture(scope="class", autouse=True)
             def setup_class(self):
                 l.append("class")
-            @pytest.fixture( autoactive=True)
+            @pytest.fixture( autouse=True)
             def setup_method(self):
                 l.append("method")
             def test_method(self):
@@ -2790,7 +2790,7 @@ def test_setup_funcarg_order(testdir):
         import pytest
 
         l = []
-        @pytest.fixture( autoactive=True)
+        @pytest.fixture( autouse=True)
         def fix1():
             l.append(1)
         @pytest.fixture()
@@ -2812,7 +2812,7 @@ def test_request_fixturenames(testdir):
         @pytest.fixture()
         def farg(arg1):
             pass
-        @pytest.fixture( autoactive=True)
+        @pytest.fixture( autouse=True)
         def sarg(tmpdir):
             pass
         def test_function(request, farg):

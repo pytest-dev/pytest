@@ -1,4 +1,5 @@
 
+.. _features:
 
 pytest: makes you write better programs
 =============================================

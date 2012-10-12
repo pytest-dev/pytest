@@ -42,18 +42,18 @@ You can use the following functions in your test, fixture or setup
 functions to force a certain test outcome.  Note that most often
 you can rather use declarative marks, see :ref:`skipping`.
 
-.. autofunction:: fail
-.. autofunction:: skip
-.. autofunction:: importorskip
-.. autofunction:: xfail
-.. autofunction:: exit
+.. autofunction:: _pytest.runner.fail
+.. autofunction:: _pytest.runner.skip
+.. autofunction:: _pytest.runner.importorskip
+.. autofunction:: _pytest.skipping.xfail
+.. autofunction:: _pytest.runner.exit
 
 fixtures and requests
 -----------------------------------------------------
 
 To mark a fixture function:
 
-.. autofunction:: fixture
+.. autofunction:: _pytest.python.fixture
 
 Tutorial at :ref:`fixtures`.
 

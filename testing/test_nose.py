@@ -28,7 +28,7 @@ def test_setup_func_with_setup_decorator():
     from _pytest.nose import call_optional
     l = []
     class A:
-        @pytest.fixture( autoactive=True)
+        @pytest.fixture( autouse=True)
         def f(self):
             l.append(1)
     call_optional(A(), "f")

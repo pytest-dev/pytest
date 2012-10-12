@@ -10,6 +10,7 @@ Installation and Getting Started
 **documentation as PDF**: `download latest <http://pytest.org/latest/pytest.pdf>`_
 
 .. _`getstarted`:
+.. _installation:
 
 Installation
 ----------------------------------------

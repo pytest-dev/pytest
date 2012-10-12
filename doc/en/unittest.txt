@@ -4,59 +4,141 @@
 Support for unittest.TestCase / Integration of fixtures
 =====================================================================
 
-py.test has support for running Python `unittest.py style`_ tests.
-It will automatically collect ``unittest.TestCase`` subclasses
-and their ``test`` methods in test files.  It will invoke
-``setUp/tearDown`` methods but also perform py.test's standard ways
-of treating tests such as IO capturing::
-
-    # content of test_unittest.py
-
-    import unittest
-    class MyTest(unittest.TestCase):
-        def setUp(self):
-            print ("hello") # output is captured
-        def test_method(self):
-            x = 1
-            self.assertEquals(x, 3)
-       
-Running it yields::
-
-    $ py.test test_unittest.py
-    =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev20
-    collected 1 items
-    
-    test_unittest.py F
-    
-    ================================= FAILURES =================================
-    ____________________________ MyTest.test_method ____________________________
-    
-    self = <test_unittest.MyTest testMethod=test_method>
-    
-        def test_method(self):
-            x = 1
-    >       self.assertEquals(x, 3)
-    E       AssertionError: 1 != 3
-    
-    test_unittest.py:8: AssertionError
-    ----------------------------- Captured stdout ------------------------------
-    hello
-    ========================= 1 failed in 0.01 seconds =========================
-
 .. _`unittest.py style`: http://docs.python.org/library/unittest.html
 
-Moreover, you can use pytest's new :ref:`autoactive fixtures` 
-functions, thereby connecting pytest's :ref:`fixture mechanism <fixture>`
-with a setup/teardown style::
+py.test has support for running Python `unittest.py style`_ tests.
+It's meant for leveraging existing unittest-style projects
+to use pytest features.  Concretely, pytest will automatically 
+collect ``unittest.TestCase`` subclasses and their ``test`` methods in
+test files.  It will invoke typlical ``setUp/tearDown`` methods and 
+generally try to make test suites written to run on unittest, to also 
+run using pytest.  We assume here that you are familiar with writing
+``unittest.TestCase`` style tests and rather focus on 
+integration aspects.
 
-    # content of test_unittest_funcargs.py
+Usage
+-------------------------------------------------------------------
+
+After :ref:`installation` type::
+
+    py.test 
+
+and you should be able to run your unittest-style tests if they
+are contained in ``test_*`` modules.  This way you can make
+use of most :ref:`pytest features <features>`, for example
+``--pdb`` debugging in failures, using :ref:`plain assert-statements <assert>`,
+:ref:`more informative tracebacks <tbreportdemo>`, stdout-capturing or 
+distributing tests to multiple CPUs via the ``-nNUM`` option if you 
+installed the ``pytest-xdist`` plugin.  Please refer to
+the general pytest documentation for many more examples.
+
+Mixing pytest fixtures into unittest.TestCase style tests
+-----------------------------------------------------------
+
+pytest supports using its :ref:`fixture mechanism <fixture>` with
+``unittest.TestCase`` style tests.  Assuming you have at least skimmed
+the pytest fixture features, let's jump-start into an example that 
+integrates a pytest ``db_class`` fixture, setting up a 
+class-cached database object, and then reference it from 
+a unittest-style test::
+
+    # content of conftest.py
+
+    # hooks and fixtures in this file are available throughout all test 
+    # modules living below the directory of this conftest.py file
+
+    import pytest
+
+    @pytest.fixture(scope="class")
+    def db_class(request):
+        class DummyDB:
+            pass
+        request.cls.db = DummyDB()
+
+This defines a fixture function ``db_class`` which - if used - is 
+called once for each test class and which sets the class-level 
+``db`` attribute to a ``DummyDB`` instance.  The fixture function
+achieves this by receiving a special ``request`` object which gives
+access to :ref:`the requesting test context <request-context>` such
+as the ``cls`` attribute, denoting the class from which the fixture 
+is used.  This architecture de-couples fixture writing from actual test
+code and allows re-use of the fixture by a minimal reference, the fixture
+name.  So let's write an actual ``unittest.TestCase`` class using our 
+fixture definition::
+
+    # content of test_unittest_db.py
+
+    import unittest
+    import pytest
+
+    @pytest.mark.usefixtures("db_class")
+    class MyTest(unittest.TestCase):
+        def test_method1(self):
+            assert hasattr(self, "db")
+            assert 0, self.db   # fail for demo purposes
+
+        def test_method2(self):
+            assert 0, self.db   # fail for demo purposes
+
+The ``@pytest.mark.usefixtures("db_class")`` class-decorator makes sure that 
+the pytest fixture function ``db_class`` is called.  Due to the deliberately
+failing assert statements, we can take a look at the ``self.db`` values 
+in the traceback::
+
+    $ py.test test_unittest_db.py
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev22
+    plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov, timeout
+    collected 2 items
+    
+    test_unittest_db.py FF
+    
+    ================================= FAILURES =================================
+    ___________________________ MyTest.test_method1 ____________________________
+    
+    self = <test_unittest_db.MyTest testMethod=test_method1>
+    
+        def test_method1(self):
+            assert hasattr(self, "db")
+    >       assert 0, self.db   # fail for demo purposes
+    E       AssertionError: <conftest.DummyDB instance at 0x135dea8>
+    
+    test_unittest_db.py:9: AssertionError
+    ___________________________ MyTest.test_method2 ____________________________
+    
+    self = <test_unittest_db.MyTest testMethod=test_method2>
+    
+        def test_method2(self):
+    >       assert 0, self.db   # fail for demo purposes
+    E       AssertionError: <conftest.DummyDB instance at 0x135dea8>
+    
+    test_unittest_db.py:12: AssertionError
+    ========================= 2 failed in 0.04 seconds =========================
+
+This default pytest traceback shows that, indeed, the two test methods
+see the same ``self.db`` attribute instance which was our intention
+when writing the class-scoped fixture function.
+
+
+autouse fixtures and accessing other fixtures
+-------------------------------------------------------------------
+
+Although it's usually better to explicitely declare use of fixtures you need
+for a given test, you may sometimes want to have fixtures that are 
+automatically used in a given context.  For this, you can flag
+fixture functions with ``@pytest.fixture(autouse=True)`` and define
+the fixture function in the context where you want it used.  Let's look 
+at an example which makes all test methods of a ``TestCase`` class 
+execute in a clean temporary directory, using a ``initdir`` fixture
+which itself uses the pytest builtin ``tmpdir`` fixture::
+
+    # content of test_unittest_cleandir.py
     import pytest
     import unittest
 
     class MyTest(unittest.TestCase):
-        @pytest.fixture(autoactive=True)
-        def chdir(self, tmpdir):
+        @pytest.fixture(autouse=True)
+        def initdir(self, tmpdir):
             tmpdir.chdir() # change to pytest-provided temporary directory
             tmpdir.join("samplefile.ini").write("# testdata")
 
@@ -64,71 +146,28 @@ with a setup/teardown style::
             s = open("samplefile.ini").read() 
             assert "testdata" in s
 
-Running this file should give us one passed test because the setup
-function took care to prepare a directory with some test data
-which the unittest-testcase method can now use::
+The ``initdir`` fixture function will be used for all methods of the
+class where it is defined.  This is basically just a shortcut for
+using a ``@pytest.mark.usefixtures("initdir")`` on the class like in
+the previous example.  Note, that the ``initdir`` fixture function
+accepts a :ref:`tmpdir <tmpdir>` argument, referencing a pytest
+builtin fixture. 
 
-    $ py.test -q test_unittest_funcargs.py
+Running this test module ...::
+
+    $ py.test -q test_unittest_cleandir.py
     .
 
-If you want to make a database attribute available on unittest.TestCases
-instances, you can do it using :ref:`usefixtures` and a simple 
-:ref:`fixture function`::
+... gives us one passed test because the ``initdir`` fixture function
+was executed ahead of the ``test_method``.
 
-    # content of test_unittest_marked_db.py
-    import pytest
-    import unittest
+.. note::
 
-    @pytest.fixture
-    def db(request):
-        class DummyDB:
-            entries = []
-        db = DummyDB()
-        if request.instance is not None:
-            request.instance.db = db
-        return db
-
-    @pytest.mark.usefixtures("db")
-    class MyTest(unittest.TestCase):
-        def test_append(self):
-            self.db.entries.append(1)
-
-        def test_method2(self):
-            # check we have a fresh instance
-            assert len(self.db.entries) == 0
-
-Running it passes both tests::
-
-    $ py.test -q test_unittest_marked_db.py
-    ..
-
-If you rather want to provide a class-cached "db" attribute, you 
-can write a slightly different fixture using a ``scope`` parameter
-for the fixture decorator ::
-
-    # content of test_unittest_class_db.py
-    import pytest
-    import unittest
-
-    @pytest.fixture(scope="class")
-    def db_class(request):
-        class DummyDB:
-            entries = []
-        db = DummyDB()
-        if request.cls is not None:
-            request.cls.db = db
-        return db
-
-    @pytest.mark.usefixtures("db_class")
-    class MyTest(unittest.TestCase):
-        def test_append(self):
-            self.db.entries.append(1)
-
-        def test_method2(self):
-            # check we DONT have a fresh instance
-            assert len(self.db.entries) == 1
-
-Running it again passes both tests::
-
-    $ py.test -q test_unittest_class_db.py
-    ..
+   ``unittest.TestCase`` methods cannot directly receive fixture or
+   function arguments as implementing that is likely to inflict
+   on the ability to run general unittest.TestCase test suites.
+   Given enough demand, attempts might be made, though.  If
+   unittest finally grows a reasonable plugin system that should 
+   help as well.  In the meanwhile, the above ``usefixtures`` and 
+   ``autouse`` examples should help to mix in pytest fixtures into
+   unittest suites.
