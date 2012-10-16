@@ -22,8 +22,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
 class UnitTestCase(pytest.Class):
 
     def collect(self):
-        self.session._fixturemanager._parsefactories(self.obj, self.nodeid,
-                unittest=True)
+        self.session._fixturemanager.parsefactories(self, unittest=True)
         loader = py.std.unittest.TestLoader()
         module = self.getparent(pytest.Module).obj
         cls = self.obj

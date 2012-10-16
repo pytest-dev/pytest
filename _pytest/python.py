@@ -83,7 +83,7 @@ def pytest_addoption(parser):
     group.addoption('--fixtures', '--fixtures',
                action="store_true", dest="showfixtures", default=False,
                help="show available fixtures, sorted by plugin appearance")
-    parser.addini("usefixtures", type="args", default=(),
+    parser.addini("usefixtures", type="args", default=[],
         help="list of default fixtures to be used with this project")
     parser.addini("python_files", type="args",
         default=('test_*.py', '*_test.py'),
@@ -379,7 +379,7 @@ class Module(pytest.File, PyCollector):
         return self._memoizedcall('_obj', self._importtestmodule)
 
     def collect(self):
-        self.session._fixturemanager._parsefactories(self.obj, self.nodeid)
+        self.session._fixturemanager.parsefactories(self)
         return super(Module, self).collect()
 
     def _importtestmodule(self):
@@ -452,7 +452,7 @@ class Instance(PyCollector):
         return obj
 
     def collect(self):
-        self.session._fixturemanager._parsefactories(self.obj, self.nodeid)
+        self.session._fixturemanager.parsefactories(self)
         return super(Instance, self).collect()
 
     def newinstance(self):
@@ -781,7 +781,7 @@ def _showfixtures_main(config, session):
     fm = session._fixturemanager
 
     available = []
-    for argname in fm.arg2fixturedefs:
+    for argname in fm._arg2fixturedefs:
         fixturedefs = fm.getfixturedefs(argname, nodeid)
         assert fixturedefs is not None
         if not fixturedefs:
@@ -1335,7 +1335,7 @@ class FixtureLookupError(LookupError):
             fm = self.request._fixturemanager
             nodeid = self.request._parentid
             available = []
-            for name, fixturedef in fm.arg2fixturedefs.items():
+            for name, fixturedef in fm._arg2fixturedefs.items():
                 faclist = list(fm._matchfactories(fixturedef, self.request._parentid))
                 if faclist:
                     available.append(name)
@@ -1370,11 +1370,11 @@ class FixtureManager:
     def __init__(self, session):
         self.session = session
         self.config = session.config
-        self.arg2fixturedefs = {}
+        self._arg2fixturedefs = {}
         self._seenplugins = set()
         self._holderobjseen = set()
         self._arg2finish = {}
-        self._autofixtures = []
+        self._nodeid_and_autousenames = [("", self.config.getini("usefixtures"))]
         session.config.pluginmanager.register(self, "funcmanage")
 
     ### XXX this hook should be called for historic events like pytest_configure
@@ -1391,7 +1391,7 @@ class FixtureManager:
         else:
             if p.basename.startswith("conftest.py"):
                 nodeid = p.dirpath().relto(self.session.fspath)
-        self._parsefactories(plugin, nodeid)
+        self.parsefactories(plugin, nodeid)
         self._seenplugins.add(plugin)
 
     @pytest.mark.tryfirst
@@ -1400,19 +1400,21 @@ class FixtureManager:
         for plugin in plugins:
             self.pytest_plugin_registered(plugin)
 
-    def getdefaultfixtures(self):
-        """ return a tuple of default fixture names (XXX for the given file path). """
-        try:
-            return self._defaultfixtures
-        except AttributeError:
-            defaultfixtures = tuple(self.config.getini("usefixtures"))
-            # make sure the self._autofixtures list is sorted
-            # by scope, scopenum 0 is session
-            self._autofixtures.sort(
-                key=lambda x: self.arg2fixturedefs[x][-1].scopenum)
-            defaultfixtures = defaultfixtures + tuple(self._autofixtures)
-            self._defaultfixtures = defaultfixtures
-            return defaultfixtures
+    def _getautousenames(self, nodeid):
+        """ return a tuple of fixture names to be used. """
+        autousenames = []
+        for baseid, basenames in self._nodeid_and_autousenames:
+            if nodeid.startswith(baseid):
+                if baseid:
+                    i = len(baseid) + 1
+                    nextchar = nodeid[i:i+1]
+                    if nextchar and nextchar not in ":/":
+                        continue
+                autousenames.extend(basenames)
+        # make sure autousenames are sorted by scope, scopenum 0 is session
+        autousenames.sort(
+            key=lambda x: self._arg2fixturedefs[x][-1].scopenum)
+        return autousenames
 
     def getfixtureclosure(self, fixturenames, parentnode):
         # collect the closure of all fixtures , starting with the given
@@ -1423,7 +1425,7 @@ class FixtureManager:
         # (discovering matching fixtures for a given name/node is expensive)
 
         parentid = parentnode.nodeid
-        fixturenames_closure = list(self.getdefaultfixtures())
+        fixturenames_closure = self._getautousenames(parentid)
         def merge(otherlist):
             for arg in otherlist:
                 if arg not in fixturenames_closure:
@@ -1484,10 +1486,16 @@ class FixtureManager:
                 for fin in l:
                     fin()
 
-    def _parsefactories(self, holderobj, nodeid, unittest=False):
+    def parsefactories(self, node_or_obj, nodeid=None, unittest=False):
+        if nodeid is not None:
+            holderobj = node_or_obj
+        else:
+            holderobj = node_or_obj.obj
+            nodeid = node_or_obj.nodeid
         if holderobj in self._holderobjseen:
             return
         self._holderobjseen.add(holderobj)
+        autousenames = []
         for name in dir(holderobj):
             obj = getattr(holderobj, name)
             if not callable(obj):
@@ -1509,18 +1517,16 @@ class FixtureManager:
             fixturedef = FixtureDef(self, nodeid, name, obj,
                                     marker.scope, marker.params,
                                     unittest=unittest)
-            faclist = self.arg2fixturedefs.setdefault(name, [])
+            faclist = self._arg2fixturedefs.setdefault(name, [])
             faclist.append(fixturedef)
             if marker.autouse:
-                self._autofixtures.append(name)
-                try:
-                    del self._defaultfixtures
-                except AttributeError:
-                    pass
+                autousenames.append(name)
+        if autousenames:
+            self._nodeid_and_autousenames.append((nodeid, autousenames))
 
     def getfixturedefs(self, argname, nodeid):
         try:
-            fixturedefs = self.arg2fixturedefs[argname]
+            fixturedefs = self._arg2fixturedefs[argname]
         except KeyError:
             return None
         else:

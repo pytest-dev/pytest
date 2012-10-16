@@ -2026,14 +2026,14 @@ class TestSetupDiscovery:
     def test_parsefactories_conftest(self, testdir):
         testdir.makepyfile("""
             def test_check_setup(item, fm):
-                assert len(fm._autofixtures) == 2
-                assert "perfunction2" in fm._autofixtures
-                assert "perfunction" in fm._autofixtures
+                autousenames = fm._getautousenames(item.nodeid)
+                assert len(autousenames) == 2
+                assert "perfunction2" in autousenames
+                assert "perfunction" in autousenames
         """)
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=1)
 
-    @pytest.mark.xfail
     def test_two_classes_separated_autouse(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -2113,6 +2113,45 @@ class TestSetupDiscovery:
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(failed=0, passed=0)
 
+    def test_autouse_in_conftests(self, testdir):
+        a = testdir.mkdir("a")
+        b = testdir.mkdir("a1")
+        conftest = testdir.makeconftest("""
+            import pytest
+            @pytest.fixture(autouse=True)
+            def hello():
+                xxx
+        """)
+        conftest.move(a.join(conftest.basename))
+        a.join("test_something.py").write("def test_func(): pass")
+        b.join("test_otherthing.py").write("def test_func(): pass")
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines("""
+            *1 passed*1 error*
+        """)
+
+    def test_autouse_in_module_and_two_classes(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            l = []
+            @pytest.fixture(autouse=True)
+            def append1():
+                l.append("module")
+            def test_x():
+                assert l == ["module"]
+
+            class TestA:
+                @pytest.fixture(autouse=True)
+                def append2(self):
+                    l.append("A")
+                def test_hello(self):
+                    assert l == ["module", "module", "A"], l
+            class TestA2:
+                def test_world(self):
+                    assert l == ["module", "module", "A", "module"], l
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=3)
 
 class TestSetupManagement:
     def test_funcarg_and_setup(self, testdir):
@@ -2220,7 +2259,7 @@ class TestSetupManagement:
                 def test_2(self):
                     pass
         """)
-        reprec = testdir.inline_run("-v",)
+        reprec = testdir.inline_run("-v","-s")
         reprec.assertoutcome(passed=8)
         config = reprec.getcalls("pytest_unconfigure")[0].config
         l = config._conftest.getconftestmodules(p)[0].l
