@@ -309,8 +309,7 @@ class PyCollector(PyobjMixin, pytest.Collector):
         clscol = self.getparent(Class)
         cls = clscol and clscol.obj or None
         transfer_markers(funcobj, cls, module)
-        metafunc = Metafunc(funcobj, parentnode=self, config=self.config,
-            cls=cls, module=module)
+        metafunc = Metafunc(funcobj, parentnode=self, cls=cls, module=module)
         gentesthook = self.config.hook.pytest_generate_tests
         extra = [module]
         if cls is not None:
@@ -612,25 +611,23 @@ class FuncargnamesCompatAttr:
         return self.fixturenames
 
 class Metafunc(FuncargnamesCompatAttr):
-    def __init__(self, function, config=None, cls=None, module=None,
-                 parentnode=None):
-        self.config = config
+    def __init__(self, function, parentnode, cls=None, module=None):
+        self.config = parentnode.config
         self.module = module
         self.function = function
         self.parentnode = parentnode
-        self._parentid = getattr(parentnode, "nodeid", "")
         argnames = getfuncargnames(function, startindex=int(cls is not None))
-        if parentnode is not None:
+        try:
             fm = parentnode.session._fixturemanager
+        except AttributeError:
+            self.fixturenames = argnames
+        else:
             self.fixturenames, self._arg2fixturedeflist = fm.getfixtureclosure(
                 argnames, parentnode)
-        else:
-            self.fixturenames = argnames
         self.cls = cls
         self.module = module
         self._calls = []
         self._ids = py.builtin.set()
-        self._arg2scopenum = {}
 
     def parametrize(self, argnames, argvalues, indirect=False, ids=None,
         scope=None):
