@@ -327,6 +327,38 @@ class PyCollector(PyobjMixin, pytest.Collector):
                                keywords={callspec.id:True})
 
 class FixtureMapper:
+    """
+    pytest fixtures definitions and information is stored and managed
+    from this class.
+
+    During collection fm.parsefactories() is called multiple times to parse
+    fixture function definitions into FixtureDef objects and internal
+    data structures.
+
+    During collection of test functions, metafunc-mechanics instantiate
+    a FuncFixtureInfo object which is cached in a FixtureMapper instance
+    which itself lives on the parent collector.  This FuncFixtureInfo object
+    is later retrieved by Function nodes which themselves offer a fixturenames
+    attribute.
+
+    The FuncFixtureInfo object holds information about fixtures and FixtureDefs
+    relevant for a particular function.  An initial list of fixtures is
+    assembled like this:
+
+    - ini-defined usefixtures
+    - autouse-marked fixtures along the collection chain up from the function
+    - usefixtures markers at module/class/function level
+    - test function funcargs
+
+    Subsequently the funcfixtureinfo.fixturenames attribute is computed
+    as the closure of the fixtures needed to setup the initial fixtures,
+    i. e. fixtures needed by fixture functions themselves are appended
+    to the fixturenames list.
+
+    Upon the test-setup phases all fixturenames are instantiated, retrieved
+    by a lookup on a FixtureMapper().
+    """
+
     def __init__(self, node, funcargs=True):
         self.node = node
         self.fm = node.session._fixturemanager
