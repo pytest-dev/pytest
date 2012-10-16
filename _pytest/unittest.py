@@ -20,6 +20,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
             return UnitTestCase(name, parent=collector)
 
 class UnitTestCase(pytest.Class):
+
     def collect(self):
         self.session._fixturemanager._parsefactories(self.obj, self.nodeid,
                 unittest=True)
@@ -51,9 +52,6 @@ class UnitTestCase(pytest.Class):
 
 class TestCaseFunction(pytest.Function):
     _excinfo = None
-
-    def _getfuncargnames(self):
-        return ()
 
     def setup(self):
         self._testcase = self.parent.obj(self.name)

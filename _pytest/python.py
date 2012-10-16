@@ -266,6 +266,18 @@ class PyobjMixin(PyobjContext):
         return fspath, lineno, modpath
 
 class PyCollector(PyobjMixin, pytest.Collector):
+    def _fixturemapper():
+        def get(self):
+            try:
+                return self._fixturemapper_memo
+            except AttributeError:
+                self._fixturemapper_memo = FixtureMapper(self, funcargs=False)
+                return self._fixturemapper_memo
+        def set(self, val):
+            assert not hasattr(self, "_fixturemapper_memo")
+            self._fixturemapper_memo = val
+        return property(get, set)
+    _fixturemapper = _fixturemapper()
 
     def funcnamefilter(self, name):
         for prefix in self.config.getini("python_functions"):
@@ -309,7 +321,7 @@ class PyCollector(PyobjMixin, pytest.Collector):
         clscol = self.getparent(Class)
         cls = clscol and clscol.obj or None
         transfer_markers(funcobj, cls, module)
-        if not hasattr(self, "_fixturemapper"):
+        if not hasattr(self, "_fixturemapper_memo"):
             self._fixturemapper = FixtureMapper(self)
         fixtureinfo = self._fixturemapper.getfixtureinfo(funcobj, cls)
         metafunc = Metafunc(funcobj, fixtureinfo, self.config,
@@ -331,17 +343,21 @@ class PyCollector(PyobjMixin, pytest.Collector):
                                keywords={callspec.id:True})
 
 class FixtureMapper:
-    def __init__(self, node):
+    def __init__(self, node, funcargs=True):
         self.node = node
         self.fm = node.session._fixturemanager
         self._name2fixtureinfo = {}
+        self.hasfuncargs = funcargs
 
     def getfixtureinfo(self, func, cls):
         try:
             return self._name2fixtureinfo[func]
         except KeyError:
             pass
-        argnames = getfuncargnames(func, int(cls is not None))
+        if self.hasfuncargs:
+            argnames = getfuncargnames(func, int(cls is not None))
+        else:
+            argnames = ()
         usefixtures = getattr(func, "usefixtures", None)
         if usefixtures is not None:
             argnames = usefixtures.args + argnames
@@ -929,17 +945,9 @@ class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
             for name, val in keywords.items():
                 setattr(self.markers, name, val)
 
-        # contstruct a list of all neccessary fixtures for this test function
-        try:
-            usefixtures = self.markers.usefixtures.args
-        except AttributeError:
-            usefixtures = ()
-        self.fixturenames = (self.session._fixturemanager.getdefaultfixtures() +
-                usefixtures + self._getfuncargnames())
-
-    def _getfuncargnames(self):
-        startindex = int(self.cls is not None)
-        return getfuncargnames(self.obj, startindex=startindex)
+        fixtureinfo = self.parent._fixturemapper.getfixtureinfo(self.obj,
+                                                                self.cls)
+        self.fixturenames = fixtureinfo.names_closure
 
     @property
     def function(self):

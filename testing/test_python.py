@@ -280,6 +280,7 @@ class TestFunction:
         config = testdir.parseconfigure()
         session = testdir.Session(config)
         session._fixturemanager = FixtureManager(session)
+        session._fixturemapper = funcargs.FixtureMapper(session, funcargs=False)
         def func1():
             pass
         def func2():
@@ -579,6 +580,7 @@ class TestFillFixtures:
                 pass
         """)
         funcargs.fillfixtures(item)
+        del item.funcargs["request"]
         assert len(item.funcargs) == 2
         assert item.funcargs['some'] == "test_func"
         assert item.funcargs['other'] == 42
@@ -685,7 +687,9 @@ class TestRequest:
         val2 = req.getfuncargvalue("other")  # see about caching
         assert val2 == 2
         pytest._fillfuncargs(item)
-        assert item.funcargs == {'something': 1}
+        assert item.funcargs["something"] == 1
+        assert len(item.funcargs) == 2
+        assert "request" in item.funcargs
         #assert item.funcargs == {'something': 1, "other": 2}
 
     def test_request_addfinalizer(self, testdir):
