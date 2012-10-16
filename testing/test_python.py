@@ -535,17 +535,17 @@ def test_getfuncargnames():
     def f(): pass
     assert not funcargs.getfuncargnames(f)
     def g(arg): pass
-    assert funcargs.getfuncargnames(g) == ['arg']
+    assert funcargs.getfuncargnames(g) == ('arg',)
     def h(arg1, arg2="hello"): pass
-    assert funcargs.getfuncargnames(h) == ['arg1']
+    assert funcargs.getfuncargnames(h) == ('arg1',)
     def h(arg1, arg2, arg3="hello"): pass
-    assert funcargs.getfuncargnames(h) == ['arg1', 'arg2']
+    assert funcargs.getfuncargnames(h) == ('arg1', 'arg2')
     class A:
         def f(self, arg1, arg2="hello"):
             pass
-    assert funcargs.getfuncargnames(A().f) == ['arg1']
+    assert funcargs.getfuncargnames(A().f) == ('arg1',)
     if sys.version_info < (3,0):
-        assert funcargs.getfuncargnames(A.f) == ['arg1']
+        assert funcargs.getfuncargnames(A.f) == ('arg1',)
 
 
 class TestFillFixtures:
@@ -910,9 +910,16 @@ class TestRequestCachedSetup:
 
 class TestMetafunc:
     def Metafunc(self, func):
-        class parent:
-            config = None
-        return funcargs.Metafunc(func, parentnode=parent)
+        # the unit tests of this class check if things work correctly
+        # on the funcarg level, so we don't need a full blown
+        # initiliazation
+        class FixtureInfo:
+            name2fixturedeflist = None
+            def __init__(self, names):
+                self.names_closure = names
+        names = funcargs.getfuncargnames(func)
+        fixtureinfo = FixtureInfo(names)
+        return funcargs.Metafunc(func, fixtureinfo, None)
 
     def test_no_funcargs(self, testdir):
         def function(): pass
@@ -1392,6 +1399,20 @@ class TestMetafuncFunctional:
         """ % (scope, length))
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=5)
+
+    def test_usemarkers_seen_in_generate_tests(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            def pytest_generate_tests(metafunc):
+                assert "abc" in metafunc.fixturenames
+                metafunc.parametrize("abc", [1])
+
+            @pytest.mark.usefixtures("abc")
+            def test_function():
+                pass
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
 
 def test_conftest_funcargs_only_available_in_subdir(testdir):
     sub1 = testdir.mkpydir("sub1")

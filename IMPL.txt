@@ -30,7 +30,7 @@ object model
 ---------------------
 
 As part of the metafunc-protocol parents of Function nodes get a
-FuncFixtureInfos() object, containing helping/caching for 
+ParentFixtures() object, containing helping/caching for 
 for a function. .getfixtureinfo(func) returns a FixtureInfo with these
 attributes:
 

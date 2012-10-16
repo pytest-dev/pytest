@@ -53,7 +53,7 @@ class TestCaseFunction(pytest.Function):
     _excinfo = None
 
     def _getfuncargnames(self):
-        return []
+        return ()
 
     def setup(self):
         self._testcase = self.parent.obj(self.name)

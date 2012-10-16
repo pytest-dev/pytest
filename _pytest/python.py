@@ -309,7 +309,11 @@ class PyCollector(PyobjMixin, pytest.Collector):
         clscol = self.getparent(Class)
         cls = clscol and clscol.obj or None
         transfer_markers(funcobj, cls, module)
-        metafunc = Metafunc(funcobj, parentnode=self, cls=cls, module=module)
+        if not hasattr(self, "_fixturemapper"):
+            self._fixturemapper = FixtureMapper(self)
+        fixtureinfo = self._fixturemapper.getfixtureinfo(funcobj, cls)
+        metafunc = Metafunc(funcobj, fixtureinfo, self.config,
+                            cls=cls, module=module)
         gentesthook = self.config.hook.pytest_generate_tests
         extra = [module]
         if cls is not None:
@@ -325,6 +329,32 @@ class PyCollector(PyobjMixin, pytest.Collector):
                 yield Function(name=subname, parent=self,
                                callspec=callspec, callobj=funcobj,
                                keywords={callspec.id:True})
+
+class FixtureMapper:
+    def __init__(self, node):
+        self.node = node
+        self.fm = node.session._fixturemanager
+        self._name2fixtureinfo = {}
+
+    def getfixtureinfo(self, func, cls):
+        try:
+            return self._name2fixtureinfo[func]
+        except KeyError:
+            pass
+        argnames = getfuncargnames(func, int(cls is not None))
+        usefixtures = getattr(func, "usefixtures", None)
+        if usefixtures is not None:
+            argnames = usefixtures.args + argnames
+        names_closure, arg2fixturedeflist = self.fm.getfixtureclosure(
+                argnames, self.node)
+        fixtureinfo = FuncFixtureInfo(names_closure, arg2fixturedeflist)
+        self._name2fixtureinfo[func] = fixtureinfo
+        return fixtureinfo
+
+class FuncFixtureInfo:
+    def __init__(self, names_closure, name2fixturedeflist):
+        self.names_closure = names_closure
+        self.name2fixturedeflist = name2fixturedeflist
 
 def transfer_markers(funcobj, cls, mod):
     # XXX this should rather be code in the mark plugin or the mark
@@ -611,19 +641,12 @@ class FuncargnamesCompatAttr:
         return self.fixturenames
 
 class Metafunc(FuncargnamesCompatAttr):
-    def __init__(self, function, parentnode, cls=None, module=None):
-        self.config = parentnode.config
+    def __init__(self, function, fixtureinfo, config, cls=None, module=None):
+        self.config = config
         self.module = module
         self.function = function
-        self.parentnode = parentnode
-        argnames = getfuncargnames(function, startindex=int(cls is not None))
-        try:
-            fm = parentnode.session._fixturemanager
-        except AttributeError:
-            self.fixturenames = argnames
-        else:
-            self.fixturenames, self._arg2fixturedeflist = fm.getfixtureclosure(
-                argnames, parentnode)
+        self.fixturenames = fixtureinfo.names_closure
+        self._arg2fixturedeflist = fixtureinfo.name2fixturedeflist
         self.cls = cls
         self.module = module
         self._calls = []
@@ -878,7 +901,7 @@ class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
     Python test function.
     """
     _genid = None
-    def __init__(self, name, parent=None, args=None, config=None,
+    def __init__(self, name, parent, args=None, config=None,
                  callspec=None, callobj=_dummy, keywords=None, session=None):
         super(Function, self).__init__(name, parent, config=config,
                                        session=session)
@@ -908,9 +931,9 @@ class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
 
         # contstruct a list of all neccessary fixtures for this test function
         try:
-            usefixtures = list(self.markers.usefixtures.args)
+            usefixtures = self.markers.usefixtures.args
         except AttributeError:
-            usefixtures = []
+            usefixtures = ()
         self.fixturenames = (self.session._fixturemanager.getdefaultfixtures() +
                 usefixtures + self._getfuncargnames())
 
@@ -1377,16 +1400,16 @@ class FixtureManager:
             self.pytest_plugin_registered(plugin)
 
     def getdefaultfixtures(self):
-        """ return a list of default fixture names (XXX for the given file path). """
+        """ return a tuple of default fixture names (XXX for the given file path). """
         try:
             return self._defaultfixtures
         except AttributeError:
-            defaultfixtures = list(self.config.getini("usefixtures"))
+            defaultfixtures = tuple(self.config.getini("usefixtures"))
             # make sure the self._autofixtures list is sorted
             # by scope, scopenum 0 is session
             self._autofixtures.sort(
                 key=lambda x: self.arg2fixturedeflist[x][-1].scopenum)
-            defaultfixtures.extend(self._autofixtures)
+            defaultfixtures = defaultfixtures + tuple(self._autofixtures)
             self._defaultfixtures = defaultfixtures
             return defaultfixtures
 
@@ -1573,8 +1596,8 @@ def getfuncargnames(function, startindex=None):
                        getattr(function, '__defaults__', None)) or ()
     numdefaults = len(defaults)
     if numdefaults:
-        return argnames[startindex:-numdefaults]
-    return argnames[startindex:]
+        return tuple(argnames[startindex:-numdefaults])
+    return tuple(argnames[startindex:])
 
 # algorithm for sorting on a per-parametrized resource setup basis
 
