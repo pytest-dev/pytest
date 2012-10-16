@@ -36,5 +36,5 @@ attributes:
 
 - names_initial: list of initial fixture names (see above)
 - names_closure: closure of all fixture names
-- name2fixturedeflist: for creating the value
+- name2fixturedefs: for creating the value
 

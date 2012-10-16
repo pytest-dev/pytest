@@ -361,26 +361,16 @@ class FixtureMapper:
         usefixtures = getattr(func, "usefixtures", None)
         if usefixtures is not None:
             argnames = usefixtures.args + argnames
-        names_closure, arg2fixturedeflist = self.fm.getfixtureclosure(
+        names_closure, arg2fixturedefs = self.fm.getfixtureclosure(
                 argnames, self.node)
-        fixtureinfo = FuncFixtureInfo(names_closure, arg2fixturedeflist)
+        fixtureinfo = FuncFixtureInfo(names_closure, arg2fixturedefs)
         self._name2fixtureinfo[func] = fixtureinfo
         return fixtureinfo
 
 class FuncFixtureInfo:
-    def __init__(self, names_closure, name2fixturedeflist):
+    def __init__(self, names_closure, name2fixturedefs):
         self.names_closure = names_closure
-        self.name2fixturedeflist = name2fixturedeflist
-
-    def getname2fixturedeflist_copy(self):
-        d = {}
-        for name, val in self.name2fixturedeflist.items():
-            try:
-                val = list(val)
-            except TypeError:
-                pass
-            d[name] = val
-        return d
+        self.name2fixturedefs = name2fixturedefs
 
 def transfer_markers(funcobj, cls, mod):
     # XXX this should rather be code in the mark plugin or the mark
@@ -675,7 +665,7 @@ class Metafunc(FuncargnamesCompatAttr):
         self.module = module
         self.function = function
         self.fixturenames = fixtureinfo.names_closure
-        self._arg2fixturedeflist = fixtureinfo.name2fixturedeflist
+        self._arg2fixturedefs = fixtureinfo.name2fixturedefs
         self.cls = cls
         self.module = module
         self._calls = []
@@ -804,12 +794,12 @@ def _showfixtures_main(config, session):
     fm = session._fixturemanager
 
     available = []
-    for argname in fm.arg2fixturedeflist:
-        fixturedeflist = fm.getfixturedeflist(argname, nodeid)
-        assert fixturedeflist is not None
-        if not fixturedeflist:
+    for argname in fm.arg2fixturedefs:
+        fixturedefs = fm.getfixturedefs(argname, nodeid)
+        assert fixturedefs is not None
+        if not fixturedefs:
             continue
-        fixturedef = fixturedeflist[-1]
+        fixturedef = fixturedefs[-1]
         loc = getlocation(fixturedef.func, curdir)
         available.append((len(fixturedef.baseid),
                           curdir.bestrelpath(loc),
@@ -1055,7 +1045,8 @@ class FixtureRequest(FuncargnamesCompatAttr):
         self.getparent = pyfuncitem.getparent
         self._funcargs  = self._pyfuncitem.funcargs.copy()
         self._fixtureinfo = fi = pyfuncitem._fixtureinfo
-        self._arg2fixturedeflist = fi.getname2fixturedeflist_copy()
+        self._arg2fixturedefs = fi.name2fixturedefs
+        self._arg2index = {}
         self.fixturenames = self._fixtureinfo.names_closure
         self._fixturemanager = pyfuncitem.session._fixturemanager
         self._parentid = pyfuncitem.parent.nodeid
@@ -1066,15 +1057,20 @@ class FixtureRequest(FuncargnamesCompatAttr):
         """ underlying collection node (depends on current request scope)"""
         return self._getscopeitem(self.scope)
 
-    def _getfixturedeflist(self, argname):
-        fixturedeflist = self._arg2fixturedeflist.get(argname, None)
-        if fixturedeflist is None:
-            fixturedeflist = self._fixturemanager.getfixturedeflist(
+    def _getnextfixturedef(self, argname):
+        fixturedefs = self._arg2fixturedefs.get(argname, None)
+        if fixturedefs is None:
+            # we arrive here because of a getfuncargvalue(argname) usage which
+            # was naturally not knowable at parsing/collection time
+            fixturedefs = self._fixturemanager.getfixturedefs(
                             argname, self._parentid)
-            self._arg2fixturedeflist[argname] = fixturedeflist
-        if not fixturedeflist:
+            self._arg2fixturedefs[argname] = fixturedefs
+        # fixturedefs is immutable so we maintain a decreasing index
+        index = self._arg2index.get(argname, 0) - 1
+        if fixturedefs is None or (-index > len(fixturedefs)):
             raise FixtureLookupError(argname, self)
-        return fixturedeflist
+        self._arg2index[argname] = index
+        return fixturedefs[index]
 
     @property
     def config(self):
@@ -1212,12 +1208,11 @@ class FixtureRequest(FuncargnamesCompatAttr):
         except KeyError:
             pass
         try:
-            fixturedeflist = self._getfixturedeflist(argname)
+            fixturedef = self._getnextfixturedef(argname)
         except FixtureLookupError:
             if argname == "request":
                 return self
             raise
-        fixturedef = fixturedeflist.pop()
         self._fixturestack.append(fixturedef)
         try:
             result = self._getfuncargvalue(fixturedef)
@@ -1353,7 +1348,7 @@ class FixtureLookupError(LookupError):
             fm = self.request._fixturemanager
             nodeid = self.request._parentid
             available = []
-            for name, fixturedef in fm.arg2fixturedeflist.items():
+            for name, fixturedef in fm.arg2fixturedefs.items():
                 faclist = list(fm._matchfactories(fixturedef, self.request._parentid))
                 if faclist:
                     available.append(name)
@@ -1388,7 +1383,7 @@ class FixtureManager:
     def __init__(self, session):
         self.session = session
         self.config = session.config
-        self.arg2fixturedeflist = {}
+        self.arg2fixturedefs = {}
         self._seenplugins = set()
         self._holderobjseen = set()
         self._arg2finish = {}
@@ -1427,7 +1422,7 @@ class FixtureManager:
             # make sure the self._autofixtures list is sorted
             # by scope, scopenum 0 is session
             self._autofixtures.sort(
-                key=lambda x: self.arg2fixturedeflist[x][-1].scopenum)
+                key=lambda x: self.arg2fixturedefs[x][-1].scopenum)
             defaultfixtures = defaultfixtures + tuple(self._autofixtures)
             self._defaultfixtures = defaultfixtures
             return defaultfixtures
@@ -1435,7 +1430,7 @@ class FixtureManager:
     def getfixtureclosure(self, fixturenames, parentnode):
         # collect the closure of all fixtures , starting with the given
         # fixturenames as the initial set.  As we have to visit all
-        # factory definitions anyway, we also return a arg2fixturedeflist
+        # factory definitions anyway, we also return a arg2fixturedefs
         # mapping so that the caller can reuse it and does not have
         # to re-discover fixturedefs again for each fixturename
         # (discovering matching fixtures for a given name/node is expensive)
@@ -1447,23 +1442,23 @@ class FixtureManager:
                 if arg not in fixturenames_closure:
                     fixturenames_closure.append(arg)
         merge(fixturenames)
-        arg2fixturedeflist = {}
+        arg2fixturedefs = {}
         lastlen = -1
         while lastlen != len(fixturenames_closure):
             lastlen = len(fixturenames_closure)
             for argname in fixturenames_closure:
-                if argname in arg2fixturedeflist:
+                if argname in arg2fixturedefs:
                     continue
-                fixturedeflist = self.getfixturedeflist(argname, parentid)
-                arg2fixturedeflist[argname] = fixturedeflist
-                if fixturedeflist is not None:
-                    for fixturedef in fixturedeflist:
+                fixturedefs = self.getfixturedefs(argname, parentid)
+                arg2fixturedefs[argname] = fixturedefs
+                if fixturedefs is not None:
+                    for fixturedef in fixturedefs:
                         merge(fixturedef.fixturenames)
-        return fixturenames_closure, arg2fixturedeflist
+        return fixturenames_closure, arg2fixturedefs
 
     def pytest_generate_tests(self, metafunc):
         for argname in metafunc.fixturenames:
-            faclist = metafunc._arg2fixturedeflist[argname]
+            faclist = metafunc._arg2fixturedefs[argname]
             if faclist is None:
                 continue # will raise FixtureLookupError at setup time
             for fixturedef in faclist:
@@ -1527,7 +1522,7 @@ class FixtureManager:
             fixturedef = FixtureDef(self, nodeid, name, obj,
                                     marker.scope, marker.params,
                                     unittest=unittest)
-            faclist = self.arg2fixturedeflist.setdefault(name, [])
+            faclist = self.arg2fixturedefs.setdefault(name, [])
             faclist.append(fixturedef)
             if marker.autouse:
                 self._autofixtures.append(name)
@@ -1536,16 +1531,16 @@ class FixtureManager:
                 except AttributeError:
                     pass
 
-    def getfixturedeflist(self, argname, nodeid):
+    def getfixturedefs(self, argname, nodeid):
         try:
-            fixturedeflist = self.arg2fixturedeflist[argname]
+            fixturedefs = self.arg2fixturedefs[argname]
         except KeyError:
             return None
         else:
-            return list(self._matchfactories(fixturedeflist, nodeid))
+            return tuple(self._matchfactories(fixturedefs, nodeid))
 
-    def _matchfactories(self, fixturedeflist, nodeid):
-        for fixturedef in fixturedeflist:
+    def _matchfactories(self, fixturedefs, nodeid):
+        for fixturedef in fixturedefs:
             if nodeid.startswith(fixturedef.baseid):
                 yield fixturedef
 

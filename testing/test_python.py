@@ -640,7 +640,7 @@ class TestRequest:
         assert req.cls.__name__ == "TestB"
         assert req.instance.__class__ == req.cls
 
-    def XXXtest_request_contains_funcarg_arg2fixturedeflist(self, testdir):
+    def XXXtest_request_contains_funcarg_arg2fixturedefs(self, testdir):
         modcol = testdir.getmodulecol("""
             def pytest_funcarg__something(request):
                 pass
@@ -650,9 +650,9 @@ class TestRequest:
         """)
         item1, = testdir.genitems([modcol])
         assert item1.name == "test_method"
-        arg2fixturedeflist = funcargs.FixtureRequest(item1)._arg2fixturedeflist
-        assert len(arg2fixturedeflist) == 1
-        assert arg2fixturedeflist[0].__name__ == "pytest_funcarg__something"
+        arg2fixturedefs = funcargs.FixtureRequest(item1)._arg2fixturedefs
+        assert len(arg2fixturedefs) == 1
+        assert arg2fixturedefs[0].__name__ == "pytest_funcarg__something"
 
     def test_getfuncargvalue_recursive(self, testdir):
         testdir.makeconftest("""
@@ -918,7 +918,7 @@ class TestMetafunc:
         # on the funcarg level, so we don't need a full blown
         # initiliazation
         class FixtureInfo:
-            name2fixturedeflist = None
+            name2fixturedefs = None
             def __init__(self, names):
                 self.names_closure = names
         names = funcargs.getfuncargnames(func)
@@ -1974,7 +1974,7 @@ class TestFixtureManager:
         testdir.makepyfile("""
             def test_hello(item, fm):
                 for name in ("fm", "hello", "item"):
-                    faclist = fm.getfixturedeflist(name, item.nodeid)
+                    faclist = fm.getfixturedefs(name, item.nodeid)
                     assert len(faclist) == 1
                     fac = faclist[0]
                     assert fac.func.__name__ == "pytest_funcarg__" + name
@@ -1990,7 +1990,7 @@ class TestFixtureManager:
                 def pytest_funcarg__hello(self, request):
                     return "class"
                 def test_hello(self, item, fm):
-                    faclist = fm.getfixturedeflist("hello", item.nodeid)
+                    faclist = fm.getfixturedefs("hello", item.nodeid)
                     print (faclist)
                     assert len(faclist) == 3
                     assert faclist[0].func(item._request) == "conftest"
