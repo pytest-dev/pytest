@@ -142,25 +142,9 @@ def pytest_pyfunc_call(__multicall__, pyfuncitem):
         if pyfuncitem._isyieldedfunction():
             testfunction(*pyfuncitem._args)
         else:
-            try:
-                fixturenames = pyfuncitem.fixturenames
-            except AttributeError:
-                funcargs = pyfuncitem.funcargs
-            else:
-                funcargs = {}
-                for name in fixturenames:
-                    funcargs[name] = pyfuncitem.funcargs[name]
-            testfunction(**funcargs)
-
-def pytest_pyfunc_call(__multicall__, pyfuncitem):
-    if not __multicall__.execute():
-        testfunction = pyfuncitem.obj
-        if pyfuncitem._isyieldedfunction():
-            testfunction(*pyfuncitem._args)
-        else:
             funcargs = pyfuncitem.funcargs
             testargs = {}
-            for arg in getfuncargnames(testfunction):
+            for arg in pyfuncitem._fixtureinfo.argnames:
                 testargs[arg] = funcargs[arg]
             testfunction(**testargs)
 
@@ -359,16 +343,19 @@ class FixtureMapper:
         else:
             argnames = ()
         usefixtures = getattr(func, "usefixtures", None)
+        initialnames = argnames
         if usefixtures is not None:
-            argnames = usefixtures.args + argnames
+            initialnames = usefixtures.args + initialnames
         names_closure, arg2fixturedefs = self.fm.getfixtureclosure(
-                argnames, self.node)
-        fixtureinfo = FuncFixtureInfo(names_closure, arg2fixturedefs)
+                initialnames, self.node)
+        fixtureinfo = FuncFixtureInfo(argnames, names_closure,
+                                      arg2fixturedefs)
         self._name2fixtureinfo[func] = fixtureinfo
         return fixtureinfo
 
 class FuncFixtureInfo:
-    def __init__(self, names_closure, name2fixturedefs):
+    def __init__(self, argnames, names_closure, name2fixturedefs):
+        self.argnames = argnames
         self.names_closure = names_closure
         self.name2fixturedefs = name2fixturedefs
 
@@ -1265,7 +1252,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         # (XXX analyse exact finalizing mechanics / cleanup)
         self.session._setupstate.addfinalizer(fixturedef.finish, self.node)
         self._fixturemanager.addargfinalizer(fixturedef.finish, argname)
-        for subargname in fixturedef.fixturenames: # XXX all deps?
+        for subargname in fixturedef.argnames: # XXX all deps?
             self._fixturemanager.addargfinalizer(fixturedef.finish, subargname)
         mp.setattr(self, "addfinalizer", fixturedef.addfinalizer)
         # finally perform the fixture call
@@ -1453,7 +1440,7 @@ class FixtureManager:
                 arg2fixturedefs[argname] = fixturedefs
                 if fixturedefs is not None:
                     for fixturedef in fixturedefs:
-                        merge(fixturedef.fixturenames)
+                        merge(fixturedef.argnames)
         return fixturenames_closure, arg2fixturedefs
 
     def pytest_generate_tests(self, metafunc):
@@ -1567,7 +1554,7 @@ class FixtureDef:
         self.scopenum = scopes.index(scope or "function")
         self.params = params
         startindex = unittest and 1 or None
-        self.fixturenames = getfuncargnames(func, startindex=startindex)
+        self.argnames = getfuncargnames(func, startindex=startindex)
         self.unittest = unittest
         self.active = False
         self._finalizer = []
@@ -1587,7 +1574,7 @@ class FixtureDef:
 
     def execute(self, request):
         kwargs = {}
-        for newname in self.fixturenames:
+        for newname in self.argnames:
             kwargs[newname] = request.getfuncargvalue(newname)
         if self.unittest:
             result = self.func(request.instance, **kwargs)
