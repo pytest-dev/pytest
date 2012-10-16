@@ -372,6 +372,16 @@ class FuncFixtureInfo:
         self.names_closure = names_closure
         self.name2fixturedeflist = name2fixturedeflist
 
+    def getname2fixturedeflist_copy(self):
+        d = {}
+        for name, val in self.name2fixturedeflist.items():
+            try:
+                val = list(val)
+            except TypeError:
+                pass
+            d[name] = val
+        return d
+
 def transfer_markers(funcobj, cls, mod):
     # XXX this should rather be code in the mark plugin or the mark
     # plugin should merge with the python plugin.
@@ -580,6 +590,9 @@ def fillfixtures(function):
         try:
             request = function._request
         except AttributeError:
+            # the special jstests class with a custom .obj
+            fi = FixtureMapper(function).getfixtureinfo(function.obj, None)
+            function._fixtureinfo = fi
             request = function._request = FixtureRequest(function)
         request._fillfixtures()
 
@@ -922,6 +935,18 @@ class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
         super(Function, self).__init__(name, parent, config=config,
                                        session=session)
         self._args = args
+        if callobj is not _dummy:
+            self.obj = callobj
+
+        for name, val in (py.builtin._getfuncdict(self.obj) or {}).items():
+            setattr(self.markers, name, val)
+        if keywords:
+            for name, val in keywords.items():
+                setattr(self.markers, name, val)
+
+        fi = self.parent._fixturemapper.getfixtureinfo(self.obj, self.cls)
+        self._fixtureinfo = fi
+        self.fixturenames = fi.names_closure
         if self._isyieldedfunction():
             assert not callspec, (
                 "yielded functions (deprecated) cannot have funcargs")
@@ -936,18 +961,6 @@ class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
                 self.funcargs = {}
             self._request = req = FixtureRequest(self)
             #req._discoverfactories()
-        if callobj is not _dummy:
-            self.obj = callobj
-
-        for name, val in (py.builtin._getfuncdict(self.obj) or {}).items():
-            setattr(self.markers, name, val)
-        if keywords:
-            for name, val in keywords.items():
-                setattr(self.markers, name, val)
-
-        fixtureinfo = self.parent._fixturemapper.getfixtureinfo(self.obj,
-                                                                self.cls)
-        self.fixturenames = fixtureinfo.names_closure
 
     @property
     def function(self):
@@ -1041,13 +1054,11 @@ class FixtureRequest(FuncargnamesCompatAttr):
         self.scope = "function"
         self.getparent = pyfuncitem.getparent
         self._funcargs  = self._pyfuncitem.funcargs.copy()
-        self._arg2fixturedeflist = {}
+        self._fixtureinfo = fi = pyfuncitem._fixtureinfo
+        self._arg2fixturedeflist = fi.getname2fixturedeflist_copy()
+        self.fixturenames = self._fixtureinfo.names_closure
         self._fixturemanager = pyfuncitem.session._fixturemanager
         self._parentid = pyfuncitem.parent.nodeid
-        self.fixturenames, self._arg2fixturedeflist_ = \
-            self._fixturemanager.getfixtureclosure(
-                getfuncargnames(self.function), # XXX _pyfuncitem...
-                pyfuncitem.parent)
         self._fixturestack = []
 
     @property
