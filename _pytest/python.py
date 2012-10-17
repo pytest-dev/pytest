@@ -65,7 +65,7 @@ def pyobj_property(name):
 
 def pytest_addoption(parser):
     group = parser.getgroup("general")
-    group.addoption('--fixtures', '--fixtures',
+    group.addoption('--fixtures', '--funcargs',
                action="store_true", dest="showfixtures", default=False,
                help="show available fixtures, sorted by plugin appearance")
     parser.addini("usefixtures", type="args", default=[],
@@ -746,15 +746,24 @@ def _showfixtures_main(config, session):
         fixturedef = fixturedefs[-1]
         loc = getlocation(fixturedef.func, curdir)
         available.append((len(fixturedef.baseid),
+                          fixturedef.func.__module__,
                           curdir.bestrelpath(loc),
                           fixturedef.argname, fixturedef))
 
     available.sort()
-    for baseid, bestrel, argname, fixturedef in available:
+    currentmodule = None
+    for baseid, module, bestrel, argname, fixturedef in available:
+        if currentmodule != module:
+            if not module.startswith("_pytest."):
+                tw.line()
+                tw.sep("-", "fixtures defined from %s" %(module,))
+                currentmodule = module
+        if verbose <= 0 and argname[0] == "_":
+            continue
         if verbose > 0:
-            funcargspec = "%s -- %s" %(name, loc,)
+            funcargspec = "%s -- %s" %(argname, loc,)
         else:
-            funcargspec = argname  # "%s %s" %(baseid, argname)
+            funcargspec = argname
         tw.line(funcargspec, green=True)
         loc = getlocation(fixturedef.func, curdir)
         doc = fixturedef.func.__doc__ or ""

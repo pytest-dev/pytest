@@ -1575,8 +1575,20 @@ class TestReportInfo:
        """
 
 class TestShowFixtures:
+    def test_funcarg_compat(self, testdir):
+        config = testdir.parseconfigure("--funcargs")
+        assert config.option.showfixtures
+
     def test_show_fixtures(self, testdir):
         result = testdir.runpytest("--fixtures")
+        result.stdout.fnmatch_lines([
+                "*tmpdir*",
+                "*temporary directory*",
+            ]
+        )
+
+    def test_show_fixtures_verbose(self, testdir):
+        result = testdir.runpytest("--fixtures", "-v")
         result.stdout.fnmatch_lines([
                 "*tmpdir*",
                 "*temporary directory*",
@@ -1587,15 +1599,20 @@ class TestShowFixtures:
         p = testdir.makepyfile('''
             import pytest
             @pytest.fixture
+            def _arg0():
+                """ hidden """
+            @pytest.fixture
             def arg1():
                 """  hello world """
         ''')
         result = testdir.runpytest("--fixtures", p)
         result.stdout.fnmatch_lines("""
-            *tmpdir*
+            *tmpdir
+            *fixtures defined from*
             *arg1*
             *hello world*
         """)
+        assert "arg0" not in result.stdout.str()
 
     @pytest.mark.parametrize("testmod", [True, False])
     def test_show_fixtures_conftest(self, testdir, testmod):
@@ -1613,6 +1630,7 @@ class TestShowFixtures:
         result = testdir.runpytest("--fixtures")
         result.stdout.fnmatch_lines("""
             *tmpdir*
+            *fixtures defined from*conftest*
             *arg1*
             *hello world*
         """)
