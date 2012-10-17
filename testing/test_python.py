@@ -1590,7 +1590,7 @@ class TestShowFixtures:
     def test_show_fixtures_verbose(self, testdir):
         result = testdir.runpytest("--fixtures", "-v")
         result.stdout.fnmatch_lines([
-                "*tmpdir*",
+                "*tmpdir*--*tmpdir.py*",
                 "*temporary directory*",
             ]
         )

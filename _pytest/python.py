@@ -761,7 +761,7 @@ def _showfixtures_main(config, session):
         if verbose <= 0 and argname[0] == "_":
             continue
         if verbose > 0:
-            funcargspec = "%s -- %s" %(argname, loc,)
+            funcargspec = "%s -- %s" %(argname, bestrel,)
         else:
             funcargspec = argname
         tw.line(funcargspec, green=True)
