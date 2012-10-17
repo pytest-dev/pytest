@@ -280,7 +280,6 @@ class TestFunction:
         config = testdir.parseconfigure()
         session = testdir.Session(config)
         session._fixturemanager = FixtureManager(session)
-        session._fixturemapper = funcargs.FixtureMapper(session, funcargs=False)
         def func1():
             pass
         def func2():
@@ -1440,29 +1439,58 @@ def test_conftest_funcargs_only_available_in_subdir(testdir):
         "*2 passed*"
     ])
 
-def test_funcarg_non_pycollectobj(testdir): # rough jstests usage
-    testdir.makeconftest("""
-        import pytest
-        def pytest_pycollect_makeitem(collector, name, obj):
-            if name == "MyClass":
-                return MyCollector(name, parent=collector)
-        class MyCollector(pytest.Collector):
-            def reportinfo(self):
-                return self.fspath, 3, "xyz"
-    """)
-    modcol = testdir.getmodulecol("""
-        def pytest_funcarg__arg1(request):
-            return 42
-        class MyClass:
-            pass
-    """)
-    # this hook finds funcarg factories
-    rep = modcol.ihook.pytest_make_collect_report(collector=modcol)
-    clscol = rep.result[0]
-    clscol.obj = lambda arg1: None
-    clscol.funcargs = {}
-    funcargs.fillfixtures(clscol)
-    assert clscol.funcargs['arg1'] == 42
+class TestOEJSKITSpecials:
+    def test_funcarg_non_pycollectobj(self, testdir): # rough jstests usage
+        testdir.makeconftest("""
+            import pytest
+            def pytest_pycollect_makeitem(collector, name, obj):
+                if name == "MyClass":
+                    return MyCollector(name, parent=collector)
+            class MyCollector(pytest.Collector):
+                def reportinfo(self):
+                    return self.fspath, 3, "xyz"
+        """)
+        modcol = testdir.getmodulecol("""
+            def pytest_funcarg__arg1(request):
+                return 42
+            class MyClass:
+                pass
+        """)
+        # this hook finds funcarg factories
+        rep = modcol.ihook.pytest_make_collect_report(collector=modcol)
+        clscol = rep.result[0]
+        clscol.obj = lambda arg1: None
+        clscol.funcargs = {}
+        funcargs.fillfixtures(clscol)
+        assert clscol.funcargs['arg1'] == 42
+
+    def test_autouse_fixture(self, testdir): # rough jstests usage
+        testdir.makeconftest("""
+            import pytest
+            def pytest_pycollect_makeitem(collector, name, obj):
+                if name == "MyClass":
+                    return MyCollector(name, parent=collector)
+            class MyCollector(pytest.Collector):
+                def reportinfo(self):
+                    return self.fspath, 3, "xyz"
+        """)
+        modcol = testdir.getmodulecol("""
+            import pytest
+            @pytest.fixture(autouse=True)
+            def hello():
+                pass
+            def pytest_funcarg__arg1(request):
+                return 42
+            class MyClass:
+                pass
+        """)
+        # this hook finds funcarg factories
+        rep = modcol.ihook.pytest_make_collect_report(collector=modcol)
+        clscol = rep.result[0]
+        clscol.obj = lambda: None
+        clscol.funcargs = {}
+        funcargs.fillfixtures(clscol)
+        assert not clscol.funcargs
 
 
 

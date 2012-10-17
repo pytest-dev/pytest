@@ -20,6 +20,8 @@ def pytest_pycollect_makeitem(collector, name, obj):
             return UnitTestCase(name, parent=collector)
 
 class UnitTestCase(pytest.Class):
+    nofuncargs = True  # marker for fixturemanger.getfixtureinfo()
+                       # to declare that our children do not support funcargs
 
     def collect(self):
         self.session._fixturemanager.parsefactories(self, unittest=True)

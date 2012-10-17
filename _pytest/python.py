@@ -250,18 +250,6 @@ class PyobjMixin(PyobjContext):
         return fspath, lineno, modpath
 
 class PyCollector(PyobjMixin, pytest.Collector):
-    def _fixturemapper():
-        def get(self):
-            try:
-                return self._fixturemapper_memo
-            except AttributeError:
-                self._fixturemapper_memo = FixtureMapper(self, funcargs=False)
-                return self._fixturemapper_memo
-        def set(self, val):
-            assert not hasattr(self, "_fixturemapper_memo")
-            self._fixturemapper_memo = val
-        return property(get, set)
-    _fixturemapper = _fixturemapper()
 
     def funcnamefilter(self, name):
         for prefix in self.config.getini("python_functions"):
@@ -305,9 +293,8 @@ class PyCollector(PyobjMixin, pytest.Collector):
         clscol = self.getparent(Class)
         cls = clscol and clscol.obj or None
         transfer_markers(funcobj, cls, module)
-        if not hasattr(self, "_fixturemapper_memo"):
-            self._fixturemapper = FixtureMapper(self)
-        fixtureinfo = self._fixturemapper.getfixtureinfo(funcobj, cls)
+        fm = self.session._fixturemanager
+        fixtureinfo = fm.getfixtureinfo(self, funcobj, cls)
         metafunc = Metafunc(funcobj, fixtureinfo, self.config,
                             cls=cls, module=module)
         gentesthook = self.config.hook.pytest_generate_tests
@@ -326,64 +313,6 @@ class PyCollector(PyobjMixin, pytest.Collector):
                                callspec=callspec, callobj=funcobj,
                                keywords={callspec.id:True})
 
-class FixtureMapper:
-    """
-    pytest fixtures definitions and information is stored and managed
-    from this class.
-
-    During collection fm.parsefactories() is called multiple times to parse
-    fixture function definitions into FixtureDef objects and internal
-    data structures.
-
-    During collection of test functions, metafunc-mechanics instantiate
-    a FuncFixtureInfo object which is cached in a FixtureMapper instance
-    which itself lives on the parent collector.  This FuncFixtureInfo object
-    is later retrieved by Function nodes which themselves offer a fixturenames
-    attribute.
-
-    The FuncFixtureInfo object holds information about fixtures and FixtureDefs
-    relevant for a particular function.  An initial list of fixtures is
-    assembled like this:
-
-    - ini-defined usefixtures
-    - autouse-marked fixtures along the collection chain up from the function
-    - usefixtures markers at module/class/function level
-    - test function funcargs
-
-    Subsequently the funcfixtureinfo.fixturenames attribute is computed
-    as the closure of the fixtures needed to setup the initial fixtures,
-    i. e. fixtures needed by fixture functions themselves are appended
-    to the fixturenames list.
-
-    Upon the test-setup phases all fixturenames are instantiated, retrieved
-    by a lookup on a FixtureMapper().
-    """
-
-    def __init__(self, node, funcargs=True):
-        self.node = node
-        self._name2fixtureinfo = {}
-        self.hasfuncargs = funcargs
-
-    def getfixtureinfo(self, func, cls):
-        try:
-            return self._name2fixtureinfo[func]
-        except KeyError:
-            pass
-        if self.hasfuncargs:
-            argnames = getfuncargnames(func, int(cls is not None))
-        else:
-            argnames = ()
-        usefixtures = getattr(func, "usefixtures", None)
-        initialnames = argnames
-        if usefixtures is not None:
-            initialnames = usefixtures.args + initialnames
-        fm = self.node.session._fixturemanager
-        names_closure, arg2fixturedefs = fm.getfixtureclosure(initialnames,
-                                                              self.node)
-        fixtureinfo = FuncFixtureInfo(argnames, names_closure,
-                                      arg2fixturedefs)
-        self._name2fixtureinfo[func] = fixtureinfo
-        return fixtureinfo
 
 class FuncFixtureInfo:
     def __init__(self, argnames, names_closure, name2fixturedefs):
@@ -599,11 +528,22 @@ def fillfixtures(function):
         try:
             request = function._request
         except AttributeError:
-            # the special jstests class with a custom .obj
-            fi = FixtureMapper(function).getfixtureinfo(function.obj, None)
+            # XXX this special code path is only expected to execute
+            # with the oejskit plugin.  It uses classes with funcargs
+            # and we thus have to work a bit to allow this.
+            fm = function.session._fixturemanager
+            fi = fm.getfixtureinfo(function.parent, function.obj, None)
             function._fixtureinfo = fi
             request = function._request = FixtureRequest(function)
-        request._fillfixtures()
+            request._fillfixtures()
+            # prune out funcargs for jstests
+            newfuncargs = {}
+            for name in fi.argnames:
+                newfuncargs[name] = function.funcargs[name]
+            function.funcargs = newfuncargs
+        else:
+            request._fillfixtures()
+
 
 _notexists = object()
 
@@ -953,8 +893,9 @@ class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
             for name, val in keywords.items():
                 setattr(self.markers, name, val)
 
-        fi = self.parent._fixturemapper.getfixtureinfo(self.obj, self.cls)
-        self._fixtureinfo = fi
+        fm = self.session._fixturemanager
+        self._fixtureinfo = fi = fm.getfixtureinfo(self.parent,
+                                                   self.obj, self.cls)
         self.fixturenames = fi.names_closure
         if self._isyieldedfunction():
             assert not callspec, (
@@ -1395,6 +1336,37 @@ class FixtureLookupErrorRepr(TerminalRepr):
         tw.line("%s:%d" % (self.filename, self.firstlineno+1))
 
 class FixtureManager:
+    """
+    pytest fixtures definitions and information is stored and managed
+    from this class.
+
+    During collection fm.parsefactories() is called multiple times to parse
+    fixture function definitions into FixtureDef objects and internal
+    data structures.
+
+    During collection of test functions, metafunc-mechanics instantiate
+    a FuncFixtureInfo object which is cached per node/func-name.
+    This FuncFixtureInfo object is later retrieved by Function nodes
+    which themselves offer a fixturenames attribute.
+
+    The FuncFixtureInfo object holds information about fixtures and FixtureDefs
+    relevant for a particular function.  An initial list of fixtures is
+    assembled like this:
+
+    - ini-defined usefixtures
+    - autouse-marked fixtures along the collection chain up from the function
+    - usefixtures markers at module/class/function level
+    - test function funcargs
+
+    Subsequently the funcfixtureinfo.fixturenames attribute is computed
+    as the closure of the fixtures needed to setup the initial fixtures,
+    i. e. fixtures needed by fixture functions themselves are appended
+    to the fixturenames list.
+
+    Upon the test-setup phases all fixturenames are instantiated, retrieved
+    by a lookup of their FuncFixtureInfo.
+    """
+
     _argprefix = "pytest_funcarg__"
     FixtureLookupError = FixtureLookupError
     FixtureLookupErrorRepr = FixtureLookupErrorRepr
@@ -1408,6 +1380,34 @@ class FixtureManager:
         self._arg2finish = {}
         self._nodeid_and_autousenames = [("", self.config.getini("usefixtures"))]
         session.config.pluginmanager.register(self, "funcmanage")
+
+        self._nodename2fixtureinfo = {}
+
+    def getfixtureinfo(self, node, func, cls):
+        key = (node, func.__name__)
+        try:
+            return self._nodename2fixtureinfo[key]
+        except KeyError:
+            pass
+        if not hasattr(node, "nofuncargs"):
+            if cls is not None:
+                startindex = 1
+            else:
+                startindex = None
+            argnames = getfuncargnames(func, startindex)
+        else:
+            argnames = ()
+        usefixtures = getattr(func, "usefixtures", None)
+        initialnames = argnames
+        if usefixtures is not None:
+            initialnames = usefixtures.args + initialnames
+        fm = node.session._fixturemanager
+        names_closure, arg2fixturedefs = fm.getfixtureclosure(initialnames,
+                                                              node)
+        fixtureinfo = FuncFixtureInfo(argnames, names_closure,
+                                      arg2fixturedefs)
+        self._nodename2fixtureinfo[key] = fixtureinfo
+        return fixtureinfo
 
     ### XXX this hook should be called for historic events like pytest_configure
     ### so that we don't have to do the below pytest_configure hook
