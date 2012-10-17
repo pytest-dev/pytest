@@ -361,7 +361,6 @@ class FixtureMapper:
 
     def __init__(self, node, funcargs=True):
         self.node = node
-        self.fm = node.session._fixturemanager
         self._name2fixtureinfo = {}
         self.hasfuncargs = funcargs
 
@@ -378,8 +377,9 @@ class FixtureMapper:
         initialnames = argnames
         if usefixtures is not None:
             initialnames = usefixtures.args + initialnames
-        names_closure, arg2fixturedefs = self.fm.getfixtureclosure(
-                initialnames, self.node)
+        fm = self.node.session._fixturemanager
+        names_closure, arg2fixturedefs = fm.getfixtureclosure(initialnames,
+                                                              self.node)
         fixtureinfo = FuncFixtureInfo(argnames, names_closure,
                                       arg2fixturedefs)
         self._name2fixtureinfo[func] = fixtureinfo

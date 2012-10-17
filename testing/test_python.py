@@ -456,24 +456,6 @@ def test_setup_only_available_in_subdir(testdir):
         "*2 passed*"
     ])
 
-def test_generate_tests_only_done_in_subdir(testdir):
-    sub1 = testdir.mkpydir("sub1")
-    sub2 = testdir.mkpydir("sub2")
-    sub1.join("conftest.py").write(py.code.Source("""
-        def pytest_generate_tests(metafunc):
-            assert metafunc.function.__name__ == "test_1"
-    """))
-    sub2.join("conftest.py").write(py.code.Source("""
-        def pytest_generate_tests(metafunc):
-            assert metafunc.function.__name__ == "test_2"
-    """))
-    sub1.join("test_in_sub1.py").write("def test_1(): pass")
-    sub2.join("test_in_sub2.py").write("def test_2(): pass")
-    result = testdir.runpytest("-v", "-s", sub1, sub2, sub1)
-    result.stdout.fnmatch_lines([
-        "*3 passed*"
-    ])
-
 def test_modulecol_roundtrip(testdir):
     modcol = testdir.getmodulecol("pass", withinit=True)
     trail = modcol.nodeid
@@ -1404,7 +1386,7 @@ class TestMetafuncFunctional:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=5)
 
-    def test_usemarkers_seen_in_generate_tests(self, testdir):
+    def test_usefixtures_seen_in_generate_tests(self, testdir):
         testdir.makepyfile("""
             import pytest
             def pytest_generate_tests(metafunc):
@@ -1417,6 +1399,25 @@ class TestMetafuncFunctional:
         """)
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
+
+    def test_generate_tests_only_done_in_subdir(self, testdir):
+        sub1 = testdir.mkpydir("sub1")
+        sub2 = testdir.mkpydir("sub2")
+        sub1.join("conftest.py").write(py.code.Source("""
+            def pytest_generate_tests(metafunc):
+                assert metafunc.function.__name__ == "test_1"
+        """))
+        sub2.join("conftest.py").write(py.code.Source("""
+            def pytest_generate_tests(metafunc):
+                assert metafunc.function.__name__ == "test_2"
+        """))
+        sub1.join("test_in_sub1.py").write("def test_1(): pass")
+        sub2.join("test_in_sub2.py").write("def test_2(): pass")
+        result = testdir.runpytest("-v", "-s", sub1, sub2, sub1)
+        result.stdout.fnmatch_lines([
+            "*3 passed*"
+        ])
+
 
 def test_conftest_funcargs_only_available_in_subdir(testdir):
     sub1 = testdir.mkpydir("sub1")
@@ -1462,6 +1463,7 @@ def test_funcarg_non_pycollectobj(testdir): # rough jstests usage
     clscol.funcargs = {}
     funcargs.fillfixtures(clscol)
     assert clscol.funcargs['arg1'] == 42
+
 
 
 def test_funcarg_lookup_error(testdir):
@@ -2000,18 +2002,18 @@ class TestFixtureManager:
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=1)
 
-class TestSetupDiscovery:
+class TestAutouseDiscovery:
     def pytest_funcarg__testdir(self, testdir):
         testdir.makeconftest("""
             import pytest
-            @pytest.fixture( autouse=True)
+            @pytest.fixture(autouse=True)
             def perfunction(request, tmpdir):
                 pass
 
             @pytest.fixture()
             def arg1(tmpdir):
                 pass
-            @pytest.fixture( autouse=True)
+            @pytest.fixture(autouse=True)
             def perfunction2(arg1):
                 pass
 
@@ -2153,7 +2155,7 @@ class TestSetupDiscovery:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=3)
 
-class TestSetupManagement:
+class TestAutouseManagement:
     def test_funcarg_and_setup(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -2179,7 +2181,7 @@ class TestSetupManagement:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
 
-    def test_setup_uses_parametrized_resource(self, testdir):
+    def test_uses_parametrized_resource(self, testdir):
         testdir.makepyfile("""
             import pytest
             l = []
@@ -2187,7 +2189,7 @@ class TestSetupManagement:
             def arg(request):
                 return request.param
 
-            @pytest.fixture( autouse=True)
+            @pytest.fixture(autouse=True)
             def something(arg):
                 l.append(arg)
 
@@ -2203,7 +2205,7 @@ class TestSetupManagement:
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=2)
 
-    def test_session_parametrized_function_setup(self, testdir):
+    def test_session_parametrized_function(self, testdir):
         testdir.makepyfile("""
             import pytest
 
@@ -2265,7 +2267,7 @@ class TestSetupManagement:
         l = config._conftest.getconftestmodules(p)[0].l
         assert l == ["fin_a1", "fin_a2", "fin_b1", "fin_b2"] * 2
 
-    def test_setup_scope_ordering(self, testdir):
+    def test_scope_ordering(self, testdir):
         testdir.makepyfile("""
             import pytest
             l = []
@@ -2799,7 +2801,7 @@ class TestErrors:
     def test_setupfunc_missing_funcarg(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.fixture( autouse=True)
+            @pytest.fixture(autouse=True)
             def gen(qwe123):
                 return 1
             def test_something():
@@ -2834,7 +2836,7 @@ class TestTestContextVarious:
             def arg(request):
                 return request.param
 
-            @pytest.fixture( autouse=True)
+            @pytest.fixture(autouse=True)
             def mysetup(request, arg):
                 assert not hasattr(request, "param")
             def test_1(arg):
@@ -2850,7 +2852,7 @@ def test_setupdecorator_and_xunit(testdir):
         @pytest.fixture(scope='module', autouse=True)
         def setup_module():
             l.append("module")
-        @pytest.fixture( autouse=True)
+        @pytest.fixture(autouse=True)
         def setup_function():
             l.append("function")
 
@@ -2861,7 +2863,7 @@ def test_setupdecorator_and_xunit(testdir):
             @pytest.fixture(scope="class", autouse=True)
             def setup_class(self):
                 l.append("class")
-            @pytest.fixture( autouse=True)
+            @pytest.fixture(autouse=True)
             def setup_method(self):
                 l.append("method")
             def test_method(self):
@@ -2880,7 +2882,7 @@ def test_setup_funcarg_order(testdir):
         import pytest
 
         l = []
-        @pytest.fixture( autouse=True)
+        @pytest.fixture(autouse=True)
         def fix1():
             l.append(1)
         @pytest.fixture()
@@ -2902,7 +2904,7 @@ def test_request_fixturenames(testdir):
         @pytest.fixture()
         def farg(arg1):
             pass
-        @pytest.fixture( autouse=True)
+        @pytest.fixture(autouse=True)
         def sarg(tmpdir):
             pass
         def test_function(request, farg):
