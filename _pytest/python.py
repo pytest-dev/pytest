@@ -1419,7 +1419,7 @@ class FixtureManager:
             if p.basename.startswith("conftest.py"):
                 nodeid = p.dirpath().relto(self.session.fspath)
                 if p.sep != "/":
-                    nodeid.replace(p.sep, "/")
+                    nodeid = nodeid.replace(p.sep, "/")
         self.parsefactories(plugin, nodeid)
         self._seenplugins.add(plugin)
 
