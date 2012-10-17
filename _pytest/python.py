@@ -53,21 +53,6 @@ def fixture(scope="function", params=None, autouse=False):
 
 defaultfuncargprefixmarker = fixture()
 
-def cached_property(f):
-    """returns a cached property that is calculated by function f.
-    taken from http://code.activestate.com/recipes/576563-cached-property/"""
-    def get(self):
-        try:
-            return self._property_cache[f]
-        except AttributeError:
-            self._property_cache = {}
-            x = self._property_cache[f] = f(self)
-            return x
-        except KeyError:
-            x = self._property_cache[f] = f(self)
-            return x
-    return property(get)
-
 def pyobj_property(name):
     def get(self):
         node = self.getparent(getattr(pytest, name))
