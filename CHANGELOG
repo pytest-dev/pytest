@@ -1,6 +1,8 @@
 Changes between 2.2.4 and 2.3.0.dev
 -----------------------------------
 
+- fix issue198 - conftest fixtures were not found on windows32 in some
+  circumstances with nested directory structures due to path manipulation issues
 - fix issue193 skip test functions with were parametrized with empty
   parameter sets
 - fix python3.3 compat, mostly reporting bits that previously depended

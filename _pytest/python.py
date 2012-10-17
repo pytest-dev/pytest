@@ -731,6 +731,7 @@ def _showfixtures_main(config, session):
     else:
         part = session._initialparts[0]
         nodeid = "::".join(map(str, [curdir.bestrelpath(part[0])] + part[1:]))
+        nodeid.replace(session.fspath.sep, "/")
 
     tw = py.io.TerminalWriter()
     verbose = config.getvalue("verbose")
@@ -1417,6 +1418,8 @@ class FixtureManager:
         else:
             if p.basename.startswith("conftest.py"):
                 nodeid = p.dirpath().relto(self.session.fspath)
+                if p.sep != "/":
+                    nodeid.replace(p.sep, "/")
         self.parsefactories(plugin, nodeid)
         self._seenplugins.add(plugin)
 

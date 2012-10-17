@@ -2974,3 +2974,19 @@ def test_funcargnames_compatattr(testdir):
     """)
     reprec = testdir.inline_run()
     reprec.assertoutcome(passed=1)
+
+def test_fixtures_sub_subdir_normalize_sep(testdir):
+    # this makes sure that normlization of nodeids takes place
+    b = testdir.mkdir("tests").mkdir("unit")
+    b.join("conftest.py").write(py.code.Source("""
+        def pytest_funcarg__arg1():
+            pass
+    """))
+    p = b.join("test_module.py")
+    p.write("def test_func(arg1): pass")
+    result = testdir.runpytest(p, "--fixtures")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines("""
+        *fixtures defined*conftest*
+        *arg1*
+    """)
