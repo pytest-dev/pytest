@@ -34,7 +34,7 @@ test modules::
 
     # content of conftest.py
    
-    from remoteinterpreter import RemoteInterpreter
+    from .remoteinterpreter import RemoteInterpreter
 
     @pytest.fixture
     def interp(request):
@@ -63,7 +63,7 @@ That's it, we can now run the test::
     $ py.test test_remoteinterpreter.py
     Traceback (most recent call last):
       File "/home/hpk/p/pytest/.tox/regen/bin/py.test", line 9, in <module>
-        load_entry_point('pytest==2.3.0.dev27', 'console_scripts', 'py.test')()
+        load_entry_point('pytest==2.3.0.dev28', 'console_scripts', 'py.test')()
       File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/core.py", line 473, in main
         config = _prepareconfig(args, plugins)
       File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/core.py", line 463, in _prepareconfig
@@ -98,9 +98,9 @@ That's it, we can now run the test::
         self._conftestpath2mod[conftestpath] = mod = conftestpath.pyimport()
       File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/py/_path/local.py", line 532, in pyimport
         __import__(modname)
-      File "/tmp/doc-exec-58/conftest.py", line 2, in <module>
-        from remoteinterpreter import RemoteInterpreter
-    ImportError: No module named remoteinterpreter
+      File "/tmp/doc-exec-111/conftest.py", line 2, in <module>
+        from .remoteinterpreter import RemoteInterpreter
+    ValueError: Attempted relative import in non-package
 
 .. _`tut-cmdlineoption`:
 
@@ -150,7 +150,7 @@ Running it yields::
     $ py.test -q test_ssh.py -rs
     Traceback (most recent call last):
       File "/home/hpk/p/pytest/.tox/regen/bin/py.test", line 9, in <module>
-        load_entry_point('pytest==2.3.0.dev27', 'console_scripts', 'py.test')()
+        load_entry_point('pytest==2.3.0.dev28', 'console_scripts', 'py.test')()
       File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/core.py", line 473, in main
         config = _prepareconfig(args, plugins)
       File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/core.py", line 463, in _prepareconfig
@@ -185,7 +185,7 @@ Running it yields::
         self._conftestpath2mod[conftestpath] = mod = conftestpath.pyimport()
       File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/py/_path/local.py", line 532, in pyimport
         __import__(modname)
-      File "/tmp/doc-exec-58/conftest.py", line 2, in <module>
+      File "/tmp/doc-exec-111/conftest.py", line 2, in <module>
         from myapp import MyApp
     ImportError: No module named myapp
 

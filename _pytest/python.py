@@ -1067,7 +1067,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
     @property
     def keywords(self):
         """ keywords/markers dictionary for the underlying node. """
-        return self._pyfuncitem.keywords
+        return self.node.keywords
 
     @property
     def session(self):
@@ -1246,7 +1246,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         if scope == "function":
             return self._pyfuncitem
         elif scope == "session":
-            return None
+            return self.session
         elif scope == "class":
             x = self._pyfuncitem.getparent(pytest.Class)
             if x is not None:

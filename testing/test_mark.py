@@ -284,6 +284,25 @@ class TestFunctional:
         assert l[0].args == ("pos0",)
         assert l[1].args == ("pos1",)
 
+    def test_keywords_at_node_level(self, testdir):
+        p = testdir.makepyfile("""
+            import pytest
+            @pytest.fixture(scope="session", autouse=True)
+            def some(request):
+                request.keywords["hello"] = 42
+                assert "world" not in request.keywords
+
+            @pytest.fixture(scope="function", autouse=True)
+            def funcsetup(request):
+                assert "world" in request.keywords
+                assert "hello" in  request.keywords
+
+            @pytest.mark.world
+            def test_function():
+                pass
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
 
 class TestKeywordSelection:
     def test_select_simple(self, testdir):

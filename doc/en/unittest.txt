@@ -87,7 +87,7 @@ the ``self.db`` values in the traceback::
 
     $ py.test test_unittest_db.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev27
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev28
     collected 2 items
     
     test_unittest_db.py FF
@@ -100,7 +100,7 @@ the ``self.db`` values in the traceback::
         def test_method1(self):
             assert hasattr(self, "db")
     >       assert 0, self.db   # fail for demo purposes
-    E       AssertionError: <conftest.DummyDB instance at 0x18ff9e0>
+    E       AssertionError: <conftest.DummyDB instance at 0x26ccbd8>
     
     test_unittest_db.py:9: AssertionError
     ___________________________ MyTest.test_method2 ____________________________
@@ -109,7 +109,7 @@ the ``self.db`` values in the traceback::
     
         def test_method2(self):
     >       assert 0, self.db   # fail for demo purposes
-    E       AssertionError: <conftest.DummyDB instance at 0x18ff9e0>
+    E       AssertionError: <conftest.DummyDB instance at 0x26ccbd8>
     
     test_unittest_db.py:12: AssertionError
     ========================= 2 failed in 0.02 seconds =========================

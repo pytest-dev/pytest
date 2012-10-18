@@ -71,7 +71,7 @@ fixture function.  Running the test looks like this::
 
     $ py.test test_smtpsimple.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev27
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev28
     collected 1 items
     
     test_smtpsimple.py F
@@ -79,7 +79,7 @@ fixture function.  Running the test looks like this::
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x1ceeb00>
+    smtp = <smtplib.SMTP instance at 0x1929d40>
     
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
@@ -130,7 +130,7 @@ Funcargs a prime example of dependency injection
 When injecting fixtures to test functions, pytest-2.0 introduced the
 term "funcargs" or "funcarg mechanism" which continues to be present
 also in pytest-2.3 docs.  It now refers to the specific case of injecting
-fixture values to test functions by arguments.  With pytest-2.3 there are
+fixture values as arguments to test functions.  With pytest-2.3 there are
 more possibilities to use fixtures but "funcargs" probably will remain
 as the main way of dealing with fixtures.
 
@@ -187,7 +187,7 @@ inspect what is going on and can now run the tests::
 
     $ py.test test_module.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev27
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev28
     collected 2 items
     
     test_module.py FF
@@ -195,7 +195,7 @@ inspect what is going on and can now run the tests::
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x1ef15f0>
+    smtp = <smtplib.SMTP instance at 0x135f3b0>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -207,7 +207,7 @@ inspect what is going on and can now run the tests::
     test_module.py:6: AssertionError
     ________________________________ test_noop _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x1ef15f0>
+    smtp = <smtplib.SMTP instance at 0x135f3b0>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -216,7 +216,7 @@ inspect what is going on and can now run the tests::
     E       assert 0
     
     test_module.py:11: AssertionError
-    ========================= 2 failed in 0.24 seconds =========================
+    ========================= 2 failed in 0.22 seconds =========================
 
 You see the two ``assert 0`` failing and more importantly you can also see 
 that the same (session-scoped) ``smtp`` object was passed into the two 
@@ -229,9 +229,9 @@ quick as a single one because they reuse the same instance.
 Fixtures can interact with the requesting test context
 -------------------------------------------------------------
 
-By accepting the special :py:class:`request <FixtureRequest>` argument,
+Using the special :py:class:`request <FixtureRequest>` argument,
 fixture functions can introspect the function, class or module for which
-they are invoked and can optionally register finalizing cleanup
+they are invoked or can register finalizing (cleanup)
 functions which are called when the last test finished execution.  
 
 Further extending the previous ``smtp`` fixture example, let's try to
@@ -258,7 +258,7 @@ using it has executed::
 
     $ py.test -s -q --tb=no
     FF
-    finalizing <smtplib.SMTP instance at 0x284e488>
+    finalizing <smtplib.SMTP instance at 0x2279758>
 
 We see that the ``smtp`` instance is finalized after the two
 tests using it tests executed.  If we had specified ``scope='function'`` 
@@ -270,7 +270,7 @@ server URL and has a test to verify the fixture picks it up::
     
     # content of test_anothersmtp.py
     
-    smtpserver = "merlinux.eu"  # will be read by smtp fixture
+    smtpserver = "mail.python.org"  # will be read by smtp fixture
 
     def test_showhelo(smtp):
         assert 0, smtp.helo()
@@ -328,7 +328,7 @@ So let's just do another run::
     ================================= FAILURES =================================
     __________________________ test_ehlo[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP instance at 0x2f69440>
+    smtp = <smtplib.SMTP instance at 0x1f5f680>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -340,7 +340,7 @@ So let's just do another run::
     test_module.py:6: AssertionError
     __________________________ test_noop[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP instance at 0x2f69440>
+    smtp = <smtplib.SMTP instance at 0x1f5f680>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -351,7 +351,7 @@ So let's just do another run::
     test_module.py:11: AssertionError
     ________________________ test_ehlo[mail.python.org] ________________________
     
-    smtp = <smtplib.SMTP instance at 0x2fecea8>
+    smtp = <smtplib.SMTP instance at 0x1fdffc8>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -362,7 +362,7 @@ So let's just do another run::
     test_module.py:5: AssertionError
     ________________________ test_noop[mail.python.org] ________________________
     
-    smtp = <smtplib.SMTP instance at 0x2fecea8>
+    smtp = <smtplib.SMTP instance at 0x1fdffc8>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -410,13 +410,13 @@ Here we declare an ``app`` fixture which receives the previously defined
 
     $ py.test -v test_appsetup.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev27 -- /home/hpk/p/pytest/.tox/regen/bin/python
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev28 -- /home/hpk/p/pytest/.tox/regen/bin/python
     collecting ... collected 2 items
     
     test_appsetup.py:12: test_smtp_exists[merlinux.eu] PASSED
     test_appsetup.py:12: test_smtp_exists[mail.python.org] PASSED
     
-    ========================= 2 passed in 0.09 seconds =========================
+    ========================= 2 passed in 0.11 seconds =========================
 
 Due to the parametrization of ``smtp`` the test will run twice with two
 different ``App`` instances and respective smtp servers.  There is no
@@ -472,7 +472,7 @@ Let's run the tests in verbose mode and with looking at the print-output::
 
     $ py.test -v -s test_module.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev27 -- /home/hpk/p/pytest/.tox/regen/bin/python
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev28 -- /home/hpk/p/pytest/.tox/regen/bin/python
     collecting ... collected 8 items
     
     test_module.py:16: test_0[1] PASSED

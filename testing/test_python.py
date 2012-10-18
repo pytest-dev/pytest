@@ -1805,7 +1805,7 @@ def test_issue117_sessionscopeteardown(testdir):
     """)
     result = testdir.runpytest()
     assert result.ret != 0
-    result.stderr.fnmatch_lines([
+    result.stdout.fnmatch_lines([
         "*3/x*",
         "*ZeroDivisionError*",
     ])
