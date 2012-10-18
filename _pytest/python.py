@@ -883,10 +883,10 @@ class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
             self.obj = callobj
 
         for name, val in (py.builtin._getfuncdict(self.obj) or {}).items():
-            setattr(self.markers, name, val)
+            self.keywords[name] = val
         if keywords:
             for name, val in keywords.items():
-                setattr(self.markers, name, val)
+                self.keywords[name] = val
 
         fm = self.session._fixturemanager
         self._fixtureinfo = fi = fm.getfixtureinfo(self.parent,
@@ -1066,7 +1066,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
 
     @property
     def keywords(self):
-        """ (deprecated, use node.markers class) dictionary of markers. """
+        """ keywords/markers dictionary for the underlying node. """
         return self._pyfuncitem.keywords
 
     @property
@@ -1099,7 +1099,10 @@ class FixtureRequest(FuncargnamesCompatAttr):
         :arg marker: a :py:class:`_pytest.mark.MarkDecorator` object
             created by a call to ``py.test.mark.NAME(...)``.
         """
-        self.node.applymarker(marker)
+        try:
+            self.node.keywords[marker.markname] = marker
+        except AttributeError:
+            raise ValueError(marker)
 
     def raiseerror(self, msg):
         """ raise a FixtureLookupError with the given message. """

@@ -731,16 +731,16 @@ class TestMarking:
         assert 'skipif' in item1.keywords
         pytest.raises(ValueError, "req1.applymarker(42)")
 
-    def test_accessmarker_function(self, testdir):
+    def test_accesskeywords(self, testdir):
         testdir.makepyfile("""
             import pytest
             @pytest.fixture()
-            def markers(request):
-                return request.node.markers
+            def keywords(request):
+                return request.keywords
             @pytest.mark.XYZ
-            def test_function(markers):
-                assert markers.XYZ is not None
-                assert not hasattr(markers, "abc")
+            def test_function(keywords):
+                assert keywords["XYZ"]
+                assert "abc" not in keywords
         """)
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
@@ -749,8 +749,8 @@ class TestMarking:
         testdir.makeconftest("""
             import pytest
             @pytest.fixture()
-            def markers(request):
-                return request.node.markers
+            def keywords(request):
+                return request.keywords
 
             @pytest.fixture(scope="class", autouse=True)
             def marking(request):
@@ -758,12 +758,12 @@ class TestMarking:
         """)
         testdir.makepyfile("""
             import pytest
-            def test_fun1(markers):
-                assert markers.XYZ is not None
-                assert not hasattr(markers, "abc")
-            def test_fun2(markers):
-                assert markers.XYZ is not None
-                assert not hasattr(markers, "abc")
+            def test_fun1(keywords):
+                assert keywords["XYZ"] is not None
+                assert "abc" not in keywords
+            def test_fun2(keywords):
+                assert keywords["XYZ"] is not None
+                assert "abc" not in keywords
         """)
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)

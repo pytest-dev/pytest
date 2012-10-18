@@ -86,21 +86,13 @@ def skipbykeyword(colitem, keywordexpr):
     if not keywordexpr:
         return
 
-    itemkeywords = getkeywords(colitem)
+    itemkeywords = colitem.keywords
     for key in filter(None, keywordexpr.split()):
         eor = key[:1] == '-'
         if eor:
             key = key[1:]
         if not (eor ^ matchonekeyword(key, itemkeywords)):
             return True
-
-def getkeywords(node):
-    keywords = {}
-    while node is not None:
-        keywords.update(node.keywords)
-        node = node.parent
-    return keywords
-
 
 def matchonekeyword(key, itemkeywords):
     for elem in key.split("."):

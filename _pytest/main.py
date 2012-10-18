@@ -4,6 +4,10 @@ import py
 import pytest, _pytest
 import inspect
 import os, sys, imp
+try:
+    from collections import MutableMapping as MappingMixin
+except ImportError:
+    from UserDict import DictMixin as MappingMixin
 
 from _pytest.mark import MarkInfo
 
@@ -160,6 +164,32 @@ def compatproperty(name):
 
     return property(fget)
 
+class NodeKeywords(MappingMixin):
+    def __init__(self, node):
+        parent = node.parent
+        bases = parent and (parent.keywords._markers,) or ()
+        self._markers = type("dynmarker", bases, {node.name: True})
+
+    def __getitem__(self, key):
+        try:
+            return getattr(self._markers, key)
+        except AttributeError:
+            raise KeyError(key)
+
+    def __setitem__(self, key, value):
+        setattr(self._markers, key, value)
+
+    def __delitem__(self, key):
+        delattr(self._markers, key)
+
+    def __iter__(self):
+        return iter(self.keys())
+
+    def __len__(self):
+        return len(self.keys())
+
+    def keys(self):
+        return dir(self._markers)
 
 class Node(object):
     """ base class for Collector and Item the test collection tree.
@@ -184,29 +214,10 @@ class Node(object):
         #: fspath sensitive hook proxy used to call pytest hooks
         self.ihook = self.session.gethookproxy(self.fspath)
 
-        bases = parent and (parent.markers,) or ()
-
-        #: marker class with markers from all scopes accessible as attributes
-        self.markers = type("dynmarker", bases, {self.name: True})
+        #: keywords/markers collected from all scopes
+        self.keywords = NodeKeywords(self)
 
         #self.extrainit()
-
-    @property
-    def keywords(self):
-        """ dictionary of Keywords / markers on this node. """
-        return vars(self.markers)
-
-    def applymarker(self, marker):
-        """ Apply a marker to this item.  This method is
-        useful if you have several parametrized function
-        and want to mark a single one of them.
-
-        :arg marker: a :py:class:`_pytest.mark.MarkDecorator` object
-            created by a call to ``py.test.mark.NAME(...)``.
-        """
-        if not isinstance(marker, pytest.mark.XYZ.__class__):
-            raise ValueError("%r is not a py.test.mark.* object")
-        setattr(self.markers, marker.markname, marker)
 
     #def extrainit(self):
     #    """"extra initialization after Node is initialized.  Implemented

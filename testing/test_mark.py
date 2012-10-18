@@ -306,7 +306,10 @@ class TestKeywordSelection:
             check(keyword, 'test_one')
         check('TestClass.test', 'test_method_one')
 
-    def test_select_extra_keywords(self, testdir):
+    @pytest.mark.parametrize("keyword", [
+        'xxx', 'xxx test_2', 'TestClass', 'xxx -test_1',
+        'TestClass test_2', 'xxx TestClass test_2'])
+    def test_select_extra_keywords(self, testdir, keyword):
         p = testdir.makepyfile(test_select="""
             def test_1():
                 pass
@@ -318,19 +321,17 @@ class TestKeywordSelection:
             def pytest_pycollect_makeitem(__multicall__, name):
                 if name == "TestClass":
                     item = __multicall__.execute()
-                    item.markers.xxx = True
+                    item.keywords["xxx"] = True
                     return item
         """)
-        for keyword in ('xxx', 'xxx test_2', 'TestClass', 'xxx -test_1',
-                        'TestClass test_2', 'xxx TestClass test_2',):
-            reprec = testdir.inline_run(p.dirpath(), '-s', '-k', keyword)
-            py.builtin.print_("keyword", repr(keyword))
-            passed, skipped, failed = reprec.listoutcomes()
-            assert len(passed) == 1
-            assert passed[0].nodeid.endswith("test_2")
-            dlist = reprec.getcalls("pytest_deselected")
-            assert len(dlist) == 1
-            assert dlist[0].items[0].name == 'test_1'
+        reprec = testdir.inline_run(p.dirpath(), '-s', '-k', keyword)
+        py.builtin.print_("keyword", repr(keyword))
+        passed, skipped, failed = reprec.listoutcomes()
+        assert len(passed) == 1
+        assert passed[0].nodeid.endswith("test_2")
+        dlist = reprec.getcalls("pytest_deselected")
+        assert len(dlist) == 1
+        assert dlist[0].items[0].name == 'test_1'
 
     def test_select_starton(self, testdir):
         threepass = testdir.makepyfile(test_threepass="""
