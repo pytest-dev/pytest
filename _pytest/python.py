@@ -1529,7 +1529,7 @@ class FixtureManager:
         self._holderobjseen.add(holderobj)
         autousenames = []
         for name in dir(holderobj):
-            obj = getattr(holderobj, name)
+            obj = getattr(holderobj, name, None)
             if not callable(obj):
                 continue
             # fixture functions have a pytest_funcarg__ prefix (pre-2.3 style)

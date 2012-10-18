@@ -313,7 +313,7 @@ class TestTrialUnittest:
             "*i2wanto*",
             "*sys.version_info*",
             "*skip_in_method*",
-            "*4 skipped*3 xfail*1 xpass*",
+            "*5 skipped*3 xfail*1 xpass*",
         ])
 
     def test_trial_error(self, testdir):
