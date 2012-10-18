@@ -1,0 +1,186 @@
+
+**Test classes, modules or whole projects can make use of
+one or more fixtures**.  All required fixture functions will execute 
+before a test from the specifying context executes.  As You can use this
+to make tests operate from a pre-initialized directory or with
+certain environment variables or with pre-configured global application
+settings.
+
+For example, the Django_ project requires database 
+initialization to be able to import from and use its model objects.  
+For that, the `pytest-django`_ plugin provides fixtures which your 
+project can then easily depend or extend on, simply by referencing the
+name of the particular fixture. 
+
+Fixture functions have limited visilibity which depends on where they
+are defined.  If they are defined on a test class, only its test methods 
+may use it. A fixture defined in a module can only be used
+from that test module.  A fixture defined in a conftest.py file
+can only be used by the tests below the directory of that file.
+Lastly, plugins can define fixtures which are available across all
+projects.
+
+
+
+
+
+Python, Java and many other languages support a so called xUnit_ style 
+for providing a fixed state, `test fixtures`_, for running tests.  It
+typically involves calling a autouse function ahead and a teardown
+function after test execute.  In 2005 pytest introduced a scope-specific
+model of automatically detecting and calling autouse and teardown
+functions on a per-module, class or function basis.  The Python unittest
+package and nose have subsequently incorporated them.  This model
+remains supported by pytest as :ref:`classic xunit`.  
+
+One property of xunit fixture functions is that they work implicitely
+by preparing global state or setting attributes on TestCase objects.
+By contrast, pytest provides :ref:`funcargs` which allow to 
+dependency-inject application test state into test functions or 
+methods as function arguments.  If your application is sufficiently modular
+or if you are creating a new project, we recommend you now rather head over to
+:ref:`funcargs` instead because many pytest users agree that using this
+paradigm leads to better application and test organisation.
+
+However, not all programs and frameworks work and can be tested in
+a fully modular way.  They rather require preparation of global state
+like database autouse on which further fixtures like preparing application
+specific tables or wrapping tests in transactions can take place.  For those 
+needs, pytest-2.3 now supports new **fixture functions** which come with
+a ton of improvements over classic xunit fixture writing.  Fixture functions:
+
+- allow to separate different autouse concerns into multiple modular functions
+
+- can receive and fully interoperate with :ref:`funcargs <resources>`,
+
+- are called multiple times if its funcargs are parametrized,
+
+- don't need to be defined directly in your test classes or modules,
+  they can also be defined in a plugin or :ref:`conftest.py <conftest.py>` files and get called 
+
+- are called on a per-session, per-module, per-class or per-function basis
+  by means of a simple "scope" declaration.
+
+- can access the :ref:`request <request>` object which allows to
+  introspect and interact with the (scoped) testcontext.
+
+- can add cleanup functions which will be invoked when the last test
+  of the fixture test context has finished executing.
+
+All of these features are now demonstrated by little examples.
+
+
+
+
+
+test modules accessing a global resource
+-------------------------------------------------------
+
+.. note::
+
+    Relying on `global state is considered bad programming practise <http://en.wikipedia.org/wiki/Global_variable>`_ but when you work with an application
+    that relies on it you often have no choice.
+
+If you want test modules to access a global resource,
+you can stick the resource to the module globals in
+a per-module autouse function.  We use a :ref:`resource factory
+<@pytest.fixture>` to create our global resource::
+
+    # content of conftest.py
+    import pytest
+
+    class GlobalResource:
+        def __init__(self):
+            pass
+
+    @pytest.fixture(scope="session")
+    def globresource():
+        return GlobalResource()
+
+    @pytest.fixture(scope="module")
+    def setresource(request, globresource):
+        request.module.globresource = globresource
+       
+Now any test module can access ``globresource`` as a module global::
+
+    # content of test_glob.py
+
+    def test_1():
+        print ("test_1 %s" % globresource)
+    def test_2():
+        print ("test_2 %s" % globresource)
+
+Let's run this module without output-capturing::
+
+    $ py.test -qs test_glob.py
+    FF
+    ================================= FAILURES =================================
+    __________________________________ test_1 __________________________________
+    
+        def test_1():
+    >       print ("test_1 %s" % globresource)
+    E       NameError: global name 'globresource' is not defined
+    
+    test_glob.py:3: NameError
+    __________________________________ test_2 __________________________________
+    
+        def test_2():
+    >       print ("test_2 %s" % globresource)
+    E       NameError: global name 'globresource' is not defined
+    
+    test_glob.py:5: NameError
+
+The two tests see the same global ``globresource`` object.
+
+Parametrizing the global resource
++++++++++++++++++++++++++++++++++++++++++++++++++
+
+We extend the previous example and add parametrization to the globresource 
+factory and also add a finalizer::
+
+    # content of conftest.py
+
+    import pytest
+
+    class GlobalResource:
+        def __init__(self, param):
+            self.param = param
+
+    @pytest.fixture(scope="session", params=[1,2])
+    def globresource(request):
+        g = GlobalResource(request.param)
+        def fin():
+            print "finalizing", g
+        request.addfinalizer(fin)
+        return g
+
+    @pytest.fixture(scope="module")
+    def setresource(request, globresource):
+        request.module.globresource = globresource
+
+And then re-run our test module::
+
+    $ py.test -qs test_glob.py
+    FF
+    ================================= FAILURES =================================
+    __________________________________ test_1 __________________________________
+    
+        def test_1():
+    >       print ("test_1 %s" % globresource)
+    E       NameError: global name 'globresource' is not defined
+    
+    test_glob.py:3: NameError
+    __________________________________ test_2 __________________________________
+    
+        def test_2():
+    >       print ("test_2 %s" % globresource)
+    E       NameError: global name 'globresource' is not defined
+    
+    test_glob.py:5: NameError
+
+We are now running the two tests twice with two different global resource
+instances.  Note that the tests are ordered such that only
+one instance is active at any given time: the finalizer of 
+the first globresource instance is called before the second
+instance is created and sent to the autouse functions.
+

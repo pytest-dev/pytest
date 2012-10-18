@@ -29,8 +29,7 @@ functions:
   functional testing, allowing to parametrize fixtures or tests according
   to configuration and component options.
 
-In addition to this next-generation (tm) style of organising test fixtures
-in Python, pytest continues to support :ref:`xunitsetup` which it
+In addition, pytest continues to support :ref:`xunitsetup` which it
 originally introduced in 2005.  You can mix both styles, moving
 incrementally from classic to new style, if you prefer.  You can also
 start out from existing :ref:`unittest.TestCase style <unittest.TestCase>` 
@@ -72,8 +71,7 @@ fixture function.  Running the test looks like this::
 
     $ py.test test_smtpsimple.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev20
-    plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov, timeout
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev27
     collected 1 items
     
     test_smtpsimple.py F
@@ -81,7 +79,7 @@ fixture function.  Running the test looks like this::
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x2391098>
+    smtp = <smtplib.SMTP instance at 0x1ceeb00>
     
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
@@ -91,7 +89,7 @@ fixture function.  Running the test looks like this::
     E       assert 0
     
     test_smtpsimple.py:12: AssertionError
-    ========================= 1 failed in 0.11 seconds =========================
+    ========================= 1 failed in 0.25 seconds =========================
 
 In the failure traceback we see that the test function was called with a
 ``smtp`` argument, the ``smtplib.SMTP()`` instance created by the fixture
@@ -189,8 +187,7 @@ inspect what is going on and can now run the tests::
 
     $ py.test test_module.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev20
-    plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov, timeout
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev27
     collected 2 items
     
     test_module.py FF
@@ -198,18 +195,19 @@ inspect what is going on and can now run the tests::
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x2d96ab8>
+    smtp = <smtplib.SMTP instance at 0x1ef15f0>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
             assert response[0] == 250
-    >       assert "python" in response[1]
-    E       assert 'python' in 'hq.merlinux.eu\nPIPELINING\nSIZE 25000000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'
+            assert "merlinux" in response[1]
+    >       assert 0  # for demo purposes
+    E       assert 0
     
-    test_module.py:5: AssertionError
+    test_module.py:6: AssertionError
     ________________________________ test_noop _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x2d96ab8>
+    smtp = <smtplib.SMTP instance at 0x1ef15f0>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -218,7 +216,7 @@ inspect what is going on and can now run the tests::
     E       assert 0
     
     test_module.py:11: AssertionError
-    ========================= 2 failed in 0.12 seconds =========================
+    ========================= 2 failed in 0.24 seconds =========================
 
 You see the two ``assert 0`` failing and more importantly you can also see 
 that the same (session-scoped) ``smtp`` object was passed into the two 
@@ -260,7 +258,7 @@ using it has executed::
 
     $ py.test -s -q --tb=no
     FF
-    finalizing <smtplib.SMTP instance at 0x2ecf1b8>
+    finalizing <smtplib.SMTP instance at 0x284e488>
 
 We see that the ``smtp`` instance is finalized after the two
 tests using it tests executed.  If we had specified ``scope='function'`` 
@@ -330,18 +328,19 @@ So let's just do another run::
     ================================= FAILURES =================================
     __________________________ test_ehlo[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP instance at 0x163ef38>
+    smtp = <smtplib.SMTP instance at 0x2f69440>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
             assert response[0] == 250
-    >       assert "python" in response[1]
-    E       assert 'python' in 'hq.merlinux.eu\nPIPELINING\nSIZE 25000000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'
+            assert "merlinux" in response[1]
+    >       assert 0  # for demo purposes
+    E       assert 0
     
-    test_module.py:5: AssertionError
+    test_module.py:6: AssertionError
     __________________________ test_noop[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP instance at 0x163ef38>
+    smtp = <smtplib.SMTP instance at 0x2f69440>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -352,19 +351,18 @@ So let's just do another run::
     test_module.py:11: AssertionError
     ________________________ test_ehlo[mail.python.org] ________________________
     
-    smtp = <smtplib.SMTP instance at 0x1645320>
+    smtp = <smtplib.SMTP instance at 0x2fecea8>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
             assert response[0] == 250
-            assert "python" in response[1]
-    >       assert 0  # for demo purposes
-    E       assert 0
+    >       assert "merlinux" in response[1]
+    E       assert 'merlinux' in 'mail.python.org\nSIZE 10240000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN'
     
-    test_module.py:6: AssertionError
+    test_module.py:5: AssertionError
     ________________________ test_noop[mail.python.org] ________________________
     
-    smtp = <smtplib.SMTP instance at 0x1645320>
+    smtp = <smtplib.SMTP instance at 0x2fecea8>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -412,15 +410,13 @@ Here we declare an ``app`` fixture which receives the previously defined
 
     $ py.test -v test_appsetup.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev20 -- /home/hpk/venv/1/bin/python
-    cachedir: /tmp/doc-exec-135/.cache
-    plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov, timeout
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev27 -- /home/hpk/p/pytest/.tox/regen/bin/python
     collecting ... collected 2 items
     
     test_appsetup.py:12: test_smtp_exists[merlinux.eu] PASSED
     test_appsetup.py:12: test_smtp_exists[mail.python.org] PASSED
     
-    ========================= 2 passed in 0.08 seconds =========================
+    ========================= 2 passed in 0.09 seconds =========================
 
 Due to the parametrization of ``smtp`` the test will run twice with two
 different ``App`` instances and respective smtp servers.  There is no
@@ -476,9 +472,7 @@ Let's run the tests in verbose mode and with looking at the print-output::
 
     $ py.test -v -s test_module.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev20 -- /home/hpk/venv/1/bin/python
-    cachedir: /tmp/doc-exec-135/.cache
-    plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov, timeout
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev27 -- /home/hpk/p/pytest/.tox/regen/bin/python
     collecting ... collected 8 items
     
     test_module.py:16: test_0[1] PASSED
@@ -490,7 +484,7 @@ Let's run the tests in verbose mode and with looking at the print-output::
     test_module.py:20: test_2[1-mod2] PASSED
     test_module.py:20: test_2[2-mod2] PASSED
     
-    ========================= 8 passed in 0.02 seconds =========================
+    ========================= 8 passed in 0.01 seconds =========================
       test0 1
       test0 2
     create mod1

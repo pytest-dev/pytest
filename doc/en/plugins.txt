@@ -68,7 +68,7 @@ there is no need to activate it.  Here is a initial list of known plugins:
 
 .. _`django`: https://www.djangoproject.com/
 
-* `pytest-django <https://pypi.python.org/pytest-django>`: write tests
+* `pytest-django <http://pypi.python.org/pypi/pytest-django>`_: write tests
   for `django`_ apps, using pytest integration.
 
 * `pytest-capturelog <http://pypi.python.org/pypi/pytest-capturelog>`_:

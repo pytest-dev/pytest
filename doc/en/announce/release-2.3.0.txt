@@ -1,0 +1,45 @@
+pytest-2.3: generalized fixtures/funcarg mechanism
+=============================================================================
+
+pytest is a popular tool for writing automated tests in Python. Version
+2.3 comes with several innovations for writing test fixtures -- 
+needed to provide a fixed base state or preinitialized objects 
+for your tests.  For info and tutorial-style examples, see
+
+    http://pytest.org/dev/fixture.html
+
+All changes are backward compatible and you should be able to continue
+to run your existing test suites.   In particular, dependency-injected
+"funcargs" still form the base of the improved fixture system but it is
+now easy to create parametrized funcargs/fixtures or cache them across
+modules or test sessions.  Moreover, there is now support for using
+pytest fixtures with unittest-style suites, see here for example:
+
+    http://pytest.org/dev/unittest.html
+
+If you are interested in the precise reasoning of the pytest-2.3 fixture
+evolution, please consult http://pytest.org/dev/funcarg_compare.html
+
+For general info on installation and getting started:
+
+    http://pytest.org/dev/getting-started.html
+
+Docs and PDF access as usual at:
+
+    http://pytest.org
+
+and more details for those already in the knowing of pytest can be found
+in the CHANGELOG below.
+
+Particular thanks for this release go to Floris Bruynooghe, Alex Okrushko
+Carl Meyer, Ronny Pfannschmidt, Benjamin Peterson and Alex Gaynor for helping 
+to get the new features right and well integrated.  Ronny and Floris
+also helped to fix a number of bugs and yet more people helped by
+providing bug reports.
+
+have fun,
+holger krekel
+
+
+
+

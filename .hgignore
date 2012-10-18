@@ -24,3 +24,4 @@ env/
 3rdparty/
 .tox
 .cache
+.coverage

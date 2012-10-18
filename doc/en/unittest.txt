@@ -81,14 +81,13 @@ fixture definition::
             assert 0, self.db   # fail for demo purposes
 
 The ``@pytest.mark.usefixtures("db_class")`` class-decorator makes sure that 
-the pytest fixture function ``db_class`` is called.  Due to the deliberately
-failing assert statements, we can take a look at the ``self.db`` values 
-in the traceback::
+the pytest fixture function ``db_class`` is called for each test method.
+Due to the deliberately failing assert statements, we can take a look at
+the ``self.db`` values in the traceback::
 
     $ py.test test_unittest_db.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev22
-    plugins: xdist, bugzilla, cache, oejskit, cli, pep8, cov, timeout
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.0.dev27
     collected 2 items
     
     test_unittest_db.py FF
@@ -101,7 +100,7 @@ in the traceback::
         def test_method1(self):
             assert hasattr(self, "db")
     >       assert 0, self.db   # fail for demo purposes
-    E       AssertionError: <conftest.DummyDB instance at 0x135dea8>
+    E       AssertionError: <conftest.DummyDB instance at 0x18ff9e0>
     
     test_unittest_db.py:9: AssertionError
     ___________________________ MyTest.test_method2 ____________________________
@@ -110,14 +109,14 @@ in the traceback::
     
         def test_method2(self):
     >       assert 0, self.db   # fail for demo purposes
-    E       AssertionError: <conftest.DummyDB instance at 0x135dea8>
+    E       AssertionError: <conftest.DummyDB instance at 0x18ff9e0>
     
     test_unittest_db.py:12: AssertionError
-    ========================= 2 failed in 0.04 seconds =========================
+    ========================= 2 failed in 0.02 seconds =========================
 
 This default pytest traceback shows that, indeed, the two test methods
-see the same ``self.db`` attribute instance which was our intention
-when writing the class-scoped fixture function.
+share the same ``self.db`` instance which was our intention
+when writing the class-scoped fixture function above.
 
 
 autouse fixtures and accessing other fixtures
@@ -128,9 +127,10 @@ for a given test, you may sometimes want to have fixtures that are
 automatically used in a given context.  For this, you can flag
 fixture functions with ``@pytest.fixture(autouse=True)`` and define
 the fixture function in the context where you want it used.  Let's look 
-at an example which makes all test methods of a ``TestCase`` class 
-execute in a clean temporary directory, using a ``initdir`` fixture
-which itself uses the pytest builtin ``tmpdir`` fixture::
+at an ``initdir`` fixrure which makes all test methods of a ``TestCase`` class 
+execute in a temporary directory with a pre-initialized ``samplefile.ini``.
+Our ``initdir`` fixture itself uses the pytest builtin :ref:`tmpdir <tmpdir>`
+fixture to help with creating a temporary dir::
 
     # content of test_unittest_cleandir.py
     import pytest
@@ -146,12 +146,10 @@ which itself uses the pytest builtin ``tmpdir`` fixture::
             s = open("samplefile.ini").read() 
             assert "testdata" in s
 
-The ``initdir`` fixture function will be used for all methods of the
-class where it is defined.  This is basically just a shortcut for
-using a ``@pytest.mark.usefixtures("initdir")`` on the class like in
-the previous example.  Note, that the ``initdir`` fixture function
-accepts a :ref:`tmpdir <tmpdir>` argument, referencing a pytest
-builtin fixture. 
+Due to the ``autouse`` flag the ``initdir`` fixture function will be
+used for all methods of the class where it is defined.  This is a
+shortcut for using a ``@pytest.mark.usefixtures("initdir")`` on the
+class like in the previous example.
 
 Running this test module ...::
 
@@ -163,7 +161,7 @@ was executed ahead of the ``test_method``.
 
 .. note::
 
-   ``unittest.TestCase`` methods cannot directly receive fixture or
+   ``unittest.TestCase`` methods cannot directly receive fixture 
    function arguments as implementing that is likely to inflict
    on the ability to run general unittest.TestCase test suites.
    Given enough demand, attempts might be made, though.  If

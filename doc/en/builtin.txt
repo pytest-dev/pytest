@@ -83,13 +83,6 @@ You can ask for available builtin or project-custom
         captured output available via ``capsys.readouterr()`` method calls
         which return a ``(out, err)`` tuple.
         
-    tmpdir
-        return a temporary directory path object
-        which is unique to each test function invocation,
-        created as a sub directory of the base temporary
-        directory.  The returned object is a `py.path.local`_
-        path object.
-        
     monkeypatch
         The returned ``monkeypatch`` funcarg provides these
         helper methods to modify objects, dictionaries or os.environ::
@@ -108,6 +101,8 @@ You can ask for available builtin or project-custom
         parameter determines if a KeyError or AttributeError
         will be raised if the set/deletion operation has no target.
         
+    pytestconfig
+        the pytest config object with access to command line opts.
     recwarn
         Return a WarningsRecorder instance that provides these methods:
         
@@ -116,5 +111,12 @@ You can ask for available builtin or project-custom
         
         See http://docs.python.org/library/warnings.html for information
         on warning categories.
+        
+    tmpdir
+        return a temporary directory path object
+        which is unique to each test function invocation,
+        created as a sub directory of the base temporary
+        directory.  The returned object is a `py.path.local`_
+        path object.
         
     

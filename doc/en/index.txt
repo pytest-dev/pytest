@@ -14,23 +14,22 @@ pytest: makes you write better programs
 
 **provides easy no-boilerplate testing**
 
- - makes it :ref:`easy to get started <getstarted>`,
+ - makes it :ref:`easy to get started <getstarted>`, 
+   many :ref:`usage options <usage>`
  - :ref:`assert with the assert statement`
  - helpful :ref:`traceback and failing assertion reporting <tbreportdemo>`
  - allows :ref:`print debugging <printdebugging>` and :ref:`the
    capturing of standard output during test execution <captures>`
- - supports :pep:`8` compliant coding styles in tests
- - refined :ref:`usage options <usage>`
 
 **scales from simple unit to complex functional testing**
 
  - (new in 2.3) :ref:`modular parametrizeable fixtures <fixture>`
- - :ref:`mark`
  - :ref:`parametrized test functions <parametrized test functions>`
+ - :ref:`mark`
  - :ref:`skipping`
  - can :ref:`distribute tests to multiple CPUs <xdistcpu>` through :ref:`xdist plugin <xdist>`
  - can :ref:`continuously re-run failing tests <looponfailing>`
- - many :ref:`builtin helpers <pytest helpers>`
+ - many :ref:`builtin helpers <pytest helpers>` and :ref:`plugins <plugins>`
  - flexible :ref:`Python test discovery`
 
 **integrates many common testing methods**:
@@ -42,6 +41,7 @@ pytest: makes you write better programs
  - supports domain-specific :ref:`non-python tests`
  - supports the generation of testing coverage reports
  - `Javascript unit- and functional testing`_
+ - supports :pep:`8` compliant coding styles in tests
 
 **extensive plugin and customization system**:
 
