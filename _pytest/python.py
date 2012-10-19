@@ -101,6 +101,10 @@ def pytest_configure(config):
         "@parametrize('arg1', [1,2]) would lead to two calls of the decorated "
         "test function, one with arg1=1 and another with arg1=2."
     )
+    config.addinivalue_line("markers",
+        "usefixtures(fixturename1, fixturename2, ...): mark tests as needing "
+        "all of the specified fixtures."
+    )
 
 def pytest_sessionstart(session):
     session._fixturemanager = FixtureManager(session)

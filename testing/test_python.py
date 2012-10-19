@@ -1445,6 +1445,12 @@ class TestMetafuncFunctional:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
+    def test_usefixtures_seen_in_showmarkers(self, testdir):
+        result = testdir.runpytest("--markers")
+        result.stdout.fnmatch_lines("""
+            *usefixtures(fixturename1*mark tests*fixtures*
+        """)
+
     def test_generate_tests_only_done_in_subdir(self, testdir):
         sub1 = testdir.mkpydir("sub1")
         sub2 = testdir.mkpydir("sub2")
