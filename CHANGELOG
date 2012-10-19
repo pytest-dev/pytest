@@ -1,4 +1,4 @@
-Changes between 2.2.4 and 2.3.0.dev
+Changes between 2.2.4 and 2.3.0
 -----------------------------------
 
 - fix issue202 - better automatic names for parametrized test functions
