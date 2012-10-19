@@ -992,10 +992,21 @@ class TestMetafunc:
             pass
         metafunc.parametrize("x", [A(), A()])
         metafunc.parametrize("y", list("ab"))
-        assert metafunc._calls[0].id == ".0-a"
-        assert metafunc._calls[1].id == ".0-b"
-        assert metafunc._calls[2].id == ".1-a"
-        assert metafunc._calls[3].id == ".1-b"
+        assert metafunc._calls[0].id == "x0-a"
+        assert metafunc._calls[1].id == "x0-b"
+        assert metafunc._calls[2].id == "x1-a"
+        assert metafunc._calls[3].id == "x1-b"
+
+    def test_idmaker_autoname(self):
+        from _pytest.python import idmaker
+        result = idmaker(("a", "b"), [("string", 1.0),
+                                      ("st-ring", 2.0)])
+        assert result == ["string-1.0", "st-ring-2.0"]
+
+        result = idmaker(("a", "b"), [(object(), 1.0),
+                                      (object(), object())])
+        assert result == ["a0-1.0", "a1-b1"]
+
 
     def test_addcall_and_parametrize(self):
         def func(x, y): pass
@@ -1361,6 +1372,41 @@ class TestMetafuncFunctional:
             "*test_func*1*PASS*",
             "*1 passed*"
         ])
+
+    def test_parametrize_with_ids(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            def pytest_generate_tests(metafunc):
+                metafunc.parametrize(("a", "b"), [(1,1), (1,2)],
+                                     ids=["basic", "advanced"])
+
+            def test_function(a, b):
+                assert a == b
+        """)
+        result = testdir.runpytest("-v")
+        assert result.ret == 1
+        result.stdout.fnmatch_lines_random([
+            "*test_function*basic*PASSED",
+            "*test_function*advanced*FAILED",
+        ])
+
+    def test_parametrize_without_ids(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            def pytest_generate_tests(metafunc):
+                metafunc.parametrize(("a", "b"),
+                                     [(1,object()), (1.3,object())])
+
+            def test_function(a, b):
+                assert 1
+        """)
+        result = testdir.runpytest("-v")
+        result.stdout.fnmatch_lines("""
+            *test_function*1-b0*
+            *test_function*1.3-b1*
+        """)
+
+
 
     @pytest.mark.parametrize(("scope", "length"),
                              [("module", 2), ("function", 4)])
@@ -1984,24 +2030,6 @@ class TestFixtureUsages:
         """)
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
-
-class TestResourceIntegrationFunctional:
-    def test_parametrize_with_ids(self, testdir):
-        testdir.makepyfile("""
-            import pytest
-            def pytest_generate_tests(metafunc):
-                metafunc.parametrize(("a", "b"), [(1,1), (1,2)],
-                                     ids=["basic", "advanced"])
-
-            def test_function(a, b):
-                assert a == b
-        """)
-        result = testdir.runpytest("-v")
-        assert result.ret == 1
-        result.stdout.fnmatch_lines_random([
-            "*test_function*basic*PASSED",
-            "*test_function*advanced*FAILED",
-        ])
 
 class TestFixtureManager:
     def pytest_funcarg__testdir(self, request):

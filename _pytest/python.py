@@ -660,8 +660,7 @@ class Metafunc(FuncargnamesCompatAttr):
                                      self.function, arg))
         valtype = indirect and "params" or "funcargs"
         if not ids:
-            idmaker = IDMaker()
-            ids = list(map(idmaker, argvalues))
+            ids = idmaker(argnames, argvalues)
         newcalls = []
         for callspec in self._calls or [CallSpec2(self)]:
             for i, valset in enumerate(argvalues):
@@ -708,18 +707,17 @@ class Metafunc(FuncargnamesCompatAttr):
         cs.setall(funcargs, id, param)
         self._calls.append(cs)
 
-class IDMaker:
-    def __init__(self):
-        self.counter = 0
-    def __call__(self, valset):
-        l = []
-        for val in valset:
-            if not isinstance(val, (int, str)):
-                val = "."+str(self.counter)
-            self.counter += 1
-            l.append(str(val))
-        return "-".join(l)
-
+def idmaker(argnames, argvalues):
+    idlist = []
+    for valindex, valset in enumerate(argvalues):
+        this_id = []
+        for nameindex, val in enumerate(valset):
+            if not isinstance(val, (float, int, str)):
+                this_id.append(argnames[nameindex]+str(valindex))
+            else:
+                this_id.append(str(val))
+        idlist.append("-".join(this_id))
+    return idlist
 
 def showfixtures(config):
     from _pytest.main import wrap_session
