@@ -12,6 +12,8 @@ PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
+SITETARGET=dev
+
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest
 
 regen:
@@ -40,10 +42,10 @@ clean:
 	-rm -rf $(BUILDDIR)/*
 
 install: html
-	 rsync -avz _build/html/ pytest.org:/www/pytest.org/latest
+	 rsync -avz _build/html/ pytest.org:/www/pytest.org/$(SITETARGET)
 
 installpdf: latexpdf
-	@scp $(BUILDDIR)/latex/pytest.pdf pytest.org:/www/pytest.org/latest
+	@scp $(BUILDDIR)/latex/pytest.pdf pytest.org:/www/pytest.org/$(SITETARGET)
 
 installall: clean install installpdf
 	@echo "done"
