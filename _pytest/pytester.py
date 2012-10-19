@@ -532,6 +532,8 @@ class TmpTestdir:
             pytest.skip("pypy-64 bit not supported")
         if sys.platform == "darwin":
             pytest.xfail("pexpect does not work reliably on darwin?!")
+        if sys.platform.startswith("freebsd"):
+            pytest.xfail("pexpect does not work reliably on freebsd")
         logfile = self.tmpdir.join("spawn.out")
         child = pexpect.spawn(cmd, logfile=logfile.open("w"))
         child.timeout = expect_timeout

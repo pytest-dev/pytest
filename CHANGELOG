@@ -1,6 +1,8 @@
 Changes between 2.3.0 and 2.3.dev
 -----------------------------------
 
+- skip pexpect using tests (test_pdb.py mostly) on freebsd* systems
+  due to pexpect not supporting it properly (hanging)
 
 Changes between 2.2.4 and 2.3.0
 -----------------------------------
