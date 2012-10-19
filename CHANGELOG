@@ -1,17 +1,15 @@
 Changes between 2.2.4 and 2.3.0.dev
 -----------------------------------
 
+- fix issue139 - introduce @pytest.fixture which allows direct scoping
+  and parametrization of funcarg factories.  Introduce new @pytest.setup
+  marker to allow the writing of setup functions which accept funcargs.
 - fix issue198 - conftest fixtures were not found on windows32 in some
   circumstances with nested directory structures due to path manipulation issues
 - fix issue193 skip test functions with were parametrized with empty
   parameter sets
 - fix python3.3 compat, mostly reporting bits that previously depended
   on dict ordering
-- introduce a generic "markers" object on Nodes and a request.node
-  attribute pointing to the scope-specific collection node of a request.
-  node.markers allows reading and manipulating of MarkInfo objects
-  previously attached with @pytest.mark.* or request.applymarker or
-  setattr(node.markers, name, pytest.mark.*) calls.
 - introduce re-ordering of tests by resource and parametrization setup
   which takes precedence to the usual file-ordering
 - fix issue185 monkeypatching time.time does not cause pytest to fail
@@ -22,9 +20,6 @@ Changes between 2.2.4 and 2.3.0.dev
   it is constructed correctly from the original current working dir.
 - fix "python setup.py test" example to cause a proper "errno" return
 - fix issue165 - fix broken doc links and mention stackoverflow for FAQ
-- fix issue139 - introduce @pytest.factory which allows direct scoping
-  and parametrization of funcarg factories.  Introduce new @pytest.setup
-  marker to allow the writing of setup functions which accept funcargs.
 - catch unicode-issues when writing failure representations
   to terminal to prevent the whole session from crashing
 - fix xfail/skip confusion: a skip-mark or an imperative pytest.skip
@@ -47,6 +42,10 @@ Changes between 2.2.4 and 2.3.0.dev
 - fix issue159: improve http://pytest.org/latest/faq.html 
   especially with respect to the "magic" history, also mention
   pytest-django, trial and unittest integration.
+
+- make request.keywords and node.keywords writable.  All descendant
+  collection nodes will see keyword values.  Keywords are dictionaries
+  containing markers and other info.
 
 - fix issue 178: xml binary escapes are now wrapped in py.xml.raw
 

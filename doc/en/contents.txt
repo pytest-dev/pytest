@@ -12,9 +12,9 @@ Full pytest documentation
    :maxdepth: 2
 
    overview
-   example/index
    apiref
    plugins
+   example/index
    talks
    develop
    funcarg_compare.txt

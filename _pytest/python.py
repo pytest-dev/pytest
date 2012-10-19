@@ -10,6 +10,8 @@ from py._code.code import TerminalRepr
 import _pytest
 cutdir = py.path.local(_pytest.__file__).dirpath()
 
+callable = py.builtin.callable
+
 class FixtureFunctionMarker:
     def __init__(self, scope, params, autouse=False):
         self.scope = scope
@@ -45,7 +47,7 @@ def fixture(scope="function", params=None, autouse=False):
                 can see it.  If False (the default) then an explicit
                 reference is needed to activate the fixture.
     """
-    if py.builtin.callable(scope) and params is None and autouse == False:
+    if callable(scope) and params is None and autouse == False:
         # direct decoration
         return FixtureFunctionMarker("function", params, autouse)(scope)
     else:
@@ -474,7 +476,7 @@ class Generator(FunctionMixin, PyCollector):
         seen = {}
         for i, x in enumerate(self.obj()):
             name, call, args = self.getcallargs(x)
-            if not py.builtin.callable(call):
+            if not callable(call):
                 raise TypeError("%r yielded non callable test %r" %(self.obj, call,))
             if name is None:
                 name = "[%d]" % i
