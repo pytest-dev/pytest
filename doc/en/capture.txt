@@ -78,7 +78,7 @@ of the failing function and hide the other one::
     
     test_module.py:9: AssertionError
     ----------------------------- Captured stdout ------------------------------
-    setting up <function test_func2 at 0x1443140>
+    setting up <function test_func2 at 0x2d98050>
     ==================== 1 failed, 1 passed in 0.01 seconds ====================
 
 Accessing captured output from a test function

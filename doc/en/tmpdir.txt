@@ -37,7 +37,7 @@ Running this would result in a passed test except for the last
     ================================= FAILURES =================================
     _____________________________ test_create_file _____________________________
     
-    tmpdir = local('/tmp/pytest-1352/test_create_file0')
+    tmpdir = local('/tmp/pytest-1410/test_create_file0')
     
         def test_create_file(tmpdir):
             p = tmpdir.mkdir("sub").join("hello.txt")

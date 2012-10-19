@@ -98,7 +98,7 @@ That's it, we can now run the test::
         self._conftestpath2mod[conftestpath] = mod = conftestpath.pyimport()
       File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/py/_path/local.py", line 532, in pyimport
         __import__(modname)
-      File "/tmp/doc-exec-172/conftest.py", line 2, in <module>
+      File "/tmp/doc-exec-286/conftest.py", line 2, in <module>
         from .remoteinterpreter import RemoteInterpreter
     ValueError: Attempted relative import in non-package
 
@@ -185,7 +185,7 @@ Running it yields::
         self._conftestpath2mod[conftestpath] = mod = conftestpath.pyimport()
       File "/home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/py/_path/local.py", line 532, in pyimport
         __import__(modname)
-      File "/tmp/doc-exec-172/conftest.py", line 2, in <module>
+      File "/tmp/doc-exec-286/conftest.py", line 2, in <module>
         from myapp import MyApp
     ImportError: No module named myapp
 

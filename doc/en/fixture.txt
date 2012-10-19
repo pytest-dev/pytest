@@ -79,7 +79,7 @@ fixture function.  Running the test looks like this::
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x14d2e18>
+    smtp = <smtplib.SMTP instance at 0x1eade18>
     
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
@@ -89,7 +89,7 @@ fixture function.  Running the test looks like this::
     E       assert 0
     
     test_smtpsimple.py:12: AssertionError
-    ========================= 1 failed in 0.54 seconds =========================
+    ========================= 1 failed in 0.20 seconds =========================
 
 In the failure traceback we see that the test function was called with a
 ``smtp`` argument, the ``smtplib.SMTP()`` instance created by the fixture
@@ -195,7 +195,7 @@ inspect what is going on and can now run the tests::
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x27f63b0>
+    smtp = <smtplib.SMTP instance at 0x29213b0>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -207,7 +207,7 @@ inspect what is going on and can now run the tests::
     test_module.py:6: AssertionError
     ________________________________ test_noop _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x27f63b0>
+    smtp = <smtplib.SMTP instance at 0x29213b0>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -216,7 +216,7 @@ inspect what is going on and can now run the tests::
     E       assert 0
     
     test_module.py:11: AssertionError
-    ========================= 2 failed in 0.21 seconds =========================
+    ========================= 2 failed in 0.20 seconds =========================
 
 You see the two ``assert 0`` failing and more importantly you can also see 
 that the same (session-scoped) ``smtp`` object was passed into the two 
@@ -258,7 +258,7 @@ using it has executed::
 
     $ py.test -s -q --tb=no
     FF
-    finalizing <smtplib.SMTP instance at 0x1497758>
+    finalizing <smtplib.SMTP instance at 0x1a9d5a8>
 
 We see that the ``smtp`` instance is finalized after the two
 tests using it tests executed.  If we had specified ``scope='function'`` 
@@ -328,7 +328,7 @@ So let's just do another run::
     ================================= FAILURES =================================
     __________________________ test_ehlo[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP instance at 0x1742680>
+    smtp = <smtplib.SMTP instance at 0x1eae680>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -340,7 +340,7 @@ So let's just do another run::
     test_module.py:6: AssertionError
     __________________________ test_noop[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP instance at 0x1742680>
+    smtp = <smtplib.SMTP instance at 0x1eae680>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -351,7 +351,7 @@ So let's just do another run::
     test_module.py:11: AssertionError
     ________________________ test_ehlo[mail.python.org] ________________________
     
-    smtp = <smtplib.SMTP instance at 0x174bfc8>
+    smtp = <smtplib.SMTP instance at 0x1eb7fc8>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -362,7 +362,7 @@ So let's just do another run::
     test_module.py:5: AssertionError
     ________________________ test_noop[mail.python.org] ________________________
     
-    smtp = <smtplib.SMTP instance at 0x174bfc8>
+    smtp = <smtplib.SMTP instance at 0x1eb7fc8>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -416,16 +416,17 @@ Here we declare an ``app`` fixture which receives the previously defined
     test_appsetup.py:12: test_smtp_exists[merlinux.eu] PASSED
     test_appsetup.py:12: test_smtp_exists[mail.python.org] PASSED
     
-    ========================= 2 passed in 0.25 seconds =========================
+    ========================= 2 passed in 0.17 seconds =========================
 
 Due to the parametrization of ``smtp`` the test will run twice with two
 different ``App`` instances and respective smtp servers.  There is no
 need for the ``app`` fixture to be aware of the ``smtp`` parametrization 
 as pytest will fully analyse the fixture dependency graph.  Note also,
-that the ``app`` fixture has a scope of ``module`` but uses a
-session-scoped ``smtp``: it is fine for fixtures to use "broader" scoped
-fixtures but not the other way round:  A session-scoped fixture could
-not use a module-scoped one in a meaningful way.
+that the ``app`` fixture has a scope of ``module`` but may use a
+session-scoped ``smtp`` from the example higher up: it is fine for
+fixtures to use "broader" scoped fixtures but not the other way round:
+A session-scoped fixture could not use a module-scoped one in a
+meaningful way.
 
 
 .. _`automatic per-resource grouping`:

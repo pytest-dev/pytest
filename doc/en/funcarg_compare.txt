@@ -1,7 +1,7 @@
 
 .. _`funcargcompare`:
 
-pytest-2.3: reasoning for the new funcarg and setup functions
+pytest-2.3: reasoning for fixture/funcarg evolution
 =============================================================
 
 **Target audience**: Reading this document requires basic knowledge of 

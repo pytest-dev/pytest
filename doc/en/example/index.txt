@@ -7,6 +7,11 @@ Usages and Examples
 Here is a (growing) list of examples. :ref:`Contact <contact>` us if you
 need more examples or have questions. Also take a look at the :ref:`comprehensive documentation <toc>` which contains many example snippets as well.
 
+Also, `pytest on stackoverflow.com <http://stackoverflow.com/search?q=pytest>`_ 
+is a primary continously updated source of pytest questions and answers
+which often contain examples.  New Questions will usually be seen 
+by pytest users or developers. 
+
 .. note::
 
    see :doc:`../getting-started` for basic introductory examples

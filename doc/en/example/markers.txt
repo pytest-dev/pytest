@@ -239,7 +239,7 @@ and here is one that specifies exactly the environment needed::
     
     test_someenv.py .
     
-    ========================= 1 passed in 0.00 seconds =========================
+    ========================= 1 passed in 0.01 seconds =========================
 
 The ``--markers`` option always gives you a list of available markers::
 
@@ -356,7 +356,7 @@ then you will see two test skipped and two executed tests as expected::
     
     test_plat.py s.s.
     ========================= short test summary info ==========================
-    SKIP [2] /tmp/doc-exec-174/conftest.py:12: cannot run on platform linux2
+    SKIP [2] /tmp/doc-exec-288/conftest.py:12: cannot run on platform linux2
     
     =================== 2 passed, 2 skipped in 0.01 seconds ====================
 

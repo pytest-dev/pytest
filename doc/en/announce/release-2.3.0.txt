@@ -27,8 +27,9 @@ All changes are backward compatible and you should be able to continue
 to run your test suites and 3rd party plugins that worked with
 pytest-2.2.4.
 
-If you are interested in the precise reasoning of the pytest-2.3 fixture
-evolution, please consult http://pytest.org/latest/funcarg_compare.html
+If you are interested in the precise reasoning (including examples) of the 
+pytest-2.3 fixture evolution, please consult
+http://pytest.org/latest/funcarg_compare.html
 
 For general info on installation and getting started:
 

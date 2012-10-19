@@ -80,4 +80,4 @@ interesting to just look at the collection tree::
       <YamlItem 'ok'>
       <YamlItem 'hello'>
     
-    =============================  in 0.02 seconds =============================
+    =============================  in 0.03 seconds =============================

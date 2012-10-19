@@ -40,10 +40,10 @@ clean:
 	-rm -rf $(BUILDDIR)/*
 
 install: html
-	 rsync -avz _build/html/ pytest.org:/www/pytest.org/dev
+	 rsync -avz _build/html/ pytest.org:/www/pytest.org/latest
 
 installpdf: latexpdf
-	@scp $(BUILDDIR)/latex/pytest.pdf pytest.org:/www/pytest.org/dev
+	@scp $(BUILDDIR)/latex/pytest.pdf pytest.org:/www/pytest.org/latest
 
 installall: clean install installpdf
 	@echo "done"

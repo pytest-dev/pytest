@@ -51,7 +51,7 @@ then the test collection looks like this::
           <Function 'check_simple'>
           <Function 'check_complex'>
     
-    =============================  in 0.01 seconds =============================
+    =============================  in 0.00 seconds =============================
 
 Interpreting cmdline arguments as Python packages
 -----------------------------------------------------

@@ -135,8 +135,8 @@ Let's also run with a stringinput that will lead to a failing test::
     
         def test_valid_string(stringinput):
     >       assert stringinput.isalpha()
-    E       assert <built-in method isalpha of str object at 0x2b3ae7eb8030>()
-    E        +  where <built-in method isalpha of str object at 0x2b3ae7eb8030> = '!'.isalpha
+    E       assert <built-in method isalpha of str object at 0x2b7d7a85a030>()
+    E        +  where <built-in method isalpha of str object at 0x2b7d7a85a030> = '!'.isalpha
     
     test_strings.py:3: AssertionError
 
@@ -149,7 +149,7 @@ listlist::
     $ py.test -q -rs test_strings.py 
     s
     ========================= short test summary info ==========================
-    SKIP [1] /home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/python.py:947: got empty parameter set, function test_valid_string at /tmp/doc-exec-145/test_strings.py:1
+    SKIP [1] /home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/python.py:947: got empty parameter set, function test_valid_string at /tmp/doc-exec-259/test_strings.py:1
 
 For further examples, you might want to look at :ref:`more
 parametrization examples <paramexamples>`.
