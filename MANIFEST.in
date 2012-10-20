@@ -2,6 +2,7 @@ include CHANGELOG
 include README.txt
 include setup.py
 include distribute_setup.py
+include tox.ini
 include LICENSE
 graft doc
 graft testing

@@ -1,3 +1,9 @@
+Changes between 2.3.1 and 2.3.2.dev
+-----------------------------------
+
+- add tox.ini to pytest distribution so that ignore-dirs and others config
+  bits are properly distributed for maintainers who run pytest-own tests
+
 Changes between 2.3.0 and 2.3.1
 -----------------------------------
 
