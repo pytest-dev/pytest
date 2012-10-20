@@ -1,4 +1,4 @@
-Changes between 2.3.0 and 2.3.dev
+Changes between 2.3.0 and 2.3.1
 -----------------------------------
 
 - fix issue202 - fix regression: using "self" from fixture functions now
@@ -16,8 +16,7 @@ Changes between 2.2.4 and 2.3.0
 
 - fix issue202 - better automatic names for parametrized test functions
 - fix issue139 - introduce @pytest.fixture which allows direct scoping
-  and parametrization of funcarg factories.  Introduce new @pytest.setup
-  marker to allow the writing of setup functions which accept funcargs.
+  and parametrization of funcarg factories. 
 - fix issue198 - conftest fixtures were not found on windows32 in some
   circumstances with nested directory structures due to path manipulation issues
 - fix issue193 skip test functions with were parametrized with empty
@@ -27,7 +26,7 @@ Changes between 2.2.4 and 2.3.0
 - introduce re-ordering of tests by resource and parametrization setup
   which takes precedence to the usual file-ordering
 - fix issue185 monkeypatching time.time does not cause pytest to fail
-- fix issue172 duplicate call of pytest.setup-decoratored setup_module
+- fix issue172 duplicate call of pytest.fixture decoratored setup_module
   functions
 - fix junitxml=path construction so that if tests change the
   current working directory and the path is a relative path
