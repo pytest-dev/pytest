@@ -24,7 +24,7 @@ def main():
         name='pytest',
         description='py.test: simple powerful testing with Python',
         long_description = long_description,
-        version='2.3.2.dev2',
+        version='2.3.2.dev3',
         url='http://pytest.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
@@ -79,7 +79,9 @@ class PyTest(Command):
         pass
     def run(self):
         import sys,subprocess
-        os.environ["PYTHONPATH"] = os.environ["PYTHONPATH"] + ":" + os.getcwd()
+        PPATH=[x for x in os.environ.get("PYTHONPATH", "").split(":") if x]
+        PPATH.insert(0, os.getcwd())
+        os.environ["PYTHONPATH"] = ":".join(PPATH)
         errno = subprocess.call([sys.executable, 'pytest.py'])
         raise SystemExit(errno)
 
