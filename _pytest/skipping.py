@@ -14,7 +14,8 @@ def pytest_configure(config):
         "skipif(*conditions): skip the given test function if evaluation "
         "of all conditions has a True value.  Evaluation happens within the "
         "module global context. Example: skipif('sys.platform == \"win32\"') "
-        "skips the test if we are on the win32 platform. "
+        "skips the test if we are on the win32 platform. see "
+        "http://pytest.org/latest/skipping.html"
     )
     config.addinivalue_line("markers",
         "xfail(*conditions, reason=None, run=True): mark the the test function "
@@ -22,6 +23,7 @@ def pytest_configure(config):
         "if you don't even want to execute the test function. Any positional "
         "condition strings will be evaluated (like with skipif) and if one is "
         "False the marker will not be applied."
+        "see http://pytest.org/latest/skipping.html"
     )
 
 def pytest_namespace():

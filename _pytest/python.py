@@ -110,10 +110,12 @@ def pytest_configure(config):
         "times passing in multiple different argument value sets. Example: "
         "@parametrize('arg1', [1,2]) would lead to two calls of the decorated "
         "test function, one with arg1=1 and another with arg1=2."
+        " see http://pytest.org/latest/parametrize.html for more info and "
+        "examples."
     )
     config.addinivalue_line("markers",
         "usefixtures(fixturename1, fixturename2, ...): mark tests as needing "
-        "all of the specified fixtures."
+        "all of the specified fixtures. see http://pytest.org/latest/fixture.html#usefixtures "
     )
 
 def pytest_sessionstart(session):
