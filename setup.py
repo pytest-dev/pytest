@@ -1,10 +1,10 @@
 import os, sys
 try:
-    from setuptools import setup
+    from setuptools import setup, Command
 except ImportError:
     from distribute_setup import use_setuptools
     use_setuptools()
-    from setuptools import setup
+    from setuptools import setup, Command
 
 long_description = """
 cross-project testing tool for Python.
@@ -24,13 +24,14 @@ def main():
         name='pytest',
         description='py.test: simple powerful testing with Python',
         long_description = long_description,
-        version='2.3.2.dev1',
+        version='2.3.2.dev2',
         url='http://pytest.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='Holger Krekel, Benjamin Peterson, Ronny Pfannschmidt, Floris Bruynooghe and others',
         author_email='holger at merlinux.eu',
         entry_points= make_entry_points(),
+        cmdclass = {'test': PyTest},
         # the following should be enabled for release
         install_requires=['py>=1.4.10'],
         classifiers=['Development Status :: 6 - Mature',
@@ -68,6 +69,19 @@ def make_entry_points():
     keys.sort()
     l = ["%s = %s" % (x, points[x]) for x in keys]
     return {'console_scripts': l}
+
+
+class PyTest(Command):
+    user_options = []
+    def initialize_options(self):
+        pass
+    def finalize_options(self):
+        pass
+    def run(self):
+        import sys,subprocess
+        os.environ["PYTHONPATH"] = os.environ["PYTHONPATH"] + ":" + os.getcwd()
+        errno = subprocess.call([sys.executable, 'pytest.py'])
+        raise SystemExit(errno)
 
 if __name__ == '__main__':
     main()
