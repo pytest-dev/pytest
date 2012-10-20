@@ -1,6 +1,10 @@
 Changes between 2.3.0 and 2.3.dev
 -----------------------------------
 
+- fix issue202 - fix regression: using "self" from fixture functions now
+  works as expected (it's the same "self" instance that a test method
+  which uses the fixture sees)
+
 - skip pexpect using tests (test_pdb.py mostly) on freebsd* systems
   due to pexpect not supporting it properly (hanging)
 

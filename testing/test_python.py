@@ -2037,6 +2037,21 @@ class TestFixtureUsages:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
 
+    def test_request_instance_issue203(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            class TestClass:
+                @pytest.fixture
+                def setup1(self, request):
+                    assert self == request.instance
+                    self.arg1 = 1
+                def test_hello(self, setup1):
+                    assert self.arg1 == 1
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
 class TestFixtureManager:
     def pytest_funcarg__testdir(self, request):
         testdir = request.getfuncargvalue("testdir")

@@ -12,6 +12,16 @@ cutdir = py.path.local(_pytest.__file__).dirpath()
 
 callable = py.builtin.callable
 
+def getimfunc(func):
+    try:
+        return func.__func__
+    except AttributeError:
+        try:
+            return func.im_func
+        except AttributeError:
+            return func
+
+
 class FixtureFunctionMarker:
     def __init__(self, scope, params, autouse=False):
         self.scope = scope
@@ -1621,7 +1631,19 @@ class FixtureDef:
         if self.unittest:
             result = self.func(request.instance, **kwargs)
         else:
-            result = self.func(**kwargs)
+            fixturefunc = self.func
+            # the fixture function needs to be bound to the actual
+            # request.instance so that code working with "self" behaves
+            # as expected. XXX request.instance should maybe return None
+            # instead of raising AttributeError
+            try:
+                if request.instance is not None:
+                    fixturefunc = getimfunc(self.func)
+                    if fixturefunc != self.func:
+                        fixturefunc = fixturefunc.__get__(request.instance)
+            except AttributeError:
+                pass
+            result = fixturefunc(**kwargs)
         self.active = True
         self.cached_result = result
         return result
