@@ -26,8 +26,9 @@ functions:
   fixtures.
 
 * fixture management scales from simple unit to complex
-  functional testing, allowing to parametrize fixtures or tests according
-  to configuration and component options.
+  functional testing, allowing to parametrize fixtures and tests according
+  to configuration and component options, or to re-use fixtures
+  across class, module or whole test session scopes.
 
 In addition, pytest continues to support :ref:`xunitsetup` which it
 originally introduced in 2005.  You can mix both styles, moving
@@ -47,7 +48,7 @@ Fixtures as Function arguments (funcargs)
 Test functions can receive fixture objects by naming them as an input
 argument. For each argument name, a fixture function with that name provides 
 the fixture object.  Fixture functions are registered by marking them with
-:py:func:`@pytest.fixture <pytest.fixture>`.  Let's look at a simple
+:py:func:`@pytest.fixture <_pytest.python.fixture>`.  Let's look at a simple
 self-contained test module containing a fixture and a test function
 using it::
 
@@ -66,8 +67,8 @@ using it::
         assert 0 # for demo purposes
 
 Here, the ``test_function`` needs the ``smtp`` fixture value.  pytest 
-will discover and call the ``@pytest.fixture`` marked ``smtp`` 
-fixture function.  Running the test looks like this::
+will discover and call the :py:func:`@pytest.fixture <_pytest.python.fixture>` 
+marked ``smtp`` fixture function.  Running the test looks like this::
 
     $ py.test test_smtpsimple.py
     =========================== test session starts ============================
@@ -79,7 +80,7 @@ fixture function.  Running the test looks like this::
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x1eade18>
+    smtp = <smtplib.SMTP instance at 0x23e1e18>
     
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
@@ -89,7 +90,7 @@ fixture function.  Running the test looks like this::
     E       assert 0
     
     test_smtpsimple.py:12: AssertionError
-    ========================= 1 failed in 0.20 seconds =========================
+    ========================= 1 failed in 0.25 seconds =========================
 
 In the failure traceback we see that the test function was called with a
 ``smtp`` argument, the ``smtplib.SMTP()`` instance created by the fixture
@@ -143,25 +144,27 @@ functions take the role of the *injector* and test functions are the
 
 .. _smtpshared:
 
-Working with a session-shared fixture
+Working with a module-shared fixture
 -----------------------------------------------------------------
 
 .. regendoc:wipe
 
 Fixtures requiring network access depend on connectivity and are 
 usually time-expensive to create.  Extending the previous example, we
-can add a ``scope='session'`` parameter to ``@pytest.fixture`` decorator.
+can add a ``scope='module'`` parameter to the 
+:py:func:`@pytest.fixture <_pytest.python.fixture>` invocation
 to cause the decorated ``smtp`` fixture function to only be invoked once 
-per test session.  Multiple test functions will thus each receive the
-same ``smtp`` fixture instance.  The next example also extracts
-the fixture function into a separate ``conftest.py`` file so that
-all tests in the directory can access the fixture function::
+per test module.  Multiple test functions in a test module will thus
+each receive the same ``smtp`` fixture instance.  The next example also
+extracts the fixture function into a separate ``conftest.py`` file so
+that all tests in test modules in the directory can access the fixture
+function::
 
     # content of conftest.py
     import pytest
     import smtplib
 
-    @pytest.fixture(scope="session")
+    @pytest.fixture(scope="module")
     def smtp():
         return smtplib.SMTP("merlinux.eu")
 
@@ -195,7 +198,7 @@ inspect what is going on and can now run the tests::
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x29213b0>
+    smtp = <smtplib.SMTP instance at 0x24bf3b0>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -207,7 +210,7 @@ inspect what is going on and can now run the tests::
     test_module.py:6: AssertionError
     ________________________________ test_noop _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x29213b0>
+    smtp = <smtplib.SMTP instance at 0x24bf3b0>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -216,28 +219,39 @@ inspect what is going on and can now run the tests::
     E       assert 0
     
     test_module.py:11: AssertionError
-    ========================= 2 failed in 0.20 seconds =========================
+    ========================= 2 failed in 0.17 seconds =========================
 
 You see the two ``assert 0`` failing and more importantly you can also see 
-that the same (session-scoped) ``smtp`` object was passed into the two 
+that the same (module-scoped) ``smtp`` object was passed into the two 
 test functions because pytest shows the incoming argument values in the 
 traceback.  As a result, the two test functions using ``smtp`` run as
 quick as a single one because they reuse the same instance.
 
+If you decide that you rather want to have a session-scoped ``smtp``
+instance, you can simply declare it::
+
+    @pytest.fixture(scope=``session``)
+    def smtp(...):
+        # the returned fixture value will be shared for 
+        # all tests needing it
+        
 .. _`request-context`:
 
 Fixtures can interact with the requesting test context
 -------------------------------------------------------------
 
-Using the special :py:class:`request <FixtureRequest>` argument,
-fixture functions can introspect the function, class or module for which
-they are invoked or can register finalizing (cleanup)
+Fixture functions can themselves use other fixtures by naming
+them as an input argument just like test functions do, see 
+:ref:`interdependent fixtures`.  Moreover, pytest 
+provides a builtin :py:class:`request <FixtureRequest>` object,
+which fixture functions can use to introspect the function, class or module
+for which they are invoked or to register finalizing (cleanup)
 functions which are called when the last test finished execution.  
 
-Further extending the previous ``smtp`` fixture example, let's try to
-read the server URL from the module namespace, also use module-caching and 
-register a finalizer that closes the smtp connection after the last
-test finished execution::
+Further extending the previous ``smtp`` fixture example, let's  
+read an optional server URL from the module namespace and register 
+a finalizer that closes the smtp connection after the last
+test in a module finished execution::
 
     # content of conftest.py
     import pytest
@@ -258,12 +272,12 @@ using it has executed::
 
     $ py.test -s -q --tb=no
     FF
-    finalizing <smtplib.SMTP instance at 0x1a9d5a8>
+    finalizing <smtplib.SMTP instance at 0x125f5a8>
 
 We see that the ``smtp`` instance is finalized after the two
 tests using it tests executed.  If we had specified ``scope='function'`` 
 then fixture setup and cleanup would occur around each single test. 
-Note that the test module itself did not need to change!
+Note that either case the test module itself does not need to change!
 
 Let's quickly create another test module that actually sets the
 server URL and has a test to verify the fixture picks it up::
@@ -289,7 +303,7 @@ Running it::
 
 .. _`fixture-parametrize`:
 
-Parametrizing a session-shared fixture
+Parametrizing a fixture
 -----------------------------------------------------------------
 
 Fixture functions can be parametrized in which case they will be called
@@ -308,7 +322,7 @@ through the special `request`_ object::
     import pytest
     import smtplib
 
-    @pytest.fixture(scope="session", 
+    @pytest.fixture(scope="module", 
                     params=["merlinux.eu", "mail.python.org"])
     def smtp(request):
         smtp = smtplib.SMTP(request.param)
@@ -318,7 +332,8 @@ through the special `request`_ object::
         request.addfinalizer(fin)
         return smtp
 
-The main change is the declaration of ``params``, a list of values
+The main change is the declaration of ``params`` with 
+:py:func:`@pytest.fixture <_pytest.python.fixture>`, a list of values
 for each of which the fixture function will execute and can access
 a value via ``request.param``.  No test function code needs to change.  
 So let's just do another run::
@@ -328,7 +343,7 @@ So let's just do another run::
     ================================= FAILURES =================================
     __________________________ test_ehlo[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP instance at 0x1eae680>
+    smtp = <smtplib.SMTP instance at 0x2fc2680>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -340,7 +355,7 @@ So let's just do another run::
     test_module.py:6: AssertionError
     __________________________ test_noop[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP instance at 0x1eae680>
+    smtp = <smtplib.SMTP instance at 0x2fc2680>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -351,7 +366,7 @@ So let's just do another run::
     test_module.py:11: AssertionError
     ________________________ test_ehlo[mail.python.org] ________________________
     
-    smtp = <smtplib.SMTP instance at 0x1eb7fc8>
+    smtp = <smtplib.SMTP instance at 0x2fcbfc8>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -362,7 +377,7 @@ So let's just do another run::
     test_module.py:5: AssertionError
     ________________________ test_noop[mail.python.org] ________________________
     
-    smtp = <smtplib.SMTP instance at 0x1eb7fc8>
+    smtp = <smtplib.SMTP instance at 0x2fcbfc8>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -416,15 +431,17 @@ Here we declare an ``app`` fixture which receives the previously defined
     test_appsetup.py:12: test_smtp_exists[merlinux.eu] PASSED
     test_appsetup.py:12: test_smtp_exists[mail.python.org] PASSED
     
-    ========================= 2 passed in 0.17 seconds =========================
+    ========================= 2 passed in 0.15 seconds =========================
 
 Due to the parametrization of ``smtp`` the test will run twice with two
 different ``App`` instances and respective smtp servers.  There is no
 need for the ``app`` fixture to be aware of the ``smtp`` parametrization 
-as pytest will fully analyse the fixture dependency graph.  Note also,
-that the ``app`` fixture has a scope of ``module`` but may use a
-session-scoped ``smtp`` from the example higher up: it is fine for
-fixtures to use "broader" scoped fixtures but not the other way round:
+as pytest will fully analyse the fixture dependency graph.  
+
+Note, that the ``app`` fixture has a scope of ``module`` and uses a
+module-scoped ``smtp`` fixture.  The example would still work if ``smtp``
+was cached on a ``session`` scope: it is fine for fixtures to use 
+"broader" scoped fixtures but not the other way round:
 A session-scoped fixture could not use a module-scoped one in a
 meaningful way.
 

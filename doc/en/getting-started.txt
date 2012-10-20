@@ -122,7 +122,7 @@ run the module by passing its filename::
     ================================= FAILURES =================================
     ____________________________ TestClass.test_two ____________________________
     
-    self = <test_class.TestClass instance at 0x1f8a6c8>
+    self = <test_class.TestClass instance at 0x1a686c8>
     
         def test_two(self):
             x = "hello"
@@ -157,7 +157,7 @@ before performing the test function call.  Let's just run it::
     ================================= FAILURES =================================
     _____________________________ test_needsfiles ______________________________
     
-    tmpdir = local('/tmp/pytest-1409/test_needsfiles0')
+    tmpdir = local('/tmp/pytest-1437/test_needsfiles0')
     
         def test_needsfiles(tmpdir):
             print tmpdir
@@ -166,7 +166,7 @@ before performing the test function call.  Let's just run it::
     
     test_tmpdir.py:3: AssertionError
     ----------------------------- Captured stdout ------------------------------
-    /tmp/pytest-1409/test_needsfiles0
+    /tmp/pytest-1437/test_needsfiles0
 
 Before the test runs, a unique-per-test-invocation temporary directory
 was created.  More info at :ref:`tmpdir handling`.

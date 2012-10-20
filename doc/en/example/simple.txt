@@ -155,7 +155,7 @@ and when running it will see a skipped "slow" test::
     
     test_module.py .s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-293/conftest.py:9: need --runslow option to run
+    SKIP [1] /tmp/doc-exec-415/conftest.py:9: need --runslow option to run
     
     =================== 1 passed, 1 skipped in 0.01 seconds ====================
 
@@ -327,7 +327,7 @@ Now we can profile which test functions execute the slowest::
     ========================= slowest 3 test durations =========================
     0.20s call     test_some_are_slow.py::test_funcslow2
     0.10s call     test_some_are_slow.py::test_funcslow1
-    0.00s setup    test_some_are_slow.py::test_funcfast
+    0.00s call     test_some_are_slow.py::test_funcfast
     ========================= 3 passed in 0.31 seconds =========================
 
 incremental testing - test steps
@@ -388,7 +388,7 @@ If we run this::
     ================================= FAILURES =================================
     ____________________ TestUserHandling.test_modification ____________________
     
-    self = <test_step.TestUserHandling instance at 0x1db2638>
+    self = <test_step.TestUserHandling instance at 0x1e88638>
     
         def test_modification(self):
     >       assert 0

@@ -195,7 +195,7 @@ And then when we run the test::
     ================================= FAILURES =================================
     _________________________ test_db_initialized[d2] __________________________
     
-    db = <conftest.DB2 instance at 0x2928878>
+    db = <conftest.DB2 instance at 0x2ae5878>
     
         def test_db_initialized(db):
             # a dummy test
@@ -250,7 +250,7 @@ argument sets to use for each test function.  Let's run it::
     ================================= FAILURES =================================
     ________________________ TestClass.test_equals[1-2] ________________________
     
-    self = <test_parametrize.TestClass instance at 0x18dd4d0>, a = 1, b = 2
+    self = <test_parametrize.TestClass instance at 0x1de24d0>, a = 1, b = 2
     
         def test_equals(self, a, b):
     >       assert a == b
