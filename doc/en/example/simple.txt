@@ -106,7 +106,7 @@ directory with the above conftest.py::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.1
     collected 0 items
     
     =============================  in 0.00 seconds =============================
@@ -150,12 +150,12 @@ and when running it will see a skipped "slow" test::
 
     $ py.test -rs    # "-rs" means report details on the little 's'
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.1
     collected 2 items
     
     test_module.py .s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-415/conftest.py:9: need --runslow option to run
+    SKIP [1] /tmp/doc-exec-597/conftest.py:9: need --runslow option to run
     
     =================== 1 passed, 1 skipped in 0.01 seconds ====================
 
@@ -163,7 +163,7 @@ Or run it including the ``slow`` marked test::
 
     $ py.test --runslow
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.1
     collected 2 items
     
     test_module.py ..
@@ -253,7 +253,7 @@ which will add the string to the test header accordingly::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.1
     project deps: mylib-1.1
     collected 0 items
     
@@ -276,7 +276,7 @@ which will add info only when run with "--v"::
 
     $ py.test -v
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0 -- /home/hpk/p/pytest/.tox/regen/bin/python
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.1 -- /home/hpk/p/pytest/.tox/regen/bin/python
     info1: did you know that ...
     did you?
     collecting ... collected 0 items
@@ -287,7 +287,7 @@ and nothing when run plainly::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.1
     collected 0 items
     
     =============================  in 0.00 seconds =============================
@@ -319,7 +319,7 @@ Now we can profile which test functions execute the slowest::
 
     $ py.test --durations=3
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.1
     collected 3 items
     
     test_some_are_slow.py ...
@@ -327,7 +327,7 @@ Now we can profile which test functions execute the slowest::
     ========================= slowest 3 test durations =========================
     0.20s call     test_some_are_slow.py::test_funcslow2
     0.10s call     test_some_are_slow.py::test_funcslow1
-    0.00s call     test_some_are_slow.py::test_funcfast
+    0.00s setup    test_some_are_slow.py::test_funcfast
     ========================= 3 passed in 0.31 seconds =========================
 
 incremental testing - test steps
@@ -380,7 +380,7 @@ If we run this::
 
     $ py.test -rx
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.1
     collected 4 items
     
     test_step.py .Fx.
@@ -388,7 +388,7 @@ If we run this::
     ================================= FAILURES =================================
     ____________________ TestUserHandling.test_modification ____________________
     
-    self = <test_step.TestUserHandling instance at 0x1e88638>
+    self = <test_step.TestUserHandling instance at 0x1aad680>
     
         def test_modification(self):
     >       assert 0

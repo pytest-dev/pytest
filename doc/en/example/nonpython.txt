@@ -27,7 +27,7 @@ now execute the test specification::
 
     nonpython $ py.test test_simple.yml
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.1
     collected 2 items
     
     test_simple.yml .F
@@ -56,7 +56,7 @@ consulted when reporting in ``verbose`` mode::
 
     nonpython $ py.test -v
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0 -- /home/hpk/p/pytest/.tox/regen/bin/python
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.1 -- /home/hpk/p/pytest/.tox/regen/bin/python
     collecting ... collected 2 items
     
     test_simple.yml:1: usecase: ok PASSED
@@ -74,10 +74,10 @@ interesting to just look at the collection tree::
 
     nonpython $ py.test --collectonly
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.0
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.1
     collected 2 items
     <YamlFile 'test_simple.yml'>
       <YamlItem 'ok'>
       <YamlItem 'hello'>
     
-    =============================  in 0.03 seconds =============================
+    =============================  in 0.02 seconds =============================
