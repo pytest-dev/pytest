@@ -28,6 +28,7 @@ class UnitTestCase(pytest.Class):
         loader = py.std.unittest.TestLoader()
         module = self.getparent(pytest.Module).obj
         cls = self.obj
+        foundsomething = False
         for name in loader.getTestCaseNames(self.obj):
             x = getattr(self.obj, name)
             funcobj = getattr(x, 'im_func', x)
@@ -35,9 +36,11 @@ class UnitTestCase(pytest.Class):
             if hasattr(funcobj, 'todo'):
                 pytest.mark.xfail(reason=str(funcobj.todo))(funcobj)
             yield TestCaseFunction(name, parent=self)
+            foundsomething = True
 
-        if getattr(self.obj, 'runTest', None) is not None:
-            yield TestCaseFunction('runTest', parent=self)
+        if not foundsomething:
+            if getattr(self.obj, 'runTest', None) is not None:
+                yield TestCaseFunction('runTest', parent=self)
 
     def setup(self):
         meth = getattr(self.obj, 'setUpClass', None)

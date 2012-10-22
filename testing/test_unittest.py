@@ -18,12 +18,21 @@ def test_runTest_method(testdir):
     testpath=testdir.makepyfile("""
         import unittest
         pytest_plugins = "pytest_unittest"
-        class MyTestCase(unittest.TestCase):
+        class MyTestCaseWithRunTest(unittest.TestCase):
             def runTest(self):
                 self.assertEquals('foo', 'foo')
+        class MyTestCaseWithoutRunTest(unittest.TestCase):
+            def runTest(self):
+                self.assertEquals('foo', 'foo')
+            def test_something(self):
+                pass
         """)
-    reprec = testdir.inline_run(testpath)
-    assert reprec.matchreport('runTest').passed
+    result = testdir.runpytest("-v")
+    result.stdout.fnmatch_lines("""
+        *MyTestCaseWithRunTest.runTest*
+        *MyTestCaseWithoutRunTest.test_something*
+        *2 passed*
+    """)
 
 def test_isclasscheck_issue53(testdir):
     testpath = testdir.makepyfile("""

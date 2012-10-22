@@ -7,6 +7,9 @@ Changes between 2.3.1 and 2.3.2.dev
 
 - fix teardown-ordering for parametrized setups
 
+- fix unittest behaviour: TestCase.runtest only called if there are
+  test methods defined
+
 - "python setup.py test" now works with pytest itself
 
 - fix/improve internal/packaging related bits:
