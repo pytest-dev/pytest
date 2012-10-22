@@ -10,6 +10,9 @@ Changes between 2.3.1 and 2.3.2.dev
 - fix unittest behaviour: TestCase.runtest only called if there are
   test methods defined
 
+- improve trial support: don't collect its empty
+  unittest.TestCase.runTest() method
+
 - "python setup.py test" now works with pytest itself
 
 - fix/improve internal/packaging related bits:

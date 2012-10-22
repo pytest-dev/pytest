@@ -39,8 +39,11 @@ class UnitTestCase(pytest.Class):
             foundsomething = True
 
         if not foundsomething:
-            if getattr(self.obj, 'runTest', None) is not None:
-                yield TestCaseFunction('runTest', parent=self)
+            runtest = getattr(self.obj, 'runTest', None)
+            if runtest is not None:
+                ut = sys.modules.get("twisted.trial.unittest", None)
+                if ut is None or runtest != ut.TestCase.runTest:
+                    yield TestCaseFunction('runTest', parent=self)
 
     def setup(self):
         meth = getattr(self.obj, 'setUpClass', None)

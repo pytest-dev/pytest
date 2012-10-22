@@ -277,7 +277,27 @@ def test_testfunction_skip_property(testdir):
 
 class TestTrialUnittest:
     def setup_class(cls):
-        pytest.importorskip("twisted.trial.unittest")
+        cls.ut = pytest.importorskip("twisted.trial.unittest")
+
+    def test_trial_testcase_runtest_not_collected(self, testdir):
+        testdir.makepyfile("""
+            from twisted.trial.unittest import TestCase
+
+            class TC(TestCase):
+                def test_hello(self):
+                    pass
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+        testdir.makepyfile("""
+            from twisted.trial.unittest import TestCase
+
+            class TC(TestCase):
+                def runTest(self):
+                    pass
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
 
     def test_trial_exceptions_with_skips(self, testdir):
         testdir.makepyfile("""
@@ -322,7 +342,7 @@ class TestTrialUnittest:
             "*i2wanto*",
             "*sys.version_info*",
             "*skip_in_method*",
-            "*5 skipped*3 xfail*1 xpass*",
+            "*4 skipped*3 xfail*1 xpass*",
         ])
 
     def test_trial_error(self, testdir):
