@@ -2,20 +2,22 @@ Changes between 2.3.1 and 2.3.2.dev
 -----------------------------------
 
 - fix issue205 - conftests in subdirs customizing
-  pytest_pycollect_makemodule now work properly
+  pytest_pycollect_makemodule and pytest_pycollect_makeitem
+  now work properly
 
 - fix teardown-ordering for parametrized setups
 
-- fix exception message check of test_nose.py to pass on python33 as well
+- "python setup.py test" now works with pytest itself
 
-- fix issue206 - fix test_assertrewrite.py to work when a global
-  PYTHONDONTWRITEBYTECODE=1 is present
+- fix/improve internal/packaging related bits:
 
-- add tox.ini to pytest distribution so that ignore-dirs and others config
-  bits are properly distributed for maintainers who run pytest-own tests
+  - exception message check of test_nose.py now passes on python33 as well
 
-- add some logic to setup.py such that "python setup.py test" works with
-  pytest itself
+  - issue206 - fix test_assertrewrite.py to work when a global
+    PYTHONDONTWRITEBYTECODE=1 is present
+
+  - add tox.ini to pytest distribution so that ignore-dirs and others config
+    bits are properly distributed for maintainers who run pytest-own tests
 
 Changes between 2.3.0 and 2.3.1
 -----------------------------------

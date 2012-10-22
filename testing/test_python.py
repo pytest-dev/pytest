@@ -419,6 +419,28 @@ class TestConftestCustomization:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
+    def test_customized_pymakeitem(self, testdir):
+        b = testdir.mkdir("a").mkdir("b")
+        b.join("conftest.py").write(py.code.Source("""
+            def pytest_pycollect_makeitem(__multicall__):
+                result = __multicall__.execute()
+                if result:
+                    for func in result:
+                        func._some123 = "world"
+                return result
+        """))
+        b.join("test_module.py").write(py.code.Source("""
+            import pytest
+
+            @pytest.fixture()
+            def obj(request):
+                return request.node._some123
+            def test_hello(obj):
+                assert obj == "world"
+        """))
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
     def test_pytest_pycollect_makeitem(self, testdir):
         testdir.makeconftest("""
             import pytest

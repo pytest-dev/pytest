@@ -288,6 +288,7 @@ class PyCollector(PyobjMixin, pytest.Collector):
         return l
 
     def makeitem(self, name, obj):
+        #assert self.ihook.fspath == self.fspath, self
         return self.ihook.pytest_pycollect_makeitem(
             collector=self, name=name, obj=obj)
 

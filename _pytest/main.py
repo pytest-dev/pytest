@@ -211,13 +211,15 @@ class Node(object):
         #: filesystem path where this node was collected from (can be None)
         self.fspath = getattr(parent, 'fspath', None)
 
-        #: fspath sensitive hook proxy used to call pytest hooks
-        self.ihook = self.session.gethookproxy(self.fspath)
-
         #: keywords/markers collected from all scopes
         self.keywords = NodeKeywords(self)
 
         #self.extrainit()
+
+    @property
+    def ihook(self):
+        """ fspath sensitive hook proxy used to call pytest hooks"""
+        return self.session.gethookproxy(self.fspath)
 
     #def extrainit(self):
     #    """"extra initialization after Node is initialized.  Implemented
