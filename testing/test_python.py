@@ -404,6 +404,21 @@ class TestConftestCustomization:
             "*<MyModule*xyz*",
         ])
 
+    def test_customized_pymakemodule_issue205_subdir(self, testdir):
+        b = testdir.mkdir("a").mkdir("b")
+        b.join("conftest.py").write(py.code.Source("""
+            def pytest_pycollect_makemodule(__multicall__):
+                mod = __multicall__.execute()
+                mod.obj.hello = "world"
+                return mod
+        """))
+        b.join("test_module.py").write(py.code.Source("""
+            def test_hello():
+                assert hello == "world"
+        """))
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
     def test_pytest_pycollect_makeitem(self, testdir):
         testdir.makeconftest("""
             import pytest

@@ -161,8 +161,8 @@ def pytest_collect_file(path, parent):
                     break
             else:
                return
-        return parent.ihook.pytest_pycollect_makemodule(
-            path=path, parent=parent)
+        ihook = parent.session.gethookproxy(path)
+        return ihook.pytest_pycollect_makemodule(path=path, parent=parent)
 
 def pytest_pycollect_makemodule(path, parent):
     return Module(path, parent)
