@@ -4,6 +4,8 @@ Changes between 2.3.1 and 2.3.2.dev
 - fix issue205 - conftests in subdirs customizing
   pytest_pycollect_makemodule now work properly
 
+- fix exception message check of test_nose.py to pass on python33 as well
+
 - add tox.ini to pytest distribution so that ignore-dirs and others config
   bits are properly distributed for maintainers who run pytest-own tests
 

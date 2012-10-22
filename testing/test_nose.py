@@ -85,7 +85,7 @@ def test_nose_setup_func_failure(testdir):
     """)
     result = testdir.runpytest(p, '-p', 'nose')
     result.stdout.fnmatch_lines([
-        "*TypeError: <lambda>() takes exactly 1*0 given*"
+        "*TypeError: <lambda>()*"
     ])
 
 
