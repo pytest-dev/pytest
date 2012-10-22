@@ -71,6 +71,10 @@ there is no need to activate it.  Here is a initial list of known plugins:
 * `pytest-django <http://pypi.python.org/pypi/pytest-django>`_: write tests
   for `django`_ apps, using pytest integration.
 
+* `pytest-twisted <http://pypi.python.org/pypi/pytest-twisted>`_: write tests
+  for `twisted <http://twistedmatrix.com>`_ apps, starting a reactor and
+  processing deferreds from test functions.
+
 * `pytest-capturelog <http://pypi.python.org/pypi/pytest-capturelog>`_:
   to capture and assert about messages from the logging module
 
