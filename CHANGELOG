@@ -6,6 +6,9 @@ Changes between 2.3.1 and 2.3.2.dev
 
 - fix exception message check of test_nose.py to pass on python33 as well
 
+- fix issue206 - fix test_assertrewrite.py to work when a global
+  PYTHONDONTWRITEBYTECODE=1 is present
+
 - add tox.ini to pytest distribution so that ignore-dirs and others config
   bits are properly distributed for maintainers who run pytest-own tests
 

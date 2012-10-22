@@ -354,18 +354,21 @@ def test_no_bytecode():
     @pytest.mark.skipif('"__pypy__" in sys.modules')
     def test_pyc_vs_pyo(self, testdir, monkeypatch):
         testdir.makepyfile("""
-import pytest
-def test_optimized():
-    "hello"
-    assert test_optimized.__doc__ is None""")
+            import pytest
+            def test_optimized():
+                "hello"
+                assert test_optimized.__doc__ is None"""
+        )
         p = py.path.local.make_numbered_dir(prefix="runpytest-", keep=None,
                                             rootdir=testdir.tmpdir)
         tmp = "--basetemp=%s" % p
         monkeypatch.setenv("PYTHONOPTIMIZE", "2")
+        monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
         assert testdir.runpybin("py.test", tmp).ret == 0
         tagged = "test_pyc_vs_pyo." + PYTEST_TAG
         assert tagged + ".pyo" in os.listdir("__pycache__")
         monkeypatch.undo()
+        monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
         assert testdir.runpybin("py.test", tmp).ret == 1
         assert tagged + ".pyc" in os.listdir("__pycache__")
 
