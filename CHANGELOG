@@ -4,6 +4,8 @@ Changes between 2.3.1 and 2.3.2.dev
 - fix issue205 - conftests in subdirs customizing
   pytest_pycollect_makemodule now work properly
 
+- fix teardown-ordering for parametrized setups
+
 - fix exception message check of test_nose.py to pass on python33 as well
 
 - fix issue206 - fix test_assertrewrite.py to work when a global

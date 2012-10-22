@@ -1531,7 +1531,7 @@ class FixtureManager:
             item.session._setupstate._callfinalizers((name, param))
             l = self._arg2finish.get(name)
             if l is not None:
-                for fin in l:
+                for fin in reversed(l):
                     fin()
 
     def parsefactories(self, node_or_obj, nodeid=None, unittest=False):

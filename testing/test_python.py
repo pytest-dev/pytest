@@ -2763,6 +2763,43 @@ class TestFixtureMarker:
         reprec = testdir.inline_run("-v")
         reprec.assertoutcome(passed=12+1)
 
+    def test_parametrized_fixture_teardown_order(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture(params=[1,2], scope="class")
+            def param1(request):
+                return request.param
+
+            l = []
+
+            class TestClass:
+                @classmethod
+                @pytest.fixture(scope="class", autouse=True)
+                def setup1(self, request, param1):
+                    l.append(1)
+                    request.addfinalizer(self.teardown1)
+                @classmethod
+                def teardown1(self):
+                    assert l.pop() == 1
+                @pytest.fixture(scope="class", autouse=True)
+                def setup2(self, request, param1):
+                    l.append(2)
+                    request.addfinalizer(self.teardown2)
+                @classmethod
+                def teardown2(self):
+                    assert l.pop() == 2
+                def test(self):
+                    pass
+
+            def test_finish():
+                assert not l
+        """)
+        result = testdir.runpytest("-v")
+        result.stdout.fnmatch_lines("""
+            *3 passed*
+        """)
+        assert "error" not in result.stdout.str()
+
     def test_parametrize_separated_lifecycle(self, testdir):
         testdir.makepyfile("""
             import pytest
