@@ -1,6 +1,9 @@
 Changes between 2.3.1 and 2.3.2.dev
 -----------------------------------
 
+- fix issue208 and fix issue29 use new py version to avoid long pauses 
+  when printing tracebacks in long modules
+
 - fix issue205 - conftests in subdirs customizing
   pytest_pycollect_makemodule and pytest_pycollect_makeitem
   now work properly
