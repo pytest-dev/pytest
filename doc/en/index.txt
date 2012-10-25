@@ -34,8 +34,9 @@ pytest: makes you write better programs
 
 **integrates many common testing methods**:
 
- - can run many ``nose``, ``unittest.py`` and ``doctest.py`` style
-   tests, including running testcases made for Django and trial
+ - multi-paradigm: pytest can run many ``nose``, ``unittest.py`` and
+   ``doctest.py`` style test suites, including running testcases made for
+   Django and trial
  - supports :ref:`good integration practises <goodpractises>`
  - supports extended :ref:`xUnit style setup <xunitsetup>`
  - supports domain-specific :ref:`non-python tests`

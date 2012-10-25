@@ -104,7 +104,7 @@ this is a fully self-contained example which you can run with::
 
     $ py.test test_scenarios.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.1
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.2
     collected 4 items
     
     test_scenarios.py ....
@@ -116,7 +116,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
 
     $ py.test --collectonly test_scenarios.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.1
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.2
     collected 4 items
     <Module 'test_scenarios.py'>
       <Class 'TestSampleWithScenarios'>
@@ -180,7 +180,7 @@ Let's first see how it looks like at collection time::
 
     $ py.test test_backends.py --collectonly
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.1
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.2
     collected 2 items
     <Module 'test_backends.py'>
       <Function 'test_db_initialized[d1]'>
@@ -195,7 +195,7 @@ And then when we run the test::
     ================================= FAILURES =================================
     _________________________ test_db_initialized[d2] __________________________
     
-    db = <conftest.DB2 instance at 0x233e8c0>
+    db = <conftest.DB2 instance at 0x216ccb0>
     
         def test_db_initialized(db):
             # a dummy test
@@ -250,7 +250,7 @@ argument sets to use for each test function.  Let's run it::
     ================================= FAILURES =================================
     ________________________ TestClass.test_equals[1-2] ________________________
     
-    self = <test_parametrize.TestClass instance at 0x2a73518>, a = 1, b = 2
+    self = <test_parametrize.TestClass instance at 0x216e8c0>, a = 1, b = 2
     
         def test_equals(self, a, b):
     >       assert a == b

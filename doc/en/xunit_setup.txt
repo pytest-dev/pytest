@@ -5,13 +5,16 @@
 classic xunit-style setup
 ========================================
 
-.. note:: 
-
-    This section describes the classic way how you can implement setup and
-    teardown on a per-module/class/function basis.  It remains fully
-    supported but it is recommended to rather use the more flexible,
-    more modular and more scalable :ref:`fixture functions
-    <fixture>` for implementing for fixing test state for your tests.
+This section describes a classic and popular way how you can implement
+fixtures (setup and teardown test state) on a per-module/class/function basis.  
+pytest started supporting these methods around 2005 and subsequently
+nose and the standard library introduced them (under slightly different
+names).  While these setup/teardown methods are and will remain fully
+supported you may also use pytest's more powerful :ref:`fixture mechanism
+<fixture>` which leverages the concept of dependency injection, allowing
+for a more modular and more scalable approach for managing test state, 
+especially for larger projects and for functional testing.  It is safe 
+to mix both fixture mechanisms.
 
 Module level setup/teardown
 --------------------------------------
