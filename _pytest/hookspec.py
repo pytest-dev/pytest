@@ -23,8 +23,10 @@ def pytest_cmdline_preparse(config, args):
     """modify command line arguments before option parsing. """
 
 def pytest_addoption(parser):
-    """add optparse-style options and ini-style config values via calls
-    to ``parser.addoption`` and ``parser.addini(...)``.
+    """use the parser to add optparse-style options and ini-style
+    config values via calls, see :py:func:`parser.addoption(...)
+    <_pytest.config.Parser.addoption>`
+    and :py:func:`parser.addini(...) <_pytest.config.Parser.addini>`.
     """
 
 def pytest_cmdline_main(config):

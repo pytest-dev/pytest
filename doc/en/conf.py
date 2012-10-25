@@ -17,7 +17,7 @@
 #
 # The full version, including alpha/beta/rc tags.
 # The short X.Y version.
-version = release = "2.3.1"
+version = release = "2.3.2.dev9"
 
 import sys, os
 

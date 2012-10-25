@@ -19,7 +19,7 @@ def pytest_unconfigure(config):
         fin()
 
 class Parser:
-    """ Parser for command line arguments. """
+    """ Parser for command line arguments and ini-file values.  """
 
     def __init__(self, usage=None, processopt=None):
         self._anonymous = OptionGroup("custom options", parser=self)
@@ -38,9 +38,14 @@ class Parser:
     def getgroup(self, name, description="", after=None):
         """ get (or create) a named option Group.
 
-        :name: unique name of the option group.
+        :name: name of the option group.
         :description: long description for --help output.
         :after: name of other group, used for ordering --help output.
+
+        The returned group object has an ``addoption`` method with the same
+        signature as :py:func:`parser.addoption
+        <_pytest.config.Parser.addoption>` but will be shown in the
+        respective group in the output of ``pytest. --help``.
         """
         for group in self._groups:
             if group.name == name:
@@ -54,7 +59,19 @@ class Parser:
         return group
 
     def addoption(self, *opts, **attrs):
-        """ add an optparse-style option. """
+        """ register a command line option.
+
+        :opts: option names, can be short or long options.
+        :attrs: same attributes which the ``add_option()`` function of the
+           `optparse library
+           <http://docs.python.org/library/optparse.html#module-optparse>`_
+           accepts.
+
+        After command line parsing options are available on the pytest config
+        object via ``config.option.NAME`` where ``NAME`` is usually set
+        by passing a ``dest`` attribute, for example
+        ``addoption("--long", dest="NAME", ...)``.
+        """
         self._anonymous.addoption(*opts, **attrs)
 
     def parse(self, args):
@@ -75,7 +92,15 @@ class Parser:
         return args
 
     def addini(self, name, help, type=None, default=None):
-        """ add an ini-file option with the given name and description. """
+        """ register an ini-file option.
+
+        :name: name of the ini-variable
+        :type: type of the variable, can be ``pathlist``, ``args`` or ``linelist``.
+        :default: default value if no ini-file option exists but is queried.
+
+        The value of ini-variables can be retrieved via a call to
+        :py:func:`config.getini(name) <_pytest.config.Config.getini>`.
+        """
         assert type in (None, "pathlist", "args", "linelist")
         self._inidict[name] = (help, type, default)
         self._ininames.append(name)
@@ -246,8 +271,9 @@ class CmdOptions(object):
 class Config(object):
     """ access to configuration values, pluginmanager and plugin hooks.  """
     def __init__(self, pluginmanager=None):
-        #: command line option values, usually added via parser.addoption(...)
-        #: or parser.getgroup(...).addoption(...) calls
+        #: command line option values, which must have been previously added
+        #: via calls like ``parser.addoption(...)`` or
+        #: ``parser.getgroup(groupname).addoption(...)``
         self.option = CmdOptions()
         self._parser = Parser(
             usage="usage: %prog [options] [file_or_dir] [file_or_dir] [...]",
