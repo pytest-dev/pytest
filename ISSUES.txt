@@ -48,59 +48,6 @@ if the signature of a decorated function does not match. XXX is it
 not sufficient to always allow non-matches?
 
 
-unify item/request classes, generalize items
----------------------------------------------------------------
-tags: 2.4 wish
-
-in lieu of extended parametrization and the new way to specify resource
-factories in terms of the parametrize decorator, consider unification
-of the item and request class.  This also is connected with allowing
-funcargs in setup functions.  Example of new item API:
-
-    item.getresource("db")  # alias for request.getfuncargvalue
-    item.addfinalizer(...)
-    item.cached_setup(...)
-    item.applymarker(...)
-
-test classes/modules could then use this api via::
-
-    def pytest_runtest_setup(item):
-        use item API ...
-
-introduction of this new method needs to be _fully_ backward compatible -
-and the documentation needs to change along to mention this new way of
-doing things. 
-
-impl note: probably Request._fillfixtures would be called from the
-python plugins own pytest_runtest_setup(item) and would call
-item.getresource(X) for all X in the funcargs of a function.
-
-XXX is it possible to even put the above item API to Nodes, i.e. also
-to Directorty/module/file/class collectors?  Problem is that current
-funcarg factories presume they are called with a per-function (even
-per-funcarg-per-function) scope.  Could there be small tweaks to the new
-API that lift this restriction?
-
-consider::
-
-    def setup_class(cls, tmpdir):
-        # would get a per-class tmpdir because tmpdir parametrization
-        # would know that it is called with a class scope
-        #
-        #
-        #
-this looks very difficult because those setup functions are also used
-by nose etc. Rather consider introduction of a new setup hook:
-
-    def setup_test(self, item):
-        self.db = item.cached_setup(..., scope='class')
-        self.tmpdir = item.getresource("tmpdir")
-
-this should be compatible to unittest/nose and provide much of what
-"testresources" provide.  XXX This would not allow full parametrization
-such that test function could be run multiple times with different
-values. See "parametrized attributes" issue.
-
 allow parametrized attributes on classes
 -------------------------------------------------- 
 
