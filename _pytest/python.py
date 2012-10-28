@@ -598,7 +598,7 @@ class CallSpec2(object):
             if valtype == "funcargs":
                 self.params[arg] = id
             self._arg2scopenum[arg] = scopenum
-            if val == _notexists:
+            if val is _notexists:
                 self._emptyparamspecified = True
         self._idlist.append(id)
 

@@ -313,6 +313,19 @@ class TestFunction:
         reprec = testdir.inline_run()
         reprec.assertoutcome(skipped=1)
 
+    def test_issue213_parametrize_value_no_equal(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            class A:
+                def __eq__(self, other):
+                    raise ValueError("not possible")
+            @pytest.mark.parametrize('arg', [A()])
+            def test_function(arg):
+                assert arg.__class__.__name__ == "A"
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
     def test_function_equality_with_callspec(self, testdir, tmpdir):
         items = testdir.getitems("""
             import pytest
