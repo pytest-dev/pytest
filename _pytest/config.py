@@ -477,14 +477,3 @@ def getcfg(args, inibasenames):
                         return iniconfig['pytest']
     return {}
 
-def findupwards(current, basename):
-    current = py.path.local(current)
-    while 1:
-        p = current.join(basename)
-        if p.check():
-            return p
-        p = current.dirpath()
-        if p == current:
-            return
-        current = p
-
