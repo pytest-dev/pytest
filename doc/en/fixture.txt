@@ -65,7 +65,7 @@ using it::
         assert "merlinux" in msg
         assert 0 # for demo purposes
 
-Here, the ``test_function`` needs the ``smtp`` fixture value.  pytest 
+Here, the ``test_ehlo`` needs the ``smtp`` fixture value.  pytest 
 will discover and call the :py:func:`@pytest.fixture <_pytest.python.fixture>` 
 marked ``smtp`` fixture function.  Running the test looks like this::
 
