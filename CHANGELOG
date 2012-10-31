@@ -1,6 +1,8 @@
 Changes between 2.3.2 and 2.3.3.dev
 -----------------------------------
 
+- fix issue 214: gracefully handle proxy objects that
+  look like fixtures but raise exceptions on introspection
 - fix issue213 - allow to parametrize with values like numpy arrays that
   do not support an __eq__ operator 
 
