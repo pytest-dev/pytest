@@ -2,10 +2,10 @@
 
 import pytest
 
-def pytest_collect_file(path, parent):
+def pytest_collect_file(parent, path):
     if path.ext == ".yml" and path.basename.startswith("test"):
         return YamlFile(path, parent)
-            
+
 class YamlFile(pytest.File):
     def collect(self):
         import yaml # we need a yaml parser, e.g. PyYAML
@@ -17,7 +17,7 @@ class YamlItem(pytest.Item):
     def __init__(self, name, parent, spec):
         super(YamlItem, self).__init__(name, parent)
         self.spec = spec
-    
+
     def runtest(self):
         for name, value in self.spec.items():
             # some custom test execution (dumb example follows)

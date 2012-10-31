@@ -1552,12 +1552,12 @@ class FixtureManager:
             # fixture functions have a pytest_funcarg__ prefix (pre-2.3 style)
             # or are "@pytest.fixture" marked
             try:
-                marker = getattr(obj, "_pytestfixturefunction", None)
-            except RuntimeError:
-                # some proxy objects raise RuntimeError
-                # flasks request globals are one example
-                # those aren't fixture functions, so we can ignore
-                # XXX: maybe trace it when it happens?
+                marker = obj._pytestfixturefunction
+            except KeyboardInterrupt:
+                raise
+            except Exception:
+                # some objects raise errors like request (from flask import request)
+                # we don't expect them to be fixture functions
                 marker = None
 
             if marker is None:

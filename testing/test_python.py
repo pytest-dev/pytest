@@ -1612,33 +1612,6 @@ def test_funcarg_lookup_error(testdir):
     assert "INTERNAL" not in result.stdout.str()
 
 
-def test_funcarg_fixture_discovery_failure_issue214(testdir):
-    # some proxy objects raise RuntimeError on getattr
-    # for example flask.request
-    p = testdir.makepyfile("""
-
-        class EvilObject(object):
-            def __call__(self): 
-                #needed to trick discovery
-                pass
-            def __getattr__(self, arg):
-                raise RuntimeError('uhm ' + arg)
-
-
-        fixture = EvilObject()
-        
-        def test_1():
-            pass
-    """)
-    result = testdir.runpytest('--fulltrace')
-    result.stdout.fnmatch_lines([
-        '*1 passed*'
-    ])
-    assert "INTERNAL" not in result.stdout.str()
-    assert "ERROR" not in result.stdout.str()
-        
-
-
 class TestReportInfo:
     def test_itemreport_reportinfo(self, testdir, linecomp):
         testdir.makeconftest("""
@@ -2144,6 +2117,20 @@ class TestFixtureManager:
                 return request._pyfuncitem
         """)
         return testdir
+
+    def test_parsefactories_evil_objects_issue214(self, testdir):
+        testdir.makepyfile("""
+            class A:
+                def __call__(self):
+                    pass
+                def __getattr__(self, name):
+                    raise RuntimeError()
+            a = A()
+            def test_hello():
+                pass
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1, failed=0)
 
     def test_parsefactories_conftest(self, testdir):
         testdir.makepyfile("""
