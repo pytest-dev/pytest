@@ -1551,7 +1551,15 @@ class FixtureManager:
                 continue
             # fixture functions have a pytest_funcarg__ prefix (pre-2.3 style)
             # or are "@pytest.fixture" marked
-            marker = getattr(obj, "_pytestfixturefunction", None)
+            try:
+                marker = getattr(obj, "_pytestfixturefunction", None)
+            except RuntimeError:
+                # some proxy objects raise RuntimeError
+                # flasks request globals are one example
+                # those aren't fixture functions, so we can ignore
+                # XXX: maybe trace it when it happens?
+                marker = None
+
             if marker is None:
                 if not name.startswith(self._argprefix):
                     continue
