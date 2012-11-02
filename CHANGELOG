@@ -4,8 +4,11 @@ Changes between 2.3.2 and 2.3.3.dev
 - fix issue214 - parse modules that contain special objects like e. g.
   flask's request object which blows up on getattr access if no request
   is active.
+
 - fix issue213 - allow to parametrize with values like numpy arrays that
   do not support an __eq__ operator
+
+- fix issue215 - split test_python.org into multiple files
 
 
 Changes between 2.3.1 and 2.3.2
