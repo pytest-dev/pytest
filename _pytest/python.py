@@ -1286,12 +1286,6 @@ scopenum_subfunction = scopes.index("subfunction")
 def scopemismatch(currentscope, newscope):
     return scopes.index(newscope) > scopes.index(currentscope)
 
-def slice_kwargs(names, kwargs):
-    new_kwargs = {}
-    for name in names:
-        new_kwargs[name] = kwargs[name]
-    return new_kwargs
-
 class FixtureLookupError(LookupError):
     """ could not return a requested Fixture (missing or invalid). """
     def __init__(self, argname, request, msg=None):
