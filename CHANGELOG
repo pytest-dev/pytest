@@ -10,6 +10,8 @@ Changes between 2.3.2 and 2.3.3.dev
 
 - fix issue215 - split test_python.org into multiple files
 
+- fix issue148 - @unittest.skip on classes is now recognized and avoids
+  calling setUpClass/tearDownClass
 
 Changes between 2.3.1 and 2.3.2
 -----------------------------------

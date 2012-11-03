@@ -96,6 +96,25 @@ def test_teardown(testdir):
     assert passed == 2
     assert passed + skipped + failed == 2
 
+@pytest.mark.skipif("sys.version_info < (3,1)")
+def test_unittest_skip_issue148(testdir):
+    testpath = testdir.makepyfile("""
+        import unittest
+
+        @unittest.skip("hello")
+        class MyTestCase(unittest.TestCase):
+            @classmethod
+            def setUpClass(self):
+                xxx
+            def test_one(self):
+                pass
+            @classmethod
+            def tearDownClass(self):
+                xxx
+    """)
+    reprec = testdir.inline_run(testpath)
+    reprec.assertoutcome(skipped=1)
+
 def test_method_and_teardown_failing_reporting(testdir):
     testdir.makepyfile("""
         import unittest, pytest

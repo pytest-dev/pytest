@@ -46,12 +46,16 @@ class UnitTestCase(pytest.Class):
                     yield TestCaseFunction('runTest', parent=self)
 
     def setup(self):
+        if getattr(self.obj, '__unittest_skip__', False):
+            return
         meth = getattr(self.obj, 'setUpClass', None)
         if meth is not None:
             meth()
         super(UnitTestCase, self).setup()
 
     def teardown(self):
+        if getattr(self.obj, '__unittest_skip__', False):
+            return
         meth = getattr(self.obj, 'tearDownClass', None)
         if meth is not None:
             meth()
