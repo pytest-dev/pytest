@@ -35,6 +35,12 @@ def test_setup_func_with_setup_decorator():
     assert not l
 
 
+def test_setup_func_not_callable():
+    from _pytest.nose import call_optional
+    class A:
+        f = 1
+    call_optional(A(), "f")
+
 def test_nose_setup_func(testdir):
     p = testdir.makepyfile("""
         from nose.tools import with_setup
