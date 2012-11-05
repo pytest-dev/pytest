@@ -13,6 +13,10 @@ Changes between 2.3.2 and 2.3.3.dev
 - fix issue148 - @unittest.skip on classes is now recognized and avoids
   calling setUpClass/tearDownClass
 
+- fix issue209 - reintroduce python2.4 support by depending on newer
+  pylib which re-introduced statement-finding for pre-AST interpreters
+
+
 Changes between 2.3.1 and 2.3.2
 -----------------------------------
 
