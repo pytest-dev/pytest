@@ -237,6 +237,25 @@ class TestFunctional:
         assert l[1].args == ()
         assert l[2].args == ("pos1", )
 
+    @pytest.mark.xfail(reason='unfixed')
+    def test_merging_markers_deep(self, testdir):
+        # issue 199 - propagate markers into nested classes
+        p = testdir.makepyfile("""
+            import pytest
+            class TestA:
+                pytestmark = pytest.mark.a
+                def test_b(self):
+                    assert True
+                class TestC:
+                    # this one didnt get marked
+                    def test_d(self):
+                        assert True
+        """)
+        items, rec = testdir.inline_genitems(p)
+        for item in items:
+            print item, item.keywords
+            assert 'a' in item.keywords
+
     def test_mark_with_wrong_marker(self, testdir):
         reprec = testdir.inline_runsource("""
                 import pytest
