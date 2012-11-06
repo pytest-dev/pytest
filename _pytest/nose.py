@@ -41,7 +41,7 @@ def pytest_make_collect_report(collector):
 
 def call_optional(obj, name):
     method = getattr(obj, name, None)
-    if method is not None and not hasattr(method, "_pytestfixturefunction") and callable(method):
+    if method is not None and not hasattr(method, "_pytestfixturefunction") and py.builtin.callable(method):
         # If there's any problems allow the exception to raise rather than
         # silently ignoring them
         method()
