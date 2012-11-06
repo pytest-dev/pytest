@@ -11,7 +11,7 @@ this release provides:
 
 - makes pytest work on py24 again (yes, people sometimes still need to use it)
 
-- show *,** args in pytest tracebacks
+- show ``*,**`` args in pytest tracebacks
 
 Thanks to Manuel Jacob, Thomas Waldmann, Ronny Pfannschmidt, Pavel Repin
 and Andreas Taumoefolau for providing patches and all for the issues.
