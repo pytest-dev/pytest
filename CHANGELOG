@@ -1,4 +1,4 @@
-Changes between 2.3.2 and 2.3.3.dev
+Changes between 2.3.2 and 2.3.3
 -----------------------------------
 
 - fix issue214 - parse modules that contain special objects like e. g.

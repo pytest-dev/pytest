@@ -53,7 +53,7 @@ which will thus run three times::
 
     $ py.test 
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.2
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.3
     collected 3 items
     
     test_expectation.py ..F
@@ -135,8 +135,8 @@ Let's also run with a stringinput that will lead to a failing test::
     
         def test_valid_string(stringinput):
     >       assert stringinput.isalpha()
-    E       assert <built-in method isalpha of str object at 0x2ada15bd2030>()
-    E        +  where <built-in method isalpha of str object at 0x2ada15bd2030> = '!'.isalpha
+    E       assert <built-in method isalpha of str object at 0x2b1792721fa8>()
+    E        +  where <built-in method isalpha of str object at 0x2b1792721fa8> = '!'.isalpha
     
     test_strings.py:3: AssertionError
 
@@ -149,7 +149,7 @@ listlist::
     $ py.test -q -rs test_strings.py 
     s
     ========================= short test summary info ==========================
-    SKIP [1] /home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/python.py:960: got empty parameter set, function test_valid_string at /tmp/doc-exec-69/test_strings.py:1
+    SKIP [1] /home/hpk/p/pytest/.tox/regen/lib/python2.7/site-packages/_pytest/python.py:960: got empty parameter set, function test_valid_string at /tmp/doc-exec-26/test_strings.py:1
 
 For further examples, you might want to look at :ref:`more
 parametrization examples <paramexamples>`.

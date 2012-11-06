@@ -106,7 +106,7 @@ directory with the above conftest.py::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.2
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.3
     collected 0 items
     
     =============================  in 0.00 seconds =============================
@@ -150,12 +150,12 @@ and when running it will see a skipped "slow" test::
 
     $ py.test -rs    # "-rs" means report details on the little 's'
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.2
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.3
     collected 2 items
     
     test_module.py .s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-104/conftest.py:9: need --runslow option to run
+    SKIP [1] /tmp/doc-exec-62/conftest.py:9: need --runslow option to run
     
     =================== 1 passed, 1 skipped in 0.01 seconds ====================
 
@@ -163,7 +163,7 @@ Or run it including the ``slow`` marked test::
 
     $ py.test --runslow
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.2
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.3
     collected 2 items
     
     test_module.py ..
@@ -253,7 +253,7 @@ which will add the string to the test header accordingly::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.2
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.3
     project deps: mylib-1.1
     collected 0 items
     
@@ -276,7 +276,7 @@ which will add info only when run with "--v"::
 
     $ py.test -v
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.2 -- /home/hpk/p/pytest/.tox/regen/bin/python
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.3 -- /home/hpk/p/pytest/.tox/regen/bin/python
     info1: did you know that ...
     did you?
     collecting ... collected 0 items
@@ -287,7 +287,7 @@ and nothing when run plainly::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.2
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.3
     collected 0 items
     
     =============================  in 0.00 seconds =============================
@@ -319,7 +319,7 @@ Now we can profile which test functions execute the slowest::
 
     $ py.test --durations=3
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.2
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.3
     collected 3 items
     
     test_some_are_slow.py ...
@@ -380,7 +380,7 @@ If we run this::
 
     $ py.test -rx
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.2
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.3
     collected 4 items
     
     test_step.py .Fx.
@@ -388,7 +388,7 @@ If we run this::
     ================================= FAILURES =================================
     ____________________ TestUserHandling.test_modification ____________________
     
-    self = <test_step.TestUserHandling instance at 0x269efc8>
+    self = <test_step.TestUserHandling instance at 0x2677b90>
     
         def test_modification(self):
     >       assert 0
@@ -398,7 +398,7 @@ If we run this::
     ========================= short test summary info ==========================
     XFAIL test_step.py::TestUserHandling::()::test_deletion
       reason: previous test failed (test_modification)
-    ============== 1 failed, 2 passed, 1 xfailed in 0.01 seconds ===============
+    ============== 1 failed, 2 passed, 1 xfailed in 0.02 seconds ===============
 
 We'll see that ``test_deletion`` was not executed because ``test_modification``
 failed.  It is reported as an "expected failure".

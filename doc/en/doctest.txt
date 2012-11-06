@@ -44,7 +44,7 @@ then you can just invoke ``py.test`` without command line options::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.2
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.3
     collected 1 items
     
     mymodule.py .
