@@ -12,6 +12,8 @@ configurations files by using the general help option::
 This will display command line and configuration file settings
 which were registered by installed plugins.
 
+.. _inifiles:
+
 How test configuration is read from configuration INI-files
 -------------------------------------------------------------
 

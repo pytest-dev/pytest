@@ -33,7 +33,7 @@ provide the ``cmdopt`` through a :ref:`fixture function <fixture function>`::
 
     @pytest.fixture
     def cmdopt(request):
-        return request.config.option.cmdopt
+        return request.config.getoption("--cmdopt")
 
 Let's run this without supplying our new option::
 
@@ -129,7 +129,7 @@ line option to control skipping of ``slow`` marked tests::
             help="run slow tests")
 
     def pytest_runtest_setup(item):
-        if 'slow' in item.keywords and not item.config.getvalue("runslow"):
+        if 'slow' in item.keywords and not item.config.getoption("--runslow"):
             pytest.skip("need --runslow option to run")
 
 We can now write a test module like this::

@@ -5,7 +5,7 @@ Working with plugins and conftest files
 
 py.test implements all aspects of configuration, collection, running and reporting by calling `well specified hooks`_.  Virtually any Python module can be registered as a plugin.  It can implement any number of hook functions (usually two or three) which all have a ``pytest_`` prefix, making hook functions easy to distinguish and find.  There are three basic location types:
 
-* `builtin plugins`_: loaded from py.test's own ``pytest/plugin`` directory.
+* `builtin plugins`_: loaded from py.test's internal ``_pytest`` directory.
 * `external plugins`_: modules discovered through `setuptools entry points`_
 * `conftest.py plugins`_: modules auto-discovered in test directories
 
@@ -155,6 +155,8 @@ If a package is installed this way, py.test will load
 ``myproject.pluginmodule`` as a plugin which can define
 `well specified hooks`_.
 
+.. _`pluginorder`:
+
 Plugin discovery order at tool startup
 --------------------------------------------
 
@@ -174,6 +176,7 @@ py.test loads plugin modules at tool startup in the following way:
 
 * by recursively loading all plugins specified by the
   ``pytest_plugins`` variable in ``conftest.py`` files
+
 
 Requiring/Loading plugins in a test module or conftest file
 -------------------------------------------------------------

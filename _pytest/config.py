@@ -271,9 +271,8 @@ class CmdOptions(object):
 class Config(object):
     """ access to configuration values, pluginmanager and plugin hooks.  """
     def __init__(self, pluginmanager=None):
-        #: command line option values, which must have been previously added
-        #: via calls like ``parser.addoption(...)`` or
-        #: ``parser.getgroup(groupname).addoption(...)``
+        #: access to command line option as attributes.
+        #: (deprecated), use :py:func:`getoption() <_pytest.config.Config.getoption>` instead
         self.option = CmdOptions()
         self._parser = Parser(
             usage="usage: %prog [options] [file_or_dir] [file_or_dir] [...]",
@@ -285,6 +284,7 @@ class Config(object):
         self._conftest = Conftest(onimport=self._onimportconftest)
         self.hook = self.pluginmanager.hook
         self._inicache = {}
+        self._opt2dest = {}
         self._cleanup = []
 
     @classmethod
@@ -305,6 +305,9 @@ class Config(object):
         self.pluginmanager.consider_conftest(conftestmodule)
 
     def _processopt(self, opt):
+        for name in opt._short_opts + opt._long_opts:
+            self._opt2dest[name] = opt.dest
+
         if hasattr(opt, 'default') and opt.dest:
             if not hasattr(self.option, opt.dest):
                 setattr(self.option, opt.dest, opt.default)
@@ -383,8 +386,9 @@ class Config(object):
         x.append(line) # modifies the cached list inline
 
     def getini(self, name):
-        """ return configuration value from an ini file. If the
-        specified name hasn't been registered through a prior ``parse.addini``
+        """ return configuration value from an :ref:`ini file <inifiles>`. If the
+        specified name hasn't been registered through a prior
+        :py:func:`parser.addini <pytest.config.Parser.addini>`
         call (usually from a plugin), a ValueError is raised. """
         try:
             return self._inicache[name]
@@ -438,8 +442,22 @@ class Config(object):
             self._checkconftest(name)
         return self._conftest.rget(name, path)
 
+    def getoption(self, name):
+        """ return command line option value.
+
+        :arg name: name of the option.  You may also specify
+            the literal ``--OPT`` option instead of the "dest" option name.
+        """
+        name = self._opt2dest.get(name, name)
+        try:
+            return getattr(self.option, name)
+        except AttributeError:
+            raise ValueError("no option named %r" % (name,))
+
     def getvalue(self, name, path=None):
-        """ return ``name`` value looked set from command line options.
+        """ return command line option value.
+
+        :arg name: name of the command line option
 
         (deprecated) if we can't find the option also lookup
         the name in a matching conftest file.

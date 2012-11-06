@@ -103,6 +103,16 @@ class TestConfigAPI:
         assert config.getvalue("x", o) == 1
         pytest.raises(KeyError, 'config.getvalue("y", o)')
 
+    def test_config_getoption(self, testdir):
+        testdir.makeconftest("""
+            def pytest_addoption(parser):
+                parser.addoption("--hello", "-X", dest="hello")
+        """)
+        config = testdir.parseconfig("--hello=this")
+        for x in ("hello", "--hello", "-X"):
+            assert config.getoption(x) == "this"
+        pytest.raises(ValueError, "config.getoption('qweqwe')")
+
     def test_config_getvalueorskip(self, testdir):
         config = testdir.parseconfig()
         pytest.raises(pytest.skip.Exception,
@@ -304,3 +314,4 @@ def test_cmdline_processargs_simple(testdir):
         "*pytest*",
         "*-h*",
     ])
+

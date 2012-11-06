@@ -27,6 +27,9 @@ Changes between 2.3.2 and 2.3.3.dev
 - fix issue217 - support mock.patch with pytest's fixtures - note that
   you need either mock-1.0.1 or the python3.3 builtin unittest.mock.
 
+- fix issue127 - improve documentation for pytest_addoption() and
+  add a ``config.getoption(name)`` helper function for consistency.
+
 Changes between 2.3.1 and 2.3.2
 -----------------------------------
 
