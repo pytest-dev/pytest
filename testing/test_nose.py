@@ -103,21 +103,13 @@ def test_nose_setup_func_failure_2(testdir):
         my_teardown = 2
 
         def test_hello():
-            print (l)
-            assert l == [1]
-
-        def test_world():
-            print (l)
-            assert l == [1,2]
+            assert l == []
 
         test_hello.setup = my_setup
         test_hello.teardown = my_teardown
     """)
-    result = testdir.runpytest(p, '-p', 'nose')
-    result.stdout.fnmatch_lines([
-        "*TypeError: 'int' object is not callable*"
-    ])
-
+    reprec = testdir.inline_run()
+    reprec.assertoutcome(passed=1)
 
 def test_nose_setup_partial(testdir):
     py.test.importorskip("functools")

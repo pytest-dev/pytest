@@ -1659,8 +1659,14 @@ class FixtureDef:
 def getfuncargnames(function, startindex=None):
     # XXX merge with main.py's varnames
     #assert not inspect.isclass(function)
+    realfunction = function
+    while hasattr(realfunction, "__wrapped__"):
+        realfunction = realfunction.__wrapped__
     if startindex is None:
         startindex = inspect.ismethod(function) and 1 or 0
+    if realfunction != function:
+        startindex += len(getattr(function, "patchings", []))
+        function = realfunction
     argnames = inspect.getargs(py.code.getrawcode(function))[0]
     defaults = getattr(function, 'func_defaults',
                        getattr(function, '__defaults__', None)) or ()

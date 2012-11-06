@@ -253,7 +253,7 @@ class TestFunctional:
         """)
         items, rec = testdir.inline_genitems(p)
         for item in items:
-            print item, item.keywords
+            print (item, item.keywords)
             assert 'a' in item.keywords
 
     def test_mark_with_wrong_marker(self, testdir):
