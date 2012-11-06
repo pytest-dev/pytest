@@ -34,7 +34,7 @@ else:
     PYTEST_TAG = "%s-%s%s-PYTEST" % (impl, ver[0], ver[1])
     del ver, impl
 
-PYC_EXT = ".py" + ("c" if __debug__ else "o")
+PYC_EXT = ".py" + (__debug__ and "c" or "o")
 PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
 
 REWRITE_NEWLINES = sys.version_info[:2] != (2, 7) and sys.version_info < (3, 2)
