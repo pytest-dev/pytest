@@ -18,6 +18,8 @@ Changes between 2.3.2 and 2.3.3.dev
 
 - nose support: only call setup, if its a callable
 
+- fix issue219 - add py2.4-3.3 classifiers to TROVE list
+
 
 Changes between 2.3.1 and 2.3.2
 -----------------------------------
