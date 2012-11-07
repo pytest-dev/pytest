@@ -20,7 +20,7 @@ scales to support complex functional testing.  It provides
   on `unittest <http://pytest.org/latest/unittest.html>`_ (or trial),
   `nose <http://pytest.org/latest/nose.html>`_
 - single-source compatibility to Python2.4 all the way up to Python3.3,
-  PyPy and Jython.
+  PyPy-1.9 and Jython-2.5.1.
 
 - many `external plugins <http://pytest.org/latest/plugins.html#installing-external-plugins-searching>`_.
 
