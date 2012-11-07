@@ -11,7 +11,7 @@ from _pytest.assertion import util
 from _pytest.assertion.reinterpret import BuiltinAssertionError
 
 
-if sys.platform.startswith("java") and sys.version_info < (2, 5, 2):
+if sys.platform.startswith("java"):
     # See http://bugs.jython.org/issue1497
     _exprs = ("BoolOp", "BinOp", "UnaryOp", "Lambda", "IfExp", "Dict",
               "ListComp", "GeneratorExp", "Yield", "Compare", "Call",
