@@ -37,7 +37,7 @@ now execute the test specification::
     usecase execution failed
        spec failed: 'some': 'other'
        no further details known at this point.
-    ==================== 1 failed, 1 passed in 0.04 seconds ====================
+    ==================== 1 failed, 1 passed in 0.05 seconds ====================
 
 You get one dot for the passing ``sub1: sub1`` check and one failure.
 Obviously in the above ``conftest.py`` you'll want to implement a more
@@ -67,7 +67,7 @@ consulted when reporting in ``verbose`` mode::
     usecase execution failed
        spec failed: 'some': 'other'
        no further details known at this point.
-    ==================== 1 failed, 1 passed in 0.04 seconds ====================
+    ==================== 1 failed, 1 passed in 0.05 seconds ====================
 
 While developing your custom test collection and execution it's also
 interesting to just look at the collection tree::

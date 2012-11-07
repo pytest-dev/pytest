@@ -101,7 +101,7 @@ the ``self.db`` values in the traceback::
         def test_method1(self):
             assert hasattr(self, "db")
     >       assert 0, self.db   # fail for demo purposes
-    E       AssertionError: <conftest.DummyDB instance at 0x269e5a8>
+    E       AssertionError: <conftest.DummyDB instance at 0x1766560>
     
     test_unittest_db.py:9: AssertionError
     ___________________________ MyTest.test_method2 ____________________________
@@ -110,7 +110,7 @@ the ``self.db`` values in the traceback::
     
         def test_method2(self):
     >       assert 0, self.db   # fail for demo purposes
-    E       AssertionError: <conftest.DummyDB instance at 0x269e5a8>
+    E       AssertionError: <conftest.DummyDB instance at 0x1766560>
     
     test_unittest_db.py:12: AssertionError
     ========================= 2 failed in 0.02 seconds =========================

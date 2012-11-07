@@ -1,3 +1,8 @@
+Changes between 2.3.3 and 2.3.4.dev
+-----------------------------------
+
+- fix issue91 - add/discuss package/directory level setups in example
+
 Changes between 2.3.2 and 2.3.3
 -----------------------------------
 

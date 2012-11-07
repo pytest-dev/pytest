@@ -155,7 +155,7 @@ and when running it will see a skipped "slow" test::
     
     test_module.py .s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-62/conftest.py:9: need --runslow option to run
+    SKIP [1] /tmp/doc-exec-140/conftest.py:9: need --runslow option to run
     
     =================== 1 passed, 1 skipped in 0.01 seconds ====================
 
@@ -388,7 +388,7 @@ If we run this::
     ================================= FAILURES =================================
     ____________________ TestUserHandling.test_modification ____________________
     
-    self = <test_step.TestUserHandling instance at 0x2677b90>
+    self = <test_step.TestUserHandling instance at 0x19e8b48>
     
         def test_modification(self):
     >       assert 0
@@ -402,4 +402,96 @@ If we run this::
 
 We'll see that ``test_deletion`` was not executed because ``test_modification``
 failed.  It is reported as an "expected failure".
+
+
+Package/Directory-level fixtures (setups)
+-------------------------------------------------------
+
+If you have nested test directories, you can have per-directory fixture scopes
+by placing fixture functions in a ``conftest.py`` file in that directory
+You can use all types of fixtures including :ref:`autouse fixtures
+<autouse fixtures>` which are the equivalent of xUnit's setup/teardown
+concept.  It's however recommended to have explicit fixture references in your
+tests or test classes rather than relying on implicitely executing
+setup/teardown functions, especially if they are far away from the actual tests.
+
+Here is a an example for making a ``db`` fixture available in a directory::
+
+    # content of a/conftest.py
+    import pytest
+
+    class DB:
+        pass
+
+    @pytest.fixture(scope="session")
+    def db():
+        return DB()
+
+and then a test module in that directory::
+
+    # content of a/test_db.py
+    def test_a1(db):
+        assert 0, db  # to show value
+
+another test module::
+
+    # content of a/test_db2.py
+    def test_a2(db):
+        assert 0, db  # to show value
+
+and then a module in a sister directory which will not see
+the ``db`` fixture::
+
+    # content of b/test_error.py
+    def test_root(db):  # no db here, will error out
+        pass
+    
+We can run this::
+
+    $ py.test
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.3
+    collected 3 items
+    
+    a/test_db.py F
+    a/test_db2.py F
+    b/test_error.py E
+    
+    ================================== ERRORS ==================================
+    _______________________ ERROR at setup of test_root ________________________
+    file /tmp/doc-exec-133/b/test_error.py, line 1
+      def test_root(db):  # no db here, will error out
+            fixture 'db' not found
+            available fixtures: pytestconfig, recwarn, monkeypatch, capfd, capsys, tmpdir
+            use 'py.test --fixtures [testpath]' for help on them.
+    
+    /tmp/doc-exec-133/b/test_error.py:1
+    ================================= FAILURES =================================
+    _________________________________ test_a1 __________________________________
+    
+    db = <conftest.DB instance at 0x13d22d8>
+    
+        def test_a1(db):
+    >       assert 0, db  # to show value
+    E       AssertionError: <conftest.DB instance at 0x13d22d8>
+    
+    a/test_db.py:2: AssertionError
+    _________________________________ test_a2 __________________________________
+    
+    db = <conftest.DB instance at 0x13d22d8>
+    
+        def test_a2(db):
+    >       assert 0, db  # to show value
+    E       AssertionError: <conftest.DB instance at 0x13d22d8>
+    
+    a/test_db2.py:2: AssertionError
+    ==================== 2 failed, 1 error in 0.02 seconds =====================
+
+The two test modules in the ``a`` directory see the same ``db`` fixture instance
+while the one test in the sister-directory ``b`` doesn't see it.  We could of course
+also define a ``db`` fixture in that sister directory's ``conftest.py`` file.
+Note that each fixture is only instantiated if there is a test actually needing
+it (unless you use "autouse" fixture which are always executed ahead of the first test
+executing).
+
 
