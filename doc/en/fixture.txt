@@ -168,7 +168,7 @@ function::
         return smtplib.SMTP("merlinux.eu")
 
 The name of the fixture again is ``smtp`` and you can access its result by
-listing the name ``smtp`` as an input parameter in any test or setup
+listing the name ``smtp`` as an input parameter in any test or fixture
 function (in or below the directory where ``conftest.py`` is located)::
 
     # content of test_module.py
