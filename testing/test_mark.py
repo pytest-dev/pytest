@@ -137,6 +137,30 @@ def test_mark_option(spec, testdir):
     assert len(passed) == len(passed_result)
     assert list(passed) == list(passed_result)
 
+@pytest.mark.multi(spec=[
+        ("interface", ("test_interface",)),
+        ("not interface", ("test_nointer",)),
+])
+def test_mark_option_custom(spec, testdir):
+    testdir.makeconftest("""
+        import pytest
+        def pytest_collection_modifyitems(items):
+            for item in items:
+                if "interface" in item.nodeid:
+                    item.keywords["interface"] = pytest.mark.interface
+    """)
+    testdir.makepyfile("""
+        def test_interface():
+            pass
+        def test_nointer():
+            pass
+    """)
+    opt, passed_result = spec
+    rec = testdir.inline_run("-m", opt)
+    passed, skipped, fail = rec.listoutcomes()
+    passed = [x.nodeid.split("::")[-1] for x in passed]
+    assert len(passed) == len(passed_result)
+    assert list(passed) == list(passed_result)
 
 class TestFunctional:
 
@@ -385,7 +409,6 @@ class TestKeywordSelection:
         assert len(dlist) == 1
         item = dlist[0].items[0]
         assert item.name == "test_one"
-
 
     def test_keyword_extra(self, testdir):
         p = testdir.makepyfile("""

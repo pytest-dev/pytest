@@ -73,7 +73,7 @@ class BoolDict:
         return name in self._mydict
 
 def matchmark(colitem, matchexpr):
-    return eval(matchexpr, {}, BoolDict(colitem.obj.__dict__))
+    return eval(matchexpr, {}, BoolDict(colitem.keywords))
 
 def pytest_configure(config):
     if config.option.strict:
