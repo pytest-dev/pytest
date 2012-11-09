@@ -162,6 +162,24 @@ def test_mark_option_custom(spec, testdir):
     assert len(passed) == len(passed_result)
     assert list(passed) == list(passed_result)
 
+@pytest.mark.multi(spec=[
+        ("interface", ("test_interface",)),
+        ("not interface", ("test_nointer",)),
+])
+def test_keyword_option_custom(spec, testdir):
+    testdir.makepyfile("""
+        def test_interface():
+            pass
+        def test_nointer():
+            pass
+    """)
+    opt, passed_result = spec
+    rec = testdir.inline_run("-k", opt)
+    passed, skipped, fail = rec.listoutcomes()
+    passed = [x.nodeid.split("::")[-1] for x in passed]
+    assert len(passed) == len(passed_result)
+    assert list(passed) == list(passed_result)
+
 class TestFunctional:
 
     def test_mark_per_function(self, testdir):
@@ -366,11 +384,11 @@ class TestKeywordSelection:
         for keyword in ['test_one', 'est_on']:
             #yield check, keyword, 'test_one'
             check(keyword, 'test_one')
-        check('TestClass.test', 'test_method_one')
+        check('TestClass and test', 'test_method_one')
 
     @pytest.mark.parametrize("keyword", [
-        'xxx', 'xxx test_2', 'TestClass', 'xxx -test_1',
-        'TestClass test_2', 'xxx TestClass test_2'])
+        'xxx', 'xxx and test_2', 'TestClass', 'xxx and -test_1',
+        'TestClass and test_2', 'xxx and TestClass and test_2'])
     def test_select_extra_keywords(self, testdir, keyword):
         p = testdir.makepyfile(test_select="""
             def test_1():

@@ -51,7 +51,7 @@ def pytest_collection_modifyitems(items, config):
     remaining = []
     deselected = []
     for colitem in items:
-        if keywordexpr and skipbykeyword(colitem, keywordexpr):
+        if keywordexpr and not matchkeyword(colitem, keywordexpr):
             deselected.append(colitem)
         else:
             if selectuntil:
@@ -72,36 +72,25 @@ class BoolDict:
     def __getitem__(self, name):
         return name in self._mydict
 
+class SubstringDict:
+    def __init__(self, mydict):
+        self._mydict = mydict
+    def __getitem__(self, name):
+        for key in self._mydict:
+            if name in key:
+                return True
+        return False
+
 def matchmark(colitem, matchexpr):
     return eval(matchexpr, {}, BoolDict(colitem.keywords))
+
+def matchkeyword(colitem, keywordexpr):
+    keywordexpr = keywordexpr.replace("-", "not ")
+    return eval(keywordexpr, {}, SubstringDict(colitem.keywords))
 
 def pytest_configure(config):
     if config.option.strict:
         pytest.mark._config = config
-
-def skipbykeyword(colitem, keywordexpr):
-    """ return True if they given keyword expression means to
-        skip this collector/item.
-    """
-    if not keywordexpr:
-        return
-
-    itemkeywords = colitem.keywords
-    for key in filter(None, keywordexpr.split()):
-        eor = key[:1] == '-'
-        if eor:
-            key = key[1:]
-        if not (eor ^ matchonekeyword(key, itemkeywords)):
-            return True
-
-def matchonekeyword(key, itemkeywords):
-    for elem in key.split("."):
-        for kw in itemkeywords:
-            if elem in kw:
-                break
-        else:
-            return False
-    return True
 
 class MarkGenerator:
     """ Factory for :class:`MarkDecorator` objects - exposed as
