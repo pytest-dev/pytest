@@ -73,7 +73,7 @@ this to your ``setup.py`` file::
             pass
         def run(self):
             import sys,subprocess
-            errno = subprocess.call([sys.executable, 'runtest.py'])
+            errno = subprocess.call([sys.executable, 'runtests.py'])
             raise SystemExit(errno)
     setup(
         #...,
@@ -85,7 +85,7 @@ If you now type::
 
     python setup.py test
 
-this will execute your tests using ``runtest.py``. As this is a
+this will execute your tests using ``runtests.py``. As this is a
 standalone version of ``py.test`` no prior installation whatsoever is
 required for calling the test command. You can also pass additional
 arguments to the subprocess-calls such as your test directory or other
