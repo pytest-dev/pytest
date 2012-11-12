@@ -181,7 +181,7 @@ class Conftest(object):
             if hasattr(arg, 'startswith') and arg.startswith("--"):
                 continue
             anchor = current.join(arg, abs=1)
-            if anchor.check(): # we found some file object
+            if exists(anchor): # we found some file object
                 self._try_load_conftest(anchor)
                 foundanchor = True
         if not foundanchor:
@@ -479,6 +479,11 @@ class Config(object):
         except KeyError:
             py.test.skip("no %r value found" %(name,))
 
+def exists(path, ignore=EnvironmentError):
+    try:
+        return path.check()
+    except ignore:
+        return False
 
 def getcfg(args, inibasenames):
     args = [x for x in args if not str(x).startswith("-")]
@@ -489,7 +494,7 @@ def getcfg(args, inibasenames):
         for base in arg.parts(reverse=True):
             for inibasename in inibasenames:
                 p = base.join(inibasename)
-                if p.check():
+                if exists(p):
                     iniconfig = py.iniconfig.IniConfig(p)
                     if 'pytest' in iniconfig.sections:
                         return iniconfig['pytest']

@@ -315,3 +315,7 @@ def test_cmdline_processargs_simple(testdir):
         "*-h*",
     ])
 
+
+def test_toolongargs_issue224(testdir):
+    result = testdir.runpytest("-m", "hello" * 500)
+    assert result.ret == 0

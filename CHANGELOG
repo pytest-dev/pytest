@@ -1,6 +1,7 @@
 Changes between 2.3.3 and 2.3.4.dev
 -----------------------------------
 
+- fix issue224 - invocations with >256 char arguments now work
 - fix issue91 - add/discuss package/directory level setups in example
 - allow to dynamically define markers via
   item.keywords[...]=assignment integrating with "-m" option
