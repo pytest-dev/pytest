@@ -1,6 +1,10 @@
 Changes between 2.3.3 and 2.3.4.dev
 -----------------------------------
 
+- NOTE: the pre-2.0 way of yielding tests is not compatible
+  with autouse fixtures.  If you need generative tests, use
+  @pytest.mark.parametrize or pytest_generate_tests, see the
+  many examples at http://pytest.org/latest/example/parametrize.html
 - fix issue224 - invocations with >256 char arguments now work
 - fix issue91 - add/discuss package/directory level setups in example
 - allow to dynamically define markers via
