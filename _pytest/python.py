@@ -1601,9 +1601,9 @@ class FixtureManager:
 
 class FixtureDef:
     """ A container for a factory definition. """
-    def __init__(self, fixturenanager, baseid, argname, func, scope, params,
+    def __init__(self, fixturemanager, baseid, argname, func, scope, params,
         unittest=False):
-        self._fixturemanager = fixturenanager
+        self._fixturemanager = fixturemanager
         self.baseid = baseid
         self.func = func
         self.argname = argname
