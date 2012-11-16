@@ -1224,6 +1224,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
             if paramscopenum != scopenum_subfunction:
                 scope = scopes[paramscopenum]
 
+        # check if a higher-level scoped fixture accesses a lower level one
         if scope is not None:
             __tracebackhide__ = True
             if scopemismatch(self.scope, scope):
@@ -1236,15 +1237,18 @@ class FixtureRequest(FuncargnamesCompatAttr):
             __tracebackhide__ = False
             mp.setattr(self, "scope", scope)
 
+        # route request.addfinalizer to fixturedef
+        mp.setattr(self, "addfinalizer", fixturedef.addfinalizer)
+
+        # perform the fixture call
+        val = fixturedef.execute(request=self)
+
         # prepare finalization according to scope
         # (XXX analyse exact finalizing mechanics / cleanup)
         self.session._setupstate.addfinalizer(fixturedef.finish, self.node)
         self._fixturemanager.addargfinalizer(fixturedef.finish, argname)
         for subargname in fixturedef.argnames: # XXX all deps?
             self._fixturemanager.addargfinalizer(fixturedef.finish, subargname)
-        mp.setattr(self, "addfinalizer", fixturedef.addfinalizer)
-        # finally perform the fixture call
-        val = fixturedef.execute(request=self)
         mp.undo()
         return val
 
@@ -1503,6 +1507,8 @@ class FixtureManager:
         items[:] = parametrize_sorted(items, set(), {}, 0)
 
     def pytest_runtest_teardown(self, item, nextitem):
+        # XXX teardown needs to be normalized for parametrized and
+        # no-parametrized functions
         try:
             cs1 = item.callspec
         except AttributeError:
@@ -1524,7 +1530,7 @@ class FixtureManager:
         keylist.sort()
         for (scopenum, name, param) in keylist:
             item.session._setupstate._callfinalizers((name, param))
-            l = self._arg2finish.get(name)
+            l = self._arg2finish.pop(name, None)
             if l is not None:
                 for fin in reversed(l):
                     fin()

@@ -1105,7 +1105,7 @@ class TestAutouseManagement:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=5)
 
-    def test_setup_funcarg_order(self, testdir):
+    def test_ordering_autouse_before_explicit(self, testdir):
         testdir.makepyfile("""
             import pytest
 
@@ -1121,6 +1121,30 @@ class TestAutouseManagement:
         """)
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
+
+    @pytest.mark.issue226
+    @pytest.mark.parametrize("param1", ["", "params=[1]"])
+    @pytest.mark.parametrize("param2", ["", "params=[1]"])
+    def test_ordering_dependencies_torndown_first(self, testdir, param1, param2):
+        testdir.makepyfile("""
+            import pytest
+            l = []
+            @pytest.fixture(%(param1)s)
+            def arg1(request):
+                request.addfinalizer(lambda: l.append("fin1"))
+                l.append("new1")
+            @pytest.fixture(%(param2)s)
+            def arg2(request, arg1):
+                request.addfinalizer(lambda: l.append("fin2"))
+                l.append("new2")
+
+            def test_arg(arg2):
+                pass
+            def test_check():
+                assert l == ["new1", "new2", "fin2", "fin1"]
+        """ % locals())
+        reprec = testdir.inline_run("-s")
+        reprec.assertoutcome(passed=2)
 
 class TestFixtureMarker:
     def test_parametrize(self, testdir):
