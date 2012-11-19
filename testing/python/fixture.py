@@ -948,7 +948,26 @@ class TestAutouseDiscovery:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=3)
 
+
 class TestAutouseManagement:
+    def test_autouse_conftest_mid_directory(self, testdir):
+        pkgdir = testdir.mkpydir("xyz123")
+        pkgdir.join("conftest.py").write(py.code.Source("""
+            import pytest
+            @pytest.fixture(autouse=True)
+            def app():
+                import sys
+                sys._myapp = "hello"
+        """))
+        t = pkgdir.ensure("tests", "test_app.py")
+        t.write(py.code.Source("""
+            import sys
+            def test_app():
+                assert sys._myapp == "hello"
+        """))
+        reprec = testdir.inline_run("-s")
+        reprec.assertoutcome(passed=1)
+
     def test_funcarg_and_setup(self, testdir):
         testdir.makepyfile("""
             import pytest

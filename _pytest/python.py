@@ -1455,7 +1455,7 @@ class FixtureManager:
         for baseid, basenames in self._nodeid_and_autousenames:
             if nodeid.startswith(baseid):
                 if baseid:
-                    i = len(baseid) + 1
+                    i = len(baseid)
                     nextchar = nodeid[i:i+1]
                     if nextchar and nextchar not in ":/":
                         continue

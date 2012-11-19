@@ -5,6 +5,8 @@ Changes between 2.3.3 and 2.3.4.dev
   with autouse fixtures.  If you need generative tests, use
   @pytest.mark.parametrize or pytest_generate_tests, see the
   many examples at http://pytest.org/latest/example/parametrize.html
+- fix autouse-issue where autouse-fixtures would not be discovered
+  if defined in a a/conftest.py file and tests in a/tests/test_some.py
 - fix issue226 - LIFO ordering for fixture teardowns
 - fix issue224 - invocations with >256 char arguments now work
 - fix issue91 - add/discuss package/directory level setups in example
