@@ -528,7 +528,7 @@ def hasinit(obj):
 
 def fillfixtures(function):
     """ fill missing funcargs for a test function. """
-    if getattr(function, "_args", None) is None:  # not a yielded function
+    if 1 or getattr(function, "_args", None) is None:  # not a yielded function
         try:
             request = function._request
         except AttributeError:
@@ -906,12 +906,15 @@ class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
                 self.keywords[name] = val
 
         fm = self.session._fixturemanager
-        self._fixtureinfo = fi = fm.getfixtureinfo(self.parent,
-                                                   self.obj, self.cls)
+        isyield = self._isyieldedfunction()
+        self._fixtureinfo = fi = fm.getfixtureinfo(self.parent, self.obj,
+                                                   self.cls,
+                                                   funcargs=not isyield)
         self.fixturenames = fi.names_closure
-        if self._isyieldedfunction():
+        if isyield:
             assert not callspec, (
                 "yielded functions (deprecated) cannot have funcargs")
+            self.funcargs = {}
         else:
             if callspec is not None:
                 self.callspec = callspec
@@ -921,8 +924,7 @@ class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
                     self.param = callspec.param
             else:
                 self.funcargs = {}
-            self._request = req = FixtureRequest(self)
-            #req._discoverfactories()
+        self._request = req = FixtureRequest(self)
 
     @property
     def function(self):
@@ -1398,13 +1400,13 @@ class FixtureManager:
 
         self._nodename2fixtureinfo = {}
 
-    def getfixtureinfo(self, node, func, cls):
+    def getfixtureinfo(self, node, func, cls, funcargs=True):
         key = (node, func.__name__)
         try:
             return self._nodename2fixtureinfo[key]
         except KeyError:
             pass
-        if not hasattr(node, "nofuncargs"):
+        if funcargs and not hasattr(node, "nofuncargs"):
             if cls is not None:
                 startindex = 1
             else:

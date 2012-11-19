@@ -968,6 +968,24 @@ class TestAutouseManagement:
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=1)
 
+    def test_autouse_honored_for_yield(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture(autouse=True)
+            def tst():
+                global x
+                x = 3
+            def test_gen():
+                def f(hello):
+                    assert x == abs(hello)
+                yield f, 3
+                yield f, -3
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
+
+
+
     def test_funcarg_and_setup(self, testdir):
         testdir.makepyfile("""
             import pytest

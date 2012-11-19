@@ -1,6 +1,7 @@
 Changes between 2.3.3 and 2.3.4.dev
 -----------------------------------
 
+- yielded tests will activate autouse-fixtures
 - NOTE: the pre-2.0 way of yielding tests is not compatible
   with autouse fixtures.  If you need generative tests, use
   @pytest.mark.parametrize or pytest_generate_tests, see the
