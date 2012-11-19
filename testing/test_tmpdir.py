@@ -1,7 +1,7 @@
 import py, pytest
 import os
 
-from _pytest.tmpdir import pytest_funcarg__tmpdir, TempdirHandler
+from _pytest.tmpdir import tmpdir, TempdirHandler
 
 def test_funcarg(testdir):
     testdir.makepyfile("""
@@ -16,12 +16,12 @@ def test_funcarg(testdir):
     # pytest_unconfigure has deleted the TempdirHandler already
     config = item.config
     config._tmpdirhandler = TempdirHandler(config)
-    p = pytest_funcarg__tmpdir(item)
+    p = tmpdir(item._request)
     assert p.check()
     bn = p.basename.strip("0123456789")
     assert bn.endswith("test_func_a_")
     item.name = "qwe/\\abc"
-    p = pytest_funcarg__tmpdir(item)
+    p = tmpdir(item._request)
     assert p.check()
     bn = p.basename.strip("0123456789")
     assert bn == "qwe__abc"
