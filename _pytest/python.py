@@ -1197,8 +1197,10 @@ class FixtureRequest(FuncargnamesCompatAttr):
             self._fixturestack.pop()
 
     def _getfuncargvalue(self, fixturedef):
-        if fixturedef.active:
-            return fixturedef.cached_result
+        try:
+            return fixturedef.cached_result # set by fixturedef.execute()
+        except AttributeError:
+            pass
 
         # prepare request fixturename and param attributes before
         # calling into fixture function
@@ -1619,7 +1621,6 @@ class FixtureDef:
         startindex = unittest and 1 or None
         self.argnames = getfuncargnames(func, startindex=startindex)
         self.unittest = unittest
-        self.active = False
         self._finalizer = []
 
     def addfinalizer(self, finalizer):
@@ -1631,9 +1632,11 @@ class FixtureDef:
             func()
         # check neccesity of next commented call
         self._fixturemanager.removefinalizer(self.finish)
-        self.active = False
         #print "finished", self
-        #del self.cached_result
+        try:
+            del self.cached_result
+        except AttributeError:
+            pass
 
     def execute(self, request):
         kwargs = {}
@@ -1655,7 +1658,7 @@ class FixtureDef:
             except AttributeError:
                 pass
             result = fixturefunc(**kwargs)
-        self.active = True
+        assert not hasattr(self, "cached_result")
         self.cached_result = result
         return result
 
