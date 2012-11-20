@@ -8,11 +8,12 @@ def pytest_addoption(parser):
     group = parser.getgroup("general")
     group._addoption('-k',
         action="store", dest="keyword", default='', metavar="KEYWORDEXPR",
-        help="only run tests which match given keyword expression.  "
-             "An expression consists of space-separated terms. "
-             "Each term must match. Precede a term with '-' to negate. "
-             "Terminate expression with ':' to make the first match match "
-             "all subsequent tests (usually file-order). ")
+        help="only run tests which match the given expression. "
+             "An expression is a python evaluatable expression "
+             "where all names are substring-matched against test names "
+             "and keywords.  Example: -k 'test_method or test_other' "
+             "matches all test functions whose name contains "
+             "'test_method' or 'test_other'.")
 
     group._addoption("-m",
         action="store", dest="markexpr", default="", metavar="MARKEXPR",

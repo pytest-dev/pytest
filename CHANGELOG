@@ -1,3 +1,8 @@
+Changes between 2.3.4 and 2.3.5dev
+-----------------------------------
+
+- fix option help for "-k"
+
 Changes between 2.3.3 and 2.3.4
 -----------------------------------
 
