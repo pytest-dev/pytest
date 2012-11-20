@@ -316,6 +316,7 @@ def test_cmdline_processargs_simple(testdir):
     ])
 
 
+@pytest.mark.skipif("sys.platform == 'win32'")
 def test_toolongargs_issue224(testdir):
     result = testdir.runpytest("-m", "hello" * 500)
     assert result.ret == 0
