@@ -6,7 +6,7 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, Command
 
-long_description = open("README.txt").read()
+long_description = open("README.rst").read()
 def main():
     setup(
         name='pytest',

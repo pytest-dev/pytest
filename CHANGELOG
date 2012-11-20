@@ -3,7 +3,7 @@ Changes between 2.3.4 and 2.3.5dev
 
 - fix option help for "-k"
 
-- move long description of distribution into README
+- move long description of distribution into README.rst
 
 Changes between 2.3.3 and 2.3.4
 -----------------------------------

@@ -1,5 +1,5 @@
 include CHANGELOG
-include README.txt
+include README.rst
 include setup.py
 include distribute_setup.py
 include tox.ini
