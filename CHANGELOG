@@ -1,9 +1,9 @@
-Changes between 2.3.3 and 2.3.4.dev
+Changes between 2.3.3 and 2.3.4
 -----------------------------------
 
-- yielded tests will activate autouse-fixtures
-- NOTE: yielded tests cannot use fixtures - if you need this
-  you may want to use the post-2.0 parametrize features, see
+- yielded test functions will now have autouse-fixtures active but 
+  cannot accept fixtures as funcargs - it's anyway recommended to
+  rather use the post-2.0 parametrize features instead of yield, see:
   http://pytest.org/latest/example/parametrize.html
 - fix autouse-issue where autouse-fixtures would not be discovered
   if defined in a a/conftest.py file and tests in a/tests/test_some.py
