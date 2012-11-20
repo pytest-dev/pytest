@@ -3,8 +3,8 @@ pytest-2.3.4: stabilization, more flexible selection via "-k expr"
 
 pytest-2.3.4 is a small stabilization release of the py.test tool
 which offers uebersimple assertions, scalable fixture mechanisms
-and deep customization for testing with Python.  The Particularly,
-this release provides:
+and deep customization for testing with Python.  This release
+comes with the following fixes and features:
 
 - make "-k" option accept an expressions the same as with "-m" so that one
   can write: -k "name1 or name2" etc.  This is a slight usage incompatibility
@@ -24,7 +24,7 @@ this release provides:
 - fix issue91 - add/discuss package/directory level setups in example
 - fixes related to autouse discovery and calling
 
-Thanks to Thomas Waldmann in particular for spotting autouse issues.
+Thanks in particular to Thomas Waldmann for spotting and reporting issues.
 
 See 
 
