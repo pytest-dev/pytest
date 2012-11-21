@@ -106,6 +106,22 @@ class TestPDB:
         if child.isalive():
             child.wait()
 
+    def test_pdb_and_capsys(self, testdir):
+        p1 = testdir.makepyfile("""
+            import pytest
+            def test_1(capsys):
+                print ("hello1")
+                pytest.set_trace()
+        """)
+        child = testdir.spawn_pytest(str(p1))
+        child.expect("test_1")
+        child.send("capsys.readouterr()\n")
+        child.expect("hello1")
+        child.sendeof()
+        rest = child.read()
+        if child.isalive():
+            child.wait()
+
     def test_pdb_interaction_doctest(self, testdir):
         p1 = testdir.makepyfile("""
             import pytest

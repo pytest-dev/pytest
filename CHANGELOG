@@ -7,6 +7,9 @@ Changes between 2.3.4 and 2.3.5dev
 
 - improve docstring for metafunc.parametrize()
 
+- fix bug where using capsys with pytest.set_trace() in a test
+  function would break when looking at capsys.readouterr()
+
 Changes between 2.3.3 and 2.3.4
 -----------------------------------
 

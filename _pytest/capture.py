@@ -211,12 +211,15 @@ class CaptureFixture:
 
     def _finalize(self):
         if hasattr(self, 'capture'):
-            outerr = self.capture.reset()
+            outerr = self._outerr = self.capture.reset()
             del self.capture
             return outerr
 
     def readouterr(self):
-        return self.capture.readouterr()
+        try:
+            return self.capture.readouterr()
+        except AttributeError:
+            return self._outerr
 
     def close(self):
         self._finalize()
