@@ -643,8 +643,11 @@ class Metafunc(FuncargnamesCompatAttr):
 
         :arg argnames: an argument name or a list of argument names
 
-        :arg argvalues: a list of values for the argname or a list of tuples of
-            values for the list of argument names.
+        :arg argvalues: The list of argvalues determines how often a test is invoked
+            with different argument values.  If only one argname was specified argvalues
+            is a list of simple values.  If N argnames were specified, argvalues must
+            be a list of N-tuples, where each tuple-element specifies a value for its
+            respective argname.
 
         :arg indirect: if True each argvalue corresponding to an argname will
             be passed as request.param to its respective argname fixture

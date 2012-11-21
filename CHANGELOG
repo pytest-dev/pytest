@@ -5,6 +5,8 @@ Changes between 2.3.4 and 2.3.5dev
 
 - move long description of distribution into README.rst
 
+- improve docstring for metafunc.parametrize()
+
 Changes between 2.3.3 and 2.3.4
 -----------------------------------
 
