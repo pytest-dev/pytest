@@ -29,7 +29,7 @@ and does not handle Deferreds returned from a test in pytest style.
 If you are using trial's unittest.TestCase chances are that you can
 just run your tests even if you return Deferreds.  In addition,
 there also is a dedicated `pytest-twisted
-<http://pypi.python.org/pypi/pytest-twisted`` plugin which allows to
+<http://pypi.python.org/pypi/pytest-twisted>`_ plugin which allows to
 return deferreds from pytest-style tests, allowing to use
 :ref:`fixtures` and other features.
  
