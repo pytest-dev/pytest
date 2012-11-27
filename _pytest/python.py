@@ -277,13 +277,12 @@ class PyCollector(PyobjMixin, pytest.Collector):
                 if name in seen:
                     continue
                 seen[name] = True
-                if name[0] != "_":
-                    res = self.makeitem(name, obj)
-                    if res is None:
-                        continue
-                    if not isinstance(res, list):
-                        res = [res]
-                    l.extend(res)
+                res = self.makeitem(name, obj)
+                if res is None:
+                    continue
+                if not isinstance(res, list):
+                    res = [res]
+                l.extend(res)
         l.sort(key=lambda item: item.reportinfo()[:2])
         return l
 

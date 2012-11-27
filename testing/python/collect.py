@@ -659,6 +659,28 @@ def test_customized_python_discovery(testdir):
         "*2 passed*",
     ])
 
+
+def test_customized_python_discovery_functions(testdir):
+    testdir.makeini("""
+        [pytest]
+        python_functions=_test
+    """)
+    p = testdir.makepyfile("""
+        def _test_underscore():
+            pass
+    """)
+    result = testdir.runpytest("--collectonly", "-s")
+    result.stdout.fnmatch_lines([
+        "*_test_underscore*",
+    ])
+
+    result = testdir.runpytest()
+    assert result.ret == 0
+    result.stdout.fnmatch_lines([
+        "*1 passed*",
+    ])
+
+
 def test_collector_attributes(testdir):
     testdir.makeconftest("""
         import pytest
