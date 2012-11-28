@@ -10,6 +10,9 @@ Changes between 2.3.4 and 2.3.5dev
 - fix bug where using capsys with pytest.set_trace() in a test
   function would break when looking at capsys.readouterr()
 
+- allow to specify prefixes starting with "_" when 
+  customizing python_functions test discovery. (thanks Graham Horler)
+
 Changes between 2.3.3 and 2.3.4
 -----------------------------------
 
