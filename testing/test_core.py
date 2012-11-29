@@ -612,6 +612,19 @@ class TestTracer:
         assert names == ['hello', '  line1', '  line2',
                      '    line3', '    line4', '  line5', 'last']
 
+    def test_readable_output_dictargs(self):
+        from _pytest.core import TagTracer
+        rootlogger = TagTracer()
+
+        out = rootlogger.format_message(['test'], [1])
+        assert out == ['1 [test]\n']
+
+        out2= rootlogger.format_message(['test'], ['test', {'a':1}])
+        assert out2 ==[
+            'test [test]\n',
+            '    a: 1\n'
+        ]
+
     def test_setprocessor(self):
         from _pytest.core import TagTracer
         rootlogger = TagTracer()

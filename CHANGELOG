@@ -13,6 +13,9 @@ Changes between 2.3.4 and 2.3.5dev
 - allow to specify prefixes starting with "_" when 
   customizing python_functions test discovery. (thanks Graham Horler)
 
+- improve PYTEST_DEBUG tracing output by puting
+  extra data on a new lines with additional indent
+
 Changes between 2.3.3 and 2.3.4
 -----------------------------------
 
