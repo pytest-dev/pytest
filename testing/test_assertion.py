@@ -164,7 +164,7 @@ def test_assert_compare_truncate_longmessage(testdir):
 
     result = testdir.runpytest()
     result.stdout.fnmatch_lines([
-        "*too verbose, truncated*",
+        "*truncated*use*-vv*",
     ])
 
 

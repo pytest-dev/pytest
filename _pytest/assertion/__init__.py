@@ -78,7 +78,7 @@ def pytest_runtest_setup(item):
             if new_expl:
                 # Don't include pageloads of data unless we are very verbose (-vv)
                 if len(''.join(new_expl[1:])) > 80*8 and item.config.option.verbose < 2:
-                    new_expl[1:] = ['Detailed information too verbose, truncated']
+                    new_expl[1:] = ['Detailed information truncated, use "-vv" to see']
                 res = '\n~'.join(new_expl)
                 if item.config.getvalue("assertmode") == "rewrite":
                     # The result will be fed back a python % formatting
