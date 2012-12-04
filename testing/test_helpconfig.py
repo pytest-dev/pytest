@@ -76,5 +76,6 @@ def test_PYTEST_DEBUG(testdir, monkeypatch):
     result = testdir.runpytest()
     assert result.ret == 0
     result.stderr.fnmatch_lines([
-        "*registered*PluginManager*"
+        "*pytest_plugin_registered*",
+        "*manager*PluginManager*"
     ])
