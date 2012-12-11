@@ -133,7 +133,7 @@ by the `PyPy-test`_ web page to show test results over several revisions.
 .. _`PyPy-test`: http://buildbot.pypy.org/summary
 
 
-Sending test report to pocoo pastebin service
+Sending test report to online pastebin service
 -----------------------------------------------------
 
 **Creating a URL for each test failure**::
