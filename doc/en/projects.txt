@@ -8,6 +8,7 @@ Here are some examples of projects using py.test (please send notes via :ref:`co
 * `PyPy <http://pypy.org>`_, Python with a JIT compiler, running over 
   `16000 tests <http://buildbot.pypy.org/summary?branch=%3Ctrunk%3E>`_
 * the `MoinMoin <http://moinmo.in>`_ Wiki Engine
+* `sentry <https://getsentry.com/welcome/>`_, realtime app-maintenance and exception tracking
 * `tox <http://codespeak.net/tox>`_, virtualenv/Hudson integration tool
 * `PIDA <http://pida.co.uk>`_ framework for integrated development
 * `PyPM <http://code.activestate.com/pypm/>`_ ActiveState's package manager
