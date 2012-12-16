@@ -1,0 +1,57 @@
+
+A sesssion-fixture which can look at all collected tests
+----------------------------------------------------------------
+
+A session-scoped fixture effectively has access to all 
+collected test items.  Here is an example of a fixture
+function which walks all collected tests and looks
+if their test class defines a ``callme`` method and
+calls it::
+
+    # content of conftest.py
+
+    import pytest
+
+    @pytest.fixture(scope="session", autouse=True)
+    def callattr_ahead_of_alltests(request):
+        print "callattr_ahead_of_alltests called"
+        seen = set([None])
+        session = request.node
+        for item in session.items:
+            instance = item.getparent(pytest.Instance)
+            if instance not in seen:
+                if hasattr(instance.obj, "callme"):
+                   instance.obj.callme()
+                seen.add(instance)
+
+test classes may now define a ``callme`` method which
+will be called ahead of running any tests::
+
+    # content of test_module.py
+
+    class TestHello:
+        def callme(self):
+            print "callme called!"
+
+        def test_method1(self):
+            print "test_method1 called"
+        
+        def test_method2(self):
+            print "test_method1 called"
+
+    class TestOther:
+        def callme(self):
+            print "callme other called"
+        def test_other(self):
+            print "test other"
+
+If you run this without output capturing::
+
+    $ py.test -q -s test_module.py 
+    ...
+    callattr_ahead_of_alltests called
+    callme called!
+    callme other called
+    test_method1 called
+    test_method1 called
+    test other

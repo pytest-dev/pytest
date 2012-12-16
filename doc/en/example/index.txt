@@ -29,5 +29,6 @@ The following examples aim at various use cases you might encounter.
    simple.txt
    parametrize.txt
    markers.txt
+   special.txt
    pythoncollection.txt
    nonpython.txt
