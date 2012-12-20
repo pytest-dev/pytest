@@ -104,19 +104,21 @@ this is a fully self-contained example which you can run with::
 
     $ py.test test_scenarios.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.4
+    platform linux2 -- Python 2.7.3 -- pytest-2.4.5dev3
+    plugins: xdist, oejskit, pep8, cache, couchdbkit, quickcheck
     collected 4 items
     
     test_scenarios.py ....
     
-    ========================= 4 passed in 0.01 seconds =========================
+    ========================= 4 passed in 0.04 seconds =========================
 
 If you just collect tests you'll also nicely see 'advanced' and 'basic' as variants for the test function::
 
 
     $ py.test --collectonly test_scenarios.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.4
+    platform linux2 -- Python 2.7.3 -- pytest-2.4.5dev3
+    plugins: xdist, oejskit, pep8, cache, couchdbkit, quickcheck
     collected 4 items
     <Module 'test_scenarios.py'>
       <Class 'TestSampleWithScenarios'>
@@ -126,7 +128,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
           <Function 'test_demo1[advanced]'>
           <Function 'test_demo2[advanced]'>
     
-    =============================  in 0.01 seconds =============================
+    =============================  in 0.03 seconds =============================
 
 Note that we told ``metafunc.parametrize()`` that your scenario values
 should be considered class-scoped.  With pytest-2.3 this leads to a
@@ -180,13 +182,14 @@ Let's first see how it looks like at collection time::
 
     $ py.test test_backends.py --collectonly
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.4
+    platform linux2 -- Python 2.7.3 -- pytest-2.4.5dev3
+    plugins: xdist, oejskit, pep8, cache, couchdbkit, quickcheck
     collected 2 items
     <Module 'test_backends.py'>
       <Function 'test_db_initialized[d1]'>
       <Function 'test_db_initialized[d2]'>
     
-    =============================  in 0.00 seconds =============================
+    =============================  in 0.03 seconds =============================
 
 And then when we run the test::
 
@@ -195,7 +198,7 @@ And then when we run the test::
     ================================= FAILURES =================================
     _________________________ test_db_initialized[d2] __________________________
     
-    db = <conftest.DB2 instance at 0x13cbcb0>
+    db = <conftest.DB2 instance at 0x19ba7e8>
     
         def test_db_initialized(db):
             # a dummy test
@@ -250,7 +253,7 @@ argument sets to use for each test function.  Let's run it::
     ================================= FAILURES =================================
     ________________________ TestClass.test_equals[1-2] ________________________
     
-    self = <test_parametrize.TestClass instance at 0x24e6d88>, a = 1, b = 2
+    self = <test_parametrize.TestClass instance at 0x2489b00>, a = 1, b = 2
     
         def test_equals(self, a, b):
     >       assert a == b
@@ -278,3 +281,74 @@ Running it results in some skips if we don't have all the python interpreters in
    ............sss............sss............sss............ssssssssssssssssss
    ========================= short test summary info ==========================
    SKIP [27] /home/hpk/p/pytest/doc/en/example/multipython.py:21: 'python2.8' not found
+
+Indirect parametrization of optional implementations/imports
+--------------------------------------------------------------------
+
+If you want to compare the outcomes of several implementations of a given
+API, you can write test functions that receive the already imported implementations
+and get skipped in case the implementation is not importable/available.  Let's
+say we have a "base" implementation and the other (possibly optimized ones) 
+need to provide similar results::
+
+    # content of conftest.py
+
+    import pytest
+
+    @pytest.fixture(scope="session")
+    def basemod(request):
+        return pytest.importorskip("base")
+
+    @pytest.fixture(scope="session", params=["opt1", "opt2"])
+    def optmod(request):
+        return pytest.importorskip(request.param)
+
+And then a base implementation of a simple function::
+
+    # content of base.py
+    def func1():
+        return 1
+
+And an optimized version::
+
+    # content of opt1.py
+    def func1():
+        return 1.0001
+
+And finally a little test module::
+
+    # content of test_module.py
+
+    def test_func1(basemod, optmod):
+        assert round(basemod.func1(), 3) == round(optmod.func1(), 3)
+
+
+If you run this with reporting for skips enabled::
+
+    $ py.test -rs test_module.py
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.3 -- pytest-2.4.5dev3
+    plugins: xdist, oejskit, pep8, cache, couchdbkit, quickcheck
+    collected 2 items
+    
+    test_module.py .s
+    ========================= short test summary info ==========================
+    SKIP [1] /tmp/doc-exec-11/conftest.py:10: could not import 'opt2'
+    
+    =================== 1 passed, 1 skipped in 0.04 seconds ====================
+
+You'll see that we don't have a ``opt2`` module and thus the second test run
+of our ``test_func1`` was skipped.  A few notes:
+
+- the fixture functions in the ``conftest.py`` file are "session-scoped" because we
+  don't need to import more than once 
+
+- if you have multiple test functions and a skipped import, you will see
+  the ``[1]`` count increasing in the report
+
+- you can put :ref:`@pytest.mark.parametrize <@pytest.mark.parametrize>` style
+  parametrization on the test functions to parametrize input/output 
+  values as well.
+
+
+

@@ -18,11 +18,11 @@ calls it::
         seen = set([None])
         session = request.node
         for item in session.items:
-            instance = item.getparent(pytest.Instance)
-            if instance not in seen:
-                if hasattr(instance.obj, "callme"):
-                   instance.obj.callme()
-                seen.add(instance)
+            cls = item.getparent(pytest.Class)
+            if cls not in seen:
+                if hasattr(cls.obj, "callme"):
+                   cls.obj.callme()
+                seen.add(cls)
 
 test classes may now define a ``callme`` method which
 will be called ahead of running any tests::
@@ -30,7 +30,8 @@ will be called ahead of running any tests::
     # content of test_module.py
 
     class TestHello:
-        def callme(self):
+        @classmethod
+        def callme(cls):
             print "callme called!"
 
         def test_method1(self):
@@ -40,18 +41,32 @@ will be called ahead of running any tests::
             print "test_method1 called"
 
     class TestOther:
-        def callme(self):
+        @classmethod
+        def callme(cls):
             print "callme other called"
         def test_other(self):
             print "test other"
 
+    # works with unittest as well ...
+    import unittest
+    
+    class SomeTest(unittest.TestCase):
+        @classmethod
+        def callme(self):
+            print "SomeTest callme called"
+
+        def test_unit1(self):
+            print "test_unit1 method called"
+
 If you run this without output capturing::
 
     $ py.test -q -s test_module.py 
-    ...
+    ....
     callattr_ahead_of_alltests called
     callme called!
     callme other called
+    SomeTest callme called
     test_method1 called
     test_method1 called
     test other
+    test_unit1 method called
