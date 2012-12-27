@@ -97,6 +97,6 @@
 
 ``py.test`` は、ローカルマシン上で分散テストを行うとき、全ての一時データが basetemp ディレクトリの配下で実行されてテスト毎に一意になるよう、サブプロセスに対しても basetemp ディレクトリをちゃんと設定します。
 
-.. _`py.path.local`: http://pylib.org/path.html
+.. _`py.path.local`: http://py.rtfd.org/path.html
 
 

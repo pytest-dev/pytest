@@ -26,7 +26,7 @@ py.test を使っているプロジェクトを紹介します (:ref:`contact` �
     * `mwlib <http://pypi.python.org/pypi/mwlib>`_ mediawiki parser and utility library
     * `The Translate Toolkit <http://translate.sourceforge.net/wiki/toolkit/index>`_ for localization and conversion
     * `execnet <http://codespeak.net/execnet>`_ rapid multi-Python deployment
-    * `pylib <http://pylib.org>`_ cross-platform path, IO, dynamic code library
+    * `pylib <http://py.rtfd.org>`_ cross-platform path, IO, dynamic code library
     * `Pacha <http://pacha.cafepais.com/>`_ configuration management in five minutes
     * `bbfreeze <http://pypi.python.org/pypi/bbfreeze>`_ create standalone executables from Python scripts
     * `pdb++ <http://bitbucket.org/antocuni/pdb>`_ a fancier version of PDB
@@ -59,7 +59,7 @@ py.test を使っているプロジェクトを紹介します (:ref:`contact` �
 * `mwlib <http://pypi.python.org/pypi/mwlib>`_: mediawiki のパーサーとユーティリティライブラリ
 * `The Translate Toolkit <http://translate.sourceforge.net/wiki/toolkit/index>`_: ローカライズと変換
 * `execnet <http://codespeak.net/execnet>`_: 高速な multi-Python デプロイ
-* `pylib <http://pylib.org>`_: クロスプラットフォームのパス、IO、動的コードライブラリ
+* `pylib <http://py.rtfd.org>`_: クロスプラットフォームのパス、IO、動的コードライブラリ
 * `Pacha <http://pacha.cafepais.com/>`_: 5分でできる構成管理
 * `bbfreeze <http://pypi.python.org/pypi/bbfreeze>`_: Python スクリプトから単独で実行できる実行可能ファイルの作成
 * `pdb++ <http://bitbucket.org/antocuni/pdb>`_: PDB の手の込んだバージョン
