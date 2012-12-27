@@ -5,27 +5,28 @@
 Contact channels
 ===================================
 
-- `new issue tracker`_ to report bugs or suggest features (for version
-  2.0 and above).  You may also peek at the `old issue tracker`_ but please
-  don't submit bugs there anymore.
+- `pytest issue tracker`_ to report bugs or suggest features (for version
+  2.0 and above).
 
 - `pytest on stackoverflow.com <http://stackoverflow.com/search?q=pytest>`_ 
   to post questions with the tag ``pytest``.  New Questions will usually 
-  be seen by pytest users or developers. 
+  be seen by pytest users or developers and answered quickly. 
 
 - `Testing In Python`_: a mailing list for Python testing tools and discussion.
 
-- `py-dev developers list`_ pytest specific announcements and discussions.
+- `pytest-dev at python.org (mailing list)`_ pytest specific announcements and discussions.
+
+- `pytest-commit at python.org (mailing list)`_: for commits and new issues
 
 - #pylib on irc.freenode.net IRC channel for random questions.
 
 - private mail to Holger.Krekel at gmail com if you want to communicate sensitive issues
 
-- `commit mailing list`_
 
-- `merlinux.eu`_ offers on-site teaching and consulting services.
+- `merlinux.eu`_ offers pytest and tox-related professional teaching and
+  consulting.
 
-.. _`new issue tracker`: http://bitbucket.org/hpk42/pytest/issues/
+.. _`pytest issue tracker`: http://bitbucket.org/hpk42/pytest/issues/
 .. _`old issue tracker`: http://bitbucket.org/hpk42/py-trunk/issues/
 
 .. _`merlinux.eu`: http://merlinux.eu
@@ -41,7 +42,7 @@ Contact channels
 .. _FOAF: http://en.wikipedia.org/wiki/FOAF
 .. _`py-dev`:
 .. _`development mailing list`:
-.. _`py-dev developers list`: http://codespeak.net/mailman/listinfo/py-dev
+.. _`pytest-dev at python.org (mailing list)`: http://mail.python.org/mailman/listinfo/pytest-dev
 .. _`py-svn`:
-.. _`commit mailing list`: http://codespeak.net/mailman/listinfo/py-svn
+.. _`pytest-commit at python.org (mailing list)`: http://mail.python.org/mailman/listinfo/pytest-commit
 
