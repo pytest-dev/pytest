@@ -1,6 +1,9 @@
 Changes between 2.3.4 and 2.3.5dev
 -----------------------------------
 
+- fix issue171 - in assertion rewriting, show the repr of some
+  global variables
+
 - fix option help for "-k"
 
 - move long description of distribution into README.rst
@@ -119,7 +122,7 @@ Changes between 2.2.4 and 2.3.0
 
 - fix issue202 - better automatic names for parametrized test functions
 - fix issue139 - introduce @pytest.fixture which allows direct scoping
-  and parametrization of funcarg factories. 
+  and parametrization of funcarg factories.
 - fix issue198 - conftest fixtures were not found on windows32 in some
   circumstances with nested directory structures due to path manipulation issues
 - fix issue193 skip test functions with were parametrized with empty

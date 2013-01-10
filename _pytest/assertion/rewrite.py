@@ -262,6 +262,9 @@ def rewrite_asserts(mod):
 _saferepr = py.io.saferepr
 from _pytest.assertion.util import format_explanation as _format_explanation
 
+def _should_repr_global_name(obj):
+    return not hasattr(obj, "__name__") and not py.builtin.callable(obj)
+
 def _format_boolop(explanations, is_or):
     return "(" + (is_or and " or " or " and ").join(explanations) + ")"
 
@@ -473,11 +476,12 @@ class AssertionRewriter(ast.NodeVisitor):
         return self.statements
 
     def visit_Name(self, name):
-        # Check if the name is local or not.
+        # Display the repr of the name if it's a local variable or
+        # _should_repr_global_name() thinks it's acceptable.
         locs = ast.Call(self.builtin("locals"), [], [], None, None)
-        globs = ast.Call(self.builtin("globals"), [], [], None, None)
-        ops = [ast.In(), ast.IsNot()]
-        test = ast.Compare(ast.Str(name.id), ops, [locs, globs])
+        inlocs = ast.Compare(ast.Str(name.id), [ast.In()], [locs])
+        dorepr = self.helper("should_repr_global_name", name)
+        test = ast.BoolOp(ast.Or(), [inlocs, dorepr])
         expr = ast.IfExp(test, self.display(name), ast.Str(name.id))
         return name, self.explanation_param(expr)
 

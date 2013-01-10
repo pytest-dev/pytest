@@ -107,7 +107,15 @@ class TestAssertionRewrite:
         assert getmsg(f) == "assert False"
         def f():
             assert a_global
-        assert getmsg(f, {"a_global" : False}) == "assert a_global"
+        assert getmsg(f, {"a_global" : False}) == "assert False"
+        def f():
+            assert sys == 42
+        assert getmsg(f, {"sys" : sys}) == "assert sys == 42"
+        def f():
+            assert cls == 42
+        class X(object):
+            pass
+        assert getmsg(f, {"cls" : X}) == "assert cls == 42"
 
     def test_assert_already_has_message(self):
         def f():
@@ -232,7 +240,7 @@ class TestAssertionRewrite:
     def test_attribute(self):
         class X(object):
             g = 3
-        ns = {"X" : X, "x" : X()}
+        ns = {"x" : X}
         def f():
             assert not x.g
         assert getmsg(f, ns) == """assert not 3
