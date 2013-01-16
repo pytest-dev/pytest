@@ -330,3 +330,21 @@ in one content string::
 This could be run with at least three different ways to invoke pytest:
 through the shell, through "python -m pytest" and inlined. As inlined
 would be the fastest it could be run first (or "--fast" mode).
+
+
+Create isolate plugin
+---------------------
+tags: feature
+
+The idea is that you can e.g. import modules in a test and afterwards
+sys.modules, sys.meta_path etc would be reverted.  It can go further
+then just importing however, e.g. current working direcroty, file
+descriptors, ...
+
+This would probably be done by marking::
+
+    @pytest.mark.isolate(importing=True, cwd=True, fds=False)
+    def test_foo():
+        ...
+
+With the possibility of doing this globally in an ini-file.
