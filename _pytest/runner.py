@@ -364,6 +364,7 @@ class OutcomeException(Exception):
         contain info about test and collection outcomes.
     """
     def __init__(self, msg=None, pytrace=True):
+        super(OutcomeException, self).__init__(msg)
         self.msg = msg
         self.pytrace = pytrace
 

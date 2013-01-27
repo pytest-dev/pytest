@@ -19,6 +19,8 @@ Changes between 2.3.4 and 2.3.5dev
 - improve PYTEST_DEBUG tracing output by puting
   extra data on a new lines with additional indent
 
+- ensure OutcomeExceptions like skip/fail have initialized exception attributes
+
 Changes between 2.3.3 and 2.3.4
 -----------------------------------
 

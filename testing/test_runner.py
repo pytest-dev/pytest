@@ -378,6 +378,10 @@ def test_runtest_in_module_ordering(testdir):
     ])
 
 
+def test_outcomeexception_exceptionattributes():
+    outcome = runner.OutcomeException('test')
+    assert outcome.message == outcome.msg
+
 def test_pytest_exit():
     try:
         py.test.exit("hello")
