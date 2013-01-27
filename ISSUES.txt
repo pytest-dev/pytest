@@ -348,3 +348,57 @@ This would probably be done by marking::
         ...
 
 With the possibility of doing this globally in an ini-file.
+
+
+fnmatch for test names
+----------------------
+tags: feature-wish
+
+various testsuites use suffixes instead of prefixes for test classes
+also it lends itself to bdd style test names::
+
+    class UserBehaviour:
+        def anonymous_should_not_have_inbox(user):
+            ...
+        def registred_should_have_inbox(user):
+            ..
+
+using the following in pytest.ini::
+
+    [pytest]
+    python_classes = Test *Behaviour *Test
+    python_functions = test *_should_*
+
+
+mechanism for running named parts of tests with different reporting behaviour
+------------------------------------------------------------------------------
+tags: feature-wish-incomplete
+
+a few use-cases come to mind:
+
+* fail assertions and record that without stopping a complete test
+
+  * this is in particular hepfull if a small bit of a test is known to fail/xfail::
+
+    def test_fun():
+        with pytest.section('fdcheck, marks=pytest.mark.xfail_if(...)):
+            breaks_on_windows()
+
+* divide functional/acceptance tests into sections
+* provide a different mechanism for generators, maybe something like::
+
+    def pytest_runtest_call(item)
+        if not generator:
+            ...
+        prepare_check = GeneratorCheckprepare()
+
+        gen = item.obj(**fixtures)
+        for check in gen
+            id, call = prepare_check(check)
+            # bubble should only prevent exception propagation after a failure
+            # the whole test should still fail
+            # there might be need for a loer level api and taking custom markers into account
+            with pytest.section(id, bubble=False):
+                call()
+
+
