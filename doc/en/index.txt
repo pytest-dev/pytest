@@ -4,6 +4,9 @@
 pytest: helps you write better programs
 =============================================
 
+.. note:: Upcoming: `professional testing with pytest and tox <`http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_ , 24th-26th June 2013, Leipzig.
+
+
 **a mature full-featured Python testing tool**
 
  - runs on Posix/Windows, Python 2.4-3.3, PyPy and Jython-2.5.1
