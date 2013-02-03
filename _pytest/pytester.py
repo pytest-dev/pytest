@@ -195,10 +195,7 @@ class TmpTestdir:
             except py.error.EEXIST:
                 continue
             break
-        # we need to create another subdir
-        # because Directory.collect() currently loads
-        # conftest.py from sibling directories
-        self.tmpdir = tmpdir.mkdir(name)
+        self.tmpdir = tmpdir
         self.plugins = []
         self._syspathremove = []
         self.chdir() # always chdir
@@ -422,7 +419,8 @@ class TmpTestdir:
             str(os.getcwd()), env.get('PYTHONPATH', '')]))
         kw['env'] = env
         #print "env", env
-        return py.std.subprocess.Popen(cmdargs, stdout=stdout, stderr=stderr, **kw)
+        return py.std.subprocess.Popen(cmdargs,
+                                       stdout=stdout, stderr=stderr, **kw)
 
     def pytestmain(self, *args, **kwargs):
         class ResetCapturing:
