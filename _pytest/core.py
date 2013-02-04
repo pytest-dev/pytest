@@ -33,7 +33,7 @@ class TagTracer:
 
         content = " ".join(map(str, args))
         indent = "  " * self.indent
-        
+
         lines = [
             "%s%s [%s]\n" %(indent, content, ":".join(tags))
         ]
@@ -345,7 +345,10 @@ def importplugin(importspec):
         #if str(e).find(name) == -1:
         #    raise
         pass #
-    __import__(importspec)
+    try:
+        __import__(importspec)
+    except ImportError:
+        raise ImportError(importspec)
     return sys.modules[importspec]
 
 class MultiCall:

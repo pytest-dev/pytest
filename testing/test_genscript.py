@@ -3,7 +3,8 @@ import subprocess
 
 
 def pytest_funcarg__standalone(request):
-    return request.cached_setup(scope="module", setup=lambda: Standalone(request))
+    return request.cached_setup(scope="module",
+        setup=lambda: Standalone(request))
 
 class Standalone:
     def __init__(self, request):
