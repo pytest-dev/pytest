@@ -1160,8 +1160,8 @@ class TestAutouseManagement:
         reprec.assertoutcome(passed=1)
 
     @pytest.mark.issue226
-    @pytest.mark.parametrize("param1", ["", "params=[1]"])
-    @pytest.mark.parametrize("param2", ["", "params=[1]"])
+    @pytest.mark.parametrize("param1", ["", "params=[1]"], ids=["p00","p01"])
+    @pytest.mark.parametrize("param2", ["", "params=[1]"], ids=["p10","p11"])
     def test_ordering_dependencies_torndown_first(self, testdir, param1, param2):
         testdir.makepyfile("""
             import pytest
