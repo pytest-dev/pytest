@@ -21,6 +21,8 @@ Changes between 2.3.4 and 2.3.5dev
 
 - ensure OutcomeExceptions like skip/fail have initialized exception attributes
 
+- fix issue 260 - don't use nose specials on plain unittest cases
+
 Changes between 2.3.3 and 2.3.4
 -----------------------------------
 
