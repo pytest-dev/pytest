@@ -3,6 +3,8 @@
 import pytest, py
 import inspect
 import sys
+from _pytest import unittest
+
 
 def pytest_runtest_makereport(__multicall__, item, call):
     SkipTest = getattr(sys.modules.get('nose', None), 'SkipTest', None)
@@ -15,7 +17,7 @@ def pytest_runtest_makereport(__multicall__, item, call):
 
 @pytest.mark.trylast
 def pytest_runtest_setup(item):
-    if isinstance(item, (pytest.Function)):
+    if is_potential_nosetest(item):
         if isinstance(item.parent, pytest.Generator):
             gen = item.parent
             if not hasattr(gen, '_nosegensetup'):
@@ -28,7 +30,7 @@ def pytest_runtest_setup(item):
             call_optional(item.parent.obj, 'setup')
 
 def pytest_runtest_teardown(item):
-    if isinstance(item, pytest.Function):
+    if is_potential_nosetest(item):
         if not call_optional(item.obj, 'teardown'):
             call_optional(item.parent.obj, 'teardown')
         #if hasattr(item.parent, '_nosegensetup'):
@@ -39,9 +41,18 @@ def pytest_make_collect_report(collector):
     if isinstance(collector, pytest.Generator):
         call_optional(collector.obj, 'setup')
 
+
+def is_potential_nosetest(item):
+    # extra check needed since we do not do nose style setup/teardown
+    # on direct unittest style classes
+    return isinstance(item, pytest.Function) and \
+        not isinstance(item, unittest.TestCaseFunction)
+
+
 def call_optional(obj, name):
     method = getattr(obj, name, None)
-    if method is not None and not hasattr(method, "_pytestfixturefunction") and py.builtin.callable(method):
+    isfixture = hasattr(method, "_pytestfixturefunction")
+    if method is not None and not isfixture and py.builtin.callable(method):
         # If there's any problems allow the exception to raise rather than
         # silently ignoring them
         method()

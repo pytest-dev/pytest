@@ -280,3 +280,28 @@ def test_nose_setup_ordering(testdir):
     result.stdout.fnmatch_lines([
         "*1 passed*",
     ])
+
+
+def test_apiwrapper_problem_issue260(testdir):
+    # this would end up trying a call a optional teardown on the class
+    # for plain unittests we dont want nose behaviour
+    testdir.makepyfile("""
+        import unittest
+        class TestCase(unittest.TestCase):
+            def setup(self):
+                #should not be called in unittest testcases
+                assert 0, 'setup'
+            def teardown(self):
+                #should not be called in unittest testcases
+                assert 0, 'teardown'
+            def setUp(self):
+                print('setup')
+            def tearDown(self):
+                print('teardown')
+            def test_fun(self):
+                pass
+        """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines("*1 passed*")
+
+
