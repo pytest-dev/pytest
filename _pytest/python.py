@@ -732,7 +732,7 @@ def idmaker(argnames, argvalues):
         this_id = []
         for nameindex, val in enumerate(valset):
             if not isinstance(val, (float, int, str)):
-                this_id.append(argnames[nameindex]+str(valindex))
+                this_id.append(str(argnames[nameindex])+str(valindex))
             else:
                 this_id.append(str(val))
         idlist.append("-".join(this_id))

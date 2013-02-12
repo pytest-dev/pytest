@@ -1,6 +1,8 @@
 Changes between 2.3.4 and 2.3.5dev
 -----------------------------------
 
+- issue250 unicode/str mixes in parametrization names and values now works
+
 - issue257, assertion-triggered compilation of source ending in a
   comment line doesn't blow up in python2.5 (fixed through py>=1.4.13.dev6)
 

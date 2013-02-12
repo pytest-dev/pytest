@@ -1,3 +1,4 @@
+
 import pytest, py, sys
 from _pytest import python as funcargs
 from _pytest.python import FixtureLookupError
@@ -106,6 +107,7 @@ class TestMetafunc:
         assert metafunc._calls[2].id == "x1-a"
         assert metafunc._calls[3].id == "x1-b"
 
+    @pytest.mark.issue250
     def test_idmaker_autoname(self):
         from _pytest.python import idmaker
         result = idmaker(("a", "b"), [("string", 1.0),
@@ -115,6 +117,9 @@ class TestMetafunc:
         result = idmaker(("a", "b"), [(object(), 1.0),
                                       (object(), object())])
         assert result == ["a0-1.0", "a1-b1"]
+        # unicode mixing, issue250
+        result = idmaker((u"a", "b"), [({}, '\xc3\xb4')])
+        assert result == ['a0-\xc3\xb4']
 
 
     def test_addcall_and_parametrize(self):
