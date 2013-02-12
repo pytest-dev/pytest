@@ -12,7 +12,7 @@ def main():
         name='pytest',
         description='py.test: simple powerful testing with Python',
         long_description = long_description,
-        version='2.3.5dev5',
+        version='2.3.5dev6',
         url='http://pytest.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
@@ -21,7 +21,7 @@ def main():
         entry_points= make_entry_points(),
         cmdclass = {'test': PyTest},
         # the following should be enabled for release
-        install_requires=['py>=1.4.12'],
+        install_requires=['py>=1.4.13dev6'],
         classifiers=['Development Status :: 6 - Mature',
                      'Intended Audience :: Developers',
                      'License :: OSI Approved :: MIT License',

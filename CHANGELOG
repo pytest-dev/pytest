@@ -1,7 +1,10 @@
 Changes between 2.3.4 and 2.3.5dev
 -----------------------------------
 
-- fix issue171 - in assertion rewriting, show the repr of some
+- issue257, assertion-triggered compilation of source ending in a
+  comment line doesn't blow up in python2.5 (fixed through py>=1.4.13.dev6)
+
+- issue171 - in assertion rewriting, show the repr of some
   global variables
 
 - fix option help for "-k"
@@ -21,7 +24,7 @@ Changes between 2.3.4 and 2.3.5dev
 
 - ensure OutcomeExceptions like skip/fail have initialized exception attributes
 
-- fix issue 260 - don't use nose specials on plain unittest cases
+- issue 260 - don't use nose special setup on plain unittest cases
 
 Changes between 2.3.3 and 2.3.4
 -----------------------------------

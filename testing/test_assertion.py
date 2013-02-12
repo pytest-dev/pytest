@@ -103,6 +103,19 @@ class TestAssert_reprcompare:
         expl = ' '.join(callequal('foo', 'bar'))
         assert 'raised in repr()' not in expl
 
+def test_python25_compile_issue257(testdir):
+    testdir.makepyfile("""
+        def test_rewritten():
+            assert 1 == 2
+        # some comment
+    """)
+    result = testdir.runpytest()
+    assert result.ret == 1
+    result.stdout.fnmatch_lines("""
+            *E*assert 1 == 2*
+            *1 failed*
+    """)
+
 @needsnewassert
 def test_rewritten(testdir):
     testdir.makepyfile("""
