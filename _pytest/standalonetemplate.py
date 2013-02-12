@@ -57,7 +57,7 @@ if __name__ == "__main__":
         sources = pickle.loads(zlib.decompress(base64.decodestring(sources)))
 
     importer = DictImporter(sources)
-    sys.meta_path.append(importer)
+    sys.meta_path.insert(0, importer)
 
     entry = "@ENTRY@"
     do_exec(entry, locals())

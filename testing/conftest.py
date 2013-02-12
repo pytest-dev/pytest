@@ -66,7 +66,8 @@ def pytest_generate_tests(metafunc):
                 metafunc.addcall(funcargs={name: val})
     elif 'anypython' in metafunc.fixturenames:
         for name in ('python2.4', 'python2.5', 'python2.6',
-                     'python2.7', 'python3.1', 'pypy', 'jython'):
+                     'python2.7', 'python3.2', "python3.3",
+                     'pypy', 'jython'):
             metafunc.addcall(id=name, param=name)
 
 # XXX copied from execnet's conftest.py - needs to be merged

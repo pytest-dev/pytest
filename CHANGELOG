@@ -4,6 +4,9 @@ Changes between 2.3.4 and 2.3.5dev
 - issue257, assertion-triggered compilation of source ending in a
   comment line doesn't blow up in python2.5 (fixed through py>=1.4.13.dev6)
 
+- fix --genscript option to generate standalone scripts that also
+  work with python3.3 (importer ordering)
+
 - issue171 - in assertion rewriting, show the repr of some
   global variables
 
