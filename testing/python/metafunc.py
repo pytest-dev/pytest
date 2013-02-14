@@ -118,7 +118,7 @@ class TestMetafunc:
                                       (object(), object())])
         assert result == ["a0-1.0", "a1-b1"]
         # unicode mixing, issue250
-        result = idmaker((u"a", "b"), [({}, '\xc3\xb4')])
+        result = idmaker((py.builtin._totext("a"), "b"), [({}, '\xc3\xb4')])
         assert result == ['a0-\xc3\xb4']
 
 
