@@ -31,6 +31,8 @@ Changes between 2.3.4 and 2.3.5dev
 
 - issue 260 - don't use nose special setup on plain unittest cases
 
+- fix issue134 - print the collect errors that prevent running specified test items
+
 Changes between 2.3.3 and 2.3.4
 -----------------------------------
 
