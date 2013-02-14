@@ -93,12 +93,14 @@ def wrap_session(config, doit):
             session.exitstatus = EXIT_INTERNALERROR
             if excinfo.errisinstance(SystemExit):
                 sys.stderr.write("mainloop: caught Spurious SystemExit!\n")
+        else:
+            if session._testsfailed:
+                session.exitstatus = EXIT_TESTSFAILED
     finally:
         if initstate >= 2:
-            config.hook.pytest_sessionfinish(session=session,
-                exitstatus=session.exitstatus or (session._testsfailed and 1))
-        if not session.exitstatus and session._testsfailed:
-            session.exitstatus = EXIT_TESTSFAILED
+            config.hook.pytest_sessionfinish(
+                session=session,
+                exitstatus=session.exitstatus)
         if initstate >= 1:
             config.pluginmanager.do_unconfigure(config)
     return session.exitstatus
