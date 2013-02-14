@@ -294,6 +294,21 @@ class TestGeneralUsage:
         ])
         assert 'sessionstarttime' not in result.stderr.str()
 
+    @pytest.mark.parametrize('lookfor', ['test_fun.py', 'test_fun.py::test_a'])
+    def test_issue134_report_syntaxerror_when_collecting_member(self, testdir, lookfor):
+        testdir.makepyfile(test_fun="""
+            def test_a():
+                pass
+            def""")
+        result = testdir.runpytest(lookfor)
+        result.stdout.fnmatch_lines(['*SyntaxError*'])
+        if '::' in lookfor:
+            result.stderr.fnmatch_lines([
+                '*ERROR*',
+            ])
+            assert result.ret == 4  # usage error only if item not found
+
+
 class TestInvocationVariants:
     def test_earlyinit(self, testdir):
         p = testdir.makepyfile("""

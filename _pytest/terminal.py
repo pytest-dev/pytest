@@ -331,7 +331,7 @@ class TerminalReporter:
     def pytest_sessionfinish(self, exitstatus, __multicall__):
         __multicall__.execute()
         self._tw.line("")
-        if exitstatus in (0, 1, 2):
+        if exitstatus in (0, 1, 2, 4):
             self.summary_errors()
             self.summary_failures()
             self.config.hook.pytest_terminal_summary(terminalreporter=self)
