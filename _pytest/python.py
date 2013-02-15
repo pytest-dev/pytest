@@ -175,9 +175,8 @@ def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
         #if hasattr(collector.obj, 'unittest'):
         #    return # we assume it's a mixin class for a TestCase derived one
         if collector.classnamefilter(name):
-            if not hasinit(obj):
-                Class = collector._getcustomclass("Class")
-                return Class(name, parent=collector)
+            Class = collector._getcustomclass("Class")
+            return Class(name, parent=collector)
     elif collector.funcnamefilter(name) and hasattr(obj, '__call__'):
         if is_generator(obj):
             return Generator(name, parent=collector)
@@ -394,6 +393,11 @@ class Module(pytest.File, PyCollector):
 class Class(PyCollector):
     """ Collector for test methods. """
     def collect(self):
+        if hasinit(self.obj):
+            pytest.skip("class %s.%s with __init__ won't get collected" % (
+                self.obj.__module__,
+                self.obj.__name__,
+            ))
         return [self._getcustomclass("Instance")(name="()", parent=self)]
 
     def setup(self):

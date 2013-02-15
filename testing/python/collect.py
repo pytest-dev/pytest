@@ -35,7 +35,7 @@ class TestModule:
         pytest.raises(ImportError, "modcol.obj")
 
 class TestClass:
-    def test_class_with_init_not_collected(self, testdir):
+    def test_class_with_init_skip_collect(self, testdir):
         modcol = testdir.getmodulecol("""
             class TestClass1:
                 def __init__(self):
@@ -45,7 +45,10 @@ class TestClass:
                     pass
         """)
         l = modcol.collect()
-        assert len(l) == 0
+        assert len(l) == 2
+
+        for classcol in l:
+            pytest.raises(pytest.skip.Exception, classcol.collect)
 
     def test_class_subclassobject(self, testdir):
         testdir.getmodulecol("""

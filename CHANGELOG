@@ -1,5 +1,6 @@
 Changes between 2.3.4 and 2.3.5dev
 -----------------------------------
+- issue 251 - report a skip instead of ignoring classes with init
 
 - issue250 unicode/str mixes in parametrization names and values now works
 
