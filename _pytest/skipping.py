@@ -3,12 +3,6 @@
 import py, pytest
 import sys
 
-# Provide basestring in python3
-try:
-    basestring = basestring
-except NameError:
-    basestring = str
-
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group.addoption('--runxfail',
@@ -92,7 +86,7 @@ class MarkEvaluator:
                 self.result = False
                 for expr in self.holder.args:
                     self.expr = expr
-                    if isinstance(expr, basestring):
+                    if isinstance(expr, py.builtin._basestring):
                         result = cached_eval(self.item.config, expr, d)
                     else:
                         pytest.fail("expression is not a string")
