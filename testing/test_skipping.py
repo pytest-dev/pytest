@@ -39,6 +39,20 @@ class TestEvaluator:
         expl = ev.getexplanation()
         assert expl == "condition: hasattr(os, 'sep')"
 
+    @pytest.mark.skipif('sys.version_info[0] >= 3')
+    def test_marked_one_arg_unicode(self, testdir):
+        item = testdir.getitem("""
+            import pytest
+            @pytest.mark.xyz(u"hasattr(os, 'sep')")
+            def test_func():
+                pass
+        """)
+        ev = MarkEvaluator(item, 'xyz')
+        assert ev
+        assert ev.istrue()
+        expl = ev.getexplanation()
+        assert expl == "condition: hasattr(os, 'sep')"
+
     def test_marked_one_arg_with_reason(self, testdir):
         item = testdir.getitem("""
             import pytest
