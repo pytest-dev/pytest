@@ -394,3 +394,11 @@ def test_rewritten():
         b = content.encode("utf-8")
         testdir.tmpdir.join("test_newlines.py").write(b, "wb")
         assert testdir.runpytest().ret == 0
+
+    @pytest.mark.skipif("sys.version_info[0] >= 3")
+    def test_assume_ascii(self, testdir):
+        content = "u'\xe2\x99\xa5'"
+        testdir.tmpdir.join("test_encoding.py").write(content, "wb")
+        res = testdir.runpytest()
+        assert res.ret != 0
+        assert "SyntaxError: Non-ASCII character" in res.stdout.str()
