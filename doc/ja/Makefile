@@ -29,6 +29,8 @@ help:
 	@echo "  devhelp    to make HTML files and a Devhelp project"
 	@echo "  epub       to make an epub"
 	@echo "  latex      to make LaTeX files, you can set PAPER=a4 or PAPER=letter"
+	@echo "  texinfo    to make Texinfo files"
+	@echo "  info       to make Texinfo files and run them through makeinfo"
 	@echo "  latexpdf   to make LaTeX files and run them through pdflatex"
 	@echo "  text       to make text files"
 	@echo "  man        to make manual pages"
@@ -140,3 +142,18 @@ doctest:
 	$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) $(BUILDDIR)/doctest
 	@echo "Testing of doctests in the sources finished, look at the " \
 	      "results in $(BUILDDIR)/doctest/output.txt."
+
+texinfo:
+	mkdir -p $(BUILDDIR)/texinfo
+	$(SPHINXBUILD) -b texinfo $(ALLSPHINXOPTS) $(BUILDDIR)/texinfo
+	@echo
+	@echo "Build finished. The Texinfo files are in $(BUILDDIR)/texinfo."
+	@echo "Run \`make' in that directory to run these through makeinfo" \
+	      "(use \`make info' here to do that automatically)."
+
+info:
+	mkdir -p $(BUILDDIR)/texinfo
+	$(SPHINXBUILD) -b texinfo $(ALLSPHINXOPTS) $(BUILDDIR)/texinfo
+	@echo "Running Texinfo files through makeinfo..."
+	make -C $(BUILDDIR)/texinfo info
+	@echo "makeinfo finished; the Info files are in $(BUILDDIR)/texinfo."

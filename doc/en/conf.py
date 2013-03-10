@@ -273,6 +273,19 @@ epub_copyright = u'2012, holger krekel et alii'
 #epub_tocdup = True
 
 
+# -- Options for texinfo output ------------------------------------------------
+
+texinfo_documents = [
+  (master_doc, 'pytest', 'pytest Documentation',
+   ('Holger Krekel@*Benjamin Peterson@*Ronny Pfannschmidt@*'
+    'Floris Bruynooghe@*others'),
+   'pytest',
+   'simple powerful testing with Pytho',
+   'Programming',
+   1),
+]
+
+
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'python': ('http://docs.python.org/', None),
 #                       'lib': ("http://docs.python.org/2.7library/", None),
