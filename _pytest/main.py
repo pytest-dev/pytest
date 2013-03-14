@@ -347,6 +347,18 @@ class Collector(Node):
     """ Collector instances create children through collect()
         and thus iteratively build a tree.
     """
+
+    _skip_exceptions = None
+    @property
+    def skip_exceptions(self):
+        if self._skip_exceptions is None:
+            return (py.test.skip.Exception,)
+        return self._skip_exceptions
+
+    @skip_exceptions.setter
+    def skip_exceptions(self, value):
+        self._skip_exceptions = value
+    
     class CollectError(Exception):
         """ an error during collection, contains a custom message. """
 

@@ -38,6 +38,8 @@ def pytest_runtest_teardown(item):
         #    del item.parent._nosegensetup
 
 def pytest_make_collect_report(collector):
+    SkipTest = py.std.unittest.SkipTest
+    collector.skip_exceptions += (SkipTest,)
     if isinstance(collector, pytest.Generator):
         call_optional(collector.obj, 'setup')
 

@@ -305,3 +305,12 @@ def test_apiwrapper_problem_issue260(testdir):
     result.stdout.fnmatch_lines("*1 passed*")
 
 
+def test_SkipTest_during_collection(testdir):
+    testdir.makepyfile("""
+        import nose
+        raise nose.SkipTest("during collection")
+        def test_failing():
+            assert False
+        """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines("*1 skipped*")
