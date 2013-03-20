@@ -133,3 +133,14 @@ class TestDoctests:
         """)
         reprec = testdir.inline_run(p, )
         reprec.assertoutcome(passed=1)
+
+    def test_doctestmodule_with_fixtures(self, testdir, tmpdir):
+        p = testdir.makepyfile("""
+            '''
+                >>> dir = get_fixture('tmpdir')
+                >>> type(dir).__name__
+                'LocalPath'
+            '''
+        """)
+        reprec = testdir.inline_run(p, "--doctest-modules")
+        reprec.assertoutcome(passed=1)

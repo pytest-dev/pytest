@@ -88,6 +88,11 @@ class DoctestModule(DoctestItem, pytest.File):
             module = self.config._conftest.importconftest(self.fspath)
         else:
             module = self.fspath.pyimport()
+        # satisfy `FixtureRequest` constructor...
+        self.funcargs = {}
+        self._fixtureinfo = FuncFixtureInfo((), [], {})
+        fixture_request = FixtureRequest(self)
         failed, tot = doctest.testmod(
             module, raise_on_error=True, verbose=0,
+            extraglobs=dict(get_fixture=fixture_request.getfuncargvalue),
             optionflags=doctest.ELLIPSIS)
