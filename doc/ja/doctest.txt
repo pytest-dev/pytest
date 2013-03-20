@@ -72,3 +72,12 @@ Python モジュール (通常 python テストモジュールを含む) の doc
     mymodule.py .
     
     ========================= 1 passed in 0.02 seconds =========================
+
+..
+    It is possible to use fixtures using the ``get_fixture`` helper::
+
+それは ``get_fixture`` ヘルパーを使ってフィクスチャを使用することが可能である::
+
+    # content of example.rst
+    >>> tmp = get_fixture('tmpdir')
+    >>> ...
