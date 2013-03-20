@@ -124,3 +124,12 @@ class TestDoctests:
             "    1",
             "*test_txtfile_failing.txt:2: DocTestFailure"
         ])
+
+    def test_txtfile_with_fixtures(self, testdir, tmpdir):
+        p = testdir.maketxtfile("""
+            >>> dir = get_fixture('tmpdir')
+            >>> type(dir).__name__
+            'LocalPath'
+        """)
+        reprec = testdir.inline_run(p, )
+        reprec.assertoutcome(passed=1)
