@@ -39,7 +39,10 @@ def pytest_configure(config):
         except ImportError:
             mode = "reinterp"
         else:
-            if sys.platform.startswith('java'):
+            # Both Jython and CPython 2.6.0 have AST bugs that make the
+            # assertion rewriting hook malfunction.
+            if (sys.platform.startswith('java') or
+                sys.version_info[:3] == (2, 6, 0)):
                 mode = "reinterp"
     if mode != "plain":
         _load_modules(mode)

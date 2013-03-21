@@ -1,6 +1,8 @@
 Changes between 2.3.4 and 2.3.5dev
 -----------------------------------
 
+- issue 280 - disable assertion rewriting on buggy CPython 2.6.0
+
 - inject "getfixture()" helper to retrieve fixtures from doctests,
   thanks Andreas Zeidler
 
