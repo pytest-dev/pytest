@@ -51,8 +51,8 @@ then you can just invoke ``py.test`` without command line options::
     
     ========================= 1 passed in 0.02 seconds =========================
 
-It is possible to use fixtures using the ``get_fixture`` helper::
+It is possible to use fixtures using the ``getfixture`` helper::
 
     # content of example.rst
-    >>> tmp = get_fixture('tmpdir')
+    >>> tmp = getfixture('tmpdir')
     >>> ...

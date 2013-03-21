@@ -127,7 +127,7 @@ class TestDoctests:
 
     def test_txtfile_with_fixtures(self, testdir):
         p = testdir.maketxtfile("""
-            >>> dir = get_fixture('tmpdir')
+            >>> dir = getfixture('tmpdir')
             >>> type(dir).__name__
             'LocalPath'
         """)
@@ -137,7 +137,7 @@ class TestDoctests:
     def test_doctestmodule_with_fixtures(self, testdir):
         p = testdir.makepyfile("""
             '''
-                >>> dir = get_fixture('tmpdir')
+                >>> dir = getfixture('tmpdir')
                 >>> type(dir).__name__
                 'LocalPath'
             '''

@@ -78,7 +78,7 @@ class DoctestTextfile(DoctestItem, pytest.File):
         failed, tot = doctest.testfile(
             str(self.fspath), module_relative=False,
             optionflags=doctest.ELLIPSIS,
-            extraglobs=dict(get_fixture=fixture_request.getfuncargvalue),
+            extraglobs=dict(getfixture=fixture_request.getfuncargvalue),
             raise_on_error=True, verbose=0)
 
 class DoctestModule(DoctestItem, pytest.File):
@@ -94,5 +94,5 @@ class DoctestModule(DoctestItem, pytest.File):
         fixture_request = FixtureRequest(self)
         failed, tot = doctest.testmod(
             module, raise_on_error=True, verbose=0,
-            extraglobs=dict(get_fixture=fixture_request.getfuncargvalue),
+            extraglobs=dict(getfixture=fixture_request.getfuncargvalue),
             optionflags=doctest.ELLIPSIS)
