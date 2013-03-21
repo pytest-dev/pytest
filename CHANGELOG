@@ -1,5 +1,9 @@
 Changes between 2.3.4 and 2.3.5dev
 -----------------------------------
+
+- inject "getfixture()" helper to retrieve fixtures from doctests,
+  thanks Andreas Zeidler
+
 - issue 259 - when assertion rewriting, be consistent with the default
   source encoding of ASCII on Python 2
 
