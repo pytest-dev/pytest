@@ -1,6 +1,7 @@
 """ discover and run doctests in modules and test files."""
 
 import pytest, py
+from _pytest.python import FixtureRequest, FuncFixtureInfo
 from py._code.code import TerminalRepr, ReprFileLocation
 
 def pytest_addoption(parser):
@@ -70,9 +71,14 @@ class DoctestItem(pytest.Item):
 class DoctestTextfile(DoctestItem, pytest.File):
     def runtest(self):
         doctest = py.std.doctest
+        # satisfy `FixtureRequest` constructor...
+        self.funcargs = {}
+        self._fixtureinfo = FuncFixtureInfo((), [], {})
+        fixture_request = FixtureRequest(self)
         failed, tot = doctest.testfile(
             str(self.fspath), module_relative=False,
             optionflags=doctest.ELLIPSIS,
+            extraglobs=dict(getfixture=fixture_request.getfuncargvalue),
             raise_on_error=True, verbose=0)
 
 class DoctestModule(DoctestItem, pytest.File):
@@ -82,6 +88,11 @@ class DoctestModule(DoctestItem, pytest.File):
             module = self.config._conftest.importconftest(self.fspath)
         else:
             module = self.fspath.pyimport()
+        # satisfy `FixtureRequest` constructor...
+        self.funcargs = {}
+        self._fixtureinfo = FuncFixtureInfo((), [], {})
+        fixture_request = FixtureRequest(self)
         failed, tot = doctest.testmod(
             module, raise_on_error=True, verbose=0,
+            extraglobs=dict(getfixture=fixture_request.getfuncargvalue),
             optionflags=doctest.ELLIPSIS)
