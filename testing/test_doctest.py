@@ -125,7 +125,7 @@ class TestDoctests:
             "*test_txtfile_failing.txt:2: DocTestFailure"
         ])
 
-    def test_txtfile_with_fixtures(self, testdir, tmpdir):
+    def test_txtfile_with_fixtures(self, testdir):
         p = testdir.maketxtfile("""
             >>> dir = get_fixture('tmpdir')
             >>> type(dir).__name__
@@ -134,7 +134,7 @@ class TestDoctests:
         reprec = testdir.inline_run(p, )
         reprec.assertoutcome(passed=1)
 
-    def test_doctestmodule_with_fixtures(self, testdir, tmpdir):
+    def test_doctestmodule_with_fixtures(self, testdir):
         p = testdir.makepyfile("""
             '''
                 >>> dir = get_fixture('tmpdir')
