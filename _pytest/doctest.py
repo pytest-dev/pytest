@@ -42,17 +42,27 @@ class DoctestItem(pytest.Item):
             example = doctestfailure.example
             test = doctestfailure.test
             filename = test.filename
-            lineno = test.lineno + example.lineno + 1
+            if test.lineno is None:
+                lineno = None
+            else:
+                lineno = test.lineno + example.lineno + 1
             message = excinfo.type.__name__
             reprlocation = ReprFileLocation(filename, lineno, message)
             checker = py.std.doctest.OutputChecker()
             REPORT_UDIFF = py.std.doctest.REPORT_UDIFF
             filelines = py.path.local(filename).readlines(cr=0)
-            i = max(test.lineno, max(0, lineno - 10)) # XXX?
             lines = []
-            for line in filelines[i:lineno]:
-                lines.append("%03d %s" % (i+1, line))
-                i += 1
+            if lineno is not None:
+                i = max(test.lineno, max(0, lineno - 10)) # XXX?
+                for line in filelines[i:lineno]:
+                    lines.append("%03d %s" % (i+1, line))
+                    i += 1
+            else:
+                lines.append('EXAMPLE LOCATION UNKNOWN, not showing all tests of that example')
+                indent = '>>>'
+                for line in example.source.splitlines():
+                    lines.append('??? %s %s' % (indent, line))
+                    indent = '...'
             if excinfo.errisinstance(doctest.DocTestFailure):
                 lines += checker.output_difference(example,
                         doctestfailure.got, REPORT_UDIFF).split("\n")

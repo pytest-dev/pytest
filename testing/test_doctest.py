@@ -59,6 +59,26 @@ class TestDoctests:
             "*UNEXPECTED*ZeroDivision*",
         ])
 
+    def test_doctest_linedata_missing(self, testdir):
+        testdir.tmpdir.join('hello.py').write(py.code.Source("""
+            class Fun(object):
+                @property
+                def test(self):
+                    '''
+                    >>> a = 1
+                    >>> 1/0
+                    '''
+            """))
+        result = testdir.runpytest("--doctest-modules")
+        result.stdout.fnmatch_lines([
+            "*hello*",
+            "*EXAMPLE LOCATION UNKNOWN, not showing all tests of that example*",
+            "*1/0*",
+            "*UNEXPECTED*ZeroDivision*",
+            "*1 failed*",
+        ])
+
+
     def test_doctest_unex_importerror(self, testdir):
         testdir.tmpdir.join("hello.py").write(py.code.Source("""
             import asdalsdkjaslkdjasd

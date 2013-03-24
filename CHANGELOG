@@ -1,6 +1,9 @@
 Changes between 2.3.4 and 2.3.5dev
 -----------------------------------
 
+- Issue 274 - dont try to show full doctest example
+  when doctest does not know the example location
+
 - issue 280 - disable assertion rewriting on buggy CPython 2.6.0
 
 - inject "getfixture()" helper to retrieve fixtures from doctests,
