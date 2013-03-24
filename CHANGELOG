@@ -1,6 +1,8 @@
 Changes between 2.3.4 and 2.3.5dev
 -----------------------------------
 
+- issue 271 - dont write junitxml on slave nodes
+
 - Issue 274 - dont try to show full doctest example
   when doctest does not know the example location
 

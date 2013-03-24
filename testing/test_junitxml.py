@@ -289,6 +289,25 @@ def test_mangle_testnames():
     assert newnames == ["a.pything", "Class", "method"]
 
 
+def test_dont_configure_on_slaves(tmpdir):
+    gotten = []
+    class FakeConfig:
+        def __init__(self):
+            self.pluginmanager = self
+            self.option = self
+        junitprefix = None
+        #XXX: shouldnt need tmpdir ?
+        xmlpath = str(tmpdir.join('junix.xml'))
+        register = gotten.append
+    fake_config = FakeConfig()
+    from _pytest import junitxml
+    junitxml.pytest_configure(fake_config)
+    assert len(gotten) == 1
+    FakeConfig.slaveinput = None
+    junitxml.pytest_configure(fake_config)
+    assert len(gotten) == 1
+
+
 class TestNonPython:
     def test_summing_simple(self, testdir):
         testdir.makeconftest("""

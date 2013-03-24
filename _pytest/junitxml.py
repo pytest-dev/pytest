@@ -70,7 +70,8 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     xmlpath = config.option.xmlpath
-    if xmlpath:
+    # prevent opening xmllog on slave nodes (xdist)
+    if xmlpath and not hasattr(config, 'slaveinput'):
         config._xml = LogXML(xmlpath, config.option.junitprefix)
         config.pluginmanager.register(config._xml)
 
