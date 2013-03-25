@@ -437,6 +437,18 @@ class TestCaptureFixture:
         ])
         assert result.ret == 2
 
+    @pytest.mark.xfail("sys.version_info < (2,7)")
+    @pytest.mark.issue14
+    def test_capture_and_logging(self, testdir):
+        p = testdir.makepyfile("""
+            import logging
+            def test_log(capsys):
+                logging.error('x')
+            """)
+        result = testdir.runpytest(p)
+        assert 'closed' not in result.stderr.str()
+
+
 def test_setup_failure_does_not_kill_capturing(testdir):
     sub1 = testdir.mkpydir("sub1")
     sub1.join("conftest.py").write(py.code.Source("""
