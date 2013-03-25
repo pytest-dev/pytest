@@ -304,4 +304,27 @@ def test_apiwrapper_problem_issue260(testdir):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines("*1 passed*")
 
+def test_setup_teardown_linking_issue265(testdir):
+    # we accidnetially didnt integrate nose setupstate with normal setupstate
+    # this test ensures that won't happen again
+    testdir.makepyfile('''
+        import pytest
 
+        class TestGeneric(object):
+            def test_nothing(self):
+                """Tests the API of the implementation (for generic and specialized)."""
+
+        @pytest.mark.skipif("True", reason="Skip tests to check if teardown is skipped as well.")
+        class TestSkipTeardown(TestGeneric):
+
+            def setup(self):
+                """Sets up my specialized implementation for $COOL_PLATFORM."""
+                raise Exception("should not call setup for skipped tests")
+
+            def teardown(self):
+                """Undoes the setup."""
+                raise Exception("should not call teardown for skipped tests")
+        ''')
+
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines("*1 skipped*")
