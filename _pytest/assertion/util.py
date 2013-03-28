@@ -83,8 +83,8 @@ except NameError:
     basestring = str
 
 
-def assertrepr_compare(op, left, right):
-    """return specialised explanations for some operators/operands"""
+def assertrepr_compare(config, op, left, right):
+    """Return specialised explanations for some operators/operands"""
     width = 80 - 15 - len(op) - 2 # 15 chars indentation, 1 space around op
     left_repr = py.io.saferepr(left, maxsize=int(width/2))
     right_repr = py.io.saferepr(right, maxsize=width-len(left_repr))
@@ -95,21 +95,21 @@ def assertrepr_compare(op, left, right):
     isdict = lambda x: isinstance(x, dict)
     isset = lambda x: isinstance(x, set)
 
+    verbose = config.getoption('verbose')
     explanation = None
     try:
         if op == '==':
             if istext(left) and istext(right):
-                explanation = _diff_text(left, right)
+                explanation = _diff_text(left, right, verbose)
             elif issequence(left) and issequence(right):
-                explanation = _compare_eq_sequence(left, right)
+                explanation = _compare_eq_sequence(left, right, verbose)
             elif isset(left) and isset(right):
-                explanation = _compare_eq_set(left, right)
+                explanation = _compare_eq_set(left, right, verbose)
             elif isdict(left) and isdict(right):
-                explanation = _diff_text(py.std.pprint.pformat(left),
-                                         py.std.pprint.pformat(right))
+                explanation = _compare_eq_dict(left, right, verbose)
         elif op == 'not in':
             if istext(left) and istext(right):
-                explanation = _notin_text(left, right)
+                explanation = _notin_text(left, right, verbose)
     except py.builtin._sysex:
         raise
     except:
@@ -121,44 +121,44 @@ def assertrepr_compare(op, left, right):
     if not explanation:
         return None
 
-
     return [summary] + explanation
 
 
-def _diff_text(left, right):
+def _diff_text(left, right, verbose=False):
     """Return the explanation for the diff between text
 
-    This will skip leading and trailing characters which are
-    identical to keep the diff minimal.
+    Unless --verbose is used this will skip leading and trailing
+    characters which are identical to keep the diff minimal.
     """
     explanation = []
-    i = 0 # just in case left or right has zero length
-    for i in range(min(len(left), len(right))):
-        if left[i] != right[i]:
-            break
-    if i > 42:
-        i -= 10                 # Provide some context
-        explanation = ['Skipping %s identical '
-                       'leading characters in diff' % i]
-        left = left[i:]
-        right = right[i:]
-    if len(left) == len(right):
-        for i in range(len(left)):
-            if left[-i] != right[-i]:
+    if not verbose:
+        i = 0 # just in case left or right has zero length
+        for i in range(min(len(left), len(right))):
+            if left[i] != right[i]:
                 break
         if i > 42:
-            i -= 10     # Provide some context
-            explanation += ['Skipping %s identical '
-                            'trailing characters in diff' % i]
-            left = left[:-i]
-            right = right[:-i]
+            i -= 10                 # Provide some context
+            explanation = ['Skipping %s identical leading '
+                           'characters in diff, use -v to show' % i]
+            left = left[i:]
+            right = right[i:]
+        if len(left) == len(right):
+            for i in range(len(left)):
+                if left[-i] != right[-i]:
+                    break
+            if i > 42:
+                i -= 10     # Provide some context
+                explanation += ['Skipping %s identical trailing '
+                                'characters in diff, use -v to show' % i]
+                left = left[:-i]
+                right = right[:-i]
     explanation += [line.strip('\n')
                     for line in py.std.difflib.ndiff(left.splitlines(),
                                                      right.splitlines())]
     return explanation
 
 
-def _compare_eq_sequence(left, right):
+def _compare_eq_sequence(left, right, verbose=False):
     explanation = []
     for i in range(min(len(left), len(right))):
         if left[i] != right[i]:
@@ -175,7 +175,7 @@ def _compare_eq_sequence(left, right):
                        #             py.std.pprint.pformat(right))
 
 
-def _compare_eq_set(left, right):
+def _compare_eq_set(left, right, verbose=False):
     explanation = []
     diff_left = left - right
     diff_right = right - left
@@ -190,12 +190,41 @@ def _compare_eq_set(left, right):
     return explanation
 
 
-def _notin_text(term, text):
+def _compare_eq_dict(left, right, verbose=False):
+    explanation = []
+    common = set(left).intersection(set(right))
+    same = dict((k, left[k]) for k in common if left[k] == right[k])
+    if same and not verbose:
+        explanation += ['Hiding %s identical items, use -v to show' %
+                        len(same)]
+    elif same:
+        explanation += ['Common items:']
+        explanation += py.std.pprint.pformat(same).splitlines()
+    diff = set(k for k in common if left[k] != right[k])
+    if diff:
+        explanation += ['Differing items:']
+        for k in diff:
+            explanation += [py.io.saferepr({k: left[k]}) + ' != ' +
+                            py.io.saferepr({k: right[k]})]
+    extra_left = set(left) - set(right)
+    if extra_left:
+        explanation.append('Left contains more items:')
+        explanation.extend(py.std.pprint.pformat(
+                dict((k, left[k]) for k in extra_left)).splitlines())
+    extra_right = set(right) - set(left)
+    if extra_right:
+        explanation.append('Right contains more items:')
+        explanation.extend(py.std.pprint.pformat(
+                dict((k, right[k]) for k in extra_right)).splitlines())
+    return explanation
+
+
+def _notin_text(term, text, verbose=False):
     index = text.find(term)
     head = text[:index]
     tail = text[index+len(term):]
     correct_text = head + tail
-    diff = _diff_text(correct_text, text)
+    diff = _diff_text(correct_text, text, verbose)
     newdiff = ['%s is contained here:' % py.io.saferepr(term, maxsize=42)]
     for line in diff:
         if line.startswith('Skipping'):

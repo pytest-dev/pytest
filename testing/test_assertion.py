@@ -6,6 +6,18 @@ from _pytest.assertion import reinterpret, util
 
 needsnewassert = pytest.mark.skipif("sys.version_info < (2,6)")
 
+
+@pytest.fixture
+def mock_config():
+    class Config(object):
+        verbose = False
+        def getoption(self, name):
+            if name == 'verbose':
+                return self.verbose
+            raise KeyError('Not mocked out: %s' % name)
+    return Config()
+
+
 def interpret(expr):
     return reinterpret.reinterpret(expr, py.code.Frame(sys._getframe(1)))
 
@@ -32,8 +44,11 @@ class TestBinReprIntegration:
             "*test_check*PASS*",
         ])
 
-def callequal(left, right):
-    return plugin.pytest_assertrepr_compare('==', left, right)
+def callequal(left, right, verbose=False):
+    config = mock_config()
+    config.verbose = verbose
+    return plugin.pytest_assertrepr_compare(config, '==', left, right)
+
 
 class TestAssert_reprcompare:
     def test_different_types(self):
@@ -47,6 +62,17 @@ class TestAssert_reprcompare:
         diff = callequal('spam', 'eggs')[1:]
         assert '- spam' in diff
         assert '+ eggs' in diff
+
+    def test_text_skipping(self):
+        lines = callequal('a'*50 + 'spam', 'a'*50 + 'eggs')
+        assert 'Skipping' in lines[1]
+        for line in lines:
+            assert 'a'*50 not in line
+
+    def test_text_skipping_verbose(self):
+        lines = callequal('a'*50 + 'spam', 'a'*50 + 'eggs', verbose=True)
+        assert '- ' + 'a'*50 + 'spam' in lines
+        assert '+ ' + 'a'*50 + 'eggs' in lines
 
     def test_multiline_text_diff(self):
         left = 'foo\nspam\nbar'
@@ -124,8 +150,9 @@ def test_rewritten(testdir):
     """)
     assert testdir.runpytest().ret == 0
 
-def test_reprcompare_notin():
-    detail = plugin.pytest_assertrepr_compare('not in', 'foo', 'aaafoobbb')[1:]
+def test_reprcompare_notin(mock_config):
+    detail = plugin.pytest_assertrepr_compare(
+        mock_config, 'not in', 'foo', 'aaafoobbb')[1:]
     assert detail == ["'foo' is contained here:", '  aaafoobbb', '?    +++']
 
 @needsnewassert
