@@ -1,0 +1,59 @@
+pytest-2.3.5: bug fixes
+===========================================================================
+
+pytest-2.3.5 is a bug fix release for the pytest testing tool.
+See the changelog below for details.  And 
+
+     http://pytest.org/
+
+for general information.  To install or upgrade pytest:
+
+    pip install -U pytest # or
+    easy_install -U pytest
+
+best,
+holger krekel
+
+
+Changes between 2.3.4 and 2.3.5
+-----------------------------------
+
+- issue 259 - when assertion rewriting, be consistent with the default
+  source encoding of ASCII on Python 2
+
+- issue 251 - report a skip instead of ignoring classes with init
+
+- issue250 unicode/str mixes in parametrization names and values now works
+
+- issue257, assertion-triggered compilation of source ending in a
+  comment line doesn't blow up in python2.5 (fixed through py>=1.4.13)
+
+- fix --genscript option to generate standalone scripts that also
+  work with python3.3 (importer ordering)
+
+- issue171 - in assertion rewriting, show the repr of some
+  global variables
+
+- fix option help for "-k"
+
+- move long description of distribution into README.rst
+
+- improve docstring for metafunc.parametrize()
+
+- fix bug where using capsys with pytest.set_trace() in a test
+  function would break when looking at capsys.readouterr()
+
+- allow to specify prefixes starting with "_" when 
+  customizing python_functions test discovery. (thanks Graham Horler)
+
+- improve PYTEST_DEBUG tracing output by puting
+  extra data on a new lines with additional indent
+
+- ensure OutcomeExceptions like skip/fail have initialized exception attributes
+
+- issue 260 - don't use nose special setup on plain unittest cases
+
+- fix issue134 - print the collect errors that prevent running specified test items
+
+- fix issue266 - accept unicode in MarkEvaluator expressions
+

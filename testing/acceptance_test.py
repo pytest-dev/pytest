@@ -505,6 +505,8 @@ class TestDurations:
     source = """
         import time
         frag = 0.02
+        def test_something():
+            pass
         def test_2():
             time.sleep(frag*5)
         def test_1():
