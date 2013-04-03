@@ -165,7 +165,7 @@ this acts as if you would call "py.test" from the command line.
 It will not raise ``SystemExit`` but return the exitcode instead.
 You can pass in options and arguments::
 
-    pytest.main(['x', 'mytestdir'])
+    pytest.main(['-x', 'mytestdir'])
 
 or pass in a string::
 

@@ -276,7 +276,7 @@ Python コードから直接 ``py.test`` を呼び出せます::
 
 これはコマンドラインから "py.test" を呼び出すように動作します。 ``SystemExit`` を発生させない代わりに終了コードを返します。次のようにオプションと引数を渡します::
 
-    pytest.main(['x', 'mytestdir'])
+    pytest.main(['-x', 'mytestdir'])
 
 ..
     or pass in a string::
