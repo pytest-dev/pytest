@@ -298,7 +298,6 @@ Running it::
     >       assert 0, smtp.helo()
     E       AssertionError: (250, 'mail.python.org')
 
-.. _`request`: :py:class:`_pytest.python.FixtureRequest`
 
 .. _`fixture-parametrize`:
 
@@ -315,7 +314,7 @@ configured in multiple ways.
 Extending the previous example, we can flag the fixture to create two
 ``smtp`` fixture instances which will cause all tests using the fixture
 to run twice.  The fixture function gets access to each parameter
-through the special `request`_ object::
+through the special :py:class:`request <FixtureRequest>` object::
 
     # content of conftest.py
     import pytest
