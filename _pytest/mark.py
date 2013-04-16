@@ -7,8 +7,8 @@ def pytest_namespace():
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group._addoption('-k',
-        action="store", dest="keyword", default='', metavar="KEYWORDEXPR",
-        help="only run tests which match the given expression. "
+        action="store", dest="keyword", default='', metavar="EXPRESSION",
+        help="only run tests which match the given substring expression. "
              "An expression is a python evaluatable expression "
              "where all names are substring-matched against test names "
              "and keywords.  Example: -k 'test_method or test_other' "
