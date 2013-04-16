@@ -1,6 +1,9 @@
 Changes between 2.3.4 and 2.3.5dev
 -----------------------------------
 
+- put captured stdout/stderr into junitxml output even for passing tests
+  (thanks Adam Goucher)
+
 - Issue 265 - integrate nose setup/teardown with setupstate
   so it doesnt try to teardown if it did not setup
 
