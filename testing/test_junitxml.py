@@ -282,12 +282,34 @@ class TestPython:
         if not sys.platform.startswith("java"):
             assert "hx" in fnode.toxml()
 
+    def test_pass_captures_stdout(self, testdir):
+        testdir.makepyfile("""
+            def test_pass():
+                print('hello-stdout')
+        """)
+        result, dom = runandparse(testdir)
+        node = dom.getElementsByTagName("testsuite")[0]
+        pnode = node.getElementsByTagName("testcase")[0]
+        systemout = pnode.getElementsByTagName("system-out")[0]
+        assert "hello-stdout" in systemout.toxml()
+
+    def test_pass_captures_stderr(self, testdir):
+        testdir.makepyfile("""
+            import sys
+            def test_pass():
+                sys.stderr.write('hello-stderr')
+        """)
+        result, dom = runandparse(testdir)
+        node = dom.getElementsByTagName("testsuite")[0]
+        pnode = node.getElementsByTagName("testcase")[0]
+        systemout = pnode.getElementsByTagName("system-err")[0]
+        assert "hello-stderr" in systemout.toxml()
+
 def test_mangle_testnames():
     from _pytest.junitxml import mangle_testnames
     names = ["a/pything.py", "Class", "()", "method"]
     newnames = mangle_testnames(names)
     assert newnames == ["a.pything", "Class", "method"]
-
 
 def test_dont_configure_on_slaves(tmpdir):
     gotten = []

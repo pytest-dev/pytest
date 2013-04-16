@@ -173,8 +173,7 @@ class CaptureManager:
         if funcarg_outerr is not None:
             outerr = (outerr[0] + funcarg_outerr[0],
                       outerr[1] + funcarg_outerr[1])
-        if not rep.passed:
-            addouterr(rep, outerr)
+        addouterr(rep, outerr)
         if not rep.passed or rep.when == "teardown":
             outerr = ('', '')
         item.outerr = outerr
