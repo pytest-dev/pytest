@@ -107,11 +107,20 @@ class LogXML(object):
             time=getattr(report, 'duration', 0)
         ))
 
+    def _write_captured_output(self, report):
+        sec = dict(report.sections)
+        for name in ('out', 'err'):
+            content = sec.get("Captured std%s" % name)
+            if content:
+                tag = getattr(Junit, 'system-'+name)
+                self.append(tag(bin_xml_escape(content)))
+
     def append(self, obj):
         self.tests[-1].append(obj)
 
     def append_pass(self, report):
         self.passed += 1
+        self._write_captured_output(report)
 
     def append_failure(self, report):
         #msg = str(report.longrepr.reprtraceback.extraline)
@@ -120,16 +129,11 @@ class LogXML(object):
                 Junit.skipped(message="xfail-marked test passes unexpectedly"))
             self.skipped += 1
         else:
-            sec = dict(report.sections)
             fail = Junit.failure(message="test failure")
             fail.append(str(report.longrepr))
             self.append(fail)
-            for name in ('out', 'err'):
-                content = sec.get("Captured std%s" % name)
-                if content:
-                    tag = getattr(Junit, 'system-'+name)
-                    self.append(tag(bin_xml_escape(content)))
             self.failed += 1
+        self._write_captured_output(report)
 
     def append_collect_failure(self, report):
         #msg = str(report.longrepr.reprtraceback.extraline)
@@ -162,6 +166,7 @@ class LogXML(object):
                               message=skipreason
                 ))
         self.skipped += 1
+        self._write_captured_output(report)
 
     def pytest_runtest_logreport(self, report):
         if report.passed:
