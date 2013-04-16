@@ -86,15 +86,20 @@ def _postmortem_traceback(excinfo):
         return excinfo._excinfo[2]
 
 
+def _find_last_non_hidden_frame(stack):
+    i = max(0, len(stack) - 1)
+    while i and stack[i][0].f_locals.get("__tracebackhide__", False):
+        i -= 1
+    return i
+
+
 def post_mortem(t):
     pdb = py.std.pdb
     class Pdb(pdb.Pdb):
         def get_stack(self, f, t):
             stack, i = pdb.Pdb.get_stack(self, f, t)
             if f is None:
-                i = max(0, len(stack) - 1)
-                while i and stack[i][0].f_locals.get("__tracebackhide__", False):
-                    i-=1
+                i = _find_last_non_hidden_frame(stack)
             return stack, i
     p = Pdb()
     p.reset()
