@@ -196,27 +196,20 @@ class Conftest(object):
                     self.getconftestmodules(x)
 
     def getconftestmodules(self, path):
-        """ return a list of imported conftest modules for the given path.  """
         try:
             clist = self._path2confmods[path]
         except KeyError:
             if path is None:
-                raise ValueError("missing default confest.")
-            dp = path.dirpath()
+                raise ValueError("missing default conftest.")
             clist = []
-            if dp != path:
-                cutdir = self._confcutdir
-                if cutdir and path != cutdir and not path.relto(cutdir):
-                    pass
-                else:
-                    conftestpath = path.join("conftest.py")
-                    if conftestpath.check(file=1):
-                        clist.append(self.importconftest(conftestpath))
-                clist[:0] = self.getconftestmodules(dp)
+            for parent in path.parts():
+                if self._confcutdir and self._confcutdir.relto(parent):
+                    continue
+                conftestpath = parent.join("conftest.py")
+                if conftestpath.check(file=1):
+                    clist.append(self.importconftest(conftestpath))
             self._path2confmods[path] = clist
-        # be defensive: avoid changes from caller side to
-        # affect us by always returning a copy of the actual list
-        return clist[:]
+        return clist
 
     def rget(self, name, path=None):
         mod, value = self.rget_with_confmod(name, path)

@@ -102,6 +102,77 @@ class TestFillFixtures:
             "*2 passed*"
         ])
 
+    def test_extend_fixture_module_class(self, testdir):
+        testfile = testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture
+            def spam():
+                return 'spam'
+
+            class TestSpam:
+
+                 @pytest.fixture
+                 def spam(self, spam):
+                     return spam * 2
+
+                 def test_spam(self, spam):
+                     assert spam == 'spamspam'
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*1 passed*"])
+        result = testdir.runpytest(testfile)
+        result.stdout.fnmatch_lines(["*1 passed*"])
+
+    def test_extend_fixture_conftest_module(self, testdir):
+        testdir.makeconftest("""
+            import pytest
+
+            @pytest.fixture
+            def spam():
+                return 'spam'
+        """)
+        testfile = testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture
+            def spam(spam):
+                return spam * 2
+
+            def test_spam(spam):
+                assert spam == 'spamspam'
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*1 passed*"])
+        result = testdir.runpytest(testfile)
+        result.stdout.fnmatch_lines(["*1 passed*"])
+
+    def test_extend_fixture_conftest_conftest(self, testdir):
+        testdir.makeconftest("""
+            import pytest
+
+            @pytest.fixture
+            def spam():
+                return 'spam'
+        """)
+        pkg = testdir.mkpydir("pkg")
+        pkg.join("conftest.py").write(py.code.Source("""
+            import pytest
+
+            @pytest.fixture
+            def spam(spam):
+                return spam * 2
+        """))
+        testfile = pkg.join("test_spam.py")
+        testfile.write(py.code.Source("""
+            def test_spam(spam):
+                assert spam == "spamspam"
+        """))
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*1 passed*"])
+        result = testdir.runpytest(testfile)
+        result.stdout.fnmatch_lines(["*1 passed*"])
+
     def test_funcarg_lookup_error(self, testdir):
         p = testdir.makepyfile("""
             def test_lookup_error(unknown):

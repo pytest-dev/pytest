@@ -204,3 +204,15 @@ def test_conftest_confcutdir(testdir):
     """))
     result = testdir.runpytest("-h", "--confcutdir=%s" % x, x)
     result.stdout.fnmatch_lines(["*--xyz*"])
+
+def test_conftest_import_order(testdir, monkeypatch):
+    ct1 = testdir.makeconftest("")
+    sub = testdir.mkdir("sub")
+    ct2 = sub.join("conftest.py")
+    ct2.write("")
+    def impct(p):
+        print p
+        return p
+    conftest = Conftest()
+    monkeypatch.setattr(conftest, 'importconftest', impct)
+    assert conftest.getconftestmodules(sub) == [ct1, ct2]
