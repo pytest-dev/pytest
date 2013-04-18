@@ -61,20 +61,26 @@ class PdbInvoke:
             return rep
         if hasattr(rep, "wasxfail"):
             return rep
-        # we assume that the above execute() suspended capturing
-        # XXX we re-use the TerminalReporter's terminalwriter
-        # because this seems to avoid some encoding related troubles
-        # for not completely clear reasons.
-        tw = item.config.pluginmanager.getplugin("terminalreporter")._tw
-        tw.line()
-        tw.sep(">", "traceback")
-        rep.toterminal(tw)
-        tw.sep(">", "entering PDB")
+        return _enter_pdb(item, call.excinfo, rep)
 
-        tb = _postmortem_traceback(call.excinfo)
-        post_mortem(tb)
-        rep._pdbshown = True
-        return rep
+
+
+
+def _enter_pdb(item, excinfo, rep):
+    # we assume that the above execute() suspended capturing
+    # XXX we re-use the TerminalReporter's terminalwriter
+    # because this seems to avoid some encoding related troubles
+    # for not completely clear reasons.
+    tw = item.config.pluginmanager.getplugin("terminalreporter")._tw
+    tw.line()
+    tw.sep(">", "traceback")
+    rep.toterminal(tw)
+    tw.sep(">", "entering PDB")
+
+    tb = _postmortem_traceback(excinfo)
+    post_mortem(tb)
+    rep._pdbshown = True
+    return rep
 
 
 def _postmortem_traceback(excinfo):
