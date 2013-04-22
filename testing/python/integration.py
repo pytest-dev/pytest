@@ -117,3 +117,35 @@ class TestMockDecoration:
         """)
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
+
+
+class TestReRunTests:
+    def test_rerun(self, testdir):
+        testdir.makeconftest("""
+            from _pytest.runner import runtestprotocol
+            def pytest_runtest_protocol(item, nextitem):
+                runtestprotocol(item, log=False, nextitem=nextitem)
+                runtestprotocol(item, log=True, nextitem=nextitem)
+        """)
+        testdir.makepyfile("""
+            import pytest
+            count = 0
+            req = None
+            @pytest.fixture
+            def fix(request):
+                global count, req
+                assert request != req
+                req = request
+                print ("fix count %s" % count)
+                count += 1
+            def test_fix(fix):
+                pass
+        """)
+        result = testdir.runpytest("-s")
+        result.stdout.fnmatch_lines("""
+            *fix count 0*
+            *fix count 1*
+        """)
+        result.stdout.fnmatch_lines("""
+            *2 passed*
+        """)

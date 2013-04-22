@@ -16,6 +16,7 @@ def test_funcarg(testdir):
     # pytest_unconfigure has deleted the TempdirHandler already
     config = item.config
     config._tmpdirhandler = TempdirHandler(config)
+    item._initrequest()
     p = tmpdir(item._request)
     assert p.check()
     bn = p.basename.strip("0123456789")

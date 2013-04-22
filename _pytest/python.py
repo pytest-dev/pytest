@@ -917,20 +917,25 @@ class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
                                                    self.cls,
                                                    funcargs=not isyield)
         self.fixturenames = fi.names_closure
-        if isyield:
-            assert not callspec, (
+        if callspec is not None:
+            self.callspec = callspec
+        self._initrequest()
+
+    def _initrequest(self):
+        if self._isyieldedfunction():
+            assert not hasattr(self, "callspec"), (
                 "yielded functions (deprecated) cannot have funcargs")
             self.funcargs = {}
         else:
-            if callspec is not None:
-                self.callspec = callspec
-                self.funcargs = callspec.funcargs or {}
+            if hasattr(self, "callspec"):
+                callspec = self.callspec
+                self.funcargs = callspec.funcargs.copy()
                 self._genid = callspec.id
                 if hasattr(callspec, "param"):
                     self.param = callspec.param
             else:
                 self.funcargs = {}
-        self._request = req = FixtureRequest(self)
+        self._request = FixtureRequest(self)
 
     @property
     def function(self):
