@@ -25,3 +25,4 @@ env/
 .tox
 .cache
 .coverage
+.ropeproject
