@@ -94,7 +94,7 @@ def assertrepr_compare(config, op, left, right):
     issequence = lambda x: isinstance(x, (list, tuple))
     istext = lambda x: isinstance(x, basestring)
     isdict = lambda x: isinstance(x, dict)
-    isset = lambda x: isinstance(x, set)
+    isset = lambda x: isinstance(x, (set, frozenset))
 
     verbose = config.getoption('verbose')
     explanation = None
