@@ -177,7 +177,8 @@ def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
         if collector.classnamefilter(name):
             Class = collector._getcustomclass("Class")
             return Class(name, parent=collector)
-    elif collector.funcnamefilter(name) and hasattr(obj, '__call__'):
+    elif collector.funcnamefilter(name) and hasattr(obj, '__call__') and \
+        getfixturemarker(obj) is None:
         if is_generator(obj):
             return Generator(name, parent=collector)
         else:
@@ -1566,15 +1567,7 @@ class FixtureManager:
                 continue
             # fixture functions have a pytest_funcarg__ prefix (pre-2.3 style)
             # or are "@pytest.fixture" marked
-            try:
-                marker = obj._pytestfixturefunction
-            except KeyboardInterrupt:
-                raise
-            except Exception:
-                # some objects raise errors like request (from flask import request)
-                # we don't expect them to be fixture functions
-                marker = None
-
+            marker = getfixturemarker(obj)
             if marker is None:
                 if not name.startswith(self._argprefix):
                     continue
@@ -1771,6 +1764,18 @@ def getfuncargparams(item, ignore, scopenum, cache):
 
 def xunitsetup(obj, name):
     meth = getattr(obj, name, None)
-    if meth is not None:
-        if not hasattr(meth, "_pytestfixturefunction"):
-            return meth
+    if getfixturemarker(meth) is None:
+        return meth
+
+def getfixturemarker(obj):
+    """ return fixturemarker or None if it doesn't exist or raised
+    exceptions."""
+    try:
+        return getattr(obj, "_pytestfixturefunction", None)
+    except KeyboardInterrupt:
+        raise
+    except Exception:
+        # some objects raise errors like request (from flask import request)
+        # we don't expect them to be fixture functions
+        return None
+

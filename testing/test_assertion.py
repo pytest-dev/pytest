@@ -101,7 +101,7 @@ class TestAssert_reprcompare:
 
     def test_frozenzet(self):
         expl = callequal(frozenset([0, 1]), set([0, 2]))
-        print expl
+        print (expl)
         assert len(expl) > 1
 
     def test_list_tuples(self):

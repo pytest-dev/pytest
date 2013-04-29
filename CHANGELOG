@@ -1,8 +1,10 @@
 Changes between 2.3.4 and 2.3.5dev
 -----------------------------------
 
+- never consider a fixture function for test function collection
+
 - allow re-running of test items / helps to fix pytest-reruntests plugin
-  and also should help to keep less fixture/resource references alive
+  and also help to keep less fixture/resource references alive
 
 - put captured stdout/stderr into junitxml output even for passing tests
   (thanks Adam Goucher)

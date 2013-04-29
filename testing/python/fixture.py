@@ -1641,6 +1641,20 @@ class TestFixtureMarker:
         reprec = testdir.inline_run("-v")
         reprec.assertoutcome(passed=6)
 
+    def test_fixture_marked_function_not_collected_as_test(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture
+            def test_app():
+                return 1
+
+            def test_something(test_app):
+                assert test_app == 1
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
+
 class TestRequestScopeAccess:
     pytestmark = pytest.mark.parametrize(("scope", "ok", "error"),[
         ["session", "", "fspath class function module"],
