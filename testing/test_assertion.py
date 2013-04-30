@@ -320,3 +320,17 @@ def test_warn_missing(testdir):
     result.stderr.fnmatch_lines([
         "*WARNING*assert statements are not executed*",
     ])
+
+def test_recursion_source_decode(testdir):
+    testdir.makepyfile("""
+        def test_something():
+            pass
+    """)
+    testdir.makeini("""
+        [pytest]
+        python_files = *.py
+    """)
+    result = testdir.runpytest("--collectonly")
+    result.stdout.fnmatch_lines("""
+        <Module*>
+    """)

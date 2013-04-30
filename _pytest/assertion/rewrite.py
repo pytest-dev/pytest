@@ -215,11 +215,17 @@ def _rewrite_test(state, fn):
         if (not source.startswith(BOM_UTF8) and
             (not cookie_re.match(source[0:end1]) or
             not cookie_re.match(source[end1:end2]))):
+            if hasattr(state, "_indecode"):
+                return None  # encodings imported us again, we don't rewrite
+            state._indecode = True
             try:
-                source.decode("ascii")
-            except UnicodeDecodeError:
-                # Let it fail in real import.
-                return None
+                try:
+                    source.decode("ascii")
+                except UnicodeDecodeError:
+                    # Let it fail in real import.
+                    return None
+            finally:
+                del state._indecode
     # On Python versions which are not 2.7 and less than or equal to 3.1, the
     # parser expects *nix newlines.
     if REWRITE_NEWLINES:
