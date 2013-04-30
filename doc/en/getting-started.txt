@@ -23,7 +23,7 @@ Installation options::
 To check your installation has installed the correct version::
 
     $ py.test --version
-    This is py.test version 2.3.4, imported from /home/hpk/p/pytest/.tox/regen/lib/python2.7/site-packages/pytest.pyc
+    This is py.test version 2.3.5, imported from /home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/pytest.py
 
 If you get an error checkout :ref:`installation issues`.
 
@@ -45,7 +45,7 @@ That's it. You can execute the test function now::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.4
+    platform linux2 -- Python 2.7.3 -- pytest-2.3.5
     collected 1 items
     
     test_sample.py F
@@ -122,7 +122,7 @@ run the module by passing its filename::
     ================================= FAILURES =================================
     ____________________________ TestClass.test_two ____________________________
     
-    self = <test_class.TestClass instance at 0x2418e18>
+    self = <test_class.TestClass instance at 0x315b488>
     
         def test_two(self):
             x = "hello"
@@ -157,7 +157,7 @@ before performing the test function call.  Let's just run it::
     ================================= FAILURES =================================
     _____________________________ test_needsfiles ______________________________
     
-    tmpdir = local('/tmp/pytest-539/test_needsfiles0')
+    tmpdir = local('/tmp/pytest-322/test_needsfiles0')
     
         def test_needsfiles(tmpdir):
             print tmpdir
@@ -166,7 +166,7 @@ before performing the test function call.  Let's just run it::
     
     test_tmpdir.py:3: AssertionError
     ----------------------------- Captured stdout ------------------------------
-    /tmp/pytest-539/test_needsfiles0
+    /tmp/pytest-322/test_needsfiles0
 
 Before the test runs, a unique-per-test-invocation temporary directory
 was created.  More info at :ref:`tmpdir handling`.

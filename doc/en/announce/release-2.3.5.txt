@@ -1,22 +1,60 @@
-pytest-2.3.5: bug fixes
+pytest-2.3.5: bug fixes and little improvements
 ===========================================================================
 
-pytest-2.3.5 is a bug fix release for the pytest testing tool.
-See the changelog below for details.  And 
+pytest-2.3.5 is a maintenance release with many bug fixes and little
+improvements.  See the changelog below for details.  No backward
+compatibility issues are foreseen and all plugins which worked with the
+prior version are expected to work unmodified.   Speaking of which, a
+few interesting new plugins saw the light last month:
+
+- pytest-instafail: show failure information while tests are running
+- pytest-qt: testing of GUI applications written with QT/Pyside
+- pytest-xprocess: managing external processes across test runs
+- pytest-random: randomize test ordering
+
+And several others like pytest-django saw maintenance releases.
+For a more complete list, check out 
+https://pypi.python.org/pypi?%3Aaction=search&term=pytest&submit=search.
+
+For general information see:
 
      http://pytest.org/
 
-for general information.  To install or upgrade pytest:
+To install or upgrade pytest:
 
     pip install -U pytest # or
     easy_install -U pytest
 
-best,
+Particular thanks to Floris, Ronny, Benjamin and the many bug reporters
+and fix providers.
+
+may the fixtures be with you,
 holger krekel
 
 
 Changes between 2.3.4 and 2.3.5
 -----------------------------------
+
+- never consider a fixture function for test function collection
+
+- allow re-running of test items / helps to fix pytest-reruntests plugin
+  and also help to keep less fixture/resource references alive
+
+- put captured stdout/stderr into junitxml output even for passing tests
+  (thanks Adam Goucher)
+
+- Issue 265 - integrate nose setup/teardown with setupstate
+  so it doesnt try to teardown if it did not setup
+
+- issue 271 - dont write junitxml on slave nodes
+
+- Issue 274 - dont try to show full doctest example
+  when doctest does not know the example location
+
+- issue 280 - disable assertion rewriting on buggy CPython 2.6.0
+
+- inject "getfixture()" helper to retrieve fixtures from doctests,
+  thanks Andreas Zeidler
 
 - issue 259 - when assertion rewriting, be consistent with the default
   source encoding of ASCII on Python 2
@@ -26,7 +64,7 @@ Changes between 2.3.4 and 2.3.5
 - issue250 unicode/str mixes in parametrization names and values now works
 
 - issue257, assertion-triggered compilation of source ending in a
-  comment line doesn't blow up in python2.5 (fixed through py>=1.4.13)
+  comment line doesn't blow up in python2.5 (fixed through py>=1.4.13.dev6)
 
 - fix --genscript option to generate standalone scripts that also
   work with python3.3 (importer ordering)
