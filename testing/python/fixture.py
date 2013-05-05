@@ -1795,3 +1795,101 @@ class TestShowFixtures:
             *hello world*
         """)
 
+
+
+class TestContextManagerFixtureFuncs:
+    def test_simple(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture
+            def arg1():
+                print ("setup")
+                yield 1
+                print ("teardown")
+            def test_1(arg1):
+                print ("test1 %s" % arg1)
+            def test_2(arg1):
+                print ("test2 %s" % arg1)
+                assert 0
+        """)
+        result = testdir.runpytest("-s")
+        result.stdout.fnmatch_lines("""
+            setup
+            test1 1
+            teardown
+            setup
+            test2 1
+            teardown
+        """)
+
+    def test_scoped(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture(scope="module")
+            def arg1():
+                print ("setup")
+                yield 1
+                print ("teardown")
+            def test_1(arg1):
+                print ("test1 %s" % arg1)
+            def test_2(arg1):
+                print ("test2 %s" % arg1)
+        """)
+        result = testdir.runpytest("-s")
+        result.stdout.fnmatch_lines("""
+            setup
+            test1 1
+            test2 1
+            teardown
+        """)
+
+    def test_setup_exception(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture(scope="module")
+            def arg1():
+                pytest.fail("setup")
+                yield 1
+            def test_1(arg1):
+                pass
+        """)
+        result = testdir.runpytest("-s")
+        result.stdout.fnmatch_lines("""
+            *pytest.fail*setup*
+            *1 error*
+        """)
+
+    def test_teardown_exception(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture(scope="module")
+            def arg1():
+                yield 1
+                pytest.fail("teardown")
+            def test_1(arg1):
+                pass
+        """)
+        result = testdir.runpytest("-s")
+        result.stdout.fnmatch_lines("""
+            *pytest.fail*teardown*
+            *1 passed*1 error*
+        """)
+
+
+    def test_yields_more_than_one(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture(scope="module")
+            def arg1():
+                yield 1
+                yield 2
+            def test_1(arg1):
+                pass
+        """)
+        result = testdir.runpytest("-s")
+        result.stdout.fnmatch_lines("""
+            *fixture function*
+            *test_yields*:2*
+        """)
+
+

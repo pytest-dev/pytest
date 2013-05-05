@@ -1,4 +1,12 @@
-Changes between 2.3.4 and 2.3.5dev
+Changes between 2.3.5 and DEV
+-----------------------------------
+
+- (experimental) allow fixture functions to be 
+  implemented as context managers
+
+
+
+Changes between 2.3.4 and 2.3.5
 -----------------------------------
 
 - never consider a fixture function for test function collection

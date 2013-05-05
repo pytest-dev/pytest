@@ -1613,6 +1613,29 @@ class FixtureManager:
             except ValueError:
                 pass
 
+def call_fixture_func(fixturefunc, request, kwargs):
+    if is_generator(fixturefunc):
+        iter = fixturefunc(**kwargs)
+        next = getattr(iter, "__next__", None)
+        if next is None:
+            next = getattr(iter, "next")
+        res = next()
+        def teardown():
+            try:
+                next()
+            except StopIteration:
+                pass
+            else:
+                fs, lineno = getfslineno(fixturefunc)
+                location = "%s:%s" % (fs, lineno+1)
+                pytest.fail(
+                    "fixture function %s has more than one 'yield': \n%s" %
+                            (fixturefunc.__name__, location), pytrace=False)
+        request.addfinalizer(teardown)
+    else:
+        res = fixturefunc(**kwargs)
+    return res
+
 class FixtureDef:
     """ A container for a factory definition. """
     def __init__(self, fixturemanager, baseid, argname, func, scope, params,
@@ -1663,7 +1686,7 @@ class FixtureDef:
                         fixturefunc = fixturefunc.__get__(request.instance)
             except AttributeError:
                 pass
-            result = fixturefunc(**kwargs)
+            result = call_fixture_func(fixturefunc, request, kwargs)
         assert not hasattr(self, "cached_result")
         self.cached_result = result
         return result
