@@ -198,7 +198,7 @@ def pytest_runtest_makereport(item, call):
             if call.when == "call":
                 longrepr = item.repr_failure(excinfo)
             else: # exception in setup or teardown
-                longrepr = item._repr_failure_py(excinfo)
+                longrepr = item._repr_failure_py(excinfo,style=item.config.option.tbstyle)
     return TestReport(item.nodeid, item.location,
                       keywords, outcome, longrepr, when,
                       duration=duration)
