@@ -21,7 +21,7 @@ def main():
         entry_points= make_entry_points(),
         cmdclass = {'test': PyTest},
         # the following should be enabled for release
-        install_requires=['py>=1.4.13dev6'],
+        install_requires=['py>=1.4.14'],
         classifiers=['Development Status :: 6 - Mature',
                      'Intended Audience :: Developers',
                      'License :: OSI Approved :: MIT License',

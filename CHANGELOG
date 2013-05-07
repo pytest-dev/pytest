@@ -2,8 +2,12 @@ Changes between 2.3.5 and DEV
 -----------------------------------
 
 - (experimental) allow fixture functions to be 
-  implemented as context managers
+  implemented as context managers.  Thanks Andreas Pelme,
+  ladimir Keleshev.
 
+- fix issue245 by depending on the released py-1.4.14
+  which fixes py.io.dupfile to work with files with no
+  mode. Thanks Jason R. Coombs.
 
 
 Changes between 2.3.4 and 2.3.5
