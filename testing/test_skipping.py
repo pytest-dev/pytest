@@ -569,7 +569,6 @@ def test_default_markers(testdir):
         "*xfail(*condition, reason=None, run=True)*expected failure*",
     ])
 
-
 def test_xfail_test_setup_exception(testdir):
     testdir.makeconftest("""
             def pytest_runtest_setup():
@@ -610,3 +609,44 @@ def test_imperativeskip_on_xfail_test(testdir):
     """)
 
 
+class TestBooleanCondition:
+    def test_skipif(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.skipif(True, reason="True123")
+            def test_func1():
+                pass
+            @pytest.mark.skipif(False, reason="True123")
+            def test_func2():
+                pass
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines("""
+            *1 passed*1 skipped*
+        """)
+
+    def test_skipif_noreason(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.skipif(True)
+            def test_func():
+                pass
+        """)
+        result = testdir.runpytest("-rs")
+        result.stdout.fnmatch_lines("""
+            *1 error*
+        """)
+
+    def test_xfail(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.xfail(True, reason="True123")
+            def test_func():
+                assert 0
+        """)
+        result = testdir.runpytest("-rxs")
+        result.stdout.fnmatch_lines("""
+            *XFAIL*
+            *True123*
+            *1 xfail*
+        """)

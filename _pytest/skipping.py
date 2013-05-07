@@ -89,7 +89,11 @@ class MarkEvaluator:
                     if isinstance(expr, py.builtin._basestring):
                         result = cached_eval(self.item.config, expr, d)
                     else:
-                        pytest.fail("expression is not a string")
+                        if self.get("reason") is None:
+                            # XXX better be checked at collection time
+                            pytest.fail("you need to specify reason=STRING "
+                                        "when using booleans as conditions.")
+                        result = bool(expr)
                     if result:
                         self.result = True
                         self.expr = expr

@@ -1,9 +1,15 @@
-Changes between 2.3.5 and DEV
+Changes between 2.3.5 and 2.4.DEV
 -----------------------------------
 
 - (experimental) allow fixture functions to be 
   implemented as context managers.  Thanks Andreas Pelme,
-  ladimir Keleshev.
+  Vladimir Keleshev.
+
+- (experimental) allow boolean expression directly with skipif/xfail
+  if a "reason" is also specified.  Rework skipping documentation
+  to recommend "condition as booleans" because it prevents surprises
+  when importing markers between modules.  Specifying conditions
+  as strings will remain fully supported.
 
 - fix issue245 by depending on the released py-1.4.14
   which fixes py.io.dupfile to work with files with no
