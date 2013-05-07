@@ -7,14 +7,14 @@ pytest fixtures: explicit, modular, scalable
 
 .. currentmodule:: _pytest.python
 
-.. versionadded:: 2.0/2.3
+.. versionadded:: 2.0/2.3/2.4
 
 .. _`xUnit`: http://en.wikipedia.org/wiki/XUnit
-.. _`general purpose of test fixtures`: http://en.wikipedia.org/wiki/Test_fixture#Software
+.. _`purpose of test fixtures`: http://en.wikipedia.org/wiki/Test_fixture#Software
 .. _`Dependency injection`: http://en.wikipedia.org/wiki/Dependency_injection#Definition
 
-The `general purpose of test fixtures`_ is to provide a fixed baseline
-upon which tests can reliably and repeatedly execute.   pytest-2.3 fixtures
+The `purpose of test fixtures`_ is to provide a fixed baseline
+upon which tests can reliably and repeatedly execute.   pytest fixtures
 offer dramatic improvements over the classic xUnit style of setup/teardown 
 functions:
 
@@ -22,8 +22,7 @@ functions:
   from test functions, modules, classes or whole projects.
 
 * fixtures are implemented in a modular manner, as each fixture name
-  triggers a *fixture function* which can itself easily use other 
-  fixtures.
+  triggers a *fixture function* which can itself use other fixtures.
 
 * fixture management scales from simple unit to complex
   functional testing, allowing to parametrize fixtures and tests according
@@ -129,10 +128,10 @@ Funcargs a prime example of dependency injection
 
 When injecting fixtures to test functions, pytest-2.0 introduced the
 term "funcargs" or "funcarg mechanism" which continues to be present
-also in pytest-2.3 docs.  It now refers to the specific case of injecting
+also in docs today.  It now refers to the specific case of injecting
 fixture values as arguments to test functions.  With pytest-2.3 there are
-more possibilities to use fixtures but "funcargs" probably will remain
-as the main way of dealing with fixtures.
+more possibilities to use fixtures but "funcargs" remain as the main way
+as they allow to directly state the dependencies of a test function.
 
 As the following examples show in more detail, funcargs allow test
 functions to easily receive and work against specific pre-initialized
@@ -154,10 +153,10 @@ can add a ``scope='module'`` parameter to the
 :py:func:`@pytest.fixture <_pytest.python.fixture>` invocation
 to cause the decorated ``smtp`` fixture function to only be invoked once 
 per test module.  Multiple test functions in a test module will thus
-each receive the same ``smtp`` fixture instance.  The next example also
-extracts the fixture function into a separate ``conftest.py`` file so
-that all tests in test modules in the directory can access the fixture
-function::
+each receive the same ``smtp`` fixture instance.  The next example puts
+the fixture function into a separate ``conftest.py`` file so
+that tests from multiple test modules in the directory can 
+access the fixture function::
 
     # content of conftest.py
     import pytest
@@ -233,24 +232,91 @@ instance, you can simply declare it::
     def smtp(...):
         # the returned fixture value will be shared for 
         # all tests needing it
+
+.. _`contextfixtures`:
         
+fixture finalization / teardowns 
+-------------------------------------------------------------
+
+pytest supports two styles of fixture finalization:
+
+- (new in pytest-2.4) by writing a contextmanager fixture
+  generator where a fixture value is "yielded" and the remainder 
+  of the function serves as the teardown code.  This integrates
+  very well with existing context managers.
+
+- by making a fixture function accept a ``request`` argument
+  with which it can call ``request.addfinalizer(teardownfunction)`` 
+  to register a teardown callback function.
+
+Both methods are strictly equivalent from pytest's view and will
+remain supported in the future.
+
+Because a number of people prefer the new contextmanager style 
+we describe it first::
+
+    # content of test_ctxfixture.py
+    
+    import smtplib
+    import pytest
+
+    @pytest.fixture(scope="module")
+    def smtp():
+        smtp = smtplib.SMTP("merlinux.eu")
+        yield smtp  # provide the fixture value
+        print ("teardown smtp")
+        smtp.close()
+
+pytest detects that you are using a ``yield`` in your fixture function,
+turns it into a generator and:
+
+a) iterates once into it for producing the value
+b) iterates a second time for tearing the fixture down, expecting
+   a StopIteration (which is produced automatically from the Python 
+   runtime when the generator returns).
+
+.. note::
+
+    The teardown will execute independently of the status of test functions.
+    You do not need to write the teardown code into a ``try-finally`` clause
+    like you would usually do with ``contextlib.contextmanager`` decorated
+    functions.
+
+    If the fixture generator yields a second value pytest will report 
+    an error.  Yielding cannot be used for parametrization.  We'll describe 
+    ways to implement parametrization further below.
+
+Prior to pytest-2.4 you always needed to register a finalizer by accepting
+a ``request`` object into your fixture function and calling
+``request.addfinalizer`` with a teardown function::
+
+    import smtplib
+    import pytest
+
+    @pytest.fixture(scope="module")
+    def smtp(request):
+        smtp = smtplib.SMTP("merlinux.eu")
+        def fin():
+            print ("teardown smtp")
+            smtp.close()
+        return smtp  # provide the fixture value
+
+This method of registering a finalizer reads more indirect
+than the new contextmanager style syntax because ``fin`` 
+is a callback function.  
+
+
 .. _`request-context`:
 
 Fixtures can interact with the requesting test context
 -------------------------------------------------------------
 
-Fixture functions can themselves use other fixtures by naming
-them as an input argument just like test functions do, see 
-:ref:`interdependent fixtures`.  Moreover, pytest 
-provides a builtin :py:class:`request <FixtureRequest>` object,
+pytest provides a builtin :py:class:`request <FixtureRequest>` object,
 which fixture functions can use to introspect the function, class or module
-for which they are invoked or to register finalizing (cleanup)
-functions which are called when the last test finished execution.  
+for which they are invoked.
 
 Further extending the previous ``smtp`` fixture example, let's  
-read an optional server URL from the module namespace and register 
-a finalizer that closes the smtp connection after the last
-test in a module finished execution::
+read an optional server URL from the module namespace::
 
     # content of conftest.py
     import pytest
@@ -260,26 +326,25 @@ test in a module finished execution::
     def smtp(request):
         server = getattr(request.module, "smtpserver", "merlinux.eu")
         smtp = smtplib.SMTP(server)
-        def fin():
-            print ("finalizing %s" % smtp)
-            smtp.close()
-        request.addfinalizer(fin)
-        return smtp
+        yield smtp  # provide the fixture 
+        print ("finalizing %s" % smtp)
+        smtp.close()
 
-The registered ``fin`` function will be called when the last test
-using it has executed::
+The finalizing part after the ``yield smtp`` statement will execute
+when the last test using the ``smtp`` fixture has executed::
 
     $ py.test -s -q --tb=no
     FF
     finalizing <smtplib.SMTP instance at 0x1e10248>
 
 We see that the ``smtp`` instance is finalized after the two
-tests using it tests executed.  If we had specified ``scope='function'`` 
-then fixture setup and cleanup would occur around each single test. 
-Note that either case the test module itself does not need to change!
+tests which use it finished executin.  If we rather specify 
+``scope='function'`` then fixture setup and cleanup occurs 
+around each single test.  Note that in either case the test 
+module itself does not need to change!  
 
 Let's quickly create another test module that actually sets the
-server URL and has a test to verify the fixture picks it up::
+server URL in its module namespace::
     
     # content of test_anothersmtp.py
     
@@ -297,6 +362,10 @@ Running it::
     test_anothersmtp.py:5: in test_showhelo
     >       assert 0, smtp.helo()
     E       AssertionError: (250, 'mail.python.org')
+
+voila! The ``smtp`` fixture function picked up our mail server name
+from the module namespace.
+
 
 .. _`fixture-parametrize`:
 
@@ -323,11 +392,9 @@ through the special :py:class:`request <FixtureRequest>` object::
                     params=["merlinux.eu", "mail.python.org"])
     def smtp(request):
         smtp = smtplib.SMTP(request.param)
-        def fin():
-            print ("finalizing %s" % smtp)
-            smtp.close()
-        request.addfinalizer(fin)
-        return smtp
+        yield smtp
+        print ("finalizing %s" % smtp)
+        smtp.close()
 
 The main change is the declaration of ``params`` with 
 :py:func:`@pytest.fixture <_pytest.python.fixture>`, a list of values
@@ -467,10 +534,8 @@ to show the setup/teardown flow::
     def modarg(request):
         param = request.param
         print "create", param
-        def fin():
-            print "fin", param
-        request.addfinalizer(fin)
-        return param
+        yield param
+        print ("fin %s" % param)
 
     @pytest.fixture(scope="function", params=[1,2])
     def otherarg(request):
@@ -517,8 +582,8 @@ You can see that the parametrized module-scoped ``modarg`` resource caused
 an ordering of test execution that lead to the fewest possible "active" resources. The finalizer for the ``mod1`` parametrized resource was executed 
 before the ``mod2`` resource was setup.
 
-.. _`usefixtures`:
 
+.. _`usefixtures`:
 
 using fixtures from classes, modules or projects
 ----------------------------------------------------------------------

@@ -3,7 +3,7 @@ Changes between 2.3.5 and 2.4.DEV
 
 - (experimental) allow fixture functions to be 
   implemented as context managers.  Thanks Andreas Pelme,
-  Vladimir Keleshev.
+  Vladimir Keleshev. 
 
 - (experimental) allow boolean expression directly with skipif/xfail
   if a "reason" is also specified.  Rework skipping documentation
