@@ -665,3 +665,19 @@ def test_fdopen_kept_alive_issue124(testdir):
     result.stdout.fnmatch_lines([
         "*2 passed*"
     ])
+
+
+def test_tbstyle_native_setup_error(testdir):
+    p = testdir.makepyfile("""
+        import pytest
+        @pytest.fixture
+        def setup_error_fixture():
+            raise Exception("error in exception")
+            
+        def test_error_fixture(setup_error_fixture):
+            pass
+    """)
+    result = testdir.runpytest("--tb=native")
+    result.stdout.fnmatch_lines([
+            '*File *test_tbstyle_native_setup_error.py", line *, in setup_error_fixture*'                                 
+            ])
