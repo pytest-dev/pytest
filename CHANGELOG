@@ -15,6 +15,7 @@ Changes between 2.3.5 and 2.4.DEV
   which fixes py.io.dupfile to work with files with no
   mode. Thanks Jason R. Coombs.
 
+- honor --tb style for setup/teardown errors as well.
 
 Changes between 2.3.4 and 2.3.5
 -----------------------------------
