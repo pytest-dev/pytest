@@ -450,3 +450,16 @@ def test_logxml_changingdir(testdir):
     assert result.ret == 0
     assert testdir.tmpdir.join("a/x.xml").check()
 
+def test_escaped_parametrized_names_xml(testdir):
+    testdir.makepyfile("""
+        import pytest
+        @pytest.mark.parametrize('char', ["\\x00"])
+        def test_func(char):
+            assert char
+    """)
+    result, dom = runandparse(testdir)
+    assert result.ret == 0
+    node = dom.getElementsByTagName("testcase")[0]
+    assert_attr(node,
+        name="test_func[#x00]")
+
