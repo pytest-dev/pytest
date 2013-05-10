@@ -16,7 +16,7 @@ Changes between 2.3.5 and 2.4.DEV
   mode. Thanks Jason R. Coombs.
 
 - fix junitxml generation when test output contains control characters,
-  addressing issue267 
+  addressing issue267, thanks Jaap Broekhuizen 
 
 - honor --tb style for setup/teardown errors as well.  Thanks Maho.
 
