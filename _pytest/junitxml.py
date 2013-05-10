@@ -36,7 +36,8 @@ class Junit(py.xml.Namespace):
 #                    | [#x10000-#x10FFFF]
 _legal_chars = (0x09, 0x0A, 0x0d)
 _legal_ranges = (
-    (0x20, 0xD7FF),
+    (0x20, 0x7E),
+    (0x80, 0xD7FF),
     (0xE000, 0xFFFD),
     (0x10000, 0x10FFFF),
 )
@@ -103,7 +104,7 @@ class LogXML(object):
             classnames.insert(0, self.prefix)
         self.tests.append(Junit.testcase(
             classname=".".join(classnames),
-            name=names[-1],
+            name=bin_xml_escape(names[-1]),
             time=getattr(report, 'duration', 0)
         ))
 
