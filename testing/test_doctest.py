@@ -1,4 +1,4 @@
-from _pytest.doctest import DoctestModule, DoctestTextfile
+from _pytest.doctest import DoctestItem, DoctestModule, DoctestTextfile
 import py, pytest
 
 class TestDoctests:
@@ -19,13 +19,61 @@ class TestDoctests:
         items, reprec = testdir.inline_genitems(w)
         assert len(items) == 1
 
-    def test_collect_module(self, testdir):
+    def test_collect_module_empty(self, testdir):
         path = testdir.makepyfile(whatever="#")
         for p in (path, testdir.tmpdir):
             items, reprec = testdir.inline_genitems(p,
                 '--doctest-modules')
+            assert len(items) == 0
+
+    def test_collect_module_single_modulelevel_doctest(self, testdir):
+        path = testdir.makepyfile(whatever='""">>> pass"""')
+        for p in (path, testdir.tmpdir):
+            items, reprec = testdir.inline_genitems(p,
+                '--doctest-modules')
             assert len(items) == 1
-            assert isinstance(items[0], DoctestModule)
+            assert isinstance(items[0], DoctestItem)
+            assert isinstance(items[0].parent, DoctestModule)
+
+    def test_collect_module_two_doctest_one_modulelevel(self, testdir):
+        path = testdir.makepyfile(whatever="""
+            '>>> x = None'
+            def my_func():
+                ">>> magic = 42 "
+        """)
+        for p in (path, testdir.tmpdir):
+            items, reprec = testdir.inline_genitems(p,
+                '--doctest-modules')
+            assert len(items) == 2
+            assert isinstance(items[0], DoctestItem)
+            assert isinstance(items[1], DoctestItem)
+            assert isinstance(items[0].parent, DoctestModule)
+            assert items[0].parent is items[1].parent
+
+    def test_collect_module_two_doctest_no_modulelevel(self, testdir):
+        path = testdir.makepyfile(whatever="""
+            '# Empty'
+            def my_func():
+                ">>> magic = 42 "
+            def unuseful():
+                '''
+                # This is a function
+                # >>> # it doesn't have any doctest
+                '''
+            def another():
+                '''
+                # This is another function
+                >>> import os # this one does have a doctest
+                '''
+        """)
+        for p in (path, testdir.tmpdir):
+            items, reprec = testdir.inline_genitems(p,
+                '--doctest-modules')
+            assert len(items) == 2
+            assert isinstance(items[0], DoctestItem)
+            assert isinstance(items[1], DoctestItem)
+            assert isinstance(items[0].parent, DoctestModule)
+            assert items[0].parent is items[1].parent
 
     def test_simple_doctestfile(self, testdir):
         p = testdir.maketxtfile(test_doc="""
@@ -164,3 +212,47 @@ class TestDoctests:
         """)
         reprec = testdir.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(passed=1)
+
+    def test_doctestmodule_three_tests(self, testdir):
+        p = testdir.makepyfile("""
+            '''
+            >>> dir = getfixture('tmpdir')
+            >>> type(dir).__name__
+            'LocalPath'
+            '''
+            def my_func():
+                '''
+                >>> magic = 42
+                >>> magic - 42
+                0
+                '''
+            def unuseful():
+                pass
+            def another():
+                '''
+                >>> import os
+                >>> os is os
+                True
+                '''
+        """)
+        reprec = testdir.inline_run(p, "--doctest-modules")
+        reprec.assertoutcome(passed=3)
+
+    def test_doctestmodule_two_tests_one_fail(self, testdir):
+        p = testdir.makepyfile("""
+            class MyClass:
+                def bad_meth(self):
+                    '''
+                    >>> magic = 42
+                    >>> magic
+                    0
+                    '''
+                def nice_meth(self):
+                    '''
+                    >>> magic = 42
+                    >>> magic - 42
+                    0
+                    '''
+        """)
+        reprec = testdir.inline_run(p, "--doctest-modules")
+        reprec.assertoutcome(failed=1, passed=1)
