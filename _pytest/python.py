@@ -4,6 +4,7 @@ import inspect
 import sys
 import pytest
 from _pytest.main import getfslineno
+from _pytest.mark import MarkDecorator, MarkInfo
 from _pytest.monkeypatch import monkeypatch
 from py._code.code import TerminalRepr
 
@@ -565,11 +566,13 @@ class CallSpec2(object):
         self._globalid_args = set()
         self._globalparam = _notexists
         self._arg2scopenum = {}  # used for sorting parametrized resources
+        self.keywords = {}
 
     def copy(self, metafunc):
         cs = CallSpec2(self.metafunc)
         cs.funcargs.update(self.funcargs)
         cs.params.update(self.params)
+        cs.keywords.update(self.keywords)
         cs._arg2scopenum.update(self._arg2scopenum)
         cs._idlist = list(self._idlist)
         cs._globalid = self._globalid
@@ -593,7 +596,7 @@ class CallSpec2(object):
     def id(self):
         return "-".join(map(str, filter(None, self._idlist)))
 
-    def setmulti(self, valtype, argnames, valset, id, scopenum=0):
+    def setmulti(self, valtype, argnames, valset, id, keywords, scopenum=0):
         for arg,val in zip(argnames, valset):
             self._checkargnotcontained(arg)
             getattr(self, valtype)[arg] = val
@@ -605,6 +608,7 @@ class CallSpec2(object):
             if val is _notexists:
                 self._emptyparamspecified = True
         self._idlist.append(id)
+        self.keywords.update(keywords)
 
     def setall(self, funcargs, id, param):
         for x in funcargs:
@@ -673,6 +677,18 @@ class Metafunc(FuncargnamesCompatAttr):
         if not argvalues:
             argvalues = [(_notexists,) * len(argnames)]
 
+        # these marks/keywords will be applied in Function init
+        newkeywords = {}
+        for i, argval in enumerate(argvalues):
+            newkeywords[i] = {}
+            if isinstance(argval, MarkDecorator):
+                # convert into a mark without the test content mixed in
+                newmark = MarkDecorator(argval.markname, argval.args[:-1], argval.kwargs)
+                newkeywords[i] = {newmark.markname: newmark}
+
+        argvalues = [av.args[-1] if isinstance(av, MarkDecorator) else av
+                     for av in argvalues]
+
         if scope is None:
             scope = "subfunction"
         scopenum = scopes.index(scope)
@@ -691,7 +707,7 @@ class Metafunc(FuncargnamesCompatAttr):
                 assert len(valset) == len(argnames)
                 newcallspec = callspec.copy(self)
                 newcallspec.setmulti(valtype, argnames, valset, ids[i],
-                                     scopenum)
+                                     newkeywords[i], scopenum)
                 newcalls.append(newcallspec)
         self._calls = newcalls
 
@@ -908,6 +924,9 @@ class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
 
         for name, val in (py.builtin._getfuncdict(self.obj) or {}).items():
             self.keywords[name] = val
+        if callspec:
+            for name, val in callspec.keywords.items():
+                self.keywords[name] = val
         if keywords:
             for name, val in keywords.items():
                 self.keywords[name] = val
