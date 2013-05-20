@@ -9,7 +9,7 @@ def pytest_collect_file(parent, path):
 class YamlFile(pytest.File):
     def collect(self):
         import yaml # we need a yaml parser, e.g. PyYAML
-        raw = yaml.load(self.fspath.open())
+        raw = yaml.safe_load(self.fspath.open())
         for name, spec in raw.items():
             yield YamlItem(name, self, spec)
 

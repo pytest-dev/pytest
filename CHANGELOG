@@ -20,6 +20,8 @@ Changes between 2.3.5 and 2.4.DEV
 
 - honor --tb style for setup/teardown errors as well.  Thanks Maho.
 
+- fix issue307 - use yaml.safe_load in example, thanks Mark Eichin.
+
 Changes between 2.3.4 and 2.3.5
 -----------------------------------
 
