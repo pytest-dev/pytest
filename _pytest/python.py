@@ -671,23 +671,26 @@ class Metafunc(FuncargnamesCompatAttr):
             It will also override any fixture-function defined scope, allowing
             to set a dynamic scope using test context or configuration.
         """
+        # remove any marks applied to individual tests instances
+        # these marks will be applied in Function init
+        newkeywords = {}
+        strippedargvalues = []
+        for i, argval in enumerate(argvalues):
+            if isinstance(argval, MarkDecorator):
+                # convert into a mark without the test content mixed in
+                newmark = MarkDecorator(argval.markname, argval.args[:-1], argval.kwargs)
+                newkeywords[i] = {newmark.markname: newmark}
+                strippedargvalues.append(argval.args[-1])
+            else:
+                newkeywords[i] = {}
+                strippedargvalues.append(argval)
+        argvalues = strippedargvalues
+
         if not isinstance(argnames, (tuple, list)):
             argnames = (argnames,)
             argvalues = [(val,) for val in argvalues]
         if not argvalues:
             argvalues = [(_notexists,) * len(argnames)]
-
-        # these marks/keywords will be applied in Function init
-        newkeywords = {}
-        for i, argval in enumerate(argvalues):
-            newkeywords[i] = {}
-            if isinstance(argval, MarkDecorator):
-                # convert into a mark without the test content mixed in
-                newmark = MarkDecorator(argval.markname, argval.args[:-1], argval.kwargs)
-                newkeywords[i] = {newmark.markname: newmark}
-
-        argvalues = [av.args[-1] if isinstance(av, MarkDecorator) else av
-                     for av in argvalues]
 
         if scope is None:
             scope = "subfunction"
