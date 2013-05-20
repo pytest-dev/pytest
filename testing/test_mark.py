@@ -382,7 +382,6 @@ class TestKeywordSelection:
             assert len(reprec.getcalls('pytest_deselected')) == 1
 
         for keyword in ['test_one', 'est_on']:
-            #yield check, keyword, 'test_one'
             check(keyword, 'test_one')
         check('TestClass and test', 'test_method_one')
 
@@ -401,7 +400,7 @@ class TestKeywordSelection:
             def pytest_pycollect_makeitem(__multicall__, name):
                 if name == "TestClass":
                     item = __multicall__.execute()
-                    item.keywords["xxx"] = True
+                    item.extra_keyword_matches.append("xxx")
                     return item
         """)
         reprec = testdir.inline_run(p.dirpath(), '-s', '-k', keyword)

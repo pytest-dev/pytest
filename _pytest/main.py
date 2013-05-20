@@ -216,6 +216,9 @@ class Node(object):
         #: keywords/markers collected from all scopes
         self.keywords = NodeKeywords(self)
 
+        #: allow adding of extra keywords to use for matching
+        self.extra_keyword_matches = []
+
         #self.extrainit()
 
     @property
@@ -306,6 +309,15 @@ class Node(object):
             item = item.parent
         chain.reverse()
         return chain
+
+    def listextrakeywords(self):
+        """ Return a list of all extra keywords in self and any parents."""
+        extra_keywords = []
+        item = self
+        while item is not None:
+            extra_keywords.extend(item.extra_keyword_matches)
+            item = item.parent
+        return extra_keywords
 
     def listnames(self):
         return [x.name for x in self.listchain()]
