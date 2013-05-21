@@ -11,6 +11,11 @@ Changes between 2.3.5 and 2.4.DEV
   when importing markers between modules.  Specifying conditions
   as strings will remain fully supported.
 
+- improved doctest counting for doctests in python modules -- 
+  files without any doctest items will not show up anymore
+  and doctest examples are counted as separate test items.
+  thanks Danilo Bellini.
+
 - fix issue245 by depending on the released py-1.4.14
   which fixes py.io.dupfile to work with files with no
   mode. Thanks Jason R. Coombs.
