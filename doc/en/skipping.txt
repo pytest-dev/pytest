@@ -176,6 +176,28 @@ Running it with the report-on-xfail option gives this output::
     
     ======================== 6 xfailed in 0.05 seconds =========================
 
+.. _`skip/xfail with parametrize`:
+
+Skip/xfail with parametrize
+---------------------------
+
+It is possible to apply markers like skip and xfail to individual
+test instances when using parametrize:
+
+     import pytest
+
+     @pytest.mark.parametrize(("n", "expected"), [
+         (1, 2),
+	 pytest.mark.xfail((1, 0)),
+	 pytest.mark.xfail(reason="some bug")((1, 3)),
+	 (2, 3),
+         (3, 4),
+         (4, 5),
+         pytest.mark.skipif("sys.version_info >= (3,0)")((10, 11)),
+     ])
+     def test_increment(n, expected):
+	 assert n + 1 == expected
+
 
 Imperative xfail from within a test or setup function
 ------------------------------------------------------
