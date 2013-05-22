@@ -185,6 +185,29 @@ You can also set a module level marker::
 in which case it will be applied to all functions and
 methods defined in the module.
 
+.. _`marking individual tests when using parametrize`:
+
+Marking individual tests when using parametrize
+-----------------------------------------------
+
+When using parametrize, applying a mark will make it apply
+to each individual test. However it is also possible to
+apply a marker to an individual test instance::
+
+    import pytest
+
+    @pytest.mark.foo
+    @pytest.mark.parametrize(("n", "expected"), [
+        (1, 2),
+        pytest.mark.bar((1, 3)),
+        (2, 3),
+    ])
+    def test_increment(n, expected):
+         assert n + 1 == expected
+
+In this example the mark "foo" will apply to each of the three
+tests, whereas the "bar" mark is only applied to the second test.
+Skip and xfail marks can also be applied in this way, see :ref:`skip/xfail with parametrize`.
 
 
 .. _`adding a custom marker from a plugin`:

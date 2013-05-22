@@ -82,6 +82,18 @@ And as usual with test function arguments, you can see the ``input`` and ``outpu
 Note that there ways how you can mark a class or a module,
 see :ref:`mark`.
 
+It is also possible to mark individual test instances within parametrize::
+
+    # content of test_expectation.py
+    import pytest
+    @pytest.mark.parametrize(("input", "expected"), [
+        ("3+5", 8),
+        ("2+4", 6),
+        pytest.mark.xfail(("6*9", 42)),
+    ])
+    def test_eval(input, expected):
+        assert eval(input) == expected
+
 
 .. _`pytest_generate_tests`:
 
