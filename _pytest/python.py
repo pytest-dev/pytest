@@ -651,11 +651,12 @@ class Metafunc(FuncargnamesCompatAttr):
 
         :arg argnames: an argument name or a list of argument names
 
-        :arg argvalues: The list of argvalues determines how often a test is invoked
-            with different argument values.  If only one argname was specified argvalues
-            is a list of simple values.  If N argnames were specified, argvalues must
-            be a list of N-tuples, where each tuple-element specifies a value for its
-            respective argname.
+        :arg argvalues: The list of argvalues determines how often a
+            test is invoked with different argument values.  If only one
+            argname was specified argvalues is a list of simple values.  If N
+            argnames were specified, argvalues must be a list of N-tuples,
+            where each tuple-element specifies a value for its respective
+            argname.
 
         :arg indirect: if True each argvalue corresponding to an argname will
             be passed as request.param to its respective argname fixture
@@ -671,20 +672,20 @@ class Metafunc(FuncargnamesCompatAttr):
             It will also override any fixture-function defined scope, allowing
             to set a dynamic scope using test context or configuration.
         """
-        # remove any marks applied to individual tests instances
-        # these marks will be applied in Function init
+
+        # individual parametrized argument sets can be wrapped in a
+        # marker in which case we unwrap the values and apply the mark
+        # at Function init
         newkeywords = {}
-        strippedargvalues = []
+        unwrapped_argvalues = []
         for i, argval in enumerate(argvalues):
             if isinstance(argval, MarkDecorator):
-                # convert into a mark without the test content mixed in
-                newmark = MarkDecorator(argval.markname, argval.args[:-1], argval.kwargs)
+                newmark = MarkDecorator(argval.markname,
+                                        argval.args[:-1], argval.kwargs)
                 newkeywords[i] = {newmark.markname: newmark}
-                strippedargvalues.append(argval.args[-1])
-            else:
-                newkeywords[i] = {}
-                strippedargvalues.append(argval)
-        argvalues = strippedargvalues
+                argval = argval.args[-1]
+            unwrapped_argvalues.append(argval)
+        argvalues = unwrapped_argvalues
 
         if not isinstance(argnames, (tuple, list)):
             argnames = (argnames,)
@@ -710,7 +711,7 @@ class Metafunc(FuncargnamesCompatAttr):
                 assert len(valset) == len(argnames)
                 newcallspec = callspec.copy(self)
                 newcallspec.setmulti(valtype, argnames, valset, ids[i],
-                                     newkeywords[i], scopenum)
+                                     newkeywords.get(i, {}), scopenum)
                 newcalls.append(newcallspec)
         self._calls = newcalls
 

@@ -578,8 +578,8 @@ class TestMetafuncFunctional:
         ])
 
 
-@pytest.mark.issue308
 class TestMarkersWithParametrization:
+    pytestmark = pytest.mark.issue308
     def test_simple_mark(self, testdir):
         s = """
             import pytest
@@ -680,7 +680,7 @@ class TestMarkersWithParametrization:
 
             @pytest.mark.parametrize(("n", "expected"), [
                 (1, 2),
-                pytest.mark.xfail("sys.version > 0")((1, 3)),
+                pytest.mark.xfail("True")((1, 3)),
                 (2, 3),
             ])
             def test_increment(n, expected):
@@ -712,7 +712,7 @@ class TestMarkersWithParametrization:
 
             @pytest.mark.parametrize(("n", "expected"), [
                 (1, 2),
-                pytest.mark.xfail("sys.version > 0", reason="some bug")((1, 3)),
+                pytest.mark.xfail("True", reason="some bug")((1, 3)),
                 (2, 3),
             ])
             def test_increment(n, expected):
