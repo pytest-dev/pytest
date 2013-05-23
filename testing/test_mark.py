@@ -439,3 +439,21 @@ class TestKeywordSelection:
         reprec = testdir.inline_run("-k", "mykeyword", p)
         passed, skipped, failed = reprec.countoutcomes()
         assert failed == 1
+
+    def test_no_magic_values(self, testdir):
+        """Make sure the tests do not match on magic values,
+        no double underscored values, like '__dict__',
+        and no instance values, like '()'.
+        """
+        p = testdir.makepyfile("""
+            def test_one(): assert 1
+        """)
+        def assert_test_is_not_selected(keyword):
+            reprec = testdir.inline_run("-k", keyword, p)
+            passed, skipped, failed = reprec.countoutcomes()
+            dlist = reprec.getcalls("pytest_deselected")
+            assert passed + skipped + failed == 0
+            assert len(dlist) == 1
+
+        assert_test_is_not_selected("__")
+        assert_test_is_not_selected("()")
