@@ -130,7 +130,7 @@ def matchkeyword(colitem, keywordexpr):
 
     # Add the names of the current item and any parent items
     for item in colitem.listchain():
-        if isinstance(item, pytest.Class) or isinstance(item, pytest.Function):
+        if not isinstance(item, pytest.Instance):
             mapped_names.append(item.name)
 
     # Add the names added as extra keywords to current or parent items
