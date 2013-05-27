@@ -217,7 +217,7 @@ class Node(object):
         self.keywords = NodeKeywords(self)
 
         #: allow adding of extra keywords to use for matching
-        self.extra_keyword_matches = []
+        self.extra_keyword_matches = set()
 
         #self.extrainit()
 
@@ -311,12 +311,11 @@ class Node(object):
         return chain
 
     def listextrakeywords(self):
-        """ Return a list of all extra keywords in self and any parents."""
-        extra_keywords = []
+        """ Return a set of all extra keywords in self and any parents."""
+        extra_keywords = set()
         item = self
-        while item is not None:
-            extra_keywords.extend(item.extra_keyword_matches)
-            item = item.parent
+        for item in self.listchain():
+            extra_keywords.update(item.extra_keyword_matches)
         return extra_keywords
 
     def listnames(self):

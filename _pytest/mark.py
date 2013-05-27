@@ -18,7 +18,7 @@ def pytest_addoption(parser):
              "other' matches all test functions and classes whose name "
              "contains 'test_method' or 'test_other'. "
              "Additionally keywords are matched to classes and functions "
-             "containing extra names in their 'extra_keyword_matches' list, "
+             "containing extra names in their 'extra_keyword_matches' set, "
              "as well as functions which have names assigned directly to them."
     )
 
@@ -87,10 +87,10 @@ class MarkMapping:
     :class:`MarkDecorator` items.
     """
     def __init__(self, keywords):
-        mymarks = []
+        mymarks = set()
         for key, value in keywords.items():
             if isinstance(value, MarkInfo) or isinstance(value, MarkDecorator):
-                mymarks.append(key)
+                mymarks.add(key)
         self._mymarks = mymarks
 
     def __getitem__(self, markname):
@@ -122,24 +122,24 @@ def matchkeyword(colitem, keywordexpr):
     Will match on the name of colitem, including the names of its parents.
     Only matches names of items which are either a :class:`Class` or a
     :class:`Function`.
-    Additionally, matches on names in the 'extra_keyword_matches' list of
+    Additionally, matches on names in the 'extra_keyword_matches' set of
     any item, as well as names directly assigned to test functions.
     """
     keywordexpr = keywordexpr.replace("-", "not ")
-    mapped_names = []
+    mapped_names = set()
 
     # Add the names of the current item and any parent items
     for item in colitem.listchain():
         if not isinstance(item, pytest.Instance):
-            mapped_names.append(item.name)
+            mapped_names.add(item.name)
 
     # Add the names added as extra keywords to current or parent items
     for name in colitem.listextrakeywords():
-        mapped_names.append(name)
+        mapped_names.add(name)
 
     # Add the names attached to the current function through direct assignment
     for name in colitem.function.func_dict:
-        mapped_names.append(name)
+        mapped_names.add(name)
 
     return eval(keywordexpr, {}, KeywordMapping(mapped_names))
 
