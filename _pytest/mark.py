@@ -138,7 +138,7 @@ def matchkeyword(colitem, keywordexpr):
         mapped_names.add(name)
 
     # Add the names attached to the current function through direct assignment
-    for name in colitem.function.func_dict:
+    for name in colitem.function.__dict__:
         mapped_names.add(name)
 
     return eval(keywordexpr, {}, KeywordMapping(mapped_names))
