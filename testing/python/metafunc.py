@@ -221,6 +221,16 @@ class TestMetafunc:
             "*6 fail*",
         ])
 
+    def test_parametrize_CSV(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.parametrize("x, y,", [(1,2), (2,3)])
+            def test_func(x, y):
+                assert x+1 == y
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
+
     def test_parametrize_class_scenarios(self, testdir):
         testdir.makepyfile("""
         # same as doc/en/example/parametrize scenario example

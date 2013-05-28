@@ -649,7 +649,8 @@ class Metafunc(FuncargnamesCompatAttr):
         during the collection phase.  If you need to setup expensive resources
         see about setting indirect=True to do it rather at test setup time.
 
-        :arg argnames: an argument name or a list of argument names
+        :arg argnames: a comma-separated string denoting one or more argument
+                       names, or a list/tuple of argument strings.
 
         :arg argvalues: The list of argvalues determines how often a
             test is invoked with different argument values.  If only one
@@ -688,7 +689,8 @@ class Metafunc(FuncargnamesCompatAttr):
         argvalues = unwrapped_argvalues
 
         if not isinstance(argnames, (tuple, list)):
-            argnames = (argnames,)
+            argnames = [x.strip() for x in argnames.split(",") if x.strip()]
+        if len(argnames) == 1:
             argvalues = [(val,) for val in argvalues]
         if not argvalues:
             argvalues = [(_notexists,) * len(argnames)]

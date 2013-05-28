@@ -4,6 +4,13 @@ Changes between 2.3.5 and 2.4.DEV
 - fix issue 308 - allow to mark/xfail/skip individual parameter sets
   when parametrizing.  Thanks Brianna Laugher.
 
+- simplify parametrize() signature: allow to pass a CSV-separated string 
+  to specify argnames.  For example: ``pytest.mark.parametrize("input,expected",  [(1,2), (2,3)])`` is possible now in addition to the prior
+  ``pytest.mark.parametrize(("input", "expected"), ...)``.
+
+- fix issue 306 - cleanup of -k/-m options to only match markers/test
+  names/keywords respectively.  Thanks Wouter van Ackooy.
+
 - (experimental) allow fixture functions to be 
   implemented as context managers.  Thanks Andreas Pelme,
   Vladimir Keleshev. 
