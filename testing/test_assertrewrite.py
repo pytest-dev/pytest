@@ -1,4 +1,5 @@
 import os
+import stat
 import sys
 import zipfile
 import py
@@ -323,6 +324,18 @@ def test_rewritten():
     assert "@py_builtins" in globals()""")
         assert testdir.runpytest().ret == 0
 
+    def test_pycache_is_readonly(self, testdir):
+        cache = testdir.tmpdir.mkdir("__pycache__")
+        old_mode = cache.stat().mode
+        cache.chmod(old_mode ^ stat.S_IWRITE)
+        testdir.makepyfile("""
+def test_rewritten():
+    assert "@py_builtins" in globals()""")
+        try:
+            assert testdir.runpytest().ret == 0
+        finally:
+            cache.chmod(old_mode)
+
     def test_zipfile(self, testdir):
         z = testdir.tmpdir.join("myzip.zip")
         z_fn = str(z)
@@ -346,8 +359,12 @@ import test_gum.test_lizard""" % (z_fn,))
 def test_rewritten():
     assert "@py_builtins" in globals()
 """).encode("utf-8"), "wb")
+        old_mode = sub.stat().mode
         sub.chmod(320)
-        assert testdir.runpytest().ret == 0
+        try:
+            assert testdir.runpytest().ret == 0
+        finally:
+            sub.chmod(old_mode)
 
     def test_dont_write_bytecode(self, testdir, monkeypatch):
         testdir.makepyfile("""
