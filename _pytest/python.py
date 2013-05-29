@@ -2,6 +2,7 @@
 import py
 import inspect
 import sys
+from types import NoneType
 import pytest
 from _pytest.main import getfslineno
 from _pytest.mark import MarkDecorator, MarkInfo
@@ -705,6 +706,9 @@ class Metafunc(FuncargnamesCompatAttr):
                     raise ValueError("%r uses no fixture %r" %(
                                      self.function, arg))
         valtype = indirect and "params" or "funcargs"
+        if ids and len(ids) != len(argvalues):
+            raise ValueError('%d tests specified with %d ids' %(
+                             len(argvalues), len(ids)))
         if not ids:
             ids = idmaker(argnames, argvalues)
         newcalls = []
@@ -758,7 +762,7 @@ def idmaker(argnames, argvalues):
     for valindex, valset in enumerate(argvalues):
         this_id = []
         for nameindex, val in enumerate(valset):
-            if not isinstance(val, (float, int, str)):
+            if not isinstance(val, (float, int, str, bool, NoneType)):
                 this_id.append(str(argnames[nameindex])+str(valindex))
             else:
                 this_id.append(str(val))
