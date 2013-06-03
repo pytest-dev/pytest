@@ -345,15 +345,15 @@ Reporting hooks
 
 Session related reporting hooks:
 
-.. autofunction: pytest_collectstart
-.. autofunction: pytest_itemcollected
-.. autofunction: pytest_collectreport
-.. autofunction: pytest_deselected
+.. autofunction:: pytest_collectstart
+.. autofunction:: pytest_itemcollected
+.. autofunction:: pytest_collectreport
+.. autofunction:: pytest_deselected
 
 And here is the central hook for reporting about
 test execution:
 
-.. autofunction: pytest_runtest_logreport
+.. autofunction:: pytest_runtest_logreport
 
 Reference of objects involved in hooks
 ===========================================================
