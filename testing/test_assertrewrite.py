@@ -1,4 +1,5 @@
 import os
+import stat
 import sys
 import zipfile
 import py
@@ -319,9 +320,21 @@ class TestRewriteOnImport:
     def test_pycache_is_a_file(self, testdir):
         testdir.tmpdir.join("__pycache__").write("Hello")
         testdir.makepyfile("""
-def test_rewritten():
-    assert "@py_builtins" in globals()""")
+            def test_rewritten():
+                assert "@py_builtins" in globals()""")
         assert testdir.runpytest().ret == 0
+
+    def test_pycache_is_readonly(self, testdir):
+        cache = testdir.tmpdir.mkdir("__pycache__")
+        old_mode = cache.stat().mode
+        cache.chmod(old_mode ^ stat.S_IWRITE)
+        testdir.makepyfile("""
+            def test_rewritten():
+                assert "@py_builtins" in globals()""")
+        try:
+            assert testdir.runpytest().ret == 0
+        finally:
+            cache.chmod(old_mode)
 
     def test_zipfile(self, testdir):
         z = testdir.tmpdir.join("myzip.zip")
@@ -334,9 +347,9 @@ def test_rewritten():
             f.close()
         z.chmod(256)
         testdir.makepyfile("""
-import sys
-sys.path.append(%r)
-import test_gum.test_lizard""" % (z_fn,))
+            import sys
+            sys.path.append(%r)
+            import test_gum.test_lizard""" % (z_fn,))
         assert testdir.runpytest().ret == 0
 
     def test_readonly(self, testdir):
@@ -345,17 +358,21 @@ import test_gum.test_lizard""" % (z_fn,))
         py.builtin._totext("""
 def test_rewritten():
     assert "@py_builtins" in globals()
-""").encode("utf-8"), "wb")
+            """).encode("utf-8"), "wb")
+        old_mode = sub.stat().mode
         sub.chmod(320)
-        assert testdir.runpytest().ret == 0
+        try:
+            assert testdir.runpytest().ret == 0
+        finally:
+            sub.chmod(old_mode)
 
     def test_dont_write_bytecode(self, testdir, monkeypatch):
         testdir.makepyfile("""
-import os
-def test_no_bytecode():
-    assert "__pycache__" in __cached__
-    assert not os.path.exists(__cached__)
-    assert not os.path.exists(os.path.dirname(__cached__))""")
+            import os
+            def test_no_bytecode():
+                assert "__pycache__" in __cached__
+                assert not os.path.exists(__cached__)
+                assert not os.path.exists(os.path.dirname(__cached__))""")
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
         assert testdir.runpytest().ret == 0
 

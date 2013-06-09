@@ -177,6 +177,10 @@ def _write_pyc(co, source_path, pyc):
             # This happens when we get a EEXIST in find_module creating the
             # __pycache__ directory and __pycache__ is by some non-dir node.
             return False
+        elif err == errno.EACCES:
+            # The directory is read-only; this can happen for example when
+            # running the tests in a package installed as root
+            return False
         raise
     try:
         fp.write(imp.get_magic())
