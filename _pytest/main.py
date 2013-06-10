@@ -97,6 +97,7 @@ def wrap_session(config, doit):
             if session._testsfailed:
                 session.exitstatus = EXIT_TESTSFAILED
     finally:
+        session.startdir.chdir()
         if initstate >= 2:
             config.hook.pytest_sessionfinish(
                 session=session,
@@ -452,6 +453,7 @@ class Session(FSCollector):
         self.shouldstop = False
         self.trace = config.trace.root.get("collection")
         self._norecursepatterns = config.getini("norecursedirs")
+        self.startdir = py.path.local()
 
     def pytest_collectstart(self):
         if self.shouldstop:
