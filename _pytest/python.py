@@ -371,7 +371,9 @@ class Module(pytest.File, PyCollector):
         return mod
 
     def setup(self):
-        setup_module = xunitsetup(self.obj, "setup_module")
+        setup_module = xunitsetup(self.obj, "setUpModule")
+        if setup_module is None:
+            setup_module = xunitsetup(self.obj, "setup_module")
         if setup_module is not None:
             #XXX: nose compat hack, move to nose plugin
             # if it takes a positional arg, its probably a pytest style one
@@ -382,7 +384,9 @@ class Module(pytest.File, PyCollector):
                 setup_module()
 
     def teardown(self):
-        teardown_module = xunitsetup(self.obj, 'teardown_module')
+        teardown_module = xunitsetup(self.obj, 'tearDownModule')
+        if teardown_module is None:
+            teardown_module = xunitsetup(self.obj, 'teardown_module')
         if teardown_module is not None:
             #XXX: nose compat hack, move to nose plugin
             # if it takes a positional arg, its probably a py.test style one
