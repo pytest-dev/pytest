@@ -1,5 +1,22 @@
 .. _projects:
 
+.. image:: img/gaynor3.png
+   :width: 400px
+   :align: right
+
+.. image:: img/theuni.png
+   :width: 400px
+   :align: right
+
+.. image:: img/cramer2.png
+   :width: 400px
+   :align: right
+
+.. image:: img/keleshev.png
+   :width: 400px
+   :align: right
+
+
 Project examples
 ==========================
 
