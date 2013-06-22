@@ -66,7 +66,7 @@ def test_setup(testdir):
     assert rep.failed and '42' in str(rep.longrepr)
 
 def test_unittest_style_setup_teardown(testdir):
-    testdir.makepyfile("""
+    testpath = testdir.makepyfile("""
         l = []
 
         def setUpModule():
@@ -81,7 +81,7 @@ def test_unittest_style_setup_teardown(testdir):
         def test_world():
             assert l == [1]
         """)
-    result = testdir.runpytest('-p', 'nose')
+    result = testdir.runpytest(testpath)
     result.stdout.fnmatch_lines([
         "*2 passed*",
     ])
