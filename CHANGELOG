@@ -1,6 +1,8 @@
 Changes between 2.3.5 and 2.4.DEV
 -----------------------------------
 
+- add support for setUpModule/tearDownModule detection, thanks Brian Okken.
+
 - make sessionfinish hooks execute with the same cwd-context as at
   session start (helps fix plugin behaviour which write output files 
   with relative path such as pytest-cov)
