@@ -555,6 +555,20 @@ class TestMetafuncFunctional:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=5)
 
+    def test_parametrize_issue323(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture(scope='module', params=range(966))
+            def foo(request):
+                return request.param
+
+            def test_it(foo):
+                pass
+        """)
+        reprec = testdir.inline_run("--collectonly")
+        assert not reprec.getcalls("pytest_internalerror")
+
     def test_usefixtures_seen_in_generate_tests(self, testdir):
         testdir.makepyfile("""
             import pytest

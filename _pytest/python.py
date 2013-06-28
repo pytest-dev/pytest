@@ -1747,9 +1747,16 @@ def getfuncargnames(function, startindex=None):
 def parametrize_sorted(items, ignore, cache, scopenum):
     if scopenum >= 3:
         return items
+
+    # we pick the first item which has a arg/param combo in the
+    # requested scope and sort other items with the same combo
+    # into "newitems" which then is a list of all items using this
+    # arg/param.
+
     similar_items = []
     other_items = []
     slicing_argparam = None
+    slicing_index = 0
     for item in items:
         argparamlist = getfuncargparams(item, ignore, scopenum, cache)
         if slicing_argparam is None and argparamlist:
@@ -1759,7 +1766,8 @@ def parametrize_sorted(items, ignore, cache, scopenum):
             similar_items.append(item)
         else:
             other_items.append(item)
-    if similar_items:
+
+    if (len(similar_items) + slicing_index) > 1:
         newignore = ignore.copy()
         newignore.add(slicing_argparam)
         part2 = parametrize_sorted(

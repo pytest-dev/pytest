@@ -1,6 +1,8 @@
 Changes between 2.3.5 and 2.4.DEV
 -----------------------------------
 
+- fix issue323 - sorting of many module-scoped arg parametrizations
+
 - add support for setUpModule/tearDownModule detection, thanks Brian Okken.
 
 - make sessionfinish hooks execute with the same cwd-context as at
