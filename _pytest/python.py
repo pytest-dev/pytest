@@ -1747,29 +1747,31 @@ def getfuncargnames(function, startindex=None):
 def parametrize_sorted(items, ignore, cache, scopenum):
     if scopenum >= 3:
         return items
-    newitems = []
-    olditems = []
+    similar_items = []
+    other_items = []
     slicing_argparam = None
     for item in items:
         argparamlist = getfuncargparams(item, ignore, scopenum, cache)
         if slicing_argparam is None and argparamlist:
             slicing_argparam = argparamlist[0]
-            slicing_index = len(olditems)
+            slicing_index = len(other_items)
         if slicing_argparam in argparamlist:
-            newitems.append(item)
+            similar_items.append(item)
         else:
-            olditems.append(item)
-    if newitems:
+            other_items.append(item)
+    if similar_items:
         newignore = ignore.copy()
         newignore.add(slicing_argparam)
-        newitems = parametrize_sorted(newitems + olditems[slicing_index:],
-                                      newignore, cache, scopenum)
-        old1 = parametrize_sorted(olditems[:slicing_index], newignore,
-                                  cache, scopenum+1)
-        return old1 + newitems
+        part2 = parametrize_sorted(
+                        similar_items + other_items[slicing_index:],
+                        newignore, cache, scopenum)
+        part1 = parametrize_sorted(
+                        other_items[:slicing_index], newignore,
+                        cache, scopenum+1)
+        return part1 + part2
     else:
-        olditems = parametrize_sorted(olditems, ignore, cache, scopenum+1)
-    return olditems + newitems
+        other_items = parametrize_sorted(other_items, ignore, cache, scopenum+1)
+    return other_items + similar_items
 
 def getfuncargparams(item, ignore, scopenum, cache):
     """ return list of (arg,param) tuple, sorted by broader scope first. """
