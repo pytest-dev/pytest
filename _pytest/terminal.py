@@ -454,10 +454,14 @@ class TerminalReporter:
                 if val:
                     parts.append("%d %s" %(len(val), key))
         line = ", ".join(parts)
-        # XXX coloring
         msg = "%s in %.2f seconds" %(line, session_duration)
         if self.verbosity >= 0:
-            self.write_sep("=", msg, bold=True)
+            markup = dict(bold=True)
+            if 'failed' in self.stats:
+                markup['red'] = True
+            else:
+                markup['green'] = True
+            self.write_sep("=", msg, **markup)
         #else:
         #    self.write_line(msg, bold=True)
 
