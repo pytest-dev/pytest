@@ -15,12 +15,6 @@ import py
 from _pytest.assertion import util
 
 
-# Windows gives ENOENT in places *nix gives ENOTDIR.
-if sys.platform.startswith("win"):
-    PATH_COMPONENT_NOT_DIR = errno.ENOENT
-else:
-    PATH_COMPONENT_NOT_DIR = errno.ENOTDIR
-
 # py.test caches rewritten pycs in __pycache__.
 if hasattr(imp, "get_tag"):
     PYTEST_TAG = imp.get_tag() + "-PYTEST"
@@ -119,7 +113,7 @@ class AssertionRewritingHook(object):
                     # common case) or it's blocked by a non-dir node. In the
                     # latter case, we'll ignore it in _write_pyc.
                     pass
-                elif e == PATH_COMPONENT_NOT_DIR:
+                elif e in [errno.ENOENT, errno.ENOTDIR]:
                     # One of the path components was not a directory, likely
                     # because we're in a zip file.
                     write = False
@@ -173,7 +167,7 @@ def _write_pyc(co, source_path, pyc):
         fp = open(pyc, "wb")
     except IOError:
         err = sys.exc_info()[1].errno
-        if err == PATH_COMPONENT_NOT_DIR:
+        if err in [errno.ENOENT, errno.ENOTDIR]:
             # This happens when we get a EEXIST in find_module creating the
             # __pycache__ directory and __pycache__ is by some non-dir node.
             return False
