@@ -211,7 +211,6 @@ def test_conftest_import_order(testdir, monkeypatch):
     ct2 = sub.join("conftest.py")
     ct2.write("")
     def impct(p):
-        print p
         return p
     conftest = Conftest()
     monkeypatch.setattr(conftest, 'importconftest', impct)
