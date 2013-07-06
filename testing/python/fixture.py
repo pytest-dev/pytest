@@ -173,6 +173,31 @@ class TestFillFixtures:
         result = testdir.runpytest(testfile)
         result.stdout.fnmatch_lines(["*1 passed*"])
 
+    def test_extend_fixture_conftest_plugin(request, testdir):
+        testdir.makepyfile(testplugin="""
+            import pytest
+
+            @pytest.fixture
+            def foo():
+                return 7
+        """)
+        testdir.syspathinsert()
+        testdir.makeconftest("""
+            import pytest
+
+            pytest_plugins = 'testplugin'
+
+            @pytest.fixture
+            def foo(foo):
+                return foo + 7
+        """)
+        testdir.makepyfile("""
+            def test_foo(foo):
+                assert foo == 14
+        """)
+        result = testdir.runpytest('-s')
+        assert result.ret == 0
+
     def test_funcarg_lookup_error(self, testdir):
         p = testdir.makepyfile("""
             def test_lookup_error(unknown):

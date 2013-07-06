@@ -1472,8 +1472,7 @@ class FixtureManager:
     def pytest_plugin_registered(self, plugin):
         if plugin in self._seenplugins:
             return
-        #print "plugin_registered", plugin
-        nodeid = ""
+        nodeid = None
         try:
             p = py.path.local(plugin.__file__)
         except AttributeError:
@@ -1580,8 +1579,8 @@ class FixtureManager:
                 for fin in reversed(l):
                     fin()
 
-    def parsefactories(self, node_or_obj, nodeid=None, unittest=False):
-        if nodeid is not None:
+    def parsefactories(self, node_or_obj, nodeid=_dummy, unittest=False):
+        if nodeid is not _dummy:
             holderobj = node_or_obj
         else:
             holderobj = node_or_obj.obj
@@ -1612,7 +1611,15 @@ class FixtureManager:
                                     marker.scope, marker.params,
                                     unittest=unittest)
             faclist = self._arg2fixturedefs.setdefault(name, [])
-            faclist.append(fixturedef)
+            if not fixturedef.has_location:
+                # All Nones are at the front so this inserts the
+                # current fixturedef after the existing fixturedefs
+                # from external plugins but before the fixturedefs
+                # provided in conftests.
+                i = faclist.count(None)
+            else:
+                i = len(faclist)  # append
+            faclist.insert(i, fixturedef)
             if marker.autouse:
                 autousenames.append(name)
         if autousenames:
@@ -1670,7 +1677,8 @@ class FixtureDef:
     def __init__(self, fixturemanager, baseid, argname, func, scope, params,
         unittest=False):
         self._fixturemanager = fixturemanager
-        self.baseid = baseid
+        self.baseid = baseid or ''
+        self.has_location = baseid is not None
         self.func = func
         self.argname = argname
         self.scope = scope
@@ -1721,7 +1729,8 @@ class FixtureDef:
         return result
 
     def __repr__(self):
-        return "<FixtureDef name=%r scope=%r>" % (self.argname, self.scope)
+        return ("<FixtureDef name=%r scope=%r baseid=%r module=%r>" %
+                (self.argname, self.scope, self.baseid, self.func.__module__))
 
 def getfuncargnames(function, startindex=None):
     # XXX merge with main.py's varnames
