@@ -654,9 +654,9 @@ def pytest_report_header(config, startdir):
 """)
         result = testdir.runpytest("a")
         result.stdout.fnmatch_lines([
+            "*hello: 42*",
             "line1",
             str(testdir.tmpdir),
-            "*hello: 42*",
         ])
 
 @pytest.mark.xfail("not hasattr(os, 'dup')")
