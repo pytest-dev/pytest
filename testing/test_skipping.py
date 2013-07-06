@@ -100,6 +100,18 @@ class TestEvaluator:
         expl = ev.getexplanation()
         assert expl == "condition: not hasattr(os, 'murks')"
 
+    def test_marked_skip_with_not_string(self, testdir):
+        item = testdir.getitem("""
+            import pytest
+            @pytest.mark.skipif(False)
+            def test_func():
+                pass
+        """)
+        ev = MarkEvaluator(item, 'skipif')
+        with pytest.raises(pytest.fail.Exception) as exc:
+            assert ev.istrue()
+        assert """Failed: you need to specify reason=STRING when using booleans as conditions.""" in exc.value.msg
+
     def test_skipif_class(self, testdir):
         item, = testdir.getitems("""
             import pytest
