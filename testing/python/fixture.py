@@ -513,12 +513,12 @@ class TestRequestCachedSetup:
 
     def test_request_cachedsetup_class(self, testdir):
         reprec = testdir.inline_runsource("""
-            mysetup = ["hello", "hello2"].pop
+            mysetup = ["hello", "hello2", "hello3"].pop
 
             def pytest_funcarg__something(request):
                 return request.cached_setup(mysetup, scope="class")
             def test_func1(something):
-                assert something == "hello2"
+                assert something == "hello3"
             def test_func2(something):
                 assert something == "hello2"
             class TestClass:
@@ -1090,7 +1090,7 @@ class TestAutouseManagement:
             def arg():
                 l.append(1)
                 return 0
-            @pytest.fixture(scope="class", autouse=True)
+            @pytest.fixture(scope="module", autouse=True)
             def something(arg):
                 l.append(2)
 
