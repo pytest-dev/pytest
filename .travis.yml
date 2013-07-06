@@ -1,0 +1,10 @@
+language: python
+# command to install dependencies
+install: "pip install -e . detox"
+# # command to run tests
+script: detox --recreate
+notifications:
+  irc:
+    - "chat.freenode.net#pylib"
+  email:
+    - pytest-commit@python.org
