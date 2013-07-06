@@ -1,7 +1,7 @@
 """
 terminal reporting of the full testing process.
 """
-import pytest,py
+import pytest, py
 import sys
 
 from _pytest.terminal import TerminalReporter, repr_pythonversion, getreportopt
@@ -32,7 +32,7 @@ def pytest_generate_tests(metafunc):
         metafunc.addcall(id="verbose",
                          funcargs={'option': Option(verbose=True)})
         metafunc.addcall(id="quiet",
-                         funcargs={'option': Option(verbose=-1)})
+                         funcargs={'option': Option(verbose= -1)})
         metafunc.addcall(id="fulltrace",
                          funcargs={'option': Option(fulltrace=True)})
 
@@ -286,7 +286,7 @@ def test_repr_python_version(monkeypatch):
     try:
         monkeypatch.setattr(sys, 'version_info', (2, 5, 1, 'final', 0))
         assert repr_pythonversion() == "2.5.1-final-0"
-        py.std.sys.version_info = x = (2,3)
+        py.std.sys.version_info = x = (2, 3)
         assert repr_pythonversion() == str(x)
     finally:
         monkeypatch.undo() # do this early as pytest can get confused
@@ -411,7 +411,7 @@ class TestTerminalFunctional:
         verinfo = ".".join(map(str, py.std.sys.version_info[:3]))
         result.stdout.fnmatch_lines([
             "*===== test session starts ====*",
-            "platform %s -- Python %s*" %(
+            "platform %s -- Python %s*" % (
                     py.std.sys.platform, verinfo), # , py.std.sys.executable),
             "*test_header_trailer_info.py .",
             "=* 1 passed in *.[0-9][0-9] seconds *=",
@@ -473,6 +473,17 @@ class TestTerminalFunctional:
         assert 'test session starts' not in s
         assert p1.basename not in s
         assert "===" not in s
+        assert "passed" in s
+
+    def test_more_quiet_reporting(self, testdir):
+        p1 = testdir.makepyfile("def test_pass(): pass")
+        result = testdir.runpytest(p1, '-qq')
+        s = result.stdout.str()
+        assert 'test session starts' not in s
+        assert p1.basename not in s
+        assert "===" not in s
+        assert "passed" not in s
+
 
 def test_fail_extra_reporting(testdir):
     p = testdir.makepyfile("def test_this(): assert 0")
@@ -679,5 +690,5 @@ def test_tbstyle_native_setup_error(testdir):
     """)
     result = testdir.runpytest("--tb=native")
     result.stdout.fnmatch_lines([
-            '*File *test_tbstyle_native_setup_error.py", line *, in setup_error_fixture*'                                 
+            '*File *test_tbstyle_native_setup_error.py", line *, in setup_error_fixture*'
             ])

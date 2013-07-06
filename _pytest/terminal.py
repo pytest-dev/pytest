@@ -44,7 +44,7 @@ def pytest_configure(config):
             pass
         else:
             config._cleanup.append(lambda: newstdout.close())
-            assert stdout.encoding  == newstdout.encoding
+            assert stdout.encoding == newstdout.encoding
             stdout = newstdout
 
     reporter = TerminalReporter(config, stdout)
@@ -105,7 +105,7 @@ class TerminalReporter:
         self.hasmarkup = self._tw.hasmarkup
 
     def hasopt(self, char):
-        char = {'xfailed': 'x', 'skipped': 's'}.get(char,char)
+        char = {'xfailed': 'x', 'skipped': 's'}.get(char, char)
         return char in self.reportchars
 
     def write_fspath_result(self, fspath, res):
@@ -154,7 +154,7 @@ class TerminalReporter:
 
     def pytest_plugin_registered(self, plugin):
         if self.config.option.traceconfig:
-            msg = "PLUGIN registered: %s" %(plugin,)
+            msg = "PLUGIN registered: %s" % (plugin,)
             # XXX this event may happen during setup/teardown time
             #     which unfortunately captures our output here
             #     which garbles our output if we use self.write_line
@@ -209,7 +209,7 @@ class TerminalReporter:
                 self.currentfspath = -2
 
     def pytest_collection(self):
-        if not self.hasmarkup and self.config.option.verbose >=1:
+        if not self.hasmarkup and self.config.option.verbose >= 1:
             self.write("collecting ... ", bold=True)
 
     def pytest_collectreport(self, report):
@@ -325,8 +325,8 @@ class TerminalReporter:
                 stack.append(col)
                 #if col.name == "()":
                 #    continue
-                indent = (len(stack)-1) * "  "
-                self._tw.line("%s%s" %(indent, col))
+                indent = (len(stack) - 1) * "  "
+                self._tw.line("%s%s" % (indent, col))
 
     def pytest_sessionfinish(self, exitstatus, __multicall__):
         __multicall__.execute()
@@ -452,9 +452,9 @@ class TerminalReporter:
             if key: # setup/teardown reports have an empty key, ignore them
                 val = self.stats.get(key, None)
                 if val:
-                    parts.append("%d %s" %(len(val), key))
+                    parts.append("%d %s" % (len(val), key))
         line = ", ".join(parts)
-        msg = "%s in %.2f seconds" %(line, session_duration)
+        msg = "%s in %.2f seconds" % (line, session_duration)
         if self.verbosity >= 0:
             markup = dict(bold=True)
             if 'failed' in self.stats:
@@ -462,6 +462,10 @@ class TerminalReporter:
             else:
                 markup['green'] = True
             self.write_sep("=", msg, **markup)
+        if self.verbosity == -1:
+            if line:
+                self.write("%s, " % line)
+            self.write("time: %.2f seconds\n" % session_duration)
         #else:
         #    self.write_line(msg, bold=True)
 
@@ -475,7 +479,7 @@ class TerminalReporter:
             if m:
                 l.append("-m %r" % m)
             if l:
-                self.write_sep("=", "%d tests deselected by %r" %(
+                self.write_sep("=", "%d tests deselected by %r" % (
                     len(self.stats['deselected']), " ".join(l)), bold=True)
 
 def repr_pythonversion(v=None):
