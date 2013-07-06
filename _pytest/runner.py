@@ -63,12 +63,20 @@ def pytest_runtest_protocol(item, nextitem):
     return True
 
 def runtestprotocol(item, log=True, nextitem=None):
+    hasrequest = hasattr(item, "_request")
+    if hasrequest and not item._request:
+        item._initrequest()
     rep = call_and_report(item, "setup", log)
     reports = [rep]
     if rep.passed:
         reports.append(call_and_report(item, "call", log))
     reports.append(call_and_report(item, "teardown", log,
         nextitem=nextitem))
+    # after all teardown hooks have been called
+    # want funcargs and request info to go away
+    if hasrequest:
+        item._request = False
+        item.funcargs = None
     return reports
 
 def pytest_runtest_setup(item):
@@ -190,7 +198,8 @@ def pytest_runtest_makereport(item, call):
             if call.when == "call":
                 longrepr = item.repr_failure(excinfo)
             else: # exception in setup or teardown
-                longrepr = item._repr_failure_py(excinfo)
+                longrepr = item._repr_failure_py(excinfo,
+                                            style=item.config.option.tbstyle)
     return TestReport(item.nodeid, item.location,
                       keywords, outcome, longrepr, when,
                       duration=duration)

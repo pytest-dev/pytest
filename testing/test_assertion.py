@@ -99,6 +99,11 @@ class TestAssert_reprcompare:
         expl = callequal(set([0, 1]), set([0, 2]))
         assert len(expl) > 1
 
+    def test_frozenzet(self):
+        expl = callequal(frozenset([0, 1]), set([0, 2]))
+        print (expl)
+        assert len(expl) > 1
+
     def test_list_tuples(self):
         expl = callequal([], [(1,2)])
         assert len(expl) > 1
@@ -315,3 +320,17 @@ def test_warn_missing(testdir):
     result.stderr.fnmatch_lines([
         "*WARNING*assert statements are not executed*",
     ])
+
+def test_recursion_source_decode(testdir):
+    testdir.makepyfile("""
+        def test_something():
+            pass
+    """)
+    testdir.makeini("""
+        [pytest]
+        python_files = *.py
+    """)
+    result = testdir.runpytest("--collectonly")
+    result.stdout.fnmatch_lines("""
+        <Module*>
+    """)

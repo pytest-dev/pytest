@@ -10,6 +10,7 @@ BuiltinAssertionError = py.builtin.builtins.AssertionError
 # DebugInterpreter.
 _reprcompare = None
 
+
 def format_explanation(explanation):
     """This formats an explanation
 
@@ -85,7 +86,7 @@ except NameError:
 
 def assertrepr_compare(config, op, left, right):
     """Return specialised explanations for some operators/operands"""
-    width = 80 - 15 - len(op) - 2 # 15 chars indentation, 1 space around op
+    width = 80 - 15 - len(op) - 2  # 15 chars indentation, 1 space around op
     left_repr = py.io.saferepr(left, maxsize=int(width/2))
     right_repr = py.io.saferepr(right, maxsize=width-len(left_repr))
     summary = '%s %s %s' % (left_repr, op, right_repr)
@@ -93,7 +94,7 @@ def assertrepr_compare(config, op, left, right):
     issequence = lambda x: isinstance(x, (list, tuple))
     istext = lambda x: isinstance(x, basestring)
     isdict = lambda x: isinstance(x, dict)
-    isset = lambda x: isinstance(x, set)
+    isset = lambda x: isinstance(x, (set, frozenset))
 
     verbose = config.getoption('verbose')
     explanation = None
@@ -114,9 +115,9 @@ def assertrepr_compare(config, op, left, right):
         raise
     except:
         excinfo = py.code.ExceptionInfo()
-        explanation = ['(pytest_assertion plugin: representation of '
-            'details failed. Probably an object has a faulty __repr__.)',
-            str(excinfo)]
+        explanation = [
+            '(pytest_assertion plugin: representation of details failed.  '
+            'Probably an object has a faulty __repr__.)', str(excinfo)]
 
     if not explanation:
         return None
@@ -132,7 +133,7 @@ def _diff_text(left, right, verbose=False):
     """
     explanation = []
     if not verbose:
-        i = 0 # just in case left or right has zero length
+        i = 0  # just in case left or right has zero length
         for i in range(min(len(left), len(right))):
             if left[i] != right[i]:
                 break
@@ -166,13 +167,15 @@ def _compare_eq_sequence(left, right, verbose=False):
                             (i, left[i], right[i])]
             break
     if len(left) > len(right):
-        explanation += ['Left contains more items, '
-            'first extra item: %s' % py.io.saferepr(left[len(right)],)]
+        explanation += [
+            'Left contains more items, first extra item: %s' %
+            py.io.saferepr(left[len(right)],)]
     elif len(left) < len(right):
-        explanation += ['Right contains more items, '
-            'first extra item: %s' % py.io.saferepr(right[len(left)],)]
-    return explanation # + _diff_text(py.std.pprint.pformat(left),
-                       #             py.std.pprint.pformat(right))
+        explanation += [
+            'Right contains more items, first extra item: %s' %
+            py.io.saferepr(right[len(left)],)]
+    return explanation  # + _diff_text(py.std.pprint.pformat(left),
+                        #             py.std.pprint.pformat(right))
 
 
 def _compare_eq_set(left, right, verbose=False):
@@ -210,12 +213,12 @@ def _compare_eq_dict(left, right, verbose=False):
     if extra_left:
         explanation.append('Left contains more items:')
         explanation.extend(py.std.pprint.pformat(
-                dict((k, left[k]) for k in extra_left)).splitlines())
+            dict((k, left[k]) for k in extra_left)).splitlines())
     extra_right = set(right) - set(left)
     if extra_right:
         explanation.append('Right contains more items:')
         explanation.extend(py.std.pprint.pformat(
-                dict((k, right[k]) for k in extra_right)).splitlines())
+            dict((k, right[k]) for k in extra_right)).splitlines())
     return explanation
 
 

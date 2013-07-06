@@ -4,6 +4,7 @@ import inspect
 import sys
 import pytest
 from _pytest.main import getfslineno
+from _pytest.mark import MarkDecorator, MarkInfo
 from _pytest.monkeypatch import monkeypatch
 from py._code.code import TerminalRepr
 
@@ -177,7 +178,8 @@ def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
         if collector.classnamefilter(name):
             Class = collector._getcustomclass("Class")
             return Class(name, parent=collector)
-    elif collector.funcnamefilter(name) and hasattr(obj, '__call__'):
+    elif collector.funcnamefilter(name) and hasattr(obj, '__call__') and \
+        getfixturemarker(obj) is None:
         if is_generator(obj):
             return Generator(name, parent=collector)
         else:
@@ -369,7 +371,9 @@ class Module(pytest.File, PyCollector):
         return mod
 
     def setup(self):
-        setup_module = xunitsetup(self.obj, "setup_module")
+        setup_module = xunitsetup(self.obj, "setUpModule")
+        if setup_module is None:
+            setup_module = xunitsetup(self.obj, "setup_module")
         if setup_module is not None:
             #XXX: nose compat hack, move to nose plugin
             # if it takes a positional arg, its probably a pytest style one
@@ -380,7 +384,9 @@ class Module(pytest.File, PyCollector):
                 setup_module()
 
     def teardown(self):
-        teardown_module = xunitsetup(self.obj, 'teardown_module')
+        teardown_module = xunitsetup(self.obj, 'tearDownModule')
+        if teardown_module is None:
+            teardown_module = xunitsetup(self.obj, 'teardown_module')
         if teardown_module is not None:
             #XXX: nose compat hack, move to nose plugin
             # if it takes a positional arg, its probably a py.test style one
@@ -564,11 +570,13 @@ class CallSpec2(object):
         self._globalid_args = set()
         self._globalparam = _notexists
         self._arg2scopenum = {}  # used for sorting parametrized resources
+        self.keywords = {}
 
     def copy(self, metafunc):
         cs = CallSpec2(self.metafunc)
         cs.funcargs.update(self.funcargs)
         cs.params.update(self.params)
+        cs.keywords.update(self.keywords)
         cs._arg2scopenum.update(self._arg2scopenum)
         cs._idlist = list(self._idlist)
         cs._globalid = self._globalid
@@ -592,7 +600,7 @@ class CallSpec2(object):
     def id(self):
         return "-".join(map(str, filter(None, self._idlist)))
 
-    def setmulti(self, valtype, argnames, valset, id, scopenum=0):
+    def setmulti(self, valtype, argnames, valset, id, keywords, scopenum=0):
         for arg,val in zip(argnames, valset):
             self._checkargnotcontained(arg)
             getattr(self, valtype)[arg] = val
@@ -604,6 +612,7 @@ class CallSpec2(object):
             if val is _notexists:
                 self._emptyparamspecified = True
         self._idlist.append(id)
+        self.keywords.update(keywords)
 
     def setall(self, funcargs, id, param):
         for x in funcargs:
@@ -644,13 +653,15 @@ class Metafunc(FuncargnamesCompatAttr):
         during the collection phase.  If you need to setup expensive resources
         see about setting indirect=True to do it rather at test setup time.
 
-        :arg argnames: an argument name or a list of argument names
+        :arg argnames: a comma-separated string denoting one or more argument
+                       names, or a list/tuple of argument strings.
 
-        :arg argvalues: The list of argvalues determines how often a test is invoked
-            with different argument values.  If only one argname was specified argvalues
-            is a list of simple values.  If N argnames were specified, argvalues must
-            be a list of N-tuples, where each tuple-element specifies a value for its
-            respective argname.
+        :arg argvalues: The list of argvalues determines how often a
+            test is invoked with different argument values.  If only one
+            argname was specified argvalues is a list of simple values.  If N
+            argnames were specified, argvalues must be a list of N-tuples,
+            where each tuple-element specifies a value for its respective
+            argname.
 
         :arg indirect: if True each argvalue corresponding to an argname will
             be passed as request.param to its respective argname fixture
@@ -666,8 +677,24 @@ class Metafunc(FuncargnamesCompatAttr):
             It will also override any fixture-function defined scope, allowing
             to set a dynamic scope using test context or configuration.
         """
+
+        # individual parametrized argument sets can be wrapped in a
+        # marker in which case we unwrap the values and apply the mark
+        # at Function init
+        newkeywords = {}
+        unwrapped_argvalues = []
+        for i, argval in enumerate(argvalues):
+            if isinstance(argval, MarkDecorator):
+                newmark = MarkDecorator(argval.markname,
+                                        argval.args[:-1], argval.kwargs)
+                newkeywords[i] = {newmark.markname: newmark}
+                argval = argval.args[-1]
+            unwrapped_argvalues.append(argval)
+        argvalues = unwrapped_argvalues
+
         if not isinstance(argnames, (tuple, list)):
-            argnames = (argnames,)
+            argnames = [x.strip() for x in argnames.split(",") if x.strip()]
+        if len(argnames) == 1:
             argvalues = [(val,) for val in argvalues]
         if not argvalues:
             argvalues = [(_notexists,) * len(argnames)]
@@ -690,7 +717,7 @@ class Metafunc(FuncargnamesCompatAttr):
                 assert len(valset) == len(argnames)
                 newcallspec = callspec.copy(self)
                 newcallspec.setmulti(valtype, argnames, valset, ids[i],
-                                     scopenum)
+                                     newkeywords.get(i, {}), scopenum)
                 newcalls.append(newcallspec)
         self._calls = newcalls
 
@@ -907,6 +934,9 @@ class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
 
         for name, val in (py.builtin._getfuncdict(self.obj) or {}).items():
             self.keywords[name] = val
+        if callspec:
+            for name, val in callspec.keywords.items():
+                self.keywords[name] = val
         if keywords:
             for name, val in keywords.items():
                 self.keywords[name] = val
@@ -917,20 +947,25 @@ class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
                                                    self.cls,
                                                    funcargs=not isyield)
         self.fixturenames = fi.names_closure
-        if isyield:
-            assert not callspec, (
+        if callspec is not None:
+            self.callspec = callspec
+        self._initrequest()
+
+    def _initrequest(self):
+        if self._isyieldedfunction():
+            assert not hasattr(self, "callspec"), (
                 "yielded functions (deprecated) cannot have funcargs")
             self.funcargs = {}
         else:
-            if callspec is not None:
-                self.callspec = callspec
-                self.funcargs = callspec.funcargs or {}
+            if hasattr(self, "callspec"):
+                callspec = self.callspec
+                self.funcargs = callspec.funcargs.copy()
                 self._genid = callspec.id
                 if hasattr(callspec, "param"):
                     self.param = callspec.param
             else:
                 self.funcargs = {}
-        self._request = req = FixtureRequest(self)
+        self._request = FixtureRequest(self)
 
     @property
     def function(self):
@@ -1561,15 +1596,7 @@ class FixtureManager:
                 continue
             # fixture functions have a pytest_funcarg__ prefix (pre-2.3 style)
             # or are "@pytest.fixture" marked
-            try:
-                marker = obj._pytestfixturefunction
-            except KeyboardInterrupt:
-                raise
-            except Exception:
-                # some objects raise errors like request (from flask import request)
-                # we don't expect them to be fixture functions
-                marker = None
-
+            marker = getfixturemarker(obj)
             if marker is None:
                 if not name.startswith(self._argprefix):
                     continue
@@ -1614,6 +1641,29 @@ class FixtureManager:
                 l.remove(finalizer)
             except ValueError:
                 pass
+
+def call_fixture_func(fixturefunc, request, kwargs):
+    if is_generator(fixturefunc):
+        iter = fixturefunc(**kwargs)
+        next = getattr(iter, "__next__", None)
+        if next is None:
+            next = getattr(iter, "next")
+        res = next()
+        def teardown():
+            try:
+                next()
+            except StopIteration:
+                pass
+            else:
+                fs, lineno = getfslineno(fixturefunc)
+                location = "%s:%s" % (fs, lineno+1)
+                pytest.fail(
+                    "fixture function %s has more than one 'yield': \n%s" %
+                            (fixturefunc.__name__, location), pytrace=False)
+        request.addfinalizer(teardown)
+    else:
+        res = fixturefunc(**kwargs)
+    return res
 
 class FixtureDef:
     """ A container for a factory definition. """
@@ -1665,7 +1715,7 @@ class FixtureDef:
                         fixturefunc = fixturefunc.__get__(request.instance)
             except AttributeError:
                 pass
-            result = fixturefunc(**kwargs)
+            result = call_fixture_func(fixturefunc, request, kwargs)
         assert not hasattr(self, "cached_result")
         self.cached_result = result
         return result
@@ -1697,29 +1747,39 @@ def getfuncargnames(function, startindex=None):
 def parametrize_sorted(items, ignore, cache, scopenum):
     if scopenum >= 3:
         return items
-    newitems = []
-    olditems = []
+
+    # we pick the first item which has a arg/param combo in the
+    # requested scope and sort other items with the same combo
+    # into "newitems" which then is a list of all items using this
+    # arg/param.
+
+    similar_items = []
+    other_items = []
     slicing_argparam = None
+    slicing_index = 0
     for item in items:
         argparamlist = getfuncargparams(item, ignore, scopenum, cache)
         if slicing_argparam is None and argparamlist:
             slicing_argparam = argparamlist[0]
-            slicing_index = len(olditems)
+            slicing_index = len(other_items)
         if slicing_argparam in argparamlist:
-            newitems.append(item)
+            similar_items.append(item)
         else:
-            olditems.append(item)
-    if newitems:
+            other_items.append(item)
+
+    if (len(similar_items) + slicing_index) > 1:
         newignore = ignore.copy()
         newignore.add(slicing_argparam)
-        newitems = parametrize_sorted(newitems + olditems[slicing_index:],
-                                      newignore, cache, scopenum)
-        old1 = parametrize_sorted(olditems[:slicing_index], newignore,
-                                  cache, scopenum+1)
-        return old1 + newitems
+        part2 = parametrize_sorted(
+                        similar_items + other_items[slicing_index:],
+                        newignore, cache, scopenum)
+        part1 = parametrize_sorted(
+                        other_items[:slicing_index], newignore,
+                        cache, scopenum+1)
+        return part1 + part2
     else:
-        olditems = parametrize_sorted(olditems, ignore, cache, scopenum+1)
-    return olditems + newitems
+        other_items = parametrize_sorted(other_items, ignore, cache, scopenum+1)
+    return other_items + similar_items
 
 def getfuncargparams(item, ignore, scopenum, cache):
     """ return list of (arg,param) tuple, sorted by broader scope first. """
@@ -1766,6 +1826,18 @@ def getfuncargparams(item, ignore, scopenum, cache):
 
 def xunitsetup(obj, name):
     meth = getattr(obj, name, None)
-    if meth is not None:
-        if not hasattr(meth, "_pytestfixturefunction"):
-            return meth
+    if getfixturemarker(meth) is None:
+        return meth
+
+def getfixturemarker(obj):
+    """ return fixturemarker or None if it doesn't exist or raised
+    exceptions."""
+    try:
+        return getattr(obj, "_pytestfixturefunction", None)
+    except KeyboardInterrupt:
+        raise
+    except Exception:
+        # some objects raise errors like request (from flask import request)
+        # we don't expect them to be fixture functions
+        return None
+

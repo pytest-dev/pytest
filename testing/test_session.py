@@ -226,3 +226,17 @@ def test_exclude(testdir):
     assert result.ret == 0
     result.stdout.fnmatch_lines(["*1 passed*"])
 
+def test_sessionfinish_with_start(testdir):
+    testdir.makeconftest("""
+        import os
+        l = []
+        def pytest_sessionstart():
+            l.append(os.getcwd())
+            os.chdir("..")
+
+        def pytest_sessionfinish():
+            assert l[0] == os.getcwd()
+
+    """)
+    res = testdir.runpytest("--collectonly")
+    assert res.ret == 0

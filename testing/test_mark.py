@@ -345,6 +345,24 @@ class TestFunctional:
         assert l[0].args == ("pos0",)
         assert l[1].args == ("pos1",)
 
+    def test_no_marker_match_on_unmarked_names(self, testdir):
+        p = testdir.makepyfile("""
+            import pytest
+            @pytest.mark.shouldmatch
+            def test_marked():
+                assert 1
+
+            def test_unmarked():
+                assert 1
+        """)
+        reprec = testdir.inline_run("-m", "test_unmarked", p)
+        passed, skipped, failed = reprec.listoutcomes()
+        assert len(passed) + len(skipped) + len(failed) == 0
+        dlist = reprec.getcalls("pytest_deselected")
+        deselected_tests = dlist[0].items
+        assert len(deselected_tests) == 2
+
+
     def test_keywords_at_node_level(self, testdir):
         p = testdir.makepyfile("""
             import pytest
@@ -382,7 +400,6 @@ class TestKeywordSelection:
             assert len(reprec.getcalls('pytest_deselected')) == 1
 
         for keyword in ['test_one', 'est_on']:
-            #yield check, keyword, 'test_one'
             check(keyword, 'test_one')
         check('TestClass and test', 'test_method_one')
 
@@ -401,7 +418,7 @@ class TestKeywordSelection:
             def pytest_pycollect_makeitem(__multicall__, name):
                 if name == "TestClass":
                     item = __multicall__.execute()
-                    item.keywords["xxx"] = True
+                    item.extra_keyword_matches.add("xxx")
                     return item
         """)
         reprec = testdir.inline_run(p.dirpath(), '-s', '-k', keyword)
@@ -440,3 +457,22 @@ class TestKeywordSelection:
         reprec = testdir.inline_run("-k", "mykeyword", p)
         passed, skipped, failed = reprec.countoutcomes()
         assert failed == 1
+
+    def test_no_magic_values(self, testdir):
+        """Make sure the tests do not match on magic values,
+        no double underscored values, like '__dict__',
+        and no instance values, like '()'.
+        """
+        p = testdir.makepyfile("""
+            def test_one(): assert 1
+        """)
+        def assert_test_is_not_selected(keyword):
+            reprec = testdir.inline_run("-k", keyword, p)
+            passed, skipped, failed = reprec.countoutcomes()
+            dlist = reprec.getcalls("pytest_deselected")
+            assert passed + skipped + failed == 0
+            deselected_tests = dlist[0].items
+            assert len(deselected_tests) == 1
+
+        assert_test_is_not_selected("__")
+        assert_test_is_not_selected("()")

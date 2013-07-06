@@ -4,8 +4,6 @@ Talks and Tutorials
 
 .. _`funcargs`: funcargs.html
 
-.. note:: Upcoming: `professional testing with pytest and tox <`http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_ , 24th-26th June 2013, Leipzig.
-
 Tutorial examples and blog postings
 ---------------------------------------------
 

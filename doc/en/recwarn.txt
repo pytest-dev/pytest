@@ -2,6 +2,8 @@
 Asserting deprecation and other warnings
 =====================================================
 
+.. _function_argument:
+
 The recwarn function argument
 ------------------------------------
 
@@ -23,6 +25,9 @@ The ``recwarn`` function argument provides these methods:
 
 * ``pop(category=None)``: return last warning matching the category.
 * ``clear()``: clear list of warnings
+
+
+.. _ensuring_function_triggers:
 
 Ensuring a function triggers a deprecation warning
 -------------------------------------------------------

@@ -4,15 +4,15 @@
 pytest: helps you write better programs
 =============================================
 
-.. note:: Upcoming: `professional testing with pytest and tox <http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_ , 24th-26th June 2013, Leipzig.
-
-
 **a mature full-featured Python testing tool**
 
  - runs on Posix/Windows, Python 2.4-3.3, PyPy and Jython-2.5.1
  - :ref:`comprehensive online <toc>` and `PDF documentation <pytest.pdf>`_
+ - many :ref:`third party plugins <extplugins>` and 
+   :ref:`builtin helpers <pytest helpers>`
  - used in :ref:`many projects and organisations <projects>`, in test
-   suites ranging from 10 to 10s of thousands of tests
+   suites with up to twenty thousand tests
+ - strict policy of remaining backward compatible across releases
  - comes with many :ref:`tested examples <examples>`
 
 **provides easy no-boilerplate testing**
@@ -26,13 +26,13 @@ pytest: helps you write better programs
 
 **scales from simple unit to complex functional testing**
 
- - (new in 2.3) :ref:`modular parametrizeable fixtures <fixture>`
+ - :ref:`modular parametrizeable fixtures <fixture>` (new in 2.3,
+   improved in 2.4)
  - :ref:`parametrized test functions <parametrized test functions>`
  - :ref:`mark`
- - :ref:`skipping`
+ - :ref:`skipping` (improved in 2.4)
  - can :ref:`distribute tests to multiple CPUs <xdistcpu>` through :ref:`xdist plugin <xdist>`
  - can :ref:`continuously re-run failing tests <looponfailing>`
- - many :ref:`builtin helpers <pytest helpers>` and :ref:`plugins <plugins>`
  - flexible :ref:`Python test discovery`
 
 **integrates many common testing methods**:
@@ -50,8 +50,9 @@ pytest: helps you write better programs
 **extensive plugin and customization system**:
 
  - all collection, reporting, running aspects are delegated to hook functions
- - customizations can be per-directory, per-project or per PyPI released plugins
- - it is easy to add command line options or do other kind of add-ons and customizations.
+ - customizations can be per-directory, per-project or per PyPI released plugin
+ - it is easy to add command line options or customize existing behaviour
+
 
 .. _`Javascript unit- and functional testing`: http://pypi.python.org/pypi/oejskit
 

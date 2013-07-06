@@ -78,11 +78,21 @@ there is no need to activate it.  Here is a initial list of known plugins:
 * `pytest-capturelog <http://pypi.python.org/pypi/pytest-capturelog>`_:
   to capture and assert about messages from the logging module
 
+* `pytest-cov <http://pypi.python.org/pypi/pytest-cov>`_:
+  coverage reporting, compatible with distributed testing
+
 * `pytest-xdist <http://pypi.python.org/pypi/pytest-xdist>`_:
   to distribute tests to CPUs and remote hosts, to run in boxed
   mode which allows to survive segmentation faults, to run in
   looponfailing mode, automatically re-running failing tests 
   on file changes, see also :ref:`xdist`
+
+* `pytest-instafail <http://pypi.python.org/pypi/pytest-instafail>`_:
+  to report failures while the test run is happening.
+
+* `pytest-bdd <http://pypi.python.org/pypi/pytest-bdd>`_ and
+  `pytest-konira <http://pypi.python.org/pypi/pytest-konira>`_ 
+  to write tests using behaviour-driven testing.
 
 * `pytest-timeout <http://pypi.python.org/pypi/pytest-timeout>`_:
   to timeout tests based on function marks or global definitions.
@@ -90,9 +100,6 @@ there is no need to activate it.  Here is a initial list of known plugins:
 * `pytest-cache <http://pypi.python.org/pypi/pytest-cache>`_:
   to interactively re-run failing tests and help other plugins to
   store test run information across invocations.
-
-* `pytest-cov <http://pypi.python.org/pypi/pytest-cov>`_:
-  coverage reporting, compatible with distributed testing
 
 * `pytest-pep8 <http://pypi.python.org/pypi/pytest-pep8>`_:
   a ``--pep8`` option to enable PEP8 compliance checking.
@@ -338,15 +345,15 @@ Reporting hooks
 
 Session related reporting hooks:
 
-.. autofunction: pytest_collectstart
-.. autofunction: pytest_itemcollected
-.. autofunction: pytest_collectreport
-.. autofunction: pytest_deselected
+.. autofunction:: pytest_collectstart
+.. autofunction:: pytest_itemcollected
+.. autofunction:: pytest_collectreport
+.. autofunction:: pytest_deselected
 
 And here is the central hook for reporting about
 test execution:
 
-.. autofunction: pytest_runtest_logreport
+.. autofunction:: pytest_runtest_logreport
 
 Reference of objects involved in hooks
 ===========================================================
