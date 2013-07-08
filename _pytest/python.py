@@ -1317,7 +1317,8 @@ class FixtureRequest(FuncargnamesCompatAttr):
             x = self._pyfuncitem.getparent(pytest.Class)
             if x is not None:
                 return x
-            scope = "module"
+            # fallback to function
+            return self._pyfuncitem
         if scope == "module":
             return self._pyfuncitem.getparent(pytest.Module)
         raise ValueError("unknown finalization scope %r" %(scope,))
