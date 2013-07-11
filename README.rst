@@ -35,4 +35,4 @@ and report bugs at:
 
     http://bitbucket.org/hpk42/pytest/issues/
 
-Copyright Holger Krekel and others, 2004-2012
+Copyright Holger Krekel and others, 2004-2013
