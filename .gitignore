@@ -29,4 +29,5 @@ env/
 .cache
 .coverage
 .ropeproject
+.idea
 

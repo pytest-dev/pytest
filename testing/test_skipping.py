@@ -108,8 +108,7 @@ class TestEvaluator:
                 pass
         """)
         ev = MarkEvaluator(item, 'skipif')
-        with pytest.raises(pytest.fail.Exception) as exc:
-            assert ev.istrue()
+        exc = pytest.raises(pytest.fail.Exception, "ev.istrue()")
         assert """Failed: you need to specify reason=STRING when using booleans as conditions.""" in exc.value.msg
 
     def test_skipif_class(self, testdir):
