@@ -64,8 +64,8 @@ These projects help integrate py.test into other Python frameworks:
 
 * `pytest-django <http://pypi.python.org/pypi/pytest-django/>`_ for Django
 * `zope.pytest <http://packages.python.org/zope.pytest/>`_ for Zope and Grok
-* `pytest__gae <http://pypi.python.org/pypi/pytest_gae/0.2.1>`_ for Google App Engine
-* There is `some work <https://github.com/Pylons/Kotti/pull/101>`_ underway for Kotti, a CMS built in Pyramid/Pylons
+* `pytest_gae <http://pypi.python.org/pypi/pytest_gae/0.2.1>`_ for Google App Engine
+* There is `some work <https://github.com/Kotti/Kotti/blob/master/kotti/testing.py>`_ underway for Kotti, a CMS built in Pyramid/Pylons
 
 
 Some organisations using py.test
