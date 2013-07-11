@@ -15,7 +15,7 @@ scales to support complex functional testing.  It provides
 
 - many `external plugins <http://pytest.org/latest/plugins.html#installing-external-plugins-searching>`_.
 
-.. image:: https://secure.travis-ci.org/hpk42/pytest.png?branch=travis-integration
+.. image:: https://secure.travis-ci.org/hpk42/pytest.png
    :target: http://travis-ci.org/hpk42/pytest
 
 A simple example for a test::
