@@ -1,6 +1,8 @@
 
 .. _features:
 
+..  note:: second training: `professional testing with Python <http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_ , 25-27th November 2013, Leipzig.
+
 pytest: helps you write better programs
 =============================================
 
