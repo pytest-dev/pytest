@@ -99,12 +99,12 @@ class TestMetafunc:
         def func(x, y): pass
         metafunc = self.Metafunc(func)
 
-        with pytest.raises(ValueError):
-            metafunc.parametrize("x", [1,2], ids=['basic'])
+        pytest.raises(ValueError, lambda:
+            metafunc.parametrize("x", [1,2], ids=['basic']))
 
-        with pytest.raises(ValueError):
+        pytest.raises(ValueError, lambda:
             metafunc.parametrize(("x","y"), [("abc", "def"),
-                                             ("ghi", "jkl")], ids=["one"])
+                                             ("ghi", "jkl")], ids=["one"]))
 
     def test_parametrize_with_userobjects(self):
         def func(x, y): pass
@@ -140,7 +140,7 @@ class TestMetafunc:
                                       (True, False),
                                       (None, None),
                                       (list("six"), [66, 66]),
-                                      ({7}, set("seven")),
+                                      (set([7]), set("seven")),
                                       (tuple("eight"), (8, -8, 8))
         ])
         assert result == ["1.0--1.1",

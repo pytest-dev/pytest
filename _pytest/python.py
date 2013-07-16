@@ -2,7 +2,6 @@
 import py
 import inspect
 import sys
-from types import NoneType
 import pytest
 from _pytest.main import getfslineno
 from _pytest.mark import MarkDecorator, MarkInfo
@@ -11,6 +10,8 @@ from py._code.code import TerminalRepr
 
 import _pytest
 cutdir = py.path.local(_pytest.__file__).dirpath()
+
+NoneType = type(None)
 
 callable = py.builtin.callable
 
