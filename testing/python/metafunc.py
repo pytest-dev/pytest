@@ -95,6 +95,17 @@ class TestMetafunc:
         ids = [x.id for x in metafunc._calls]
         assert ids == ["basic-abc", "basic-def", "advanced-abc", "advanced-def"]
 
+    def test_parametrize_with_wrong_number_of_ids(self, testdir):
+        def func(x, y): pass
+        metafunc = self.Metafunc(func)
+
+        with pytest.raises(ValueError):
+            metafunc.parametrize("x", [1,2], ids=['basic'])
+
+        with pytest.raises(ValueError):
+            metafunc.parametrize(("x","y"), [("abc", "def"),
+                                             ("ghi", "jkl")], ids=["one"])
+
     def test_parametrize_with_userobjects(self):
         def func(x, y): pass
         metafunc = self.Metafunc(func)
@@ -121,6 +132,25 @@ class TestMetafunc:
         result = idmaker((py.builtin._totext("a"), "b"), [({}, '\xc3\xb4')])
         assert result == ['a0-\xc3\xb4']
 
+    def test_idmaker_native_strings(self):
+        from _pytest.python import idmaker
+        result = idmaker(("a", "b"), [(1.0, -1.1),
+                                      (2, -202),
+                                      ("three", "three hundred"),
+                                      (True, False),
+                                      (None, None),
+                                      (list("six"), [66, 66]),
+                                      ({7}, set("seven")),
+                                      (tuple("eight"), (8, -8, 8))
+        ])
+        assert result == ["1.0--1.1",
+                          "2--202",
+                          "three-three hundred",
+                          "True-False",
+                          "None-None",
+                          "a5-b5",
+                          "a6-b6",
+                          "a7-b7"]
 
     def test_addcall_and_parametrize(self):
         def func(x, y): pass
@@ -529,8 +559,6 @@ class TestMetafuncFunctional:
             *test_function*1-b0*
             *test_function*1.3-b1*
         """)
-
-
 
     @pytest.mark.parametrize(("scope", "length"),
                              [("module", 2), ("function", 4)])
