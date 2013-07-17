@@ -1,6 +1,9 @@
 Changes between 2.3.5 and 2.4.DEV
 -----------------------------------
 
+- SO-17664702: call fixture finalizers even if the fixture function
+  partially failed (finalizers would not always be called before)
+
 - color the last line red or green depending if failures/errors occured
   or everything passed.  thanks Christian Theunert.
 

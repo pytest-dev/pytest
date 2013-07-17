@@ -1290,15 +1290,21 @@ class FixtureRequest(FuncargnamesCompatAttr):
         # route request.addfinalizer to fixturedef
         mp.setattr(self, "addfinalizer", fixturedef.addfinalizer)
 
-        # perform the fixture call
-        val = fixturedef.execute(request=self)
+        try:
+            # perform the fixture call
+            val = fixturedef.execute(request=self)
+        finally:
+            # if the fixture function failed it might still have
+            # registered finalizers so we can register
 
-        # prepare finalization according to scope
-        # (XXX analyse exact finalizing mechanics / cleanup)
-        self.session._setupstate.addfinalizer(fixturedef.finish, self.node)
-        self._fixturemanager.addargfinalizer(fixturedef.finish, argname)
-        for subargname in fixturedef.argnames: # XXX all deps?
-            self._fixturemanager.addargfinalizer(fixturedef.finish, subargname)
+            # prepare finalization according to scope
+            # (XXX analyse exact finalizing mechanics / cleanup)
+            self.session._setupstate.addfinalizer(fixturedef.finish,
+                                                  self.node)
+            self._fixturemanager.addargfinalizer(fixturedef.finish, argname)
+            for subargname in fixturedef.argnames: # XXX all deps?
+                self._fixturemanager.addargfinalizer(fixturedef.finish,
+                                                     subargname)
         mp.undo()
         return val
 

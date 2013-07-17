@@ -309,6 +309,39 @@ class TestRequestBasic:
         print(ss.stack)
         assert teardownlist == [1]
 
+    def test_request_addfinalizer_failing_setup(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            l = [1]
+            @pytest.fixture
+            def myfix(request):
+                request.addfinalizer(l.pop)
+                assert 0
+            def test_fix(myfix):
+                pass
+            def test_finalizer_ran():
+                assert not l
+        """)
+        reprec = testdir.inline_run("-s")
+        reprec.assertoutcome(failed=1, passed=1)
+
+    def test_request_addfinalizer_failing_setup_module(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            l = [1, 2]
+            @pytest.fixture(scope="module")
+            def myfix(request):
+                request.addfinalizer(l.pop)
+                request.addfinalizer(l.pop)
+                assert 0
+            def test_fix(myfix):
+                pass
+        """)
+        reprec = testdir.inline_run("-s")
+        mod = reprec.getcalls("pytest_runtest_setup")[0].item.module
+        assert not mod.l
+
+
     def test_request_addfinalizer_partial_setup_failure(self, testdir):
         p = testdir.makepyfile("""
             l = []
