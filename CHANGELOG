@@ -1,6 +1,9 @@
 Changes between 2.3.5 and 2.4.DEV
 -----------------------------------
 
+- color the last line red or green depending if failures/errors occured
+  or everything passed.  thanks Christian Theunert.
+
 - fix issue320 - fix class scope for fixtures when mixed with
   module-level functions.  Thanks Anatloy Bubenkoff.
 

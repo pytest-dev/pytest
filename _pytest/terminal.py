@@ -457,7 +457,7 @@ class TerminalReporter:
         msg = "%s in %.2f seconds" % (line, session_duration)
         if self.verbosity >= 0:
             markup = dict(bold=True)
-            if 'failed' in self.stats:
+            if 'failed' in self.stats or 'error' in self.stats:
                 markup['red'] = True
             else:
                 markup['green'] = True
