@@ -35,4 +35,10 @@ and report bugs at:
 
     http://bitbucket.org/hpk42/pytest/issues/
 
+and checkout repos at:
+
+    http://github.com/hpk42/pytest/ (mirror)
+    http://bitbucket.org/hpk42/pytest/
+
+
 Copyright Holger Krekel and others, 2004-2013
