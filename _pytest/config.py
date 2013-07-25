@@ -5,6 +5,12 @@ import sys, os
 from _pytest.core import PluginManager
 import pytest
 
+# enable after some grace period for plugin writers
+TYPE_WARN = False
+if TYPE_WARN:
+    import warnings
+
+
 def pytest_cmdline_parse(pluginmanager, args):
     config = Config(pluginmanager)
     config.parse(args)
@@ -147,6 +153,17 @@ class Argument:
         self._short_opts = []
         self._long_opts = []
         self.dest = attrs.get('dest')
+        if TYPE_WARN:
+            try:
+                help = attrs['help']
+                if '%default' in help:
+                    warnings.warn(
+                        'py.test now uses argparse. "%default" should be'
+                        ' changed to "%(default)s" ',
+                        FutureWarning,
+                        stacklevel=3)
+            except KeyError:
+                pass
         try:
             typ = attrs['type']
         except KeyError:
@@ -155,10 +172,25 @@ class Argument:
             # this might raise a keyerror as well, don't want to catch that
             if isinstance(typ, str):
                 if typ == 'choice':
+                    if TYPE_WARN:
+                        warnings.warn(
+                            'type argument to addoption() is a string %r.'
+                            ' For parsearg this is optional and when supplied '
+                            ' should be a type.'
+                            ' (options: %s)' % (typ, names),
+                            FutureWarning,
+                            stacklevel=3)
                     # argparse expects a type here take it from
                     # the type of the first element
                     attrs['type'] = type(attrs['choices'][0])
                 else:
+                    if TYPE_WARN:
+                        warnings.warn(
+                            'type argument to addoption() is a string %r.'
+                            ' For parsearg this should be a type.'
+                            ' (options: %s)' % (typ, names),
+                            FutureWarning,
+                            stacklevel=3)
                     attrs['type'] = Argument._typ_map[typ]
                 # used in test_parseopt -> test_parse_defaultgetter 
                 self.type = attrs['type']
@@ -185,7 +217,7 @@ class Argument:
 
     def attrs(self):
         # update any attributes set by processopt
-        attrs = 'default dest'.split()
+        attrs = 'default dest help'.split()
         if self.dest:
             attrs.append(self.dest)
         for attr in attrs:
@@ -193,6 +225,11 @@ class Argument:
                 self._attrs[attr] = getattr(self, attr)
             except AttributeError:
                 pass
+        if self._attrs.get('help'):
+            a = self._attrs['help']
+            a = a.replace('%default', '%(default)s')
+            #a = a.replace('%prog', '%(prog)s')
+            self._attrs['help'] = a
         return self._attrs
         
     def _set_opt_strings(self, opts):
