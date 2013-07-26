@@ -16,7 +16,7 @@ py.test を使っているプロジェクトを紹介します (:ref:`contact` �
     * `PyPy <http://pypy.org>`_, Python with a JIT compiler, running over 
       `16000 tests <http://buildbot.pypy.org/summary?branch=%3Ctrunk%3E>`_
     * the `MoinMoin <http://moinmo.in>`_ Wiki Engine
-    * `tox <http://codespeak.net/tox>`_, virtualenv/Hudson integration tool
+    * `tox <http://testrun.org/tox>`_, virtualenv/Hudson integration tool
     * `PIDA <http://pida.co.uk>`_ framework for integrated development
     * `PyPM <http://code.activestate.com/pypm/>`_ ActiveState's package manager
     * `Fom <http://packages.python.org/Fom/>`_ a fluid object mapper for FluidDB
@@ -49,7 +49,7 @@ py.test を使っているプロジェクトを紹介します (:ref:`contact` �
 
 * `PyPy <http://pypy.org>`_: JIT コンパイラーを備えた Python、 `16000 テスト <http://buildbot.pypy.org/summary?branch=%3Ctrunk%3E>`_ 以上を実行
 * `MoinMoin <http://moinmo.in>`_: Wiki エンジン
-* `tox <http://codespeak.net/tox>`_: virtualenv/Jenkins インテグレーションツール
+* `tox <http://testrun.org/tox>`_: virtualenv/Jenkins インテグレーションツール
 * `PIDA <http://pida.co.uk>`_: 統合開発フレームワーク
 * `PyPM <http://code.activestate.com/pypm/>`_: Activestate 社のパッケージマネージャー
 * `Fom <http://packages.python.org/Fom/>`_: FluidDB の fluid オブジェクトマッパー
