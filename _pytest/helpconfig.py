@@ -62,6 +62,7 @@ def pytest_cmdline_main(config):
 def showhelp(config):
     tw = py.io.TerminalWriter()
     tw.write(config._parser.optparser.format_help())
+    tw.write(config._parser.optparser.format_epilog(None))
     tw.line()
     tw.line()
     #tw.sep( "=", "config file settings")

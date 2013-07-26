@@ -451,12 +451,22 @@ class TestKeywordSelection:
                assert 0
            test_one.mykeyword = True
         """)
-        reprec = testdir.inline_run("-k", "-mykeyword", p)
-        passed, skipped, failed = reprec.countoutcomes()
-        assert passed + skipped + failed == 0
         reprec = testdir.inline_run("-k", "mykeyword", p)
         passed, skipped, failed = reprec.countoutcomes()
         assert failed == 1
+
+    @pytest.mark.xfail
+    def test_keyword_extra_dash(self, testdir):
+        p = testdir.makepyfile("""
+           def test_one():
+               assert 0
+           test_one.mykeyword = True
+        """)
+        # with argparse the argument to an option cannot
+        # start with '-'
+        reprec = testdir.inline_run("-k", "-mykeyword", p)
+        passed, skipped, failed = reprec.countoutcomes()
+        assert passed + skipped + failed == 0
 
     def test_no_magic_values(self, testdir):
         """Make sure the tests do not match on magic values,

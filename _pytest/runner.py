@@ -18,7 +18,7 @@ def pytest_namespace():
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "reporting", after="general")
     group.addoption('--durations',
-         action="store", type="int", default=None, metavar="N",
+         action="store", type=int, default=None, metavar="N",
          help="show N slowest setup/test durations (N=0 for all)."),
 
 def pytest_terminal_summary(terminalreporter):

@@ -23,7 +23,7 @@ def pytest_cmdline_preparse(config, args):
     """modify command line arguments before option parsing. """
 
 def pytest_addoption(parser):
-    """register optparse-style options and ini-style config values.
+    """register argparse-style options and ini-style config values.
 
     This function must be implemented in a :ref:`plugin <pluginorder>` and is
     called once at the beginning of a test run.

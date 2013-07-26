@@ -5,6 +5,12 @@ import sys, os
 from _pytest.core import PluginManager
 import pytest
 
+# enable after some grace period for plugin writers
+TYPE_WARN = False
+if TYPE_WARN:
+    import warnings
+
+
 def pytest_cmdline_parse(pluginmanager, args):
     config = Config(pluginmanager)
     config.parse(args)
@@ -80,16 +86,20 @@ class Parser:
         for group in groups:
             if group.options:
                 desc = group.description or group.name
-                optgroup = py.std.optparse.OptionGroup(optparser, desc)
-                optgroup.add_options(group.options)
-                optparser.add_option_group(optgroup)
+                arggroup = optparser.add_argument_group(desc)
+                for option in group.options:
+                    n = option.names()
+                    a = option.attrs()
+                    arggroup.add_argument(*n, **a)
+        optparser.add_argument(Config._file_or_dir, nargs='*')
+        try_argcomplete(self.optparser)
         return self.optparser.parse_args([str(x) for x in args])
 
     def parse_setoption(self, args, option):
-        parsedoption, args = self.parse(args)
+        parsedoption = self.parse(args)
         for name, value in parsedoption.__dict__.items():
             setattr(option, name, value)
-        return args
+        return getattr(parsedoption, Config._file_or_dir)
 
     def addini(self, name, help, type=None, default=None):
         """ register an ini-file option.
@@ -105,7 +115,164 @@ class Parser:
         self._inidict[name] = (help, type, default)
         self._ininames.append(name)
 
+def try_argcomplete(parser):
+    try:
+        import argcomplete
+    except ImportError:
+        pass
+    else:
+        argcomplete.autocomplete(parser)
 
+class ArgumentError(Exception):
+    """
+    Raised if an Argument instance is created with invalid or
+    inconsistent arguments.
+    """
+
+    def __init__(self, msg, option):
+        self.msg = msg
+        self.option_id = str(option)
+
+    def __str__(self):
+        if self.option_id:
+            return "option %s: %s" % (self.option_id, self.msg)
+        else:
+            return self.msg
+
+
+class Argument:
+    """class that mimics the necessary behaviour of py.std.optparse.Option """
+    _typ_map = {
+        'int': int,
+        'string': str,
+        }
+        
+    def __init__(self, *names, **attrs):
+        """store parms in private vars for use in add_argument"""
+        self._attrs = attrs
+        self._short_opts = []
+        self._long_opts = []
+        self.dest = attrs.get('dest')
+        if TYPE_WARN:
+            try:
+                help = attrs['help']
+                if '%default' in help:
+                    warnings.warn(
+                        'py.test now uses argparse. "%default" should be'
+                        ' changed to "%(default)s" ',
+                        FutureWarning,
+                        stacklevel=3)
+            except KeyError:
+                pass
+        try:
+            typ = attrs['type']
+        except KeyError:
+            pass
+        else:
+            # this might raise a keyerror as well, don't want to catch that
+            if isinstance(typ, str):
+                if typ == 'choice':
+                    if TYPE_WARN:
+                        warnings.warn(
+                            'type argument to addoption() is a string %r.'
+                            ' For parsearg this is optional and when supplied '
+                            ' should be a type.'
+                            ' (options: %s)' % (typ, names),
+                            FutureWarning,
+                            stacklevel=3)
+                    # argparse expects a type here take it from
+                    # the type of the first element
+                    attrs['type'] = type(attrs['choices'][0])
+                else:
+                    if TYPE_WARN:
+                        warnings.warn(
+                            'type argument to addoption() is a string %r.'
+                            ' For parsearg this should be a type.'
+                            ' (options: %s)' % (typ, names),
+                            FutureWarning,
+                            stacklevel=3)
+                    attrs['type'] = Argument._typ_map[typ]
+                # used in test_parseopt -> test_parse_defaultgetter 
+                self.type = attrs['type']
+            else:
+                self.type = typ
+        try:
+            # attribute existence is tested in Config._processopt
+            self.default = attrs['default']
+        except KeyError:
+            pass
+        self._set_opt_strings(names)
+        if not self.dest:
+            if self._long_opts:
+                self.dest = self._long_opts[0][2:].replace('-', '_')
+            else:
+                try:
+                    self.dest = self._short_opts[0][1:]
+                except IndexError:
+                    raise ArgumentError(
+                        'need a long or short option', self)
+
+    def names(self):
+        return self._short_opts + self._long_opts
+
+    def attrs(self):
+        # update any attributes set by processopt
+        attrs = 'default dest help'.split()
+        if self.dest:
+            attrs.append(self.dest)
+        for attr in attrs:
+            try:
+                self._attrs[attr] = getattr(self, attr)
+            except AttributeError:
+                pass
+        if self._attrs.get('help'):
+            a = self._attrs['help']
+            a = a.replace('%default', '%(default)s')
+            #a = a.replace('%prog', '%(prog)s')
+            self._attrs['help'] = a
+        return self._attrs
+        
+    def _set_opt_strings(self, opts):
+        """directly from optparse
+
+        might not be necessary as this is passed to argparse later on"""
+        for opt in opts:
+            if len(opt) < 2:
+                raise ArgumentError(
+                    "invalid option string %r: "
+                    "must be at least two characters long" % opt, self)
+            elif len(opt) == 2:
+                if not (opt[0] == "-" and opt[1] != "-"):
+                    raise ArgumentError(
+                        "invalid short option string %r: "
+                        "must be of the form -x, (x any non-dash char)" % opt,
+                        self)
+                self._short_opts.append(opt)
+            else:
+                if not (opt[0:2] == "--" and opt[2] != "-"):
+                    raise ArgumentError(
+                        "invalid long option string %r: "
+                        "must start with --, followed by non-dash" % opt,
+                        self)
+                self._long_opts.append(opt)
+        
+    def __repr__(self):
+        retval = 'Argument('
+        if self._short_opts:
+            retval += '_short_opts: ' + repr(self._short_opts) + ', '
+        if self._long_opts:
+            retval += '_long_opts: ' + repr(self._long_opts) + ', '
+        retval += 'dest: ' + repr(self.dest) + ', '
+        if hasattr(self, 'type'):
+            retval += 'type: ' + repr(self.type) + ', '
+        if hasattr(self, 'default'):
+            retval += 'default: ' + repr(self.default) + ', '
+        if retval[-2:] == ', ':  # always long enough to test ("Argument(" )
+            retval = retval[:-2]
+        retval += ')'
+        return retval
+
+                        
 class OptionGroup:
     def __init__(self, name, description="", parser=None):
         self.name = name
@@ -115,11 +282,11 @@ class OptionGroup:
 
     def addoption(self, *optnames, **attrs):
         """ add an option to this group. """
-        option = py.std.optparse.Option(*optnames, **attrs)
+        option = Argument(*optnames, **attrs)
         self._addoption_instance(option, shortupper=False)
 
     def _addoption(self, *optnames, **attrs):
-        option = py.std.optparse.Option(*optnames, **attrs)
+        option = Argument(*optnames, **attrs)
         self._addoption_instance(option, shortupper=True)
 
     def _addoption_instance(self, option, shortupper=False):
@@ -132,11 +299,11 @@ class OptionGroup:
         self.options.append(option)
 
 
-class MyOptionParser(py.std.optparse.OptionParser):
+class MyOptionParser(py.std.argparse.ArgumentParser):
     def __init__(self, parser):
         self._parser = parser
-        py.std.optparse.OptionParser.__init__(self, usage=parser._usage,
-            add_help_option=False)
+        py.std.argparse.ArgumentParser.__init__(self, usage=parser._usage,
+            add_help=False)
     def format_epilog(self, formatter):
         hints = self._parser.hints
         if hints:
@@ -263,12 +430,15 @@ class CmdOptions(object):
 
 class Config(object):
     """ access to configuration values, pluginmanager and plugin hooks.  """
+    _file_or_dir = 'file_or_dir'
+    
     def __init__(self, pluginmanager=None):
         #: access to command line option as attributes.
         #: (deprecated), use :py:func:`getoption() <_pytest.config.Config.getoption>` instead
         self.option = CmdOptions()
+        _a = self._file_or_dir
         self._parser = Parser(
-            usage="usage: %prog [options] [file_or_dir] [file_or_dir] [...]",
+            usage="%%(prog)s [options] [%s] [%s] [...]" % (_a, _a),
             processopt=self._processopt,
         )
         #: a pluginmanager instance

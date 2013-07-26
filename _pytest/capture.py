@@ -6,7 +6,7 @@ import os
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group._addoption('--capture', action="store", default=None,
-        metavar="method", type="choice", choices=['fd', 'sys', 'no'],
+        metavar="method", choices=['fd', 'sys', 'no'],
         help="per-test capturing method: one of fd (default)|sys|no.")
     group._addoption('-s', action="store_const", const="no", dest="capture",
         help="shortcut for --capture=no.")
