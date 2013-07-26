@@ -26,7 +26,7 @@ Here are some examples of projects using py.test (please send notes via :ref:`co
   `16000 tests <http://buildbot.pypy.org/summary?branch=%3Ctrunk%3E>`_
 * the `MoinMoin <http://moinmo.in>`_ Wiki Engine
 * `sentry <https://getsentry.com/welcome/>`_, realtime app-maintenance and exception tracking
-* `tox <http://codespeak.net/tox>`_, virtualenv/Hudson integration tool
+* `tox <http://testrun.org/tox>`_, virtualenv/Hudson integration tool
 * `PIDA <http://pida.co.uk>`_ framework for integrated development
 * `PyPM <http://code.activestate.com/pypm/>`_ ActiveState's package manager
 * `Fom <http://packages.python.org/Fom/>`_ a fluid object mapper for FluidDB
