@@ -13,6 +13,10 @@ class DictImporter(object):
         self.sources = sources
 
     def find_module(self, fullname, path=None):
+        if fullname == "argparse" and sys.version_info >= (2,7):
+            # we were generated with <python2.7 (which pulls in argparse)
+            # but we are running now on a stdlib which has it, so use that.
+            return None
         if fullname in self.sources:
             return self
         if fullname + '.__init__' in self.sources:

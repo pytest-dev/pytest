@@ -1,3 +1,4 @@
+from __future__ import with_statement
 import py, pytest
 from _pytest import config as parseopt
 from textwrap import dedent
@@ -44,7 +45,7 @@ class TestParser:
         res = argument.attrs()
         assert res['default'] == 42
         assert res['dest'] == 'abc'
-                    
+
     def test_group_add_and_get(self):
         parser = parseopt.Parser()
         group = parser.getgroup("hello", description="desc")
@@ -128,7 +129,7 @@ class TestParser:
         x = parser.addoption("--ultimate-answer", type=int)
         args = parser.parse(['--ultimate-answer', '42'])
         assert args.ultimate_answer == 42
-        
+
     def test_parse_defaultgetter(self):
         def defaultget(option):
             if not hasattr(option, 'type'):

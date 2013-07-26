@@ -8,6 +8,10 @@ except ImportError:
 
 long_description = open("README.rst").read()
 def main():
+    install_requires = ["py>=1.4.15"]
+    if sys.version_info < (2,7):
+        install_requires.append("argparse")
+
     setup(
         name='pytest',
         description='py.test: simple powerful testing with Python',
@@ -21,7 +25,7 @@ def main():
         entry_points= make_entry_points(),
         cmdclass = {'test': PyTest},
         # the following should be enabled for release
-        install_requires=['py>=1.4.14'],
+        install_requires=install_requires,
         classifiers=['Development Status :: 6 - Mature',
                      'Intended Audience :: Developers',
                      'License :: OSI Approved :: MIT License',

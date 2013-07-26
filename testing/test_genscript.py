@@ -1,10 +1,11 @@
+import pytest
 import py, os, sys
 import subprocess
 
 
-def pytest_funcarg__standalone(request):
-    return request.cached_setup(scope="module",
-        setup=lambda: Standalone(request))
+@pytest.fixture(scope="module")
+def standalone(request):
+    return Standalone(request)
 
 class Standalone:
     def __init__(self, request):
@@ -20,6 +21,12 @@ class Standalone:
         return testdir._run(anypython, self.script, *args)
 
 def test_gen(testdir, anypython, standalone):
+    if sys.version_info >= (2,7):
+        result = testdir._run(anypython, "-c",
+                                "import sys;print sys.version_info >=(2,7)")
+        if result.stdout.str() == "False":
+            pytest.skip("genscript called from python2.7 cannot work "
+                        "earlier python versions")
     result = standalone.run(anypython, testdir, '--version')
     assert result.ret == 0
     result.stderr.fnmatch_lines([

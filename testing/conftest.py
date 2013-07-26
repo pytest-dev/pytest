@@ -77,6 +77,9 @@ winpymap = {
     'python2.5': r'C:\Python25\python.exe',
     'python2.4': r'C:\Python24\python.exe',
     'python3.1': r'C:\Python31\python.exe',
+    'python3.2': r'C:\Python32\python.exe',
+    'python3.3': r'C:\Python33\python.exe',
+    'python3.4': r'C:\Python34\python.exe',
 }
 
 def getexecutable(name, cache={}):
