@@ -17,5 +17,5 @@
 .. _`virtualenv`: http://pypi.python.org/pypi/virtualenv
 .. _hudson: http://hudson-ci.org/
 .. _jenkins: http://jenkins-ci.org/
-.. _tox: http://codespeak.net/tox
+.. _tox: http://testrun.org/tox
 .. _pylib: http://pylib.org
