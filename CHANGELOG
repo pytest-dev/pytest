@@ -1,6 +1,10 @@
 Changes between 2.3.5 and 2.4.DEV
 -----------------------------------
 
+- integrate option tab-completion when argcomplete is used.  Thanks
+  Anthon van der Neut for the PR.  This also lets pytest use argparse
+  instead of optparse.
+
 - SO-17664702: call fixture finalizers even if the fixture function
   partially failed (finalizers would not always be called before)
 
