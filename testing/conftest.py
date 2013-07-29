@@ -36,7 +36,7 @@ def getopenfiles(out):
 def check_open_files(config):
     out2 = py.process.cmdexec("lsof -p %d" % pid)
     lines2 = getopenfiles(out2)
-    if len(lines2) > config._numfiles + 1:
+    if len(lines2) > config._numfiles + 3:
         error = []
         error.append("***** %s FD leackage detected" %
     (len(lines2)-config._numfiles))
