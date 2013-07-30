@@ -175,10 +175,10 @@ def test_addoption_parser_epilog(testdir):
 
 @pytest.mark.skipif("sys.version_info < (2,5)")
 def test_argcomplete(testdir):
+    if not py.path.local.sysfind('bash'):
+        pytest.skip("bash not available")    
     import os
-    p = py.path.local.make_numbered_dir(prefix="test_argcomplete-",
-                keep=None, rootdir=testdir.tmpdir)
-    script = p._fastjoin('test_argcomplete')
+    script = os.path.join(os.getcwd(), 'test_argcomplete')
     with open(str(script), 'w') as fp:
         # redirect output from argcomplete to stdin and stderr is not trivial
         # http://stackoverflow.com/q/12589419/1307905
@@ -187,14 +187,22 @@ def test_argcomplete(testdir):
                  '8>&1 9>&2')
     os.environ['_ARGCOMPLETE'] = "1"
     os.environ['_ARGCOMPLETE_IFS'] =  "\x0b"
-    os.environ['COMP_LINE'] = "py.test --fu"
-    os.environ['COMP_POINT'] = "12"
     os.environ['COMP_WORDBREAKS'] = ' \\t\\n"\\\'><=;|&(:'
 
-    result = testdir.run('bash', str(script), '--fu')
+    arg = '--fu'
+    os.environ['COMP_LINE'] = "py.test " + arg
+    os.environ['COMP_POINT'] = str(len(os.environ['COMP_LINE']))
+    result = testdir.run('bash', str(script), arg)
     print dir(result), result.ret
     if result.ret == 255:
         # argcomplete not found
-        assert True
+        pytest.skip("argcomplete not available")
     else:
         result.stdout.fnmatch_lines(["--funcargs", "--fulltrace"])
+
+    os.mkdir('test_argcomplete.d')
+    arg = 'test_argc'
+    os.environ['COMP_LINE'] = "py.test " + arg
+    os.environ['COMP_POINT'] = str(len(os.environ['COMP_LINE']))
+    result = testdir.run('bash', str(script), arg)
+    result.stdout.fnmatch_lines(["test_argcomplete", "test_argcomplete.d/"])

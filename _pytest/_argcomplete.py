@@ -55,7 +55,6 @@ if os.environ.get('_ARGCOMPLETE'):
     if sys.version_info[:2] < (2, 6):
         sys.exit(1)
     try:
-        import argcomplete
         import argcomplete.completers
     except ImportError:
         sys.exit(-1)
