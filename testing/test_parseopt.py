@@ -176,7 +176,7 @@ def test_addoption_parser_epilog(testdir):
 @pytest.mark.skipif("sys.version_info < (2,5)")
 def test_argcomplete(testdir):
     if not py.path.local.sysfind('bash'):
-        pytest.skip("bash not available")    
+        pytest.skip("bash not available")
     import os
     script = os.path.join(os.getcwd(), 'test_argcomplete')
     with open(str(script), 'w') as fp:
@@ -185,6 +185,10 @@ def test_argcomplete(testdir):
         # so we use bash
         fp.write('COMP_WORDBREAKS="$COMP_WORDBREAKS" $(which py.test) '
                  '8>&1 9>&2')
+    # alternative would be exteneded Testdir.{run(),_run(),popen()} to be able
+    # to handle a keyword argument env that replaces os.environ in popen or
+    # extends the copy, advantage: could not forget to restore
+    orgenv = os.environ.copy()
     os.environ['_ARGCOMPLETE'] = "1"
     os.environ['_ARGCOMPLETE_IFS'] =  "\x0b"
     os.environ['COMP_WORDBREAKS'] = ' \\t\\n"\\\'><=;|&(:'
@@ -206,3 +210,5 @@ def test_argcomplete(testdir):
     os.environ['COMP_POINT'] = str(len(os.environ['COMP_LINE']))
     result = testdir.run('bash', str(script), arg)
     result.stdout.fnmatch_lines(["test_argcomplete", "test_argcomplete.d/"])
+    # restore environment
+    os.environ = orgenv.copy()
