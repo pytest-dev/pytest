@@ -174,7 +174,7 @@ def test_addoption_parser_epilog(testdir):
     result.stdout.fnmatch_lines(["hint: hello world", "hint: from me too"])
 
 @pytest.mark.skipif("sys.version_info < (2,5)")
-def test_argcomplete(testdir):
+def test_argcomplete(testdir, monkeypatch):
     if not py.path.local.sysfind('bash'):
         pytest.skip("bash not available")
     import os
@@ -188,14 +188,13 @@ def test_argcomplete(testdir):
     # alternative would be exteneded Testdir.{run(),_run(),popen()} to be able
     # to handle a keyword argument env that replaces os.environ in popen or
     # extends the copy, advantage: could not forget to restore
-    orgenv = os.environ.copy()
-    os.environ['_ARGCOMPLETE'] = "1"
-    os.environ['_ARGCOMPLETE_IFS'] =  "\x0b"
-    os.environ['COMP_WORDBREAKS'] = ' \\t\\n"\\\'><=;|&(:'
+    monkeypatch.setenv('_ARGCOMPLETE', "1")
+    monkeypatch.setenv('_ARGCOMPLETE_IFS',"\x0b")
+    monkeypatch.setenv('COMP_WORDBREAKS', ' \\t\\n"\\\'><=;|&(:')
 
     arg = '--fu'
-    os.environ['COMP_LINE'] = "py.test " + arg
-    os.environ['COMP_POINT'] = str(len(os.environ['COMP_LINE']))
+    monkeypatch.setenv('COMP_LINE', "py.test " + arg)
+    monkeypatch.setenv('COMP_POINT', str(len("py.test " + arg)))
     result = testdir.run('bash', str(script), arg)
     print dir(result), result.ret
     if result.ret == 255:
@@ -206,9 +205,8 @@ def test_argcomplete(testdir):
 
     os.mkdir('test_argcomplete.d')
     arg = 'test_argc'
-    os.environ['COMP_LINE'] = "py.test " + arg
-    os.environ['COMP_POINT'] = str(len(os.environ['COMP_LINE']))
+    monkeypatch.setenv('COMP_LINE', "py.test " + arg)
+    monkeypatch.setenv('COMP_POINT', str(len('py.test ' + arg)))
     result = testdir.run('bash', str(script), arg)
     result.stdout.fnmatch_lines(["test_argcomplete", "test_argcomplete.d/"])
     # restore environment
-    os.environ = orgenv.copy()
