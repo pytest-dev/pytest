@@ -4,6 +4,7 @@ import py
 import sys, os
 from _pytest.core import PluginManager
 import pytest
+from _argcomplete import try_argcomplete, filescompleter
 
 # enable after some grace period for plugin writers
 TYPE_WARN = False
@@ -91,7 +92,9 @@ class Parser:
                     n = option.names()
                     a = option.attrs()
                     arggroup.add_argument(*n, **a)
-        optparser.add_argument(Config._file_or_dir, nargs='*')
+        # bash like autocompletion for dirs (appending '/')
+        optparser.add_argument(Config._file_or_dir, nargs='*'
+                               ).completer=filescompleter
         try_argcomplete(self.optparser)
         return self.optparser.parse_args([str(x) for x in args])
 
@@ -115,13 +118,6 @@ class Parser:
         self._inidict[name] = (help, type, default)
         self._ininames.append(name)
 
-def try_argcomplete(parser):
-    try:
-        import argcomplete
-    except ImportError:
-        pass
-    else:
-        argcomplete.autocomplete(parser)
 
 class ArgumentError(Exception):
     """
@@ -304,6 +300,7 @@ class MyOptionParser(py.std.argparse.ArgumentParser):
         self._parser = parser
         py.std.argparse.ArgumentParser.__init__(self, usage=parser._usage,
             add_help=False)
+
     def format_epilog(self, formatter):
         hints = self._parser.hints
         if hints:
@@ -312,6 +309,18 @@ class MyOptionParser(py.std.argparse.ArgumentParser):
             return s
         return ""
 
+    def parse_args(self, args=None, namespace=None):
+        """allow splitting of positional arguments"""
+        args, argv = self.parse_known_args(args, namespace)
+        if argv:
+            for arg in argv:
+                if arg and arg[0] == '-':
+                    msg = py.std.argparse._('unrecognized arguments: %s')
+                    self.error(msg % ' '.join(argv))
+            getattr(args, Config._file_or_dir).extend(argv)
+        return args
+
+    
 class Conftest(object):
     """ the single place for accessing values and interacting
         towards conftest modules from py.test objects.

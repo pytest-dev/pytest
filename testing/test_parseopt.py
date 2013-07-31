@@ -130,6 +130,21 @@ class TestParser:
         args = parser.parse(['--ultimate-answer', '42'])
         assert args.ultimate_answer == 42
 
+    def test_parse_split_positional_arguments(self):
+        parser = parseopt.Parser()
+        parser.addoption("-R", action='store_true')
+        parser.addoption("-S", action='store_false')
+        args = parser.parse(['-R', '4', '2', '-S'])
+        assert getattr(args, parseopt.Config._file_or_dir) == ['4', '2']
+        args = parser.parse(['-R', '-S', '4', '2', '-R'])
+        assert getattr(args, parseopt.Config._file_or_dir) == ['4', '2']
+        assert args.R == True
+        assert args.S == False
+        args = parser.parse(['-R', '4', '-S', '2'])
+        assert getattr(args, parseopt.Config._file_or_dir) == ['4', '2']
+        assert args.R == True
+        assert args.S == False
+
     def test_parse_defaultgetter(self):
         def defaultget(option):
             if not hasattr(option, 'type'):
@@ -158,3 +173,36 @@ def test_addoption_parser_epilog(testdir):
     #assert result.ret != 0
     result.stdout.fnmatch_lines(["hint: hello world", "hint: from me too"])
 
+@pytest.mark.skipif("sys.version_info < (2,5)")
+def test_argcomplete(testdir):
+    if not py.path.local.sysfind('bash'):
+        pytest.skip("bash not available")    
+    import os
+    script = os.path.join(os.getcwd(), 'test_argcomplete')
+    with open(str(script), 'w') as fp:
+        # redirect output from argcomplete to stdin and stderr is not trivial
+        # http://stackoverflow.com/q/12589419/1307905
+        # so we use bash
+        fp.write('COMP_WORDBREAKS="$COMP_WORDBREAKS" $(which py.test) '
+                 '8>&1 9>&2')
+    os.environ['_ARGCOMPLETE'] = "1"
+    os.environ['_ARGCOMPLETE_IFS'] =  "\x0b"
+    os.environ['COMP_WORDBREAKS'] = ' \\t\\n"\\\'><=;|&(:'
+
+    arg = '--fu'
+    os.environ['COMP_LINE'] = "py.test " + arg
+    os.environ['COMP_POINT'] = str(len(os.environ['COMP_LINE']))
+    result = testdir.run('bash', str(script), arg)
+    print dir(result), result.ret
+    if result.ret == 255:
+        # argcomplete not found
+        pytest.skip("argcomplete not available")
+    else:
+        result.stdout.fnmatch_lines(["--funcargs", "--fulltrace"])
+
+    os.mkdir('test_argcomplete.d')
+    arg = 'test_argc'
+    os.environ['COMP_LINE'] = "py.test " + arg
+    os.environ['COMP_POINT'] = str(len(os.environ['COMP_LINE']))
+    result = testdir.run('bash', str(script), arg)
+    result.stdout.fnmatch_lines(["test_argcomplete", "test_argcomplete.d/"])
