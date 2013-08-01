@@ -1626,18 +1626,18 @@ class FixtureManager:
                                     unittest=unittest)
             faclist = self._arg2fixturedefs.setdefault(name, [])
             if not fixturedef.has_location:
-                # All Nones are at the front so this inserts the
-                # current fixturedef after the existing fixturedefs
-                # from external plugins but before the fixturedefs
-                # provided in conftests.
-                i = faclist.count(None)
+                # All fixturedefs with no location are at the front
+                # so this inserts the current fixturedef after the
+                # existing fixturedefs from external plugins but
+                # before the fixturedefs provided in conftests.
+                i = len([f for f in faclist if not f.has_location])
             else:
                 i = len(faclist)  # append
             faclist.insert(i, fixturedef)
             if marker.autouse:
                 autousenames.append(name)
         if autousenames:
-            self._nodeid_and_autousenames.append((nodeid, autousenames))
+            self._nodeid_and_autousenames.append((nodeid or '', autousenames))
 
     def getfixturedefs(self, argname, nodeid):
         try:

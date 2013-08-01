@@ -173,7 +173,7 @@ class TestFillFixtures:
         result = testdir.runpytest(testfile)
         result.stdout.fnmatch_lines(["*1 passed*"])
 
-    def test_extend_fixture_conftest_plugin(request, testdir):
+    def test_extend_fixture_conftest_plugin(self, testdir):
         testdir.makepyfile(testplugin="""
             import pytest
 
@@ -196,6 +196,52 @@ class TestFillFixtures:
                 assert foo == 14
         """)
         result = testdir.runpytest('-s')
+        assert result.ret == 0
+
+    def test_extend_fixture_plugin_plugin(self, testdir):
+        # Two plugins should extend each order in loading order
+        testdir.makepyfile(testplugin0="""
+            import pytest
+
+            @pytest.fixture
+            def foo():
+                return 7
+        """)
+        testdir.makepyfile(testplugin1="""
+            import pytest
+
+            @pytest.fixture
+            def foo(foo):
+                return foo + 7
+        """)
+        testdir.syspathinsert()
+        testdir.makepyfile("""
+            pytest_plugins = ['testplugin0', 'testplugin1']
+
+            def test_foo(foo):
+                assert foo == 14
+        """)
+        result = testdir.runpytest()
+        assert result.ret == 0
+
+    def test_autouse_fixture_plugin(self, testdir):
+        # A fixture from a plugin has no baseid set, which screwed up
+        # the autouse fixture handling.
+        testdir.makepyfile(testplugin="""
+            import pytest
+
+            @pytest.fixture(autouse=True)
+            def foo(request):
+                request.function.foo = 7
+        """)
+        testdir.syspathinsert()
+        testdir.makepyfile("""
+            pytest_plugins = 'testplugin'
+
+            def test_foo(request):
+                assert request.function.foo == 7
+        """)
+        result = testdir.runpytest()
         assert result.ret == 0
 
     def test_funcarg_lookup_error(self, testdir):
