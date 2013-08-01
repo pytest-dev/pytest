@@ -844,6 +844,8 @@ def raises(ExpectedException, *args, **kwargs):
     """ assert that a code block/function call raises @ExpectedException
     and raise a failure exception otherwise.
 
+    This helper produces a ``py.code.ExceptionInfo()`` object.
+
     If using Python 2.5 or above, you may use this function as a
     context manager::
 
