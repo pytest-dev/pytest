@@ -42,3 +42,4 @@ and checkout repos at:
 
 
 Copyright Holger Krekel and others, 2004-2013
+Licensed under the MIT license.
