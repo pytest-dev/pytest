@@ -277,7 +277,13 @@ class OptionGroup:
         self.parser = parser
 
     def addoption(self, *optnames, **attrs):
-        """ add an option to this group. """
+        """ add an option to this group.
+
+        if a shortened version of a long option is specified it will
+        be suppressed in the help. addoption('--twowords', '--two-words')
+        results in help showing '--two-words' only, but --twowords gets
+        accepted **and** the automatic destination is in args.twowords
+        """
         option = Argument(*optnames, **attrs)
         self._addoption_instance(option, shortupper=False)
 
@@ -299,7 +305,7 @@ class MyOptionParser(py.std.argparse.ArgumentParser):
     def __init__(self, parser):
         self._parser = parser
         py.std.argparse.ArgumentParser.__init__(self, usage=parser._usage,
-            add_help=False)
+            add_help=False, formatter_class=DropShorterLongHelpFormatter)
 
     def format_epilog(self, formatter):
         hints = self._parser.hints
@@ -319,6 +325,67 @@ class MyOptionParser(py.std.argparse.ArgumentParser):
                     self.error(msg % ' '.join(argv))
             getattr(args, Config._file_or_dir).extend(argv)
         return args
+
+# #pylib 2013-07-31
+# (12:05:53) anthon: hynek: can you get me a list of preferred py.test
+#                    long-options with '-' inserted at the right places?
+# (12:08:29) hynek:  anthon, hpk: generally I'd love the following, decide
+#                    yourself which you agree and which not:
+# (12:10:51) hynek:  --exit-on-first --full-trace --junit-xml --junit-prefix
+#                    --result-log --collect-only --conf-cut-dir --trace-config
+#                    --no-magic
+# (12:18:21) hpk:    hynek,anthon: makes sense to me.
+# (13:40:30) hpk:    hynek: let's not change names, rather only deal with
+#                    hyphens for now
+# (13:40:50) hynek:  then --exit-first *shrug*
+
+class DropShorterLongHelpFormatter(py.std.argparse.HelpFormatter):
+    """shorten help for long options that differ only in extra hyphens
+
+    - collapse **long** options that are the same except for extra hyphens
+    - special action attribute map_long_option allows surpressing additional
+      long options
+    - shortcut if there are only two options and one of them is a short one
+    - cache result on action object as this is called at least 2 times
+    """
+    def _format_action_invocation(self, action):
+        orgstr = py.std.argparse.HelpFormatter._format_action_invocation(self, action)
+        if orgstr and orgstr[0] != '-': # only optional arguments
+            return orgstr
+        res = getattr(action, '_formatted_action_invocation', None)
+        if res:
+            return res
+        options = orgstr.split(', ')
+        if len(options) == 2 and (len(options[0]) == 2 or len(options[1]) == 2):
+            # a shortcut for '-h, --help' or '--abc', '-a'
+            action._formatted_action_invocation = orgstr
+            return orgstr
+        return_list = []
+        option_map =  getattr(action, 'map_long_option', {})
+        if option_map is None:
+            option_map = {}
+        short_long = {}
+        for option in options:
+            if len(option) == 2 or option[2] == ' ':
+                continue
+            if not option.startswith('--'):
+                raise ArgumentError('long optional argument without "--": [%s]'
+                                    % (option), self)
+            xxoption = option[2:]
+            if xxoption.split()[0] not in option_map:
+                shortened = xxoption.replace('-', '')
+                if shortened not in short_long or \
+                   len(short_long[shortened]) < len(xxoption):
+                    short_long[shortened] = xxoption
+        # now short_long has been filled out to the longest with dashes
+        # **and** we keep the right option ordering from add_argument
+        for option in options: #
+            if len(option) == 2 or option[2] == ' ':
+                return_list.append(option)
+            if option[2:] == short_long.get(option.replace('-', '')):
+                return_list.append(option)
+        action._formatted_action_invocation = ', '.join(return_list)
+        return action._formatted_action_invocation
 
 
 class Conftest(object):
