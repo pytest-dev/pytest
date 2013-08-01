@@ -4,7 +4,7 @@ import py
 import sys, os
 from _pytest.core import PluginManager
 import pytest
-from _argcomplete import try_argcomplete, filescompleter
+from _pytest._argcomplete import try_argcomplete, filescompleter
 
 # enable after some grace period for plugin writers
 TYPE_WARN = False
@@ -142,7 +142,7 @@ class Argument:
         'int': int,
         'string': str,
         }
-        
+
     def __init__(self, *names, **attrs):
         """store parms in private vars for use in add_argument"""
         self._attrs = attrs
@@ -188,7 +188,7 @@ class Argument:
                             FutureWarning,
                             stacklevel=3)
                     attrs['type'] = Argument._typ_map[typ]
-                # used in test_parseopt -> test_parse_defaultgetter 
+                # used in test_parseopt -> test_parse_defaultgetter
                 self.type = attrs['type']
             else:
                 self.type = typ
@@ -227,7 +227,7 @@ class Argument:
             #a = a.replace('%prog', '%(prog)s')
             self._attrs['help'] = a
         return self._attrs
-        
+
     def _set_opt_strings(self, opts):
         """directly from optparse
 
@@ -251,7 +251,7 @@ class Argument:
                         "must start with --, followed by non-dash" % opt,
                         self)
                 self._long_opts.append(opt)
-        
+
     def __repr__(self):
         retval = 'Argument('
         if self._short_opts:
@@ -268,7 +268,7 @@ class Argument:
         retval += ')'
         return retval
 
-                        
+
 class OptionGroup:
     def __init__(self, name, description="", parser=None):
         self.name = name
@@ -320,7 +320,7 @@ class MyOptionParser(py.std.argparse.ArgumentParser):
             getattr(args, Config._file_or_dir).extend(argv)
         return args
 
-    
+
 class Conftest(object):
     """ the single place for accessing values and interacting
         towards conftest modules from py.test objects.
@@ -440,7 +440,7 @@ class CmdOptions(object):
 class Config(object):
     """ access to configuration values, pluginmanager and plugin hooks.  """
     _file_or_dir = 'file_or_dir'
-    
+
     def __init__(self, pluginmanager=None):
         #: access to command line option as attributes.
         #: (deprecated), use :py:func:`getoption() <_pytest.config.Config.getoption>` instead
