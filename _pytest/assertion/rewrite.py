@@ -156,7 +156,7 @@ class AssertionRewritingHook(object):
             raise
         return sys.modules[name]
 
-def _write_pyc(co, source_path, pyc):
+def _write_pyc(state, co, source_path, pyc):
     # Technically, we don't have to have the same pyc format as
     # (C)Python, since these "pycs" should never be seen by builtin
     # import. However, there's little reason deviate, and I hope
@@ -167,15 +167,11 @@ def _write_pyc(co, source_path, pyc):
         fp = open(pyc, "wb")
     except IOError:
         err = sys.exc_info()[1].errno
-        if err in [errno.ENOENT, errno.ENOTDIR]:
-            # This happens when we get a EEXIST in find_module creating the
-            # __pycache__ directory and __pycache__ is by some non-dir node.
-            return False
-        elif err == errno.EACCES:
-            # The directory is read-only; this can happen for example when
-            # running the tests in a package installed as root
-            return False
-        raise
+        state.trace("error writing pyc file at %s: errno=%s" %(pyc, err))
+        # we ignore any failure to write the cache file
+        # there are many reasons, permission-denied, __pycache__ being a
+        # file etc.
+        return False
     try:
         fp.write(imp.get_magic())
         fp.write(struct.pack("<l", mtime))
@@ -249,12 +245,12 @@ def _make_rewritten_pyc(state, fn, pyc, co):
     if sys.platform.startswith("win"):
         # Windows grants exclusive access to open files and doesn't have atomic
         # rename, so just write into the final file.
-        _write_pyc(co, fn, pyc)
+        _write_pyc(state, co, fn, pyc)
     else:
         # When not on windows, assume rename is atomic. Dump the code object
         # into a file specific to this process and atomically replace it.
         proc_pyc = pyc + "." + str(os.getpid())
-        if _write_pyc(co, fn, proc_pyc):
+        if _write_pyc(state, co, fn, proc_pyc):
             os.rename(proc_pyc, pyc)
 
 def _read_pyc(source, pyc):

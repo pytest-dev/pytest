@@ -419,3 +419,23 @@ def test_rewritten():
         res = testdir.runpytest()
         assert res.ret != 0
         assert "SyntaxError: Non-ASCII character" in res.stdout.str()
+
+
+    def test_write_pyc(self, testdir, tmpdir, monkeypatch):
+        from _pytest.assertion.rewrite import _write_pyc
+        from _pytest.assertion import AssertionState
+        try:
+            import __builtin__ as b
+        except ImportError:
+            import builtins as b
+        config = testdir.parseconfig([])
+        state = AssertionState(config, "rewrite")
+        source_path = tmpdir.ensure("source.py")
+        pycpath = tmpdir.join("pyc").strpath
+        assert _write_pyc(state, [1], source_path, pycpath)
+        def open(*args):
+            e = IOError()
+            e.errno = 10
+            raise e
+        monkeypatch.setattr(b, "open", open)
+        assert not _write_pyc(state, [1], source_path, pycpath)
