@@ -2,7 +2,7 @@ Changes between 2.3.5 and 2.4.DEV
 -----------------------------------
 
 - fix issue335: document py.code.ExceptionInfo() object returned
-  from pytest.raises(), thanks Matthieu Agopian.
+  from pytest.raises(), thanks Mathieu Agopian.
 
 - remove implicit distribute_setup support from setup.py.
 
