@@ -1,10 +1,4 @@
 
-improve / add to dependency/test resource injection
--------------------------------------------------------------
-tags: wish feature  docs
-
-write up better examples showing the connection between
-the two.
 
 refine parametrize API
 -------------------------------------------------------------
