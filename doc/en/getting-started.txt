@@ -198,11 +198,8 @@ easy_install or pip not found?
 
 `Install pip`_ for a state of the art python package installer.
 
-Or consult `distribute docs`_ to install the ``easy_install``
-tool on your machine.  
-
-You may also use the older `setuptools`_ project but it lacks bug fixes
-and does not work on Python3.
+Install `setuptools`_ to get ``easy_install`` which allows to install
+``.egg`` binary format packages in addition to source-based ones.
 
 py.test not found on Windows despite installation?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

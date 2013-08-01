@@ -46,8 +46,6 @@ You can tell people to download the script and then e.g.  run it like this::
     python runtests.py
 
 
-.. _`Distribute for installation`: http://pypi.python.org/pypi/distribute#installation-instructions
-.. _`distribute installation`: http://pypi.python.org/pypi/distribute
 
 
 Integrating with distutils / ``python setup.py test``
@@ -92,12 +90,11 @@ arguments to the subprocess-calls such as your test directory or other
 options.
 
 
-Integration with setuptools/distribute test commands
+Integration with setuptools test commands
 ----------------------------------------------------
 
-Distribute/Setuptools support test requirements,
-which means its really easy to extend its test command
-to support running a pytest from test requirements::
+Setuptools supports writing our own Test command for invoking 
+pytest::
 
     from setuptools.command.test import test as TestCommand
     import sys

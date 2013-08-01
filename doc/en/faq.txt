@@ -171,16 +171,8 @@ Unfortunately, setuptools-0.6.11 does not ``if __name__=='__main__'``
 protect its generated command line script.  This leads to infinite
 recursion when running a test that instantiates Processes.
 
-A good solution is to `install Distribute`_ as a drop-in replacement
-for setuptools and then re-install ``pytest``.  Otherwise you could
-fix the script that is created by setuptools by inserting an
-``if __name__ == '__main__'``.  Or you can create a "pytest.py"
-script with this content and invoke that with the python version::
-
-    import pytest
-    if __name__ == '__main__':
-        pytest.main()
-
-.. _`install distribute`: http://pypi.python.org/pypi/distribute#installation-instructions
+As of middle 2013, there shouldn't be a problem anymore when you
+use the standard setuptools (note that distribute has been merged
+back into setuptools which is now shipped directly with virtualenv).
 
 .. include:: links.inc

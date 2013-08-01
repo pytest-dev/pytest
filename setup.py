@@ -1,10 +1,5 @@
 import os, sys
-try:
-    from setuptools import setup, Command
-except ImportError:
-    from distribute_setup import use_setuptools
-    use_setuptools()
-    from setuptools import setup, Command
+from setuptools import setup, Command
 
 long_description = open("README.rst").read()
 def main():

@@ -1,6 +1,8 @@
 Changes between 2.3.5 and 2.4.DEV
 -----------------------------------
 
+- remove implicit distribute_setup support from setup.py.
+
 - integrate tab-completion on options through use of "argcomplete".
   Thanks Anthon van der Neut for the PR.
 
