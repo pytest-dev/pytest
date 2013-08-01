@@ -114,7 +114,7 @@ this is a fully self-contained example which you can run with::
 If you just collect tests you'll also nicely see 'advanced' and 'basic' as variants for the test function::
 
 
-    $ py.test --collectonly test_scenarios.py
+    $ py.test --collect-only test_scenarios.py
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.3.5
     collected 4 items
@@ -178,7 +178,7 @@ creates a database object for the actual test invocations::
 
 Let's first see how it looks like at collection time::
 
-    $ py.test test_backends.py --collectonly
+    $ py.test test_backends.py --collect-only
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.3.5
     collected 2 items

@@ -101,7 +101,7 @@ Yaml ファイルでテストを指定する基本的なサンプル
 
 カスタムテストコレクションや実行処理の開発中、そのコレクションツリーをちょっと見るのもおもしろいです::
 
-    nonpython $ py.test --collectonly
+    nonpython $ py.test --collect-only
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.1 -- pytest-2.2.4
     collecting ... collected 2 items

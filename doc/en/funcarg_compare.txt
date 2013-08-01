@@ -157,7 +157,7 @@ several problems:
    that are never needed because it only co-ordinates the test run
    activities of the slave processes.  
 
-2. if you only perform a collection (with "--collectonly") 
+2. if you only perform a collection (with "--collect-only") 
    resource-setup will still be executed.  
 
 3. If a pytest_sessionstart is contained in some subdirectories
@@ -182,7 +182,7 @@ funcargs/fixture discovery now happens at collection time
 
 pytest-2.3 takes care to discover fixture/funcarg factories
 at collection time.  This is more efficient especially for large test suites. 
-Moreover, a call to "py.test --collectonly" should be able to in the future
+Moreover, a call to "py.test --collect-only" should be able to in the future
 show a lot of setup-information and thus presents a nice method to get an
 overview of fixture management in your project.
 

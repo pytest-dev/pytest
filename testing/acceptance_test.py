@@ -151,7 +151,7 @@ class TestGeneralUsage:
                 pass
         """)
         p = testdir.makepyfile("def test_hello(): pass")
-        result = testdir.runpytest(p, "--collectonly")
+        result = testdir.runpytest(p, "--collect-only")
         result.stdout.fnmatch_lines([
             "*MyFile*test_issue88*",
             "*Module*test_issue88*",

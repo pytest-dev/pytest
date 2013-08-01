@@ -97,7 +97,7 @@ class TestCollectFS:
         for x in tmpdir.visit("test_*.py"):
             x.write("def test_hello(): pass")
 
-        result = testdir.runpytest("--collectonly")
+        result = testdir.runpytest("--collect-only")
         s = result.stdout.str()
         assert "test_notfound" not in s
         assert "test_found" in s
@@ -252,7 +252,7 @@ class TestCustomConftests:
         """)
         sub = testdir.mkdir("sub")
         p = testdir.makepyfile("def test_x(): pass")
-        result = testdir.runpytest("--collectonly")
+        result = testdir.runpytest("--collect-only")
         result.stdout.fnmatch_lines([
             "*MyModule*",
             "*test_x*"
@@ -282,7 +282,7 @@ class TestCustomConftests:
         p = testdir.makepyfile("def test_x(): pass")
         p.copy(sub1.join(p.basename))
         p.copy(sub2.join(p.basename))
-        result = testdir.runpytest("--collectonly")
+        result = testdir.runpytest("--collect-only")
         result.stdout.fnmatch_lines([
             "*MyModule1*",
             "*MyModule2*",

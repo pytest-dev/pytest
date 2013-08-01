@@ -414,7 +414,7 @@ class TestConftestCustomization:
         """)
         testdir.makepyfile("def test_some(): pass")
         testdir.makepyfile(test_xyz="def test_func(): pass")
-        result = testdir.runpytest("--collectonly")
+        result = testdir.runpytest("--collect-only")
         result.stdout.fnmatch_lines([
             "*<Module*test_pytest*",
             "*<MyModule*xyz*",
@@ -467,7 +467,7 @@ class TestConftestCustomization:
                     return MyFunction(name, collector)
         """)
         testdir.makepyfile("def some(): pass")
-        result = testdir.runpytest("--collectonly")
+        result = testdir.runpytest("--collect-only")
         result.stdout.fnmatch_lines([
             "*MyFunction*some*",
         ])
@@ -648,7 +648,7 @@ def test_customized_python_discovery(testdir):
     """)
     p2 = p.new(basename=p.basename.replace("test", "check"))
     p.move(p2)
-    result = testdir.runpytest("--collectonly", "-s")
+    result = testdir.runpytest("--collect-only", "-s")
     result.stdout.fnmatch_lines([
         "*check_customized*",
         "*check_simple*",
@@ -672,7 +672,7 @@ def test_customized_python_discovery_functions(testdir):
         def _test_underscore():
             pass
     """)
-    result = testdir.runpytest("--collectonly", "-s")
+    result = testdir.runpytest("--collect-only", "-s")
     result.stdout.fnmatch_lines([
         "*_test_underscore*",
     ])
@@ -721,7 +721,7 @@ def test_customize_through_attributes(testdir):
             def test_hello(self):
                 pass
     """)
-    result = testdir.runpytest("--collectonly")
+    result = testdir.runpytest("--collect-only")
     result.stdout.fnmatch_lines([
         "*MyClass*",
         "*MyInstance*",

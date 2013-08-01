@@ -68,7 +68,7 @@ ini ファイルで :confval:`norecursedirs` オプションを設定できま�
 
 テストコレクションは次のようになります::
 
-    $ py.test --collectonly
+    $ py.test --collect-only
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.1 -- pytest-2.2.4
     collecting ... collected 2 items
@@ -127,7 +127,7 @@ py.test がファイルシステムのパスから Python パッケージ名と�
 
 次のようにテストを実行せずにコレクションツリーをピークできます::
 
-    . $ py.test --collectonly pythoncollection.py
+    . $ py.test --collect-only pythoncollection.py
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.1 -- pytest-2.2.4
     collecting ... collected 3 items

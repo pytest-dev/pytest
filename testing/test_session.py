@@ -179,7 +179,7 @@ class TestNewSession(SessionTests):
             test_three="xxxdsadsadsadsa",
             __init__=""
         )
-        reprec = testdir.inline_run('--collectonly', p.dirpath())
+        reprec = testdir.inline_run('--collect-only', p.dirpath())
 
         itemstarted = reprec.getcalls("pytest_itemcollected")
         assert len(itemstarted) == 3
@@ -238,5 +238,5 @@ def test_sessionfinish_with_start(testdir):
             assert l[0] == os.getcwd()
 
     """)
-    res = testdir.runpytest("--collectonly")
+    res = testdir.runpytest("--collect-only")
     assert res.ret == 0

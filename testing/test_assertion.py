@@ -372,7 +372,7 @@ def test_recursion_source_decode(testdir):
         [pytest]
         python_files = *.py
     """)
-    result = testdir.runpytest("--collectonly")
+    result = testdir.runpytest("--collect-only")
     result.stdout.fnmatch_lines("""
         <Module*>
     """)

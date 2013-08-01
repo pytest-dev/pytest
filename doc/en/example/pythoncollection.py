@@ -1,5 +1,5 @@
 
-# run this with $ py.test --collectonly test_collectonly.py
+# run this with $ py.test --collect-only test_collectonly.py
 #
 def test_function():
     pass

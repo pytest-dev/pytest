@@ -273,7 +273,7 @@ funcarg ファクトリー関数は、特別なテスト関数呼び出しに関
 
 分かりやすいように ``numiter`` の値が ``9`` のときのみテストが失敗します。 ``pytest_generate_tests(metafunc)`` フックは、実際にテストを実行するときとは違うフェーズの、テストコレクションで呼ばれることに注意してください。では、テストコレクションがどうなるかをちょっと見てみましょう::
 
-    $ py.test --collectonly test_example.py
+    $ py.test --collect-only test_example.py
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.1 -- pytest-2.2.4
     collecting ... collected 10 items

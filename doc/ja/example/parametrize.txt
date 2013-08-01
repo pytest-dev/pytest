@@ -218,7 +218,7 @@ Robert Collins による標準ライブラリの unittest フレームワーク�
 
 ただテストを (実行せずに) 集めるだけなら、テスト関数の変数として 'advanced' と 'basic' もうまく表示されます::
 
-    $ py.test --collectonly test_scenarios.py
+    $ py.test --collect-only test_scenarios.py
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.1 -- pytest-2.2.4
     collecting ... collected 2 items
@@ -287,7 +287,7 @@ Robert Collins による標準ライブラリの unittest フレームワーク�
 
 コレクション時に先ほどの設定がどうなるかを最初に見てみましょう::
 
-    $ py.test test_backends.py --collectonly
+    $ py.test test_backends.py --collect-only
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.1 -- pytest-2.2.4
     collecting ... collected 2 items

@@ -72,7 +72,7 @@ consulted when reporting in ``verbose`` mode::
 While developing your custom test collection and execution it's also
 interesting to just look at the collection tree::
 
-    nonpython $ py.test --collectonly
+    nonpython $ py.test --collect-only
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.3.5
     collected 2 items

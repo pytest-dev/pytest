@@ -188,7 +188,7 @@ class TestCollectonly:
             def test_func():
                 pass
         """)
-        result = testdir.runpytest("--collectonly",)
+        result = testdir.runpytest("--collect-only",)
         result.stdout.fnmatch_lines([
            "<Module 'test_collectonly_basic.py'>",
            "  <Function 'test_func'>",
@@ -199,7 +199,7 @@ class TestCollectonly:
             import pytest
             pytest.skip("hello")
         """)
-        result = testdir.runpytest("--collectonly", "-rs")
+        result = testdir.runpytest("--collect-only", "-rs")
         result.stdout.fnmatch_lines([
             "SKIP*hello*",
             "*1 skip*",
@@ -207,7 +207,7 @@ class TestCollectonly:
 
     def test_collectonly_failed_module(self, testdir):
         testdir.makepyfile("""raise ValueError(0)""")
-        result = testdir.runpytest("--collectonly")
+        result = testdir.runpytest("--collect-only")
         result.stdout.fnmatch_lines([
             "*raise ValueError*",
             "*1 error*",
@@ -218,7 +218,7 @@ class TestCollectonly:
             def pytest_collectstart(collector):
                 assert 0, "urgs"
         """)
-        result = testdir.runpytest("--collectonly")
+        result = testdir.runpytest("--collect-only")
         result.stdout.fnmatch_lines([
             "*INTERNAL*args*"
         ])
@@ -232,7 +232,7 @@ class TestCollectonly:
                 def test_method(self):
                     pass
         """)
-        result = testdir.runpytest("--collectonly", p)
+        result = testdir.runpytest("--collect-only", p)
         stderr = result.stderr.str().strip()
         #assert stderr.startswith("inserting into sys.path")
         assert result.ret == 0
@@ -246,7 +246,7 @@ class TestCollectonly:
 
     def test_collectonly_error(self, testdir):
         p = testdir.makepyfile("import Errlkjqweqwe")
-        result = testdir.runpytest("--collectonly", p)
+        result = testdir.runpytest("--collect-only", p)
         stderr = result.stderr.str().strip()
         assert result.ret == 1
         result.stdout.fnmatch_lines(py.code.Source("""
@@ -261,7 +261,7 @@ class TestCollectonly:
             failure in parseargs will cause session
             not to have the items attribute
         """
-        result = testdir.runpytest("--collectonly", "uhm_missing_path")
+        result = testdir.runpytest("--collect-only", "uhm_missing_path")
         assert result.ret == 4
         result.stderr.fnmatch_lines([
             '*ERROR: file not found*',
@@ -269,14 +269,14 @@ class TestCollectonly:
 
     def test_collectonly_quiet(self, testdir):
         testdir.makepyfile("def test_foo(): pass")
-        result = testdir.runpytest("--collectonly", "-q")
+        result = testdir.runpytest("--collect-only", "-q")
         result.stdout.fnmatch_lines([
             '*test_foo*',
         ])
 
     def test_collectonly_more_quiet(self, testdir):
         testdir.makepyfile(test_fun="def test_foo(): pass")
-        result = testdir.runpytest("--collectonly", "-qq")
+        result = testdir.runpytest("--collect-only", "-qq")
         result.stdout.fnmatch_lines([
             '*test_fun.py: 1*',
         ])

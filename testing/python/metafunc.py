@@ -594,7 +594,7 @@ class TestMetafuncFunctional:
             def test_it(foo):
                 pass
         """)
-        reprec = testdir.inline_run("--collectonly")
+        reprec = testdir.inline_run("--collect-only")
         assert not reprec.getcalls("pytest_internalerror")
 
     def test_usefixtures_seen_in_generate_tests(self, testdir):

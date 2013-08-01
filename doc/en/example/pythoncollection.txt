@@ -41,7 +41,7 @@ in functions and classes.  For example, if we have::
 
 then the test collection looks like this::
 
-    $ py.test --collectonly
+    $ py.test --collect-only
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.3.5
     collected 2 items
@@ -80,7 +80,7 @@ Finding out what is collected
 
 You can always peek at the collection tree without running tests like this::
 
-    . $ py.test --collectonly pythoncollection.py
+    . $ py.test --collect-only pythoncollection.py
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.3.5
     collected 3 items
@@ -133,7 +133,7 @@ and a setup.py dummy file like this::
 then a pytest run on python2 will find the one test when run with a python2 
 interpreters and will leave out the setup.py file::
     
-    $ py.test --collectonly
+    $ py.test --collect-only
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.3.5
     collected 1 items
