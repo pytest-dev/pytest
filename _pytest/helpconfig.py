@@ -13,8 +13,8 @@ def pytest_addoption(parser):
     group._addoption('-p', action="append", dest="plugins", default = [],
                metavar="name",
                help="early-load given plugin (multi-allowed).")
-    group.addoption('--traceconfig',
-               action="store_true", dest="traceconfig", default=False,
+    group.addoption('--traceconfig', '--trace-config',
+               action="store_true", default=False,
                help="trace considerations of conftest.py files."),
     group.addoption('--debug',
                action="store_true", dest="debug", default=False,
