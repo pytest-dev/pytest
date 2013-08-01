@@ -196,7 +196,7 @@ def test_argcomplete(testdir, monkeypatch):
     monkeypatch.setenv('COMP_LINE', "py.test " + arg)
     monkeypatch.setenv('COMP_POINT', str(len("py.test " + arg)))
     result = testdir.run('bash', str(script), arg)
-    print dir(result), result.ret
+    #print dir(result), result.ret
     if result.ret == 255:
         # argcomplete not found
         pytest.skip("argcomplete not available")
