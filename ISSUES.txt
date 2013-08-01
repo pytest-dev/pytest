@@ -1,10 +1,4 @@
 
-improve / add to dependency/test resource injection
--------------------------------------------------------------
-tags: wish feature  docs
-
-write up better examples showing the connection between
-the two.
 
 refine parametrize API
 -------------------------------------------------------------
@@ -94,20 +88,6 @@ appropriately to avoid this issue.  Moreover/Alternatively, we could
 record which implementations of a hook succeeded and only call their
 teardown.
 
-consider and document __init__ file usage in test directories
----------------------------------------------------------------
-tags: bug  core
-
-Currently, a test module is imported with its fully qualified
-package path, determined by checking __init__ files upwards.
-This has the side effect that a source package at the root
-of the test dir could be imported as well.  This is somewhat
-convenient but complicates the picture for running tests against
-different versions of a package.  Also, implicit sys.path
-manipulations are problematic per-se.  Maybe factorting out
-a pytest_addsyspath hook which can be disabled from the command line
-makes sense.  In any case documentation/recommendations for
-certain scenarios makes sense.
 
 relax requirement to have tests/testing contain an __init__
 ----------------------------------------------------------------
@@ -220,32 +200,10 @@ to further reduce py.test globality.  Also consider
 having py.test.config and ensuretemp coming from
 a plugin rather than being there from the start.
 
-consider allowing funcargs for setup methods
---------------------------------------------------------------
-tags: experimental-wish 
-
-Users have expressed the wish to have funcargs available to setup
-functions.  Experiment with allowing funcargs there - it might
-also help to make the py.test.ensuretemp and config deprecation.
-For filling funcargs for setup methods, we could call funcarg
-factories with a request object that not have a cls/function
-attributes.  However, how to handle parametrized test functions
-and funcargs?
-
-maybe introduce a setup method like:
-
-    setup_invocation(self, request)
-
-which has full access to the test invocation through "request"
-through which you can get funcargvalues, use cached_setup etc.
-Therefore, the access to funcargs would be indirect but it
-could be consistently implemented.  setup_invocation() would
-be a "glue" function for bringing together the xUnit and funcargs
-world.
 
 consider pytest_addsyspath hook
 -----------------------------------------
-tags: 
+tags: wish
 
 py.test could call a new pytest_addsyspath() in order to systematically
 allow manipulation of sys.path and to inhibit it via --no-addsyspath
@@ -255,13 +213,6 @@ Alternatively it could also be done via the config object
 and pytest_configure.
 
 
-show plugin information in test header
-----------------------------------------------------------------
-tags: feature 
-
-Now that external plugins are becoming more numerous
-it would be useful to have external plugins along with
-their versions displayed as a header line.
 
 deprecate global py.test.config usage
 ----------------------------------------------------------------
