@@ -200,28 +200,6 @@ to further reduce py.test globality.  Also consider
 having py.test.config and ensuretemp coming from
 a plugin rather than being there from the start.
 
-consider allowing funcargs for setup methods
---------------------------------------------------------------
-tags: experimental-wish 
-
-Users have expressed the wish to have funcargs available to setup
-functions.  Experiment with allowing funcargs there - it might
-also help to make the py.test.ensuretemp and config deprecation.
-For filling funcargs for setup methods, we could call funcarg
-factories with a request object that not have a cls/function
-attributes.  However, how to handle parametrized test functions
-and funcargs?
-
-maybe introduce a setup method like:
-
-    setup_invocation(self, request)
-
-which has full access to the test invocation through "request"
-through which you can get funcargvalues, use cached_setup etc.
-Therefore, the access to funcargs would be indirect but it
-could be consistently implemented.  setup_invocation() would
-be a "glue" function for bringing together the xUnit and funcargs
-world.
 
 consider pytest_addsyspath hook
 -----------------------------------------
