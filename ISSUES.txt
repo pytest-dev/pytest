@@ -213,13 +213,6 @@ Alternatively it could also be done via the config object
 and pytest_configure.
 
 
-show plugin information in test header
-----------------------------------------------------------------
-tags: feature 
-
-Now that external plugins are becoming more numerous
-it would be useful to have external plugins along with
-their versions displayed as a header line.
 
 deprecate global py.test.config usage
 ----------------------------------------------------------------
