@@ -28,7 +28,8 @@ def _xunit_setUpClass(request):
         return  # skipped
     setup = getattr(request.cls, 'setUpClass', None)
     teardown = getattr(request.cls, 'tearDownClass', None)
-    setup()
+    if setup is not None:
+        setup()
     if teardown is not None:
         request.addfinalizer(teardown)
 

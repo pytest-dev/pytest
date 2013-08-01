@@ -1,6 +1,11 @@
 Changes between 2.3.5 and 2.4.DEV
 -----------------------------------
 
+- fix issue322: tearDownClass is not run if setUpClass failed. Thanks
+  Mathieu Agopian for fixing.  The patch moves handling setUpClass
+  into a new autofixture. (XXX impl-decide if rather adding addfinalizer()
+  API to node's would have a similar effect)
+
 - fix issue336: autouse fixture in plugins should work again.
 
 - change to use hyphen-separated long options but keep the old spelling
