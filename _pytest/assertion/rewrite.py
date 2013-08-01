@@ -150,11 +150,24 @@ class AssertionRewritingHook(object):
             mod.__file__ = co.co_filename
             # Normally, this attribute is 3.2+.
             mod.__cached__ = pyc
+            mod.__loader__ = self
             py.builtin.exec_(co, mod.__dict__)
         except:
             del sys.modules[name]
             raise
         return sys.modules[name]
+
+
+
+    def is_package(self, name):
+        try:
+            fd, fn, desc = imp.find_module(name)
+        except ImportError:
+            return False
+        if fd is not None:
+            fd.close()
+        tp = desc[2]
+        return tp == imp.PKG_DIRECTORY
 
 def _write_pyc(state, co, source_path, pyc):
     # Technically, we don't have to have the same pyc format as

@@ -412,6 +412,36 @@ def test_rewritten():
         testdir.tmpdir.join("test_newlines.py").write(b, "wb")
         assert testdir.runpytest().ret == 0
 
+
+class TestAssertionRewriteHookDetails(object):
+    def test_loader_is_package_false_for_module(self, testdir):
+        testdir.makepyfile(test_fun="""
+            def test_loader():
+                assert not __loader__.is_package(__name__)
+            """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "* 1 passed*",
+        ])
+
+    def test_loader_is_package_true_for_package(self, testdir):
+        testdir.makepyfile(test_fun="""
+            def test_loader():
+                assert not __loader__.is_package(__name__)
+
+            def test_fun():
+                assert __loader__.is_package('fun')
+
+            def test_missing():
+                assert not __loader__.is_package('pytest_not_there')
+            """)
+        pkg = testdir.mkpydir('fun')
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            '* 3 passed*',
+        ])
+
+
     @pytest.mark.skipif("sys.version_info[0] >= 3")
     def test_assume_ascii(self, testdir):
         content = "u'\xe2\x99\xa5'"
