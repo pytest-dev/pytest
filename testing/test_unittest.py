@@ -118,7 +118,7 @@ def test_teardown(testdir):
     assert passed == 2
     assert passed + skipped + failed == 2
 
-@pytest.mark.skipif("sys.version_info < (3,1)")
+@pytest.mark.skipif("sys.version_info < (2,7)")
 def test_unittest_skip_issue148(testdir):
     testpath = testdir.makepyfile("""
         import unittest
@@ -586,3 +586,53 @@ def test_unittest_setup_interaction(testdir):
     """)
     result = testdir.runpytest()
     result.stdout.fnmatch_lines("*3 passed*")
+
+
+def test_non_unittest_no_setupclass_support(testdir):
+    testpath = testdir.makepyfile("""
+        class TestFoo:
+            x = 0
+
+            @classmethod
+            def setUpClass(cls):
+                cls.x = 1
+
+            def test_method1(self):
+                assert self.x == 0
+
+            @classmethod
+            def tearDownClass(cls):
+                cls.x = 1
+
+        def test_not_teareddown():
+            assert TestFoo.x == 0
+
+    """)
+    reprec = testdir.inline_run(testpath)
+    reprec.assertoutcome(passed=2)
+
+
+def test_no_teardown_if_setupclass_failed(testdir):
+    testpath = testdir.makepyfile("""
+        import unittest
+
+        class MyTestCase(unittest.TestCase):
+            x = 0
+
+            @classmethod
+            def setUpClass(cls):
+                cls.x = 1
+                assert False
+
+            def test_func1(self):
+                cls.x = 10
+
+            @classmethod
+            def tearDownClass(cls):
+                cls.x = 100
+
+        def test_notTornDown():
+            assert MyTestCase.x == 1
+    """)
+    reprec = testdir.inline_run(testpath)
+    reprec.assertoutcome(passed=1, failed=1)

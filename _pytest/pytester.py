@@ -11,6 +11,12 @@ from _pytest.main import Session, EXIT_OK
 from py.builtin import print_
 from _pytest.core import HookRelay
 
+
+def get_public_names(l):
+    """Only return names from iterator l without a leading underscore."""
+    return [x for x in l if x[0] != "_"]
+
+
 def pytest_addoption(parser):
     group = parser.getgroup("pylib")
     group.addoption('--no-tools-on-path',

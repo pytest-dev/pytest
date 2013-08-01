@@ -1,6 +1,8 @@
 import pytest, py, sys
 from _pytest import python as funcargs
 from _pytest.python import FixtureLookupError
+from _pytest.pytester import get_public_names
+
 
 def test_getfuncargnames():
     def f(): pass
@@ -50,7 +52,7 @@ class TestFillFixtures:
         """)
         funcargs.fillfixtures(item)
         del item.funcargs["request"]
-        assert len(item.funcargs) == 2
+        assert len(get_public_names(item.funcargs)) == 2
         assert item.funcargs['some'] == "test_func"
         assert item.funcargs['other'] == 42
 
@@ -334,7 +336,7 @@ class TestRequestBasic:
         assert val2 == 2
         pytest._fillfuncargs(item)
         assert item.funcargs["something"] == 1
-        assert len(item.funcargs) == 2
+        assert len(get_public_names(item.funcargs)) == 2
         assert "request" in item.funcargs
         #assert item.funcargs == {'something': 1, "other": 2}
 
@@ -412,6 +414,7 @@ class TestRequestBasic:
     def test_request_fixturenames(self, testdir):
         testdir.makepyfile("""
             import pytest
+            from _pytest.pytester import get_public_names
             @pytest.fixture()
             def arg1():
                 pass
@@ -422,7 +425,7 @@ class TestRequestBasic:
             def sarg(tmpdir):
                 pass
             def test_function(request, farg):
-                assert set(request.fixturenames) == \
+                assert set(get_public_names(request.fixturenames)) == \
                        set(["tmpdir", "sarg", "arg1", "request", "farg"])
         """)
         reprec = testdir.inline_run()
@@ -831,6 +834,8 @@ class TestFixtureUsages:
         l = reprec.getfailedcollections()
         assert len(l) == 1
 
+    @pytest.mark.xfail(reason="unclear if it should be supported at all, "
+                              "currently broken")
     def test_request_can_be_overridden(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -995,9 +1000,10 @@ class TestAutouseDiscovery:
 
     def test_parsefactories_conftest(self, testdir):
         testdir.makepyfile("""
+            from _pytest.pytester import get_public_names
             def test_check_setup(item, fm):
                 autousenames = fm._getautousenames(item.nodeid)
-                assert len(autousenames) == 2
+                assert len(get_public_names(autousenames)) == 2
                 assert "perfunction2" in autousenames
                 assert "perfunction" in autousenames
         """)

@@ -5,19 +5,38 @@ import sys, pdb
 # for transfering markers
 from _pytest.python import transfer_markers
 
-def pytest_pycollect_makeitem(collector, name, obj):
+
+def is_unittest(obj):
+    """Is obj a subclass of unittest.TestCase?"""
     unittest = sys.modules.get('unittest')
     if unittest is None:
-        return # nobody can have derived unittest.TestCase
+        return  # nobody can have derived unittest.TestCase
     try:
-        isunit = issubclass(obj, unittest.TestCase)
+        return issubclass(obj, unittest.TestCase)
     except KeyboardInterrupt:
         raise
-    except Exception:
-        pass
-    else:
-        if isunit:
-            return UnitTestCase(name, parent=collector)
+    except:
+        return False
+
+
+@pytest.fixture(scope='class', autouse=True)
+def _xunit_setUpClass(request):
+    """Add support for unittest.TestCase setUpClass and tearDownClass."""
+    if not is_unittest(request.cls):
+        return  # only support setUpClass / tearDownClass for unittest.TestCase
+    if getattr(request.cls, '__unittest_skip__', False):
+        return  # skipped
+    setup = getattr(request.cls, 'setUpClass', None)
+    teardown = getattr(request.cls, 'tearDownClass', None)
+    setup()
+    if teardown is not None:
+        request.addfinalizer(teardown)
+
+
+def pytest_pycollect_makeitem(collector, name, obj):
+    if is_unittest(obj):
+        return UnitTestCase(name, parent=collector)
+
 
 class UnitTestCase(pytest.Class):
     nofuncargs = True  # marker for fixturemanger.getfixtureinfo()
@@ -45,21 +64,7 @@ class UnitTestCase(pytest.Class):
                 if ut is None or runtest != ut.TestCase.runTest:
                     yield TestCaseFunction('runTest', parent=self)
 
-    def setup(self):
-        if getattr(self.obj, '__unittest_skip__', False):
-            return
-        meth = getattr(self.obj, 'setUpClass', None)
-        if meth is not None:
-            meth()
-        super(UnitTestCase, self).setup()
 
-    def teardown(self):
-        if getattr(self.obj, '__unittest_skip__', False):
-            return
-        meth = getattr(self.obj, 'tearDownClass', None)
-        if meth is not None:
-            meth()
-        super(UnitTestCase, self).teardown()
 
 class TestCaseFunction(pytest.Function):
     _excinfo = None
