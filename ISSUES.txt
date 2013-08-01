@@ -88,20 +88,6 @@ appropriately to avoid this issue.  Moreover/Alternatively, we could
 record which implementations of a hook succeeded and only call their
 teardown.
 
-consider and document __init__ file usage in test directories
----------------------------------------------------------------
-tags: bug  core
-
-Currently, a test module is imported with its fully qualified
-package path, determined by checking __init__ files upwards.
-This has the side effect that a source package at the root
-of the test dir could be imported as well.  This is somewhat
-convenient but complicates the picture for running tests against
-different versions of a package.  Also, implicit sys.path
-manipulations are problematic per-se.  Maybe factorting out
-a pytest_addsyspath hook which can be disabled from the command line
-makes sense.  In any case documentation/recommendations for
-certain scenarios makes sense.
 
 relax requirement to have tests/testing contain an __init__
 ----------------------------------------------------------------
