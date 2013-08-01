@@ -4,7 +4,11 @@ import py
 try:
     from collections.abc import Sequence
 except ImportError:
-    from collections import Sequence
+    try:
+        from collections import Sequence
+    except ImportError:
+        Sequence = list
+
 
 BuiltinAssertionError = py.builtin.builtins.AssertionError
 

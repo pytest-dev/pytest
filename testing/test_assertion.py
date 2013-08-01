@@ -3,12 +3,6 @@ import sys
 import py, pytest
 import _pytest.assertion as plugin
 from _pytest.assertion import reinterpret, util
-try:
-    from collections.abc import MutableSequence
-except ImportError:
-    from collections import MutableSequence
-
-
 needsnewassert = pytest.mark.skipif("sys.version_info < (2,6)")
 
 
@@ -122,6 +116,14 @@ class TestAssert_reprcompare:
         assert len(expl) > 1
 
     def test_Sequence(self):
+        col = py.builtin._tryimport(
+            "collections.abc",
+            "collections",
+            "sys")
+        if not hasattr(col, "MutableSequence"):
+            pytest.skip("cannot import MutableSequence")
+        MutableSequence = col.MutableSequence
+
         class TestSequence(MutableSequence):  # works with a Sequence subclass
             def __init__(self, iterable):
                 self.elements = list(iterable)
