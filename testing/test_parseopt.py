@@ -14,7 +14,7 @@ class TestParser:
         out, err = capsys.readouterr()
         assert err.find("error: unrecognized arguments") != -1
 
-    def test_argument(self, parser):
+    def test_argument(self):
         with pytest.raises(parseopt.ArgumentError):
             # need a short or long option
             argument = parseopt.Argument()
@@ -29,7 +29,7 @@ class TestParser:
         argument = parseopt.Argument('-t', '--test', dest='abc')
         assert argument.dest == 'abc'
 
-    def test_argument_type(self, parser):
+    def test_argument_type(self):
         argument = parseopt.Argument('-t', dest='abc', type='int')
         assert argument.type is int
         argument = parseopt.Argument('-t', dest='abc', type='string')
