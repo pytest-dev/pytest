@@ -3,6 +3,11 @@ import sys
 import py, pytest
 import _pytest.assertion as plugin
 from _pytest.assertion import reinterpret, util
+try:
+    from collections.abc import MutableSequence
+except ImportError:
+    from collections import MutableSequence
+
 
 needsnewassert = pytest.mark.skipif("sys.version_info < (2,6)")
 
@@ -95,13 +100,48 @@ class TestAssert_reprcompare:
         expl = callequal({'a': 0}, {'a': 1})
         assert len(expl) > 1
 
+    def test_dict_omitting(self):
+        lines = callequal({'a': 0, 'b': 1}, {'a': 1, 'b': 1})
+        assert lines[1].startswith('Omitting 1 identical item')
+        assert 'Common items' not in lines
+        for line in lines[1:]:
+            assert 'b' not in line
+
+    def test_dict_omitting_verbose(self):
+        lines = callequal({'a': 0, 'b': 1}, {'a': 1, 'b': 1}, verbose=True)
+        assert lines[1].startswith('Common items:')
+        assert 'Omitting' not in lines[1]
+        assert lines[2] == "{'b': 1}"
+
     def test_set(self):
         expl = callequal(set([0, 1]), set([0, 2]))
         assert len(expl) > 1
 
     def test_frozenzet(self):
         expl = callequal(frozenset([0, 1]), set([0, 2]))
-        print (expl)
+        assert len(expl) > 1
+
+    def test_Sequence(self):
+        class TestSequence(MutableSequence):  # works with a Sequence subclass
+            def __init__(self, iterable):
+                self.elements = list(iterable)
+
+            def __getitem__(self, item):
+                return self.elements[item]
+
+            def __len__(self):
+                return len(self.elements)
+
+            def __setitem__(self, item, value):
+                pass
+
+            def __delitem__(self, item):
+                pass
+
+            def insert(self, item, index):
+                pass
+
+        expl = callequal(TestSequence([0, 1]), list([0, 2]))
         assert len(expl) > 1
 
     def test_list_tuples(self):

@@ -1,6 +1,10 @@
 """Utilities for assertion debugging"""
 
 import py
+try:
+    from collections.abc import Sequence
+except ImportError:
+    from collections import Sequence
 
 BuiltinAssertionError = py.builtin.builtins.AssertionError
 
@@ -91,7 +95,8 @@ def assertrepr_compare(config, op, left, right):
     right_repr = py.io.saferepr(right, maxsize=width-len(left_repr))
     summary = '%s %s %s' % (left_repr, op, right_repr)
 
-    issequence = lambda x: isinstance(x, (list, tuple))
+    issequence = lambda x: (isinstance(x, (list, tuple, Sequence))
+                            and not isinstance(x, basestring))
     istext = lambda x: isinstance(x, basestring)
     isdict = lambda x: isinstance(x, dict)
     isset = lambda x: isinstance(x, (set, frozenset))
@@ -198,7 +203,7 @@ def _compare_eq_dict(left, right, verbose=False):
     common = set(left).intersection(set(right))
     same = dict((k, left[k]) for k in common if left[k] == right[k])
     if same and not verbose:
-        explanation += ['Hiding %s identical items, use -v to show' %
+        explanation += ['Omitting %s identical items, use -v to show' %
                         len(same)]
     elif same:
         explanation += ['Common items:']
