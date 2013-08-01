@@ -174,9 +174,9 @@ def test_addoption_parser_epilog(testdir):
     result.stdout.fnmatch_lines(["hint: hello world", "hint: from me too"])
 
 @pytest.mark.skipif("sys.version_info < (2,5)")
-def test_argcomplete(testdir):
+def test_argcomplete(testdir, monkeypatch):
     if not py.path.local.sysfind('bash'):
-        pytest.skip("bash not available")    
+        pytest.skip("bash not available")
     import os
     script = os.path.join(os.getcwd(), 'test_argcomplete')
     with open(str(script), 'w') as fp:
@@ -185,13 +185,16 @@ def test_argcomplete(testdir):
         # so we use bash
         fp.write('COMP_WORDBREAKS="$COMP_WORDBREAKS" $(which py.test) '
                  '8>&1 9>&2')
-    os.environ['_ARGCOMPLETE'] = "1"
-    os.environ['_ARGCOMPLETE_IFS'] =  "\x0b"
-    os.environ['COMP_WORDBREAKS'] = ' \\t\\n"\\\'><=;|&(:'
+    # alternative would be exteneded Testdir.{run(),_run(),popen()} to be able
+    # to handle a keyword argument env that replaces os.environ in popen or
+    # extends the copy, advantage: could not forget to restore
+    monkeypatch.setenv('_ARGCOMPLETE', "1")
+    monkeypatch.setenv('_ARGCOMPLETE_IFS',"\x0b")
+    monkeypatch.setenv('COMP_WORDBREAKS', ' \\t\\n"\\\'><=;|&(:')
 
     arg = '--fu'
-    os.environ['COMP_LINE'] = "py.test " + arg
-    os.environ['COMP_POINT'] = str(len(os.environ['COMP_LINE']))
+    monkeypatch.setenv('COMP_LINE', "py.test " + arg)
+    monkeypatch.setenv('COMP_POINT', str(len("py.test " + arg)))
     result = testdir.run('bash', str(script), arg)
     print dir(result), result.ret
     if result.ret == 255:
@@ -202,7 +205,8 @@ def test_argcomplete(testdir):
 
     os.mkdir('test_argcomplete.d')
     arg = 'test_argc'
-    os.environ['COMP_LINE'] = "py.test " + arg
-    os.environ['COMP_POINT'] = str(len(os.environ['COMP_LINE']))
+    monkeypatch.setenv('COMP_LINE', "py.test " + arg)
+    monkeypatch.setenv('COMP_POINT', str(len('py.test ' + arg)))
     result = testdir.run('bash', str(script), arg)
     result.stdout.fnmatch_lines(["test_argcomplete", "test_argcomplete.d/"])
+    # restore environment
