@@ -203,7 +203,7 @@ a plugin rather than being there from the start.
 
 consider pytest_addsyspath hook
 -----------------------------------------
-tags: 
+tags: wish
 
 py.test could call a new pytest_addsyspath() in order to systematically
 allow manipulation of sys.path and to inhibit it via --no-addsyspath
