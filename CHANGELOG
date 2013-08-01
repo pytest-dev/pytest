@@ -1,6 +1,10 @@
 Changes between 2.3.5 and 2.4.DEV
 -----------------------------------
 
+- fix issue279: improve object comparisons on assertion failure
+  for standard datatypes and recognise collections.abc.  Thanks to
+  Brianna Laugher and Mathieu Agopian.
+
 - fix issue335: document py.code.ExceptionInfo() object returned
   from pytest.raises(), thanks Mathieu Agopian.
 
