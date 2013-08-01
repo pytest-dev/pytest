@@ -19,8 +19,8 @@ def pytest_addoption(parser):
 to provide assert expression information. """)
     group.addoption('--no-assert', action="store_true", default=False,
         dest="noassert", help="DEPRECATED equivalent to --assert=plain")
-    group.addoption('--nomagic', action="store_true", default=False,
-        dest="nomagic", help="DEPRECATED equivalent to --assert=plain")
+    group.addoption('--nomagic', '--no-magic', action="store_true", 
+        default=False, help="DEPRECATED equivalent to --assert=plain")
 
 class AssertionState:
     """State for the assertion plugin."""

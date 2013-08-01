@@ -6,7 +6,7 @@ import py
 
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "resultlog plugin options")
-    group.addoption('--resultlog', action="store", dest="resultlog",
+    group.addoption('--resultlog', '--result-log', action="store", 
         metavar="path", default=None,
         help="path for machine-readable result log.")
 

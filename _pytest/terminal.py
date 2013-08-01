@@ -27,8 +27,8 @@ def pytest_addoption(parser):
                action="store", dest="tbstyle", default='long',
                choices=['long', 'short', 'no', 'line', 'native'],
                help="traceback print mode (long/short/line/native/no).")
-    group._addoption('--fulltrace',
-               action="store_true", dest="fulltrace", default=False,
+    group._addoption('--fulltrace', '--full-trace',
+               action="store_true", default=False,
                help="don't cut any tracebacks (default is to cut).")
 
 def pytest_configure(config):

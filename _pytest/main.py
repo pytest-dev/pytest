@@ -41,13 +41,14 @@ def pytest_addoption(parser):
                help="run pytest in strict mode, warnings become errors.")
 
     group = parser.getgroup("collect", "collection")
-    group.addoption('--collectonly',
-        action="store_true", dest="collectonly",
+    group.addoption('--collectonly', '--collect-only', action="store_true", 
         help="only collect tests, don't execute them."),
     group.addoption('--pyargs', action="store_true",
         help="try to interpret all arguments as python packages.")
     group.addoption("--ignore", action="append", metavar="path",
         help="ignore path during collection (multi-allowed).")
+    # when changing this to --conf-cut-dir, config.py Conftest.setinitial
+    # needs upgrading as well
     group.addoption('--confcutdir', dest="confcutdir", default=None,
         metavar="dir",
         help="only load conftest.py's relative to specified dir.")

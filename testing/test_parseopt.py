@@ -267,7 +267,6 @@ def test_argcomplete(testdir, monkeypatch):
         # argcomplete not found
         pytest.skip("argcomplete not available")
     else:
-        #print 'type ---------------', result.stdout, result.stdout.lines
         if py.std.sys.version_info < (2,7):
             result.stdout.lines = result.stdout.lines[0].split('\x0b')
             result.stdout.fnmatch_lines(["--funcargs", "--fulltrace"])
