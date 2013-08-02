@@ -384,19 +384,19 @@ class Module(pytest.File, PyCollector):
                 setup_module(self.obj)
             else:
                 setup_module()
-
-    def teardown(self):
-        teardown_module = xunitsetup(self.obj, 'tearDownModule')
-        if teardown_module is None:
-            teardown_module = xunitsetup(self.obj, 'teardown_module')
-        if teardown_module is not None:
+        fin = getattr(self.obj, 'tearDownModule', None)
+        if fin is None:
+            fin = getattr(self.obj, 'teardown_module', None)
+        if fin is not None:
             #XXX: nose compat hack, move to nose plugin
             # if it takes a positional arg, its probably a py.test style one
             # so we pass the current module object
-            if inspect.getargspec(teardown_module)[0]:
-                teardown_module(self.obj)
+            if inspect.getargspec(fin)[0]:
+                finalizer = lambda: fin(self.obj)
             else:
-                teardown_module()
+                finalizer = fin
+            self.addfinalizer(finalizer)
+
 
 class Class(PyCollector):
     """ Collector for test methods. """
@@ -415,12 +415,11 @@ class Class(PyCollector):
             setup_class = getattr(setup_class, '__func__', setup_class)
             setup_class(self.obj)
 
-    def teardown(self):
-        teardown_class = xunitsetup(self.obj, 'teardown_class')
-        if teardown_class is not None:
-            teardown_class = getattr(teardown_class, 'im_func', teardown_class)
-            teardown_class = getattr(teardown_class, '__func__', teardown_class)
-            teardown_class(self.obj)
+        fin_class = getattr(self.obj, 'teardown_class', None)
+        if fin_class is not None:
+            fin_class = getattr(fin_class, 'im_func', fin_class)
+            fin_class = getattr(fin_class, '__func__', fin_class)
+            self.addfinalizer(lambda: fin_class(self.obj))
 
 class Instance(PyCollector):
     def _getobj(self):
@@ -449,23 +448,17 @@ class FunctionMixin(PyobjMixin):
         else:
             obj = self.parent.obj
         if inspect.ismethod(self.obj):
-            name = 'setup_method'
+            setup_name = 'setup_method'
+            teardown_name = 'teardown_method'
         else:
-            name = 'setup_function'
-        setup_func_or_method = xunitsetup(obj, name)
+            setup_name = 'setup_function'
+            teardown_name = 'teardown_function'
+        setup_func_or_method = xunitsetup(obj, setup_name)
         if setup_func_or_method is not None:
             setup_func_or_method(self.obj)
-
-    def teardown(self):
-        """ perform teardown for this test function. """
-        if inspect.ismethod(self.obj):
-            name = 'teardown_method'
-        else:
-            name = 'teardown_function'
-        obj = self.parent.obj
-        teardown_func_or_meth = xunitsetup(obj, name)
-        if teardown_func_or_meth is not None:
-            teardown_func_or_meth(self.obj)
+        fin = getattr(obj, teardown_name, None)
+        if fin is not None:
+            self.addfinalizer(lambda: fin(self.obj))
 
     def _prunetraceback(self, excinfo):
         if hasattr(self, '_obj') and not self.config.option.fulltrace:

@@ -13,8 +13,15 @@ names).  While these setup/teardown methods are and will remain fully
 supported you may also use pytest's more powerful :ref:`fixture mechanism
 <fixture>` which leverages the concept of dependency injection, allowing
 for a more modular and more scalable approach for managing test state, 
-especially for larger projects and for functional testing.  It is safe 
-to mix both fixture mechanisms.
+especially for larger projects and for functional testing.  You can
+mix both fixture mechanisms in the same file but unittest-based
+test methods cannot receive fixture arguments.
+
+.. note::
+
+    As of pytest-2.4, teardownX functions are not called if 
+    setupX existed and failed/was skipped.  This harmonizes
+    behaviour across all major python testing tools.
 
 Module level setup/teardown
 --------------------------------------

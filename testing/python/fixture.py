@@ -834,8 +834,6 @@ class TestFixtureUsages:
         l = reprec.getfailedcollections()
         assert len(l) == 1
 
-    @pytest.mark.xfail(reason="unclear if it should be supported at all, "
-                              "currently broken")
     def test_request_can_be_overridden(self, testdir):
         testdir.makepyfile("""
             import pytest

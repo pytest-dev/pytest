@@ -19,21 +19,6 @@ def is_unittest(obj):
         return False
 
 
-@pytest.fixture(scope='class', autouse=True)
-def _xunit_setUpClass(request):
-    """Add support for unittest.TestCase setUpClass and tearDownClass."""
-    if not is_unittest(request.cls):
-        return  # only support setUpClass / tearDownClass for unittest.TestCase
-    if getattr(request.cls, '__unittest_skip__', False):
-        return  # skipped
-    setup = getattr(request.cls, 'setUpClass', None)
-    teardown = getattr(request.cls, 'tearDownClass', None)
-    if setup is not None:
-        setup()
-    if teardown is not None:
-        request.addfinalizer(teardown)
-
-
 def pytest_pycollect_makeitem(collector, name, obj):
     if is_unittest(obj):
         return UnitTestCase(name, parent=collector)
@@ -42,6 +27,18 @@ def pytest_pycollect_makeitem(collector, name, obj):
 class UnitTestCase(pytest.Class):
     nofuncargs = True  # marker for fixturemanger.getfixtureinfo()
                        # to declare that our children do not support funcargs
+                       #
+    def setup(self):
+        cls = self.obj
+        if getattr(cls, '__unittest_skip__', False):
+            return  # skipped
+        setup = getattr(cls, 'setUpClass', None)
+        if setup is not None:
+            setup()
+        teardown = getattr(cls, 'tearDownClass', None)
+        if teardown is not None:
+            self.addfinalizer(teardown)
+        super(UnitTestCase, self).setup()
 
     def collect(self):
         self.session._fixturemanager.parsefactories(self, unittest=True)

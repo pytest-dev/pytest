@@ -65,7 +65,7 @@ def test_setup(testdir):
     rep = reprec.matchreport("test_both", when="teardown")
     assert rep.failed and '42' in str(rep.longrepr)
 
-def test_unittest_style_setup_teardown(testdir):
+def test_setUpModule(testdir):
     testpath = testdir.makepyfile("""
         l = []
 
@@ -86,6 +86,23 @@ def test_unittest_style_setup_teardown(testdir):
         "*2 passed*",
     ])
 
+def test_setUpModule_failing_no_teardown(testdir):
+    testpath = testdir.makepyfile("""
+        l = []
+
+        def setUpModule():
+            0/0
+
+        def tearDownModule():
+            l.append(1)
+
+        def test_hello():
+            pass
+    """)
+    reprec = testdir.inline_run(testpath)
+    reprec.assertoutcome(passed=0, failed=1)
+    call = reprec.getcalls("pytest_runtest_setup")[0]
+    assert not call.item.module.l
 
 def test_new_instances(testdir):
     testpath = testdir.makepyfile("""
@@ -636,3 +653,4 @@ def test_no_teardown_if_setupclass_failed(testdir):
     """)
     reprec = testdir.inline_run(testpath)
     reprec.assertoutcome(passed=1, failed=1)
+

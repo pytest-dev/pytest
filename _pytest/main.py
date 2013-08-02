@@ -41,7 +41,7 @@ def pytest_addoption(parser):
                help="run pytest in strict mode, warnings become errors.")
 
     group = parser.getgroup("collect", "collection")
-    group.addoption('--collectonly', '--collect-only', action="store_true", 
+    group.addoption('--collectonly', '--collect-only', action="store_true",
         help="only collect tests, don't execute them."),
     group.addoption('--pyargs', action="store_true",
         help="try to interpret all arguments as python packages.")
@@ -325,6 +325,14 @@ class Node(object):
 
     def getplugins(self):
         return self.config._getmatchingplugins(self.fspath)
+
+    def addfinalizer(self, fin):
+        """ register a function to be called when this node is finalized.
+
+        This method can only be called when this node is active
+        in a setup chain, for example during self.setup().
+        """
+        self.session._setupstate.addfinalizer(fin, self)
 
     def getparent(self, cls):
         current = self
