@@ -455,19 +455,17 @@ class TerminalReporter:
                     parts.append("%d %s" % (len(val), key))
         line = ", ".join(parts)
         msg = "%s in %.2f seconds" % (line, session_duration)
+
+        markup = {'bold': True}
+        if 'failed' in self.stats or 'error' in self.stats:
+            markup = {'red': True, 'bold': True}
+        else:
+            markup = {'green': True, 'bold': True}
+
         if self.verbosity >= 0:
-            markup = dict(bold=True)
-            if 'failed' in self.stats or 'error' in self.stats:
-                markup['red'] = True
-            else:
-                markup['green'] = True
             self.write_sep("=", msg, **markup)
         if self.verbosity == -1:
-            if line:
-                self.write("%s, " % line)
-            self.write("time: %.2f seconds\n" % session_duration)
-        #else:
-        #    self.write_line(msg, bold=True)
+            self.write_line(msg, **markup)
 
     def summary_deselected(self):
         if 'deselected' in self.stats:
