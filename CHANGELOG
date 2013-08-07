@@ -1,6 +1,16 @@
 Changes between 2.3.5 and 2.4.DEV
 -----------------------------------
 
+- new monkeypatch.replace() to allow for more direct patching::
+
+     monkeypatch.replace(os.path.abspath, lambda x: "mocked")
+
+  instead of: monkeypatch.setattr(os.path, "abspath", lambda x: "mocked")
+
+  You can also avoid imports by specifying a python path string::
+
+     monkeypatch.replace("requests.get", ...)
+  
 - fix issue322: tearDownClass is not run if setUpClass failed. Thanks
   Mathieu Agopian for the initial fix.  Also make all of pytest/nose finalizer 
   mimick the same generic behaviour: if a setupX exists and fails, 
@@ -97,6 +107,7 @@ Changes between 2.3.5 and 2.4.DEV
 - fix issue307 - use yaml.safe_load in example, thanks Mark Eichin.
 
 - better parametrize error messages, thanks Brianna Laugher
+
 
 known incompatibilities:
 

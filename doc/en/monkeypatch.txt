@@ -29,7 +29,7 @@ patch this function before calling into a function which uses it::
     def test_mytest(monkeypatch):
         def mockreturn(path):
             return '/abc'
-        monkeypatch.setattr(os.path, 'expanduser', mockreturn)
+        monkeypatch.setattr(os.path., 'expanduser', mockreturn)
         x = getssh()
         assert x == '/abc/.ssh'
 
@@ -41,7 +41,7 @@ Method reference of the monkeypatch function argument
 -----------------------------------------------------
 
 .. autoclass:: monkeypatch
-    :members: setattr, delattr, setitem, delitem, setenv, delenv, syspath_prepend, chdir, undo
+    :members: setattr, replace, delattr, setitem, delitem, setenv, delenv, syspath_prepend, chdir, undo
 
 ``monkeypatch.setattr/delattr/delitem/delenv()`` all
 by default raise an Exception if the target does not exist.
