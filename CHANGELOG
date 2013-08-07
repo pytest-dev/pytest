@@ -1,15 +1,12 @@
 Changes between 2.3.5 and 2.4.DEV
 -----------------------------------
 
-- new monkeypatch.replace() to allow for more direct patching::
+- new monkeypatch.replace() to avoid imports and provide a shorter
+  invocation for patching out classes/functions from modules:
 
-     monkeypatch.replace(os.path.abspath, lambda x: "mocked")
+     monkeypatch.replace("requests.get", myfunc
 
-  instead of: monkeypatch.setattr(os.path, "abspath", lambda x: "mocked")
-
-  You can also avoid imports by specifying a python path string::
-
-     monkeypatch.replace("requests.get", ...)
+  will replace the "get" function of the "requests" module with ``myfunc``.
   
 - fix issue322: tearDownClass is not run if setUpClass failed. Thanks
   Mathieu Agopian for the initial fix.  Also make all of pytest/nose finalizer 

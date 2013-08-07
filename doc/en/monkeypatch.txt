@@ -29,13 +29,30 @@ patch this function before calling into a function which uses it::
     def test_mytest(monkeypatch):
         def mockreturn(path):
             return '/abc'
-        monkeypatch.setattr(os.path., 'expanduser', mockreturn)
+        monkeypatch.setattr(os.path, 'expanduser', mockreturn)
         x = getssh()
         assert x == '/abc/.ssh'
 
 Here our test function monkeypatches ``os.path.expanduser`` and
 then calls into an function that calls it.  After the test function 
 finishes the ``os.path.expanduser`` modification will be undone.
+
+example: preventing "requests" from remote operations
+------------------------------------------------------
+
+If you want to prevent the "requests" library from performing http
+requests in all your tests, you can do::
+
+    # content of conftest.py
+
+    import pytest
+    @pytest.fixture(autouse=True)
+    def no_requests(monkeypatch):
+        monkeypatch.replace("requests.session.Session.request", None)
+
+This autouse fixture will be executed for all test functions and it
+will replace the method ``request.session.Session.request`` with the
+value None so that any attempts to create http requests will fail.
 
 Method reference of the monkeypatch function argument
 -----------------------------------------------------

@@ -35,29 +35,7 @@ def test_setattr():
     monkeypatch.undo() # double-undo makes no modification
     assert A.x == 5
 
-class TestDerived:
-    def f(self):
-        pass
-
-    def test_class_function(self, monkeypatch):
-        monkeypatch.replace(TestDerived.f, lambda x: 42)
-        assert TestDerived().f() == 42
-
-    def test_instance_function(self, monkeypatch):
-        t = TestDerived()
-        monkeypatch.replace(t.f, lambda: 42)
-        assert t.f() == 42
-
-    def test_module_class(self, monkeypatch):
-        class New:
-            pass
-        monkeypatch.replace(TestDerived, New)
-        assert TestDerived == New
-
-    def test_nested_module(self, monkeypatch):
-        monkeypatch.replace(os.path.abspath, lambda x: "hello")
-        assert os.path.abspath("123") == "hello"
-
+class TestReplace:
     def test_string_expression(self, monkeypatch):
         monkeypatch.replace("os.path.abspath", lambda x: "hello2")
         assert os.path.abspath("123") == "hello2"
@@ -66,6 +44,17 @@ class TestDerived:
         monkeypatch.replace("_pytest.config.Config", 42)
         import _pytest
         assert _pytest.config.Config == 42
+
+    def test_wrong_target(self, monkeypatch):
+        pytest.raises(TypeError, lambda: monkeypatch.replace(None, None))
+
+    def test_unknown_import(self, monkeypatch):
+        pytest.raises(pytest.fail.Exception,
+                      lambda: monkeypatch.replace("unkn123.classx", None))
+
+    def test_unknown_attr(self, monkeypatch):
+        pytest.raises(pytest.fail.Exception,
+                      lambda: monkeypatch.replace("os.path.qweqwe", None))
 
 def test_delattr():
     class A:

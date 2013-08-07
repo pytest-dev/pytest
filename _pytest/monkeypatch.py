@@ -1,6 +1,7 @@
 """ monkeypatching and mocking functionality.  """
 
 import os, sys, inspect
+import pytest
 
 def pytest_funcarg__monkeypatch(request):
     """The returned ``monkeypatch`` funcarg provides these
@@ -26,47 +27,6 @@ def pytest_funcarg__monkeypatch(request):
 
 notset = object()
 
-if sys.version_info < (3,0):
-    def derive_obj_and_name(obj):
-        name = obj.__name__
-        real_obj = getattr(obj, "im_self", None)
-        if real_obj is None:
-            real_obj = getattr(obj, "im_class", None)
-            if real_obj is None:
-                real_obj = sys.modules[obj.__module__]
-        assert getattr(real_obj, name) == obj, \
-                "could not derive object/name pair"
-        return name, real_obj
-
-else:
-    def derive_obj_and_name(obj):
-        name = obj.__name__
-        real_obj = getattr(obj, "__self__", None)
-        if real_obj is None:
-            current = sys.modules[obj.__module__]
-            for name in obj.__qualname__.split("."):
-                real_obj = current
-                current = getattr(current, name)
-        assert getattr(real_obj, name) == obj, \
-               "could not derive object/name pair"
-        return name, real_obj
-
-def derive_from_string(target):
-    rest = []
-    while target:
-        try:
-            obj = __import__(target, None, None, "__doc__")
-        except ImportError:
-            if "." not in target:
-                raise
-            target, name = target.rsplit(".", 1)
-            rest.append(name)
-        else:
-            assert len(rest) >= 1
-            while len(rest) != 1:
-                obj = getattr(obj, rest.pop())
-            return rest[0], obj
-
 class monkeypatch:
     """ object keeping a record of setattr/item/env/syspath changes. """
     def __init__(self):
@@ -74,22 +34,45 @@ class monkeypatch:
         self._setitem = []
         self._cwd = None
 
-    def replace(self, target, value):
-        """ derive monkeypatching location from ``target`` and call
-        setattr(derived_obj, derived_name, value).
+    def replace(self, import_path, value):
+        """ replace the object specified by a dotted ``import_path``
+        with the given ``value``.
 
-        This function can usually derive monkeypatch locations
-        for function, method or class targets.  It also accepts
-        a string which is taken as a python path which is then
-        tried to be imported.  For example the target "os.path.abspath"
-        will lead to a call to setattr(os.path, "abspath", value)
-        without the need to import "os.path" yourself.
+        For example ``replace("os.path.abspath", value)`` will
+        trigger an ``import os.path`` and a subsequent
+        setattr(os.path, "abspath", value).  Or to prevent
+        the requests library from performing requests you can call
+        ``replace("requests.sessions.Session.request", None)``
+        which will lead to an import of ``requests.sessions`` and a call
+        to ``setattr(requests.sessions.Session, "request", None)``.
         """
-        if isinstance(target, str):
-            name, obj = derive_from_string(target)
-        else:
-            name, obj = derive_obj_and_name(target)
-        return self.setattr(obj, name, value)
+        if not isinstance(import_path, str) or "." not in import_path:
+            raise TypeError("must be absolute import path string, not %r" %
+                            (import_path,))
+        rest = []
+        target = import_path
+        while target:
+            try:
+                obj = __import__(target, None, None, "__doc__")
+            except ImportError:
+                if "." not in target:
+                    __tracebackhide__ = True
+                    pytest.fail("could not import any sub part: %s" %
+                                import_path)
+                target, name = target.rsplit(".", 1)
+                rest.append(name)
+            else:
+                assert rest
+                try:
+                    while len(rest) > 1:
+                        attr = rest.pop()
+                        obj = getattr(obj, attr)
+                    attr = rest[0]
+                    getattr(obj, attr)
+                except AttributeError:
+                    __tracebackhide__ = True
+                    pytest.fail("object %r has no attribute %r" % (obj, attr))
+                return self.setattr(obj, attr, value)
 
     def setattr(self, obj, name, value, raising=True):
         """ set attribute ``name`` on ``obj`` to ``value``, by default
