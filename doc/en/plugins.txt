@@ -339,6 +339,10 @@ you can use the following hook:
 .. autofunction:: pytest_pycollect_makeitem
 .. autofunction:: pytest_generate_tests
 
+After collection is complete, you can modify the order of
+items, delete or otherwise amend the test items:
+
+.. autofunction:: pytest_collection_modifyitems
 
 Reporting hooks
 ------------------------------
