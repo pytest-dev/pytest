@@ -1,5 +1,23 @@
 
 
+recorder = monkeypatch.function(".......")
+-------------------------------------------------------------
+tags: nice feature 
+
+Like monkeypatch.replace but sets a mock-like call recorder:
+
+    recorder = monkeypatch.function("os.path.abspath")
+    recorder.set_return("/hello")
+    os.path.abspath("hello")
+    call, = recorder.calls
+    assert call.args.path == "hello"
+    assert call.returned == "/hello"
+    ...
+
+Unlike mock, "args.path" acts on the parsed auto-spec'ed ``os.path.abspath``
+so it's independent from if the client side called "os.path.abspath(path=...)"
+or "os.path.abspath('positional')".
+
 refine parametrize API
 -------------------------------------------------------------
 tags: critical feature 
