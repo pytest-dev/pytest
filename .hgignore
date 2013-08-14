@@ -32,3 +32,4 @@ env/
 .cache
 .coverage
 .ropeproject
+*.sublime-*
