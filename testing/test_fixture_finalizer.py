@@ -5,12 +5,13 @@ import py.code
 def test_fixture_finalizer(testdir):
     testdir.makeconftest("""
     import pytest
+    import sys
 
     @pytest.fixture
     def browser(request):
 
         def finalize():
-            print 'Finalized'
+            sys.stdout.write('Finalized')
         request.addfinalizer(finalize)
         return {}
     """)
