@@ -1,7 +1,6 @@
 include CHANGELOG
 include README.rst
 include setup.py
-include distribute_setup.py
 include tox.ini
 include LICENSE
 graft doc
