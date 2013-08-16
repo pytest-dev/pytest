@@ -813,3 +813,20 @@ class TestMarkersWithParametrization:
         testdir.makepyfile(s)
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2, skipped=2)
+
+
+    @pytest.mark.xfail(reason="issue 290")
+    def test_parametrize_ID_generation_string_int_works(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture
+            def myfixture():
+                return 'example'
+            @pytest.mark.parametrize(
+                'limit', (0, '0'))
+            def test_limit(limit, myfixture):
+                return
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
