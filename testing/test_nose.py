@@ -327,6 +327,15 @@ def test_setup_teardown_linking_issue265(testdir):
                 """Undoes the setup."""
                 raise Exception("should not call teardown for skipped tests")
         ''')
+    reprec = testdir.inline_run()
+    reprec.assertoutcome(passed=1, skipped=1)
 
-    result = testdir.runpytest()
-    result.stdout.fnmatch_lines("*1 skipped*")
+def test_SkipTest_during_collection(testdir):
+    testdir.makepyfile("""
+        import nose
+        raise nose.SkipTest("during collection")
+        def test_failing():
+            assert False
+        """)
+    reprec = testdir.inline_run()
+    reprec.assertoutcome(skipped=1)

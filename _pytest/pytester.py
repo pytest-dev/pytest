@@ -604,9 +604,10 @@ class ReportRecorder(object):
         passed = []
         skipped = []
         failed = []
-        for rep in self.getreports("pytest_runtest_logreport"):
+        for rep in self.getreports(
+            "pytest_collectreport pytest_runtest_logreport"):
             if rep.passed:
-                if rep.when == "call":
+                if getattr(rep, "when", None) == "call":
                     passed.append(rep)
             elif rep.skipped:
                 skipped.append(rep)

@@ -40,6 +40,9 @@ def teardown_nose(item):
         #    del item.parent._nosegensetup
 
 def pytest_make_collect_report(collector):
+    if sys.modules.get("unittest"):
+        SkipTest = py.std.unittest.SkipTest
+        collector.skip_exceptions += (SkipTest,)
     if isinstance(collector, pytest.Generator):
         call_optional(collector.obj, 'setup')
 
