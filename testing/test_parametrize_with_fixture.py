@@ -1,5 +1,7 @@
+import pytest
 
 
+@pytest.mark.xfail()
 def test_parametrize(testdir):
     testdir.makepyfile("""
         import pytest
