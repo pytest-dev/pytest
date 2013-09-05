@@ -119,6 +119,8 @@ known incompatibilities:
 Changes between 2.3.4 and 2.3.5
 -----------------------------------
 
+- fix issue169: respect --tb=style with setup/teardown errors as well.
+
 - never consider a fixture function for test function collection
 
 - allow re-running of test items / helps to fix pytest-reruntests plugin

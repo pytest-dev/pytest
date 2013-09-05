@@ -483,3 +483,14 @@ def test_unicode_in_longrepr(testdir):
     assert result.ret == 1
     assert "UnicodeEncodeError" not in result.stderr.str()
 
+
+
+def test_failure_in_setup(testdir):
+    testdir.makepyfile("""
+        def setup_module():
+            0/0
+        def test_func():
+            pass
+    """)
+    result = testdir.runpytest("--tb=line")
+    assert "def setup_module" not in result.stdout.str()
