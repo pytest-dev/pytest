@@ -266,6 +266,8 @@ def test_argcomplete(testdir, monkeypatch):
     if result.ret == 255:
         # argcomplete not found
         pytest.skip("argcomplete not available")
+    elif not result.stdout.str():
+        pytest.skip("bash provided no output, argcomplete not available?")
     else:
         if py.std.sys.version_info < (2,7):
             result.stdout.lines = result.stdout.lines[0].split('\x0b')
