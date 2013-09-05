@@ -185,7 +185,10 @@ class BaseFunctionalTests:
                 # so we would end up calling test functions while
                 # sys.exc_info would return the indexerror
                 # from guessing the lastitem
-                assert sys.exc_info()[0] is None
+                excinfo = sys.exc_info()
+                import traceback
+                assert excinfo[0] is None, \
+                       traceback.format_exception(*excinfo)
             def teardown_function(func):
                 raise ValueError(42)
         """)
