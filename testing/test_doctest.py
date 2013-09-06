@@ -1,6 +1,11 @@
 from _pytest.doctest import DoctestItem, DoctestModule, DoctestTextfile
 import py, pytest
 
+import pdb
+
+xfail_if_pdbpp_installed = pytest.mark.xfail(hasattr(pdb, "__author__"),
+    reason="doctest/pdbpp problem: https://bitbucket.org/antocuni/pdb/issue/24/doctests-fail-when-pdbpp-is-installed")
+
 class TestDoctests:
 
     def test_collect_testtextfile(self, testdir):
@@ -154,6 +159,7 @@ class TestDoctests:
         reprec = testdir.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(failed=1)
 
+    @xfail_if_pdbpp_installed
     def test_doctestmodule_external_and_issue116(self, testdir):
         p = testdir.mkpydir("hello")
         p.join("__init__.py").write(py.code.Source("""
@@ -193,6 +199,7 @@ class TestDoctests:
             "*test_txtfile_failing.txt:2: DocTestFailure"
         ])
 
+    @xfail_if_pdbpp_installed
     def test_txtfile_with_fixtures(self, testdir):
         p = testdir.maketxtfile("""
             >>> dir = getfixture('tmpdir')
@@ -202,6 +209,8 @@ class TestDoctests:
         reprec = testdir.inline_run(p, )
         reprec.assertoutcome(passed=1)
 
+
+    @xfail_if_pdbpp_installed
     def test_doctestmodule_with_fixtures(self, testdir):
         p = testdir.makepyfile("""
             '''
@@ -213,6 +222,7 @@ class TestDoctests:
         reprec = testdir.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(passed=1)
 
+    @xfail_if_pdbpp_installed
     def test_doctestmodule_three_tests(self, testdir):
         p = testdir.makepyfile("""
             '''
@@ -238,6 +248,7 @@ class TestDoctests:
         reprec = testdir.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(passed=3)
 
+    @xfail_if_pdbpp_installed
     def test_doctestmodule_two_tests_one_fail(self, testdir):
         p = testdir.makepyfile("""
             class MyClass:
