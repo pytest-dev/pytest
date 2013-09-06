@@ -41,8 +41,9 @@ def teardown_nose(item):
 
 def pytest_make_collect_report(collector):
     if sys.modules.get("unittest"):
-        SkipTest = py.std.unittest.SkipTest
-        collector.skip_exceptions += (SkipTest,)
+        SkipTest = getattr(py.std.unittest, "SkipTest", None)
+        if SkipTest is not None:
+            collector.skip_exceptions += (SkipTest,)
     if isinstance(collector, pytest.Generator):
         call_optional(collector.obj, 'setup')
 
