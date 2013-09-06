@@ -5,13 +5,13 @@ import inspect
 import sys
 from _pytest import unittest
 
-
 def pytest_runtest_makereport(__multicall__, item, call):
     SkipTest = getattr(sys.modules.get('nose', None), 'SkipTest', None)
     if SkipTest:
         if call.excinfo and call.excinfo.errisinstance(SkipTest):
             # let's substitute the excinfo with a py.test.skip one
-            call2 = call.__class__(lambda: py.test.skip(str(call.excinfo.value)), call.when)
+            call2 = call.__class__(lambda:
+                        pytest.skip(str(call.excinfo.value)), call.when)
             call.excinfo = call2.excinfo
 
 
@@ -40,10 +40,12 @@ def teardown_nose(item):
         #    del item.parent._nosegensetup
 
 def pytest_make_collect_report(collector):
-    if sys.modules.get("unittest"):
-        SkipTest = getattr(py.std.unittest, "SkipTest", None)
-        if SkipTest is not None:
-            collector.skip_exceptions += (SkipTest,)
+    SkipTest = getattr(sys.modules.get('unittest', None), 'SkipTest', None)
+    if SkipTest is not None:
+        collector.skip_exceptions += (SkipTest,)
+    SkipTest = getattr(sys.modules.get('nose', None), 'SkipTest', None)
+    if SkipTest is not None:
+        collector.skip_exceptions += (SkipTest,)
     if isinstance(collector, pytest.Generator):
         call_optional(collector.obj, 'setup')
 
