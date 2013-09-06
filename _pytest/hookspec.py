@@ -241,8 +241,18 @@ def pytest_plugin_registered(plugin, manager):
 def pytest_plugin_unregistered(plugin):
     """ a py lib plugin got unregistered. """
 
-def pytest_internalerror(excrepr):
+def pytest_internalerror(excrepr, excinfo):
     """ called for internal errors. """
 
 def pytest_keyboard_interrupt(excinfo):
     """ called for keyboard interrupt. """
+
+def pytest_exception_interact(node, call, report):
+    """ (experimental, new in 2.4) called when
+    an exception was raised which can potentially be
+    interactively handled.
+
+    This hook is only called if an exception was raised
+    that is not an internal exception like "skip.Exception".
+    """
+

@@ -10,7 +10,7 @@ except ImportError:
     from UserDict import DictMixin as MappingMixin
 
 from _pytest.mark import MarkInfo
-import _pytest.runner
+from _pytest.runner import collect_one_node, Skipped
 
 tracebackcutdir = py.path.local(_pytest.__file__).dirpath()
 
@@ -372,7 +372,7 @@ class Collector(Node):
 
     # the set of exceptions to interpret as "Skip the whole module" during
     # collection
-    skip_exceptions = (_pytest.runner.Skipped,)
+    skip_exceptions = (Skipped,)
 
     class CollectError(Exception):
         """ an error during collection, contains a custom message. """
@@ -512,8 +512,7 @@ class Session(FSCollector):
             parts = self._parsearg(arg)
             self._initialparts.append(parts)
             self._initialpaths.add(parts[0])
-        self.ihook.pytest_collectstart(collector=self)
-        rep = self.ihook.pytest_make_collect_report(collector=self)
+        rep = collect_one_node(self)
         self.ihook.pytest_collectreport(report=rep)
         self.trace.root.indent -= 1
         if self._notfound:
@@ -642,8 +641,7 @@ class Session(FSCollector):
                     resultnodes.append(node)
                 continue
             assert isinstance(node, pytest.Collector)
-            node.ihook.pytest_collectstart(collector=node)
-            rep = node.ihook.pytest_make_collect_report(collector=node)
+            rep = collect_one_node(node)
             if rep.passed:
                 has_matched = False
                 for x in rep.result:
@@ -664,8 +662,7 @@ class Session(FSCollector):
             yield node
         else:
             assert isinstance(node, pytest.Collector)
-            node.ihook.pytest_collectstart(collector=node)
-            rep = node.ihook.pytest_make_collect_report(collector=node)
+            rep = collect_one_node(node)
             if rep.passed:
                 for subnode in rep.result:
                     for x in self.genitems(subnode):

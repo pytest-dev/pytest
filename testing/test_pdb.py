@@ -1,6 +1,8 @@
 import py, pytest
 import sys
 
+from test_doctest import xfail_if_pdbpp_installed
+
 class TestPDB:
     def pytest_funcarg__pdblist(self, request):
         monkeypatch = request.getfuncargvalue("monkeypatch")
@@ -85,6 +87,32 @@ class TestPDB:
         if child.isalive():
             child.wait()
 
+    def test_pdb_interaction_on_collection_issue181(self, testdir):
+        p1 = testdir.makepyfile("""
+            import pytest
+            xxx
+        """)
+        child = testdir.spawn_pytest("--pdb %s" % p1)
+        #child.expect(".*import pytest.*")
+        child.expect("(Pdb)")
+        child.sendeof()
+        child.expect("1 error")
+        if child.isalive():
+            child.wait()
+
+    def test_pdb_interaction_on_internal_error(self, testdir):
+        testdir.makeconftest("""
+            def pytest_runtest_protocol():
+                0/0
+        """)
+        p1 = testdir.makepyfile("def test_func(): pass")
+        child = testdir.spawn_pytest("--pdb %s" % p1)
+        #child.expect(".*import pytest.*")
+        child.expect("(Pdb)")
+        child.sendeof()
+        if child.isalive():
+            child.wait()
+
     def test_pdb_interaction_capturing_simple(self, testdir):
         p1 = testdir.makepyfile("""
             import pytest
@@ -122,6 +150,7 @@ class TestPDB:
         if child.isalive():
             child.wait()
 
+    @xfail_if_pdbpp_installed
     def test_pdb_interaction_doctest(self, testdir):
         p1 = testdir.makepyfile("""
             import pytest

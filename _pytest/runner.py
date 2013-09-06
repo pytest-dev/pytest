@@ -108,7 +108,15 @@ def call_and_report(item, when, log=True, **kwds):
     report = hook.pytest_runtest_makereport(item=item, call=call)
     if log:
         hook.pytest_runtest_logreport(report=report)
+    if check_interactive_exception(call, report):
+        hook.pytest_exception_interact(node=item, call=call, report=report)
     return report
+
+def check_interactive_exception(call, report):
+    return call.excinfo and not (
+                hasattr(report, "wasxfail") or
+                call.excinfo.errisinstance(skip.Exception) or
+                call.excinfo.errisinstance(py.std.bdb.BdbQuit))
 
 def call_runtest_hook(item, when, **kwds):
     hookname = "pytest_runtest_" + when
@@ -268,8 +276,11 @@ def pytest_make_collect_report(collector):
             if not hasattr(errorinfo, "toterminal"):
                 errorinfo = CollectErrorRepr(errorinfo)
             longrepr = errorinfo
-    return CollectReport(collector.nodeid, outcome, longrepr,
+    rep = CollectReport(collector.nodeid, outcome, longrepr,
         getattr(call, 'result', None))
+    rep.call = call  # see collect_one_node
+    return rep
+
 
 class CollectReport(BaseReport):
     def __init__(self, nodeid, outcome, longrepr, result, sections=(), **extra):
@@ -363,6 +374,16 @@ class SetupState(object):
             except Exception:
                 col._prepare_exc = sys.exc_info()
                 raise
+
+def collect_one_node(collector):
+    ihook = collector.ihook
+    ihook.pytest_collectstart(collector=collector)
+    rep = ihook.pytest_make_collect_report(collector=collector)
+    call = rep.__dict__.pop("call", None)
+    if call and check_interactive_exception(call, rep):
+        ihook.pytest_exception_interact(node=collector, call=call, report=rep)
+    return rep
+
 
 # =============================================================
 # Test OutcomeExceptions and helpers for creating them.

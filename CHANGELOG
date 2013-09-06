@@ -1,6 +1,14 @@
 Changes between 2.3.5 and 2.4.DEV
 -----------------------------------
 
+- fix issue181: --pdb now also works on collect errors (and 
+  on internal errors) .  This was implemented by a slight internal 
+  refactoring and the introduction of a new hook 
+  ``pytest_exception_interact`` hook (see below).
+
+- fix issue341: introduce new experimental hook for IDEs/terminals to 
+  intercept debugging: ``pytest_exception_interact(node, call, report)``.
+
 - PR27: correctly handle nose.SkipTest during collection.  Thanks
   Antonio Cuni, Ronny Pfannschmidt.
 

@@ -298,7 +298,8 @@ class PluginManager(object):
             showlocals=getattr(option, 'showlocals', False),
             style=style,
         )
-        res = self.hook.pytest_internalerror(excrepr=excrepr)
+        res = self.hook.pytest_internalerror(excrepr=excrepr,
+                                             excinfo=excinfo)
         if not py.builtin.any(res):
             for line in str(excrepr).split("\n"):
                 sys.stderr.write("INTERNALERROR> %s\n" %line)

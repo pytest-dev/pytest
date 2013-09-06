@@ -359,6 +359,17 @@ test execution:
 
 .. autofunction:: pytest_runtest_logreport
 
+
+Debugging/Interaction hooks
+--------------------------------------
+
+There are few hooks which can be used for special
+reporting or interaction with exceptions:
+
+.. autofunction:: pytest_internalerror
+.. autofunction:: pytest_keyboard_interrupt
+.. autofunction:: pytest_exception_interact
+
 Reference of objects involved in hooks
 ===========================================================
 

@@ -1,4 +1,5 @@
 import pytest, py, sys
+from _pytest import runner
 
 class TestOEJSKITSpecials:
     def test_funcarg_non_pycollectobj(self, testdir): # rough jstests usage
@@ -18,7 +19,7 @@ class TestOEJSKITSpecials:
                 pass
         """)
         # this hook finds funcarg factories
-        rep = modcol.ihook.pytest_make_collect_report(collector=modcol)
+        rep = runner.collect_one_node(collector=modcol)
         clscol = rep.result[0]
         clscol.obj = lambda arg1: None
         clscol.funcargs = {}
@@ -46,7 +47,7 @@ class TestOEJSKITSpecials:
                 pass
         """)
         # this hook finds funcarg factories
-        rep = modcol.ihook.pytest_make_collect_report(collector=modcol)
+        rep = runner.collect_one_node(modcol)
         clscol = rep.result[0]
         clscol.obj = lambda: None
         clscol.funcargs = {}

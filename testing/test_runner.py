@@ -1,5 +1,5 @@
 import pytest, py, sys, os
-from _pytest import runner
+from _pytest import runner, main
 from py._code.code import ReprExceptionInfo
 
 class TestSetupState:
@@ -298,7 +298,7 @@ class TestSessionReports:
             class TestClass:
                 pass
         """)
-        rep = runner.pytest_make_collect_report(col)
+        rep = runner.collect_one_node(col)
         assert not rep.failed
         assert not rep.skipped
         assert rep.passed
@@ -318,7 +318,7 @@ class TestSessionReports:
             def test_func():
                 pass
         """)
-        rep = runner.pytest_make_collect_report(col)
+        rep = main.collect_one_node(col)
         assert not rep.failed
         assert not rep.passed
         assert rep.skipped
