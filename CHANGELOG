@@ -1,6 +1,9 @@
 Changes between 2.3.5 and 2.4.DEV
 -----------------------------------
 
+- make "import pdb ; pdb.set_trace()" work natively wrt capturing (no "-s" needed
+  anymore), making ``pytest.set_trace()`` a mere shortcut.
+
 - fix issue181: --pdb now also works on collect errors (and 
   on internal errors) .  This was implemented by a slight internal 
   refactoring and the introduction of a new hook 

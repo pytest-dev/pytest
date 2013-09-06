@@ -134,6 +134,22 @@ class TestPDB:
         if child.isalive():
             child.wait()
 
+    def test_pdb_set_trace_interception(self, testdir):
+        p1 = testdir.makepyfile("""
+            import pdb
+            def test_1():
+                pdb.set_trace()
+        """)
+        child = testdir.spawn_pytest(str(p1))
+        child.expect("test_1")
+        child.expect("(Pdb)")
+        child.sendeof()
+        rest = child.read()
+        assert "1 failed" in rest
+        assert "reading from stdin while output" not in rest
+        if child.isalive():
+            child.wait()
+
     def test_pdb_and_capsys(self, testdir):
         p1 = testdir.makepyfile("""
             import pytest

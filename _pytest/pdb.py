@@ -16,6 +16,12 @@ def pytest_configure(config):
     if config.getvalue("usepdb"):
         config.pluginmanager.register(PdbInvoke(), 'pdbinvoke')
 
+    old_trace = py.std.pdb.set_trace
+    def fin():
+        py.std.pdb.set_trace = old_trace
+    py.std.pdb.set_trace = pytest.set_trace
+    config._cleanup.append(fin)
+
 class pytestPDB:
     """ Pseudo PDB that defers to the real pdb. """
     item = None
