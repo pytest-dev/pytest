@@ -329,6 +329,24 @@ class TestFunction:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
+    def test_parametrize_with_non_hashable_values(self, testdir):
+        """Test parametrization with non-hashable values."""
+        testdir.makepyfile("""
+            archival_mapping = {
+                '1.0': {'tag': '1.0'},
+                '1.2.2a1': {'tag': 'release-1.2.2a1'},
+            }
+
+            import pytest
+            @pytest.mark.parametrize('key value'.split(),
+                                     archival_mapping.items())
+            def test_archival_to_version(key, value):
+                assert key in archival_mapping
+                assert value == archival_mapping[key]
+        """)
+        rec = testdir.inline_run()
+        rec.assertoutcome(passed=2)
+
     def test_function_equality_with_callspec(self, testdir, tmpdir):
         items = testdir.getitems("""
             import pytest
