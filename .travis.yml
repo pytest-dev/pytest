@@ -1,6 +1,6 @@
 language: python
 # command to install dependencies
-install: "pip install 'virtualenv<1.10' -e . detox"
+install: "pip install -U detox"
 # # command to run tests
 script: detox --recreate
 notifications:
