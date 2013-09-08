@@ -308,6 +308,14 @@ class TestGeneralUsage:
             ])
             assert result.ret == 4  # usage error only if item not found
 
+    def test_report_all_failed_collections_initargs(self, testdir):
+        testdir.makepyfile(test_a="def", test_b="def")
+        result = testdir.runpytest("test_a.py::a", "test_b.py::b")
+        result.stderr.fnmatch_lines([
+            "*ERROR*test_a.py::a*",
+            "*ERROR*test_b.py::b*",
+        ])
+
 
 class TestInvocationVariants:
     def test_earlyinit(self, testdir):

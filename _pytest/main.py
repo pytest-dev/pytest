@@ -82,8 +82,9 @@ def wrap_session(config, doit):
             initstate = 2
             doit(config, session)
         except pytest.UsageError:
-            msg = sys.exc_info()[1].args[0]
-            sys.stderr.write("ERROR: %s\n" %(msg,))
+            args = sys.exc_info()[1].args
+            for msg in args:
+                sys.stderr.write("ERROR: %s\n" %(msg,))
             session.exitstatus = EXIT_USAGEERROR
         except KeyboardInterrupt:
             excinfo = py.code.ExceptionInfo()
@@ -516,9 +517,12 @@ class Session(FSCollector):
         self.ihook.pytest_collectreport(report=rep)
         self.trace.root.indent -= 1
         if self._notfound:
+            errors = []
             for arg, exc in self._notfound:
                 line = "(no name %r in any of %r)" % (arg, exc.args[0])
-                raise pytest.UsageError("not found: %s\n%s" %(arg, line))
+                errors.append("not found: %s\n%s" % (arg, line))
+                #XXX: test this
+            raise pytest.UsageError(*errors)
         if not genitems:
             return rep.result
         else:
@@ -539,8 +543,7 @@ class Session(FSCollector):
                 # we are inside a make_report hook so
                 # we cannot directly pass through the exception
                 self._notfound.append((arg, sys.exc_info()[1]))
-                self.trace.root.indent -= 1
-                break
+
             self.trace.root.indent -= 1
 
     def _collect(self, arg):
