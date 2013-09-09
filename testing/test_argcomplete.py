@@ -72,6 +72,7 @@ class FilesCompleter(object):
 # the following barfs with a syntax error on py2.5
 # @pytest.mark.skipif("sys.version_info < (2,6)")
 class TestArgComplete:
+    @pytest.mark.skipif("sys.platform == 'win32'")
     @pytest.mark.skipif("sys.version_info < (2,6)")
     def test_compare_with_compgen(self):
         from _pytest._argcomplete import FastFilesCompleter
@@ -80,6 +81,7 @@ class TestArgComplete:
         for x in '/ /d /data qqq'.split():
             assert equal_with_bash(x, ffc, fc, out=py.std.sys.stdout)
 
+    @pytest.mark.skipif("sys.platform == 'win32'")
     @pytest.mark.skipif("sys.version_info < (2,6)")
     def test_remove_dir_prefix(self):
         """this is not compatible with compgen but it is with bash itself:
