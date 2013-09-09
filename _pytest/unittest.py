@@ -150,7 +150,10 @@ def pytest_runtest_makereport(item, call):
     if isinstance(item, TestCaseFunction):
         if item._excinfo:
             call.excinfo = item._excinfo.pop(0)
-            del call.result
+            try:
+                del call.result
+            except AttributeError:
+                pass
 
 # twisted trial support
 def pytest_runtest_protocol(item, __multicall__):

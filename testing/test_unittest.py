@@ -654,3 +654,21 @@ def test_no_teardown_if_setupclass_failed(testdir):
     reprec = testdir.inline_run(testpath)
     reprec.assertoutcome(passed=1, failed=1)
 
+
+def test_issue333_result_clearing(testdir):
+    testdir.makeconftest("""
+        def pytest_runtest_call(__multicall__, item):
+            __multicall__.execute()
+            assert 0
+    """)
+    testdir.makepyfile("""
+        import unittest
+        class TestIt(unittest.TestCase):
+            def test_func(self):
+                0/0
+    """)
+
+    reprec = testdir.inline_run()
+    reprec.assertoutcome(failed=1)
+
+
