@@ -23,7 +23,9 @@ Changes between 2.3.5 and 2.4.DEV
      monkeypatch.replace("requests.get", myfunc
 
   will replace the "get" function of the "requests" module with ``myfunc``.
-  
+
+- fix issue355: junitxml puts name="pytest" attribute to testsuite tag.
+
 - fix issue322: tearDownClass is not run if setUpClass failed. Thanks
   Mathieu Agopian for the initial fix.  Also make all of pytest/nose finalizer 
   mimick the same generic behaviour: if a setupX exists and fails, 

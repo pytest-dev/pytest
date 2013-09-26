@@ -62,8 +62,8 @@ def bin_xml_escape(arg):
 
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting")
-    group.addoption('--junitxml', '--junit-xml', action="store", 
-           dest="xmlpath", metavar="path", default=None, 
+    group.addoption('--junitxml', '--junit-xml', action="store",
+           dest="xmlpath", metavar="path", default=None,
            help="create junit-xml style report file at given path.")
     group.addoption('--junitprefix', '--junit-prefix', action="store",
            metavar="str", default=None,
@@ -217,7 +217,7 @@ class LogXML(object):
         logfile.write('<?xml version="1.0" encoding="utf-8"?>')
         logfile.write(Junit.testsuite(
             self.tests,
-            name="",
+            name="pytest",
             errors=self.errors,
             failures=self.failed,
             skips=self.skipped,
