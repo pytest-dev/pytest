@@ -1980,7 +1980,7 @@ class TestContextManagerFixtureFuncs:
     def test_simple(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.fixture
+            @pytest.fixture(yieldctx=True)
             def arg1():
                 print ("setup")
                 yield 1
@@ -2004,7 +2004,7 @@ class TestContextManagerFixtureFuncs:
     def test_scoped(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.fixture(scope="module")
+            @pytest.fixture(scope="module", yieldctx=True)
             def arg1():
                 print ("setup")
                 yield 1
@@ -2025,7 +2025,7 @@ class TestContextManagerFixtureFuncs:
     def test_setup_exception(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.fixture(scope="module")
+            @pytest.fixture(scope="module", yieldctx=True)
             def arg1():
                 pytest.fail("setup")
                 yield 1
@@ -2041,7 +2041,7 @@ class TestContextManagerFixtureFuncs:
     def test_teardown_exception(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.fixture(scope="module")
+            @pytest.fixture(scope="module", yieldctx=True)
             def arg1():
                 yield 1
                 pytest.fail("teardown")
@@ -2054,11 +2054,10 @@ class TestContextManagerFixtureFuncs:
             *1 passed*1 error*
         """)
 
-
     def test_yields_more_than_one(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.fixture(scope="module")
+            @pytest.fixture(scope="module", yieldctx=True)
             def arg1():
                 yield 1
                 yield 2
@@ -2069,6 +2068,23 @@ class TestContextManagerFixtureFuncs:
         result.stdout.fnmatch_lines("""
             *fixture function*
             *test_yields*:2*
+        """)
+
+
+    def test_no_yield(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture(scope="module", yieldctx=True)
+            def arg1():
+                return 1
+            def test_1(arg1):
+                pass
+        """)
+        result = testdir.runpytest("-s")
+        result.stdout.fnmatch_lines("""
+            *yieldctx*requires*yield*
+            *yieldctx=True*
+            *def arg1*
         """)
 
 

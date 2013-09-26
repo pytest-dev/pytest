@@ -40,7 +40,7 @@ style <unittest.TestCase>` or :ref:`nose based <nosestyle>` projects.
 .. _`@pytest.fixture`:
 .. _`pytest.fixture`:
 
-Fixtures as Function arguments (funcargs)
+Fixtures as Function arguments
 -----------------------------------------
 
 Test functions can receive fixture objects by naming them as an input
@@ -70,7 +70,8 @@ marked ``smtp`` fixture function.  Running the test looks like this::
 
     $ py.test test_smtpsimple.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.5
+    platform linux2 -- Python 2.7.3 -- pytest-2.4.0.dev12
+    plugins: xdist, pep8, cov, cache, capturelog, instafail
     collected 1 items
     
     test_smtpsimple.py F
@@ -78,7 +79,7 @@ marked ``smtp`` fixture function.  Running the test looks like this::
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x226cc20>
+    smtp = <smtplib.SMTP instance at 0x1ac66c8>
     
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
@@ -88,7 +89,7 @@ marked ``smtp`` fixture function.  Running the test looks like this::
     E       assert 0
     
     test_smtpsimple.py:12: AssertionError
-    ========================= 1 failed in 0.20 seconds =========================
+    ========================= 1 failed in 0.17 seconds =========================
 
 In the failure traceback we see that the test function was called with a
 ``smtp`` argument, the ``smtplib.SMTP()`` instance created by the fixture
@@ -123,7 +124,7 @@ with a list of available function arguments.
     but is not anymore advertised as the primary means of declaring fixture
     functions.
 
-Funcargs a prime example of dependency injection
+"Funcargs" a prime example of dependency injection
 ---------------------------------------------------
 
 When injecting fixtures to test functions, pytest-2.0 introduced the
@@ -142,7 +143,7 @@ functions take the role of the *injector* and test functions are the
 
 .. _smtpshared:
 
-Working with a module-shared fixture
+Sharing a fixture across tests in a module (or class/session)
 -----------------------------------------------------------------
 
 .. regendoc:wipe
@@ -188,7 +189,8 @@ inspect what is going on and can now run the tests::
 
     $ py.test test_module.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.5
+    platform linux2 -- Python 2.7.3 -- pytest-2.4.0.dev12
+    plugins: xdist, pep8, cov, cache, capturelog, instafail
     collected 2 items
     
     test_module.py FF
@@ -196,7 +198,7 @@ inspect what is going on and can now run the tests::
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x18a6368>
+    smtp = <smtplib.SMTP instance at 0x15b2d88>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -208,7 +210,7 @@ inspect what is going on and can now run the tests::
     test_module.py:6: AssertionError
     ________________________________ test_noop _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x18a6368>
+    smtp = <smtplib.SMTP instance at 0x15b2d88>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -217,7 +219,7 @@ inspect what is going on and can now run the tests::
     E       assert 0
     
     test_module.py:11: AssertionError
-    ========================= 2 failed in 0.26 seconds =========================
+    ========================= 2 failed in 0.16 seconds =========================
 
 You see the two ``assert 0`` failing and more importantly you can also see 
 that the same (module-scoped) ``smtp`` object was passed into the two 
@@ -233,62 +235,17 @@ instance, you can simply declare it::
         # the returned fixture value will be shared for 
         # all tests needing it
 
-.. _`contextfixtures`:
+.. _`finalization`:
         
-fixture finalization / teardowns 
+fixture finalization / executing teardown code 
 -------------------------------------------------------------
 
-pytest supports two styles of fixture finalization:
+pytest supports execution of fixture specific finalization code 
+when the fixture goes out of scope.  By accepting a ``request`` object
+into your fixture function you can call its ``request.addfinalizer`` one
+or multiple times::
 
-- (new in pytest-2.4) by writing a contextmanager fixture
-  generator where a fixture value is "yielded" and the remainder 
-  of the function serves as the teardown code.  This integrates
-  very well with existing context managers.
-
-- by making a fixture function accept a ``request`` argument
-  with which it can call ``request.addfinalizer(teardownfunction)`` 
-  to register a teardown callback function.
-
-Both methods are strictly equivalent from pytest's view and will
-remain supported in the future.
-
-Because a number of people prefer the new contextmanager style 
-we describe it first::
-
-    # content of test_ctxfixture.py
-    
-    import smtplib
-    import pytest
-
-    @pytest.fixture(scope="module")
-    def smtp():
-        smtp = smtplib.SMTP("merlinux.eu")
-        yield smtp  # provide the fixture value
-        print ("teardown smtp")
-        smtp.close()
-
-pytest detects that you are using a ``yield`` in your fixture function,
-turns it into a generator and:
-
-a) iterates once into it for producing the value
-b) iterates a second time for tearing the fixture down, expecting
-   a StopIteration (which is produced automatically from the Python 
-   runtime when the generator returns).
-
-.. note::
-
-    The teardown will execute independently of the status of test functions.
-    You do not need to write the teardown code into a ``try-finally`` clause
-    like you would usually do with ``contextlib.contextmanager`` decorated
-    functions.
-
-    If the fixture generator yields a second value pytest will report 
-    an error.  Yielding cannot be used for parametrization.  We'll describe 
-    ways to implement parametrization further below.
-
-Prior to pytest-2.4 you always needed to register a finalizer by accepting
-a ``request`` object into your fixture function and calling
-``request.addfinalizer`` with a teardown function::
+    # content of conftest.py
 
     import smtplib
     import pytest
@@ -299,24 +256,38 @@ a ``request`` object into your fixture function and calling
         def fin():
             print ("teardown smtp")
             smtp.close()
+        request.addfinalizer(fin)
         return smtp  # provide the fixture value
 
-This method of registering a finalizer reads more indirect
-than the new contextmanager style syntax because ``fin`` 
-is a callback function.  
+The ``fin`` function will execute when the last test using
+the fixture in the module has finished execution.
 
+Let's execute it::
+
+    $ py.test -s -q --tb=no
+    FF
+    2 failed in 0.16 seconds
+    teardown smtp
+
+We see that the ``smtp`` instance is finalized after the two
+tests finished execution.  Note that if we decorated our fixture
+function with ``scope='function'`` then fixture setup and cleanup would
+occur around each single test.  In either case the test 
+module itself does not need to change or know about these details
+of fixture setup.
+
+Note that pytest-2.4 introduced an alternative `yield-context <yieldctx>`_ 
+mechanism which allows to interact nicely with context managers.
 
 .. _`request-context`:
 
-Fixtures can interact with the requesting test context
+Fixtures can introspect the requesting test context
 -------------------------------------------------------------
 
-pytest provides a builtin :py:class:`request <FixtureRequest>` object,
-which fixture functions can use to introspect the function, class or module
-for which they are invoked.
-
+Fixture function can accept the :py:class:`request <FixtureRequest>` object
+to introspect the "requesting" test function, class or module context.
 Further extending the previous ``smtp`` fixture example, let's  
-read an optional server URL from the module namespace::
+read an optional server URL from the test module which uses our fixture::
 
     # content of conftest.py
     import pytest
@@ -326,22 +297,21 @@ read an optional server URL from the module namespace::
     def smtp(request):
         server = getattr(request.module, "smtpserver", "merlinux.eu")
         smtp = smtplib.SMTP(server)
-        yield smtp  # provide the fixture 
-        print ("finalizing %s" % smtp)
-        smtp.close()
+       
+        def fin():
+            print ("finalizing %s (%s)" % (smtp, server))
+            smtp.close()
+             
+        return smtp 
 
-The finalizing part after the ``yield smtp`` statement will execute
-when the last test using the ``smtp`` fixture has executed::
+We use the ``request.module`` attribute to optionally obtain an
+``smtpserver`` attribute from the test module.  If we just execute
+again, nothing much has changed::
 
     $ py.test -s -q --tb=no
     FF
-    finalizing <smtplib.SMTP instance at 0x1e10248>
-
-We see that the ``smtp`` instance is finalized after the two
-tests which use it finished executin.  If we rather specify 
-``scope='function'`` then fixture setup and cleanup occurs 
-around each single test.  Note that in either case the test 
-module itself does not need to change!  
+    2 failed in 0.17 seconds
+    teardown smtp
 
 Let's quickly create another test module that actually sets the
 server URL in its module namespace::
@@ -361,11 +331,10 @@ Running it::
     ______________________________ test_showhelo _______________________________
     test_anothersmtp.py:5: in test_showhelo
     >       assert 0, smtp.helo()
-    E       AssertionError: (250, 'mail.python.org')
+    E       AssertionError: (250, 'hq.merlinux.eu')
 
 voila! The ``smtp`` fixture function picked up our mail server name
 from the module namespace.
-
 
 .. _`fixture-parametrize`:
 
@@ -392,9 +361,11 @@ through the special :py:class:`request <FixtureRequest>` object::
                     params=["merlinux.eu", "mail.python.org"])
     def smtp(request):
         smtp = smtplib.SMTP(request.param)
-        yield smtp
-        print ("finalizing %s" % smtp)
-        smtp.close()
+        def fin():
+            print ("finalizing %s" % smtp)
+            smtp.close()
+        request.addfinalizer(fin)
+        return smtp
 
 The main change is the declaration of ``params`` with 
 :py:func:`@pytest.fixture <_pytest.python.fixture>`, a list of values
@@ -407,7 +378,7 @@ So let's just do another run::
     ================================= FAILURES =================================
     __________________________ test_ehlo[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP instance at 0x1b38a28>
+    smtp = <smtplib.SMTP instance at 0x1d1b680>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -419,7 +390,7 @@ So let's just do another run::
     test_module.py:6: AssertionError
     __________________________ test_noop[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP instance at 0x1b38a28>
+    smtp = <smtplib.SMTP instance at 0x1d1b680>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -430,7 +401,7 @@ So let's just do another run::
     test_module.py:11: AssertionError
     ________________________ test_ehlo[mail.python.org] ________________________
     
-    smtp = <smtplib.SMTP instance at 0x1b496c8>
+    smtp = <smtplib.SMTP instance at 0x1d237e8>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -441,7 +412,7 @@ So let's just do another run::
     test_module.py:5: AssertionError
     ________________________ test_noop[mail.python.org] ________________________
     
-    smtp = <smtplib.SMTP instance at 0x1b496c8>
+    smtp = <smtplib.SMTP instance at 0x1d237e8>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -450,6 +421,7 @@ So let's just do another run::
     E       assert 0
     
     test_module.py:11: AssertionError
+    4 failed in 6.04 seconds
 
 We see that our two test functions each ran twice, against the different
 ``smtp`` instances.  Note also, that with the ``mail.python.org`` 
@@ -489,13 +461,15 @@ Here we declare an ``app`` fixture which receives the previously defined
 
     $ py.test -v test_appsetup.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.5 -- /home/hpk/p/pytest/.tox/regen/bin/python
+    platform linux2 -- Python 2.7.3 -- pytest-2.4.0.dev12 -- /home/hpk/venv/0/bin/python
+    cachedir: /tmp/doc-exec-120/.cache
+    plugins: xdist, pep8, cov, cache, capturelog, instafail
     collecting ... collected 2 items
     
-    test_appsetup.py:12: test_smtp_exists[merlinux.eu] PASSED
     test_appsetup.py:12: test_smtp_exists[mail.python.org] PASSED
+    test_appsetup.py:12: test_smtp_exists[merlinux.eu] PASSED
     
-    ========================= 2 passed in 5.38 seconds =========================
+    ========================= 2 passed in 6.98 seconds =========================
 
 Due to the parametrization of ``smtp`` the test will run twice with two
 different ``App`` instances and respective smtp servers.  There is no
@@ -534,8 +508,9 @@ to show the setup/teardown flow::
     def modarg(request):
         param = request.param
         print "create", param
-        yield param
-        print ("fin %s" % param)
+        def fin():
+            print ("fin %s" % param)
+        return param
 
     @pytest.fixture(scope="function", params=[1,2])
     def otherarg(request):
@@ -552,31 +527,31 @@ Let's run the tests in verbose mode and with looking at the print-output::
 
     $ py.test -v -s test_module.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.5 -- /home/hpk/p/pytest/.tox/regen/bin/python
+    platform linux2 -- Python 2.7.3 -- pytest-2.4.0.dev12 -- /home/hpk/venv/0/bin/python
+    cachedir: /tmp/doc-exec-120/.cache
+    plugins: xdist, pep8, cov, cache, capturelog, instafail
     collecting ... collected 8 items
     
-    test_module.py:16: test_0[1] PASSED
-    test_module.py:16: test_0[2] PASSED
-    test_module.py:18: test_1[mod1] PASSED
-    test_module.py:20: test_2[1-mod1] PASSED
-    test_module.py:20: test_2[2-mod1] PASSED
-    test_module.py:18: test_1[mod2] PASSED
-    test_module.py:20: test_2[1-mod2] PASSED
-    test_module.py:20: test_2[2-mod2] PASSED
+    test_module.py:15: test_0[1] PASSED
+    test_module.py:15: test_0[2] PASSED
+    test_module.py:17: test_1[mod1] PASSED
+    test_module.py:19: test_2[1-mod1] PASSED
+    test_module.py:19: test_2[2-mod1] PASSED
+    test_module.py:17: test_1[mod2] PASSED
+    test_module.py:19: test_2[1-mod2] PASSED
+    test_module.py:19: test_2[2-mod2] PASSED
     
-    ========================= 8 passed in 0.01 seconds =========================
+    ========================= 8 passed in 0.02 seconds =========================
       test0 1
       test0 2
     create mod1
       test1 mod1
       test2 1 mod1
       test2 2 mod1
-    fin mod1
     create mod2
       test1 mod2
       test2 1 mod2
       test2 2 mod2
-    fin mod2
 
 You can see that the parametrized module-scoped ``modarg`` resource caused
 an ordering of test execution that lead to the fewest possible "active" resources. The finalizer for the ``mod1`` parametrized resource was executed 
@@ -632,6 +607,7 @@ to verify our fixture is activated and the tests pass::
 
     $ py.test -q
     ..
+    2 passed in 0.02 seconds
 
 You can specify multiple fixtures like this::
 
@@ -702,6 +678,7 @@ If we run it, we get two passing tests::
 
     $ py.test -q
     ..
+    2 passed in 0.02 seconds
 
 Here is how autouse fixtures work in other scopes:
 
@@ -749,4 +726,63 @@ to a :ref:`conftest.py <conftest.py>` file or even separately installable
 :ref:`plugins <plugins>` without changing test code.  The discovery of
 fixtures functions starts at test classes, then test modules, then
 ``conftest.py`` files and finally builtin and third party plugins.
+
+
+.. _yieldctx:
+
+Fixture functions using "yield" / context manager integration
+---------------------------------------------------------------
+
+.. versionadded:: 2.4
+
+pytest-2.4 allows fixture functions to use a ``yield`` instead 
+of a ``return`` statement to provide a fixture value.  Let's
+look at a quick example before discussing advantages::
+
+    # content of conftest.py
+    
+    import smtplib
+    import pytest
+
+    @pytest.fixture(scope="module", yieldctx=True)
+    def smtp():
+        smtp = smtplib.SMTP("merlinux.eu")
+        yield smtp  # provide the fixture value
+        print ("teardown smtp after a yield")
+        smtp.close()
+
+In contrast to the `finalization`_ example, our fixture
+function uses a single ``yield`` to provide the ``smtp`` fixture
+value.  The code after the ``yield`` statement serves as the
+teardown code, avoiding the indirection of registering a 
+teardown function.   More importantly, it also allows to 
+seemlessly re-use existing context managers, for example::
+
+    @pytest.fixture(yieldctx=True)
+    def somefixture():
+        with open("somefile") as f:
+            yield f.readlines()
+
+The file ``f`` will be closed once ``somefixture`` goes out of scope.
+It is possible to achieve the same result by using a ``request.addfinalizer``
+call but it is more boilerplate and not very obvious unless
+you know about the exact ``__enter__|__exit__`` protocol of with-style
+context managers.
+
+For some background, here is the protocol pytest follows for when
+``yieldctx=True`` is specified in the fixture decorator:
+
+a) iterate once into the generator for producing the value
+b) iterate a second time for tearing the fixture down, expecting
+   a StopIteration (which is produced automatically from the Python 
+   runtime when the generator returns).
+
+The teardown will always execute, independently of the outcome of
+test functions.  You do **not need** to write the teardown code into a
+``try-finally`` clause like you would usually do with
+:py:func:`contextlib.contextmanager` decorated functions.
+
+If the fixture generator yields a second value pytest will report 
+an error.  Yielding cannot be used for parametrization, rather
+see `fixture-parametrize`_.
 

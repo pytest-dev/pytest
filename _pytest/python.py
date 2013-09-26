@@ -26,19 +26,21 @@ def getimfunc(func):
 
 
 class FixtureFunctionMarker:
-    def __init__(self, scope, params, autouse=False):
+    def __init__(self, scope, params, autouse=False, yieldctx=False):
         self.scope = scope
         self.params = params
         self.autouse = autouse
+        self.yieldctx = yieldctx
 
     def __call__(self, function):
         if inspect.isclass(function):
-            raise ValueError("class fixtures not supported (may be in the future)")
+            raise ValueError(
+                    "class fixtures not supported (may be in the future)")
         function._pytestfixturefunction = self
         return function
 
 
-def fixture(scope="function", params=None, autouse=False):
+def fixture(scope="function", params=None, autouse=False, yieldctx=False):
     """ (return a) decorator to mark a fixture factory function.
 
     This decorator can be used (with or or without parameters) to define
@@ -59,12 +61,17 @@ def fixture(scope="function", params=None, autouse=False):
     :arg autouse: if True, the fixture func is activated for all tests that
                 can see it.  If False (the default) then an explicit
                 reference is needed to activate the fixture.
+
+    :arg yieldctx: if True, the fixture function yields a fixture value.
+                Code after such a ``yield`` statement is treated as
+                teardown code.
     """
     if callable(scope) and params is None and autouse == False:
         # direct decoration
-        return FixtureFunctionMarker("function", params, autouse)(scope)
+        return FixtureFunctionMarker(
+                "function", params, autouse, yieldctx)(scope)
     else:
-        return FixtureFunctionMarker(scope, params, autouse=autouse)
+        return FixtureFunctionMarker(scope, params, autouse, yieldctx)
 
 defaultfuncargprefixmarker = fixture()
 
@@ -1616,6 +1623,7 @@ class FixtureManager:
                 assert not name.startswith(self._argprefix)
             fixturedef = FixtureDef(self, nodeid, name, obj,
                                     marker.scope, marker.params,
+                                    marker.yieldctx,
                                     unittest=unittest)
             faclist = self._arg2fixturedefs.setdefault(name, [])
             if not fixturedef.has_location:
@@ -1656,8 +1664,18 @@ class FixtureManager:
             except ValueError:
                 pass
 
-def call_fixture_func(fixturefunc, request, kwargs):
-    if is_generator(fixturefunc):
+def fail_fixturefunc(fixturefunc, msg):
+    fs, lineno = getfslineno(fixturefunc)
+    location = "%s:%s" % (fs, lineno+1)
+    source = py.code.Source(fixturefunc)
+    pytest.fail(msg + ":\n\n" + str(source.indent()) + "\n" + location,
+                pytrace=False)
+
+def call_fixture_func(fixturefunc, request, kwargs, yieldctx):
+    if yieldctx:
+        if not is_generator(fixturefunc):
+            fail_fixturefunc(fixturefunc,
+                msg="yieldctx=True requires yield statement")
         iter = fixturefunc(**kwargs)
         next = getattr(iter, "__next__", None)
         if next is None:
@@ -1669,11 +1687,8 @@ def call_fixture_func(fixturefunc, request, kwargs):
             except StopIteration:
                 pass
             else:
-                fs, lineno = getfslineno(fixturefunc)
-                location = "%s:%s" % (fs, lineno+1)
-                pytest.fail(
-                    "fixture function %s has more than one 'yield': \n%s" %
-                            (fixturefunc.__name__, location), pytrace=False)
+                fail_fixturefunc(fixturefunc,
+                    "fixture function has more than one 'yield'")
         request.addfinalizer(teardown)
     else:
         res = fixturefunc(**kwargs)
@@ -1682,7 +1697,7 @@ def call_fixture_func(fixturefunc, request, kwargs):
 class FixtureDef:
     """ A container for a factory definition. """
     def __init__(self, fixturemanager, baseid, argname, func, scope, params,
-        unittest=False):
+        yieldctx, unittest=False):
         self._fixturemanager = fixturemanager
         self.baseid = baseid or ''
         self.has_location = baseid is not None
@@ -1693,6 +1708,7 @@ class FixtureDef:
         self.params = params
         startindex = unittest and 1 or None
         self.argnames = getfuncargnames(func, startindex=startindex)
+        self.yieldctx = yieldctx
         self.unittest = unittest
         self._finalizer = []
 
@@ -1730,7 +1746,8 @@ class FixtureDef:
                         fixturefunc = fixturefunc.__get__(request.instance)
             except AttributeError:
                 pass
-            result = call_fixture_func(fixturefunc, request, kwargs)
+            result = call_fixture_func(fixturefunc, request, kwargs,
+                                       self.yieldctx)
         assert not hasattr(self, "cached_result")
         self.cached_result = result
         return result
