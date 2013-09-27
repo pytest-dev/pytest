@@ -35,26 +35,32 @@ def test_setattr():
     monkeypatch.undo() # double-undo makes no modification
     assert A.x == 5
 
-class TestReplace:
+class TestSetattrWithImportPath:
     def test_string_expression(self, monkeypatch):
-        monkeypatch.replace("os.path.abspath", lambda x: "hello2")
+        monkeypatch.setattr("os.path.abspath", lambda x: "hello2")
         assert os.path.abspath("123") == "hello2"
 
     def test_string_expression_class(self, monkeypatch):
-        monkeypatch.replace("_pytest.config.Config", 42)
+        monkeypatch.setattr("_pytest.config.Config", 42)
         import _pytest
         assert _pytest.config.Config == 42
 
     def test_wrong_target(self, monkeypatch):
-        pytest.raises(TypeError, lambda: monkeypatch.replace(None, None))
+        pytest.raises(TypeError, lambda: monkeypatch.setattr(None, None))
 
     def test_unknown_import(self, monkeypatch):
         pytest.raises(pytest.fail.Exception,
-                      lambda: monkeypatch.replace("unkn123.classx", None))
+                      lambda: monkeypatch.setattr("unkn123.classx", None))
 
     def test_unknown_attr(self, monkeypatch):
         pytest.raises(pytest.fail.Exception,
-                      lambda: monkeypatch.replace("os.path.qweqwe", None))
+                      lambda: monkeypatch.setattr("os.path.qweqwe", None))
+
+    def test_delattr(self, monkeypatch):
+        monkeypatch.delattr("os.path.abspath")
+        assert not hasattr(os.path, "abspath")
+        monkeypatch.undo()
+        assert os.path.abspath
 
 def test_delattr():
     class A:
@@ -262,3 +268,5 @@ def test_issue156_undo_staticmethod(Sample):
 
     monkeypatch.undo()
     assert Sample.hello()
+
+

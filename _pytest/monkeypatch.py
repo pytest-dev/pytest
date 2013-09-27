@@ -25,6 +25,39 @@ def pytest_funcarg__monkeypatch(request):
     request.addfinalizer(mpatch.undo)
     return mpatch
 
+
+
+def derive_importpath(import_path):
+    if not isinstance(import_path, str) or "." not in import_path:
+        raise TypeError("must be absolute import path string, not %r" %
+                        (import_path,))
+    rest = []
+    target = import_path
+    while target:
+        try:
+            obj = __import__(target, None, None, "__doc__")
+        except ImportError:
+            if "." not in target:
+                __tracebackhide__ = True
+                pytest.fail("could not import any sub part: %s" %
+                            import_path)
+            target, name = target.rsplit(".", 1)
+            rest.append(name)
+        else:
+            assert rest
+            try:
+                while len(rest) > 1:
+                    attr = rest.pop()
+                    obj = getattr(obj, attr)
+                attr = rest[0]
+                getattr(obj, attr)
+            except AttributeError:
+                __tracebackhide__ = True
+                pytest.fail("object %r has no attribute %r" % (obj, attr))
+            return attr, obj
+
+
+
 notset = object()
 
 class monkeypatch:
@@ -34,70 +67,66 @@ class monkeypatch:
         self._setitem = []
         self._cwd = None
 
-    def replace(self, import_path, value):
-        """ replace the object specified by a dotted ``import_path``
-        with the given ``value``.
+    def setattr(self, target, name, value=notset, raising=True):
+        """ set attribute value on target, memorizing the old value.
+        By default raise AttributeError if the attribute did not exist.
 
-        For example ``replace("os.path.abspath", value)`` will
-        trigger an ``import os.path`` and a subsequent
-        setattr(os.path, "abspath", value).  Or to prevent
-        the requests library from performing requests you can call
-        ``replace("requests.sessions.Session.request", None)``
-        which will lead to an import of ``requests.sessions`` and a call
-        to ``setattr(requests.sessions.Session, "request", None)``.
+        For convenience you can specify a string as ``target`` which
+        will be interpreted as a dotted import path, with the last part
+        being the attribute name.  Example:
+        ``monkeypatch.setattr("os.getcwd", lambda x: "/")``
+        would set the ``getcwd`` function of the ``os`` module.
+
+        The ``raising`` value determines if the setattr should fail
+        if the attribute is not already present (defaults to True
+        which means it will raise).
         """
-        if not isinstance(import_path, str) or "." not in import_path:
-            raise TypeError("must be absolute import path string, not %r" %
-                            (import_path,))
-        rest = []
-        target = import_path
-        while target:
-            try:
-                obj = __import__(target, None, None, "__doc__")
-            except ImportError:
-                if "." not in target:
-                    __tracebackhide__ = True
-                    pytest.fail("could not import any sub part: %s" %
-                                import_path)
-                target, name = target.rsplit(".", 1)
-                rest.append(name)
-            else:
-                assert rest
-                try:
-                    while len(rest) > 1:
-                        attr = rest.pop()
-                        obj = getattr(obj, attr)
-                    attr = rest[0]
-                    getattr(obj, attr)
-                except AttributeError:
-                    __tracebackhide__ = True
-                    pytest.fail("object %r has no attribute %r" % (obj, attr))
-                return self.setattr(obj, attr, value)
+        __tracebackhide__ = True
 
-    def setattr(self, obj, name, value, raising=True):
-        """ set attribute ``name`` on ``obj`` to ``value``, by default
-        raise AttributeEror if the attribute did not exist.
+        if value is notset:
+            if not isinstance(target, str):
+                raise TypeError("use setattr(target, name, value) or "
+                   "setattr(target, value) with target being a dotted "
+                   "import string")
+            value = name
+            name, target = derive_importpath(target)
 
-        """
-        oldval = getattr(obj, name, notset)
+        oldval = getattr(target, name, notset)
         if raising and oldval is notset:
-            raise AttributeError("%r has no attribute %r" %(obj, name))
+            raise AttributeError("%r has no attribute %r" %(target, name))
 
         # avoid class descriptors like staticmethod/classmethod
-        if inspect.isclass(obj):
-            oldval = obj.__dict__.get(name, notset)
-        self._setattr.insert(0, (obj, name, oldval))
-        setattr(obj, name, value)
+        if inspect.isclass(target):
+            oldval = target.__dict__.get(name, notset)
+        self._setattr.insert(0, (target, name, oldval))
+        setattr(target, name, value)
 
-    def delattr(self, obj, name, raising=True):
-        """ delete attribute ``name`` from ``obj``, by default raise
-        AttributeError it the attribute did not previously exist. """
-        if not hasattr(obj, name):
+    def delattr(self, target, name=notset, raising=True):
+        """ delete attribute ``name`` from ``target``, by default raise
+        AttributeError it the attribute did not previously exist.
+
+        If no ``name`` is specified and ``target`` is a string
+        it will be interpreted as a dotted import path with the
+        last part being the attribute name.
+
+        If raising is set to false, the attribute is allowed to not
+        pre-exist.
+        """
+        __tracebackhide__ = True
+        if name is notset:
+            if not isinstance(target, str):
+                raise TypeError("use delattr(target, name) or "
+                                "delattr(target) with target being a dotted "
+                                "import string")
+            name, target = derive_importpath(target)
+
+        if not hasattr(target, name):
             if raising:
                 raise AttributeError(name)
         else:
-            self._setattr.insert(0, (obj, name, getattr(obj, name, notset)))
-            delattr(obj, name)
+            self._setattr.insert(0, (target, name,
+                                     getattr(target, name, notset)))
+            delattr(target, name)
 
     def setitem(self, dic, name, value):
         """ set dictionary entry ``name`` to value. """

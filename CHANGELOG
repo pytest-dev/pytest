@@ -17,10 +17,10 @@ Changes between 2.3.5 and 2.4.DEV
 - PR27: correctly handle nose.SkipTest during collection.  Thanks
   Antonio Cuni, Ronny Pfannschmidt.
 
-- new monkeypatch.replace() to avoid imports and provide a shorter
+- new monkeypatch.setattr() variant to provide a shorter
   invocation for patching out classes/functions from modules:
 
-     monkeypatch.replace("requests.get", myfunc
+     monkeypatch.setattr("requests.get", myfunc)
 
   will replace the "get" function of the "requests" module with ``myfunc``.
 
