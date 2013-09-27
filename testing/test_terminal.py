@@ -677,6 +677,13 @@ def test_fdopen_kept_alive_issue124(testdir):
         "*2 passed*"
     ])
 
+def test_nofd_manipulation_with_capture_disabled(testdir):
+    from _pytest.terminal import pytest_configure
+    config = testdir.parseconfig("--capture=no")
+    stdout = sys.stdout
+    pytest_configure(config)
+    reporter = config.pluginmanager.getplugin('terminalreporter')
+    assert reporter._tw._file == stdout
 
 def test_tbstyle_native_setup_error(testdir):
     p = testdir.makepyfile("""
@@ -684,7 +691,7 @@ def test_tbstyle_native_setup_error(testdir):
         @pytest.fixture
         def setup_error_fixture():
             raise Exception("error in exception")
-            
+
         def test_error_fixture(setup_error_fixture):
             pass
     """)

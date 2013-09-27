@@ -34,9 +34,10 @@ def pytest_addoption(parser):
 def pytest_configure(config):
     config.option.verbose -= config.option.quiet
     # we try hard to make printing resilient against
-    # later changes on FD level.
+    # later changes on FD level. (unless capturing is turned off)
     stdout = py.std.sys.stdout
-    if hasattr(os, 'dup') and hasattr(stdout, 'fileno'):
+    capture = config.option.capture != "no"
+    if capture and hasattr(os, 'dup') and hasattr(stdout, 'fileno'):
         try:
             newstdout = py.io.dupfile(stdout, buffering=1,
                                       encoding=stdout.encoding)
