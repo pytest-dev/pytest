@@ -28,4 +28,4 @@ def test_fixture_finalizer(testdir):
     """))
     reprec = testdir.runpytest("-s")
     for test in ['test_browser']:
-        reprec.stdout.fnmatch_lines('Finalized')
+        reprec.stdout.fnmatch_lines('*Finalized*')

@@ -672,7 +672,7 @@ def test_fdopen_kept_alive_issue124(testdir):
             stdout = k.pop()
             stdout.close()
     """)
-    result = testdir.runpytest("-s")
+    result = testdir.runpytest()
     result.stdout.fnmatch_lines([
         "*2 passed*"
     ])

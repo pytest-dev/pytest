@@ -1623,7 +1623,7 @@ class FixtureManager:
                 assert not name.startswith(self._argprefix)
             fixturedef = FixtureDef(self, nodeid, name, obj,
                                     marker.scope, marker.params,
-                                    marker.yieldctx,
+                                    yieldctx=marker.yieldctx,
                                     unittest=unittest)
             faclist = self._arg2fixturedefs.setdefault(name, [])
             if not fixturedef.has_location:

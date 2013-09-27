@@ -1993,12 +1993,12 @@ class TestContextManagerFixtureFuncs:
         """)
         result = testdir.runpytest("-s")
         result.stdout.fnmatch_lines("""
-            setup
-            test1 1
-            teardown
-            setup
-            test2 1
-            teardown
+            *setup*
+            *test1 1*
+            *teardown*
+            *setup*
+            *test2 1*
+            *teardown*
         """)
 
     def test_scoped(self, testdir):
@@ -2016,10 +2016,10 @@ class TestContextManagerFixtureFuncs:
         """)
         result = testdir.runpytest("-s")
         result.stdout.fnmatch_lines("""
-            setup
-            test1 1
-            test2 1
-            teardown
+            *setup*
+            *test1 1*
+            *test2 1*
+            *teardown*
         """)
 
     def test_setup_exception(self, testdir):
