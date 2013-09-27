@@ -52,6 +52,12 @@ new features:
   don't run teardownX.  This internally introduces a new method "node.addfinalizer()"
   helper which can only be called during the setup phase of a node.
 
+- simplify pytest.mark.parametrize() signature: allow to pass a CSV-separated string 
+  to specify argnames.  For example: 
+  ``pytest.mark.parametrize("input,expected",  [(1,2), (2,3)])``
+  works as well as the previous:
+  ``pytest.mark.parametrize(("input", "expected"), ...)``.
+
 - add support for setUpModule/tearDownModule detection, thanks Brian Okken.
 
 - integrate tab-completion on options through use of "argcomplete".
@@ -113,10 +119,6 @@ Bug fixes:
   with relative path such as pytest-cov)
 
 - fix issue316 - properly reference collection hooks in docs
-
-- simplify parametrize() signature: allow to pass a CSV-separated string 
-  to specify argnames.  For example: ``pytest.mark.parametrize("input,expected",  [(1,2), (2,3)])`` is possible now in addition to the prior
-  ``pytest.mark.parametrize(("input", "expected"), ...)``.
 
 - fix issue 306 - cleanup of -k/-m options to only match markers/test
   names/keywords respectively.  Thanks Wouter van Ackooy.
