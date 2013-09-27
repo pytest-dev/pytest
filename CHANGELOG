@@ -1,21 +1,43 @@
 Changes between 2.3.5 and 2.4.DEV
 -----------------------------------
 
+known incompatibilities:
+
+- if calling --genscript from python2.7 or above, you only get a
+  standalone script which works on python2.7 or above.  Use Python2.6
+  to also get a python2.5 compatible version.
+
+- all xunit-style teardown methods (nose-style, pytest-style,
+  unittest-style) will not be called if the corresponding setup method failed,
+  see issue322 below.
+
+new features:
+
+- experimentally allow fixture functions to "yield" instead of "return"
+  a fixture value, allowing direct integration with with-context managers
+  in fixture functions and avoiding registration of finalization callbacks.
+  Thanks Andreas Pelme, Vladimir Keleshev, Floris Bruynooghe, Ronny Pfannschmidt
+  and many others for discussions.
+
+- allow boolean expression directly with skipif/xfail
+  if a "reason" is also specified.  Rework skipping documentation
+  to recommend "condition as booleans" because it prevents surprises
+  when importing markers between modules.  Specifying conditions
+  as strings will remain fully supported.
+
+- reporting: color the last line red or green depending if failures/errors occured
+  or everything passed.  thanks Christian Theunert.
+
 - make "import pdb ; pdb.set_trace()" work natively wrt capturing (no "-s" needed
   anymore), making ``pytest.set_trace()`` a mere shortcut.
-
-- fix issue333: fix a case of bad unittest/pytest hook interaction.
 
 - fix issue181: --pdb now also works on collect errors (and 
   on internal errors) .  This was implemented by a slight internal 
   refactoring and the introduction of a new hook 
-  ``pytest_exception_interact`` hook (see below).
+  ``pytest_exception_interact`` hook (see next item).
 
 - fix issue341: introduce new experimental hook for IDEs/terminals to 
   intercept debugging: ``pytest_exception_interact(node, call, report)``.
-
-- PR27: correctly handle nose.SkipTest during collection.  Thanks
-  Antonio Cuni, Ronny Pfannschmidt.
 
 - new monkeypatch.setattr() variant to provide a shorter
   invocation for patching out classes/functions from modules:
@@ -24,21 +46,40 @@ Changes between 2.3.5 and 2.4.DEV
 
   will replace the "get" function of the "requests" module with ``myfunc``.
 
-- fix issue355: junitxml puts name="pytest" attribute to testsuite tag.
-
 - fix issue322: tearDownClass is not run if setUpClass failed. Thanks
   Mathieu Agopian for the initial fix.  Also make all of pytest/nose finalizer 
   mimick the same generic behaviour: if a setupX exists and fails, 
-  don't run teardownX.  This also introduces a new method "node.addfinalizer()"
+  don't run teardownX.  This internally introduces a new method "node.addfinalizer()"
   helper which can only be called during the setup phase of a node.
 
-- fix issue336: autouse fixture in plugins should work again.
+- add support for setUpModule/tearDownModule detection, thanks Brian Okken.
 
-- change to use hyphen-separated long options but keep the old spelling
+- integrate tab-completion on options through use of "argcomplete".
+  Thanks Anthon van der Neut for the PR.
+
+- change option names to be hyphen-separated long options but keep the old spelling
   backward compatible.  py.test -h will only show the hyphenated version,
   for example "--collect-only" but "--collectonly" will remain valid as well
   (for backward-compat reasons).  Many thanks to Anthon van der Neut for
   the implementation and to Hynek Schlawack for pushing us.
+
+- fix issue 308 - allow to mark/xfail/skip individual parameter sets
+  when parametrizing.  Thanks Brianna Laugher.
+
+Bug fixes:
+
+- pytest now uses argparse instead of optparse (thanks Anthon) which 
+  means that "argparse" is added as a dependency if installing into python2.6
+  environments or below.
+
+- fix issue333: fix a case of bad unittest/pytest hook interaction.
+
+- PR27: correctly handle nose.SkipTest during collection.  Thanks
+  Antonio Cuni, Ronny Pfannschmidt.
+
+- fix issue355: junitxml puts name="pytest" attribute to testsuite tag.
+
+- fix issue336: autouse fixture in plugins should work again.
 
 - fix issue279: improve object comparisons on assertion failure
   for standard datatypes and recognise collections.abc.  Thanks to
@@ -53,18 +94,8 @@ Changes between 2.3.5 and 2.4.DEV
 
 - fix issue305: ignore any problems when writing pyc files.
 
-- integrate tab-completion on options through use of "argcomplete".
-  Thanks Anthon van der Neut for the PR.
-
-- pytest now uses argparse instead of optparse (thanks Anthon) which 
-  means that "argparse" is added as a dependency if installing into python2.6
-  environments or below.
-
 - SO-17664702: call fixture finalizers even if the fixture function
   partially failed (finalizers would not always be called before)
-
-- color the last line red or green depending if failures/errors occured
-  or everything passed.  thanks Christian Theunert.
 
 - fix issue320 - fix class scope for fixtures when mixed with
   module-level functions.  Thanks Anatloy Bubenkoff.
@@ -77,16 +108,11 @@ Changes between 2.3.5 and 2.4.DEV
 
 - fix issue323 - sorting of many module-scoped arg parametrizations
 
-- add support for setUpModule/tearDownModule detection, thanks Brian Okken.
-
 - make sessionfinish hooks execute with the same cwd-context as at
   session start (helps fix plugin behaviour which write output files 
   with relative path such as pytest-cov)
 
 - fix issue316 - properly reference collection hooks in docs
-
-- fix issue 308 - allow to mark/xfail/skip individual parameter sets
-  when parametrizing.  Thanks Brianna Laugher.
 
 - simplify parametrize() signature: allow to pass a CSV-separated string 
   to specify argnames.  For example: ``pytest.mark.parametrize("input,expected",  [(1,2), (2,3)])`` is possible now in addition to the prior
@@ -95,15 +121,6 @@ Changes between 2.3.5 and 2.4.DEV
 - fix issue 306 - cleanup of -k/-m options to only match markers/test
   names/keywords respectively.  Thanks Wouter van Ackooy.
 
-- (experimental) allow fixture functions to be 
-  implemented as context managers.  Thanks Andreas Pelme,
-  Vladimir Keleshev. 
-
-- (experimental) allow boolean expression directly with skipif/xfail
-  if a "reason" is also specified.  Rework skipping documentation
-  to recommend "condition as booleans" because it prevents surprises
-  when importing markers between modules.  Specifying conditions
-  as strings will remain fully supported.
 
 - improved doctest counting for doctests in python modules -- 
   files without any doctest items will not show up anymore
@@ -123,12 +140,6 @@ Changes between 2.3.5 and 2.4.DEV
 
 - better parametrize error messages, thanks Brianna Laugher
 
-
-known incompatibilities:
-
-- if calling --genscript from python2.7 or above, you only get a
-  standalone script which works on python2.7 or above.  Use Python2.6
-  to also get a python2.5 compatible version.
 
 
 Changes between 2.3.4 and 2.3.5

@@ -29,7 +29,7 @@ corresponding to the "short" letters shown in the test progress::
 Marking a test function to be skipped
 -------------------------------------------
 
-.. versionadded:: 2.4
+.. versionadded:: 2.0, 2.4 
 
 Here is an example of marking a test function to be skipped
 when run on a Python3.3 interpreter::
