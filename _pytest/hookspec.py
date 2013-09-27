@@ -221,7 +221,7 @@ def pytest_report_teststatus(report):
 pytest_report_teststatus.firstresult = True
 
 def pytest_terminal_summary(terminalreporter):
-    """ add additional section in terminal summary reporting. """
+    """ add additional section in terminal summary reporting.  """
 
 # -------------------------------------------------------------------------
 # doctest hooks

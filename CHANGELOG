@@ -142,7 +142,9 @@ Bug fixes:
 
 - better parametrize error messages, thanks Brianna Laugher
 
-
+- pytest_terminal_summary(terminalreporter) hooks can now use
+  ".section(title)" and ".line(msg)" methods to print extra 
+  information at the end of a test run.
 
 Changes between 2.3.4 and 2.3.5
 -----------------------------------

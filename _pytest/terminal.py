@@ -100,7 +100,7 @@ class TerminalReporter:
         self.startdir = self.curdir = py.path.local()
         if file is None:
             file = py.std.sys.stdout
-        self._tw = py.io.TerminalWriter(file)
+        self._tw = self.writer = py.io.TerminalWriter(file)
         self.currentfspath = None
         self.reportchars = getreportopt(config)
         self.hasmarkup = self._tw.hasmarkup
@@ -148,6 +148,12 @@ class TerminalReporter:
         self.ensure_newline()
         self._tw.sep(sep, title, **markup)
 
+    def section(self, title, sep="=", **kw):
+        self._tw.sep(sep, title, **kw)
+
+    def line(self, msg, **kw):
+        self._tw.line(msg, **kw)
+
     def pytest_internalerror(self, excrepr):
         for line in str(excrepr).split("\n"):
             self.write_line("INTERNALERROR> " + line)
@@ -179,6 +185,7 @@ class TerminalReporter:
         res = self.config.hook.pytest_report_teststatus(report=rep)
         cat, letter, word = res
         self.stats.setdefault(cat, []).append(rep)
+        self._tests_ran = True
         if not letter and not word:
             # probably passed setup/teardown
             return

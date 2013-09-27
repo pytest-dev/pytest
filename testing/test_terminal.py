@@ -699,3 +699,16 @@ def test_tbstyle_native_setup_error(testdir):
     result.stdout.fnmatch_lines([
             '*File *test_tbstyle_native_setup_error.py", line *, in setup_error_fixture*'
             ])
+
+def test_terminal_summary(testdir):
+    testdir.makeconftest("""
+        def pytest_terminal_summary(terminalreporter):
+            w = terminalreporter
+            w.section("hello")
+            w.line("world")
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines("""
+        *==== hello ====*
+        world
+    """)
