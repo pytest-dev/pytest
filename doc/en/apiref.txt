@@ -11,6 +11,7 @@ py.test reference documentation
    customize.txt
    assert.txt
    fixture.txt
+   yieldfixture.txt
    parametrize.txt
    xunit_setup.txt
    capture.txt
