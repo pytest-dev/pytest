@@ -319,7 +319,7 @@ class TestPytestPluginInteractions:
             def pytest_myhook(xyz):
                 return xyz + 1
         """)
-        config = testdir.Config()
+        config = testdir.Config(PluginManager(load=True))
         config._conftest.importconftest(conf)
         print(config.pluginmanager.getplugins())
         res = config.hook.pytest_myhook(xyz=10)

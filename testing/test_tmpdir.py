@@ -36,7 +36,7 @@ def test_ensuretemp(recwarn):
 
 class TestTempdirHandler:
     def test_mktemp(self, testdir):
-        config = testdir.Config()
+        config = testdir.parseconfig()
         config.option.basetemp = testdir.mkdir("hello")
         t = TempdirHandler(config)
         tmp = t.mktemp("world")

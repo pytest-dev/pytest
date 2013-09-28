@@ -82,7 +82,7 @@ class TestConfigCmdlineParsing:
 
 class TestConfigAPI:
     def test_config_trace(self, testdir):
-        config = testdir.Config()
+        config = testdir.parseconfig()
         l = []
         config.trace.root.setwriter(l.append)
         config.trace("hello")

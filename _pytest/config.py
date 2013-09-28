@@ -495,7 +495,7 @@ FILE_OR_DIR = 'file_or_dir'
 class Config(object):
     """ access to configuration values, pluginmanager and plugin hooks.  """
 
-    def __init__(self, pluginmanager=None):
+    def __init__(self, pluginmanager):
         #: access to command line option as attributes.
         #: (deprecated), use :py:func:`getoption() <_pytest.config.Config.getoption>` instead
         self.option = CmdOptions()
@@ -505,7 +505,7 @@ class Config(object):
             processopt=self._processopt,
         )
         #: a pluginmanager instance
-        self.pluginmanager = pluginmanager or PluginManager(load=True)
+        self.pluginmanager = pluginmanager
         self.trace = self.pluginmanager.trace.root.get("config")
         self._conftest = Conftest(onimport=self._onimportconftest)
         self.hook = self.pluginmanager.hook
@@ -516,7 +516,7 @@ class Config(object):
     @classmethod
     def fromdictargs(cls, option_dict, args):
         """ constructor useable for subprocesses. """
-        config = cls()
+        config = cls(PluginManager(load=True))
         # XXX slightly crude way to initialize capturing
         import _pytest.capture
         _pytest.capture.pytest_cmdline_parse(config.pluginmanager, args)
