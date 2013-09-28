@@ -11,6 +11,9 @@ known incompatibilities:
   unittest-style) will not be called if the corresponding setup method failed,
   see issue322 below.
 
+- the pytest_plugin_unregister hook wasn't ever properly called
+  and there is no known implementation of the hook - so it got removed.
+
 new features:
 
 - experimentally allow fixture functions to "yield" instead of "return"

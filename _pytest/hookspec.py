@@ -236,10 +236,7 @@ pytest_doctest_prepare_content.firstresult = True
 # -------------------------------------------------------------------------
 
 def pytest_plugin_registered(plugin, manager):
-    """ a new py lib plugin got registered. """
-
-def pytest_plugin_unregistered(plugin):
-    """ a py lib plugin got unregistered. """
+    """ a new pytest plugin got registered. """
 
 def pytest_internalerror(excrepr, excinfo):
     """ called for internal errors. """
