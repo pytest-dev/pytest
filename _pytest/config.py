@@ -93,7 +93,7 @@ class Parser:
                     a = option.attrs()
                     arggroup.add_argument(*n, **a)
         # bash like autocompletion for dirs (appending '/')
-        optparser.add_argument(Config._file_or_dir, nargs='*'
+        optparser.add_argument(FILE_OR_DIR, nargs='*'
                                ).completer=filescompleter
         try_argcomplete(self.optparser)
         return self.optparser.parse_args([str(x) for x in args])
@@ -102,7 +102,7 @@ class Parser:
         parsedoption = self.parse(args)
         for name, value in parsedoption.__dict__.items():
             setattr(option, name, value)
-        return getattr(parsedoption, Config._file_or_dir)
+        return getattr(parsedoption, FILE_OR_DIR)
 
     def addini(self, name, help, type=None, default=None):
         """ register an ini-file option.
@@ -323,21 +323,8 @@ class MyOptionParser(py.std.argparse.ArgumentParser):
                 if arg and arg[0] == '-':
                     msg = py.std.argparse._('unrecognized arguments: %s')
                     self.error(msg % ' '.join(argv))
-            getattr(args, Config._file_or_dir).extend(argv)
+            getattr(args, FILE_OR_DIR).extend(argv)
         return args
-
-# #pylib 2013-07-31
-# (12:05:53) anthon: hynek: can you get me a list of preferred py.test
-#                    long-options with '-' inserted at the right places?
-# (12:08:29) hynek:  anthon, hpk: generally I'd love the following, decide
-#                    yourself which you agree and which not:
-# (12:10:51) hynek:  --exit-on-first --full-trace --junit-xml --junit-prefix
-#                    --result-log --collect-only --conf-cut-dir --trace-config
-#                    --no-magic
-# (12:18:21) hpk:    hynek,anthon: makes sense to me.
-# (13:40:30) hpk:    hynek: let's not change names, rather only deal with
-#                    hyphens for now
-# (13:40:50) hynek:  then --exit-first *shrug*
 
 class DropShorterLongHelpFormatter(py.std.argparse.HelpFormatter):
     """shorten help for long options that differ only in extra hyphens
@@ -504,15 +491,15 @@ class CmdOptions(object):
     def __repr__(self):
         return "<CmdOptions %r>" %(self.__dict__,)
 
+FILE_OR_DIR = 'file_or_dir'
 class Config(object):
     """ access to configuration values, pluginmanager and plugin hooks.  """
-    _file_or_dir = 'file_or_dir'
 
     def __init__(self, pluginmanager=None):
         #: access to command line option as attributes.
         #: (deprecated), use :py:func:`getoption() <_pytest.config.Config.getoption>` instead
         self.option = CmdOptions()
-        _a = self._file_or_dir
+        _a = FILE_OR_DIR
         self._parser = Parser(
             usage="%%(prog)s [options] [%s] [%s] [...]" % (_a, _a),
             processopt=self._processopt,

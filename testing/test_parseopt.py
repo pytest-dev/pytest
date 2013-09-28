@@ -95,11 +95,11 @@ class TestParser:
         parser.addoption("--hello", dest="hello", action="store")
         args = parser.parse(['--hello', 'world'])
         assert args.hello == "world"
-        assert not getattr(args, parseopt.Config._file_or_dir)
+        assert not getattr(args, parseopt.FILE_OR_DIR)
 
     def test_parse2(self, parser):
         args = parser.parse([py.path.local()])
-        assert getattr(args, parseopt.Config._file_or_dir)[0] == py.path.local()
+        assert getattr(args, parseopt.FILE_OR_DIR)[0] == py.path.local()
 
     def test_parse_will_set_default(self, parser):
         parser.addoption("--hello", dest="hello", default="x", action="store")
@@ -128,13 +128,13 @@ class TestParser:
         parser.addoption("-R", action='store_true')
         parser.addoption("-S", action='store_false')
         args = parser.parse(['-R', '4', '2', '-S'])
-        assert getattr(args, parseopt.Config._file_or_dir) == ['4', '2']
+        assert getattr(args, parseopt.FILE_OR_DIR) == ['4', '2']
         args = parser.parse(['-R', '-S', '4', '2', '-R'])
-        assert getattr(args, parseopt.Config._file_or_dir) == ['4', '2']
+        assert getattr(args, parseopt.FILE_OR_DIR) == ['4', '2']
         assert args.R == True
         assert args.S == False
         args = parser.parse(['-R', '4', '-S', '2'])
-        assert getattr(args, parseopt.Config._file_or_dir) == ['4', '2']
+        assert getattr(args, parseopt.FILE_OR_DIR) == ['4', '2']
         assert args.R == True
         assert args.S == False
 
