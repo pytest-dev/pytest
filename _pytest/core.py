@@ -460,7 +460,14 @@ class HookCaller:
 _preinit = []
 
 def _preloadplugins():
+    assert not _preinit
     _preinit.append(PluginManager(load=True))
+
+def get_plugin_manager():
+    if _preinit:
+        return _preinit.pop(0)
+    else: # subsequent calls to main will create a fresh instance
+        return PluginManager(load=True)
 
 def _prepareconfig(args=None, plugins=None):
     if args is None:
@@ -471,16 +478,12 @@ def _prepareconfig(args=None, plugins=None):
         if not isinstance(args, str):
             raise ValueError("not a string or argument list: %r" % (args,))
         args = py.std.shlex.split(args)
-    if _preinit:
-       _pluginmanager = _preinit.pop(0)
-    else: # subsequent calls to main will create a fresh instance
-        _pluginmanager = PluginManager(load=True)
-    hook = _pluginmanager.hook
+    pluginmanager = get_plugin_manager()
     if plugins:
         for plugin in plugins:
-            _pluginmanager.register(plugin)
-    return hook.pytest_cmdline_parse(
-            pluginmanager=_pluginmanager, args=args)
+            pluginmanager.register(plugin)
+    return pluginmanager.hook.pytest_cmdline_parse(
+            pluginmanager=pluginmanager, args=args)
 
 def main(args=None, plugins=None):
     """ return exit code, after performing an in-process test run.

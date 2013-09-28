@@ -516,7 +516,9 @@ class Config(object):
     @classmethod
     def fromdictargs(cls, option_dict, args):
         """ constructor useable for subprocesses. """
-        config = cls(PluginManager(load=True))
+        from _pytest.core import get_plugin_manager
+        pluginmanager = get_plugin_manager()
+        config = cls(pluginmanager)
         # XXX slightly crude way to initialize capturing
         import _pytest.capture
         _pytest.capture.pytest_cmdline_parse(config.pluginmanager, args)
