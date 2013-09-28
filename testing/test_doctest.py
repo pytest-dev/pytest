@@ -4,7 +4,7 @@ import py, pytest
 import pdb
 
 xfail_if_pdbpp_installed = pytest.mark.xfail(hasattr(pdb, "__author__"),
-    reason="doctest/pdbpp problem: https://bitbucket.org/antocuni/pdb/issue/24/doctests-fail-when-pdbpp-is-installed")
+    reason="doctest/pdbpp problem: https://bitbucket.org/antocuni/pdb/issue/24/doctests-fail-when-pdbpp-is-installed", run=False)
 
 class TestDoctests:
 

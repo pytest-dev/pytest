@@ -83,7 +83,8 @@ class HookRecorder:
 
     def finish_recording(self):
         for recorder in self._recorders.values():
-            self._pluginmanager.unregister(recorder)
+            if self._pluginmanager.isregistered(recorder):
+                self._pluginmanager.unregister(recorder)
         self._recorders.clear()
 
     def _makecallparser(self, method):
@@ -361,7 +362,7 @@ class TmpTestdir:
         if not plugins:
             plugins = []
         plugins.append(Collect())
-        ret = self.pytestmain(list(args), plugins=plugins)
+        ret = pytest.main(list(args), plugins=plugins)
         reprec = rec[0]
         reprec.ret = ret
         assert len(rec) == 1
@@ -376,14 +377,15 @@ class TmpTestdir:
             args.append("--basetemp=%s" % self.tmpdir.dirpath('basetemp'))
         import _pytest.core
         config = _pytest.core._prepareconfig(args, self.plugins)
-        # the in-process pytest invocation needs to avoid leaking FDs
-        # so we register a "reset_capturings" callmon the capturing manager
-        # and make sure it gets called
-        config._cleanup.append(
-            config.pluginmanager.getplugin("capturemanager").reset_capturings)
-        import _pytest.config
-        self.request.addfinalizer(
-            lambda: _pytest.config.pytest_unconfigure(config))
+        # we don't know what the test will do with this half-setup config
+        # object and thus we make sure it gets unconfigured properly in any
+        # case (otherwise capturing could still be active, for example)
+        def ensure_unconfigure():
+            if hasattr(config.pluginmanager, "_config"):
+                config.pluginmanager.do_unconfigure(config)
+            config.pluginmanager.ensure_shutdown()
+
+        self.request.addfinalizer(ensure_unconfigure)
         return config
 
     def parseconfigure(self, *args):
@@ -427,17 +429,6 @@ class TmpTestdir:
         #print "env", env
         return py.std.subprocess.Popen(cmdargs,
                                        stdout=stdout, stderr=stderr, **kw)
-
-    def pytestmain(self, *args, **kwargs):
-        class ResetCapturing:
-            @pytest.mark.trylast
-            def pytest_unconfigure(self, config):
-                capman = config.pluginmanager.getplugin("capturemanager")
-                capman.reset_capturings()
-        plugins = kwargs.setdefault("plugins", [])
-        rc = ResetCapturing()
-        plugins.append(rc)
-        return pytest.main(*args, **kwargs)
 
     def run(self, *cmdargs):
         return self._run(*cmdargs)

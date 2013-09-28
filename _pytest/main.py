@@ -106,6 +106,7 @@ def wrap_session(config, doit):
                 exitstatus=session.exitstatus)
         if initstate >= 1:
             config.pluginmanager.do_unconfigure(config)
+        config.pluginmanager.ensure_shutdown()
     return session.exitstatus
 
 def pytest_cmdline_main(config):

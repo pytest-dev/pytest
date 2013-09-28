@@ -22,6 +22,13 @@ def pytest_cmdline_parse(pluginmanager, args):
         method = "sys"
     capman = CaptureManager(method)
     pluginmanager.register(capman, "capturemanager")
+    # make sure that capturemanager is properly reset at final shutdown
+    def teardown():
+        try:
+            capman.reset_capturings()
+        except ValueError:
+            pass
+    pluginmanager.add_shutdown(teardown)
 
 def addouterr(rep, outerr):
     for secname, content in zip(["out", "err"], outerr):
@@ -81,6 +88,7 @@ class CaptureManager:
     def reset_capturings(self):
         for name, cap in self._method2capture.items():
             cap.reset()
+
 
     def resumecapture_item(self, item):
         method = self._getmethod(item.config, item.fspath)

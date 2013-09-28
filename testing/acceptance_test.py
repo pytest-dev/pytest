@@ -391,15 +391,15 @@ class TestInvocationVariants:
     def test_equivalence_pytest_pytest(self):
         assert pytest.main == py.test.cmdline.main
 
-    def test_invoke_with_string(self, testdir, capsys):
-        retcode = testdir.pytestmain("-h")
+    def test_invoke_with_string(self, capsys):
+        retcode = pytest.main("-h")
         assert not retcode
         out, err = capsys.readouterr()
         assert "--help" in out
         pytest.raises(ValueError, lambda: pytest.main(0))
 
-    def test_invoke_with_path(self, testdir, capsys):
-        retcode = testdir.pytestmain(testdir.tmpdir)
+    def test_invoke_with_path(self, tmpdir, capsys):
+        retcode = pytest.main(tmpdir)
         assert not retcode
         out, err = capsys.readouterr()
 
@@ -408,7 +408,7 @@ class TestInvocationVariants:
             def pytest_addoption(self, parser):
                 parser.addoption("--myopt")
 
-        testdir.pytestmain(["-h"], plugins=[MyPlugin()])
+        pytest.main(["-h"], plugins=[MyPlugin()])
         out, err = capsys.readouterr()
         assert "--myopt" in out
 

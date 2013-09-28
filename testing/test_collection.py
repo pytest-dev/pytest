@@ -123,7 +123,7 @@ class TestCollectPluginHookRelay:
             def pytest_collect_file(self, path, parent):
                 wascalled.append(path)
         testdir.makefile(".abc", "xyz")
-        testdir.pytestmain([testdir.tmpdir], plugins=[Plugin()])
+        pytest.main([testdir.tmpdir], plugins=[Plugin()])
         assert len(wascalled) == 1
         assert wascalled[0].ext == '.abc'
 
@@ -134,7 +134,7 @@ class TestCollectPluginHookRelay:
                 wascalled.append(path.basename)
         testdir.mkdir("hello")
         testdir.mkdir("world")
-        testdir.pytestmain(testdir.tmpdir, plugins=[Plugin()])
+        pytest.main(testdir.tmpdir, plugins=[Plugin()])
         assert "hello" in wascalled
         assert "world" in wascalled
 

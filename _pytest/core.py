@@ -80,6 +80,7 @@ class PluginManager(object):
         self._hints = []
         self.trace = TagTracer().get("pluginmanage")
         self._plugin_distinfo = []
+        self._shutdown = []
         if os.environ.get('PYTEST_DEBUG'):
             err = sys.stderr
             encoding = getattr(err, 'encoding', 'utf8')
@@ -117,6 +118,17 @@ class PluginManager(object):
         for name, value in list(self._name2plugin.items()):
             if value == plugin:
                 del self._name2plugin[name]
+
+    def add_shutdown(self, func):
+        self._shutdown.append(func)
+
+    def ensure_shutdown(self):
+        while self._shutdown:
+            func = self._shutdown.pop()
+            func()
+        self._plugins = []
+        self._name2plugin.clear()
+        self._listattrcache.clear()
 
     def isregistered(self, plugin, name=None):
         if self.getplugin(name) is not None:
@@ -286,7 +298,7 @@ class PluginManager(object):
         config = self._config
         del self._config
         config.hook.pytest_unconfigure(config=config)
-        config.pluginmanager.unregister(self)
+        config.pluginmanager.ensure_shutdown()
 
     def notify_exception(self, excinfo, option=None):
         if option and option.fulltrace:
