@@ -1980,7 +1980,7 @@ class TestContextManagerFixtureFuncs:
     def test_simple(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.fixture(yieldctx=True)
+            @pytest.yield_fixture
             def arg1():
                 print ("setup")
                 yield 1
@@ -2004,7 +2004,7 @@ class TestContextManagerFixtureFuncs:
     def test_scoped(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.fixture(scope="module", yieldctx=True)
+            @pytest.yield_fixture(scope="module")
             def arg1():
                 print ("setup")
                 yield 1
@@ -2025,7 +2025,7 @@ class TestContextManagerFixtureFuncs:
     def test_setup_exception(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.fixture(scope="module", yieldctx=True)
+            @pytest.yield_fixture(scope="module")
             def arg1():
                 pytest.fail("setup")
                 yield 1
@@ -2041,7 +2041,7 @@ class TestContextManagerFixtureFuncs:
     def test_teardown_exception(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.fixture(scope="module", yieldctx=True)
+            @pytest.yield_fixture(scope="module")
             def arg1():
                 yield 1
                 pytest.fail("teardown")
@@ -2057,7 +2057,7 @@ class TestContextManagerFixtureFuncs:
     def test_yields_more_than_one(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.fixture(scope="module", yieldctx=True)
+            @pytest.yield_fixture(scope="module")
             def arg1():
                 yield 1
                 yield 2
@@ -2074,7 +2074,7 @@ class TestContextManagerFixtureFuncs:
     def test_no_yield(self, testdir):
         testdir.makepyfile("""
             import pytest
-            @pytest.fixture(scope="module", yieldctx=True)
+            @pytest.yield_fixture(scope="module")
             def arg1():
                 return 1
             def test_1(arg1):
@@ -2082,9 +2082,8 @@ class TestContextManagerFixtureFuncs:
         """)
         result = testdir.runpytest("-s")
         result.stdout.fnmatch_lines("""
-            *yieldctx*requires*yield*
-            *yieldctx=True*
+            *yield_fixture*requires*yield*
+            *yield_fixture*
             *def arg1*
         """)
-
 

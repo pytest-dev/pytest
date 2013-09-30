@@ -40,7 +40,7 @@ class FixtureFunctionMarker:
         return function
 
 
-def fixture(scope="function", params=None, autouse=False, yieldctx=False):
+def fixture(scope="function", params=None, autouse=False):
     """ (return a) decorator to mark a fixture factory function.
 
     This decorator can be used (with or or without parameters) to define
@@ -62,16 +62,29 @@ def fixture(scope="function", params=None, autouse=False, yieldctx=False):
                 can see it.  If False (the default) then an explicit
                 reference is needed to activate the fixture.
 
-    :arg yieldctx: if True, the fixture function yields a fixture value.
-                Code after such a ``yield`` statement is treated as
-                teardown code.
     """
     if callable(scope) and params is None and autouse == False:
         # direct decoration
         return FixtureFunctionMarker(
-                "function", params, autouse, yieldctx)(scope)
+                "function", params, autouse)(scope)
     else:
-        return FixtureFunctionMarker(scope, params, autouse, yieldctx)
+        return FixtureFunctionMarker(scope, params, autouse)
+
+def yield_fixture(scope="function", params=None, autouse=False):
+    """ (return a) decorator to mark a yield-fixture factory function
+    (EXPERIMENTAL).
+
+    This takes the same arguments as :py:func:`pytest.fixture` but
+    expects a fixture function to use a ``yield`` instead of a ``return``
+    statement to provide a fixture.  See
+    http://pytest.org/en/latest/yieldfixture.html for more info.
+    """
+    if callable(scope) and params is None and autouse == False:
+        # direct decoration
+        return FixtureFunctionMarker(
+                "function", params, autouse, yieldctx=True)(scope)
+    else:
+        return FixtureFunctionMarker(scope, params, autouse, yieldctx=True)
 
 defaultfuncargprefixmarker = fixture()
 
@@ -136,6 +149,7 @@ def pytest_namespace():
     raises.Exception = pytest.fail.Exception
     return {
         'fixture': fixture,
+        'yield_fixture': yield_fixture,
         'raises' : raises,
         'collect': {
         'Module': Module, 'Class': Class, 'Instance': Instance,
@@ -1675,7 +1689,7 @@ def call_fixture_func(fixturefunc, request, kwargs, yieldctx):
     if yieldctx:
         if not is_generator(fixturefunc):
             fail_fixturefunc(fixturefunc,
-                msg="yieldctx=True requires yield statement")
+                msg="yield_fixture requires yield statement in function")
         iter = fixturefunc(**kwargs)
         next = getattr(iter, "__next__", None)
         if next is None:
@@ -1688,7 +1702,7 @@ def call_fixture_func(fixturefunc, request, kwargs, yieldctx):
                 pass
             else:
                 fail_fixturefunc(fixturefunc,
-                    "fixture function has more than one 'yield'")
+                    "yield_fixture function has more than one 'yield'")
         request.addfinalizer(teardown)
     else:
         res = fixturefunc(**kwargs)

@@ -16,9 +16,12 @@ known incompatibilities:
 
 new features:
 
-- experimentally allow fixture functions to "yield" instead of "return"
-  a fixture value, allowing direct integration with with-context managers
-  in fixture functions and avoiding registration of finalization callbacks.
+- experimentally introduce a new pytest.yield_fixture decorator which
+  has exactly the same parameters as pytest.fixture but expects
+  a ``yield`` statement instead of a ``return statement`` from fixture functions.
+  This allows direct integration with with-context managers
+  in fixture functions and generally avoids registering of finalization callbacks
+  in favour of treating the "after-yield" as teardown code.
   Thanks Andreas Pelme, Vladimir Keleshev, Floris Bruynooghe, Ronny Pfannschmidt
   and many others for discussions.
 

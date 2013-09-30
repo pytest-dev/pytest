@@ -276,8 +276,8 @@ module itself does not need to change or know about these details
 of fixture setup.
 
 Note that pytest-2.4 introduced an experimental alternative
-:ref:`yield fixture mechanism <yieldctx>` for easier context manager integration
-and more linear writing of teardown code.
+:ref:`yield fixture mechanism <yieldfixture>` for easier context manager
+integration and more linear writing of teardown code.
 
 .. _`request-context`:
 

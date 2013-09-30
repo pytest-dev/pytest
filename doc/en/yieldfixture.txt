@@ -1,5 +1,5 @@
 
-.. _yieldctx:
+.. _yieldfixture:
 
 Fixture functions using "yield" / context manager integration
 ---------------------------------------------------------------
@@ -16,10 +16,9 @@ fully supporting all other fixture features.
 
    "yielding" fixture values is an experimental feature and its exact
    declaration may change later but earliest in a 2.5 release.  You can thus
-   safely use this feature in the 2.4 series but may need to adapt your
-   fixtures later. Test functions themselves will not need to change
-   (they can be completely ignorant of the return/yield modes of 
-   fixture functions).
+   safely use this feature in the 2.4 series but may need to adapt later.
+   Test functions themselves will not need to change (as a general
+   feature, they are ignorant of how fixtures are setup).
 
 Let's look at a simple standalone-example using the new ``yield`` syntax::
 
@@ -27,7 +26,7 @@ Let's look at a simple standalone-example using the new ``yield`` syntax::
     
     import pytest
 
-    @pytest.fixture(yieldctx=True)
+    @pytest.yield_fixture
     def passwd():
         print ("\nsetup before yield")
         f = open("/etc/passwd")
@@ -62,7 +61,7 @@ Let's simplify the above ``passwd`` fixture::
     
     import pytest
 
-    @pytest.fixture(yieldctx=True)
+    @pytest.yield_fixture
     def passwd():
         with open("/etc/passwd") as f:
             yield f.readlines()
