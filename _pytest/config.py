@@ -2,15 +2,7 @@
 
 import py
 import sys, os
-from _pytest.core import PluginManager
 import pytest
-from _pytest._argcomplete import try_argcomplete, filescompleter
-
-# enable after some grace period for plugin writers
-TYPE_WARN = False
-if TYPE_WARN:
-    import warnings
-
 
 def pytest_cmdline_parse(pluginmanager, args):
     config = Config(pluginmanager)
@@ -82,6 +74,7 @@ class Parser:
         self._anonymous.addoption(*opts, **attrs)
 
     def parse(self, args):
+        from _pytest._argcomplete import try_argcomplete, filescompleter
         self.optparser = optparser = MyOptionParser(self)
         groups = self._groups + [self._anonymous]
         for group in groups:
@@ -142,6 +135,8 @@ class Argument:
         'int': int,
         'string': str,
         }
+    # enable after some grace period for plugin writers
+    TYPE_WARN = False
 
     def __init__(self, *names, **attrs):
         """store parms in private vars for use in add_argument"""
@@ -149,11 +144,11 @@ class Argument:
         self._short_opts = []
         self._long_opts = []
         self.dest = attrs.get('dest')
-        if TYPE_WARN:
+        if self.TYPE_WARN:
             try:
                 help = attrs['help']
                 if '%default' in help:
-                    warnings.warn(
+                    py.std.warnings.warn(
                         'py.test now uses argparse. "%default" should be'
                         ' changed to "%(default)s" ',
                         FutureWarning,
@@ -168,8 +163,8 @@ class Argument:
             # this might raise a keyerror as well, don't want to catch that
             if isinstance(typ, str):
                 if typ == 'choice':
-                    if TYPE_WARN:
-                        warnings.warn(
+                    if self.TYPE_WARN:
+                        py.std.warnings.warn(
                             'type argument to addoption() is a string %r.'
                             ' For parsearg this is optional and when supplied '
                             ' should be a type.'
@@ -180,8 +175,8 @@ class Argument:
                     # the type of the first element
                     attrs['type'] = type(attrs['choices'][0])
                 else:
-                    if TYPE_WARN:
-                        warnings.warn(
+                    if self.TYPE_WARN:
+                        py.std.warnings.warn(
                             'type argument to addoption() is a string %r.'
                             ' For parsearg this should be a type.'
                             ' (options: %s)' % (typ, names),
