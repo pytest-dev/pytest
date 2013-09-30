@@ -75,6 +75,9 @@ new features:
 - fix issue 308 - allow to mark/xfail/skip individual parameter sets
   when parametrizing.  Thanks Brianna Laugher.
 
+- call new experimental pytest_load_initial_conftests hook to allow
+  3rd party plugins to do something before a conftest is loaded.
+
 Bug fixes:
 
 - pytest now uses argparse instead of optparse (thanks Anthon) which 

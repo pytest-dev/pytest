@@ -335,3 +335,18 @@ def test_notify_exception(testdir, capfd):
     out, err = capfd.readouterr()
     assert not err
 
+
+def test_load_initial_conftest_last_ordering(testdir):
+    from _pytest.config  import get_plugin_manager
+    pm = get_plugin_manager()
+    class My:
+        def pytest_load_initial_conftests(self):
+            pass
+    m = My()
+    pm.register(m)
+    l = pm.listattr("pytest_load_initial_conftests")
+    assert l[-1].__module__ == "_pytest.capture"
+    assert l[-2] == m.pytest_load_initial_conftests
+    assert l[-3].__module__ == "_pytest.config"
+
+

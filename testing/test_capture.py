@@ -484,3 +484,13 @@ def test_capture_conftest_runtest_setup(testdir):
     result = testdir.runpytest()
     assert result.ret == 0
     assert 'hello19' not in result.stdout.str()
+
+def test_capture_early_option_parsing(testdir):
+    testdir.makeconftest("""
+        def pytest_runtest_setup():
+            print ("hello19")
+    """)
+    testdir.makepyfile("def test_func(): pass")
+    result = testdir.runpytest("-vs")
+    assert result.ret == 0
+    assert 'hello19' in result.stdout.str()

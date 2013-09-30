@@ -101,6 +101,12 @@ class TestParser:
         args = parser.parse([py.path.local()])
         assert getattr(args, parseopt.FILE_OR_DIR)[0] == py.path.local()
 
+    def test_parse_known_args(self, parser):
+        args = parser.parse_known_args([py.path.local()])
+        parser.addoption("--hello", action="store_true")
+        ns = parser.parse_known_args(["x", "--y", "--hello", "this"])
+        assert ns.hello
+
     def test_parse_will_set_default(self, parser):
         parser.addoption("--hello", dest="hello", default="x", action="store")
         option = parser.parse([])

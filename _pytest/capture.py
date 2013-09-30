@@ -1,6 +1,7 @@
 """ per-test stdout/stderr capturing mechanisms, ``capsys`` and ``capfd`` function arguments.  """
 
 import pytest, py
+import sys
 import os
 
 def pytest_addoption(parser):
@@ -12,23 +13,34 @@ def pytest_addoption(parser):
         help="shortcut for --capture=no.")
 
 @pytest.mark.tryfirst
-def pytest_cmdline_parse(pluginmanager, args):
-    # we want to perform capturing already for plugin/conftest loading
-    if '-s' in args or "--capture=no" in args:
-        method = "no"
-    elif hasattr(os, 'dup') and '--capture=sys' not in args:
+def pytest_load_initial_conftests(early_config, parser, args, __multicall__):
+    ns = parser.parse_known_args(args)
+    method = ns.capture
+    if not method:
         method = "fd"
-    else:
+    if method == "fd" and not hasattr(os, "dup"):
         method = "sys"
     capman = CaptureManager(method)
-    pluginmanager.register(capman, "capturemanager")
+    early_config.pluginmanager.register(capman, "capturemanager")
     # make sure that capturemanager is properly reset at final shutdown
     def teardown():
         try:
             capman.reset_capturings()
         except ValueError:
             pass
-    pluginmanager.add_shutdown(teardown)
+    early_config.pluginmanager.add_shutdown(teardown)
+
+    # finally trigger conftest loading but while capturing (issue93)
+    capman.resumecapture()
+    try:
+        try:
+            return __multicall__.execute()
+        finally:
+            out, err = capman.suspendcapture()
+    except:
+        sys.stdout.write(out)
+        sys.stderr.write(err)
+        raise
 
 def addouterr(rep, outerr):
     for secname, content in zip(["out", "err"], outerr):
@@ -88,7 +100,6 @@ class CaptureManager:
     def reset_capturings(self):
         for name, cap in self._method2capture.items():
             cap.reset()
-
 
     def resumecapture_item(self, item):
         method = self._getmethod(item.config, item.fspath)

@@ -141,8 +141,14 @@ class Parser:
         self._anonymous.addoption(*opts, **attrs)
 
     def parse(self, args):
-        from _pytest._argcomplete import try_argcomplete, filescompleter
-        self.optparser = optparser = MyOptionParser(self)
+        from _pytest._argcomplete import try_argcomplete
+        self.optparser = self._getparser()
+        try_argcomplete(self.optparser)
+        return self.optparser.parse_args([str(x) for x in args])
+
+    def _getparser(self):
+        from _pytest._argcomplete import filescompleter
+        optparser = MyOptionParser(self)
         groups = self._groups + [self._anonymous]
         for group in groups:
             if group.options:
@@ -155,14 +161,18 @@ class Parser:
         # bash like autocompletion for dirs (appending '/')
         optparser.add_argument(FILE_OR_DIR, nargs='*'
                                ).completer=filescompleter
-        try_argcomplete(self.optparser)
-        return self.optparser.parse_args([str(x) for x in args])
+        return optparser
 
     def parse_setoption(self, args, option):
         parsedoption = self.parse(args)
         for name, value in parsedoption.__dict__.items():
             setattr(option, name, value)
         return getattr(parsedoption, FILE_OR_DIR)
+
+    def parse_known_args(self, args):
+        optparser = self._getparser()
+        args = [str(x) for x in args]
+        return optparser.parse_known_args(args)[0]
 
     def addini(self, name, help, type=None, default=None):
         """ register an ini-file option.
@@ -635,9 +645,6 @@ class Config(object):
         """ constructor useable for subprocesses. """
         pluginmanager = get_plugin_manager()
         config = pluginmanager.config
-        # XXX slightly crude way to initialize capturing
-        import _pytest.capture
-        _pytest.capture.pytest_cmdline_parse(config.pluginmanager, args)
         config._preparse(args, addopts=False)
         config.option.__dict__.update(option_dict)
         for x in config.option.plugins:
@@ -663,21 +670,9 @@ class Config(object):
         plugins += self._conftest.getconftestmodules(fspath)
         return plugins
 
-    def _setinitialconftest(self, args):
-        # capture output during conftest init (#issue93)
-        # XXX introduce load_conftest hook to avoid needing to know
-        # about capturing plugin here
-        capman = self.pluginmanager.getplugin("capturemanager")
-        capman.resumecapture()
-        try:
-            try:
-                self._conftest.setinitial(args)
-            finally:
-                out, err = capman.suspendcapture() # logging might have got it
-        except:
-            sys.stdout.write(out)
-            sys.stderr.write(err)
-            raise
+    def pytest_load_initial_conftests(self, parser, args):
+        self._conftest.setinitial(args)
+    pytest_load_initial_conftests.trylast = True
 
     def _initini(self, args):
         self.inicfg = getcfg(args, ["pytest.ini", "tox.ini", "setup.cfg"])
@@ -692,9 +687,8 @@ class Config(object):
         self.pluginmanager.consider_preparse(args)
         self.pluginmanager.consider_setuptools_entrypoints()
         self.pluginmanager.consider_env()
-        self._setinitialconftest(args)
-        if addopts:
-            self.hook.pytest_cmdline_preparse(config=self, args=args)
+        self.hook.pytest_load_initial_conftests(early_config=self,
+            args=args, parser=self._parser)
 
     def _checkversion(self):
         import pytest
@@ -715,6 +709,8 @@ class Config(object):
                 "can only parse cmdline args at most once per Config object")
         self._origargs = args
         self._preparse(args)
+        # XXX deprecated hook:
+        self.hook.pytest_cmdline_preparse(config=self, args=args)
         self._parser.hints.extend(self.pluginmanager._hints)
         args = self._parser.parse_setoption(args, self.option)
         if not args:
