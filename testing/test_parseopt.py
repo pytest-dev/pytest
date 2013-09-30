@@ -245,7 +245,7 @@ def test_argcomplete(testdir, monkeypatch):
     if not py.path.local.sysfind('bash'):
         pytest.skip("bash not available")
     import os
-    script = os.path.join(os.getcwd(), 'test_argcomplete')
+    script = str(testdir.tmpdir.join("test_argcomplete"))
     with open(str(script), 'w') as fp:
         # redirect output from argcomplete to stdin and stderr is not trivial
         # http://stackoverflow.com/q/12589419/1307905
