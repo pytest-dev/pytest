@@ -54,9 +54,9 @@ def pytest_cmdline_main(config):
                 sys.stderr.write(line + "\n")
         return 0
     elif config.option.help:
-        config.pluginmanager.do_configure(config)
+        config.do_configure()
         showhelp(config)
-        config.pluginmanager.do_unconfigure(config)
+        config.do_unconfigure()
         return 0
 
 def showhelp(config):

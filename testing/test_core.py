@@ -261,13 +261,13 @@ class TestBootstrapping:
         assert pm.getplugins()
         my2 = MyPlugin()
         pm.register(my2)
-        assert pm.getplugins()[1:] == [my, my2]
+        assert pm.getplugins()[2:] == [my, my2]
 
         assert pm.isregistered(my)
         assert pm.isregistered(my2)
         pm.unregister(my)
         assert not pm.isregistered(my)
-        assert pm.getplugins()[1:] == [my2]
+        assert pm.getplugins()[2:] == [my2]
 
     def test_listattr(self):
         plugins = PluginManager()
@@ -319,7 +319,7 @@ class TestPytestPluginInteractions:
             def pytest_myhook(xyz):
                 return xyz + 1
         """)
-        config = testdir.Config(PluginManager(load=True))
+        config = PluginManager(load=True).config
         config._conftest.importconftest(conf)
         print(config.pluginmanager.getplugins())
         res = config.hook.pytest_myhook(xyz=10)
@@ -383,13 +383,13 @@ class TestPytestPluginInteractions:
 
         config.pluginmanager.register(A())
         assert len(l) == 0
-        config.pluginmanager.do_configure(config=config)
+        config.do_configure()
         assert len(l) == 1
         config.pluginmanager.register(A())  # leads to a configured() plugin
         assert len(l) == 2
         assert l[0] != l[1]
 
-        config.pluginmanager.do_unconfigure(config=config)
+        config.do_unconfigure()
         config.pluginmanager.register(A())
         assert len(l) == 2
 

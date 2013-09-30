@@ -76,7 +76,7 @@ def wrap_session(config, doit):
     initstate = 0
     try:
         try:
-            config.pluginmanager.do_configure(config)
+            config.do_configure()
             initstate = 1
             config.hook.pytest_sessionstart(session=session)
             initstate = 2
@@ -105,7 +105,7 @@ def wrap_session(config, doit):
                 session=session,
                 exitstatus=session.exitstatus)
         if initstate >= 1:
-            config.pluginmanager.do_unconfigure(config)
+            config.do_unconfigure()
         config.pluginmanager.ensure_shutdown()
     return session.exitstatus
 

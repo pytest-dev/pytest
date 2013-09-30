@@ -208,13 +208,14 @@ def test_plugin_specify(testdir):
             testdir.parseconfig("-p", "nqweotexistent")
     """)
     #pytest.raises(ImportError,
-    #    "config.pluginmanager.do_configure(config)"
+    #    "config.do_configure(config)"
     #)
 
 def test_plugin_already_exists(testdir):
     config = testdir.parseconfig("-p", "terminal")
     assert config.option.plugins == ['terminal']
-    config.pluginmanager.do_configure(config)
+    config.do_configure()
+    config.do_unconfigure()
 
 def test_exclude(testdir):
     hellodir = testdir.mkdir("hello")

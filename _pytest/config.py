@@ -2,20 +2,6 @@
 
 import py
 import sys, os
-import pytest
-
-def pytest_cmdline_parse(pluginmanager, args):
-    config = Config(pluginmanager)
-    config.parse(args)
-    return config
-
-def pytest_unconfigure(config):
-    while 1:
-        try:
-            fin = config._cleanup.pop()
-        except IndexError:
-            break
-        fin()
 
 class Parser:
     """ Parser for command line arguments and ini-file values.  """
@@ -507,13 +493,46 @@ class Config(object):
         self._inicache = {}
         self._opt2dest = {}
         self._cleanup = []
+        self.pluginmanager.register(self, "pytestconfig")
+        self._configured = False
+
+    def pytest_plugin_registered(self, plugin):
+        call_plugin = self.pluginmanager.call_plugin
+        dic = call_plugin(plugin, "pytest_namespace", {}) or {}
+        if dic:
+            import pytest
+            setns(pytest, dic)
+        call_plugin(plugin, "pytest_addoption", {'parser': self._parser})
+        if self._configured:
+            call_plugin(plugin, "pytest_configure", {'config': self})
+
+    def do_configure(self):
+        assert not self._configured
+        self._configured = True
+        self.hook.pytest_configure(config=self)
+
+    def do_unconfigure(self):
+        assert self._configured
+        self._configured = False
+        self.hook.pytest_unconfigure(config=self)
+        self.pluginmanager.ensure_shutdown()
+
+    def pytest_cmdline_parse(self, pluginmanager, args):
+        assert self == pluginmanager.config, (self, pluginmanager.config)
+        self.parse(args)
+        return self
+
+    def pytest_unconfigure(config):
+        while config._cleanup:
+            fin = config._cleanup.pop()
+            fin()
 
     @classmethod
     def fromdictargs(cls, option_dict, args):
         """ constructor useable for subprocesses. """
         from _pytest.core import get_plugin_manager
         pluginmanager = get_plugin_manager()
-        config = cls(pluginmanager)
+        config = pluginmanager.config
         # XXX slightly crude way to initialize capturing
         import _pytest.capture
         _pytest.capture.pytest_cmdline_parse(config.pluginmanager, args)
@@ -572,11 +591,11 @@ class Config(object):
         self.pluginmanager.consider_setuptools_entrypoints()
         self.pluginmanager.consider_env()
         self._setinitialconftest(args)
-        self.pluginmanager.do_addoption(self._parser)
         if addopts:
             self.hook.pytest_cmdline_preparse(config=self, args=args)
 
     def _checkversion(self):
+        import pytest
         minver = self.inicfg.get('minversion', None)
         if minver:
             ver = minver.split(".")
@@ -723,3 +742,23 @@ def getcfg(args, inibasenames):
                         return iniconfig['pytest']
     return {}
 
+
+def setns(obj, dic):
+    import pytest
+    for name, value in dic.items():
+        if isinstance(value, dict):
+            mod = getattr(obj, name, None)
+            if mod is None:
+                modname = "pytest.%s" % name
+                mod = py.std.types.ModuleType(modname)
+                sys.modules[modname] = mod
+                mod.__all__ = []
+                setattr(obj, name, mod)
+            obj.__all__.append(name)
+            setns(mod, value)
+        else:
+            setattr(obj, name, value)
+            obj.__all__.append(name)
+            #if obj != pytest:
+            #    pytest.__all__.append(name)
+            setattr(pytest, name, value)

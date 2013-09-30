@@ -1,5 +1,5 @@
 """ generic mechanism for marking and selecting python functions. """
-import pytest, py
+import py
 
 
 def pytest_namespace():
@@ -39,14 +39,14 @@ def pytest_addoption(parser):
 
 def pytest_cmdline_main(config):
     if config.option.markers:
-        config.pluginmanager.do_configure(config)
+        config.do_configure()
         tw = py.io.TerminalWriter()
         for line in config.getini("markers"):
             name, rest = line.split(":", 1)
             tw.write("@pytest.mark.%s:" % name, bold=True)
             tw.line(rest)
             tw.line()
-        config.pluginmanager.do_unconfigure(config)
+        config.do_unconfigure()
         return 0
 pytest_cmdline_main.tryfirst = True
 
@@ -129,6 +129,7 @@ def matchkeyword(colitem, keywordexpr):
     mapped_names = set()
 
     # Add the names of the current item and any parent items
+    import pytest
     for item in colitem.listchain():
         if not isinstance(item, pytest.Instance):
             mapped_names.add(item.name)
@@ -145,6 +146,7 @@ def matchkeyword(colitem, keywordexpr):
 
 
 def pytest_configure(config):
+    import pytest
     if config.option.strict:
         pytest.mark._config = config
 

@@ -1,17 +1,17 @@
 """
 pytest PluginManager, basic initialization and tracing.
-(c) Holger Krekel 2004-2010
 """
 import sys, os
 import inspect
 import py
 from _pytest import hookspec # the extension point definitions
+from _pytest.config import Config
 
 assert py.__version__.split(".")[:2] >= ['1', '4'], ("installation problem: "
     "%s is too old, remove or upgrade 'py'" % (py.__version__))
 
 default_plugins = (
- "config mark main terminal runner python pdb unittest capture skipping "
+ "mark main terminal runner python pdb unittest capture skipping "
  "tmpdir monkeypatch recwarn pastebin helpconfig nose assertion genscript "
  "junitxml resultlog doctest").split()
 
@@ -91,6 +91,7 @@ class PluginManager(object):
             self.trace.root.setwriter(err.write)
         self.hook = HookRelay([hookspec], pm=self)
         self.register(self)
+        self.config = Config(self)  # XXX unclear if the attr is needed
         if load:
             for spec in default_plugins:
                 self.import_plugin(spec)
@@ -100,7 +101,8 @@ class PluginManager(object):
             return
         name = name or getattr(plugin, '__name__', str(id(plugin)))
         if self.isregistered(plugin, name):
-            raise ValueError("Plugin already registered: %s=%s" %(name, plugin))
+            raise ValueError("Plugin already registered: %s=%s\n%s" %(
+                              name, plugin, self._name2plugin))
         #self.trace("registering", name, plugin)
         self._name2plugin[name] = plugin
         self.call_plugin(plugin, "pytest_addhooks", {'pluginmanager': self})
@@ -220,7 +222,6 @@ class PluginManager(object):
         if self.getplugin(modname) is not None:
             return
         try:
-            #self.trace("importing", modname)
             mod = importplugin(modname)
         except KeyboardInterrupt:
             raise
@@ -247,58 +248,11 @@ class PluginManager(object):
             "trylast: mark a hook implementation function such that the "
             "plugin machinery will try to call it last/as late as possible.")
 
-    def pytest_plugin_registered(self, plugin):
-        import pytest
-        dic = self.call_plugin(plugin, "pytest_namespace", {}) or {}
-        if dic:
-            self._setns(pytest, dic)
-        if hasattr(self, '_config'):
-            self.call_plugin(plugin, "pytest_addoption",
-                {'parser': self._config._parser})
-            self.call_plugin(plugin, "pytest_configure",
-                {'config': self._config})
-
-    def _setns(self, obj, dic):
-        import pytest
-        for name, value in dic.items():
-            if isinstance(value, dict):
-                mod = getattr(obj, name, None)
-                if mod is None:
-                    modname = "pytest.%s" % name
-                    mod = py.std.types.ModuleType(modname)
-                    sys.modules[modname] = mod
-                    mod.__all__ = []
-                    setattr(obj, name, mod)
-                obj.__all__.append(name)
-                self._setns(mod, value)
-            else:
-                setattr(obj, name, value)
-                obj.__all__.append(name)
-                #if obj != pytest:
-                #    pytest.__all__.append(name)
-                setattr(pytest, name, value)
-
     def pytest_terminal_summary(self, terminalreporter):
         tw = terminalreporter._tw
         if terminalreporter.config.option.traceconfig:
             for hint in self._hints:
                 tw.line("hint: %s" % hint)
-
-    def do_addoption(self, parser):
-        mname = "pytest_addoption"
-        methods = reversed(self.listattr(mname))
-        MultiCall(methods, {'parser': parser}).execute()
-
-    def do_configure(self, config):
-        assert not hasattr(self, '_config')
-        self._config = config
-        config.hook.pytest_configure(config=self._config)
-
-    def do_unconfigure(self, config):
-        config = self._config
-        del self._config
-        config.hook.pytest_unconfigure(config=config)
-        config.pluginmanager.ensure_shutdown()
 
     def notify_exception(self, excinfo, option=None):
         if option and option.fulltrace:
@@ -350,6 +304,7 @@ def importplugin(importspec):
     name = importspec
     try:
         mod = "_pytest." + name
+        #print >>sys.stderr, "tryimport", mod
         __import__(mod)
         return sys.modules[mod]
     except ImportError:
@@ -358,6 +313,7 @@ def importplugin(importspec):
         #    raise
         pass #
     try:
+        #print >>sys.stderr, "tryimport", importspec
         __import__(importspec)
     except ImportError:
         raise ImportError(importspec)
