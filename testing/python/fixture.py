@@ -2087,3 +2087,18 @@ class TestContextManagerFixtureFuncs:
             *def arg1*
         """)
 
+    def test_yield_not_allowed_in_non_yield(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture(scope="module")
+            def arg1():
+                yield 1
+            def test_1(arg1):
+                pass
+        """)
+        result = testdir.runpytest("-s")
+        result.stdout.fnmatch_lines("""
+            *fixture*cannot use*yield*
+            *def arg1*
+        """)
+

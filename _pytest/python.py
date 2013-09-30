@@ -1705,6 +1705,11 @@ def call_fixture_func(fixturefunc, request, kwargs, yieldctx):
                     "yield_fixture function has more than one 'yield'")
         request.addfinalizer(teardown)
     else:
+        if is_generator(fixturefunc):
+            fail_fixturefunc(fixturefunc,
+                msg="pytest.fixture functions cannot use ``yield``. "
+                    "Instead write and return an inner function/generator "
+                    "and let the consumer call and iterate over it.")
         res = fixturefunc(**kwargs)
     return res
 

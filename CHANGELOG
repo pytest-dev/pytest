@@ -14,12 +14,18 @@ known incompatibilities:
 - the pytest_plugin_unregister hook wasn't ever properly called
   and there is no known implementation of the hook - so it got removed.
 
+- pytest.fixture-decorated functions cannot be generators (i.e. use yield) anymore.  
+  This change might be reversed in 2.4.1 if it causes unforeseen real-life issues.
+  However, you can always write and return an inner function/generator
+  and change the fixture consumer to iterate over the returned generator. 
+  This change was done in lieu of the new ``pytest.yield_fixture`` decorator, see below.
+
 new features:
 
-- experimentally introduce a new pytest.yield_fixture decorator which
-  has exactly the same parameters as pytest.fixture but expects
+- experimentally introduce a new ``pytest.yield_fixture`` decorator which
+  accepts exactly the same parameters as pytest.fixture but mandates
   a ``yield`` statement instead of a ``return statement`` from fixture functions.
-  This allows direct integration with with-context managers
+  This allows direct integration with "with-style" context managers
   in fixture functions and generally avoids registering of finalization callbacks
   in favour of treating the "after-yield" as teardown code.
   Thanks Andreas Pelme, Vladimir Keleshev, Floris Bruynooghe, Ronny Pfannschmidt
