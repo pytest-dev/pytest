@@ -80,6 +80,9 @@ new features:
 
 Bug fixes:
 
+- fix issue358 - capturing options are now parsed more properly 
+  by using a new parser.parse_known_args method.
+
 - pytest now uses argparse instead of optparse (thanks Anthon) which 
   means that "argparse" is added as a dependency if installing into python2.6
   environments or below.
