@@ -586,9 +586,9 @@ class TestDurationWithFixture:
         result = testdir.runpytest("--durations=10")
         assert result.ret == 0
 
-        result.stdout.fnmatch_lines([
-            "*durations*",
-            "* setup *test_1*",
-            "* call *test_1*",
-        ])
+        result.stdout.fnmatch_lines_random("""
+            *durations*
+            * setup *test_1*
+            * call *test_1*
+        """)
 

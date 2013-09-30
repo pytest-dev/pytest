@@ -437,7 +437,6 @@ class TestCaptureFixture:
         ])
         assert result.ret == 2
 
-    @pytest.mark.xfail("sys.version_info < (2,7)")
     @pytest.mark.issue14
     def test_capture_and_logging(self, testdir):
         p = testdir.makepyfile("""

@@ -29,6 +29,11 @@ def pytest_load_initial_conftests(early_config, parser, args, __multicall__):
         except ValueError:
             pass
     early_config.pluginmanager.add_shutdown(teardown)
+    # make sure logging does not raise exceptions if it is imported
+    def silence_logging_at_shutdown():
+        if "logging" in sys.modules:
+            sys.modules["logging"].raiseExceptions = False
+    early_config.pluginmanager.add_shutdown(silence_logging_at_shutdown)
 
     # finally trigger conftest loading but while capturing (issue93)
     capman.resumecapture()

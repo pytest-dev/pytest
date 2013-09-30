@@ -14,22 +14,23 @@ known incompatibilities:
 - the pytest_plugin_unregister hook wasn't ever properly called
   and there is no known implementation of the hook - so it got removed.
 
-- pytest.fixture-decorated functions cannot be generators (i.e. use yield) anymore.  
-  This change might be reversed in 2.4.1 if it causes unforeseen real-life issues.
-  However, you can always write and return an inner function/generator
-  and change the fixture consumer to iterate over the returned generator. 
-  This change was done in lieu of the new ``pytest.yield_fixture`` decorator, see below.
+- pytest.fixture-decorated functions cannot be generators (i.e. use
+  yield) anymore.  This change might be reversed in 2.4.1 if it causes
+  unforeseen real-life issues.  However, you can always write and return
+  an inner function/generator and change the fixture consumer to iterate
+  over the returned generator.  This change was done in lieu of the new
+  ``pytest.yield_fixture`` decorator, see below.
 
 new features:
 
-- experimentally introduce a new ``pytest.yield_fixture`` decorator which
-  accepts exactly the same parameters as pytest.fixture but mandates
-  a ``yield`` statement instead of a ``return statement`` from fixture functions.
-  This allows direct integration with "with-style" context managers
-  in fixture functions and generally avoids registering of finalization callbacks
-  in favour of treating the "after-yield" as teardown code.
-  Thanks Andreas Pelme, Vladimir Keleshev, Floris Bruynooghe, Ronny Pfannschmidt
-  and many others for discussions.
+- experimentally introduce a new ``pytest.yield_fixture`` decorator
+  which accepts exactly the same parameters as pytest.fixture but
+  mandates a ``yield`` statement instead of a ``return statement`` from
+  fixture functions.  This allows direct integration with "with-style"
+  context managers in fixture functions and generally avoids registering
+  of finalization callbacks in favour of treating the "after-yield" as
+  teardown code.  Thanks Andreas Pelme, Vladimir Keleshev, Floris
+  Bruynooghe, Ronny Pfannschmidt and many others for discussions.
 
 - allow boolean expression directly with skipif/xfail
   if a "reason" is also specified.  Rework skipping documentation
@@ -37,11 +38,12 @@ new features:
   when importing markers between modules.  Specifying conditions
   as strings will remain fully supported.
 
-- reporting: color the last line red or green depending if failures/errors occured
-  or everything passed.  thanks Christian Theunert.
+- reporting: color the last line red or green depending if
+  failures/errors occured or everything passed.  thanks Christian
+  Theunert.
 
-- make "import pdb ; pdb.set_trace()" work natively wrt capturing (no "-s" needed
-  anymore), making ``pytest.set_trace()`` a mere shortcut.
+- make "import pdb ; pdb.set_trace()" work natively wrt capturing (no
+  "-s" needed anymore), making ``pytest.set_trace()`` a mere shortcut.
 
 - fix issue181: --pdb now also works on collect errors (and 
   on internal errors) .  This was implemented by a slight internal 
@@ -59,13 +61,14 @@ new features:
   will replace the "get" function of the "requests" module with ``myfunc``.
 
 - fix issue322: tearDownClass is not run if setUpClass failed. Thanks
-  Mathieu Agopian for the initial fix.  Also make all of pytest/nose finalizer 
-  mimick the same generic behaviour: if a setupX exists and fails, 
-  don't run teardownX.  This internally introduces a new method "node.addfinalizer()"
-  helper which can only be called during the setup phase of a node.
+  Mathieu Agopian for the initial fix.  Also make all of pytest/nose
+  finalizer mimick the same generic behaviour: if a setupX exists and
+  fails, don't run teardownX.  This internally introduces a new method
+  "node.addfinalizer()" helper which can only be called during the setup
+  phase of a node.
 
-- simplify pytest.mark.parametrize() signature: allow to pass a CSV-separated string 
-  to specify argnames.  For example: 
+- simplify pytest.mark.parametrize() signature: allow to pass a
+  CSV-separated string to specify argnames.  For example: 
   ``pytest.mark.parametrize("input,expected",  [(1,2), (2,3)])``
   works as well as the previous:
   ``pytest.mark.parametrize(("input", "expected"), ...)``.
@@ -75,11 +78,12 @@ new features:
 - integrate tab-completion on options through use of "argcomplete".
   Thanks Anthon van der Neut for the PR.
 
-- change option names to be hyphen-separated long options but keep the old spelling
-  backward compatible.  py.test -h will only show the hyphenated version,
-  for example "--collect-only" but "--collectonly" will remain valid as well
-  (for backward-compat reasons).  Many thanks to Anthon van der Neut for
-  the implementation and to Hynek Schlawack for pushing us.
+- change option names to be hyphen-separated long options but keep the
+  old spelling backward compatible.  py.test -h will only show the
+  hyphenated version, for example "--collect-only" but "--collectonly"
+  will remain valid as well (for backward-compat reasons).  Many thanks to
+  Anthon van der Neut for the implementation and to Hynek Schlawack for
+  pushing us.
 
 - fix issue 308 - allow to mark/xfail/skip individual parameter sets
   when parametrizing.  Thanks Brianna Laugher.
@@ -140,7 +144,6 @@ Bug fixes:
 
 - fix issue 306 - cleanup of -k/-m options to only match markers/test
   names/keywords respectively.  Thanks Wouter van Ackooy.
-
 
 - improved doctest counting for doctests in python modules -- 
   files without any doctest items will not show up anymore
