@@ -320,3 +320,18 @@ def test_cmdline_processargs_simple(testdir):
 def test_toolongargs_issue224(testdir):
     result = testdir.runpytest("-m", "hello" * 500)
     assert result.ret == 0
+
+def test_notify_exception(testdir, capfd):
+    config = testdir.parseconfig()
+    excinfo = pytest.raises(ValueError, "raise ValueError(1)")
+    config.notify_exception(excinfo)
+    out, err = capfd.readouterr()
+    assert "ValueError" in err
+    class A:
+        def pytest_internalerror(self, excrepr):
+            return True
+    config.pluginmanager.register(A())
+    config.notify_exception(excinfo)
+    out, err = capfd.readouterr()
+    assert not err
+

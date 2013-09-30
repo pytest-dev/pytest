@@ -2,6 +2,87 @@
 
 import py
 import sys, os
+from _pytest import hookspec # the extension point definitions
+from _pytest.core import PluginManager
+
+# pytest startup
+
+def main(args=None, plugins=None):
+    """ return exit code, after performing an in-process test run.
+
+    :arg args: list of command line arguments.
+
+    :arg plugins: list of plugin objects to be auto-registered during
+                  initialization.
+    """
+    config = _prepareconfig(args, plugins)
+    exitstatus = config.hook.pytest_cmdline_main(config=config)
+    return exitstatus
+
+class cmdline:  # compatibility namespace
+    main = staticmethod(main)
+
+class UsageError(Exception):
+    """ error in py.test usage or invocation"""
+
+_preinit = []
+
+default_plugins = (
+     "mark main terminal runner python pdb unittest capture skipping "
+     "tmpdir monkeypatch recwarn pastebin helpconfig nose assertion genscript "
+     "junitxml resultlog doctest").split()
+
+def _preloadplugins():
+    assert not _preinit
+    _preinit.append(get_plugin_manager())
+
+def get_plugin_manager():
+    if _preinit:
+        return _preinit.pop(0)
+    # subsequent calls to main will create a fresh instance
+    pluginmanager = PytestPluginManager()
+    pluginmanager.config = config = Config(pluginmanager) # XXX attr needed?
+    for spec in default_plugins:
+        pluginmanager.import_plugin(spec)
+    return pluginmanager
+
+def _prepareconfig(args=None, plugins=None):
+    if args is None:
+        args = sys.argv[1:]
+    elif isinstance(args, py.path.local):
+        args = [str(args)]
+    elif not isinstance(args, (tuple, list)):
+        if not isinstance(args, str):
+            raise ValueError("not a string or argument list: %r" % (args,))
+        args = py.std.shlex.split(args)
+    pluginmanager = get_plugin_manager()
+    if plugins:
+        for plugin in plugins:
+            pluginmanager.register(plugin)
+    return pluginmanager.hook.pytest_cmdline_parse(
+            pluginmanager=pluginmanager, args=args)
+
+class PytestPluginManager(PluginManager):
+    def __init__(self, hookspecs=[hookspec]):
+        super(PytestPluginManager, self).__init__(hookspecs=hookspecs)
+        self.register(self)
+        if os.environ.get('PYTEST_DEBUG'):
+            err = sys.stderr
+            encoding = getattr(err, 'encoding', 'utf8')
+            try:
+                err = py.io.dupfile(err, encoding=encoding)
+            except Exception:
+                pass
+            self.trace.root.setwriter(err.write)
+
+    def pytest_configure(self, config):
+        config.addinivalue_line("markers",
+            "tryfirst: mark a hook implementation function such that the "
+            "plugin machinery will try to call it first/as early as possible.")
+        config.addinivalue_line("markers",
+            "trylast: mark a hook implementation function such that the "
+            "plugin machinery will try to call it last/as late as possible.")
+
 
 class Parser:
     """ Parser for command line arguments and ini-file values.  """
@@ -494,10 +575,15 @@ class Config(object):
         self._opt2dest = {}
         self._cleanup = []
         self.pluginmanager.register(self, "pytestconfig")
+        self.pluginmanager.set_register_callback(self._register_plugin)
         self._configured = False
 
-    def pytest_plugin_registered(self, plugin):
+    def _register_plugin(self, plugin, name):
         call_plugin = self.pluginmanager.call_plugin
+        call_plugin(plugin, "pytest_addhooks",
+                    {'pluginmanager': self.pluginmanager})
+        self.hook.pytest_plugin_registered(plugin=plugin,
+                                           manager=self.pluginmanager)
         dic = call_plugin(plugin, "pytest_namespace", {}) or {}
         if dic:
             import pytest
@@ -527,10 +613,26 @@ class Config(object):
             fin = config._cleanup.pop()
             fin()
 
+    def notify_exception(self, excinfo, option=None):
+        if option and option.fulltrace:
+            style = "long"
+        else:
+            style = "native"
+        excrepr = excinfo.getrepr(funcargs=True,
+            showlocals=getattr(option, 'showlocals', False),
+            style=style,
+        )
+        res = self.hook.pytest_internalerror(excrepr=excrepr,
+                                             excinfo=excinfo)
+        if not py.builtin.any(res):
+            for line in str(excrepr).split("\n"):
+                sys.stderr.write("INTERNALERROR> %s\n" %line)
+                sys.stderr.flush()
+
+
     @classmethod
     def fromdictargs(cls, option_dict, args):
         """ constructor useable for subprocesses. """
-        from _pytest.core import get_plugin_manager
         pluginmanager = get_plugin_manager()
         config = pluginmanager.config
         # XXX slightly crude way to initialize capturing

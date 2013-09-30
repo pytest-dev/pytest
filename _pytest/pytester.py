@@ -375,8 +375,8 @@ class TmpTestdir:
                 break
         else:
             args.append("--basetemp=%s" % self.tmpdir.dirpath('basetemp'))
-        import _pytest.core
-        config = _pytest.core._prepareconfig(args, self.plugins)
+        import _pytest.config
+        config = _pytest.config._prepareconfig(args, self.plugins)
         # we don't know what the test will do with this half-setup config
         # object and thus we make sure it gets unconfigured properly in any
         # case (otherwise capturing could still be active, for example)

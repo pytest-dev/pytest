@@ -1,6 +1,7 @@
 import pytest, py, os
 from _pytest.core import PluginManager
 from _pytest.core import MultiCall, HookRelay, varnames
+from _pytest.config import get_plugin_manager
 
 
 class TestBootstrapping:
@@ -149,7 +150,7 @@ class TestBootstrapping:
         mod = py.std.types.ModuleType("x")
         mod.pytest_plugins = "pytest_a"
         aplugin = testdir.makepyfile(pytest_a="#")
-        pluginmanager = PluginManager()
+        pluginmanager = get_plugin_manager()
         reprec = testdir.getreportrecorder(pluginmanager)
         #syspath.prepend(aplugin.dirpath())
         py.std.sys.path.insert(0, str(aplugin.dirpath()))
@@ -224,36 +225,21 @@ class TestBootstrapping:
         assert pp.isregistered(mod)
 
     def test_register_mismatch_method(self):
-        pp = PluginManager(load=True)
+        pp = get_plugin_manager()
         class hello:
             def pytest_gurgel(self):
                 pass
         pytest.raises(Exception, "pp.register(hello())")
 
     def test_register_mismatch_arg(self):
-        pp = PluginManager(load=True)
+        pp = get_plugin_manager()
         class hello:
             def pytest_configure(self, asd):
                 pass
         excinfo = pytest.raises(Exception, "pp.register(hello())")
 
-
-    def test_notify_exception(self, capfd):
-        pp = PluginManager()
-        excinfo = pytest.raises(ValueError, "raise ValueError(1)")
-        pp.notify_exception(excinfo)
-        out, err = capfd.readouterr()
-        assert "ValueError" in err
-        class A:
-            def pytest_internalerror(self, excrepr):
-                return True
-        pp.register(A())
-        pp.notify_exception(excinfo)
-        out, err = capfd.readouterr()
-        assert not err
-
     def test_register(self):
-        pm = PluginManager(load=False)
+        pm = get_plugin_manager()
         class MyPlugin:
             pass
         my = MyPlugin()
@@ -261,13 +247,13 @@ class TestBootstrapping:
         assert pm.getplugins()
         my2 = MyPlugin()
         pm.register(my2)
-        assert pm.getplugins()[2:] == [my, my2]
+        assert pm.getplugins()[-2:] == [my, my2]
 
         assert pm.isregistered(my)
         assert pm.isregistered(my2)
         pm.unregister(my)
         assert not pm.isregistered(my)
-        assert pm.getplugins()[2:] == [my2]
+        assert pm.getplugins()[-1:] == [my2]
 
     def test_listattr(self):
         plugins = PluginManager()
@@ -284,7 +270,7 @@ class TestBootstrapping:
         assert l == [41, 42, 43]
 
     def test_hook_tracing(self):
-        pm = PluginManager()
+        pm = get_plugin_manager()
         saveindent = []
         class api1:
             x = 41
@@ -319,7 +305,7 @@ class TestPytestPluginInteractions:
             def pytest_myhook(xyz):
                 return xyz + 1
         """)
-        config = PluginManager(load=True).config
+        config = get_plugin_manager().config
         config._conftest.importconftest(conf)
         print(config.pluginmanager.getplugins())
         res = config.hook.pytest_myhook(xyz=10)

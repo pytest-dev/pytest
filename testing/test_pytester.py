@@ -104,7 +104,7 @@ def test_functional(testdir, linecomp):
         def test_func(_pytest):
             class ApiClass:
                 def pytest_xyz(self, arg):  "x"
-            hook = HookRelay([ApiClass], PluginManager(load=False))
+            hook = HookRelay([ApiClass], PluginManager())
             rec = _pytest.gethookrecorder(hook)
             class Plugin:
                 def pytest_xyz(self, arg):

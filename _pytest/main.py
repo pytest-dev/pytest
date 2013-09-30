@@ -91,7 +91,7 @@ def wrap_session(config, doit):
             session.exitstatus = EXIT_INTERRUPTED
         except:
             excinfo = py.code.ExceptionInfo()
-            config.pluginmanager.notify_exception(excinfo, config.option)
+            config.notify_exception(excinfo, config.option)
             session.exitstatus = EXIT_INTERNALERROR
             if excinfo.errisinstance(SystemExit):
                 sys.stderr.write("mainloop: caught Spurious SystemExit!\n")
