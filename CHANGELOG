@@ -3,6 +3,11 @@ Changes between 2.4.0 and X
 
 - fix issue360: When using parser.addoption() unicode arguments to the
   "type" keyword should also be converted to the respective types.
+  thanks Floris Bruynooghe.
+
+- fix issue361: fix filename completion when using argcomplete 
+  thanks Anthon van der Neuth.
+  
 
 Changes between 2.3.5 and 2.4
 -----------------------------------
