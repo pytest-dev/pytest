@@ -3,7 +3,7 @@ from setuptools import setup, Command
 
 long_description = open("README.rst").read()
 def main():
-    install_requires = ["py>=1.4.15"]
+    install_requires = ["py>=1.4.16"]
     if sys.version_info < (2,7):
         install_requires.append("argparse")
 
@@ -11,7 +11,7 @@ def main():
         name='pytest',
         description='py.test: simple powerful testing with Python',
         long_description = long_description,
-        version='2.4.0.dev14',
+        version='2.4.0',
         url='http://pytest.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
