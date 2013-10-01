@@ -34,6 +34,12 @@ both styles, moving incrementally from classic to new style, as you
 prefer.  You can also start out from existing :ref:`unittest.TestCase
 style <unittest.TestCase>` or :ref:`nose based <nosestyle>` projects.
 
+.. note::
+
+    pytest-2.4 introduced an additional experimental
+    :ref:`yield fixture mechanism <yieldfixture>` for easier context manager
+    integration and more linear writing of teardown code.
+
 .. _`funcargs`:
 .. _`funcarg mechanism`:
 .. _`fixture function`:
@@ -275,9 +281,6 @@ occur around each single test.  In either case the test
 module itself does not need to change or know about these details
 of fixture setup.
 
-Note that pytest-2.4 introduced an experimental alternative
-:ref:`yield fixture mechanism <yieldfixture>` for easier context manager
-integration and more linear writing of teardown code.
 
 .. _`request-context`:
 

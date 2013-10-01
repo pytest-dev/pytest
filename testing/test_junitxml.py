@@ -1,4 +1,4 @@
-
+import pytest
 from xml.dom import minidom
 import py, sys, os
 
@@ -427,16 +427,16 @@ def test_invalid_xml_escape():
 def test_logxml_path_expansion(tmpdir, monkeypatch):
     from _pytest.junitxml import LogXML
 
-    home_tilde = os.path.normpath(os.path.expanduser('~/test.xml'))
+    home_tilde = py.path.local(os.path.expanduser('~')).join('test.xml')
 
-    xml_tilde = LogXML('~/test.xml', None)
+    xml_tilde = LogXML('~%stest.xml' % tmpdir.sep, None)
     assert xml_tilde.logfile == home_tilde
 
     # this is here for when $HOME is not set correct
     monkeypatch.setenv("HOME", tmpdir)
     home_var = os.path.normpath(os.path.expandvars('$HOME/test.xml'))
 
-    xml_var = LogXML('$HOME/test.xml', None)
+    xml_var = LogXML('$HOME%stest.xml' % tmpdir.sep, None)
     assert xml_var.logfile == home_var
 
 def test_logxml_changingdir(testdir):

@@ -3,9 +3,10 @@ Some Issues and Questions
 
 .. note::
 
-    If you don't find an answer here, you may checkout 
+    This FAQ is here only mostly for historic reasons.  Checkout
     `pytest Q&A at Stackoverflow <http://stackoverflow.com/search?q=pytest>`_ 
-    or other :ref:`contact channels` to get help.
+    for many questions and answers related to pytest and/or use
+    :ref:`contact channels` to get help.
 
 On naming, nosetests, licensing and magic
 ------------------------------------------------
@@ -94,12 +95,12 @@ but since many people have gotten used to the old name and there
 is another tool named "pytest" we just decided to stick with
 ``py.test`` for now.
 
-Function arguments, parametrized tests and setup
+pytest fixtures, parametrized tests
 -------------------------------------------------------
 
 .. _funcargs: funcargs.html
 
-Is using funcarg- versus xUnit setup a style question?
+Is using pytest fixtures versus xUnit setup a style question?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 For simple applications and for people experienced with nose_ or
@@ -117,20 +118,6 @@ in a managed class/module/function scope.
 
 .. _`why pytest_pyfuncarg__ methods?`:
 
-Why the ``pytest_funcarg__*`` name for funcarg factories?
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-We like `Convention over Configuration`_ and didn't see much point
-in allowing a more flexible or abstract mechanism.  Moreover,
-it is nice to be able to search for ``pytest_funcarg__MYARG`` in
-source code and safely find all factory functions for
-the ``MYARG`` function argument.
-
-.. note::
-
-    With pytest-2.3 you can use the :ref:`@pytest.fixture` decorator
-    to mark a function as a fixture function.  
-
 .. _`Convention over Configuration`: http://en.wikipedia.org/wiki/Convention_over_Configuration
 
 Can I yield multiple values from a fixture function function?
@@ -139,15 +126,15 @@ Can I yield multiple values from a fixture function function?
 There are two conceptual reasons why yielding from a factory function
 is not possible:
 
-* Calling factories for obtaining test function arguments
-  is part of setting up and running a test.  At that
-  point it is not possible to add new test calls to
-  the test collection anymore.
-
 * If multiple factories yielded values there would
   be no natural place to determine the combination
   policy - in real-world examples some combinations
   often should not run.
+
+* Calling factories for obtaining test function arguments
+  is part of setting up and running a test.  At that
+  point it is not possible to add new test calls to
+  the test collection anymore.
 
 However, with pytest-2.3 you can use the :ref:`@pytest.fixture` decorator
 and specify ``params`` so that all tests depending on the factory-created

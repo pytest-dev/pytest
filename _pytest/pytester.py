@@ -661,6 +661,12 @@ class LineMatcher:
             else:
                 raise ValueError("line %r not found in output" % line)
 
+    def get_lines_after(self, fnline):
+        for i, line in enumerate(self.lines):
+            if fnline == line or fnmatch(line, fnline):
+                return self.lines[i+1:]
+        raise ValueError("line %r not found in output" % fnline)
+
     def fnmatch_lines(self, lines2):
         def show(arg1, arg2):
             py.builtin.print_(arg1, arg2, file=py.std.sys.stderr)

@@ -504,7 +504,7 @@ class TestInvocationVariants:
 class TestDurations:
     source = """
         import time
-        frag = 0.02
+        frag = 0.002
         def test_something():
             pass
         def test_2():
@@ -519,7 +519,7 @@ class TestDurations:
         testdir.makepyfile(self.source)
         result = testdir.runpytest("--durations=10")
         assert result.ret == 0
-        result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines_random([
             "*durations*",
             "*call*test_3*",
             "*call*test_2*",
@@ -530,12 +530,8 @@ class TestDurations:
         testdir.makepyfile(self.source)
         result = testdir.runpytest("--durations=2")
         assert result.ret == 0
-        result.stdout.fnmatch_lines([
-            "*durations*",
-            "*call*test_3*",
-            "*call*test_2*",
-        ])
-        assert "test_1" not in result.stdout.str()
+        lines = result.stdout.get_lines_after("*slowest*durations*")
+        assert "4 passed" in lines[2]
 
     def test_calls_showall(self, testdir):
         testdir.makepyfile(self.source)
@@ -573,7 +569,7 @@ class TestDurations:
 class TestDurationWithFixture:
     source = """
         import time
-        frag = 0.01
+        frag = 0.001
         def setup_function(func):
             time.sleep(frag * 3)
         def test_1():
