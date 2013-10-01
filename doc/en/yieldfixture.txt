@@ -8,7 +8,7 @@ Fixture functions using "yield" / context manager integration
 
 .. regendoc:wipe
 
-pytest-2.4 allows fixture functions to seemlessly use a ``yield`` instead 
+pytest-2.4 allows fixture functions to seamlessly use a ``yield`` instead 
 of a ``return`` statement to provide a fixture value while otherwise
 fully supporting all other fixture features.  
 
@@ -92,7 +92,7 @@ In general, the advantages of the using a ``yield`` fixture syntax are:
 
 However, there are also limitations or foreseeable irritations:
 
-- usually ``yield`` is typically used for producing multiple values.
+- usually ``yield`` is used for producing multiple values.
   But fixture functions can only yield exactly one value.
   Yielding a second fixture value will get you an error.
   It's possible we can evolve pytest to allow for producing
