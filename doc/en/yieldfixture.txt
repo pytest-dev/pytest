@@ -119,13 +119,6 @@ However, there are also limitations or foreseeable irritations:
   Others can start experimenting with writing yield-style fixtures
   and possibly help evolving them further.
 
-Some developers also expressed their preference for
-rather introduce a new ``@pytest.yieldfixture`` decorator
-instead of a keyword argument, or for assuming the above 
-yield-semantics automatically by introspecting if a fixture 
-function is a generator.  Depending on more experiences and 
-feedback during the 2.4 cycle, we revisit theses issues.
-
 If you want to feedback or participate in the ongoing
 discussion, please join our :ref:`contact channels`.
 you are most welcome.
