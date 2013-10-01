@@ -113,6 +113,17 @@ class TestConfigAPI:
             assert config.getoption(x) == "this"
         pytest.raises(ValueError, "config.getoption('qweqwe')")
 
+    @pytest.mark.skipif('sys.version_info[:2] not in [(2, 6), (2, 7)]')
+    def test_config_getoption_unicode(self, testdir):
+        testdir.makeconftest("""
+            from __future__ import unicode_literals
+
+            def pytest_addoption(parser):
+                parser.addoption('--hello', type='string')
+        """)
+        config = testdir.parseconfig('--hello=this')
+        assert config.getoption('hello') == 'this'
+
     def test_config_getvalueorskip(self, testdir):
         config = testdir.parseconfig()
         pytest.raises(pytest.skip.Exception,

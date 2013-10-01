@@ -238,7 +238,7 @@ class Argument:
             pass
         else:
             # this might raise a keyerror as well, don't want to catch that
-            if isinstance(typ, str):
+            if isinstance(typ, py.builtin._basestring):
                 if typ == 'choice':
                     if self.TYPE_WARN:
                         py.std.warnings.warn(
