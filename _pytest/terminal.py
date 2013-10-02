@@ -33,20 +33,23 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     config.option.verbose -= config.option.quiet
+
     # we try hard to make printing resilient against
-    # later changes on FD level. (unless capturing is turned off)
-    stdout = py.std.sys.stdout
-    capture = config.option.capture != "no"
-    if capture and hasattr(os, 'dup') and hasattr(stdout, 'fileno'):
+    # later changes on FD level. (unless capturing is off/sys)
+    stdout = sys.stdout
+    if config.option.capture == "fd" and hasattr(os, "dup"):
         try:
             newstdout = py.io.dupfile(stdout, buffering=1,
                                       encoding=stdout.encoding)
         except ValueError:
             pass
         else:
-            config._cleanup.append(lambda: newstdout.close())
             assert stdout.encoding == newstdout.encoding
             stdout = newstdout
+            #we don't close on shutdown because this can
+            #cause logging to fail on a second close
+            #(not really clear to me how it happens exactly, though)
+            #config.pluginmanager.add_shutdown(fin)
 
     reporter = TerminalReporter(config, stdout)
     config.pluginmanager.register(reporter, 'terminalreporter')

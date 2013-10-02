@@ -29,7 +29,7 @@ def pytest_load_initial_conftests(early_config, parser, args, __multicall__):
         except ValueError:
             pass
     early_config.pluginmanager.add_shutdown(teardown)
-    # make sure logging does not raise exceptions if it is imported
+    # make sure logging does not raise exceptions at the end
     def silence_logging_at_shutdown():
         if "logging" in sys.modules:
             sys.modules["logging"].raiseExceptions = False
