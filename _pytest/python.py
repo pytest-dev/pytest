@@ -710,8 +710,8 @@ class Metafunc(FuncargnamesCompatAttr):
 
         if not isinstance(argnames, (tuple, list)):
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
-        if len(argnames) == 1:
-            argvalues = [(val,) for val in argvalues]
+            if len(argnames) == 1:
+                argvalues = [(val,) for val in argvalues]
         if not argvalues:
             argvalues = [(_notexists,) * len(argnames)]
 

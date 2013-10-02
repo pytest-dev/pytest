@@ -316,6 +316,16 @@ class TestFunction:
         reprec = testdir.inline_run()
         reprec.assertoutcome(skipped=1)
 
+    def test_single_tuple_unwraps_values(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.parametrize(('arg',), [(1,)])
+            def test_function(arg):
+                assert arg == 1
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
     def test_issue213_parametrize_value_no_equal(self, testdir):
         testdir.makepyfile("""
             import pytest

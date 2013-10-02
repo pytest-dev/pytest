@@ -8,6 +8,10 @@ Changes between 2.4.0 and 2.4.1
 - fix dotted filename completion when using argcomplete 
   thanks Anthon van der Neuth. (fixes issue361)
 
+- fix regression when a 1-tuple ("arg",) is used for specifying
+  parametrization (the values of the parametrization were passed
+  nested in a tuple).  Thanks Donald Stufft.
+
 - merge doc typo fixes, thanks Andy Dirnberger
 
 Changes between 2.3.5 and 2.4
