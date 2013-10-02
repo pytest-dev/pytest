@@ -1,3 +1,6 @@
+
+Changelog: http://pytest.org/latest/changelog.html
+
 The ``py.test`` testing tool makes it easy to write small tests, yet
 scales to support complex functional testing.  It provides
 
