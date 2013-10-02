@@ -4,7 +4,6 @@ import py, pytest
 import sys, os
 import codecs
 import re
-import inspect
 import time
 from fnmatch import fnmatch
 from _pytest.main import Session, EXIT_OK

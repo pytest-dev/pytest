@@ -1,7 +1,6 @@
 """ run test suites written for nose. """
 
 import pytest, py
-import inspect
 import sys
 from _pytest import unittest
 

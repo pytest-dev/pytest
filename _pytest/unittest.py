@@ -1,6 +1,6 @@
 """ discovery and running of std-library "unittest" style tests. """
 import pytest, py
-import sys, pdb
+import sys
 
 # for transfering markers
 from _pytest.python import transfer_markers

@@ -1,7 +1,7 @@
 """
 pytest PluginManager, basic initialization and tracing.
 """
-import sys, os
+import sys
 import inspect
 import py
 

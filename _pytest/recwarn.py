@@ -1,14 +1,14 @@
 """ recording warnings during test function execution. """
 
 import py
-import sys, os
+import sys
 
 def pytest_funcarg__recwarn(request):
     """Return a WarningsRecorder instance that provides these methods:
 
     * ``pop(category=None)``: return last warning matching the category.
     * ``clear()``: clear list of warnings
-   
+
     See http://docs.python.org/library/warnings.html for information
     on warning categories.
     """

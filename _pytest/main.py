@@ -2,14 +2,12 @@
 
 import py
 import pytest, _pytest
-import inspect
 import os, sys, imp
 try:
     from collections import MutableMapping as MappingMixin
 except ImportError:
     from UserDict import DictMixin as MappingMixin
 
-from _pytest.mark import MarkInfo
 from _pytest.runner import collect_one_node, Skipped
 
 tracebackcutdir = py.path.local(_pytest.__file__).dirpath()

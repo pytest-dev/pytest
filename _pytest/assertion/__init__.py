@@ -3,7 +3,6 @@ support for presenting detailed information in failing assertions.
 """
 import py
 import sys
-import pytest
 from _pytest.monkeypatch import monkeypatch
 from _pytest.assertion import util
 
@@ -19,7 +18,7 @@ def pytest_addoption(parser):
 to provide assert expression information. """)
     group.addoption('--no-assert', action="store_true", default=False,
         dest="noassert", help="DEPRECATED equivalent to --assert=plain")
-    group.addoption('--nomagic', '--no-magic', action="store_true", 
+    group.addoption('--nomagic', '--no-magic', action="store_true",
         default=False, help="DEPRECATED equivalent to --assert=plain")
 
 class AssertionState:
