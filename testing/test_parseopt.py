@@ -1,4 +1,6 @@
 from __future__ import with_statement
+import sys
+import os
 import py, pytest
 from _pytest import config as parseopt
 from textwrap import dedent
@@ -250,14 +252,16 @@ def test_addoption_parser_epilog(testdir):
 def test_argcomplete(testdir, monkeypatch):
     if not py.path.local.sysfind('bash'):
         pytest.skip("bash not available")
-    import os
     script = str(testdir.tmpdir.join("test_argcomplete"))
+    pytest_bin = sys.argv[0]
+    if "py.test" not in os.path.basename(pytest_bin):
+        pytest.skip("need to be run with py.test executable, not %s" %(pytest_bin,))
+
     with open(str(script), 'w') as fp:
         # redirect output from argcomplete to stdin and stderr is not trivial
         # http://stackoverflow.com/q/12589419/1307905
         # so we use bash
-        fp.write('COMP_WORDBREAKS="$COMP_WORDBREAKS" $(which py.test) '
-                 '8>&1 9>&2')
+        fp.write('COMP_WORDBREAKS="$COMP_WORDBREAKS" %s 8>&1 9>&2' % pytest_bin)
     # alternative would be exteneded Testdir.{run(),_run(),popen()} to be able
     # to handle a keyword argument env that replaces os.environ in popen or
     # extends the copy, advantage: could not forget to restore
