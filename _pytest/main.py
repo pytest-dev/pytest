@@ -170,30 +170,39 @@ def compatproperty(name):
 
 class NodeKeywords(MappingMixin):
     def __init__(self, node):
-        parent = node.parent
-        bases = parent and (parent.keywords._markers,) or ()
-        self._markers = type("dynmarker", bases, {node.name: True})
+        self.node = node
+        self.parent = node.parent
+        self._markers = {node.name: True}
 
     def __getitem__(self, key):
         try:
-            return getattr(self._markers, key)
-        except AttributeError:
-            raise KeyError(key)
+            return self._markers[key]
+        except KeyError:
+            if self.parent is None:
+                raise
+            return self.parent.keywords[key]
 
     def __setitem__(self, key, value):
-        setattr(self._markers, key, value)
+        self._markers[key] = value
 
     def __delitem__(self, key):
-        delattr(self._markers, key)
+        raise ValueError("cannot delete key in keywords dict")
 
     def __iter__(self):
-        return iter(self.keys())
+        seen = set(self._markers)
+        if self.parent is not None:
+            seen.update(self.parent.keywords)
+        return iter(seen)
 
     def __len__(self):
-        return len(self.keys())
+        return len(self.__iter__())
 
     def keys(self):
-        return dir(self._markers)
+        return list(self)
+
+    def __repr__(self):
+        return "<NodeKeywords for node %s>" % (self.node, )
+
 
 class Node(object):
     """ base class for Collector and Item the test collection tree.

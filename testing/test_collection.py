@@ -566,4 +566,25 @@ def test_matchnodes_two_collections_same_file(testdir):
     ])
 
 
+class TestNodekeywords:
+    def test_no_under(self, testdir):
+        modcol = testdir.getmodulecol("""
+            def test_pass(): pass
+            def test_fail(): assert 0
+        """)
+        l = list(modcol.keywords)
+        assert modcol.name in l
+        for x in l:
+            assert not x.startswith("_")
+        assert modcol.name in repr(modcol.keywords)
 
+    def test_issue345(self, testdir):
+        testdir.makepyfile("""
+            def test_should_not_be_selected():
+                assert False, 'I should not have been selected to run'
+
+            def test___repr__():
+                pass
+        """)
+        reprec = testdir.inline_run("-k repr")
+        reprec.assertoutcome(passed=1, failed=0)

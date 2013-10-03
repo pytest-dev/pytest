@@ -1,6 +1,10 @@
 Changes between 2.4.1 and 2.4.2
 -----------------------------------
 
+- fix "-k" matching of tests where "repr" and "attr" and other names would
+  cause wrong matches because of an internal implementation quirk
+  (don't ask) which is now properly implemented. fixes issue345.
+
 - avoid "IOError: Bad Filedescriptor" on pytest shutdown by not closing
   the internal dupped stdout (fix is slightly hand-wavy but work).
 
