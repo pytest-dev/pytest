@@ -704,14 +704,3 @@ def test_terminal_summary(testdir):
         *==== hello ====*
         world
     """)
-
-@pytest.mark.xfail("not hasattr(os, 'dup')")
-def test_fd_fixing(testdir):
-    testdir.makepyfile("""
-        import os
-        os.close(1)
-        def test_fdclose():
-            os.close(2)
-    """)
-    result = testdir.runpytest("-s")
-    result.stdout.fnmatch_lines("*1 pass*")

@@ -25,6 +25,10 @@ Changes between 2.4.1 and 2.4.2
   docs.
 
 
+- remove attempt to "dup" stdout at startup.  
+  the normal capturing should catch enough possibilities
+  of tests messing up standard FDs. 
+
 Changes between 2.4.0 and 2.4.1
 -----------------------------------
 
