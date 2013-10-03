@@ -1,12 +1,15 @@
 Changes between 2.4.1 and 2.4.2
 -----------------------------------
 
+- on Windows require colorama and a newer py lib so that py.io.TerminalWriter()
+  now uses colorama instead of its own ctypes hacks. (fixes issue365)
+
 - fix "-k" matching of tests where "repr" and "attr" and other names would
   cause wrong matches because of an internal implementation quirk
   (don't ask) which is now properly implemented. fixes issue345.
 
 - avoid "IOError: Bad Filedescriptor" on pytest shutdown by not closing
-  the internal dupped stdout (fix is slightly hand-wavy but work).
+  the internal dupped stdout (fix is slightly hand-wavy but works).
 
 - avoid tmpdir fixture to create too long filenames especially
   when parametrization is used (issue354)
@@ -20,6 +23,7 @@ Changes between 2.4.1 and 2.4.2
   like pytest-pep8 and pytest-flakes to avoid the messy
   details of the node.keywords  pseudo-dicts.  Adapated
   docs.
+
 
 Changes between 2.4.0 and 2.4.1
 -----------------------------------

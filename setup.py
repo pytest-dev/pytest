@@ -3,15 +3,17 @@ from setuptools import setup, Command
 
 long_description = open("README.rst").read()
 def main():
-    install_requires = ["py>=1.4.16"]
+    install_requires = ["py>=1.4.17.dev2"]
     if sys.version_info < (2,7):
         install_requires.append("argparse")
+    if sys.platform == "win32":
+        install_requires.append("colorama")
 
     setup(
         name='pytest',
         description='py.test: simple powerful testing with Python',
         long_description = long_description,
-        version='2.4.2.dev1',
+        version='2.4.2',
         url='http://pytest.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
