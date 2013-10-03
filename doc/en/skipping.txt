@@ -158,14 +158,14 @@ Running it with the report-on-xfail option gives this output::
 
     example $ py.test -rx xfail_demo.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.5
+    platform linux2 -- Python 2.7.3 -- pytest-2.4.2
     collected 6 items
-
+    
     xfail_demo.py xxxxxx
     ========================= short test summary info ==========================
     XFAIL xfail_demo.py::test_hello
     XFAIL xfail_demo.py::test_hello2
-      reason: [NOTRUN]
+      reason: [NOTRUN] 
     XFAIL xfail_demo.py::test_hello3
       condition: hasattr(os, 'sep')
     XFAIL xfail_demo.py::test_hello4
@@ -174,7 +174,7 @@ Running it with the report-on-xfail option gives this output::
       condition: pytest.__version__[0] != "17"
     XFAIL xfail_demo.py::test_hello6
       reason: reason
-
+    
     ======================== 6 xfailed in 0.05 seconds =========================
 
 .. _`skip/xfail with parametrize`:

@@ -8,9 +8,6 @@ Changes between 2.4.1 and 2.4.2
   cause wrong matches because of an internal implementation quirk
   (don't ask) which is now properly implemented. fixes issue345.
 
-- avoid "IOError: Bad Filedescriptor" on pytest shutdown by not closing
-  the internal dupped stdout (fix is slightly hand-wavy but works).
-
 - avoid tmpdir fixture to create too long filenames especially
   when parametrization is used (issue354)
 
@@ -25,7 +22,7 @@ Changes between 2.4.1 and 2.4.2
   docs.
 
 
-- remove attempt to "dup" stdout at startup.  
+- remove attempt to "dup" stdout at startup as it's icky.
   the normal capturing should catch enough possibilities
   of tests messing up standard FDs. 
 

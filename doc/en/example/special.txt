@@ -61,12 +61,13 @@ will be called ahead of running any tests::
 If you run this without output capturing::
 
     $ py.test -q -s test_module.py 
-    ....
     callattr_ahead_of_alltests called
     callme called!
     callme other called
     SomeTest callme called
     test_method1 called
-    test_method1 called
-    test other
-    test_unit1 method called
+    .test_method1 called
+    .test other
+    .test_unit1 method called
+    .
+    4 passed in 0.02 seconds

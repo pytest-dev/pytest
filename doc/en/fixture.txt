@@ -76,8 +76,7 @@ marked ``smtp`` fixture function.  Running the test looks like this::
 
     $ py.test test_smtpsimple.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.4.0.dev12
-    plugins: xdist, pep8, cov, cache, capturelog, instafail
+    platform linux2 -- Python 2.7.3 -- pytest-2.4.2
     collected 1 items
     
     test_smtpsimple.py F
@@ -85,7 +84,7 @@ marked ``smtp`` fixture function.  Running the test looks like this::
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x22530e0>
+    smtp = <smtplib.SMTP instance at 0x2bb9d88>
     
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
@@ -95,7 +94,7 @@ marked ``smtp`` fixture function.  Running the test looks like this::
     E       assert 0
     
     test_smtpsimple.py:12: AssertionError
-    ========================= 1 failed in 0.17 seconds =========================
+    ========================= 1 failed in 0.18 seconds =========================
 
 In the failure traceback we see that the test function was called with a
 ``smtp`` argument, the ``smtplib.SMTP()`` instance created by the fixture
@@ -195,8 +194,7 @@ inspect what is going on and can now run the tests::
 
     $ py.test test_module.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.4.0.dev12
-    plugins: xdist, pep8, cov, cache, capturelog, instafail
+    platform linux2 -- Python 2.7.3 -- pytest-2.4.2
     collected 2 items
     
     test_module.py FF
@@ -204,7 +202,7 @@ inspect what is going on and can now run the tests::
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x165fa28>
+    smtp = <smtplib.SMTP instance at 0x18f2fc8>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -216,7 +214,7 @@ inspect what is going on and can now run the tests::
     test_module.py:6: AssertionError
     ________________________________ test_noop _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x165fa28>
+    smtp = <smtplib.SMTP instance at 0x18f2fc8>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -225,7 +223,7 @@ inspect what is going on and can now run the tests::
     E       assert 0
     
     test_module.py:11: AssertionError
-    ========================= 2 failed in 0.18 seconds =========================
+    ========================= 2 failed in 0.16 seconds =========================
 
 You see the two ``assert 0`` failing and more importantly you can also see 
 that the same (module-scoped) ``smtp`` object was passed into the two 
@@ -271,8 +269,9 @@ the fixture in the module has finished execution.
 Let's execute it::
 
     $ py.test -s -q --tb=no
-    FF
-    2 failed in 0.20 seconds
+    FFteardown smtp
+    
+    2 failed in 0.15 seconds
 
 We see that the ``smtp`` instance is finalized after the two
 tests finished execution.  Note that if we decorated our fixture
@@ -313,7 +312,7 @@ again, nothing much has changed::
 
     $ py.test -s -q --tb=no
     FF
-    2 failed in 0.18 seconds
+    2 failed in 0.16 seconds
 
 Let's quickly create another test module that actually sets the
 server URL in its module namespace::
@@ -380,7 +379,7 @@ So let's just do another run::
     ================================= FAILURES =================================
     __________________________ test_ehlo[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP instance at 0x28d13b0>
+    smtp = <smtplib.SMTP instance at 0x2662290>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -392,7 +391,7 @@ So let's just do another run::
     test_module.py:6: AssertionError
     __________________________ test_noop[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP instance at 0x28d13b0>
+    smtp = <smtplib.SMTP instance at 0x2662290>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -403,7 +402,7 @@ So let's just do another run::
     test_module.py:11: AssertionError
     ________________________ test_ehlo[mail.python.org] ________________________
     
-    smtp = <smtplib.SMTP instance at 0x28d8440>
+    smtp = <smtplib.SMTP instance at 0x26c2dd0>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -414,7 +413,7 @@ So let's just do another run::
     test_module.py:5: AssertionError
     ________________________ test_noop[mail.python.org] ________________________
     
-    smtp = <smtplib.SMTP instance at 0x28d8440>
+    smtp = <smtplib.SMTP instance at 0x26c2dd0>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -423,7 +422,7 @@ So let's just do another run::
     E       assert 0
     
     test_module.py:11: AssertionError
-    4 failed in 6.47 seconds
+    4 failed in 6.32 seconds
 
 We see that our two test functions each ran twice, against the different
 ``smtp`` instances.  Note also, that with the ``mail.python.org`` 
@@ -463,15 +462,13 @@ Here we declare an ``app`` fixture which receives the previously defined
 
     $ py.test -v test_appsetup.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.4.0.dev12 -- /home/hpk/venv/0/bin/python
-    cachedir: /tmp/doc-exec-127/.cache
-    plugins: xdist, pep8, cov, cache, capturelog, instafail
+    platform linux2 -- Python 2.7.3 -- pytest-2.4.2 -- /home/hpk/p/pytest/.tox/regen/bin/python
     collecting ... collected 2 items
     
     test_appsetup.py:12: test_smtp_exists[mail.python.org] PASSED
     test_appsetup.py:12: test_smtp_exists[merlinux.eu] PASSED
     
-    ========================= 2 passed in 6.07 seconds =========================
+    ========================= 2 passed in 5.75 seconds =========================
 
 Due to the parametrization of ``smtp`` the test will run twice with two
 different ``App`` instances and respective smtp servers.  There is no
@@ -529,9 +526,7 @@ Let's run the tests in verbose mode and with looking at the print-output::
 
     $ py.test -v -s test_module.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.4.0.dev12 -- /home/hpk/venv/0/bin/python
-    cachedir: /tmp/doc-exec-127/.cache
-    plugins: xdist, pep8, cov, cache, capturelog, instafail
+    platform linux2 -- Python 2.7.3 -- pytest-2.4.2 -- /home/hpk/p/pytest/.tox/regen/bin/python
     collecting ... collected 8 items
     
     test_module.py:15: test_0[1]   test0 1
@@ -553,7 +548,7 @@ Let's run the tests in verbose mode and with looking at the print-output::
     test_module.py:19: test_2[2-mod2]   test2 2 mod2
     PASSED
     
-    ========================= 8 passed in 0.02 seconds =========================
+    ========================= 8 passed in 0.01 seconds =========================
 
 You can see that the parametrized module-scoped ``modarg`` resource caused
 an ordering of test execution that lead to the fewest possible "active" resources. The finalizer for the ``mod1`` parametrized resource was executed 
@@ -609,7 +604,7 @@ to verify our fixture is activated and the tests pass::
 
     $ py.test -q
     ..
-    2 passed in 0.02 seconds
+    2 passed in 0.01 seconds
 
 You can specify multiple fixtures like this::
 
@@ -680,7 +675,7 @@ If we run it, we get two passing tests::
 
     $ py.test -q
     ..
-    2 passed in 0.02 seconds
+    2 passed in 0.01 seconds
 
 Here is how autouse fixtures work in other scopes:
 
