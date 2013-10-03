@@ -81,11 +81,8 @@ def pytest_collection_modifyitems(items, config):
 
 
 class MarkMapping:
-    """Provides a local mapping for markers.
-    Only the marker names from the given :class:`NodeKeywords` will be mapped,
-    so the names are taken only from :class:`MarkInfo` or
-    :class:`MarkDecorator` items.
-    """
+    """Provides a local mapping for markers where item access
+    resolves to True if the marker is present. """
     def __init__(self, keywords):
         mymarks = set()
         for key, value in keywords.items():
@@ -93,8 +90,8 @@ class MarkMapping:
                 mymarks.add(key)
         self._mymarks = mymarks
 
-    def __getitem__(self, markname):
-        return markname in self._mymarks
+    def __getitem__(self, name):
+        return name in self._mymarks
 
 
 class KeywordMapping:
@@ -202,13 +199,17 @@ class MarkDecorator:
             pass
     """
     def __init__(self, name, args=None, kwargs=None):
-        self.markname = name
+        self.name = name
         self.args = args or ()
         self.kwargs = kwargs or {}
 
+    @property
+    def markname(self):
+        return self.name # for backward-compat (2.4.1 had this attr)
+
     def __repr__(self):
         d = self.__dict__.copy()
-        name = d.pop('markname')
+        name = d.pop('name')
         return "<MarkDecorator %r %r>" % (name, d)
 
     def __call__(self, *args, **kwargs):
@@ -228,19 +229,19 @@ class MarkDecorator:
                     else:
                         func.pytestmark = [self]
                 else:
-                    holder = getattr(func, self.markname, None)
+                    holder = getattr(func, self.name, None)
                     if holder is None:
                         holder = MarkInfo(
-                            self.markname, self.args, self.kwargs
+                            self.name, self.args, self.kwargs
                         )
-                        setattr(func, self.markname, holder)
+                        setattr(func, self.name, holder)
                     else:
                         holder.add(self.args, self.kwargs)
                 return func
         kw = self.kwargs.copy()
         kw.update(kwargs)
         args = self.args + args
-        return self.__class__(self.markname, args=args, kwargs=kw)
+        return self.__class__(self.name, args=args, kwargs=kw)
 
 
 class MarkInfo:

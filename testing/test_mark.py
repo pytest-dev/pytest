@@ -180,6 +180,7 @@ def test_keyword_option_custom(spec, testdir):
     assert len(passed) == len(passed_result)
     assert list(passed) == list(passed_result)
 
+
 class TestFunctional:
 
     def test_mark_per_function(self, testdir):
@@ -362,7 +363,6 @@ class TestFunctional:
         deselected_tests = dlist[0].items
         assert len(deselected_tests) == 2
 
-
     def test_keywords_at_node_level(self, testdir):
         p = testdir.makepyfile("""
             import pytest
@@ -381,6 +381,30 @@ class TestFunctional:
                 pass
         """)
         reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
+    def test_keyword_added_for_session(self, testdir):
+        testdir.makeconftest("""
+            import pytest
+            def pytest_collection_modifyitems(session):
+                session.add_marker("mark1")
+                session.add_marker(pytest.mark.mark2)
+                session.add_marker(pytest.mark.mark3)
+                pytest.raises(ValueError, lambda:
+                        session.add_marker(10))
+        """)
+        testdir.makepyfile("""
+            def test_some(request):
+                assert "mark1" in request.keywords
+                assert "mark2" in request.keywords
+                assert "mark3" in request.keywords
+                assert 10 not in request.keywords
+                marker = request.node.get_marker("mark1")
+                assert marker.name == "mark1"
+                assert marker.args == ()
+                assert marker.kwargs == {}
+        """)
+        reprec = testdir.inline_run("-m", "mark1")
         reprec.assertoutcome(passed=1)
 
 class TestKeywordSelection:

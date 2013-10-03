@@ -321,6 +321,27 @@ class Node(object):
         chain.reverse()
         return chain
 
+    def add_marker(self, marker):
+        """ dynamically add a marker object to the node.
+
+        ``marker`` can be a string or pytest.mark.* instance.
+        """
+        from _pytest.mark import MarkDecorator
+        if isinstance(marker, py.builtin._basestring):
+            marker = MarkDecorator(marker)
+        elif not isinstance(marker, MarkDecorator):
+            raise ValueError("is not a string or pytest.mark.* Marker")
+        self.keywords[marker.name] = marker
+
+    def get_marker(self, name):
+        """ get a marker object from this node or None if
+        the node doesn't have a marker with that name. """
+        val = self.keywords.get(name, None)
+        if val is not None:
+            from _pytest.mark import MarkInfo, MarkDecorator
+            if isinstance(val, (MarkDecorator, MarkInfo)):
+                return val
+
     def listextrakeywords(self):
         """ Return a set of all extra keywords in self and any parents."""
         extra_keywords = set()

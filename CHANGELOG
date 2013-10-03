@@ -11,6 +11,16 @@ Changes between 2.4.1 and 2.4.2
 - avoid tmpdir fixture to create too long filenames especially
   when parametrization is used (issue354)
 
+- fix pytest-pep8 and pytest-flakes / pytest interactions
+  (collection names in mark plugin was assuming an item always
+  has a function which is not true for those plugins etc.)
+  Thanks Andi Zeidler.
+
+- introduce node.get_marker/node.add_marker API for plugins
+  like pytest-pep8 and pytest-flakes to avoid the messy
+  details of the node.keywords  pseudo-dicts.  Adapated
+  docs.
+
 Changes between 2.4.0 and 2.4.1
 -----------------------------------
 

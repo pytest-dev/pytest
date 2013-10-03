@@ -235,7 +235,7 @@ specifies via named environments::
             "env(name): mark test to run only on named environment")
 
     def pytest_runtest_setup(item):
-        envmarker = item.keywords.get("env", None)
+        envmarker = item.get_marker("env")
         if envmarker is not None:
             envname = envmarker.args[0]
             if envname != item.config.getoption("-E"):
@@ -318,7 +318,7 @@ test function.  From a conftest file we can read it like this::
     import sys
 
     def pytest_runtest_setup(item):
-        g = item.keywords.get("glob", None)
+        g = item.get_marker("glob")
         if g is not None:
             for info in g:
                 print ("glob args=%s kwargs=%s" %(info.args, info.kwargs))
@@ -353,7 +353,7 @@ for your particular platform, you could use the following plugin::
     def pytest_runtest_setup(item):
         if isinstance(item, item.Function):
             plat = sys.platform
-            if plat not in item.keywords:
+            if not item.get_marker(plat):
                 if ALL.intersection(item.keywords):
                     pytest.skip("cannot run on platform %s" %(plat))
 
@@ -439,9 +439,9 @@ We want to dynamically define two markers and can do it in a
     def pytest_collection_modifyitems(items):
         for item in items:
             if "interface" in item.nodeid:
-                item.keywords["interface"] = pytest.mark.interface
+                item.add_marker(pytest.mark.interface)
             elif "event" in item.nodeid:
-                item.keywords["event"] = pytest.mark.event
+                item.add_marker(pytest.mark.event)
 
 We can now use the ``-m option`` to select one set::
 
