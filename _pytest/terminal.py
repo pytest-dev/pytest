@@ -37,7 +37,7 @@ def pytest_configure(config):
     # we try hard to make printing resilient against
     # later changes on FD level. (unless capturing is off/sys)
     stdout = sys.stdout
-    if config.option.capture == "fd" and hasattr(os, "dup"):
+    if hasattr(os, "dup"):
         try:
             newstdout = py.io.dupfile(stdout, buffering=1,
                                       encoding=stdout.encoding)

@@ -677,14 +677,6 @@ def test_fdopen_kept_alive_issue124(testdir):
         "*2 passed*"
     ])
 
-def test_nofd_manipulation_with_capture_disabled(testdir):
-    from _pytest.terminal import pytest_configure
-    config = testdir.parseconfig("--capture=no")
-    stdout = sys.stdout
-    pytest_configure(config)
-    reporter = config.pluginmanager.getplugin('terminalreporter')
-    assert reporter._tw._file == stdout
-
 def test_tbstyle_native_setup_error(testdir):
     p = testdir.makepyfile("""
         import pytest
@@ -712,3 +704,14 @@ def test_terminal_summary(testdir):
         *==== hello ====*
         world
     """)
+
+@pytest.mark.xfail("not hasattr(os, 'dup')")
+def test_fd_fixing(testdir):
+    testdir.makepyfile("""
+        import os
+        os.close(1)
+        def test_fdclose():
+            os.close(2)
+    """)
+    result = testdir.runpytest("-s")
+    result.stdout.fnmatch_lines("*1 pass*")
