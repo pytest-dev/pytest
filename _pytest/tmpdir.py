@@ -64,5 +64,8 @@ def tmpdir(request):
     """
     name = request.node.name
     name = py.std.re.sub("[\W]", "_", name)
+    MAXVAL = 30
+    if len(name) > MAXVAL:
+        name = name[:MAXVAL]
     x = request.config._tmpdirhandler.mktemp(name, numbered=True)
     return x

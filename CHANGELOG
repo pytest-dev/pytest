@@ -8,6 +8,9 @@ Changes between 2.4.1 and 2.4.2
 - avoid "IOError: Bad Filedescriptor" on pytest shutdown by not closing
   the internal dupped stdout (fix is slightly hand-wavy but work).
 
+- avoid tmpdir fixture to create too long filenames especially
+  when parametrization is used (issue354)
+
 Changes between 2.4.0 and 2.4.1
 -----------------------------------
 
