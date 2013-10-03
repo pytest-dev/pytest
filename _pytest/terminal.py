@@ -37,11 +37,11 @@ def pytest_configure(config):
     # we try hard to make printing resilient against
     # later changes on FD level. (unless capturing is off/sys)
     stdout = sys.stdout
-    if hasattr(os, "dup"):
+    if hasattr(os, "dup") and hasattr(stdout, "fileno"):
         try:
             newstdout = py.io.dupfile(stdout, buffering=1,
                                       encoding=stdout.encoding)
-        except ValueError:
+        except (AttributeError, ValueError):
             pass
         else:
             assert stdout.encoding == newstdout.encoding

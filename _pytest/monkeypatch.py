@@ -1,7 +1,6 @@
 """ monkeypatching and mocking functionality.  """
 
-import os, sys, inspect
-import pytest
+import os, sys
 
 def pytest_funcarg__monkeypatch(request):
     """The returned ``monkeypatch`` funcarg provides these
@@ -28,6 +27,7 @@ def pytest_funcarg__monkeypatch(request):
 
 
 def derive_importpath(import_path):
+    import pytest
     if not isinstance(import_path, str) or "." not in import_path:
         raise TypeError("must be absolute import path string, not %r" %
                         (import_path,))
@@ -82,6 +82,7 @@ class monkeypatch:
         which means it will raise).
         """
         __tracebackhide__ = True
+        import inspect
 
         if value is notset:
             if not isinstance(target, str):
