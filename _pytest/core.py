@@ -76,6 +76,10 @@ class PluginManager(object):
         self._shutdown = []
         self.hook = HookRelay(hookspecs or [], pm=self)
 
+    def do_configure(self, config):
+        # backward compatibility
+        config.do_configure()
+
     def set_register_callback(self, callback):
         assert not hasattr(self, "_registercallback")
         self._registercallback = callback

@@ -3,7 +3,7 @@ from setuptools import setup, Command
 
 long_description = open("README.rst").read()
 def main():
-    install_requires = ["py>=1.4.17.dev2"]
+    install_requires = ["py>=1.4.17"]
     if sys.version_info < (2,7):
         install_requires.append("argparse")
     if sys.platform == "win32":

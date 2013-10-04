@@ -21,10 +21,12 @@ Changes between 2.4.1 and 2.4.2
   details of the node.keywords  pseudo-dicts.  Adapated
   docs.
 
-
 - remove attempt to "dup" stdout at startup as it's icky.
   the normal capturing should catch enough possibilities
   of tests messing up standard FDs. 
+
+- add pluginmanager.do_configure(config) as a link to 
+  config.do_configure() for plugin-compatibility
 
 Changes between 2.4.0 and 2.4.1
 -----------------------------------

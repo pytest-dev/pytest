@@ -9,8 +9,12 @@ cd ../pytest-instafail
 py.test 
 cd ../pytest-cache
 py.test
+cd ../pytest-xprocess
+py.test
 #cd ../pytest-cov
 #py.test
+cd ../pytest-capturelog
+py.test
 cd ../pytest-xdist
 py.test
 
