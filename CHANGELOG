@@ -3,6 +3,7 @@ Changes between 2.4.1 and 2.4.2
 
 - on Windows require colorama and a newer py lib so that py.io.TerminalWriter()
   now uses colorama instead of its own ctypes hacks. (fixes issue365)
+  thanks Paul Moore for bringing it up.
 
 - fix "-k" matching of tests where "repr" and "attr" and other names would
   cause wrong matches because of an internal implementation quirk
