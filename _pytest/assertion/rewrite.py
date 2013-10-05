@@ -221,7 +221,7 @@ def _rewrite_test(state, fn):
         end2 = source.find("\n", end1 + 1)
         if (not source.startswith(BOM_UTF8) and
             cookie_re.match(source[0:end1]) is None and
-            cookie_re.match(source[end1:end2]) is None):
+            cookie_re.match(source[end1 + 1:end2]) is None):
             if hasattr(state, "_indecode"):
                 return None  # encodings imported us again, we don't rewrite
             state._indecode = True
