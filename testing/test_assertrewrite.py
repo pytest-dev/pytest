@@ -466,6 +466,15 @@ def test_rewritten():
     assert "@py_builtins" in globals()""", "wb")
         assert testdir.runpytest().ret == 0
 
+    @pytest.mark.skipif("sys.version_info[0] >= 3")
+    def test_detect_coding_cookie_crlf(self, testdir):
+        testdir.tmpdir.join("test_cookie.py").write("""#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+u"St\xc3\xa4d"
+def test_rewritten():
+    assert "@py_builtins" in globals()""".replace("\n", "\r\n"), "wb")
+        assert testdir.runpytest().ret == 0
+
     def test_write_pyc(self, testdir, tmpdir, monkeypatch):
         from _pytest.assertion.rewrite import _write_pyc
         from _pytest.assertion import AssertionState
