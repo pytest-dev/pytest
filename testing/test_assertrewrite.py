@@ -441,7 +441,6 @@ class TestAssertionRewriteHookDetails(object):
             '* 3 passed*',
         ])
 
-
     @pytest.mark.skipif("sys.version_info[0] >= 3")
     def test_assume_ascii(self, testdir):
         content = "u'\xe2\x99\xa5'"
@@ -450,6 +449,13 @@ class TestAssertionRewriteHookDetails(object):
         assert res.ret != 0
         assert "SyntaxError: Non-ASCII character" in res.stdout.str()
 
+    @pytest.mark.skipif("sys.version_info[0] >= 3")
+    def test_detect_coding_cookie(self, testdir):
+        testdir.tmpdir.join("test_utf8.py").write("""# -*- coding: utf-8 -*-
+u"St\xc3\xa4d"
+def test_rewritten():
+    assert "@py_builtins" in globals()""", "wb")
+        assert testdir.runpytest().ret == 0
 
     def test_write_pyc(self, testdir, tmpdir, monkeypatch):
         from _pytest.assertion.rewrite import _write_pyc

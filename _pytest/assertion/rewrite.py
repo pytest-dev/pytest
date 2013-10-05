@@ -196,7 +196,7 @@ def _write_pyc(state, co, source_path, pyc):
 RN = "\r\n".encode("utf-8")
 N = "\n".encode("utf-8")
 
-cookie_re = re.compile("coding[:=]\s*[-\w.]+")
+cookie_re = re.compile(r"^[ \t\f]*#.*coding[:=][ \t]*[-\w.]+")
 BOM_UTF8 = '\xef\xbb\xbf'
 
 def _rewrite_test(state, fn):
@@ -220,8 +220,8 @@ def _rewrite_test(state, fn):
         end1 = source.find("\n")
         end2 = source.find("\n", end1 + 1)
         if (not source.startswith(BOM_UTF8) and
-            (not cookie_re.match(source[0:end1]) or
-            not cookie_re.match(source[end1:end2]))):
+            cookie_re.match(source[0:end1]) is None and
+            cookie_re.match(source[end1:end2]) is None):
             if hasattr(state, "_indecode"):
                 return None  # encodings imported us again, we don't rewrite
             state._indecode = True
