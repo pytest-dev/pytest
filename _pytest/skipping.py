@@ -10,6 +10,14 @@ def pytest_addoption(parser):
            help="run tests even if they are marked xfail")
 
 def pytest_configure(config):
+    if config.option.runxfail:
+        old = pytest.xfail
+        config._cleanup.append(lambda: setattr(pytest, "xfail", old))
+        def nop(*args, **kwargs):
+            pass
+        nop.Exception = XFailed
+        setattr(pytest, "xfail", nop)
+
     config.addinivalue_line("markers",
         "skipif(condition): skip the given test function if eval(condition) "
         "results in a True value.  Evaluation happens within the "

@@ -4,6 +4,9 @@ Changes between 2.4.2 and 2.4.3
 - In assertion rewriting mode on Python 2, fix the detection of coding
   cookies. See issue #330.
 
+- make "--runxfail" turn imperative pytest.xfail calls into no ops
+  (it already did neutralize pytest.mark.xfail markers)
+
 Changes between 2.4.1 and 2.4.2
 -----------------------------------
 

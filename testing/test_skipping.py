@@ -159,13 +159,14 @@ class TestXFail:
             @pytest.mark.xfail
             def test_func():
                 assert 0
+            def test_func2():
+                pytest.xfail("hello")
         """)
         result = testdir.runpytest("--runxfail")
-        assert result.ret == 1
         result.stdout.fnmatch_lines([
             "*def test_func():*",
             "*assert 0*",
-            "*1 failed*",
+            "*1 failed*1 pass*",
         ])
 
     def test_xfail_evalfalse_but_fails(self, testdir):
@@ -261,10 +262,7 @@ class TestXFail:
             "*reason:*hello*",
         ])
         result = testdir.runpytest(p, "--runxfail")
-        result.stdout.fnmatch_lines([
-            "*def test_this():*",
-            "*pytest.xfail*",
-        ])
+        result.stdout.fnmatch_lines("*1 pass*")
 
     def test_xfail_imperative_in_setup_function(self, testdir):
         p = testdir.makepyfile("""
@@ -285,10 +283,10 @@ class TestXFail:
             "*reason:*hello*",
         ])
         result = testdir.runpytest(p, "--runxfail")
-        result.stdout.fnmatch_lines([
-            "*def setup_function(function):*",
-            "*pytest.xfail*",
-        ])
+        result.stdout.fnmatch_lines("""
+            *def test_this*
+            *1 fail*
+        """)
 
     def xtest_dynamic_xfail_set_during_setup(self, testdir):
         p = testdir.makepyfile("""
