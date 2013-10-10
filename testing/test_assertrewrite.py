@@ -514,6 +514,7 @@ def test_rewritten():
                 def test_load_resource():
                     assert isinstance(__loader__, AssertionRewritingHook)
                     res = pkg_resources.resource_string(__name__, 'resource.txt')
+                    res = res.decode('ascii')
                     assert res == 'Load me please.'
                 """,
         }
