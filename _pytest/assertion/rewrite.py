@@ -173,10 +173,11 @@ class AssertionRewritingHook(object):
     @classmethod
     def _register_with_pkg_resources(cls):
         """
-        Ensure package resources can be loaded from this loader.
+        Ensure package resources can be loaded from this loader. May be called
+        multiple times, as the operation is idempotent.
         """
         try:
-            pkg_resources = __import__('pkg_resources')
+            import pkg_resources
             # access an attribute in case a deferred importer is present
             pkg_resources.__name__
         except ImportError:
