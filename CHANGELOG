@@ -7,6 +7,11 @@ Changes between 2.4.2 and 2.4.3
 - make "--runxfail" turn imperative pytest.xfail calls into no ops
   (it already did neutralize pytest.mark.xfail markers)
 
+- refine pytest / pkg_resources interactions: The AssertionRewritingHook
+  PEP302 compliant loader now registers itself with setuptools/pkg_resources 
+  properly so that the pkg_resources.resource_stream method works properly.
+  Fixes issue366.  Thanks for the investigations and full PR to Jason R. Coombs.
+
 Changes between 2.4.1 and 2.4.2
 -----------------------------------
 
