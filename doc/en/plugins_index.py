@@ -1,6 +1,6 @@
 '''
 Script to generate the file `plugins_index.txt` with information about pytest plugins taken directly 
-from a live pypi server.
+from a live PyPI server.
 
 This will evolve to include test compatibility (pythons and pytest versions) information also.
 '''
@@ -19,7 +19,7 @@ import xmlrpclib
 #===================================================================================================
 def iter_plugins(client, search='pytest-'):
     '''
-    Returns an iterator of (name, version) from pypi.
+    Returns an iterator of (name, version) from PyPI.
     
     :param client: xmlrpclib.ServerProxy
     :param search: package names to search for 
@@ -145,7 +145,7 @@ def _get_today_as_str():
 #===================================================================================================
 def generate_plugins_index(client, filename):
     '''
-    Generates an RST file with a table of the latest pytest plugins found in pypi. 
+    Generates an RST file with a table of the latest pytest plugins found in PyPI. 
     
     :param client: xmlrpclib.ServerProxy
     :param filename: output filename
@@ -162,9 +162,9 @@ def main(argv):
     filename = os.path.join(os.path.dirname(__file__), 'plugins_index.txt')
     url = 'http://pypi.python.org/pypi'
     
-    parser = OptionParser(description='Generates a restructured document of pytest plugins from PyPi')
+    parser = OptionParser(description='Generates a restructured document of pytest plugins from PyPI')
     parser.add_option('-f', '--filename', default=filename, help='output filename [default: %default]')
-    parser.add_option('-u', '--url', default=url, help='url of PyPi server to obtain data from [default: %default]')
+    parser.add_option('-u', '--url', default=url, help='url of PyPI server to obtain data from [default: %default]')
     (options, _) = parser.parse_args(argv[1:])
 
     client = xmlrpclib.ServerProxy(options.url)
