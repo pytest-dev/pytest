@@ -100,6 +100,16 @@ def test_markers_option(testdir):
         "*a1some*another marker",
     ])
 
+def test_mark_on_pseudo_function(testdir):
+    testdir.makepyfile("""
+        import pytest
+
+        @pytest.mark.r(lambda x: 0/0)
+        def test_hello():
+            pass
+    """)
+    reprec = testdir.inline_run()
+    reprec.assertoutcome(passed=1)
 
 def test_strict_prohibits_unregistered_markers(testdir):
     testdir.makepyfile("""
@@ -510,3 +520,4 @@ class TestKeywordSelection:
 
         assert_test_is_not_selected("__")
         assert_test_is_not_selected("()")
+

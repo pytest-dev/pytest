@@ -12,6 +12,16 @@ Changes between 2.4.2 and 2.4.3
   properly so that the pkg_resources.resource_stream method works properly.
   Fixes issue366.  Thanks for the investigations and full PR to Jason R. Coombs.
 
+- avoid one surprising case of marker malfunction/confusion::
+  
+      @pytest.mark.some(lambda arg: ...)
+      def test_function():
+
+  would not work correctly because pytest assumes @pytest.mark.some 
+  gets a function to be decorated already.  We now at least detect if this 
+  arg is an lambda and thus the example will work.  Thanks Alex Gaynor
+  for bringing it up.
+
 Changes between 2.4.1 and 2.4.2
 -----------------------------------
 

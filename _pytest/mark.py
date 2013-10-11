@@ -182,6 +182,9 @@ class MarkGenerator:
         if name not in self._markers:
             raise AttributeError("%r not a registered marker" % (name,))
 
+def istestfunc(func):
+    return hasattr(func, "__call__") and \
+        getattr(func, "__name__", "<lambda>") != "<lambda>"
 
 class MarkDecorator:
     """ A decorator for test functions and test classes.  When applied
@@ -217,8 +220,8 @@ class MarkDecorator:
             otherwise add *args/**kwargs in-place to mark information. """
         if args:
             func = args[0]
-            if len(args) == 1 and hasattr(func, '__call__') or \
-               hasattr(func, '__bases__'):
+            if len(args) == 1 and (istestfunc(func) or
+                                   hasattr(func, '__bases__')):
                 if hasattr(func, '__bases__'):
                     if hasattr(func, 'pytestmark'):
                         l = func.pytestmark
