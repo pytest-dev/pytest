@@ -493,3 +493,35 @@ def test_rewritten():
             raise e
         monkeypatch.setattr(b, "open", open)
         assert not _write_pyc(state, [1], source_path, pycpath)
+
+    def test_resources_provider_for_loader(self, testdir):
+        """
+        Attempts to load resources from a package should succeed normally,
+        even when the AssertionRewriteHook is used to load the modules.
+
+        See #366 for details.
+        """
+        pytest.importorskip("pkg_resources")
+
+        testdir.mkpydir('testpkg')
+        contents = {
+            'testpkg/test_pkg': """
+                import pkg_resources
+
+                import pytest
+                from _pytest.assertion.rewrite import AssertionRewritingHook
+
+                def test_load_resource():
+                    assert isinstance(__loader__, AssertionRewritingHook)
+                    res = pkg_resources.resource_string(__name__, 'resource.txt')
+                    res = res.decode('ascii')
+                    assert res == 'Load me please.'
+                """,
+        }
+        testdir.makepyfile(**contents)
+        testdir.maketxtfile(**{'testpkg/resource': "Load me please."})
+
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            '* 1 passed*',
+        ])

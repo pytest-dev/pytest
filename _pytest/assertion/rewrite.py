@@ -41,6 +41,7 @@ class AssertionRewritingHook(object):
     def __init__(self):
         self.session = None
         self.modules = {}
+        self._register_with_pkg_resources()
 
     def set_session(self, session):
         self.fnpats = session.config.getini("python_files")
@@ -168,6 +169,24 @@ class AssertionRewritingHook(object):
             fd.close()
         tp = desc[2]
         return tp == imp.PKG_DIRECTORY
+
+    @classmethod
+    def _register_with_pkg_resources(cls):
+        """
+        Ensure package resources can be loaded from this loader. May be called
+        multiple times, as the operation is idempotent.
+        """
+        try:
+            import pkg_resources
+            # access an attribute in case a deferred importer is present
+            pkg_resources.__name__
+        except ImportError:
+            return
+
+        # Since pytest tests are always located in the file system, the
+        #  DefaultProvider is appropriate.
+        pkg_resources.register_loader_type(cls, pkg_resources.DefaultProvider)
+
 
 def _write_pyc(state, co, source_path, pyc):
     # Technically, we don't have to have the same pyc format as
