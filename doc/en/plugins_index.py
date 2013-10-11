@@ -8,6 +8,7 @@ from collections import namedtuple
 import datetime
 from distutils.version import LooseVersion
 import itertools
+from optparse import OptionParser
 import os
 import sys
 import xmlrpclib
@@ -126,7 +127,17 @@ def generate_plugins_index_from_table(filename, headers, rows):
         print >> f, get_row_limiter('=')
         print >> f
         
-        print >> f, '*(Last updated: %s)*' % datetime.date.today().strftime('%Y-%m-%d')
+        print >> f, '*(Updated on %s)*' % _get_today_as_str()
+        
+
+#===================================================================================================
+# _get_today_as_str
+#===================================================================================================
+def _get_today_as_str():
+    '''
+    internal. only exists so we can patch it in testing.
+    '''
+    return datetime.date.today().strftime('%Y-%m-%d')
 
 
 #===================================================================================================
@@ -148,9 +159,16 @@ def generate_plugins_index(client, filename):
 # main
 #===================================================================================================
 def main(argv):
-    client = xmlrpclib.ServerProxy('http://pypi.python.org/pypi')
     filename = os.path.join(os.path.dirname(__file__), 'plugins_index.txt')
-    generate_plugins_index(client, filename)
+    url = 'http://pypi.python.org/pypi'
+    
+    parser = OptionParser(description='Generates a restructured document of pytest plugins from PyPi')
+    parser.add_option('-f', '--filename', default=filename, help='output filename [default: %default]')
+    parser.add_option('-u', '--url', default=url, help='url of PyPi server to obtain data from [default: %default]')
+    (options, _) = parser.parse_args(argv[1:])
+
+    client = xmlrpclib.ServerProxy(options.url)
+    generate_plugins_index(client, options.filename)
     print 'OK'
     return 0
 
