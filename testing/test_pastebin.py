@@ -1,4 +1,3 @@
-import pytest
 
 class TestPasting:
     def pytest_funcarg__pastebinlist(self, request):
@@ -56,4 +55,4 @@ class TestRPCClient:
         assert proxy is not None
         assert proxy.__class__.__module__.startswith('xmlrpc')
 
-    
+

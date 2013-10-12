@@ -26,7 +26,6 @@ def pytest_addoption(parser):
 def pytest_configure(config):
     # This might be called multiple times. Only take the first.
     global _pytest_fullpath
-    import pytest
     try:
         _pytest_fullpath
     except NameError:
@@ -121,7 +120,6 @@ class HookRecorder:
 
     def contains(self, entries):
         __tracebackhide__ = True
-        from py.builtin import print_
         i = 0
         entries = list(entries)
         backlocals = py.std.sys._getframe(1).f_locals
@@ -259,9 +257,6 @@ class TmpTestdir:
 
     def makefile(self, ext, *args, **kwargs):
         return self._makefile(ext, args, kwargs)
-
-    def makeini(self, source):
-        return self.makefile('cfg', setup=source)
 
     def makeconftest(self, source):
         return self.makepyfile(conftest=source)
@@ -475,7 +470,7 @@ class TmpTestdir:
             # XXX we rely on script refering to the correct environment
             # we cannot use "(py.std.sys.executable,script)"
             # becaue on windows the script is e.g. a py.test.exe
-            return (py.std.sys.executable, _pytest_fullpath,)
+            return (py.std.sys.executable, _pytest_fullpath,) # noqa
         else:
             py.test.skip("cannot run %r with --no-tools-on-path" % scriptname)
 

@@ -34,7 +34,7 @@ def pytest_configure(config):
         mode = "plain"
     if mode == "rewrite":
         try:
-            import ast
+            import ast  # noqa
         except ImportError:
             mode = "reinterp"
         else:
@@ -48,10 +48,10 @@ def pytest_configure(config):
         m = monkeypatch()
         config._cleanup.append(m.undo)
         m.setattr(py.builtin.builtins, 'AssertionError',
-                  reinterpret.AssertionError)
+                  reinterpret.AssertionError)  # noqa
     hook = None
     if mode == "rewrite":
-        hook = rewrite.AssertionRewritingHook()
+        hook = rewrite.AssertionRewritingHook()  # noqa
         sys.meta_path.insert(0, hook)
     warn_about_missing_assertion(mode)
     config._assertstate = AssertionState(config, mode)
@@ -101,9 +101,9 @@ def pytest_sessionfinish(session):
 def _load_modules(mode):
     """Lazily import assertion related code."""
     global rewrite, reinterpret
-    from _pytest.assertion import reinterpret
+    from _pytest.assertion import reinterpret  # noqa
     if mode == "rewrite":
-        from _pytest.assertion import rewrite
+        from _pytest.assertion import rewrite  # noqa
 
 def warn_about_missing_assertion(mode):
     try:

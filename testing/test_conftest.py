@@ -8,7 +8,7 @@ def pytest_generate_tests(metafunc):
 
 def pytest_funcarg__basedir(request):
     def basedirmaker(request):
-        basedir = d = request.getfuncargvalue("tmpdir")
+        d = request.getfuncargvalue("tmpdir")
         d.ensure("adir/conftest.py").write("a=1 ; Directory = 3")
         d.ensure("adir/b/conftest.py").write("b=2 ; a = 1.5")
         if request.param == "inpackage":
@@ -41,7 +41,7 @@ class TestConftestValueAccessGlobal:
 
     def test_immediate_initialiation_and_incremental_are_the_same(self, basedir):
         conftest = Conftest()
-        snap0 = len(conftest._path2confmods)
+        len(conftest._path2confmods)
         conftest.getconftestmodules(basedir)
         snap1 = len(conftest._path2confmods)
         #assert len(conftest._path2confmods) == snap1 + 1
@@ -57,7 +57,7 @@ class TestConftestValueAccessGlobal:
 
     def test_value_access_not_existing(self, basedir):
         conftest = ConftestWithSetinitial(basedir)
-        pytest.raises(KeyError, "conftest.rget('a')")
+        pytest.raises(KeyError, lambda: conftest.rget('a'))
         #pytest.raises(KeyError, "conftest.lget('a')")
 
     def test_value_access_by_path(self, basedir):
@@ -97,7 +97,7 @@ def test_conftest_in_nonpkg_with_init(tmpdir):
     tmpdir.ensure("adir-1.0/b/conftest.py").write("b=2 ; a = 1.5")
     tmpdir.ensure("adir-1.0/b/__init__.py")
     tmpdir.ensure("adir-1.0/__init__.py")
-    conftest = ConftestWithSetinitial(tmpdir.join("adir-1.0", "b"))
+    ConftestWithSetinitial(tmpdir.join("adir-1.0", "b"))
 
 def test_doubledash_not_considered(testdir):
     conf = testdir.mkdir("--option")

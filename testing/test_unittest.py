@@ -15,7 +15,7 @@ def test_simple_unittest(testdir):
     assert reprec.matchreport("test_failing").failed
 
 def test_runTest_method(testdir):
-    testpath=testdir.makepyfile("""
+    testdir.makepyfile("""
         import unittest
         pytest_plugins = "pytest_unittest"
         class MyTestCaseWithRunTest(unittest.TestCase):

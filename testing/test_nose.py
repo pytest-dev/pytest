@@ -96,7 +96,7 @@ def test_nose_setup_func_failure(testdir):
 
 
 def test_nose_setup_func_failure_2(testdir):
-    p = testdir.makepyfile("""
+    testdir.makepyfile("""
         l = []
 
         my_setup = 1

@@ -3,7 +3,6 @@ import sys
 import os
 import py, pytest
 from _pytest import config as parseopt
-from textwrap import dedent
 
 @pytest.fixture
 def parser():
@@ -12,7 +11,7 @@ def parser():
 class TestParser:
     def test_no_help_by_default(self, capsys):
         parser = parseopt.Parser(usage="xyz")
-        pytest.raises(SystemExit, 'parser.parse(["-h"])')
+        pytest.raises(SystemExit, lambda: parser.parse(["-h"]))
         out, err = capsys.readouterr()
         assert err.find("error: unrecognized arguments") != -1
 
@@ -65,9 +64,9 @@ class TestParser:
         assert group2 is group
 
     def test_group_ordering(self, parser):
-        group0 = parser.getgroup("1")
-        group1 = parser.getgroup("2")
-        group1 = parser.getgroup("3", after="1")
+        parser.getgroup("1")
+        parser.getgroup("2")
+        parser.getgroup("3", after="1")
         groups = parser._groups
         groups_names = [x.name for x in groups]
         assert groups_names == list("132")
@@ -104,7 +103,7 @@ class TestParser:
         assert getattr(args, parseopt.FILE_OR_DIR)[0] == py.path.local()
 
     def test_parse_known_args(self, parser):
-        args = parser.parse_known_args([py.path.local()])
+        parser.parse_known_args([py.path.local()])
         parser.addoption("--hello", action="store_true")
         ns = parser.parse_known_args(["x", "--y", "--hello", "this"])
         assert ns.hello
@@ -114,7 +113,7 @@ class TestParser:
         option = parser.parse([])
         assert option.hello == "x"
         del option.hello
-        args = parser.parse_setoption([], option)
+        parser.parse_setoption([], option)
         assert option.hello == "x"
 
     def test_parse_setoption(self, parser):
@@ -128,7 +127,7 @@ class TestParser:
         assert not args
 
     def test_parse_special_destination(self, parser):
-        x = parser.addoption("--ultimate-answer", type=int)
+        parser.addoption("--ultimate-answer", type=int)
         args = parser.parse(['--ultimate-answer', '42'])
         assert args.ultimate_answer == 42
 

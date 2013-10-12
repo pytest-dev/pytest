@@ -1,4 +1,4 @@
-import py, pytest
+import py
 import sys
 
 from test_doctest import xfail_if_pdbpp_installed
@@ -162,7 +162,7 @@ class TestPDB:
         child.send("capsys.readouterr()\n")
         child.expect("hello1")
         child.sendeof()
-        rest = child.read()
+        child.read()
         if child.isalive():
             child.wait()
 

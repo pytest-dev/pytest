@@ -1,6 +1,4 @@
-import pytest, py, sys
-from _pytest import python as funcargs
-from _pytest.python import FixtureLookupError
+import pytest, py
 
 class TestModule:
     def test_failing_import(self, testdir):
@@ -32,7 +30,7 @@ class TestModule:
 
     def test_module_considers_pluginmanager_at_import(self, testdir):
         modcol = testdir.getmodulecol("pytest_plugins='xasdlkj',")
-        pytest.raises(ImportError, "modcol.obj")
+        pytest.raises(ImportError, lambda: modcol.obj)
 
 class TestClass:
     def test_class_with_init_skip_collect(self, testdir):
@@ -606,7 +604,7 @@ class TestReportInfo:
                     return MyFunction(name, parent=collector)
         """)
         item = testdir.getitem("def test_func(): pass")
-        runner = item.config.pluginmanager.getplugin("runner")
+        item.config.pluginmanager.getplugin("runner")
         assert item.location == ("ABCDE", 42, "custom")
 
     def test_func_reportinfo(self, testdir):
@@ -696,7 +694,7 @@ def test_customized_python_discovery_functions(testdir):
         [pytest]
         python_functions=_test
     """)
-    p = testdir.makepyfile("""
+    testdir.makepyfile("""
         def _test_underscore():
             pass
     """)

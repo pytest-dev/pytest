@@ -319,7 +319,7 @@ def rewrite_asserts(mod):
 
 
 _saferepr = py.io.saferepr
-from _pytest.assertion.util import format_explanation as _format_explanation
+from _pytest.assertion.util import format_explanation as _format_explanation # noqa
 
 def _should_repr_global_name(obj):
     return not hasattr(obj, "__name__") and not py.builtin.callable(obj)
@@ -557,7 +557,8 @@ class AssertionRewriter(ast.NodeVisitor):
         for i, v in enumerate(boolop.values):
             if i:
                 fail_inner = []
-                self.on_failure.append(ast.If(cond, fail_inner, []))
+                # cond is set in a prior loop iteration below
+                self.on_failure.append(ast.If(cond, fail_inner, [])) # noqa
                 self.on_failure = fail_inner
             self.push_format_context()
             res, expl = self.visit(v)

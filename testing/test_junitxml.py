@@ -1,4 +1,3 @@
-import pytest
 from xml.dom import minidom
 import py, sys, os
 
@@ -370,7 +369,7 @@ def test_nullbyte(testdir):
             assert False
     """)
     xmlf = testdir.tmpdir.join('junit.xml')
-    result = testdir.runpytest('--junitxml=%s' % xmlf)
+    testdir.runpytest('--junitxml=%s' % xmlf)
     text = xmlf.read()
     assert '\x00' not in text
     assert '#x00' in text
@@ -386,7 +385,7 @@ def test_nullbyte_replace(testdir):
             assert False
     """)
     xmlf = testdir.tmpdir.join('junit.xml')
-    result = testdir.runpytest('--junitxml=%s' % xmlf)
+    testdir.runpytest('--junitxml=%s' % xmlf)
     text = xmlf.read()
     assert '#x0' in text
 
@@ -405,7 +404,6 @@ def test_invalid_xml_escape():
         unichr(65)
     except NameError:
         unichr = chr
-    u = py.builtin._totext
     invalid = (0x00, 0x1, 0xB, 0xC, 0xE, 0x19,
                 27, # issue #126
                0xD800, 0xDFFF, 0xFFFE, 0x0FFFF) #, 0x110000)

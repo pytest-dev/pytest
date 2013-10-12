@@ -1,4 +1,4 @@
-import py, pytest,os
+import py, pytest
 from _pytest.helpconfig import collectattr
 
 def test_version(testdir, pytestconfig):

@@ -120,7 +120,6 @@ def pytest_report_header(config):
 
     if config.option.traceconfig:
         lines.append("active plugins:")
-        plugins = []
         items = config.pluginmanager._name2plugin.items()
         for name, plugin in items:
             if hasattr(plugin, '__file__'):

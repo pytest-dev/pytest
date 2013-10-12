@@ -107,13 +107,13 @@ class TestAssertionRewrite:
             assert f
         assert getmsg(f) == "assert False"
         def f():
-            assert a_global
+            assert a_global  # noqa
         assert getmsg(f, {"a_global" : False}) == "assert False"
         def f():
             assert sys == 42
         assert getmsg(f, {"sys" : sys}) == "assert sys == 42"
         def f():
-            assert cls == 42
+            assert cls == 42  # noqa
         class X(object):
             pass
         assert getmsg(f, {"cls" : X}) == "assert cls == 42"
@@ -174,7 +174,7 @@ class TestAssertionRewrite:
 
     def test_short_circut_evaluation(self):
         def f():
-            assert True or explode
+            assert True or explode  # noqa
         getmsg(f, must_pass=True)
         def f():
             x = 1
@@ -206,7 +206,6 @@ class TestAssertionRewrite:
             assert x + y
         assert getmsg(f) == "assert (1 + -1)"
         def f():
-            x = range(10)
             assert not 5 % 4
         assert getmsg(f) == "assert not (5 % 4)"
 
@@ -243,12 +242,12 @@ class TestAssertionRewrite:
             g = 3
         ns = {"x" : X}
         def f():
-            assert not x.g
+            assert not x.g # noqa
         assert getmsg(f, ns) == """assert not 3
  +  where 3 = x.g"""
         def f():
-            x.a = False
-            assert x.a
+            x.a = False  # noqa
+            assert x.a   # noqa
         assert getmsg(f, ns) == """assert x.a"""
 
     def test_comparisons(self):
@@ -435,7 +434,7 @@ class TestAssertionRewriteHookDetails(object):
             def test_missing():
                 assert not __loader__.is_package('pytest_not_there')
             """)
-        pkg = testdir.mkpydir('fun')
+        testdir.mkpydir('fun')
         result = testdir.runpytest()
         result.stdout.fnmatch_lines([
             '* 3 passed*',

@@ -1,4 +1,4 @@
-import pytest, py, sys
+import pytest
 from _pytest import runner
 
 class TestOEJSKITSpecials:

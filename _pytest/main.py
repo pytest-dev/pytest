@@ -425,7 +425,6 @@ class Collector(Node):
 
     def _prunetraceback(self, excinfo):
         if hasattr(self, 'fspath'):
-            path = self.fspath
             traceback = excinfo.traceback
             ntraceback = traceback.cut(path=self.fspath)
             if ntraceback == traceback:

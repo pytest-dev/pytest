@@ -39,7 +39,7 @@ def pytest_generate_tests(metafunc):
 
 class TestTerminal:
     def test_pass_skip_fail(self, testdir, option):
-        p = testdir.makepyfile("""
+        testdir.makepyfile("""
             import pytest
             def test_ok():
                 pass
@@ -76,7 +76,6 @@ class TestTerminal:
 
     def test_writeline(self, testdir, linecomp):
         modcol = testdir.getmodulecol("def test_one(): pass")
-        stringio = py.io.TextIO()
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
         rep.write_fspath_result(py.path.local("xy.py"), '.')
         rep.write_line("hello world")
@@ -97,7 +96,7 @@ class TestTerminal:
         ])
 
     def test_runtest_location_shown_before_test_starts(self, testdir):
-        p1 = testdir.makepyfile("""
+        testdir.makepyfile("""
             def test_1():
                 import time
                 time.sleep(20)
@@ -108,7 +107,7 @@ class TestTerminal:
         child.kill(15)
 
     def test_itemreport_subclasses_show_subclassed_file(self, testdir):
-        p1 = testdir.makepyfile(test_p1="""
+        testdir.makepyfile(test_p1="""
             class BaseTests:
                 def test_p1(self):
                     pass
@@ -145,7 +144,7 @@ class TestTerminal:
         assert " <- " not in result.stdout.str()
 
     def test_keyboard_interrupt(self, testdir, option):
-        p = testdir.makepyfile("""
+        testdir.makepyfile("""
             def test_foobar():
                 assert 0
             def test_spamegg():
@@ -172,7 +171,7 @@ class TestTerminal:
             def pytest_sessionstart():
                 raise KeyboardInterrupt
         """)
-        p = testdir.makepyfile("""
+        testdir.makepyfile("""
             def test_foobar():
                 pass
         """)
@@ -214,7 +213,7 @@ class TestCollectonly:
         ])
 
     def test_collectonly_fatal(self, testdir):
-        p1 = testdir.makeconftest("""
+        testdir.makeconftest("""
             def pytest_collectstart(collector):
                 assert 0, "urgs"
         """)
@@ -233,7 +232,6 @@ class TestCollectonly:
                     pass
         """)
         result = testdir.runpytest("--collect-only", p)
-        stderr = result.stderr.str().strip()
         #assert stderr.startswith("inserting into sys.path")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
@@ -247,7 +245,6 @@ class TestCollectonly:
     def test_collectonly_error(self, testdir):
         p = testdir.makepyfile("import Errlkjqweqwe")
         result = testdir.runpytest("--collect-only", p)
-        stderr = result.stderr.str().strip()
         assert result.ret == 1
         result.stdout.fnmatch_lines(py.code.Source("""
             *ERROR*
@@ -293,7 +290,7 @@ def test_repr_python_version(monkeypatch):
 
 class TestFixtureReporting:
     def test_setup_fixture_error(self, testdir):
-        p = testdir.makepyfile("""
+        testdir.makepyfile("""
             def setup_function(function):
                 print ("setup func")
                 assert 0
@@ -311,7 +308,7 @@ class TestFixtureReporting:
         assert result.ret != 0
 
     def test_teardown_fixture_error(self, testdir):
-        p = testdir.makepyfile("""
+        testdir.makepyfile("""
             def test_nada():
                 pass
             def teardown_function(function):
@@ -329,7 +326,7 @@ class TestFixtureReporting:
         ])
 
     def test_teardown_fixture_error_and_test_failure(self, testdir):
-        p = testdir.makepyfile("""
+        testdir.makepyfile("""
             def test_fail():
                 assert 0, "failingfunc"
 
@@ -403,7 +400,7 @@ class TestTerminalFunctional:
         assert result.ret == 0
 
     def test_header_trailer_info(self, testdir):
-        p1 = testdir.makepyfile("""
+        testdir.makepyfile("""
             def test_passes():
                 pass
         """)
@@ -486,18 +483,18 @@ class TestTerminalFunctional:
 
 
 def test_fail_extra_reporting(testdir):
-    p = testdir.makepyfile("def test_this(): assert 0")
-    result = testdir.runpytest(p)
+    testdir.makepyfile("def test_this(): assert 0")
+    result = testdir.runpytest()
     assert 'short test summary' not in result.stdout.str()
-    result = testdir.runpytest(p, '-rf')
+    result = testdir.runpytest('-rf')
     result.stdout.fnmatch_lines([
         "*test summary*",
         "FAIL*test_fail_extra_reporting*",
     ])
 
 def test_fail_reporting_on_pass(testdir):
-    p = testdir.makepyfile("def test_this(): assert 1")
-    result = testdir.runpytest(p, '-rf')
+    testdir.makepyfile("def test_this(): assert 1")
+    result = testdir.runpytest('-rf')
     assert 'short test summary' not in result.stdout.str()
 
 def test_getreportopt():
@@ -522,7 +519,7 @@ def test_getreportopt():
 
 def test_terminalreporter_reportopt_addopts(testdir):
     testdir.makeini("[pytest]\naddopts=-rs")
-    p = testdir.makepyfile("""
+    testdir.makepyfile("""
         def pytest_funcarg__tr(request):
             tr = request.config.pluginmanager.getplugin("terminalreporter")
             return tr
@@ -570,7 +567,7 @@ class TestGenericReporting:
         provider to run e.g. distributed tests.
     """
     def test_collect_fail(self, testdir, option):
-        p = testdir.makepyfile("import xyz\n")
+        testdir.makepyfile("import xyz\n")
         result = testdir.runpytest(*option.args)
         result.stdout.fnmatch_lines([
             ">   import xyz",
@@ -579,7 +576,7 @@ class TestGenericReporting:
         ])
 
     def test_maxfailures(self, testdir, option):
-        p = testdir.makepyfile("""
+        testdir.makepyfile("""
             def test_1():
                 assert 0
             def test_2():
@@ -597,7 +594,7 @@ class TestGenericReporting:
 
 
     def test_tb_option(self, testdir, option):
-        p = testdir.makepyfile("""
+        testdir.makepyfile("""
             import pytest
             def g():
                 raise IndexError
@@ -678,7 +675,7 @@ def test_fdopen_kept_alive_issue124(testdir):
     ])
 
 def test_tbstyle_native_setup_error(testdir):
-    p = testdir.makepyfile("""
+    testdir.makepyfile("""
         import pytest
         @pytest.fixture
         def setup_error_fixture():

@@ -1,4 +1,4 @@
-import sys, py, pytest
+import py, pytest
 
 class TestGeneralUsage:
     def test_config_error(self, testdir):
@@ -14,7 +14,7 @@ class TestGeneralUsage:
         ])
 
     def test_root_conftest_syntax_error(self, testdir):
-        p = testdir.makepyfile(conftest="raise SyntaxError\n")
+        testdir.makepyfile(conftest="raise SyntaxError\n")
         result = testdir.runpytest()
         result.stderr.fnmatch_lines(["*raise SyntaxError*"])
         assert result.ret != 0
@@ -67,7 +67,7 @@ class TestGeneralUsage:
         result = testdir.runpytest("-s", "asd")
         assert result.ret == 4 # EXIT_USAGEERROR
         result.stderr.fnmatch_lines(["ERROR: file not found*asd"])
-        s = result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             "*---configure",
             "*---unconfigure",
         ])
@@ -539,7 +539,6 @@ class TestDurations:
         assert result.ret == 0
         for x in "123":
             for y in 'call',: #'setup', 'call', 'teardown':
-                l = []
                 for line in result.stdout.lines:
                     if ("test_%s" % x) in line and y in line:
                         break

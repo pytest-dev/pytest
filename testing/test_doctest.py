@@ -99,7 +99,7 @@ class TestDoctests:
         reprec.assertoutcome(failed=1)
 
     def test_doctest_unexpected_exception(self, testdir):
-        p = testdir.maketxtfile("""
+        testdir.maketxtfile("""
             >>> i = 0
             >>> 0 / i
             2
@@ -136,7 +136,7 @@ class TestDoctests:
         testdir.tmpdir.join("hello.py").write(py.code.Source("""
             import asdalsdkjaslkdjasd
         """))
-        p = testdir.maketxtfile("""
+        testdir.maketxtfile("""
             >>> import hello
             >>>
         """)

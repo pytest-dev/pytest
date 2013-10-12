@@ -1,7 +1,6 @@
 
-import pytest, py, sys
+import pytest, py
 from _pytest import python as funcargs
-from _pytest.python import FixtureLookupError
 
 class TestMetafunc:
     def Metafunc(self, func):

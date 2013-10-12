@@ -5,7 +5,6 @@ This is a good source for looking at the various reporting hooks.
 import pytest
 import py
 import sys
-import os
 
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "reporting", after="general")

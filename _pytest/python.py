@@ -4,7 +4,7 @@ import inspect
 import sys
 import pytest
 from _pytest.main import getfslineno
-from _pytest.mark import MarkDecorator, MarkInfo
+from _pytest.mark import MarkDecorator
 from _pytest.monkeypatch import monkeypatch
 from py._code.code import TerminalRepr
 
@@ -177,7 +177,6 @@ def pytest_pyfunc_call(__multicall__, pyfuncitem):
 
 def pytest_collect_file(path, parent):
     ext = path.ext
-    pb = path.purebasename
     if ext == ".py":
         if not parent.session.isinitpath(path):
             for pat in parent.config.getini('python_files'):
@@ -914,10 +913,6 @@ def raises(ExpectedException, *args, **kwargs):
             func(*args[1:], **kwargs)
         except ExpectedException:
             return py.code.ExceptionInfo()
-        k = ", ".join(["%s=%r" % x for x in kwargs.items()])
-        if k:
-            k = ', ' + k
-        expr = '%s(%r%s)' %(getattr(func, '__name__', func), args, k)
     pytest.fail("DID NOT RAISE")
 
 class RaisesContext(object):
@@ -1015,7 +1010,7 @@ class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
     def setup(self):
         # check if parametrization happend with an empty list
         try:
-            empty = self.callspec._emptyparamspecified
+            self.callspec._emptyparamspecified
         except AttributeError:
             pass
         else:
@@ -1392,10 +1387,10 @@ class FixtureLookupError(LookupError):
 
         if msg is None:
             fm = self.request._fixturemanager
-            nodeid = self.request._parentid
             available = []
             for name, fixturedef in fm._arg2fixturedefs.items():
-                faclist = list(fm._matchfactories(fixturedef, self.request._parentid))
+                faclist = list(fm._matchfactories(fixturedef,
+                                                  self.request._parentid))
                 if faclist:
                     available.append(name)
             msg = "fixture %r not found" % (self.argname,)

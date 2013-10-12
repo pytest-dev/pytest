@@ -13,7 +13,7 @@ class TestMark:
 
     def test_pytest_mark_notcallable(self):
         mark = Mark()
-        pytest.raises((AttributeError, TypeError), "mark()")
+        pytest.raises((AttributeError, TypeError), mark)
 
     def test_pytest_mark_bare(self):
         mark = Mark()
@@ -35,7 +35,7 @@ class TestMark:
         mark = Mark()
         def f():
             pass
-        marker = mark.world
+        mark.world
         mark.world(x=3)(f)
         assert f.world.kwargs['x'] == 3
         mark.world(y=4)(f)
@@ -374,7 +374,7 @@ class TestFunctional:
         assert len(deselected_tests) == 2
 
     def test_keywords_at_node_level(self, testdir):
-        p = testdir.makepyfile("""
+        testdir.makepyfile("""
             import pytest
             @pytest.fixture(scope="session", autouse=True)
             def some(request):

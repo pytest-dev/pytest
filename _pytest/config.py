@@ -41,7 +41,7 @@ def get_plugin_manager():
         return _preinit.pop(0)
     # subsequent calls to main will create a fresh instance
     pluginmanager = PytestPluginManager()
-    pluginmanager.config = config = Config(pluginmanager) # XXX attr needed?
+    pluginmanager.config = Config(pluginmanager) # XXX attr needed?
     for spec in default_plugins:
         pluginmanager.import_plugin(spec)
     return pluginmanager

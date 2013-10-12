@@ -16,7 +16,7 @@ class TestParseIni:
         assert config.inicfg['name'] == 'value'
 
     def test_getcfg_empty_path(self, tmpdir):
-        cfg = getcfg([''], ['setup.cfg']) #happens on py.test  ""
+        getcfg([''], ['setup.cfg']) #happens on py.test  ""
 
     def test_append_parse_args(self, testdir, tmpdir):
         tmpdir.join("setup.cfg").write(py.code.Source("""
@@ -31,7 +31,7 @@ class TestParseIni:
         #assert len(args) == 1
 
     def test_tox_ini_wrong_version(self, testdir):
-        p = testdir.makefile('.ini', tox="""
+        testdir.makefile('.ini', tox="""
             [pytest]
             minversion=9.0
         """)
@@ -77,7 +77,7 @@ class TestParseIni:
 class TestConfigCmdlineParsing:
     def test_parsing_again_fails(self, testdir):
         config = testdir.parseconfig()
-        pytest.raises(AssertionError, "config.parse([])")
+        pytest.raises(AssertionError, lambda: config.parse([]))
 
 
 class TestConfigAPI:
@@ -200,7 +200,7 @@ class TestConfigAPI:
                 parser.addini("args", "new args", type="args")
                 parser.addini("a2", "", "args", default="1 2 3".split())
         """)
-        p = testdir.makeini("""
+        testdir.makeini("""
             [pytest]
             args=123 "123 hello" "this"
         """)
@@ -217,7 +217,7 @@ class TestConfigAPI:
                 parser.addini("xy", "", type="linelist")
                 parser.addini("a2", "", "linelist")
         """)
-        p = testdir.makeini("""
+        testdir.makeini("""
             [pytest]
             xy= 123 345
                 second line
@@ -234,7 +234,7 @@ class TestConfigAPI:
             def pytest_addoption(parser):
                 parser.addini("xy", "", type="linelist")
         """)
-        p = testdir.makeini("""
+        testdir.makeini("""
             [pytest]
             xy= 123
         """)

@@ -8,13 +8,12 @@ class TestBootstrapping:
     def test_consider_env_fails_to_import(self, monkeypatch):
         pluginmanager = PluginManager()
         monkeypatch.setenv('PYTEST_PLUGINS', 'nonexisting', prepend=",")
-        pytest.raises(ImportError, "pluginmanager.consider_env()")
+        pytest.raises(ImportError, lambda: pluginmanager.consider_env())
 
     def test_preparse_args(self):
         pluginmanager = PluginManager()
-        pytest.raises(ImportError, """
-            pluginmanager.consider_preparse(["xyz", "-p", "hello123"])
-        """)
+        pytest.raises(ImportError, lambda:
+            pluginmanager.consider_preparse(["xyz", "-p", "hello123"]))
 
     def test_plugin_prevent_register(self):
         pluginmanager = PluginManager()
@@ -93,7 +92,7 @@ class TestBootstrapping:
         # ok, we did not explode
 
     def test_pluginmanager_ENV_startup(self, testdir, monkeypatch):
-        x500 = testdir.makepyfile(pytest_x500="#")
+        testdir.makepyfile(pytest_x500="#")
         p = testdir.makepyfile("""
             import pytest
             def test_hello(pytestconfig):
@@ -110,7 +109,7 @@ class TestBootstrapping:
         pytest.raises(ImportError, 'pluginmanager.import_plugin("qweqwex.y")')
         pytest.raises(ImportError, 'pluginmanager.import_plugin("pytest_qweqwx.y")')
 
-        reset = testdir.syspathinsert()
+        testdir.syspathinsert()
         pluginname = "pytest_hello"
         testdir.makepyfile(**{pluginname: ""})
         pluginmanager.import_plugin("pytest_hello")
@@ -128,7 +127,7 @@ class TestBootstrapping:
         pytest.raises(ImportError, 'pluginmanager.import_plugin("qweqwex.y")')
         pytest.raises(ImportError, 'pluginmanager.import_plugin("pytest_qweqwex.y")')
 
-        reset = testdir.syspathinsert()
+        testdir.syspathinsert()
         testdir.mkpydir("pkg").join("plug.py").write("x=3")
         pluginname = "pkg.plug"
         pluginmanager.import_plugin(pluginname)
@@ -170,7 +169,7 @@ class TestBootstrapping:
     def test_consider_conftest_deps(self, testdir):
         mod = testdir.makepyfile("pytest_plugins='xyz'").pyimport()
         pp = PluginManager()
-        pytest.raises(ImportError, "pp.consider_conftest(mod)")
+        pytest.raises(ImportError, lambda: pp.consider_conftest(mod))
 
     def test_pm(self):
         pp = PluginManager()
@@ -210,9 +209,7 @@ class TestBootstrapping:
         l = pp.getplugins()
         assert mod in l
         pytest.raises(ValueError, "pp.register(mod)")
-        mod2 = py.std.types.ModuleType("pytest_hello")
-        #pp.register(mod2) # double pm
-        pytest.raises(ValueError, "pp.register(mod)")
+        pytest.raises(ValueError, lambda: pp.register(mod))
         #assert not pp.isregistered(mod2)
         assert pp.getplugins() == l
 
@@ -229,14 +226,14 @@ class TestBootstrapping:
         class hello:
             def pytest_gurgel(self):
                 pass
-        pytest.raises(Exception, "pp.register(hello())")
+        pytest.raises(Exception, lambda: pp.register(hello()))
 
     def test_register_mismatch_arg(self):
         pp = get_plugin_manager()
         class hello:
             def pytest_configure(self, asd):
                 pass
-        excinfo = pytest.raises(Exception, "pp.register(hello())")
+        pytest.raises(Exception, lambda: pp.register(hello()))
 
     def test_register(self):
         pm = get_plugin_manager()
@@ -293,7 +290,7 @@ class TestBootstrapping:
 class TestPytestPluginInteractions:
 
     def test_addhooks_conftestplugin(self, testdir):
-        newhooks = testdir.makepyfile(newhooks="""
+        testdir.makepyfile(newhooks="""
             def pytest_myhook(xyz):
                 "new hook"
         """)
@@ -312,7 +309,7 @@ class TestPytestPluginInteractions:
         assert res == [11]
 
     def test_addhooks_nohooks(self, testdir):
-        conf = testdir.makeconftest("""
+        testdir.makeconftest("""
             import sys
             def pytest_addhooks(pluginmanager):
                 pluginmanager.addhooks(sys)
@@ -431,7 +428,7 @@ def test_namespace_has_default_and_env_plugins(testdir):
 
 def test_varnames():
     def f(x):
-        i = 3
+        i = 3  # noqa
     class A:
         def f(self, y):
             pass
@@ -496,7 +493,7 @@ class TestMultiCall:
 
     def test_tags_call_error(self):
         multicall = MultiCall([lambda x: x], {})
-        pytest.raises(TypeError, "multicall.execute()")
+        pytest.raises(TypeError, multicall.execute)
 
     def test_call_subexecute(self):
         def m(__multicall__):
@@ -544,7 +541,7 @@ class TestHookRelay:
             def hello(self, arg):
                 "api hook 1"
         mcm = HookRelay(hookspecs=Api, pm=pm, prefix="he")
-        pytest.raises(TypeError, "mcm.hello(3)")
+        pytest.raises(TypeError, lambda: mcm.hello(3))
 
     def test_firstresult_definition(self):
         pm = PluginManager()

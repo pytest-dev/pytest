@@ -204,7 +204,7 @@ class TestNewSession(SessionTests):
 
 def test_plugin_specify(testdir):
     testdir.chdir()
-    config = pytest.raises(ImportError, """
+    pytest.raises(ImportError, """
             testdir.parseconfig("-p", "nqweotexistent")
     """)
     #pytest.raises(ImportError,

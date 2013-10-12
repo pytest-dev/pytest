@@ -1,7 +1,7 @@
 import py
 import pytest
-import os, sys
-from _pytest.pytester import LineMatcher, LineComp, HookRecorder
+import os
+from _pytest.pytester import HookRecorder
 from _pytest.core import PluginManager
 
 def test_reportrecorder(testdir):
@@ -56,7 +56,6 @@ def test_reportrecorder(testdir):
 
 
 def test_parseconfig(testdir):
-    import py
     config1 = testdir.parseconfig()
     config2 = testdir.parseconfig()
     assert config2 != config1

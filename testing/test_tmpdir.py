@@ -1,5 +1,4 @@
 import py, pytest
-import os
 
 from _pytest.tmpdir import tmpdir, TempdirHandler
 

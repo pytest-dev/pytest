@@ -247,7 +247,7 @@ class TestFillFixtures:
         assert result.ret == 0
 
     def test_funcarg_lookup_error(self, testdir):
-        p = testdir.makepyfile("""
+        testdir.makepyfile("""
             def test_lookup_error(unknown):
                 pass
         """)
@@ -307,7 +307,7 @@ class TestRequestBasic:
             def pytest_funcarg__something(request):
                 return 1
         """)
-        item = testdir.makepyfile("""
+        testdir.makepyfile("""
             def pytest_funcarg__something(request):
                 return request.getfuncargvalue("something") + 1
             def test_func(something):
@@ -634,13 +634,13 @@ class TestRequestCachedSetup:
             l.append("setup")
         def teardown(val):
             l.append("teardown")
-        ret1 = req1.cached_setup(setup, teardown, scope="function")
+        req1.cached_setup(setup, teardown, scope="function")
         assert l == ['setup']
         # artificial call of finalizer
         setupstate = req1._pyfuncitem.session._setupstate
         setupstate._callfinalizers(item1)
         assert l == ["setup", "teardown"]
-        ret2 = req1.cached_setup(setup, teardown, scope="function")
+        req1.cached_setup(setup, teardown, scope="function")
         assert l == ["setup", "teardown", "setup"]
         setupstate._callfinalizers(item1)
         assert l == ["setup", "teardown", "setup", "teardown"]
@@ -1461,7 +1461,7 @@ class TestFixtureMarker:
         'request.getfuncargvalue("arg")',
         'request.cached_setup(lambda: None, scope="function")',
     ], ids=["getfuncargvalue", "cached_setup"])
-    def test_scope_mismatch(self, testdir, method):
+    def test_scope_mismatch_various(self, testdir, method):
         testdir.makeconftest("""
             import pytest
             finalized = []
@@ -1609,7 +1609,7 @@ class TestFixtureMarker:
         """)
 
     def test_class_ordering(self, testdir):
-        p = testdir.makeconftest("""
+        testdir.makeconftest("""
             import pytest
 
             l = []

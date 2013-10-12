@@ -1,6 +1,5 @@
 import pytest
-import py, os, sys
-import subprocess
+import sys
 
 
 @pytest.fixture(scope="module")

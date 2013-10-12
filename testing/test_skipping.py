@@ -1,8 +1,7 @@
 import pytest
 import sys
 
-from _pytest.skipping import MarkEvaluator, folded_skips
-from _pytest.skipping import pytest_runtest_setup
+from _pytest.skipping import MarkEvaluator, folded_skips, pytest_runtest_setup
 from _pytest.runner import runtestprotocol
 
 class TestEvaluator:
@@ -108,7 +107,7 @@ class TestEvaluator:
                 pass
         """)
         ev = MarkEvaluator(item, 'skipif')
-        exc = pytest.raises(pytest.fail.Exception, "ev.istrue()")
+        exc = pytest.raises(pytest.fail.Exception, ev.istrue)
         assert """Failed: you need to specify reason=STRING when using booleans as conditions.""" in exc.value.msg
 
     def test_skipif_class(self, testdir):
@@ -189,7 +188,7 @@ class TestXFail:
             def test_this():
                 assert 0
         """)
-        result = testdir.runpytest(p, '-v')
+        testdir.runpytest(p, '-v')
         #result.stdout.fnmatch_lines([
         #    "*HINT*use*-r*"
         #])
@@ -370,8 +369,9 @@ class TestSkipif:
             @pytest.mark.skipif("hasattr(os, 'sep')")
             def test_func():
                 pass
-        """)
-        x = pytest.raises(pytest.skip.Exception, "pytest_runtest_setup(item)")
+        """) # noqa
+        x = pytest.raises(pytest.skip.Exception, lambda:
+                          pytest_runtest_setup(item))
         assert x.value.msg == "condition: hasattr(os, 'sep')"
 
 

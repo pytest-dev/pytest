@@ -217,7 +217,6 @@ def pytest_terminal_summary(terminalreporter):
             tr._tw.line(line)
 
 def show_simple(terminalreporter, lines, stat, format):
-    tw = terminalreporter._tw
     failed = terminalreporter.stats.get(stat)
     if failed:
         for rep in failed:

@@ -242,7 +242,7 @@ class TestCustomConftests:
         assert "passed" in result.stdout.str()
 
     def test_pytest_fs_collect_hooks_are_seen(self, testdir):
-        conf = testdir.makeconftest("""
+        testdir.makeconftest("""
             import pytest
             class MyModule(pytest.Module):
                 pass
@@ -250,8 +250,8 @@ class TestCustomConftests:
                 if path.ext == ".py":
                     return MyModule(path, parent)
         """)
-        sub = testdir.mkdir("sub")
-        p = testdir.makepyfile("def test_x(): pass")
+        testdir.mkdir("sub")
+        testdir.makepyfile("def test_x(): pass")
         result = testdir.runpytest("--collect-only")
         result.stdout.fnmatch_lines([
             "*MyModule*",
@@ -318,7 +318,7 @@ class TestSession:
         topdir = testdir.tmpdir
         rcol = Session(config)
         assert topdir == rcol.fspath
-        rootid = rcol.nodeid
+        #rootid = rcol.nodeid
         #root2 = rcol.perform_collect([rcol.nodeid], genitems=False)[0]
         #assert root2 == rcol, rootid
         colitems = rcol.perform_collect([rcol.nodeid], genitems=False)
@@ -329,13 +329,13 @@ class TestSession:
     def test_collect_protocol_single_function(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
         id = "::".join([p.basename, "test_func"])
-        topdir = testdir.tmpdir
         items, hookrec = testdir.inline_genitems(id)
         item, = items
         assert item.name == "test_func"
         newid = item.nodeid
         assert newid == id
         py.std.pprint.pprint(hookrec.hookrecorder.calls)
+        topdir = testdir.tmpdir  # noqa
         hookrec.hookrecorder.contains([
             ("pytest_collectstart", "collector.fspath == topdir"),
             ("pytest_make_collect_report", "collector.fspath == topdir"),
@@ -436,7 +436,7 @@ class TestSession:
         ])
 
     def test_serialization_byid(self, testdir):
-        p = testdir.makepyfile("def test_func(): pass")
+        testdir.makepyfile("def test_func(): pass")
         items, hookrec = testdir.inline_genitems()
         assert len(items) == 1
         item, = items

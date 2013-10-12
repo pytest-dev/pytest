@@ -2,7 +2,7 @@ import sys
 
 import py, pytest
 import _pytest.assertion as plugin
-from _pytest.assertion import reinterpret, util
+from _pytest.assertion import reinterpret
 needsnewassert = pytest.mark.skipif("sys.version_info < (2,6)")
 
 
@@ -353,7 +353,7 @@ def test_traceback_failure(testdir):
 
 @pytest.mark.skipif("sys.version_info < (2,5) or '__pypy__' in sys.builtin_module_names or sys.platform.startswith('java')" )
 def test_warn_missing(testdir):
-    p1 = testdir.makepyfile("")
+    testdir.makepyfile("")
     result = testdir.run(sys.executable, "-OO", "-m", "pytest", "-h")
     result.stderr.fnmatch_lines([
         "*WARNING*assert statements are not executed*",

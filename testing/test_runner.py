@@ -1,6 +1,5 @@
 import pytest, py, sys, os
 from _pytest import runner, main
-from py._code.code import ReprExceptionInfo
 
 class TestSetupState:
     def test_setup(self, testdir):
@@ -39,10 +38,11 @@ class TestSetupState:
             def setup_module(mod):
                 raise ValueError(42)
             def test_func(): pass
-        """)
+        """) # noqa
         ss = runner.SetupState()
-        pytest.raises(ValueError, "ss.prepare(item)")
-        pytest.raises(ValueError, "ss.prepare(item)")
+        pytest.raises(ValueError, lambda: ss.prepare(item))
+        pytest.raises(ValueError, lambda: ss.prepare(item))
+
 
 class BaseFunctionalTests:
     def test_passfunction(self, testdir):
@@ -428,7 +428,7 @@ def test_importorskip():
     def f():
         importorskip("asdlkj")
     try:
-        sys = importorskip("sys")
+        sys = importorskip("sys")  # noqa
         assert sys == py.std.sys
         #path = py.test.importorskip("os.path")
         #assert path == py.std.os.path
@@ -464,7 +464,7 @@ def test_pytest_cmdline_main(testdir):
     """)
     import subprocess
     popen = subprocess.Popen([sys.executable, str(p)], stdout=subprocess.PIPE)
-    s = popen.stdout.read()
+    popen.communicate()
     ret = popen.wait()
     assert ret == 0
 
