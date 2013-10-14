@@ -55,17 +55,15 @@ def obtain_plugins_table(plugins, client):
     
     :param plugins: list of (name, version)
     :param client: xmlrpclib.ServerProxy
-    
     '''
     rows = []
     ColumnData = namedtuple('ColumnData', 'text link')
-    headers = ['Name', 'Version', 'Author', 'Summary']
+    headers = ['Name', 'Author', 'Summary']
     
     for package_name, version in plugins:
         release_data = client.release_data(package_name, version)
         row = (
-            ColumnData(package_name, release_data['package_url']),
-            ColumnData(version, release_data['release_url']),
+            ColumnData(package_name + '-' + version, release_data['release_url']),
             ColumnData(release_data['author'], release_data['author_email']),
             ColumnData(release_data['summary'], None),
         )
