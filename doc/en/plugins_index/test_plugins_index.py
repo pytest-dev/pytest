@@ -1,6 +1,8 @@
 import os
 import xmlrpclib
 
+import pytest
+
 
 #===================================================================================================
 # test_plugins_index
@@ -39,6 +41,7 @@ def test_plugins_index(tmpdir, monkeypatch):
                     'author' : 'someone',
                     'author_email' : 'someone@py.com',
                     'summary' : 'some plugin',
+                    'downloads': {'last_day': 1, 'last_month': 4, 'last_week': 2},
                 },
                 
                 ('pytest-plugin2', '1.2') : {
@@ -47,6 +50,7 @@ def test_plugins_index(tmpdir, monkeypatch):
                     'author' : 'other',
                     'author_email' : 'other@py.com',
                     'summary' : 'some other plugin',
+                    'downloads': {'last_day': 10, 'last_month': 40, 'last_week': 20},
                 },
             }
             
@@ -76,13 +80,22 @@ expected_output = '''\
 List of Third-Party Plugins
 ===========================
 
-============================================ ============================= ===================
-                    Name                                Author                   Summary      
-============================================ ============================= ===================
- `pytest-plugin1-1.0 <http://plugin1/1.0>`_   `someone <someone@py.com>`_      some plugin    
- `pytest-plugin2-1.2 <http://plugin2/1.2>`_     `other <other@py.com>`_     some other plugin 
+============================================ ============================= ========= ===================
+                    Name                                Author             Downloads       Summary      
+============================================ ============================= ========= ===================
+ `pytest-plugin1-1.0 <http://plugin1/1.0>`_   `someone <someone@py.com>`_      4         some plugin    
+ `pytest-plugin2-1.2 <http://plugin2/1.2>`_     `other <other@py.com>`_       40      some other plugin 
 
-============================================ ============================= ===================
+============================================ ============================= ========= ===================
+
+*(Downloads are given from last month only)*
 
 *(Updated on 2013-10-20)*
 '''
+
+
+#===================================================================================================
+# main
+#===================================================================================================
+if __name__ == '__main__':
+    pytest.main()

@@ -58,17 +58,24 @@ def obtain_plugins_table(plugins, client):
     '''
     rows = []
     ColumnData = namedtuple('ColumnData', 'text link')
-    headers = ['Name', 'Author', 'Summary']
+    headers = ['Name', 'Author', 'Downloads', 'Summary']
     
-    for package_name, version in plugins:
+    plugins = list(plugins)
+    for index, (package_name, version) in enumerate(plugins):
+        print package_name, version, '...',
+        
         release_data = client.release_data(package_name, version)
+        download_count = release_data['downloads']['last_month']
         row = (
             ColumnData(package_name + '-' + version, release_data['release_url']),
             ColumnData(release_data['author'], release_data['author_email']),
+            ColumnData(str(download_count), None),
             ColumnData(release_data['summary'], None),
         )
         assert len(row) == len(headers)
         rows.append(row)
+        
+        print 'OK (%d%%)' % ((index + 1) * 100 / len(plugins)) 
         
     return headers, rows    
 
@@ -124,7 +131,8 @@ def generate_plugins_index_from_table(filename, headers, rows):
         print >> f
         print >> f, get_row_limiter('=')
         print >> f
-        
+        print >> f, '*(Downloads are given from last month only)*'
+        print >> f
         print >> f, '*(Updated on %s)*' % _get_today_as_str()
         
 
@@ -167,7 +175,9 @@ def main(argv):
 
     client = xmlrpclib.ServerProxy(options.url)
     generate_plugins_index(client, options.filename)
-    print 'OK'
+    
+    print
+    print '%s Updated.' % options.filename
     return 0
 
 #===================================================================================================
