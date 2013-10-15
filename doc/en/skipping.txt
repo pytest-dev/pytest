@@ -70,7 +70,8 @@ For larger test suites it's usually a good idea to have one file
 where you define the markers which you then consistently apply
 throughout your test suite.
 
-Alternatively, the pre pytest-2.4 way to specify `condition strings <condition strings>`_ instead of booleans will remain fully supported in future
+Alternatively, the pre pytest-2.4 way to specify :ref:`condition strings
+<string conditions>` instead of booleans will remain fully supported in future
 versions of pytest.  It couldn't be easily used for importing markers
 between test modules so it's no longer advertised as the primary method.
 
@@ -232,7 +233,7 @@ The version will be read from the specified
 module's ``__version__`` attribute.
 
 
-.. _`string conditions`:
+.. _string conditions:
 
 specifying conditions as strings versus booleans
 ----------------------------------------------------------
