@@ -1,6 +1,7 @@
 """ monkeypatching and mocking functionality.  """
 
 import os, sys
+from py.builtin import _basestring
 
 def pytest_funcarg__monkeypatch(request):
     """The returned ``monkeypatch`` funcarg provides these
@@ -28,7 +29,7 @@ def pytest_funcarg__monkeypatch(request):
 
 def derive_importpath(import_path):
     import pytest
-    if not isinstance(import_path, str) or "." not in import_path:
+    if not isinstance(import_path, basestring) or "." not in import_path:
         raise TypeError("must be absolute import path string, not %r" %
                         (import_path,))
     rest = []
@@ -85,7 +86,7 @@ class monkeypatch:
         import inspect
 
         if value is notset:
-            if not isinstance(target, str):
+            if not isinstance(target, _basestring):
                 raise TypeError("use setattr(target, name, value) or "
                    "setattr(target, value) with target being a dotted "
                    "import string")
@@ -115,7 +116,7 @@ class monkeypatch:
         """
         __tracebackhide__ = True
         if name is notset:
-            if not isinstance(target, str):
+            if not isinstance(target, basestring):
                 raise TypeError("use delattr(target, name) or "
                                 "delattr(target) with target being a dotted "
                                 "import string")

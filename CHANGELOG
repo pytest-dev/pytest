@@ -1,6 +1,9 @@
 Changes between 2.4.2 and 2.4.3
 -----------------------------------
 
+- fix unicode handling with new monkeypatch.setattr(import_path, value)
+  API.  Thanks Rob Dennis.  Fixes issue371.
+
 - In assertion rewriting mode on Python 2, fix the detection of coding
   cookies. See issue #330.
 
