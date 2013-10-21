@@ -9,7 +9,6 @@ import re
 import sys
 import time
 
-
 # Python 2.X and 3.X compatibility
 try:
     unichr(65)
@@ -131,31 +130,31 @@ class LogXML(object):
             self.skipped += 1
         else:
             fail = Junit.failure(message="test failure")
-            fail.append(str(report.longrepr))
+            fail.append(unicode(report.longrepr))
             self.append(fail)
             self.failed += 1
         self._write_captured_output(report)
 
     def append_collect_failure(self, report):
         #msg = str(report.longrepr.reprtraceback.extraline)
-        self.append(Junit.failure(str(report.longrepr),
+        self.append(Junit.failure(unicode(report.longrepr),
                                   message="collection failure"))
         self.errors += 1
 
     def append_collect_skipped(self, report):
         #msg = str(report.longrepr.reprtraceback.extraline)
-        self.append(Junit.skipped(str(report.longrepr),
+        self.append(Junit.skipped(unicode(report.longrepr),
                                   message="collection skipped"))
         self.skipped += 1
 
     def append_error(self, report):
-        self.append(Junit.error(str(report.longrepr),
+        self.append(Junit.error(unicode(report.longrepr),
                                 message="test setup failure"))
         self.errors += 1
 
     def append_skipped(self, report):
         if hasattr(report, "wasxfail"):
-            self.append(Junit.skipped(str(report.wasxfail),
+            self.append(Junit.skipped(unicode(report.wasxfail),
                                       message="expected test failure"))
         else:
             filename, lineno, skipreason = report.longrepr
@@ -201,10 +200,10 @@ class LogXML(object):
                     classname="pytest",
                     name="internal"))
 
-    def pytest_sessionstart(self, session):
+    def pytest_sessionstart(self):
         self.suite_start_time = time.time()
 
-    def pytest_sessionfinish(self, session, exitstatus, __multicall__):
+    def pytest_sessionfinish(self):
         if py.std.sys.version_info[0] < 3:
             logfile = py.std.codecs.open(self.logfile, 'w', encoding='utf-8')
         else:

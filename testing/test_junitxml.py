@@ -1,5 +1,8 @@
+# -*- coding: utf-8 -*-
+
 from xml.dom import minidom
 import py, sys, os
+from _pytest.junitxml import LogXML
 
 def runandparse(testdir, *args):
     resultpath = testdir.tmpdir.join("junit.xml")
@@ -423,8 +426,6 @@ def test_invalid_xml_escape():
         assert chr(i) == bin_xml_escape(unichr(i)).uniobj
 
 def test_logxml_path_expansion(tmpdir, monkeypatch):
-    from _pytest.junitxml import LogXML
-
     home_tilde = py.path.local(os.path.expanduser('~')).join('test.xml')
 
     xml_tilde = LogXML('~%stest.xml' % tmpdir.sep, None)
@@ -460,4 +461,26 @@ def test_escaped_parametrized_names_xml(testdir):
     node = dom.getElementsByTagName("testcase")[0]
     assert_attr(node,
         name="test_func[#x00]")
+
+def test_unicode_issue368(testdir):
+    path = testdir.tmpdir.join("test.xml")
+    log = LogXML(str(path), None)
+    class report:
+        longrepr = u"ВНИМАНИЕ!"
+        sections = []
+        nodeid = "something"
+
+    # hopefully this is not too brittle ...
+    log.pytest_sessionstart()
+    log._opentestcase(report)
+    log.append_failure(report)
+    log.append_collect_failure(report)
+    log.append_collect_skipped(report)
+    log.append_error(report)
+    report.longrepr = "filename", 1, u"ВНИМАНИЕ!"
+    log.append_skipped(report)
+    report.wasxfail = u"ВНИМАНИЕ!"
+    log.append_skipped(report)
+    log.pytest_sessionfinish()
+
 
