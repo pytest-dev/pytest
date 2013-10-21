@@ -12,6 +12,9 @@ Changes between 2.4.2 and 2.4.3
   properly so that the pkg_resources.resource_stream method works properly.
   Fixes issue366.  Thanks for the investigations and full PR to Jason R. Coombs.
 
+- pytestconfig is now session-config as it is the same object during the
+  whole test run.  Fixes issue370. 
+
 - avoid one surprising case of marker malfunction/confusion::
   
       @pytest.mark.some(lambda arg: ...)

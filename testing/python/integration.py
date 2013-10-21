@@ -150,3 +150,7 @@ class TestReRunTests:
         result.stdout.fnmatch_lines("""
             *2 passed*
         """)
+
+def test_pytestconfig_is_session_scoped():
+    from _pytest.python import pytestconfig
+    assert pytestconfig._pytestfixturefunction.scope == "session"

@@ -157,7 +157,7 @@ def pytest_namespace():
         '_fillfuncargs': fillfixtures}
     }
 
-@fixture()
+@fixture(scope="session")
 def pytestconfig(request):
     """ the pytest config object with access to command line opts."""
     return request.config
@@ -1566,8 +1566,8 @@ class FixtureManager:
                 continue # will raise FixtureLookupError at setup time
             for fixturedef in faclist:
                 if fixturedef.params is not None:
-                    metafunc.parametrize(argname, fixturedef.params, indirect=True,
-                                         scope=fixturedef.scope)
+                    metafunc.parametrize(argname, fixturedef.params,
+                                         indirect=True, scope=fixturedef.scope)
 
     def pytest_collection_modifyitems(self, items):
         # separate parametrized setups
