@@ -234,7 +234,7 @@ quick as a single one because they reuse the same instance.
 If you decide that you rather want to have a session-scoped ``smtp``
 instance, you can simply declare it::
 
-    @pytest.fixture(scope=``session``)
+    @pytest.fixture(scope="session")
     def smtp(...):
         # the returned fixture value will be shared for 
         # all tests needing it
