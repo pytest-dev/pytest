@@ -29,7 +29,7 @@ def pytest_funcarg__monkeypatch(request):
 
 def derive_importpath(import_path):
     import pytest
-    if not isinstance(import_path, basestring) or "." not in import_path:
+    if not isinstance(import_path, _basestring) or "." not in import_path:
         raise TypeError("must be absolute import path string, not %r" %
                         (import_path,))
     rest = []
@@ -116,7 +116,7 @@ class monkeypatch:
         """
         __tracebackhide__ = True
         if name is notset:
-            if not isinstance(target, basestring):
+            if not isinstance(target, _basestring):
                 raise TypeError("use delattr(target, name) or "
                                 "delattr(target) with target being a dotted "
                                 "import string")

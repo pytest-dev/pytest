@@ -465,8 +465,9 @@ def test_escaped_parametrized_names_xml(testdir):
 def test_unicode_issue368(testdir):
     path = testdir.tmpdir.join("test.xml")
     log = LogXML(str(path), None)
+    ustr = py.builtin._totext("ВНИ!", "utf-8")
     class report:
-        longrepr = u"ВНИМАНИЕ!"
+        longrepr = ustr
         sections = []
         nodeid = "something"
 
@@ -477,9 +478,9 @@ def test_unicode_issue368(testdir):
     log.append_collect_failure(report)
     log.append_collect_skipped(report)
     log.append_error(report)
-    report.longrepr = "filename", 1, u"ВНИМАНИЕ!"
+    report.longrepr = "filename", 1, ustr
     log.append_skipped(report)
-    report.wasxfail = u"ВНИМАНИЕ!"
+    report.wasxfail = ustr
     log.append_skipped(report)
     log.pytest_sessionfinish()
 
