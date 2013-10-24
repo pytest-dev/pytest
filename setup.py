@@ -13,7 +13,7 @@ classifiers=['Development Status :: 6 - Mature',
              'Programming Language :: Python :: 2',
              'Programming Language :: Python :: 3'] + [
             ("Programming Language :: Python :: %s" % x) for x in
-                "2.4 2.5 2.6 2.7 3.0 3.1 3.2 3.3".split()]
+                "2.5 2.6 2.7 3.0 3.1 3.2 3.3".split()]
 
 long_description = open("README.rst").read()
 def main():

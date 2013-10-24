@@ -1,5 +1,9 @@
 
+Documentation: http://pytest.org/latest/
+
 Changelog: http://pytest.org/latest/changelog.html
+
+Issues: https://bitbucket.org/hpk42/pytest/issues?status=open
 
 The ``py.test`` testing tool makes it easy to write small tests, yet
 scales to support complex functional testing.  It provides
