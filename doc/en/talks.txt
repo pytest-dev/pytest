@@ -10,7 +10,10 @@ Tutorial examples and blog postings
 .. _`tutorial1 repository`: http://bitbucket.org/hpk42/pytest-tutorial1/
 .. _`pycon 2010 tutorial PDF`: http://bitbucket.org/hpk42/pytest-tutorial1/raw/tip/pytest-basic.pdf
 
-Basic usage and funcargs:
+Basic usage and fixtures:
+
+- `pytest feature and release highlights (GERMAN, October 2013)
+  <http://pyvideo.org/video/2429/pytest-feature-and-new-release-highlights>`_
 
 - `pytest introduction from Brian Okken (January 2013)
   <http://pythontesting.net/framework/pytest-introduction/>`_
