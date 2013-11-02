@@ -1,5 +1,7 @@
-Changes between 2.4.2 and 2.4.3
+Unreleased
 -----------------------------------
+
+- allow nested parametrize-value markers, thanks James Lan for the PR.
 
 - fix unicode handling with new monkeypatch.setattr(import_path, value)
   API.  Thanks Rob Dennis.  Fixes issue371.
@@ -29,6 +31,7 @@ Changes between 2.4.2 and 2.4.3
   gets a function to be decorated already.  We now at least detect if this 
   arg is an lambda and thus the example will work.  Thanks Alex Gaynor
   for bringing it up.
+
 
 Changes between 2.4.1 and 2.4.2
 -----------------------------------
