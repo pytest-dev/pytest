@@ -355,6 +355,21 @@ class TestFunction:
         rec = testdir.inline_run()
         rec.assertoutcome(passed=2)
 
+    def test_parametrize_with_mark(selfself, testdir):
+        items = testdir.getitems("""
+            import pytest
+            @pytest.mark.foo
+            @pytest.mark.parametrize('arg', [
+                1,
+                pytest.mark.bar(pytest.mark.baz(2))
+            ])
+            def test_function(arg):
+                pass
+        """)
+        keywords = [item.keywords for item in items]
+        assert 'foo' in keywords[0] and 'bar' not in keywords[0] and 'baz' not in keywords[0]
+        assert 'foo' in keywords[1] and 'bar' in keywords[1] and 'baz' in keywords[1]
+
     def test_function_equality_with_callspec(self, testdir, tmpdir):
         items = testdir.getitems("""
             import pytest
