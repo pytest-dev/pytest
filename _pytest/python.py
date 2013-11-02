@@ -693,16 +693,17 @@ class Metafunc(FuncargnamesCompatAttr):
             to set a dynamic scope using test context or configuration.
         """
 
-        # individual parametrized argument sets can be wrapped in a
-        # marker in which case we unwrap the values and apply the mark
+        # individual parametrized argument sets can be wrapped in a series
+        # of markers in which case we unwrap the values and apply the mark
         # at Function init
         newkeywords = {}
         unwrapped_argvalues = []
         for i, argval in enumerate(argvalues):
-            if isinstance(argval, MarkDecorator):
+            while isinstance(argval, MarkDecorator):
                 newmark = MarkDecorator(argval.markname,
                                         argval.args[:-1], argval.kwargs)
-                newkeywords[i] = {newmark.markname: newmark}
+                newmarks = newkeywords.setdefault(i, {})
+                newmarks[newmark.markname] = newmark
                 argval = argval.args[-1]
             unwrapped_argvalues.append(argval)
         argvalues = unwrapped_argvalues
