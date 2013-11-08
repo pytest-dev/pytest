@@ -57,7 +57,12 @@ class AssertionRewritingHook(object):
         lastname = names[-1]
         pth = None
         if path is not None and len(path) == 1:
-            pth = path[0]
+            try:
+                pth = path[0]
+            except TypeError:
+                # Starting with Python 3.3, `path` started being unsubscriptable, we have to wrap it
+                # in a list.
+                pth = list(path)[0]
         if pth is None:
             try:
                 fd, fn, desc = imp.find_module(lastname, path)
