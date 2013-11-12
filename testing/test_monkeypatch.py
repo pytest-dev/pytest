@@ -46,10 +46,10 @@ class TestSetattrWithImportPath:
         assert _pytest.config.Config == 42
 
     def test_unicode_string(self, monkeypatch):
-        monkeypatch.setattr(u"_pytest.config.Config", 42)
+        monkeypatch.setattr("_pytest.config.Config", 42)
         import _pytest
         assert _pytest.config.Config == 42
-        monkeypatch.delattr(u"_pytest.config.Config")
+        monkeypatch.delattr("_pytest.config.Config")
 
     def test_wrong_target(self, monkeypatch):
         pytest.raises(TypeError, lambda: monkeypatch.setattr(None, None))
