@@ -215,3 +215,40 @@ def test_conftest_import_order(testdir, monkeypatch):
     conftest = Conftest()
     monkeypatch.setattr(conftest, 'importconftest', impct)
     assert conftest.getconftestmodules(sub) == [ct1, ct2]
+
+
+def test_fixture_dependency(testdir, monkeypatch):
+    ct1 = testdir.makeconftest("")
+    ct1 = testdir.makepyfile("__init__.py")
+    ct1.write("")
+    sub = testdir.mkdir("sub")
+    sub.join("__init__.py").write("")
+    sub.join("conftest.py").write(py.std.textwrap.dedent("""
+        import pytest
+
+        @pytest.fixture
+        def not_needed():
+            assert False, "Should not be called!"
+
+        @pytest.fixture
+        def foo():
+            assert False, "Should not be called!"
+
+        @pytest.fixture
+        def bar(foo):
+            return 'bar'
+    """))
+    subsub = sub.mkdir("subsub")
+    subsub.join("__init__.py").write("")
+    subsub.join("test_bar.py").write(py.std.textwrap.dedent("""
+        import pytest
+
+        @pytest.fixture
+        def bar():
+            return 'sub bar'
+
+        def test_event_fixture(bar):
+            assert bar == 'sub bar'
+    """))
+    result = testdir.runpytest("sub")
+    result.stdout.fnmatch_lines(["*1 passed*"])

@@ -1556,8 +1556,7 @@ class FixtureManager:
                 fixturedefs = self.getfixturedefs(argname, parentid)
                 arg2fixturedefs[argname] = fixturedefs
                 if fixturedefs is not None:
-                    for fixturedef in fixturedefs:
-                        merge(fixturedef.argnames)
+                    merge(fixturedefs[-1].argnames)
         return fixturenames_closure, arg2fixturedefs
 
     def pytest_generate_tests(self, metafunc):
