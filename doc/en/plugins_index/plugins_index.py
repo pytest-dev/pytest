@@ -13,6 +13,7 @@ import os
 import sys
 import xmlrpclib
 
+import pytest
 
 #===================================================================================================
 # iter_plugins
@@ -58,18 +59,23 @@ def obtain_plugins_table(plugins, client):
     '''
     rows = []
     ColumnData = namedtuple('ColumnData', 'text link')
-    headers = ['Name', 'Author', 'Downloads', 'Summary']
-    
+    headers = ['Name', 'Author', 'Downloads', 'Python 2.7', 'Python 3.3', 'Summary']
+    pytest_version = pytest.__version__
     plugins = list(plugins)
     for index, (package_name, version) in enumerate(plugins):
         print package_name, version, '...',
         
         release_data = client.release_data(package_name, version)
         download_count = release_data['downloads']['last_month']
+        image_url = '.. image:: http://pytest-plugs.herokuapp.com/status/{name}-{version}'.format(name=package_name,
+                                                                                                  version=version)
+        image_url += '?py={py}&pytest={pytest}'
         row = (
             ColumnData(package_name + '-' + version, release_data['release_url']),
             ColumnData(release_data['author'], release_data['author_email']),
             ColumnData(str(download_count), None),
+            ColumnData(image_url.format(py='py27', pytest=pytest_version), None),
+            ColumnData(image_url.format(py='py33', pytest=pytest_version), None),
             ColumnData(release_data['summary'], None),
         )
         assert len(row) == len(headers)
