@@ -50,8 +50,6 @@ class UnitTestCase(pytest.Class):
             x = getattr(self.obj, name)
             funcobj = getattr(x, 'im_func', x)
             transfer_markers(funcobj, cls, module)
-            if hasattr(funcobj, 'todo'):
-                pytest.mark.xfail(reason=str(funcobj.todo))(funcobj)
             yield TestCaseFunction(name, parent=self)
             foundsomething = True
 
@@ -70,10 +68,6 @@ class TestCaseFunction(pytest.Function):
     def setup(self):
         self._testcase = self.parent.obj(self.name)
         self._obj = getattr(self._testcase, self.name)
-        if hasattr(self._testcase, 'skip'):
-            pytest.skip(self._testcase.skip)
-        if hasattr(self._obj, 'skip'):
-            pytest.skip(self._obj.skip)
         if hasattr(self._testcase, 'setup_method'):
             self._testcase.setup_method(self._obj)
         if hasattr(self, "_request"):

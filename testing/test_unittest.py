@@ -310,9 +310,10 @@ def test_module_level_pytestmark(testdir):
     reprec.assertoutcome(skipped=1)
 
 
-def test_testcase_skip_property(testdir):
+def test_trial_testcase_skip_property(testdir):
+
     testpath = testdir.makepyfile("""
-        import unittest
+        from twisted.trial import unittest
         class MyTestCase(unittest.TestCase):
             skip = 'dont run'
             def test_func(self):
@@ -321,13 +322,41 @@ def test_testcase_skip_property(testdir):
     reprec = testdir.inline_run(testpath, "-s")
     reprec.assertoutcome(skipped=1)
 
-def test_testfunction_skip_property(testdir):
+
+def test_trial_testfunction_skip_property(testdir):
+    pytest.importorskip('twisted.trial.unittest')
     testpath = testdir.makepyfile("""
-        import unittest
+        from twisted.trial import unittest
         class MyTestCase(unittest.TestCase):
             def test_func(self):
                 pass
             test_func.skip = 'dont run'
+        """)
+    reprec = testdir.inline_run(testpath, "-s")
+    reprec.assertoutcome(skipped=1)
+
+
+def test_trial_testcase_todo_property(testdir):
+
+    testpath = testdir.makepyfile("""
+        from twisted.trial import unittest
+        class MyTestCase(unittest.TestCase):
+            todo = 'dont run'
+            def test_func(self):
+                assert 0
+        """)
+    reprec = testdir.inline_run(testpath, "-s")
+    reprec.assertoutcome(skipped=1)
+
+
+def test_trial_testfunction_todo_property(testdir):
+    pytest.importorskip('twisted.trial.unittest')
+    testpath = testdir.makepyfile("""
+        from twisted.trial import unittest
+        class MyTestCase(unittest.TestCase):
+            def test_func(self):
+                assert 0
+            test_func.todo = 'dont run'
         """)
     reprec = testdir.inline_run(testpath, "-s")
     reprec.assertoutcome(skipped=1)
