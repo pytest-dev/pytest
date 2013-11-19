@@ -6,7 +6,7 @@ import py
 
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "resultlog plugin options")
-    group.addoption('--resultlog', '--result-log', action="store", 
+    group.addoption('--resultlog', '--result-log', action="store",
         metavar="path", default=None,
         help="path for machine-readable result log.")
 
@@ -85,7 +85,7 @@ class ResultLog(object):
         if not report.passed:
             if report.failed:
                 code = "F"
-                longrepr = str(report.longrepr.reprcrash)
+                longrepr = str(report.longrepr)
             else:
                 assert report.skipped
                 code = "S"
