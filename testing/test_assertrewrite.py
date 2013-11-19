@@ -441,8 +441,9 @@ class TestAssertionRewriteHookDetails(object):
         ])
 
     @pytest.mark.skipif("sys.version_info[0] >= 3")
+    @pytest.mark.xfail("hasattr(sys, 'pypy_translation_info')")
     def test_assume_ascii(self, testdir):
-        content = "u'\xe2\x99\xa5'"
+        content = "u'\xe2\x99\xa5\x01\xfe'"
         testdir.tmpdir.join("test_encoding.py").write(content, "wb")
         res = testdir.runpytest()
         assert res.ret != 0

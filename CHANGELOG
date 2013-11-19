@@ -39,6 +39,8 @@ Unreleased
   arg is an lambda and thus the example will work.  Thanks Alex Gaynor
   for bringing it up.
 
+- xfail a test on pypy that checks wrong encoding/ascii (pypy does
+  not error out). fixes issue385.
 
 Changes between 2.4.1 and 2.4.2
 -----------------------------------
