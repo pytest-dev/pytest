@@ -304,19 +304,36 @@ class MultiCall:
         return kwargs
 
 def varnames(func):
+    """ return argument name tuple for a function, method, class or callable.
+
+    In case of a class, its "__init__" method is considered.
+    For methods the "self" parameter is not included unless you are passing
+    an unbound method with Python3 (which has no supports for unbound methods)
+    """
+    cache = getattr(func, "__dict__", {})
     try:
-        return func._varnames
-    except AttributeError:
+        return cache["_varnames"]
+    except KeyError:
         pass
-    if not inspect.isfunction(func) and not inspect.ismethod(func):
-        func = getattr(func, '__call__', func)
-    ismethod = inspect.ismethod(func)
+    if inspect.isclass(func):
+        try:
+            func = func.__init__
+        except AttributeError:
+            return ()
+        ismethod = True
+    else:
+        if not inspect.isfunction(func) and not inspect.ismethod(func):
+            func = getattr(func, '__call__', func)
+        ismethod = inspect.ismethod(func)
     rawcode = py.code.getrawcode(func)
     try:
         x = rawcode.co_varnames[ismethod:rawcode.co_argcount]
     except AttributeError:
         x = ()
-    py.builtin._getfuncdict(func)['_varnames'] = x
+    try:
+        cache["_varnames"] = x
+    except TypeError:
+        pass
     return x
 
 class HookRelay:

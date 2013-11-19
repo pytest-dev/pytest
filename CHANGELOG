@@ -48,6 +48,10 @@ Unreleased
 - xfail a test on pypy that checks wrong encoding/ascii (pypy does
   not error out). fixes issue385.
 
+- internally make varnames() deal with classes's __init__,
+  although it's not needed by pytest itself atm.  Also
+  fix caching.  Fixes issue376.
+
 Changes between 2.4.1 and 2.4.2
 -----------------------------------
 

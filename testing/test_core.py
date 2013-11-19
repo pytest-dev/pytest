@@ -438,6 +438,15 @@ def test_varnames():
     assert varnames(A().f) == ('y',)
     assert varnames(B()) == ('z',)
 
+def test_varnames_class():
+    class C:
+        def __init__(self, x):
+            pass
+    class D:
+        pass
+    assert varnames(C) == ("x",)
+    assert varnames(D) == ()
+
 class TestMultiCall:
     def test_uses_copy_of_methods(self):
         l = [lambda: 42]
@@ -654,8 +663,7 @@ def test_default_markers(testdir):
 
 def test_importplugin_issue375(testdir):
     testdir.makepyfile(qwe="import aaaa")
-    with pytest.raises(ImportError) as excinfo:
-        importplugin("qwe")
+    excinfo = pytest.raises(ImportError, lambda: importplugin("qwe"))
     assert "qwe" not in str(excinfo.value)
     assert "aaaa" in str(excinfo.value)
 
