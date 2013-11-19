@@ -43,6 +43,21 @@ class TestSetupState:
         pytest.raises(ValueError, lambda: ss.prepare(item))
         pytest.raises(ValueError, lambda: ss.prepare(item))
 
+    def test_teardown_multiple_one_fails(self, testdir):
+        r = []
+        def fin1(): r.append('fin1')
+        def fin2(): raise Exception('oops')
+        def fin3(): r.append('fin3')
+        item = testdir.getitem("def test_func(): pass")
+        ss = runner.SetupState()
+        ss.addfinalizer(fin1, item)
+        ss.addfinalizer(fin2, item)
+        ss.addfinalizer(fin3, item)
+        with pytest.raises(Exception) as err:
+            ss._callfinalizers(item)
+        assert err.value.args == ('oops',)
+        assert r == ['fin3', 'fin1']
+
 
 class BaseFunctionalTests:
     def test_passfunction(self, testdir):

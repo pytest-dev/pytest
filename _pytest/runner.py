@@ -328,9 +328,17 @@ class SetupState(object):
 
     def _callfinalizers(self, colitem):
         finalizers = self._finalizers.pop(colitem, None)
+        exc = None
         while finalizers:
             fin = finalizers.pop()
-            fin()
+            try:
+                fin()
+            except KeyboardInterrupt:
+                raise
+            except:
+                exc = py.std.sys.exc_info()
+        if exc:
+            py.builtin._reraise(*exc)
 
     def _teardown_with_finalization(self, colitem):
         self._callfinalizers(colitem)

@@ -1,6 +1,10 @@
 Unreleased
 -----------------------------------
 
+- fix issue287 by running all finalizers but saving the exception
+  from the last failing finalizer and re-raising it so teardown will
+  still have failed.
+
 - fix issue384 by removing the trial support code
   since the unittest compat enhancements allow
   trial to handle it on its own
