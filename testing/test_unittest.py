@@ -311,7 +311,7 @@ def test_module_level_pytestmark(testdir):
 
 
 def test_trial_testcase_skip_property(testdir):
-
+    pytest.importorskip('twisted.trial.unittest')
     testpath = testdir.makepyfile("""
         from twisted.trial import unittest
         class MyTestCase(unittest.TestCase):
@@ -337,7 +337,7 @@ def test_trial_testfunction_skip_property(testdir):
 
 
 def test_trial_testcase_todo_property(testdir):
-
+    pytest.importorskip('twisted.trial.unittest')
     testpath = testdir.makepyfile("""
         from twisted.trial import unittest
         class MyTestCase(unittest.TestCase):
