@@ -1,6 +1,9 @@
 Unreleased
 -----------------------------------
 
+- fix pexpect-3.0 compatibility for pytest's own tests.
+  (fixes issue386)
+
 - allow nested parametrize-value markers, thanks James Lan for the PR.
 
 - fix unicode handling with new monkeypatch.setattr(import_path, value)

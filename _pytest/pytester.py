@@ -516,15 +516,16 @@ class TmpTestdir:
         return self.spawn(cmd, expect_timeout=expect_timeout)
 
     def spawn(self, cmd, expect_timeout=10.0):
-        pexpect = py.test.importorskip("pexpect", "2.4")
+        pexpect = py.test.importorskip("pexpect", "3.0")
         if hasattr(sys, 'pypy_version_info') and '64' in py.std.platform.machine():
             pytest.skip("pypy-64 bit not supported")
         if sys.platform == "darwin":
             pytest.xfail("pexpect does not work reliably on darwin?!")
         if sys.platform.startswith("freebsd"):
             pytest.xfail("pexpect does not work reliably on freebsd")
-        logfile = self.tmpdir.join("spawn.out")
-        child = pexpect.spawn(cmd, logfile=logfile.open("w"))
+        logfile = self.tmpdir.join("spawn.out").open("wb")
+        child = pexpect.spawn(cmd, logfile=logfile)
+        self.request.addfinalizer(logfile.close)
         child.timeout = expect_timeout
         return child
 
