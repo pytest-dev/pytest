@@ -1,6 +1,10 @@
 Unreleased
 -----------------------------------
 
+- fix ordering when mock.patch or other standard decorator-wrappings
+  are used with test methods.  This fixues issue346.  Thanks to
+  Ronny Pfannschmidt and Donald Stufft for helping to isolate it.
+
 - fix issue384 by removing the trial support code
   since the unittest compat enhancements allow
   trial to handle it on its own

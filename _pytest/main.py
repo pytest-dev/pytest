@@ -697,11 +697,4 @@ class Session(FSCollector):
                         yield x
             node.ihook.pytest_collectreport(report=rep)
 
-def getfslineno(obj):
-    # xxx let decorators etc specify a sane ordering
-    if hasattr(obj, 'place_as'):
-        obj = obj.place_as
-    fslineno = py.code.getfslineno(obj)
-    assert isinstance(fslineno[1], int), obj
-    return fslineno
 
