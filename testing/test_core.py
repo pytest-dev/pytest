@@ -1,6 +1,5 @@
 import pytest, py, os
-from _pytest.core import PluginManager
-from _pytest.core import MultiCall, HookRelay, varnames
+from _pytest.core import * # noqa
 from _pytest.config import get_plugin_manager
 
 
@@ -652,3 +651,11 @@ def test_default_markers(testdir):
         "*tryfirst*first*",
         "*trylast*last*",
     ])
+
+def test_importplugin_issue375(testdir):
+    testdir.makepyfile(qwe="import aaaa")
+    with pytest.raises(ImportError) as excinfo:
+        importplugin("qwe")
+    assert "qwe" not in str(excinfo.value)
+    assert "aaaa" in str(excinfo.value)
+
