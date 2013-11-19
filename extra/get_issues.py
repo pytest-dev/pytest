@@ -53,7 +53,7 @@ def report(issues):
         kind = metadata["kind"]
         status = issue["status"]
         id = issue["local_id"]
-        link = "https://bitbucket.org/hpk42/pytest/issues/%s/" % id
+        link = "https://bitbucket.org/hpk42/pytest/issue/%s/" % id
         print("----")
         print(status, kind, link)
         print(title)
