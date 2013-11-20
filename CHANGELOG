@@ -56,6 +56,9 @@ Unreleased
   although it's not needed by pytest itself atm.  Also
   fix caching.  Fixes issue376.
 
+- fix issue221 - handle importing of namespace-package with no 
+  __init__.py properly.
+
 Changes between 2.4.1 and 2.4.2
 -----------------------------------
 
