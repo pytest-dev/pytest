@@ -35,14 +35,3 @@ def test_gen(testdir, anypython, standalone):
     result = standalone.run(anypython, testdir, p)
     assert result.ret != 0
 
-def test_rundist(testdir, pytestconfig, standalone):
-    pytestconfig.pluginmanager.skipifmissing("xdist")
-    testdir.makepyfile("""
-        def test_one():
-            pass
-    """)
-    result = standalone.run(sys.executable, testdir, '-n', '3')
-    assert result.ret == 0
-    result.stdout.fnmatch_lines([
-        "*1 passed*",
-    ])
