@@ -2,7 +2,7 @@ import pytest, py, sys
 from _pytest import python as funcargs
 from _pytest.python import FixtureLookupError
 from _pytest.pytester import get_public_names
-
+from textwrap import dedent
 
 def test_getfuncargnames():
     def f(): pass
@@ -1737,6 +1737,60 @@ class TestFixtureMarker:
             *3 passed*
         """)
         assert "error" not in result.stdout.str()
+
+    def test_fixture_finalizer(self, testdir):
+        testdir.makeconftest("""
+            import pytest
+            import sys
+
+            @pytest.fixture
+            def browser(request):
+
+                def finalize():
+                    sys.stdout.write('Finalized')
+                request.addfinalizer(finalize)
+                return {}
+        """)
+        b = testdir.mkdir("subdir")
+        b.join("test_overriden_fixture_finalizer.py").write(dedent("""
+            import pytest
+            @pytest.fixture
+            def browser(browser):
+                browser['visited'] = True
+                return browser
+
+            def test_browser(browser):
+                assert browser['visited'] is True
+        """))
+        reprec = testdir.runpytest("-s")
+        for test in ['test_browser']:
+            reprec.stdout.fnmatch_lines('*Finalized*')
+
+    def test_class_scope_with_normal_tests(self, testdir):
+        testpath = testdir.makepyfile("""
+            import pytest
+
+            class Box:
+                value = 0
+
+            @pytest.fixture(scope='class')
+            def a(request):
+                Box.value += 1
+                return Box.value
+
+            def test_a(a):
+                assert a == 1
+
+            class Test1:
+                def test_b(self, a):
+                    assert a == 2
+
+            class Test2:
+                def test_c(self, a):
+                    assert a == 3""")
+        reprec = testdir.inline_run(testpath)
+        for test in ['test_a', 'test_b', 'test_c']:
+            assert reprec.matchreport(test).passed
 
     def test_parametrize_separated_lifecycle(self, testdir):
         testdir.makepyfile("""
