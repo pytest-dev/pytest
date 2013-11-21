@@ -336,7 +336,7 @@ class SetupState(object):
             except Exception:
                 # XXX Only first exception will be seen by user,
                 #     ideally all should be reported.
-                if not exc:
+                if exc is None:
                     exc = sys.exc_info()
         if exc:
             py.builtin._reraise(*exc)
@@ -459,25 +459,25 @@ fail.Exception = Failed
 
 
 def importorskip(modname, minversion=None):
-    """ return imported module if it has a higher __version__ than the
-    optionally specified 'minversion' - otherwise call py.test.skip()
-    with a message detailing the mismatch.
+    """ return imported module if it has at least "minversion" as its
+    __version__ attribute.  If no minversion is specified the a skip
+    is only triggered if the module can not be imported.
+    Note that version comparison only works with simple version strings
+    like "1.2.3" but not "1.2.3.dev1" or others.
     """
     __tracebackhide__ = True
     compile(modname, '', 'eval') # to catch syntaxerrors
     try:
         __import__(modname)
     except ImportError:
-        py.test.skip("could not import %r" %(modname,))
+        skip("could not import %r" %(modname,))
     mod = sys.modules[modname]
     if minversion is None:
         return mod
     verattr = getattr(mod, '__version__', None)
-    if isinstance(minversion, str):
-        minver = minversion.split(".")
-    else:
-        minver = list(minversion)
-    if verattr is None or verattr.split(".") < minver:
-        py.test.skip("module %r has __version__ %r, required is: %r" %(
-                     modname, verattr, minversion))
+    def intver(verstring):
+        return [int(x) for x in verstring.split(".")]
+    if verattr is None or intver(verattr) < intver(minversion):
+        skip("module %r has __version__ %r, required is: %r" %(
+             modname, verattr, minversion))
     return mod

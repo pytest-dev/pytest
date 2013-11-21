@@ -69,6 +69,8 @@ Unreleased
   One of the positive user-facing effects is that the "request" object 
   can now be used in closures.
 
+- fixed version comparison in pytest.importskip(modname, minverstring)
+
 Changes between 2.4.1 and 2.4.2
 -----------------------------------
 
