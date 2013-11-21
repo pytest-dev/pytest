@@ -3,7 +3,6 @@ import py
 import inspect
 import sys
 import pytest
-from _pytest.main import getfslineno
 from _pytest.mark import MarkDecorator
 from _pytest.monkeypatch import monkeypatch
 from py._code.code import TerminalRepr
@@ -14,6 +13,16 @@ cutdir = py.path.local(_pytest.__file__).dirpath()
 NoneType = type(None)
 
 callable = py.builtin.callable
+
+def getfslineno(obj):
+    # xxx let decorators etc specify a sane ordering
+    while hasattr(obj, "__wrapped__"):
+        obj = obj.__wrapped__
+    if hasattr(obj, 'place_as'):
+        obj = obj.place_as
+    fslineno = py.code.getfslineno(obj)
+    assert isinstance(fslineno[1], int), obj
+    return fslineno
 
 def getimfunc(func):
     try:
