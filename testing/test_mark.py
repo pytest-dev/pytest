@@ -174,13 +174,17 @@ def test_mark_option_custom(spec, testdir):
 
 @pytest.mark.parametrize("spec", [
         ("interface", ("test_interface",)),
-        ("not interface", ("test_nointer",)),
+        ("not interface", ("test_nointer", "test_pass")),
+        ("pass", ("test_pass",)),
+        ("not pass", ("test_interface", "test_nointer")),
 ])
 def test_keyword_option_custom(spec, testdir):
     testdir.makepyfile("""
         def test_interface():
             pass
         def test_nointer():
+            pass
+        def test_pass():
             pass
     """)
     opt, passed_result = spec
@@ -190,6 +194,24 @@ def test_keyword_option_custom(spec, testdir):
     assert len(passed) == len(passed_result)
     assert list(passed) == list(passed_result)
 
+
+@pytest.mark.parametrize("spec", [
+        ("None", ("test_func[None]",)),
+        ("1.3", ("test_func[1.3]",))
+])
+def test_keyword_option_parametrize(spec, testdir):
+    testdir.makepyfile("""
+        import pytest
+        @pytest.mark.parametrize("arg", [None, 1.3])
+        def test_func(arg):
+            pass
+    """)
+    opt, passed_result = spec
+    rec = testdir.inline_run("-k", opt)
+    passed, skipped, fail = rec.listoutcomes()
+    passed = [x.nodeid.split("::")[-1] for x in passed]
+    assert len(passed) == len(passed_result)
+    assert list(passed) == list(passed_result)
 
 class TestFunctional:
 

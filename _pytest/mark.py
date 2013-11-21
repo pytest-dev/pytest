@@ -140,7 +140,13 @@ def matchkeyword(colitem, keywordexpr):
         for name in colitem.function.__dict__:
             mapped_names.add(name)
 
-    return eval(keywordexpr, {}, KeywordMapping(mapped_names))
+    mapping = KeywordMapping(mapped_names)
+    if " " not in keywordexpr:
+        # special case to allow for simple "-k pass" and "-k 1.3"
+        return mapping[keywordexpr]
+    elif keywordexpr.startswith("not ") and " " not in keywordexpr[4:]:
+        return not mapping[keywordexpr[4:]]
+    return eval(keywordexpr, {}, mapping)
 
 
 def pytest_configure(config):

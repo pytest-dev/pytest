@@ -11,6 +11,13 @@ Unreleased
   help with random "xdist" collection failures.  Thanks to
   Ronny Pfannschmidt and Donald Stufft for helping to isolate it.
 
+- fix issue357 - special case "-k" expressions to allow for
+  filtering with simple strings that are not valid python expressions.
+  Examples: "-k 1.3" matches all tests parametrized with 1.3.
+  "-k None" filters all tests that have "None" in their name
+  and conversely "-k 'not None'". 
+  Previously these examples would raise syntax errors.
+  
 - fix issue384 by removing the trial support code
   since the unittest compat enhancements allow
   trial to handle it on its own
