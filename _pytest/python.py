@@ -4,7 +4,6 @@ import inspect
 import sys
 import pytest
 from _pytest.mark import MarkDecorator
-from _pytest.monkeypatch import monkeypatch
 from py._code.code import TerminalRepr
 
 import _pytest
@@ -1083,14 +1082,12 @@ class FixtureRequest(FuncargnamesCompatAttr):
         self.fixturename = None
         #: Scope string, one of "function", "cls", "module", "session"
         self.scope = "function"
-        self.getparent = pyfuncitem.getparent
         self._funcargs  = self._pyfuncitem.funcargs.copy()
-        self._fixtureinfo = fi = pyfuncitem._fixtureinfo
-        self._arg2fixturedefs = fi.name2fixturedefs
+        fixtureinfo = pyfuncitem._fixtureinfo
+        self._arg2fixturedefs = fixtureinfo.name2fixturedefs
         self._arg2index = {}
-        self.fixturenames = self._fixtureinfo.names_closure
+        self.fixturenames = fixtureinfo.names_closure
         self._fixturemanager = pyfuncitem.session._fixturemanager
-        self._parentid = pyfuncitem.parent.nodeid
         self._fixturestack = []
 
     @property
@@ -1104,7 +1101,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
             # we arrive here because of a getfuncargvalue(argname) usage which
             # was naturally not knowable at parsing/collection time
             fixturedefs = self._fixturemanager.getfixturedefs(
-                            argname, self._parentid)
+                            argname, self._pyfuncitem.parent.nodeid)
             self._arg2fixturedefs[argname] = fixturedefs
         # fixturedefs is immutable so we maintain a decreasing index
         index = self._arg2index.get(argname, 0) - 1
@@ -1270,29 +1267,21 @@ class FixtureRequest(FuncargnamesCompatAttr):
             return fixturedef.cached_result # set by fixturedef.execute()
         except AttributeError:
             pass
-
-        # prepare request fixturename and param attributes before
-        # calling into fixture function
+        # prepare a subrequest object before calling fixture function
+        # (latter managed by fixturedef)
         argname = fixturedef.argname
         node = self._pyfuncitem
-        mp = monkeypatch()
-        mp.setattr(self, 'fixturename', argname)
+        scope = fixturedef.scope
         try:
             param = node.callspec.getparam(argname)
         except (AttributeError, ValueError):
-            pass
+            param = notset
         else:
-            mp.setattr(self, 'param', param, raising=False)
-
-        # if a parametrize invocation set a scope it will override
-        # the static scope defined with the fixture function
-        scope = fixturedef.scope
-        try:
-            paramscopenum = node.callspec._arg2scopenum[argname]
-        except (KeyError, AttributeError):
-            pass
-        else:
-            if paramscopenum != scopenum_subfunction:
+            # if a parametrize invocation set a scope it will override
+            # the static scope defined with the fixture function
+            paramscopenum = node.callspec._arg2scopenum.get(argname)
+            if paramscopenum is not None and \
+               paramscopenum != scopenum_subfunction:
                 scope = scopes[paramscopenum]
 
         # check if a higher-level scoped fixture accesses a lower level one
@@ -1302,31 +1291,29 @@ class FixtureRequest(FuncargnamesCompatAttr):
                 # try to report something helpful
                 lines = self._factorytraceback()
                 raise ScopeMismatchError("You tried to access the %r scoped "
-                    "funcarg %r with a %r scoped request object, "
+                    "fixture %r with a %r scoped request object, "
                     "involved factories\n%s" %(
                     (scope, argname, self.scope, "\n".join(lines))))
             __tracebackhide__ = False
-            mp.setattr(self, "scope", scope)
+        else:
+            scope = self.scope
 
-        # route request.addfinalizer to fixturedef
-        mp.setattr(self, "addfinalizer", fixturedef.addfinalizer)
-
+        subrequest = SubRequest(self, argname, scope, param,
+                                fixturedef.addfinalizer)
         try:
             # perform the fixture call
-            val = fixturedef.execute(request=self)
+            val = fixturedef.execute(request=subrequest)
         finally:
             # if the fixture function failed it might still have
             # registered finalizers so we can register
-
             # prepare finalization according to scope
             # (XXX analyse exact finalizing mechanics / cleanup)
             self.session._setupstate.addfinalizer(fixturedef.finish,
-                                                  self.node)
+                                                  subrequest.node)
             self._fixturemanager.addargfinalizer(fixturedef.finish, argname)
             for subargname in fixturedef.argnames: # XXX all deps?
                 self._fixturemanager.addargfinalizer(fixturedef.finish,
                                                      subargname)
-        mp.undo()
         return val
 
     def _factorytraceback(self):
@@ -1357,6 +1344,28 @@ class FixtureRequest(FuncargnamesCompatAttr):
 
     def __repr__(self):
         return "<FixtureRequest for %r>" %(self.node)
+
+notset = object()
+class SubRequest(FixtureRequest):
+    """ a sub request for handling getting a fixture from a
+    test function/fixture. """
+    def __init__(self, request, argname, scope, param, addfinalizer):
+        self._parent_request = request
+        self.fixturename = argname
+        if param is not notset:
+            self.param = param
+        self.scope = scope
+        self.addfinalizer = addfinalizer
+        self._pyfuncitem = request._pyfuncitem
+        self._funcargs  = request._funcargs
+        self._arg2fixturedefs = request._arg2fixturedefs
+        self._arg2index = request._arg2index
+        self.fixturenames = request.fixturenames
+        self._fixturemanager = request._fixturemanager
+        self._fixturestack = request._fixturestack
+
+    def __repr__(self):
+        return "<SubRequest %r for %r>" % (self.fixturename, self.node)
 
 class ScopeMismatchError(Exception):
     """ A fixture function tries to use a different fixture function which
@@ -1399,8 +1408,8 @@ class FixtureLookupError(LookupError):
             fm = self.request._fixturemanager
             available = []
             for name, fixturedef in fm._arg2fixturedefs.items():
-                faclist = list(fm._matchfactories(fixturedef,
-                                                  self.request._parentid))
+                parentid = self.request._pyfuncitem.parent.nodeid
+                faclist = list(fm._matchfactories(fixturedef, parentid))
                 if faclist:
                     available.append(name)
             msg = "fixture %r not found" % (self.argname,)
@@ -1744,7 +1753,6 @@ class FixtureDef:
             func()
         # check neccesity of next commented call
         self._fixturemanager.removefinalizer(self.finish)
-        #print "finished", self
         try:
             del self.cached_result
         except AttributeError:

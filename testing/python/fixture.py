@@ -473,7 +473,7 @@ class TestRequestBasic:
                 assert l == ["module", "function", "class",
                              "function", "method", "function"]
         """)
-        reprec = testdir.inline_run()
+        reprec = testdir.inline_run("-v")
         reprec.assertoutcome(passed=3)
 
     def test_fixtures_sub_subdir_normalize_sep(self, testdir):
@@ -1791,6 +1791,20 @@ class TestFixtureMarker:
         reprec = testdir.inline_run(testpath)
         for test in ['test_a', 'test_b', 'test_c']:
             assert reprec.matchreport(test).passed
+
+    def test_request_is_clean(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            l = []
+            @pytest.fixture(params=[1, 2])
+            def fix(request):
+                request.addfinalizer(lambda: l.append(request.param))
+            def test_fix(fix):
+                pass
+        """)
+        reprec = testdir.inline_run("-s")
+        l = reprec.getcalls("pytest_runtest_call")[0].item.module.l
+        assert l == [1,2]
 
     def test_parametrize_separated_lifecycle(self, testdir):
         testdir.makepyfile("""

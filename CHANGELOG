@@ -65,6 +65,10 @@ Unreleased
 - fix issue221 - handle importing of namespace-package with no 
   __init__.py properly.
 
+- refactor internal FixtureRequest handling to avoid monkeypatching.
+  One of the positive user-facing effects is that the "request" object 
+  can now be used in closures.
+
 Changes between 2.4.1 and 2.4.2
 -----------------------------------
 
