@@ -1,3 +1,5 @@
+from __future__ import with_statement
+
 import pytest, py, sys, os
 from _pytest import runner, main
 
