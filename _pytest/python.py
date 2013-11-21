@@ -1380,6 +1380,7 @@ class ScopeMismatchError(Exception):
 
 scopes = "session module class function subfunction".split()
 scopenum_subfunction = scopes.index("subfunction")
+scopenum_function = scopes.index("function")
 def scopemismatch(currentscope, newscope):
     return scopes.index(newscope) > scopes.index(currentscope)
 
@@ -1597,6 +1598,7 @@ class FixtureManager:
         # separate parametrized setups
         items[:] = parametrize_sorted(items, set(), {}, 0)
 
+    @pytest.mark.trylast
     def pytest_runtest_teardown(self, item, nextitem):
         # XXX teardown needs to be normalized for parametrized and
         # no-parametrized functions
@@ -1620,6 +1622,8 @@ class FixtureManager:
         # sort by scope (function scope first, then higher ones)
         keylist.sort()
         for (scopenum, name, param) in keylist:
+            #if -scopenum >= scopenum_function:
+            #    continue # handled by runner.pytest_runtest_teardown
             item.session._setupstate._callfinalizers((name, param))
             l = self._arg2finish.pop(name, None)
             if l is not None:

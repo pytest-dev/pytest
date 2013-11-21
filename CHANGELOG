@@ -15,6 +15,10 @@ Unreleased
   since the unittest compat enhancements allow
   trial to handle it on its own
 
+- fix ordering of finalizers of parametrized interdependent fixtures.
+  This fixes issue246 as reported.  Thanks Ralph Schmitt for the 
+  precise failure example.
+
 - don't hide an ImportError when importing a plugin produces one.
   fixes issue375.
 

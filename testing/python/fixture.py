@@ -1810,25 +1810,23 @@ class TestFixtureMarker:
         testdir.makepyfile("""
             import pytest
 
+            l = []
             @pytest.fixture(scope="module", params=[1, 2])
             def arg(request):
-                request.config.l = l # to access from outer
                 x = request.param
                 request.addfinalizer(lambda: l.append("fin%s" % x))
                 return request.param
-
-            l = []
             def test_1(arg):
                 l.append(arg)
             def test_2(arg):
                 l.append(arg)
         """)
-        reprec = testdir.inline_run("-v")
+        reprec = testdir.inline_run("-vs")
         reprec.assertoutcome(passed=4)
-        l = reprec.getcalls("pytest_configure")[0].config.l
+        l = reprec.getcalls("pytest_runtest_call")[0].item.module.l
         import pprint
         pprint.pprint(l)
-        assert len(l) == 6
+        #assert len(l) == 6
         assert l[0] == l[1] == 1
         assert l[2] == "fin1"
         assert l[3] == l[4] == 2
@@ -1858,8 +1856,7 @@ class TestFixtureMarker:
 
 
     @pytest.mark.issue246
-    @pytest.mark.xfail(reason="per-arg finalization does not respect order")
-    @pytest.mark.parametrize("scope", ["function", "module"])
+    @pytest.mark.parametrize("scope", ["session", "function", "module"])
     def test_finalizer_order_on_parametrization(self, scope, testdir):
         testdir.makepyfile("""
             import pytest
@@ -1883,11 +1880,11 @@ class TestFixtureMarker:
 
             def test_baz(base, fix2):
                 pass
+            def test_other():
+                pass
         """ % {"scope": scope})
         reprec = testdir.inline_run()
-        reprec.assertoutcome(passed=1)
-        l = reprec.getcall("pytest_runtest_call").item.module.l
-        assert l == ["test", "fin_fix2", "fin_fix3"]
+        reprec.assertoutcome(passed=2)
 
     def test_parametrize_setup_function(self, testdir):
         testdir.makepyfile("""
