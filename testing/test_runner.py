@@ -58,6 +58,19 @@ class TestSetupState:
         assert err.value.args == ('oops',)
         assert r == ['fin3', 'fin1']
 
+    def test_teardown_multiple_fail(self, testdir):
+        # Ensure the first exception is the one which is re-raised.
+        # Ideally both would be reported however.
+        def fin1(): raise Exception('oops1')
+        def fin2(): raise Exception('oops2')
+        item = testdir.getitem("def test_func(): pass")
+        ss = runner.SetupState()
+        ss.addfinalizer(fin1, item)
+        ss.addfinalizer(fin2, item)
+        with pytest.raises(Exception) as err:
+            ss._callfinalizers(item)
+        assert err.value.args == ('oops2',)
+
 
 class BaseFunctionalTests:
     def test_passfunction(self, testdir):

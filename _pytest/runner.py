@@ -333,10 +333,11 @@ class SetupState(object):
             fin = finalizers.pop()
             try:
                 fin()
-            except KeyboardInterrupt:
-                raise
-            except:
-                exc = py.std.sys.exc_info()
+            except Exception:
+                # XXX Only first exception will be seen by user,
+                #     ideally all should be reported.
+                if not exc:
+                    exc = sys.exc_info()
         if exc:
             py.builtin._reraise(*exc)
 
