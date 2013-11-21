@@ -10,6 +10,7 @@ import _pytest
 cutdir = py.path.local(_pytest.__file__).dirpath()
 
 NoneType = type(None)
+NOTSET = object()
 
 callable = py.builtin.callable
 
@@ -943,18 +944,18 @@ class RaisesContext(object):
 #
 #  the basic py.test Function item
 #
-_dummy = object()
+
 class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
     """ a Function Item is responsible for setting up and executing a
     Python test function.
     """
     _genid = None
     def __init__(self, name, parent, args=None, config=None,
-                 callspec=None, callobj=_dummy, keywords=None, session=None):
+                 callspec=None, callobj=NOTSET, keywords=None, session=None):
         super(Function, self).__init__(name, parent, config=config,
                                        session=session)
         self._args = args
-        if callobj is not _dummy:
+        if callobj is not NOTSET:
             self.obj = callobj
 
         for name, val in (py.builtin._getfuncdict(self.obj) or {}).items():
@@ -1088,7 +1089,6 @@ class FixtureRequest(FuncargnamesCompatAttr):
         self._arg2index = {}
         self.fixturenames = fixtureinfo.names_closure
         self._fixturemanager = pyfuncitem.session._fixturemanager
-        self._fixturestack = []
 
     @property
     def node(self):
@@ -1254,13 +1254,20 @@ class FixtureRequest(FuncargnamesCompatAttr):
             if argname == "request":
                 return self
             raise
-        self._fixturestack.append(fixturedef)
-        try:
-            result = self._getfuncargvalue(fixturedef)
-            self._funcargs[argname] = result
-            return result
-        finally:
-            self._fixturestack.pop()
+        result = self._getfuncargvalue(fixturedef)
+        self._funcargs[argname] = result
+        return result
+
+    def _get_fixturestack(self):
+        current = self
+        l = []
+        while 1:
+            fixturedef = getattr(current, "_fixturedef", None)
+            if fixturedef is None:
+                l.reverse()
+                return l
+            l.append(fixturedef)
+            current = current._parent_request
 
     def _getfuncargvalue(self, fixturedef):
         try:
@@ -1275,7 +1282,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         try:
             param = node.callspec.getparam(argname)
         except (AttributeError, ValueError):
-            param = notset
+            param = NOTSET
         else:
             # if a parametrize invocation set a scope it will override
             # the static scope defined with the fixture function
@@ -1284,21 +1291,20 @@ class FixtureRequest(FuncargnamesCompatAttr):
                paramscopenum != scopenum_subfunction:
                 scope = scopes[paramscopenum]
 
+        subrequest = SubRequest(self, scope, param, fixturedef)
+
         # check if a higher-level scoped fixture accesses a lower level one
         if scope is not None:
             __tracebackhide__ = True
             if scopemismatch(self.scope, scope):
                 # try to report something helpful
-                lines = self._factorytraceback()
+                lines = subrequest._factorytraceback()
                 raise ScopeMismatchError("You tried to access the %r scoped "
                     "fixture %r with a %r scoped request object, "
                     "involved factories\n%s" %(
                     (scope, argname, self.scope, "\n".join(lines))))
             __tracebackhide__ = False
-        else:
-            scope = self.scope
 
-        subrequest = SubRequest(self, scope, param, fixturedef)
         try:
             # perform the fixture call
             val = fixturedef.execute(request=subrequest)
@@ -1317,7 +1323,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
 
     def _factorytraceback(self):
         lines = []
-        for fixturedef in self._fixturestack:
+        for fixturedef in self._get_fixturestack():
             factory = fixturedef.func
             fs, lineno = getfslineno(factory)
             p = self._pyfuncitem.session.fspath.bestrelpath(fs)
@@ -1344,16 +1350,17 @@ class FixtureRequest(FuncargnamesCompatAttr):
     def __repr__(self):
         return "<FixtureRequest for %r>" %(self.node)
 
-notset = object()
+
 class SubRequest(FixtureRequest):
     """ a sub request for handling getting a fixture from a
     test function/fixture. """
     def __init__(self, request, scope, param, fixturedef):
         self._parent_request = request
         self.fixturename = fixturedef.argname
-        if param is not notset:
+        if param is not NOTSET:
             self.param = param
         self.scope = scope
+        self._fixturedef = fixturedef
         self.addfinalizer = fixturedef.addfinalizer
         self._pyfuncitem = request._pyfuncitem
         self._funcargs  = request._funcargs
@@ -1361,10 +1368,10 @@ class SubRequest(FixtureRequest):
         self._arg2index = request._arg2index
         self.fixturenames = request.fixturenames
         self._fixturemanager = request._fixturemanager
-        self._fixturestack = request._fixturestack
 
     def __repr__(self):
-        return "<SubRequest %r for %r>" % (self.fixturename, self.node)
+        return "<SubRequest %r for %r>" % (self.fixturename, self._pyfuncitem)
+
 
 class ScopeMismatchError(Exception):
     """ A fixture function tries to use a different fixture function which
@@ -1381,7 +1388,7 @@ class FixtureLookupError(LookupError):
     def __init__(self, argname, request, msg=None):
         self.argname = argname
         self.request = request
-        self.fixturestack = list(request._fixturestack)
+        self.fixturestack = request._get_fixturestack()
         self.msg = msg
 
     def formatrepr(self):
@@ -1619,8 +1626,8 @@ class FixtureManager:
                 for fin in reversed(l):
                     fin()
 
-    def parsefactories(self, node_or_obj, nodeid=_dummy, unittest=False):
-        if nodeid is not _dummy:
+    def parsefactories(self, node_or_obj, nodeid=NOTSET, unittest=False):
+        if nodeid is not NOTSET:
             holderobj = node_or_obj
         else:
             holderobj = node_or_obj.obj
