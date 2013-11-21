@@ -124,7 +124,7 @@ def test_strict_prohibits_unregistered_markers(testdir):
         "*unregisteredmark*not*registered*",
     ])
 
-@pytest.mark.multi(spec=[
+@pytest.mark.parametrize("spec", [
         ("xyz", ("test_one",)),
         ("xyz and xyz2", ()),
         ("xyz2", ("test_two",)),
@@ -147,7 +147,7 @@ def test_mark_option(spec, testdir):
     assert len(passed) == len(passed_result)
     assert list(passed) == list(passed_result)
 
-@pytest.mark.multi(spec=[
+@pytest.mark.parametrize("spec", [
         ("interface", ("test_interface",)),
         ("not interface", ("test_nointer",)),
 ])
@@ -172,7 +172,7 @@ def test_mark_option_custom(spec, testdir):
     assert len(passed) == len(passed_result)
     assert list(passed) == list(passed_result)
 
-@pytest.mark.multi(spec=[
+@pytest.mark.parametrize("spec", [
         ("interface", ("test_interface",)),
         ("not interface", ("test_nointer",)),
 ])

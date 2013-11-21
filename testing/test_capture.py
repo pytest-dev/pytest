@@ -32,7 +32,7 @@ class TestCaptureManager:
         assert capman._getmethod(config, sub.join("test_hello.py")) == mode
 
     @needsosdup
-    @pytest.mark.multi(method=['no', 'fd', 'sys'])
+    @pytest.mark.parametrize("method", ['no', 'fd', 'sys'])
     def test_capturing_basic_api(self, method):
         capouter = py.io.StdCaptureFD()
         old = sys.stdout, sys.stderr, sys.stdin
@@ -81,7 +81,7 @@ class TestCaptureManager:
             capouter.reset()
 
 @pytest.mark.xfail("hasattr(sys, 'pypy_version_info')")
-@pytest.mark.multi(method=['fd', 'sys'])
+@pytest.mark.parametrize("method", ['fd', 'sys'])
 def test_capturing_unicode(testdir, method):
     if sys.version_info >= (3,0):
         obj = "'b\u00f6y'"
@@ -100,7 +100,7 @@ def test_capturing_unicode(testdir, method):
         "*1 passed*"
     ])
 
-@pytest.mark.multi(method=['fd', 'sys'])
+@pytest.mark.parametrize("method", ['fd', 'sys'])
 def test_capturing_bytes_in_utf8_encoding(testdir, method):
     testdir.makepyfile("""
         def test_unicode():

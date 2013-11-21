@@ -182,7 +182,7 @@ def test_setinitial_confcut(testdir):
         assert conftest.getconftestmodules(sub) == []
         assert conftest.getconftestmodules(conf.dirpath()) == []
 
-@pytest.mark.multi(name='test tests whatever .dotdir'.split())
+@pytest.mark.parametrize("name", 'test tests whatever .dotdir'.split())
 def test_setinitial_conftest_subdirs(testdir, name):
     sub = testdir.mkdir(name)
     subconftest = sub.ensure("conftest.py")

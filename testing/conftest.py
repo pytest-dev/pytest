@@ -12,10 +12,6 @@ def pytest_addoption(parser):
            help=("run FD checks if lsof is available"))
 
 def pytest_configure(config):
-    config.addinivalue_line("markers",
-        "multi(arg=[value1,value2, ...]): call the test function "
-        "multiple times with arg=value1, then with arg=value2, ... "
-    )
     if config.getvalue("lsof"):
         try:
             out = py.process.cmdexec("lsof -p %d" % pid)
@@ -57,19 +53,6 @@ def pytest_runtest_teardown(item, __multicall__):
         check_open_files(item.config)
         return x
 
-def pytest_generate_tests(metafunc):
-    multi = getattr(metafunc.function, 'multi', None)
-    if multi is not None:
-        assert len(multi.kwargs) == 1
-        for name, l in multi.kwargs.items():
-            for val in l:
-                metafunc.addcall(funcargs={name: val})
-    elif 'anypython' in metafunc.fixturenames:
-        for name in ('python2.5', 'python2.6',
-                     'python2.7', 'python3.2', "python3.3",
-                     'pypy', 'jython'):
-            metafunc.addcall(id=name, param=name)
-
 # XXX copied from execnet's conftest.py - needs to be merged
 winpymap = {
     'python2.7': r'C:\Python27\python.exe',
@@ -100,7 +83,10 @@ def getexecutable(name, cache={}):
         cache[name] = executable
         return executable
 
-def pytest_funcarg__anypython(request):
+@pytest.fixture(params=['python2.5', 'python2.6',
+                        'python2.7', 'python3.2', "python3.3",
+                        'pypy', 'jython'])
+def anypython(request):
     name = request.param
     executable = getexecutable(name)
     if executable is None:

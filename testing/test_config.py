@@ -41,7 +41,7 @@ class TestParseIni:
             "*tox.ini:2*requires*9.0*actual*"
         ])
 
-    @pytest.mark.multi(name="setup.cfg tox.ini pytest.ini".split())
+    @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
     def test_ini_names(self, testdir, name):
         testdir.tmpdir.join(name).write(py.std.textwrap.dedent("""
             [pytest]

@@ -236,7 +236,7 @@ def test_setup_class(testdir):
     reprec.assertoutcome(passed=3)
 
 
-@pytest.mark.multi(type=['Error', 'Failure'])
+@pytest.mark.parametrize("type", ['Error', 'Failure'])
 def test_testcase_adderrorandfailure_defers(testdir, type):
     testdir.makepyfile("""
         from unittest import TestCase
@@ -256,7 +256,7 @@ def test_testcase_adderrorandfailure_defers(testdir, type):
     result = testdir.runpytest()
     assert 'should not raise' not in result.stdout.str()
 
-@pytest.mark.multi(type=['Error', 'Failure'])
+@pytest.mark.parametrize("type", ['Error', 'Failure'])
 def test_testcase_custom_exception_info(testdir, type):
     testdir.makepyfile("""
         from unittest import TestCase
