@@ -4,6 +4,7 @@ Unreleased
 - fix issue287 by running all finalizers but saving the exception
   from the last failing finalizer and re-raising it so teardown will
   still have failed.
+
 - fix ordering when mock.patch or other standard decorator-wrappings
   are used with test methods.  This fixues issue346.  Thanks to
   Ronny Pfannschmidt and Donald Stufft for helping to isolate it.
@@ -58,6 +59,9 @@ Unreleased
 - internally make varnames() deal with classes's __init__,
   although it's not needed by pytest itself atm.  Also
   fix caching.  Fixes issue376.
+
+- fix issue221 - handle importing of namespace-package with no 
+  __init__.py properly.
 
 Changes between 2.4.1 and 2.4.2
 -----------------------------------
