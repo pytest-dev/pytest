@@ -12,6 +12,7 @@ def pytest_addoption(parser):
            help=("run FD checks if lsof is available"))
 
 def pytest_configure(config):
+    config._basedir = py.path.local()
     if config.getvalue("lsof"):
         try:
             out = py.process.cmdexec("lsof -p %d" % pid)
@@ -42,12 +43,8 @@ def check_open_files(config):
         config._numfiles = len(lines2)
         raise AssertionError("\n".join(error))
 
-@pytest.mark.tryfirst # XXX rather do item.addfinalizer
-def pytest_runtest_setup(item):
-    item._oldir = py.path.local()
-
 def pytest_runtest_teardown(item, __multicall__):
-    item._oldir.chdir()
+    item.config._basedir.chdir()
     if hasattr(item.config, '_numfiles'):
         x = __multicall__.execute()
         check_open_files(item.config)
