@@ -1298,8 +1298,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         else:
             scope = self.scope
 
-        subrequest = SubRequest(self, argname, scope, param,
-                                fixturedef.addfinalizer)
+        subrequest = SubRequest(self, scope, param, fixturedef)
         try:
             # perform the fixture call
             val = fixturedef.execute(request=subrequest)
@@ -1349,13 +1348,13 @@ notset = object()
 class SubRequest(FixtureRequest):
     """ a sub request for handling getting a fixture from a
     test function/fixture. """
-    def __init__(self, request, argname, scope, param, addfinalizer):
+    def __init__(self, request, scope, param, fixturedef):
         self._parent_request = request
-        self.fixturename = argname
+        self.fixturename = fixturedef.argname
         if param is not notset:
             self.param = param
         self.scope = scope
-        self.addfinalizer = addfinalizer
+        self.addfinalizer = fixturedef.addfinalizer
         self._pyfuncitem = request._pyfuncitem
         self._funcargs  = request._funcargs
         self._arg2fixturedefs = request._arg2fixturedefs
