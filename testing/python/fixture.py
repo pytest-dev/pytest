@@ -1820,7 +1820,6 @@ class TestFixtureMarker:
         assert l[3] == l[4] == 2
         assert l[5] == "fin2"
 
-
     def test_parametrize_function_scoped_finalizers_called(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -1842,6 +1841,39 @@ class TestFixtureMarker:
         """)
         reprec = testdir.inline_run("-v")
         reprec.assertoutcome(passed=5)
+
+
+    @pytest.mark.issue246
+    @pytest.mark.xfail(reason="per-arg finalization does not respect order")
+    @pytest.mark.parametrize("scope", ["function", "module"])
+    def test_finalizer_order_on_parametrization(self, scope, testdir):
+        testdir.makepyfile("""
+            import pytest
+            l = []
+
+            @pytest.fixture(scope=%(scope)r, params=["1"])
+            def fix1(request):
+                return request.param
+
+            @pytest.fixture(scope=%(scope)r)
+            def fix2(request, base):
+                def cleanup_fix2():
+                    assert not l, "base should not have been finalized"
+                request.addfinalizer(cleanup_fix2)
+
+            @pytest.fixture(scope=%(scope)r)
+            def base(request, fix1):
+                def cleanup_base():
+                    l.append("fin_base")
+                request.addfinalizer(cleanup_base)
+
+            def test_baz(base, fix2):
+                pass
+        """ % {"scope": scope})
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+        l = reprec.getcall("pytest_runtest_call").item.module.l
+        assert l == ["test", "fin_fix2", "fin_fix3"]
 
     def test_parametrize_setup_function(self, testdir):
         testdir.makepyfile("""
