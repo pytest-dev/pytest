@@ -121,8 +121,6 @@ Builtin configuration file options
 .. confval:: python_functions
 
    One or more name prefixes determining which test functions
-   and methods are considered as test modules.  Note that this
-   has no effect on methods that live on a ``unittest.TestCase`` 
-   derived class.
+   and methods are considered as test modules.
 
    See :ref:`change naming conventions` for examples.

@@ -95,6 +95,9 @@ except NameError:
 def assertrepr_compare(config, op, left, right):
     """Return specialised explanations for some operators/operands"""
     width = 80 - 15 - len(op) - 2  # 15 chars indentation, 1 space around op
+    left_repr = py.io.saferepr(left, maxsize=int(width/2))
+    right_repr = py.io.saferepr(right, maxsize=width-len(left_repr))
+    summary = '%s %s %s' % (left_repr, op, right_repr)
 
     issequence = lambda x: (isinstance(x, (list, tuple, Sequence))
                             and not isinstance(x, basestring))
@@ -117,7 +120,9 @@ def assertrepr_compare(config, op, left, right):
         elif op == 'not in':
             if istext(left) and istext(right):
                 explanation = _notin_text(left, right, verbose)
-    except Exception:
+    except py.builtin._sysex:
+        raise
+    except:
         excinfo = py.code.ExceptionInfo()
         explanation = [
             '(pytest_assertion plugin: representation of details failed.  '
@@ -125,15 +130,7 @@ def assertrepr_compare(config, op, left, right):
 
     if not explanation:
         return None
-    if istext(left):
-        left_repr = left[:int(width/2)]
-    else:
-        left_repr = py.io.saferepr(left, maxsize=int(width/2))
-    if istext(right):
-        right_repr = right[:int(width/2)]
-    else:
-        right_repr = py.io.saferepr(right, maxsize=width-len(left_repr))
-    summary = '%s %s %s' % (left_repr, op, right_repr)
+
     return [summary] + explanation
 
 
