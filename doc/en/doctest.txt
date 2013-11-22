@@ -56,3 +56,7 @@ It is possible to use fixtures using the ``getfixture`` helper::
     # content of example.rst
     >>> tmp = getfixture('tmpdir')
     >>> ...
+    >>>
+
+Also, :ref:`usefixtures` and :ref:`autouse` fixtures are supported
+when executing text doctest files.

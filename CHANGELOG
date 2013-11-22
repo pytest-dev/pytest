@@ -29,6 +29,9 @@ Unreleased
 - don't hide an ImportError when importing a plugin produces one.
   fixes issue375.
 
+- fix issue275 - allow usefixtures and autouse fixtures 
+  for running doctest text files.
+
 - fix issue380 by making --resultlog only rely on longrepr instead
   of the "reprcrash" attribute which only exists sometimes.
 

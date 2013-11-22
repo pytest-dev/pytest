@@ -209,6 +209,26 @@ class TestDoctests:
         reprec = testdir.inline_run(p, )
         reprec.assertoutcome(passed=1)
 
+    @xfail_if_pdbpp_installed
+    def test_txtfile_with_usefixtures_in_ini(self, testdir):
+        testdir.makeini("""
+            [pytest]
+            usefixtures = myfixture
+        """)
+        testdir.makeconftest("""
+            import pytest
+            @pytest.fixture
+            def myfixture(monkeypatch):
+                monkeypatch.setenv("HELLO", "WORLD")
+        """)
+
+        p = testdir.maketxtfile("""
+            >>> import os
+            >>> os.environ["HELLO"]
+            'WORLD'
+        """)
+        reprec = testdir.inline_run(p, )
+        reprec.assertoutcome(passed=1)
 
     @xfail_if_pdbpp_installed
     def test_doctestmodule_with_fixtures(self, testdir):
