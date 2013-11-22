@@ -53,6 +53,12 @@ then the test collection looks like this::
     
     =============================  in 0.01 seconds =============================
 
+.. note::
+   
+   the ``python_functions`` and ``python_classes`` has no effect
+   for ``unittest.TestCase`` test discovery because pytest delegates
+   detection of test case methods to unittest code.
+
 Interpreting cmdline arguments as Python packages
 -----------------------------------------------------
 
