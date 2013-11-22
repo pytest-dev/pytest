@@ -655,7 +655,7 @@ class AssertionRewriter(ast.NodeVisitor):
             res_expr = ast.Compare(left_res, [op], [next_res])
             self.statements.append(ast.Assign([store_names[i]], res_expr))
             left_res, left_expl = next_res, next_expl
-        # Use py.code._reprcompare if that's available.
+        # Use pytest.assertion.util._reprcompare if that's available.
         expl_call = self.helper("call_reprcompare",
                                 ast.Tuple(syms, ast.Load()),
                                 ast.Tuple(load_names, ast.Load()),
