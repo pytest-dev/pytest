@@ -30,9 +30,18 @@ Supported nose Idioms
 Unsupported idioms / known issues
 ----------------------------------
 
+- unittest-style ``setUp, tearDown, setUpClass, tearDownClass`` 
+  are recognized only on ``unittest.TestCase`` classes but not
+  on plain classes.  ``nose`` supports these methods also on plain
+  classes but pytest deliberately does not.  As nose and pytest already 
+  both support ``setup_class, teardown_class, setup_method, teardown_method``
+  it doesn't seem useful to duplicate the unittest-API like nose does.
+  If you however rather think pytest should support the unittest-spelling on
+  plain classes please post `to this issue
+  <https://bitbucket.org/hpk42/pytest/issue/377/>`_.
+  
 - nose-style doctests are not collected and executed correctly,
   also doctest fixtures don't work.
 
 - no nose-configuration is recognized
-
 

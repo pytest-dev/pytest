@@ -82,6 +82,9 @@ Unreleased
 
 - fixed version comparison in pytest.importskip(modname, minverstring)
 
+- fix issue377 by clarifying in the nose-compat docs that pytest
+  does not duplicate the unittest-API into the "plain" namespace.
+
 Changes between 2.4.1 and 2.4.2
 -----------------------------------
 
