@@ -8,7 +8,7 @@ pytest: helps you write better programs
 
 **a mature full-featured Python testing tool**
 
- - runs on Posix/Windows, Python 2.4-3.3, PyPy and Jython-2.5.1
+ - runs on Posix/Windows, Python 2.5-3.3, PyPy and Jython-2.5.1
  - :ref:`comprehensive online <toc>` and `PDF documentation <pytest.pdf>`_
  - many :ref:`third party plugins <extplugins>` and 
    :ref:`builtin helpers <pytest helpers>`
