@@ -39,6 +39,13 @@ Unsupported idioms / known issues
   If you however rather think pytest should support the unittest-spelling on
   plain classes please post `to this issue
   <https://bitbucket.org/hpk42/pytest/issue/377/>`_.
+
+- nose imports test modules with the same import path (e.g.
+  ``tests.test_mod``) but different file system paths
+  (e.g. ``tests/test_mode.py`` and ``other/tests/test_mode.py``)
+  by extending sys.path/import semantics.   pytest does not do that
+  but there is discussion in `issue268 <https://bitbucket.org/hpk42/pytest/issue/268>`_ for adding some support.  Note that 
+  `nose2 choose to avoid this sys.path/import hackery <https://nose2.readthedocs.org/en/latest/differences.html#test-discovery-and-loading>`_.
   
 - nose-style doctests are not collected and executed correctly,
   also doctest fixtures don't work.
