@@ -2,17 +2,17 @@ import sys
 import py
 from _pytest.assertion.util import BuiltinAssertionError
 
+
 class AssertionError(BuiltinAssertionError):
     def __init__(self, *args):
         BuiltinAssertionError.__init__(self, *args)
         if args:
             try:
-                self.msg = str(args[0])
-            except py.builtin._sysex:
-                raise
-            except:
-                self.msg = "<[broken __repr__] %s at %0xd>" %(
-                    args[0].__class__, id(args[0]))
+                self.msg = py.builtin._totext(args[0])
+            except Exception:
+                self.msg = py.builtin._totext(
+                    "<[broken __repr__] %s at %0xd> %s"
+                    % (args[0].__class__, id(args[0])))
         else:
             f = py.code.Frame(sys._getframe(1))
             try:
