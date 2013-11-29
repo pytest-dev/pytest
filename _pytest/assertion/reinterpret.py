@@ -11,7 +11,7 @@ class AssertionError(BuiltinAssertionError):
                 self.msg = py.builtin._totext(args[0])
             except Exception:
                 self.msg = py.builtin._totext(
-                    "<[broken __repr__] %s at %0xd> %s"
+                    "<[broken __repr__] %s at %0xd>"
                     % (args[0].__class__, id(args[0])))
         else:
             f = py.code.Frame(sys._getframe(1))
