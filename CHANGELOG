@@ -88,6 +88,8 @@ Unreleased
 - fix issue377 by clarifying in the nose-compat docs that pytest
   does not duplicate the unittest-API into the "plain" namespace.
 
+- fix verbose reporting for @mock'd test functions
+
 Changes between 2.4.1 and 2.4.2
 -----------------------------------
 

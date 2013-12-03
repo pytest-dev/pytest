@@ -133,6 +133,10 @@ class TestMockDecoration:
         """)
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
+        calls = reprec.getcalls("pytest_runtest_logreport")
+        funcnames = [call.report.location[2] for call in calls
+                        if call.report.when == "call"]
+        assert funcnames == ["T.test_hello", "test_someting"]
 
     def test_mock_sorting(self, testdir):
         pytest.importorskip("mock", "1.0.1")

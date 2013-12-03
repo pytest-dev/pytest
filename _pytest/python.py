@@ -277,10 +277,9 @@ class PyobjMixin(PyobjContext):
             if fspath.endswith(".pyc"):
                 fspath = fspath[:-1]
             lineno = obj.compat_co_firstlineno
-            modpath = obj.__module__
         else:
             fspath, lineno = getfslineno(obj)
-            modpath = self.getmodpath()
+        modpath = self.getmodpath()
         assert isinstance(lineno, int)
         return fspath, lineno, modpath
 
