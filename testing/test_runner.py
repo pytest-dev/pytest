@@ -469,12 +469,14 @@ def test_importorskip():
         assert path.purebasename == "test_runner"
         pytest.raises(SyntaxError, "py.test.importorskip('x y z')")
         pytest.raises(SyntaxError, "py.test.importorskip('x=y')")
-        path = importorskip("py", minversion=py.__version__)
         mod = py.std.types.ModuleType("hello123")
         mod.__version__ = "1.3"
+        sys.modules["hello123"] = mod
         pytest.raises(pytest.skip.Exception, """
             py.test.importorskip("hello123", minversion="1.3.1")
         """)
+        mod2 = pytest.importorskip("hello123", minversion="1.3")
+        assert mod2 == mod
     except pytest.skip.Exception:
         print(py.code.ExceptionInfo())
         py.test.fail("spurious skip")
