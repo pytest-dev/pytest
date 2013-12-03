@@ -355,6 +355,35 @@ class TestFunction:
         rec = testdir.inline_run()
         rec.assertoutcome(passed=2)
 
+
+    def test_parametrize_with_non_hashable_values_indirect(self, testdir):
+        """Test parametrization with non-hashable values with indirect parametrization."""
+        testdir.makepyfile("""
+            archival_mapping = {
+                '1.0': {'tag': '1.0'},
+                '1.2.2a1': {'tag': 'release-1.2.2a1'},
+            }
+
+            import pytest
+
+            @pytest.fixture
+            def key(request):
+                return request.param
+
+            @pytest.fixture
+            def value(request):
+                return request.param
+
+            @pytest.mark.parametrize('key value'.split(),
+                                     archival_mapping.items(), indirect=True)
+            def test_archival_to_version(key, value):
+                assert key in archival_mapping
+                assert value == archival_mapping[key]
+        """)
+        rec = testdir.inline_run()
+        rec.assertoutcome(passed=2)
+
+
     def test_parametrize_with_mark(selfself, testdir):
         items = testdir.getitems("""
             import pytest

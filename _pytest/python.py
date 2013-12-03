@@ -594,12 +594,14 @@ class CallSpec2(object):
         self._globalparam = _notexists
         self._arg2scopenum = {}  # used for sorting parametrized resources
         self.keywords = {}
+        self.indices = {}
 
     def copy(self, metafunc):
         cs = CallSpec2(self.metafunc)
         cs.funcargs.update(self.funcargs)
         cs.params.update(self.params)
         cs.keywords.update(self.keywords)
+        cs.indices.update(self.indices)
         cs._arg2scopenum.update(self._arg2scopenum)
         cs._idlist = list(self._idlist)
         cs._globalid = self._globalid
@@ -623,7 +625,8 @@ class CallSpec2(object):
     def id(self):
         return "-".join(map(str, filter(None, self._idlist)))
 
-    def setmulti(self, valtype, argnames, valset, id, keywords, scopenum=0):
+    def setmulti(self, valtype, argnames, valset, id, keywords, scopenum,
+                 param_index):
         for arg,val in zip(argnames, valset):
             self._checkargnotcontained(arg)
             getattr(self, valtype)[arg] = val
@@ -631,6 +634,7 @@ class CallSpec2(object):
             # parametrize_sorted() which groups tests by params/scope
             if valtype == "funcargs":
                 self.params[arg] = id
+            self.indices[arg] = param_index
             self._arg2scopenum[arg] = scopenum
             if val is _notexists:
                 self._emptyparamspecified = True
@@ -740,11 +744,12 @@ class Metafunc(FuncargnamesCompatAttr):
             ids = idmaker(argnames, argvalues)
         newcalls = []
         for callspec in self._calls or [CallSpec2(self)]:
-            for i, valset in enumerate(argvalues):
+            for param_index, valset in enumerate(argvalues):
                 assert len(valset) == len(argnames)
                 newcallspec = callspec.copy(self)
-                newcallspec.setmulti(valtype, argnames, valset, ids[i],
-                                     newkeywords.get(i, {}), scopenum)
+                newcallspec.setmulti(valtype, argnames, valset, ids[param_index],
+                                     newkeywords.get(param_index, {}), scopenum,
+                                     param_index)
                 newcalls.append(newcallspec)
         self._calls = newcalls
 
@@ -1862,19 +1867,19 @@ def getfuncargparams(item, ignore, scopenum, cache):
     except AttributeError:
         return []
     if scopenum == 0:
-        argparams = [x for x in cs.params.items() if x not in ignore
+        argparams = [x for x in cs.indices.items() if x not in ignore
                         and cs._arg2scopenum[x[0]] == scopenum]
     elif scopenum == 1:  # module
         argparams = []
-        for argname, param in cs.params.items():
+        for argname, valindex in cs.indices.items():
             if cs._arg2scopenum[argname] == scopenum:
-                key = (argname, param, item.fspath)
+                key = (argname, valindex, item.fspath)
                 if key in ignore:
                     continue
                 argparams.append(key)
     elif scopenum == 2:  # class
         argparams = []
-        for argname, param in cs.params.items():
+        for argname, valindex in cs.indices.items():
             if cs._arg2scopenum[argname] == scopenum:
                 l = cache.setdefault(item.fspath, [])
                 try:
@@ -1882,13 +1887,13 @@ def getfuncargparams(item, ignore, scopenum, cache):
                 except ValueError:
                     i = len(l)
                     l.append(item.cls)
-                key = (argname, param, item.fspath, i)
+                key = (argname, valindex, item.fspath, i)
                 if key in ignore:
                     continue
                 argparams.append(key)
     #elif scopenum == 3:
     #    argparams = []
-    #    for argname, param in cs.params.items():
+    #    for argname, param in cs.indices.items():
     #        if cs._arg2scopenum[argname] == scopenum:
     #            key = (argname, param, getfslineno(item.obj))
     #            if key in ignore:
