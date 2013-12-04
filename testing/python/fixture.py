@@ -1855,6 +1855,7 @@ class TestFixtureMarker:
         reprec.assertoutcome(passed=5)
 
 
+    @pytest.mark.xfail
     @pytest.mark.issue246
     @pytest.mark.parametrize("scope", ["session", "function", "module"])
     def test_finalizer_order_on_parametrization(self, scope, testdir):
@@ -1876,15 +1877,18 @@ class TestFixtureMarker:
             def base(request, fix1):
                 def cleanup_base():
                     l.append("fin_base")
+                    print ("finalizing base")
                 request.addfinalizer(cleanup_base)
 
+            def test_begin():
+                pass
             def test_baz(base, fix2):
                 pass
             def test_other():
                 pass
         """ % {"scope": scope})
-        reprec = testdir.inline_run()
-        reprec.assertoutcome(passed=2)
+        reprec = testdir.inline_run("-lvs")
+        reprec.assertoutcome(passed=3)
 
     def test_parametrize_setup_function(self, testdir):
         testdir.makepyfile("""
