@@ -1660,8 +1660,9 @@ class FixtureManager:
                 # magic globals  with __getattr__ might have got us a wrong
                 # fixture attribute
                 continue
-            else:
-                assert not name.startswith(self._argprefix)
+            elif name.startswith(self._argprefix):
+                # let's allso fixture-marked pytest_funcarg__ prefixed functions
+                name = name[len(self._argprefix):]
             fixturedef = FixtureDef(self, nodeid, name, obj,
                                     marker.scope, marker.params,
                                     yieldctx=marker.yieldctx,

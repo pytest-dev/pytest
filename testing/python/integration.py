@@ -195,3 +195,16 @@ class TestReRunTests:
 def test_pytestconfig_is_session_scoped():
     from _pytest.python import pytestconfig
     assert pytestconfig._pytestfixturefunction.scope == "session"
+
+def test_funcarg_prefix_and_marker(testdir):
+    testdir.makepyfile("""
+        import pytest
+        @pytest.fixture
+        def pytest_funcarg__foo():
+            return 1
+
+        def test_hello(foo):
+            assert foo == 1
+    """)
+    reprec = testdir.inline_run()
+    reprec.assertoutcome(passed=1)
