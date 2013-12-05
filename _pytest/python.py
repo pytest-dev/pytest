@@ -1081,8 +1081,6 @@ class FixtureRequest(FuncargnamesCompatAttr):
 
     def __init__(self, pyfuncitem):
         self._pyfuncitem = pyfuncitem
-        if hasattr(pyfuncitem, '_requestparam'):
-            self.param = pyfuncitem._requestparam
         #: fixture for which this request is being performed
         self.fixturename = None
         #: Scope string, one of "function", "cls", "module", "session"
