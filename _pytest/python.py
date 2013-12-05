@@ -631,7 +631,7 @@ class CallSpec2(object):
             self._checkargnotcontained(arg)
             getattr(self, valtype)[arg] = val
             # we want self.params to be always set because of
-            # parametrize_sorted() which groups tests by params/scope
+            # reorder_items() which groups tests by params/scope
             if valtype == "funcargs":
                 self.params[arg] = id
             self.indices[arg] = param_index
@@ -1600,7 +1600,7 @@ class FixtureManager:
 
     def pytest_collection_modifyitems(self, items):
         # separate parametrized setups
-        items[:] = parametrize_sorted(items, set(), {}, 0)
+        items[:] = reorder_items(items, set(), {}, 0)
 
     @pytest.mark.trylast
     def pytest_runtest_teardown(self, item, nextitem):
@@ -1822,85 +1822,77 @@ def getfuncargnames(function, startindex=None):
     return tuple(argnames[startindex:])
 
 # algorithm for sorting on a per-parametrized resource setup basis
+# it is called for scopenum==0 (session) first and performs sorting
+# down to the lower scopes such as to minimize number of "high scope"
+# setups and teardowns
 
-def parametrize_sorted(items, ignore, cache, scopenum):
-    if scopenum >= 3:
+def reorder_items(items, ignore, cache, scopenum):
+    if scopenum >= scopenum_function:
         return items
+    if len(items) < 2:
+        return items
+    #print "\nparametrize_Sorted", items, ignore, cache, scopenum
 
-    # we pick the first item which has a arg/param combo in the
-    # requested scope and sort other items with the same combo
-    # into "newitems" which then is a list of all items using this
-    # arg/param.
-
-    similar_items = []
-    other_items = []
-    slicing_argparam = None
-    slicing_index = 0
-    for item in items:
-        argparamlist = getfuncargparams(item, ignore, scopenum, cache)
-        if slicing_argparam is None and argparamlist:
-            slicing_argparam = argparamlist[0]
-            slicing_index = len(other_items)
-        if slicing_argparam in argparamlist:
-            similar_items.append(item)
+    # we pick the first item which uses a fixture instance in the requested scope
+    # and which we haven't seen yet.  We slice the input items list into
+    # a list of items_nomatch, items_using_same_fixtureinstance and
+    # items_remaining
+    slicing_argkey = None
+    for i, item in enumerate(items):
+        argkeys = get_parametrized_fixture_keys(item, ignore, scopenum, cache)
+        if slicing_argkey is None:
+            if argkeys:
+                slicing_argkey = argkeys.pop()
+                items_using_same_fixtureinstance = [item]
+                items_nomatch = items[:i]
+                items_remaining = []
+            continue
+        if slicing_argkey in argkeys:
+            items_using_same_fixtureinstance.append(item)
         else:
-            other_items.append(item)
+            items_remaining.append(item)
 
-    if (len(similar_items) + slicing_index) > 1:
-        newignore = ignore.copy()
-        newignore.add(slicing_argparam)
-        part2 = parametrize_sorted(
-                        similar_items + other_items[slicing_index:],
-                        newignore, cache, scopenum)
-        part1 = parametrize_sorted(
-                        other_items[:slicing_index], newignore,
-                        cache, scopenum+1)
-        return part1 + part2
-    else:
-        other_items = parametrize_sorted(other_items, ignore, cache, scopenum+1)
-    return other_items + similar_items
+    if slicing_argkey is None or len(items_using_same_fixtureinstance) == 1:
+        # nothing to sort on this level
+        return reorder_items(items, ignore, cache, scopenum+1)
 
-def getfuncargparams(item, ignore, scopenum, cache):
-    """ return list of (arg,param) tuple, sorted by broader scope first. """
-    assert scopenum < 3  # function
+    items_nomatch = reorder_items(items_nomatch, ignore, cache, scopenum+1)
+    newignore = ignore.copy()
+    newignore.add(slicing_argkey)
+    part2 = reorder_items(items_using_same_fixtureinstance + items_remaining,
+                          newignore, cache, scopenum)
+    return items_nomatch + part2
+
+def get_parametrized_fixture_keys(item, ignore, scopenum, cache):
+    """ return list of keys for all parametrized arguments which match
+    the specified scope. """
+    assert scopenum < scopenum_function  # function
+    keys = set()
     try:
         cs = item.callspec
     except AttributeError:
-        return []
-    if scopenum == 0:
-        argparams = [x for x in cs.indices.items() if x not in ignore
-                        and cs._arg2scopenum[x[0]] == scopenum]
-    elif scopenum == 1:  # module
-        argparams = []
-        for argname, valindex in cs.indices.items():
-            if cs._arg2scopenum[argname] == scopenum:
-                key = (argname, valindex, item.fspath)
-                if key in ignore:
-                    continue
-                argparams.append(key)
-    elif scopenum == 2:  # class
-        argparams = []
-        for argname, valindex in cs.indices.items():
-            if cs._arg2scopenum[argname] == scopenum:
-                l = cache.setdefault(item.fspath, [])
-                try:
-                    i = l.index(item.cls)
-                except ValueError:
-                    i = len(l)
-                    l.append(item.cls)
-                key = (argname, valindex, item.fspath, i)
-                if key in ignore:
-                    continue
-                argparams.append(key)
-    #elif scopenum == 3:
-    #    argparams = []
-    #    for argname, param in cs.indices.items():
-    #        if cs._arg2scopenum[argname] == scopenum:
-    #            key = (argname, param, getfslineno(item.obj))
-    #            if key in ignore:
-    #                continue
-    #            argparams.append(key)
-    return argparams
+        return keys  # no parametrization on this item
+    # cs.indictes.items() is random order of argnames but
+    # then again different functions (items) can change order of
+    # arguments so it doesn't matter much probably
+    for argname, param_index in cs.indices.items():
+        if cs._arg2scopenum[argname] != scopenum:
+            continue
+        if scopenum == 0:    # session
+            key = (argname, param_index)
+        elif scopenum == 1:  # module
+            key = (argname, param_index, item.fspath)
+        elif scopenum == 2:  # class
+            l = cache.setdefault(item.fspath, [])
+            try:
+                i = l.index(item.cls)
+            except ValueError:
+                i = len(l)
+                l.append(item.cls)
+            key = (argname, param_index, item.fspath, i)
+        if key not in ignore:
+            keys.add(key)
+    return keys
 
 
 def xunitsetup(obj, name):
