@@ -1,6 +1,7 @@
 """
 terminal reporting of the full testing process.
 """
+import os
 import pytest, py
 import sys
 
@@ -496,6 +497,18 @@ def test_fail_reporting_on_pass(testdir):
     testdir.makepyfile("def test_this(): assert 1")
     result = testdir.runpytest('-rf')
     assert 'short test summary' not in result.stdout.str()
+
+def test_color_yes(testdir, monkeypatch):
+    testdir.makepyfile("def test_this(): assert 1")
+    result = testdir.runpytest('--color=yes')
+    assert 'short test summary' not in result.stdout.str()
+    assert u'\x1b[1m' in result.stdout.str()
+
+def test_color_no(testdir):
+    testdir.makepyfile("def test_this(): assert 1")
+    result = testdir.runpytest('--color=no')
+    assert 'short test summary' not in result.stdout.str()
+    assert u'\x1b[1m' not in result.stdout.str()
 
 def test_getreportopt():
     class config:
