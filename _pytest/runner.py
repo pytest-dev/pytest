@@ -193,7 +193,6 @@ def pytest_runtest_makereport(item, call):
         outcome = "passed"
         longrepr = None
     else:
-        excinfo = call.excinfo
         if not isinstance(excinfo, py.code.ExceptionInfo):
             outcome = "failed"
             longrepr = excinfo
