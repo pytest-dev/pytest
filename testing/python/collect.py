@@ -287,22 +287,10 @@ class TestFunction:
             pass
         f1 = pytest.Function(name="name", parent=session, config=config,
                 args=(1,), callobj=func1)
+        assert f1 == f1
         f2 = pytest.Function(name="name",config=config,
-                args=(1,), callobj=func2, parent=session)
-        assert not f1 == f2
+                callobj=func2, parent=session)
         assert f1 != f2
-        f3 = pytest.Function(name="name", parent=session, config=config,
-                args=(1,2), callobj=func2)
-        assert not f3 == f2
-        assert f3 != f2
-
-        assert not f3 == f1
-        assert f3 != f1
-
-        f1_b = pytest.Function(name="name", parent=session, config=config,
-              args=(1,), callobj=func1)
-        assert f1 == f1_b
-        assert not f1 != f1_b
 
     def test_issue197_parametrize_emptyset(self, testdir):
         testdir.makepyfile("""

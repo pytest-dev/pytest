@@ -272,21 +272,11 @@ class Node(object):
             self._nodeid = x = self._makeid()
             return x
 
-
     def _makeid(self):
         return self.parent.nodeid + "::" + self.name
 
-    def __eq__(self, other):
-        if not isinstance(other, Node):
-            return False
-        return (self.__class__ == other.__class__ and
-                self.name == other.name and self.parent == other.parent)
-
-    def __ne__(self, other):
-        return not self == other
-
     def __hash__(self):
-        return hash((self.name, self.parent))
+        return hash(self.nodeid)
 
     def setup(self):
         pass

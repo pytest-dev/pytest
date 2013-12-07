@@ -1087,24 +1087,6 @@ class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
         super(Function, self).setup()
         fillfixtures(self)
 
-    def __eq__(self, other):
-        try:
-            return (self.name == other.name and
-                    self._args == other._args and
-                    self.parent == other.parent and
-                    self.obj == other.obj and
-                    getattr(self, '_genid', None) ==
-                    getattr(other, '_genid', None)
-            )
-        except AttributeError:
-            pass
-        return False
-
-    def __ne__(self, other):
-        return not self == other
-
-    def __hash__(self):
-        return hash((self.parent, self.name))
 
 scope2props = dict(session=())
 scope2props["module"] = ("fspath", "module")
