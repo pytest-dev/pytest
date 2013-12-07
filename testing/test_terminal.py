@@ -498,7 +498,7 @@ def test_fail_reporting_on_pass(testdir):
     result = testdir.runpytest('-rf')
     assert 'short test summary' not in result.stdout.str()
 
-def test_color_yes(testdir, monkeypatch):
+def test_color_yes(testdir):
     testdir.makepyfile("def test_this(): assert 1")
     result = testdir.runpytest('--color=yes')
     assert 'test session starts' in result.stdout.str()
