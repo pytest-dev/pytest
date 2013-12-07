@@ -1626,7 +1626,7 @@ class FixtureManager:
 
     def pytest_collection_modifyitems(self, items):
         # separate parametrized setups
-        items[:] = reorder_items(items, set(), {}, 0)
+        items[:] = reorder_items(items, set(), 0)
 
     def parsefactories(self, node_or_obj, nodeid=NOTSET, unittest=False):
         if nodeid is not NOTSET:
@@ -1825,14 +1825,14 @@ def getfuncargnames(function, startindex=None):
 # down to the lower scopes such as to minimize number of "high scope"
 # setups and teardowns
 
-def reorder_items(items, ignore, cache, scopenum):
+def reorder_items(items, ignore, scopenum):
     if scopenum >= scopenum_function or len(items) < 3:
         return items
     items_done = []
     while 1:
         items_before, items_same, items_other, newignore = \
-                slice_items(items, ignore, cache, scopenum)
-        items_before = reorder_items(items_before, ignore, cache, scopenum+1)
+                slice_items(items, ignore, scopenum)
+        items_before = reorder_items(items_before, ignore, scopenum+1)
         if items_same is None:
             # nothing to reorder in this scope
             assert items_other is None
@@ -1842,13 +1842,13 @@ def reorder_items(items, ignore, cache, scopenum):
         ignore = newignore
 
 
-def slice_items(items, ignore, cache, scopenum):
+def slice_items(items, ignore, scopenum):
     # we pick the first item which uses a fixture instance in the requested scope
     # and which we haven't seen yet.  We slice the input items list into
     # a list of items_nomatch, items_same and items_other
     slicing_argkey = None
     for i, item in enumerate(items):
-        argkeys = get_parametrized_fixture_keys(item, ignore, scopenum, cache)
+        argkeys = get_parametrized_fixture_keys(item, ignore, scopenum)
         if slicing_argkey is None:
             if argkeys:
                 slicing_argkey = argkeys.pop()
@@ -1866,7 +1866,7 @@ def slice_items(items, ignore, cache, scopenum):
     newignore.add(slicing_argkey)
     return (items_before, items_same, items_other, newignore)
 
-def get_parametrized_fixture_keys(item, ignore, scopenum, cache):
+def get_parametrized_fixture_keys(item, ignore, scopenum):
     """ return list of keys for all parametrized arguments which match
     the specified scope. """
     assert scopenum < scopenum_function  # function
@@ -1886,13 +1886,6 @@ def get_parametrized_fixture_keys(item, ignore, scopenum, cache):
         elif scopenum == 1:  # module
             key = (argname, param_index, item.fspath)
         elif scopenum == 2:  # class
-            # enumerate classes per fspath
-            l = cache.setdefault(item.fspath, [])
-            try:
-                numclass = l.index(item.cls)
-            except ValueError:
-                numclass = len(l)
-                l.append(item.cls)
             key = (argname, param_index, item.fspath, item.cls)
         if key not in ignore:
             keys.add(key)
