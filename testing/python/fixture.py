@@ -1889,6 +1889,34 @@ class TestFixtureMarker:
         reprec = testdir.inline_run("-lvs")
         reprec.assertoutcome(passed=3)
 
+    @pytest.mark.issue396
+    def test_class_scope_parametrization_ordering(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            l = []
+            @pytest.fixture(params=["John", "Doe"], scope="class")
+            def human(request):
+                request.addfinalizer(lambda: l.append("fin %s" % request.param))
+                return request.param
+
+            class TestGreetings:
+                def test_hello(self, human):
+                    l.append("test_hello")
+
+            class TestMetrics:
+                def test_name(self, human):
+                    l.append("test_name")
+
+                def test_population(self, human):
+                    l.append("test_population")
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=6)
+        l = reprec.getcalls("pytest_runtest_call")[0].item.module.l
+        assert l == ["test_hello", "fin John", "test_hello", "fin Doe",
+                     "test_name", "test_population", "fin John",
+                     "test_name", "test_population", "fin Doe"]
+
     def test_parametrize_setup_function(self, testdir):
         testdir.makepyfile("""
             import pytest

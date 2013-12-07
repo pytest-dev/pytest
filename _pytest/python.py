@@ -1826,41 +1826,45 @@ def getfuncargnames(function, startindex=None):
 # setups and teardowns
 
 def reorder_items(items, ignore, cache, scopenum):
-    if scopenum >= scopenum_function:
+    if scopenum >= scopenum_function or len(items) < 3:
         return items
-    if len(items) < 2:
-        return items
-    #print "\nparametrize_Sorted", items, ignore, cache, scopenum
+    items_done = []
+    while 1:
+        items_before, items_same, items_other, newignore = \
+                slice_items(items, ignore, cache, scopenum)
+        items_before = reorder_items(items_before, ignore, cache, scopenum+1)
+        if items_same is None:
+            # nothing to reorder in this scope
+            assert items_other is None
+            return items_done + items_before
+        items_done.extend(items_before)
+        items = items_same + items_other
+        ignore = newignore
 
+
+def slice_items(items, ignore, cache, scopenum):
     # we pick the first item which uses a fixture instance in the requested scope
     # and which we haven't seen yet.  We slice the input items list into
-    # a list of items_nomatch, items_using_same_fixtureinstance and
-    # items_remaining
+    # a list of items_nomatch, items_same and items_other
     slicing_argkey = None
     for i, item in enumerate(items):
         argkeys = get_parametrized_fixture_keys(item, ignore, scopenum, cache)
         if slicing_argkey is None:
             if argkeys:
                 slicing_argkey = argkeys.pop()
-                items_using_same_fixtureinstance = [item]
-                items_nomatch = items[:i]
-                items_remaining = []
+                items_before = items[:i]
+                items_same = [item]
+                items_other = []
             continue
         if slicing_argkey in argkeys:
-            items_using_same_fixtureinstance.append(item)
+            items_same.append(item)
         else:
-            items_remaining.append(item)
-
-    if slicing_argkey is None or len(items_using_same_fixtureinstance) == 1:
-        # nothing to sort on this level
-        return reorder_items(items, ignore, cache, scopenum+1)
-
-    items_nomatch = reorder_items(items_nomatch, ignore, cache, scopenum+1)
+            items_other.append(item)
+    if slicing_argkey is None:
+        return items, None, None, None
     newignore = ignore.copy()
     newignore.add(slicing_argkey)
-    part2 = reorder_items(items_using_same_fixtureinstance + items_remaining,
-                          newignore, cache, scopenum)
-    return items_nomatch + part2
+    return (items_before, items_same, items_other, newignore)
 
 def get_parametrized_fixture_keys(item, ignore, scopenum, cache):
     """ return list of keys for all parametrized arguments which match
@@ -1882,13 +1886,14 @@ def get_parametrized_fixture_keys(item, ignore, scopenum, cache):
         elif scopenum == 1:  # module
             key = (argname, param_index, item.fspath)
         elif scopenum == 2:  # class
+            # enumerate classes per fspath
             l = cache.setdefault(item.fspath, [])
             try:
-                i = l.index(item.cls)
+                numclass = l.index(item.cls)
             except ValueError:
-                i = len(l)
+                numclass = len(l)
                 l.append(item.cls)
-            key = (argname, param_index, item.fspath, i)
+            key = (argname, param_index, item.fspath, item.cls)
         if key not in ignore:
             keys.add(key)
     return keys

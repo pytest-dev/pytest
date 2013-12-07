@@ -592,6 +592,8 @@ class TestMetafuncFunctional:
 
             def test_it(foo):
                 pass
+            def test_it2(foo):
+                pass
         """)
         reprec = testdir.inline_run("--collect-only")
         assert not reprec.getcalls("pytest_internalerror")

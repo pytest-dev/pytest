@@ -10,6 +10,15 @@ Unreleased
   hook and expecting certain fixture instances are torn down within (very
   unlikely and would have been unreliable anyway).
 
+- fix issue396 - correctly sort and finalize class-scoped parametrized 
+  tests independently from number of methods on the class.  
+
+- refix issue323 in a better way -- parametrization should now never
+  cause Runtime Recursion errors because the underlying algorithm
+  for re-ordering tests per-scope/per-fixture is not recursive
+  anymore (it was tail-call recursive before which could lead
+  to problems for more than >966 non-function scoped parameters).
+
 - fix issue290 - there is preliminary support now for parametrizing
   with repeated same values (sometimes useful to to test if calling 
   a second time works as with the first time).
