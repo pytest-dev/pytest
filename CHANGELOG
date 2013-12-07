@@ -10,6 +10,10 @@ Unreleased
   hook and expecting certain fixture instances are torn down within (very
   unlikely and would have been unreliable anyway).
 
+- fix issue290 - there is preliminary support now for parametrizing
+  with repeated same values (sometimes useful to to test if calling 
+  a second time works as with the first time).
+
 - fix issue246 (again) fix finalizer order to be LIFO on independent fixtures
   depending on a parametrized higher-than-function scoped fixture. 
   (fix quite some effort so please bear with the complexity of this sentence :)

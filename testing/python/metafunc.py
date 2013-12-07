@@ -814,7 +814,7 @@ class TestMarkersWithParametrization:
         reprec.assertoutcome(passed=2, skipped=2)
 
 
-    @pytest.mark.xfail(reason="issue 290")
+    @pytest.mark.issue290
     def test_parametrize_ID_generation_string_int_works(self, testdir):
         testdir.makepyfile("""
             import pytest
