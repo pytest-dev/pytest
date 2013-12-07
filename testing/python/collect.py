@@ -334,7 +334,7 @@ class TestFunction:
             def test_function(arg):
                 assert arg.__class__.__name__ == "A"
         """)
-        reprec = testdir.inline_run()
+        reprec = testdir.inline_run("--fulltrace")
         reprec.assertoutcome(passed=1)
 
     def test_parametrize_with_non_hashable_values(self, testdir):

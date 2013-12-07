@@ -193,8 +193,8 @@ class TestMetafunc:
                 metafunc.parametrize('y', [2])
             def pytest_funcarg__x(request):
                 return request.param * 10
-            def pytest_funcarg__y(request):
-                return request.param
+            #def pytest_funcarg__y(request):
+            #    return request.param
 
             def test_simple(x,y):
                 assert x in (10,20)

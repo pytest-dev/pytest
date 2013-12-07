@@ -1315,6 +1315,7 @@ class TestAutouseManagement:
                     l.append("step2-%d" % item)
 
             def test_finish():
+                print (l)
                 assert l == ["setup-1", "step1-1", "step2-1", "teardown-1",
                              "setup-2", "step1-2", "step2-2", "teardown-2",]
         """)
@@ -1683,23 +1684,22 @@ class TestFixtureMarker:
                 l.append("test3")
             def test_4(modarg, arg):
                 l.append("test4")
-            def test_5():
-                assert len(l) == 12 * 3
-                expected = [
-                    'create:1', 'test1', 'fin:1', 'create:2', 'test1',
-                    'fin:2', 'create:mod1', 'test2', 'create:1', 'test3',
-                    'fin:1', 'create:2', 'test3', 'fin:2', 'create:1',
-                    'test4', 'fin:1', 'create:2', 'test4', 'fin:2',
-                    'fin:mod1', 'create:mod2', 'test2', 'create:1', 'test3',
-                    'fin:1', 'create:2', 'test3', 'fin:2', 'create:1',
-                    'test4', 'fin:1', 'create:2', 'test4', 'fin:2',
-                'fin:mod2']
-                import pprint
-                pprint.pprint(list(zip(l, expected)))
-                assert l == expected
         """)
         reprec = testdir.inline_run("-v")
-        reprec.assertoutcome(passed=12+1)
+        reprec.assertoutcome(passed=12)
+        l = reprec.getcalls("pytest_runtest_call")[0].item.module.l
+        expected = [
+            'create:1', 'test1', 'fin:1', 'create:2', 'test1',
+            'fin:2', 'create:mod1', 'test2', 'create:1', 'test3',
+            'fin:1', 'create:2', 'test3', 'fin:2', 'create:1',
+            'test4', 'fin:1', 'create:2', 'test4', 'fin:2',
+            'fin:mod1', 'create:mod2', 'test2', 'create:1', 'test3',
+            'fin:1', 'create:2', 'test3', 'fin:2', 'create:1',
+            'test4', 'fin:1', 'create:2', 'test4', 'fin:2',
+        'fin:mod2']
+        import pprint
+        pprint.pprint(list(zip(l, expected)))
+        assert l == expected
 
     def test_parametrized_fixture_teardown_order(self, testdir):
         testdir.makepyfile("""
@@ -1855,7 +1855,6 @@ class TestFixtureMarker:
         reprec.assertoutcome(passed=5)
 
 
-    @pytest.mark.xfail
     @pytest.mark.issue246
     @pytest.mark.parametrize("scope", ["session", "function", "module"])
     def test_finalizer_order_on_parametrization(self, scope, testdir):

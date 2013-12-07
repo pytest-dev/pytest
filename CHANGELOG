@@ -1,6 +1,19 @@
 Unreleased
 -----------------------------------
 
+- simplified and fixed implementation for calling finalizers when
+  parametrized fixtures or function arguments are involved.  finalization 
+  is now performed lazily at setup time instead of in the "teardown phase".
+  While this might sound odd at first, it helps to ensure that we are 
+  correctly handling setup/teardown even in complex code.  User-level code
+  should not be affected unless it's implementing the pytest_runtest_teardown
+  hook and expecting certain fixture instances are torn down within (very
+  unlikely and would have been unreliable anyway).
+
+- fix issue246 (again) fix finalizer order to be LIFO on independent fixtures
+  depending on a parametrized higher-than-function scoped fixture. 
+  (fix quite some effort so please bear with the complexity of this sentence :)
+ 
 - fix issue244 by implementing special index for parameters to only use
   indices for paramentrized test ids
 

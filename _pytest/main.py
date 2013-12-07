@@ -230,6 +230,8 @@ class Node(object):
         #: allow adding of extra keywords to use for matching
         self.extra_keyword_matches = set()
 
+        # used for storing artificial fixturedefs for direct parametrization
+        self._name2pseudofixturedef = {}
         #self.extrainit()
 
     @property
@@ -365,6 +367,8 @@ class Node(object):
         self.session._setupstate.addfinalizer(fin, self)
 
     def getparent(self, cls):
+        """ get the next parent node (including ourself)
+        which is an instance of the given class"""
         current = self
         while current and not isinstance(current, cls):
             current = current.parent
