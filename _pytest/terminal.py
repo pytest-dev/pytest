@@ -32,7 +32,7 @@ def pytest_addoption(parser):
     group._addoption('--color', metavar="color",
                action="store", dest="color", default='auto',
                choices=['yes', 'no', 'auto'],
-               help="color output (yes/no/auto).")
+               help="color terminal output (yes/no/auto).")
 
 def pytest_configure(config):
     config.option.verbose -= config.option.quiet

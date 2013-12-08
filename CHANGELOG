@@ -10,6 +10,9 @@ Unreleased
   hook and expecting certain fixture instances are torn down within (very
   unlikely and would have been unreliable anyway).
 
+- PR90: add --color=yes|no|auto option to force terminal coloring 
+  mode ("auto" is default).  Thanks Marc Abramowitz.
+
 - fix issue396 - correctly sort and finalize class-scoped parametrized 
   tests independently from number of methods on the class.  
 
