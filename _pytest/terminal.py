@@ -29,6 +29,10 @@ def pytest_addoption(parser):
     group._addoption('--fulltrace', '--full-trace',
                action="store_true", default=False,
                help="don't cut any tracebacks (default is to cut).")
+    group._addoption('--color', metavar="color",
+               action="store", dest="color", default='auto',
+               choices=['yes', 'no', 'auto'],
+               help="color output (yes/no/auto).")
 
 def pytest_configure(config):
     config.option.verbose -= config.option.quiet
@@ -85,6 +89,10 @@ class TerminalReporter:
         if file is None:
             file = py.std.sys.stdout
         self._tw = self.writer = py.io.TerminalWriter(file)
+        if self.config.option.color == 'yes':
+            self._tw.hasmarkup = True
+        if self.config.option.color == 'no':
+            self._tw.hasmarkup = False
         self.currentfspath = None
         self.reportchars = getreportopt(config)
         self.hasmarkup = self._tw.hasmarkup
