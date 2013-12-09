@@ -26,9 +26,10 @@ Unreleased
   with repeated same values (sometimes useful to to test if calling 
   a second time works as with the first time).
 
-- fix issue246 (again) fix finalizer order to be LIFO on independent fixtures
+- fix issue246 fix finalizer order to be LIFO on independent fixtures
   depending on a parametrized higher-than-function scoped fixture. 
-  (fix quite some effort so please bear with the complexity of this sentence :)
+  (was quite some effort so please bear with the complexity of this sentence :)
+  Thanks Ralph Schmitt for the precise failure example.
  
 - fix issue244 by implementing special index for parameters to only use
   indices for paramentrized test ids
@@ -53,10 +54,6 @@ Unreleased
 - fix issue384 by removing the trial support code
   since the unittest compat enhancements allow
   trial to handle it on its own
-
-- fix ordering of finalizers of parametrized interdependent fixtures.
-  This fixes issue246 as reported.  Thanks Ralph Schmitt for the 
-  precise failure example.
 
 - don't hide an ImportError when importing a plugin produces one.
   fixes issue375.
