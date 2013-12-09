@@ -122,9 +122,6 @@ Unreleased
 
 - fix verbose reporting for @mock'd test functions
 
-- allow @pytest.fixture marked pytest_funcarg__foo functions
-  so that pylint errors can be avoided.
-
 Changes between 2.4.1 and 2.4.2
 -----------------------------------
 
