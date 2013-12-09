@@ -1626,7 +1626,7 @@ class FixtureManager:
 
     def pytest_collection_modifyitems(self, items):
         # separate parametrized setups
-        items[:] = reorder_items(items, set(), 0)
+        items[:] = reorder_items(items)
 
     def parsefactories(self, node_or_obj, nodeid=NOTSET, unittest=False):
         if nodeid is not NOTSET:
@@ -1824,14 +1824,25 @@ def getfuncargnames(function, startindex=None):
 # down to the lower scopes such as to minimize number of "high scope"
 # setups and teardowns
 
-def reorder_items(items, ignore, scopenum):
+def reorder_items(items):
+    argkeys_cache = {}
+    for scopenum in range(0, scopenum_function):
+        argkeys_cache[scopenum] = d = {}
+        for item in items:
+            keys = set(get_parametrized_fixture_keys(item, scopenum))
+            if keys:
+                d[item] = keys
+    return reorder_items_atscope(items, set(), argkeys_cache, 0)
+
+def reorder_items_atscope(items, ignore, argkeys_cache, scopenum):
     if scopenum >= scopenum_function or len(items) < 3:
         return items
     items_done = []
     while 1:
         items_before, items_same, items_other, newignore = \
-                slice_items(items, ignore, scopenum)
-        items_before = reorder_items(items_before, ignore, scopenum+1)
+                slice_items(items, ignore, argkeys_cache[scopenum])
+        items_before = reorder_items_atscope(
+                            items_before, ignore, argkeys_cache,scopenum+1)
         if items_same is None:
             # nothing to reorder in this scope
             assert items_other is None
@@ -1841,54 +1852,58 @@ def reorder_items(items, ignore, scopenum):
         ignore = newignore
 
 
-def slice_items(items, ignore, scopenum):
-    # we pick the first item which uses a fixture instance in the requested scope
-    # and which we haven't seen yet.  We slice the input items list into
-    # a list of items_nomatch, items_same and items_other
-    slicing_argkey = None
-    for i, item in enumerate(items):
-        argkeys = get_parametrized_fixture_keys(item, ignore, scopenum)
-        if slicing_argkey is None:
-            if argkeys:
-                slicing_argkey = argkeys.pop()
-                items_before = items[:i]
-                items_same = [item]
-                items_other = []
-            continue
-        if slicing_argkey in argkeys:
-            items_same.append(item)
-        else:
-            items_other.append(item)
-    if slicing_argkey is None:
-        return items, None, None, None
-    newignore = ignore.copy()
-    newignore.add(slicing_argkey)
-    return (items_before, items_same, items_other, newignore)
+def slice_items(items, ignore, scoped_argkeys_cache):
+    # we pick the first item which uses a fixture instance in the
+    # requested scope and which we haven't seen yet.  We slice the input
+    # items list into a list of items_nomatch, items_same and
+    # items_other
+    if scoped_argkeys_cache:  # do we need to do work at all?
+        it = iter(items)
+        # first find a slicing key
+        for i, item in enumerate(it):
+            argkeys = scoped_argkeys_cache.get(item)
+            if argkeys is not None:
+                argkeys = argkeys.difference(ignore)
+                if argkeys:  # found a slicing key
+                    slicing_argkey = argkeys.pop()
+                    items_before = items[:i]
+                    items_same = [item]
+                    items_other = []
+                    # now slice the remainder of the list
+                    for item in it:
+                        argkeys = scoped_argkeys_cache.get(item)
+                        if argkeys and slicing_argkey in argkeys and \
+                            slicing_argkey not in ignore:
+                            items_same.append(item)
+                        else:
+                            items_other.append(item)
+                    newignore = ignore.copy()
+                    newignore.add(slicing_argkey)
+                    return (items_before, items_same, items_other, newignore)
+    return items, None, None, None
 
-def get_parametrized_fixture_keys(item, ignore, scopenum):
+def get_parametrized_fixture_keys(item, scopenum):
     """ return list of keys for all parametrized arguments which match
     the specified scope. """
     assert scopenum < scopenum_function  # function
-    keys = set()
     try:
         cs = item.callspec
     except AttributeError:
-        return keys  # no parametrization on this item
-    # cs.indictes.items() is random order of argnames but
-    # then again different functions (items) can change order of
-    # arguments so it doesn't matter much probably
-    for argname, param_index in cs.indices.items():
-        if cs._arg2scopenum[argname] != scopenum:
-            continue
-        if scopenum == 0:    # session
-            key = (argname, param_index)
-        elif scopenum == 1:  # module
-            key = (argname, param_index, item.fspath)
-        elif scopenum == 2:  # class
-            key = (argname, param_index, item.fspath, item.cls)
-        if key not in ignore:
-            keys.add(key)
-    return keys
+        pass
+    else:
+        # cs.indictes.items() is random order of argnames but
+        # then again different functions (items) can change order of
+        # arguments so it doesn't matter much probably
+        for argname, param_index in cs.indices.items():
+            if cs._arg2scopenum[argname] != scopenum:
+                continue
+            if scopenum == 0:    # session
+                key = (argname, param_index)
+            elif scopenum == 1:  # module
+                key = (argname, param_index, item.fspath)
+            elif scopenum == 2:  # class
+                key = (argname, param_index, item.fspath, item.cls)
+            yield key
 
 
 def xunitsetup(obj, name):
