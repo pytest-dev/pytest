@@ -340,10 +340,8 @@ class TestPytestPluginInteractions:
                 assert hello == "world"
                 assert 'hello' in py.test.__all__
         """)
-        result = testdir.runpytest(p)
-        result.stdout.fnmatch_lines([
-            "*1 passed*"
-        ])
+        reprec = testdir.inline_run(p)
+        reprec.assertoutcome(passed=1)
 
     def test_do_option_postinitialize(self, testdir):
         config = testdir.parseconfigure()
