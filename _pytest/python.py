@@ -76,8 +76,9 @@ def fixture(scope="function", params=None, autouse=False):
         # direct decoration
         return FixtureFunctionMarker(
                 "function", params, autouse)(scope)
-    else:
-        return FixtureFunctionMarker(scope, params, autouse)
+    if params is not None and not isinstance(params, (list, tuple)):
+        params = list(params)
+    return FixtureFunctionMarker(scope, params, autouse)
 
 def yield_fixture(scope="function", params=None, autouse=False):
     """ (return a) decorator to mark a yield-fixture factory function

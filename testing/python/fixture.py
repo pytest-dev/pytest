@@ -914,6 +914,34 @@ class TestFixtureUsages:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
+    def test_fixture_parametrized_with_iterator(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            l = []
+            def f():
+                yield 1
+                yield 2
+            dec = pytest.fixture(scope="module", params=f())
+
+            @dec
+            def arg(request):
+                return request.param
+            @dec
+            def arg2(request):
+                return request.param
+
+            def test_1(arg):
+                l.append(arg)
+            def test_2(arg2):
+                l.append(arg2*10)
+        """)
+        reprec = testdir.inline_run("-v")
+        reprec.assertoutcome(passed=4)
+        l = reprec.getcalls("pytest_runtest_call")[0].item.module.l
+        assert l == [1,2, 10,20]
+
+
 class TestFixtureManagerParseFactories:
     def pytest_funcarg__testdir(self, request):
         testdir = request.getfuncargvalue("testdir")
