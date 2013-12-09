@@ -1661,15 +1661,15 @@ class FixtureManager:
                                     yieldctx=marker.yieldctx,
                                     unittest=unittest)
             faclist = self._arg2fixturedefs.setdefault(name, [])
-            if not fixturedef.has_location:
-                # All fixturedefs with no location are at the front
+            if fixturedef.has_location:
+                faclist.append(fixturedef)
+            else:
+                # fixturedefs with no location are at the front
                 # so this inserts the current fixturedef after the
                 # existing fixturedefs from external plugins but
                 # before the fixturedefs provided in conftests.
                 i = len([f for f in faclist if not f.has_location])
-            else:
-                i = len(faclist)  # append
-            faclist.insert(i, fixturedef)
+                faclist.insert(i, fixturedef)
             if marker.autouse:
                 autousenames.append(name)
         if autousenames:

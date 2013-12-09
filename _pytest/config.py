@@ -16,8 +16,7 @@ def main(args=None, plugins=None):
                   initialization.
     """
     config = _prepareconfig(args, plugins)
-    exitstatus = config.hook.pytest_cmdline_main(config=config)
-    return exitstatus
+    return config.hook.pytest_cmdline_main(config=config)
 
 class cmdline:  # compatibility namespace
     main = staticmethod(main)
