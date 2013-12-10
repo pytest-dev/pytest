@@ -368,7 +368,6 @@ def add_funcarg_pseudo_fixture_def(collector, metafunc, fixturemanager):
     arg2fixturedefs = metafunc._arg2fixturedefs
     for param_index, callspec in enumerate(metafunc._calls):
         for argname, argvalue in callspec.funcargs.items():
-            assert argname not in arg2fixturedefs
             arg2params.setdefault(argname, []).append(argvalue)
             if argname not in arg2scope:
                 scopenum = callspec._arg2scopenum.get(argname, scopenum_function)
@@ -387,7 +386,6 @@ def add_funcarg_pseudo_fixture_def(collector, metafunc, fixturemanager):
         # to make sure we only ever create an according fixturedef on
         # a per-scope basis. We thus store and cache the fixturedef on the
         # node related to the scope.
-        assert argname not in arg2fixturedefs, (argname, arg2fixturedefs)
         scope = arg2scope[argname]
         node = None
         if scope != "function":
