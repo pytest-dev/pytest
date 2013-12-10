@@ -140,10 +140,12 @@ def pytest_generate_tests(metafunc):
 def pytest_configure(config):
     config.addinivalue_line("markers",
         "parametrize(argnames, argvalues): call a test function multiple "
-        "times passing in multiple different argument value sets. Example: "
-        "@parametrize('arg1', [1,2]) would lead to two calls of the decorated "
-        "test function, one with arg1=1 and another with arg1=2."
-        " see http://pytest.org/latest/parametrize.html for more info and "
+        "times passing in different arguments in turn. argvalues generally "
+        "needs to be a list of values if argnames specifies only one name "
+        "or a list of tuples of values if argnames specifies multiple names. "
+        "Example: @parametrize('arg1', [1,2]) would lead to two calls of the "
+        "decorated test function, one with arg1=1 and another with arg1=2."
+        "see http://pytest.org/latest/parametrize.html for more info and "
         "examples."
     )
     config.addinivalue_line("markers",
