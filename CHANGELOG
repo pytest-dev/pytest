@@ -26,6 +26,10 @@ Unreleased
   with repeated same values (sometimes useful to to test if calling 
   a second time works as with the first time).
 
+- close issue240 - document precisely how pytest module importing
+  works, discuss the two common test directory layouts, and how it 
+  interacts with PEP420-namespace packages.
+
 - fix issue246 fix finalizer order to be LIFO on independent fixtures
   depending on a parametrized higher-than-function scoped fixture. 
   (was quite some effort so please bear with the complexity of this sentence :)
