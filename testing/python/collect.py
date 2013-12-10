@@ -372,6 +372,24 @@ class TestFunction:
         rec.assertoutcome(passed=2)
 
 
+    def test_parametrize_overrides_fixture(self, testdir):
+        """Test parametrization when parameter overrides existing fixture with same name."""
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture
+            def value():
+                return 'value'
+
+            @pytest.mark.parametrize('value',
+                                     ['overrided'])
+            def test_overrided_via_param(value):
+                assert value == 'overrided'
+        """)
+        rec = testdir.inline_run()
+        rec.assertoutcome(passed=1)
+
+
     def test_parametrize_with_mark(selfself, testdir):
         items = testdir.getitems("""
             import pytest
