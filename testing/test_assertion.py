@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sys
 
 import py, pytest
@@ -175,6 +176,15 @@ class TestAssert_reprcompare:
     def test_repr_no_exc(self):
         expl = ' '.join(callequal('foo', 'bar'))
         assert 'raised in repr()' not in expl
+
+    def test_unicode(self):
+        left = py.builtin._totext('£€', 'utf-8')
+        right = py.builtin._totext('£', 'utf-8')
+        expl = callequal(left, right)
+        assert expl[0] == py.builtin._totext("'£€' == '£'", 'utf-8')
+        assert expl[1] == py.builtin._totext('- £€', 'utf-8')
+        assert expl[2] == py.builtin._totext('+ £', 'utf-8')
+
 
 def test_python25_compile_issue257(testdir):
     testdir.makepyfile("""

@@ -17,7 +17,7 @@ classifiers=['Development Status :: 6 - Mature',
 
 long_description = open("README.rst").read()
 def main():
-    install_requires = ["py>=1.4.17"]
+    install_requires = ["py>=1.4.19"]
     if sys.version_info < (2,7):
         install_requires.append("argparse")
     if sys.platform == "win32":
@@ -27,7 +27,7 @@ def main():
         name='pytest',
         description='py.test: simple powerful testing with Python',
         long_description = long_description,
-        version='2.4.3.dev2',
+        version='2.5.0.dev1',
         url='http://pytest.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],

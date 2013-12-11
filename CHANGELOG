@@ -13,6 +13,10 @@ Unreleased
 - PR90: add --color=yes|no|auto option to force terminal coloring 
   mode ("auto" is default).  Thanks Marc Abramowitz.
 
+- fix issue319 - correctly show unicode in assertion errors.  Many
+  thanks to Floris Bruynooghe for the complete PR.  Also means
+  we depend on py>=1.4.19 now.
+
 - fix issue396 - correctly sort and finalize class-scoped parametrized 
   tests independently from number of methods on the class.  
 
