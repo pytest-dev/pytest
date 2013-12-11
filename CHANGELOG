@@ -1,5 +1,9 @@
-Unreleased
+2.5.0
 -----------------------------------
+
+- dropped python2.5 from automated release testing of pytest itself 
+  which means it's probably going to break soon (but still works 
+  with this release we believe).
 
 - simplified and fixed implementation for calling finalizers when
   parametrized fixtures or function arguments are involved.  finalization 
