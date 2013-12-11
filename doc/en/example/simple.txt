@@ -108,7 +108,7 @@ directory with the above conftest.py::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.4.2
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.0
     collected 0 items
     
     =============================  in 0.00 seconds =============================
@@ -152,12 +152,12 @@ and when running it will see a skipped "slow" test::
 
     $ py.test -rs    # "-rs" means report details on the little 's'
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.4.2
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.0
     collected 2 items
     
     test_module.py .s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-603/conftest.py:9: need --runslow option to run
+    SKIP [1] /tmp/doc-exec-67/conftest.py:9: need --runslow option to run
     
     =================== 1 passed, 1 skipped in 0.01 seconds ====================
 
@@ -165,7 +165,7 @@ Or run it including the ``slow`` marked test::
 
     $ py.test --runslow
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.4.2
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.0
     collected 2 items
     
     test_module.py ..
@@ -256,7 +256,7 @@ which will add the string to the test header accordingly::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.4.2
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.0
     project deps: mylib-1.1
     collected 0 items
     
@@ -279,7 +279,7 @@ which will add info only when run with "--v"::
 
     $ py.test -v
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.4.2 -- /home/hpk/p/pytest/.tox/regen/bin/python
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.0 -- /home/hpk/p/pytest/.tox/regen/bin/python
     info1: did you know that ...
     did you?
     collecting ... collected 0 items
@@ -290,7 +290,7 @@ and nothing when run plainly::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.4.2
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.0
     collected 0 items
     
     =============================  in 0.00 seconds =============================
@@ -322,7 +322,7 @@ Now we can profile which test functions execute the slowest::
 
     $ py.test --durations=3
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.4.2
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.0
     collected 3 items
     
     test_some_are_slow.py ...
@@ -383,7 +383,7 @@ If we run this::
 
     $ py.test -rx
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.4.2
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.0
     collected 4 items
     
     test_step.py .Fx.
@@ -391,7 +391,7 @@ If we run this::
     ================================= FAILURES =================================
     ____________________ TestUserHandling.test_modification ____________________
     
-    self = <test_step.TestUserHandling instance at 0x1c6fb90>
+    self = <test_step.TestUserHandling instance at 0x192ea28>
     
         def test_modification(self):
     >       assert 0
@@ -453,7 +453,7 @@ We can run this::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.4.2
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.0
     collected 7 items
     
     test_step.py .Fx.
@@ -463,17 +463,17 @@ We can run this::
     
     ================================== ERRORS ==================================
     _______________________ ERROR at setup of test_root ________________________
-    file /tmp/doc-exec-603/b/test_error.py, line 1
+    file /tmp/doc-exec-67/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
             fixture 'db' not found
-            available fixtures: pytestconfig, recwarn, monkeypatch, capfd, capsys, tmpdir
+            available fixtures: monkeypatch, capsys, tmpdir, capfd, pytestconfig, recwarn
             use 'py.test --fixtures [testpath]' for help on them.
     
-    /tmp/doc-exec-603/b/test_error.py:1
+    /tmp/doc-exec-67/b/test_error.py:1
     ================================= FAILURES =================================
     ____________________ TestUserHandling.test_modification ____________________
     
-    self = <test_step.TestUserHandling instance at 0x22f3518>
+    self = <test_step.TestUserHandling instance at 0x2099a28>
     
         def test_modification(self):
     >       assert 0
@@ -482,20 +482,20 @@ We can run this::
     test_step.py:9: AssertionError
     _________________________________ test_a1 __________________________________
     
-    db = <conftest.DB instance at 0x2304248>
+    db = <conftest.DB instance at 0x20a1518>
     
         def test_a1(db):
     >       assert 0, db  # to show value
-    E       AssertionError: <conftest.DB instance at 0x2304248>
+    E       AssertionError: <conftest.DB instance at 0x20a1518>
     
     a/test_db.py:2: AssertionError
     _________________________________ test_a2 __________________________________
     
-    db = <conftest.DB instance at 0x2304248>
+    db = <conftest.DB instance at 0x20a1518>
     
         def test_a2(db):
     >       assert 0, db  # to show value
-    E       AssertionError: <conftest.DB instance at 0x2304248>
+    E       AssertionError: <conftest.DB instance at 0x20a1518>
     
     a/test_db2.py:2: AssertionError
     ========== 3 failed, 2 passed, 1 xfailed, 1 error in 0.03 seconds ==========
@@ -553,7 +553,7 @@ and run them::
 
     $ py.test test_module.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.4.2
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.0
     collected 2 items
     
     test_module.py FF
@@ -561,7 +561,7 @@ and run them::
     ================================= FAILURES =================================
     ________________________________ test_fail1 ________________________________
     
-    tmpdir = local('/tmp/pytest-190/test_fail10')
+    tmpdir = local('/tmp/pytest-281/test_fail10')
     
         def test_fail1(tmpdir):
     >       assert 0
@@ -575,12 +575,12 @@ and run them::
     E       assert 0
     
     test_module.py:4: AssertionError
-    ========================= 2 failed in 0.01 seconds =========================
+    ========================= 2 failed in 0.02 seconds =========================
 
 you will have a "failures" file which contains the failing test ids::
 
     $ cat failures
-    test_module.py::test_fail1 (/tmp/pytest-190/test_fail10)
+    test_module.py::test_fail1 (/tmp/pytest-281/test_fail10)
     test_module.py::test_fail2
 
 Making test result information available in fixtures
@@ -643,7 +643,7 @@ and run it::
 
     $ py.test -s test_module.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.4.2
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.0
     collected 3 items
     
     test_module.py Esetting up a test failed! test_module.py::test_setup_fails
@@ -676,7 +676,7 @@ and run it::
     E       assert 0
     
     test_module.py:15: AssertionError
-    ==================== 2 failed, 1 error in 0.02 seconds =====================
+    ==================== 2 failed, 1 error in 0.01 seconds =====================
 
 You'll see that the fixture finalizers could use the precise reporting
 information.
