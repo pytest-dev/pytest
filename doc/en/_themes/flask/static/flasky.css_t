@@ -10,6 +10,8 @@
 {% set sidebar_width = '220px' %}
 {% set base_font = '"Gudea", sans-serif' %}
 {% set header_font = '"Rancho", serif' %}
+{% set link_color = '#004B6B' %}
+{% set link_hover_color = '#6D4100' %}
 
 @import url("basic.css");
 
@@ -43,7 +45,8 @@ div.sphinxsidebar {
 }
 
 hr {
-    border: 1px solid #B1B4B6;
+    border: 0;
+    border-top: 1px solid #B1B4B6;
 }
 
 div.body {
@@ -143,12 +146,12 @@ div.sphinxsidebar input {
 /* -- body styles ----------------------------------------------------------- */
 
 a {
-    color: #004B6B;
+    color: {{ link_color }};
     text-decoration: underline;
 }
 
 a:hover {
-    color: #6D4100;
+    color: {{ link_hover_color }};
     text-decoration: underline;
 }
 
@@ -373,22 +376,22 @@ tt.xref, a tt {
 
 a.reference {
     text-decoration: none;
-    border-bottom: 1px dotted #004B6B;
+    border-bottom: 1px dotted {{ link_color }};
 }
 
 a.reference:hover {
-    border-bottom: 1px solid #6D4100;
+    border-bottom: 1px solid {{ link_hover_color }};
 }
 
 a.footnote-reference {
     text-decoration: none;
     font-size: 0.7em;
     vertical-align: top;
-    border-bottom: 1px dotted #004B6B;
+    border-bottom: 1px dotted {{ link_color }};
 }
 
 a.footnote-reference:hover {
-    border-bottom: 1px solid #6D4100;
+    border-bottom: 1px solid {{ link_hover_color }};
 }
 
 a:hover tt {
