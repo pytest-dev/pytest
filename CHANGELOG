@@ -1,4 +1,4 @@
-2.5.0
+v2.5.0
 -----------------------------------
 
 - dropped python2.5 from automated release testing of pytest itself
@@ -134,7 +134,7 @@
 
 - fix verbose reporting for @mock'd test functions
 
-Changes between 2.4.1 and 2.4.2
+v2.4.2
 -----------------------------------
 
 - on Windows require colorama and a newer py lib so that py.io.TerminalWriter()
@@ -165,7 +165,7 @@ Changes between 2.4.1 and 2.4.2
 - add pluginmanager.do_configure(config) as a link to
   config.do_configure() for plugin-compatibility
 
-Changes between 2.4.0 and 2.4.1
+v2.4.1
 -----------------------------------
 
 - When using parser.addoption() unicode arguments to the
@@ -181,7 +181,7 @@ Changes between 2.4.0 and 2.4.1
 
 - merge doc typo fixes, thanks Andy Dirnberger
 
-Changes between 2.3.5 and 2.4
+v2.4
 -----------------------------------
 
 known incompatibilities:
@@ -350,7 +350,7 @@ Bug fixes:
   ".section(title)" and ".line(msg)" methods to print extra
   information at the end of a test run.
 
-Changes between 2.3.4 and 2.3.5
+v2.3.5
 -----------------------------------
 
 - fix issue169: respect --tb=style with setup/teardown errors as well.
@@ -415,7 +415,7 @@ Changes between 2.3.4 and 2.3.5
 
 - fix issue266 - accept unicode in MarkEvaluator expressions
 
-Changes between 2.3.3 and 2.3.4
+v2.3.4
 -----------------------------------
 
 - yielded test functions will now have autouse-fixtures active but
@@ -435,7 +435,7 @@ Changes between 2.3.3 and 2.3.4
   need to write as -k "TestClass and test_method" to match a certain
   method in a certain test class.
 
-Changes between 2.3.2 and 2.3.3
+v2.3.3
 -----------------------------------
 
 - fix issue214 - parse modules that contain special objects like e. g.
@@ -467,7 +467,7 @@ Changes between 2.3.2 and 2.3.3
 - fix issue127 - improve documentation for pytest_addoption() and
   add a ``config.getoption(name)`` helper function for consistency.
 
-Changes between 2.3.1 and 2.3.2
+v2.3.2
 -----------------------------------
 
 - fix issue208 and fix issue29 use new py version to avoid long pauses
@@ -500,7 +500,7 @@ Changes between 2.3.1 and 2.3.2
   - add tox.ini to pytest distribution so that ignore-dirs and others config
     bits are properly distributed for maintainers who run pytest-own tests
 
-Changes between 2.3.0 and 2.3.1
+v2.3.1
 -----------------------------------
 
 - fix issue202 - fix regression: using "self" from fixture functions now
@@ -513,7 +513,7 @@ Changes between 2.3.0 and 2.3.1
 - link to web pages from --markers output which provides help for
   pytest.mark.* usage.
 
-Changes between 2.2.4 and 2.3.0
+v2.3.0
 -----------------------------------
 
 - fix issue202 - better automatic names for parametrized test functions
@@ -592,7 +592,7 @@ Changes between 2.2.4 and 2.3.0
 
   - py.test -vv will show all of assert comparisations instead of truncating
 
-Changes between 2.2.3 and 2.2.4
+v2.2.4
 -----------------------------------
 
 - fix error message for rewritten assertions involving the % operator
@@ -609,12 +609,12 @@ Changes between 2.2.3 and 2.2.4
 - fix issue #144: better mangle test ids to junitxml classnames
 - upgrade distribute_setup.py to 0.6.27
 
-Changes between 2.2.2 and 2.2.3
+v2.2.3
 ----------------------------------------
 
 - fix uploaded package to only include neccesary files
 
-Changes between 2.2.1 and 2.2.2
+v2.2.2
 ----------------------------------------
 
 - fix issue101: wrong args to unittest.TestCase test function now
@@ -634,7 +634,7 @@ Changes between 2.2.1 and 2.2.2
 - allow adding of attributes to test reports such that it also works
   with distributed testing (no upgrade of pytest-xdist needed)
 
-Changes between 2.2.0 and 2.2.1
+v2.2.1
 ----------------------------------------
 
 - fix issue99 (in pytest and py) internallerrors with resultlog now
@@ -651,7 +651,7 @@ Changes between 2.2.0 and 2.2.1
 - fix collection crash due to unknown-source collected items, thanks
   to Ralf Schmitt (fixed by depending on a more recent pylib)
 
-Changes between 2.1.3 and 2.2.0
+v2.2.0
 ----------------------------------------
 
 - fix issue90: introduce eager tearing down of test items so that
@@ -686,7 +686,7 @@ Changes between 2.1.3 and 2.2.0
 - simplify junitxml output code by relying on py.xml
 - add support for skip properties on unittest classes and functions
 
-Changes between 2.1.2 and 2.1.3
+v2.1.3
 ----------------------------------------
 
 - fix issue79: assertion rewriting failed on some comparisons in boolops
@@ -695,7 +695,7 @@ Changes between 2.1.2 and 2.1.3
 - fix issue75 / skipping test failure on jython
 - fix issue77 / Allow assertrepr_compare hook to apply to a subset of tests
 
-Changes between 2.1.1 and 2.1.2
+v2.1.2
 ----------------------------------------
 
 - fix assertion rewriting on files with windows newlines on some Python versions
@@ -705,7 +705,7 @@ Changes between 2.1.1 and 2.1.2
 - fix issue66: use different assertion rewriting caches when the -O option is passed
 - don't try assertion rewriting on Jython, use reinterp
 
-Changes between 2.1.0 and 2.1.1
+v2.1.1
 ----------------------------------------------
 
 - fix issue64 / pytest.set_trace now works within pytest_generate_tests hooks
@@ -718,7 +718,7 @@ Changes between 2.1.0 and 2.1.1
 - fix issue61: assertion rewriting on boolean operations with 3 or more operands
 - you can now build a man page with "cd doc ; make man"
 
-Changes between 2.0.3 and 2.1.0.DEV
+v2.1.0
 ----------------------------------------------
 
 - fix issue53 call nosestyle setup functions with correct ordering
@@ -738,7 +738,7 @@ Changes between 2.0.3 and 2.1.0.DEV
 - report KeyboardInterrupt even if interrupted during session startup
 - fix issue 35 - provide PDF doc version and download link from index page
 
-Changes between 2.0.2 and 2.0.3
+v2.0.3
 ----------------------------------------------
 
 - fix issue38: nicer tracebacks on calls to hooks, particularly early
@@ -758,7 +758,7 @@ Changes between 2.0.2 and 2.0.3
 
 - fix issue37: avoid invalid characters in junitxml's output
 
-Changes between 2.0.1 and 2.0.2
+v2.0.2
 ----------------------------------------------
 
 - tackle issue32 - speed up test runs of very quick test functions
@@ -810,7 +810,7 @@ Changes between 2.0.1 and 2.0.2
 
 - avoid std unittest assertion helper code in tracebacks (thanks Ronny)
 
-Changes between 2.0.0 and 2.0.1
+v2.0.1
 ----------------------------------------------
 
 - refine and unify initial capturing so that it works nicely
@@ -859,7 +859,7 @@ Changes between 2.0.0 and 2.0.1
   parametraization remains the "pytest_generate_tests"
   mechanism, see the docs.
 
-Changes between 1.3.4 and 2.0.0
+v2.0.0
 ----------------------------------------------
 
 - pytest-2.0 is now its own package and depends on pylib-2.0
@@ -904,7 +904,7 @@ Changes between 1.3.4 and 2.0.0
 - add ability to use "class" level for cached_setup helper
 - fix strangeness: mark.* objects are now immutable, create new instances
 
-Changes between 1.3.3 and 1.3.4
+v1.3.4
 ----------------------------------------------
 
 - fix issue111: improve install documentation for windows
@@ -913,7 +913,7 @@ Changes between 1.3.3 and 1.3.4
 - fix issue115: unify internal exception passthrough/catching/GeneratorExit
 - fix issue118: new --tb=native for presenting cpython-standard exceptions
 
-Changes between 1.3.2 and 1.3.3
+v1.3.3
 ----------------------------------------------
 
 - fix issue113: assertion representation problem with triple-quoted strings
@@ -928,7 +928,7 @@ Changes between 1.3.2 and 1.3.3
   (thanks Armin Ronacher for reporting)
 - remove trailing whitespace in all py/text distribution files
 
-Changes between 1.3.1 and 1.3.2
+v1.3.2
 ----------------------------------------------
 
 New features
@@ -1003,7 +1003,7 @@ Bug fixes / Maintenance
 - fix homedir detection on Windows
 - ship distribute_setup.py version 0.6.13
 
-Changes between 1.3.0 and 1.3.1
+v1.3.1
 ---------------------------------------------
 
 New features
@@ -1075,7 +1075,7 @@ Fixes / Maintenance
   (and internally be more careful when presenting unexpected byte sequences)
 
 
-Changes between 1.2.1 and 1.3.0
+v1.3.0
 ---------------------------------------------
 
 - deprecate --report option in favour of a new shorter and easier to
@@ -1140,7 +1140,7 @@ Changes between 1.2.1 and 1.3.0
 - added links to the new capturelog and coverage plugins
 
 
-Changes between 1.2.1 and 1.2.0
+v1.2.0
 ---------------------------------------------
 
 - refined usage and options for "py.cleanup"::
@@ -1179,7 +1179,7 @@ Changes between 1.2.1 and 1.2.0
 
 - fix plugin links
 
-Changes between 1.2 and 1.1.1
+v1.1.1
 ---------------------------------------------
 
 - moved dist/looponfailing from py.test core into a new
@@ -1263,7 +1263,7 @@ Changes between 1.2 and 1.1.1
 - fix docs, fix internal bin/ script generation
 
 
-Changes between 1.1.1 and 1.1.0
+v1.1.0
 ---------------------------------------------
 
 - introduce automatic plugin registration via 'pytest11'
@@ -1282,7 +1282,7 @@ Changes between 1.1.1 and 1.1.0
 - try harder to have deprecation warnings for py.compat.* accesses
   report a correct location
 
-Changes between 1.1.0 and 1.0.2
+v1.0.2
 ---------------------------------------------
 
 * adjust and improve docs
@@ -1367,7 +1367,7 @@ Changes between 1.1.0 and 1.0.2
 
 * simplified internal localpath implementation
 
-Changes between 1.0.1 and 1.0.2
+v1.0.2
 -------------------------------------------
 
 * fixing packaging issues, triggered by fedora redhat packaging,
@@ -1375,7 +1375,7 @@ Changes between 1.0.1 and 1.0.2
 
 * added a documentation link to the new django plugin.
 
-Changes between 1.0.0 and 1.0.1
+v1.0.1
 -------------------------------------------
 
 * added a 'pytest_nose' plugin which handles nose.SkipTest,
@@ -1409,13 +1409,13 @@ Changes between 1.0.0 and 1.0.1
 * simplified multicall mechanism and plugin architecture,
   renamed some internal methods and argnames
 
-Changes between 1.0.0b9 and 1.0.0
+v1.0.0
 -------------------------------------------
 
 * more terse reporting try to show filesystem path relatively to current dir
 * improve xfail output a bit
 
-Changes between 1.0.0b8 and 1.0.0b9
+v1.0.0b9
 -------------------------------------------
 
 * cleanly handle and report final teardown of test setup
@@ -1449,7 +1449,7 @@ Changes between 1.0.0b8 and 1.0.0b9
 * item.repr_failure(excinfo) instead of item.repr_failure(excinfo, outerr)
 
 
-Changes between 1.0.0b7 and 1.0.0b8
+v1.0.0b8
 -------------------------------------------
 
 * pytest_unittest-plugin is now enabled by default
@@ -1478,7 +1478,7 @@ Changes between 1.0.0b7 and 1.0.0b8
 * tweaked doctest output for docstrings in py modules,
   thanks Radomir.
 
-Changes between 1.0.0b3 and 1.0.0b7
+v1.0.0b7
 -------------------------------------------
 
 * renamed py.test.xfail back to py.test.mark.xfail to avoid
@@ -1503,7 +1503,7 @@ Changes between 1.0.0b3 and 1.0.0b7
 
 * make __name__ == "__channelexec__" for remote_exec code
 
-Changes between 1.0.0b1 and 1.0.0b3
+v1.0.0b3
 -------------------------------------------
 
 * plugin classes are removed: one now defines
@@ -1520,7 +1520,7 @@ Changes between 1.0.0b1 and 1.0.0b3
   well with function arguments.
 
 
-Changes between 0.9.2 and 1.0.0b1
+v1.0.0b1
 -------------------------------------------
 
 * introduced new "funcarg" setup method,
@@ -1544,7 +1544,7 @@ Changes between 0.9.2 and 1.0.0b1
 
 XXX lots of things missing here XXX
 
-Changes between 0.9.1 and 0.9.2
+v0.9.2
 -------------------------------------------
 
 * refined installation and metadata, created new setup.py,
@@ -1577,10 +1577,10 @@ Changes between 0.9.1 and 0.9.2
 
 * there now is a py.__version__ attribute
 
-Changes between 0.9.0 and 0.9.1
+v0.9.1
 -------------------------------------------
 
-This is a fairly complete list of changes between 0.9 and 0.9.1, which can
+This is a fairly complete list of v0.9.1, which can
 serve as a reference for developers.
 
 * allowing + signs in py.path.svn urls [39106]
