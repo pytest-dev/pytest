@@ -10,8 +10,8 @@
 {% set sidebar_width = '220px' %}
 {% set base_font = '"Gudea", sans-serif' %}
 {% set header_font = '"Rancho", serif' %}
-{% set link_color = '#004B6B' %}
-{% set link_hover_color = '#6D4100' %}
+{% set link_color = '#490' %}
+{% set link_hover_color = '#9c0' %}
 
 @import url("basic.css");
 
