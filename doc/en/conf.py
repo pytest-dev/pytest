@@ -156,6 +156,7 @@ html_static_path = ['_static']
 html_sidebars = {
     'index': [
         'sidebarintro.html',
+        'links.html',
         'sourcelink.html',
         'searchbox.html'
     ],
