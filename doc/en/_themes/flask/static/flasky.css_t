@@ -8,8 +8,8 @@
 
 {% set page_width = '940px' %}
 {% set sidebar_width = '220px' %}
-{% set base_font = '"Georgia", serif' %}
-{% set header_font = '"Garamond", "Georgia", serif' %}
+{% set base_font = '"Gudea", sans-serif' %}
+{% set header_font = '"Rancho", serif' %}
 
 @import url("basic.css");
 
