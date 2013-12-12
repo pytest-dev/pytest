@@ -45,8 +45,6 @@ holger krekel
   with this release we believe).
 
 - simplified and fixed implementation for calling finalizers when
-
-- simplified and fixed implementation for calling finalizers when
   parametrized fixtures or function arguments are involved.  finalization 
   is now performed lazily at setup time instead of in the "teardown phase".
   While this might sound odd at first, it helps to ensure that we are 
