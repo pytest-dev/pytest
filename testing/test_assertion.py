@@ -386,3 +386,16 @@ def test_recursion_source_decode(testdir):
     result.stdout.fnmatch_lines("""
         <Module*>
     """)
+
+def test_AssertionError_message(testdir):
+    testdir.makepyfile("""
+        def test_hello():
+            x,y = 1,2
+            assert 0, (x,y)
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines("""
+        *def test_hello*
+        *assert 0, (x,y)*
+        *AssertionError: (1, 2)*
+    """)

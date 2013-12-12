@@ -1,18 +1,26 @@
 import sys
 import py
 from _pytest.assertion.util import BuiltinAssertionError
+u = py.builtin._totext
 
 
 class AssertionError(BuiltinAssertionError):
     def __init__(self, *args):
         BuiltinAssertionError.__init__(self, *args)
         if args:
+            # on Python2.6 we get len(args)==2 for: assert 0, (x,y)
+            # on Python2.7 and above we always get len(args) == 1
+            # with args[0] being the (x,y) tuple.
+            if len(args) > 1:
+                toprint = args
+            else:
+                toprint = args[0]
             try:
-                self.msg = py.builtin._totext(args[0])
+                self.msg = u(toprint)
             except Exception:
-                self.msg = py.builtin._totext(
+                self.msg = u(
                     "<[broken __repr__] %s at %0xd>"
-                    % (args[0].__class__, id(args[0])))
+                    % (toprint.__class__, id(toprint)))
         else:
             f = py.code.Frame(sys._getframe(1))
             try:
