@@ -1,7 +1,6 @@
 """
 terminal reporting of the full testing process.
 """
-import os
 import pytest, py
 import sys
 
