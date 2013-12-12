@@ -163,6 +163,7 @@ html_sidebars = {
     '**': [
         'localtoc.html',
         'relations.html',
+        'links.html',
         'sourcelink.html',
         'searchbox.html'
     ]
