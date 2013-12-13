@@ -1,3 +1,8 @@
+Unreleased
+-----------------------------------
+
+- fix issue404 by always using the binary xml escape in the junitxml plugin
+
 2.5.0
 -----------------------------------
 

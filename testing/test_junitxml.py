@@ -284,6 +284,19 @@ class TestPython:
         if not sys.platform.startswith("java"):
             assert "hx" in fnode.toxml()
 
+    def test_assertion_binchars(self, testdir):
+        """this test did fail when the escaping wasnt strict"""
+        testdir.makepyfile("""
+
+            M1 = '\x01\x02\x03\x04'
+            M2 = '\x01\x02\x03\x05'
+
+            def test_str_compare():
+                assert M1 == M2
+            """)
+        result, dom = runandparse(testdir)
+        print dom.toxml()
+
     def test_pass_captures_stdout(self, testdir):
         testdir.makepyfile("""
             def test_pass():
@@ -391,7 +404,6 @@ def test_nullbyte_replace(testdir):
     testdir.runpytest('--junitxml=%s' % xmlf)
     text = xmlf.read()
     assert '#x0' in text
-
 
 def test_invalid_xml_escape():
     # Test some more invalid xml chars, the full range should be
