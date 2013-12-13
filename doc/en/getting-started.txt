@@ -1,7 +1,7 @@
 Installation and Getting Started
 ===================================
 
-**Pythons**: Python 2.4-3.3, Jython, PyPy
+**Pythons**: Python 2.5-3.3, Jython, PyPy
 
 **Platforms**: Unix/Posix and Windows
 
