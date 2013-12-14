@@ -481,7 +481,7 @@ a:hover tt {
     }
 
     div.sphinxsidebar h3, div.sphinxsidebar h4, div.sphinxsidebar p,
-    div.sphinxsidebar h3 a {
+    div.sphinxsidebar h3 a, div.sphinxsidebar ul {
         color: white;
     }
 
