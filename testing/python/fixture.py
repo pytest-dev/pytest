@@ -1989,6 +1989,40 @@ class TestFixtureMarker:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
+    def test_params_and_ids(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture(params=[object(), object()],
+                            ids=['alpha', 'beta'])
+            def fix(request):
+                return request.param
+
+            def test_foo(fix):
+                assert 1
+        """)
+        res = testdir.runpytest('-v')
+        res.stdout.fnmatch_lines([
+            '*test_foo*alpha*',
+            '*test_foo*beta*'])
+
+    def test_params_and_ids_yieldfixture(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.yield_fixture(params=[object(), object()],
+                                  ids=['alpha', 'beta'])
+            def fix(request):
+                 yield request.param
+
+            def test_foo(fix):
+                assert 1
+        """)
+        res = testdir.runpytest('-v')
+        res.stdout.fnmatch_lines([
+            '*test_foo*alpha*',
+            '*test_foo*beta*'])
+
 
 class TestRequestScopeAccess:
     pytestmark = pytest.mark.parametrize(("scope", "ok", "error"),[

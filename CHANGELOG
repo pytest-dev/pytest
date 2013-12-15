@@ -1,6 +1,9 @@
 Unreleased
 -----------------------------------
 
+- Allow parameterized fixtures to specify the ID of the parameters by
+  adding an ids argument to pytest.fixture() and pytest.yield_fixture().
+
 - fix issue404 by always using the binary xml escape in the junitxml plugin
 
 2.5.0
