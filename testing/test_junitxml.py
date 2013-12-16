@@ -295,7 +295,7 @@ class TestPython:
                 assert M1 == M2
             """)
         result, dom = runandparse(testdir)
-        # print dom.toxml()
+        print(dom.toxml())
 
     def test_pass_captures_stdout(self, testdir):
         testdir.makepyfile("""
