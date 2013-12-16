@@ -35,11 +35,13 @@ def getimfunc(func):
 
 
 class FixtureFunctionMarker:
-    def __init__(self, scope, params, autouse=False, yieldctx=False):
+    def __init__(self, scope, params,
+                 autouse=False, yieldctx=False, ids=None):
         self.scope = scope
         self.params = params
         self.autouse = autouse
         self.yieldctx = yieldctx
+        self.ids = ids
 
     def __call__(self, function):
         if inspect.isclass(function):
@@ -49,7 +51,7 @@ class FixtureFunctionMarker:
         return function
 
 
-def fixture(scope="function", params=None, autouse=False):
+def fixture(scope="function", params=None, autouse=False, ids=None):
     """ (return a) decorator to mark a fixture factory function.
 
     This decorator can be used (with or or without parameters) to define
@@ -71,6 +73,10 @@ def fixture(scope="function", params=None, autouse=False):
                 can see it.  If False (the default) then an explicit
                 reference is needed to activate the fixture.
 
+    :arg ids: list of string ids each corresponding to the argvalues
+       so that they are part of the test id. If no ids are provided
+       they will be generated automatically from the argvalues.
+
     """
     if callable(scope) and params is None and autouse == False:
         # direct decoration
@@ -78,9 +84,9 @@ def fixture(scope="function", params=None, autouse=False):
                 "function", params, autouse)(scope)
     if params is not None and not isinstance(params, (list, tuple)):
         params = list(params)
-    return FixtureFunctionMarker(scope, params, autouse)
+    return FixtureFunctionMarker(scope, params, autouse, ids=ids)
 
-def yield_fixture(scope="function", params=None, autouse=False):
+def yield_fixture(scope="function", params=None, autouse=False, ids=None):
     """ (return a) decorator to mark a yield-fixture factory function
     (EXPERIMENTAL).
 
@@ -94,7 +100,8 @@ def yield_fixture(scope="function", params=None, autouse=False):
         return FixtureFunctionMarker(
                 "function", params, autouse, yieldctx=True)(scope)
     else:
-        return FixtureFunctionMarker(scope, params, autouse, yieldctx=True)
+        return FixtureFunctionMarker(scope, params, autouse,
+                                     yieldctx=True, ids=ids)
 
 defaultfuncargprefixmarker = fixture()
 
@@ -1624,7 +1631,8 @@ class FixtureManager:
             for fixturedef in faclist:
                 if fixturedef.params is not None:
                     metafunc.parametrize(argname, fixturedef.params,
-                                         indirect=True, scope=fixturedef.scope)
+                                         indirect=True, scope=fixturedef.scope,
+                                         ids=fixturedef.ids)
 
     def pytest_collection_modifyitems(self, items):
         # separate parametrized setups
@@ -1661,7 +1669,7 @@ class FixtureManager:
             fixturedef = FixtureDef(self, nodeid, name, obj,
                                     marker.scope, marker.params,
                                     yieldctx=marker.yieldctx,
-                                    unittest=unittest)
+                                    unittest=unittest, ids=marker.ids)
             faclist = self._arg2fixturedefs.setdefault(name, [])
             if fixturedef.has_location:
                 faclist.append(fixturedef)
@@ -1729,7 +1737,7 @@ def call_fixture_func(fixturefunc, request, kwargs, yieldctx):
 class FixtureDef:
     """ A container for a factory definition. """
     def __init__(self, fixturemanager, baseid, argname, func, scope, params,
-        yieldctx, unittest=False):
+                 yieldctx, unittest=False, ids=None):
         self._fixturemanager = fixturemanager
         self.baseid = baseid or ''
         self.has_location = baseid is not None
@@ -1742,6 +1750,7 @@ class FixtureDef:
         self.argnames = getfuncargnames(func, startindex=startindex)
         self.yieldctx = yieldctx
         self.unittest = unittest
+        self.ids = ids
         self._finalizer = []
 
     def addfinalizer(self, finalizer):

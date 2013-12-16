@@ -130,36 +130,36 @@ class LogXML(object):
             self.skipped += 1
         else:
             fail = Junit.failure(message="test failure")
-            fail.append(unicode(report.longrepr))
+            fail.append(bin_xml_escape(report.longrepr))
             self.append(fail)
             self.failed += 1
         self._write_captured_output(report)
 
     def append_collect_failure(self, report):
         #msg = str(report.longrepr.reprtraceback.extraline)
-        self.append(Junit.failure(unicode(report.longrepr),
+        self.append(Junit.failure(bin_xml_escape(report.longrepr),
                                   message="collection failure"))
         self.errors += 1
 
     def append_collect_skipped(self, report):
         #msg = str(report.longrepr.reprtraceback.extraline)
-        self.append(Junit.skipped(unicode(report.longrepr),
+        self.append(Junit.skipped(bin_xml_escape(report.longrepr),
                                   message="collection skipped"))
         self.skipped += 1
 
     def append_error(self, report):
-        self.append(Junit.error(unicode(report.longrepr),
+        self.append(Junit.error(bin_xml_escape(report.longrepr),
                                 message="test setup failure"))
         self.errors += 1
 
     def append_skipped(self, report):
         if hasattr(report, "wasxfail"):
-            self.append(Junit.skipped(unicode(report.wasxfail),
+            self.append(Junit.skipped(bin_xml_escape(report.wasxfail),
                                       message="expected test failure"))
         else:
             filename, lineno, skipreason = report.longrepr
             if skipreason.startswith("Skipped: "):
-                skipreason = skipreason[9:]
+                skipreason = bin_xml_escape(skipreason[9:])
             self.append(
                 Junit.skipped("%s:%s: %s" % report.longrepr,
                               type="pytest.skip",
@@ -193,7 +193,7 @@ class LogXML(object):
 
     def pytest_internalerror(self, excrepr):
         self.errors += 1
-        data = py.xml.escape(excrepr)
+        data = bin_xml_escape(excrepr)
         self.tests.append(
             Junit.testcase(
                     Junit.error(data, message="internal error"),

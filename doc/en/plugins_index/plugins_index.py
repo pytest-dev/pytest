@@ -61,6 +61,7 @@ def obtain_plugins_table(plugins, client):
     ColumnData = namedtuple('ColumnData', 'text link')
     headers = ['Name', 'Author', 'Downloads', 'Python 2.7', 'Python 3.3', 'Summary']
     pytest_version = pytest.__version__
+    print '*** pytest-{} ***'.format(pytest_version)
     plugins = list(plugins)
     for index, (package_name, version) in enumerate(plugins):
         print package_name, version, '...',

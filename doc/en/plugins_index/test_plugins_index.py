@@ -53,45 +53,33 @@ def test_plugins_index(tmpdir, monkeypatch):
                     'downloads': {'last_day': 10, 'last_month': 40, 'last_week': 20},
                 },
             }
-            
             return results[(package_name, version)]
             
-    
     monkeypatch.setattr(xmlrpclib, 'ServerProxy', DummyProxy, 'foo')
     monkeypatch.setattr(plugins_index, '_get_today_as_str', lambda: '2013-10-20')
     
     output_file = str(tmpdir.join('output.txt'))
     assert plugins_index.main(['', '-f', output_file, '-u', DummyProxy.expected_url]) == 0
-    
+
     with file(output_file, 'rU') as f:
         obtained_output = f.read()
+        expected_output = get_expected_output()
 
         if obtained_output != expected_output:
-            obtained_file = os.path.splitext(__file__)[0] + '.obtained'
+            obtained_file = os.path.splitext(__file__)[0] + '.obtained.txt'
             with file(obtained_file, 'w') as f:
                 f.write(obtained_output)
 
         assert obtained_output == expected_output
 
 
-expected_output = '''\
-.. _plugins_index:
-
-List of Third-Party Plugins
-===========================
-
-============================================ ============================= ========= ============================================================================================= ============================================================================================= ===================
-                    Name                                Author             Downloads                                          Python 2.7                                                                                    Python 3.3                                                 Summary      
-============================================ ============================= ========= ============================================================================================= ============================================================================================= ===================
- `pytest-plugin1-1.0 <http://plugin1/1.0>`_   `someone <someone@py.com>`_      4      .. image:: http://pytest-plugs.herokuapp.com/status/pytest-plugin1-1.0?py=py27&pytest=2.4.2   .. image:: http://pytest-plugs.herokuapp.com/status/pytest-plugin1-1.0?py=py33&pytest=2.4.2      some plugin    
- `pytest-plugin2-1.2 <http://plugin2/1.2>`_     `other <other@py.com>`_       40      .. image:: http://pytest-plugs.herokuapp.com/status/pytest-plugin2-1.2?py=py27&pytest=2.4.2   .. image:: http://pytest-plugs.herokuapp.com/status/pytest-plugin2-1.2?py=py33&pytest=2.4.2   some other plugin 
-
-============================================ ============================= ========= ============================================================================================= ============================================================================================= ===================
-
-*(Downloads are given from last month only)*
-
-*(Updated on 2013-10-20)*
-'''
+def get_expected_output():
+    """
+    :return: string with expected rst output from the plugins_index.py script.
+    """
+    expected_filename = os.path.join(os.path.dirname(__file__), 'test_plugins_index.expected.txt')
+    expected_output = open(expected_filename, 'rU').read()
+    return expected_output.replace('pytest=2.X.Y', 'pytest={}'.format(pytest.__version__))
 
 
 #===================================================================================================
