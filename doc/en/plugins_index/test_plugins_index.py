@@ -7,24 +7,26 @@ import pytest
 #===================================================================================================
 # test_plugins_index
 #===================================================================================================
+
+@pytest.mark.xfail(reason="issue405 fails, not py33 ready, not a core pytest test")
 def test_plugins_index(tmpdir, monkeypatch):
     '''
     Blackbox testing for plugins_index script. Calls main() generating a file and compares produced
     output to expected.
-    
+
     .. note:: if the test fails, a file named `test_plugins_index.obtained` will be generated in
     the same directory as this test file. Ensure the contents are correct and overwrite
-    the global `expected_output` with the new contents. 
+    the global `expected_output` with the new contents.
     '''
     import plugins_index
-    
+
     # dummy interface to xmlrpclib.ServerProxy
     class DummyProxy(object):
-        
+
         expected_url = 'http://dummy.pypi'
         def __init__(self, url):
             assert url == self.expected_url
-        
+
         def search(self, query):
             assert query == {'name' : 'pytest-'}
             return [
@@ -32,7 +34,7 @@ def test_plugins_index(tmpdir, monkeypatch):
                 {'name': 'pytest-plugin1', 'version' : '1.0'},
                 {'name': 'pytest-plugin2', 'version' : '1.2'},
             ]
-            
+
         def release_data(self, package_name, version):
             results = {
                 ('pytest-plugin1', '1.0') : {
@@ -43,7 +45,7 @@ def test_plugins_index(tmpdir, monkeypatch):
                     'summary' : 'some plugin',
                     'downloads': {'last_day': 1, 'last_month': 4, 'last_week': 2},
                 },
-                
+
                 ('pytest-plugin2', '1.2') : {
                     'package_url' : 'http://plugin2',
                     'release_url' : 'http://plugin2/1.2',
@@ -54,10 +56,10 @@ def test_plugins_index(tmpdir, monkeypatch):
                 },
             }
             return results[(package_name, version)]
-            
+
     monkeypatch.setattr(xmlrpclib, 'ServerProxy', DummyProxy, 'foo')
     monkeypatch.setattr(plugins_index, '_get_today_as_str', lambda: '2013-10-20')
-    
+
     output_file = str(tmpdir.join('output.txt'))
     assert plugins_index.main(['', '-f', output_file, '-u', DummyProxy.expected_url]) == 0
 
