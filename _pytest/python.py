@@ -1623,7 +1623,6 @@ class FixtureManager:
         return fixturenames_closure, arg2fixturedefs
 
     def pytest_generate_tests(self, metafunc):
-        print "pytest core pytest_generate_tests"
         for argname in metafunc.fixturenames:
             faclist = metafunc._arg2fixturedefs.get(argname)
             if faclist is None:

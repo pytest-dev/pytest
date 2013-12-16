@@ -22,7 +22,8 @@ class Standalone:
 def test_gen(testdir, anypython, standalone):
     if sys.version_info >= (2,7):
         result = testdir._run(anypython, "-c",
-                                "import sys;print sys.version_info >=(2,7)")
+                                "import sys;print (sys.version_info >=(2,7))")
+        assert result.ret == 0
         if result.stdout.str() == "False":
             pytest.skip("genscript called from python2.7 cannot work "
                         "earlier python versions")
