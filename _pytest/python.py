@@ -73,9 +73,9 @@ def fixture(scope="function", params=None, autouse=False, ids=None):
                 can see it.  If False (the default) then an explicit
                 reference is needed to activate the fixture.
 
-    :arg ids: list of string ids each corresponding to the argvalues
+    :arg ids: list of string ids each corresponding to the params
        so that they are part of the test id. If no ids are provided
-       they will be generated automatically from the argvalues.
+       they will be generated automatically from the params.
 
     """
     if callable(scope) and params is None and autouse == False:
