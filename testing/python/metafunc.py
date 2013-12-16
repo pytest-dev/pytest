@@ -631,7 +631,7 @@ class TestMetafuncFunctional:
         ])
 
     def test_generate_same_function_names_issue403(self, testdir):
-        sub1 = testdir.makepyfile("""
+        testdir.makepyfile("""
             import pytest
 
             def make_tests():
