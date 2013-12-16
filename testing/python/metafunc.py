@@ -630,6 +630,22 @@ class TestMetafuncFunctional:
             "*3 passed*"
         ])
 
+    def test_generate_same_function_names_issue403(self, testdir):
+        sub1 = testdir.makepyfile("""
+            import pytest
+
+            def make_tests():
+                @pytest.mark.parametrize("x", range(2))
+                def test_foo(x):
+                    pass
+                return test_foo
+
+            test_x = make_tests()
+            test_y = make_tests()
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=4)
+
 
 class TestMarkersWithParametrization:
     pytestmark = pytest.mark.issue308

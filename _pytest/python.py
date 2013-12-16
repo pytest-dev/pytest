@@ -1529,7 +1529,8 @@ class FixtureManager:
         self._nodename2fixtureinfo = {}
 
     def getfixtureinfo(self, node, func, cls, funcargs=True):
-        key = (node, func.__name__)
+        # node is the "collection node" for "func"
+        key = (node, func)
         try:
             return self._nodename2fixtureinfo[key]
         except KeyError:
