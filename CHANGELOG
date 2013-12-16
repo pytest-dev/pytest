@@ -1,10 +1,16 @@
 Unreleased
 -----------------------------------
 
+- fix issue403: allow parametrize of multiple same-name functions within
+  a collection node.  Thanks Andreas Kloeckner and Alex Gaynor for reporting
+  and analysis.
+
 - Allow parameterized fixtures to specify the ID of the parameters by
   adding an ids argument to pytest.fixture() and pytest.yield_fixture().
+  Thanks Floris Bruynooghe. 
 
-- fix issue404 by always using the binary xml escape in the junitxml plugin
+- fix issue404 by always using the binary xml escape in the junitxml
+  plugin.  Thanks Ronny Pfannschmidt.
 
 2.5.0
 -----------------------------------
