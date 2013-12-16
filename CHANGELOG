@@ -12,6 +12,10 @@ Unreleased
 - fix issue404 by always using the binary xml escape in the junitxml
   plugin.  Thanks Ronny Pfannschmidt.
 
+- fix issue407: fix addoption docstring to point to argparse instead of
+  optparse. Thanks Daniel D. Wright.
+
+
 2.5.0
 -----------------------------------
 

@@ -128,8 +128,8 @@ class Parser:
 
         :opts: option names, can be short or long options.
         :attrs: same attributes which the ``add_option()`` function of the
-           `optparse library
-           <http://docs.python.org/library/optparse.html#module-optparse>`_
+           `argparse library
+           <http://docs.python.org/2/library/argparse.html>`_
            accepts.
 
         After command line parsing options are available on the pytest config
