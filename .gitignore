@@ -13,7 +13,6 @@ include/
 *.pyc
 *.pyo
 *.swp
-*.html
 *.class
 *.orig
 *~

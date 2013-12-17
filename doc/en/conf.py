@@ -105,14 +105,19 @@ pygments_style = 'sphinx'
 
 # -- Options for HTML output ---------------------------------------------------
 
+sys.path.append(os.path.abspath('_themes'))
+html_theme_path = ['_themes']
+
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'sphinxdoc'
+html_theme = 'flask'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {}
+html_theme_options = {
+  'index_logo': None
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
@@ -149,6 +154,23 @@ html_static_path = ['_static']
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}
 #html_sidebars = {'index': 'indexsidebar.html'}
+
+html_sidebars = {
+    'index': [
+        'sidebarintro.html',
+        'globaltoc.html',
+        'links.html',
+        'sourcelink.html',
+        'searchbox.html'
+    ],
+    '**': [
+        'globaltoc.html',
+        'relations.html',
+        'links.html',
+        'sourcelink.html',
+        'searchbox.html'
+    ]
+}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
