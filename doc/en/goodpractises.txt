@@ -69,7 +69,7 @@ Important notes relating to both schemes:
 
 - **avoid "__init__.py" files in your test directories**.
   This way your tests can run easily against an installed version 
-  of ``mypkg``, independently from if the installed version contains 
+  of ``mypkg``, independently from if the installed package contains 
   the tests or not.  
 
 - With inlined tests you might put ``__init__.py`` into test 
@@ -96,16 +96,14 @@ required configurations.
 .. note::
 
     You can use Python3 namespace packages (PEP420) for your application
-    but pytest will still perform `package name`_ discovery based on the
-    presence of ``__init__.py`` files.  If you use one of the above
-    two recommended file system layouts but leave away the ``__init__.py``
-    files it should just work on Python3.3 and above.  When using 
+    but pytest will still perform `test package name`_ discovery based on the
+    presence of ``__init__.py`` files.  If you use one of the 
+    two recommended file system layouts above but leave away the ``__init__.py``
+    files from your directories it should just work on Python3.3 and above.  From 
     "inlined tests", however, you will need to use absolute imports for
-    getting at your application code because the test modules will be
-    imported directly, without any application context.  The latter allows
-    your tests to run against an installed version of your package.
+    getting at your application code.
 
-.. _`package name`:
+.. _`test package name`:
 
 .. note::
 

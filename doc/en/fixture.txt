@@ -626,6 +626,7 @@ into an ini-file::
     usefixtures = cleandir
 
 
+.. _`autouse`:
 .. _`autouse fixtures`:
 
 autouse fixtures (xUnit setup on steroids)
