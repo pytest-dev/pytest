@@ -61,7 +61,7 @@ def obtain_plugins_table(plugins, client):
     ColumnData = namedtuple('ColumnData', 'text link')
     headers = ['Name', 'Author', 'Downloads', 'Python 2.7', 'Python 3.3', 'Summary']
     pytest_version = pytest.__version__
-    print '*** pytest-{} ***'.format(pytest_version)
+    print '*** pytest-{0} ***'.format(pytest_version)
     plugins = list(plugins)
     for index, (package_name, version) in enumerate(plugins):
         print package_name, version, '...',
@@ -127,13 +127,13 @@ def generate_plugins_index_from_table(filename, headers, rows):
         # table 
         print >> f, get_row_limiter('=')
         for i, header in enumerate(headers):
-            print >> f, '{:^{fill}}'.format(header, fill=column_lengths[i]),
+            print >> f, '{0:^{fill}}'.format(header, fill=column_lengths[i]),
         print >> f
         print >> f, get_row_limiter('=')
         
         for column_texts in table_texts:
             for i, row_text in enumerate(column_texts):
-                print >> f, '{:^{fill}}'.format(row_text, fill=column_lengths[i]),
+                print >> f, '{0:^{fill}}'.format(row_text, fill=column_lengths[i]),
             print >> f
         print >> f
         print >> f, get_row_limiter('=')

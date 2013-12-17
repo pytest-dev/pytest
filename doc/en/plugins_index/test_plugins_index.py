@@ -14,9 +14,9 @@ def test_plugins_index(tmpdir, monkeypatch):
     Blackbox testing for plugins_index script. Calls main() generating a file and compares produced
     output to expected.
 
-    .. note:: if the test fails, a file named `test_plugins_index.obtained` will be generated in
+    .. note:: if the test fails, a file named `test_plugins_index.obtained.rst` will be generated in
     the same directory as this test file. Ensure the contents are correct and overwrite
-    the global `expected_output` with the new contents.
+    `test_plugins_index.expected.rst` with that file.
     '''
     import plugins_index
 
@@ -60,7 +60,7 @@ def test_plugins_index(tmpdir, monkeypatch):
     monkeypatch.setattr(xmlrpclib, 'ServerProxy', DummyProxy, 'foo')
     monkeypatch.setattr(plugins_index, '_get_today_as_str', lambda: '2013-10-20')
 
-    output_file = str(tmpdir.join('output.txt'))
+    output_file = str(tmpdir.join('output.rst'))
     assert plugins_index.main(['', '-f', output_file, '-u', DummyProxy.expected_url]) == 0
 
     with file(output_file, 'rU') as f:
@@ -68,7 +68,7 @@ def test_plugins_index(tmpdir, monkeypatch):
         expected_output = get_expected_output()
 
         if obtained_output != expected_output:
-            obtained_file = os.path.splitext(__file__)[0] + '.obtained.txt'
+            obtained_file = os.path.splitext(__file__)[0] + '.obtained.rst'
             with file(obtained_file, 'w') as f:
                 f.write(obtained_output)
 
@@ -79,9 +79,9 @@ def get_expected_output():
     """
     :return: string with expected rst output from the plugins_index.py script.
     """
-    expected_filename = os.path.join(os.path.dirname(__file__), 'test_plugins_index.expected.txt')
+    expected_filename = os.path.join(os.path.dirname(__file__), 'test_plugins_index.expected.rst')
     expected_output = open(expected_filename, 'rU').read()
-    return expected_output.replace('pytest=2.X.Y', 'pytest={}'.format(pytest.__version__))
+    return expected_output.replace('pytest=2.X.Y', 'pytest={0}'.format(pytest.__version__))
 
 
 #===================================================================================================
