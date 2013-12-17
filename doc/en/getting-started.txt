@@ -23,7 +23,7 @@ Installation options::
 To check your installation has installed the correct version::
 
     $ py.test --version
-    This is py.test version 2.5.0, imported from /home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/pytest.pyc
+    This is py.test version 2.5.1, imported from /home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/pytest.pyc
 
 If you get an error checkout :ref:`installation issues`.
 
@@ -45,7 +45,7 @@ That's it. You can execute the test function now::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.0
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 1 items
     
     test_sample.py F
@@ -93,7 +93,7 @@ Running it with, this time in "quiet" reporting mode::
 
     $ py.test -q test_sysexit.py
     .
-    1 passed in 0.01 seconds
+    1 passed in 0.00 seconds
 
 .. todo:: For further ways to assert exceptions see the `raises`
 
@@ -123,7 +123,7 @@ run the module by passing its filename::
     ================================= FAILURES =================================
     ____________________________ TestClass.test_two ____________________________
     
-    self = <test_class.TestClass instance at 0x2a8fef0>
+    self = <test_class.TestClass instance at 0x2b57dd0>
     
         def test_two(self):
             x = "hello"
@@ -159,7 +159,7 @@ before performing the test function call.  Let's just run it::
     ================================= FAILURES =================================
     _____________________________ test_needsfiles ______________________________
     
-    tmpdir = local('/tmp/pytest-277/test_needsfiles0')
+    tmpdir = local('/tmp/pytest-38/test_needsfiles0')
     
         def test_needsfiles(tmpdir):
             print tmpdir
@@ -168,8 +168,8 @@ before performing the test function call.  Let's just run it::
     
     test_tmpdir.py:3: AssertionError
     ----------------------------- Captured stdout ------------------------------
-    /tmp/pytest-277/test_needsfiles0
-    1 failed in 0.01 seconds
+    /tmp/pytest-38/test_needsfiles0
+    1 failed in 0.04 seconds
 
 Before the test runs, a unique-per-test-invocation temporary directory
 was created.  More info at :ref:`tmpdir handling`.

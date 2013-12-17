@@ -12,8 +12,7 @@ pytest: helps you write better programs
  - **zero-reported-bugs** policy with >1000 tests against itself
  - **strict backward compatibility policy** for safe pytest upgrades
  - :ref:`comprehensive online <toc>` and `PDF documentation <pytest.pdf>`_
- - many :ref:`third party plugins <extplugins>`, 
-   :ref:`builtin helpers <pytest helpers>`, 
+ - many :ref:`third party plugins <extplugins>` and :ref:`builtin helpers <pytest helpers>`, 
  - used in :ref:`many small and large projects and organisations <projects>`
  - comes with many :ref:`tested examples <examples>`
 
@@ -45,7 +44,8 @@ pytest: helps you write better programs
  - supports :ref:`good integration practises <goodpractises>`
  - supports extended :ref:`xUnit style setup <xunitsetup>`
  - supports domain-specific :ref:`non-python tests`
- - supports the generation of testing coverage reports
+ - supports generating `test coverage reports
+   <https://pypi.python.org/pypi/pytest-cov>`_
  - supports :pep:`8` compliant coding styles in tests
 
 **extensive plugin and customization system**:

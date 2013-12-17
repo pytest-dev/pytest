@@ -106,7 +106,7 @@ this is a fully self-contained example which you can run with::
 
     $ py.test test_scenarios.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.0
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 4 items
     
     test_scenarios.py ....
@@ -118,7 +118,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
 
     $ py.test --collect-only test_scenarios.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.0
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 4 items
     <Module 'test_scenarios.py'>
       <Class 'TestSampleWithScenarios'>
@@ -182,7 +182,7 @@ Let's first see how it looks like at collection time::
 
     $ py.test test_backends.py --collect-only
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.0
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 2 items
     <Module 'test_backends.py'>
       <Function 'test_db_initialized[d1]'>
@@ -197,7 +197,7 @@ And then when we run the test::
     ================================= FAILURES =================================
     _________________________ test_db_initialized[d2] __________________________
     
-    db = <conftest.DB2 instance at 0x1992c20>
+    db = <conftest.DB2 instance at 0x12d4128>
     
         def test_db_initialized(db):
             # a dummy test
@@ -251,9 +251,9 @@ argument sets to use for each test function.  Let's run it::
     $ py.test -q
     F..
     ================================= FAILURES =================================
-    ________________________ TestClass.test_equals[1-2] ________________________
+    ________________________ TestClass.test_equals[2-1] ________________________
     
-    self = <test_parametrize.TestClass instance at 0x13483b0>, a = 1, b = 2
+    self = <test_parametrize.TestClass instance at 0x14493f8>, a = 1, b = 2
     
         def test_equals(self, a, b):
     >       assert a == b
@@ -282,7 +282,7 @@ Running it results in some skips if we don't have all the python interpreters in
    ............sss............sss............sss............ssssssssssssssssss
    ========================= short test summary info ==========================
    SKIP [27] /home/hpk/p/pytest/doc/en/example/multipython.py:21: 'python2.8' not found
-   48 passed, 27 skipped in 1.41 seconds
+   48 passed, 27 skipped in 1.34 seconds
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------
@@ -329,12 +329,12 @@ If you run this with reporting for skips enabled::
 
     $ py.test -rs test_module.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.0
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 2 items
     
     test_module.py .s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-64/conftest.py:10: could not import 'opt2'
+    SKIP [1] /tmp/doc-exec-65/conftest.py:10: could not import 'opt2'
     
     =================== 1 passed, 1 skipped in 0.01 seconds ====================
 

@@ -76,7 +76,7 @@ marked ``smtp`` fixture function.  Running the test looks like this::
 
     $ py.test test_smtpsimple.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.0
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 1 items
     
     test_smtpsimple.py F
@@ -84,7 +84,7 @@ marked ``smtp`` fixture function.  Running the test looks like this::
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x24a9950>
+    smtp = <smtplib.SMTP instance at 0x2ae3469203f8>
     
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
@@ -194,7 +194,7 @@ inspect what is going on and can now run the tests::
 
     $ py.test test_module.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.0
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 2 items
     
     test_module.py FF
@@ -202,7 +202,7 @@ inspect what is going on and can now run the tests::
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x138a290>
+    smtp = <smtplib.SMTP instance at 0x1af5440>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -214,7 +214,7 @@ inspect what is going on and can now run the tests::
     test_module.py:6: AssertionError
     ________________________________ test_noop _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x138a290>
+    smtp = <smtplib.SMTP instance at 0x1af5440>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -223,7 +223,7 @@ inspect what is going on and can now run the tests::
     E       assert 0
     
     test_module.py:11: AssertionError
-    ========================= 2 failed in 0.19 seconds =========================
+    ========================= 2 failed in 0.17 seconds =========================
 
 You see the two ``assert 0`` failing and more importantly you can also see 
 that the same (module-scoped) ``smtp`` object was passed into the two 
@@ -271,7 +271,7 @@ Let's execute it::
     $ py.test -s -q --tb=no
     FFteardown smtp
     
-    2 failed in 0.24 seconds
+    2 failed in 0.17 seconds
 
 We see that the ``smtp`` instance is finalized after the two
 tests finished execution.  Note that if we decorated our fixture
@@ -312,7 +312,7 @@ again, nothing much has changed::
 
     $ py.test -s -q --tb=no
     FF
-    2 failed in 0.23 seconds
+    2 failed in 0.21 seconds
 
 Let's quickly create another test module that actually sets the
 server URL in its module namespace::
@@ -379,7 +379,7 @@ So let's just do another run::
     ================================= FAILURES =================================
     __________________________ test_ehlo[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP instance at 0x15f7998>
+    smtp = <smtplib.SMTP instance at 0x100ac20>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -391,7 +391,7 @@ So let's just do another run::
     test_module.py:6: AssertionError
     __________________________ test_noop[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP instance at 0x15f7998>
+    smtp = <smtplib.SMTP instance at 0x100ac20>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -402,7 +402,7 @@ So let's just do another run::
     test_module.py:11: AssertionError
     ________________________ test_ehlo[mail.python.org] ________________________
     
-    smtp = <smtplib.SMTP instance at 0x16535f0>
+    smtp = <smtplib.SMTP instance at 0x105b638>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -412,10 +412,10 @@ So let's just do another run::
     
     test_module.py:5: AssertionError
     ----------------------------- Captured stdout ------------------------------
-    finalizing <smtplib.SMTP instance at 0x15f7998>
+    finalizing <smtplib.SMTP instance at 0x100ac20>
     ________________________ test_noop[mail.python.org] ________________________
     
-    smtp = <smtplib.SMTP instance at 0x16535f0>
+    smtp = <smtplib.SMTP instance at 0x105b638>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -424,7 +424,7 @@ So let's just do another run::
     E       assert 0
     
     test_module.py:11: AssertionError
-    4 failed in 6.30 seconds
+    4 failed in 6.58 seconds
 
 We see that our two test functions each ran twice, against the different
 ``smtp`` instances.  Note also, that with the ``mail.python.org`` 
@@ -464,13 +464,13 @@ Here we declare an ``app`` fixture which receives the previously defined
 
     $ py.test -v test_appsetup.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.0 -- /home/hpk/p/pytest/.tox/regen/bin/python
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.1 -- /home/hpk/p/pytest/.tox/regen/bin/python
     collecting ... collected 2 items
     
     test_appsetup.py:12: test_smtp_exists[merlinux.eu] PASSED
     test_appsetup.py:12: test_smtp_exists[mail.python.org] PASSED
     
-    ========================= 2 passed in 5.63 seconds =========================
+    ========================= 2 passed in 5.95 seconds =========================
 
 Due to the parametrization of ``smtp`` the test will run twice with two
 different ``App`` instances and respective smtp servers.  There is no
@@ -528,7 +528,7 @@ Let's run the tests in verbose mode and with looking at the print-output::
 
     $ py.test -v -s test_module.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.0 -- /home/hpk/p/pytest/.tox/regen/bin/python
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.1 -- /home/hpk/p/pytest/.tox/regen/bin/python
     collecting ... collected 8 items
     
     test_module.py:15: test_0[1]   test0 1

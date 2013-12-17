@@ -28,7 +28,7 @@ You can then restrict a test run to only run tests marked with ``webtest``::
 
     $ py.test -v -m webtest
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.0 -- /home/hpk/p/pytest/.tox/regen/bin/python
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.1 -- /home/hpk/p/pytest/.tox/regen/bin/python
     collecting ... collected 3 items
     
     test_server.py:3: test_send_http PASSED
@@ -40,7 +40,7 @@ Or the inverse, running all tests except the webtest ones::
     
     $ py.test -v -m "not webtest"
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.0 -- /home/hpk/p/pytest/.tox/regen/bin/python
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.1 -- /home/hpk/p/pytest/.tox/regen/bin/python
     collecting ... collected 3 items
     
     test_server.py:6: test_something_quick PASSED
@@ -61,7 +61,7 @@ select tests based on their names::
 
     $ py.test -v -k http  # running with the above defined example module
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.0 -- /home/hpk/p/pytest/.tox/regen/bin/python
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.1 -- /home/hpk/p/pytest/.tox/regen/bin/python
     collecting ... collected 3 items
     
     test_server.py:3: test_send_http PASSED
@@ -73,7 +73,7 @@ And you can also run all tests except the ones that match the keyword::
 
     $ py.test -k "not send_http" -v
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.0 -- /home/hpk/p/pytest/.tox/regen/bin/python
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.1 -- /home/hpk/p/pytest/.tox/regen/bin/python
     collecting ... collected 3 items
     
     test_server.py:6: test_something_quick PASSED
@@ -86,7 +86,7 @@ Or to select "http" and "quick" tests::
 
     $ py.test -k "http or quick" -v
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.0 -- /home/hpk/p/pytest/.tox/regen/bin/python
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.1 -- /home/hpk/p/pytest/.tox/regen/bin/python
     collecting ... collected 3 items
     
     test_server.py:3: test_send_http PASSED
@@ -266,7 +266,7 @@ the test needs::
 
     $ py.test -E stage2
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.0
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 1 items
     
     test_someenv.py s
@@ -277,7 +277,7 @@ and here is one that specifies exactly the environment needed::
 
     $ py.test -E stage1
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.0
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 1 items
     
     test_someenv.py .
@@ -395,12 +395,12 @@ then you will see two test skipped and two executed tests as expected::
 
     $ py.test -rs # this option reports skip reasons
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.0
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 4 items
     
     test_plat.py s.s.
     ========================= short test summary info ==========================
-    SKIP [2] /tmp/doc-exec-62/conftest.py:12: cannot run on platform linux2
+    SKIP [2] /tmp/doc-exec-63/conftest.py:12: cannot run on platform linux2
     
     =================== 2 passed, 2 skipped in 0.01 seconds ====================
 
@@ -408,7 +408,7 @@ Note that if you specify a platform via the marker-command line option like this
 
     $ py.test -m linux2
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.0
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 4 items
     
     test_plat.py .
@@ -459,7 +459,7 @@ We can now use the ``-m option`` to select one set::
 
   $ py.test -m interface --tb=short
   =========================== test session starts ============================
-  platform linux2 -- Python 2.7.3 -- pytest-2.5.0
+  platform linux2 -- Python 2.7.3 -- pytest-2.5.1
   collected 4 items
   
   test_module.py FF
@@ -480,7 +480,7 @@ or to select both "event" and "interface" tests::
 
   $ py.test -m "interface or event" --tb=short
   =========================== test session starts ============================
-  platform linux2 -- Python 2.7.3 -- pytest-2.5.0
+  platform linux2 -- Python 2.7.3 -- pytest-2.5.1
   collected 4 items
   
   test_module.py FFF
