@@ -9,7 +9,7 @@
 {% set page_width = '940px' %}
 {% set sidebar_width = '220px' %}
 {% set base_font = '"Gudea", sans-serif' %}
-{% set header_font = '"Exo 2", serif' %}
+{% set header_font = '"Gudea", sans-serif' %}
 {% set link_color = '#490' %}
 {% set link_hover_color = '#9c0' %}
 
