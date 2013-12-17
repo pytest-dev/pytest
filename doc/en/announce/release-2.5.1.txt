@@ -1,11 +1,13 @@
 pytest-2.5.1: fixes and new home page styling
 ===========================================================================
 
-pytest-2.5.1, a mature testing tool with more than a 1000 tests 
-against itself, maintains the "zero-reported-bugs" promise by fixing
-the three bugs reported since the last release a few days ago.  It also 
+pytest is a mature Python testing tool with more than a 1000 tests 
+against itself, passing on many different interpreters and platforms.  
+
+The 2.5.1 release maintains the "zero-reported-bugs" promise by fixing
+the three bugs reported since the last release a few days ago.  It also
 features a new home page styling implemented by Tobias Bieniek, based on
-original work from Armin Ronacher.  Check it out:
+the flask theme from Armin Ronacher:
 
     http://pytest.org
 
@@ -15,13 +17,13 @@ we'd be very happy to merge further pull requests.
 On the coding side, the release also contains a little enhancement to
 fixture decorators allowing to directly influence generation of test
 ids, thanks to Floris Bruynooghe.  Other thanks for helping with 
-this release also go to Anatoly Bubenkoff and Ronny Pfannschmidt.
+this release go to Anatoly Bubenkoff and Ronny Pfannschmidt.
 
 As usual, you can upgrade from pypi via::
 
     pip install -U pytest
 
-have fun and a nice remaining time of the year!
+have fun and a nice remaining "bug-free" time of the year :)
 holger krekel
 
 2.5.1
