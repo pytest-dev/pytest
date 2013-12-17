@@ -1,11 +1,9 @@
 import os
-import xmlrpclib
 
 import pytest
 
 
-@pytest.mark.xfail(
-    reason="issue405 fails, not py33 ready, not a core pytest test")
+@pytest.mark.xfail(reason="not a core pytest test")
 def test_plugins_index(tmpdir, monkeypatch):
     """
     Blackbox testing for plugins_index script. Calls main() generating a file
@@ -58,7 +56,9 @@ def test_plugins_index(tmpdir, monkeypatch):
             }
             return results[(package_name, version)]
 
-    monkeypatch.setattr(xmlrpclib, 'ServerProxy', DummyProxy, 'foo')
+
+    monkeypatch.setattr(plugins_index, 'get_proxy', lambda url: DummyProxy(url),
+                        'foo')
     monkeypatch.setattr(plugins_index, '_get_today_as_str',
                         lambda: '2013-10-20')
 
@@ -66,13 +66,13 @@ def test_plugins_index(tmpdir, monkeypatch):
     assert plugins_index.main(
         ['', '-f', output_file, '-u', DummyProxy.expected_url]) == 0
 
-    with file(output_file, 'rU') as f:
+    with open(output_file, 'rU') as f:
         obtained_output = f.read()
         expected_output = get_expected_output()
 
         if obtained_output != expected_output:
             obtained_file = os.path.splitext(__file__)[0] + '.obtained.rst'
-            with file(obtained_file, 'w') as f:
+            with open(obtained_file, 'w') as f:
                 f.write(obtained_output)
 
         assert obtained_output == expected_output

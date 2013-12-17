@@ -5,6 +5,7 @@ pytest plugins taken directly from a live PyPI server.
 This will evolve to include test compatibility (pythons and pytest versions)
 information also.
 """
+from __future__ import print_function
 from collections import namedtuple
 import datetime
 from distutils.version import LooseVersion
@@ -12,16 +13,29 @@ import itertools
 from optparse import OptionParser
 import os
 import sys
-import xmlrpclib
-
 import pytest
+
+
+def get_proxy(url):
+    """
+    wrapper function to obtain a xmlrpc proxy, taking in account import
+    differences between python 2.X and 3.X
+
+    :param url: url to bind the proxy to
+    :return: a ServerProxy instance
+    """
+    if sys.version_info < (3, 0):
+        from xmlrpclib import ServerProxy
+    else:
+        from xmlrpc.client import ServerProxy
+    return ServerProxy(url)
 
 
 def iter_plugins(client, search='pytest-'):
     """
     Returns an iterator of (name, version) from PyPI.
     
-    :param client: xmlrpclib.ServerProxy
+    :param client: ServerProxy
     :param search: package names to search for 
     """
     for plug_data in client.search({'name': search}):
@@ -50,17 +64,17 @@ def obtain_plugins_table(plugins, client):
     should not be linked to anything.
     
     :param plugins: list of (name, version)
-    :param client: xmlrpclib.ServerProxy
+    :param client: ServerProxy
     """
     rows = []
     ColumnData = namedtuple('ColumnData', 'text link')
     headers = ['Name', 'Author', 'Downloads', 'Python 2.7', 'Python 3.3',
                'Summary']
     pytest_version = pytest.__version__
-    print '*** pytest-{0} ***'.format(pytest_version)
+    print('*** pytest-{0} ***'.format(pytest_version))
     plugins = list(plugins)
     for index, (package_name, version) in enumerate(plugins):
-        print package_name, version, '...',
+        print(package_name, version, '...', end='')
 
         release_data = client.release_data(package_name, version)
         download_count = release_data['downloads']['last_month']
@@ -84,7 +98,7 @@ def obtain_plugins_table(plugins, client):
         assert len(row) == len(headers)
         rows.append(row)
 
-        print 'OK (%d%%)' % ((index + 1) * 100 / len(plugins))
+        print('OK (%d%%)' % ((index + 1) * 100 / len(plugins)))
 
     return headers, rows
 
@@ -118,32 +132,34 @@ def generate_plugins_index_from_table(filename, headers, rows):
     def get_row_limiter(char):
         return ' '.join(char * length for length in column_lengths)
 
-    with file(filename, 'w') as f:
+    with open(filename, 'w') as f:
         # write welcome 
-        print >> f, '.. _plugins_index:'
-        print >> f
-        print >> f, 'List of Third-Party Plugins'
-        print >> f, '==========================='
-        print >> f
+        print('.. _plugins_index:', file=f)
+        print(file=f)
+        print('List of Third-Party Plugins', file=f)
+        print('===========================', file=f)
+        print(file=f)
 
         # table 
-        print >> f, get_row_limiter('=')
-        for i, header in enumerate(headers):
-            print >> f, '{0:^{fill}}'.format(header, fill=column_lengths[i]),
-        print >> f
-        print >> f, get_row_limiter('=')
+        print(get_row_limiter('='), file=f)
+        formatted_headers = [
+            '{0:^{fill}}'.format(header, fill=column_lengths[i])
+            for i, header in enumerate(headers)]
+        print(*formatted_headers, file=f)
+        print(get_row_limiter('='), file=f)
 
         for column_texts in table_texts:
-            for i, row_text in enumerate(column_texts):
-                print >> f, '{0:^{fill}}'.format(row_text,
-                                                 fill=column_lengths[i]),
-            print >> f
-        print >> f
-        print >> f, get_row_limiter('=')
-        print >> f
-        print >> f, '*(Downloads are given from last month only)*'
-        print >> f
-        print >> f, '*(Updated on %s)*' % _get_today_as_str()
+            formatted_rows = [
+                '{0:^{fill}}'.format(row_text, fill=column_lengths[i])
+                for i, row_text in enumerate(column_texts)
+            ]
+            print(*formatted_rows, file=f)
+        print(file=f)
+        print(get_row_limiter('='), file=f)
+        print(file=f)
+        print('*(Downloads are given from last month only)*', file=f)
+        print(file=f)
+        print('*(Updated on %s)*' % _get_today_as_str(), file=f)
 
 
 def _get_today_as_str():
@@ -158,7 +174,7 @@ def generate_plugins_index(client, filename):
     Generates an RST file with a table of the latest pytest plugins found in
     PyPI.
     
-    :param client: xmlrpclib.ServerProxy
+    :param client: ServerProxy
     :param filename: output filename
     """
     plugins = get_latest_versions(iter_plugins(client))
@@ -182,12 +198,13 @@ def main(argv):
                       help='url of PyPI server to obtain data from [default: %default]')
     (options, _) = parser.parse_args(argv[1:])
 
-    client = xmlrpclib.ServerProxy(options.url)
+    client = get_proxy(options.url)
     generate_plugins_index(client, options.filename)
 
-    print
-    print '%s Updated.' % options.filename
+    print()
+    print('%s Updated.' % options.filename)
     return 0
+
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
