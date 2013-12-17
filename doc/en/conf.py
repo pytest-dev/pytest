@@ -54,7 +54,7 @@ master_doc = 'contents'
 
 # General information about the project.
 project = u'pytest'
-copyright = u'2012, holger krekel'
+copyright = u'2013, holger krekel'
 
 
 
@@ -220,7 +220,7 @@ htmlhelp_basename = 'pytestdoc'
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('contents', 'pytest.tex', u'pytest Documentation',
-   u'holger krekel, http://merlinux.eu', 'manual'),
+   u'holger krekel, trainer and consultant, http://merlinux.eu', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -262,7 +262,7 @@ man_pages = [
 epub_title = u'pytest'
 epub_author = u'holger krekel at merlinux eu'
 epub_publisher = u'holger krekel at merlinux eu'
-epub_copyright = u'2012, holger krekel et alii'
+epub_copyright = u'2013, holger krekel et alii'
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.
