@@ -1,3 +1,10 @@
+UNRELEASED
+-----------------------------------
+
+- fix issue409 -- better interoperate with cx_freeze by not
+  trying to import from collections.abc which causes problems for py27/cx_freeze.
+  Thanks Wolfgang L. for reporting and tracking it down.
+
 2.5.1
 -----------------------------------
 

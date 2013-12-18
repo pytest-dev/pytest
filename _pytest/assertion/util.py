@@ -2,13 +2,9 @@
 
 import py
 try:
-    from collections.abc import Sequence
+    from collections import Sequence
 except ImportError:
-    try:
-        from collections import Sequence
-    except ImportError:
-        Sequence = list
-
+    Sequence = list
 
 BuiltinAssertionError = py.builtin.builtins.AssertionError
 u = py.builtin._totext
