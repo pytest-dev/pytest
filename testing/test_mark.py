@@ -15,6 +15,10 @@ class TestMark:
         mark = Mark()
         pytest.raises((AttributeError, TypeError), mark)
 
+    def test_pytest_mark_name_starts_with_underscore(self):
+        mark = Mark()
+        pytest.raises(AttributeError, getattr, mark, '_some_name')
+
     def test_pytest_mark_bare(self):
         mark = Mark()
         def f():

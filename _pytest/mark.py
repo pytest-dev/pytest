@@ -169,7 +169,7 @@ class MarkGenerator:
 
     def __getattr__(self, name):
         if name[0] == "_":
-            raise AttributeError(name)
+            raise AttributeError("Marker name must NOT start with underscore")
         if hasattr(self, '_config'):
             self._check(name)
         return MarkDecorator(name)
