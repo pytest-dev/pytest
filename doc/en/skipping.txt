@@ -212,7 +212,7 @@ imperatively, in test or setup code::
         if not valid_config():
             pytest.xfail("failing configuration (but should work)")
             # or
-            pytest.skipif("unsupported configuration")
+            pytest.skip("unsupported configuration")
 
 
 Skipping on a missing import dependency
