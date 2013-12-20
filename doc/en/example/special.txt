@@ -1,5 +1,4 @@
-
-A sesssion-fixture which can look at all collected tests
+A session-fixture which can look at all collected tests
 ----------------------------------------------------------------
 
 A session-scoped fixture effectively has access to all 
