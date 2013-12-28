@@ -114,8 +114,8 @@ shows up as an "xfailed (expected to fail)" test.
 
     In versions prior to 2.4 one needed to specify the argument
     names as a tuple.  This remains valid but the simpler ``"name1,name2,..."``
-    comma-separated-string syntax is now advertised fist because 
-    it's easier to write, produces less line noise.
+    comma-separated-string syntax is now advertised first because 
+    it's easier to write and produces less line noise.
 
 .. _`pytest_generate_tests`:
 
