@@ -47,8 +47,8 @@ to an expected output::
     def test_eval(input, expected):
         assert eval(input) == expected
 
-Here, the ``@parametrize`` decorator defines three different ``(input,output)``
-tuples so that that the ``test_eval`` function will run three times using
+Here, the ``@parametrize`` decorator defines three different ``(input,expected)``
+tuples so that the ``test_eval`` function will run three times using
 them in turn::
 
     $ py.test 
