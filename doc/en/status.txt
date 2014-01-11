@@ -1,0 +1,8 @@
+pytest development status
+================================
+
+github triggered travis:
+
+.. image:: https://secure.travis-ci.org/hpk42/pytest.png
+   :target: http://travis-ci.org/hpk42/pytest
+
