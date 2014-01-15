@@ -77,11 +77,15 @@ def obtain_plugins_table(plugins, client):
         print(package_name, version, '...', end='')
 
         release_data = client.release_data(package_name, version)
-        url = '.. image:: {site}/status/{name}-{version}'
-        image_url = url.format(
+
+        common_params = dict(
             site='http://pytest-plugs.herokuapp.com',
             name=package_name,
             version=version)
+
+        # first row: name, images and simple links
+        url = '.. image:: {site}/status/{name}-{version}'
+        image_url = url.format(**common_params)
         image_url += '?py={py}&pytest={pytest}'
         row = (
             ColumnData(package_name + '-' + version,
@@ -94,6 +98,23 @@ def obtain_plugins_table(plugins, client):
                 repositories.get(package_name, release_data['home_page']),
                 None),
             ColumnData(release_data['summary'], None),
+        )
+        assert len(row) == len(headers)
+        rows.append(row)
+
+        # second row: links for images (they should be in their own line)
+        url = '    :target: {site}/output/{name}-{version}'
+        output_url = url.format(**common_params)
+        output_url += '?py={py}&pytest={pytest}'
+
+        row = (
+            ColumnData('', None),
+            ColumnData(output_url.format(py='py27', pytest=pytest_version),
+                       None),
+            ColumnData(output_url.format(py='py33', pytest=pytest_version),
+                       None),
+            ColumnData('', None),
+            ColumnData('', None),
         )
         assert len(row) == len(headers)
         rows.append(row)
