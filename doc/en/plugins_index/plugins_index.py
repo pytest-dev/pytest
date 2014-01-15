@@ -2,8 +2,8 @@
 Script to generate the file `plugins_index.txt` with information about
 pytest plugins taken directly from a live PyPI server.
 
-This will evolve to include test compatibility (pythons and pytest versions)
-information also.
+Also includes plugin compatibility between different python and pytest versions,
+obtained from http://pytest-plugs.herokuapp.com.
 """
 from __future__ import print_function
 from collections import namedtuple
@@ -68,16 +68,15 @@ def obtain_plugins_table(plugins, client):
     """
     rows = []
     ColumnData = namedtuple('ColumnData', 'text link')
-    headers = ['Name', 'Author', 'Downloads', 'Python 2.7', 'Python 3.3',
-               'Summary']
+    headers = ['Name', 'Py27', 'Py33', 'Repository', 'Summary']
     pytest_version = pytest.__version__
+    repositories = obtain_override_repositories()
     print('*** pytest-{0} ***'.format(pytest_version))
     plugins = list(plugins)
     for index, (package_name, version) in enumerate(plugins):
         print(package_name, version, '...', end='')
 
         release_data = client.release_data(package_name, version)
-        download_count = release_data['downloads']['last_month']
         url = '.. image:: {site}/status/{name}-{version}'
         image_url = url.format(
             site='http://pytest-plugs.herokuapp.com',
@@ -87,12 +86,13 @@ def obtain_plugins_table(plugins, client):
         row = (
             ColumnData(package_name + '-' + version,
                        release_data['release_url']),
-            ColumnData(release_data['author'], release_data['author_email']),
-            ColumnData(str(download_count), None),
             ColumnData(image_url.format(py='py27', pytest=pytest_version),
                        None),
             ColumnData(image_url.format(py='py33', pytest=pytest_version),
                        None),
+            ColumnData(
+                repositories.get(package_name, release_data['home_page']),
+                None),
             ColumnData(release_data['summary'], None),
         )
         assert len(row) == len(headers)
@@ -101,6 +101,20 @@ def obtain_plugins_table(plugins, client):
         print('OK (%d%%)' % ((index + 1) * 100 / len(plugins)))
 
     return headers, rows
+
+
+def obtain_override_repositories():
+    """
+    Used to override the "home_page" obtained from pypi to known
+    package repositories. Used when the author didn't fill the "home_page"
+    field in setup.py.
+
+    :return: dict of {package_name: repository_url}
+    """
+    return {
+        'pytest-blockage': 'https://github.com/rob-b/pytest-blockage',
+        'pytest-konira': 'http://github.com/alfredodeza/pytest-konira',
+    }
 
 
 def generate_plugins_index_from_table(filename, headers, rows):
@@ -157,16 +171,8 @@ def generate_plugins_index_from_table(filename, headers, rows):
         print(file=f)
         print(get_row_limiter('='), file=f)
         print(file=f)
-        print('*(Downloads are given from last month only)*', file=f)
-        print(file=f)
-        print('*(Updated on %s)*' % _get_today_as_str(), file=f)
-
-
-def _get_today_as_str():
-    """
-    internal. only exists so we can patch it in testing.
-    """
-    return datetime.date.today().strftime('%Y-%m-%d')
+        today = datetime.date.today().strftime('%Y-%m-%d')
+        print('*(Updated on %s)*' % today, file=f)
 
 
 def generate_plugins_index(client, filename):
