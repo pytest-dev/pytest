@@ -30,22 +30,22 @@ You can then restrict a test run to only run tests marked with ``webtest``::
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.5.1 -- /home/hpk/p/pytest/.tox/regen/bin/python
     collecting ... collected 3 items
-    
+
     test_server.py:3: test_send_http PASSED
-    
+
     =================== 2 tests deselected by "-m 'webtest'" ===================
     ================== 1 passed, 2 deselected in 0.01 seconds ==================
 
 Or the inverse, running all tests except the webtest ones::
-    
+
     $ py.test -v -m "not webtest"
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.5.1 -- /home/hpk/p/pytest/.tox/regen/bin/python
     collecting ... collected 3 items
-    
+
     test_server.py:6: test_something_quick PASSED
     test_server.py:8: test_another PASSED
-    
+
     ================= 1 tests deselected by "-m 'not webtest'" =================
     ================== 2 passed, 1 deselected in 0.01 seconds ==================
 
@@ -63,9 +63,9 @@ select tests based on their names::
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.5.1 -- /home/hpk/p/pytest/.tox/regen/bin/python
     collecting ... collected 3 items
-    
+
     test_server.py:3: test_send_http PASSED
-    
+
     ====================== 2 tests deselected by '-khttp' ======================
     ================== 1 passed, 2 deselected in 0.01 seconds ==================
 
@@ -75,10 +75,10 @@ And you can also run all tests except the ones that match the keyword::
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.5.1 -- /home/hpk/p/pytest/.tox/regen/bin/python
     collecting ... collected 3 items
-    
+
     test_server.py:6: test_something_quick PASSED
     test_server.py:8: test_another PASSED
-    
+
     ================= 1 tests deselected by '-knot send_http' ==================
     ================== 2 passed, 1 deselected in 0.01 seconds ==================
 
@@ -88,10 +88,10 @@ Or to select "http" and "quick" tests::
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.5.1 -- /home/hpk/p/pytest/.tox/regen/bin/python
     collecting ... collected 3 items
-    
+
     test_server.py:3: test_send_http PASSED
     test_server.py:6: test_something_quick PASSED
-    
+
     ================= 1 tests deselected by '-khttp or quick' ==================
     ================== 2 passed, 1 deselected in 0.01 seconds ==================
 
@@ -124,19 +124,19 @@ You can ask which markers exist for your test suite - the list includes our just
 
     $ py.test --markers
     @pytest.mark.webtest: mark a test as a webtest.
-    
+
     @pytest.mark.skipif(condition): skip the given test function if eval(condition) results in a True value.  Evaluation happens within the module global context. Example: skipif('sys.platform == "win32"') skips the test if we are on the win32 platform. see http://pytest.org/latest/skipping.html
-    
+
     @pytest.mark.xfail(condition, reason=None, run=True): mark the the test function as an expected failure if eval(condition) has a True value. Optionally specify a reason for better reporting and run=False if you don't even want to execute the test function. See http://pytest.org/latest/skipping.html
-    
+
     @pytest.mark.parametrize(argnames, argvalues): call a test function multiple times passing in different arguments in turn. argvalues generally needs to be a list of values if argnames specifies only one name or a list of tuples of values if argnames specifies multiple names. Example: @parametrize('arg1', [1,2]) would lead to two calls of the decorated test function, one with arg1=1 and another with arg1=2.see http://pytest.org/latest/parametrize.html for more info and examples.
-    
-    @pytest.mark.usefixtures(fixturename1, fixturename2, ...): mark tests as needing all of the specified fixtures. see http://pytest.org/latest/fixture.html#usefixtures 
-    
+
+    @pytest.mark.usefixtures(fixturename1, fixturename2, ...): mark tests as needing all of the specified fixtures. see http://pytest.org/latest/fixture.html#usefixtures
+
     @pytest.mark.tryfirst: mark a hook implementation function such that the plugin machinery will try to call it first/as early as possible.
-    
+
     @pytest.mark.trylast: mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible.
-    
+
 
 For an example on how to add and work with markers from a plugin, see
 :ref:`adding a custom marker from a plugin`.
@@ -150,8 +150,8 @@ For an example on how to add and work with markers from a plugin, see
     * asking for existing markers via ``py.test --markers`` gives good output
 
     * typos in function markers are treated as an error if you use
-      the ``--strict`` option. Later versions of py.test are probably
-      going to treat non-registered markers as an error.
+      the ``--strict`` option. Future versions of ``pytest`` are probably
+      going to start treating non-registered markers as errors at some point.
 
 .. _`scoped-marking`:
 
@@ -268,40 +268,40 @@ the test needs::
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 1 items
-    
+
     test_someenv.py s
-    
+
     ======================== 1 skipped in 0.01 seconds =========================
-  
+
 and here is one that specifies exactly the environment needed::
 
     $ py.test -E stage1
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 1 items
-    
+
     test_someenv.py .
-    
+
     ========================= 1 passed in 0.01 seconds =========================
 
 The ``--markers`` option always gives you a list of available markers::
 
     $ py.test --markers
     @pytest.mark.env(name): mark test to run only on named environment
-    
+
     @pytest.mark.skipif(condition): skip the given test function if eval(condition) results in a True value.  Evaluation happens within the module global context. Example: skipif('sys.platform == "win32"') skips the test if we are on the win32 platform. see http://pytest.org/latest/skipping.html
-    
+
     @pytest.mark.xfail(condition, reason=None, run=True): mark the the test function as an expected failure if eval(condition) has a True value. Optionally specify a reason for better reporting and run=False if you don't even want to execute the test function. See http://pytest.org/latest/skipping.html
-    
+
     @pytest.mark.parametrize(argnames, argvalues): call a test function multiple times passing in different arguments in turn. argvalues generally needs to be a list of values if argnames specifies only one name or a list of tuples of values if argnames specifies multiple names. Example: @parametrize('arg1', [1,2]) would lead to two calls of the decorated test function, one with arg1=1 and another with arg1=2.see http://pytest.org/latest/parametrize.html for more info and examples.
-    
-    @pytest.mark.usefixtures(fixturename1, fixturename2, ...): mark tests as needing all of the specified fixtures. see http://pytest.org/latest/fixture.html#usefixtures 
-    
+
+    @pytest.mark.usefixtures(fixturename1, fixturename2, ...): mark tests as needing all of the specified fixtures. see http://pytest.org/latest/fixture.html#usefixtures
+
     @pytest.mark.tryfirst: mark a hook implementation function such that the plugin machinery will try to call it first/as early as possible.
-    
+
     @pytest.mark.trylast: mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible.
-    
-    
+
+
 Reading markers which were set from multiple places
 ----------------------------------------------------
 
@@ -337,7 +337,7 @@ test function.  From a conftest file we can read it like this::
 
 Let's run this without capturing output and see what we get::
 
-    $ py.test -q -s 
+    $ py.test -q -s
     glob args=('function',) kwargs={'x': 3}
     glob args=('class',) kwargs={'x': 2}
     glob args=('module',) kwargs={'x': 1}
@@ -352,7 +352,7 @@ marking platform specific tests with pytest
 Consider you have a test suite which marks tests for particular platforms,
 namely ``pytest.mark.osx``, ``pytest.mark.win32`` etc. and you
 also have tests that run on all platforms and have no specific
-marker.  If you now want to have a way to only run the tests 
+marker.  If you now want to have a way to only run the tests
 for your particular platform, you could use the following plugin::
 
     # content of conftest.py
@@ -397,11 +397,11 @@ then you will see two test skipped and two executed tests as expected::
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 4 items
-    
+
     test_plat.py s.s.
     ========================= short test summary info ==========================
     SKIP [2] /tmp/doc-exec-63/conftest.py:12: cannot run on platform linux2
-    
+
     =================== 2 passed, 2 skipped in 0.01 seconds ====================
 
 Note that if you specify a platform via the marker-command line option like this::
@@ -410,13 +410,13 @@ Note that if you specify a platform via the marker-command line option like this
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 4 items
-    
+
     test_plat.py .
-    
+
     =================== 3 tests deselected by "-m 'linux2'" ====================
     ================== 1 passed, 3 deselected in 0.01 seconds ==================
 
-then the unmarked-tests will not be run.  It is thus a way to restrict the run to the specific tests.   
+then the unmarked-tests will not be run.  It is thus a way to restrict the run to the specific tests.
 
 Automatically adding markers based on test names
 --------------------------------------------------------
@@ -435,7 +435,7 @@ at this test module::
 
     def test_interface_complex():
         assert 0
-    
+
     def test_event_simple():
         assert 0
 
@@ -446,7 +446,7 @@ We want to dynamically define two markers and can do it in a
 ``conftest.py`` plugin::
 
     # content of conftest.py
-    
+
     import pytest
     def pytest_collection_modifyitems(items):
         for item in items:
@@ -461,9 +461,9 @@ We can now use the ``-m option`` to select one set::
   =========================== test session starts ============================
   platform linux2 -- Python 2.7.3 -- pytest-2.5.1
   collected 4 items
-  
+
   test_module.py FF
-  
+
   ================================= FAILURES =================================
   __________________________ test_interface_simple ___________________________
   test_module.py:3: in test_interface_simple
@@ -482,9 +482,9 @@ or to select both "event" and "interface" tests::
   =========================== test session starts ============================
   platform linux2 -- Python 2.7.3 -- pytest-2.5.1
   collected 4 items
-  
+
   test_module.py FFF
-  
+
   ================================= FAILURES =================================
   __________________________ test_interface_simple ___________________________
   test_module.py:3: in test_interface_simple

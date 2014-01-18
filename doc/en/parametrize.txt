@@ -15,10 +15,10 @@ pytest supports test parametrization in several well-integrated ways:
   at the level of fixture functions <fixture-parametrize>`.
 
 * `@pytest.mark.parametrize`_ allows to define parametrization at the
-  function or class level, provides multiple argument/fixture sets 
+  function or class level, provides multiple argument/fixture sets
   for a particular test function or class.
 
-* `pytest_generate_tests`_ enables implementing your own custom 
+* `pytest_generate_tests`_ enables implementing your own custom
   dynamic parametrization scheme or extensions.
 
 .. _parametrizemark:
@@ -51,18 +51,18 @@ Here, the ``@parametrize`` decorator defines three different ``(input,expected)`
 tuples so that the ``test_eval`` function will run three times using
 them in turn::
 
-    $ py.test 
+    $ py.test
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 3 items
-    
+
     test_expectation.py ..F
-    
+
     ================================= FAILURES =================================
     ____________________________ test_eval[6*9-42] _____________________________
-    
+
     input = '6*9', expected = 42
-    
+
         @pytest.mark.parametrize("input,expected", [
             ("3+5", 8),
             ("2+4", 6),
@@ -72,7 +72,7 @@ them in turn::
     >       assert eval(input) == expected
     E       assert 54 == 42
     E        +  where 54 = eval('6*9')
-    
+
     test_expectation.py:8: AssertionError
     ==================== 1 failed, 2 passed in 0.01 seconds ====================
 
@@ -102,9 +102,9 @@ Let's run this::
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 3 items
-    
+
     test_expectation.py ..x
-    
+
     =================== 2 passed, 1 xfailed in 0.01 seconds ====================
 
 The one parameter set which caused a failure previously now
@@ -114,7 +114,7 @@ shows up as an "xfailed (expected to fail)" test.
 
     In versions prior to 2.4 one needed to specify the argument
     names as a tuple.  This remains valid but the simpler ``"name1,name2,..."``
-    comma-separated-string syntax is now advertised first because 
+    comma-separated-string syntax is now advertised first because
     it's easier to write and produces less line noise.
 
 .. _`pytest_generate_tests`:
@@ -124,14 +124,14 @@ Basic ``pytest_generate_tests`` example
 
 Sometimes you may want to implement your own parametrization scheme
 or implement some dynamism for determining the parameters or scope
-of a fixture.   For this, you can use the ``pytest_generate_tests`` hook 
+of a fixture.   For this, you can use the ``pytest_generate_tests`` hook
 which is called when collecting a test function.  Through the passed in
 `metafunc` object you can inspect the requesting test context and, most
 importantly, you can call ``metafunc.parametrize()`` to cause
-parametrization.  
+parametrization.
 
 For example, let's say we want to run a test taking string inputs which
-we want to set via a new py.test command line option.  Let's first write 
+we want to set via a new ``pytest`` command line option.  Let's first write
 a simple test accepting a ``stringinput`` fixture function argument::
 
     # content of test_strings.py
@@ -139,7 +139,7 @@ a simple test accepting a ``stringinput`` fixture function argument::
     def test_valid_string(stringinput):
         assert stringinput.isalpha()
 
-Now we add a ``conftest.py`` file containing the addition of a 
+Now we add a ``conftest.py`` file containing the addition of a
 command line option and the parametrization of our test function::
 
     # content of conftest.py
@@ -150,7 +150,7 @@ command line option and the parametrization of our test function::
 
     def pytest_generate_tests(metafunc):
         if 'stringinput' in metafunc.fixturenames:
-            metafunc.parametrize("stringinput", 
+            metafunc.parametrize("stringinput",
                                  metafunc.config.option.stringinput)
 
 If we now pass two stringinput values, our test will run twice::
@@ -165,24 +165,24 @@ Let's also run with a stringinput that will lead to a failing test::
     F
     ================================= FAILURES =================================
     ___________________________ test_valid_string[!] ___________________________
-    
+
     stringinput = '!'
-    
+
         def test_valid_string(stringinput):
     >       assert stringinput.isalpha()
     E       assert <built-in method isalpha of str object at 0x2b72934ca198>()
     E        +  where <built-in method isalpha of str object at 0x2b72934ca198> = '!'.isalpha
-    
+
     test_strings.py:3: AssertionError
     1 failed in 0.01 seconds
 
-As expected our test function fails. 
+As expected our test function fails.
 
 If you don't specify a stringinput it will be skipped because
 ``metafunc.parametrize()`` will be called with an empty parameter
 listlist::
 
-    $ py.test -q -rs test_strings.py 
+    $ py.test -q -rs test_strings.py
     s
     ========================= short test summary info ==========================
     SKIP [1] /home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/python.py:1094: got empty parameter set, function test_valid_string at /tmp/doc-exec-24/test_strings.py:1

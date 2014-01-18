@@ -6,13 +6,13 @@ Support for unittest.TestCase / Integration of fixtures
 
 .. _`unittest.py style`: http://docs.python.org/library/unittest.html
 
-py.test has support for running Python `unittest.py style`_ tests.
+``pytest`` has support for running Python `unittest.py style`_ tests.
 It's meant for leveraging existing unittest-style projects
 to use pytest features.  Concretely, pytest will automatically 
 collect ``unittest.TestCase`` subclasses and their ``test`` methods in
 test files.  It will invoke typical setup/teardown methods and 
 generally try to make test suites written to run on unittest, to also 
-run using ``py.test``.  We assume here that you are familiar with writing
+run using ``pytest``.  We assume here that you are familiar with writing
 ``unittest.TestCase`` style tests and rather focus on 
 integration aspects.
 
@@ -30,12 +30,12 @@ you can make use of most :ref:`pytest features <features>`, for example
 :ref:`more informative tracebacks <tbreportdemo>`, stdout-capturing or 
 distributing tests to multiple CPUs via the ``-nNUM`` option if you 
 installed the ``pytest-xdist`` plugin.  Please refer to
-the general pytest documentation for many more examples.
+the general ``pytest`` documentation for many more examples.
 
 Mixing pytest fixtures into unittest.TestCase style tests
 -----------------------------------------------------------
 
-Running your unittest with ``py.test`` allows you to use its
+Running your unittest with ``pytest`` allows you to use its
 :ref:`fixture mechanism <fixture>` with ``unittest.TestCase`` style
 tests.  Assuming you have at least skimmed the pytest fixture features,
 let's jump-start into an example that integrates a pytest ``db_class``

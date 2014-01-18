@@ -280,7 +280,7 @@ def test_options_on_small_file_do_not_blow_up(testdir):
         runfiletest(opts + [path])
 
 def test_preparse_ordering_with_setuptools(testdir, monkeypatch):
-    pkg_resources = py.test.importorskip("pkg_resources")
+    pkg_resources = pytest.importorskip("pkg_resources")
     def my_iter(name):
         assert name == "pytest11"
         class EntryPoint:
@@ -302,7 +302,7 @@ def test_preparse_ordering_with_setuptools(testdir, monkeypatch):
     assert plugin.x == 42
 
 def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch):
-    pkg_resources = py.test.importorskip("pkg_resources")
+    pkg_resources = pytest.importorskip("pkg_resources")
     def my_iter(name):
         assert name == "pytest11"
         class EntryPoint:

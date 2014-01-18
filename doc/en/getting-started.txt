@@ -23,7 +23,7 @@ Installation options::
 To check your installation has installed the correct version::
 
     $ py.test --version
-    This is py.test version 2.5.1, imported from /home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/pytest.pyc
+    This is pytest version 2.5.1, imported from /home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/pytest.pyc
 
 If you get an error checkout :ref:`installation issues`.
 
@@ -47,21 +47,21 @@ That's it. You can execute the test function now::
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 1 items
-    
+
     test_sample.py F
-    
+
     ================================= FAILURES =================================
     _______________________________ test_answer ________________________________
-    
+
         def test_answer():
     >       assert func(3) == 5
     E       assert 4 == 5
     E        +  where 4 = func(3)
-    
+
     test_sample.py:5: AssertionError
     ========================= 1 failed in 0.01 seconds =========================
 
-py.test found the ``test_answer`` function by following :ref:`standard test discovery rules <test discovery>`, basically detecting the ``test_`` prefixes.  We got a failure report because our little ``func(3)`` call did not return ``5``.
+``pytest`` found the ``test_answer`` function by following :ref:`standard test discovery rules <test discovery>`, basically detecting the ``test_`` prefixes.  We got a failure report because our little ``func(3)`` call did not return ``5``.
 
 .. note::
 
@@ -122,14 +122,14 @@ run the module by passing its filename::
     .F
     ================================= FAILURES =================================
     ____________________________ TestClass.test_two ____________________________
-    
+
     self = <test_class.TestClass instance at 0x2b57dd0>
-    
+
         def test_two(self):
             x = "hello"
     >       assert hasattr(x, 'check')
     E       assert hasattr('hello', 'check')
-    
+
     test_class.py:8: AssertionError
     1 failed, 1 passed in 0.01 seconds
 
@@ -142,7 +142,7 @@ Going functional: requesting a unique temporary directory
 
 For functional tests one often needs to create some files
 and pass them to application objects.  pytest provides
-:ref:`builtinfixtures` which allow to request arbitrary 
+:ref:`builtinfixtures` which allow to request arbitrary
 resources, for example a unique temporary directory::
 
     # content of test_tmpdir.py
@@ -151,21 +151,21 @@ resources, for example a unique temporary directory::
         assert 0
 
 We list the name ``tmpdir`` in the test function signature and
-py.test will lookup and call a fixture factory to create the resource
+``pytest`` will lookup and call a fixture factory to create the resource
 before performing the test function call.  Let's just run it::
 
     $ py.test -q test_tmpdir.py
     F
     ================================= FAILURES =================================
     _____________________________ test_needsfiles ______________________________
-    
+
     tmpdir = local('/tmp/pytest-38/test_needsfiles0')
-    
+
         def test_needsfiles(tmpdir):
             print tmpdir
     >       assert 0
     E       assert 0
-    
+
     test_tmpdir.py:3: AssertionError
     ----------------------------- Captured stdout ------------------------------
     /tmp/pytest-38/test_needsfiles0
@@ -186,7 +186,7 @@ Here are a few suggestions where to go next:
 * :ref:`cmdline` for command line invocation examples
 * :ref:`good practises <goodpractises>` for virtualenv, test layout, genscript support
 * :ref:`fixtures` for providing a functional baseline to your tests
-* :ref:`apiref` for documentation and examples on using py.test
+* :ref:`apiref` for documentation and examples on using ``pytest``
 * :ref:`plugins` managing and writing plugins
 
 .. _`installation issues`:
@@ -221,7 +221,7 @@ py.test not found on Windows despite installation?
 - **Jython2.5.1 on Windows XP**: `Jython does not create command line launchers`_
   so ``py.test`` will not work correctly.  You may install py.test on
   CPython and type ``py.test --genscript=mytest`` and then use
-  ``jython mytest`` to run py.test for your tests to run with Jython.
+  ``jython mytest`` to run your tests with Jython using ``pytest``.
 
  :ref:`examples` for more complex examples
 

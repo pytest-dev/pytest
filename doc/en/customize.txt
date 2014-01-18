@@ -17,7 +17,7 @@ which were registered by installed plugins.
 How test configuration is read from configuration INI-files
 -------------------------------------------------------------
 
-py.test searches for the first matching ini-style configuration file
+``pytest`` searches for the first matching ini-style configuration file
 in the directories of command line argument and the directories above.
 It looks for file basenames in this order::
 
@@ -26,8 +26,8 @@ It looks for file basenames in this order::
     setup.cfg
 
 Searching stops when the first ``[pytest]`` section is found in any of
-these files.  There is no merging of configuration values from multiple 
-files.  Example:: 
+these files.  There is no merging of configuration values from multiple
+files.  Example::
 
     py.test path/to/testdir
 
@@ -41,7 +41,7 @@ will look in the following dirs for a config file::
     path/to/setup.cfg
     ... # up until root of filesystem
 
-If argument is provided to a py.test run, the current working directory
+If argument is provided to a ``pytest`` run, the current working directory
 is used to start the search.
 
 .. _`how to change command line options defaults`:
@@ -51,7 +51,7 @@ How to change command line options defaults
 ------------------------------------------------
 
 It can be tedious to type the same series of command line options
-every time you use py.test .  For example, if you always want to see
+every time you use ``pytest``.  For example, if you always want to see
 detailed info on skipped and xfailed tests, as well as have terser "dot"
 progress output, you can write it into a configuration file::
 
@@ -60,7 +60,7 @@ progress output, you can write it into a configuration file::
     [pytest]
     addopts = -rsxX -q
 
-From now on, running ``py.test`` will add the specified options.
+From now on, running ``pytest`` will add the specified options.
 
 Builtin configuration file options
 ----------------------------------------------
@@ -105,7 +105,7 @@ Builtin configuration file options
     [pytest]
     norecursedirs = .svn _build tmp*
 
-   This would tell py.test to not look into typical subversion or
+   This would tell ``pytest`` to not look into typical subversion or
    sphinx-build directories or into any ``tmp`` prefixed directory.
 
 .. confval:: python_files
@@ -122,7 +122,7 @@ Builtin configuration file options
 
    One or more name prefixes determining which test functions
    and methods are considered as test modules.  Note that this
-   has no effect on methods that live on a ``unittest.TestCase`` 
+   has no effect on methods that live on a ``unittest.TestCase``
    derived class.
 
    See :ref:`change naming conventions` for examples.

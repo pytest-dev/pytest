@@ -157,10 +157,10 @@ def pytest_configure(config):
 
 class MarkGenerator:
     """ Factory for :class:`MarkDecorator` objects - exposed as
-    a ``py.test.mark`` singleton instance.  Example::
+    a ``pytest.mark`` singleton instance.  Example::
 
          import py
-         @py.test.mark.slowtest
+         @pytest.mark.slowtest
          def test_function():
             pass
 
@@ -198,8 +198,8 @@ class MarkDecorator:
     :ref:`retrieved by hooks as item keywords <excontrolskip>`.
     MarkDecorator instances are often created like this::
 
-        mark1 = py.test.mark.NAME              # simple MarkDecorator
-        mark2 = py.test.mark.NAME(name1=value) # parametrized MarkDecorator
+        mark1 = pytest.mark.NAME              # simple MarkDecorator
+        mark2 = pytest.mark.NAME(name1=value) # parametrized MarkDecorator
 
     and can then be applied as decorators to test functions::
 

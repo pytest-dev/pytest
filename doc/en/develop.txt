@@ -1,5 +1,5 @@
 =================================================
-Feedback and contribute to py.test
+Feedback and contribute to pytest
 =================================================
 
 .. toctree::

@@ -63,7 +63,7 @@ def pytest_namespace():
     return dict(collect=collect)
 
 def pytest_configure(config):
-    py.test.config = config # compatibiltiy
+    pytest.config = config # compatibiltiy
     if config.option.exitfirst:
         config.option.maxfail = 1
 

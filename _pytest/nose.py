@@ -8,7 +8,7 @@ def pytest_runtest_makereport(__multicall__, item, call):
     SkipTest = getattr(sys.modules.get('nose', None), 'SkipTest', None)
     if SkipTest:
         if call.excinfo and call.excinfo.errisinstance(SkipTest):
-            # let's substitute the excinfo with a py.test.skip one
+            # let's substitute the excinfo with a pytest.skip one
             call2 = call.__class__(lambda:
                         pytest.skip(str(call.excinfo.value)), call.when)
             call.excinfo = call2.excinfo

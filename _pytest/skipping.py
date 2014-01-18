@@ -37,7 +37,7 @@ def pytest_namespace():
     return dict(xfail=xfail)
 
 class XFailed(pytest.fail.Exception):
-    """ raised from an explicit call to py.test.xfail() """
+    """ raised from an explicit call to pytest.xfail() """
 
 def xfail(reason=""):
     """ xfail an executing test or setup functions with the given reason."""
@@ -129,7 +129,7 @@ def pytest_runtest_setup(item):
         return
     evalskip = MarkEvaluator(item, 'skipif')
     if evalskip.istrue():
-        py.test.skip(evalskip.getexplanation())
+        pytest.skip(evalskip.getexplanation())
     item._evalxfail = MarkEvaluator(item, 'xfail')
     check_xfail_no_run(item)
 
@@ -141,7 +141,7 @@ def check_xfail_no_run(item):
         evalxfail = item._evalxfail
         if evalxfail.istrue():
             if not evalxfail.get('run', True):
-                py.test.xfail("[NOTRUN] " + evalxfail.getexplanation())
+                pytest.xfail("[NOTRUN] " + evalxfail.getexplanation())
 
 def pytest_runtest_makereport(__multicall__, item, call):
     if not isinstance(item, pytest.Function):
@@ -150,16 +150,16 @@ def pytest_runtest_makereport(__multicall__, item, call):
     if hasattr(item, '_unexpectedsuccess'):
         rep = __multicall__.execute()
         if rep.when == "call":
-            # we need to translate into how py.test encodes xpass
+            # we need to translate into how pytest encodes xpass
             rep.wasxfail = "reason: " + repr(item._unexpectedsuccess)
             rep.outcome = "failed"
         return rep
     if not (call.excinfo and
-        call.excinfo.errisinstance(py.test.xfail.Exception)):
+        call.excinfo.errisinstance(pytest.xfail.Exception)):
         evalxfail = getattr(item, '_evalxfail', None)
         if not evalxfail:
             return
-    if call.excinfo and call.excinfo.errisinstance(py.test.xfail.Exception):
+    if call.excinfo and call.excinfo.errisinstance(pytest.xfail.Exception):
         if not item.config.getvalue("runxfail"):
             rep = __multicall__.execute()
             rep.wasxfail = "reason: " + call.excinfo.value.msg

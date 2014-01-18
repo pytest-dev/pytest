@@ -1,7 +1,7 @@
 import py, pytest
 
 def setup_module(mod):
-    mod.nose = py.test.importorskip("nose")
+    mod.nose = pytest.importorskip("nose")
 
 def test_nose_setup(testdir):
     p = testdir.makepyfile("""
@@ -112,7 +112,7 @@ def test_nose_setup_func_failure_2(testdir):
     reprec.assertoutcome(passed=1)
 
 def test_nose_setup_partial(testdir):
-    py.test.importorskip("functools")
+    pytest.importorskip("functools")
     p = testdir.makepyfile("""
         from functools import partial
 

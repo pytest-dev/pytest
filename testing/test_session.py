@@ -54,7 +54,7 @@ class SessionTests:
         out = failed[0].longrepr.reprcrash.message
         if not out.find("DID NOT RAISE") != -1:
             print(out)
-            py.test.fail("incorrect raises() output")
+            pytest.fail("incorrect raises() output")
 
     def test_generator_yields_None(self, testdir):
         reprec = testdir.inline_runsource("""
@@ -127,7 +127,7 @@ class SessionTests:
         try:
             reprec = testdir.inline_run(testdir.tmpdir)
         except pytest.skip.Exception:
-            py.test.fail("wrong skipped caught")
+            pytest.fail("wrong skipped caught")
         reports = reprec.getreports("pytest_collectreport")
         assert len(reports) == 1
         assert reports[0].skipped

@@ -14,7 +14,7 @@ A *skip* means that you expect your test to pass unless the environment
 And *xfail* means that your test can run but you expect it to fail
 because there is an implementation problem.
 
-py.test counts and lists *skip* and *xfail* tests separately. Detailed
+``pytest`` counts and lists *skip* and *xfail* tests separately. Detailed
 information about skipped/xfailed tests is not shown by default to avoid
 cluttering the output.  You can use the ``-r`` option to see details
 corresponding to the "short" letters shown in the test progress::
@@ -29,7 +29,7 @@ corresponding to the "short" letters shown in the test progress::
 Marking a test function to be skipped
 -------------------------------------------
 
-.. versionadded:: 2.0, 2.4 
+.. versionadded:: 2.0, 2.4
 
 Here is an example of marking a test function to be skipped
 when run on a Python3.3 interpreter::
@@ -104,7 +104,7 @@ you can set the ``pytestmark`` attribute of a class::
             "will not be setup or run under 'win32' platform"
 
 As with the class-decorator, the ``pytestmark`` special name tells
-py.test to apply it to each test function in the class.
+``pytest`` to apply it to each test function in the class.
 
 If you want to skip all test functions of a module, you must use
 the ``pytestmark`` name on the global level::
@@ -161,12 +161,12 @@ Running it with the report-on-xfail option gives this output::
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 6 items
-    
+
     xfail_demo.py xxxxxx
     ========================= short test summary info ==========================
     XFAIL xfail_demo.py::test_hello
     XFAIL xfail_demo.py::test_hello2
-      reason: [NOTRUN] 
+      reason: [NOTRUN]
     XFAIL xfail_demo.py::test_hello3
       condition: hasattr(os, 'sep')
     XFAIL xfail_demo.py::test_hello4
@@ -175,7 +175,7 @@ Running it with the report-on-xfail option gives this output::
       condition: pytest.__version__[0] != "17"
     XFAIL xfail_demo.py::test_hello6
       reason: reason
-    
+
     ======================== 6 xfailed in 0.04 seconds =========================
 
 .. _`skip/xfail with parametrize`:
@@ -255,7 +255,7 @@ because markers can then be freely imported between test modules.
 With strings you need to import not only the marker but all variables
 everything used by the marker, which violates encapsulation.
 
-The reason for specifying the condition as a string was that py.test can
+The reason for specifying the condition as a string was that ``pytest`` can
 report a summary of skip conditions based purely on the condition string.
 With conditions as booleans you are required to specify a ``reason`` string.
 

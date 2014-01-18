@@ -46,7 +46,7 @@ def pytest_unconfigure(config):
 def pytest_cmdline_main(config):
     if config.option.version:
         p = py.path.local(pytest.__file__)
-        sys.stderr.write("This is py.test version %s, imported from %s\n" %
+        sys.stderr.write("This is pytest version %s, imported from %s\n" %
             (pytest.__version__, p))
         plugininfo = getpluginversioninfo(config)
         if plugininfo:

@@ -28,7 +28,7 @@ def test_assert_with_explicit_message():
         assert e.msg == 'hello'
 
 def test_assert_within_finally():
-    excinfo = py.test.raises(ZeroDivisionError, """
+    excinfo = pytest.raises(ZeroDivisionError, """
         try:
             1/0
         finally:
@@ -79,7 +79,7 @@ def test_is():
         assert s.startswith("assert 1 is 2")
 
 
-@py.test.mark.skipif("sys.version_info < (2,6)")
+@pytest.mark.skipif("sys.version_info < (2,6)")
 def test_attrib():
     class Foo(object):
         b = 1
@@ -91,7 +91,7 @@ def test_attrib():
         s = str(e)
         assert s.startswith("assert 1 == 2")
 
-@py.test.mark.skipif("sys.version_info < (2,6)")
+@pytest.mark.skipif("sys.version_info < (2,6)")
 def test_attrib_inst():
     class Foo(object):
         b = 1
@@ -168,7 +168,7 @@ def test_assert_with_brokenrepr_arg():
         def __repr__(self): 0 / 0
     e = AssertionError(BrokenRepr())
     if e.msg.find("broken __repr__") == -1:
-        py.test.fail("broken __repr__ not handle correctly")
+        pytest.fail("broken __repr__ not handle correctly")
 
 def test_multiple_statements_per_line():
     try:
@@ -244,7 +244,7 @@ class TestView:
         assert codelines == ["4 + 5", "getitem('', 'join')",
             "setattr('x', 'y', 3)", "12 - 1"]
 
-@py.test.mark.skipif("sys.version_info < (2,6)")
+@pytest.mark.skipif("sys.version_info < (2,6)")
 def test_assert_customizable_reprcompare(monkeypatch):
     monkeypatch.setattr(util, '_reprcompare', lambda *args: 'hello')
     try:
@@ -323,7 +323,7 @@ def test_assert_raises_in_nonzero_of_object_pytest_issue10():
         s = str(e)
         assert "<MY42 object> < 0" in s
 
-@py.test.mark.skipif("sys.version_info >= (2,6)")
+@pytest.mark.skipif("sys.version_info >= (2,6)")
 def test_oldinterpret_importation():
     # we had a cyclic import there
     # requires pytest on sys.path

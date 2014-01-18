@@ -37,7 +37,7 @@ def test_recwarn_functional(testdir):
     assert tuple(res) == (2, 0, 0), res
 
 #
-# ============ test py.test.deprecated_call() ==============
+# ============ test pytest.deprecated_call() ==============
 #
 
 def dep(i):
@@ -53,14 +53,14 @@ def dep_explicit(i):
 
 def test_deprecated_call_raises():
     excinfo = pytest.raises(AssertionError,
-                   "py.test.deprecated_call(dep, 3)")
+                   "pytest.deprecated_call(dep, 3)")
     assert str(excinfo).find("did not produce") != -1
 
 def test_deprecated_call():
-    py.test.deprecated_call(dep, 0)
+    pytest.deprecated_call(dep, 0)
 
 def test_deprecated_call_ret():
-    ret = py.test.deprecated_call(dep, 0)
+    ret = pytest.deprecated_call(dep, 0)
     assert ret == 42
 
 def test_deprecated_call_preserves():
@@ -73,9 +73,9 @@ def test_deprecated_call_preserves():
 
 def test_deprecated_explicit_call_raises():
     pytest.raises(AssertionError,
-                   "py.test.deprecated_call(dep_explicit, 3)")
+                   "pytest.deprecated_call(dep_explicit, 3)")
 
 def test_deprecated_explicit_call():
-    py.test.deprecated_call(dep_explicit, 0)
-    py.test.deprecated_call(dep_explicit, 0)
+    pytest.deprecated_call(dep_explicit, 0)
+    pytest.deprecated_call(dep_explicit, 0)
 

@@ -1,7 +1,7 @@
 
 .. _apiref:
 
-py.test reference documentation
+pytest reference documentation
 ================================================
 
 .. toctree::

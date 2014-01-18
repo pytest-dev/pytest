@@ -65,7 +65,7 @@ class TestBootstrapping:
         assert l2 == l3
 
     def test_consider_setuptools_instantiation(self, monkeypatch):
-        pkg_resources = py.test.importorskip("pkg_resources")
+        pkg_resources = pytest.importorskip("pkg_resources")
         def my_iter(name):
             assert name == "pytest11"
             class EntryPoint:
@@ -334,11 +334,11 @@ class TestPytestPluginInteractions:
                 return {'hello': 'world'}
         """)
         p = testdir.makepyfile("""
-            from py.test import hello
-            import py
+            from pytest import hello
+            import pytest
             def test_hello():
                 assert hello == "world"
-                assert 'hello' in py.test.__all__
+                assert 'hello' in pytest.__all__
         """)
         reprec = testdir.inline_run(p)
         reprec.assertoutcome(passed=1)

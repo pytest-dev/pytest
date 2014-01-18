@@ -27,9 +27,9 @@ def test_funcarg(testdir):
     assert bn == "qwe__abc"
 
 def test_ensuretemp(recwarn):
-    #py.test.deprecated_call(py.test.ensuretemp, 'hello')
-    d1 = py.test.ensuretemp('hello')
-    d2 = py.test.ensuretemp('hello')
+    #pytest.deprecated_call(pytest.ensuretemp, 'hello')
+    d1 = pytest.ensuretemp('hello')
+    d2 = pytest.ensuretemp('hello')
     assert d1 == d2
     assert d1.check(dir=1)
 

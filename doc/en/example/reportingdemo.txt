@@ -1,11 +1,11 @@
 
 .. _`tbreportdemo`:
- 
-Demo of Python failure reports with py.test
+
+Demo of Python failure reports with pytest
 ==================================================
 
 Here is a nice run of several tens of failures
-and how py.test presents things (unfortunately
+and how ``pytest`` presents things (unfortunately
 not showing the nice colors here in the HTML that you
 get on the terminal - we are working on that):
 
@@ -15,82 +15,82 @@ get on the terminal - we are working on that):
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 39 items
-    
+
     failure_demo.py FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-    
+
     ================================= FAILURES =================================
     ____________________________ test_generative[0] ____________________________
-    
+
     param1 = 3, param2 = 6
-    
+
         def test_generative(param1, param2):
     >       assert param1 * 2 < param2
     E       assert (3 * 2) < 6
-    
+
     failure_demo.py:15: AssertionError
     _________________________ TestFailing.test_simple __________________________
-    
+
     self = <failure_demo.TestFailing object at 0x12d9250>
-    
+
         def test_simple(self):
             def f():
                 return 42
             def g():
                 return 43
-        
+
     >       assert f() == g()
     E       assert 42 == 43
     E        +  where 42 = <function f at 0x1278b90>()
     E        +  and   43 = <function g at 0x1278c08>()
-    
+
     failure_demo.py:28: AssertionError
     ____________________ TestFailing.test_simple_multiline _____________________
-    
+
     self = <failure_demo.TestFailing object at 0x1287210>
-    
+
         def test_simple_multiline(self):
             otherfunc_multi(
                       42,
     >                 6*9)
-    
-    failure_demo.py:33: 
-    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-    
+
+    failure_demo.py:33:
+    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
     a = 42, b = 54
-    
+
         def otherfunc_multi(a,b):
     >       assert (a ==
                     b)
     E       assert 42 == 54
-    
+
     failure_demo.py:11: AssertionError
     ___________________________ TestFailing.test_not ___________________________
-    
+
     self = <failure_demo.TestFailing object at 0x12c6e10>
-    
+
         def test_not(self):
             def f():
                 return 42
     >       assert not f()
     E       assert not 42
     E        +  where 42 = <function f at 0x12861b8>()
-    
+
     failure_demo.py:38: AssertionError
     _________________ TestSpecialisedExplanations.test_eq_text _________________
-    
+
     self = <failure_demo.TestSpecialisedExplanations object at 0x1290c50>
-    
+
         def test_eq_text(self):
     >       assert 'spam' == 'eggs'
     E       assert 'spam' == 'eggs'
     E         - spam
     E         + eggs
-    
+
     failure_demo.py:42: AssertionError
     _____________ TestSpecialisedExplanations.test_eq_similar_text _____________
-    
+
     self = <failure_demo.TestSpecialisedExplanations object at 0x12877d0>
-    
+
         def test_eq_similar_text(self):
     >       assert 'foo 1 bar' == 'foo 2 bar'
     E       assert 'foo 1 bar' == 'foo 2 bar'
@@ -98,12 +98,12 @@ get on the terminal - we are working on that):
     E         ?     ^
     E         + foo 2 bar
     E         ?     ^
-    
+
     failure_demo.py:45: AssertionError
     ____________ TestSpecialisedExplanations.test_eq_multiline_text ____________
-    
+
     self = <failure_demo.TestSpecialisedExplanations object at 0x12de1d0>
-    
+
         def test_eq_multiline_text(self):
     >       assert 'foo\nspam\nbar' == 'foo\neggs\nbar'
     E       assert 'foo\nspam\nbar' == 'foo\neggs\nbar'
@@ -111,12 +111,12 @@ get on the terminal - we are working on that):
     E         - spam
     E         + eggs
     E           bar
-    
+
     failure_demo.py:48: AssertionError
     ______________ TestSpecialisedExplanations.test_eq_long_text _______________
-    
+
     self = <failure_demo.TestSpecialisedExplanations object at 0x143b5d0>
-    
+
         def test_eq_long_text(self):
             a = '1'*100 + 'a' + '2'*100
             b = '1'*100 + 'b' + '2'*100
@@ -128,12 +128,12 @@ get on the terminal - we are working on that):
     E         ?           ^
     E         + 1111111111b222222222
     E         ?           ^
-    
+
     failure_demo.py:53: AssertionError
     _________ TestSpecialisedExplanations.test_eq_long_text_multiline __________
-    
+
     self = <failure_demo.TestSpecialisedExplanations object at 0x1287810>
-    
+
         def test_eq_long_text_multiline(self):
             a = '1\n'*100 + 'a' + '2\n'*100
             b = '1\n'*100 + 'b' + '2\n'*100
@@ -152,34 +152,34 @@ get on the terminal - we are working on that):
     E           2
     E           2
     E           2
-    
+
     failure_demo.py:58: AssertionError
     _________________ TestSpecialisedExplanations.test_eq_list _________________
-    
+
     self = <failure_demo.TestSpecialisedExplanations object at 0x12900d0>
-    
+
         def test_eq_list(self):
     >       assert [0, 1, 2] == [0, 1, 3]
     E       assert [0, 1, 2] == [0, 1, 3]
     E         At index 2 diff: 2 != 3
-    
+
     failure_demo.py:61: AssertionError
     ______________ TestSpecialisedExplanations.test_eq_list_long _______________
-    
+
     self = <failure_demo.TestSpecialisedExplanations object at 0x12c62d0>
-    
+
         def test_eq_list_long(self):
             a = [0]*100 + [1] + [3]*100
             b = [0]*100 + [2] + [3]*100
     >       assert a == b
     E       assert [0, 0, 0, 0, 0, 0, ...] == [0, 0, 0, 0, 0, 0, ...]
     E         At index 100 diff: 1 != 2
-    
+
     failure_demo.py:66: AssertionError
     _________________ TestSpecialisedExplanations.test_eq_dict _________________
-    
+
     self = <failure_demo.TestSpecialisedExplanations object at 0x12deb50>
-    
+
         def test_eq_dict(self):
     >       assert {'a': 0, 'b': 1, 'c': 0} == {'a': 0, 'b': 2, 'd': 0}
     E       assert {'a': 0, 'b': 1, 'c': 0} == {'a': 0, 'b': 2, 'd': 0}
@@ -190,12 +190,12 @@ get on the terminal - we are working on that):
     E         {'c': 0}
     E         Right contains more items:
     E         {'d': 0}
-    
+
     failure_demo.py:69: AssertionError
     _________________ TestSpecialisedExplanations.test_eq_set __________________
-    
+
     self = <failure_demo.TestSpecialisedExplanations object at 0x128b4d0>
-    
+
         def test_eq_set(self):
     >       assert set([0, 10, 11, 12]) == set([0, 20, 21])
     E       assert set([0, 10, 11, 12]) == set([0, 20, 21])
@@ -206,31 +206,31 @@ get on the terminal - we are working on that):
     E         Extra items in the right set:
     E         20
     E         21
-    
+
     failure_demo.py:72: AssertionError
     _____________ TestSpecialisedExplanations.test_eq_longer_list ______________
-    
+
     self = <failure_demo.TestSpecialisedExplanations object at 0x12c6b10>
-    
+
         def test_eq_longer_list(self):
     >       assert [1,2] == [1,2,3]
     E       assert [1, 2] == [1, 2, 3]
     E         Right contains more items, first extra item: 3
-    
+
     failure_demo.py:75: AssertionError
     _________________ TestSpecialisedExplanations.test_in_list _________________
-    
+
     self = <failure_demo.TestSpecialisedExplanations object at 0x143b650>
-    
+
         def test_in_list(self):
     >       assert 1 in [0, 2, 3, 4, 5]
     E       assert 1 in [0, 2, 3, 4, 5]
-    
+
     failure_demo.py:78: AssertionError
     __________ TestSpecialisedExplanations.test_not_in_text_multiline __________
-    
+
     self = <failure_demo.TestSpecialisedExplanations object at 0x128be10>
-    
+
         def test_not_in_text_multiline(self):
             text = 'some multiline\ntext\nwhich\nincludes foo\nand a\ntail'
     >       assert 'foo' not in text
@@ -243,12 +243,12 @@ get on the terminal - we are working on that):
     E         ?          +++
     E           and a
     E           tail
-    
+
     failure_demo.py:82: AssertionError
     ___________ TestSpecialisedExplanations.test_not_in_text_single ____________
-    
+
     self = <failure_demo.TestSpecialisedExplanations object at 0x12d9fd0>
-    
+
         def test_not_in_text_single(self):
             text = 'single foo line'
     >       assert 'foo' not in text
@@ -256,36 +256,36 @@ get on the terminal - we are working on that):
     E         'foo' is contained here:
     E           single foo line
     E         ?        +++
-    
+
     failure_demo.py:86: AssertionError
     _________ TestSpecialisedExplanations.test_not_in_text_single_long _________
-    
+
     self = <failure_demo.TestSpecialisedExplanations object at 0x143bdd0>
-    
+
         def test_not_in_text_single_long(self):
             text = 'head ' * 50 + 'foo ' + 'tail ' * 20
     >       assert 'foo' not in text
     E       assert 'foo' not in 'head head head head hea...ail tail tail tail tail '
     E         'foo' is contained here:
-    E           head head foo tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail 
+    E           head head foo tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail
     E         ?           +++
-    
+
     failure_demo.py:90: AssertionError
     ______ TestSpecialisedExplanations.test_not_in_text_single_long_term _______
-    
+
     self = <failure_demo.TestSpecialisedExplanations object at 0x12c6390>
-    
+
         def test_not_in_text_single_long_term(self):
             text = 'head ' * 50 + 'f'*70 + 'tail ' * 20
     >       assert 'f'*70 not in text
     E       assert 'fffffffffff...ffffffffffff' not in 'head head he...l tail tail '
     E         'ffffffffffffffffff...fffffffffffffffffff' is contained here:
-    E           head head fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffftail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail 
+    E           head head fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffftail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail
     E         ?           ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    
+
     failure_demo.py:94: AssertionError
     ______________________________ test_attribute ______________________________
-    
+
         def test_attribute():
             class Foo(object):
                 b = 1
@@ -293,10 +293,10 @@ get on the terminal - we are working on that):
     >       assert i.b == 2
     E       assert 1 == 2
     E        +  where 1 = <failure_demo.Foo object at 0x1287790>.b
-    
+
     failure_demo.py:101: AssertionError
     _________________________ test_attribute_instance __________________________
-    
+
         def test_attribute_instance():
             class Foo(object):
                 b = 1
@@ -304,10 +304,10 @@ get on the terminal - we are working on that):
     E       assert 1 == 2
     E        +  where 1 = <failure_demo.Foo object at 0x12c6bd0>.b
     E        +    where <failure_demo.Foo object at 0x12c6bd0> = <class 'failure_demo.Foo'>()
-    
+
     failure_demo.py:107: AssertionError
     __________________________ test_attribute_failure __________________________
-    
+
         def test_attribute_failure():
             class Foo(object):
                 def _get_b(self):
@@ -315,19 +315,19 @@ get on the terminal - we are working on that):
                 b = property(_get_b)
             i = Foo()
     >       assert i.b == 2
-    
-    failure_demo.py:116: 
-    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-    
+
+    failure_demo.py:116:
+    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
     self = <failure_demo.Foo object at 0x12daed0>
-    
+
         def _get_b(self):
     >       raise Exception('Failed to get attrib')
     E       Exception: Failed to get attrib
-    
+
     failure_demo.py:113: Exception
     _________________________ test_attribute_multiple __________________________
-    
+
         def test_attribute_multiple():
             class Foo(object):
                 b = 1
@@ -339,74 +339,74 @@ get on the terminal - we are working on that):
     E        +    where <failure_demo.Foo object at 0x128bcd0> = <class 'failure_demo.Foo'>()
     E        +  and   2 = <failure_demo.Bar object at 0x128b050>.b
     E        +    where <failure_demo.Bar object at 0x128b050> = <class 'failure_demo.Bar'>()
-    
+
     failure_demo.py:124: AssertionError
     __________________________ TestRaises.test_raises __________________________
-    
+
     self = <failure_demo.TestRaises instance at 0x145c7e8>
-    
+
         def test_raises(self):
             s = 'qwe'
     >       raises(TypeError, "int(s)")
-    
-    failure_demo.py:133: 
-    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-    
+
+    failure_demo.py:133:
+    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
     >   int(s)
     E   ValueError: invalid literal for int() with base 10: 'qwe'
-    
+
     <0-codegen /home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/python.py:983>:1: ValueError
     ______________________ TestRaises.test_raises_doesnt _______________________
-    
+
     self = <failure_demo.TestRaises instance at 0x1455f38>
-    
+
         def test_raises_doesnt(self):
     >       raises(IOError, "int('3')")
     E       Failed: DID NOT RAISE
-    
+
     failure_demo.py:136: Failed
     __________________________ TestRaises.test_raise ___________________________
-    
+
     self = <failure_demo.TestRaises instance at 0x1453998>
-    
+
         def test_raise(self):
     >       raise ValueError("demo error")
     E       ValueError: demo error
-    
+
     failure_demo.py:139: ValueError
     ________________________ TestRaises.test_tupleerror ________________________
-    
+
     self = <failure_demo.TestRaises instance at 0x1465560>
-    
+
         def test_tupleerror(self):
     >       a,b = [1]
     E       ValueError: need more than 1 value to unpack
-    
+
     failure_demo.py:142: ValueError
     ______ TestRaises.test_reinterpret_fails_with_print_for_the_fun_of_it ______
-    
+
     self = <failure_demo.TestRaises instance at 0x1465758>
-    
+
         def test_reinterpret_fails_with_print_for_the_fun_of_it(self):
             l = [1,2,3]
             print ("l is %r" % l)
     >       a,b = l.pop()
     E       TypeError: 'int' object is not iterable
-    
+
     failure_demo.py:147: TypeError
     ----------------------------- Captured stdout ------------------------------
     l is [1, 2, 3]
     ________________________ TestRaises.test_some_error ________________________
-    
+
     self = <failure_demo.TestRaises instance at 0x1468ab8>
-    
+
         def test_some_error(self):
     >       if namenotexi:
     E       NameError: global name 'namenotexi' is not defined
-    
+
     failure_demo.py:150: NameError
     ____________________ test_dynamic_compile_shows_nicely _____________________
-    
+
         def test_dynamic_compile_shows_nicely():
             src = 'def foo():\n assert 1 == 0\n'
             name = 'abc-123'
@@ -415,80 +415,80 @@ get on the terminal - we are working on that):
             py.builtin.exec_(code, module.__dict__)
             py.std.sys.modules[name] = module
     >       module.foo()
-    
-    failure_demo.py:165: 
-    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-    
+
+    failure_demo.py:165:
+    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
         def foo():
     >    assert 1 == 0
     E    assert 1 == 0
-    
+
     <2-codegen 'abc-123' /home/hpk/p/pytest/doc/en/example/assertion/failure_demo.py:162>:2: AssertionError
     ____________________ TestMoreErrors.test_complex_error _____________________
-    
+
     self = <failure_demo.TestMoreErrors instance at 0x1442908>
-    
+
         def test_complex_error(self):
             def f():
                 return 44
             def g():
                 return 43
     >       somefunc(f(), g())
-    
-    failure_demo.py:175: 
-    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-    
+
+    failure_demo.py:175:
+    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
     x = 44, y = 43
-    
+
         def somefunc(x,y):
     >       otherfunc(x,y)
-    
-    failure_demo.py:8: 
-    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-    
+
+    failure_demo.py:8:
+    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
     a = 44, b = 43
-    
+
         def otherfunc(a,b):
     >       assert a==b
     E       assert 44 == 43
-    
+
     failure_demo.py:5: AssertionError
     ___________________ TestMoreErrors.test_z1_unpack_error ____________________
-    
+
     self = <failure_demo.TestMoreErrors instance at 0x145bab8>
-    
+
         def test_z1_unpack_error(self):
             l = []
     >       a,b  = l
     E       ValueError: need more than 0 values to unpack
-    
+
     failure_demo.py:179: ValueError
     ____________________ TestMoreErrors.test_z2_type_error _____________________
-    
+
     self = <failure_demo.TestMoreErrors instance at 0x1444368>
-    
+
         def test_z2_type_error(self):
             l = 3
     >       a,b  = l
     E       TypeError: 'int' object is not iterable
-    
+
     failure_demo.py:183: TypeError
     ______________________ TestMoreErrors.test_startswith ______________________
-    
+
     self = <failure_demo.TestMoreErrors instance at 0x146e4d0>
-    
+
         def test_startswith(self):
             s = "123"
             g = "456"
     >       assert s.startswith(g)
     E       assert <built-in method startswith of str object at 0x12dfa58>('456')
     E        +  where <built-in method startswith of str object at 0x12dfa58> = '123'.startswith
-    
+
     failure_demo.py:188: AssertionError
     __________________ TestMoreErrors.test_startswith_nested ___________________
-    
+
     self = <failure_demo.TestMoreErrors instance at 0x143ed40>
-    
+
         def test_startswith_nested(self):
             def f():
                 return "123"
@@ -499,48 +499,48 @@ get on the terminal - we are working on that):
     E        +  where <built-in method startswith of str object at 0x12dfa58> = '123'.startswith
     E        +    where '123' = <function f at 0x1286500>()
     E        +  and   '456' = <function g at 0x126db18>()
-    
+
     failure_demo.py:195: AssertionError
     _____________________ TestMoreErrors.test_global_func ______________________
-    
+
     self = <failure_demo.TestMoreErrors instance at 0x1453b90>
-    
+
         def test_global_func(self):
     >       assert isinstance(globf(42), float)
     E       assert isinstance(43, float)
     E        +  where 43 = globf(42)
-    
+
     failure_demo.py:198: AssertionError
     _______________________ TestMoreErrors.test_instance _______________________
-    
+
     self = <failure_demo.TestMoreErrors instance at 0x146b128>
-    
+
         def test_instance(self):
             self.x = 6*7
     >       assert self.x != 42
     E       assert 42 != 42
     E        +  where 42 = <failure_demo.TestMoreErrors instance at 0x146b128>.x
-    
+
     failure_demo.py:202: AssertionError
     _______________________ TestMoreErrors.test_compare ________________________
-    
+
     self = <failure_demo.TestMoreErrors instance at 0x1469368>
-    
+
         def test_compare(self):
     >       assert globf(10) < 5
     E       assert 11 < 5
     E        +  where 11 = globf(10)
-    
+
     failure_demo.py:205: AssertionError
     _____________________ TestMoreErrors.test_try_finally ______________________
-    
+
     self = <failure_demo.TestMoreErrors instance at 0x12c4098>
-    
+
         def test_try_finally(self):
             x = 1
             try:
     >           assert x == 0
     E           assert 1 == 0
-    
+
     failure_demo.py:210: AssertionError
     ======================== 39 failed in 0.20 seconds =========================

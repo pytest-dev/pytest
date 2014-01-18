@@ -1,6 +1,7 @@
 """ command line options, ini-file and conftest.py processing. """
 
 import py
+import pytest
 import sys, os
 from _pytest import hookspec # the extension point definitions
 from _pytest.core import PluginManager
@@ -22,7 +23,7 @@ class cmdline:  # compatibility namespace
     main = staticmethod(main)
 
 class UsageError(Exception):
-    """ error in py.test usage or invocation"""
+    """ error in pytest usage or invocation"""
 
 _preinit = []
 
@@ -225,7 +226,7 @@ class Argument:
                 help = attrs['help']
                 if '%default' in help:
                     py.std.warnings.warn(
-                        'py.test now uses argparse. "%default" should be'
+                        'pytest now uses argparse. "%default" should be'
                         ' changed to "%(default)s" ',
                         FutureWarning,
                         stacklevel=3)
@@ -448,7 +449,7 @@ class DropShorterLongHelpFormatter(py.std.argparse.HelpFormatter):
 
 class Conftest(object):
     """ the single place for accessing values and interacting
-        towards conftest modules from py.test objects.
+        towards conftest modules from pytest objects.
     """
     def __init__(self, onimport=None, confcutdir=None):
         self._path2confmods = {}
@@ -808,7 +809,7 @@ class Config(object):
 
     def getvalueorskip(self, name, path=None):
         """ (deprecated) return getvalue(name) or call
-        py.test.skip if no value exists. """
+        pytest.skip if no value exists. """
         __tracebackhide__ = True
         try:
             val = self.getvalue(name, path)
@@ -816,7 +817,7 @@ class Config(object):
                 raise KeyError(name)
             return val
         except KeyError:
-            py.test.skip("no %r value found" %(name,))
+            pytest.skip("no %r value found" %(name,))
 
 def exists(path, ignore=EnvironmentError):
     try:

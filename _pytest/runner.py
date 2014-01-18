@@ -1,6 +1,8 @@
 """ basic collect and runtest protocol implementations """
 
-import py, sys
+import py
+import pytest
+import sys
 from time import time
 from py._code.code import TerminalRepr
 
@@ -196,7 +198,7 @@ def pytest_runtest_makereport(item, call):
         if not isinstance(excinfo, py.code.ExceptionInfo):
             outcome = "failed"
             longrepr = excinfo
-        elif excinfo.errisinstance(py.test.skip.Exception):
+        elif excinfo.errisinstance(pytest.skip.Exception):
             outcome = "skipped"
             r = excinfo._getreprcrash()
             longrepr = (str(r.path), r.lineno, r.message)
@@ -418,7 +420,7 @@ class Skipped(OutcomeException):
     __module__ = 'builtins'
 
 class Failed(OutcomeException):
-    """ raised from an explicit call to py.test.fail() """
+    """ raised from an explicit call to pytest.fail() """
     __module__ = 'builtins'
 
 class Exit(KeyboardInterrupt):
@@ -438,7 +440,7 @@ exit.Exception = Exit
 
 def skip(msg=""):
     """ skip an executing test with the given message.  Note: it's usually
-    better to use the py.test.mark.skipif marker to declare a test to be
+    better to use the pytest.mark.skipif marker to declare a test to be
     skipped under certain conditions like mismatching platforms or
     dependencies.  See the pytest_skipping plugin for details.
     """

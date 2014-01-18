@@ -4,6 +4,7 @@ pytest PluginManager, basic initialization and tracing.
 import sys
 import inspect
 import py
+import pytest
 
 assert py.__version__.split(".")[:2] >= ['1', '4'], ("installation problem: "
     "%s is too old, remove or upgrade 'py'" % (py.__version__))
@@ -136,7 +137,7 @@ class PluginManager(object):
 
     def skipifmissing(self, name):
         if not self.hasplugin(name):
-            py.test.skip("plugin %r is missing" % name)
+            pytest.skip("plugin %r is missing" % name)
 
     def hasplugin(self, name):
         return bool(self.getplugin(name))
@@ -220,9 +221,9 @@ class PluginManager(object):
             raise
         except:
             e = py.std.sys.exc_info()[1]
-            if not hasattr(py.test, 'skip'):
+            if not hasattr(pytest, 'skip'):
                 raise
-            elif not isinstance(e, py.test.skip.Exception):
+            elif not isinstance(e, pytest.skip.Exception):
                 raise
             self._hints.append("skipped plugin %r: %s" %((modname, e.msg)))
         else:

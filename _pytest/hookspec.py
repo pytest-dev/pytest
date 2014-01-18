@@ -11,8 +11,8 @@ def pytest_addhooks(pluginmanager):
 
 def pytest_namespace():
     """return dict of name->object to be made globally available in
-    the py.test/pytest namespace.  This hook is called before command
-    line options are parsed.
+    the pytest namespace.  This hook is called before command line options
+    are parsed.
     """
 
 def pytest_cmdline_parse(pluginmanager, args):

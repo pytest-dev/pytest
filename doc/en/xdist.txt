@@ -4,11 +4,11 @@
 xdist: pytest distributed testing plugin
 ===============================================================
 
-The `pytest-xdist`_ plugin extends py.test with some unique
+The `pytest-xdist`_ plugin extends ``pytest`` with some unique
 test execution modes:
 
 * Looponfail: run your tests repeatedly in a subprocess.  After each
-  run, py.test waits until a file in your project changes and then
+  run, ``pytest`` waits until a file in your project changes and then
   re-runs the previously failing tests.  This is repeated until all
   tests pass.  At this point a full run is again performed.
 
@@ -19,7 +19,7 @@ test execution modes:
 * Multi-Platform coverage: you can specify different Python interpreters
   or different platforms and run tests in parallel on all of them.
 
-Before running tests remotely, ``py.test`` efficiently "rsyncs" your
+Before running tests remotely, ``pytest`` efficiently "rsyncs" your
 program source code to the remote place.  All test results
 are reported back and displayed to your local terminal.
 You may specify different Python versions and interpreters.
@@ -86,7 +86,7 @@ you can use the looponfailing mode. Simply add the ``--f`` option::
 
     py.test -f
    
-and py.test will run your tests. Assuming you have failures it will then
+and ``pytest`` will run your tests. Assuming you have failures it will then
 wait for file changes and re-run the failing test set.  File changes are detected by looking at ``looponfailingroots`` root directories and all of their contents (recursively).  If the default for this value does not work for you you
 can change it in your project by setting a configuration option::
 
@@ -115,11 +115,11 @@ to be sent to the remote side.
 
 .. XXX CHECK
 
-    **NOTE:** For py.test to collect and send tests correctly
+    **NOTE:** For ``pytest`` to collect and send tests correctly
     you not only need to make sure all code and tests
     directories are rsynced, but that any test (sub) directory
     also has an ``__init__.py`` file because internally
-    py.test references tests as a fully qualified python
+    ``pytest`` references tests as a fully qualified python
     module path.  **You will otherwise get strange errors**
     during setup of the remote side.
 

@@ -23,7 +23,7 @@ a test.
 Setting capturing methods or disabling capturing
 -------------------------------------------------
 
-There are two ways in which ``py.test`` can perform capturing:
+There are two ways in which ``pytest`` can perform capturing:
 
 * file descriptor (FD) level capturing (default): All writes going to the
   operating system file descriptors 1 and 2 will be captured.
@@ -49,7 +49,7 @@ One primary benefit of the default capturing of stdout/stderr output
 is that you can use print statements for debugging::
 
     # content of test_module.py
-   
+
     def setup_function(function):
         print ("setting up %s" % function)
 
@@ -66,16 +66,16 @@ of the failing function and hide the other one::
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 2 items
-    
+
     test_module.py .F
-    
+
     ================================= FAILURES =================================
     ________________________________ test_func2 ________________________________
-    
+
         def test_func2():
     >       assert False
     E       assert False
-    
+
     test_module.py:9: AssertionError
     ----------------------------- Captured stdout ------------------------------
     setting up <function test_func2 at 0x1eb37d0>
@@ -105,7 +105,7 @@ and capturing will be continued.  After the test
 function finishes the original streams will
 be restored.  Using ``capsys`` this way frees your
 test from having to care about setting/resetting
-output streams and also interacts well with py.test's
+output streams and also interacts well with pytest's
 own per-test capturing.
 
 If you want to capture on ``fd`` level you can use

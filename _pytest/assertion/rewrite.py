@@ -15,7 +15,7 @@ import py
 from _pytest.assertion import util
 
 
-# py.test caches rewritten pycs in __pycache__.
+# pytest caches rewritten pycs in __pycache__.
 if hasattr(imp, "get_tag"):
     PYTEST_TAG = imp.get_tag() + "-PYTEST"
 else:
@@ -102,7 +102,7 @@ class AssertionRewritingHook(object):
         # the most magical part of the process: load the source, rewrite the
         # asserts, and load the rewritten source. We also cache the rewritten
         # module code in a special pyc. We must be aware of the possibility of
-        # concurrent py.test processes rewriting and loading pycs. To avoid
+        # concurrent pytest processes rewriting and loading pycs. To avoid
         # tricky race conditions, we maintain the following invariant: The
         # cached pyc is always a complete, valid pyc. Operations on it must be
         # atomic. POSIX's atomic rename comes in handy.
@@ -290,7 +290,7 @@ def _make_rewritten_pyc(state, fn, pyc, co):
             os.rename(proc_pyc, pyc)
 
 def _read_pyc(source, pyc):
-    """Possibly read a py.test pyc containing rewritten code.
+    """Possibly read a pytest pyc containing rewritten code.
 
     Return rewritten code if successful or None if not.
     """

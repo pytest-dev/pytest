@@ -59,7 +59,7 @@ def test_parseconfig(testdir):
     config1 = testdir.parseconfig()
     config2 = testdir.parseconfig()
     assert config2 != config1
-    assert config1 != py.test.config
+    assert config1 != pytest.config
 
 def test_testdir_runs_with_plugin(testdir):
     testdir.makepyfile("""

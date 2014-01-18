@@ -1,4 +1,4 @@
-""" (disabled by default) support for testing py.test and py.test plugins. """
+""" (disabled by default) support for testing pytest and pytest plugins. """
 
 import py, pytest
 import sys, os
@@ -137,7 +137,7 @@ class HookRecorder:
                     break
                 print_("NONAMEMATCH", name, "with", call)
             else:
-                py.test.fail("could not find %r check %r" % (name, check))
+                pytest.fail("could not find %r check %r" % (name, check))
 
     def popcall(self, name):
         __tracebackhide__ = True
@@ -147,7 +147,7 @@ class HookRecorder:
                 return call
         lines = ["could not find call %r, in:" % (name,)]
         lines.extend(["  %s" % str(x) for x in self.calls])
-        py.test.fail("\n".join(lines))
+        pytest.fail("\n".join(lines))
 
     def getcall(self, name):
         l = self.getcalls(name)
@@ -472,7 +472,7 @@ class TmpTestdir:
             # becaue on windows the script is e.g. a py.test.exe
             return (py.std.sys.executable, _pytest_fullpath,) # noqa
         else:
-            py.test.skip("cannot run %r with --no-tools-on-path" % scriptname)
+            pytest.skip("cannot run %r with --no-tools-on-path" % scriptname)
 
     def runpython(self, script, prepend=True):
         if prepend:
@@ -509,14 +509,14 @@ class TmpTestdir:
 
     def spawn_pytest(self, string, expect_timeout=10.0):
         if self.request.config.getvalue("notoolsonpath"):
-            py.test.skip("--no-tools-on-path prevents running pexpect-spawn tests")
+            pytest.skip("--no-tools-on-path prevents running pexpect-spawn tests")
         basetemp = self.tmpdir.mkdir("pexpect")
         invoke = " ".join(map(str, self._getpybinargs("py.test")))
         cmd = "%s --basetemp=%s %s" % (invoke, basetemp, string)
         return self.spawn(cmd, expect_timeout=expect_timeout)
 
     def spawn(self, cmd, expect_timeout=10.0):
-        pexpect = py.test.importorskip("pexpect", "3.0")
+        pexpect = pytest.importorskip("pexpect", "3.0")
         if hasattr(sys, 'pypy_version_info') and '64' in py.std.platform.machine():
             pytest.skip("pypy-64 bit not supported")
         if sys.platform == "darwin":
@@ -688,4 +688,4 @@ class LineMatcher:
                     show("    and:", repr(nextline))
                 extralines.append(nextline)
             else:
-                py.test.fail("remains unmatched: %r, see stderr" % (line,))
+                pytest.fail("remains unmatched: %r, see stderr" % (line,))

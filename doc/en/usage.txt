@@ -72,7 +72,7 @@ Dropping to PDB (Python Debugger) on failures
 
 .. _PDB: http://docs.python.org/library/pdb.html
 
-Python comes with a builtin Python debugger called PDB_.  ``py.test``
+Python comes with a builtin Python debugger called PDB_.  ``pytest``
 allows one to drop into the PDB prompt via a command line option::
 
     py.test --pdb
@@ -160,7 +160,7 @@ Calling pytest from Python code
 
 .. versionadded:: 2.0
 
-You can invoke ``py.test`` from Python code directly::
+You can invoke ``pytest`` from Python code directly::
 
     pytest.main()
 

@@ -7,7 +7,7 @@ nose-compatibility plugin: allow to run nose test suites natively.
   :local:
 
 This is an experimental plugin for allowing to run tests written
-in 'nosetests style with py.test.
+in 'nosetests' style with ``pytest``.
 
 Usage
 -------------
@@ -17,7 +17,7 @@ type::
     py.test  # instead of 'nosetests'
 
 and you should be able to run nose style tests and at the same
-time can make full use of py.test's capabilities.
+time can make full use of pytest's capabilities.
 
 Supported nose Idioms
 ----------------------
@@ -40,7 +40,7 @@ If you find other issues or have suggestions please run::
 
     py.test --pastebin=all
 
-and send the resulting URL to a py.test contact channel,
+and send the resulting URL to a ``pytest`` contact channel,
 at best to the mailing list.
 
 Start improving this plugin in 30 seconds
@@ -49,7 +49,7 @@ Start improving this plugin in 30 seconds
 
 1. Download `pytest_nose.py`_ plugin source code
 2. put it somewhere as ``pytest_nose.py`` into your import path
-3. a subsequent ``py.test`` run will use your local version
+3. a subsequent ``pytest`` run will use your local version
 
 Checkout customize_, other plugins_ or `get in contact`_.
 

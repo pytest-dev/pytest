@@ -485,7 +485,7 @@ class Module(pytest.File, PyCollector):
             fin = getattr(self.obj, 'teardown_module', None)
         if fin is not None:
             #XXX: nose compat hack, move to nose plugin
-            # if it takes a positional arg, its probably a py.test style one
+            # if it takes a positional arg, its probably a pytest style one
             # so we pass the current module object
             if inspect.getargspec(fin)[0]:
                 finalizer = lambda: fin(self.obj)
@@ -1011,7 +1011,7 @@ class RaisesContext(object):
         return issubclass(self.excinfo.type, self.ExpectedException)
 
 #
-#  the basic py.test Function item
+#  the basic pytest Function item
 #
 
 class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
@@ -1225,7 +1225,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         on all function invocations.
 
         :arg marker: a :py:class:`_pytest.mark.MarkDecorator` object
-            created by a call to ``py.test.mark.NAME(...)``.
+            created by a call to ``pytest.mark.NAME(...)``.
         """
         try:
             self.node.keywords[marker.markname] = marker
