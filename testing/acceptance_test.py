@@ -307,7 +307,7 @@ class TestGeneralUsage:
                 '*ERROR*',
             ])
             assert result.ret == 4  # usage error only if item not found
-    
+
     def test_namespace_import_doesnt_confuse_import_hook(self, testdir):
         # Ref #383. Python 3.3's namespace package messed with our import hooks
         # Importing a module that didn't exist, even if the ImportError was
@@ -319,7 +319,7 @@ class TestGeneralUsage:
             except ImportError:
                 # We handle the import error gracefully here
                 pass
-            
+
             def test_whatever():
                 pass
         """)
