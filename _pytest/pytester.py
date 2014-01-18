@@ -467,9 +467,9 @@ class TmpTestdir:
 
     def _getpybinargs(self, scriptname):
         if not self.request.config.getvalue("notoolsonpath"):
-            # XXX we rely on script refering to the correct environment
+            # XXX we rely on script referring to the correct environment
             # we cannot use "(py.std.sys.executable,script)"
-            # becaue on windows the script is e.g. a py.test.exe
+            # because on windows the script is e.g. a py.test.exe
             return (py.std.sys.executable, _pytest_fullpath,) # noqa
         else:
             pytest.skip("cannot run %r with --no-tools-on-path" % scriptname)

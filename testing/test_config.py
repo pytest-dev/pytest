@@ -16,7 +16,7 @@ class TestParseIni:
         assert config.inicfg['name'] == 'value'
 
     def test_getcfg_empty_path(self, tmpdir):
-        getcfg([''], ['setup.cfg']) #happens on py.test  ""
+        getcfg([''], ['setup.cfg']) #happens on py.test ""
 
     def test_append_parse_args(self, testdir, tmpdir):
         tmpdir.join("setup.cfg").write(py.code.Source("""

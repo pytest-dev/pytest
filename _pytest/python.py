@@ -485,7 +485,7 @@ class Module(pytest.File, PyCollector):
             fin = getattr(self.obj, 'teardown_module', None)
         if fin is not None:
             #XXX: nose compat hack, move to nose plugin
-            # if it takes a positional arg, its probably a pytest style one
+            # if it takes a positional arg, it's probably a pytest style one
             # so we pass the current module object
             if inspect.getargspec(fin)[0]:
                 finalizer = lambda: fin(self.obj)
