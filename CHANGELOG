@@ -6,7 +6,7 @@ UNRELEASED
   Thanks Wolfgang L. for reporting and tracking it down.
 
 - fixed docs and code to use "pytest" instead of "py.test" everywhere.
-  Thanks Jurko Gspodnetic for the complete PR.
+  Thanks Jurko Gospodnetic for the complete PR.
 
 2.5.1
 -----------------------------------
