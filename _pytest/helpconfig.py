@@ -12,7 +12,9 @@ def pytest_addoption(parser):
             help="show help message and configuration info")
     group._addoption('-p', action="append", dest="plugins", default = [],
                metavar="name",
-               help="early-load given plugin (multi-allowed).")
+               help="early-load given plugin (multi-allowed). "
+                    "To avoid loading of plugins, use the `no:` prefix, e.g. "
+                    "`no:doctest`.")
     group.addoption('--traceconfig', '--trace-config',
                action="store_true", default=False,
                help="trace considerations of conftest.py files."),
