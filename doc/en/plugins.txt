@@ -138,7 +138,7 @@ may define a so-called entry point for your distribution so
 that ``pytest`` finds your plugin module.  Entry points are
 a feature that is provided by `setuptools`_ or `Distribute`_.
 pytest looks up the ``pytest11`` entrypoint to discover its
-plugins and you can thus make your plugin available by definig
+plugins and you can thus make your plugin available by defining
 it in your setuptools/distribute-based setup-invocation:
 
 .. sourcecode:: python
