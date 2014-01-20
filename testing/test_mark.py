@@ -57,6 +57,17 @@ class TestMark:
         assert f.world.args[0] == "hello"
         mark.world("world")(f)
 
+    def test_pytest_mark_positional_func_and_keyword(self):
+        mark = Mark()
+        def f():
+            raise Exception
+        m = mark.world(f, omega="hello")
+        def g():
+            pass
+        assert m(g) == g
+        assert g.world.args[0] is f
+        assert g.world.kwargs["omega"] == "hello"
+
     def test_pytest_mark_reuse(self):
         mark = Mark()
         def f():
