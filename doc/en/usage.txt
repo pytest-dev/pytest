@@ -153,6 +153,17 @@ for example ``-x`` if you only want to send one particular failure.
 
 Currently only pasting to the http://bpaste.net service is implemented.
 
+Disabling plugins
+-----------------
+
+To disable loading specific plugins at invocation time, use the ``-p`` option
+together with the prefix ``no:``.
+
+Example: to disable loading the plugin ``doctest``, which is responsible for
+executing doctest tests from text files, invoke py.test like this::
+
+    py.test -p no:doctest
+
 .. _`pytest.main-usage`:
 
 Calling pytest from Python code
