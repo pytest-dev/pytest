@@ -408,8 +408,9 @@ class TestTerminalFunctional:
         verinfo = ".".join(map(str, py.std.sys.version_info[:3]))
         result.stdout.fnmatch_lines([
             "*===== test session starts ====*",
-            "platform %s -- Python %s*" % (
-                    py.std.sys.platform, verinfo), # , py.std.sys.executable),
+            "platform %s -- Python %s* -- py-%s -- pytest-%s" % (
+                py.std.sys.platform, verinfo,
+                py.__version__, pytest.__version__),
             "*test_header_trailer_info.py .",
             "=* 1 passed in *.[0-9][0-9] seconds *=",
         ])
