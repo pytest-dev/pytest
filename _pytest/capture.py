@@ -331,7 +331,7 @@ class FDCapture:
                 "saved filedescriptor not valid, "
                 "did you call start() twice?")
         if self.targetfd == 0 and not self.tmpfile:
-            fd = os.open(devnullpath, os.O_RDONLY)
+            fd = os.open(os.devnull, os.O_RDONLY)
             os.dup2(fd, 0)
             os.close(fd)
             if hasattr(self, '_oldsys'):
@@ -639,12 +639,3 @@ class DontReadFromInput:
 
     def close(self):
         pass
-
-
-try:
-    devnullpath = os.devnull
-except AttributeError:
-    if os.name == 'nt':
-        devnullpath = 'NUL'
-    else:
-        devnullpath = '/dev/null'
