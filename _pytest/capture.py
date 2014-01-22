@@ -400,10 +400,6 @@ class EncodedFile(object):
     def write(self, obj):
         if isinstance(obj, unicode):
             obj = obj.encode(self.encoding)
-        elif isinstance(obj, str):
-            pass
-        else:
-            obj = str(obj)
         self._stream.write(obj)
 
     def writelines(self, linelist):
