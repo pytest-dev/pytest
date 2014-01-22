@@ -29,13 +29,16 @@ def pytest_load_initial_conftests(early_config, parser, args, __multicall__):
         method = "sys"
     capman = CaptureManager(method)
     early_config.pluginmanager.register(capman, "capturemanager")
+
     # make sure that capturemanager is properly reset at final shutdown
     def teardown():
         try:
             capman.reset_capturings()
         except ValueError:
             pass
+
     early_config.pluginmanager.add_shutdown(teardown)
+
     # make sure logging does not raise exceptions at the end
     def silence_logging_at_shutdown():
         if "logging" in sys.modules:
@@ -54,20 +57,26 @@ def pytest_load_initial_conftests(early_config, parser, args, __multicall__):
         sys.stderr.write(err)
         raise
 
+
 def addouterr(rep, outerr):
     for secname, content in zip(["out", "err"], outerr):
         if content:
             rep.sections.append(("Captured std%s" % secname, content))
 
+
 class NoCapture:
     def startall(self):
         pass
+
     def resume(self):
         pass
+
     def reset(self):
         pass
+
     def suspend(self):
         return "", ""
+
 
 class CaptureManager:
     def __init__(self, defaultmethod=None):
@@ -76,21 +85,25 @@ class CaptureManager:
 
     def _maketempfile(self):
         f = py.std.tempfile.TemporaryFile()
-        newf = py.io.dupfile(f, encoding="UTF-8")
+        newf = dupfile(f, encoding="UTF-8")
         f.close()
         return newf
 
     def _makestringio(self):
-        return py.io.TextIO()
+        return TextIO()
 
     def _getcapture(self, method):
         if method == "fd":
-            return py.io.StdCaptureFD(now=False,
-                out=self._maketempfile(), err=self._maketempfile()
+            return StdCaptureFD(
+                now=False,
+                out=self._maketempfile(),
+                err=self._maketempfile(),
             )
         elif method == "sys":
-            return py.io.StdCapture(now=False,
-                out=self._makestringio(), err=self._makestringio()
+            return StdCapture(
+                now=False,
+                out=self._makestringio(),
+                err=self._makestringio(),
             )
         elif method == "no":
             return NoCapture()
@@ -105,7 +118,7 @@ class CaptureManager:
                 method = config._conftest.rget("option_capture", path=fspath)
             except KeyError:
                 method = "fd"
-        if method == "fd" and not hasattr(os, 'dup'): # e.g. jython
+        if method == "fd" and not hasattr(os, 'dup'):  # e.g. jython
             method = "sys"
         return method
 
@@ -116,12 +129,13 @@ class CaptureManager:
     def resumecapture_item(self, item):
         method = self._getmethod(item.config, item.fspath)
         if not hasattr(item, 'outerr'):
-            item.outerr = ('', '') # we accumulate outerr on the item
+            item.outerr = ('', '')  # we accumulate outerr on the item
         return self.resumecapture(method)
 
     def resumecapture(self, method=None):
         if hasattr(self, '_capturing'):
-            raise ValueError("cannot resume, already capturing with %r" %
+            raise ValueError(
+                "cannot resume, already capturing with %r" %
                 (self._capturing,))
         if method is None:
             method = self._defaultmethod
@@ -170,8 +184,9 @@ class CaptureManager:
         try:
             self.resumecapture(method)
         except ValueError:
-            return # recursive collect, XXX refactor capturing
-                   # to allow for more lightweight recursive capturing
+            # recursive collect, XXX refactor capturing
+            # to allow for more lightweight recursive capturing
+            return
         try:
             rep = __multicall__.execute()
         finally:
@@ -212,6 +227,7 @@ class CaptureManager:
 
 error_capsysfderror = "cannot use capsys and capfd at the same time"
 
+
 def pytest_funcarg__capsys(request):
     """enables capturing of writes to sys.stdout/sys.stderr and makes
     captured output available via ``capsys.readouterr()`` method calls
@@ -219,7 +235,8 @@ def pytest_funcarg__capsys(request):
     """
     if "capfd" in request._funcargs:
         raise request.raiseerror(error_capsysfderror)
-    return CaptureFixture(py.io.StdCapture)
+    return CaptureFixture(StdCapture)
+
 
 def pytest_funcarg__capfd(request):
     """enables capturing of writes to file descriptors 1 and 2 and makes
@@ -230,7 +247,8 @@ def pytest_funcarg__capfd(request):
         request.raiseerror(error_capsysfderror)
     if not hasattr(os, 'dup'):
         pytest.skip("capfd funcarg needs os.dup")
-    return CaptureFixture(py.io.StdCaptureFD)
+    return CaptureFixture(StdCaptureFD)
+
 
 class CaptureFixture:
     def __init__(self, captureclass):
@@ -253,9 +271,7 @@ class CaptureFixture:
 
     def close(self):
         self._finalize()
-import os
-import sys
-import py
+
 import tempfile
 
 try:
@@ -263,11 +279,13 @@ try:
 except ImportError:
     from StringIO import StringIO
 
-if sys.version_info < (3,0):
+
+if sys.version_info < (3, 0):
     class TextIO(StringIO):
         def write(self, data):
             if not isinstance(data, unicode):
-                data = unicode(data, getattr(self, '_encoding', 'UTF-8'), 'replace')
+                enc = getattr(self, '_encoding', 'UTF-8')
+                data = unicode(data, enc, 'replace')
             StringIO.write(self, data)
 else:
     TextIO = StringIO
@@ -278,10 +296,11 @@ except ImportError:
     class BytesIO(StringIO):
         def write(self, data):
             if isinstance(data, unicode):
-                raise TypeError("not a byte value: %r" %(data,))
+                raise TypeError("not a byte value: %r" % (data,))
             StringIO.write(self, data)
 
 patchsysdict = {0: 'stdin', 1: 'stdout', 2: 'stderr'}
+
 
 class FDCapture:
     """ Capture IO to/from a given os-level filedescriptor. """
@@ -308,7 +327,8 @@ class FDCapture:
         try:
             os.fstat(self._savefd)
         except OSError:
-            raise ValueError("saved filedescriptor not valid, "
+            raise ValueError(
+                "saved filedescriptor not valid, "
                 "did you call start() twice?")
         if self.targetfd == 0 and not self.tmpfile:
             fd = os.open(devnullpath, os.O_RDONLY)
@@ -360,7 +380,7 @@ def dupfile(f, mode=None, buffering=0, raising=False, encoding=None):
             raise
         return f
     newfd = os.dup(fd)
-    if sys.version_info >= (3,0):
+    if sys.version_info >= (3, 0):
         if encoding is not None:
             mode = mode.replace("b", "")
             buffering = True
@@ -370,6 +390,7 @@ def dupfile(f, mode=None, buffering=0, raising=False, encoding=None):
         if encoding is not None:
             return EncodedFile(f, encoding)
         return f
+
 
 class EncodedFile(object):
     def __init__(self, _stream, encoding):
@@ -391,6 +412,7 @@ class EncodedFile(object):
 
     def __getattr__(self, name):
         return getattr(self._stream, name)
+
 
 class Capture(object):
     def call(cls, func, *args, **kwargs):
@@ -437,7 +459,7 @@ class StdCaptureFD(Capture):
         is invalid it will not be captured.
     """
     def __init__(self, out=True, err=True, mixed=False,
-        in_=True, patchsys=True, now=True):
+                 in_=True, patchsys=True, now=True):
         self._options = {
             "out": out,
             "err": err,
@@ -458,7 +480,8 @@ class StdCaptureFD(Capture):
         patchsys = self._options['patchsys']
         if in_:
             try:
-                self.in_ = FDCapture(0, tmpfile=None, now=False,
+                self.in_ = FDCapture(
+                    0, tmpfile=None, now=False,
                     patchsys=patchsys)
             except OSError:
                 pass
@@ -467,8 +490,9 @@ class StdCaptureFD(Capture):
             if hasattr(out, 'write'):
                 tmpfile = out
             try:
-                self.out = FDCapture(1, tmpfile=tmpfile,
-                           now=False, patchsys=patchsys)
+                self.out = FDCapture(
+                    1, tmpfile=tmpfile,
+                    now=False, patchsys=patchsys)
                 self._options['out'] = self.out.tmpfile
             except OSError:
                 pass
@@ -480,8 +504,9 @@ class StdCaptureFD(Capture):
             else:
                 tmpfile = None
             try:
-                self.err = FDCapture(2, tmpfile=tmpfile,
-                           now=False, patchsys=patchsys)
+                self.err = FDCapture(
+                    2, tmpfile=tmpfile,
+                    now=False, patchsys=patchsys)
                 self._options['err'] = self.err.tmpfile
             except OSError:
                 pass
@@ -506,7 +531,7 @@ class StdCaptureFD(Capture):
         if hasattr(self, 'err') and not self.err.tmpfile.closed:
             errfile = self.err.done()
         if hasattr(self, 'in_'):
-            tmpfile = self.in_.done()
+            self.in_.done()
         if save:
             self._save()
         return outfile, errfile
@@ -543,7 +568,7 @@ class StdCapture(Capture):
     def __init__(self, out=True, err=True, in_=True, mixed=False, now=True):
         self._oldout = sys.stdout
         self._olderr = sys.stderr
-        self._oldin  = sys.stdin
+        self._oldin = sys.stdin
         if out and not hasattr(out, 'file'):
             out = TextIO()
         self.out = out
@@ -563,7 +588,7 @@ class StdCapture(Capture):
         if self.err:
             sys.stderr = self.err
         if self.in_:
-            sys.stdin  = self.in_  = DontReadFromInput()
+            sys.stdin = self.in_ = DontReadFromInput()
 
     def done(self, save=True):
         """ return (outfile, errfile) and stop capturing. """
@@ -597,6 +622,7 @@ class StdCapture(Capture):
             self.err.seek(0)
         return out, err
 
+
 class DontReadFromInput:
     """Temporary stub class.  Ideally when stdin is accessed, the
     capturing should be turned off, with possibly all data captured
@@ -612,10 +638,13 @@ class DontReadFromInput:
 
     def fileno(self):
         raise ValueError("redirected Stdin is pseudofile, has no fileno()")
+
     def isatty(self):
         return False
+
     def close(self):
         pass
+
 
 try:
     devnullpath = os.devnull
