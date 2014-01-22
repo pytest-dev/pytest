@@ -4,8 +4,37 @@
 """
 import sys
 import os
+import tempfile
+
 import py
 import pytest
+
+try:
+    from io import StringIO
+except ImportError:
+    from StringIO import StringIO
+
+try:
+    from io import BytesIO
+except ImportError:
+    class BytesIO(StringIO):
+        def write(self, data):
+            if isinstance(data, unicode):
+                raise TypeError("not a byte value: %r" % (data,))
+            StringIO.write(self, data)
+
+if sys.version_info < (3, 0):
+    class TextIO(StringIO):
+        def write(self, data):
+            if not isinstance(data, unicode):
+                enc = getattr(self, '_encoding', 'UTF-8')
+                data = unicode(data, enc, 'replace')
+            StringIO.write(self, data)
+else:
+    TextIO = StringIO
+
+
+patchsysdict = {0: 'stdin', 1: 'stdout', 2: 'stderr'}
 
 
 def pytest_addoption(parser):
@@ -271,35 +300,6 @@ class CaptureFixture:
 
     def close(self):
         self._finalize()
-
-import tempfile
-
-try:
-    from io import StringIO
-except ImportError:
-    from StringIO import StringIO
-
-
-if sys.version_info < (3, 0):
-    class TextIO(StringIO):
-        def write(self, data):
-            if not isinstance(data, unicode):
-                enc = getattr(self, '_encoding', 'UTF-8')
-                data = unicode(data, enc, 'replace')
-            StringIO.write(self, data)
-else:
-    TextIO = StringIO
-
-try:
-    from io import BytesIO
-except ImportError:
-    class BytesIO(StringIO):
-        def write(self, data):
-            if isinstance(data, unicode):
-                raise TypeError("not a byte value: %r" % (data,))
-            StringIO.write(self, data)
-
-patchsysdict = {0: 'stdin', 1: 'stdout', 2: 'stderr'}
 
 
 class FDCapture:
