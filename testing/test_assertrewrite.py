@@ -411,6 +411,13 @@ def test_rewritten():
         testdir.tmpdir.join("test_newlines.py").write(b, "wb")
         assert testdir.runpytest().ret == 0
 
+    @pytest.mark.skipif(sys.version_info[0] == 2,
+                        reason='packages without __init__.py not supported on python 2')
+    def test_package_without__init__py(self, testdir):
+        pkg = testdir.mkdir('a_package_without_init_py')
+        mod = pkg.join('module.py').ensure()
+        testdir.makepyfile("import a_package_without_init_py.module")
+        assert testdir.runpytest().ret == 0
 
 class TestAssertionRewriteHookDetails(object):
     def test_loader_is_package_false_for_module(self, testdir):
