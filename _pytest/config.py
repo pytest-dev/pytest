@@ -1,7 +1,7 @@
 """ command line options, ini-file and conftest.py processing. """
 
 import py
-import pytest
+# DON't import pytest here because it causes import cycle troubles
 import sys, os
 from _pytest import hookspec # the extension point definitions
 from _pytest.core import PluginManager
@@ -817,7 +817,8 @@ class Config(object):
                 raise KeyError(name)
             return val
         except KeyError:
-            pytest.skip("no %r value found" %(name,))
+            import pytest
+            py.test.skip("no %r value found" %(name,))
 
 def exists(path, ignore=EnvironmentError):
     try:

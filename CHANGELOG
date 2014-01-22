@@ -5,11 +5,12 @@ UNRELEASED
   trying to import from collections.abc which causes problems for py27/cx_freeze.
   Thanks Wolfgang L. for reporting and tracking it down.
 
-- fixed docs and code to use "pytest" instead of "py.test" everywhere.
-  Thanks Jurko Gospodnetic for the complete PR.
+- fixed docs and code to use "pytest" instead of "py.test" almost everywhere.
+  Thanks Jurko Gospodnetic for the complete PR.  
 
 - fix issue425: mention at end of "py.test -h" that --markers
   and --fixtures work according to specified test path (or current dir)
+
 
 2.5.1
 -----------------------------------
