@@ -84,6 +84,8 @@ def showhelp(config):
     #tw.sep("=")
     tw.line("to see available markers type: py.test --markers")
     tw.line("to see available fixtures type: py.test --fixtures")
+    tw.line("(shown according to specified file_or_dir or current dir "
+            "if not specified)")
     return
 
     tw.line("conftest.py options:")

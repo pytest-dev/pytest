@@ -8,6 +8,9 @@ UNRELEASED
 - fixed docs and code to use "pytest" instead of "py.test" everywhere.
   Thanks Jurko Gospodnetic for the complete PR.
 
+- fix issue425: mention at end of "py.test -h" that --markers
+  and --fixtures work according to specified test path (or current dir)
+
 2.5.1
 -----------------------------------
 
