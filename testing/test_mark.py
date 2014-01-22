@@ -115,6 +115,28 @@ def test_markers_option(testdir):
         "*a1some*another marker",
     ])
 
+def test_markers_option_with_plugin_in_current_dir(testdir):
+    testdir.makeconftest('pytest_plugins = "flip_flop"')
+    testdir.makepyfile(flip_flop="""\
+        def pytest_configure(config):
+            config.addinivalue_line("markers", "flip:flop")
+
+        def pytest_generate_tests(metafunc):
+            try:
+                mark = metafunc.function.flipper
+            except AttributeError:
+                return
+            metafunc.parametrize("x", (10, 20))""")
+    testdir.makepyfile("""\
+        import pytest
+        @pytest.mark.flipper
+        def test_example(x):
+            assert x""")
+
+    result = testdir.runpytest("--markers")
+    result.stdout.fnmatch_lines(["*flip*flop*"])
+
+
 def test_mark_on_pseudo_function(testdir):
     testdir.makepyfile("""
         import pytest
