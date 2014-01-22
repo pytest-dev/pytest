@@ -152,7 +152,7 @@ class CaptureManager:
         return method
 
     def reset_capturings(self):
-        for name, cap in self._method2capture.items():
+        for cap in self._method2capture.values():
             cap.reset()
 
     def resumecapture_item(self, item):
