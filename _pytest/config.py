@@ -817,7 +817,6 @@ class Config(object):
                 raise KeyError(name)
             return val
         except KeyError:
-            import pytest
             py.test.skip("no %r value found" %(name,))
 
 def exists(path, ignore=EnvironmentError):
