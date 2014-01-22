@@ -494,7 +494,7 @@ def test_capture_early_option_parsing(testdir):
     assert result.ret == 0
     assert 'hello19' in result.stdout.str()
 
-@pytest.mark.xfail(sys.version_info >= (3, 0), reason='encoding issues')
+@pytest.mark.xfail(reason='encoding issues')
 def test_capture_binary_output(testdir):
     testdir.makepyfile("""
         import pytest
@@ -515,4 +515,4 @@ def test_capture_binary_output(testdir):
     result.stdout.fnmatch_lines([
         '*2 passed*',
     ])
-    
+
