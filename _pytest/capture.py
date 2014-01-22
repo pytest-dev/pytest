@@ -283,20 +283,20 @@ def pytest_funcarg__capfd(request):
 
 class CaptureFixture:
     def __init__(self, captureclass):
-        self.capture = captureclass(now=False)
+        self._capture = captureclass(now=False)
 
     def _start(self):
-        self.capture.startall()
+        self._capture.startall()
 
     def _finalize(self):
         if hasattr(self, 'capture'):
-            outerr = self._outerr = self.capture.reset()
-            del self.capture
+            outerr = self._outerr = self._capture.reset()
+            del self._capture
             return outerr
 
     def readouterr(self):
         try:
-            return self.capture.readouterr()
+            return self._capture.readouterr()
         except AttributeError:
             return self._outerr
 
