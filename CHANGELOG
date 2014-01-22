@@ -11,6 +11,9 @@ UNRELEASED
 - fix issue425: mention at end of "py.test -h" that --markers
   and --fixtures work according to specified test path (or current dir)
 
+- fix issue413: exceptions with unicode attributes are now printed
+  correctly also on python2 and with pytest-xdist runs. (the fix
+  requires py-1.4.20)
 
 2.5.1
 -----------------------------------
