@@ -43,7 +43,7 @@ Fix bugs
 Look through the BitBucket issues for bugs.  Here is sample filter you can use:
 https://bitbucket.org/hpk42/pytest/issues?status=new&status=open&kind=bug
 
-:ref:'Talk <contact>' to developers to find out how you can fix specific bugs.
+:ref:`Talk <contact>` to developers to find out how you can fix specific bugs.
 
 Implement features
 ------------------
@@ -52,7 +52,7 @@ Look through the BitBucket issues for enhancements.  Here is sample filter you
 can use:
 https://bitbucket.org/hpk42/pytest/issues?status=new&status=open&kind=enhancement
 
-:ref:'Talk <contact>' to developers to find out how you can implement specific
+:ref:`Talk <contact>` to developers to find out how you can implement specific
 features.
 
 Write documentation
@@ -68,16 +68,29 @@ py.test could always use more documentation.  What exactly is needed?
 Getting started for contributing
 ================================
 
-1. Fork the py.test repository on BitBucket.
+The primary development platform for py.test is BitBucket.  You can find all
+the issues there and submit pull requests.  There is, however,
+a `GitHub mirror <https://github.com/hpk42/pytest/>`__ available, too,
+although it only allows for submitting pull requests.  For a GitHub
+contribution guide look :ref:`below <contribution-on-github>`.
+
+1. Fork the py.test `repository <https://bitbucket.org/hpk42/pytest>`__ on BitBucket.
+
+2. Create a local virtualenv (http://www.virtualenv.org/en/latest/)::
+
+    $ virtualenv pytest-venv
+    $ cd pytest-venv/
+
 .. _checkout:
-2. Clone your fork locally::
+
+3. Clone your fork locally::
 
     $ hg clone ssh://hg@bitbucket.org/your_name_here/pytest
 
-3. Install your local copy into a virtualenv.  Assuming you have
-   ``virtualenvwrapper`` (http://virtualenvwrapper.readthedocs.org) installed::
+.. _installing-dev-pytest:
 
-    $ mkvirtualenv pytest
+4. Install your local copy into a virtualenv::
+
     $ cd pytest/
     $ python setup.py develop
 
@@ -86,11 +99,7 @@ Getting started for contributing
 
     $ python setup.py develop -i http://pypi.testrun.org
 
-4. Create a branch for local development::
-
-    $ hg branch name-of-your-bugfix-or-feature
-
-   Now you can make your changes locally.
+.. _testing-pytest:
 
 5. When you're done making changes, check that all of them pass all the tests
    (including PEP8 and different Python interpreter versions).  It's as simple
@@ -110,10 +119,41 @@ Getting started for contributing
 
   You also need to have Python 3.3 and 2.7 available in your system.
 
-6. Commit your changes and push your branch to BitBucket::
+6. Commit your changes and push to BitBucket::
 
     $ hg add .
     $ hg commit
-    $ hg push --new-branch -r .
+    $ hg push -r .
 
 7. Submit a pull request through the BitBucket website.
+
+
+.. _contribution-on-github:
+What about GitHub?
+------------------
+
+.. warning::
+  Remember that GitHub is **not** a default development platform for py.test
+  and it doesn't include e.g. issue list.
+
+1. Fork the py.test `repository <https://github.com/hpk42/pytest/>`__ on GitHub.
+
+2. Create a local virtualenv (http://www.virtualenv.org/en/latest/)::
+
+    $ virtualenv pytest-venv
+    $ cd pytest-venv/
+
+3. Clone your fork locally::
+
+    $ git clone git@github.com:your_name_here/pytest.git
+
+4. :ref:`Install your local copy into a virtualenv <installing-dev-pytest>`
+   and after that :ref:`test your changes <testing-pytest>`.
+
+5. Commit your changes and push to GitHub::
+
+    $ git add .
+    $ git commit
+    $ git push -u
+
+6. Submit a pull request through the GitHub website.
