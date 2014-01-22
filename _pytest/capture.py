@@ -538,17 +538,16 @@ class StdCaptureFD(Capture):
 
     def readouterr(self):
         """ return snapshot value of stdout/stderr capturings. """
-        if hasattr(self, "out"):
-            out = self._readsnapshot(self.out.tmpfile)
-        else:
-            out = ""
-        if hasattr(self, "err"):
-            err = self._readsnapshot(self.err.tmpfile)
-        else:
-            err = ""
-        return [out, err]
+        out = self._readsnapshot('out')
+        err = self._readsnapshot('err')
+        return out, err
 
-    def _readsnapshot(self, f):
+    def _readsnapshot(self, name):
+        if hasattr(self, name):
+            f = getattr(self, name).tmpfile
+        else:
+            return ''
+
         f.seek(0)
         res = f.read()
         enc = getattr(f, "encoding", None)
