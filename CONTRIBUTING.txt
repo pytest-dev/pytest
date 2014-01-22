@@ -102,22 +102,20 @@ contribution guide look :ref:`below <contribution-on-github>`.
 .. _testing-pytest:
 
 5. When you're done making changes, check that all of them pass all the tests
-   (including PEP8 and different Python interpreter versions).  It's as simple
-   as issuing this one command::
-
-    $ tox
-
-  The least minimum of required Python tests to pass is Python 2.7 and
-  Python 3.3::
-
-    $ tox -e py27,py33
-
-  If you don't seem to have ``tox`` installed, issue this from inside your
-  virtualenv::
+   (including PEP8 and different Python interpreter versions).  First install
+   ``tox``::
 
     $ pip install tox
 
-  You also need to have Python 3.3 and 2.7 available in your system.
+  You also need to have Python 2.7 and 3.3 available in your system.  Now
+  running tests is as simple as issuing this one command::
+
+    $ tox -e py27,py33
+
+  This command will run tests for both Python 2.7 and 3.3, which is a minimum
+  required to get your patch merged.  To run whole test suit issue::
+
+    $ tox
 
 6. Commit your changes and push to BitBucket::
 
