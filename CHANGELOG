@@ -15,6 +15,10 @@ UNRELEASED
   correctly also on python2 and with pytest-xdist runs. (the fix
   requires py-1.4.20)
 
+- copy, cleanup and integrate py.io capture
+  from pylib 1.4.20.dev2 (rev 13d9af95547e)
+
+
 2.5.1
 -----------------------------------
 
