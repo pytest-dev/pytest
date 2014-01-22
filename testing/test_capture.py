@@ -6,8 +6,39 @@ import pytest
 
 from _pytest import capture
 from _pytest.capture import CaptureManager
+from py.builtin import print_
 
 needsosdup = pytest.mark.xfail("not hasattr(os, 'dup')")
+
+if sys.version_info >= (3, 0):
+    def tobytes(obj):
+        if isinstance(obj, str):
+            obj = obj.encode('UTF-8')
+        assert isinstance(obj, bytes)
+        return obj
+
+    def totext(obj):
+        if isinstance(obj, bytes):
+            obj = str(obj, 'UTF-8')
+        assert isinstance(obj, str)
+        return obj
+else:
+    def tobytes(obj):
+        if isinstance(obj, unicode):
+            obj = obj.encode('UTF-8')
+        assert isinstance(obj, str)
+        return obj
+
+    def totext(obj):
+        if isinstance(obj, str):
+            obj = unicode(obj, 'UTF-8')
+        assert isinstance(obj, unicode)
+        return obj
+
+
+def oswritebytes(fd, obj):
+    os.write(fd, tobytes(obj))
+
 
 
 class TestCaptureManager:
@@ -532,41 +563,6 @@ def test_capture_binary_output(testdir):
     ])
 
 
-needsdup = pytest.mark.skipif("not hasattr(os, 'dup')")
-
-from py.builtin import print_
-
-
-if sys.version_info >= (3, 0):
-    def tobytes(obj):
-        if isinstance(obj, str):
-            obj = obj.encode('UTF-8')
-        assert isinstance(obj, bytes)
-        return obj
-
-    def totext(obj):
-        if isinstance(obj, bytes):
-            obj = str(obj, 'UTF-8')
-        assert isinstance(obj, str)
-        return obj
-else:
-    def tobytes(obj):
-        if isinstance(obj, unicode):
-            obj = obj.encode('UTF-8')
-        assert isinstance(obj, str)
-        return obj
-
-    def totext(obj):
-        if isinstance(obj, str):
-            obj = unicode(obj, 'UTF-8')
-        assert isinstance(obj, unicode)
-        return obj
-
-
-def oswritebytes(fd, obj):
-    os.write(fd, tobytes(obj))
-
-
 class TestTextIO:
     def test_text(self):
         f = capture.TextIO()
@@ -614,7 +610,7 @@ def pytest_funcarg__tmpfile(request):
     return f
 
 
-@needsdup
+@needsosdup
 def test_dupfile(tmpfile):
     flist = []
     for i in range(5):
@@ -661,7 +657,7 @@ def lsof_check(func):
 
 
 class TestFDCapture:
-    pytestmark = needsdup
+    pytestmark = needsosdup
 
     def test_not_now(self, tmpfile):
         fd = tmpfile.fileno()
@@ -887,7 +883,7 @@ class TestStdCaptureNotNow(TestStdCapture):
 
 
 class TestStdCaptureFD(TestStdCapture):
-    pytestmark = needsdup
+    pytestmark = needsosdup
 
     def getcapture(self, **kw):
         return capture.StdCaptureFD(**kw)
@@ -926,7 +922,7 @@ class TestStdCaptureFD(TestStdCapture):
 
 
 class TestStdCaptureFDNotNow(TestStdCaptureFD):
-    pytestmark = needsdup
+    pytestmark = needsosdup
 
     def getcapture(self, **kw):
         kw['now'] = False
@@ -935,7 +931,7 @@ class TestStdCaptureFDNotNow(TestStdCaptureFD):
         return cap
 
 
-@needsdup
+@needsosdup
 def test_stdcapture_fd_tmpfile(tmpfile):
     capfd = capture.StdCaptureFD(out=tmpfile)
     os.write(1, "hello".encode("ascii"))
@@ -945,7 +941,7 @@ def test_stdcapture_fd_tmpfile(tmpfile):
 
 
 class TestStdCaptureFDinvalidFD:
-    pytestmark = needsdup
+    pytestmark = needsosdup
 
     def test_stdcapture_fd_invalid_fd(self, testdir):
         testdir.makepyfile("""
@@ -976,7 +972,7 @@ def test_capture_not_started_but_reset():
     capsys.reset()
 
 
-@needsdup
+@needsosdup
 def test_capture_no_sys():
     capsys = capture.StdCapture()
     try:
@@ -992,7 +988,7 @@ def test_capture_no_sys():
         capsys.reset()
 
 
-@needsdup
+@needsosdup
 def test_callcapture_nofd():
     def func(x, y):
         oswritebytes(1, "hello")
@@ -1011,7 +1007,7 @@ def test_callcapture_nofd():
     assert err.startswith("4")
 
 
-@needsdup
+@needsosdup
 @pytest.mark.parametrize('use', [True, False])
 def test_fdcapture_tmpfile_remains_the_same(tmpfile, use):
     if not use:
