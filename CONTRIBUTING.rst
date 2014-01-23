@@ -1,10 +1,10 @@
-
 ============
 Contributing
 ============
 
 Contributions are highly welcomed and appreciated.  Every little help counts,
 so do not hesitate!
+
 
 Types of contributions
 ======================
@@ -125,7 +125,13 @@ contribution guide look :ref:`below <contribution-on-github>`.
     $ hg commit -m"<commit message>
     $ hg push -b .
 
-7. Submit a pull request through the BitBucket website.
+7. Submit a pull request through the BitBucket website:
+
+    source: <your user>/pytest
+    branch: <yourbranchname>
+
+    target: hpk42/pytest
+    branch: default
 
 
 .. _contribution-on-github:
@@ -158,4 +164,10 @@ What about GitHub?
     $ git commit -am"<commit message>"
     $ git push origin <yourbranchname>
 
-6. Submit a pull request through the GitHub website.
+6. Submit a pull request through the GitHub website using the schema::
+
+    base fork: hpk42/pytest
+    base: master
+
+    head fork: <your user>/pytest
+    compare: <yourbranchname>
