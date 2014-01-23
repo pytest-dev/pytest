@@ -9,10 +9,23 @@ so do not hesitate!
 Types of contributions
 ======================
 
+Report bugs
+-----------
+
+Report bugs at https://bitbucket.org/hpk42/pytest/issues.
+
+If you are reporting a bug, please include:
+
+* Your operating system name and version.
+* Any details about your local setup that might be helpful in troubleshooting,
+  specifically Python interpreter version,
+  installed libraries and pytest version.
+* Detailed steps to reproduce the bug.
+
 Submit feedback for developers
 ------------------------------
 
-Do you like py.test?  Share some love on Twitter or in your blog posts!
+Do you like pytest?  Share some love on Twitter or in your blog posts!
 
 We'd also like to hear about your propositions and suggestions.  Feel free to
 `submit them as issues <https://bitbucket.org/hpk42/pytest/issues>`__ and:
@@ -24,18 +37,6 @@ We'd also like to hear about your propositions and suggestions.  Feel free to
 * If you have required skills and/or knowledge, we are very happy for
   pull requests (see below).
 
-Report bugs
------------
-
-Report bugs at https://bitbucket.org/hpk42/pytest/issues.
-
-If you are reporting a bug, please include:
-
-* Your operating system name and version.
-* Any details about your local setup that might be helpful in troubleshooting,
-  specifically Python interpreter version,
-  installed libraries and py.test version.
-* Detailed steps to reproduce the bug.
 
 Fix bugs
 --------
@@ -58,74 +59,75 @@ features.
 Write documentation
 -------------------
 
-py.test could always use more documentation.  What exactly is needed?
+pytest could always use more documentation.  What exactly is needed?
 
 * More complementary documentation.  Have you perhaps found something unclear?
 * Documentation translations.  We currently have English and Japanese versions.
 * Docstrings.  There's never too much of them.
 * Blog posts, articles and such -- they're all very appreciated.
 
-Getting started for contributing
-================================
+Preparing Pull Requests on Bitbucket
+=====================================
 
-The primary development platform for py.test is BitBucket.  You can find all
+The primary development platform for pytest is BitBucket.  You can find all
 the issues there and submit pull requests.  There is, however,
 a `GitHub mirror <https://github.com/hpk42/pytest/>`__ available, too,
 although it only allows for submitting pull requests.  For a GitHub
 contribution guide look :ref:`below <contribution-on-github>`.
 
-1. Fork the py.test `repository <https://bitbucket.org/hpk42/pytest>`__ on BitBucket.
+1. Fork the `pytest bitbucket repository <https://bitbucket.org/hpk42/pytest>`__. It's fine to
+  use ``pytest`` as your fork repository name because it will live
+  under your user.
 
-2. Create a local virtualenv (http://www.virtualenv.org/en/latest/)::
+.. _virtualenvactivate:
+
+2. Create and activate a fork-specific virtualenv
+   (http://www.virtualenv.org/en/latest/)::
 
     $ virtualenv pytest-venv
-    $ cd pytest-venv/
-    $ source bin/activate
+    $ source pytest-venv/bin/activate
 
 .. _checkout:
 
-3. Clone your fork locally::
+3. Clone your fork locally and create a branch::
 
-    $ hg clone ssh://hg@bitbucket.org/your_name_here/pytest
-
-.. _installing-dev-pytest:
-
-4. Install your local copy into a virtualenv::
-
-    $ cd pytest/
-    $ python setup.py develop
-
-   If that last command complains about not finding the required version
-   of "py" then you need to use the development pypi repository::
-
-    $ python setup.py develop -i http://pypi.testrun.org
+    $ hg clone ssh://hg@bitbucket.org/YOUR_BITBUCKET_USERNAME/pytest
+    $ cd pytest
+    $ hg branch <yourbranchname>
 
 .. _testing-pytest:
 
-5. When you're done making changes, check that all of them pass all the tests
-   (including PEP8 and different Python interpreter versions).  First install
-   ``tox``::
+4. You can now edit your local working copy.  To test you need to
+   install the "tox" tool into your virtualenv::
 
     $ pip install tox
 
-  You also need to have Python 2.7 and 3.3 available in your system.  Now
-  running tests is as simple as issuing this one command::
+  You need to have Python 2.7 and 3.3 available in your system.  Now
+  running tests is as simple as issuing this command::
 
-    $ tox -e py27,py33
+    $ python runtox.py -e py27,py33,flakes
 
-  This command will run tests for both Python 2.7 and 3.3, which is a minimum
-  required to get your patch merged.  To run whole test suit issue::
+  This command will run tests via the "tox" tool against Python 2.7 and 3.3
+  and also perform "flakes" coding-style checks.  ``runtox.py`` is
+  a thin wrapper around ``tox`` which installs from a development package
+  index where newer (not yet released to pypi) versions of dependencies
+  (especially ``py``) might be present.
 
-    $ tox
+  To run tests on py27 and pass options (e.g. enter pdb on failure)
+  to pytest you can do::
 
-6. Commit your changes and push to BitBucket::
+    $ python runtox.py -e py27 -- --pdb
 
-    $ hg branch <yourbranchname>
-    $ hg add .
-    $ hg commit -m"<commit message>
+  or to only run tests in a particular test module on py33::
+
+    $ python runtox.py -e py33 -- testing/test_config.py
+
+5. Commit and push once your tests pass and you are happy with your change(s)::
+
+    $ hg commit -m"<commit message>"
     $ hg push -b .
 
-7. Submit a pull request through the BitBucket website:
+6. Finally, submit a pull request through the BitBucket website::
 
     source: <your user>/pytest
     branch: <yourbranchname>

@@ -18,6 +18,9 @@ Basic usage and fixtures:
 - `pytest introduction from Brian Okken (January 2013)
   <http://pythontesting.net/framework/pytest-introduction/>`_
 
+- `3-part blog series about pytest from Daniel Greenfeld (January
+  2014) <http://pydanny.com/pytest-no-boilerplate-testing.html>`_
+
 - `pycon australia 2012 pytest talk from Brianna Laugher
   <http://2012.pycon-au.org/schedule/52/view_talk?day=sunday>`_ (`video <http://www.youtube.com/watch?v=DTNejE9EraI>`_, `slides <http://www.slideshare.net/pfctdayelise/funcargs-other-fun-with-pytest>`_, `code <https://gist.github.com/3386951>`_)
 - `pycon 2012 US talk video from Holger Krekel <http://www.youtube.com/watch?v=9LVqBQcFmyw>`_
