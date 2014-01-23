@@ -19,13 +19,13 @@ If you are reporting a bug, please include:
 * Your operating system name and version.
 * Any details about your local setup that might be helpful in troubleshooting,
   specifically Python interpreter version,
-  installed libraries and py.test version.
+  installed libraries and pytest version.
 * Detailed steps to reproduce the bug.
 
 Submit feedback for developers
 ------------------------------
 
-Do you like py.test?  Share some love on Twitter or in your blog posts!
+Do you like pytest?  Share some love on Twitter or in your blog posts!
 
 We'd also like to hear about your propositions and suggestions.  Feel free to
 `submit them as issues <https://bitbucket.org/hpk42/pytest/issues>`__ and:
@@ -59,7 +59,7 @@ features.
 Write documentation
 -------------------
 
-py.test could always use more documentation.  What exactly is needed?
+pytest could always use more documentation.  What exactly is needed?
 
 * More complementary documentation.  Have you perhaps found something unclear?
 * Documentation translations.  We currently have English and Japanese versions.
@@ -69,7 +69,7 @@ py.test could always use more documentation.  What exactly is needed?
 Preparing Pull Requests on Bitbucket
 =====================================
 
-The primary development platform for py.test is BitBucket.  You can find all
+The primary development platform for pytest is BitBucket.  You can find all
 the issues there and submit pull requests.  There is, however,
 a `GitHub mirror <https://github.com/hpk42/pytest/>`__ available, too,
 although it only allows for submitting pull requests.  For a GitHub
@@ -142,7 +142,7 @@ Preparing Pull Requests on Github
 
 .. warning::
 
-  Remember that GitHub is **not** a default development platform for py.test
+  Remember that GitHub is **not** a default development platform for pytest
   and it doesn't include e.g. issue list.
 
 1. Fork the `pytest github repository <https://github.com/hpk42/pytest/>`__.
