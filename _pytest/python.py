@@ -938,12 +938,6 @@ def raises(ExpectedException, *args, **kwargs):
 
     This helper produces a ``py.code.ExceptionInfo()`` object.
 
-    Note that any local references made to such returned
-    ``py.code.ExceptionInfo()`` objects should be explicitly cleared, as they
-    are part of a reference cycle similar to local references to caught Python
-    exception objects. See the official Python ``try`` statement documentation
-    for more detailed information.
-
     If using Python 2.5 or above, you may use this function as a
     context manager::
 
@@ -968,6 +962,22 @@ def raises(ExpectedException, *args, **kwargs):
 
         >>> raises(ZeroDivisionError, "f(0)")
         <ExceptionInfo ...>
+
+    Performance note:
+    -----------------
+
+    Similar to caught exception objects in Python, explicitly clearing local
+    references to returned ``py.code.ExceptionInfo`` objects can help the Python
+    interpreter speed up its garbage collection.
+
+    Clearing those references breaks a reference cycle (``ExceptionInfo`` -->
+    caught exception --> frame stack raising the exception --> current frame
+    stack --> local variables --> ``ExceptionInfo``) which makes Python keep all
+    objects referenced from that cycle (including all local variables in the
+    current frame) alive until the next cyclic garbage collection run. See the
+    official Python ``try`` statement documentation for more detailed
+    information.
+
     """
     __tracebackhide__ = True
     if ExpectedException is AssertionError:
