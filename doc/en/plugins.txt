@@ -177,9 +177,15 @@ Plugin discovery order at tool startup
   and loading the specified plugin before actual command line parsing.
 
 * by loading all :file:`conftest.py` files as inferred by the command line
-  invocation (test files and all of its *parent* directories).
-  Note that ``conftest.py`` files from *sub* directories are by default
-  not loaded at tool startup.
+  invocation:
+
+  - if no test paths are specified use current dir as a test path
+  - if exists, load ``conftest.py`` and ``test*/conftest.py`` relative 
+    to the directory part of the first test path. 
+
+  Note that pytest does not find ``conftest.py`` files in deeper nested
+  sub directories at tool startup.  It is usually a good idea to keep
+  your conftest.py file in the top level test or project root directory.
 
 * by recursively loading all plugins specified by the
   ``pytest_plugins`` variable in ``conftest.py`` files

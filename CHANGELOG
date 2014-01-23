@@ -15,6 +15,9 @@ UNRELEASED
   correctly also on python2 and with pytest-xdist runs. (the fix
   requires py-1.4.20)
 
+- address issue416: clarify docs as to conftest.py loading semantics
+
+
 2.5.1
 -----------------------------------
 
