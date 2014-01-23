@@ -134,40 +134,18 @@ contribution guide look :ref:`below <contribution-on-github>`.
     branch: default
 
 
-.. _contribution-on-github:
-What about GitHub?
-------------------
+.. _contribution-using-git:
+What about git (and so GitHub)?
+-------------------------------
+
+There used to be the pytest github mirror. It was removed in favor of this mercurial one, to remove confusion of people
+not knowing where it's better to put their issues and pull requests. Also it wasn't easilily possible to automate
+mirroring process.
+However, it's still possible to use git to contribute to pytest using tools like https://github.com/buchuki/gitifyhg
+which allow you to clone and work mercurial repo still using git.
 
 .. warning::
-  Remember that GitHub is **not** a default development platform for py.test
-  and it doesn't include e.g. issue list.
+  Remember that git is **not** a default version control system py.test and you need to be careful using git
+  to work with it.
 
-1. Fork the py.test `repository <https://github.com/hpk42/pytest/>`__ on GitHub.
-
-2. Create a local virtualenv (http://www.virtualenv.org/en/latest/)::
-
-    $ virtualenv pytest-venv
-    $ cd pytest-venv/
-
-3. Clone your fork locally::
-
-    $ git clone git@github.com:your_name_here/pytest.git
-
-4. :ref:`Install your local copy into a virtualenv <installing-dev-pytest>`
-   and after that :ref:`test your changes <testing-pytest>`.
-
-5. Commit your changes and push to GitHub::
-
-    $ git branch <yourbranchname>
-    $ git checkout <yourbranchname>
-    $ git add .
-    $ git commit -am"<commit message>"
-    $ git push origin <yourbranchname>
-
-6. Submit a pull request through the GitHub website using the schema::
-
-    base fork: hpk42/pytest
-    base: master
-
-    head fork: <your user>/pytest
-    compare: <yourbranchname>
+Please read the manual carefully, and then use same contribution manual as for BitBucket.
