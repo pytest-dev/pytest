@@ -15,14 +15,14 @@ Submit feedback for developers
 Do you like py.test?  Share some love on Twitter or in your blog posts!
 
 We'd also like to hear about your propositions and suggestions.  Feel free to
-submit them as issues `here <https://bitbucket.org/hpk42/pytest/issues>`__ and:
+`submit them as issues <https://bitbucket.org/hpk42/pytest/issues>`__ and:
 
 * Set the "kind" to "enhancement" or "proposal" so that we can quickly find
   about them.
 * Explain in detail how they should work.
 * Keep the scope as narrow as possible.  This will make it easier to implement.
-* If you have required skills and/or knowledge, you can always contribute to
-  these issues!
+* If you have required skills and/or knowledge, we are very happy for
+  pull requests (see below).
 
 Report bugs
 -----------
