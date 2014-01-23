@@ -938,6 +938,12 @@ def raises(ExpectedException, *args, **kwargs):
 
     This helper produces a ``py.code.ExceptionInfo()`` object.
 
+    Note that any local references made to such returned
+    ``py.code.ExceptionInfo()`` objects should be explicitly cleared, as they
+    are part of a reference cycle similar to local references to caught Python
+    exception objects. See the official Python ``try`` statement documentation
+    for more detailed information.
+
     If using Python 2.5 or above, you may use this function as a
     context manager::
 
