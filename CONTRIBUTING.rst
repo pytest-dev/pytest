@@ -79,14 +79,12 @@ Preparing Pull Requests on Bitbucket
   even add more commits to it later on.
 
 The primary development platform for pytest is BitBucket.  You can find all
-the issues there and submit pull requests.  There is, however,
-a `GitHub mirror <https://github.com/hpk42/pytest/>`__ available, too,
-although it only allows for submitting pull requests.  For a GitHub
-contribution guide look :ref:`below <contribution-using-git>`.
+the issues there and submit your pull requests.
 
-1. Fork the `pytest bitbucket repository <https://bitbucket.org/hpk42/pytest>`__. It's fine to
-  use ``pytest`` as your fork repository name because it will live
-  under your user.
+1. Fork the
+   `pytest BitBucket repository <https://bitbucket.org/hpk42/pytest>`__.  It's
+   fine to use ``pytest`` as your fork repository name because it will live
+   under your user.
 
 .. _virtualenvactivate:
 
@@ -98,11 +96,15 @@ contribution guide look :ref:`below <contribution-using-git>`.
 
 .. _checkout:
 
-3. Clone your fork locally and create a branch::
+3. Clone your fork locally using `Mercurial <http://mercurial.selenic.com/>`_
+   (``hg``) and create a branch::
 
     $ hg clone ssh://hg@bitbucket.org/YOUR_BITBUCKET_USERNAME/pytest
     $ cd pytest
-    $ hg branch <yourbranchname>
+    $ hg branch your-branch-name
+
+   If you need some help with Mercurial, follow this quick start
+   guide: http://mercurial.selenic.com/wiki/QuickStart
 
 .. _testing-pytest:
 
@@ -138,8 +140,8 @@ contribution guide look :ref:`below <contribution-using-git>`.
 
 6. Finally, submit a pull request through the BitBucket website::
 
-    source: <your user>/pytest
-    branch: <yourbranchname>
+    source: YOUR_BITBUCKET_USERNAME/pytest
+    branch: your-branch-name
 
     target: hpk42/pytest
     branch: default
@@ -149,14 +151,18 @@ contribution guide look :ref:`below <contribution-using-git>`.
 What about git (and so GitHub)?
 -------------------------------
 
-There used to be the pytest github mirror. It was removed in favor of this mercurial one, to remove confusion of people
-not knowing where it's better to put their issues and pull requests. Also it wasn't easilily possible to automate
-mirroring process.
-However, it's still possible to use git to contribute to pytest using tools like https://github.com/buchuki/gitifyhg
-which allow you to clone and work mercurial repo still using git.
+There used to be the pytest GitHub mirror.  It was removed in favor of the
+Mercurial one, to remove confusion of people not knowing where it's better to
+put their issues and pull requests.  Also it wasn't easily possible to automate
+the mirroring process.
+
+However, it's still possible to use git to contribute to pytest using tools
+like `gitifyhg <https://github.com/buchuki/gitifyhg>`_ which allows you to
+clone and work with Mercurial repo still using git.
 
 .. warning::
-  Remember that git is **not** a default version control system py.test and you need to be careful using git
-  to work with it.
+  Remember that git is **not** a default version control system for pytest and
+  you need to be careful using it.
 
-Please read the manual carefully, and then use same contribution manual as for BitBucket.
+Please read the manual carefully, and then use same contribution manual as for
+BitBucket.
