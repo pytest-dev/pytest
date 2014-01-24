@@ -35,7 +35,7 @@ We'd also like to hear about your propositions and suggestions.  Feel free to
 * Explain in detail how they should work.
 * Keep the scope as narrow as possible.  This will make it easier to implement.
 * If you have required skills and/or knowledge, we are very happy for
-  pull requests (see below).
+  :ref:`pull requests <pull-requests>`.
 
 
 Fix bugs
@@ -66,14 +66,23 @@ pytest could always use more documentation.  What exactly is needed?
 * Docstrings.  There's never too much of them.
 * Blog posts, articles and such -- they're all very appreciated.
 
+.. _pull-requests:
+
 Preparing Pull Requests on Bitbucket
 =====================================
+
+.. note::
+  What is a "pull request"?  It informs project's core developers about the
+  changes you want to review and merge.  Pull requests are stored on
+  `BitBucket servers <https://bitbucket.org/hpk42/pytest/pull-requests>`__.
+  Once you send pull request, we can discuss it's potential modifications and
+  even add more commits to it later on.
 
 The primary development platform for pytest is BitBucket.  You can find all
 the issues there and submit pull requests.  There is, however,
 a `GitHub mirror <https://github.com/hpk42/pytest/>`__ available, too,
 although it only allows for submitting pull requests.  For a GitHub
-contribution guide look :ref:`below <contribution-on-github>`.
+contribution guide look :ref:`below <contribution-using-git>`.
 
 1. Fork the `pytest bitbucket repository <https://bitbucket.org/hpk42/pytest>`__. It's fine to
   use ``pytest`` as your fork repository name because it will live
