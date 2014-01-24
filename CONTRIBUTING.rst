@@ -138,7 +138,13 @@ the issues there and submit your pull requests.
     $ hg commit -m"<commit message>"
     $ hg push -b .
 
-6. Finally, submit a pull request through the BitBucket website::
+6. Finally, submit a pull request through the BitBucket website:
+
+  .. image:: img/pullrequest.png
+     :width: 700px
+     :align: center
+
+  ::
 
     source: YOUR_BITBUCKET_USERNAME/pytest
     branch: your-branch-name
@@ -146,8 +152,8 @@ the issues there and submit your pull requests.
     target: hpk42/pytest
     branch: default
 
-
 .. _contribution-using-git:
+
 What about git (and so GitHub)?
 -------------------------------
 
@@ -163,6 +169,3 @@ clone and work with Mercurial repo still using git.
 .. warning::
   Remember that git is **not** a default version control system for pytest and
   you need to be careful using it.
-
-Please read the manual carefully, and then use same contribution manual as for
-BitBucket.
