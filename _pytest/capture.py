@@ -409,22 +409,6 @@ class EncodedFile(object):
 
 
 class Capture(object):
-    def call(cls, func, *args, **kwargs):
-        """ return a (res, out, err) tuple where
-            out and err represent the output/error output
-            during function execution.
-            call the given function with args/kwargs
-            and capture output/error during its execution.
-        """
-        so = cls()
-        so.startall()
-        try:
-            res = func(*args, **kwargs)
-        finally:
-            out, err = so.reset()
-        return res, out, err
-    call = classmethod(call)
-
     def reset(self):
         """ reset sys.stdout/stderr and return captured output as strings. """
         if hasattr(self, '_reset'):

@@ -896,17 +896,6 @@ class TestStdCaptureFD(TestStdCapture):
         assert out == "123"
         assert err == "abc"
 
-    def test_callcapture(self):
-        def func(x, y):
-            print (x)
-            sys.stderr.write(str(y))
-            return 42
-
-        res, out, err = capture.StdCaptureFD.call(func, 3, y=4)
-        assert res == 42
-        assert out.startswith("3")
-        assert err.startswith("4")
-
     def test_many(self, capfd):
         def f():
             for i in range(10):
@@ -975,26 +964,6 @@ def test_capture_no_sys():
         assert err == "2"
     finally:
         capsys.reset()
-
-
-@needsosdup
-def test_callcapture_nofd():
-    def func(x, y):
-        oswritebytes(1, "hello")
-        oswritebytes(2, "hello")
-        print (x)
-        sys.stderr.write(str(y))
-        return 42
-
-    capfd = capture.StdCaptureFD(patchsys=False)
-    capfd.startall()
-    try:
-        res, out, err = capture.StdCapture.call(func, 3, y=4)
-    finally:
-        capfd.reset()
-    assert res == 42
-    assert out.startswith("3")
-    assert err.startswith("4")
 
 
 @needsosdup
