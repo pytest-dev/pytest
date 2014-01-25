@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
 import sys
 
 import py, pytest
 import _pytest.assertion as plugin
-from _pytest.assertion import reinterpret, util
+from _pytest.assertion import reinterpret
 needsnewassert = pytest.mark.skipif("sys.version_info < (2,6)")
 
 
@@ -175,6 +176,15 @@ class TestAssert_reprcompare:
     def test_repr_no_exc(self):
         expl = ' '.join(callequal('foo', 'bar'))
         assert 'raised in repr()' not in expl
+
+    def test_unicode(self):
+        left = py.builtin._totext('£€', 'utf-8')
+        right = py.builtin._totext('£', 'utf-8')
+        expl = callequal(left, right)
+        assert expl[0] == py.builtin._totext("'£€' == '£'", 'utf-8')
+        assert expl[1] == py.builtin._totext('- £€', 'utf-8')
+        assert expl[2] == py.builtin._totext('+ £', 'utf-8')
+
 
 def test_python25_compile_issue257(testdir):
     testdir.makepyfile("""
@@ -353,7 +363,7 @@ def test_traceback_failure(testdir):
 
 @pytest.mark.skipif("sys.version_info < (2,5) or '__pypy__' in sys.builtin_module_names or sys.platform.startswith('java')" )
 def test_warn_missing(testdir):
-    p1 = testdir.makepyfile("")
+    testdir.makepyfile("")
     result = testdir.run(sys.executable, "-OO", "-m", "pytest", "-h")
     result.stderr.fnmatch_lines([
         "*WARNING*assert statements are not executed*",
@@ -375,4 +385,17 @@ def test_recursion_source_decode(testdir):
     result = testdir.runpytest("--collect-only")
     result.stdout.fnmatch_lines("""
         <Module*>
+    """)
+
+def test_AssertionError_message(testdir):
+    testdir.makepyfile("""
+        def test_hello():
+            x,y = 1,2
+            assert 0, (x,y)
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines("""
+        *def test_hello*
+        *assert 0, (x,y)*
+        *AssertionError: (1, 2)*
     """)

@@ -11,8 +11,8 @@ def pytest_addhooks(pluginmanager):
 
 def pytest_namespace():
     """return dict of name->object to be made globally available in
-    the py.test/pytest namespace.  This hook is called before command
-    line options are parsed.
+    the pytest namespace.  This hook is called before command line options
+    are parsed.
     """
 
 def pytest_cmdline_parse(pluginmanager, args):
@@ -20,7 +20,7 @@ def pytest_cmdline_parse(pluginmanager, args):
 pytest_cmdline_parse.firstresult = True
 
 def pytest_cmdline_preparse(config, args):
-    """modify command line arguments before option parsing. """
+    """(deprecated) modify command line arguments before option parsing. """
 
 def pytest_addoption(parser):
     """register argparse-style options and ini-style config values.
@@ -51,6 +51,10 @@ def pytest_cmdline_main(config):
     """ called for performing the main command line action. The default
     implementation will invoke the configure hooks and runtest_mainloop. """
 pytest_cmdline_main.firstresult = True
+
+def pytest_load_initial_conftests(args, early_config, parser):
+    """ implements loading initial conftests.
+    """
 
 def pytest_configure(config):
     """ called after command line options have been parsed
@@ -221,7 +225,7 @@ def pytest_report_teststatus(report):
 pytest_report_teststatus.firstresult = True
 
 def pytest_terminal_summary(terminalreporter):
-    """ add additional section in terminal summary reporting. """
+    """ add additional section in terminal summary reporting.  """
 
 # -------------------------------------------------------------------------
 # doctest hooks
@@ -236,10 +240,7 @@ pytest_doctest_prepare_content.firstresult = True
 # -------------------------------------------------------------------------
 
 def pytest_plugin_registered(plugin, manager):
-    """ a new py lib plugin got registered. """
-
-def pytest_plugin_unregistered(plugin):
-    """ a py lib plugin got unregistered. """
+    """ a new pytest plugin got registered. """
 
 def pytest_internalerror(excrepr, excinfo):
     """ called for internal errors. """

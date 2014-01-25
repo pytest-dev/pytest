@@ -20,10 +20,10 @@
 Project examples
 ==========================
 
-Here are some examples of projects using py.test (please send notes via :ref:`contact`):
+Here are some examples of projects using ``pytest`` (please send notes via :ref:`contact`):
 
-* `PyPy <http://pypy.org>`_, Python with a JIT compiler, running over 
-  `16000 tests <http://buildbot.pypy.org/summary?branch=%3Ctrunk%3E>`_
+* `PyPy <http://pypy.org>`_, Python with a JIT compiler, running over
+  `21000 tests <http://buildbot.pypy.org/summary?branch=%3Ctrunk%3E>`_
 * the `MoinMoin <http://moinmo.in>`_ Wiki Engine
 * `sentry <https://getsentry.com/welcome/>`_, realtime app-maintenance and exception tracking
 * `tox <http://testrun.org/tox>`_, virtualenv/Hudson integration tool
@@ -60,7 +60,7 @@ Here are some examples of projects using py.test (please send notes via :ref:`co
 * `pytest-localserver <https://bitbucket.org/basti/pytest-localserver/>`_ a plugin for pytest that provides a httpserver and smtpserver
 * `pytest-monkeyplus <http://pypi.python.org/pypi/pytest-monkeyplus/>`_ a plugin that extends monkeypatch
 
-These projects help integrate py.test into other Python frameworks:
+These projects help integrate ``pytest`` into other Python frameworks:
 
 * `pytest-django <http://pypi.python.org/pypi/pytest-django/>`_ for Django
 * `zope.pytest <http://packages.python.org/zope.pytest/>`_ for Zope and Grok
@@ -68,7 +68,7 @@ These projects help integrate py.test into other Python frameworks:
 * There is `some work <https://github.com/Kotti/Kotti/blob/master/kotti/testing.py>`_ underway for Kotti, a CMS built in Pyramid/Pylons
 
 
-Some organisations using py.test
+Some organisations using pytest
 -----------------------------------
 
 * `Square Kilometre Array, Cape Town <http://ska.ac.za/>`_

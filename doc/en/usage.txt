@@ -44,8 +44,11 @@ Specifying tests / selecting tests
 Several test run options::
 
     py.test test_mod.py   # run tests in module
-    py.test somepath      # run all tests below path
-    py.test -k string     # only run tests whose names contain a string
+    py.test somepath      # run all tests below somepath
+    py.test -k stringexpr # only run tests with names that match the
+                          # the "string expression", e.g. "MyClass and not method" 
+                          # will select TestMyClass.test_something
+                          # but not TestMyClass.test_method_simple
 
 Import 'pkg' and use its filesystem location to find and run tests::
 
@@ -69,7 +72,7 @@ Dropping to PDB (Python Debugger) on failures
 
 .. _PDB: http://docs.python.org/library/pdb.html
 
-Python comes with a builtin Python debugger called PDB_.  ``py.test``
+Python comes with a builtin Python debugger called PDB_.  ``pytest``
 allows one to drop into the PDB prompt via a command line option::
 
     py.test --pdb
@@ -150,6 +153,17 @@ for example ``-x`` if you only want to send one particular failure.
 
 Currently only pasting to the http://bpaste.net service is implemented.
 
+Disabling plugins
+-----------------
+
+To disable loading specific plugins at invocation time, use the ``-p`` option
+together with the prefix ``no:``.
+
+Example: to disable loading the plugin ``doctest``, which is responsible for
+executing doctest tests from text files, invoke py.test like this::
+
+    py.test -p no:doctest
+
 .. _`pytest.main-usage`:
 
 Calling pytest from Python code
@@ -157,7 +171,7 @@ Calling pytest from Python code
 
 .. versionadded:: 2.0
 
-You can invoke ``py.test`` from Python code directly::
+You can invoke ``pytest`` from Python code directly::
 
     pytest.main()
 
@@ -185,7 +199,7 @@ Running it will show that ``MyPlugin`` was added and its
 hook was invoked::
 
     $ python myinvoke.py
-    
     *** test run reporting finishing
+    
 
 .. include:: links.inc

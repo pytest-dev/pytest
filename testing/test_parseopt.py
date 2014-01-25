@@ -1,7 +1,8 @@
 from __future__ import with_statement
+import sys
+import os
 import py, pytest
 from _pytest import config as parseopt
-from textwrap import dedent
 
 @pytest.fixture
 def parser():
@@ -10,7 +11,7 @@ def parser():
 class TestParser:
     def test_no_help_by_default(self, capsys):
         parser = parseopt.Parser(usage="xyz")
-        pytest.raises(SystemExit, 'parser.parse(["-h"])')
+        pytest.raises(SystemExit, lambda: parser.parse(["-h"]))
         out, err = capsys.readouterr()
         assert err.find("error: unrecognized arguments") != -1
 
@@ -63,9 +64,9 @@ class TestParser:
         assert group2 is group
 
     def test_group_ordering(self, parser):
-        group0 = parser.getgroup("1")
-        group1 = parser.getgroup("2")
-        group1 = parser.getgroup("3", after="1")
+        parser.getgroup("1")
+        parser.getgroup("2")
+        parser.getgroup("3", after="1")
         groups = parser._groups
         groups_names = [x.name for x in groups]
         assert groups_names == list("132")
@@ -95,18 +96,24 @@ class TestParser:
         parser.addoption("--hello", dest="hello", action="store")
         args = parser.parse(['--hello', 'world'])
         assert args.hello == "world"
-        assert not getattr(args, parseopt.Config._file_or_dir)
+        assert not getattr(args, parseopt.FILE_OR_DIR)
 
     def test_parse2(self, parser):
         args = parser.parse([py.path.local()])
-        assert getattr(args, parseopt.Config._file_or_dir)[0] == py.path.local()
+        assert getattr(args, parseopt.FILE_OR_DIR)[0] == py.path.local()
+
+    def test_parse_known_args(self, parser):
+        parser.parse_known_args([py.path.local()])
+        parser.addoption("--hello", action="store_true")
+        ns = parser.parse_known_args(["x", "--y", "--hello", "this"])
+        assert ns.hello
 
     def test_parse_will_set_default(self, parser):
         parser.addoption("--hello", dest="hello", default="x", action="store")
         option = parser.parse([])
         assert option.hello == "x"
         del option.hello
-        args = parser.parse_setoption([], option)
+        parser.parse_setoption([], option)
         assert option.hello == "x"
 
     def test_parse_setoption(self, parser):
@@ -120,7 +127,7 @@ class TestParser:
         assert not args
 
     def test_parse_special_destination(self, parser):
-        x = parser.addoption("--ultimate-answer", type=int)
+        parser.addoption("--ultimate-answer", type=int)
         args = parser.parse(['--ultimate-answer', '42'])
         assert args.ultimate_answer == 42
 
@@ -128,13 +135,13 @@ class TestParser:
         parser.addoption("-R", action='store_true')
         parser.addoption("-S", action='store_false')
         args = parser.parse(['-R', '4', '2', '-S'])
-        assert getattr(args, parseopt.Config._file_or_dir) == ['4', '2']
+        assert getattr(args, parseopt.FILE_OR_DIR) == ['4', '2']
         args = parser.parse(['-R', '-S', '4', '2', '-R'])
-        assert getattr(args, parseopt.Config._file_or_dir) == ['4', '2']
+        assert getattr(args, parseopt.FILE_OR_DIR) == ['4', '2']
         assert args.R == True
         assert args.S == False
         args = parser.parse(['-R', '4', '-S', '2'])
-        assert getattr(args, parseopt.Config._file_or_dir) == ['4', '2']
+        assert getattr(args, parseopt.FILE_OR_DIR) == ['4', '2']
         assert args.R == True
         assert args.S == False
 
@@ -244,14 +251,16 @@ def test_addoption_parser_epilog(testdir):
 def test_argcomplete(testdir, monkeypatch):
     if not py.path.local.sysfind('bash'):
         pytest.skip("bash not available")
-    import os
-    script = os.path.join(os.getcwd(), 'test_argcomplete')
+    script = str(testdir.tmpdir.join("test_argcomplete"))
+    pytest_bin = sys.argv[0]
+    if "py.test" not in os.path.basename(pytest_bin):
+        pytest.skip("need to be run with py.test executable, not %s" %(pytest_bin,))
+
     with open(str(script), 'w') as fp:
         # redirect output from argcomplete to stdin and stderr is not trivial
         # http://stackoverflow.com/q/12589419/1307905
         # so we use bash
-        fp.write('COMP_WORDBREAKS="$COMP_WORDBREAKS" $(which py.test) '
-                 '8>&1 9>&2')
+        fp.write('COMP_WORDBREAKS="$COMP_WORDBREAKS" %s 8>&1 9>&2' % pytest_bin)
     # alternative would be exteneded Testdir.{run(),_run(),popen()} to be able
     # to handle a keyword argument env that replaces os.environ in popen or
     # extends the copy, advantage: could not forget to restore

@@ -15,7 +15,7 @@ def test_simple_unittest(testdir):
     assert reprec.matchreport("test_failing").failed
 
 def test_runTest_method(testdir):
-    testpath=testdir.makepyfile("""
+    testdir.makepyfile("""
         import unittest
         pytest_plugins = "pytest_unittest"
         class MyTestCaseWithRunTest(unittest.TestCase):
@@ -236,7 +236,7 @@ def test_setup_class(testdir):
     reprec.assertoutcome(passed=3)
 
 
-@pytest.mark.multi(type=['Error', 'Failure'])
+@pytest.mark.parametrize("type", ['Error', 'Failure'])
 def test_testcase_adderrorandfailure_defers(testdir, type):
     testdir.makepyfile("""
         from unittest import TestCase
@@ -256,7 +256,7 @@ def test_testcase_adderrorandfailure_defers(testdir, type):
     result = testdir.runpytest()
     assert 'should not raise' not in result.stdout.str()
 
-@pytest.mark.multi(type=['Error', 'Failure'])
+@pytest.mark.parametrize("type", ['Error', 'Failure'])
 def test_testcase_custom_exception_info(testdir, type):
     testdir.makepyfile("""
         from unittest import TestCase
@@ -310,9 +310,10 @@ def test_module_level_pytestmark(testdir):
     reprec.assertoutcome(skipped=1)
 
 
-def test_testcase_skip_property(testdir):
+def test_trial_testcase_skip_property(testdir):
+    pytest.importorskip('twisted.trial.unittest')
     testpath = testdir.makepyfile("""
-        import unittest
+        from twisted.trial import unittest
         class MyTestCase(unittest.TestCase):
             skip = 'dont run'
             def test_func(self):
@@ -321,13 +322,41 @@ def test_testcase_skip_property(testdir):
     reprec = testdir.inline_run(testpath, "-s")
     reprec.assertoutcome(skipped=1)
 
-def test_testfunction_skip_property(testdir):
+
+def test_trial_testfunction_skip_property(testdir):
+    pytest.importorskip('twisted.trial.unittest')
     testpath = testdir.makepyfile("""
-        import unittest
+        from twisted.trial import unittest
         class MyTestCase(unittest.TestCase):
             def test_func(self):
                 pass
             test_func.skip = 'dont run'
+        """)
+    reprec = testdir.inline_run(testpath, "-s")
+    reprec.assertoutcome(skipped=1)
+
+
+def test_trial_testcase_todo_property(testdir):
+    pytest.importorskip('twisted.trial.unittest')
+    testpath = testdir.makepyfile("""
+        from twisted.trial import unittest
+        class MyTestCase(unittest.TestCase):
+            todo = 'dont run'
+            def test_func(self):
+                assert 0
+        """)
+    reprec = testdir.inline_run(testpath, "-s")
+    reprec.assertoutcome(skipped=1)
+
+
+def test_trial_testfunction_todo_property(testdir):
+    pytest.importorskip('twisted.trial.unittest')
+    testpath = testdir.makepyfile("""
+        from twisted.trial import unittest
+        class MyTestCase(unittest.TestCase):
+            def test_func(self):
+                assert 0
+            test_func.todo = 'dont run'
         """)
     reprec = testdir.inline_run(testpath, "-s")
     reprec.assertoutcome(skipped=1)
@@ -653,4 +682,22 @@ def test_no_teardown_if_setupclass_failed(testdir):
     """)
     reprec = testdir.inline_run(testpath)
     reprec.assertoutcome(passed=1, failed=1)
+
+
+def test_issue333_result_clearing(testdir):
+    testdir.makeconftest("""
+        def pytest_runtest_call(__multicall__, item):
+            __multicall__.execute()
+            assert 0
+    """)
+    testdir.makepyfile("""
+        import unittest
+        class TestIt(unittest.TestCase):
+            def test_func(self):
+                0/0
+    """)
+
+    reprec = testdir.inline_run()
+    reprec.assertoutcome(failed=1)
+
 

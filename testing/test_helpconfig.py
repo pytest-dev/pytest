@@ -1,4 +1,4 @@
-import py, pytest,os
+import py, pytest
 from _pytest.helpconfig import collectattr
 
 def test_version(testdir, pytestconfig):
@@ -6,7 +6,7 @@ def test_version(testdir, pytestconfig):
     assert result.ret == 0
     #p = py.path.local(py.__file__).dirpath()
     result.stderr.fnmatch_lines([
-        '*py.test*%s*imported from*' % (pytest.__version__, )
+        '*pytest*%s*imported from*' % (pytest.__version__, )
     ])
     if pytestconfig.pluginmanager._plugin_distinfo:
         result.stderr.fnmatch_lines([

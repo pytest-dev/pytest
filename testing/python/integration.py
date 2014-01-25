@@ -1,5 +1,6 @@
-import pytest, py, sys
+import pytest
 from _pytest import runner
+from _pytest import python
 
 class TestOEJSKITSpecials:
     def test_funcarg_non_pycollectobj(self, testdir): # rough jstests usage
@@ -54,6 +55,20 @@ class TestOEJSKITSpecials:
         pytest._fillfuncargs(clscol)
         assert not clscol.funcargs
 
+
+def test_wrapped_getfslineno():
+    def func():
+        pass
+    def wrap(f):
+        func.__wrapped__ = f
+        func.patchings = ["qwe"]
+        return func
+    @wrap
+    def wrapped_func(x, y, z):
+        pass
+    fs, lineno = python.getfslineno(wrapped_func)
+    fs2, lineno2 = python.getfslineno(wrap)
+    assert lineno > lineno2, "getfslineno does not unwrap correctly"
 
 class TestMockDecoration:
     def test_wrapped_getfuncargnames(self):
@@ -118,6 +133,32 @@ class TestMockDecoration:
         """)
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
+        calls = reprec.getcalls("pytest_runtest_logreport")
+        funcnames = [call.report.location[2] for call in calls
+                        if call.report.when == "call"]
+        assert funcnames == ["T.test_hello", "test_someting"]
+
+    def test_mock_sorting(self, testdir):
+        pytest.importorskip("mock", "1.0.1")
+        testdir.makepyfile("""
+            import os
+            import mock
+
+            @mock.patch("os.path.abspath")
+            def test_one(abspath):
+                pass
+            @mock.patch("os.path.abspath")
+            def test_two(abspath):
+                pass
+            @mock.patch("os.path.abspath")
+            def test_three(abspath):
+                pass
+        """)
+        reprec = testdir.inline_run()
+        calls = reprec.getreports("pytest_runtest_logreport")
+        calls = [x for x in calls if x.when == "call"]
+        names = [x.nodeid.split("::")[-1] for x in calls]
+        assert names == ["test_one", "test_two", "test_three"]
 
 
 class TestReRunTests:
@@ -150,3 +191,7 @@ class TestReRunTests:
         result.stdout.fnmatch_lines("""
             *2 passed*
         """)
+
+def test_pytestconfig_is_session_scoped():
+    from _pytest.python import pytestconfig
+    assert pytestconfig._pytestfixturefunction.scope == "session"

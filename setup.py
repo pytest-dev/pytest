@@ -1,39 +1,43 @@
 import os, sys
 from setuptools import setup, Command
 
+classifiers=['Development Status :: 6 - Mature',
+             'Intended Audience :: Developers',
+             'License :: OSI Approved :: MIT License',
+             'Operating System :: POSIX',
+             'Operating System :: Microsoft :: Windows',
+             'Operating System :: MacOS :: MacOS X',
+             'Topic :: Software Development :: Testing',
+             'Topic :: Software Development :: Libraries',
+             'Topic :: Utilities',
+             'Programming Language :: Python :: 2',
+             'Programming Language :: Python :: 3'] + [
+            ("Programming Language :: Python :: %s" % x) for x in
+                "2.6 2.7 3.0 3.1 3.2 3.3".split()]
+
 long_description = open("README.rst").read()
 def main():
-    install_requires = ["py>=1.4.15"]
+    install_requires = ["py>=1.4.20.dev2"]
     if sys.version_info < (2,7):
         install_requires.append("argparse")
+    if sys.platform == "win32":
+        install_requires.append("colorama")
 
     setup(
         name='pytest',
-        description='py.test: simple powerful testing with Python',
+        description='pytest: simple powerful testing with Python',
         long_description = long_description,
-        version='2.4.0.dev12',
+        version='2.5.2.dev1',
         url='http://pytest.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='Holger Krekel, Benjamin Peterson, Ronny Pfannschmidt, Floris Bruynooghe and others',
         author_email='holger at merlinux.eu',
         entry_points= make_entry_points(),
+        classifiers=classifiers,
         cmdclass = {'test': PyTest},
         # the following should be enabled for release
         install_requires=install_requires,
-        classifiers=['Development Status :: 6 - Mature',
-                     'Intended Audience :: Developers',
-                     'License :: OSI Approved :: MIT License',
-                     'Operating System :: POSIX',
-                     'Operating System :: Microsoft :: Windows',
-                     'Operating System :: MacOS :: MacOS X',
-                     'Topic :: Software Development :: Testing',
-                     'Topic :: Software Development :: Libraries',
-                     'Topic :: Utilities',
-                     'Programming Language :: Python :: 2',
-                     'Programming Language :: Python :: 3'] + [
-        ("Programming Language :: Python :: %s" % x) for x in
-            "2.4 2.5 2.6 2.7 3.0 3.1 3.2 3.3".split()],
         packages=['_pytest', '_pytest.assertion'],
         py_modules=['pytest'],
         zip_safe=False,

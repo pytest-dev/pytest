@@ -5,7 +5,6 @@ This is a good source for looking at the various reporting hooks.
 import pytest
 import py
 import sys
-import os
 
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "reporting", after="general")
@@ -30,24 +29,14 @@ def pytest_addoption(parser):
     group._addoption('--fulltrace', '--full-trace',
                action="store_true", default=False,
                help="don't cut any tracebacks (default is to cut).")
+    group._addoption('--color', metavar="color",
+               action="store", dest="color", default='auto',
+               choices=['yes', 'no', 'auto'],
+               help="color terminal output (yes/no/auto).")
 
 def pytest_configure(config):
     config.option.verbose -= config.option.quiet
-    # we try hard to make printing resilient against
-    # later changes on FD level.
-    stdout = py.std.sys.stdout
-    if hasattr(os, 'dup') and hasattr(stdout, 'fileno'):
-        try:
-            newstdout = py.io.dupfile(stdout, buffering=1,
-                                      encoding=stdout.encoding)
-        except ValueError:
-            pass
-        else:
-            config._cleanup.append(lambda: newstdout.close())
-            assert stdout.encoding == newstdout.encoding
-            stdout = newstdout
-
-    reporter = TerminalReporter(config, stdout)
+    reporter = TerminalReporter(config, sys.stdout)
     config.pluginmanager.register(reporter, 'terminalreporter')
     if config.option.debug or config.option.traceconfig:
         def mywriter(tags, args):
@@ -99,7 +88,11 @@ class TerminalReporter:
         self.startdir = self.curdir = py.path.local()
         if file is None:
             file = py.std.sys.stdout
-        self._tw = py.io.TerminalWriter(file)
+        self._tw = self.writer = py.io.TerminalWriter(file)
+        if self.config.option.color == 'yes':
+            self._tw.hasmarkup = True
+        if self.config.option.color == 'no':
+            self._tw.hasmarkup = False
         self.currentfspath = None
         self.reportchars = getreportopt(config)
         self.hasmarkup = self._tw.hasmarkup
@@ -147,6 +140,12 @@ class TerminalReporter:
         self.ensure_newline()
         self._tw.sep(sep, title, **markup)
 
+    def section(self, title, sep="=", **kw):
+        self._tw.sep(sep, title, **kw)
+
+    def line(self, msg, **kw):
+        self._tw.line(msg, **kw)
+
     def pytest_internalerror(self, excrepr):
         for line in str(excrepr).split("\n"):
             self.write_line("INTERNALERROR> " + line)
@@ -178,6 +177,7 @@ class TerminalReporter:
         res = self.config.hook.pytest_report_teststatus(report=rep)
         cat, letter, word = res
         self.stats.setdefault(cat, []).append(rep)
+        self._tests_ran = True
         if not letter and not word:
             # probably passed setup/teardown
             return
@@ -259,7 +259,7 @@ class TerminalReporter:
         if hasattr(sys, 'pypy_version_info'):
             verinfo = ".".join(map(str, sys.pypy_version_info[:3]))
             msg += "[pypy-%s-%s]" % (verinfo, sys.pypy_version_info[3])
-        msg += " -- pytest-%s" % (py.test.__version__)
+        msg += " -- py-%s -- pytest-%s" % (py.__version__, pytest.__version__)
         if self.verbosity > 0 or self.config.option.debug or \
            getattr(self.config.option, 'pastebin', None):
             msg += " -- " + str(sys.executable)
@@ -334,6 +334,7 @@ class TerminalReporter:
         if exitstatus in (0, 1, 2, 4):
             self.summary_errors()
             self.summary_failures()
+            self.summary_hints()
             self.config.hook.pytest_terminal_summary(terminalreporter=self)
         if exitstatus == 2:
             self._report_keyboardinterrupt()
@@ -398,6 +399,11 @@ class TerminalReporter:
             if not hasattr(x, '_pdbshown'):
                 l.append(x)
         return l
+
+    def summary_hints(self):
+        if self.config.option.traceconfig:
+            for hint in self.config.pluginmanager._hints:
+                self._tw.line("hint: %s" % hint)
 
     def summary_failures(self):
         if self.config.option.tbstyle != "no":

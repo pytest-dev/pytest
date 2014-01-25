@@ -107,13 +107,13 @@ class TestAssertionRewrite:
             assert f
         assert getmsg(f) == "assert False"
         def f():
-            assert a_global
+            assert a_global  # noqa
         assert getmsg(f, {"a_global" : False}) == "assert False"
         def f():
             assert sys == 42
         assert getmsg(f, {"sys" : sys}) == "assert sys == 42"
         def f():
-            assert cls == 42
+            assert cls == 42  # noqa
         class X(object):
             pass
         assert getmsg(f, {"cls" : X}) == "assert cls == 42"
@@ -174,7 +174,7 @@ class TestAssertionRewrite:
 
     def test_short_circut_evaluation(self):
         def f():
-            assert True or explode
+            assert True or explode  # noqa
         getmsg(f, must_pass=True)
         def f():
             x = 1
@@ -206,7 +206,6 @@ class TestAssertionRewrite:
             assert x + y
         assert getmsg(f) == "assert (1 + -1)"
         def f():
-            x = range(10)
             assert not 5 % 4
         assert getmsg(f) == "assert not (5 % 4)"
 
@@ -243,12 +242,12 @@ class TestAssertionRewrite:
             g = 3
         ns = {"x" : X}
         def f():
-            assert not x.g
+            assert not x.g # noqa
         assert getmsg(f, ns) == """assert not 3
  +  where 3 = x.g"""
         def f():
-            x.a = False
-            assert x.a
+            x.a = False  # noqa
+            assert x.a   # noqa
         assert getmsg(f, ns) == """assert x.a"""
 
     def test_comparisons(self):
@@ -412,6 +411,13 @@ def test_rewritten():
         testdir.tmpdir.join("test_newlines.py").write(b, "wb")
         assert testdir.runpytest().ret == 0
 
+    @pytest.mark.skipif(sys.version_info[0] == 2,
+                        reason='packages without __init__.py not supported on python 2')
+    def test_package_without__init__py(self, testdir):
+        pkg = testdir.mkdir('a_package_without_init_py')
+        mod = pkg.join('module.py').ensure()
+        testdir.makepyfile("import a_package_without_init_py.module")
+        assert testdir.runpytest().ret == 0
 
 class TestAssertionRewriteHookDetails(object):
     def test_loader_is_package_false_for_module(self, testdir):
@@ -435,21 +441,46 @@ class TestAssertionRewriteHookDetails(object):
             def test_missing():
                 assert not __loader__.is_package('pytest_not_there')
             """)
-        pkg = testdir.mkpydir('fun')
+        testdir.mkpydir('fun')
         result = testdir.runpytest()
         result.stdout.fnmatch_lines([
             '* 3 passed*',
         ])
 
-
     @pytest.mark.skipif("sys.version_info[0] >= 3")
+    @pytest.mark.xfail("hasattr(sys, 'pypy_translation_info')")
     def test_assume_ascii(self, testdir):
-        content = "u'\xe2\x99\xa5'"
+        content = "u'\xe2\x99\xa5\x01\xfe'"
         testdir.tmpdir.join("test_encoding.py").write(content, "wb")
         res = testdir.runpytest()
         assert res.ret != 0
         assert "SyntaxError: Non-ASCII character" in res.stdout.str()
 
+    @pytest.mark.skipif("sys.version_info[0] >= 3")
+    def test_detect_coding_cookie(self, testdir):
+        testdir.tmpdir.join("test_cookie.py").write("""# -*- coding: utf-8 -*-
+u"St\xc3\xa4d"
+def test_rewritten():
+    assert "@py_builtins" in globals()""", "wb")
+        assert testdir.runpytest().ret == 0
+
+    @pytest.mark.skipif("sys.version_info[0] >= 3")
+    def test_detect_coding_cookie_second_line(self, testdir):
+        testdir.tmpdir.join("test_cookie.py").write("""#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+u"St\xc3\xa4d"
+def test_rewritten():
+    assert "@py_builtins" in globals()""", "wb")
+        assert testdir.runpytest().ret == 0
+
+    @pytest.mark.skipif("sys.version_info[0] >= 3")
+    def test_detect_coding_cookie_crlf(self, testdir):
+        testdir.tmpdir.join("test_cookie.py").write("""#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+u"St\xc3\xa4d"
+def test_rewritten():
+    assert "@py_builtins" in globals()""".replace("\n", "\r\n"), "wb")
+        assert testdir.runpytest().ret == 0
 
     def test_write_pyc(self, testdir, tmpdir, monkeypatch):
         from _pytest.assertion.rewrite import _write_pyc
@@ -469,3 +500,35 @@ class TestAssertionRewriteHookDetails(object):
             raise e
         monkeypatch.setattr(b, "open", open)
         assert not _write_pyc(state, [1], source_path, pycpath)
+
+    def test_resources_provider_for_loader(self, testdir):
+        """
+        Attempts to load resources from a package should succeed normally,
+        even when the AssertionRewriteHook is used to load the modules.
+
+        See #366 for details.
+        """
+        pytest.importorskip("pkg_resources")
+
+        testdir.mkpydir('testpkg')
+        contents = {
+            'testpkg/test_pkg': """
+                import pkg_resources
+
+                import pytest
+                from _pytest.assertion.rewrite import AssertionRewritingHook
+
+                def test_load_resource():
+                    assert isinstance(__loader__, AssertionRewritingHook)
+                    res = pkg_resources.resource_string(__name__, 'resource.txt')
+                    res = res.decode('ascii')
+                    assert res == 'Load me please.'
+                """,
+        }
+        testdir.makepyfile(**contents)
+        testdir.maketxtfile(**{'testpkg/resource': "Load me please."})
+
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            '* 1 passed*',
+        ])

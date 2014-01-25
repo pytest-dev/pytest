@@ -1,4 +1,4 @@
-""" generate a single-file self-contained version of py.test """
+""" generate a single-file self-contained version of pytest """
 import py
 import sys
 
@@ -55,7 +55,7 @@ def pytest_addoption(parser):
     group = parser.getgroup("debugconfig")
     group.addoption("--genscript", action="store", default=None,
         dest="genscript", metavar="path",
-        help="create standalone py.test script at given target path.")
+        help="create standalone pytest script at given target path.")
 
 def pytest_cmdline_main(config):
     genscript = config.getvalue("genscript")
@@ -70,7 +70,7 @@ def pytest_cmdline_main(config):
                     "or below due to 'argparse' dependency. Use python2.6 "
                     "to generate a python2.5/6 compatible script", red=True)
         script = generate_script(
-            'import py; raise SystemExit(py.test.cmdline.main())',
+            'import pytest; raise SystemExit(pytest.cmdline.main())',
             deps,
         )
         genscript = py.path.local(genscript)

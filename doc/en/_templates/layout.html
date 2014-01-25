@@ -1,16 +1,5 @@
 {% extends "!layout.html" %}
 
-{% block relbaritems %}
-{{ super() }}
-<g:plusone></g:plusone>
-
-
-<iframe style="border: 0; margin: 0; padding: 0;"
-        src="https://www.gittip.com/hpk42/widget.html"
-        width="48pt" height="22pt"></iframe>
-
-{% endblock %}
-
 {% block footer %}
 {{ super() }}
 <script type="text/javascript">
@@ -26,5 +15,4 @@
   })();
 
 </script>
-<script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
 {% endblock %}

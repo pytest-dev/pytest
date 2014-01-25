@@ -6,13 +6,13 @@ loop on failing tests, distribute test runs to CPUs and hosts.
 .. contents::
   :local:
 
-The `pytest-xdist`_ plugin extends py.test with some unique
+The `pytest-xdist`_ plugin extends ``pytest`` with some unique
 test execution modes:
 
-* Looponfail: run your tests repeatedly in a subprocess.  After each run py.test
-  waits until a file in your project changes and then re-runs the previously
-  failing tests.  This is repeated until all tests pass after which again
-  a full run is performed.
+* Looponfail: run your tests repeatedly in a subprocess.  After each run
+  ``pytest`` waits until a file in your project changes and then re-runs the
+  previously failing tests.  This is repeated until all tests pass after which
+  again a full run is performed.
 
 * Load-balancing: if you have multiple CPUs or hosts you can use
   those for a combined test run.  This allows to speed up
@@ -21,7 +21,7 @@ test execution modes:
 * Multi-Platform coverage: you can specify different Python interpreters
   or different platforms and run tests in parallel on all of them.
 
-Before running tests remotely, ``py.test`` efficiently synchronizes your
+Before running tests remotely, ``pytest`` efficiently synchronizes your
 program source code to the remote place.  All test results
 are reported back and displayed to your local test session.
 You may specify different Python versions and interpreters.
@@ -77,11 +77,11 @@ and send them to remote places for execution.
 You can specify multiple ``--rsyncdir`` directories
 to be sent to the remote side.
 
-**NOTE:** For py.test to collect and send tests correctly
+**NOTE:** For ``pytest`` to collect and send tests correctly
 you not only need to make sure all code and tests
 directories are rsynced, but that any test (sub) directory
 also has an ``__init__.py`` file because internally
-py.test references tests as a fully qualified python
+``pytest`` references tests using their fully qualified python
 module path.  **You will otherwise get strange errors**
 during setup of the remote side.
 
@@ -156,11 +156,11 @@ command line options
     box each test run in a separate process (unix)
 ``--dist=distmode``
     set mode for distributing tests to exec environments.
-    
+
     each: send each test to each available environment.
-    
+
     load: send each test to available environment.
-    
+
     (default) no: run tests inprocess, don't distribute.
 ``--tx=xspec``
     add a test execution environment. some examples: --tx popen//python=python2.5 --tx socket=192.168.1.102:8888 --tx ssh=user@codespeak.net//chdir=testcache

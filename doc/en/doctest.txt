@@ -44,15 +44,19 @@ then you can just invoke ``py.test`` without command line options::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.5
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 1 items
     
     mymodule.py .
     
-    ========================= 1 passed in 0.02 seconds =========================
+    ========================= 1 passed in 0.01 seconds =========================
 
 It is possible to use fixtures using the ``getfixture`` helper::
 
     # content of example.rst
     >>> tmp = getfixture('tmpdir')
     >>> ...
+    >>>
+
+Also, :ref:`usefixtures` and :ref:`autouse` fixtures are supported
+when executing text doctest files.

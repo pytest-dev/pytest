@@ -14,7 +14,7 @@ A *skip* means that you expect your test to pass unless the environment
 And *xfail* means that your test can run but you expect it to fail
 because there is an implementation problem.
 
-py.test counts and lists *skip* and *xfail* tests separately. Detailed
+``pytest`` counts and lists *skip* and *xfail* tests separately. Detailed
 information about skipped/xfailed tests is not shown by default to avoid
 cluttering the output.  You can use the ``-r`` option to see details
 corresponding to the "short" letters shown in the test progress::
@@ -29,7 +29,7 @@ corresponding to the "short" letters shown in the test progress::
 Marking a test function to be skipped
 -------------------------------------------
 
-.. versionadded:: 2.4
+.. versionadded:: 2.0, 2.4
 
 Here is an example of marking a test function to be skipped
 when run on a Python3.3 interpreter::
@@ -70,7 +70,8 @@ For larger test suites it's usually a good idea to have one file
 where you define the markers which you then consistently apply
 throughout your test suite.
 
-Alternatively, the pre pytest-2.4 way to specify `condition strings <condition strings>`_ instead of booleans will remain fully supported in future
+Alternatively, the pre pytest-2.4 way to specify :ref:`condition strings
+<string conditions>` instead of booleans will remain fully supported in future
 versions of pytest.  It couldn't be easily used for importing markers
 between test modules so it's no longer advertised as the primary method.
 
@@ -103,7 +104,7 @@ you can set the ``pytestmark`` attribute of a class::
             "will not be setup or run under 'win32' platform"
 
 As with the class-decorator, the ``pytestmark`` special name tells
-py.test to apply it to each test function in the class.
+``pytest`` to apply it to each test function in the class.
 
 If you want to skip all test functions of a module, you must use
 the ``pytestmark`` name on the global level::
@@ -158,7 +159,7 @@ Running it with the report-on-xfail option gives this output::
 
     example $ py.test -rx xfail_demo.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.5
+    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
     collected 6 items
 
     xfail_demo.py xxxxxx
@@ -175,7 +176,7 @@ Running it with the report-on-xfail option gives this output::
     XFAIL xfail_demo.py::test_hello6
       reason: reason
 
-    ======================== 6 xfailed in 0.05 seconds =========================
+    ======================== 6 xfailed in 0.04 seconds =========================
 
 .. _`skip/xfail with parametrize`:
 
@@ -183,7 +184,7 @@ Skip/xfail with parametrize
 ---------------------------
 
 It is possible to apply markers like skip and xfail to individual
-test instances when using parametrize:
+test instances when using parametrize::
 
      import pytest
 
@@ -191,7 +192,7 @@ test instances when using parametrize:
          (1, 2),
 	 pytest.mark.xfail((1, 0)),
 	 pytest.mark.xfail(reason="some bug")((1, 3)),
-	 (2, 3),
+         (2, 3),
          (3, 4),
          (4, 5),
          pytest.mark.skipif("sys.version_info >= (3,0)")((10, 11)),
@@ -211,7 +212,7 @@ imperatively, in test or setup code::
         if not valid_config():
             pytest.xfail("failing configuration (but should work)")
             # or
-            pytest.skipif("unsupported configuration")
+            pytest.skip("unsupported configuration")
 
 
 Skipping on a missing import dependency
@@ -232,7 +233,7 @@ The version will be read from the specified
 module's ``__version__`` attribute.
 
 
-.. _`string conditions`:
+.. _string conditions:
 
 specifying conditions as strings versus booleans
 ----------------------------------------------------------
@@ -254,7 +255,7 @@ because markers can then be freely imported between test modules.
 With strings you need to import not only the marker but all variables
 everything used by the marker, which violates encapsulation.
 
-The reason for specifying the condition as a string was that py.test can
+The reason for specifying the condition as a string was that ``pytest`` can
 report a summary of skip conditions based purely on the condition string.
 With conditions as booleans you are required to specify a ``reason`` string.
 

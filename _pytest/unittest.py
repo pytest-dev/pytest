@@ -1,6 +1,6 @@
 """ discovery and running of std-library "unittest" style tests. """
 import pytest, py
-import sys, pdb
+import sys
 
 # for transfering markers
 from _pytest.python import transfer_markers
@@ -50,8 +50,6 @@ class UnitTestCase(pytest.Class):
             x = getattr(self.obj, name)
             funcobj = getattr(x, 'im_func', x)
             transfer_markers(funcobj, cls, module)
-            if hasattr(funcobj, 'todo'):
-                pytest.mark.xfail(reason=str(funcobj.todo))(funcobj)
             yield TestCaseFunction(name, parent=self)
             foundsomething = True
 
@@ -70,10 +68,6 @@ class TestCaseFunction(pytest.Function):
     def setup(self):
         self._testcase = self.parent.obj(self.name)
         self._obj = getattr(self._testcase, self.name)
-        if hasattr(self._testcase, 'skip'):
-            pytest.skip(self._testcase.skip)
-        if hasattr(self._obj, 'skip'):
-            pytest.skip(self._obj.skip)
         if hasattr(self._testcase, 'setup_method'):
             self._testcase.setup_method(self._obj)
         if hasattr(self, "_request"):
@@ -150,7 +144,10 @@ def pytest_runtest_makereport(item, call):
     if isinstance(item, TestCaseFunction):
         if item._excinfo:
             call.excinfo = item._excinfo.pop(0)
-            del call.result
+            try:
+                del call.result
+            except AttributeError:
+                pass
 
 # twisted trial support
 def pytest_runtest_protocol(item, __multicall__):

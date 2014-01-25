@@ -1,4 +1,11 @@
-The ``py.test`` testing tool makes it easy to write small tests, yet
+
+Documentation: http://pytest.org/latest/
+
+Changelog: http://pytest.org/latest/changelog.html
+
+Issues: https://bitbucket.org/hpk42/pytest/issues?status=open
+
+The ``pytest`` testing tool makes it easy to write small tests, yet
 scales to support complex functional testing.  It provides
 
 - `auto-discovery
@@ -7,16 +14,13 @@ scales to support complex functional testing.  It provides
 - detailed info on failing `assert statements <http://pytest.org/latest/assert.html>`_ (no need to remember ``self.assert*`` names)
 - `modular fixtures <http://pytest.org/latest/fixture.html>`_  for
   managing small or parametrized long-lived test resources.
-- multi-paradigm support: you can use ``py.test`` to run test suites based
+- multi-paradigm support: you can use ``pytest`` to run test suites based
   on `unittest <http://pytest.org/latest/unittest.html>`_ (or trial),
   `nose <http://pytest.org/latest/nose.html>`_
-- single-source compatibility to Python2.4 all the way up to Python3.3,
+- single-source compatibility to Python2.5 all the way up to Python3.3,
   PyPy-1.9 and Jython-2.5.1.
 
 - many `external plugins <http://pytest.org/latest/plugins.html#installing-external-plugins-searching>`_.
-
-.. image:: https://secure.travis-ci.org/hpk42/pytest.png
-   :target: http://travis-ci.org/hpk42/pytest
 
 A simple example for a test::
 

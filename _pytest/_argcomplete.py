@@ -74,9 +74,13 @@ class FastFilesCompleter:
         else:
             prefix_dir = 0
         completion = []
+        globbed = []
         if '*' not in prefix and '?' not in prefix:
+            if prefix[-1] == os.path.sep:  # we are on unix, otherwise no bash
+                globbed.extend(glob(prefix + '.*'))
             prefix += '*'
-        for x in sorted(glob(prefix)):
+        globbed.extend(glob(prefix))
+        for x in sorted(globbed):
             if os.path.isdir(x):
                 x += '/'
             # append stripping the prefix (like bash, not like compgen)

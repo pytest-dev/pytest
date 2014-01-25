@@ -17,7 +17,8 @@
 #
 # The full version, including alpha/beta/rc tags.
 # The short X.Y version.
-version = release = "2.4.0.dev"
+version = "2.5.1"
+release = "2.5.1"
 
 import sys, os
 
@@ -53,7 +54,7 @@ master_doc = 'contents'
 
 # General information about the project.
 project = u'pytest'
-copyright = u'2012, holger krekel'
+copyright = u'2013, holger krekel'
 
 
 
@@ -104,14 +105,19 @@ pygments_style = 'sphinx'
 
 # -- Options for HTML output ---------------------------------------------------
 
+sys.path.append(os.path.abspath('_themes'))
+html_theme_path = ['_themes']
+
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'sphinxdoc'
+html_theme = 'flask'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {}
+html_theme_options = {
+  'index_logo': None
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
@@ -148,6 +154,23 @@ html_static_path = ['_static']
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}
 #html_sidebars = {'index': 'indexsidebar.html'}
+
+html_sidebars = {
+    'index': [
+        'sidebarintro.html',
+        'globaltoc.html',
+        'links.html',
+        'sourcelink.html',
+        'searchbox.html'
+    ],
+    '**': [
+        'globaltoc.html',
+        'relations.html',
+        'links.html',
+        'sourcelink.html',
+        'searchbox.html'
+    ]
+}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
@@ -197,7 +220,7 @@ htmlhelp_basename = 'pytestdoc'
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('contents', 'pytest.tex', u'pytest Documentation',
-   u'holger krekel, http://merlinux.eu', 'manual'),
+   u'holger krekel, trainer and consultant, http://merlinux.eu', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -239,7 +262,7 @@ man_pages = [
 epub_title = u'pytest'
 epub_author = u'holger krekel at merlinux eu'
 epub_publisher = u'holger krekel at merlinux eu'
-epub_copyright = u'2012, holger krekel et alii'
+epub_copyright = u'2013, holger krekel et alii'
 
 # The language of the text. It defaults to the language option
 # or en if the language is not set.

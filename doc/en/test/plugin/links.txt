@@ -22,7 +22,7 @@
 .. _`capturelog`: capturelog.html
 .. _`junitxml`: junitxml.html
 .. _`pytest_skipping.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.3.4/py/_plugin/pytest_skipping.py
-.. _`checkout the py.test development version`: ../../install.html#checkout
+.. _`checkout the pytest development version`: ../../install.html#checkout
 .. _`pytest_helpconfig.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.3.4/py/_plugin/pytest_helpconfig.py
 .. _`oejskit`: oejskit.html
 .. _`doctest`: doctest.html

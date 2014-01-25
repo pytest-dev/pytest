@@ -1,6 +1,8 @@
 """ basic collect and runtest protocol implementations """
 
-import py, sys
+import py
+import pytest
+import sys
 from time import time
 from py._code.code import TerminalRepr
 
@@ -193,11 +195,10 @@ def pytest_runtest_makereport(item, call):
         outcome = "passed"
         longrepr = None
     else:
-        excinfo = call.excinfo
         if not isinstance(excinfo, py.code.ExceptionInfo):
             outcome = "failed"
             longrepr = excinfo
-        elif excinfo.errisinstance(py.test.skip.Exception):
+        elif excinfo.errisinstance(pytest.skip.Exception):
             outcome = "skipped"
             r = excinfo._getreprcrash()
             longrepr = (str(r.path), r.lineno, r.message)
@@ -328,9 +329,18 @@ class SetupState(object):
 
     def _callfinalizers(self, colitem):
         finalizers = self._finalizers.pop(colitem, None)
+        exc = None
         while finalizers:
             fin = finalizers.pop()
-            fin()
+            try:
+                fin()
+            except Exception:
+                # XXX Only first exception will be seen by user,
+                #     ideally all should be reported.
+                if exc is None:
+                    exc = sys.exc_info()
+        if exc:
+            py.builtin._reraise(*exc)
 
     def _teardown_with_finalization(self, colitem):
         self._callfinalizers(colitem)
@@ -410,7 +420,7 @@ class Skipped(OutcomeException):
     __module__ = 'builtins'
 
 class Failed(OutcomeException):
-    """ raised from an explicit call to py.test.fail() """
+    """ raised from an explicit call to pytest.fail() """
     __module__ = 'builtins'
 
 class Exit(KeyboardInterrupt):
@@ -430,7 +440,7 @@ exit.Exception = Exit
 
 def skip(msg=""):
     """ skip an executing test with the given message.  Note: it's usually
-    better to use the py.test.mark.skipif marker to declare a test to be
+    better to use the pytest.mark.skipif marker to declare a test to be
     skipped under certain conditions like mismatching platforms or
     dependencies.  See the pytest_skipping plugin for details.
     """
@@ -450,25 +460,25 @@ fail.Exception = Failed
 
 
 def importorskip(modname, minversion=None):
-    """ return imported module if it has a higher __version__ than the
-    optionally specified 'minversion' - otherwise call py.test.skip()
-    with a message detailing the mismatch.
+    """ return imported module if it has at least "minversion" as its
+    __version__ attribute.  If no minversion is specified the a skip
+    is only triggered if the module can not be imported.
+    Note that version comparison only works with simple version strings
+    like "1.2.3" but not "1.2.3.dev1" or others.
     """
     __tracebackhide__ = True
     compile(modname, '', 'eval') # to catch syntaxerrors
     try:
         __import__(modname)
     except ImportError:
-        py.test.skip("could not import %r" %(modname,))
+        skip("could not import %r" %(modname,))
     mod = sys.modules[modname]
     if minversion is None:
         return mod
     verattr = getattr(mod, '__version__', None)
-    if isinstance(minversion, str):
-        minver = minversion.split(".")
-    else:
-        minver = list(minversion)
-    if verattr is None or verattr.split(".") < minver:
-        py.test.skip("module %r has __version__ %r, required is: %r" %(
-                     modname, verattr, minversion))
+    def intver(verstring):
+        return [int(x) for x in verstring.split(".")]
+    if verattr is None or intver(verattr) < intver(minversion):
+        skip("module %r has __version__ %r, required is: %r" %(
+             modname, verattr, minversion))
     return mod

@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 
 from xml.dom import minidom
 import py, sys, os
+from _pytest.junitxml import LogXML
 
 def runandparse(testdir, *args):
     resultpath = testdir.tmpdir.join("junit.xml")
@@ -37,7 +39,7 @@ class TestPython:
         result, dom = runandparse(testdir)
         assert result.ret
         node = dom.getElementsByTagName("testsuite")[0]
-        assert_attr(node, errors=0, failures=1, skips=3, tests=2)
+        assert_attr(node, name="pytest", errors=0, failures=1, skips=3, tests=2)
 
     def test_timing_function(self, testdir):
         testdir.makepyfile("""
@@ -282,6 +284,19 @@ class TestPython:
         if not sys.platform.startswith("java"):
             assert "hx" in fnode.toxml()
 
+    def test_assertion_binchars(self, testdir):
+        """this test did fail when the escaping wasnt strict"""
+        testdir.makepyfile("""
+
+            M1 = '\x01\x02\x03\x04'
+            M2 = '\x01\x02\x03\x05'
+
+            def test_str_compare():
+                assert M1 == M2
+            """)
+        result, dom = runandparse(testdir)
+        print(dom.toxml())
+
     def test_pass_captures_stdout(self, testdir):
         testdir.makepyfile("""
             def test_pass():
@@ -370,7 +385,7 @@ def test_nullbyte(testdir):
             assert False
     """)
     xmlf = testdir.tmpdir.join('junit.xml')
-    result = testdir.runpytest('--junitxml=%s' % xmlf)
+    testdir.runpytest('--junitxml=%s' % xmlf)
     text = xmlf.read()
     assert '\x00' not in text
     assert '#x00' in text
@@ -386,10 +401,9 @@ def test_nullbyte_replace(testdir):
             assert False
     """)
     xmlf = testdir.tmpdir.join('junit.xml')
-    result = testdir.runpytest('--junitxml=%s' % xmlf)
+    testdir.runpytest('--junitxml=%s' % xmlf)
     text = xmlf.read()
     assert '#x0' in text
-
 
 def test_invalid_xml_escape():
     # Test some more invalid xml chars, the full range should be
@@ -405,7 +419,6 @@ def test_invalid_xml_escape():
         unichr(65)
     except NameError:
         unichr = chr
-    u = py.builtin._totext
     invalid = (0x00, 0x1, 0xB, 0xC, 0xE, 0x19,
                 27, # issue #126
                0xD800, 0xDFFF, 0xFFFE, 0x0FFFF) #, 0x110000)
@@ -425,18 +438,16 @@ def test_invalid_xml_escape():
         assert chr(i) == bin_xml_escape(unichr(i)).uniobj
 
 def test_logxml_path_expansion(tmpdir, monkeypatch):
-    from _pytest.junitxml import LogXML
+    home_tilde = py.path.local(os.path.expanduser('~')).join('test.xml')
 
-    home_tilde = os.path.normpath(os.path.expanduser('~/test.xml'))
-
-    xml_tilde = LogXML('~/test.xml', None)
+    xml_tilde = LogXML('~%stest.xml' % tmpdir.sep, None)
     assert xml_tilde.logfile == home_tilde
 
     # this is here for when $HOME is not set correct
     monkeypatch.setenv("HOME", tmpdir)
     home_var = os.path.normpath(os.path.expandvars('$HOME/test.xml'))
 
-    xml_var = LogXML('$HOME/test.xml', None)
+    xml_var = LogXML('$HOME%stest.xml' % tmpdir.sep, None)
     assert xml_var.logfile == home_var
 
 def test_logxml_changingdir(testdir):
@@ -462,4 +473,27 @@ def test_escaped_parametrized_names_xml(testdir):
     node = dom.getElementsByTagName("testcase")[0]
     assert_attr(node,
         name="test_func[#x00]")
+
+def test_unicode_issue368(testdir):
+    path = testdir.tmpdir.join("test.xml")
+    log = LogXML(str(path), None)
+    ustr = py.builtin._totext("ВНИ!", "utf-8")
+    class report:
+        longrepr = ustr
+        sections = []
+        nodeid = "something"
+
+    # hopefully this is not too brittle ...
+    log.pytest_sessionstart()
+    log._opentestcase(report)
+    log.append_failure(report)
+    log.append_collect_failure(report)
+    log.append_collect_skipped(report)
+    log.append_error(report)
+    report.longrepr = "filename", 1, ustr
+    log.append_skipped(report)
+    report.wasxfail = ustr
+    log.append_skipped(report)
+    log.pytest_sessionfinish()
+
 

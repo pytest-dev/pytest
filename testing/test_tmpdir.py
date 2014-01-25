@@ -1,5 +1,4 @@
 import py, pytest
-import os
 
 from _pytest.tmpdir import tmpdir, TempdirHandler
 
@@ -28,15 +27,15 @@ def test_funcarg(testdir):
     assert bn == "qwe__abc"
 
 def test_ensuretemp(recwarn):
-    #py.test.deprecated_call(py.test.ensuretemp, 'hello')
-    d1 = py.test.ensuretemp('hello')
-    d2 = py.test.ensuretemp('hello')
+    #pytest.deprecated_call(pytest.ensuretemp, 'hello')
+    d1 = pytest.ensuretemp('hello')
+    d2 = pytest.ensuretemp('hello')
     assert d1 == d2
     assert d1.check(dir=1)
 
 class TestTempdirHandler:
     def test_mktemp(self, testdir):
-        config = testdir.Config()
+        config = testdir.parseconfig()
         config.option.basetemp = testdir.mkdir("hello")
         t = TempdirHandler(config)
         tmp = t.mktemp("world")
@@ -91,3 +90,12 @@ def test_tmpdir_always_is_realpath(testdir):
     result = testdir.runpytest("-s", p, '--basetemp=%s/bt' % linktemp)
     assert not result.ret
 
+def test_tmpdir_too_long_on_parametrization(testdir):
+    testdir.makepyfile("""
+        import pytest
+        @pytest.mark.parametrize("arg", ["1"*1000])
+        def test_some(arg, tmpdir):
+            tmpdir.ensure("hello")
+    """)
+    reprec = testdir.inline_run()
+    reprec.assertoutcome(passed=1)

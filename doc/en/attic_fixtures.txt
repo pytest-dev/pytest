@@ -129,6 +129,7 @@ Let's run this module without output-capturing::
     E       NameError: global name 'globresource' is not defined
     
     test_glob.py:5: NameError
+    2 failed in 0.01 seconds
 
 The two tests see the same global ``globresource`` object.
 
@@ -177,6 +178,7 @@ And then re-run our test module::
     E       NameError: global name 'globresource' is not defined
     
     test_glob.py:5: NameError
+    2 failed in 0.01 seconds
 
 We are now running the two tests twice with two different global resource
 instances.  Note that the tests are ordered such that only

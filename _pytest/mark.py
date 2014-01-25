@@ -1,5 +1,5 @@
 """ generic mechanism for marking and selecting python functions. """
-import pytest, py
+import py
 
 
 def pytest_namespace():
@@ -39,14 +39,14 @@ def pytest_addoption(parser):
 
 def pytest_cmdline_main(config):
     if config.option.markers:
-        config.pluginmanager.do_configure(config)
+        config.do_configure()
         tw = py.io.TerminalWriter()
         for line in config.getini("markers"):
             name, rest = line.split(":", 1)
             tw.write("@pytest.mark.%s:" % name, bold=True)
             tw.line(rest)
             tw.line()
-        config.pluginmanager.do_unconfigure(config)
+        config.do_unconfigure()
         return 0
 pytest_cmdline_main.tryfirst = True
 
@@ -81,11 +81,8 @@ def pytest_collection_modifyitems(items, config):
 
 
 class MarkMapping:
-    """Provides a local mapping for markers.
-    Only the marker names from the given :class:`NodeKeywords` will be mapped,
-    so the names are taken only from :class:`MarkInfo` or
-    :class:`MarkDecorator` items.
-    """
+    """Provides a local mapping for markers where item access
+    resolves to True if the marker is present. """
     def __init__(self, keywords):
         mymarks = set()
         for key, value in keywords.items():
@@ -93,8 +90,8 @@ class MarkMapping:
                 mymarks.add(key)
         self._mymarks = mymarks
 
-    def __getitem__(self, markname):
-        return markname in self._mymarks
+    def __getitem__(self, name):
+        return name in self._mymarks
 
 
 class KeywordMapping:
@@ -129,6 +126,7 @@ def matchkeyword(colitem, keywordexpr):
     mapped_names = set()
 
     # Add the names of the current item and any parent items
+    import pytest
     for item in colitem.listchain():
         if not isinstance(item, pytest.Instance):
             mapped_names.add(item.name)
@@ -138,23 +136,31 @@ def matchkeyword(colitem, keywordexpr):
         mapped_names.add(name)
 
     # Add the names attached to the current function through direct assignment
-    for name in colitem.function.__dict__:
-        mapped_names.add(name)
+    if hasattr(colitem, 'function'):
+        for name in colitem.function.__dict__:
+            mapped_names.add(name)
 
-    return eval(keywordexpr, {}, KeywordMapping(mapped_names))
+    mapping = KeywordMapping(mapped_names)
+    if " " not in keywordexpr:
+        # special case to allow for simple "-k pass" and "-k 1.3"
+        return mapping[keywordexpr]
+    elif keywordexpr.startswith("not ") and " " not in keywordexpr[4:]:
+        return not mapping[keywordexpr[4:]]
+    return eval(keywordexpr, {}, mapping)
 
 
 def pytest_configure(config):
+    import pytest
     if config.option.strict:
         pytest.mark._config = config
 
 
 class MarkGenerator:
     """ Factory for :class:`MarkDecorator` objects - exposed as
-    a ``py.test.mark`` singleton instance.  Example::
+    a ``pytest.mark`` singleton instance.  Example::
 
          import py
-         @py.test.mark.slowtest
+         @pytest.mark.slowtest
          def test_function():
             pass
 
@@ -163,7 +169,7 @@ class MarkGenerator:
 
     def __getattr__(self, name):
         if name[0] == "_":
-            raise AttributeError(name)
+            raise AttributeError("Marker name must NOT start with underscore")
         if hasattr(self, '_config'):
             self._check(name)
         return MarkDecorator(name)
@@ -182,6 +188,9 @@ class MarkGenerator:
         if name not in self._markers:
             raise AttributeError("%r not a registered marker" % (name,))
 
+def istestfunc(func):
+    return hasattr(func, "__call__") and \
+        getattr(func, "__name__", "<lambda>") != "<lambda>"
 
 class MarkDecorator:
     """ A decorator for test functions and test classes.  When applied
@@ -189,32 +198,54 @@ class MarkDecorator:
     :ref:`retrieved by hooks as item keywords <excontrolskip>`.
     MarkDecorator instances are often created like this::
 
-        mark1 = py.test.mark.NAME              # simple MarkDecorator
-        mark2 = py.test.mark.NAME(name1=value) # parametrized MarkDecorator
+        mark1 = pytest.mark.NAME              # simple MarkDecorator
+        mark2 = pytest.mark.NAME(name1=value) # parametrized MarkDecorator
 
     and can then be applied as decorators to test functions::
 
         @mark2
         def test_function():
             pass
+
+    When a MarkDecorator instance is called it does the following:
+      1. If called with a single class as its only positional argument and no
+         additional keyword arguments, it attaches itself to the class so it
+         gets applied automatically to all test cases found in that class.
+      2. If called with a single function as its only positional argument and
+         no additional keyword arguments, it attaches a MarkInfo object to the
+         function, containing all the arguments already stored internally in
+         the MarkDecorator.
+      3. When called in any other case, it performs a 'fake construction' call,
+         i.e. it returns a new MarkDecorator instance with the original
+         MarkDecorator's content updated with the arguments passed to this
+         call.
+
+    Note: The rules above prevent MarkDecorator objects from storing only a
+    single function or class reference as their positional argument with no
+    additional keyword or positional arguments.
+
     """
     def __init__(self, name, args=None, kwargs=None):
-        self.markname = name
+        self.name = name
         self.args = args or ()
         self.kwargs = kwargs or {}
 
+    @property
+    def markname(self):
+        return self.name # for backward-compat (2.4.1 had this attr)
+
     def __repr__(self):
         d = self.__dict__.copy()
-        name = d.pop('markname')
+        name = d.pop('name')
         return "<MarkDecorator %r %r>" % (name, d)
 
     def __call__(self, *args, **kwargs):
         """ if passed a single callable argument: decorate it with mark info.
             otherwise add *args/**kwargs in-place to mark information. """
-        if args:
+        if args and not kwargs:
             func = args[0]
-            if len(args) == 1 and hasattr(func, '__call__') or \
-               hasattr(func, '__bases__'):
+            if len(args) == 1 and (istestfunc(func) or
+                                   hasattr(func, '__bases__')):
                 if hasattr(func, '__bases__'):
                     if hasattr(func, 'pytestmark'):
                         l = func.pytestmark
@@ -225,19 +256,19 @@ class MarkDecorator:
                     else:
                         func.pytestmark = [self]
                 else:
-                    holder = getattr(func, self.markname, None)
+                    holder = getattr(func, self.name, None)
                     if holder is None:
                         holder = MarkInfo(
-                            self.markname, self.args, self.kwargs
+                            self.name, self.args, self.kwargs
                         )
-                        setattr(func, self.markname, holder)
+                        setattr(func, self.name, holder)
                     else:
                         holder.add(self.args, self.kwargs)
                 return func
         kw = self.kwargs.copy()
         kw.update(kwargs)
         args = self.args + args
-        return self.__class__(self.markname, args=args, kwargs=kw)
+        return self.__class__(self.name, args=args, kwargs=kw)
 
 
 class MarkInfo:

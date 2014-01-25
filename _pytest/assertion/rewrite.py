@@ -15,7 +15,7 @@ import py
 from _pytest.assertion import util
 
 
-# py.test caches rewritten pycs in __pycache__.
+# pytest caches rewritten pycs in __pycache__.
 if hasattr(imp, "get_tag"):
     PYTEST_TAG = imp.get_tag() + "-PYTEST"
 else:
@@ -41,6 +41,7 @@ class AssertionRewritingHook(object):
     def __init__(self):
         self.session = None
         self.modules = {}
+        self._register_with_pkg_resources()
 
     def set_session(self, session):
         self.fnpats = session.config.getini("python_files")
@@ -55,8 +56,12 @@ class AssertionRewritingHook(object):
         names = name.rsplit(".", 1)
         lastname = names[-1]
         pth = None
-        if path is not None and len(path) == 1:
-            pth = path[0]
+        if path is not None:
+            # Starting with Python 3.3, path is a _NamespacePath(), which
+            # causes problems if not converted to list.
+            path = list(path)
+            if len(path) == 1:
+                pth = path[0]
         if pth is None:
             try:
                 fd, fn, desc = imp.find_module(lastname, path)
@@ -97,7 +102,7 @@ class AssertionRewritingHook(object):
         # the most magical part of the process: load the source, rewrite the
         # asserts, and load the rewritten source. We also cache the rewritten
         # module code in a special pyc. We must be aware of the possibility of
-        # concurrent py.test processes rewriting and loading pycs. To avoid
+        # concurrent pytest processes rewriting and loading pycs. To avoid
         # tricky race conditions, we maintain the following invariant: The
         # cached pyc is always a complete, valid pyc. Operations on it must be
         # atomic. POSIX's atomic rename comes in handy.
@@ -169,6 +174,24 @@ class AssertionRewritingHook(object):
         tp = desc[2]
         return tp == imp.PKG_DIRECTORY
 
+    @classmethod
+    def _register_with_pkg_resources(cls):
+        """
+        Ensure package resources can be loaded from this loader. May be called
+        multiple times, as the operation is idempotent.
+        """
+        try:
+            import pkg_resources
+            # access an attribute in case a deferred importer is present
+            pkg_resources.__name__
+        except ImportError:
+            return
+
+        # Since pytest tests are always located in the file system, the
+        #  DefaultProvider is appropriate.
+        pkg_resources.register_loader_type(cls, pkg_resources.DefaultProvider)
+
+
 def _write_pyc(state, co, source_path, pyc):
     # Technically, we don't have to have the same pyc format as
     # (C)Python, since these "pycs" should never be seen by builtin
@@ -196,7 +219,7 @@ def _write_pyc(state, co, source_path, pyc):
 RN = "\r\n".encode("utf-8")
 N = "\n".encode("utf-8")
 
-cookie_re = re.compile("coding[:=]\s*[-\w.]+")
+cookie_re = re.compile(r"^[ \t\f]*#.*coding[:=][ \t]*[-\w.]+")
 BOM_UTF8 = '\xef\xbb\xbf'
 
 def _rewrite_test(state, fn):
@@ -220,8 +243,8 @@ def _rewrite_test(state, fn):
         end1 = source.find("\n")
         end2 = source.find("\n", end1 + 1)
         if (not source.startswith(BOM_UTF8) and
-            (not cookie_re.match(source[0:end1]) or
-            not cookie_re.match(source[end1:end2]))):
+            cookie_re.match(source[0:end1]) is None and
+            cookie_re.match(source[end1 + 1:end2]) is None):
             if hasattr(state, "_indecode"):
                 return None  # encodings imported us again, we don't rewrite
             state._indecode = True
@@ -267,7 +290,7 @@ def _make_rewritten_pyc(state, fn, pyc, co):
             os.rename(proc_pyc, pyc)
 
 def _read_pyc(source, pyc):
-    """Possibly read a py.test pyc containing rewritten code.
+    """Possibly read a pytest pyc containing rewritten code.
 
     Return rewritten code if successful or None if not.
     """
@@ -300,7 +323,7 @@ def rewrite_asserts(mod):
 
 
 _saferepr = py.io.saferepr
-from _pytest.assertion.util import format_explanation as _format_explanation
+from _pytest.assertion.util import format_explanation as _format_explanation # noqa
 
 def _should_repr_global_name(obj):
     return not hasattr(obj, "__name__") and not py.builtin.callable(obj)
@@ -538,7 +561,8 @@ class AssertionRewriter(ast.NodeVisitor):
         for i, v in enumerate(boolop.values):
             if i:
                 fail_inner = []
-                self.on_failure.append(ast.If(cond, fail_inner, []))
+                # cond is set in a prior loop iteration below
+                self.on_failure.append(ast.If(cond, fail_inner, [])) # noqa
                 self.on_failure = fail_inner
             self.push_format_context()
             res, expl = self.visit(v)
@@ -631,7 +655,7 @@ class AssertionRewriter(ast.NodeVisitor):
             res_expr = ast.Compare(left_res, [op], [next_res])
             self.statements.append(ast.Assign([store_names[i]], res_expr))
             left_res, left_expl = next_res, next_expl
-        # Use py.code._reprcompare if that's available.
+        # Use pytest.assertion.util._reprcompare if that's available.
         expl_call = self.helper("call_reprcompare",
                                 ast.Tuple(syms, ast.Load()),
                                 ast.Tuple(load_names, ast.Load()),

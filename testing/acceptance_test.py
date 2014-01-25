@@ -1,4 +1,4 @@
-import sys, py, pytest
+import py, pytest
 
 class TestGeneralUsage:
     def test_config_error(self, testdir):
@@ -14,7 +14,7 @@ class TestGeneralUsage:
         ])
 
     def test_root_conftest_syntax_error(self, testdir):
-        p = testdir.makepyfile(conftest="raise SyntaxError\n")
+        testdir.makepyfile(conftest="raise SyntaxError\n")
         result = testdir.runpytest()
         result.stderr.fnmatch_lines(["*raise SyntaxError*"])
         assert result.ret != 0
@@ -67,7 +67,7 @@ class TestGeneralUsage:
         result = testdir.runpytest("-s", "asd")
         assert result.ret == 4 # EXIT_USAGEERROR
         result.stderr.fnmatch_lines(["ERROR: file not found*asd"])
-        s = result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines([
             "*---configure",
             "*---unconfigure",
         ])
@@ -316,6 +316,24 @@ class TestGeneralUsage:
             "*ERROR*test_b.py::b*",
         ])
 
+    def test_namespace_import_doesnt_confuse_import_hook(self, testdir):
+        # Ref #383. Python 3.3's namespace package messed with our import hooks
+        # Importing a module that didn't exist, even if the ImportError was
+        # gracefully handled, would make our test crash.
+        testdir.mkdir('not_a_package')
+        p = testdir.makepyfile("""
+            try:
+                from not_a_package import doesnt_exist
+            except ImportError:
+                # We handle the import error gracefully here
+                pass
+
+            def test_whatever():
+                pass
+        """)
+        res = testdir.runpytest(p.basename)
+        assert res.ret == 0
+
 
 class TestInvocationVariants:
     def test_earlyinit(self, testdir):
@@ -399,15 +417,15 @@ class TestInvocationVariants:
     def test_equivalence_pytest_pytest(self):
         assert pytest.main == py.test.cmdline.main
 
-    def test_invoke_with_string(self, testdir, capsys):
-        retcode = testdir.pytestmain("-h")
+    def test_invoke_with_string(self, capsys):
+        retcode = pytest.main("-h")
         assert not retcode
         out, err = capsys.readouterr()
         assert "--help" in out
         pytest.raises(ValueError, lambda: pytest.main(0))
 
-    def test_invoke_with_path(self, testdir, capsys):
-        retcode = testdir.pytestmain(testdir.tmpdir)
+    def test_invoke_with_path(self, tmpdir, capsys):
+        retcode = pytest.main(tmpdir)
         assert not retcode
         out, err = capsys.readouterr()
 
@@ -416,7 +434,7 @@ class TestInvocationVariants:
             def pytest_addoption(self, parser):
                 parser.addoption("--myopt")
 
-        testdir.pytestmain(["-h"], plugins=[MyPlugin()])
+        pytest.main(["-h"], plugins=[MyPlugin()])
         out, err = capsys.readouterr()
         assert "--myopt" in out
 
@@ -512,7 +530,7 @@ class TestInvocationVariants:
 class TestDurations:
     source = """
         import time
-        frag = 0.02
+        frag = 0.002
         def test_something():
             pass
         def test_2():
@@ -527,7 +545,7 @@ class TestDurations:
         testdir.makepyfile(self.source)
         result = testdir.runpytest("--durations=10")
         assert result.ret == 0
-        result.stdout.fnmatch_lines([
+        result.stdout.fnmatch_lines_random([
             "*durations*",
             "*call*test_3*",
             "*call*test_2*",
@@ -538,12 +556,8 @@ class TestDurations:
         testdir.makepyfile(self.source)
         result = testdir.runpytest("--durations=2")
         assert result.ret == 0
-        result.stdout.fnmatch_lines([
-            "*durations*",
-            "*call*test_3*",
-            "*call*test_2*",
-        ])
-        assert "test_1" not in result.stdout.str()
+        lines = result.stdout.get_lines_after("*slowest*durations*")
+        assert "4 passed" in lines[2]
 
     def test_calls_showall(self, testdir):
         testdir.makepyfile(self.source)
@@ -551,7 +565,6 @@ class TestDurations:
         assert result.ret == 0
         for x in "123":
             for y in 'call',: #'setup', 'call', 'teardown':
-                l = []
                 for line in result.stdout.lines:
                     if ("test_%s" % x) in line and y in line:
                         break
@@ -581,7 +594,7 @@ class TestDurations:
 class TestDurationWithFixture:
     source = """
         import time
-        frag = 0.01
+        frag = 0.001
         def setup_function(func):
             time.sleep(frag * 3)
         def test_1():
@@ -594,9 +607,9 @@ class TestDurationWithFixture:
         result = testdir.runpytest("--durations=10")
         assert result.ret == 0
 
-        result.stdout.fnmatch_lines([
-            "*durations*",
-            "* setup *test_1*",
-            "* call *test_1*",
-        ])
+        result.stdout.fnmatch_lines_random("""
+            *durations*
+            * setup *test_1*
+            * call *test_1*
+        """)
 

@@ -91,8 +91,13 @@ class DoctestTextfile(DoctestItem, pytest.File):
         doctest = py.std.doctest
         # satisfy `FixtureRequest` constructor...
         self.funcargs = {}
-        self._fixtureinfo = FuncFixtureInfo((), [], {})
+        fm = self.session._fixturemanager
+        def func():
+            pass
+        self._fixtureinfo = fm.getfixtureinfo(node=self, func=func,
+                                              cls=None, funcargs=False)
         fixture_request = FixtureRequest(self)
+        fixture_request._fillfixtures()
         failed, tot = doctest.testfile(
             str(self.fspath), module_relative=False,
             optionflags=doctest.ELLIPSIS,

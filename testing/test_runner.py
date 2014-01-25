@@ -1,6 +1,7 @@
+from __future__ import with_statement
+
 import pytest, py, sys, os
 from _pytest import runner, main
-from py._code.code import ReprExceptionInfo
 
 class TestSetupState:
     def test_setup(self, testdir):
@@ -39,10 +40,39 @@ class TestSetupState:
             def setup_module(mod):
                 raise ValueError(42)
             def test_func(): pass
-        """)
+        """) # noqa
         ss = runner.SetupState()
-        pytest.raises(ValueError, "ss.prepare(item)")
-        pytest.raises(ValueError, "ss.prepare(item)")
+        pytest.raises(ValueError, lambda: ss.prepare(item))
+        pytest.raises(ValueError, lambda: ss.prepare(item))
+
+    def test_teardown_multiple_one_fails(self, testdir):
+        r = []
+        def fin1(): r.append('fin1')
+        def fin2(): raise Exception('oops')
+        def fin3(): r.append('fin3')
+        item = testdir.getitem("def test_func(): pass")
+        ss = runner.SetupState()
+        ss.addfinalizer(fin1, item)
+        ss.addfinalizer(fin2, item)
+        ss.addfinalizer(fin3, item)
+        with pytest.raises(Exception) as err:
+            ss._callfinalizers(item)
+        assert err.value.args == ('oops',)
+        assert r == ['fin3', 'fin1']
+
+    def test_teardown_multiple_fail(self, testdir):
+        # Ensure the first exception is the one which is re-raised.
+        # Ideally both would be reported however.
+        def fin1(): raise Exception('oops1')
+        def fin2(): raise Exception('oops2')
+        item = testdir.getitem("def test_func(): pass")
+        ss = runner.SetupState()
+        ss.addfinalizer(fin1, item)
+        ss.addfinalizer(fin2, item)
+        with pytest.raises(Exception) as err:
+            ss._callfinalizers(item)
+        assert err.value.args == ('oops2',)
+
 
 class BaseFunctionalTests:
     def test_passfunction(self, testdir):
@@ -238,7 +268,7 @@ class BaseFunctionalTests:
                     raise SystemExit(42)
             """)
         except SystemExit:
-            py.test.fail("runner did not catch SystemExit")
+            pytest.fail("runner did not catch SystemExit")
         rep = reports[1]
         assert rep.failed
         assert rep.when == "call"
@@ -250,10 +280,10 @@ class BaseFunctionalTests:
                 def test_func():
                     raise pytest.exit.Exception()
             """)
-        except py.test.exit.Exception:
+        except pytest.exit.Exception:
             pass
         else:
-            py.test.fail("did not raise")
+            pytest.fail("did not raise")
 
 class TestExecutionNonForked(BaseFunctionalTests):
     def getrunner(self):
@@ -270,14 +300,14 @@ class TestExecutionNonForked(BaseFunctionalTests):
         except KeyboardInterrupt:
             pass
         else:
-            py.test.fail("did not raise")
+            pytest.fail("did not raise")
 
 class TestExecutionForked(BaseFunctionalTests):
     pytestmark = pytest.mark.skipif("not hasattr(os, 'fork')")
 
     def getrunner(self):
         # XXX re-arrange this test to live in pytest-xdist
-        xplugin = py.test.importorskip("xdist.plugin")
+        xplugin = pytest.importorskip("xdist.plugin")
         return xplugin.forked_run_report
 
     def test_suicide(self, testdir):
@@ -387,15 +417,15 @@ def test_outcomeexception_exceptionattributes():
 
 def test_pytest_exit():
     try:
-        py.test.exit("hello")
-    except py.test.exit.Exception:
+        pytest.exit("hello")
+    except pytest.exit.Exception:
         excinfo = py.code.ExceptionInfo()
         assert excinfo.errisinstance(KeyboardInterrupt)
 
 def test_pytest_fail():
     try:
-        py.test.fail("hello")
-    except py.test.fail.Exception:
+        pytest.fail("hello")
+    except pytest.fail.Exception:
         excinfo = py.code.ExceptionInfo()
         s = excinfo.exconly(tryshort=True)
         assert s.startswith("Failed")
@@ -424,47 +454,49 @@ def test_exception_printing_skip():
         assert s.startswith("Skipped")
 
 def test_importorskip():
-    importorskip = py.test.importorskip
+    importorskip = pytest.importorskip
     def f():
         importorskip("asdlkj")
     try:
-        sys = importorskip("sys")
+        sys = importorskip("sys")  # noqa
         assert sys == py.std.sys
-        #path = py.test.importorskip("os.path")
+        #path = pytest.importorskip("os.path")
         #assert path == py.std.os.path
         excinfo = pytest.raises(pytest.skip.Exception, f)
         path = py.path.local(excinfo.getrepr().reprcrash.path)
         # check that importorskip reports the actual call
         # in this test the test_runner.py file
         assert path.purebasename == "test_runner"
-        pytest.raises(SyntaxError, "py.test.importorskip('x y z')")
-        pytest.raises(SyntaxError, "py.test.importorskip('x=y')")
-        path = importorskip("py", minversion=".".join(py.__version__))
+        pytest.raises(SyntaxError, "pytest.importorskip('x y z')")
+        pytest.raises(SyntaxError, "pytest.importorskip('x=y')")
         mod = py.std.types.ModuleType("hello123")
         mod.__version__ = "1.3"
+        sys.modules["hello123"] = mod
         pytest.raises(pytest.skip.Exception, """
-            py.test.importorskip("hello123", minversion="5.0")
+            pytest.importorskip("hello123", minversion="1.3.1")
         """)
+        mod2 = pytest.importorskip("hello123", minversion="1.3")
+        assert mod2 == mod
     except pytest.skip.Exception:
         print(py.code.ExceptionInfo())
-        py.test.fail("spurious skip")
+        pytest.fail("spurious skip")
 
 def test_importorskip_imports_last_module_part():
-    ospath = py.test.importorskip("os.path")
+    ospath = pytest.importorskip("os.path")
     assert os.path == ospath
 
 
 def test_pytest_cmdline_main(testdir):
     p = testdir.makepyfile("""
-        import py
+        import pytest
         def test_hello():
             assert 1
         if __name__ == '__main__':
-           py.test.cmdline.main([__file__])
+           pytest.cmdline.main([__file__])
     """)
     import subprocess
     popen = subprocess.Popen([sys.executable, str(p)], stdout=subprocess.PIPE)
-    s = popen.stdout.read()
+    popen.communicate()
     ret = popen.wait()
     assert ret == 0
 

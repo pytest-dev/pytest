@@ -2,14 +2,12 @@
 
 import py
 import pytest, _pytest
-import inspect
 import os, sys, imp
 try:
     from collections import MutableMapping as MappingMixin
 except ImportError:
     from UserDict import DictMixin as MappingMixin
 
-from _pytest.mark import MarkInfo
 from _pytest.runner import collect_one_node, Skipped
 
 tracebackcutdir = py.path.local(_pytest.__file__).dirpath()
@@ -65,7 +63,7 @@ def pytest_namespace():
     return dict(collect=collect)
 
 def pytest_configure(config):
-    py.test.config = config # compatibiltiy
+    pytest.config = config # compatibiltiy
     if config.option.exitfirst:
         config.option.maxfail = 1
 
@@ -76,7 +74,7 @@ def wrap_session(config, doit):
     initstate = 0
     try:
         try:
-            config.pluginmanager.do_configure(config)
+            config.do_configure()
             initstate = 1
             config.hook.pytest_sessionstart(session=session)
             initstate = 2
@@ -92,7 +90,7 @@ def wrap_session(config, doit):
             session.exitstatus = EXIT_INTERRUPTED
         except:
             excinfo = py.code.ExceptionInfo()
-            config.pluginmanager.notify_exception(excinfo, config.option)
+            config.notify_exception(excinfo, config.option)
             session.exitstatus = EXIT_INTERNALERROR
             if excinfo.errisinstance(SystemExit):
                 sys.stderr.write("mainloop: caught Spurious SystemExit!\n")
@@ -106,7 +104,8 @@ def wrap_session(config, doit):
                 session=session,
                 exitstatus=session.exitstatus)
         if initstate >= 1:
-            config.pluginmanager.do_unconfigure(config)
+            config.do_unconfigure()
+        config.pluginmanager.ensure_shutdown()
     return session.exitstatus
 
 def pytest_cmdline_main(config):
@@ -172,30 +171,39 @@ def compatproperty(name):
 
 class NodeKeywords(MappingMixin):
     def __init__(self, node):
-        parent = node.parent
-        bases = parent and (parent.keywords._markers,) or ()
-        self._markers = type("dynmarker", bases, {node.name: True})
+        self.node = node
+        self.parent = node.parent
+        self._markers = {node.name: True}
 
     def __getitem__(self, key):
         try:
-            return getattr(self._markers, key)
-        except AttributeError:
-            raise KeyError(key)
+            return self._markers[key]
+        except KeyError:
+            if self.parent is None:
+                raise
+            return self.parent.keywords[key]
 
     def __setitem__(self, key, value):
-        setattr(self._markers, key, value)
+        self._markers[key] = value
 
     def __delitem__(self, key):
-        delattr(self._markers, key)
+        raise ValueError("cannot delete key in keywords dict")
 
     def __iter__(self):
-        return iter(self.keys())
+        seen = set(self._markers)
+        if self.parent is not None:
+            seen.update(self.parent.keywords)
+        return iter(seen)
 
     def __len__(self):
-        return len(self.keys())
+        return len(self.__iter__())
 
     def keys(self):
-        return dir(self._markers)
+        return list(self)
+
+    def __repr__(self):
+        return "<NodeKeywords for node %s>" % (self.node, )
+
 
 class Node(object):
     """ base class for Collector and Item the test collection tree.
@@ -223,6 +231,8 @@ class Node(object):
         #: allow adding of extra keywords to use for matching
         self.extra_keyword_matches = set()
 
+        # used for storing artificial fixturedefs for direct parametrization
+        self._name2pseudofixturedef = {}
         #self.extrainit()
 
     @property
@@ -263,21 +273,11 @@ class Node(object):
             self._nodeid = x = self._makeid()
             return x
 
-
     def _makeid(self):
         return self.parent.nodeid + "::" + self.name
 
-    def __eq__(self, other):
-        if not isinstance(other, Node):
-            return False
-        return (self.__class__ == other.__class__ and
-                self.name == other.name and self.parent == other.parent)
-
-    def __ne__(self, other):
-        return not self == other
-
     def __hash__(self):
-        return hash((self.name, self.parent))
+        return hash(self.nodeid)
 
     def setup(self):
         pass
@@ -314,6 +314,27 @@ class Node(object):
         chain.reverse()
         return chain
 
+    def add_marker(self, marker):
+        """ dynamically add a marker object to the node.
+
+        ``marker`` can be a string or pytest.mark.* instance.
+        """
+        from _pytest.mark import MarkDecorator
+        if isinstance(marker, py.builtin._basestring):
+            marker = MarkDecorator(marker)
+        elif not isinstance(marker, MarkDecorator):
+            raise ValueError("is not a string or pytest.mark.* Marker")
+        self.keywords[marker.name] = marker
+
+    def get_marker(self, name):
+        """ get a marker object from this node or None if
+        the node doesn't have a marker with that name. """
+        val = self.keywords.get(name, None)
+        if val is not None:
+            from _pytest.mark import MarkInfo, MarkDecorator
+            if isinstance(val, (MarkDecorator, MarkInfo)):
+                return val
+
     def listextrakeywords(self):
         """ Return a set of all extra keywords in self and any parents."""
         extra_keywords = set()
@@ -337,6 +358,8 @@ class Node(object):
         self.session._setupstate.addfinalizer(fin, self)
 
     def getparent(self, cls):
+        """ get the next parent node (including ourself)
+        which is an instance of the given class"""
         current = self
         while current and not isinstance(current, cls):
             current = current.parent
@@ -397,7 +420,6 @@ class Collector(Node):
 
     def _prunetraceback(self, excinfo):
         if hasattr(self, 'fspath'):
-            path = self.fspath
             traceback = excinfo.traceback
             ntraceback = traceback.cut(path=self.fspath)
             if ntraceback == traceback:
@@ -672,11 +694,4 @@ class Session(FSCollector):
                         yield x
             node.ihook.pytest_collectreport(report=rep)
 
-def getfslineno(obj):
-    # xxx let decorators etc specify a sane ordering
-    if hasattr(obj, 'place_as'):
-        obj = obj.place_as
-    fslineno = py.code.getfslineno(obj)
-    assert isinstance(fslineno[1], int), obj
-    return fslineno
 

@@ -1,6 +1,4 @@
-import pytest, py, sys
-from _pytest import python as funcargs
-from _pytest.python import FixtureLookupError
+import pytest, py
 
 class TestModule:
     def test_failing_import(self, testdir):
@@ -32,7 +30,7 @@ class TestModule:
 
     def test_module_considers_pluginmanager_at_import(self, testdir):
         modcol = testdir.getmodulecol("pytest_plugins='xasdlkj',")
-        pytest.raises(ImportError, "modcol.obj")
+        pytest.raises(ImportError, lambda: modcol.obj)
 
 class TestClass:
     def test_class_with_init_skip_collect(self, testdir):
@@ -289,22 +287,10 @@ class TestFunction:
             pass
         f1 = pytest.Function(name="name", parent=session, config=config,
                 args=(1,), callobj=func1)
+        assert f1 == f1
         f2 = pytest.Function(name="name",config=config,
-                args=(1,), callobj=func2, parent=session)
-        assert not f1 == f2
+                callobj=func2, parent=session)
         assert f1 != f2
-        f3 = pytest.Function(name="name", parent=session, config=config,
-                args=(1,2), callobj=func2)
-        assert not f3 == f2
-        assert f3 != f2
-
-        assert not f3 == f1
-        assert f3 != f1
-
-        f1_b = pytest.Function(name="name", parent=session, config=config,
-              args=(1,), callobj=func1)
-        assert f1 == f1_b
-        assert not f1 != f1_b
 
     def test_issue197_parametrize_emptyset(self, testdir):
         testdir.makepyfile("""
@@ -316,6 +302,16 @@ class TestFunction:
         reprec = testdir.inline_run()
         reprec.assertoutcome(skipped=1)
 
+    def test_single_tuple_unwraps_values(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.parametrize(('arg',), [(1,)])
+            def test_function(arg):
+                assert arg == 1
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
     def test_issue213_parametrize_value_no_equal(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -326,7 +322,7 @@ class TestFunction:
             def test_function(arg):
                 assert arg.__class__.__name__ == "A"
         """)
-        reprec = testdir.inline_run()
+        reprec = testdir.inline_run("--fulltrace")
         reprec.assertoutcome(passed=1)
 
     def test_parametrize_with_non_hashable_values(self, testdir):
@@ -346,6 +342,68 @@ class TestFunction:
         """)
         rec = testdir.inline_run()
         rec.assertoutcome(passed=2)
+
+
+    def test_parametrize_with_non_hashable_values_indirect(self, testdir):
+        """Test parametrization with non-hashable values with indirect parametrization."""
+        testdir.makepyfile("""
+            archival_mapping = {
+                '1.0': {'tag': '1.0'},
+                '1.2.2a1': {'tag': 'release-1.2.2a1'},
+            }
+
+            import pytest
+
+            @pytest.fixture
+            def key(request):
+                return request.param
+
+            @pytest.fixture
+            def value(request):
+                return request.param
+
+            @pytest.mark.parametrize('key value'.split(),
+                                     archival_mapping.items(), indirect=True)
+            def test_archival_to_version(key, value):
+                assert key in archival_mapping
+                assert value == archival_mapping[key]
+        """)
+        rec = testdir.inline_run()
+        rec.assertoutcome(passed=2)
+
+
+    def test_parametrize_overrides_fixture(self, testdir):
+        """Test parametrization when parameter overrides existing fixture with same name."""
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture
+            def value():
+                return 'value'
+
+            @pytest.mark.parametrize('value',
+                                     ['overrided'])
+            def test_overrided_via_param(value):
+                assert value == 'overrided'
+        """)
+        rec = testdir.inline_run()
+        rec.assertoutcome(passed=1)
+
+
+    def test_parametrize_with_mark(selfself, testdir):
+        items = testdir.getitems("""
+            import pytest
+            @pytest.mark.foo
+            @pytest.mark.parametrize('arg', [
+                1,
+                pytest.mark.bar(pytest.mark.baz(2))
+            ])
+            def test_function(arg):
+                pass
+        """)
+        keywords = [item.keywords for item in items]
+        assert 'foo' in keywords[0] and 'bar' not in keywords[0] and 'baz' not in keywords[0]
+        assert 'foo' in keywords[1] and 'bar' in keywords[1] and 'baz' in keywords[1]
 
     def test_function_equality_with_callspec(self, testdir, tmpdir):
         items = testdir.getitems("""
@@ -596,7 +654,7 @@ class TestReportInfo:
                     return MyFunction(name, parent=collector)
         """)
         item = testdir.getitem("def test_func(): pass")
-        runner = item.config.pluginmanager.getplugin("runner")
+        item.config.pluginmanager.getplugin("runner")
         assert item.location == ("ABCDE", 42, "custom")
 
     def test_func_reportinfo(self, testdir):
@@ -686,7 +744,7 @@ def test_customized_python_discovery_functions(testdir):
         [pytest]
         python_functions=_test
     """)
-    p = testdir.makepyfile("""
+    testdir.makepyfile("""
         def _test_underscore():
             pass
     """)

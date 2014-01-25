@@ -1,29 +1,88 @@
 """ command line options, ini-file and conftest.py processing. """
 
 import py
+# DON't import pytest here because it causes import cycle troubles
 import sys, os
+from _pytest import hookspec # the extension point definitions
 from _pytest.core import PluginManager
-import pytest
-from _pytest._argcomplete import try_argcomplete, filescompleter
 
-# enable after some grace period for plugin writers
-TYPE_WARN = False
-if TYPE_WARN:
-    import warnings
+# pytest startup
 
+def main(args=None, plugins=None):
+    """ return exit code, after performing an in-process test run.
 
-def pytest_cmdline_parse(pluginmanager, args):
-    config = Config(pluginmanager)
-    config.parse(args)
-    return config
+    :arg args: list of command line arguments.
 
-def pytest_unconfigure(config):
-    while 1:
-        try:
-            fin = config._cleanup.pop()
-        except IndexError:
-            break
-        fin()
+    :arg plugins: list of plugin objects to be auto-registered during
+                  initialization.
+    """
+    config = _prepareconfig(args, plugins)
+    return config.hook.pytest_cmdline_main(config=config)
+
+class cmdline:  # compatibility namespace
+    main = staticmethod(main)
+
+class UsageError(Exception):
+    """ error in pytest usage or invocation"""
+
+_preinit = []
+
+default_plugins = (
+     "mark main terminal runner python pdb unittest capture skipping "
+     "tmpdir monkeypatch recwarn pastebin helpconfig nose assertion genscript "
+     "junitxml resultlog doctest").split()
+
+def _preloadplugins():
+    assert not _preinit
+    _preinit.append(get_plugin_manager())
+
+def get_plugin_manager():
+    if _preinit:
+        return _preinit.pop(0)
+    # subsequent calls to main will create a fresh instance
+    pluginmanager = PytestPluginManager()
+    pluginmanager.config = Config(pluginmanager) # XXX attr needed?
+    for spec in default_plugins:
+        pluginmanager.import_plugin(spec)
+    return pluginmanager
+
+def _prepareconfig(args=None, plugins=None):
+    if args is None:
+        args = sys.argv[1:]
+    elif isinstance(args, py.path.local):
+        args = [str(args)]
+    elif not isinstance(args, (tuple, list)):
+        if not isinstance(args, str):
+            raise ValueError("not a string or argument list: %r" % (args,))
+        args = py.std.shlex.split(args)
+    pluginmanager = get_plugin_manager()
+    if plugins:
+        for plugin in plugins:
+            pluginmanager.register(plugin)
+    return pluginmanager.hook.pytest_cmdline_parse(
+            pluginmanager=pluginmanager, args=args)
+
+class PytestPluginManager(PluginManager):
+    def __init__(self, hookspecs=[hookspec]):
+        super(PytestPluginManager, self).__init__(hookspecs=hookspecs)
+        self.register(self)
+        if os.environ.get('PYTEST_DEBUG'):
+            err = sys.stderr
+            encoding = getattr(err, 'encoding', 'utf8')
+            try:
+                err = py.io.dupfile(err, encoding=encoding)
+            except Exception:
+                pass
+            self.trace.root.setwriter(err.write)
+
+    def pytest_configure(self, config):
+        config.addinivalue_line("markers",
+            "tryfirst: mark a hook implementation function such that the "
+            "plugin machinery will try to call it first/as early as possible.")
+        config.addinivalue_line("markers",
+            "trylast: mark a hook implementation function such that the "
+            "plugin machinery will try to call it last/as late as possible.")
+
 
 class Parser:
     """ Parser for command line arguments and ini-file values.  """
@@ -70,8 +129,8 @@ class Parser:
 
         :opts: option names, can be short or long options.
         :attrs: same attributes which the ``add_option()`` function of the
-           `optparse library
-           <http://docs.python.org/library/optparse.html#module-optparse>`_
+           `argparse library
+           <http://docs.python.org/2/library/argparse.html>`_
            accepts.
 
         After command line parsing options are available on the pytest config
@@ -82,7 +141,14 @@ class Parser:
         self._anonymous.addoption(*opts, **attrs)
 
     def parse(self, args):
-        self.optparser = optparser = MyOptionParser(self)
+        from _pytest._argcomplete import try_argcomplete
+        self.optparser = self._getparser()
+        try_argcomplete(self.optparser)
+        return self.optparser.parse_args([str(x) for x in args])
+
+    def _getparser(self):
+        from _pytest._argcomplete import filescompleter
+        optparser = MyOptionParser(self)
         groups = self._groups + [self._anonymous]
         for group in groups:
             if group.options:
@@ -93,16 +159,20 @@ class Parser:
                     a = option.attrs()
                     arggroup.add_argument(*n, **a)
         # bash like autocompletion for dirs (appending '/')
-        optparser.add_argument(Config._file_or_dir, nargs='*'
+        optparser.add_argument(FILE_OR_DIR, nargs='*'
                                ).completer=filescompleter
-        try_argcomplete(self.optparser)
-        return self.optparser.parse_args([str(x) for x in args])
+        return optparser
 
     def parse_setoption(self, args, option):
         parsedoption = self.parse(args)
         for name, value in parsedoption.__dict__.items():
             setattr(option, name, value)
-        return getattr(parsedoption, Config._file_or_dir)
+        return getattr(parsedoption, FILE_OR_DIR)
+
+    def parse_known_args(self, args):
+        optparser = self._getparser()
+        args = [str(x) for x in args]
+        return optparser.parse_known_args(args)[0]
 
     def addini(self, name, help, type=None, default=None):
         """ register an ini-file option.
@@ -142,6 +212,8 @@ class Argument:
         'int': int,
         'string': str,
         }
+    # enable after some grace period for plugin writers
+    TYPE_WARN = False
 
     def __init__(self, *names, **attrs):
         """store parms in private vars for use in add_argument"""
@@ -149,12 +221,12 @@ class Argument:
         self._short_opts = []
         self._long_opts = []
         self.dest = attrs.get('dest')
-        if TYPE_WARN:
+        if self.TYPE_WARN:
             try:
                 help = attrs['help']
                 if '%default' in help:
-                    warnings.warn(
-                        'py.test now uses argparse. "%default" should be'
+                    py.std.warnings.warn(
+                        'pytest now uses argparse. "%default" should be'
                         ' changed to "%(default)s" ',
                         FutureWarning,
                         stacklevel=3)
@@ -166,10 +238,10 @@ class Argument:
             pass
         else:
             # this might raise a keyerror as well, don't want to catch that
-            if isinstance(typ, str):
+            if isinstance(typ, py.builtin._basestring):
                 if typ == 'choice':
-                    if TYPE_WARN:
-                        warnings.warn(
+                    if self.TYPE_WARN:
+                        py.std.warnings.warn(
                             'type argument to addoption() is a string %r.'
                             ' For parsearg this is optional and when supplied '
                             ' should be a type.'
@@ -180,8 +252,8 @@ class Argument:
                     # the type of the first element
                     attrs['type'] = type(attrs['choices'][0])
                 else:
-                    if TYPE_WARN:
-                        warnings.warn(
+                    if self.TYPE_WARN:
+                        py.std.warnings.warn(
                             'type argument to addoption() is a string %r.'
                             ' For parsearg this should be a type.'
                             ' (options: %s)' % (typ, names),
@@ -323,21 +395,8 @@ class MyOptionParser(py.std.argparse.ArgumentParser):
                 if arg and arg[0] == '-':
                     msg = py.std.argparse._('unrecognized arguments: %s')
                     self.error(msg % ' '.join(argv))
-            getattr(args, Config._file_or_dir).extend(argv)
+            getattr(args, FILE_OR_DIR).extend(argv)
         return args
-
-# #pylib 2013-07-31
-# (12:05:53) anthon: hynek: can you get me a list of preferred py.test
-#                    long-options with '-' inserted at the right places?
-# (12:08:29) hynek:  anthon, hpk: generally I'd love the following, decide
-#                    yourself which you agree and which not:
-# (12:10:51) hynek:  --exit-on-first --full-trace --junit-xml --junit-prefix
-#                    --result-log --collect-only --conf-cut-dir --trace-config
-#                    --no-magic
-# (12:18:21) hpk:    hynek,anthon: makes sense to me.
-# (13:40:30) hpk:    hynek: let's not change names, rather only deal with
-#                    hyphens for now
-# (13:40:50) hynek:  then --exit-first *shrug*
 
 class DropShorterLongHelpFormatter(py.std.argparse.HelpFormatter):
     """shorten help for long options that differ only in extra hyphens
@@ -390,7 +449,7 @@ class DropShorterLongHelpFormatter(py.std.argparse.HelpFormatter):
 
 class Conftest(object):
     """ the single place for accessing values and interacting
-        towards conftest modules from py.test objects.
+        towards conftest modules from pytest objects.
     """
     def __init__(self, onimport=None, confcutdir=None):
         self._path2confmods = {}
@@ -504,35 +563,88 @@ class CmdOptions(object):
     def __repr__(self):
         return "<CmdOptions %r>" %(self.__dict__,)
 
+FILE_OR_DIR = 'file_or_dir'
 class Config(object):
     """ access to configuration values, pluginmanager and plugin hooks.  """
-    _file_or_dir = 'file_or_dir'
 
-    def __init__(self, pluginmanager=None):
+    def __init__(self, pluginmanager):
         #: access to command line option as attributes.
         #: (deprecated), use :py:func:`getoption() <_pytest.config.Config.getoption>` instead
         self.option = CmdOptions()
-        _a = self._file_or_dir
+        _a = FILE_OR_DIR
         self._parser = Parser(
             usage="%%(prog)s [options] [%s] [%s] [...]" % (_a, _a),
             processopt=self._processopt,
         )
         #: a pluginmanager instance
-        self.pluginmanager = pluginmanager or PluginManager(load=True)
+        self.pluginmanager = pluginmanager
         self.trace = self.pluginmanager.trace.root.get("config")
         self._conftest = Conftest(onimport=self._onimportconftest)
         self.hook = self.pluginmanager.hook
         self._inicache = {}
         self._opt2dest = {}
         self._cleanup = []
+        self.pluginmanager.register(self, "pytestconfig")
+        self.pluginmanager.set_register_callback(self._register_plugin)
+        self._configured = False
+
+    def _register_plugin(self, plugin, name):
+        call_plugin = self.pluginmanager.call_plugin
+        call_plugin(plugin, "pytest_addhooks",
+                    {'pluginmanager': self.pluginmanager})
+        self.hook.pytest_plugin_registered(plugin=plugin,
+                                           manager=self.pluginmanager)
+        dic = call_plugin(plugin, "pytest_namespace", {}) or {}
+        if dic:
+            import pytest
+            setns(pytest, dic)
+        call_plugin(plugin, "pytest_addoption", {'parser': self._parser})
+        if self._configured:
+            call_plugin(plugin, "pytest_configure", {'config': self})
+
+    def do_configure(self):
+        assert not self._configured
+        self._configured = True
+        self.hook.pytest_configure(config=self)
+
+    def do_unconfigure(self):
+        assert self._configured
+        self._configured = False
+        self.hook.pytest_unconfigure(config=self)
+        self.pluginmanager.ensure_shutdown()
+
+    def pytest_cmdline_parse(self, pluginmanager, args):
+        assert self == pluginmanager.config, (self, pluginmanager.config)
+        self.parse(args)
+        return self
+
+    def pytest_unconfigure(config):
+        while config._cleanup:
+            fin = config._cleanup.pop()
+            fin()
+
+    def notify_exception(self, excinfo, option=None):
+        if option and option.fulltrace:
+            style = "long"
+        else:
+            style = "native"
+        excrepr = excinfo.getrepr(funcargs=True,
+            showlocals=getattr(option, 'showlocals', False),
+            style=style,
+        )
+        res = self.hook.pytest_internalerror(excrepr=excrepr,
+                                             excinfo=excinfo)
+        if not py.builtin.any(res):
+            for line in str(excrepr).split("\n"):
+                sys.stderr.write("INTERNALERROR> %s\n" %line)
+                sys.stderr.flush()
+
 
     @classmethod
     def fromdictargs(cls, option_dict, args):
         """ constructor useable for subprocesses. """
-        config = cls()
-        # XXX slightly crude way to initialize capturing
-        import _pytest.capture
-        _pytest.capture.pytest_cmdline_parse(config.pluginmanager, args)
+        pluginmanager = get_plugin_manager()
+        config = pluginmanager.config
         config._preparse(args, addopts=False)
         config.option.__dict__.update(option_dict)
         for x in config.option.plugins:
@@ -558,21 +670,9 @@ class Config(object):
         plugins += self._conftest.getconftestmodules(fspath)
         return plugins
 
-    def _setinitialconftest(self, args):
-        # capture output during conftest init (#issue93)
-        # XXX introduce load_conftest hook to avoid needing to know
-        # about capturing plugin here
-        capman = self.pluginmanager.getplugin("capturemanager")
-        capman.resumecapture()
-        try:
-            try:
-                self._conftest.setinitial(args)
-            finally:
-                out, err = capman.suspendcapture() # logging might have got it
-        except:
-            sys.stdout.write(out)
-            sys.stderr.write(err)
-            raise
+    def pytest_load_initial_conftests(self, parser, args):
+        self._conftest.setinitial(args)
+    pytest_load_initial_conftests.trylast = True
 
     def _initini(self, args):
         self.inicfg = getcfg(args, ["pytest.ini", "tox.ini", "setup.cfg"])
@@ -587,12 +687,11 @@ class Config(object):
         self.pluginmanager.consider_preparse(args)
         self.pluginmanager.consider_setuptools_entrypoints()
         self.pluginmanager.consider_env()
-        self._setinitialconftest(args)
-        self.pluginmanager.do_addoption(self._parser)
-        if addopts:
-            self.hook.pytest_cmdline_preparse(config=self, args=args)
+        self.hook.pytest_load_initial_conftests(early_config=self,
+            args=args, parser=self._parser)
 
     def _checkversion(self):
+        import pytest
         minver = self.inicfg.get('minversion', None)
         if minver:
             ver = minver.split(".")
@@ -610,6 +709,8 @@ class Config(object):
                 "can only parse cmdline args at most once per Config object")
         self._origargs = args
         self._preparse(args)
+        # XXX deprecated hook:
+        self.hook.pytest_cmdline_preparse(config=self, args=args)
         self._parser.hints.extend(self.pluginmanager._hints)
         args = self._parser.parse_setoption(args, self.option)
         if not args:
@@ -708,7 +809,7 @@ class Config(object):
 
     def getvalueorskip(self, name, path=None):
         """ (deprecated) return getvalue(name) or call
-        py.test.skip if no value exists. """
+        pytest.skip if no value exists. """
         __tracebackhide__ = True
         try:
             val = self.getvalue(name, path)
@@ -739,3 +840,23 @@ def getcfg(args, inibasenames):
                         return iniconfig['pytest']
     return {}
 
+
+def setns(obj, dic):
+    import pytest
+    for name, value in dic.items():
+        if isinstance(value, dict):
+            mod = getattr(obj, name, None)
+            if mod is None:
+                modname = "pytest.%s" % name
+                mod = py.std.types.ModuleType(modname)
+                sys.modules[modname] = mod
+                mod.__all__ = []
+                setattr(obj, name, mod)
+            obj.__all__.append(name)
+            setns(mod, value)
+        else:
+            setattr(obj, name, value)
+            obj.__all__.append(name)
+            #if obj != pytest:
+            #    pytest.__all__.append(name)
+            setattr(pytest, name, value)

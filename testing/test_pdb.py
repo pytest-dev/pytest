@@ -1,4 +1,5 @@
-import py, pytest
+
+import py
 import sys
 
 from test_doctest import xfail_if_pdbpp_installed
@@ -62,7 +63,7 @@ class TestPDB:
         child.expect(".*i = 0")
         child.expect("(Pdb)")
         child.sendeof()
-        rest = child.read()
+        rest = child.read().decode("utf8")
         assert "1 failed" in rest
         assert "def test_1" not in rest
         if child.isalive():
@@ -127,7 +128,7 @@ class TestPDB:
         child.expect("x = 3")
         child.expect("(Pdb)")
         child.sendeof()
-        rest = child.read()
+        rest = child.read().decode("utf-8")
         assert "1 failed" in rest
         assert "def test_1" in rest
         assert "hello17" in rest # out is captured
@@ -144,7 +145,7 @@ class TestPDB:
         child.expect("test_1")
         child.expect("(Pdb)")
         child.sendeof()
-        rest = child.read()
+        rest = child.read().decode("utf8")
         assert "1 failed" in rest
         assert "reading from stdin while output" not in rest
         if child.isalive():
@@ -162,7 +163,7 @@ class TestPDB:
         child.send("capsys.readouterr()\n")
         child.expect("hello1")
         child.sendeof()
-        rest = child.read()
+        child.read()
         if child.isalive():
             child.wait()
 
@@ -182,7 +183,7 @@ class TestPDB:
         child.expect("0")
         child.expect("(Pdb)")
         child.sendeof()
-        rest = child.read()
+        rest = child.read().decode("utf8")
         assert "1 failed" in rest
         if child.isalive():
             child.wait()
@@ -206,7 +207,7 @@ class TestPDB:
         child.sendline('c')
         child.expect("x = 4")
         child.sendeof()
-        rest = child.read()
+        rest = child.read().decode("utf8")
         assert "1 failed" in rest
         assert "def test_1" in rest
         assert "hello17" in rest # out is captured
@@ -238,6 +239,7 @@ class TestPDB:
         child.expect("x = 5")
         child.sendeof()
         child.wait()
+
     def test_pdb_collection_failure_is_shown(self, testdir):
         p1 = testdir.makepyfile("""xxx """)
         result = testdir.runpytest("--pdb", p1)

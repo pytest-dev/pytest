@@ -4,7 +4,7 @@ import py, pytest
 import pdb
 
 xfail_if_pdbpp_installed = pytest.mark.xfail(hasattr(pdb, "__author__"),
-    reason="doctest/pdbpp problem: https://bitbucket.org/antocuni/pdb/issue/24/doctests-fail-when-pdbpp-is-installed")
+    reason="doctest/pdbpp problem: https://bitbucket.org/antocuni/pdb/issue/24/doctests-fail-when-pdbpp-is-installed", run=False)
 
 class TestDoctests:
 
@@ -99,7 +99,7 @@ class TestDoctests:
         reprec.assertoutcome(failed=1)
 
     def test_doctest_unexpected_exception(self, testdir):
-        p = testdir.maketxtfile("""
+        testdir.maketxtfile("""
             >>> i = 0
             >>> 0 / i
             2
@@ -136,7 +136,7 @@ class TestDoctests:
         testdir.tmpdir.join("hello.py").write(py.code.Source("""
             import asdalsdkjaslkdjasd
         """))
-        p = testdir.maketxtfile("""
+        testdir.maketxtfile("""
             >>> import hello
             >>>
         """)
@@ -209,6 +209,26 @@ class TestDoctests:
         reprec = testdir.inline_run(p, )
         reprec.assertoutcome(passed=1)
 
+    @xfail_if_pdbpp_installed
+    def test_txtfile_with_usefixtures_in_ini(self, testdir):
+        testdir.makeini("""
+            [pytest]
+            usefixtures = myfixture
+        """)
+        testdir.makeconftest("""
+            import pytest
+            @pytest.fixture
+            def myfixture(monkeypatch):
+                monkeypatch.setenv("HELLO", "WORLD")
+        """)
+
+        p = testdir.maketxtfile("""
+            >>> import os
+            >>> os.environ["HELLO"]
+            'WORLD'
+        """)
+        reprec = testdir.inline_run(p, )
+        reprec.assertoutcome(passed=1)
 
     @xfail_if_pdbpp_installed
     def test_doctestmodule_with_fixtures(self, testdir):

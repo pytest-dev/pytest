@@ -48,11 +48,28 @@ requests in all your tests, you can do::
     import pytest
     @pytest.fixture(autouse=True)
     def no_requests(monkeypatch):
-        monkeypatch.replace("requests.session.Session.request", None)
+        monkeypatch.delattr("requests.session.Session.request")
 
-This autouse fixture will be executed for all test functions and it
-will replace the method ``request.session.Session.request`` with the
-value None so that any attempts to create http requests will fail.
+This autouse fixture will be executed for each test function and it
+will delete the method ``request.session.Session.request`` 
+so that any attempts within tests to create http requests will fail.
+
+example: setting an attribute on some class
+------------------------------------------------------
+
+If you need to patch out ``os.getcwd()`` to return an artifical
+value::
+
+    def test_some_interaction(monkeypatch):
+        monkeypatch.setattr("os.getcwd", lambda: "/")
+
+which is equivalent to the long form::
+
+    def test_some_interaction(monkeypatch):
+        import os
+        monkeypatch.setattr(os, "getcwd", lambda: "/")
+    
+
 
 Method reference of the monkeypatch function argument
 -----------------------------------------------------

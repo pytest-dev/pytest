@@ -1,7 +1,6 @@
 
-import pytest, py, sys
+import pytest, py
 from _pytest import python as funcargs
-from _pytest.python import FixtureLookupError
 
 class TestMetafunc:
     def Metafunc(self, func):
@@ -194,8 +193,8 @@ class TestMetafunc:
                 metafunc.parametrize('y', [2])
             def pytest_funcarg__x(request):
                 return request.param * 10
-            def pytest_funcarg__y(request):
-                return request.param
+            #def pytest_funcarg__y(request):
+            #    return request.param
 
             def test_simple(x,y):
                 assert x in (10,20)
@@ -593,6 +592,8 @@ class TestMetafuncFunctional:
 
             def test_it(foo):
                 pass
+            def test_it2(foo):
+                pass
         """)
         reprec = testdir.inline_run("--collect-only")
         assert not reprec.getcalls("pytest_internalerror")
@@ -628,6 +629,22 @@ class TestMetafuncFunctional:
         result.stdout.fnmatch_lines([
             "*3 passed*"
         ])
+
+    def test_generate_same_function_names_issue403(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            def make_tests():
+                @pytest.mark.parametrize("x", range(2))
+                def test_foo(x):
+                    pass
+                return test_foo
+
+            test_x = make_tests()
+            test_y = make_tests()
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=4)
 
 
 class TestMarkersWithParametrization:
@@ -815,7 +832,7 @@ class TestMarkersWithParametrization:
         reprec.assertoutcome(passed=2, skipped=2)
 
 
-    @pytest.mark.xfail(reason="issue 290")
+    @pytest.mark.issue290
     def test_parametrize_ID_generation_string_int_works(self, testdir):
         testdir.makepyfile("""
             import pytest

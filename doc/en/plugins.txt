@@ -3,9 +3,9 @@
 Working with plugins and conftest files
 =============================================
 
-py.test implements all aspects of configuration, collection, running and reporting by calling `well specified hooks`_.  Virtually any Python module can be registered as a plugin.  It can implement any number of hook functions (usually two or three) which all have a ``pytest_`` prefix, making hook functions easy to distinguish and find.  There are three basic location types:
+``pytest`` implements all aspects of configuration, collection, running and reporting by calling `well specified hooks`_.  Virtually any Python module can be registered as a plugin.  It can implement any number of hook functions (usually two or three) which all have a ``pytest_`` prefix, making hook functions easy to distinguish and find.  There are three basic location types:
 
-* `builtin plugins`_: loaded from py.test's internal ``_pytest`` directory.
+* `builtin plugins`_: loaded from pytest's internal ``_pytest`` directory.
 * `external plugins`_: modules discovered through `setuptools entry points`_
 * `conftest.py plugins`_: modules auto-discovered in test directories
 
@@ -63,7 +63,7 @@ tool, for example::
     pip install pytest-NAME
     pip uninstall pytest-NAME
 
-If a plugin is installed,  py.test automatically finds and integrates it,
+If a plugin is installed, ``pytest`` automatically finds and integrates it,
 there is no need to activate it.  Here is a initial list of known plugins:
 
 .. _`django`: https://www.djangoproject.com/
@@ -84,14 +84,14 @@ there is no need to activate it.  Here is a initial list of known plugins:
 * `pytest-xdist <http://pypi.python.org/pypi/pytest-xdist>`_:
   to distribute tests to CPUs and remote hosts, to run in boxed
   mode which allows to survive segmentation faults, to run in
-  looponfailing mode, automatically re-running failing tests 
+  looponfailing mode, automatically re-running failing tests
   on file changes, see also :ref:`xdist`
 
 * `pytest-instafail <http://pypi.python.org/pypi/pytest-instafail>`_:
   to report failures while the test run is happening.
 
 * `pytest-bdd <http://pypi.python.org/pypi/pytest-bdd>`_ and
-  `pytest-konira <http://pypi.python.org/pypi/pytest-konira>`_ 
+  `pytest-konira <http://pypi.python.org/pypi/pytest-konira>`_
   to write tests using behaviour-driven testing.
 
 * `pytest-timeout <http://pypi.python.org/pypi/pytest-timeout>`_:
@@ -122,7 +122,7 @@ If you want to write a plugin, there are many real-life examples
 you can copy from:
 
 * a custom collection example plugin: :ref:`yaml plugin`
-* around 20 `builtin plugins`_ which provide py.test's own functionality
+* around 20 `builtin plugins`_ which provide pytest's own functionality
 * many `external plugins`_ providing additional features
 
 All of these plugins implement the documented `well specified hooks`_
@@ -135,10 +135,10 @@ Making your plugin installable by others
 
 If you want to make your plugin externally available, you
 may define a so-called entry point for your distribution so
-that ``py.test`` finds your plugin module.  Entry points are
+that ``pytest`` finds your plugin module.  Entry points are
 a feature that is provided by `setuptools`_ or `Distribute`_.
-py.test looks up the ``pytest11`` entrypoint to discover its
-plugins and you can thus make your plugin available by definig
+pytest looks up the ``pytest11`` entrypoint to discover its
+plugins and you can thus make your plugin available by defining
 it in your setuptools/distribute-based setup-invocation:
 
 .. sourcecode:: python
@@ -150,7 +150,7 @@ it in your setuptools/distribute-based setup-invocation:
         name="myproject",
         packages = ['myproject']
 
-        # the following makes a plugin available to py.test
+        # the following makes a plugin available to pytest
         entry_points = {
             'pytest11': [
                 'name_of_plugin = myproject.pluginmodule',
@@ -158,7 +158,7 @@ it in your setuptools/distribute-based setup-invocation:
         },
     )
 
-If a package is installed this way, py.test will load
+If a package is installed this way, ``pytest`` will load
 ``myproject.pluginmodule`` as a plugin which can define
 `well specified hooks`_.
 
@@ -167,7 +167,7 @@ If a package is installed this way, py.test will load
 Plugin discovery order at tool startup
 --------------------------------------------
 
-py.test loads plugin modules at tool startup in the following way:
+``pytest`` loads plugin modules at tool startup in the following way:
 
 * by loading all builtin plugins
 
@@ -177,9 +177,15 @@ py.test loads plugin modules at tool startup in the following way:
   and loading the specified plugin before actual command line parsing.
 
 * by loading all :file:`conftest.py` files as inferred by the command line
-  invocation (test files and all of its *parent* directories).
-  Note that ``conftest.py`` files from *sub* directories are by default
-  not loaded at tool startup.
+  invocation:
+
+  - if no test paths are specified use current dir as a test path
+  - if exists, load ``conftest.py`` and ``test*/conftest.py`` relative 
+    to the directory part of the first test path. 
+
+  Note that pytest does not find ``conftest.py`` files in deeper nested
+  sub directories at tool startup.  It is usually a good idea to keep
+  your conftest.py file in the top level test or project root directory.
 
 * by recursively loading all plugins specified by the
   ``pytest_plugins`` variable in ``conftest.py`` files
@@ -197,7 +203,7 @@ will be loaded as well.  You can also use dotted path like this::
 
     pytest_plugins = "myapp.testsupport.myplugin"
 
-which will import the specified module as a py.test plugin.
+which will import the specified module as a ``pytest`` plugin.
 
 
 Accessing another plugin by name
@@ -243,7 +249,7 @@ how to obtain the name of a plugin.
 
 .. _`builtin plugins`:
 
-py.test default plugin reference
+pytest default plugin reference
 ====================================
 
 
@@ -277,14 +283,14 @@ in the `pytest repository <http://bitbucket.org/hpk42/pytest/>`_.
 
 .. _`well specified hooks`:
 
-py.test hook reference
+pytest hook reference
 ====================================
 
 Hook specification and validation
 -----------------------------------------
 
-py.test calls hook functions to implement initialization, running,
-test execution and reporting.  When py.test loads a plugin it validates
+``pytest`` calls hook functions to implement initialization, running,
+test execution and reporting.  When ``pytest`` loads a plugin it validates
 that each hook function conforms to its respective hook specification.
 Each hook function name and its argument names need to match a hook
 specification.  However, a hook function may accept *fewer* parameters
@@ -327,7 +333,7 @@ the reporting hook to print information about a test run.
 Collection hooks
 ------------------------------
 
-py.test calls the following hooks for collecting files and directories:
+``pytest`` calls the following hooks for collecting files and directories:
 
 .. autofunction:: pytest_ignore_collect
 .. autofunction:: pytest_collect_directory

@@ -9,7 +9,6 @@ import re
 import sys
 import time
 
-
 # Python 2.X and 3.X compatibility
 try:
     unichr(65)
@@ -62,8 +61,8 @@ def bin_xml_escape(arg):
 
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting")
-    group.addoption('--junitxml', '--junit-xml', action="store", 
-           dest="xmlpath", metavar="path", default=None, 
+    group.addoption('--junitxml', '--junit-xml', action="store",
+           dest="xmlpath", metavar="path", default=None,
            help="create junit-xml style report file at given path.")
     group.addoption('--junitprefix', '--junit-prefix', action="store",
            metavar="str", default=None,
@@ -131,36 +130,36 @@ class LogXML(object):
             self.skipped += 1
         else:
             fail = Junit.failure(message="test failure")
-            fail.append(str(report.longrepr))
+            fail.append(bin_xml_escape(report.longrepr))
             self.append(fail)
             self.failed += 1
         self._write_captured_output(report)
 
     def append_collect_failure(self, report):
         #msg = str(report.longrepr.reprtraceback.extraline)
-        self.append(Junit.failure(str(report.longrepr),
+        self.append(Junit.failure(bin_xml_escape(report.longrepr),
                                   message="collection failure"))
         self.errors += 1
 
     def append_collect_skipped(self, report):
         #msg = str(report.longrepr.reprtraceback.extraline)
-        self.append(Junit.skipped(str(report.longrepr),
+        self.append(Junit.skipped(bin_xml_escape(report.longrepr),
                                   message="collection skipped"))
         self.skipped += 1
 
     def append_error(self, report):
-        self.append(Junit.error(str(report.longrepr),
+        self.append(Junit.error(bin_xml_escape(report.longrepr),
                                 message="test setup failure"))
         self.errors += 1
 
     def append_skipped(self, report):
         if hasattr(report, "wasxfail"):
-            self.append(Junit.skipped(str(report.wasxfail),
+            self.append(Junit.skipped(bin_xml_escape(report.wasxfail),
                                       message="expected test failure"))
         else:
             filename, lineno, skipreason = report.longrepr
             if skipreason.startswith("Skipped: "):
-                skipreason = skipreason[9:]
+                skipreason = bin_xml_escape(skipreason[9:])
             self.append(
                 Junit.skipped("%s:%s: %s" % report.longrepr,
                               type="pytest.skip",
@@ -194,17 +193,17 @@ class LogXML(object):
 
     def pytest_internalerror(self, excrepr):
         self.errors += 1
-        data = py.xml.escape(excrepr)
+        data = bin_xml_escape(excrepr)
         self.tests.append(
             Junit.testcase(
                     Junit.error(data, message="internal error"),
                     classname="pytest",
                     name="internal"))
 
-    def pytest_sessionstart(self, session):
+    def pytest_sessionstart(self):
         self.suite_start_time = time.time()
 
-    def pytest_sessionfinish(self, session, exitstatus, __multicall__):
+    def pytest_sessionfinish(self):
         if py.std.sys.version_info[0] < 3:
             logfile = py.std.codecs.open(self.logfile, 'w', encoding='utf-8')
         else:
@@ -217,7 +216,7 @@ class LogXML(object):
         logfile.write('<?xml version="1.0" encoding="utf-8"?>')
         logfile.write(Junit.testsuite(
             self.tests,
-            name="",
+            name="pytest",
             errors=self.errors,
             failures=self.failed,
             skips=self.skipped,

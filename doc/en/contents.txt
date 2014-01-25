@@ -16,7 +16,7 @@ Full pytest documentation
    plugins
    example/index
    talks
-   develop
+   contributing
    funcarg_compare.txt
    announce/index
 

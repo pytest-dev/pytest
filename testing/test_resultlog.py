@@ -195,3 +195,23 @@ def test_no_resultlog_on_slaves(testdir):
     pytest_unconfigure(config)
     assert not hasattr(config, '_resultlog')
 
+
+def test_failure_issue380(testdir):
+    testdir.makeconftest("""
+        import pytest
+        class MyCollector(pytest.File):
+            def collect(self):
+                raise ValueError()
+            def repr_failure(self, excinfo):
+                return "somestring"
+        def pytest_collect_file(path, parent):
+            return MyCollector(parent=parent, fspath=path)
+    """)
+    testdir.makepyfile("""
+        def test_func():
+            pass
+    """)
+    result = testdir.runpytest("--resultlog=log")
+    assert result.ret == 1
+
+

@@ -122,8 +122,8 @@ customize test function collection
 -------------------------------------------------------
 tags: feature 
 
-- introduce py.test.mark.nocollect for not considering a function for
-  test collection at all.  maybe also introduce a py.test.mark.test to
+- introduce pytest.mark.nocollect for not considering a function for
+  test collection at all.  maybe also introduce a pytest.mark.test to
   explicitely mark a function to become a tested one.  Lookup JUnit ways
   of tagging tests.
 
@@ -135,18 +135,18 @@ in addition to the imperative pytest.importorskip also introduce
 a pytest.mark.importorskip so that the test count is more correct.
 
 
-introduce py.test.mark.platform
+introduce pytest.mark.platform
 -------------------------------------------------------
 tags: feature 
 
 Introduce nice-to-spell platform-skipping, examples:
 
-    @py.test.mark.platform("python3")
-    @py.test.mark.platform("not python3")
-    @py.test.mark.platform("win32 and not python3")
-    @py.test.mark.platform("darwin")
-    @py.test.mark.platform("not (jython and win32)")
-    @py.test.mark.platform("not (jython and win32)", xfail=True)
+    @pytest.mark.platform("python3")
+    @pytest.mark.platform("not python3")
+    @pytest.mark.platform("win32 and not python3")
+    @pytest.mark.platform("darwin")
+    @pytest.mark.platform("not (jython and win32)")
+    @pytest.mark.platform("not (jython and win32)", xfail=True)
 
 etc. Idea is to allow Python expressions which can operate
 on common spellings for operating systems and python
@@ -181,8 +181,8 @@ tags: feature
 allow to name conftest.py files (in sub directories) that should
 be imported early, as to include command line options.
 
-improve central py.test ini file
-----------------------------------
+improve central pytest ini file
+-------------------------------
 tags: feature 
 
 introduce more declarative configuration options:
@@ -196,7 +196,7 @@ new documentation
 ----------------------------------
 tags: feature 
 
-- logo py.test
+- logo pytest
 - examples for unittest or functional testing
 - resource management for functional testing
 - patterns: page object
@@ -205,17 +205,17 @@ have imported module mismatch honour relative paths
 --------------------------------------------------------
 tags: bug 
 
-With 1.1.1 py.test fails at least on windows if an import
+With 1.1.1 pytest fails at least on windows if an import
 is relative and compared against an absolute conftest.py
 path. Normalize.
 
-consider globals: py.test.ensuretemp and config
+consider globals: pytest.ensuretemp and config
 --------------------------------------------------------------
 tags: experimental-wish 
 
-consider deprecating py.test.ensuretemp and py.test.config
-to further reduce py.test globality.  Also consider
-having py.test.config and ensuretemp coming from
+consider deprecating pytest.ensuretemp and pytest.config
+to further reduce pytest globality.  Also consider
+having pytest.config and ensuretemp coming from
 a plugin rather than being there from the start.
 
 
@@ -223,7 +223,7 @@ consider pytest_addsyspath hook
 -----------------------------------------
 tags: wish
 
-py.test could call a new pytest_addsyspath() in order to systematically
+pytest could call a new pytest_addsyspath() in order to systematically
 allow manipulation of sys.path and to inhibit it via --no-addsyspath
 in order to more easily run against installed packages.
 
@@ -232,11 +232,11 @@ and pytest_configure.
 
 
 
-deprecate global py.test.config usage
+deprecate global pytest.config usage
 ----------------------------------------------------------------
 tags: feature 
 
-py.test.ensuretemp and py.test.config are probably the last
+pytest.ensuretemp and pytest.config are probably the last
 objects containing global state.  Often using them is not
 neccessary.  This is about trying to get rid of them, i.e.
 deprecating them and checking with PyPy's usages as well

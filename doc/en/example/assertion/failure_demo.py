@@ -1,4 +1,4 @@
-from py.test import raises
+from pytest import raises
 import py
 
 def otherfunc(a,b):

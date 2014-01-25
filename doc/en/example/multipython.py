@@ -2,7 +2,8 @@
 module containing a parametrized tests testing cross-python
 serialization via the pickle module.
 """
-import py, pytest
+import py
+import pytest
 
 pythonlist = ['python2.4', 'python2.5', 'python2.6', 'python2.7', 'python2.8']
 @pytest.fixture(params=pythonlist)
@@ -18,7 +19,7 @@ class Python:
     def __init__(self, version, picklefile):
         self.pythonpath = py.path.local.sysfind(version)
         if not self.pythonpath:
-            py.test.skip("%r not found" %(version,))
+            pytest.skip("%r not found" %(version,))
         self.picklefile = picklefile
     def dumps(self, obj):
         dumpfile = self.picklefile.dirpath("dump.py")

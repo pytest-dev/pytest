@@ -1,7 +1,7 @@
 import py
 import pytest
-import os, sys
-from _pytest.pytester import LineMatcher, LineComp, HookRecorder
+import os
+from _pytest.pytester import HookRecorder
 from _pytest.core import PluginManager
 
 def test_reportrecorder(testdir):
@@ -56,11 +56,10 @@ def test_reportrecorder(testdir):
 
 
 def test_parseconfig(testdir):
-    import py
     config1 = testdir.parseconfig()
     config2 = testdir.parseconfig()
     assert config2 != config1
-    assert config1 != py.test.config
+    assert config1 != pytest.config
 
 def test_testdir_runs_with_plugin(testdir):
     testdir.makepyfile("""
@@ -104,7 +103,7 @@ def test_functional(testdir, linecomp):
         def test_func(_pytest):
             class ApiClass:
                 def pytest_xyz(self, arg):  "x"
-            hook = HookRelay([ApiClass], PluginManager(load=False))
+            hook = HookRelay([ApiClass], PluginManager())
             rec = _pytest.gethookrecorder(hook)
             class Plugin:
                 def pytest_xyz(self, arg):
