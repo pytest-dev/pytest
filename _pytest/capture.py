@@ -437,12 +437,10 @@ class StdCaptureFD(Capture):
         reads from sys.stdin).  If any of the 0,1,2 file descriptors
         is invalid it will not be captured.
     """
-    def __init__(self, out=True, err=True, mixed=False,
-                 in_=True, patchsys=True):
+    def __init__(self, out=True, err=True, in_=True, patchsys=True):
         self._options = {
             "out": out,
             "err": err,
-            "mixed": mixed,
             "in_": in_,
             "patchsys": patchsys,
         }
@@ -452,7 +450,6 @@ class StdCaptureFD(Capture):
         in_ = self._options['in_']
         out = self._options['out']
         err = self._options['err']
-        mixed = self._options['mixed']
         patchsys = self._options['patchsys']
         if in_:
             try:
@@ -473,9 +470,7 @@ class StdCaptureFD(Capture):
             except OSError:
                 pass
         if err:
-            if out and mixed:
-                tmpfile = self.out.tmpfile
-            elif hasattr(err, 'write'):
+            if hasattr(err, 'write'):
                 tmpfile = err
             else:
                 tmpfile = None
@@ -540,7 +535,7 @@ class StdCapture(Capture):
         modifies sys.stdout|stderr|stdin attributes and does not
         touch underlying File Descriptors (use StdCaptureFD for that).
     """
-    def __init__(self, out=True, err=True, in_=True, mixed=False):
+    def __init__(self, out=True, err=True, in_=True):
         self._oldout = sys.stdout
         self._olderr = sys.stderr
         self._oldin = sys.stdin
@@ -548,9 +543,7 @@ class StdCapture(Capture):
             out = TextIO()
         self.out = out
         if err:
-            if mixed:
-                err = out
-            elif not hasattr(err, 'write'):
+            if not hasattr(err, 'write'):
                 err = TextIO()
         self.err = err
         self.in_ = in_

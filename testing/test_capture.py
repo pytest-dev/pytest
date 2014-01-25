@@ -780,15 +780,6 @@ class TestStdCapture:
         out, err = cap.readouterr()
         assert out == py.builtin._totext('\ufffd\n', 'unicode-escape')
 
-    def test_capturing_mixed(self):
-        cap = self.getcapture(mixed=True)
-        sys.stdout.write("hello ")
-        sys.stderr.write("world")
-        sys.stdout.write(".")
-        out, err = cap.reset()
-        assert out.strip() == "hello world."
-        assert not err
-
     def test_reset_twice_error(self):
         cap = self.getcapture()
         print ("hello")
