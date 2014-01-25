@@ -308,6 +308,14 @@ class TestGeneralUsage:
             ])
             assert result.ret == 4  # usage error only if item not found
 
+    def test_report_all_failed_collections_initargs(self, testdir):
+        testdir.makepyfile(test_a="def", test_b="def")
+        result = testdir.runpytest("test_a.py::a", "test_b.py::b")
+        result.stderr.fnmatch_lines([
+            "*ERROR*test_a.py::a*",
+            "*ERROR*test_b.py::b*",
+        ])
+
     def test_namespace_import_doesnt_confuse_import_hook(self, testdir):
         # Ref #383. Python 3.3's namespace package messed with our import hooks
         # Importing a module that didn't exist, even if the ImportError was
