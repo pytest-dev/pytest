@@ -661,21 +661,6 @@ def lsof_check(func):
 class TestFDCapture:
     pytestmark = needsosdup
 
-    def test_not_now(self, tmpfile):
-        fd = tmpfile.fileno()
-        cap = capture.FDCapture(fd, now=False)
-        data = tobytes("hello")
-        os.write(fd, data)
-        f = cap.done()
-        s = f.read()
-        assert not s
-        cap = capture.FDCapture(fd, now=False)
-        cap.start()
-        os.write(fd, data)
-        f = cap.done()
-        s = f.read()
-        assert s == "hello"
-
     def test_simple(self, tmpfile):
         fd = tmpfile.fileno()
         cap = capture.FDCapture(fd)
@@ -683,8 +668,13 @@ class TestFDCapture:
         os.write(fd, data)
         f = cap.done()
         s = f.read()
+        assert not s
+        cap = capture.FDCapture(fd)
+        cap.start()
+        os.write(fd, data)
+        f = cap.done()
+        s = f.read()
         assert s == "hello"
-        f.close()
 
     def test_simple_many(self, tmpfile):
         for i in range(10):
@@ -702,6 +692,7 @@ class TestFDCapture:
 
     def test_stderr(self):
         cap = capture.FDCapture(2, patchsys=True)
+        cap.start()
         print_("hello", file=sys.stderr)
         f = cap.done()
         s = f.read()
@@ -711,6 +702,7 @@ class TestFDCapture:
         tmpfile.write(tobytes("3"))
         tmpfile.seek(0)
         cap = capture.FDCapture(0, tmpfile=tmpfile)
+        cap.start()
         # check with os.read() directly instead of raw_input(), because
         # sys.stdin itself may be redirected (as pytest now does by default)
         x = os.read(0, 100).strip()
@@ -721,6 +713,7 @@ class TestFDCapture:
         data1, data2 = tobytes("foo"), tobytes("bar")
         try:
             cap = capture.FDCapture(tmpfile.fileno())
+            cap.start()
             tmpfile.write(data1)
             cap.writeorg(data2)
         finally:
@@ -734,7 +727,9 @@ class TestFDCapture:
 
 class TestStdCapture:
     def getcapture(self, **kw):
-        return capture.StdCapture(**kw)
+        cap = capture.StdCapture(**kw)
+        cap.startall()
+        return cap
 
     def test_capturing_done_simple(self):
         cap = self.getcapture()
@@ -879,19 +874,13 @@ class TestStdCapture:
         assert not err
 
 
-class TestStdCaptureNotNow(TestStdCapture):
-    def getcapture(self, **kw):
-        kw['now'] = False
-        cap = capture.StdCapture(**kw)
-        cap.startall()
-        return cap
-
-
 class TestStdCaptureFD(TestStdCapture):
     pytestmark = needsosdup
 
     def getcapture(self, **kw):
-        return capture.StdCaptureFD(**kw)
+        cap = capture.StdCaptureFD(**kw)
+        cap.startall()
+        return cap
 
     def test_intermingling(self):
         cap = self.getcapture()
@@ -925,15 +914,6 @@ class TestStdCaptureFD(TestStdCapture):
                 cap.reset()
         lsof_check(f)
 
-
-class TestStdCaptureFDNotNow(TestStdCaptureFD):
-    pytestmark = needsosdup
-
-    def getcapture(self, **kw):
-        kw['now'] = False
-        cap = capture.StdCaptureFD(**kw)
-        cap.startall()
-        return cap
 
 
 @needsosdup
@@ -974,7 +954,7 @@ class TestStdCaptureFDinvalidFD:
 
 
 def test_capture_not_started_but_reset():
-    capsys = capture.StdCapture(now=False)
+    capsys = capture.StdCapture()
     capsys.done()
     capsys.done()
     capsys.reset()
@@ -985,6 +965,7 @@ def test_capture_no_sys():
     capsys = capture.StdCapture()
     try:
         cap = capture.StdCaptureFD(patchsys=False)
+        cap.startall()
         sys.stdout.write("hello")
         sys.stderr.write("world")
         oswritebytes(1, "1")
@@ -1006,6 +987,7 @@ def test_callcapture_nofd():
         return 42
 
     capfd = capture.StdCaptureFD(patchsys=False)
+    capfd.startall()
     try:
         res, out, err = capture.StdCapture.call(func, 3, y=4)
     finally:
@@ -1020,7 +1002,7 @@ def test_callcapture_nofd():
 def test_fdcapture_tmpfile_remains_the_same(tmpfile, use):
     if not use:
         tmpfile = True
-    cap = capture.StdCaptureFD(out=False, err=tmpfile, now=False)
+    cap = capture.StdCaptureFD(out=False, err=tmpfile)
     try:
         cap.startall()
         capfile = cap.err.tmpfile
@@ -1042,6 +1024,7 @@ def test_capturing_and_logging_fundamentals(testdir, method):
         import py, logging
         from _pytest import capture
         cap = capture.%s(out=False, in_=False)
+        cap.startall()
 
         logging.warn("hello1")
         outerr = cap.suspend()
