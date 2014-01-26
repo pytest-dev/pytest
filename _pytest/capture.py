@@ -126,13 +126,11 @@ class CaptureManager:
     def _getcapture(self, method):
         if method == "fd":
             return StdCaptureFD(
-                now=False,
                 out=self._maketempfile(),
                 err=self._maketempfile(),
             )
         elif method == "sys":
             return StdCapture(
-                now=False,
                 out=self._makestringio(),
                 err=self._makestringio(),
             )
@@ -283,7 +281,7 @@ def pytest_funcarg__capfd(request):
 
 class CaptureFixture:
     def __init__(self, captureclass):
-        self._capture = captureclass(now=False)
+        self._capture = captureclass()
 
     def _start(self):
         self._capture.startall()
@@ -307,7 +305,7 @@ class CaptureFixture:
 class FDCapture:
     """ Capture IO to/from a given os-level filedescriptor. """
 
-    def __init__(self, targetfd, tmpfile=None, now=True, patchsys=False):
+    def __init__(self, targetfd, tmpfile=None, patchsys=False):
         """ save targetfd descriptor, and open a new
             temporary file there.  If no tmpfile is
             specified a tempfile.Tempfile() will be opened
@@ -322,8 +320,6 @@ class FDCapture:
         self._savefd = os.dup(self.targetfd)
         if patchsys:
             self._oldsys = getattr(sys, patchsysdict[targetfd])
-        if now:
-            self.start()
 
     def start(self):
         try:
@@ -413,21 +409,6 @@ class EncodedFile(object):
 
 
 class Capture(object):
-    def call(cls, func, *args, **kwargs):
-        """ return a (res, out, err) tuple where
-            out and err represent the output/error output
-            during function execution.
-            call the given function with args/kwargs
-            and capture output/error during its execution.
-        """
-        so = cls()
-        try:
-            res = func(*args, **kwargs)
-        finally:
-            out, err = so.reset()
-        return res, out, err
-    call = classmethod(call)
-
     def reset(self):
         """ reset sys.stdout/stderr and return captured output as strings. """
         if hasattr(self, '_reset'):
@@ -456,30 +437,24 @@ class StdCaptureFD(Capture):
         reads from sys.stdin).  If any of the 0,1,2 file descriptors
         is invalid it will not be captured.
     """
-    def __init__(self, out=True, err=True, mixed=False,
-                 in_=True, patchsys=True, now=True):
+    def __init__(self, out=True, err=True, in_=True, patchsys=True):
         self._options = {
             "out": out,
             "err": err,
-            "mixed": mixed,
             "in_": in_,
             "patchsys": patchsys,
-            "now": now,
         }
         self._save()
-        if now:
-            self.startall()
 
     def _save(self):
         in_ = self._options['in_']
         out = self._options['out']
         err = self._options['err']
-        mixed = self._options['mixed']
         patchsys = self._options['patchsys']
         if in_:
             try:
                 self.in_ = FDCapture(
-                    0, tmpfile=None, now=False,
+                    0, tmpfile=None,
                     patchsys=patchsys)
             except OSError:
                 pass
@@ -490,21 +465,19 @@ class StdCaptureFD(Capture):
             try:
                 self.out = FDCapture(
                     1, tmpfile=tmpfile,
-                    now=False, patchsys=patchsys)
+                    patchsys=patchsys)
                 self._options['out'] = self.out.tmpfile
             except OSError:
                 pass
         if err:
-            if out and mixed:
-                tmpfile = self.out.tmpfile
-            elif hasattr(err, 'write'):
+            if hasattr(err, 'write'):
                 tmpfile = err
             else:
                 tmpfile = None
             try:
                 self.err = FDCapture(
                     2, tmpfile=tmpfile,
-                    now=False, patchsys=patchsys)
+                    patchsys=patchsys)
                 self._options['err'] = self.err.tmpfile
             except OSError:
                 pass
@@ -562,7 +535,7 @@ class StdCapture(Capture):
         modifies sys.stdout|stderr|stdin attributes and does not
         touch underlying File Descriptors (use StdCaptureFD for that).
     """
-    def __init__(self, out=True, err=True, in_=True, mixed=False, now=True):
+    def __init__(self, out=True, err=True, in_=True):
         self._oldout = sys.stdout
         self._olderr = sys.stderr
         self._oldin = sys.stdin
@@ -570,14 +543,10 @@ class StdCapture(Capture):
             out = TextIO()
         self.out = out
         if err:
-            if mixed:
-                err = out
-            elif not hasattr(err, 'write'):
+            if not hasattr(err, 'write'):
                 err = TextIO()
         self.err = err
         self.in_ = in_
-        if now:
-            self.startall()
 
     def startall(self):
         if self.out:
