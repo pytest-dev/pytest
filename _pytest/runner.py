@@ -316,11 +316,10 @@ class SetupState(object):
         """ attach a finalizer to the given colitem.
         if colitem is None, this will add a finalizer that
         is called at the end of teardown_all().
-        if colitem is a tuple, it will be used as a key
-        and needs an explicit call to _callfinalizers(key) later on.
         """
-        assert hasattr(finalizer, '__call__')
-        #assert colitem in self.stack
+        assert colitem and not isinstance(colitem, tuple)
+        assert callable(finalizer)
+        #assert colitem in self.stack  # some unit tests don't setup stack :/
         self._finalizers.setdefault(colitem, []).append(finalizer)
 
     def _pop_and_teardown(self):
