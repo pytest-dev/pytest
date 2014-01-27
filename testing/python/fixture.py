@@ -1391,6 +1391,7 @@ class TestAutouseManagement:
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=2)
 
+
 class TestFixtureMarker:
     def test_parametrize(self, testdir):
         testdir.makepyfile("""

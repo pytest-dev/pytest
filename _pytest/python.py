@@ -372,22 +372,22 @@ def add_funcarg_pseudo_fixture_def(collector, metafunc, fixturemanager):
     # collect funcargs of all callspecs into a list of values
     arg2params = {}
     arg2scope = {}
-    arg2fixturedefs = metafunc._arg2fixturedefs
-    for param_index, callspec in enumerate(metafunc._calls):
+    for callspec in metafunc._calls:
         for argname, argvalue in callspec.funcargs.items():
-            arg2params.setdefault(argname, []).append(argvalue)
-            if argname not in arg2scope:
-                scopenum = callspec._arg2scopenum.get(argname, scopenum_function)
-                arg2scope[argname] = scopes[scopenum]
-            callspec.indices[argname] = param_index
-
-        for argname in callspec.funcargs:
             assert argname not in callspec.params
-        callspec.params.update(callspec.funcargs)
+            callspec.params[argname] = argvalue
+            arg2params_list = arg2params.setdefault(argname, [])
+            callspec.indices[argname] = len(arg2params_list)
+            arg2params_list.append(argvalue)
+            if argname not in arg2scope:
+                scopenum = callspec._arg2scopenum.get(argname,
+                                                      scopenum_function)
+                arg2scope[argname] = scopes[scopenum]
         callspec.funcargs.clear()
 
     # register artificial FixtureDef's so that later at test execution
     # time we can rely on a proper FixtureDef to exist for fixture setup.
+    arg2fixturedefs = metafunc._arg2fixturedefs
     for argname, valuelist in arg2params.items():
         # if we have a scope that is higher than function we need
         # to make sure we only ever create an according fixturedef on
