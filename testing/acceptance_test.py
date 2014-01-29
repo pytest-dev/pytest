@@ -177,7 +177,8 @@ class TestGeneralUsage:
         assert result.ret != 0
         assert "should be seen" in result.stdout.str()
 
-    @pytest.mark.skipif("not hasattr(py.path.local, 'mksymlinkto')")
+    @pytest.mark.skipif(not hasattr(py.path.local, 'mksymlinkto'),
+                        reason="symlink not available on this platform")
     def test_chdir(self, testdir):
         testdir.tmpdir.join("py").mksymlinkto(py._pydir)
         p = testdir.tmpdir.join("main.py")

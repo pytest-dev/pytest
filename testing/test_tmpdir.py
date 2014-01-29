@@ -1,3 +1,4 @@
+import py
 import pytest
 
 from _pytest.tmpdir import tmpdir, TempdirHandler
@@ -71,7 +72,8 @@ def test_basetemp(testdir):
     assert result.ret == 0
     assert mytemp.join('hello').check()
 
-@pytest.mark.skipif("not hasattr(py.path.local, 'mksymlinkto')")
+@pytest.mark.skipif(not hasattr(py.path.local, 'mksymlinkto'),
+                    reason="symlink not available on this platform")
 def test_tmpdir_always_is_realpath(testdir):
     # the reason why tmpdir should be a realpath is that
     # when you cd to it and do "os.getcwd()" you will anyway
