@@ -1,4 +1,3 @@
-import py
 import pytest
 import os
 from _pytest.pytester import HookRecorder

@@ -1,4 +1,4 @@
-import py, pytest
+import pytest
 
 from _pytest.tmpdir import tmpdir, TempdirHandler
 

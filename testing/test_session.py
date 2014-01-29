@@ -1,4 +1,4 @@
-import pytest, py
+import pytest
 
 class SessionTests:
     def test_basic_testitem_events(self, testdir):
