@@ -39,10 +39,10 @@ and report bugs at:
 
     http://bitbucket.org/hpk42/pytest/issues/
 
-and checkout repo at:
+and checkout or fork repo at:
 
     http://bitbucket.org/hpk42/pytest/
 
 
-Copyright Holger Krekel and others, 2004-2013
+Copyright Holger Krekel and others, 2004-2014
 Licensed under the MIT license.

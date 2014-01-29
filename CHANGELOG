@@ -2,8 +2,8 @@ UNRELEASED
 -----------------------------------
 
 - fix issue409 -- better interoperate with cx_freeze by not
-  trying to import from collections.abc which causes problems for py27/cx_freeze.
-  Thanks Wolfgang L. for reporting and tracking it down.
+  trying to import from collections.abc which causes problems 
+  for py27/cx_freeze.  Thanks Wolfgang L. for reporting and tracking it down.
 
 - fixed docs and code to use "pytest" instead of "py.test" almost everywhere.
   Thanks Jurko Gospodnetic for the complete PR.  
@@ -20,6 +20,8 @@ UNRELEASED
   
 - address issue416: clarify docs as to conftest.py loading semantics
 
+- fix issue429: comparing byte strings with non-ascii chars in assert
+  expressions now work better.  Thanks Floris Bruynooghe.
 
 - make capfd/capsys.capture private, its unused and shouldnt be exposed
 
