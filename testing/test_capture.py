@@ -191,7 +191,7 @@ class TestPerTestCapturing:
             "in func2*",
         ])
 
-    @pytest.mark.xfail
+    @pytest.mark.xfail(reason="unimplemented feature")
     def test_capture_scope_cache(self, testdir):
         p = testdir.makepyfile("""
             import sys
