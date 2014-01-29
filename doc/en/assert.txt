@@ -26,19 +26,19 @@ you will see the return value of the function call::
 
     $ py.test test_assert1.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
+    platform linux2 -- Python 2.7.3 -- py-1.4.20 -- pytest-2.5.2
     collected 1 items
-
+    
     test_assert1.py F
-
+    
     ================================= FAILURES =================================
     ______________________________ test_function _______________________________
-
+    
         def test_function():
     >       assert f() == 4
     E       assert 3 == 4
     E        +  where 3 = f()
-
+    
     test_assert1.py:5: AssertionError
     ========================= 1 failed in 0.01 seconds =========================
 
@@ -116,14 +116,14 @@ if you run this module::
 
     $ py.test test_assert2.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
+    platform linux2 -- Python 2.7.3 -- py-1.4.20 -- pytest-2.5.2
     collected 1 items
-
+    
     test_assert2.py F
-
+    
     ================================= FAILURES =================================
     ___________________________ test_set_comparison ____________________________
-
+    
         def test_set_comparison():
             set1 = set("1308")
             set2 = set("8035")
@@ -133,7 +133,7 @@ if you run this module::
     E         '1'
     E         Extra items in the right set:
     E         '5'
-
+    
     test_assert2.py:5: AssertionError
     ========================= 1 failed in 0.01 seconds =========================
 

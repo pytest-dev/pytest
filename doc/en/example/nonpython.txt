@@ -27,10 +27,10 @@ now execute the test specification::
 
     nonpython $ py.test test_simple.yml
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
+    platform linux2 -- Python 2.7.3 -- py-1.4.20 -- pytest-2.5.2
     collected 2 items
     
-    test_simple.yml .F
+    test_simple.yml F.
     
     ================================= FAILURES =================================
     ______________________________ usecase: hello ______________________________
@@ -56,11 +56,11 @@ consulted when reporting in ``verbose`` mode::
 
     nonpython $ py.test -v
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.1 -- /home/hpk/p/pytest/.tox/regen/bin/python
+    platform linux2 -- Python 2.7.3 -- py-1.4.20 -- pytest-2.5.2 -- /home/hpk/p/pytest/.tox/regen/bin/python
     collecting ... collected 2 items
     
-    test_simple.yml:1: usecase: ok PASSED
     test_simple.yml:1: usecase: hello FAILED
+    test_simple.yml:1: usecase: ok PASSED
     
     ================================= FAILURES =================================
     ______________________________ usecase: hello ______________________________
@@ -74,10 +74,10 @@ interesting to just look at the collection tree::
 
     nonpython $ py.test --collect-only
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
+    platform linux2 -- Python 2.7.3 -- py-1.4.20 -- pytest-2.5.2
     collected 2 items
     <YamlFile 'test_simple.yml'>
-      <YamlItem 'ok'>
       <YamlItem 'hello'>
+      <YamlItem 'ok'>
     
     =============================  in 0.02 seconds =============================

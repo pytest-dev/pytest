@@ -29,7 +29,7 @@ Running this would result in a passed test except for the last
 
     $ py.test test_tmpdir.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
+    platform linux2 -- Python 2.7.3 -- py-1.4.20 -- pytest-2.5.2
     collected 1 items
     
     test_tmpdir.py F
@@ -37,7 +37,7 @@ Running this would result in a passed test except for the last
     ================================= FAILURES =================================
     _____________________________ test_create_file _____________________________
     
-    tmpdir = local('/tmp/pytest-39/test_create_file0')
+    tmpdir = local('/tmp/pytest-1009/test_create_file0')
     
         def test_create_file(tmpdir):
             p = tmpdir.mkdir("sub").join("hello.txt")

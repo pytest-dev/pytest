@@ -545,6 +545,7 @@ def test_capture_early_option_parsing(testdir):
 
 
 @pytest.mark.xfail(sys.version_info >= (3, 0), reason='encoding issues')
+@pytest.mark.xfail(sys.version_info < (2, 6), reason='test not run on py25')
 def test_capture_binary_output(testdir):
     testdir.makepyfile(r"""
         import pytest

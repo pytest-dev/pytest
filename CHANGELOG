@@ -1,4 +1,4 @@
-UNRELEASED
+2.5.2
 -----------------------------------
 
 - fix issue409 -- better interoperate with cx_freeze by not

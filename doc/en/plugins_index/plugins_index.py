@@ -1,5 +1,5 @@
 """
-Script to generate the file `plugins_index.txt` with information about
+Script to generate the file `index.txt` with information about
 pytest plugins taken directly from a live PyPI server.
 
 Also includes plugin compatibility between different python and pytest versions,
@@ -34,9 +34,9 @@ def get_proxy(url):
 def iter_plugins(client, search='pytest-'):
     """
     Returns an iterator of (name, version) from PyPI.
-    
+
     :param client: ServerProxy
-    :param search: package names to search for 
+    :param search: package names to search for
     """
     for plug_data in client.search({'name': search}):
         yield plug_data['name'], plug_data['version']
@@ -58,11 +58,11 @@ def obtain_plugins_table(plugins, client):
     """
     Returns information to populate a table of plugins, their versions,
     authors, etc.
-    
+
     The returned information is a list of columns of `ColumnData`
     namedtuples(text, link). Link can be None if the text for that column
     should not be linked to anything.
-    
+
     :param plugins: list of (name, version)
     :param client: ServerProxy
     """
@@ -141,7 +141,7 @@ def obtain_override_repositories():
 def generate_plugins_index_from_table(filename, headers, rows):
     """
     Generates a RST file with the table data given.
-     
+
     :param filename: output filename
     :param headers: see `obtain_plugins_table`
     :param rows: see `obtain_plugins_table`
@@ -168,14 +168,14 @@ def generate_plugins_index_from_table(filename, headers, rows):
         return ' '.join(char * length for length in column_lengths)
 
     with open(filename, 'w') as f:
-        # write welcome 
+        # write welcome
         print('.. _plugins_index:', file=f)
         print(file=f)
         print('List of Third-Party Plugins', file=f)
         print('===========================', file=f)
         print(file=f)
 
-        # table 
+        # table
         print(get_row_limiter('='), file=f)
         formatted_headers = [
             '{0:^{fill}}'.format(header, fill=column_lengths[i])
@@ -200,7 +200,7 @@ def generate_plugins_index(client, filename):
     """
     Generates an RST file with a table of the latest pytest plugins found in
     PyPI.
-    
+
     :param client: ServerProxy
     :param filename: output filename
     """
@@ -214,7 +214,7 @@ def main(argv):
     Script entry point. Configures an option parser and calls the appropriate
     internal function.
     """
-    filename = os.path.join(os.path.dirname(__file__), 'plugins_index.txt')
+    filename = os.path.join(os.path.dirname(__file__), 'index.txt')
     url = 'http://pypi.python.org/pypi'
 
     parser = OptionParser(

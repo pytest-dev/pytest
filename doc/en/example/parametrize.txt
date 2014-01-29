@@ -106,11 +106,11 @@ this is a fully self-contained example which you can run with::
 
     $ py.test test_scenarios.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
+    platform linux2 -- Python 2.7.3 -- py-1.4.20 -- pytest-2.5.2
     collected 4 items
-
+    
     test_scenarios.py ....
-
+    
     ========================= 4 passed in 0.01 seconds =========================
 
 If you just collect tests you'll also nicely see 'advanced' and 'basic' as variants for the test function::
@@ -118,7 +118,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
 
     $ py.test --collect-only test_scenarios.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
+    platform linux2 -- Python 2.7.3 -- py-1.4.20 -- pytest-2.5.2
     collected 4 items
     <Module 'test_scenarios.py'>
       <Class 'TestSampleWithScenarios'>
@@ -127,7 +127,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
           <Function 'test_demo2[basic]'>
           <Function 'test_demo1[advanced]'>
           <Function 'test_demo2[advanced]'>
-
+    
     =============================  in 0.01 seconds =============================
 
 Note that we told ``metafunc.parametrize()`` that your scenario values
@@ -182,12 +182,12 @@ Let's first see how it looks like at collection time::
 
     $ py.test test_backends.py --collect-only
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
+    platform linux2 -- Python 2.7.3 -- py-1.4.20 -- pytest-2.5.2
     collected 2 items
     <Module 'test_backends.py'>
       <Function 'test_db_initialized[d1]'>
       <Function 'test_db_initialized[d2]'>
-
+    
     =============================  in 0.00 seconds =============================
 
 And then when we run the test::
@@ -196,15 +196,15 @@ And then when we run the test::
     .F
     ================================= FAILURES =================================
     _________________________ test_db_initialized[d2] __________________________
-
-    db = <conftest.DB2 instance at 0x12d4128>
-
+    
+    db = <conftest.DB2 instance at 0x1e5f050>
+    
         def test_db_initialized(db):
             # a dummy test
             if db.__class__.__name__ == "DB2":
     >           pytest.fail("deliberately failing for demo purposes")
     E           Failed: deliberately failing for demo purposes
-
+    
     test_backends.py:6: Failed
     1 failed, 1 passed in 0.01 seconds
 
@@ -251,14 +251,14 @@ argument sets to use for each test function.  Let's run it::
     $ py.test -q
     F..
     ================================= FAILURES =================================
-    ________________________ TestClass.test_equals[2-1] ________________________
-
-    self = <test_parametrize.TestClass instance at 0x14493f8>, a = 1, b = 2
-
+    ________________________ TestClass.test_equals[1-2] ________________________
+    
+    self = <test_parametrize.TestClass instance at 0x246c4d0>, a = 1, b = 2
+    
         def test_equals(self, a, b):
     >       assert a == b
     E       assert 1 == 2
-
+    
     test_parametrize.py:18: AssertionError
     1 failed, 2 passed in 0.01 seconds
 
@@ -281,8 +281,8 @@ Running it results in some skips if we don't have all the python interpreters in
    . $ py.test -rs -q multipython.py
    ............sss............sss............sss............ssssssssssssssssss
    ========================= short test summary info ==========================
-   SKIP [27] /home/hpk/p/pytest/doc/en/example/multipython.py:21: 'python2.8' not found
-   48 passed, 27 skipped in 1.34 seconds
+   SKIP [27] /home/hpk/p/pytest/doc/en/example/multipython.py:22: 'python2.8' not found
+   48 passed, 27 skipped in 1.30 seconds
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------
@@ -329,13 +329,13 @@ If you run this with reporting for skips enabled::
 
     $ py.test -rs test_module.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
+    platform linux2 -- Python 2.7.3 -- py-1.4.20 -- pytest-2.5.2
     collected 2 items
-
+    
     test_module.py .s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-65/conftest.py:10: could not import 'opt2'
-
+    SKIP [1] /tmp/doc-exec-67/conftest.py:10: could not import 'opt2'
+    
     =================== 1 passed, 1 skipped in 0.01 seconds ====================
 
 You'll see that we don't have a ``opt2`` module and thus the second test run

@@ -64,7 +64,9 @@ tool, for example::
     pip uninstall pytest-NAME
 
 If a plugin is installed, ``pytest`` automatically finds and integrates it,
-there is no need to activate it.  Here is a initial list of known plugins:
+there is no need to activate it.  We have a :doc:`beta page listing
+all 3rd party plugins and their status <plugins_index/index>` and here
+is a little annotated list for some popular plugins:
 
 .. _`django`: https://www.djangoproject.com/
 

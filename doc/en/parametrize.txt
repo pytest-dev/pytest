@@ -53,16 +53,16 @@ them in turn::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
+    platform linux2 -- Python 2.7.3 -- py-1.4.20 -- pytest-2.5.2
     collected 3 items
-
+    
     test_expectation.py ..F
-
+    
     ================================= FAILURES =================================
     ____________________________ test_eval[6*9-42] _____________________________
-
+    
     input = '6*9', expected = 42
-
+    
         @pytest.mark.parametrize("input,expected", [
             ("3+5", 8),
             ("2+4", 6),
@@ -72,7 +72,7 @@ them in turn::
     >       assert eval(input) == expected
     E       assert 54 == 42
     E        +  where 54 = eval('6*9')
-
+    
     test_expectation.py:8: AssertionError
     ==================== 1 failed, 2 passed in 0.01 seconds ====================
 
@@ -100,11 +100,11 @@ Let's run this::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.5.1
+    platform linux2 -- Python 2.7.3 -- py-1.4.20 -- pytest-2.5.2
     collected 3 items
-
+    
     test_expectation.py ..x
-
+    
     =================== 2 passed, 1 xfailed in 0.01 seconds ====================
 
 The one parameter set which caused a failure previously now
@@ -165,14 +165,14 @@ Let's also run with a stringinput that will lead to a failing test::
     F
     ================================= FAILURES =================================
     ___________________________ test_valid_string[!] ___________________________
-
+    
     stringinput = '!'
-
+    
         def test_valid_string(stringinput):
     >       assert stringinput.isalpha()
-    E       assert <built-in method isalpha of str object at 0x2b72934ca198>()
-    E        +  where <built-in method isalpha of str object at 0x2b72934ca198> = '!'.isalpha
-
+    E       assert <built-in method isalpha of str object at 0x2b869b32b148>()
+    E        +  where <built-in method isalpha of str object at 0x2b869b32b148> = '!'.isalpha
+    
     test_strings.py:3: AssertionError
     1 failed in 0.01 seconds
 
@@ -185,7 +185,7 @@ listlist::
     $ py.test -q -rs test_strings.py
     s
     ========================= short test summary info ==========================
-    SKIP [1] /home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/python.py:1094: got empty parameter set, function test_valid_string at /tmp/doc-exec-24/test_strings.py:1
+    SKIP [1] /home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/_pytest/python.py:1110: got empty parameter set, function test_valid_string at /tmp/doc-exec-24/test_strings.py:1
     1 skipped in 0.01 seconds
 
 For further examples, you might want to look at :ref:`more
