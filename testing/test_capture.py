@@ -5,6 +5,7 @@ import os
 import sys
 import py
 import pytest
+import contextlib
 
 from _pytest import capture
 from _pytest.capture import CaptureManager
@@ -121,9 +122,10 @@ class TestCaptureManager:
             capouter.reset()
 
 
-@pytest.mark.xfail("hasattr(sys, 'pypy_version_info')")
 @pytest.mark.parametrize("method", ['fd', 'sys'])
 def test_capturing_unicode(testdir, method):
+    if hasattr(sys, "pypy_version_info") and sys.pypy_version_info < (2,2):
+        pytest.xfail("does not work on pypy < 2.2")
     if sys.version_info >= (3, 0):
         obj = "'b\u00f6y'"
     else:
@@ -605,12 +607,12 @@ def test_dontreadfrominput():
     f.close()  # just for completeness
 
 
-def pytest_funcarg__tmpfile(request):
-    testdir = request.getfuncargvalue("testdir")
+@pytest.yield_fixture
+def tmpfile(testdir):
     f = testdir.makepyfile("").open('wb+')
-    request.addfinalizer(f.close)
-    return f
-
+    yield f
+    if not f.closed:
+        f.close()
 
 @needsosdup
 def test_dupfile(tmpfile):
@@ -645,13 +647,14 @@ def test_dupfile_no_mode():
         capture.dupfile(tmpfile, raising=True)
 
 
-def lsof_check(func):
+@contextlib.contextmanager
+def lsof_check():
     pid = os.getpid()
     try:
         out = py.process.cmdexec("lsof -p %d" % pid)
     except py.process.cmdexec.Error:
         pytest.skip("could not run 'lsof'")
-    func()
+    yield
     out2 = py.process.cmdexec("lsof -p %d" % pid)
     len1 = len([x for x in out.split("\n") if "REG" in x])
     len2 = len([x for x in out2.split("\n") if "REG" in x])
@@ -668,6 +671,7 @@ class TestFDCapture:
         os.write(fd, data)
         f = cap.done()
         s = f.read()
+        f.close()
         assert not s
         cap = capture.FDCapture(fd)
         cap.start()
@@ -675,13 +679,16 @@ class TestFDCapture:
         f = cap.done()
         s = f.read()
         assert s == "hello"
+        f.close()
 
     def test_simple_many(self, tmpfile):
         for i in range(10):
             self.test_simple(tmpfile)
 
-    def test_simple_many_check_open_files(self, tmpfile):
-        lsof_check(lambda: self.test_simple_many(tmpfile))
+    def test_simple_many_check_open_files(self, testdir):
+        with lsof_check():
+            with testdir.makepyfile("").open('wb+') as tmpfile:
+                self.test_simple_many(tmpfile)
 
     def test_simple_fail_second_start(self, tmpfile):
         fd = tmpfile.fileno()
@@ -888,12 +895,10 @@ class TestStdCaptureFD(TestStdCapture):
         assert err == "abc"
 
     def test_many(self, capfd):
-        def f():
+        with lsof_check():
             for i in range(10):
                 cap = capture.StdCaptureFD()
                 cap.reset()
-        lsof_check(f)
-
 
 
 @needsosdup
