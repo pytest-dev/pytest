@@ -185,6 +185,19 @@ class TestAssert_reprcompare:
         assert expl[1] == py.builtin._totext('- £€', 'utf-8')
         assert expl[2] == py.builtin._totext('+ £', 'utf-8')
 
+    def test_mojibake(self):
+        # issue 429
+        left = 'e'
+        right = '\xc3\xa9'
+        if not isinstance(left, py.builtin.bytes):
+            left = py.builtin.bytes(left, 'utf-8')
+            right = py.builtin.bytes(right, 'utf-8')
+        expl = callequal(left, right)
+        for line in expl:
+            assert isinstance(line, py.builtin.text)
+        msg = py.builtin._totext('\n').join(expl)
+        assert msg
+
 
 def test_python25_compile_issue257(testdir):
     testdir.makepyfile("""

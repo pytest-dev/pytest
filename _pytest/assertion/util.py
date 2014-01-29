@@ -162,12 +162,18 @@ def assertrepr_compare(config, op, left, right):
 
 
 def _diff_text(left, right, verbose=False):
-    """Return the explanation for the diff between text
+    """Return the explanation for the diff between text or bytes
 
     Unless --verbose is used this will skip leading and trailing
     characters which are identical to keep the diff minimal.
+
+    If the input are bytes they will be safely converted to text.
     """
     explanation = []
+    if isinstance(left, py.builtin.bytes):
+        left = u(repr(left)[1:-1]).replace(r'\n', '\n')
+    if isinstance(right, py.builtin.bytes):
+        right = u(repr(right)[1:-1]).replace(r'\n', '\n')
     if not verbose:
         i = 0  # just in case left or right has zero length
         for i in range(min(len(left), len(right))):
