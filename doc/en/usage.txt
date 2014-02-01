@@ -82,7 +82,7 @@ only want to do this for the first failing test to understand a certain
 failure situation::
 
     py.test -x --pdb   # drop to PDB on first failure, then end test session
-    py.test --pdb --maxfail=3  # drop to PDB for the first three failures
+    py.test --pdb --maxfail=3  # drop to PDB for first three failures
 
 
 Setting a breakpoint / aka ``set_trace()``
