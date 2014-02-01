@@ -98,8 +98,24 @@ can use a helper::
 
 .. versionadded: 2.0.0
 
-In previous versions you could only enter PDB_ tracing if
-you disabled capturing on the command line via ``py.test -s``.
+Prior to pytest version 2.0.0 you could only enter PDB_ tracing if you disabled
+capturing on the command line via ``py.test -s``. In later versions, pytest
+automatically disables its output capture when you enter PDB_ tracing:
+
+* Output capture in other tests is not affected.
+* Any prior test output that has already been captured and will be processed as
+  such.
+* Any later output produced within the same test will not be captured and will
+  instead get sent directly to ``sys.stdout``. Note that this holds true even
+  for test output occuring after you exit the interactive PDB_ tracing session
+  and continue with the regular test run.
+
+.. versionadded: 2.4.0
+
+Since pytest version 2.4.0 you can also use the native Python
+``import pdb;pdb.set_trace()`` call to enter PDB_ tracing without having to use
+the ``pytest.set_trace()`` wrapper or explicitly disable pytest's output
+capturing via ``py.test -s``.
 
 .. _durations:
 
