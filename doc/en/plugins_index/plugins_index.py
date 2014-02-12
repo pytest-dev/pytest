@@ -84,12 +84,11 @@ def obtain_plugins_table(plugins, client):
             version=version)
 
         # first row: name, images and simple links
-        url = '.. image:: {site}/status/{name}-{version}'
+        url = '.. image:: {site}/status/{name}-latest'
         image_url = url.format(**common_params)
         image_url += '?py={py}&pytest={pytest}'
         row = (
-            ColumnData(package_name + '-' + version,
-                       release_data['release_url']),
+            ColumnData(package_name, release_data['package_url']),
             ColumnData(image_url.format(py='py27', pytest=pytest_version),
                        None),
             ColumnData(image_url.format(py='py33', pytest=pytest_version),
@@ -103,7 +102,7 @@ def obtain_plugins_table(plugins, client):
         rows.append(row)
 
         # second row: links for images (they should be in their own line)
-        url = '    :target: {site}/output/{name}-{version}'
+        url = '    :target: {site}/output/{name}-latest'
         output_url = url.format(**common_params)
         output_url += '?py={py}&pytest={pytest}'
 
