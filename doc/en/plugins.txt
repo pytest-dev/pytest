@@ -315,7 +315,7 @@ Initialization, command line and configuration hooks
 Generic "runtest" hooks
 ------------------------------
 
-All all runtest related hooks receive a :py:class:`pytest.Item` object.
+All runtest related hooks receive a :py:class:`pytest.Item` object.
 
 .. autofunction:: pytest_runtest_protocol
 .. autofunction:: pytest_runtest_setup
