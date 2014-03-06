@@ -67,13 +67,13 @@ Examples for modifying traceback printing::
     py.test --tb=short   # a shorter traceback format
     py.test --tb=line    # only one line per failure
 
-Dropping to PDB (Python Debugger) on failures
-----------------------------------------------
+Dropping to PDB_ (Python Debugger) on failures
+-----------------------------------------------
 
 .. _PDB: http://docs.python.org/library/pdb.html
 
 Python comes with a builtin Python debugger called PDB_.  ``pytest``
-allows one to drop into the PDB prompt via a command line option::
+allows one to drop into the PDB_ prompt via a command line option::
 
     py.test --pdb
 
@@ -82,7 +82,7 @@ only want to do this for the first failing test to understand a certain
 failure situation::
 
     py.test -x --pdb   # drop to PDB on first failure, then end test session
-    py.test --pdb --maxfail=3  # drop to PDB for the first three failures
+    py.test --pdb --maxfail=3  # drop to PDB for first three failures
 
 
 Setting a breakpoint / aka ``set_trace()``
@@ -98,8 +98,24 @@ can use a helper::
 
 .. versionadded: 2.0.0
 
-In previous versions you could only enter PDB tracing if
-you disabled capturing on the command line via ``py.test -s``.
+Prior to pytest version 2.0.0 you could only enter PDB_ tracing if you disabled
+capturing on the command line via ``py.test -s``. In later versions, pytest
+automatically disables its output capture when you enter PDB_ tracing:
+
+* Output capture in other tests is not affected.
+* Any prior test output that has already been captured and will be processed as
+  such.
+* Any later output produced within the same test will not be captured and will
+  instead get sent directly to ``sys.stdout``. Note that this holds true even
+  for test output occuring after you exit the interactive PDB_ tracing session
+  and continue with the regular test run.
+
+.. versionadded: 2.4.0
+
+Since pytest version 2.4.0 you can also use the native Python
+``import pdb;pdb.set_trace()`` call to enter PDB_ tracing without having to use
+the ``pytest.set_trace()`` wrapper or explicitly disable pytest's output
+capturing via ``py.test -s``.
 
 .. _durations:
 
