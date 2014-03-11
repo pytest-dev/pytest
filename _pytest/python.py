@@ -11,7 +11,8 @@ cutdir = py.path.local(_pytest.__file__).dirpath()
 
 NoneType = type(None)
 NOTSET = object()
-
+isfunction = inspect.isfunction
+isclass = inspect.isclass
 callable = py.builtin.callable
 
 def getfslineno(obj):
@@ -44,7 +45,7 @@ class FixtureFunctionMarker:
         self.ids = ids
 
     def __call__(self, function):
-        if inspect.isclass(function):
+        if isclass(function):
             raise ValueError(
                     "class fixtures not supported (may be in the future)")
         function._pytestfixturefunction = self
@@ -213,14 +214,19 @@ def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
     res = __multicall__.execute()
     if res is not None:
         return res
-    if inspect.isclass(obj):
+    if isclass(obj):
         #if hasattr(collector.obj, 'unittest'):
         #    return # we assume it's a mixin class for a TestCase derived one
         if collector.classnamefilter(name):
             Class = collector._getcustomclass("Class")
             return Class(name, parent=collector)
-    elif collector.funcnamefilter(name) and hasattr(obj, '__call__') and \
+    elif collector.funcnamefilter(name) and hasattr(obj, "__call__") and \
         getfixturemarker(obj) is None:
+        if not isfunction(obj):
+            collector.warn(code="C2", message=
+                "cannot collect %r because it is not a function."
+                % name, )
+            return
         if is_generator(obj):
             return Generator(name, parent=collector)
         else:
@@ -498,10 +504,9 @@ class Class(PyCollector):
     """ Collector for test methods. """
     def collect(self):
         if hasinit(self.obj):
-            pytest.skip("class %s.%s with __init__ won't get collected" % (
-                self.obj.__module__,
-                self.obj.__name__,
-            ))
+            self.warn("C1", "cannot collect test class %r because it has a "
+                "__init__ constructor" % self.obj.__name__)
+            return []
         return [self._getcustomclass("Instance")(name="()", parent=self)]
 
     def setup(self):

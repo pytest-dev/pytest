@@ -33,8 +33,8 @@ class TestModule:
         pytest.raises(ImportError, lambda: modcol.obj)
 
 class TestClass:
-    def test_class_with_init_skip_collect(self, testdir):
-        modcol = testdir.getmodulecol("""
+    def test_class_with_init_warning(self, testdir):
+        testdir.makepyfile("""
             class TestClass1:
                 def __init__(self):
                     pass
@@ -42,11 +42,11 @@ class TestClass:
                 def __init__(self):
                     pass
         """)
-        l = modcol.collect()
-        assert len(l) == 2
-
-        for classcol in l:
-            pytest.raises(pytest.skip.Exception, classcol.collect)
+        result = testdir.runpytest("-rw")
+        result.stdout.fnmatch_lines("""
+            WC1*test_class_with_init_warning.py*__init__*
+            *2 warnings*
+        """)
 
     def test_class_subclassobject(self, testdir):
         testdir.getmodulecol("""
@@ -275,6 +275,17 @@ class TestFunction:
         modcol = item.getparent(pytest.Module)
         assert isinstance(modcol, pytest.Module)
         assert hasattr(modcol.obj, 'test_func')
+
+    def test_function_as_object_instance_ignored(self, testdir):
+        item = testdir.makepyfile("""
+            class A:
+                def __call__(self, tmpdir):
+                    0/0
+
+            test_a = A()
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome()
 
     def test_function_equality(self, testdir, tmpdir):
         from _pytest.python import FixtureManager
