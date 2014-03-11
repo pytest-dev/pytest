@@ -227,6 +227,11 @@ pytest_report_teststatus.firstresult = True
 def pytest_terminal_summary(terminalreporter):
     """ add additional section in terminal summary reporting.  """
 
+def pytest_logwarning(message, code, nodeid, fslocation):
+    """ process a warning specified by a message, a code string,
+    a nodeid and fslocation (both of which may be None
+    if the warning is not tied to a partilar node/location)."""
+
 # -------------------------------------------------------------------------
 # doctest hooks
 # -------------------------------------------------------------------------

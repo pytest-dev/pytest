@@ -360,4 +360,43 @@ def test_load_initial_conftest_last_ordering(testdir):
     assert l[-2] == m.pytest_load_initial_conftests
     assert l[-3].__module__ == "_pytest.config"
 
+class TestWarning:
+    def test_warn_config(self, testdir):
+        testdir.makeconftest("""
+            l = []
+            def pytest_configure(config):
+                config.warn("C1", "hello")
+            def pytest_logwarning(code, message):
+                assert code == "C1"
+                assert message == "hello"
+                l.append(1)
+        """)
+        testdir.makepyfile("""
+            def test_proper(pytestconfig):
+                import conftest
+                assert conftest.l == [1]
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
 
+    def test_warn_on_test_item_from_request(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture
+            def fix(request):
+                request.node.warn("T1", "hello")
+            def test_hello(fix):
+                pass
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines("""
+            *1 warning*
+        """)
+        assert "hello" not in result.stdout.str()
+        result = testdir.runpytest("-rw")
+        result.stdout.fnmatch_lines("""
+            ===*warning summary*===
+            *WT1*test_warn_on_test_item*:5*hello*
+            *1 warning*
+        """)

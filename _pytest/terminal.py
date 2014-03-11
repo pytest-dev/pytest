@@ -75,6 +75,14 @@ def pytest_report_teststatus(report):
             letter = "f"
     return report.outcome, letter, report.outcome.upper()
 
+class WarningReport:
+    def __init__(self, code, message, nodeid=None, fslocation=None):
+        self.code = code
+        self.message = message
+        self.nodeid = nodeid
+        self.fslocation = fslocation
+
+
 class TerminalReporter:
     def __init__(self, config, file=None):
         self.config = config
@@ -150,6 +158,12 @@ class TerminalReporter:
         for line in str(excrepr).split("\n"):
             self.write_line("INTERNALERROR> " + line)
         return 1
+
+    def pytest_logwarning(self, code, fslocation, message, nodeid):
+        warnings = self.stats.setdefault("warnings", [])
+        warning = WarningReport(code=code, fslocation=fslocation,
+                                message=message, nodeid=nodeid)
+        warnings.append(warning)
 
     def pytest_plugin_registered(self, plugin):
         if self.config.option.traceconfig:
@@ -335,6 +349,7 @@ class TerminalReporter:
             self.summary_errors()
             self.summary_failures()
             self.summary_hints()
+            self.summary_warnings()
             self.config.hook.pytest_terminal_summary(terminalreporter=self)
         if exitstatus == 2:
             self._report_keyboardinterrupt()
@@ -405,6 +420,16 @@ class TerminalReporter:
             for hint in self.config.pluginmanager._hints:
                 self._tw.line("hint: %s" % hint)
 
+    def summary_warnings(self):
+        if self.hasopt("w"):
+            warnings = self.stats.get("warnings")
+            if not warnings:
+                return
+            self.write_sep("=", "warning summary")
+            for w in warnings:
+                self._tw.line("W%s %s %s" % (w.code,
+                              w.fslocation, w.message))
+
     def summary_failures(self):
         if self.config.option.tbstyle != "no":
             reports = self.getreports('failed')
@@ -449,7 +474,8 @@ class TerminalReporter:
     def summary_stats(self):
         session_duration = py.std.time.time() - self._sessionstarttime
 
-        keys = "failed passed skipped deselected xfailed xpassed".split()
+        keys = ("failed passed skipped deselected "
+               "xfailed xpassed warnings").split()
         for key in self.stats.keys():
             if key not in keys:
                 keys.append(key)

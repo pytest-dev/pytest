@@ -263,6 +263,20 @@ class Node(object):
         return "<%s %r>" %(self.__class__.__name__,
                            getattr(self, 'name', None))
 
+    def warn(self, code, message):
+        """ generate a warning with the given code and message for this
+        item. """
+        assert isinstance(code, str)
+        fslocation = getattr(self, "location", None)
+        if fslocation is None:
+            fslocation = getattr(self, "fspath", None)
+        else:
+            fslocation = "%s:%s" % fslocation[:2]
+
+        self.ihook.pytest_logwarning(code=code, message=message,
+                                     nodeid=self.nodeid,
+                                     fslocation=fslocation)
+
     # methods for ordering nodes
     @property
     def nodeid(self):

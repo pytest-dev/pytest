@@ -613,6 +613,11 @@ class Config(object):
         self.hook.pytest_unconfigure(config=self)
         self.pluginmanager.ensure_shutdown()
 
+    def warn(self, code, message):
+        """ generate a warning for this test session. """
+        self.hook.pytest_logwarning(code=code, message=message,
+                                    fslocation=None, nodeid=None)
+
     def pytest_cmdline_parse(self, pluginmanager, args):
         assert self == pluginmanager.config, (self, pluginmanager.config)
         self.parse(args)
