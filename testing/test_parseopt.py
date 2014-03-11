@@ -236,16 +236,6 @@ class TestParser:
         help = parser.optparser.format_help()
         assert '-doit, --func-args  foo' in  help
 
-@pytest.mark.skipif("sys.version_info < (2,5)")
-def test_addoption_parser_epilog(testdir):
-    testdir.makeconftest("""
-        def pytest_addoption(parser):
-            parser.hints.append("hello world")
-            parser.hints.append("from me too")
-    """)
-    result = testdir.runpytest('--help')
-    #assert result.ret != 0
-    result.stdout.fnmatch_lines(["hint: hello world", "hint: from me too"])
 
 @pytest.mark.skipif("sys.version_info < (2,6)")
 def test_argcomplete(testdir, monkeypatch):

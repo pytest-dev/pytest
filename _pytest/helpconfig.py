@@ -64,7 +64,6 @@ def pytest_cmdline_main(config):
 def showhelp(config):
     tw = py.io.TerminalWriter()
     tw.write(config._parser.optparser.format_help())
-    tw.write(config._parser.optparser.format_epilog(None))
     tw.line()
     tw.line()
     #tw.sep( "=", "config file settings")
@@ -86,6 +85,8 @@ def showhelp(config):
     tw.line("to see available fixtures type: py.test --fixtures")
     tw.line("(shown according to specified file_or_dir or current dir "
             "if not specified)")
+    for warning in config.pluginmanager._warnings:
+        tw.line("warning: %s" % (warning,))
     return
 
     tw.line("conftest.py options:")

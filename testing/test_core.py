@@ -43,11 +43,11 @@ class TestBootstrapping:
         """)
         p.copy(p.dirpath("skipping2.py"))
         monkeypatch.setenv("PYTEST_PLUGINS", "skipping2")
-        result = testdir.runpytest("-p", "skipping1", "--traceconfig")
+        result = testdir.runpytest("-rw", "-p", "skipping1", "--traceconfig")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
-            "*hint*skipping1*hello*",
-            "*hint*skipping2*hello*",
+            "WI1*skipped plugin*skipping1*hello*",
+            "WI1*skipped plugin*skipping2*hello*",
         ])
 
     def test_consider_env_plugin_instantiation(self, testdir, monkeypatch):

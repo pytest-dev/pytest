@@ -82,6 +82,9 @@ class PytestPluginManager(PluginManager):
         config.addinivalue_line("markers",
             "trylast: mark a hook implementation function such that the "
             "plugin machinery will try to call it last/as late as possible.")
+        while self._warnings:
+            warning = self._warnings.pop(0)
+            config.warn(code="I1", message=warning)
 
 
 class Parser:
@@ -94,7 +97,6 @@ class Parser:
         self._usage = usage
         self._inidict = {}
         self._ininames = []
-        self.hints = []
 
     def processoption(self, option):
         if self._processopt:
@@ -378,14 +380,6 @@ class MyOptionParser(py.std.argparse.ArgumentParser):
         self._parser = parser
         py.std.argparse.ArgumentParser.__init__(self, usage=parser._usage,
             add_help=False, formatter_class=DropShorterLongHelpFormatter)
-
-    def format_epilog(self, formatter):
-        hints = self._parser.hints
-        if hints:
-            s = "\n".join(["hint: " + x for x in hints]) + "\n"
-            s = "\n" + s + "\n"
-            return s
-        return ""
 
     def parse_args(self, args=None, namespace=None):
         """allow splitting of positional arguments"""
@@ -716,7 +710,6 @@ class Config(object):
         self._preparse(args)
         # XXX deprecated hook:
         self.hook.pytest_cmdline_preparse(config=self, args=args)
-        self._parser.hints.extend(self.pluginmanager._hints)
         args = self._parser.parse_setoption(args, self.option)
         if not args:
             args.append(py.std.os.getcwd())

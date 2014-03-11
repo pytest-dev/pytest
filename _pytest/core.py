@@ -71,7 +71,7 @@ class PluginManager(object):
         self._name2plugin = {}
         self._listattrcache = {}
         self._plugins = []
-        self._hints = []
+        self._warnings = []
         self.trace = TagTracer().get("pluginmanage")
         self._plugin_distinfo = []
         self._shutdown = []
@@ -225,7 +225,7 @@ class PluginManager(object):
                 raise
             elif not isinstance(e, py.test.skip.Exception):
                 raise
-            self._hints.append("skipped plugin %r: %s" %((modname, e.msg)))
+            self._warnings.append("skipped plugin %r: %s" %((modname, e.msg)))
         else:
             self.register(mod, modname)
             self.consider_module(mod)

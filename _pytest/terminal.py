@@ -348,7 +348,6 @@ class TerminalReporter:
         if exitstatus in (0, 1, 2, 4):
             self.summary_errors()
             self.summary_failures()
-            self.summary_hints()
             self.summary_warnings()
             self.config.hook.pytest_terminal_summary(terminalreporter=self)
         if exitstatus == 2:
@@ -414,11 +413,6 @@ class TerminalReporter:
             if not hasattr(x, '_pdbshown'):
                 l.append(x)
         return l
-
-    def summary_hints(self):
-        if self.config.option.traceconfig:
-            for hint in self.config.pluginmanager._hints:
-                self._tw.line("hint: %s" % hint)
 
     def summary_warnings(self):
         if self.hasopt("w"):
