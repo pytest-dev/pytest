@@ -408,10 +408,6 @@ class Collector(Node):
         and thus iteratively build a tree.
     """
 
-    # the set of exceptions to interpret as "Skip the whole module" during
-    # collection
-    skip_exceptions = (Skipped,)
-
     class CollectError(Exception):
         """ an error during collection, contains a custom message. """
 

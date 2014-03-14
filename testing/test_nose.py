@@ -330,12 +330,26 @@ def test_setup_teardown_linking_issue265(testdir):
     reprec = testdir.inline_run()
     reprec.assertoutcome(passed=1, skipped=1)
 
+
 def test_SkipTest_during_collection(testdir):
-    testdir.makepyfile("""
+    p = testdir.makepyfile("""
         import nose
         raise nose.SkipTest("during collection")
         def test_failing():
             assert False
+        """)
+    result = testdir.runpytest(p)
+    outcome = result.parseoutcomes()
+    outcome.pop('seconds')
+    assert outcome == dict(skipped=1)
+
+
+def test_SkipTest_in_test(testdir):
+    testdir.makepyfile("""
+        import nose
+
+        def test_skipping():
+            raise nose.SkipTest("in test")
         """)
     reprec = testdir.inline_run()
     reprec.assertoutcome(skipped=1)
