@@ -8,7 +8,7 @@ try:
 except ImportError:
     from UserDict import DictMixin as MappingMixin
 
-from _pytest.runner import collect_one_node, Skipped
+from _pytest.runner import collect_one_node
 
 tracebackcutdir = py.path.local(_pytest.__file__).dirpath()
 
