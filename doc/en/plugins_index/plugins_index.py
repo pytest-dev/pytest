@@ -1,6 +1,13 @@
 """
 Script to generate the file `index.txt` with information about
-pytest plugins taken directly from a live PyPI server.
+pytest plugins taken directly from PyPI.
+
+Usage:
+    python plugins_index.py
+
+This command will update `index.txt` in the same directory found as this script.
+This should be issued before every major documentation release to obtain latest
+versions from PyPI.
 
 Also includes plugin compatibility between different python and pytest versions,
 obtained from http://pytest-plugs.herokuapp.com.
@@ -66,9 +73,34 @@ def obtain_plugins_table(plugins, client):
     :param plugins: list of (name, version)
     :param client: ServerProxy
     """
+    def get_repo_markup(repo):
+        """
+        obtains appropriate markup for the given repository, as two lines
+        that should be output in the same table row. We use this to display an icon
+        for known repository hosts (github, etc), just a "?" char when
+        repository is not registered in pypi or a simple link otherwise.
+        """
+        target = repo
+        if 'github.com' in repo:
+            image = 'github.png'
+        elif 'bitbucket.org' in repo:
+            image = 'bitbucket.png'
+        elif repo.lower() == 'unknown':
+            return '?', ''
+        else:
+            image = None
+
+        if image is not None:
+            image_markup = '.. image:: %s' % image
+            target_markup = '   :target: %s' % repo
+            pad_right = ('%-' + str(len(target_markup)) + 's')
+            return pad_right % image_markup, target_markup
+        else:
+            return '`link <%s>`_' % target, ''
+
     rows = []
     ColumnData = namedtuple('ColumnData', 'text link')
-    headers = ['Name', 'Py27', 'Py33', 'Repository', 'Summary']
+    headers = ['Name', 'Py27', 'Py33', 'Repo', 'Summary']
     pytest_version = pytest.__version__
     repositories = obtain_override_repositories()
     print('*** pytest-{0} ***'.format(pytest_version))
@@ -83,6 +115,9 @@ def obtain_plugins_table(plugins, client):
             name=package_name,
             version=version)
 
+        repository = repositories.get(package_name, release_data['home_page'])
+        repo_markup_1, repo_markup_2 = get_repo_markup(repository)
+
         # first row: name, images and simple links
         url = '.. image:: {site}/status/{name}-latest'
         image_url = url.format(**common_params)
@@ -94,7 +129,7 @@ def obtain_plugins_table(plugins, client):
             ColumnData(image_url.format(py='py33', pytest=pytest_version),
                        None),
             ColumnData(
-                repositories.get(package_name, release_data['home_page']),
+                repo_markup_1,
                 None),
             ColumnData(release_data['summary'], None),
         )
@@ -112,8 +147,9 @@ def obtain_plugins_table(plugins, client):
                        None),
             ColumnData(output_url.format(py='py33', pytest=pytest_version),
                        None),
+            ColumnData(repo_markup_2, None),
             ColumnData('', None),
-            ColumnData('', None),
+
         )
         assert len(row) == len(headers)
         rows.append(row)
@@ -167,11 +203,9 @@ def generate_plugins_index_from_table(filename, headers, rows):
         return ' '.join(char * length for length in column_lengths)
 
     with open(filename, 'w') as f:
-        # write welcome
-        print('.. _plugins_index:', file=f)
-        print(file=f)
-        print('List of Third-Party Plugins', file=f)
-        print('===========================', file=f)
+        # header
+        header_text = HEADER.format(pytest_version=pytest.__version__)
+        print(header_text, file=f)
         print(file=f)
 
         # table
@@ -230,6 +264,22 @@ def main(argv):
     print()
     print('%s Updated.' % options.filename)
     return 0
+
+
+# header for the plugins_index page
+HEADER = '''.. _plugins_index:
+
+List of Third-Party Plugins
+===========================
+
+The table below contains a listing of plugins found in PyPI and
+their status when tested using py.test **{pytest_version}** and python 2.7 and
+3.3.
+
+A complete listing can also be found at
+`pytest-plugs <http://pytest-plugs.herokuapp.com/>`_, which contains tests
+status against other py.test releases.
+'''
 
 
 if __name__ == '__main__':
