@@ -120,9 +120,6 @@ class CaptureManager:
         f.close()
         return newf
 
-    def _makestringio(self):
-        return TextIO()
-
     def _getcapture(self, method):
         if method == "fd":
             return StdCaptureFD(
@@ -130,10 +127,7 @@ class CaptureManager:
                 err=self._maketempfile(),
             )
         elif method == "sys":
-            return StdCapture(
-                out=self._makestringio(),
-                err=self._makestringio(),
-            )
+            return StdCapture(out=TextIO(), err=TextIO())
         elif method == "no":
             return NoCapture()
         else:
