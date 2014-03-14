@@ -16,43 +16,30 @@ def pytest_configure(config):
     if config.getvalue("usepdb"):
         config.pluginmanager.register(PdbInvoke(), 'pdbinvoke')
 
-    old_trace = py.std.pdb.set_trace
+    old = (py.std.pdb.set_trace, pytestPDB._pluginmanager)
     def fin():
-        py.std.pdb.set_trace = old_trace
+        py.std.pdb.set_trace, pytestPDB._pluginmanager = old
     py.std.pdb.set_trace = pytest.set_trace
+    pytestPDB._pluginmanager = config.pluginmanager
     config._cleanup.append(fin)
 
 class pytestPDB:
     """ Pseudo PDB that defers to the real pdb. """
-    item = None
-    collector = None
+    _pluginmanager = None
 
     def set_trace(self):
         """ invoke PDB set_trace debugging, dropping any IO capturing. """
         frame = sys._getframe().f_back
-        item = self.item or self.collector
-
-        if item is not None:
-            capman = item.config.pluginmanager.getplugin("capturemanager")
+        capman = None
+        if self._pluginmanager is not None:
+            capman = self._pluginmanager.getplugin("capturemanager")
             if capman:
                 capman.reset_capturings()
-            tw = item.config.get_terminal_writer()
+            tw = py.io.TerminalWriter()
             tw.line()
             tw.sep(">", "PDB set_trace (IO-capturing turned off)")
         py.std.pdb.Pdb().set_trace(frame)
 
-def pdbitem(item):
-    pytestPDB.item = item
-pytest_runtest_setup = pytest_runtest_call = pytest_runtest_teardown = pdbitem
-
-@pytest.mark.hookwrapper
-def pytest_make_collect_report(collector):
-    pytestPDB.collector = collector
-    yield
-    pytestPDB.collector = None
-
-def pytest_runtest_makereport():
-    pytestPDB.item = None
 
 class PdbInvoke:
     def pytest_exception_interact(self, node, call, report):
