@@ -27,7 +27,7 @@ def main():
         name='pytest',
         description='pytest: simple powerful testing with Python',
         long_description = long_description,
-        version='2.5.2',
+        version='2.5.3.dev1',
         url='http://pytest.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],

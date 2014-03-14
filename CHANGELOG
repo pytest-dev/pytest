@@ -1,3 +1,16 @@
+NEXT (2.6)
+-----------------------------------
+
+- internal new warning system: pytest will now produce warnings when
+  it detects oddities in your test collection or execution.  
+  Warnings are ultimately sent to a new pytest_logwarning hook which is
+  currently only implemented by the terminal plugin which displays
+  warnings in the summary line and shows more details when -rw (report on
+  warnings) is specified.
+
+- change skips into warnings for test classes with an __init__ and
+  callables in test modules which look like a test but are not functions.
+
 2.5.2
 -----------------------------------
 
