@@ -17,16 +17,11 @@ def get_skip_exceptions():
 
 
 def pytest_runtest_makereport(__multicall__, item, call):
-    if not call.excinfo:
-        return
-
-    for skip_exc in get_skip_exceptions():
-        if call.excinfo.errisinstance(skip_exc):
-            # let's substitute the excinfo with a pytest.skip one
-            call2 = call.__class__(lambda:
-                        pytest.skip(str(call.excinfo.value)), call.when)
-            call.excinfo = call2.excinfo
-            return
+    if call.excinfo and call.excinfo.errisinstance(get_skip_exceptions()):
+        # let's substitute the excinfo with a pytest.skip one
+        call2 = call.__class__(lambda:
+                    pytest.skip(str(call.excinfo.value)), call.when)
+        call.excinfo = call2.excinfo
 
 
 @pytest.mark.trylast
