@@ -34,10 +34,9 @@ class pytestPDB:
 
         if item is not None:
             capman = item.config.pluginmanager.getplugin("capturemanager")
-            out, err = capman.suspendcapture()
-            #if hasattr(item, 'outerr'):
-            #    item.outerr = (item.outerr[0] + out, item.outerr[1] + err)
-            tw = py.io.TerminalWriter()
+            if capman:
+                capman.reset_capturings()
+            tw = item.config.get_terminal_writer()
             tw.line()
             tw.sep(">", "PDB set_trace (IO-capturing turned off)")
         py.std.pdb.Pdb().set_trace(frame)
@@ -46,19 +45,20 @@ def pdbitem(item):
     pytestPDB.item = item
 pytest_runtest_setup = pytest_runtest_call = pytest_runtest_teardown = pdbitem
 
-@pytest.mark.tryfirst
-def pytest_make_collect_report(__multicall__, collector):
-    try:
-        pytestPDB.collector = collector
-        return __multicall__.execute()
-    finally:
-        pytestPDB.collector = None
+@pytest.mark.hookwrapper
+def pytest_make_collect_report(collector):
+    pytestPDB.collector = collector
+    yield
+    pytestPDB.collector = None
 
 def pytest_runtest_makereport():
     pytestPDB.item = None
 
 class PdbInvoke:
     def pytest_exception_interact(self, node, call, report):
+        capman = node.config.pluginmanager.getplugin("capturemanager")
+        if capman:
+            capman.reset_capturings()
         return _enter_pdb(node, call.excinfo, report)
 
     def pytest_internalerror(self, excrepr, excinfo):

@@ -56,11 +56,15 @@ def _prepareconfig(args=None, plugins=None):
             raise ValueError("not a string or argument list: %r" % (args,))
         args = py.std.shlex.split(args)
     pluginmanager = get_plugin_manager()
-    if plugins:
-        for plugin in plugins:
-            pluginmanager.register(plugin)
-    return pluginmanager.hook.pytest_cmdline_parse(
-            pluginmanager=pluginmanager, args=args)
+    try:
+        if plugins:
+            for plugin in plugins:
+                pluginmanager.register(plugin)
+        return pluginmanager.hook.pytest_cmdline_parse(
+                pluginmanager=pluginmanager, args=args)
+    except Exception:
+        pluginmanager.ensure_shutdown()
+        raise
 
 class PytestPluginManager(PluginManager):
     def __init__(self, hookspecs=[hookspec]):
@@ -611,6 +615,9 @@ class Config(object):
         """ generate a warning for this test session. """
         self.hook.pytest_logwarning(code=code, message=message,
                                     fslocation=None, nodeid=None)
+
+    def get_terminal_writer(self):
+        return self.pluginmanager.getplugin("terminalreporter")._tw
 
     def pytest_cmdline_parse(self, pluginmanager, args):
         assert self == pluginmanager.config, (self, pluginmanager.config)

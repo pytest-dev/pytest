@@ -885,7 +885,7 @@ def _showfixtures_main(config, session):
         nodeid = "::".join(map(str, [curdir.bestrelpath(part[0])] + part[1:]))
         nodeid.replace(session.fspath.sep, "/")
 
-    tw = py.io.TerminalWriter()
+    tw = config.get_terminal_writer()
     verbose = config.getvalue("verbose")
 
     fm = session._fixturemanager

@@ -36,13 +36,21 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     config.option.verbose -= config.option.quiet
-    reporter = TerminalReporter(config, sys.stdout)
+    out = config.pluginmanager.getplugin("dupped_stdout")
+    #if out is None:
+    #    out = sys.stdout
+    reporter = TerminalReporter(config, out)
     config.pluginmanager.register(reporter, 'terminalreporter')
     if config.option.debug or config.option.traceconfig:
         def mywriter(tags, args):
             msg = " ".join(map(str, args))
             reporter.write_line("[traceconfig] " + msg)
         config.trace.root.setprocessor("pytest:config", mywriter)
+
+def get_terminal_writer(config):
+    tr = config.pluginmanager.getplugin("terminalreporter")
+    return tr._tw
+
 
 def getreportopt(config):
     reportopts = ""

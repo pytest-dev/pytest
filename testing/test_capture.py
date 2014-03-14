@@ -736,14 +736,14 @@ class TestFDCapture:
 class TestStdCapture:
     def getcapture(self, **kw):
         cap = capture.StdCapture(**kw)
-        cap.startall()
+        cap.start_capturing()
         return cap
 
     def test_capturing_done_simple(self):
         cap = self.getcapture()
         sys.stdout.write("hello")
         sys.stderr.write("world")
-        outfile, errfile = cap.done()
+        outfile, errfile = cap.stop_capturing()
         s = outfile.read()
         assert s == "hello"
         s = errfile.read()
@@ -787,6 +787,7 @@ class TestStdCapture:
         print('\xa6')
         out, err = cap.readouterr()
         assert out == py.builtin._totext('\ufffd\n', 'unicode-escape')
+        cap.reset()
 
     def test_reset_twice_error(self):
         cap = self.getcapture()
@@ -859,12 +860,13 @@ class TestStdCapture:
         try:
             print ("hello")
             sys.stderr.write("error\n")
-            out, err = cap.suspend()
+            out, err = cap.readouterr()
+            cap.stop_capturing()
             assert out == "hello\n"
             assert not err
             print ("in between")
             sys.stderr.write("in between\n")
-            cap.resume()
+            cap.start_capturing()
             print ("after")
             sys.stderr.write("error_after\n")
         finally:
@@ -878,7 +880,7 @@ class TestStdCaptureFD(TestStdCapture):
 
     def getcapture(self, **kw):
         cap = capture.StdCaptureFD(**kw)
-        cap.startall()
+        cap.start_capturing()
         return cap
 
     def test_intermingling(self):
@@ -908,7 +910,7 @@ def test_stdcapture_fd_tmpfile(tmpfile):
     try:
         os.write(1, "hello".encode("ascii"))
         os.write(2, "world".encode("ascii"))
-        outf, errf = capfd.done()
+        outf, errf = capfd.stop_capturing()
     finally:
         capfd.reset()
     assert outf == tmpfile
@@ -924,15 +926,15 @@ class TestStdCaptureFDinvalidFD:
             def test_stdout():
                 os.close(1)
                 cap = StdCaptureFD(out=True, err=False, in_=False)
-                cap.done()
+                cap.stop_capturing()
             def test_stderr():
                 os.close(2)
                 cap = StdCaptureFD(out=False, err=True, in_=False)
-                cap.done()
+                cap.stop_capturing()
             def test_stdin():
                 os.close(0)
                 cap = StdCaptureFD(out=False, err=False, in_=True)
-                cap.done()
+                cap.stop_capturing()
         """)
         result = testdir.runpytest("--capture=fd")
         assert result.ret == 0
@@ -941,8 +943,8 @@ class TestStdCaptureFDinvalidFD:
 
 def test_capture_not_started_but_reset():
     capsys = capture.StdCapture()
-    capsys.done()
-    capsys.done()
+    capsys.stop_capturing()
+    capsys.stop_capturing()
     capsys.reset()
 
 
@@ -951,7 +953,7 @@ def test_capture_no_sys():
     capsys = capture.StdCapture()
     try:
         cap = capture.StdCaptureFD(patchsys=False)
-        cap.startall()
+        cap.start_capturing()
         sys.stdout.write("hello")
         sys.stderr.write("world")
         oswritebytes(1, "1")
@@ -970,10 +972,9 @@ def test_fdcapture_tmpfile_remains_the_same(tmpfile, use):
         tmpfile = True
     cap = capture.StdCaptureFD(out=False, err=tmpfile)
     try:
-        cap.startall()
+        cap.start_capturing()
         capfile = cap.err.tmpfile
-        cap.suspend()
-        cap.resume()
+        cap.readouterr()
     finally:
         cap.reset()
     capfile2 = cap.err.tmpfile
@@ -990,22 +991,25 @@ def test_capturing_and_logging_fundamentals(testdir, method):
         import py, logging
         from _pytest import capture
         cap = capture.%s(out=False, in_=False)
-        cap.startall()
+        cap.start_capturing()
 
         logging.warn("hello1")
-        outerr = cap.suspend()
+        outerr = cap.readouterr()
         print ("suspend, captured %%s" %%(outerr,))
         logging.warn("hello2")
 
-        cap.resume()
+        cap.pop_outerr_to_orig()
         logging.warn("hello3")
 
-        outerr = cap.suspend()
+        outerr = cap.readouterr()
         print ("suspend2, captured %%s" %% (outerr,))
     """ % (method,))
     result = testdir.runpython(p)
-    result.stdout.fnmatch_lines([
-        "suspend, captured*hello1*",
-        "suspend2, captured*hello2*WARNING:root:hello3*",
-    ])
+    result.stdout.fnmatch_lines("""
+        suspend, captured*hello1*
+        suspend2, captured*WARNING:root:hello3*
+    """)
+    result.stderr.fnmatch_lines("""
+        WARNING:root:hello2
+    """)
     assert "atexit" not in result.stderr.str()

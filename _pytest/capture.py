@@ -1,12 +1,11 @@
 """
-    per-test stdout/stderr capturing mechanisms,
-    ``capsys`` and ``capfd`` function arguments.
+per-test stdout/stderr capturing mechanism.
+
 """
-# note: py.io capture was where copied from
-# pylib 1.4.20.dev2 (rev 13d9af95547e)
 import sys
 import os
 import tempfile
+import contextlib
 
 import py
 import pytest
@@ -58,8 +57,18 @@ def pytest_load_initial_conftests(early_config, parser, args, __multicall__):
         method = "fd"
     if method == "fd" and not hasattr(os, "dup"):
         method = "sys"
+    pluginmanager = early_config.pluginmanager
+    if method != "no":
+        try:
+            sys.stdout.fileno()
+        except Exception:
+            dupped_stdout = sys.stdout
+        else:
+            dupped_stdout = dupfile(sys.stdout, buffering=1)
+        pluginmanager.register(dupped_stdout, "dupped_stdout")
+            #pluginmanager.add_shutdown(dupped_stdout.close)
     capman = CaptureManager(method)
-    early_config.pluginmanager.register(capman, "capturemanager")
+    pluginmanager.register(capman, "capturemanager")
 
     # make sure that capturemanager is properly reset at final shutdown
     def teardown():
@@ -68,13 +77,13 @@ def pytest_load_initial_conftests(early_config, parser, args, __multicall__):
         except ValueError:
             pass
 
-    early_config.pluginmanager.add_shutdown(teardown)
+    pluginmanager.add_shutdown(teardown)
 
     # make sure logging does not raise exceptions at the end
     def silence_logging_at_shutdown():
         if "logging" in sys.modules:
             sys.modules["logging"].raiseExceptions = False
-    early_config.pluginmanager.add_shutdown(silence_logging_at_shutdown)
+    pluginmanager.add_shutdown(silence_logging_at_shutdown)
 
     # finally trigger conftest loading but while capturing (issue93)
     capman.resumecapture()
@@ -89,23 +98,20 @@ def pytest_load_initial_conftests(early_config, parser, args, __multicall__):
         raise
 
 
-def addouterr(rep, outerr):
-    for secname, content in zip(["out", "err"], outerr):
-        if content:
-            rep.sections.append(("Captured std%s" % secname, content))
-
-
 class NoCapture:
-    def startall(self):
+    def start_capturing(self):
         pass
 
-    def resume(self):
+    def stop_capturing(self):
+        pass
+
+    def pop_outerr_to_orig(self):
         pass
 
     def reset(self):
         pass
 
-    def suspend(self):
+    def readouterr(self):
         return "", ""
 
 
@@ -147,7 +153,9 @@ class CaptureManager:
 
     def reset_capturings(self):
         for cap in self._method2capture.values():
+            cap.pop_outerr_to_orig()
             cap.reset()
+        self._method2capture.clear()
 
     def resumecapture_item(self, item):
         method = self._getmethod(item.config, item.fspath)
@@ -164,9 +172,9 @@ class CaptureManager:
         self._capturing = method
         if cap is None:
             self._method2capture[method] = cap = self._getcapture(method)
-            cap.startall()
+            cap.start_capturing()
         else:
-            cap.resume()
+            cap.pop_outerr_to_orig()
 
     def suspendcapture(self, item=None):
         self.deactivate_funcargs()
@@ -175,7 +183,7 @@ class CaptureManager:
             del self._capturing
             cap = self._method2capture.get(method)
             if cap is not None:
-                return cap.suspend()
+                return cap.readouterr()
         return "", ""
 
     def activate_funcargs(self, pyfuncitem):
@@ -194,47 +202,68 @@ class CaptureManager:
             del self._capturing_funcarg
             return outerr
 
+    @pytest.mark.hookwrapper
     def pytest_make_collect_report(self, __multicall__, collector):
         method = self._getmethod(collector.config, collector.fspath)
         try:
             self.resumecapture(method)
         except ValueError:
+            yield
             # recursive collect, XXX refactor capturing
             # to allow for more lightweight recursive capturing
             return
-        try:
-            rep = __multicall__.execute()
-        finally:
-            outerr = self.suspendcapture()
-        addouterr(rep, outerr)
-        return rep
+        yield
+        out, err = self.suspendcapture()
+        # XXX getting the report from the ongoing hook call is a bit
+        # of a hack.  We need to think about capturing during collection
+        # and find out if it's really needed fine-grained (per
+        # collector).
+        if __multicall__.results:
+            rep = __multicall__.results[0]
+            if out:
+                rep.sections.append(("Captured stdout", out))
+            if err:
+                rep.sections.append(("Captured stderr", err))
 
-    @pytest.mark.tryfirst
+    @pytest.mark.hookwrapper
     def pytest_runtest_setup(self, item):
-        self.resumecapture_item(item)
+        with self.item_capture_wrapper(item, "setup"):
+            yield
 
-    @pytest.mark.tryfirst
+    @pytest.mark.hookwrapper
     def pytest_runtest_call(self, item):
-        self.resumecapture_item(item)
-        self.activate_funcargs(item)
+        with self.item_capture_wrapper(item, "call"):
+            yield
 
-    @pytest.mark.tryfirst
+    @pytest.mark.hookwrapper
     def pytest_runtest_teardown(self, item):
-        self.resumecapture_item(item)
-
-    def pytest_keyboard_interrupt(self, excinfo):
-        if hasattr(self, '_capturing'):
-            self.suspendcapture()
+        with self.item_capture_wrapper(item, "teardown"):
+            yield
 
     @pytest.mark.tryfirst
-    def pytest_runtest_makereport(self, item, call):
-        funcarg_outerr = self.deactivate_funcargs()
+    def pytest_keyboard_interrupt(self, excinfo):
+        self.reset_capturings()
+
+    @pytest.mark.tryfirst
+    def pytest_internalerror(self, excinfo):
+        self.reset_capturings()
+
+    @contextlib.contextmanager
+    def item_capture_wrapper(self, item, when):
+        self.resumecapture_item(item)
+        if when == "call":
+            self.activate_funcargs(item)
+            yield
+            funcarg_outerr = self.deactivate_funcargs()
+        else:
+            yield
+            funcarg_outerr = None
         out, err = self.suspendcapture(item)
         if funcarg_outerr is not None:
             out += funcarg_outerr[0]
             err += funcarg_outerr[1]
-        item.add_report_section(call.when, "out", out)
-        item.add_report_section(call.when, "err", err)
+        item.add_report_section(when, "out", out)
+        item.add_report_section(when, "err", err)
 
 error_capsysfderror = "cannot use capsys and capfd at the same time"
 
@@ -263,10 +292,10 @@ def pytest_funcarg__capfd(request):
 
 class CaptureFixture:
     def __init__(self, captureclass):
-        self._capture = captureclass()
+        self._capture = captureclass(in_=False)
 
     def _start(self):
-        self._capture.startall()
+        self._capture.start_capturing()
 
     def _finalize(self):
         if hasattr(self, '_capture'):
@@ -295,6 +324,8 @@ class FDCapture:
         """
         self.targetfd = targetfd
         if tmpfile is None and targetfd != 0:
+            # this code path is covered in the tests
+            # but not used by a regular pytest run
             f = tempfile.TemporaryFile('wb+')
             tmpfile = dupfile(f, encoding="UTF-8")
             f.close()
@@ -390,13 +421,13 @@ class EncodedFile(object):
         return getattr(self._stream, name)
 
 
-class Capture(object):
+class StdCaptureBase(object):
     def reset(self):
         """ reset sys.stdout/stderr and return captured output as strings. """
         if hasattr(self, '_reset'):
             raise ValueError("was already reset")
         self._reset = True
-        outfile, errfile = self.done(save=False)
+        outfile, errfile = self.stop_capturing(save=False)
         out, err = "", ""
         if outfile and not outfile.closed:
             out = outfile.read()
@@ -406,14 +437,16 @@ class Capture(object):
             errfile.close()
         return out, err
 
-    def suspend(self):
-        """ return current snapshot captures, memorize tempfiles. """
-        outerr = self.readouterr()
-        outfile, errfile = self.done()
-        return outerr
+    def pop_outerr_to_orig(self):
+        """ pop current snapshot out/err capture and flush to orig streams. """
+        out, err = self.readouterr()
+        if out:
+            self.out.writeorg(out)
+        if err:
+            self.err.writeorg(err)
 
 
-class StdCaptureFD(Capture):
+class StdCaptureFD(StdCaptureBase):
     """ This class allows to capture writes to FD1 and FD2
         and may connect a NULL file to FD0 (and prevent
         reads from sys.stdin).  If any of the 0,1,2 file descriptors
@@ -464,7 +497,7 @@ class StdCaptureFD(Capture):
             except OSError:
                 pass
 
-    def startall(self):
+    def start_capturing(self):
         if hasattr(self, 'in_'):
             self.in_.start()
         if hasattr(self, 'out'):
@@ -472,11 +505,10 @@ class StdCaptureFD(Capture):
         if hasattr(self, 'err'):
             self.err.start()
 
-    def resume(self):
-        """ resume capturing with original temp files. """
-        self.startall()
+    #def pytest_sessionfinish(self):
+    #    self.reset_capturings()
 
-    def done(self, save=True):
+    def stop_capturing(self, save=True):
         """ return (outfile, errfile) and stop capturing. """
         outfile = errfile = None
         if hasattr(self, 'out') and not self.out.tmpfile.closed:
@@ -491,16 +523,15 @@ class StdCaptureFD(Capture):
 
     def readouterr(self):
         """ return snapshot value of stdout/stderr capturings. """
-        out = self._readsnapshot('out')
-        err = self._readsnapshot('err')
-        return out, err
+        return self._readsnapshot('out'), self._readsnapshot('err')
 
     def _readsnapshot(self, name):
-        if hasattr(self, name):
+        try:
             f = getattr(self, name).tmpfile
-        else:
+        except AttributeError:
             return ''
-
+        if f.tell() == 0:
+            return ''
         f.seek(0)
         res = f.read()
         enc = getattr(f, "encoding", None)
@@ -510,8 +541,17 @@ class StdCaptureFD(Capture):
         f.seek(0)
         return res
 
+class TextCapture(TextIO):
+    def __init__(self, oldout):
+        super(TextCapture, self).__init__()
+        self._oldout = oldout
 
-class StdCapture(Capture):
+    def writeorg(self, data):
+        self._oldout.write(data)
+        self._oldout.flush()
+
+
+class StdCapture(StdCaptureBase):
     """ This class allows to capture writes to sys.stdout|stderr "in-memory"
         and will raise errors on tries to read from sys.stdin. It only
         modifies sys.stdout|stderr|stdin attributes and does not
@@ -522,15 +562,15 @@ class StdCapture(Capture):
         self._olderr = sys.stderr
         self._oldin = sys.stdin
         if out and not hasattr(out, 'file'):
-            out = TextIO()
+            out = TextCapture(self._oldout)
         self.out = out
         if err:
             if not hasattr(err, 'write'):
-                err = TextIO()
+                err = TextCapture(self._olderr)
         self.err = err
         self.in_ = in_
 
-    def startall(self):
+    def start_capturing(self):
         if self.out:
             sys.stdout = self.out
         if self.err:
@@ -538,7 +578,7 @@ class StdCapture(Capture):
         if self.in_:
             sys.stdin = self.in_ = DontReadFromInput()
 
-    def done(self, save=True):
+    def stop_capturing(self, save=True):
         """ return (outfile, errfile) and stop capturing. """
         outfile = errfile = None
         if self.out and not self.out.closed:
@@ -553,9 +593,6 @@ class StdCapture(Capture):
             sys.stdin = self._oldin
         return outfile, errfile
 
-    def resume(self):
-        """ resume capturing with original temp files. """
-        self.startall()
 
     def readouterr(self):
         """ return snapshot value of stdout/stderr capturings. """

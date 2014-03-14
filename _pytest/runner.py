@@ -135,14 +135,13 @@ class CallInfo:
         self.when = when
         self.start = time()
         try:
-            try:
-                self.result = func()
-            except KeyboardInterrupt:
-                raise
-            except:
-                self.excinfo = py.code.ExceptionInfo()
-        finally:
+            self.result = func()
+        except KeyboardInterrupt:
             self.stop = time()
+            raise
+        except:
+            self.excinfo = py.code.ExceptionInfo()
+        self.stop = time()
 
     def __repr__(self):
         if self.excinfo:
@@ -292,7 +291,8 @@ def pytest_make_collect_report(collector):
 
 
 class CollectReport(BaseReport):
-    def __init__(self, nodeid, outcome, longrepr, result, sections=(), **extra):
+    def __init__(self, nodeid, outcome, longrepr, result,
+                 sections=(), **extra):
         self.nodeid = nodeid
         self.outcome = outcome
         self.longrepr = longrepr
