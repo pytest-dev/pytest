@@ -240,18 +240,22 @@ class PluginManager(object):
             pass
         l = []
         last = []
+        wrappers = []
         for plugin in plugins:
             try:
                 meth = getattr(plugin, attrname)
-                if hasattr(meth, 'tryfirst'):
-                    last.append(meth)
-                elif hasattr(meth, 'trylast'):
-                    l.insert(0, meth)
-                else:
-                    l.append(meth)
             except AttributeError:
                 continue
+            if hasattr(meth, 'hookwrapper'):
+                wrappers.append(meth)
+            elif hasattr(meth, 'tryfirst'):
+                last.append(meth)
+            elif hasattr(meth, 'trylast'):
+                l.insert(0, meth)
+            else:
+                l.append(meth)
         l.extend(last)
+        l.extend(wrappers)
         self._listattrcache[key] = list(l)
         return l
 
@@ -272,6 +276,14 @@ def importplugin(importspec):
 
 class MultiCall:
     """ execute a call into multiple python functions/methods. """
+
+    class WrongHookWrapper(Exception):
+        """ a hook wrapper does not behave correctly. """
+        def __init__(self, func, message):
+            Exception.__init__(self, func, message)
+            self.func = func
+            self.message = message
+
     def __init__(self, methods, kwargs, firstresult=False):
         self.methods = list(methods)
         self.kwargs = kwargs
@@ -283,16 +295,39 @@ class MultiCall:
         return "<MultiCall %s, kwargs=%r>" %(status, self.kwargs)
 
     def execute(self):
-        while self.methods:
-            method = self.methods.pop()
-            kwargs = self.getkwargs(method)
-            res = method(**kwargs)
-            if res is not None:
-                self.results.append(res)
-                if self.firstresult:
-                    return res
-        if not self.firstresult:
-            return self.results
+        next_finalizers = []
+        try:
+            while self.methods:
+                method = self.methods.pop()
+                kwargs = self.getkwargs(method)
+                if hasattr(method, "hookwrapper"):
+                    it = method(**kwargs)
+                    next = getattr(it, "next", None)
+                    if next is None:
+                        next = getattr(it, "__next__", None)
+                        if next is None:
+                            raise self.WrongHookWrapper(method,
+                                "wrapper does not contain a yield")
+                    res = next()
+                    next_finalizers.append((method, next))
+                else:
+                    res = method(**kwargs)
+                if res is not None:
+                    self.results.append(res)
+                    if self.firstresult:
+                        return res
+            if not self.firstresult:
+                return self.results
+        finally:
+            for method, fin in reversed(next_finalizers):
+                try:
+                    fin()
+                except StopIteration:
+                    pass
+                else:
+                    raise self.WrongHookWrapper(method,
+                                "wrapper contain more than one yield")
+
 
     def getkwargs(self, method):
         kwargs = {}
