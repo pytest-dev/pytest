@@ -277,7 +277,7 @@ class TestFunction:
         assert hasattr(modcol.obj, 'test_func')
 
     def test_function_as_object_instance_ignored(self, testdir):
-        item = testdir.makepyfile("""
+        testdir.makepyfile("""
             class A:
                 def __call__(self, tmpdir):
                     0/0
