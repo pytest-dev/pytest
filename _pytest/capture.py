@@ -2,6 +2,8 @@
 per-test stdout/stderr capturing mechanism.
 
 """
+from __future__ import with_statement
+
 import sys
 import os
 import tempfile
@@ -366,12 +368,9 @@ class FDCapture:
     def writeorg(self, data):
         """ write a string to the original file descriptor
         """
-        tempfp = tempfile.TemporaryFile()
-        try:
-            os.dup2(self._savefd, tempfp.fileno())
-            tempfp.write(data)
-        finally:
-            tempfp.close()
+        if py.builtin._istext(data):
+            data = data.encode("utf8") # XXX use encoding of original stream
+        os.write(self._savefd, data)
 
 
 def dupfile(f, mode=None, buffering=0, raising=False, encoding=None):
