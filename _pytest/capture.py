@@ -151,8 +151,6 @@ class CaptureManager:
 
     def resumecapture_item(self, item):
         method = self._getmethod(item.config, item.fspath)
-        if not hasattr(item, 'outerr'):
-            item.outerr = ('', '')  # we accumulate outerr on the item
         return self.resumecapture(method)
 
     def resumecapture(self, method=None):
@@ -174,16 +172,10 @@ class CaptureManager:
         self.deactivate_funcargs()
         if hasattr(self, '_capturing'):
             method = self._capturing
+            del self._capturing
             cap = self._method2capture.get(method)
             if cap is not None:
-                outerr = cap.suspend()
-            del self._capturing
-            if item:
-                outerr = (item.outerr[0] + outerr[0],
-                          item.outerr[1] + outerr[1])
-            return outerr
-        if hasattr(item, 'outerr'):
-            return item.outerr
+                return cap.suspend()
         return "", ""
 
     def activate_funcargs(self, pyfuncitem):
@@ -235,18 +227,14 @@ class CaptureManager:
             self.suspendcapture()
 
     @pytest.mark.tryfirst
-    def pytest_runtest_makereport(self, __multicall__, item, call):
+    def pytest_runtest_makereport(self, item, call):
         funcarg_outerr = self.deactivate_funcargs()
-        rep = __multicall__.execute()
-        outerr = self.suspendcapture(item)
+        out, err = self.suspendcapture(item)
         if funcarg_outerr is not None:
-            outerr = (outerr[0] + funcarg_outerr[0],
-                      outerr[1] + funcarg_outerr[1])
-        addouterr(rep, outerr)
-        if not rep.passed or rep.when == "teardown":
-            outerr = ('', '')
-        item.outerr = outerr
-        return rep
+            out += funcarg_outerr[0]
+            err += funcarg_outerr[1]
+        item.add_report_section(call.when, "out", out)
+        item.add_report_section(call.when, "err", err)
 
 error_capsysfderror = "cannot use capsys and capfd at the same time"
 

@@ -282,9 +282,9 @@ class TestPerTestCapturing:
             "====* FAILURES *====",
             "____*____",
             "*test_capturing_outerr.py:8: ValueError",
-            "*--- Captured stdout ---*",
+            "*--- Captured stdout *call*",
             "1",
-            "*--- Captured stderr ---*",
+            "*--- Captured stderr *call*",
             "2",
         ])
 

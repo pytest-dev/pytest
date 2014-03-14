@@ -35,8 +35,8 @@ class pytestPDB:
         if item is not None:
             capman = item.config.pluginmanager.getplugin("capturemanager")
             out, err = capman.suspendcapture()
-            if hasattr(item, 'outerr'):
-                item.outerr = (item.outerr[0] + out, item.outerr[1] + err)
+            #if hasattr(item, 'outerr'):
+            #    item.outerr = (item.outerr[0] + out, item.outerr[1] + err)
             tw = py.io.TerminalWriter()
             tw.line()
             tw.sep(">", "PDB set_trace (IO-capturing turned off)")

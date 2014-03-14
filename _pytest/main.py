@@ -233,6 +233,7 @@ class Node(object):
 
         # used for storing artificial fixturedefs for direct parametrization
         self._name2pseudofixturedef = {}
+
         #self.extrainit()
 
     @property
@@ -468,6 +469,14 @@ class Item(Node):
     there might be multiple test invocation items.
     """
     nextitem = None
+
+    def __init__(self, name, parent=None, config=None, session=None):
+        super(Item, self).__init__(name, parent, config, session)
+        self._report_sections = []
+
+    def add_report_section(self, when, key, content):
+        if content:
+            self._report_sections.append((when, key, content))
 
     def reportinfo(self):
         return self.fspath, None, ""
