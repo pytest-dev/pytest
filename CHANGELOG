@@ -15,6 +15,9 @@ NEXT (2.6)
   during collection/loading of test modules.  Thanks to Marc Schlaich
   for the complete PR.
 
+- fix issue490: include pytest_load_initial_conftests in documentation
+  and improve docstring.
+
 
 2.5.2
 -----------------------------------
