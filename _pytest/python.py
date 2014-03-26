@@ -1836,12 +1836,12 @@ def getfuncargnames(function, startindex=None):
     if startindex is None:
         startindex = inspect.ismethod(function) and 1 or 0
     if realfunction != function:
-        try:
-            from mock import DEFAULT
+        mock_default = sys.modules.get('mock.DEFAULT')
+        if mock_default:
             for patching in getattr(function, "patchings", []):
                 if not patching.attribute_name and patching.new is DEFAULT:
                     startindex += 1
-        except ImportError:
+        else:
             startindex += len(getattr(function, "patchings", []))
         function = realfunction
     argnames = inspect.getargs(py.code.getrawcode(function))[0]
