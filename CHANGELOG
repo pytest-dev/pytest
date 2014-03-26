@@ -21,6 +21,8 @@ NEXT (2.6)
 - fix issue472: clarify that ``pytest.config.getvalue()`` cannot work
   if it's triggered ahead of command line parsing.
 
+- merge PR123: improved integration with mock.patch decorator on tests.
+
 
 2.5.2
 -----------------------------------
