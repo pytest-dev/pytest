@@ -18,6 +18,9 @@ NEXT (2.6)
 - fix issue490: include pytest_load_initial_conftests in documentation
   and improve docstring.
 
+- fix issue472: clarify that ``pytest.config.getvalue()`` cannot work
+  if it's triggered ahead of command line parsing.
+
 
 2.5.2
 -----------------------------------

@@ -286,4 +286,9 @@ The equivalent with "boolean conditions" is::
     def test_function(...):
         pass
 
+.. note::
 
+    You cannot use ``pytest.config.getvalue()`` in code
+    imported before py.test's argument parsing takes place.  For example,
+    ``conftest.py`` files are imported before command line parsing and thus
+    ``config.getvalue()`` will not execute correctly.
