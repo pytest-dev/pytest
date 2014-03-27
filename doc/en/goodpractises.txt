@@ -68,7 +68,7 @@ Important notes relating to both schemes:
 
 - **avoid "__init__.py" files in your test directories**.
   This way your tests can run easily against an installed version
-  of ``mypkg``, independently from if the installed package contains
+  of ``mypkg``, independently from the installed package if it contains
   the tests or not.
 
 - With inlined tests you might put ``__init__.py`` into test
