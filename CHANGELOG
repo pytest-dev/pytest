@@ -11,6 +11,19 @@ NEXT (2.6)
 - change skips into warnings for test classes with an __init__ and
   callables in test modules which look like a test but are not functions.
 
+- fix issue #479: properly handle nose/unittest(2) SkipTest exceptions
+  during collection/loading of test modules.  Thanks to Marc Schlaich
+  for the complete PR.
+
+- fix issue490: include pytest_load_initial_conftests in documentation
+  and improve docstring.
+
+- fix issue472: clarify that ``pytest.config.getvalue()`` cannot work
+  if it's triggered ahead of command line parsing.
+
+- merge PR123: improved integration with mock.patch decorator on tests.
+
+
 2.5.2
 -----------------------------------
 

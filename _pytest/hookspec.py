@@ -53,8 +53,8 @@ def pytest_cmdline_main(config):
 pytest_cmdline_main.firstresult = True
 
 def pytest_load_initial_conftests(args, early_config, parser):
-    """ implements loading initial conftests.
-    """
+    """ implements the loading of initial conftest files ahead
+    of command line option parsing. """
 
 def pytest_configure(config):
     """ called after command line options have been parsed

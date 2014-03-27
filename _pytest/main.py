@@ -8,7 +8,7 @@ try:
 except ImportError:
     from UserDict import DictMixin as MappingMixin
 
-from _pytest.runner import collect_one_node, Skipped
+from _pytest.runner import collect_one_node
 
 tracebackcutdir = py.path.local(_pytest.__file__).dirpath()
 
@@ -408,10 +408,6 @@ class Collector(Node):
     """ Collector instances create children through collect()
         and thus iteratively build a tree.
     """
-
-    # the set of exceptions to interpret as "Skip the whole module" during
-    # collection
-    skip_exceptions = (Skipped,)
 
     class CollectError(Exception):
         """ an error during collection, contains a custom message. """

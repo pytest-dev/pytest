@@ -440,7 +440,7 @@ class DropShorterLongHelpFormatter(py.std.argparse.HelpFormatter):
             if len(option) == 2 or option[2] == ' ':
                 return_list.append(option)
             if option[2:] == short_long.get(option.replace('-', '')):
-                return_list.append(option)
+                return_list.append(option.replace(' ', '='))
         action._formatted_action_invocation = ', '.join(return_list)
         return action._formatted_action_invocation
 
