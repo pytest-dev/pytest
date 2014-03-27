@@ -533,6 +533,24 @@ def test_capture_conftest_runtest_setup(testdir):
     assert 'hello19' not in result.stdout.str()
 
 
+@pytest.mark.xfail(reason='demonstrate #412')
+def test_capture_badoutput(testdir):
+    testdir.makepyfile("""
+        import os
+
+        def test_func():
+            omg = bytearray([1,129,1])
+            os.write(1, omg)
+            assert 0
+        """)
+    result = testdir.runpytest('--cap=fd')
+    #this fails on  python3 - fnmatch first for debugging
+    result.stdout.fnmatch_lines([
+        '*1 failed*',
+        ])
+    assert result.ret == 1
+
+
 def test_capture_early_option_parsing(testdir):
     testdir.makeconftest("""
         def pytest_runtest_setup():

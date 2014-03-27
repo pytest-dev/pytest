@@ -9,6 +9,7 @@ lib/
 bin/
 include/
 .Python/
+.env/
 
 # These lines are suggested according to the svn:ignore property
 # Feel free to enable them by uncommenting them
@@ -27,6 +28,7 @@ dist/
 *.egg-info
 issue/
 env/
+env3/
 3rdparty/
 .tox
 .cache
