@@ -533,7 +533,7 @@ def test_capture_conftest_runtest_setup(testdir):
     assert 'hello19' not in result.stdout.str()
 
 
-@pytest.mark.xfail(reason='demonstrate #412')
+@pytest.mark.xfail(sys.version_info>=(3,), reason='demonstrate #412')
 def test_capture_badoutput(testdir):
     testdir.makepyfile("""
         import os
