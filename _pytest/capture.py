@@ -12,30 +12,7 @@ import contextlib
 import py
 import pytest
 
-try:
-    from io import StringIO
-except ImportError:
-    from StringIO import StringIO
-
-try:
-    from io import BytesIO
-except ImportError:
-    class BytesIO(StringIO):
-        def write(self, data):
-            if isinstance(data, unicode):
-                raise TypeError("not a byte value: %r" % (data,))
-            StringIO.write(self, data)
-
-if sys.version_info < (3, 0):
-    class TextIO(StringIO):
-        def write(self, data):
-            if not isinstance(data, unicode):
-                enc = getattr(self, '_encoding', 'UTF-8')
-                data = unicode(data, enc, 'replace')
-            StringIO.write(self, data)
-else:
-    TextIO = StringIO
-
+from py.io import TextIO
 
 patchsysdict = {0: 'stdin', 1: 'stdout', 2: 'stderr'}
 
@@ -232,7 +209,8 @@ class CaptureManager:
 error_capsysfderror = "cannot use capsys and capfd at the same time"
 
 
-def pytest_funcarg__capsys(request):
+@pytest.fixture
+def capsys(request):
     """enables capturing of writes to sys.stdout/sys.stderr and makes
     captured output available via ``capsys.readouterr()`` method calls
     which return a ``(out, err)`` tuple.
@@ -242,7 +220,8 @@ def pytest_funcarg__capsys(request):
     request.node._capfuncarg = c = CaptureFixture(SysCapture)
     return c
 
-def pytest_funcarg__capfd(request):
+@pytest.fixture
+def capfd(request):
     """enables capturing of writes to file descriptors 1 and 2 and makes
     captured output available via ``capsys.readouterr()`` method calls
     which return a ``(out, err)`` tuple.

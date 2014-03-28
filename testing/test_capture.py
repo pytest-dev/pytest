@@ -541,8 +541,8 @@ def test_capture_conftest_runtest_setup(testdir):
     assert 'hello19' not in result.stdout.str()
 
 
-@pytest.mark.xfail(sys.version_info>=(3,), reason='demonstrate #412')
-def test_capture_badoutput(testdir):
+@pytest.mark.xfail("sys.version_info >= (3,)")
+def test_capture_badoutput_issue412(testdir):
     testdir.makepyfile("""
         import os
 
@@ -552,11 +552,12 @@ def test_capture_badoutput(testdir):
             assert 0
         """)
     result = testdir.runpytest('--cap=fd')
-    #this fails on  python3 - fnmatch first for debugging
-    result.stdout.fnmatch_lines([
-        '*1 failed*',
-        ])
-    assert result.ret == 1
+    result.stdout.fnmatch_lines('''
+        *def test_func*
+        *assert 0*
+        *Captured*
+        *1 failed*
+    ''')
 
 
 def test_capture_early_option_parsing(testdir):
@@ -616,7 +617,7 @@ class TestTextIO:
 
 
 def test_bytes_io():
-    f = capture.BytesIO()
+    f = py.io.BytesIO()
     f.write(tobytes("hello"))
     pytest.raises(TypeError, "f.write(totext('hello'))")
     s = f.getvalue()
