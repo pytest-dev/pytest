@@ -23,6 +23,9 @@ NEXT (2.6)
 
 - merge PR123: improved integration with mock.patch decorator on tests.
 
+- fix issue412: messing with stdout/stderr FD-level streams is now
+  captured without crashes.
+
 
 2.5.2
 -----------------------------------
