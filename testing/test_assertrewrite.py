@@ -482,6 +482,12 @@ def test_rewritten():
     assert "@py_builtins" in globals()""".replace("\n", "\r\n"), "wb")
         assert testdir.runpytest().ret == 0
 
+    def test_sys_meta_path_munged(self, testdir):
+        testdir.makepyfile("""
+            def test_meta_path():
+                import sys; sys.meta_path = []""")
+        assert testdir.runpytest().ret == 0
+
     def test_write_pyc(self, testdir, tmpdir, monkeypatch):
         from _pytest.assertion.rewrite import _write_pyc
         from _pytest.assertion import AssertionState
