@@ -103,7 +103,7 @@ class TestCaptureManager:
             assert not out and not err
             capman.reset_capturings()
         finally:
-            capouter.reset()
+            capouter.stop_capturing()
 
     @needsosdup
     def test_juggle_capturings(self, testdir):
@@ -127,7 +127,7 @@ class TestCaptureManager:
             finally:
                 capman.reset_capturings()
         finally:
-            capouter.reset()
+            capouter.stop_capturing()
 
 
 @pytest.mark.parametrize("method", ['fd', 'sys'])
@@ -696,17 +696,15 @@ class TestFDCapture:
         cap = capture.FDCapture(fd)
         data = tobytes("hello")
         os.write(fd, data)
-        f = cap.done()
-        s = f.read()
-        f.close()
+        s = cap.snap()
+        cap.done()
         assert not s
         cap = capture.FDCapture(fd)
         cap.start()
         os.write(fd, data)
-        f = cap.done()
-        s = f.read()
+        s = cap.snap()
+        cap.done()
         assert s == "hello"
-        f.close()
 
     def test_simple_many(self, tmpfile):
         for i in range(10):
@@ -720,16 +718,15 @@ class TestFDCapture:
     def test_simple_fail_second_start(self, tmpfile):
         fd = tmpfile.fileno()
         cap = capture.FDCapture(fd)
-        f = cap.done()
+        cap.done()
         pytest.raises(ValueError, cap.start)
-        f.close()
 
     def test_stderr(self):
         cap = capture.FDCapture(2)
         cap.start()
         print_("hello", file=sys.stderr)
-        f = cap.done()
-        s = f.read()
+        s = cap.snap()
+        cap.done()
         assert s == "hello\n"
 
     def test_stdin(self, tmpfile):
@@ -752,8 +749,8 @@ class TestFDCapture:
             cap.writeorg(data2)
         finally:
             tmpfile.close()
-        f = cap.done()
-        scap = f.read()
+        scap = cap.snap()
+        cap.done()
         assert scap == totext(data1)
         stmp = open(tmpfile.name, 'rb').read()
         assert stmp == data2
@@ -769,17 +766,17 @@ class TestStdCapture:
         cap = self.getcapture()
         sys.stdout.write("hello")
         sys.stderr.write("world")
-        outfile, errfile = cap.stop_capturing()
-        s = outfile.read()
-        assert s == "hello"
-        s = errfile.read()
-        assert s == "world"
+        out, err = cap.readouterr()
+        cap.stop_capturing()
+        assert out == "hello"
+        assert err == "world"
 
     def test_capturing_reset_simple(self):
         cap = self.getcapture()
         print("hello world")
         sys.stderr.write("hello error\n")
-        out, err = cap.reset()
+        out, err = cap.readouterr()
+        cap.stop_capturing()
         assert out == "hello world\n"
         assert err == "hello error\n"
 
@@ -792,8 +789,9 @@ class TestStdCapture:
             assert out == "hello world\n"
             assert err == "hello error\n"
             sys.stderr.write("error2")
+            out, err = cap.readouterr()
         finally:
-            out, err = cap.reset()
+            cap.stop_capturing()
         assert err == "error2"
 
     def test_capturing_readouterr_unicode(self):
@@ -802,7 +800,7 @@ class TestStdCapture:
             print ("hx\xc4\x85\xc4\x87")
             out, err = cap.readouterr()
         finally:
-            cap.reset()
+            cap.stop_capturing()
         assert out == py.builtin._totext("hx\xc4\x85\xc4\x87\n", "utf8")
 
     @pytest.mark.skipif('sys.version_info >= (3,)',
@@ -813,13 +811,14 @@ class TestStdCapture:
         print('\xa6')
         out, err = cap.readouterr()
         assert out == py.builtin._totext('\ufffd\n', 'unicode-escape')
-        cap.reset()
+        cap.stop_capturing()
 
     def test_reset_twice_error(self):
         cap = self.getcapture()
         print ("hello")
-        out, err = cap.reset()
-        pytest.raises(ValueError, cap.reset)
+        out, err = cap.readouterr()
+        cap.stop_capturing()
+        pytest.raises(ValueError, cap.stop_capturing)
         assert out == "hello\n"
         assert not err
 
@@ -833,7 +832,8 @@ class TestStdCapture:
         sys.stderr = capture.TextIO()
         print ("not seen")
         sys.stderr.write("not seen\n")
-        out, err = cap.reset()
+        out, err = cap.readouterr()
+        cap.stop_capturing()
         assert out == "hello"
         assert err == "world"
         assert sys.stdout == oldout
@@ -844,8 +844,10 @@ class TestStdCapture:
         print ("cap1")
         cap2 = self.getcapture()
         print ("cap2")
-        out2, err2 = cap2.reset()
-        out1, err1 = cap1.reset()
+        out2, err2 = cap2.readouterr()
+        out1, err1 = cap1.readouterr()
+        cap2.stop_capturing()
+        cap1.stop_capturing()
         assert out1 == "cap1\n"
         assert out2 == "cap2\n"
 
@@ -853,7 +855,8 @@ class TestStdCapture:
         cap = self.getcapture(out=True, err=False)
         sys.stdout.write("hello")
         sys.stderr.write("world")
-        out, err = cap.reset()
+        out, err = cap.readouterr()
+        cap.stop_capturing()
         assert out == "hello"
         assert not err
 
@@ -861,7 +864,8 @@ class TestStdCapture:
         cap = self.getcapture(out=False, err=True)
         sys.stdout.write("hello")
         sys.stderr.write("world")
-        out, err = cap.reset()
+        out, err = cap.readouterr()
+        cap.stop_capturing()
         assert err == "world"
         assert not out
 
@@ -869,7 +873,7 @@ class TestStdCapture:
         old = sys.stdin
         cap = self.getcapture(in_=True)
         newstdin = sys.stdin
-        out, err = cap.reset()
+        cap.stop_capturing()
         assert newstdin != sys.stdin
         assert sys.stdin is old
 
@@ -879,7 +883,7 @@ class TestStdCapture:
         print ("XXX mechanisms")
         cap = self.getcapture()
         pytest.raises(IOError, "sys.stdin.read()")
-        out, err = cap.reset()
+        cap.stop_capturing()
 
 
 class TestStdCaptureFD(TestStdCapture):
@@ -889,6 +893,20 @@ class TestStdCaptureFD(TestStdCapture):
         cap = StdCaptureFD(**kw)
         cap.start_capturing()
         return cap
+
+    def test_simple_only_fd(self, testdir):
+        testdir.makepyfile("""
+            import os
+            def test_x():
+                os.write(1, "hello\\n".encode("ascii"))
+                assert 0
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines("""
+            *test_x*
+            *assert 0*
+            *Captured stdout*
+        """)
 
     def test_intermingling(self):
         cap = self.getcapture()
@@ -900,7 +918,8 @@ class TestStdCaptureFD(TestStdCapture):
         sys.stderr.write("b")
         sys.stderr.flush()
         oswritebytes(2, "c")
-        out, err = cap.reset()
+        out, err = cap.readouterr()
+        cap.stop_capturing()
         assert out == "123"
         assert err == "abc"
 
@@ -908,7 +927,7 @@ class TestStdCaptureFD(TestStdCapture):
         with lsof_check():
             for i in range(10):
                 cap = StdCaptureFD()
-                cap.reset()
+                cap.stop_capturing()
 
 
 
@@ -943,10 +962,6 @@ class TestStdCaptureFDinvalidFD:
 def test_capture_not_started_but_reset():
     capsys = StdCapture()
     capsys.stop_capturing()
-    capsys.stop_capturing()
-    capsys.reset()
-
-
 
 
 @needsosdup
@@ -960,7 +975,7 @@ def test_fdcapture_tmpfile_remains_the_same(tmpfile, use):
         capfile = cap.err.tmpfile
         cap.readouterr()
     finally:
-        cap.reset()
+        cap.stop_capturing()
     capfile2 = cap.err.tmpfile
     assert capfile2 == capfile
 

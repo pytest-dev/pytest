@@ -6,7 +6,7 @@ from __future__ import with_statement
 
 import sys
 import os
-import tempfile
+from tempfile import TemporaryFile
 import contextlib
 
 import py
@@ -101,12 +101,6 @@ def pytest_load_initial_conftests(early_config, parser, args, __multicall__):
 
 
 
-def maketmpfile():
-    f = py.std.tempfile.TemporaryFile()
-    newf = dupfile(f, encoding="UTF-8")
-    f.close()
-    return newf
-
 class CaptureManager:
     def __init__(self, defaultmethod=None):
         self._method2capture = {}
@@ -137,7 +131,7 @@ class CaptureManager:
     def reset_capturings(self):
         for cap in self._method2capture.values():
             cap.pop_outerr_to_orig()
-            cap.reset()
+            cap.stop_capturing()
         self._method2capture.clear()
 
     def resumecapture_item(self, item):
@@ -274,15 +268,16 @@ def pytest_funcarg__capfd(request):
 
 class CaptureFixture:
     def __init__(self, captureclass):
-        self._capture = StdCaptureBase(out=True, err=True, in_=False,
-                                   Capture=captureclass)
+        self.captureclass = captureclass
 
     def _start(self):
+        self._capture = StdCaptureBase(out=True, err=True, in_=False,
+                                       Capture=self.captureclass)
         self._capture.start_capturing()
 
     def _finalize(self):
         if hasattr(self, '_capture'):
-            outerr = self._outerr = self._capture.reset()
+            outerr = self._outerr = self._capture.stop_capturing()
             del self._capture
             return outerr
 
@@ -355,21 +350,6 @@ class StdCaptureBase(object):
         if err:
             self.err = Capture(2)
 
-    def reset(self):
-        """ reset sys.stdout/stderr and return captured output as strings. """
-        if hasattr(self, '_reset'):
-            raise ValueError("was already reset")
-        self._reset = True
-        outfile, errfile = self.stop_capturing()
-        out, err = "", ""
-        if outfile and not outfile.closed:
-            out = outfile.read()
-            outfile.close()
-        if errfile and errfile != outfile and not errfile.closed:
-            err = errfile.read()
-            errfile.close()
-        return out, err
-
     def start_capturing(self):
         if self.in_:
             self.in_.start()
@@ -377,17 +357,6 @@ class StdCaptureBase(object):
             self.out.start()
         if self.err:
             self.err.start()
-
-    def stop_capturing(self):
-        """ return (outfile, errfile) and stop capturing. """
-        outfile = errfile = None
-        if self.out:
-            outfile = self.out.done()
-        if self.err:
-            errfile = self.err.done()
-        if self.in_:
-            self.in_.done()
-        return outfile, errfile
 
     def pop_outerr_to_orig(self):
         """ pop current snapshot out/err capture and flush to orig streams. """
@@ -397,25 +366,27 @@ class StdCaptureBase(object):
         if err:
             self.err.writeorg(err)
 
+    def stop_capturing(self):
+        """ stop capturing and reset capturing streams """
+        if hasattr(self, '_reset'):
+            raise ValueError("was already stopped")
+        self._reset = True
+        if self.out:
+            self.out.done()
+        if self.err:
+            self.err.done()
+        if self.in_:
+            self.in_.done()
+
     def readouterr(self):
         """ return snapshot unicode value of stdout/stderr capturings. """
         return self._readsnapshot('out'), self._readsnapshot('err')
 
     def _readsnapshot(self, name):
-        try:
-            f = getattr(self, name).tmpfile
-        except AttributeError:
-            return ''
-        if f.tell() == 0:
-            return ''
-        f.seek(0)
-        res = f.read()
-        enc = getattr(f, "encoding", None)
-        if enc and isinstance(res, bytes):
-            res = py.builtin._totext(res, enc, "replace")
-        f.truncate(0)
-        f.seek(0)
-        return res
+        cap = getattr(self, name, None)
+        if cap is None:
+            return ""
+        return cap.snap()
 
 
 class FDCapture:
@@ -433,10 +404,15 @@ class FDCapture:
                 if targetfd == 0:
                     tmpfile = open(os.devnull, "r")
                 else:
-                    tmpfile = maketmpfile()
+                    f = TemporaryFile()
+                    with f:
+                        tmpfile = dupfile(f, encoding="UTF-8")
             self.tmpfile = tmpfile
             if targetfd in patchsysdict:
                 self._oldsys = getattr(sys, patchsysdict[targetfd])
+
+    def __repr__(self):
+        return "<FDCapture %s oldfd=%s>" % (self.targetfd, self._savefd)
 
     def start(self):
         """ Start capturing on targetfd using memorized tmpfile. """
@@ -450,16 +426,26 @@ class FDCapture:
             subst = self.tmpfile if targetfd != 0 else DontReadFromInput()
             setattr(sys, patchsysdict[targetfd], subst)
 
+    def snap(self):
+        f = self.tmpfile
+        f.seek(0)
+        res = f.read()
+        if res:
+            enc = getattr(f, "encoding", None)
+            if enc and isinstance(res, bytes):
+                res = py.builtin._totext(res, enc, "replace")
+            f.truncate(0)
+            f.seek(0)
+        return res
+
     def done(self):
         """ stop capturing, restore streams, return original capture file,
         seeked to position zero. """
         os.dup2(self._savefd, self.targetfd)
         os.close(self._savefd)
-        if self.targetfd != 0:
-            self.tmpfile.seek(0)
         if hasattr(self, '_oldsys'):
             setattr(sys, patchsysdict[self.targetfd], self._oldsys)
-        return self.tmpfile
+        self.tmpfile.close()
 
     def writeorg(self, data):
         """ write a string to the original file descriptor
@@ -482,16 +468,20 @@ class SysCapture:
     def start(self):
         setattr(sys, self.name, self.tmpfile)
 
+    def snap(self):
+        f = self.tmpfile
+        res = f.getvalue()
+        f.truncate(0)
+        f.seek(0)
+        return res
+
     def done(self):
         setattr(sys, self.name, self._old)
-        if self.name != "stdin":
-            self.tmpfile.seek(0)
-        return self.tmpfile
+        self.tmpfile.close()
 
     def writeorg(self, data):
         self._old.write(data)
         self._old.flush()
-
 
 
 class DontReadFromInput:
