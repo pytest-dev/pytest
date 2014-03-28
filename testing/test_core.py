@@ -523,6 +523,95 @@ class TestMultiCall:
         res = MultiCall([m1, m2], {}).execute()
         assert res == [1]
 
+    def test_hookwrapper(self):
+        l = []
+        def m1():
+            l.append("m1 init")
+            yield None
+            l.append("m1 finish")
+        m1.hookwrapper = True
+
+        def m2():
+            l.append("m2")
+            return 2
+        res = MultiCall([m2, m1], {}).execute()
+        assert res == [2]
+        assert l == ["m1 init", "m2", "m1 finish"]
+        l[:] = []
+        res = MultiCall([m2, m1], {}, firstresult=True).execute()
+        assert res == 2
+        assert l == ["m1 init", "m2", "m1 finish"]
+
+    def test_hookwrapper_order(self):
+        l = []
+        def m1():
+            l.append("m1 init")
+            yield 1
+            l.append("m1 finish")
+        m1.hookwrapper = True
+
+        def m2():
+            l.append("m2 init")
+            yield 2
+            l.append("m2 finish")
+        m2.hookwrapper = True
+        res = MultiCall([m2, m1], {}).execute()
+        assert res == [1, 2]
+        assert l == ["m1 init", "m2 init", "m2 finish", "m1 finish"]
+
+    def test_listattr_hookwrapper_ordering(self):
+        class P1:
+            @pytest.mark.hookwrapper
+            def m(self):
+                return 17
+
+        class P2:
+            def m(self):
+                return 23
+
+        class P3:
+            @pytest.mark.tryfirst
+            def m(self):
+                return 19
+
+        pluginmanager = PluginManager()
+        p1 = P1()
+        p2 = P2()
+        p3 = P3()
+        pluginmanager.register(p1)
+        pluginmanager.register(p2)
+        pluginmanager.register(p3)
+        methods = pluginmanager.listattr('m')
+        assert methods == [p2.m, p3.m, p1.m]
+        ## listattr keeps a cache and deleting
+        ## a function attribute requires clearing it
+        #pluginmanager._listattrcache.clear()
+        #del P1.m.__dict__['tryfirst']
+
+    def test_hookwrapper_not_yield(self):
+        def m1():
+            pass
+        m1.hookwrapper = True
+
+        mc = MultiCall([m1], {})
+        with pytest.raises(mc.WrongHookWrapper) as ex:
+            mc.execute()
+        assert ex.value.func == m1
+        assert ex.value.message
+
+    def test_hookwrapper_too_many_yield(self):
+        def m1():
+            yield 1
+            yield 2
+        m1.hookwrapper = True
+
+        mc = MultiCall([m1], {})
+        with pytest.raises(mc.WrongHookWrapper) as ex:
+            mc.execute()
+        assert ex.value.func == m1
+        assert ex.value.message
+
+
 class TestHookRelay:
     def test_happypath(self):
         pm = PluginManager()

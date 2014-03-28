@@ -135,14 +135,13 @@ class CallInfo:
         self.when = when
         self.start = time()
         try:
-            try:
-                self.result = func()
-            except KeyboardInterrupt:
-                raise
-            except:
-                self.excinfo = py.code.ExceptionInfo()
-        finally:
+            self.result = func()
+        except KeyboardInterrupt:
             self.stop = time()
+            raise
+        except:
+            self.excinfo = py.code.ExceptionInfo()
+        self.stop = time()
 
     def __repr__(self):
         if self.excinfo:
@@ -178,6 +177,11 @@ class BaseReport(object):
             except UnicodeEncodeError:
                 out.line("<unprintable longrepr>")
 
+    def get_sections(self, prefix):
+        for name, content in self.sections:
+            if name.startswith(prefix):
+                yield prefix, content
+
     passed = property(lambda x: x.outcome == "passed")
     failed = property(lambda x: x.outcome == "failed")
     skipped = property(lambda x: x.outcome == "skipped")
@@ -191,6 +195,7 @@ def pytest_runtest_makereport(item, call):
     duration = call.stop-call.start
     keywords = dict([(x,1) for x in item.keywords])
     excinfo = call.excinfo
+    sections = []
     if not call.excinfo:
         outcome = "passed"
         longrepr = None
@@ -209,16 +214,18 @@ def pytest_runtest_makereport(item, call):
             else: # exception in setup or teardown
                 longrepr = item._repr_failure_py(excinfo,
                                             style=item.config.option.tbstyle)
+    for rwhen, key, content in item._report_sections:
+        sections.append(("Captured std%s %s" %(key, rwhen), content))
     return TestReport(item.nodeid, item.location,
                       keywords, outcome, longrepr, when,
-                      duration=duration)
+                      sections, duration)
 
 class TestReport(BaseReport):
     """ Basic test report object (also used for setup and teardown calls if
     they fail).
     """
-    def __init__(self, nodeid, location,
-            keywords, outcome, longrepr, when, sections=(), duration=0, **extra):
+    def __init__(self, nodeid, location, keywords, outcome,
+                 longrepr, when, sections=(), duration=0, **extra):
         #: normalized collection node id
         self.nodeid = nodeid
 
@@ -286,7 +293,8 @@ def pytest_make_collect_report(collector):
 
 
 class CollectReport(BaseReport):
-    def __init__(self, nodeid, outcome, longrepr, result, sections=(), **extra):
+    def __init__(self, nodeid, outcome, longrepr, result,
+                 sections=(), **extra):
         self.nodeid = nodeid
         self.outcome = outcome
         self.longrepr = longrepr

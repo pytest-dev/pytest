@@ -108,12 +108,14 @@ class LogXML(object):
         ))
 
     def _write_captured_output(self, report):
-        sec = dict(report.sections)
-        for name in ('out', 'err'):
-            content = sec.get("Captured std%s" % name)
-            if content:
-                tag = getattr(Junit, 'system-'+name)
-                self.append(tag(bin_xml_escape(content)))
+        for capname in ('out', 'err'):
+            allcontent = ""
+            for name, content in report.get_sections("Captured std%s" %
+                                                    capname):
+                allcontent += content
+            if allcontent:
+                tag = getattr(Junit, 'system-'+capname)
+                self.append(tag(bin_xml_escape(allcontent)))
 
     def append(self, obj):
         self.tests[-1].append(obj)

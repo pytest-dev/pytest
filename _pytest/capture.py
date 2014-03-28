@@ -1,12 +1,13 @@
 """
-    per-test stdout/stderr capturing mechanisms,
-    ``capsys`` and ``capfd`` function arguments.
+per-test stdout/stderr capturing mechanism.
+
 """
-# note: py.io capture was where copied from
-# pylib 1.4.20.dev2 (rev 13d9af95547e)
+from __future__ import with_statement
+
 import sys
 import os
-import tempfile
+from tempfile import TemporaryFile
+import contextlib
 
 import py
 import pytest
@@ -58,8 +59,18 @@ def pytest_load_initial_conftests(early_config, parser, args, __multicall__):
         method = "fd"
     if method == "fd" and not hasattr(os, "dup"):
         method = "sys"
+    pluginmanager = early_config.pluginmanager
+    if method != "no":
+        try:
+            sys.stdout.fileno()
+        except Exception:
+            dupped_stdout = sys.stdout
+        else:
+            dupped_stdout = dupfile(sys.stdout, buffering=1)
+        pluginmanager.register(dupped_stdout, "dupped_stdout")
+            #pluginmanager.add_shutdown(dupped_stdout.close)
     capman = CaptureManager(method)
-    early_config.pluginmanager.register(capman, "capturemanager")
+    pluginmanager.register(capman, "capturemanager")
 
     # make sure that capturemanager is properly reset at final shutdown
     def teardown():
@@ -68,13 +79,13 @@ def pytest_load_initial_conftests(early_config, parser, args, __multicall__):
         except ValueError:
             pass
 
-    early_config.pluginmanager.add_shutdown(teardown)
+    pluginmanager.add_shutdown(teardown)
 
     # make sure logging does not raise exceptions at the end
     def silence_logging_at_shutdown():
         if "logging" in sys.modules:
             sys.modules["logging"].raiseExceptions = False
-    early_config.pluginmanager.add_shutdown(silence_logging_at_shutdown)
+    pluginmanager.add_shutdown(silence_logging_at_shutdown)
 
     # finally trigger conftest loading but while capturing (issue93)
     capman.resumecapture()
@@ -89,53 +100,19 @@ def pytest_load_initial_conftests(early_config, parser, args, __multicall__):
         raise
 
 
-def addouterr(rep, outerr):
-    for secname, content in zip(["out", "err"], outerr):
-        if content:
-            rep.sections.append(("Captured std%s" % secname, content))
-
-
-class NoCapture:
-    def startall(self):
-        pass
-
-    def resume(self):
-        pass
-
-    def reset(self):
-        pass
-
-    def suspend(self):
-        return "", ""
-
 
 class CaptureManager:
     def __init__(self, defaultmethod=None):
         self._method2capture = {}
         self._defaultmethod = defaultmethod
 
-    def _maketempfile(self):
-        f = py.std.tempfile.TemporaryFile()
-        newf = dupfile(f, encoding="UTF-8")
-        f.close()
-        return newf
-
-    def _makestringio(self):
-        return TextIO()
-
     def _getcapture(self, method):
         if method == "fd":
-            return StdCaptureFD(
-                out=self._maketempfile(),
-                err=self._maketempfile(),
-            )
+            return StdCaptureBase(out=True, err=True, Capture=FDCapture)
         elif method == "sys":
-            return StdCapture(
-                out=self._makestringio(),
-                err=self._makestringio(),
-            )
+            return StdCaptureBase(out=True, err=True, Capture=SysCapture)
         elif method == "no":
-            return NoCapture()
+            return StdCaptureBase(out=False, err=False, in_=False)
         else:
             raise ValueError("unknown capturing method: %r" % method)
 
@@ -153,12 +130,12 @@ class CaptureManager:
 
     def reset_capturings(self):
         for cap in self._method2capture.values():
-            cap.reset()
+            cap.pop_outerr_to_orig()
+            cap.stop_capturing()
+        self._method2capture.clear()
 
     def resumecapture_item(self, item):
         method = self._getmethod(item.config, item.fspath)
-        if not hasattr(item, 'outerr'):
-            item.outerr = ('', '')  # we accumulate outerr on the item
         return self.resumecapture(method)
 
     def resumecapture(self, method=None):
@@ -172,87 +149,85 @@ class CaptureManager:
         self._capturing = method
         if cap is None:
             self._method2capture[method] = cap = self._getcapture(method)
-            cap.startall()
+            cap.start_capturing()
         else:
-            cap.resume()
+            cap.pop_outerr_to_orig()
 
     def suspendcapture(self, item=None):
         self.deactivate_funcargs()
-        if hasattr(self, '_capturing'):
-            method = self._capturing
+        method = self.__dict__.pop("_capturing", None)
+        if method is not None:
             cap = self._method2capture.get(method)
             if cap is not None:
-                outerr = cap.suspend()
-            del self._capturing
-            if item:
-                outerr = (item.outerr[0] + outerr[0],
-                          item.outerr[1] + outerr[1])
-            return outerr
-        if hasattr(item, 'outerr'):
-            return item.outerr
+                return cap.readouterr()
         return "", ""
 
     def activate_funcargs(self, pyfuncitem):
-        funcargs = getattr(pyfuncitem, "funcargs", None)
-        if funcargs is not None:
-            for name, capfuncarg in funcargs.items():
-                if name in ('capsys', 'capfd'):
-                    assert not hasattr(self, '_capturing_funcarg')
-                    self._capturing_funcarg = capfuncarg
-                    capfuncarg._start()
+        capfuncarg = pyfuncitem.__dict__.pop("_capfuncarg", None)
+        if capfuncarg is not None:
+            capfuncarg._start()
+            self._capfuncarg = capfuncarg
 
     def deactivate_funcargs(self):
-        capturing_funcarg = getattr(self, '_capturing_funcarg', None)
-        if capturing_funcarg:
-            outerr = capturing_funcarg._finalize()
-            del self._capturing_funcarg
-            return outerr
+        capfuncarg = self.__dict__.pop("_capfuncarg", None)
+        if capfuncarg is not None:
+            capfuncarg.close()
 
+    @pytest.mark.hookwrapper
     def pytest_make_collect_report(self, __multicall__, collector):
         method = self._getmethod(collector.config, collector.fspath)
         try:
             self.resumecapture(method)
         except ValueError:
+            yield
             # recursive collect, XXX refactor capturing
             # to allow for more lightweight recursive capturing
             return
-        try:
-            rep = __multicall__.execute()
-        finally:
-            outerr = self.suspendcapture()
-        addouterr(rep, outerr)
-        return rep
+        yield
+        out, err = self.suspendcapture()
+        # XXX getting the report from the ongoing hook call is a bit
+        # of a hack.  We need to think about capturing during collection
+        # and find out if it's really needed fine-grained (per
+        # collector).
+        if __multicall__.results:
+            rep = __multicall__.results[0]
+            if out:
+                rep.sections.append(("Captured stdout", out))
+            if err:
+                rep.sections.append(("Captured stderr", err))
 
-    @pytest.mark.tryfirst
+    @pytest.mark.hookwrapper
     def pytest_runtest_setup(self, item):
-        self.resumecapture_item(item)
+        with self.item_capture_wrapper(item, "setup"):
+            yield
 
-    @pytest.mark.tryfirst
+    @pytest.mark.hookwrapper
     def pytest_runtest_call(self, item):
-        self.resumecapture_item(item)
-        self.activate_funcargs(item)
+        with self.item_capture_wrapper(item, "call"):
+            self.activate_funcargs(item)
+            yield
+            #self.deactivate_funcargs() called from ctx's suspendcapture()
 
-    @pytest.mark.tryfirst
+    @pytest.mark.hookwrapper
     def pytest_runtest_teardown(self, item):
-        self.resumecapture_item(item)
-
-    def pytest_keyboard_interrupt(self, excinfo):
-        if hasattr(self, '_capturing'):
-            self.suspendcapture()
+        with self.item_capture_wrapper(item, "teardown"):
+            yield
 
     @pytest.mark.tryfirst
-    def pytest_runtest_makereport(self, __multicall__, item, call):
-        funcarg_outerr = self.deactivate_funcargs()
-        rep = __multicall__.execute()
-        outerr = self.suspendcapture(item)
-        if funcarg_outerr is not None:
-            outerr = (outerr[0] + funcarg_outerr[0],
-                      outerr[1] + funcarg_outerr[1])
-        addouterr(rep, outerr)
-        if not rep.passed or rep.when == "teardown":
-            outerr = ('', '')
-        item.outerr = outerr
-        return rep
+    def pytest_keyboard_interrupt(self, excinfo):
+        self.reset_capturings()
+
+    @pytest.mark.tryfirst
+    def pytest_internalerror(self, excinfo):
+        self.reset_capturings()
+
+    @contextlib.contextmanager
+    def item_capture_wrapper(self, item, when):
+        self.resumecapture_item(item)
+        yield
+        out, err = self.suspendcapture(item)
+        item.add_report_section(when, "out", out)
+        item.add_report_section(when, "err", err)
 
 error_capsysfderror = "cannot use capsys and capfd at the same time"
 
@@ -264,8 +239,8 @@ def pytest_funcarg__capsys(request):
     """
     if "capfd" in request._funcargs:
         raise request.raiseerror(error_capsysfderror)
-    return CaptureFixture(StdCapture)
-
+    request.node._capfuncarg = c = CaptureFixture(SysCapture)
+    return c
 
 def pytest_funcarg__capfd(request):
     """enables capturing of writes to file descriptors 1 and 2 and makes
@@ -276,89 +251,30 @@ def pytest_funcarg__capfd(request):
         request.raiseerror(error_capsysfderror)
     if not hasattr(os, 'dup'):
         pytest.skip("capfd funcarg needs os.dup")
-    return CaptureFixture(StdCaptureFD)
+    request.node._capfuncarg = c = CaptureFixture(FDCapture)
+    return c
 
 
 class CaptureFixture:
     def __init__(self, captureclass):
-        self._capture = captureclass()
+        self.captureclass = captureclass
 
     def _start(self):
-        self._capture.startall()
+        self._capture = StdCaptureBase(out=True, err=True, in_=False,
+                                       Capture=self.captureclass)
+        self._capture.start_capturing()
 
-    def _finalize(self):
-        if hasattr(self, '_capture'):
-            outerr = self._outerr = self._capture.reset()
-            del self._capture
-            return outerr
+    def close(self):
+        cap = self.__dict__.pop("_capture", None)
+        if cap is not None:
+            cap.pop_outerr_to_orig()
+            cap.stop_capturing()
 
     def readouterr(self):
         try:
             return self._capture.readouterr()
         except AttributeError:
-            return self._outerr
-
-    def close(self):
-        self._finalize()
-
-
-class FDCapture:
-    """ Capture IO to/from a given os-level filedescriptor. """
-
-    def __init__(self, targetfd, tmpfile=None, patchsys=False):
-        """ save targetfd descriptor, and open a new
-            temporary file there.  If no tmpfile is
-            specified a tempfile.Tempfile() will be opened
-            in text mode.
-        """
-        self.targetfd = targetfd
-        if tmpfile is None and targetfd != 0:
-            f = tempfile.TemporaryFile('wb+')
-            tmpfile = dupfile(f, encoding="UTF-8")
-            f.close()
-        self.tmpfile = tmpfile
-        self._savefd = os.dup(self.targetfd)
-        if patchsys:
-            self._oldsys = getattr(sys, patchsysdict[targetfd])
-
-    def start(self):
-        try:
-            os.fstat(self._savefd)
-        except OSError:
-            raise ValueError(
-                "saved filedescriptor not valid, "
-                "did you call start() twice?")
-        if self.targetfd == 0 and not self.tmpfile:
-            fd = os.open(os.devnull, os.O_RDONLY)
-            os.dup2(fd, 0)
-            os.close(fd)
-            if hasattr(self, '_oldsys'):
-                setattr(sys, patchsysdict[self.targetfd], DontReadFromInput())
-        else:
-            os.dup2(self.tmpfile.fileno(), self.targetfd)
-            if hasattr(self, '_oldsys'):
-                setattr(sys, patchsysdict[self.targetfd], self.tmpfile)
-
-    def done(self):
-        """ unpatch and clean up, returns the self.tmpfile (file object)
-        """
-        os.dup2(self._savefd, self.targetfd)
-        os.close(self._savefd)
-        if self.targetfd != 0:
-            self.tmpfile.seek(0)
-        if hasattr(self, '_oldsys'):
-            setattr(sys, patchsysdict[self.targetfd], self._oldsys)
-        return self.tmpfile
-
-    def writeorg(self, data):
-        """ write a string to the original file descriptor
-        """
-        tempfp = tempfile.TemporaryFile()
-        try:
-            os.dup2(self._savefd, tempfp.fileno())
-            tempfp.write(data)
-        finally:
-            tempfp.close()
+            return "", ""
 
 
 def dupfile(f, mode=None, buffering=0, raising=False, encoding=None):
@@ -408,185 +324,148 @@ class EncodedFile(object):
         return getattr(self._stream, name)
 
 
-class Capture(object):
-    def reset(self):
-        """ reset sys.stdout/stderr and return captured output as strings. """
-        if hasattr(self, '_reset'):
-            raise ValueError("was already reset")
-        self._reset = True
-        outfile, errfile = self.done(save=False)
-        out, err = "", ""
-        if outfile and not outfile.closed:
-            out = outfile.read()
-            outfile.close()
-        if errfile and errfile != outfile and not errfile.closed:
-            err = errfile.read()
-            errfile.close()
-        return out, err
+class StdCaptureBase(object):
+    out = err = in_ = None
 
-    def suspend(self):
-        """ return current snapshot captures, memorize tempfiles. """
-        outerr = self.readouterr()
-        outfile, errfile = self.done()
-        return outerr
-
-
-class StdCaptureFD(Capture):
-    """ This class allows to capture writes to FD1 and FD2
-        and may connect a NULL file to FD0 (and prevent
-        reads from sys.stdin).  If any of the 0,1,2 file descriptors
-        is invalid it will not be captured.
-    """
-    def __init__(self, out=True, err=True, in_=True, patchsys=True):
-        self._options = {
-            "out": out,
-            "err": err,
-            "in_": in_,
-            "patchsys": patchsys,
-        }
-        self._save()
-
-    def _save(self):
-        in_ = self._options['in_']
-        out = self._options['out']
-        err = self._options['err']
-        patchsys = self._options['patchsys']
+    def __init__(self, out=True, err=True, in_=True, Capture=None):
         if in_:
-            try:
-                self.in_ = FDCapture(
-                    0, tmpfile=None,
-                    patchsys=patchsys)
-            except OSError:
-                pass
+            self.in_ = Capture(0)
         if out:
-            tmpfile = None
-            if hasattr(out, 'write'):
-                tmpfile = out
-            try:
-                self.out = FDCapture(
-                    1, tmpfile=tmpfile,
-                    patchsys=patchsys)
-                self._options['out'] = self.out.tmpfile
-            except OSError:
-                pass
+            self.out = Capture(1)
         if err:
-            if hasattr(err, 'write'):
-                tmpfile = err
-            else:
-                tmpfile = None
-            try:
-                self.err = FDCapture(
-                    2, tmpfile=tmpfile,
-                    patchsys=patchsys)
-                self._options['err'] = self.err.tmpfile
-            except OSError:
-                pass
+            self.err = Capture(2)
 
-    def startall(self):
-        if hasattr(self, 'in_'):
+    def start_capturing(self):
+        if self.in_:
             self.in_.start()
-        if hasattr(self, 'out'):
+        if self.out:
             self.out.start()
-        if hasattr(self, 'err'):
+        if self.err:
             self.err.start()
 
-    def resume(self):
-        """ resume capturing with original temp files. """
-        self.startall()
+    def pop_outerr_to_orig(self):
+        """ pop current snapshot out/err capture and flush to orig streams. """
+        out, err = self.readouterr()
+        if out:
+            self.out.writeorg(out)
+        if err:
+            self.err.writeorg(err)
 
-    def done(self, save=True):
-        """ return (outfile, errfile) and stop capturing. """
-        outfile = errfile = None
-        if hasattr(self, 'out') and not self.out.tmpfile.closed:
-            outfile = self.out.done()
-        if hasattr(self, 'err') and not self.err.tmpfile.closed:
-            errfile = self.err.done()
-        if hasattr(self, 'in_'):
+    def stop_capturing(self):
+        """ stop capturing and reset capturing streams """
+        if hasattr(self, '_reset'):
+            raise ValueError("was already stopped")
+        self._reset = True
+        if self.out:
+            self.out.done()
+        if self.err:
+            self.err.done()
+        if self.in_:
             self.in_.done()
-        if save:
-            self._save()
-        return outfile, errfile
 
     def readouterr(self):
-        """ return snapshot value of stdout/stderr capturings. """
-        out = self._readsnapshot('out')
-        err = self._readsnapshot('err')
-        return out, err
+        """ return snapshot unicode value of stdout/stderr capturings. """
+        return self._readsnapshot('out'), self._readsnapshot('err')
 
     def _readsnapshot(self, name):
-        if hasattr(self, name):
-            f = getattr(self, name).tmpfile
-        else:
-            return ''
+        cap = getattr(self, name, None)
+        if cap is None:
+            return ""
+        return cap.snap()
 
+
+class FDCapture:
+    """ Capture IO to/from a given os-level filedescriptor. """
+
+    def __init__(self, targetfd, tmpfile=None):
+        self.targetfd = targetfd
+        try:
+            self._savefd = os.dup(self.targetfd)
+        except OSError:
+            self.start = lambda: None
+            self.done = lambda: None
+        else:
+            if tmpfile is None:
+                if targetfd == 0:
+                    tmpfile = open(os.devnull, "r")
+                else:
+                    f = TemporaryFile()
+                    with f:
+                        tmpfile = dupfile(f, encoding="UTF-8")
+            self.tmpfile = tmpfile
+            if targetfd in patchsysdict:
+                self._oldsys = getattr(sys, patchsysdict[targetfd])
+
+    def __repr__(self):
+        return "<FDCapture %s oldfd=%s>" % (self.targetfd, self._savefd)
+
+    def start(self):
+        """ Start capturing on targetfd using memorized tmpfile. """
+        try:
+            os.fstat(self._savefd)
+        except OSError:
+            raise ValueError("saved filedescriptor not valid anymore")
+        targetfd = self.targetfd
+        os.dup2(self.tmpfile.fileno(), targetfd)
+        if hasattr(self, '_oldsys'):
+            subst = self.tmpfile if targetfd != 0 else DontReadFromInput()
+            setattr(sys, patchsysdict[targetfd], subst)
+
+    def snap(self):
+        f = self.tmpfile
         f.seek(0)
         res = f.read()
-        enc = getattr(f, "encoding", None)
-        if enc:
-            res = py.builtin._totext(res, enc, "replace")
+        if res:
+            enc = getattr(f, "encoding", None)
+            if enc and isinstance(res, bytes):
+                res = py.builtin._totext(res, enc, "replace")
+            f.truncate(0)
+            f.seek(0)
+        return res
+
+    def done(self):
+        """ stop capturing, restore streams, return original capture file,
+        seeked to position zero. """
+        os.dup2(self._savefd, self.targetfd)
+        os.close(self._savefd)
+        if hasattr(self, '_oldsys'):
+            setattr(sys, patchsysdict[self.targetfd], self._oldsys)
+        self.tmpfile.close()
+
+    def writeorg(self, data):
+        """ write to original file descriptor. """
+        if py.builtin._istext(data):
+            data = data.encode("utf8") # XXX use encoding of original stream
+        os.write(self._savefd, data)
+
+
+class SysCapture:
+    def __init__(self, fd):
+        name = patchsysdict[fd]
+        self._old = getattr(sys, name)
+        self.name = name
+        if name == "stdin":
+            self.tmpfile = DontReadFromInput()
+        else:
+            self.tmpfile = TextIO()
+
+    def start(self):
+        setattr(sys, self.name, self.tmpfile)
+
+    def snap(self):
+        f = self.tmpfile
+        res = f.getvalue()
         f.truncate(0)
         f.seek(0)
         return res
 
+    def done(self):
+        setattr(sys, self.name, self._old)
+        self.tmpfile.close()
 
-class StdCapture(Capture):
-    """ This class allows to capture writes to sys.stdout|stderr "in-memory"
-        and will raise errors on tries to read from sys.stdin. It only
-        modifies sys.stdout|stderr|stdin attributes and does not
-        touch underlying File Descriptors (use StdCaptureFD for that).
-    """
-    def __init__(self, out=True, err=True, in_=True):
-        self._oldout = sys.stdout
-        self._olderr = sys.stderr
-        self._oldin = sys.stdin
-        if out and not hasattr(out, 'file'):
-            out = TextIO()
-        self.out = out
-        if err:
-            if not hasattr(err, 'write'):
-                err = TextIO()
-        self.err = err
-        self.in_ = in_
-
-    def startall(self):
-        if self.out:
-            sys.stdout = self.out
-        if self.err:
-            sys.stderr = self.err
-        if self.in_:
-            sys.stdin = self.in_ = DontReadFromInput()
-
-    def done(self, save=True):
-        """ return (outfile, errfile) and stop capturing. """
-        outfile = errfile = None
-        if self.out and not self.out.closed:
-            sys.stdout = self._oldout
-            outfile = self.out
-            outfile.seek(0)
-        if self.err and not self.err.closed:
-            sys.stderr = self._olderr
-            errfile = self.err
-            errfile.seek(0)
-        if self.in_:
-            sys.stdin = self._oldin
-        return outfile, errfile
-
-    def resume(self):
-        """ resume capturing with original temp files. """
-        self.startall()
-
-    def readouterr(self):
-        """ return snapshot value of stdout/stderr capturings. """
-        out = err = ""
-        if self.out:
-            out = self.out.getvalue()
-            self.out.truncate(0)
-            self.out.seek(0)
-        if self.err:
-            err = self.err.getvalue()
-            self.err.truncate(0)
-            self.err.seek(0)
-        return out, err
+    def writeorg(self, data):
+        self._old.write(data)
+        self._old.flush()
 
 
 class DontReadFromInput:

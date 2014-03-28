@@ -478,10 +478,12 @@ def test_unicode_issue368(testdir):
     path = testdir.tmpdir.join("test.xml")
     log = LogXML(str(path), None)
     ustr = py.builtin._totext("ВНИ!", "utf-8")
-    class report:
+    from _pytest.runner import BaseReport
+    class Report(BaseReport):
         longrepr = ustr
         sections = []
         nodeid = "something"
+    report = Report()
 
     # hopefully this is not too brittle ...
     log.pytest_sessionstart()

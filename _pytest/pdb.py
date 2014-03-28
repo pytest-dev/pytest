@@ -16,49 +16,36 @@ def pytest_configure(config):
     if config.getvalue("usepdb"):
         config.pluginmanager.register(PdbInvoke(), 'pdbinvoke')
 
-    old_trace = py.std.pdb.set_trace
+    old = (py.std.pdb.set_trace, pytestPDB._pluginmanager)
     def fin():
-        py.std.pdb.set_trace = old_trace
+        py.std.pdb.set_trace, pytestPDB._pluginmanager = old
     py.std.pdb.set_trace = pytest.set_trace
+    pytestPDB._pluginmanager = config.pluginmanager
     config._cleanup.append(fin)
 
 class pytestPDB:
     """ Pseudo PDB that defers to the real pdb. """
-    item = None
-    collector = None
+    _pluginmanager = None
 
     def set_trace(self):
         """ invoke PDB set_trace debugging, dropping any IO capturing. """
         frame = sys._getframe().f_back
-        item = self.item or self.collector
-
-        if item is not None:
-            capman = item.config.pluginmanager.getplugin("capturemanager")
-            out, err = capman.suspendcapture()
-            if hasattr(item, 'outerr'):
-                item.outerr = (item.outerr[0] + out, item.outerr[1] + err)
+        capman = None
+        if self._pluginmanager is not None:
+            capman = self._pluginmanager.getplugin("capturemanager")
+            if capman:
+                capman.reset_capturings()
             tw = py.io.TerminalWriter()
             tw.line()
             tw.sep(">", "PDB set_trace (IO-capturing turned off)")
         py.std.pdb.Pdb().set_trace(frame)
 
-def pdbitem(item):
-    pytestPDB.item = item
-pytest_runtest_setup = pytest_runtest_call = pytest_runtest_teardown = pdbitem
-
-@pytest.mark.tryfirst
-def pytest_make_collect_report(__multicall__, collector):
-    try:
-        pytestPDB.collector = collector
-        return __multicall__.execute()
-    finally:
-        pytestPDB.collector = None
-
-def pytest_runtest_makereport():
-    pytestPDB.item = None
 
 class PdbInvoke:
     def pytest_exception_interact(self, node, call, report):
+        capman = node.config.pluginmanager.getplugin("capturemanager")
+        if capman:
+            capman.reset_capturings()
         return _enter_pdb(node, call.excinfo, report)
 
     def pytest_internalerror(self, excrepr, excinfo):

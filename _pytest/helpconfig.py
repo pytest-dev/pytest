@@ -47,6 +47,8 @@ def pytest_unconfigure(config):
 
 def pytest_cmdline_main(config):
     if config.option.version:
+        capman = config.pluginmanager.getplugin("capturemanager")
+        capman.reset_capturings()
         p = py.path.local(pytest.__file__)
         sys.stderr.write("This is pytest version %s, imported from %s\n" %
             (pytest.__version__, p))
@@ -62,7 +64,7 @@ def pytest_cmdline_main(config):
         return 0
 
 def showhelp(config):
-    tw = py.io.TerminalWriter()
+    tw = config.get_terminal_writer()
     tw.write(config._parser.optparser.format_help())
     tw.line()
     tw.line()
