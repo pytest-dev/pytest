@@ -23,6 +23,8 @@ NEXT (2.6)
 
 - merge PR123: improved integration with mock.patch decorator on tests.
 
+- fix issue483: trial/py33 works now properly.  Thanks Daniel Grana for PR.
+
 
 2.5.2
 -----------------------------------
