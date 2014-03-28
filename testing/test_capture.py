@@ -4,6 +4,7 @@ from __future__ import with_statement
 import os
 import sys
 import py
+import tempfile
 import pytest
 import contextlib
 
@@ -44,6 +45,13 @@ def oswritebytes(fd, obj):
 
 
 
+def StdCaptureFD(out=True, err=True, in_=True):
+    return capture.StdCaptureBase(out, err, in_, Capture=capture.FDCapture)
+
+def StdCapture(out=True, err=True, in_=True):
+    return capture.StdCaptureBase(out, err, in_, Capture=capture.SysCapture)
+
+
 class TestCaptureManager:
     def test_getmethod_default_no_fd(self, testdir, monkeypatch):
         config = testdir.parseconfig(testdir.tmpdir)
@@ -75,7 +83,7 @@ class TestCaptureManager:
     @needsosdup
     @pytest.mark.parametrize("method", ['no', 'fd', 'sys'])
     def test_capturing_basic_api(self, method):
-        capouter = capture.StdCaptureFD()
+        capouter = StdCaptureFD()
         old = sys.stdout, sys.stderr, sys.stdin
         try:
             capman = CaptureManager()
@@ -99,7 +107,7 @@ class TestCaptureManager:
 
     @needsosdup
     def test_juggle_capturings(self, testdir):
-        capouter = capture.StdCaptureFD()
+        capouter = StdCaptureFD()
         try:
             #config = testdir.parseconfig(testdir.tmpdir)
             capman = CaptureManager()
@@ -717,7 +725,7 @@ class TestFDCapture:
         f.close()
 
     def test_stderr(self):
-        cap = capture.FDCapture(2, patchsys=True)
+        cap = capture.FDCapture(2)
         cap.start()
         print_("hello", file=sys.stderr)
         f = cap.done()
@@ -727,7 +735,7 @@ class TestFDCapture:
     def test_stdin(self, tmpfile):
         tmpfile.write(tobytes("3"))
         tmpfile.seek(0)
-        cap = capture.FDCapture(0, tmpfile=tmpfile)
+        cap = capture.FDCapture(0, tmpfile)
         cap.start()
         # check with os.read() directly instead of raw_input(), because
         # sys.stdin itself may be redirected (as pytest now does by default)
@@ -753,7 +761,7 @@ class TestFDCapture:
 
 class TestStdCapture:
     def getcapture(self, **kw):
-        cap = capture.StdCapture(**kw)
+        cap = StdCapture(**kw)
         cap.start_capturing()
         return cap
 
@@ -878,7 +886,7 @@ class TestStdCaptureFD(TestStdCapture):
     pytestmark = needsosdup
 
     def getcapture(self, **kw):
-        cap = capture.StdCaptureFD(**kw)
+        cap = StdCaptureFD(**kw)
         cap.start_capturing()
         return cap
 
@@ -899,17 +907,9 @@ class TestStdCaptureFD(TestStdCapture):
     def test_many(self, capfd):
         with lsof_check():
             for i in range(10):
-                cap = capture.StdCaptureFD()
+                cap = StdCaptureFD()
                 cap.reset()
 
-
-@needsosdup
-def test_stdcapture_fd_tmpfile(tmpfile):
-    capfd = capture.StdCaptureFD(out=tmpfile)
-    os.write(1, "hello".encode("ascii"))
-    os.write(2, "world".encode("ascii"))
-    outf, errf = capfd.stop_capturing()
-    assert outf == tmpfile
 
 
 class TestStdCaptureFDinvalidFD:
@@ -918,7 +918,10 @@ class TestStdCaptureFDinvalidFD:
     def test_stdcapture_fd_invalid_fd(self, testdir):
         testdir.makepyfile("""
             import os
-            from _pytest.capture import StdCaptureFD
+            from _pytest import capture
+            def StdCaptureFD(out=True, err=True, in_=True):
+                return capture.StdCaptureBase(out, err, in_,
+                                              Capture=capture.FDCapture)
             def test_stdout():
                 os.close(1)
                 cap = StdCaptureFD(out=True, err=False, in_=False)
@@ -938,27 +941,12 @@ class TestStdCaptureFDinvalidFD:
 
 
 def test_capture_not_started_but_reset():
-    capsys = capture.StdCapture()
+    capsys = StdCapture()
     capsys.stop_capturing()
     capsys.stop_capturing()
     capsys.reset()
 
 
-@needsosdup
-def test_capture_no_sys():
-    capsys = capture.StdCapture()
-    try:
-        cap = capture.StdCaptureFD(patchsys=False)
-        cap.start_capturing()
-        sys.stdout.write("hello")
-        sys.stderr.write("world")
-        oswritebytes(1, "1")
-        oswritebytes(2, "2")
-        out, err = cap.reset()
-        assert out == "1"
-        assert err == "2"
-    finally:
-        capsys.reset()
 
 
 @needsosdup
@@ -966,7 +954,7 @@ def test_capture_no_sys():
 def test_fdcapture_tmpfile_remains_the_same(tmpfile, use):
     if not use:
         tmpfile = True
-    cap = capture.StdCaptureFD(out=False, err=tmpfile)
+    cap = StdCaptureFD(out=False, err=tmpfile)
     try:
         cap.start_capturing()
         capfile = cap.err.tmpfile
@@ -977,7 +965,7 @@ def test_fdcapture_tmpfile_remains_the_same(tmpfile, use):
     assert capfile2 == capfile
 
 
-@pytest.mark.parametrize('method', ['StdCapture', 'StdCaptureFD'])
+@pytest.mark.parametrize('method', ['SysCapture', 'FDCapture'])
 def test_capturing_and_logging_fundamentals(testdir, method):
     if method == "StdCaptureFD" and not hasattr(os, 'dup'):
         pytest.skip("need os.dup")
@@ -986,7 +974,8 @@ def test_capturing_and_logging_fundamentals(testdir, method):
         import sys, os
         import py, logging
         from _pytest import capture
-        cap = capture.%s(out=False, in_=False)
+        cap = capture.StdCaptureBase(out=False, in_=False,
+                                     Capture=capture.%s)
         cap.start_capturing()
 
         logging.warn("hello1")
