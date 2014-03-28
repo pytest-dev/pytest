@@ -541,7 +541,6 @@ def test_capture_conftest_runtest_setup(testdir):
     assert 'hello19' not in result.stdout.str()
 
 
-@pytest.mark.xfail("sys.version_info >= (3,)")
 def test_capture_badoutput_issue412(testdir):
     testdir.makepyfile("""
         import os
@@ -571,8 +570,6 @@ def test_capture_early_option_parsing(testdir):
     assert 'hello19' in result.stdout.str()
 
 
-@pytest.mark.xfail(sys.version_info >= (3, 0), reason='encoding issues')
-@pytest.mark.xfail(sys.version_info < (2, 6), reason='test not run on py25')
 def test_capture_binary_output(testdir):
     testdir.makepyfile(r"""
         import pytest
@@ -646,7 +643,7 @@ def tmpfile(testdir):
 def test_dupfile(tmpfile):
     flist = []
     for i in range(5):
-        nf = capture.dupfile(tmpfile, encoding="utf-8")
+        nf = capture.safe_text_dupfile(tmpfile, "wb")
         assert nf != tmpfile
         assert nf.fileno() != tmpfile.fileno()
         assert nf not in flist
@@ -660,19 +657,17 @@ def test_dupfile(tmpfile):
     assert "01234" in repr(s)
     tmpfile.close()
 
+def test_dupfile_on_bytesio():
+    io = py.io.BytesIO()
+    f = capture.safe_text_dupfile(io, "wb")
+    f.write("hello")
+    assert io.getvalue() == b"hello"
 
-def test_dupfile_no_mode():
-    """
-    dupfile should trap an AttributeError and return f if no mode is supplied.
-    """
-    class SomeFileWrapper(object):
-        "An object with a fileno method but no mode attribute"
-        def fileno(self):
-            return 1
-    tmpfile = SomeFileWrapper()
-    assert capture.dupfile(tmpfile) is tmpfile
-    with pytest.raises(AttributeError):
-        capture.dupfile(tmpfile, raising=True)
+def test_dupfile_on_textio():
+    io = py.io.TextIO()
+    f = capture.safe_text_dupfile(io, "wb")
+    f.write("hello")
+    assert io.getvalue() == "hello"
 
 
 @contextlib.contextmanager

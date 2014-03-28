@@ -13,6 +13,7 @@ import py
 import pytest
 
 from py.io import TextIO
+unicode = py.builtin.text
 
 patchsysdict = {0: 'stdin', 1: 'stdout', 2: 'stderr'}
 
@@ -38,12 +39,7 @@ def pytest_load_initial_conftests(early_config, parser, args, __multicall__):
         method = "sys"
     pluginmanager = early_config.pluginmanager
     if method != "no":
-        try:
-            sys.stdout.fileno()
-        except Exception:
-            dupped_stdout = sys.stdout
-        else:
-            dupped_stdout = dupfile(sys.stdout, buffering=1)
+        dupped_stdout = safe_text_dupfile(sys.stdout, "wb")
         pluginmanager.register(dupped_stdout, "dupped_stdout")
             #pluginmanager.add_shutdown(dupped_stdout.close)
     capman = CaptureManager(method)
@@ -256,51 +252,41 @@ class CaptureFixture:
             return "", ""
 
 
-def dupfile(f, mode=None, buffering=0, raising=False, encoding=None):
-    """ return a new open file object that's a duplicate of f
-
-        mode is duplicated if not given, 'buffering' controls
-        buffer size (defaulting to no buffering) and 'raising'
-        defines whether an exception is raised when an incompatible
-        file object is passed in (if raising is False, the file
-        object itself will be returned)
+def safe_text_dupfile(f, mode, default_encoding="UTF8"):
+    """ return a open text file object that's a duplicate of f on the
+        FD-level if possible.
     """
+    encoding = getattr(f, "encoding", None)
     try:
         fd = f.fileno()
-        mode = mode or f.mode
-    except AttributeError:
-        if raising:
-            raise
-        return f
-    newfd = os.dup(fd)
-    if sys.version_info >= (3, 0):
-        if encoding is not None:
-            mode = mode.replace("b", "")
-            buffering = True
-        return os.fdopen(newfd, mode, buffering, encoding, closefd=True)
+    except Exception:
+        if "b" not in getattr(f, "mode", "") and hasattr(f, "encoding"):
+            # we seem to have a text stream, let's just use it
+            return f
     else:
-        f = os.fdopen(newfd, mode, buffering)
-        if encoding is not None:
-            return EncodedFile(f, encoding)
-        return f
+        newfd = os.dup(fd)
+        if "b" not in mode:
+            mode += "b"
+        f = os.fdopen(newfd, mode, 0)  # no buffering
+    return EncodedFile(f, encoding or default_encoding)
 
 
 class EncodedFile(object):
-    def __init__(self, _stream, encoding):
-        self._stream = _stream
+    def __init__(self, buffer, encoding):
+        self.buffer = buffer
         self.encoding = encoding
 
     def write(self, obj):
         if isinstance(obj, unicode):
-            obj = obj.encode(self.encoding)
-        self._stream.write(obj)
+            obj = obj.encode(self.encoding, "replace")
+        self.buffer.write(obj)
 
     def writelines(self, linelist):
         data = ''.join(linelist)
         self.write(data)
 
     def __getattr__(self, name):
-        return getattr(self._stream, name)
+        return getattr(self.buffer, name)
 
 
 class StdCaptureBase(object):
@@ -344,13 +330,8 @@ class StdCaptureBase(object):
 
     def readouterr(self):
         """ return snapshot unicode value of stdout/stderr capturings. """
-        return self._readsnapshot('out'), self._readsnapshot('err')
-
-    def _readsnapshot(self, name):
-        cap = getattr(self, name, None)
-        if cap is None:
-            return ""
-        return cap.snap()
+        return (self.out.snap() if self.out is not None else "",
+                self.err.snap() if self.err is not None else "")
 
 
 class FDCapture:
@@ -370,7 +351,7 @@ class FDCapture:
                 else:
                     f = TemporaryFile()
                     with f:
-                        tmpfile = dupfile(f, encoding="UTF-8")
+                        tmpfile = safe_text_dupfile(f, mode="wb+")
             self.tmpfile = tmpfile
             if targetfd in patchsysdict:
                 self._oldsys = getattr(sys, patchsysdict[targetfd])

@@ -104,6 +104,7 @@ class TerminalReporter:
         self.startdir = self.curdir = py.path.local()
         if file is None:
             file = py.std.sys.stdout
+        #assert file.encoding
         self._tw = self.writer = py.io.TerminalWriter(file)
         if self.config.option.color == 'yes':
             self._tw.hasmarkup = True
@@ -144,7 +145,8 @@ class TerminalReporter:
         self._tw.write(content, **markup)
 
     def write_line(self, line, **markup):
-        line = str(line)
+        if not py.builtin._istext(line):
+            line = py.builtin.text(line, errors="replace")
         self.ensure_newline()
         self._tw.line(line, **markup)
 
@@ -163,7 +165,7 @@ class TerminalReporter:
         self._tw.line(msg, **kw)
 
     def pytest_internalerror(self, excrepr):
-        for line in str(excrepr).split("\n"):
+        for line in py.builtin.text(excrepr).split("\n"):
             self.write_line("INTERNALERROR> " + line)
         return 1
 
