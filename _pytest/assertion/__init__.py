@@ -60,7 +60,7 @@ def pytest_configure(config):
 
 def pytest_unconfigure(config):
     hook = config._assertstate.hook
-    if hook is not None:
+    if hook is not None and hook in sys.meta_path:
         sys.meta_path.remove(hook)
 
 def pytest_collection(session):
