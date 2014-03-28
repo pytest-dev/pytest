@@ -155,29 +155,23 @@ class CaptureManager:
 
     def suspendcapture(self, item=None):
         self.deactivate_funcargs()
-        if hasattr(self, '_capturing'):
-            method = self._capturing
-            del self._capturing
+        method = self.__dict__.pop("_capturing", None)
+        if method is not None:
             cap = self._method2capture.get(method)
             if cap is not None:
                 return cap.readouterr()
         return "", ""
 
     def activate_funcargs(self, pyfuncitem):
-        funcargs = getattr(pyfuncitem, "funcargs", None)
-        if funcargs is not None:
-            for name, capfuncarg in funcargs.items():
-                if name in ('capsys', 'capfd'):
-                    assert not hasattr(self, '_capturing_funcarg')
-                    self._capturing_funcarg = capfuncarg
-                    capfuncarg._start()
+        capfuncarg = pyfuncitem.__dict__.pop("_capfuncarg", None)
+        if capfuncarg is not None:
+            capfuncarg._start()
+            self._capfuncarg = capfuncarg
 
     def deactivate_funcargs(self):
-        capturing_funcarg = getattr(self, '_capturing_funcarg', None)
-        if capturing_funcarg:
-            outerr = capturing_funcarg._finalize()
-            del self._capturing_funcarg
-            return outerr
+        capfuncarg = self.__dict__.pop("_capfuncarg", None)
+        if capfuncarg is not None:
+            capfuncarg.close()
 
     @pytest.mark.hookwrapper
     def pytest_make_collect_report(self, __multicall__, collector):
@@ -210,7 +204,9 @@ class CaptureManager:
     @pytest.mark.hookwrapper
     def pytest_runtest_call(self, item):
         with self.item_capture_wrapper(item, "call"):
+            self.activate_funcargs(item)
             yield
+            #self.deactivate_funcargs() called from ctx's suspendcapture()
 
     @pytest.mark.hookwrapper
     def pytest_runtest_teardown(self, item):
@@ -228,17 +224,8 @@ class CaptureManager:
     @contextlib.contextmanager
     def item_capture_wrapper(self, item, when):
         self.resumecapture_item(item)
-        if when == "call":
-            self.activate_funcargs(item)
-            yield
-            funcarg_outerr = self.deactivate_funcargs()
-        else:
-            yield
-            funcarg_outerr = None
+        yield
         out, err = self.suspendcapture(item)
-        if funcarg_outerr is not None:
-            out += funcarg_outerr[0]
-            err += funcarg_outerr[1]
         item.add_report_section(when, "out", out)
         item.add_report_section(when, "err", err)
 
@@ -252,7 +239,8 @@ def pytest_funcarg__capsys(request):
     """
     if "capfd" in request._funcargs:
         raise request.raiseerror(error_capsysfderror)
-    return CaptureFixture(SysCapture)
+    request.node._capfuncarg = c = CaptureFixture(SysCapture)
+    return c
 
 def pytest_funcarg__capfd(request):
     """enables capturing of writes to file descriptors 1 and 2 and makes
@@ -263,7 +251,8 @@ def pytest_funcarg__capfd(request):
         request.raiseerror(error_capsysfderror)
     if not hasattr(os, 'dup'):
         pytest.skip("capfd funcarg needs os.dup")
-    return CaptureFixture(FDCapture)
+    request.node._capfuncarg = c = CaptureFixture(FDCapture)
+    return c
 
 
 class CaptureFixture:
@@ -275,21 +264,17 @@ class CaptureFixture:
                                        Capture=self.captureclass)
         self._capture.start_capturing()
 
-    def _finalize(self):
-        if hasattr(self, '_capture'):
-            outerr = self._outerr = self._capture.stop_capturing()
-            del self._capture
-            return outerr
+    def close(self):
+        cap = self.__dict__.pop("_capture", None)
+        if cap is not None:
+            cap.pop_outerr_to_orig()
+            cap.stop_capturing()
 
     def readouterr(self):
         try:
             return self._capture.readouterr()
         except AttributeError:
-            return self._outerr
-
-    def close(self):
-        self._finalize()
-
+            return "", ""
 
 
 def dupfile(f, mode=None, buffering=0, raising=False, encoding=None):
@@ -448,8 +433,7 @@ class FDCapture:
         self.tmpfile.close()
 
     def writeorg(self, data):
-        """ write a string to the original file descriptor
-        """
+        """ write to original file descriptor. """
         if py.builtin._istext(data):
             data = data.encode("utf8") # XXX use encoding of original stream
         os.write(self._savefd, data)
