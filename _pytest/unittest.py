@@ -154,7 +154,7 @@ def pytest_runtest_protocol(item, __multicall__):
     if isinstance(item, TestCaseFunction):
         if 'twisted.trial.unittest' in sys.modules:
             ut = sys.modules['twisted.python.failure']
-            Failure__init__ = ut.Failure.__init__.im_func
+            Failure__init__ = ut.Failure.__init__
             check_testcase_implements_trial_reporter()
             def excstore(self, exc_value=None, exc_type=None, exc_tb=None,
                 captureVars=None):
