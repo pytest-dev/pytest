@@ -483,19 +483,9 @@ def test_rewritten():
         assert testdir.runpytest().ret == 0
 
     def test_sys_meta_path_munged(self, testdir):
-        # In some versions, if any code messed with sys.meta_path and removed
-        # the assertionrewrite import hook (one example is CaptureMock), it
-        # would cause an error on py.test exit:
-        #
-        #   File "/Users/marca/dev/hg-repos/pytest/_pytest/assertion/__init__.py", line 64, in pytest_unconfigure
-        #     sys.meta_path.remove(hook)
-        # ValueError: list.remove(x): x not in list
-        #
-        testdir.tmpdir.join("test_meta_path.py").write("""#!/usr/bin/env python
-def test_meta_path():
-    import sys
-    sys.meta_path = []
-    assert True""".replace("\n", "\r\n"), "wb")
+        testdir.makepyfile("""
+            def test_meta_path():
+                import sys; sys.meta_path = []""")
         assert testdir.runpytest().ret == 0
 
     def test_write_pyc(self, testdir, tmpdir, monkeypatch):
