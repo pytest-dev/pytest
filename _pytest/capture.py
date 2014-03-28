@@ -426,7 +426,7 @@ class StdCaptureBase(object):
         if hasattr(self, '_reset'):
             raise ValueError("was already reset")
         self._reset = True
-        outfile, errfile = self.stop_capturing(save=False)
+        outfile, errfile = self.stop_capturing()
         out, err = "", ""
         if outfile and not outfile.closed:
             out = outfile.read()
@@ -452,24 +452,9 @@ class StdCaptureFD(StdCaptureBase):
         is invalid it will not be captured.
     """
     def __init__(self, out=True, err=True, in_=True, patchsys=True):
-        self._options = {
-            "out": out,
-            "err": err,
-            "in_": in_,
-            "patchsys": patchsys,
-        }
-        self._save()
-
-    def _save(self):
-        in_ = self._options['in_']
-        out = self._options['out']
-        err = self._options['err']
-        patchsys = self._options['patchsys']
         if in_:
             try:
-                self.in_ = FDCapture(
-                    0, tmpfile=None,
-                    patchsys=patchsys)
+                self.in_ = FDCapture(0, tmpfile=None, patchsys=patchsys)
             except OSError:
                 pass
         if out:
@@ -477,10 +462,7 @@ class StdCaptureFD(StdCaptureBase):
             if hasattr(out, 'write'):
                 tmpfile = out
             try:
-                self.out = FDCapture(
-                    1, tmpfile=tmpfile,
-                    patchsys=patchsys)
-                self._options['out'] = self.out.tmpfile
+                self.out = FDCapture(1, tmpfile=tmpfile, patchsys=patchsys)
             except OSError:
                 pass
         if err:
@@ -489,10 +471,7 @@ class StdCaptureFD(StdCaptureBase):
             else:
                 tmpfile = None
             try:
-                self.err = FDCapture(
-                    2, tmpfile=tmpfile,
-                    patchsys=patchsys)
-                self._options['err'] = self.err.tmpfile
+                self.err = FDCapture(2, tmpfile=tmpfile, patchsys=patchsys)
             except OSError:
                 pass
 
@@ -507,7 +486,7 @@ class StdCaptureFD(StdCaptureBase):
     #def pytest_sessionfinish(self):
     #    self.reset_capturings()
 
-    def stop_capturing(self, save=True):
+    def stop_capturing(self):
         """ return (outfile, errfile) and stop capturing. """
         outfile = errfile = None
         if hasattr(self, 'out') and not self.out.tmpfile.closed:
@@ -516,8 +495,6 @@ class StdCaptureFD(StdCaptureBase):
             errfile = self.err.done()
         if hasattr(self, 'in_'):
             self.in_.done()
-        if save:
-            self._save()
         return outfile, errfile
 
     def readouterr(self):
@@ -577,7 +554,7 @@ class StdCapture(StdCaptureBase):
         if self.in_:
             sys.stdin = self.in_ = DontReadFromInput()
 
-    def stop_capturing(self, save=True):
+    def stop_capturing(self):
         """ return (outfile, errfile) and stop capturing. """
         outfile = errfile = None
         if self.out and not self.out.closed:

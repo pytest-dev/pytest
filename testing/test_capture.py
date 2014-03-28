@@ -873,25 +873,6 @@ class TestStdCapture:
         pytest.raises(IOError, "sys.stdin.read()")
         out, err = cap.reset()
 
-    def test_suspend_resume(self):
-        cap = self.getcapture(out=True, err=False, in_=False)
-        try:
-            print ("hello")
-            sys.stderr.write("error\n")
-            out, err = cap.readouterr()
-            cap.stop_capturing()
-            assert out == "hello\n"
-            assert not err
-            print ("in between")
-            sys.stderr.write("in between\n")
-            cap.start_capturing()
-            print ("after")
-            sys.stderr.write("error_after\n")
-        finally:
-            out, err = cap.reset()
-        assert out == "after\n"
-        assert not err
-
 
 class TestStdCaptureFD(TestStdCapture):
     pytestmark = needsosdup
@@ -925,12 +906,9 @@ class TestStdCaptureFD(TestStdCapture):
 @needsosdup
 def test_stdcapture_fd_tmpfile(tmpfile):
     capfd = capture.StdCaptureFD(out=tmpfile)
-    try:
-        os.write(1, "hello".encode("ascii"))
-        os.write(2, "world".encode("ascii"))
-        outf, errf = capfd.stop_capturing()
-    finally:
-        capfd.reset()
+    os.write(1, "hello".encode("ascii"))
+    os.write(2, "world".encode("ascii"))
+    outf, errf = capfd.stop_capturing()
     assert outf == tmpfile
 
 
