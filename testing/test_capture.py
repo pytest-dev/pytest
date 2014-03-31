@@ -747,8 +747,9 @@ class TestFDCapture:
         f = cap.done()
         scap = f.read()
         assert scap == totext(data1)
-        stmp = open(tmpfile.name, 'rb').read()
-        assert stmp == data2
+        with open(tmpfile.name, 'rb') as stmp_file:
+            stmp = stmp_file.read()
+            assert stmp == data2
 
 
 class TestStdCapture:
