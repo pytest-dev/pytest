@@ -335,6 +335,12 @@ class TestGeneralUsage:
         res = testdir.runpytest(p.basename)
         assert res.ret == 0
 
+    def test_unknown_option(self, testdir):
+        result = testdir.runpytest("--qwlkej")
+        result.stderr.fnmatch_lines("""
+            *unrecognized*
+        """)
+
 
 class TestInvocationVariants:
     def test_earlyinit(self, testdir):

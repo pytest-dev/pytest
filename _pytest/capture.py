@@ -46,13 +46,7 @@ def pytest_load_initial_conftests(early_config, parser, args, __multicall__):
     pluginmanager.register(capman, "capturemanager")
 
     # make sure that capturemanager is properly reset at final shutdown
-    def teardown():
-        try:
-            capman.reset_capturings()
-        except ValueError:
-            pass
-
-    pluginmanager.add_shutdown(teardown)
+    pluginmanager.add_shutdown(capman.reset_capturings)
 
     # make sure logging does not raise exceptions at the end
     def silence_logging_at_shutdown():
@@ -124,16 +118,18 @@ class CaptureManager:
             self._method2capture[method] = cap = self._getcapture(method)
             cap.start_capturing()
         else:
-            cap.pop_outerr_to_orig()
+            cap.resume_capturing()
 
     def suspendcapture(self, item=None):
         self.deactivate_funcargs()
         method = self.__dict__.pop("_capturing", None)
+        outerr = "", ""
         if method is not None:
             cap = self._method2capture.get(method)
             if cap is not None:
-                return cap.readouterr()
-        return "", ""
+                outerr = cap.readouterr()
+                cap.suspend_capturing()
+        return outerr
 
     def activate_funcargs(self, pyfuncitem):
         capfuncarg = pyfuncitem.__dict__.pop("_capfuncarg", None)
@@ -316,6 +312,18 @@ class MultiCapture(object):
         if err:
             self.err.writeorg(err)
 
+    def suspend_capturing(self):
+        if self.out:
+            self.out.suspend()
+        if self.err:
+            self.err.suspend()
+
+    def resume_capturing(self):
+        if self.out:
+            self.out.resume()
+        if self.err:
+            self.err.resume()
+
     def stop_capturing(self):
         """ stop capturing and reset capturing streams """
         if hasattr(self, '_reset'):
@@ -334,7 +342,7 @@ class MultiCapture(object):
                 self.err.snap() if self.err is not None else "")
 
 class NoCapture:
-    __init__ = start = done = lambda *args: None
+    __init__ = start = done = suspend = resume = lambda *args: None
 
 class FDCapture:
     """ Capture IO to/from a given os-level filedescriptor. """
