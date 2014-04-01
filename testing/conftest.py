@@ -25,7 +25,7 @@ class LsofFdLeakChecker(object):
         for line in out.split("\n"):
             if isopen(line):
                 fields = line.split('\0')
-                fd = int(fields[0][1:])
+                fd = fields[0][1:]
                 filename = fields[1][1:]
                 if filename.startswith('/'):
                     open_files.append((fd, filename))
@@ -53,7 +53,7 @@ def pytest_runtest_setup(item):
 
 def check_open_files(config):
     lines2 = config._fd_leak_checker.get_open_files()
-    new_fds = sorted(set([t[0] for t in lines2]) - set([t[0] for t in config._openfiles]))
+    new_fds = set([t[0] for t in lines2]) - set([t[0] for t in config._openfiles])
     open_files = [t for t in lines2 if t[0] in new_fds]
     if open_files:
         error = []
