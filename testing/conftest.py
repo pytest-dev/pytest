@@ -13,13 +13,24 @@ class LsofFdLeakChecker(object):
 
     def _exec_lsof(self):
         pid = os.getpid()
-        return py.process.cmdexec("lsof -p %d" % pid)
+        return py.process.cmdexec("lsof -Ffn0 -p %d" % pid)
 
     def _parse_lsof_output(self, out):
         def isopen(line):
-            return ("REG" in line or "CHR" in line) and (
-                "deleted" not in line and 'mem' not in line and "txt" not in line)
-        return [x for x in out.split("\n") if isopen(x)]
+            return line.startswith('f') and (
+                "deleted" not in line and 'mem' not in line and "txt" not in line and 'cwd' not in line)
+
+        open_files = []
+
+        for line in out.split("\n"):
+            if isopen(line):
+                fields = line.split('\0')
+                fd = int(fields[0][1:])
+                filename = fields[1][1:]
+                if filename.startswith('/'):
+                    open_files.append((fd, filename))
+
+        return open_files
 
 
 def pytest_addoption(parser):
@@ -49,11 +60,16 @@ def getopenfiles(out):
 
 def check_open_files(config):
     lines2 = config._fd_leak_checker.get_open_files()
-    if len(lines2) > config._numfiles + 3:
+    new_fds = sorted(set([t[0] for t in lines2]) - set([t[0] for t in config._openfiles]))
+    open_files = [t for t in lines2 if t[0] in new_fds]
+    if open_files:
         error = []
-        error.append("***** %s FD leackage detected" %
-    (len(lines2)-config._numfiles))
-        error.extend(lines2)
+        error.append("***** %s FD leackage detected" % len(open_files))
+        error.extend([str(f) for f in open_files])
+        error.append("*** Before:")
+        error.extend([str(f) for f in config._openfiles])
+        error.append("*** After:")
+        error.extend([str(f) for f in lines2])
         error.append(error[0])
         # update numfile so that the overall test run continuess
         config._numfiles = len(lines2)
