@@ -4,7 +4,23 @@ import sys
 pytest_plugins = "pytester",
 
 import os, py
-pid = os.getpid()
+
+class LsofFdLeakChecker(object):
+    def get_open_files(self):
+        out = self._exec_lsof()
+        open_files = self._parse_lsof_output(out)
+        return open_files
+
+    def _exec_lsof(self):
+        pid = os.getpid()
+        return py.process.cmdexec("lsof -p %d" % pid)
+
+    def _parse_lsof_output(self, out):
+        def isopen(line):
+            return ("REG" in line or "CHR" in line) and (
+                "deleted" not in line and 'mem' not in line and "txt" not in line)
+        return [x for x in out.split("\n") if isopen(x)]
+
 
 def pytest_addoption(parser):
     parser.addoption('--lsof',
@@ -15,11 +31,12 @@ def pytest_configure(config):
     config._basedir = py.path.local()
     if config.getvalue("lsof"):
         try:
-            out = py.process.cmdexec("lsof -p %d" % pid)
+            config._fd_leak_checker = LsofFdLeakChecker()
+            config._openfiles = config._fd_leak_checker.get_open_files()
         except py.process.cmdexec.Error:
             pass
         else:
-            config._numfiles = len(getopenfiles(out))
+            config._numfiles = len(config._openfiles)
 
 #def pytest_report_header():
 #    return "pid: %s" % os.getpid()
@@ -31,8 +48,7 @@ def getopenfiles(out):
     return [x for x in out.split("\n") if isopen(x)]
 
 def check_open_files(config):
-    out2 = py.process.cmdexec("lsof -p %d" % pid)
-    lines2 = getopenfiles(out2)
+    lines2 = config._fd_leak_checker.get_open_files()
     if len(lines2) > config._numfiles + 3:
         error = []
         error.append("***** %s FD leackage detected" %
