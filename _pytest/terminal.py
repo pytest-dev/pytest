@@ -36,21 +36,13 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     config.option.verbose -= config.option.quiet
-    out = config.pluginmanager.getplugin("dupped_stdout")
-    #if out is None:
-    #    out = sys.stdout
-    reporter = TerminalReporter(config, out)
+    reporter = TerminalReporter(config, sys.stdout)
     config.pluginmanager.register(reporter, 'terminalreporter')
     if config.option.debug or config.option.traceconfig:
         def mywriter(tags, args):
             msg = " ".join(map(str, args))
             reporter.write_line("[traceconfig] " + msg)
         config.trace.root.setprocessor("pytest:config", mywriter)
-
-def get_terminal_writer(config):
-    tr = config.pluginmanager.getplugin("terminalreporter")
-    return tr._tw
-
 
 def getreportopt(config):
     reportopts = ""
@@ -104,7 +96,6 @@ class TerminalReporter:
         self.startdir = self.curdir = py.path.local()
         if file is None:
             file = py.std.sys.stdout
-        #assert file.encoding
         self._tw = self.writer = py.io.TerminalWriter(file)
         if self.config.option.color == 'yes':
             self._tw.hasmarkup = True

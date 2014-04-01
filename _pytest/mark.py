@@ -40,7 +40,7 @@ def pytest_addoption(parser):
 def pytest_cmdline_main(config):
     if config.option.markers:
         config.do_configure()
-        tw = config.get_terminal_writer()
+        tw = py.io.TerminalWriter()
         for line in config.getini("markers"):
             name, rest = line.split(":", 1)
             tw.write("@pytest.mark.%s:" % name, bold=True)

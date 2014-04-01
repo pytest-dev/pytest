@@ -26,6 +26,10 @@ NEXT (2.6)
 - fix issue412: messing with stdout/stderr FD-level streams is now
   captured without crashes.
 
+- simplified internal capturing mechanism and made it more robust
+  against tests or setups changing FD1/FD2, also better integrated
+  now with pytest.pdb() in single tests.
+
 
 2.5.2
 -----------------------------------

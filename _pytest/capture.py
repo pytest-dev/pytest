@@ -7,7 +7,6 @@ from __future__ import with_statement
 import sys
 import os
 from tempfile import TemporaryFile
-import contextlib
 
 import py
 import pytest
@@ -34,13 +33,9 @@ def pytest_addoption(parser):
 def pytest_load_initial_conftests(early_config, parser, args, __multicall__):
     ns = parser.parse_known_args(args)
     pluginmanager = early_config.pluginmanager
-    method = ns.capture
-    if method != "no":
-        dupped_stdout = safe_text_dupfile(sys.stdout, "wb")
-        pluginmanager.register(dupped_stdout, "dupped_stdout")
-            #pluginmanager.add_shutdown(dupped_stdout.close)
-
-    capman = CaptureManager(method)
+    if ns.capture == "no":
+        return
+    capman = CaptureManager(ns.capture)
     pluginmanager.register(capman, "capturemanager")
 
     # make sure that capturemanager is properly reset at final shutdown
@@ -129,20 +124,23 @@ class CaptureManager:
 
     @pytest.mark.hookwrapper
     def pytest_runtest_setup(self, item):
-        with self.item_capture_wrapper(item, "setup"):
-            yield
+        self.resumecapture()
+        yield
+        self.suspendcapture_item(item, "setup")
 
     @pytest.mark.hookwrapper
     def pytest_runtest_call(self, item):
-        with self.item_capture_wrapper(item, "call"):
-            self.activate_funcargs(item)
-            yield
-            #self.deactivate_funcargs() called from ctx's suspendcapture()
+        self.resumecapture()
+        self.activate_funcargs(item)
+        yield
+        #self.deactivate_funcargs() called from suspendcapture()
+        self.suspendcapture_item(item, "call")
 
     @pytest.mark.hookwrapper
     def pytest_runtest_teardown(self, item):
-        with self.item_capture_wrapper(item, "teardown"):
-            yield
+        self.resumecapture()
+        yield
+        self.suspendcapture_item(item, "teardown")
 
     @pytest.mark.tryfirst
     def pytest_keyboard_interrupt(self, excinfo):
@@ -152,10 +150,7 @@ class CaptureManager:
     def pytest_internalerror(self, excinfo):
         self.reset_capturings()
 
-    @contextlib.contextmanager
-    def item_capture_wrapper(self, item, when):
-        self.resumecapture()
-        yield
+    def suspendcapture_item(self, item, when):
         out, err = self.suspendcapture()
         item.add_report_section(when, "out", out)
         item.add_report_section(when, "err", err)

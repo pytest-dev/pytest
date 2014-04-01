@@ -60,7 +60,6 @@ def pytest_addoption(parser):
 def pytest_cmdline_main(config):
     genscript = config.getvalue("genscript")
     if genscript:
-        #tw = config.get_terminal_writer()
         tw = py.io.TerminalWriter()
         deps =  ['py', '_pytest', 'pytest']
         if sys.version_info < (2,7):
