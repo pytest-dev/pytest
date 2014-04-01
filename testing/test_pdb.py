@@ -167,6 +167,26 @@ class TestPDB:
         if child.isalive():
             child.wait()
 
+    def test_set_trace_capturing_afterwards(self, testdir):
+        p1 = testdir.makepyfile("""
+            import pdb
+            def test_1():
+                pdb.set_trace()
+            def test_2():
+                print ("hello")
+                assert 0
+        """)
+        child = testdir.spawn_pytest(str(p1))
+        child.expect("test_1")
+        child.send("c\n")
+        child.expect("test_2")
+        child.expect("Captured")
+        child.expect("hello")
+        child.sendeof()
+        child.read()
+        if child.isalive():
+            child.wait()
+
     @xfail_if_pdbpp_installed
     def test_pdb_interaction_doctest(self, testdir):
         p1 = testdir.makepyfile("""

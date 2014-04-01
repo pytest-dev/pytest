@@ -21,9 +21,10 @@ patchsysdict = {0: 'stdin', 1: 'stdout', 2: 'stderr'}
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group._addoption(
-        '--capture', action="store", default=None,
+        '--capture', action="store", 
+        default="fd" if hasattr(os, "dup") else "sys",
         metavar="method", choices=['fd', 'sys', 'no'],
-        help="per-test capturing method: one of fd (default)|sys|no.")
+        help="per-test capturing method: one of fd|sys|no.")
     group._addoption(
         '-s', action="store_const", const="no", dest="capture",
         help="shortcut for --capture=no.")
@@ -32,16 +33,13 @@ def pytest_addoption(parser):
 @pytest.mark.tryfirst
 def pytest_load_initial_conftests(early_config, parser, args, __multicall__):
     ns = parser.parse_known_args(args)
-    method = ns.capture
-    if not method:
-        method = "fd"
-    if method == "fd" and not hasattr(os, "dup"):
-        method = "sys"
     pluginmanager = early_config.pluginmanager
+    method = ns.capture
     if method != "no":
         dupped_stdout = safe_text_dupfile(sys.stdout, "wb")
         pluginmanager.register(dupped_stdout, "dupped_stdout")
             #pluginmanager.add_shutdown(dupped_stdout.close)
+
     capman = CaptureManager(method)
     pluginmanager.register(capman, "capturemanager")
 
@@ -55,7 +53,7 @@ def pytest_load_initial_conftests(early_config, parser, args, __multicall__):
     pluginmanager.add_shutdown(silence_logging_at_shutdown)
 
     # finally trigger conftest loading but while capturing (issue93)
-    capman.resumecapture()
+    capman.init_capturings()
     try:
         try:
             return __multicall__.execute()
@@ -67,11 +65,9 @@ def pytest_load_initial_conftests(early_config, parser, args, __multicall__):
         raise
 
 
-
 class CaptureManager:
-    def __init__(self, defaultmethod=None):
-        self._method2capture = {}
-        self._defaultmethod = defaultmethod
+    def __init__(self, method):
+        self._method = method
 
     def _getcapture(self, method):
         if method == "fd":
@@ -83,53 +79,27 @@ class CaptureManager:
         else:
             raise ValueError("unknown capturing method: %r" % method)
 
-    def _getmethod(self, config, fspath):
-        if config.option.capture:
-            method = config.option.capture
-        else:
-            try:
-                method = config._conftest.rget("option_capture", path=fspath)
-            except KeyError:
-                method = "fd"
-        if method == "fd" and not hasattr(os, 'dup'):  # e.g. jython
-            method = "sys"
-        return method
+    def init_capturings(self):
+        assert not hasattr(self, "_capturing")
+        self._capturing = self._getcapture(self._method)
+        self._capturing.start_capturing()
 
     def reset_capturings(self):
-        for cap in self._method2capture.values():
+        cap = self.__dict__.pop("_capturing", None)
+        if cap is not None:
             cap.pop_outerr_to_orig()
             cap.stop_capturing()
-        self._method2capture.clear()
 
-    def resumecapture_item(self, item):
-        method = self._getmethod(item.config, item.fspath)
-        return self.resumecapture(method)
+    def resumecapture(self):
+        self._capturing.resume_capturing()
 
-    def resumecapture(self, method=None):
-        if hasattr(self, '_capturing'):
-            raise ValueError(
-                "cannot resume, already capturing with %r" %
-                (self._capturing,))
-        if method is None:
-            method = self._defaultmethod
-        cap = self._method2capture.get(method)
-        self._capturing = method
-        if cap is None:
-            self._method2capture[method] = cap = self._getcapture(method)
-            cap.start_capturing()
-        else:
-            cap.resume_capturing()
-
-    def suspendcapture(self, item=None):
+    def suspendcapture(self, in_=False):
         self.deactivate_funcargs()
-        method = self.__dict__.pop("_capturing", None)
-        outerr = "", ""
-        if method is not None:
-            cap = self._method2capture.get(method)
-            if cap is not None:
-                outerr = cap.readouterr()
-                cap.suspend_capturing()
-        return outerr
+        cap = getattr(self, "_capturing", None)
+        if cap is not None:
+            outerr = cap.readouterr()
+            cap.suspend_capturing(in_=in_)
+            return outerr
 
     def activate_funcargs(self, pyfuncitem):
         capfuncarg = pyfuncitem.__dict__.pop("_capfuncarg", None)
@@ -142,28 +112,20 @@ class CaptureManager:
         if capfuncarg is not None:
             capfuncarg.close()
 
-    @pytest.mark.hookwrapper
+    @pytest.mark.tryfirst
     def pytest_make_collect_report(self, __multicall__, collector):
-        method = self._getmethod(collector.config, collector.fspath)
-        try:
-            self.resumecapture(method)
-        except ValueError:
-            yield
-            # recursive collect, XXX refactor capturing
-            # to allow for more lightweight recursive capturing
+        if not isinstance(collector, pytest.File):
             return
-        yield
-        out, err = self.suspendcapture()
-        # XXX getting the report from the ongoing hook call is a bit
-        # of a hack.  We need to think about capturing during collection
-        # and find out if it's really needed fine-grained (per
-        # collector).
-        if __multicall__.results:
-            rep = __multicall__.results[0]
-            if out:
-                rep.sections.append(("Captured stdout", out))
-            if err:
-                rep.sections.append(("Captured stderr", err))
+        self.resumecapture()
+        try:
+            rep = __multicall__.execute()
+        finally:
+            out, err = self.suspendcapture()
+        if out:
+            rep.sections.append(("Captured stdout", out))
+        if err:
+            rep.sections.append(("Captured stderr", err))
+        return rep
 
     @pytest.mark.hookwrapper
     def pytest_runtest_setup(self, item):
@@ -192,9 +154,9 @@ class CaptureManager:
 
     @contextlib.contextmanager
     def item_capture_wrapper(self, item, when):
-        self.resumecapture_item(item)
+        self.resumecapture()
         yield
-        out, err = self.suspendcapture(item)
+        out, err = self.suspendcapture()
         item.add_report_section(when, "out", out)
         item.add_report_section(when, "err", err)
 
@@ -238,14 +200,14 @@ class CaptureFixture:
     def close(self):
         cap = self.__dict__.pop("_capture", None)
         if cap is not None:
-            cap.pop_outerr_to_orig()
+            self._outerr = cap.pop_outerr_to_orig()
             cap.stop_capturing()
 
     def readouterr(self):
         try:
             return self._capture.readouterr()
         except AttributeError:
-            return "", ""
+            return self._outerr
 
 
 def safe_text_dupfile(f, mode, default_encoding="UTF8"):
@@ -311,18 +273,25 @@ class MultiCapture(object):
             self.out.writeorg(out)
         if err:
             self.err.writeorg(err)
+        return out, err
 
-    def suspend_capturing(self):
+    def suspend_capturing(self, in_=False):
         if self.out:
             self.out.suspend()
         if self.err:
             self.err.suspend()
+        if in_ and self.in_:
+            self.in_.suspend()
+            self._in_suspended = True
 
     def resume_capturing(self):
         if self.out:
             self.out.resume()
         if self.err:
             self.err.resume()
+        if hasattr(self, "_in_suspended"):
+            self.in_.resume()
+            del self._in_suspended
 
     def stop_capturing(self):
         """ stop capturing and reset capturing streams """
@@ -393,7 +362,8 @@ class FDCapture:
                 res = py.builtin._totext(res, enc, "replace")
             f.truncate(0)
             f.seek(0)
-        return res
+            return res
+        return ''
 
     def done(self):
         """ stop capturing, restore streams, return original capture file,

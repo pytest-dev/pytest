@@ -53,79 +53,54 @@ def StdCapture(out=True, err=True, in_=True):
 
 
 class TestCaptureManager:
-    def test_getmethod_default_no_fd(self, testdir, monkeypatch):
-        config = testdir.parseconfig(testdir.tmpdir)
-        assert config.getvalue("capture") is None
-        capman = CaptureManager()
+    def test_getmethod_default_no_fd(self, monkeypatch):
+        from _pytest.capture import pytest_addoption
+        from _pytest.config import Parser
+        parser = Parser()
+        pytest_addoption(parser)
+        default = parser._groups[0].options[0].default
+        assert default == "fd" if hasattr(os, "dup") else "sys"
+        parser = Parser()
         monkeypatch.delattr(os, 'dup', raising=False)
-        try:
-            assert capman._getmethod(config, None) == "sys"
-        finally:
-            monkeypatch.undo()
-
-    @pytest.mark.parametrize("mode", "no fd sys".split())
-    def test_configure_per_fspath(self, testdir, mode):
-        config = testdir.parseconfig(testdir.tmpdir)
-        capman = CaptureManager()
-        hasfd = hasattr(os, 'dup')
-        if hasfd:
-            assert capman._getmethod(config, None) == "fd"
-        else:
-            assert capman._getmethod(config, None) == "sys"
-
-        if not hasfd and mode == 'fd':
-            return
-        sub = testdir.tmpdir.mkdir("dir" + mode)
-        sub.ensure("__init__.py")
-        sub.join("conftest.py").write('option_capture = %r' % mode)
-        assert capman._getmethod(config, sub.join("test_hello.py")) == mode
+        pytest_addoption(parser)
+        assert parser._groups[0].options[0].default == "sys"
 
     @needsosdup
-    @pytest.mark.parametrize("method", ['no', 'fd', 'sys'])
+    @pytest.mark.parametrize("method", 
+        ['no', 'sys', pytest.mark.skipif('not hasattr(os, "dup")', 'fd')])
     def test_capturing_basic_api(self, method):
         capouter = StdCaptureFD()
         old = sys.stdout, sys.stderr, sys.stdin
         try:
-            capman = CaptureManager()
-            # call suspend without resume or start
-            outerr = capman.suspendcapture()
+            capman = CaptureManager(method)
+            capman.init_capturings()
             outerr = capman.suspendcapture()
             assert outerr == ("", "")
-            capman.resumecapture(method)
+            outerr = capman.suspendcapture()
+            assert outerr == ("", "")
             print ("hello")
             out, err = capman.suspendcapture()
             if method == "no":
                 assert old == (sys.stdout, sys.stderr, sys.stdin)
             else:
-                assert out == "hello\n"
-            capman.resumecapture(method)
+                assert not out
+            capman.resumecapture()
+            print ("hello")
             out, err = capman.suspendcapture()
-            assert not out and not err
+            if method != "no":
+                assert out == "hello\n"
             capman.reset_capturings()
         finally:
             capouter.stop_capturing()
 
     @needsosdup
-    def test_juggle_capturings(self, testdir):
+    def test_init_capturing(self):
         capouter = StdCaptureFD()
         try:
-            #config = testdir.parseconfig(testdir.tmpdir)
-            capman = CaptureManager()
-            try:
-                capman.resumecapture("fd")
-                pytest.raises(ValueError, 'capman.resumecapture("fd")')
-                pytest.raises(ValueError, 'capman.resumecapture("sys")')
-                os.write(1, "hello\n".encode('ascii'))
-                out, err = capman.suspendcapture()
-                assert out == "hello\n"
-                capman.resumecapture("sys")
-                os.write(1, "hello\n".encode('ascii'))
-                py.builtin.print_("world", file=sys.stderr)
-                out, err = capman.suspendcapture()
-                assert not out
-                assert err == "world\n"
-            finally:
-                capman.reset_capturings()
+            capman = CaptureManager("fd")
+            capman.init_capturings()
+            pytest.raises(AssertionError, "capman.init_capturings()")
+            capman.reset_capturings()
         finally:
             capouter.stop_capturing()
 
@@ -991,7 +966,7 @@ def test_close_and_capture_again(testdir):
         def test_close():
             os.close(1)
         def test_capture_again():
-            os.write(1, "hello\\n")
+            os.write(1, b"hello\\n")
             assert 0
     """)
     result = testdir.runpytest()
