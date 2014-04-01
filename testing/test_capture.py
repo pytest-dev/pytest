@@ -46,10 +46,10 @@ def oswritebytes(fd, obj):
 
 
 def StdCaptureFD(out=True, err=True, in_=True):
-    return capture.StdCaptureBase(out, err, in_, Capture=capture.FDCapture)
+    return capture.MultiCapture(out, err, in_, Capture=capture.FDCapture)
 
 def StdCapture(out=True, err=True, in_=True):
-    return capture.StdCaptureBase(out, err, in_, Capture=capture.SysCapture)
+    return capture.MultiCapture(out, err, in_, Capture=capture.SysCapture)
 
 
 class TestCaptureManager:
@@ -918,7 +918,7 @@ class TestStdCaptureFDinvalidFD:
             import os
             from _pytest import capture
             def StdCaptureFD(out=True, err=True, in_=True):
-                return capture.StdCaptureBase(out, err, in_,
+                return capture.MultiCapture(out, err, in_,
                                               Capture=capture.FDCapture)
             def test_stdout():
                 os.close(1)
@@ -958,6 +958,25 @@ def test_fdcapture_tmpfile_remains_the_same(tmpfile, use):
     capfile2 = cap.err.tmpfile
     assert capfile2 == capfile
 
+@needsosdup
+def test_close_and_capture_again(testdir):
+    testdir.makepyfile("""
+        import os
+        def test_close():
+            os.close(1)
+        def test_capture_again():
+            os.write(1, "hello\\n")
+            assert 0
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines("""
+        *test_capture_again*
+        *assert 0*
+        *stdout*
+        *hello*
+    """)
+
+
 
 @pytest.mark.parametrize('method', ['SysCapture', 'FDCapture'])
 def test_capturing_and_logging_fundamentals(testdir, method):
@@ -968,7 +987,7 @@ def test_capturing_and_logging_fundamentals(testdir, method):
         import sys, os
         import py, logging
         from _pytest import capture
-        cap = capture.StdCaptureBase(out=False, in_=False,
+        cap = capture.MultiCapture(out=False, in_=False,
                                      Capture=capture.%s)
         cap.start_capturing()
 

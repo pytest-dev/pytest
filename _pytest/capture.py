@@ -81,11 +81,11 @@ class CaptureManager:
 
     def _getcapture(self, method):
         if method == "fd":
-            return StdCaptureBase(out=True, err=True, Capture=FDCapture)
+            return MultiCapture(out=True, err=True, Capture=FDCapture)
         elif method == "sys":
-            return StdCaptureBase(out=True, err=True, Capture=SysCapture)
+            return MultiCapture(out=True, err=True, Capture=SysCapture)
         elif method == "no":
-            return StdCaptureBase(out=False, err=False, in_=False)
+            return MultiCapture(out=False, err=False, in_=False)
         else:
             raise ValueError("unknown capturing method: %r" % method)
 
@@ -235,7 +235,7 @@ class CaptureFixture:
         self.captureclass = captureclass
 
     def _start(self):
-        self._capture = StdCaptureBase(out=True, err=True, in_=False,
+        self._capture = MultiCapture(out=True, err=True, in_=False,
                                        Capture=self.captureclass)
         self._capture.start_capturing()
 
@@ -289,7 +289,7 @@ class EncodedFile(object):
         return getattr(self.buffer, name)
 
 
-class StdCaptureBase(object):
+class MultiCapture(object):
     out = err = in_ = None
 
     def __init__(self, out=True, err=True, in_=True, Capture=None):
