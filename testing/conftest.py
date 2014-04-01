@@ -38,7 +38,8 @@ def pytest_addoption(parser):
            action="store_true", dest="lsof", default=False,
            help=("run FD checks if lsof is available"))
 
-def pytest_configure(config):
+def pytest_runtest_setup(item):
+    config = item.config
     config._basedir = py.path.local()
     if config.getvalue("lsof"):
         try:
@@ -46,17 +47,9 @@ def pytest_configure(config):
             config._openfiles = config._fd_leak_checker.get_open_files()
         except py.process.cmdexec.Error:
             pass
-        else:
-            config._numfiles = len(config._openfiles)
 
 #def pytest_report_header():
 #    return "pid: %s" % os.getpid()
-
-def getopenfiles(out):
-    def isopen(line):
-        return ("REG" in line or "CHR" in line) and (
-            "deleted" not in line and 'mem' not in line and "txt" not in line)
-    return [x for x in out.split("\n") if isopen(x)]
 
 def check_open_files(config):
     lines2 = config._fd_leak_checker.get_open_files()
@@ -71,13 +64,11 @@ def check_open_files(config):
         error.append("*** After:")
         error.extend([str(f) for f in lines2])
         error.append(error[0])
-        # update numfile so that the overall test run continuess
-        config._numfiles = len(lines2)
         raise AssertionError("\n".join(error))
 
 def pytest_runtest_teardown(item, __multicall__):
     item.config._basedir.chdir()
-    if hasattr(item.config, '_numfiles'):
+    if hasattr(item.config, '_openfiles'):
         x = __multicall__.execute()
         check_open_files(item.config)
         return x
