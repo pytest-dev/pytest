@@ -726,15 +726,11 @@ class TestFDCapture:
         assert s == "hello\n"
 
     def test_stdin(self, tmpfile):
-        tmpfile.write(tobytes("3"))
-        tmpfile.seek(0)
-        cap = capture.FDCapture(0, tmpfile)
+        cap = capture.FDCapture(0)
         cap.start()
-        # check with os.read() directly instead of raw_input(), because
-        # sys.stdin itself may be redirected (as pytest now does by default)
         x = os.read(0, 100).strip()
         cap.done()
-        assert x == tobytes("3")
+        assert x == tobytes('')
 
     def test_writeorg(self, tmpfile):
         data1, data2 = tobytes("foo"), tobytes("bar")
@@ -751,7 +747,37 @@ class TestFDCapture:
         stmp = open(tmpfile.name, 'rb').read()
         assert stmp == data2
 
+    def test_simple_resume_suspend(self, tmpfile):
+        with saved_fd(1):
+            cap = capture.FDCapture(1)
+            cap.start()
+            data = tobytes("hello")
+            os.write(1, data)
+            sys.stdout.write("whatever")
+            s = cap.snap()
+            assert s == "hellowhatever"
+            cap.suspend()
+            os.write(1, tobytes("world"))
+            sys.stdout.write("qlwkej")
+            assert not cap.snap()
+            cap.resume()
+            os.write(1, tobytes("but now"))
+            sys.stdout.write(" yes\n")
+            s = cap.snap()
+            assert s == "but now yes\n"
+            cap.suspend()
+            cap.done()
+            pytest.raises(AttributeError, cap.suspend)
 
+@contextlib.contextmanager
+def saved_fd(fd):
+    new_fd = os.dup(fd)
+    try:
+        yield
+    finally:
+        os.dup2(new_fd, fd)
+
+    
 class TestStdCapture:
     captureclass = staticmethod(StdCapture)
 
