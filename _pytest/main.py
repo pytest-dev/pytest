@@ -98,6 +98,7 @@ def wrap_session(config, doit):
             if session._testsfailed:
                 session.exitstatus = EXIT_TESTSFAILED
     finally:
+        excinfo = None  # Explicitly break reference cycle.
         session.startdir.chdir()
         if initstate >= 2:
             config.hook.pytest_sessionfinish(

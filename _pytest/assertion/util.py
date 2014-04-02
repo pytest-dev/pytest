@@ -149,11 +149,10 @@ def assertrepr_compare(config, op, left, right):
             if istext(left) and istext(right):
                 explanation = _notin_text(left, right, verbose)
     except Exception:
-        excinfo = py.code.ExceptionInfo()
         explanation = [
             u('(pytest_assertion plugin: representation of details failed.  '
               'Probably an object has a faulty __repr__.)'),
-            u(excinfo)]
+            u(py.code.ExceptionInfo())]
 
     if not explanation:
         return None

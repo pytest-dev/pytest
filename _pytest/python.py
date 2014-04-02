@@ -456,8 +456,8 @@ class Module(pytest.File, PyCollector):
         try:
             mod = self.fspath.pyimport(ensuresyspath=True)
         except SyntaxError:
-            excinfo = py.code.ExceptionInfo()
-            raise self.CollectError(excinfo.getrepr(style="short"))
+            raise self.CollectError(
+                py.code.ExceptionInfo().getrepr(style="short"))
         except self.fspath.ImportMismatchError:
             e = sys.exc_info()[1]
             raise self.CollectError(
