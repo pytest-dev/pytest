@@ -6,20 +6,32 @@ import sys
 from _pytest.monkeypatch import monkeypatch
 from _pytest.assertion import util
 
+
 def pytest_addoption(parser):
     group = parser.getgroup("debugconfig")
-    group.addoption('--assert', action="store", dest="assertmode",
+    group.addoption('--assert',
+                    action="store",
+                    dest="assertmode",
                     choices=("rewrite", "reinterp", "plain",),
-                    default="rewrite", metavar="MODE",
-                    help="""control assertion debugging tools.
-'plain' performs no assertion debugging.
-'reinterp' reinterprets assert statements after they failed to provide assertion expression information.
-'rewrite' (the default) rewrites assert statements in test modules on import
-to provide assert expression information. """)
-    group.addoption('--no-assert', action="store_true", default=False,
-        dest="noassert", help="DEPRECATED equivalent to --assert=plain")
-    group.addoption('--nomagic', '--no-magic', action="store_true",
-        default=False, help="DEPRECATED equivalent to --assert=plain")
+                    default="rewrite",
+                    metavar="MODE",
+                    help="""control assertion debugging tools.  'plain'
+                            performs no assertion debugging.  'reinterp'
+                            reinterprets assert statements after they failed
+                            to provide assertion expression information.
+                            'rewrite' (the default) rewrites assert
+                            statements in test modules on import to
+                            provide assert expression information. """)
+    group.addoption('--no-assert',
+                    action="store_true",
+                    default=False,
+                    dest="noassert",
+                    help="DEPRECATED equivalent to --assert=plain")
+    group.addoption('--nomagic', '--no-magic',
+                    action="store_true",
+                    default=False,
+                    help="DEPRECATED equivalent to --assert=plain")
+
 
 class AssertionState:
     """State for the assertion plugin."""
@@ -27,6 +39,7 @@ class AssertionState:
     def __init__(self, config, mode):
         self.mode = mode
         self.trace = config.trace.root.get("assertion")
+
 
 def pytest_configure(config):
     mode = config.getvalue("assertmode")
@@ -41,7 +54,7 @@ def pytest_configure(config):
             # Both Jython and CPython 2.6.0 have AST bugs that make the
             # assertion rewriting hook malfunction.
             if (sys.platform.startswith('java') or
-                sys.version_info[:3] == (2, 6, 0)):
+                    sys.version_info[:3] == (2, 6, 0)):
                 mode = "reinterp"
     if mode != "plain":
         _load_modules(mode)
@@ -58,10 +71,12 @@ def pytest_configure(config):
     config._assertstate.hook = hook
     config._assertstate.trace("configured with mode set to %r" % (mode,))
 
+
 def pytest_unconfigure(config):
     hook = config._assertstate.hook
     if hook is not None and hook in sys.meta_path:
         sys.meta_path.remove(hook)
+
 
 def pytest_collection(session):
     # this hook is only called when test modules are collected
@@ -71,11 +86,11 @@ def pytest_collection(session):
     if hook is not None:
         hook.set_session(session)
 
+
 def pytest_runtest_setup(item):
     def callbinrepr(op, left, right):
         hook_result = item.ihook.pytest_assertrepr_compare(
             config=item.config, op=op, left=left, right=right)
-
         for new_expl in hook_result:
             if new_expl:
                 # Don't include pageloads of data unless we are very
@@ -84,7 +99,7 @@ def pytest_runtest_setup(item):
                         and item.config.option.verbose < 2):
                     new_expl[1:] = [py.builtin._totext(
                         'Detailed information truncated, use "-vv" to show')]
-                res = py.builtin._totext('\n~').join(new_expl)
+                res = py.builtin._totext("\n~").join(new_expl)
                 if item.config.getvalue("assertmode") == "rewrite":
                     # The result will be fed back a python % formatting
                     # operation, which will fail if there are extraneous
@@ -93,13 +108,16 @@ def pytest_runtest_setup(item):
                 return res
     util._reprcompare = callbinrepr
 
+
 def pytest_runtest_teardown(item):
     util._reprcompare = None
+
 
 def pytest_sessionfinish(session):
     hook = session.config._assertstate.hook
     if hook is not None:
         hook.session = None
+
 
 def _load_modules(mode):
     """Lazily import assertion related code."""
@@ -107,6 +125,7 @@ def _load_modules(mode):
     from _pytest.assertion import reinterpret  # noqa
     if mode == "rewrite":
         from _pytest.assertion import rewrite  # noqa
+
 
 def warn_about_missing_assertion(mode):
     try:
@@ -121,8 +140,9 @@ def warn_about_missing_assertion(mode):
             specifically = "failing tests may report as passing"
 
         sys.stderr.write("WARNING: " + specifically +
-                        " because assert statements are not executed "
-                        "by the underlying Python interpreter "
-                        "(are you using python -O?)\n")
+                         " because assert statements are not executed "
+                         "by the underlying Python interpreter "
+                         "(are you using python -O?)\n")
+
 
 pytest_assertrepr_compare = util.assertrepr_compare
