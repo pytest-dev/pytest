@@ -1,6 +1,9 @@
 NEXT (2.6)
 -----------------------------------
 
+- fix issue453: the result of the pytest_assertrepr_compare hook now gets
+  it's newlines escaped so that format_exception does not blow up.
+
 - internal new warning system: pytest will now produce warnings when
   it detects oddities in your test collection or execution.  
   Warnings are ultimately sent to a new pytest_logwarning hook which is
