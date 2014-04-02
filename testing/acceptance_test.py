@@ -124,6 +124,18 @@ class TestGeneralUsage:
             "*ERROR: not found:*%s" %(p2.basename,)
         ])
 
+    def test_issue486_better_reporting_on_conftest_load_failure(self, testdir):
+        testdir.makepyfile("")
+        testdir.makeconftest("import qwerty")
+        result = testdir.runpytest("--help")
+        result.stdout.fnmatch_lines("""
+            *--version*
+            *warning*conftest.py*
+        """)
+        result = testdir.runpytest()
+        result.stderr.fnmatch_lines("""
+            *ERROR*could not load*conftest.py*
+        """)
 
 
     def test_early_skip(self, testdir):

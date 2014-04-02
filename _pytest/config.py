@@ -7,6 +7,13 @@ from _pytest import hookspec # the extension point definitions
 from _pytest.core import PluginManager
 
 # pytest startup
+#
+class ConftestImportFailure(Exception):
+    def __init__(self, path, excinfo):
+        Exception.__init__(self, path, excinfo)
+        self.path = path
+        self.excinfo = excinfo
+
 
 def main(args=None, plugins=None):
     """ return exit code, after performing an in-process test run.
@@ -16,8 +23,17 @@ def main(args=None, plugins=None):
     :arg plugins: list of plugin objects to be auto-registered during
                   initialization.
     """
-    config = _prepareconfig(args, plugins)
-    return config.hook.pytest_cmdline_main(config=config)
+    try:
+        config = _prepareconfig(args, plugins)
+    except ConftestImportFailure:
+        e = sys.exc_info()[1]
+        tw = py.io.TerminalWriter(sys.stderr)
+        for line in py.std.traceback.format_exception(*e.excinfo):
+            tw.line(line.rstrip(), red=True)
+        tw.line("ERROR: could not load %s\n" % (e.path), red=True)
+        return 4
+    else:
+        return config.hook.pytest_cmdline_main(config=config)
 
 class cmdline:  # compatibility namespace
     main = staticmethod(main)
@@ -86,8 +102,7 @@ class PytestPluginManager(PluginManager):
         config.addinivalue_line("markers",
             "trylast: mark a hook implementation function such that the "
             "plugin machinery will try to call it last/as late as possible.")
-        while self._warnings:
-            warning = self._warnings.pop(0)
+        for warning in self._warnings:
             config.warn(code="I1", message=warning)
 
 
@@ -496,7 +511,8 @@ class Conftest(object):
                     continue
                 conftestpath = parent.join("conftest.py")
                 if conftestpath.check(file=1):
-                    clist.append(self.importconftest(conftestpath))
+                    mod = self.importconftest(conftestpath)
+                    clist.append(mod)
             self._path2confmods[path] = clist
         return clist
 
@@ -522,7 +538,11 @@ class Conftest(object):
             pkgpath = conftestpath.pypkgpath()
             if pkgpath is None:
                 _ensure_removed_sysmodule(conftestpath.purebasename)
-            self._conftestpath2mod[conftestpath] = mod = conftestpath.pyimport()
+            try:
+                mod = conftestpath.pyimport()
+            except Exception:
+                raise ConftestImportFailure(conftestpath, sys.exc_info())
+            self._conftestpath2mod[conftestpath] = mod
             dirpath = conftestpath.dirpath()
             if dirpath in self._path2confmods:
                 for path, mods in self._path2confmods.items():
@@ -682,9 +702,19 @@ class Config(object):
         self.pluginmanager.consider_preparse(args)
         self.pluginmanager.consider_setuptools_entrypoints()
         self.pluginmanager.consider_env()
-        self.known_args_namespace = self._parser.parse_known_args(args)
-        self.hook.pytest_load_initial_conftests(early_config=self,
-            args=args, parser=self._parser)
+        self.known_args_namespace = ns = self._parser.parse_known_args(args)
+        try:
+            self.hook.pytest_load_initial_conftests(early_config=self,
+                    args=args, parser=self._parser)
+        except ConftestImportFailure:
+            e = sys.exc_info()[1]
+            if ns.help or ns.version:
+                # we don't want to prevent --help/--version to work 
+                # so just let is pass and print a warning at the end
+                self.pluginmanager._warnings.append(
+                        "could not load initial conftests (%s)\n" % e.path)
+            else:
+                raise
 
     def _checkversion(self):
         import pytest

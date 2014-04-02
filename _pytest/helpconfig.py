@@ -86,17 +86,9 @@ def showhelp(config):
     tw.line("(shown according to specified file_or_dir or current dir "
             "if not specified)")
     for warning in config.pluginmanager._warnings:
-        tw.line("warning: %s" % (warning,))
+        tw.line("warning: %s" % (warning,), red=True)
     return
 
-    tw.line("conftest.py options:")
-    tw.line()
-    conftestitems = sorted(config._parser._conftestdict.items())
-    for name, help in conftest_options + conftestitems:
-        line = "   %-15s  %s" %(name, help)
-        tw.line(line[:tw.fullwidth])
-    tw.line()
-    #tw.sep( "=")
 
 conftest_options = [
     ('pytest_plugins', 'list of plugin names to load'),
