@@ -1017,7 +1017,7 @@ def test_close_and_capture_again(testdir):
         def test_close():
             os.close(1)
         def test_capture_again():
-            os.write(1, "hello\\n")
+            os.write(1, b"hello\\n")
             assert 0
     """)
     result = testdir.runpytest()
