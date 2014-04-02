@@ -4,6 +4,7 @@ import sys
 import py, pytest
 import _pytest.assertion as plugin
 from _pytest.assertion import reinterpret
+from _pytest.assertion import util
 needsnewassert = pytest.mark.skipif("sys.version_info < (2,6)")
 
 
@@ -197,6 +198,21 @@ class TestAssert_reprcompare:
             assert isinstance(line, py.builtin.text)
         msg = py.builtin._totext('\n').join(expl)
         assert msg
+
+
+class TestFormatExplanation:
+
+    def test_speical_chars_full(self, testdir):
+        # Issue 453, for the bug this would raise IndexError
+        testdir.makepyfile("""
+            def test_foo():
+                assert u'\\n}' == u''
+        """)
+        result = testdir.runpytest()
+        assert result.ret == 1
+        result.stdout.fnmatch_lines([
+            "*AssertionError*",
+        ])
 
 
 def test_python25_compile_issue257(testdir):

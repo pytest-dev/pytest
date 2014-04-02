@@ -88,22 +88,38 @@ def pytest_collection(session):
 
 
 def pytest_runtest_setup(item):
+    """Setup the pytest_assertrepr_compare hook
+
+    The newinterpret and rewrite modules will use util._reprcompare if
+    it exists to use custom reporting via the
+    pytest_assertrepr_compare hook.  This sets up this custom
+    comparison for the test.
+    """
     def callbinrepr(op, left, right):
+        """Call the pytest_assertrepr_compare hook and prepare the result
+
+        This uses the first result from the hook and then ensures the
+        following:
+        * Overly verbose explanations are dropped unles -vv was used.
+        * Embedded newlines are escaped to help util.format_explanation()
+          later.
+        * If the rewrite mode is used embedded %-characters are replaced
+          to protect later % formatting.
+
+        The result can be formatted by util.format_explanation() for
+        pretty printing.
+        """
         hook_result = item.ihook.pytest_assertrepr_compare(
             config=item.config, op=op, left=left, right=right)
         for new_expl in hook_result:
             if new_expl:
-                # Don't include pageloads of data unless we are very
-                # verbose (-vv)
                 if (sum(len(p) for p in new_expl[1:]) > 80*8
                         and item.config.option.verbose < 2):
                     new_expl[1:] = [py.builtin._totext(
                         'Detailed information truncated, use "-vv" to show')]
+                new_expl = [line.replace("\n", "\\n") for line in new_expl]
                 res = py.builtin._totext("\n~").join(new_expl)
                 if item.config.getvalue("assertmode") == "rewrite":
-                    # The result will be fed back a python % formatting
-                    # operation, which will fail if there are extraneous
-                    # '%'s in the string. Escape them here.
                     res = res.replace("%", "%%")
                 return res
     util._reprcompare = callbinrepr
@@ -145,4 +161,5 @@ def warn_about_missing_assertion(mode):
                          "(are you using python -O?)\n")
 
 
+# Expose this plugin's implementation for the pytest_assertrepr_compare hook
 pytest_assertrepr_compare = util.assertrepr_compare
