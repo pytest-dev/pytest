@@ -709,13 +709,11 @@ class TestFDCapture:
 
     def test_writeorg(self, tmpfile):
         data1, data2 = tobytes("foo"), tobytes("bar")
-        try:
-            cap = capture.FDCapture(tmpfile.fileno())
-            cap.start()
-            tmpfile.write(data1)
-            cap.writeorg(data2)
-        finally:
-            tmpfile.close()
+        cap = capture.FDCapture(tmpfile.fileno())
+        cap.start()
+        tmpfile.write(data1)
+        tmpfile.flush()
+        cap.writeorg(data2)
         scap = cap.snap()
         cap.done()
         assert scap == totext(data1)
