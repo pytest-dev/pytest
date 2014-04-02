@@ -449,38 +449,27 @@ class Conftest(object):
     """ the single place for accessing values and interacting
         towards conftest modules from pytest objects.
     """
-    def __init__(self, onimport=None, confcutdir=None):
+    def __init__(self, onimport=None):
         self._path2confmods = {}
         self._onimport = onimport
         self._conftestpath2mod = {}
-        self._confcutdir = confcutdir
+        self._confcutdir = None
 
-    def setinitial(self, args):
-        """ try to find a first anchor path for looking up global values
-            from conftests. This function is usually called _before_
-            argument parsing.  conftest files may add command line options
-            and we thus have no completely safe way of determining
-            which parts of the arguments are actually related to options
-            and which are file system paths.  We just try here to get
-            bootstrapped ...
+    def setinitial(self, namespace):
+        """ load initial conftest files given a preparsed "namespace".
+            As conftest files may add their own command line options
+            which have arguments ('--my-opt somepath') we might get some
+            false positives.  All builtin and 3rd party plugins will have
+            been loaded, however, so common options will not confuse our logic
+            here.
         """
         current = py.path.local()
-        opt = '--confcutdir'
-        for i in range(len(args)):
-            opt1 = str(args[i])
-            if opt1.startswith(opt):
-                if opt1 == opt:
-                    if len(args) > i:
-                        p = current.join(args[i+1], abs=True)
-                elif opt1.startswith(opt + "="):
-                    p = current.join(opt1[len(opt)+1:], abs=1)
-                self._confcutdir = p
-                break
+        self._confcutdir = current.join(namespace.confcutdir, abs=True) \
+                                if namespace.confcutdir else None
+        testpaths = namespace.file_or_dir
         foundanchor = False
-        for arg in args:
-            if hasattr(arg, 'startswith') and arg.startswith("--"):
-                continue
-            anchor = current.join(arg, abs=1)
+        for path in testpaths:
+            anchor = current.join(path, abs=1)
             if exists(anchor): # we found some file object
                 self._try_load_conftest(anchor)
                 foundanchor = True
@@ -676,8 +665,8 @@ class Config(object):
         plugins += self._conftest.getconftestmodules(fspath)
         return plugins
 
-    def pytest_load_initial_conftests(self, parser, args):
-        self._conftest.setinitial(args)
+    def pytest_load_initial_conftests(self, early_config):
+        self._conftest.setinitial(early_config.known_args_namespace)
     pytest_load_initial_conftests.trylast = True
 
     def _initini(self, args):
@@ -693,6 +682,7 @@ class Config(object):
         self.pluginmanager.consider_preparse(args)
         self.pluginmanager.consider_setuptools_entrypoints()
         self.pluginmanager.consider_env()
+        self.known_args_namespace = self._parser.parse_known_args(args)
         self.hook.pytest_load_initial_conftests(early_config=self,
             args=args, parser=self._parser)
 
@@ -710,7 +700,6 @@ class Config(object):
 
     def parse(self, args):
         # parse given cmdline arguments into this config object.
-        # Note that this can only be called once per testing process.
         assert not hasattr(self, 'args'), (
                 "can only parse cmdline args at most once per Config object")
         self._origargs = args

@@ -11,6 +11,11 @@ NEXT (2.6)
 - change skips into warnings for test classes with an __init__ and
   callables in test modules which look like a test but are not functions.
 
+- fix issue436: improved finding of initial conftest files from command
+  line arguments by using the result of parse_known_args rather than
+  the previous flaky heuristics.  Thanks Marc Abramowitz for tests
+  and initial fixing approaches in this area.
+
 - fix issue #479: properly handle nose/unittest(2) SkipTest exceptions
   during collection/loading of test modules.  Thanks to Marc Schlaich
   for the complete PR.

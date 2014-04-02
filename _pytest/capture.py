@@ -31,7 +31,7 @@ def pytest_addoption(parser):
 
 @pytest.mark.tryfirst
 def pytest_load_initial_conftests(early_config, parser, args, __multicall__):
-    ns = parser.parse_known_args(args)
+    ns = early_config.known_args_namespace
     pluginmanager = early_config.pluginmanager
     if ns.capture == "no":
         return

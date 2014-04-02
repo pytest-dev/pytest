@@ -148,7 +148,7 @@ class TestConfigAPI:
         assert config.getvalue('x') == 1
         config.option.x = 2
         assert config.getvalue('x') == 2
-        config = testdir.parseconfig([str(o)])
+        config = testdir.parseconfig(str(o))
         assert config.getvalue('x') == 1
 
     def test_getconftest_pathlist(self, testdir, tmpdir):
