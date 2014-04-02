@@ -89,20 +89,6 @@ class TestConfigAPI:
         assert len(l) == 1
         assert l[0] == "hello [config]\n"
 
-    def test_config_getvalue_honours_conftest(self, testdir):
-        testdir.makepyfile(conftest="x=1")
-        testdir.mkdir("sub").join("conftest.py").write("x=2 ; y = 3")
-        config = testdir.parseconfig()
-        o = testdir.tmpdir
-        assert config.getvalue("x") == 1
-        assert config.getvalue("x", o.join('sub')) == 2
-        pytest.raises(KeyError, "config.getvalue('y')")
-        config = testdir.parseconfigure(str(o.join('sub')))
-        assert config.getvalue("x") == 2
-        assert config.getvalue("y") == 3
-        assert config.getvalue("x", o) == 1
-        pytest.raises(KeyError, 'config.getvalue("y", o)')
-
     def test_config_getoption(self, testdir):
         testdir.makeconftest("""
             def pytest_addoption(parser):
@@ -130,34 +116,20 @@ class TestConfigAPI:
             "config.getvalueorskip('hello')")
         verbose = config.getvalueorskip("verbose")
         assert verbose == config.option.verbose
-        config.option.hello = None
-        try:
-            config.getvalueorskip('hello')
-        except KeyboardInterrupt:
-            raise
-        except:
-            excinfo = py.code.ExceptionInfo()
-        frame = excinfo.traceback[-2].frame
-        assert frame.code.name == "getvalueorskip"
-        assert frame.eval("__tracebackhide__")
 
-    def test_config_overwrite(self, testdir):
-        o = testdir.tmpdir
-        o.ensure("conftest.py").write("x=1")
-        config = testdir.parseconfig(str(o))
-        assert config.getvalue('x') == 1
-        config.option.x = 2
-        assert config.getvalue('x') == 2
-        config = testdir.parseconfig(str(o))
-        assert config.getvalue('x') == 1
+    def test_getoption(self, testdir):
+        config = testdir.parseconfig()
+        with pytest.raises(ValueError):
+            config.getvalue('x')
+        assert config.getoption("x", 1) == 1
 
     def test_getconftest_pathlist(self, testdir, tmpdir):
         somepath = tmpdir.join("x", "y", "z")
         p = tmpdir.join("conftest.py")
         p.write("pathlist = ['.', %r]" % str(somepath))
         config = testdir.parseconfigure(p)
-        assert config._getconftest_pathlist('notexist') is None
-        pl = config._getconftest_pathlist('pathlist')
+        assert config._getconftest_pathlist('notexist', path=tmpdir) is None
+        pl = config._getconftest_pathlist('pathlist', path=tmpdir)
         print(pl)
         assert len(pl) == 2
         assert pl[0] == tmpdir

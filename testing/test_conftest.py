@@ -1,22 +1,17 @@
 import py, pytest
 from _pytest.config import Conftest
 
-def pytest_generate_tests(metafunc):
-    if "basedir" in metafunc.fixturenames:
-        metafunc.addcall(param="global")
-        metafunc.addcall(param="inpackage")
 
-def pytest_funcarg__basedir(request):
-    def basedirmaker(request):
-        d = request.getfuncargvalue("tmpdir")
-        d.ensure("adir/conftest.py").write("a=1 ; Directory = 3")
-        d.ensure("adir/b/conftest.py").write("b=2 ; a = 1.5")
-        if request.param == "inpackage":
-            d.ensure("adir/__init__.py")
-            d.ensure("adir/b/__init__.py")
-        return d
-    return request.cached_setup(
-        lambda: basedirmaker(request), extrakey=request.param)
+@pytest.fixture(scope="module", params=["global", "inpackage"])
+def basedir(request):
+    from _pytest.tmpdir import tmpdir
+    tmpdir = tmpdir(request)
+    tmpdir.ensure("adir/conftest.py").write("a=1 ; Directory = 3")
+    tmpdir.ensure("adir/b/conftest.py").write("b=2 ; a = 1.5")
+    if request.param == "inpackage":
+        tmpdir.ensure("adir/__init__.py")
+        tmpdir.ensure("adir/b/__init__.py")
+    return tmpdir
 
 def ConftestWithSetinitial(path):
     conftest = Conftest()
@@ -33,17 +28,17 @@ def conftest_setinitial(conftest, args, confcutdir=None):
 class TestConftestValueAccessGlobal:
     def test_basic_init(self, basedir):
         conftest = Conftest()
-        conftest_setinitial(conftest, [basedir.join("adir")])
-        assert conftest.rget("a") == 1
+        p = basedir.join("adir")
+        assert conftest.rget_with_confmod("a", p)[1] == 1
 
     def test_onimport(self, basedir):
         l = []
         conftest = Conftest(onimport=l.append)
-        conftest_setinitial(conftest, [basedir.join("adir"),
-            '--confcutdir=%s' % basedir])
+        adir = basedir.join("adir")
+        conftest_setinitial(conftest, [adir], confcutdir=basedir)
         assert len(l) == 1
-        assert conftest.rget("a") == 1
-        assert conftest.rget("b", basedir.join("adir", "b")) == 2
+        assert conftest.rget_with_confmod("a", adir)[1] == 1
+        assert conftest.rget_with_confmod("b", adir.join("b"))[1] == 2
         assert len(l) == 2
 
     def test_immediate_initialiation_and_incremental_are_the_same(self, basedir):
@@ -57,37 +52,16 @@ class TestConftestValueAccessGlobal:
         conftest.getconftestmodules(basedir.join('b'))
         assert len(conftest._path2confmods) == snap1 + 2
 
-    def test_default_has_lower_prio(self, basedir):
-        conftest = ConftestWithSetinitial(basedir.join("adir"))
-        assert conftest.rget('Directory') == 3
-        #assert conftest.lget('Directory') == pytest.Directory
-
     def test_value_access_not_existing(self, basedir):
         conftest = ConftestWithSetinitial(basedir)
-        pytest.raises(KeyError, lambda: conftest.rget('a'))
-        #pytest.raises(KeyError, "conftest.lget('a')")
+        with pytest.raises(KeyError):
+            conftest.rget_with_confmod('a', basedir)
 
     def test_value_access_by_path(self, basedir):
         conftest = ConftestWithSetinitial(basedir)
-        assert conftest.rget("a", basedir.join('adir')) == 1
-        #assert conftest.lget("a", basedir.join('adir')) == 1
-        assert conftest.rget("a", basedir.join('adir', 'b')) == 1.5
-        #assert conftest.lget("a", basedir.join('adir', 'b')) == 1
-        #assert conftest.lget("b", basedir.join('adir', 'b')) == 2
-        #assert pytest.raises(KeyError,
-        #    'conftest.lget("b", basedir.join("a"))'
-        #)
-
-    def test_value_access_with_init_one_conftest(self, basedir):
-        conftest = ConftestWithSetinitial(basedir.join('adir'))
-        assert conftest.rget("a") == 1
-        #assert conftest.lget("a") == 1
-
-    def test_value_access_with_init_two_conftests(self, basedir):
-        conftest = ConftestWithSetinitial(basedir.join("adir", "b"))
-        conftest.rget("a") == 1.5
-        #conftest.lget("a") == 1
-        #conftest.lget("b") == 1
+        adir = basedir.join("adir")
+        assert conftest.rget_with_confmod("a", adir)[1] == 1
+        assert conftest.rget_with_confmod("a", adir.join("b"))[1] == 1.5
 
     def test_value_access_with_confmod(self, basedir):
         startdir = basedir.join("adir", "b")
@@ -111,7 +85,7 @@ def test_doubledash_considered(testdir):
     conf.join("conftest.py").ensure()
     conftest = Conftest()
     conftest_setinitial(conftest, [conf.basename, conf.basename])
-    l = conftest.getconftestmodules(None)
+    l = conftest.getconftestmodules(conf)
     assert len(l) == 1
 
 def test_issue151_load_all_conftests(testdir):
