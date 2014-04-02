@@ -4,7 +4,6 @@ from __future__ import with_statement
 import os
 import sys
 import py
-import tempfile
 import pytest
 import contextlib
 
