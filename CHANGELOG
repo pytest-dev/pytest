@@ -48,6 +48,9 @@ NEXT (2.6)
 - fix issue493: don't run tests in doc directory with ``python setup.py test`` 
   (use tox -e doctesting for that)
 
+- fix issue486: better reporting and handling of early conftest loading failures
+
+
 2.5.2
 -----------------------------------
 
