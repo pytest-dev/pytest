@@ -719,8 +719,9 @@ class TestFDCapture:
         scap = cap.snap()
         cap.done()
         assert scap == totext(data1)
-        stmp = open(tmpfile.name, 'rb').read()
-        assert stmp == data2
+        with open(tmpfile.name, 'rb') as stmp_file:
+            stmp = stmp_file.read()
+            assert stmp == data2
 
     def test_simple_resume_suspend(self, tmpfile):
         with saved_fd(1):
