@@ -857,7 +857,7 @@ class TestStdCapture:
 
     def test_stdin_restored(self):
         old = sys.stdin
-        with self.getcapture(in_=True) as cap:
+        with self.getcapture(in_=True):
             newstdin = sys.stdin
         assert newstdin != sys.stdin
         assert sys.stdin is old
@@ -866,7 +866,7 @@ class TestStdCapture:
         print ("XXX this test may well hang instead of crashing")
         print ("XXX which indicates an error in the underlying capturing")
         print ("XXX mechanisms")
-        with self.getcapture() as cap:
+        with self.getcapture():
             pytest.raises(IOError, "sys.stdin.read()")
 
 
