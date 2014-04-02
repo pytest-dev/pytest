@@ -123,7 +123,7 @@ def obtain_plugins_table(plugins, client):
         image_url = url.format(**common_params)
         image_url += '?py={py}&pytest={pytest}'
         row = (
-            ColumnData(package_name, release_data['package_url']),
+            ColumnData(package_name + "-" + version, release_data['package_url']),
             ColumnData(image_url.format(py='py27', pytest=pytest_version),
                        None),
             ColumnData(image_url.format(py='py33', pytest=pytest_version),
@@ -170,6 +170,7 @@ def obtain_override_repositories():
     return {
         'pytest-blockage': 'https://github.com/rob-b/pytest-blockage',
         'pytest-konira': 'http://github.com/alfredodeza/pytest-konira',
+        'pytest-sugar': 'https://github.com/Frozenball/pytest-sugar',
     }
 
 
