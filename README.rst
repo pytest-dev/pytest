@@ -5,6 +5,8 @@ Changelog: http://pytest.org/latest/changelog.html
 
 Issues: https://bitbucket.org/hpk42/pytest/issues?status=open
 
+CI: https://drone.io/bitbucket.org/hpk42/pytest
+
 The ``pytest`` testing tool makes it easy to write small tests, yet
 scales to support complex functional testing.  It provides
 
