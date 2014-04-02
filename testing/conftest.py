@@ -57,7 +57,7 @@ def check_open_files(config):
     open_files = [t for t in lines2 if t[0] in new_fds]
     if open_files:
         error = []
-        error.append("***** %s FD leackage detected" % len(open_files))
+        error.append("***** %s FD leakage detected" % len(open_files))
         error.extend([str(f) for f in open_files])
         error.append("*** Before:")
         error.extend([str(f) for f in config._openfiles])

@@ -32,6 +32,9 @@ NEXT (2.6)
   against tests or setups changing FD1/FD2, also better integrated
   now with pytest.pdb() in single tests.
 
+- improvements to pytest's own test-suite leakage detection, courtesy of PRs
+  from Marc Abramowitz
+
 2.5.2
 -----------------------------------
 
