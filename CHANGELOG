@@ -40,7 +40,7 @@ NEXT (2.6)
 - improvements to pytest's own test-suite leakage detection, courtesy of PRs
   from Marc Abramowitz
 
-- fix issue492: avoid leak in test_writeorg
+- fix issue492: avoid leak in test_writeorg.  Thanks Marc Abramowitz.
 
 2.5.2
 -----------------------------------
