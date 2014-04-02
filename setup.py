@@ -75,7 +75,7 @@ class PyTest(Command):
         PPATH=[x for x in os.environ.get("PYTHONPATH", "").split(":") if x]
         PPATH.insert(0, os.getcwd())
         os.environ["PYTHONPATH"] = ":".join(PPATH)
-        errno = subprocess.call([sys.executable, 'pytest.py'])
+        errno = subprocess.call([sys.executable, 'pytest.py', '--ignore=doc'])
         raise SystemExit(errno)
 
 if __name__ == '__main__':

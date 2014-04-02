@@ -42,6 +42,9 @@ NEXT (2.6)
 
 - fix issue492: avoid leak in test_writeorg.  Thanks Marc Abramowitz.
 
+- fix issue493: don't run tests in doc directory with ``python setup.py test`` 
+  (use tox -e doctesting for that)
+
 2.5.2
 -----------------------------------
 
