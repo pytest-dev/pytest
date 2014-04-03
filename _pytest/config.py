@@ -492,7 +492,7 @@ class Conftest(object):
             self._try_load_conftest(current)
 
     def _try_load_conftest(self, anchor):
-        self._path2confmods[None] = self.getconftestmodules(anchor)
+        self.getconftestmodules(anchor)
         # let's also consider test* subdirs
         if anchor.check(dir=1):
             for x in anchor.listdir("test*"):
@@ -501,10 +501,8 @@ class Conftest(object):
 
     def getconftestmodules(self, path):
         try:
-            clist = self._path2confmods[path]
+            return self._path2confmods[path]
         except KeyError:
-            if path is None:
-                raise ValueError("missing default conftest.")
             clist = []
             for parent in path.parts():
                 if self._confcutdir and self._confcutdir.relto(parent):
@@ -514,16 +512,11 @@ class Conftest(object):
                     mod = self.importconftest(conftestpath)
                     clist.append(mod)
             self._path2confmods[path] = clist
-        return clist
+            return clist
 
-    def rget(self, name, path=None):
-        mod, value = self.rget_with_confmod(name, path)
-        return value
-
-    def rget_with_confmod(self, name, path=None):
+    def rget_with_confmod(self, name, path):
         modules = self.getconftestmodules(path)
-        modules.reverse()
-        for mod in modules:
+        for mod in reversed(modules):
             try:
                 return mod, getattr(mod, name)
             except AttributeError:
@@ -531,7 +524,6 @@ class Conftest(object):
         raise KeyError(name)
 
     def importconftest(self, conftestpath):
-        assert conftestpath.check(), conftestpath
         try:
             return self._conftestpath2mod[conftestpath]
         except KeyError:
@@ -549,13 +541,10 @@ class Conftest(object):
                     if path and path.relto(dirpath) or path == dirpath:
                         assert mod not in mods
                         mods.append(mod)
-            self._postimport(mod)
+            if self._onimport:
+                self._onimport(mod)
             return mod
 
-    def _postimport(self, mod):
-        if self._onimport:
-            self._onimport(mod)
-        return mod
 
 def _ensure_removed_sysmodule(modname):
     try:
@@ -570,6 +559,7 @@ class CmdOptions(object):
     def __repr__(self):
         return "<CmdOptions %r>" %(self.__dict__,)
 
+notset = object()
 FILE_OR_DIR = 'file_or_dir'
 class Config(object):
     """ access to configuration values, pluginmanager and plugin hooks.  """
@@ -787,7 +777,7 @@ class Config(object):
             assert type is None
             return value
 
-    def _getconftest_pathlist(self, name, path=None):
+    def _getconftest_pathlist(self, name, path):
         try:
             mod, relroots = self._conftest.rget_with_confmod(name, path)
         except KeyError:
@@ -801,47 +791,31 @@ class Config(object):
             l.append(relroot)
         return l
 
-    def _getconftest(self, name, path=None, check=False):
-        if check:
-            self._checkconftest(name)
-        return self._conftest.rget(name, path)
-
-    def getoption(self, name):
+    def getoption(self, name, default=notset, skip=False):
         """ return command line option value.
 
         :arg name: name of the option.  You may also specify
             the literal ``--OPT`` option instead of the "dest" option name.
+        :arg default: default value if no option of that name exists.
+        :arg skip: if True raise pytest.skip if not option exists.
         """
         name = self._opt2dest.get(name, name)
         try:
             return getattr(self.option, name)
         except AttributeError:
+            if default is not notset:
+                return default
+            if skip:
+                py.test.skip("no %r option found" %(name,))
             raise ValueError("no option named %r" % (name,))
 
     def getvalue(self, name, path=None):
-        """ return command line option value.
-
-        :arg name: name of the command line option
-
-        (deprecated) if we can't find the option also lookup
-        the name in a matching conftest file.
-        """
-        try:
-            return getattr(self.option, name)
-        except AttributeError:
-            return self._getconftest(name, path, check=False)
+        """ (deprecated, use getoption()) """
+        return self.getoption(name)
 
     def getvalueorskip(self, name, path=None):
-        """ (deprecated) return getvalue(name) or call
-        pytest.skip if no value exists. """
-        __tracebackhide__ = True
-        try:
-            val = self.getvalue(name, path)
-            if val is None:
-                raise KeyError(name)
-            return val
-        except KeyError:
-            py.test.skip("no %r value found" %(name,))
+        """ (deprecated, use getoption(skip=True)) """
+        return self.getoption(name, skip=True)
 
 def exists(path, ignore=EnvironmentError):
     try:

@@ -144,7 +144,7 @@ def pytest_ignore_collect(path, config):
     p = path.dirpath()
     ignore_paths = config._getconftest_pathlist("collect_ignore", path=p)
     ignore_paths = ignore_paths or []
-    excludeopt = config.getvalue("ignore")
+    excludeopt = config.getoption("ignore")
     if excludeopt:
         ignore_paths.extend([py.path.local(x) for x in excludeopt])
     return path in ignore_paths
