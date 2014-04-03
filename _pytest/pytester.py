@@ -246,8 +246,14 @@ class TmpTestdir:
         ret = None
         for name, value in items:
             p = self.tmpdir.join(name).new(ext=ext)
-            source = py.builtin._totext(py.code.Source(value)).strip()
-            content = source.encode("utf-8") # + "\n"
+            source = py.code.Source(value)
+            def my_totext(s, encoding="utf-8"):
+                if py.builtin._isbytes(s):
+                    s = py.builtin._totext(s, encoding=encoding)
+                return s
+            source_unicode = "\n".join([my_totext(line) for line in source.lines])
+            source = py.builtin._totext(source_unicode)
+            content = source.strip().encode("utf-8") # + "\n"
             #content = content.rstrip() + "\n"
             p.write(content, "wb")
             if ret is None:

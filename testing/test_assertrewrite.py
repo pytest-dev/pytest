@@ -458,28 +458,29 @@ class TestAssertionRewriteHookDetails(object):
 
     @pytest.mark.skipif("sys.version_info[0] >= 3")
     def test_detect_coding_cookie(self, testdir):
-        testdir.tmpdir.join("test_cookie.py").write("""# -*- coding: utf-8 -*-
-u"St\xc3\xa4d"
-def test_rewritten():
-    assert "@py_builtins" in globals()""", "wb")
+        testdir.makepyfile(test_cookie="""
+            # -*- coding: utf-8 -*-
+            u"St\xc3\xa4d"
+            def test_rewritten():
+                assert "@py_builtins" in globals()""")
         assert testdir.runpytest().ret == 0
 
     @pytest.mark.skipif("sys.version_info[0] >= 3")
     def test_detect_coding_cookie_second_line(self, testdir):
-        testdir.tmpdir.join("test_cookie.py").write("""#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-u"St\xc3\xa4d"
-def test_rewritten():
-    assert "@py_builtins" in globals()""", "wb")
+        testdir.makepyfile(test_cookie="""
+            # -*- coding: utf-8 -*-
+            u"St\xc3\xa4d"
+            def test_rewritten():
+                assert "@py_builtins" in globals()""")
         assert testdir.runpytest().ret == 0
 
     @pytest.mark.skipif("sys.version_info[0] >= 3")
     def test_detect_coding_cookie_crlf(self, testdir):
-        testdir.tmpdir.join("test_cookie.py").write("""#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-u"St\xc3\xa4d"
-def test_rewritten():
-    assert "@py_builtins" in globals()""".replace("\n", "\r\n"), "wb")
+        testdir.makepyfile(test_cookie="""
+            # -*- coding: utf-8 -*-
+            u"St\xc3\xa4d"
+            def test_rewritten():
+                assert "@py_builtins" in globals()""")
         assert testdir.runpytest().ret == 0
 
     def test_sys_meta_path_munged(self, testdir):
