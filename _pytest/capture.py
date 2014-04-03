@@ -172,7 +172,7 @@ def capsys(request):
 @pytest.fixture
 def capfd(request):
     """enables capturing of writes to file descriptors 1 and 2 and makes
-    captured output available via ``capsys.readouterr()`` method calls
+    captured output available via ``capfd.readouterr()`` method calls
     which return a ``(out, err)`` tuple.
     """
     if "capsys" in request._funcargs:
