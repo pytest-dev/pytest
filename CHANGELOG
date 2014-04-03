@@ -50,6 +50,11 @@ NEXT (2.6)
 
 - fix issue486: better reporting and handling of early conftest loading failures
 
+- some cleanup and simplification of internal conftest handling.
+
+- work a bit harder to break reference cycles when catching exceptions.
+  Thanks Jurko Gospodnetic.
+
 
 2.5.2
 -----------------------------------
