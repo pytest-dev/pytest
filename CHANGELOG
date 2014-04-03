@@ -55,6 +55,9 @@ NEXT (2.6)
 - work a bit harder to break reference cycles when catching exceptions.
   Thanks Jurko Gospodnetic.
 
+- fix issue443: fix skip examples to use proper comparison.  Thanks Alex
+  Groenholm.
+
 
 2.5.2
 -----------------------------------

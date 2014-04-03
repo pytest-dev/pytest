@@ -35,7 +35,7 @@ Here is an example of marking a test function to be skipped
 when run on a Python3.3 interpreter::
 
     import sys
-    @pytest.mark.skipif(sys.version_info >= (3,3),
+    @pytest.mark.skipif(sys.version_info < (3,3),
                         reason="requires python3.3")
     def test_function():
         ...
@@ -51,7 +51,7 @@ You can share skipif markers between modules.  Consider this test module::
     # content of test_mymodule.py
 
     import mymodule
-    minversion = pytest.mark.skipif(mymodule.__versioninfo__ >= (1,1),
+    minversion = pytest.mark.skipif(mymodule.__versioninfo__ < (1,1),
                                     reason="at least mymodule-1.1 required")
     @minversion
     def test_function():
