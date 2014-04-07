@@ -2087,6 +2087,35 @@ class TestErrors:
             "*1 error*",
         ])
 
+    def test_issue498_fixture_finalizer_failing(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture
+            def fix1(request):
+                def f():
+                    raise KeyError
+                request.addfinalizer(f) 
+                return object()
+
+            l = []
+            def test_1(fix1):
+                l.append(fix1)
+            def test_2(fix1):
+                l.append(fix1)
+            def test_3():
+                assert l[0] != l[1]
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines("""
+            *ERROR*teardown*test_1*
+            *KeyError*
+            *ERROR*teardown*test_2*
+            *KeyError*
+            *3 pass*2 error*
+        """)
+        
+
+
     def test_setupfunc_missing_funcarg(self, testdir):
         testdir.makepyfile("""
             import pytest
