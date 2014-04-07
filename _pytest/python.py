@@ -1778,13 +1778,15 @@ class FixtureDef:
         self._finalizer.append(finalizer)
 
     def finish(self):
-        while self._finalizer:
-            func = self._finalizer.pop()
-            func()
         try:
-            del self.cached_result
-        except AttributeError:
-            pass
+            while self._finalizer:
+                func = self._finalizer.pop()
+                func()
+        finally:
+            # even if finalization fails, we invalidate
+            # the cached fixture value
+            if hasattr(self, "cached_result"):
+                del self.cached_result
 
     def execute(self, request):
         # get required arguments and register our own finish()

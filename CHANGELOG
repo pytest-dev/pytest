@@ -1,6 +1,9 @@
 NEXT (2.6)
 -----------------------------------
 
+- fix issue498: if a fixture finalizer fails, make sure that 
+  the fixture is still invalidated.
+
 - fix issue453: the result of the pytest_assertrepr_compare hook now gets
   it's newlines escaped so that format_exception does not blow up.
 
