@@ -222,6 +222,8 @@ def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
             return Class(name, parent=collector)
     elif collector.funcnamefilter(name) and hasattr(obj, "__call__") and \
         getfixturemarker(obj) is None:
+        # mock seems to store unbound methods (issue473), let's normalize it
+        obj = getattr(obj, "__func__", obj)
         if not isfunction(obj):
             collector.warn(code="C2", message=
                 "cannot collect %r because it is not a function."

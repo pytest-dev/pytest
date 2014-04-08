@@ -164,6 +164,21 @@ class TestMockDecoration:
         names = [x.nodeid.split("::")[-1] for x in calls]
         assert names == ["test_one", "test_two", "test_three"]
 
+    def test_mock_double_patch_issue473(self, testdir):
+        testdir.makepyfile("""
+            from mock import patch
+            from pytest import mark
+
+            @patch('os.getcwd')
+            @patch('os.path')
+            @mark.slow
+            class TestSimple:
+                def test_simple_thing(self, mock_path, mock_getcwd):
+                    pass
+        """)
+        res = testdir.inline_run()
+        res.assertoutcome(passed=1)
+
 
 class TestReRunTests:
     def test_rerun(self, testdir):

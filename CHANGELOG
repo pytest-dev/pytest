@@ -1,6 +1,9 @@
 NEXT (2.6)
 -----------------------------------
 
+- fix issue473: work around mock putting an unbound method into a class
+  dict when double-patching.
+
 - fix issue498: if a fixture finalizer fails, make sure that 
   the fixture is still invalidated.
 
