@@ -225,6 +225,7 @@ class TestNoselikeTestAttribute:
                 pass
         """)
         reprec = testdir.inline_run()
+        assert not reprec.getfailedcollections()
         calls = reprec.getreports("pytest_runtest_logreport")
         assert not calls
         
@@ -233,7 +234,7 @@ class TestNoselikeTestAttribute:
             __test__ = True
             def test_func():
                 pass
-            test_hello.__test__ = False
+            test_func.__test__ = False
 
             class TestSome:
                 __test__ = False
@@ -241,6 +242,7 @@ class TestNoselikeTestAttribute:
                     pass
         """)
         reprec = testdir.inline_run()
+        assert not reprec.getfailedcollections()
         calls = reprec.getreports("pytest_runtest_logreport")
         assert not calls
 
@@ -256,6 +258,7 @@ class TestNoselikeTestAttribute:
                     pass
         """)
         reprec = testdir.inline_run()
+        assert not reprec.getfailedcollections()
         call = reprec.getcalls("pytest_collection_modifyitems")[0]
         assert len(call.items) == 1
         assert call.items[0].cls.__name__ == "TC"
