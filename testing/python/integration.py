@@ -164,7 +164,7 @@ class TestMockDecoration:
         names = [x.nodeid.split("::")[-1] for x in calls]
         assert names == ["test_one", "test_two", "test_three"]
 
-    def test_mock_and_mark_issue473(self, testdir):
+    def test_mock_double_patch_issue473(self, testdir):
         pytest.importorskip("mock", "1.0.1")
         testdir.makepyfile("""
             from mock import patch
@@ -172,7 +172,7 @@ class TestMockDecoration:
 
             @patch('os.getcwd')
             @patch('os.path')
-            #@mark.slow
+            @mark.slow
             class TestSimple:
                 def test_simple_thing(self, mock_path, mock_getcwd):
                     pass
