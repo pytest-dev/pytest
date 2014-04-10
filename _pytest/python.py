@@ -229,10 +229,11 @@ def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
                 "cannot collect %r because it is not a function."
                 % name, )
             return
-        if is_generator(obj):
-            return Generator(name, parent=collector)
-        else:
-            return list(collector._genfunctions(name, obj))
+        if getattr(obj, "__test__", True):
+            if is_generator(obj):
+                return Generator(name, parent=collector)
+            else:
+                return list(collector._genfunctions(name, obj))
 
 def is_generator(func):
     try:
@@ -314,6 +315,9 @@ class PyCollector(PyobjMixin, pytest.Collector):
                 return True
 
     def collect(self):
+        if not getattr(self.obj, "__test__", True):
+            return []
+
         # NB. we avoid random getattrs and peek in the __dict__ instead
         # (XXX originally introduced from a PyPy need, still true?)
         dicts = [getattr(self.obj, '__dict__', {})]

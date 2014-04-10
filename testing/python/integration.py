@@ -165,6 +165,7 @@ class TestMockDecoration:
         assert names == ["test_one", "test_two", "test_three"]
 
     def test_mock_double_patch_issue473(self, testdir):
+        pytest.importorskip("mock", "1.0.1")
         testdir.makepyfile("""
             from mock import patch
             from pytest import mark
@@ -176,8 +177,8 @@ class TestMockDecoration:
                 def test_simple_thing(self, mock_path, mock_getcwd):
                     pass
         """)
-        res = testdir.inline_run()
-        res.assertoutcome(passed=1)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
 
 
 class TestReRunTests:
@@ -214,3 +215,52 @@ class TestReRunTests:
 def test_pytestconfig_is_session_scoped():
     from _pytest.python import pytestconfig
     assert pytestconfig._pytestfixturefunction.scope == "session"
+
+
+class TestNoselikeTestAttribute:
+    def test_module(self, testdir):
+        testdir.makepyfile("""
+            __test__ = False
+            def test_hello():
+                pass
+        """)
+        reprec = testdir.inline_run()
+        assert not reprec.getfailedcollections()
+        calls = reprec.getreports("pytest_runtest_logreport")
+        assert not calls
+        
+    def test_class_and_method(self, testdir):
+        testdir.makepyfile("""
+            __test__ = True
+            def test_func():
+                pass
+            test_func.__test__ = False
+
+            class TestSome:
+                __test__ = False
+                def test_method(self):
+                    pass
+        """)
+        reprec = testdir.inline_run()
+        assert not reprec.getfailedcollections()
+        calls = reprec.getreports("pytest_runtest_logreport")
+        assert not calls
+
+    def test_unittest_class(self, testdir):
+        testdir.makepyfile("""
+            import unittest
+            class TC(unittest.TestCase):
+                def test_1(self):
+                    pass
+            class TC2(unittest.TestCase):
+                __test__ = False
+                def test_2(self):
+                    pass
+        """)
+        reprec = testdir.inline_run()
+        assert not reprec.getfailedcollections()
+        call = reprec.getcalls("pytest_collection_modifyitems")[0]
+        assert len(call.items) == 1
+        assert call.items[0].cls.__name__ == "TC"
+        
+
