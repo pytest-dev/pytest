@@ -65,7 +65,7 @@ NEXT (2.6)
   Groenholm.
 
 - support nose-style ``__test__`` attribute on modules, classes and
-  functions, including unittest-style Classes.  If set to True, the 
+  functions, including unittest-style Classes.  If set to False, the 
   test will not be collected.  
 
 
