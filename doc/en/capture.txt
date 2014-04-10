@@ -84,11 +84,9 @@ of the failing function and hide the other one::
 Accessing captured output from a test function
 ---------------------------------------------------
 
-The :ref:`funcarg mechanism` allows test function a very easy
-way to access the captured output by simply using the names
-``capsys`` or ``capfd`` in the test function signature.  Here
-is an example test function that performs some output related
-checks::
+The ``capsys`` and ``capfd`` fixtures allow to access stdout/stderr
+output created during test execution.  Here is an example test function
+that performs some output related checks::
 
     def test_myoutput(capsys): # or use "capfd" for fd-level
         print ("hello")
@@ -108,8 +106,10 @@ test from having to care about setting/resetting
 output streams and also interacts well with pytest's
 own per-test capturing.
 
-If you want to capture on ``fd`` level you can use
+If you want to capture on filedescriptor level you can use
 the ``capfd`` function argument which offers the exact
-same interface.
+same interface but allows to also capture output from
+libraries or subprocesses that directly write to operating
+system level output streams (FD1 and FD2).
 
 .. include:: links.inc
