@@ -64,6 +64,10 @@ NEXT (2.6)
 - fix issue443: fix skip examples to use proper comparison.  Thanks Alex
   Groenholm.
 
+- support nose-style ``__test__`` attribute on modules, classes and
+  functions, including unittest-style Classes.  If set to True, the 
+  test will not be collected.  
+
 
 2.5.2
 -----------------------------------

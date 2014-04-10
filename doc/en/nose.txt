@@ -25,6 +25,7 @@ Supported nose Idioms
 * SkipTest exceptions and markers
 * setup/teardown decorators
 * yield-based tests and their setup
+* ``__test__`` attribute on modules/classes/functions
 * general usage of nose utilities
 
 Unsupported idioms / known issues

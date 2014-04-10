@@ -41,10 +41,12 @@ class UnitTestCase(pytest.Class):
         super(UnitTestCase, self).setup()
 
     def collect(self):
+        cls = self.obj
+        if not getattr(cls, "__test__", True):
+            return
         self.session._fixturemanager.parsefactories(self, unittest=True)
         loader = py.std.unittest.TestLoader()
         module = self.getparent(pytest.Module).obj
-        cls = self.obj
         foundsomething = False
         for name in loader.getTestCaseNames(self.obj):
             x = getattr(self.obj, name)

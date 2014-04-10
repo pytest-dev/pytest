@@ -314,6 +314,9 @@ class PyCollector(PyobjMixin, pytest.Collector):
                 return True
 
     def collect(self):
+        if not getattr(self.obj, "__test__", True):
+            return []
+
         # NB. we avoid random getattrs and peek in the __dict__ instead
         # (XXX originally introduced from a PyPy need, still true?)
         dicts = [getattr(self.obj, '__dict__', {})]
