@@ -186,7 +186,7 @@ def pytest_report_teststatus(report):
         if report.skipped:
             return "xfailed", "x", "xfail"
         elif report.failed:
-            return "xpassed", "X", "XPASS"
+            return "xpassed", "X", ("XPASS", {'yellow': True})
 
 # called by the terminalreporter instance/plugin
 def pytest_terminal_summary(terminalreporter):
