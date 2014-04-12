@@ -1,6 +1,9 @@
 NEXT (2.6)
 -----------------------------------
 
+- change XPASS colour to yellow rather then red when tests are run
+  with -v.
+
 - fix issue473: work around mock putting an unbound method into a class
   dict when double-patching.
 
