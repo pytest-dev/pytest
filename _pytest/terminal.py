@@ -382,9 +382,11 @@ class TerminalReporter:
             line = str(fspath)
             if lineno is not None:
                 lineno += 1
-                line += ":" + str(lineno)
+                line += "@" + str(lineno)
             if domain:
-                line += ": " + str(domain)
+                split = str(domain).split('[')
+                split[0] = split[0].replace('.', '::')  # don't replace '.' in params
+                line += "::" + '['.join(split)
         else:
             line = "[location]"
         return line + " "

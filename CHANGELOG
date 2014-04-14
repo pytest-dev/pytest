@@ -1,6 +1,10 @@
 NEXT (2.6)
 -----------------------------------
 
+- change -v output to include full node IDs of tests.  Users can copy
+  a node ID from a test run, including line number, and use it as a
+  positional argument in order to run only a single test.
+
 - change XPASS colour to yellow rather then red when tests are run
   with -v.
 

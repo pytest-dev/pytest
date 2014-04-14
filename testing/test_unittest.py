@@ -29,8 +29,8 @@ def test_runTest_method(testdir):
         """)
     result = testdir.runpytest("-v")
     result.stdout.fnmatch_lines("""
-        *MyTestCaseWithRunTest.runTest*
-        *MyTestCaseWithoutRunTest.test_something*
+        *MyTestCaseWithRunTest::runTest*
+        *MyTestCaseWithoutRunTest::test_something*
         *2 passed*
     """)
 

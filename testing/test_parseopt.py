@@ -145,6 +145,10 @@ class TestParser:
         assert args.R == True
         assert args.S == False
 
+    def test_parse_removes_line_number_from_positional_arguments(self, parser):
+        args = parser.parse(['path@2::func', 'path2@5::func2[param with @]'])
+        assert getattr(args, parseopt.FILE_OR_DIR) == ['path::func', 'path2::func2[param with @]']
+
     def test_parse_defaultgetter(self):
         def defaultget(option):
             if not hasattr(option, 'type'):
