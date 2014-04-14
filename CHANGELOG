@@ -1,6 +1,9 @@
 NEXT (2.6)
 -----------------------------------
 
+- fix issue 475: fail early and comprehensible if calling
+  pytest.raises with wrong exception type.
+
 - change XPASS colour to yellow rather then red when tests are run
   with -v.
 
