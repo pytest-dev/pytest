@@ -977,15 +977,16 @@ def raises(ExpectedException, *args, **kwargs):
     Performance note:
     -----------------
 
-    Similar to caught exception objects in Python, explicitly clearing local
-    references to returned ``py.code.ExceptionInfo`` objects can help the Python
-    interpreter speed up its garbage collection.
+    Similar to caught exception objects in Python, explicitly clearing
+    local references to returned ``py.code.ExceptionInfo`` objects can
+    help the Python interpreter speed up its garbage collection.
 
-    Clearing those references breaks a reference cycle (``ExceptionInfo`` -->
-    caught exception --> frame stack raising the exception --> current frame
-    stack --> local variables --> ``ExceptionInfo``) which makes Python keep all
-    objects referenced from that cycle (including all local variables in the
-    current frame) alive until the next cyclic garbage collection run. See the
+    Clearing those references breaks a reference cycle
+    (``ExceptionInfo`` --> caught exception --> frame stack raising
+    the exception --> current frame stack --> local variables -->
+    ``ExceptionInfo``) which makes Python keep all objects referenced
+    from that cycle (including all local variables in the current
+    frame) alive until the next cyclic garbage collection run. See the
     official Python ``try`` statement documentation for more detailed
     information.
 
@@ -995,7 +996,16 @@ def raises(ExpectedException, *args, **kwargs):
         # we want to catch a AssertionError
         # replace our subclass with the builtin one
         # see https://bitbucket.org/hpk42/pytest/issue/176/pytestraises
-        from _pytest.assertion.util import BuiltinAssertionError as ExpectedException
+        from _pytest.assertion.util import BuiltinAssertionError \
+            as ExpectedException
+    msg = ("exceptions must be old-style classes or"
+           " derived from BaseException, not %s")
+    if isinstance(ExpectedException, tuple):
+        for exc in ExpectedException:
+            if not inspect.isclass(exc):
+                raise TypeError(msg % type(exc))
+    elif not inspect.isclass(ExpectedException):
+        raise TypeError(msg % type(ExpectedException))
 
     if not args:
         return RaisesContext(ExpectedException)

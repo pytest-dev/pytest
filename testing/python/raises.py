@@ -62,3 +62,10 @@ class TestRaises:
             '*3 passed*',
         ])
 
+    def test_noclass(self):
+        with pytest.raises(TypeError):
+            pytest.raises('wrong', lambda: None)
+
+    def test_tuple(self):
+        with pytest.raises((KeyError, ValueError)):
+            raise KeyError('oops')
