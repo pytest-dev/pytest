@@ -56,9 +56,9 @@ Or the inverse, running all tests except the webtest ones::
 Selecing tests based on their node ID
 -------------------------------------
 
-You can provide one or more node IDs as positional arguments to select
-only specified tests. This makes it easy to select tests based on
-their module, class, method, or function name::
+You can provide one or more :ref:`node IDs <node-id>` as positional
+arguments to select only specified tests. This makes it easy to select
+tests based on their module, class, method, or function name::
 
     $ py.test -v test_server.py::TestClass::test_method
     =========================== test session starts ============================
@@ -91,6 +91,9 @@ Or select multiple nodes::
     test_server.py:3: test_send_http PASSED
 
     ========================= 2 passed in 0.01 seconds =========================
+
+
+.. _node-id:
 
 .. note::
 
