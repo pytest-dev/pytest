@@ -2,6 +2,7 @@
 
 import py
 # DON't import pytest here because it causes import cycle troubles
+import re
 import sys, os
 from _pytest import hookspec # the extension point definitions
 from _pytest.core import PluginManager
@@ -180,7 +181,7 @@ class Parser:
                     a = option.attrs()
                     arggroup.add_argument(*n, **a)
         # bash like autocompletion for dirs (appending '/')
-        optparser.add_argument(FILE_OR_DIR, nargs='*'
+        optparser.add_argument(FILE_OR_DIR, nargs='*', type=node_with_line_number,
                                ).completer=filescompleter
         return optparser
 
@@ -699,7 +700,7 @@ class Config(object):
         except ConftestImportFailure:
             e = sys.exc_info()[1]
             if ns.help or ns.version:
-                # we don't want to prevent --help/--version to work 
+                # we don't want to prevent --help/--version to work
                 # so just let is pass and print a warning at the end
                 self.pluginmanager._warnings.append(
                         "could not load initial conftests (%s)\n" % e.path)
@@ -837,6 +838,12 @@ def getcfg(args, inibasenames):
                     if 'pytest' in iniconfig.sections:
                         return iniconfig['pytest']
     return {}
+
+
+def node_with_line_number(string):
+    split = string.split('[')
+    split[0] = re.sub(r'@\d+', '', split[0])
+    return '['.join(split)
 
 
 def setns(obj, dic):
