@@ -1,6 +1,8 @@
 NEXT (2.6)
 -----------------------------------
 
+- Cache exceptions from fixtures according to their scope (issue 467).
+
 - fix issue514: teach assertion reinterpretation about private class attributes
 
 - change -v output to include full node IDs of tests.  Users can copy
@@ -59,10 +61,6 @@ NEXT (2.6)
 
 - fix issue483: trial/py33 works now properly.  Thanks Daniel Grana for PR.
 
-- improve example for pytest integration with "python setup.py test"
-  which now has a generic "-a" or "--pytest-args" option where you
-  can pass additional options as a quoted string.  Thanks Trevor Bekolay.
-
 - simplified internal capturing mechanism and made it more robust
   against tests or setups changing FD1/FD2, also better integrated
   now with pytest.pdb() in single tests.
@@ -88,9 +86,6 @@ NEXT (2.6)
 - support nose-style ``__test__`` attribute on modules, classes and
   functions, including unittest-style Classes.  If set to False, the 
   test will not be collected.  
-
-- fix issue512: show "<notset>" for arguments which might not be set
-  in monkeypatch plugin.  Improves output in documentation.
 
 
 2.5.2

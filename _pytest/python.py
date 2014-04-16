@@ -1337,7 +1337,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
             except FixtureLookupError:
                 if argname == "request":
                     class PseudoFixtureDef:
-                        cached_result = (self, [0])
+                        cached_result = (self, [0], None)
                     return PseudoFixtureDef
                 raise
             result = self._getfuncargvalue(fixturedef)
@@ -1810,7 +1810,7 @@ class FixtureDef:
         kwargs = {}
         for argname in self.argnames:
             fixturedef = request._get_active_fixturedef(argname)
-            result, arg_cache_key = fixturedef.cached_result
+            result, arg_cache_key, exc = fixturedef.cached_result
             kwargs[argname] = result
             if argname != "request":
                 fixturedef.addfinalizer(self.finish)
@@ -1818,13 +1818,12 @@ class FixtureDef:
         my_cache_key = request.param_index
         cached_result = getattr(self, "cached_result", None)
         if cached_result is not None:
-            #print argname, "Found cached_result", cached_result
-            #print argname, "param_index", param_index
-            result, cache_key = cached_result
+            result, cache_key, err = cached_result
             if my_cache_key == cache_key:
-                #print request.fixturename, "CACHE HIT", repr(my_cache_key)
-                return result
-            #print request.fixturename, "CACHE MISS"
+                if err is not None:
+                    py.builtin._reraise(*err)
+                else:
+                    return result
             # we have a previous but differently parametrized fixture instance
             # so we need to tear it down before creating a new one
             self.finish()
@@ -1841,9 +1840,13 @@ class FixtureDef:
                 fixturefunc = getimfunc(self.func)
                 if fixturefunc != self.func:
                     fixturefunc = fixturefunc.__get__(request.instance)
-            result = call_fixture_func(fixturefunc, request, kwargs,
-                                       self.yieldctx)
-        self.cached_result = (result, my_cache_key)
+            try:
+                result = call_fixture_func(fixturefunc, request, kwargs,
+                                           self.yieldctx)
+            except Exception:
+                self.cached_result = (None, my_cache_key, sys.exc_info())
+                raise
+        self.cached_result = (result, my_cache_key, None)
         return result
 
     def __repr__(self):
