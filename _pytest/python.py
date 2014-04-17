@@ -771,9 +771,14 @@ class Metafunc(FuncargnamesCompatAttr):
             function so that it can perform more expensive setups during the
             setup phase of a test rather than at collection time.
 
-        :arg ids: list of string ids each corresponding to the argvalues so
-            that they are part of the test id. If no ids are provided they will
-            be generated automatically from the argvalues.
+        :arg ids: list of string ids, or a callable.
+            If strings, each is corresponding to the argvalues so that they are
+            part of the test id.
+            If callable, it should take one argument (a single argvalue) and return
+            a string or return None. If None, the automatically generated id for that
+            argument will be used.
+            If no ids are provided they will be generated automatically from
+            the argvalues.
 
         :arg scope: if specified it denotes the scope of the parameters.
             The scope is used for grouping tests by parameter instances.
@@ -813,11 +818,15 @@ class Metafunc(FuncargnamesCompatAttr):
                     raise ValueError("%r uses no fixture %r" %(
                                      self.function, arg))
         valtype = indirect and "params" or "funcargs"
+        idfn = None
+        if callable(ids):
+            idfn = ids
+            ids = None
         if ids and len(ids) != len(argvalues):
             raise ValueError('%d tests specified with %d ids' %(
                              len(argvalues), len(ids)))
         if not ids:
-            ids = idmaker(argnames, argvalues)
+            ids = idmaker(argnames, argvalues, idfn)
         newcalls = []
         for callspec in self._calls or [CallSpec2(self)]:
             for param_index, valset in enumerate(argvalues):
@@ -865,17 +874,31 @@ class Metafunc(FuncargnamesCompatAttr):
         cs.setall(funcargs, id, param)
         self._calls.append(cs)
 
-def idmaker(argnames, argvalues):
-    idlist = []
-    for valindex, valset in enumerate(argvalues):
-        this_id = []
-        for nameindex, val in enumerate(valset):
-            if not isinstance(val, (float, int, str, bool, NoneType)):
-                this_id.append(str(argnames[nameindex])+str(valindex))
-            else:
-                this_id.append(str(val))
-        idlist.append("-".join(this_id))
-    return idlist
+
+def _idval(val, argname, idx, idfn):
+    if idfn:
+        try:
+            s = idfn(val)
+            if s:
+                return s
+        except Exception:
+            pass
+    if isinstance(val, (float, int, str, bool, NoneType)):
+        return str(val)
+    return str(argname)+str(idx)
+
+def _idvalset(idx, valset, argnames, idfn):
+    this_id = [_idval(val, argname, idx, idfn)
+               for val, argname in zip(valset, argnames)]
+    return "-".join(this_id)
+
+def idmaker(argnames, argvalues, idfn=None):
+    ids = [_idvalset(valindex, valset, argnames, idfn)
+           for valindex, valset in enumerate(argvalues)]
+    if len(set(ids)) < len(ids):
+        # the user may have provided a bad idfn which means the ids are not unique
+        ids = ["{}".format(i) + testid for i, testid in enumerate(ids)]
+    return ids
 
 def showfixtures(config):
     from _pytest.main import wrap_session

@@ -151,6 +151,52 @@ class TestMetafunc:
                           "a6-b6",
                           "a7-b7"]
 
+    @pytest.mark.issue351
+    def test_idmaker_idfn(self):
+        from _pytest.python import idmaker
+        def ids(val):
+            if isinstance(val, Exception):
+                return repr(val)
+
+        result = idmaker(("a", "b"), [(10.0, IndexError()),
+                                      (20, KeyError()),
+                                      ("three", [1, 2, 3]),
+        ], idfn=ids)
+        assert result == ["10.0-IndexError()",
+                          "20-KeyError()",
+                          "three-b2",
+                         ]
+
+    @pytest.mark.issue351
+    def test_idmaker_idfn_unique_names(self):
+        from _pytest.python import idmaker
+        def ids(val):
+            return 'a'
+
+        result = idmaker(("a", "b"), [(10.0, IndexError()),
+                                      (20, KeyError()),
+                                      ("three", [1, 2, 3]),
+        ], idfn=ids)
+        assert result == ["0a-a",
+                          "1a-a",
+                          "2a-a",
+                         ]
+
+    @pytest.mark.issue351
+    def test_idmaker_idfn_exception(self):
+        from _pytest.python import idmaker
+        def ids(val):
+            raise Exception("bad code")
+
+        result = idmaker(("a", "b"), [(10.0, IndexError()),
+                                      (20, KeyError()),
+                                      ("three", [1, 2, 3]),
+        ], idfn=ids)
+        assert result == ["10.0-b0",
+                          "20-b1",
+                          "three-b2",
+                         ]
+
     def test_addcall_and_parametrize(self):
         def func(x, y): pass
         metafunc = self.Metafunc(func)
