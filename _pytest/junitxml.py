@@ -162,9 +162,8 @@ class LogXML(object):
             filename, lineno, skipreason = report.longrepr
             if skipreason.startswith("Skipped: "):
                 skipreason = bin_xml_escape(skipreason[9:])
-                report.longrepr = filename, lineno, skipreason
             self.append(
-                Junit.skipped("%s:%s: %s" % report.longrepr,
+                Junit.skipped("%s:%s: %s" % (filename, lineno, skipreason),
                               type="pytest.skip",
                               message=skipreason
                 ))
