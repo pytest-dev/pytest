@@ -59,7 +59,11 @@ def derive_importpath(import_path):
 
 
 
-notset = object()
+class Notset:
+    def __repr__(self):
+        return "<notset>"
+
+notset = Notset()
 
 class monkeypatch:
     """ object keeping a record of setattr/item/env/syspath changes. """

@@ -78,6 +78,9 @@ NEXT (2.6)
   functions, including unittest-style Classes.  If set to False, the 
   test will not be collected.  
 
+- fix issue512: show "<notset>" for arguments which might not be set
+  in monkeypatch plugin.  Improves output in documentation.
+
 
 2.5.2
 -----------------------------------
