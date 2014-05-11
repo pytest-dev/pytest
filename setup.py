@@ -18,7 +18,8 @@ classifiers=['Development Status :: 6 - Mature',
 long_description = open("README.rst").read()
 def main():
     install_requires = ["py>=1.4.20"]
-    if sys.version_info < (2,7):
+    if (sys.version_info < (2,7) or
+        sys.version_info > (3, ) and sys.version_info < (3, 2)):
         install_requires.append("argparse")
     if sys.platform == "win32":
         install_requires.append("colorama")
