@@ -328,7 +328,7 @@ class SetupState(object):
         is called at the end of teardown_all().
         """
         assert colitem and not isinstance(colitem, tuple)
-        assert callable(finalizer)
+        assert py.builtin.callable(finalizer)
         #assert colitem in self.stack  # some unit tests don't setup stack :/
         self._finalizers.setdefault(colitem, []).append(finalizer)
 
