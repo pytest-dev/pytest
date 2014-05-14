@@ -117,6 +117,15 @@ class TestConfigAPI:
         verbose = config.getvalueorskip("verbose")
         assert verbose == config.option.verbose
 
+    def test_config_getvalueorskip_None(self, testdir):
+        testdir.makeconftest("""
+            def pytest_addoption(parser):
+                parser.addoption("--hello")
+        """)
+        config = testdir.parseconfig()
+        pytest.raises(pytest.skip.Exception,
+            "config.getvalueorskip('hello')")
+
     def test_getoption(self, testdir):
         config = testdir.parseconfig()
         with pytest.raises(ValueError):

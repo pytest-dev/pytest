@@ -560,7 +560,11 @@ class CmdOptions(object):
     def __repr__(self):
         return "<CmdOptions %r>" %(self.__dict__,)
 
-notset = object()
+class Notset:
+    def __repr__(self):
+        return "<NOTSET>"
+
+notset = Notset()
 FILE_OR_DIR = 'file_or_dir'
 class Config(object):
     """ access to configuration values, pluginmanager and plugin hooks.  """
@@ -798,11 +802,15 @@ class Config(object):
         :arg name: name of the option.  You may also specify
             the literal ``--OPT`` option instead of the "dest" option name.
         :arg default: default value if no option of that name exists.
-        :arg skip: if True raise pytest.skip if not option exists.
+        :arg skip: if True raise pytest.skip if option does not exists
+            or has a None value.
         """
         name = self._opt2dest.get(name, name)
         try:
-            return getattr(self.option, name)
+            val = getattr(self.option, name)
+            if val is None and skip:
+                raise AttributeError(name)
+            return val
         except AttributeError:
             if default is not notset:
                 return default
