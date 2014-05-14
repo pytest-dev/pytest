@@ -8,6 +8,11 @@ NEXT (2.6)
 - fix issue 475: fail early and comprehensible if calling
   pytest.raises with wrong exception type.
 
+- fix issue516: tell in getting-started about current dependencies.
+
+- cleanup setup.py a bit and specify supported versions. Thanks Jurko
+  Gospodnetic for the PR.
+
 - change XPASS colour to yellow rather then red when tests are run
   with -v.
 
