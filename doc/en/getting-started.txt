@@ -7,6 +7,10 @@ Installation and Getting Started
 
 **PyPI package name**: `pytest <http://pypi.python.org/pypi/pytest>`_
 
+**dependencies**: `py <http://pypi.python.org/pypi/py>`_,
+`colorama (Windows) <http://pypi.python.org/pypi/colorama>`_,
+`argparse (py26) <http://pypi.python.org/pypi/argparse>`_.
+
 **documentation as PDF**: `download latest <http://pytest.org/latest/pytest.pdf>`_
 
 .. _`getstarted`:
