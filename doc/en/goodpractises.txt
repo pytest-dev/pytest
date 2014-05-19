@@ -229,6 +229,12 @@ get started with setuptools integration::
 
 
     class PyTest(TestCommand):
+        user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
+
+        def initialize_options(self):
+            TestCommand.initialize_options(self)
+            self.pytest_args = None
+
         def finalize_options(self):
             TestCommand.finalize_options(self)
             self.test_args = []
@@ -237,7 +243,7 @@ get started with setuptools integration::
         def run_tests(self):
             #import here, cause outside the eggs aren't loaded
             import pytest
-            errno = pytest.main(self.test_args)
+            errno = pytest.main(self.pytest_args)
             sys.exit(errno)
 
 
@@ -252,7 +258,12 @@ Now if you run::
     python setup.py test
 
 this will download ``pytest`` if needed and then run your tests
-as you would expect it to.
+as you would expect it to. You can pass a single string of arguments
+using the ``--pytest-args`` or ``-a`` command-line option. For example::
+
+    python setup.py test -a "--durations=5"
+
+is equivalent to running ``py.test --durations=5``.
 
 .. _`test discovery`:
 .. _`Python test discovery`:
