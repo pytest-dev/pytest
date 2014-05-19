@@ -57,6 +57,10 @@ NEXT (2.6)
 
 - fix issue483: trial/py33 works now properly.  Thanks Daniel Grana for PR.
 
+- improve example for pytest integration with "python setup.py test"
+  which now has a generic "-a" or "--pytest-args" option where you
+  can pass additional options as a quoted string.  Thanks Trevor Bekolay.
+
 - simplified internal capturing mechanism and made it more robust
   against tests or setups changing FD1/FD2, also better integrated
   now with pytest.pdb() in single tests.
