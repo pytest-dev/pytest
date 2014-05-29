@@ -100,7 +100,7 @@ def obtain_plugins_table(plugins, client):
 
     rows = []
     ColumnData = namedtuple('ColumnData', 'text link')
-    headers = ['Name', 'Py27', 'Py33', 'Repo', 'Summary']
+    headers = ['Name', 'Py27', 'Py34', 'Repo', 'Summary']
     pytest_version = pytest.__version__
     repositories = obtain_override_repositories()
     print('*** pytest-{0} ***'.format(pytest_version))
@@ -126,7 +126,7 @@ def obtain_plugins_table(plugins, client):
             ColumnData(package_name + "-" + version, release_data['package_url']),
             ColumnData(image_url.format(py='py27', pytest=pytest_version),
                        None),
-            ColumnData(image_url.format(py='py33', pytest=pytest_version),
+            ColumnData(image_url.format(py='py34', pytest=pytest_version),
                        None),
             ColumnData(
                 repo_markup_1,
@@ -145,7 +145,7 @@ def obtain_plugins_table(plugins, client):
             ColumnData('', None),
             ColumnData(output_url.format(py='py27', pytest=pytest_version),
                        None),
-            ColumnData(output_url.format(py='py33', pytest=pytest_version),
+            ColumnData(output_url.format(py='py34', pytest=pytest_version),
                        None),
             ColumnData(repo_markup_2, None),
             ColumnData('', None),
