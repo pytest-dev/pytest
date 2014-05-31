@@ -206,7 +206,7 @@ class TestFormatExplanation:
         # Issue 453, for the bug this would raise IndexError
         testdir.makepyfile("""
             def test_foo():
-                assert u'\\n}' == u''
+                assert '\\n}' == ''
         """)
         result = testdir.runpytest()
         assert result.ret == 1
