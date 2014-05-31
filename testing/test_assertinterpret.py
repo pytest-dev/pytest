@@ -131,6 +131,18 @@ def test_assert_keyword_arg():
         e = exvalue()
         assert "x=5" in e.msg
 
+def test_private_class_variable():
+    class X:
+        def __init__(self):
+            self.__v = 41
+        def m(self):
+            assert self.__v == 42
+    try:
+        X().m()
+    except AssertionError:
+        e = exvalue()
+        assert "== 42" in e.msg
+
 # These tests should both fail, but should fail nicely...
 class WeirdRepr:
     def __repr__(self):

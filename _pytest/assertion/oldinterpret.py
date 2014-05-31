@@ -355,7 +355,18 @@ class Getattr(Interpretable):
         expr.eval(frame)
         source = '__exprinfo_expr.%s' % self.attrname
         try:
-            self.result = frame.eval(source, __exprinfo_expr=expr.result)
+            try:
+                self.result = frame.eval(source, __exprinfo_expr=expr.result)
+            except AttributeError:
+                # Maybe the attribute name needs to be mangled?
+                if (not self.attrname.startswith("__") or
+                    self.attrname.endswith("__")):
+                    raise
+                source = "getattr(__exprinfo_expr.__class__, '__name__', '')"
+                class_name = frame.eval(source, __exprinfo_expr=expr.result)
+                mangled_attr = "_" + class_name +  self.attrname
+                source = "__exprinfo_expr.%s" % (mangled_attr,)
+                self.result = frame.eval(source, __exprinfo_expr=expr.result)
         except passthroughex:
             raise
         except:

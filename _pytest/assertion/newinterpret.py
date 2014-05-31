@@ -286,7 +286,19 @@ class DebugInterpreter(ast.NodeVisitor):
         source = "__exprinfo_expr.%s" % (attr.attr,)
         co = self._compile(source)
         try:
-            result = self.frame.eval(co, __exprinfo_expr=source_result)
+            try:
+                result = self.frame.eval(co, __exprinfo_expr=source_result)
+            except AttributeError:
+                # Maybe the attribute name needs to be mangled?
+                if not attr.attr.startswith("__") or attr.attr.endswith("__"):
+                    raise
+                source = "getattr(__exprinfo_expr.__class__, '__name__', '')"
+                co = self._compile(source)
+                class_name = self.frame.eval(co, __exprinfo_expr=source_result)
+                mangled_attr = "_" + class_name +  attr.attr
+                source = "__exprinfo_expr.%s" % (mangled_attr,)
+                co = self._compile(source)
+                result = self.frame.eval(co, __exprinfo_expr=source_result)
         except Exception:
             raise Failure(explanation)
         explanation = "%s\n{%s = %s.%s\n}" % (self.frame.repr(result),
