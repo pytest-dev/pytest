@@ -152,7 +152,7 @@ def pytest_runtest_protocol(item, nextitem):
 
     :arg item: test item for which the runtest protocol is performed.
 
-    :arg nexitem: the scheduled-to-be-next test item (or None if this
+    :arg nextitem: the scheduled-to-be-next test item (or None if this
                   is the end my friend).  This argument is passed on to
                   :py:func:`pytest_runtest_teardown`.
 
