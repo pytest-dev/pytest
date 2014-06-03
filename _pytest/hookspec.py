@@ -153,8 +153,8 @@ def pytest_runtest_protocol(item, nextitem):
     :arg item: test item for which the runtest protocol is performed.
 
     :arg nextitem: the scheduled-to-be-next test item (or None if this
-                  is the end my friend).  This argument is passed on to
-                  :py:func:`pytest_runtest_teardown`.
+                   is the end my friend).  This argument is passed on to
+                   :py:func:`pytest_runtest_teardown`.
 
     :return boolean: True if no further hook implementations should be invoked.
     """
@@ -172,10 +172,10 @@ def pytest_runtest_call(item):
 def pytest_runtest_teardown(item, nextitem):
     """ called after ``pytest_runtest_call``.
 
-    :arg nexitem: the scheduled-to-be-next test item (None if no further
-                  test item is scheduled).  This argument can be used to
-                  perform exact teardowns, i.e. calling just enough finalizers
-                  so that nextitem only needs to call setup-functions.
+    :arg nextitem: the scheduled-to-be-next test item (None if no further
+                   test item is scheduled).  This argument can be used to
+                   perform exact teardowns, i.e. calling just enough finalizers
+                   so that nextitem only needs to call setup-functions.
     """
 
 def pytest_runtest_makereport(item, call):
