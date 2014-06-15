@@ -1449,6 +1449,30 @@ class TestFixtureMarker:
         reprec = testdir.inline_run()
         reprec.assertoutcome(skipped=2, passed=1)
 
+    def test_scope_session_exc_two_fix(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            l = []
+            m = []
+            @pytest.fixture(scope="session")
+            def a():
+                l.append(1)
+                pytest.skip('skipping')
+            @pytest.fixture(scope="session")
+            def b(a):
+                m.append(1)
+
+            def test_1(b):
+                pass
+            def test_2(b):
+                pass
+            def test_last():
+                assert l == [1]
+                assert m == []
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(skipped=2, passed=1)
+
     def test_scope_module_uses_session(self, testdir):
         testdir.makepyfile("""
             import pytest
