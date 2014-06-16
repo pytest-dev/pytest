@@ -4,7 +4,6 @@ import sys
 import py, pytest
 import _pytest.assertion as plugin
 from _pytest.assertion import reinterpret
-from _pytest.assertion import util
 needsnewassert = pytest.mark.skipif("sys.version_info < (2,6)")
 
 

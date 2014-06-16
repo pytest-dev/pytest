@@ -123,8 +123,8 @@ class TestConfigAPI:
                 parser.addoption("--hello")
         """)
         config = testdir.parseconfig()
-        pytest.raises(pytest.skip.Exception,
-            "config.getvalueorskip('hello')")
+        with pytest.raises(pytest.skip.Exception):
+            config.getvalueorskip('hello')
 
     def test_getoption(self, testdir):
         config = testdir.parseconfig()
