@@ -79,6 +79,21 @@ class TestConfigCmdlineParsing:
         config = testdir.parseconfig()
         pytest.raises(AssertionError, lambda: config.parse([]))
 
+    def test_explicitly_specified_config_file_is_loaded(self, testdir):
+        testdir.makeconftest("""
+            def pytest_addoption(parser):
+                parser.addini("custom", "")
+        """)
+        testdir.makeini("""
+            [pytest]
+            custom = 0
+        """)
+        testdir.makefile(".cfg", custom = """
+            [pytest]
+            custom = 1
+        """)
+        config = testdir.parseconfig("-c", "custom.cfg")
+        assert config.getini("custom") == "1"
 
 class TestConfigAPI:
     def test_config_trace(self, testdir):

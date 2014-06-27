@@ -833,6 +833,14 @@ def exists(path, ignore=EnvironmentError):
         return False
 
 def getcfg(args, inibasenames):
+    if "-c" in args:
+        n = len(args)
+        for i in range(1, n):
+            if args[i - 1] == "-c" and not str(args[i]).startswith("-"):
+                iniconfig = py.iniconfig.IniConfig(args[i])
+                if 'pytest' in iniconfig.sections:
+                    return iniconfig['pytest']
+        return {}
     args = [x for x in args if not str(x).startswith("-")]
     if not args:
         args = [py.path.local()]
