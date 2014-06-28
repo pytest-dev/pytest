@@ -38,8 +38,7 @@ def pytest_addoption(parser):
                help="exit after first num failures or errors.")
     group._addoption('--strict', action="store_true",
                help="run pytest in strict mode, warnings become errors.")
-    # This option is never used as such, see config.getcfg().
-    group._addoption("-c", metavar="file", type=str, dest="_inifilename",
+    group._addoption("-c", metavar="file", type=str, dest="inifilename",
                help="load configuration from `file` instead of trying to locate one of the implicit configuration files.")
 
     group = parser.getgroup("collect", "collection")
