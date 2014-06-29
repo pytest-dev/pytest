@@ -559,8 +559,8 @@ def test_tbstyle_short(testdir):
     assert 'x = 0' not in s
     result.stdout.fnmatch_lines([
         "*%s:5*" % p.basename,
-        ">*assert x",
-        "E*assert*",
+        "    assert x",
+        "E   assert*",
     ])
     result = testdir.runpytest()
     s = result.stdout.str()
@@ -583,7 +583,7 @@ class TestGenericReporting:
         testdir.makepyfile("import xyz\n")
         result = testdir.runpytest(*option.args)
         result.stdout.fnmatch_lines([
-            ">   import xyz",
+            "?   import xyz",
             "E   ImportError: No module named *xyz*",
             "*1 error*",
         ])

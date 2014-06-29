@@ -390,20 +390,24 @@ class Node(object):
         fm = self.session._fixturemanager
         if excinfo.errisinstance(fm.FixtureLookupError):
             return excinfo.value.formatrepr()
+        tbfilter = True
         if self.config.option.fulltrace:
             style="long"
         else:
             self._prunetraceback(excinfo)
-        # XXX should excinfo.getrepr record all data and toterminal()
-        # process it?
+            tbfilter = False  # prunetraceback already does it
+            if style == "auto":
+                style = "long"
+        # XXX should excinfo.getrepr record all data and toterminal() process it?
         if style is None:
             if self.config.option.tbstyle == "short":
                 style = "short"
             else:
                 style = "long"
+
         return excinfo.getrepr(funcargs=True,
                                showlocals=self.config.option.showlocals,
-                               style=style)
+                               style=style, tbfilter=tbfilter)
 
     repr_failure = _repr_failure_py
 
