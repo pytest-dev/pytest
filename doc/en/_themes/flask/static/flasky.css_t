@@ -8,8 +8,9 @@
 
 {% set page_width = '1020px' %}
 {% set sidebar_width = '220px' %}
-{% set link_color = '#490' %}
-{% set link_hover_color = '#9c0' %}
+/* orange of logo is #d67c29 but we use black for links for now */
+{% set link_color = '#000' %}
+{% set link_hover_color = '#000' %}
 {% set base_font = 'sans-serif' %}
 {% set header_font = 'sans-serif' %}
 
