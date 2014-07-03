@@ -221,8 +221,8 @@ class PluginManager(object):
                 return self.import_plugin(modname[7:])
             raise
         except:
-            import pytest
             e = py.std.sys.exc_info()[1]
+            import pytest
             if not hasattr(pytest, 'skip') or not isinstance(e, pytest.skip.Exception):
                 raise
             self._warnings.append("skipped plugin %r: %s" %((modname, e.msg)))
