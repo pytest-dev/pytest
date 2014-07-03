@@ -97,7 +97,7 @@ Builtin configuration file options
         [seq]   matches any character in seq
         [!seq]  matches any char not in seq
 
-   Default patterns are ``.* _darcs CVS {args}``. Setting a ``norecursedir``
+   Default patterns are ``'.*', 'CVS', '_darcs', '{arch}'``. Setting a ``norecursedirs``
    replaces the default.  Here is an example of how to avoid
    certain directories::
 
