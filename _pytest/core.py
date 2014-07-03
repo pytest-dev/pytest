@@ -137,7 +137,8 @@ class PluginManager(object):
 
     def skipifmissing(self, name):
         if not self.hasplugin(name):
-            py.test.skip("plugin %r is missing" % name)
+            import pytest
+            pytest.skip("plugin %r is missing" % name)
 
     def hasplugin(self, name):
         return bool(self.getplugin(name))
@@ -220,10 +221,9 @@ class PluginManager(object):
                 return self.import_plugin(modname[7:])
             raise
         except:
+            import pytest
             e = py.std.sys.exc_info()[1]
-            if not hasattr(py.test, 'skip'):
-                raise
-            elif not isinstance(e, py.test.skip.Exception):
+            if not hasattr(pytest, 'skip') or not isinstance(e, pytest.skip.Exception):
                 raise
             self._warnings.append("skipped plugin %r: %s" %((modname, e.msg)))
         else:

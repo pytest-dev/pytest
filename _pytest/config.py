@@ -823,7 +823,8 @@ class Config(object):
             if default is not notset:
                 return default
             if skip:
-                py.test.skip("no %r option found" %(name,))
+                import pytest
+                pytest.skip("no %r option found" %(name,))
             raise ValueError("no option named %r" % (name,))
 
     def getvalue(self, name, path=None):

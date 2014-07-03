@@ -98,6 +98,7 @@ NEXT (2.6)
 - fix issue512: show "<notset>" for arguments which might not be set
   in monkeypatch plugin.  Improves output in documentation.
 
+- avoid importing "py.test" (an old alias module for "pytest")
 
 2.5.2
 -----------------------------------
