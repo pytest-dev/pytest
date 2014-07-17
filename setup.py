@@ -17,7 +17,7 @@ long_description = open('README.rst').read()
 
 
 def main():
-    install_requires = ['py>=1.4.21.dev2']
+    install_requires = ['py>=1.4.22']
     if sys.version_info < (2, 7) or (3,) <= sys.version_info < (3, 2):
         install_requires.append('argparse')
     if sys.platform == 'win32':
@@ -27,7 +27,7 @@ def main():
         name='pytest',
         description='pytest: simple powerful testing with Python',
         long_description=long_description,
-        version='2.6.0.dev2',
+        version='2.6.0.dev3',
         url='http://pytest.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
