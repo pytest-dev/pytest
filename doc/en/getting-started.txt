@@ -1,7 +1,7 @@
 Installation and Getting Started
 ===================================
 
-**Pythons**: Python 2.6-3.3, Jython, PyPy
+**Pythons**: Python 2.6-3.4, Jython, PyPy-2.3
 
 **Platforms**: Unix/Posix and Windows
 
@@ -51,17 +51,17 @@ That's it. You can execute the test function now::
     =========================== test session starts ============================
     platform linux2 -- Python 2.7.3 -- py-1.4.20 -- pytest-2.5.2
     collected 1 items
-    
+
     test_sample.py F
-    
+
     ================================= FAILURES =================================
     _______________________________ test_answer ________________________________
-    
+
         def test_answer():
     >       assert func(3) == 5
     E       assert 4 == 5
     E        +  where 4 = func(3)
-    
+
     test_sample.py:5: AssertionError
     ========================= 1 failed in 0.01 seconds =========================
 
@@ -126,14 +126,14 @@ run the module by passing its filename::
     .F
     ================================= FAILURES =================================
     ____________________________ TestClass.test_two ____________________________
-    
+
     self = <test_class.TestClass instance at 0x255a0e0>
-    
+
         def test_two(self):
             x = "hello"
     >       assert hasattr(x, 'check')
     E       assert hasattr('hello', 'check')
-    
+
     test_class.py:8: AssertionError
     1 failed, 1 passed in 0.01 seconds
 
@@ -162,14 +162,14 @@ before performing the test function call.  Let's just run it::
     F
     ================================= FAILURES =================================
     _____________________________ test_needsfiles ______________________________
-    
+
     tmpdir = local('/tmp/pytest-1008/test_needsfiles0')
-    
+
         def test_needsfiles(tmpdir):
             print tmpdir
     >       assert 0
     E       assert 0
-    
+
     test_tmpdir.py:3: AssertionError
     ----------------------------- Captured stdout ------------------------------
     /tmp/pytest-1008/test_needsfiles0
