@@ -1,6 +1,8 @@
 NEXT (2.6)
 -----------------------------------
 
+- fix issue537: Avoid importing old assertion reinterpretation code by default.
+
 - fix issue364: shorten and enhance tracebacks representation by default.  
   The new "--tb=auto" option (default) will only display long tracebacks
   for the first and last entry.  You can get the old behaviour of printing
