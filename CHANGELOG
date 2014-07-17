@@ -1,4 +1,4 @@
-NEXT (2.6)
+2.6.0
 -----------------------------------
 
 - fix issue537: Avoid importing old assertion reinterpretation code by default.
