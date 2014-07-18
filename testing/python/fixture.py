@@ -1473,6 +1473,35 @@ class TestFixtureMarker:
         reprec = testdir.inline_run()
         reprec.assertoutcome(skipped=2, passed=1)
 
+    def test_scope_exc(self, testdir):
+        testdir.makepyfile(
+            test_foo="""
+                def test_foo(fix):
+                    pass
+            """,
+            test_bar="""
+                def test_bar(fix):
+                    pass
+            """,
+            conftest="""
+                import pytest
+                reqs = []
+                @pytest.fixture(scope="session")
+                def fix(request):
+                    reqs.append(1)
+                    pytest.skip()
+                @pytest.fixture
+                def req_list():
+                    return reqs
+            """,
+            test_real="""
+                def test_last(req_list):
+                    assert req_list == [1]
+            """
+        )
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(skipped=2, passed=1)
+
     def test_scope_module_uses_session(self, testdir):
         testdir.makepyfile("""
             import pytest
