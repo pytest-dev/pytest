@@ -578,6 +578,12 @@ class FunctionMixin(PyobjMixin):
                 if ntraceback == traceback:
                     ntraceback = ntraceback.cut(excludepath=cutdir)
             excinfo.traceback = ntraceback.filter()
+            # issue364: mark all but first and last frames to
+            # only show a single-line message for each frame
+            if self.config.option.tbstyle == "auto":
+                if len(excinfo.traceback) > 2:
+                    for entry in excinfo.traceback[1:-1]:
+                        entry.set_repr_style('short')
 
     def _repr_failure_py(self, excinfo, style="long"):
         if excinfo.errisinstance(pytest.fail.Exception):
@@ -588,8 +594,10 @@ class FunctionMixin(PyobjMixin):
 
     def repr_failure(self, excinfo, outerr=None):
         assert outerr is None, "XXX outerr usage is deprecated"
-        return self._repr_failure_py(excinfo,
-            style=self.config.option.tbstyle)
+        style = self.config.option.tbstyle
+        if style == "auto":
+            style = "long"
+        return self._repr_failure_py(excinfo, style=style)
 
 
 class Generator(FunctionMixin, PyCollector):

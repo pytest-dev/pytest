@@ -54,7 +54,7 @@ master_doc = 'contents'
 
 # General information about the project.
 project = u'pytest'
-copyright = u'2013, holger krekel'
+copyright = u'2014, holger krekel'
 
 
 

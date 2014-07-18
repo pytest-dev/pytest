@@ -4,7 +4,6 @@ import sys
 import py, pytest
 import _pytest.assertion as plugin
 from _pytest.assertion import reinterpret
-from _pytest.assertion import util
 needsnewassert = pytest.mark.skipif("sys.version_info < (2,6)")
 
 
@@ -370,7 +369,7 @@ def test_traceback_failure(testdir):
         def test_onefails():
             f(3)
     """)
-    result = testdir.runpytest(p1)
+    result = testdir.runpytest(p1, "--tb=long")
     result.stdout.fnmatch_lines([
         "*test_traceback_failure.py F",
         "====* FAILURES *====",
@@ -382,6 +381,25 @@ def test_traceback_failure(testdir):
         "*test_*.py:6: ",
         "_ _ _ *",
         #"",
+        "    def f(x):",
+        ">       assert x == g()",
+        "E       assert 3 == 2",
+        "E        +  where 2 = g()",
+        "",
+        "*test_traceback_failure.py:4: AssertionError"
+    ])
+
+    result = testdir.runpytest(p1) # "auto"
+    result.stdout.fnmatch_lines([
+        "*test_traceback_failure.py F",
+        "====* FAILURES *====",
+        "____*____",
+        "",
+        "    def test_onefails():",
+        ">       f(3)",
+        "",
+        "*test_*.py:6: ",
+        "",
         "    def f(x):",
         ">       assert x == g()",
         "E       assert 3 == 2",

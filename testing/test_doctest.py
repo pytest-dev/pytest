@@ -80,6 +80,8 @@ class TestDoctests:
             assert isinstance(items[0].parent, DoctestModule)
             assert items[0].parent is items[1].parent
 
+    @pytest.mark.xfail('hasattr(sys, "pypy_version_info")', reason=
+                       "pypy leaks one FD")
     def test_simple_doctestfile(self, testdir):
         p = testdir.maketxtfile(test_doc="""
             >>> x = 1

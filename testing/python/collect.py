@@ -641,7 +641,7 @@ class TestTracebackCutting:
         assert "x = 1" not in out
         assert "x = 2" not in out
         result.stdout.fnmatch_lines([
-            ">*asd*",
+            " *asd*",
             "E*NameError*",
         ])
         result = testdir.runpytest("--fulltrace")

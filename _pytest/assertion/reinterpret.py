@@ -45,10 +45,8 @@ class AssertionError(BuiltinAssertionError):
 
 if sys.version_info > (3, 0):
     AssertionError.__module__ = "builtins"
-    reinterpret_old = "old reinterpretation not available for py3"
-else:
-    from _pytest.assertion.oldinterpret import interpret as reinterpret_old
-if sys.version_info >= (2, 6) or (sys.platform.startswith("java")):
+
+if sys.version_info >= (2, 6) or sys.platform.startswith("java"):
     from _pytest.assertion.newinterpret import interpret as reinterpret
 else:
-    reinterpret = reinterpret_old
+    from _pytest.assertion.oldinterpret import interpret as reinterpret

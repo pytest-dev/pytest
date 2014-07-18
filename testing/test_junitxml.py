@@ -494,6 +494,8 @@ def test_unicode_issue368(testdir):
     log.append_error(report)
     report.longrepr = "filename", 1, ustr
     log.append_skipped(report)
+    report.longrepr = "filename", 1, "Skipped: 卡嘣嘣"
+    log.append_skipped(report)
     report.wasxfail = ustr
     log.append_skipped(report)
     log.pytest_sessionfinish()

@@ -65,7 +65,7 @@ class TestCaptureManager:
         assert parser._groups[0].options[0].default == "sys"
 
     @needsosdup
-    @pytest.mark.parametrize("method", 
+    @pytest.mark.parametrize("method",
         ['no', 'sys', pytest.mark.skipif('not hasattr(os, "dup")', 'fd')])
     def test_capturing_basic_api(self, method):
         capouter = StdCaptureFD()
@@ -750,7 +750,7 @@ def saved_fd(fd):
     finally:
         os.dup2(new_fd, fd)
 
-    
+
 class TestStdCapture:
     captureclass = staticmethod(StdCapture)
 
@@ -1010,21 +1010,4 @@ def test_capturing_and_logging_fundamentals(testdir, method):
         WARNING:root:hello2
     """)
     assert "atexit" not in result.stderr.str()
-
-def test_close_and_capture_again(testdir):
-    testdir.makepyfile("""
-        import os
-        def test_close():
-            os.close(1)
-        def test_capture_again():
-            os.write(1, b"hello\\n")
-            assert 0
-    """)
-    result = testdir.runpytest()
-    result.stdout.fnmatch_lines("""
-        *test_capture_again*
-        *assert 0*
-        *stdout*
-        *hello*
-    """)
 

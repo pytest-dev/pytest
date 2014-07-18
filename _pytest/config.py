@@ -685,7 +685,15 @@ class Config(object):
     pytest_load_initial_conftests.trylast = True
 
     def _initini(self, args):
-        self.inicfg = getcfg(args, ["pytest.ini", "tox.ini", "setup.cfg"])
+        parsed_args = self._parser.parse_known_args(args)
+        if parsed_args.inifilename:
+            iniconfig = py.iniconfig.IniConfig(parsed_args.inifilename)
+            if 'pytest' in iniconfig.sections:
+                self.inicfg = iniconfig['pytest']
+            else:
+                self.inicfg = {}
+        else:
+            self.inicfg = getcfg(args, ["pytest.ini", "tox.ini", "setup.cfg"])
         self._parser.addini('addopts', 'extra command line options', 'args')
         self._parser.addini('minversion', 'minimally required pytest version')
 
@@ -815,7 +823,8 @@ class Config(object):
             if default is not notset:
                 return default
             if skip:
-                py.test.skip("no %r option found" %(name,))
+                import pytest
+                pytest.skip("no %r option found" %(name,))
             raise ValueError("no option named %r" % (name,))
 
     def getvalue(self, name, path=None):

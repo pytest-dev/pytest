@@ -1,24 +1,29 @@
 
 .. _features:
 
-..  second training: `professional testing with Python <http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_ , 25-27th November 2013, Leipzig.
+.. sidebar:: Next Open Trainings
+
+   `improving your automated testing with pytest <https://ep2014.europython.eu/en/schedule/sessions/92/>`_, July 25th 2014, Berlin, Germany
+
+   `professional testing with pytest and tox <http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_, 24-26th November 2014, Freiburg, Germany
+
 
 pytest: helps you write better programs
 =============================================
 
 **a mature full-featured Python testing tool**
 
- - runs on Posix/Windows, Python 2.5-3.3, PyPy and Jython-2.5.1
- - **zero-reported-bugs** policy with >1000 tests against itself
+ - runs on Posix/Windows, Python 2.5-3.4, PyPy and Jython-2.5.1
+ - **well tested** with more than a thousand tests against itself
  - **strict backward compatibility policy** for safe pytest upgrades
  - :ref:`comprehensive online <toc>` and `PDF documentation <pytest.pdf>`_
- - many :ref:`third party plugins <extplugins>` and :ref:`builtin helpers <pytest helpers>`, 
+ - many :ref:`third party plugins <extplugins>` and :ref:`builtin helpers <pytest helpers>`,
  - used in :ref:`many small and large projects and organisations <projects>`
  - comes with many :ref:`tested examples <examples>`
 
 **provides easy no-boilerplate testing**
 
- - makes it :ref:`easy to get started <getstarted>`, 
+ - makes it :ref:`easy to get started <getstarted>`,
    has many :ref:`usage options <usage>`
  - :ref:`assert with the assert statement`
  - helpful :ref:`traceback and failing assertion reporting <tbreportdemo>`
@@ -38,7 +43,7 @@ pytest: helps you write better programs
 
 **integrates with other testing methods and tools**:
 
- - multi-paradigm: pytest can run ``nose``, ``unittest`` and 
+ - multi-paradigm: pytest can run ``nose``, ``unittest`` and
    ``doctest`` style test suites, including running testcases made for
    Django and trial
  - supports :ref:`good integration practises <goodpractises>`

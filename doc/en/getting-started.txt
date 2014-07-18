@@ -1,7 +1,7 @@
 Installation and Getting Started
 ===================================
 
-**Pythons**: Python 2.6-3.3, Jython, PyPy
+**Pythons**: Python 2.6-3.4, Jython, PyPy-2.3
 
 **Platforms**: Unix/Posix and Windows
 
@@ -27,7 +27,7 @@ Installation options::
 To check your installation has installed the correct version::
 
     $ py.test --version
-    This is pytest version 2.5.2, imported from /home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/pytest.pyc
+    This is pytest version 2.6.0, imported from /home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/pytest.pyc
 
 If you get an error checkout :ref:`installation issues`.
 
@@ -49,7 +49,7 @@ That's it. You can execute the test function now::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.3 -- py-1.4.20 -- pytest-2.5.2
+    platform linux2 -- Python 2.7.6 -- py-1.4.22 -- pytest-2.6.0
     collected 1 items
     
     test_sample.py F
@@ -97,7 +97,7 @@ Running it with, this time in "quiet" reporting mode::
 
     $ py.test -q test_sysexit.py
     .
-    1 passed in 0.01 seconds
+    1 passed in 0.00 seconds
 
 .. todo:: For further ways to assert exceptions see the `raises`
 
@@ -127,7 +127,7 @@ run the module by passing its filename::
     ================================= FAILURES =================================
     ____________________________ TestClass.test_two ____________________________
     
-    self = <test_class.TestClass instance at 0x255a0e0>
+    self = <test_class.TestClass instance at 0x2b0b0ac73098>
     
         def test_two(self):
             x = "hello"
@@ -163,7 +163,7 @@ before performing the test function call.  Let's just run it::
     ================================= FAILURES =================================
     _____________________________ test_needsfiles ______________________________
     
-    tmpdir = local('/tmp/pytest-1008/test_needsfiles0')
+    tmpdir = local('/tmp/pytest-24/test_needsfiles0')
     
         def test_needsfiles(tmpdir):
             print tmpdir
@@ -171,8 +171,8 @@ before performing the test function call.  Let's just run it::
     E       assert 0
     
     test_tmpdir.py:3: AssertionError
-    ----------------------------- Captured stdout ------------------------------
-    /tmp/pytest-1008/test_needsfiles0
+    --------------------------- Captured stdout call ---------------------------
+    /tmp/pytest-24/test_needsfiles0
     1 failed in 0.01 seconds
 
 Before the test runs, a unique-per-test-invocation temporary directory

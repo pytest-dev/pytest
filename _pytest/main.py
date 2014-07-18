@@ -23,7 +23,7 @@ name_re = py.std.re.compile("^[a-zA-Z_]\w*$")
 
 def pytest_addoption(parser):
     parser.addini("norecursedirs", "directory patterns to avoid for recursion",
-        type="args", default=('.*', 'CVS', '_darcs', '{arch}'))
+        type="args", default=('.*', 'CVS', '_darcs', '{arch}', '*.egg'))
     #parser.addini("dirpatterns",
     #    "patterns specifying possible locations of test files",
     #    type="linelist", default=["**/test_*.txt",
@@ -38,6 +38,8 @@ def pytest_addoption(parser):
                help="exit after first num failures or errors.")
     group._addoption('--strict', action="store_true",
                help="run pytest in strict mode, warnings become errors.")
+    group._addoption("-c", metavar="file", type=str, dest="inifilename",
+               help="load configuration from `file` instead of trying to locate one of the implicit configuration files.")
 
     group = parser.getgroup("collect", "collection")
     group.addoption('--collectonly', '--collect-only', action="store_true",
@@ -388,20 +390,24 @@ class Node(object):
         fm = self.session._fixturemanager
         if excinfo.errisinstance(fm.FixtureLookupError):
             return excinfo.value.formatrepr()
+        tbfilter = True
         if self.config.option.fulltrace:
             style="long"
         else:
             self._prunetraceback(excinfo)
-        # XXX should excinfo.getrepr record all data and toterminal()
-        # process it?
+            tbfilter = False  # prunetraceback already does it
+            if style == "auto":
+                style = "long"
+        # XXX should excinfo.getrepr record all data and toterminal() process it?
         if style is None:
             if self.config.option.tbstyle == "short":
                 style = "short"
             else:
                 style = "long"
+
         return excinfo.getrepr(funcargs=True,
                                showlocals=self.config.option.showlocals,
-                               style=style)
+                               style=style, tbfilter=tbfilter)
 
     repr_failure = _repr_failure_py
 
