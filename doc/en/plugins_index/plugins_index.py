@@ -97,6 +97,11 @@ def obtain_plugins_table(plugins, client):
             return pad_right % image_markup, target_markup
         else:
             return '`link <%s>`_' % target, ''
+    
+    def sanitize_summary(summary):
+        """Make sure summaries don't break our table formatting.
+        """
+        return summary.replace('\n', ' ')
 
     rows = []
     ColumnData = namedtuple('ColumnData', 'text link')
@@ -131,7 +136,7 @@ def obtain_plugins_table(plugins, client):
             ColumnData(
                 repo_markup_1,
                 None),
-            ColumnData(release_data['summary'], None),
+            ColumnData(sanitize_summary(release_data['summary']), None),
         )
         assert len(row) == len(headers)
         rows.append(row)
