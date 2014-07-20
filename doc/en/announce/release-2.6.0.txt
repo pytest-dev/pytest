@@ -1,4 +1,4 @@
-pytest-2.6.0: fixes
+pytest-2.6.0: shorter tracebacks, new warning system, test runner compat
 ===========================================================================
 
 pytest is a mature Python testing tool with more than a 1000 tests
