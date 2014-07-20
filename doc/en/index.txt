@@ -1,7 +1,7 @@
 
 .. _features:
 
-.. sidebar:: Next Open Trainings
+.. note::
 
    `improving your automated testing with pytest <https://ep2014.europython.eu/en/schedule/sessions/92/>`_, July 25th 2014, Berlin, Germany
 

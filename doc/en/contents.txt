@@ -1,4 +1,10 @@
 
+.. note::
+
+   `improving your automated testing with pytest <https://ep2014.europython.eu/en/schedule/sessions/92/>`_, July 25th 2014, Berlin, Germany
+
+   `professional testing with pytest and tox <http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_, 24-26th November 2014, Freiburg, Germany
+
 .. _toc:
 
 Full pytest documentation
