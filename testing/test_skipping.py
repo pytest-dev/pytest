@@ -330,6 +330,53 @@ class TestXFail:
             "*1 xfailed*",
         ])
 
+    def test_xfail_raises_match(self, testdir):
+        p = testdir.makepyfile("""
+            import pytest
+            @pytest.mark.xfail(raises=TypeError)
+            def test_raises():
+                raise TypeError()
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([
+            "*1 xfailed*",
+        ])
+
+    def test_xfail_raises_mismatch(self, testdir):
+        p = testdir.makepyfile("""
+            import pytest
+            @pytest.mark.xfail(raises=IndexError)
+            def test_raises():
+                raise TypeError()
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([
+            "*1 failed*",
+        ])
+    def test_xfail_raises_tuple_match(self, testdir):
+        p = testdir.makepyfile("""
+            import pytest
+            @pytest.mark.xfail(raises=(AttributeError, TypeError))
+            def test_raises():
+                raise TypeError()
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([
+            "*1 xfailed*",
+        ])
+
+    def test_xfail_raises_tuple_mismatch(self, testdir):
+        p = testdir.makepyfile("""
+            import pytest
+            @pytest.mark.xfail(raises=(AttributeError, IndexError))
+            def test_raises():
+                raise TypeError()
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([
+            "*1 failed*",
+        ])
+
 class TestXFailwithSetupTeardown:
     def test_failing_setup_issue9(self, testdir):
         testdir.makepyfile("""
@@ -575,7 +622,7 @@ def test_default_markers(testdir):
     result = testdir.runpytest("--markers")
     result.stdout.fnmatch_lines([
         "*skipif(*condition)*skip*",
-        "*xfail(*condition, reason=None, run=True)*expected failure*",
+        "*xfail(*condition, reason=None, run=True, raises=None)*expected failure*",
     ])
 
 def test_xfail_test_setup_exception(testdir):
@@ -616,7 +663,6 @@ def test_imperativeskip_on_xfail_test(testdir):
         *SKIP*condition: True*
         *2 skipped*
     """)
-
 
 class TestBooleanCondition:
     def test_skipif(self, testdir):

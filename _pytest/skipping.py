@@ -26,11 +26,13 @@ def pytest_configure(config):
         "http://pytest.org/latest/skipping.html"
     )
     config.addinivalue_line("markers",
-        "xfail(condition, reason=None, run=True): mark the the test function "
+        "xfail(condition, reason=None, run=True, raises=None): mark the the test function "
         "as an expected failure if eval(condition) has a True value. "
         "Optionally specify a reason for better reporting and run=False if "
-        "you don't even want to execute the test function. See "
-        "http://pytest.org/latest/skipping.html"
+        "you don't even want to execute the test function. If only specific "
+        "exception(s) are expected, you can list them in raises, and if the test fails "
+        "in other ways, it will be reported as a true failure. "
+        "See http://pytest.org/latest/skipping.html"
     )
 
 def pytest_namespace():
@@ -59,6 +61,15 @@ class MarkEvaluator:
 
     def wasvalid(self):
         return not hasattr(self, 'exc')
+
+    def invalidraise(self, exctype):
+        raises = self.get('raises')
+        if not raises:
+            return
+        if isinstance(raises, tuple):
+            return exctype not in raises
+        else:
+            return raises != exctype
 
     def istrue(self):
         try:
@@ -171,7 +182,11 @@ def pytest_runtest_makereport(__multicall__, item, call):
         if not item.config.option.runxfail:
             if evalxfail.wasvalid() and evalxfail.istrue():
                 if call.excinfo:
-                    rep.outcome = "skipped"
+                    if evalxfail.invalidraise(call.excinfo.type):
+                        rep.outcome = "failed"
+                        return rep
+                    else:
+                        rep.outcome = "skipped"
                 elif call.when == "call":
                     rep.outcome = "failed"
                 else:
