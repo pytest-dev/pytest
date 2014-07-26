@@ -62,14 +62,11 @@ class MarkEvaluator:
     def wasvalid(self):
         return not hasattr(self, 'exc')
 
-    def invalidraise(self, exctype):
+    def invalidraise(self, exc):
         raises = self.get('raises')
         if not raises:
             return
-        if isinstance(raises, tuple):
-            return exctype not in raises
-        else:
-            return raises != exctype
+        return not isinstance(exc, raises)
 
     def istrue(self):
         try:
@@ -182,7 +179,7 @@ def pytest_runtest_makereport(__multicall__, item, call):
         if not item.config.option.runxfail:
             if evalxfail.wasvalid() and evalxfail.istrue():
                 if call.excinfo:
-                    if evalxfail.invalidraise(call.excinfo.type):
+                    if evalxfail.invalidraise(call.excinfo.value):
                         rep.outcome = "failed"
                         return rep
                     else:

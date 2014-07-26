@@ -330,52 +330,27 @@ class TestXFail:
             "*1 xfailed*",
         ])
 
-    def test_xfail_raises_match(self, testdir):
+
+    @pytest.mark.parametrize('params', [('TypeError', 'TypeError', "*1 xfailed*"),
+                                        ('(AttributeError, TypeError)', 'TypeError',
+                                         "*1 xfailed*"),
+                                        ('TypeError', 'IndexError', "*1 failed*"),
+                                        ('(AttributeError, TypeError)', 'IndexError',
+                                         "*1 failed*"),
+                                        ])
+    def test_xfail_raises(self, params, testdir):
+        expected, actual, matchline = params
         p = testdir.makepyfile("""
             import pytest
-            @pytest.mark.xfail(raises=TypeError)
+            @pytest.mark.xfail(raises=%s)
             def test_raises():
-                raise TypeError()
-        """)
+                raise %s()
+        """ % (expected, actual))
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
-            "*1 xfailed*",
+            matchline,
         ])
 
-    def test_xfail_raises_mismatch(self, testdir):
-        p = testdir.makepyfile("""
-            import pytest
-            @pytest.mark.xfail(raises=IndexError)
-            def test_raises():
-                raise TypeError()
-        """)
-        result = testdir.runpytest(p)
-        result.stdout.fnmatch_lines([
-            "*1 failed*",
-        ])
-    def test_xfail_raises_tuple_match(self, testdir):
-        p = testdir.makepyfile("""
-            import pytest
-            @pytest.mark.xfail(raises=(AttributeError, TypeError))
-            def test_raises():
-                raise TypeError()
-        """)
-        result = testdir.runpytest(p)
-        result.stdout.fnmatch_lines([
-            "*1 xfailed*",
-        ])
-
-    def test_xfail_raises_tuple_mismatch(self, testdir):
-        p = testdir.makepyfile("""
-            import pytest
-            @pytest.mark.xfail(raises=(AttributeError, IndexError))
-            def test_raises():
-                raise TypeError()
-        """)
-        result = testdir.runpytest(p)
-        result.stdout.fnmatch_lines([
-            "*1 failed*",
-        ])
 
 class TestXFailwithSetupTeardown:
     def test_failing_setup_issue9(self, testdir):
