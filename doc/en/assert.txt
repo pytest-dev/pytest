@@ -95,6 +95,22 @@ asserts that the given ``ExpectedException`` is raised.  The reporter will
 provide you with helpful output in case of failures such as *no
 exception* or *wrong exception*.
 
+Note that it is also possible to specify a "raises" argument to
+``pytest.mark.xfail``, which checks that the test is failing in a more
+specific way than just having any exception raised::
+
+    @pytest.mark.xfail(raises=IndexError)
+    def test_f():
+        f()
+
+Using ``pytest.raises`` is likely to be better for cases where you are testing
+exceptions your own code is deliberately raising, whereas using
+``@pytest.mark.xfail`` with a check function is probably better for something
+like documenting unfixed bugs (where the test describes what "should" happen)
+or bugs in dependencies.
+
+
+
 .. _newreport:
 
 Making use of context-sensitive comparisons

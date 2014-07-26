@@ -149,6 +149,11 @@ on a particular platform::
     def test_function():
         ...
 
+If you want to be more specific as to why the test is failing, you can specify
+a single exception, or a list of exceptions, in the ``raises`` argument. Then
+the test will be reported as a regular failure if it fails with an
+exception not mentioned in ``raises``.
+
 You can furthermore prevent the running of an "xfail" test or
 specify a reason such as a bug ID or similar.  Here is
 a simple test file with the several usages:
