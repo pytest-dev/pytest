@@ -331,15 +331,13 @@ class TestXFail:
         ])
 
 
-    @pytest.mark.parametrize('params', [('TypeError', 'TypeError', "*1 xfailed*"),
-                                        ('(AttributeError, TypeError)', 'TypeError',
-                                         "*1 xfailed*"),
-                                        ('TypeError', 'IndexError', "*1 failed*"),
-                                        ('(AttributeError, TypeError)', 'IndexError',
-                                         "*1 failed*"),
-                                        ])
-    def test_xfail_raises(self, params, testdir):
-        expected, actual, matchline = params
+    @pytest.mark.parametrize('expected, actual, matchline',
+                             [('TypeError', 'TypeError', "*1 xfailed*"),
+                              ('(AttributeError, TypeError)', 'TypeError', "*1 xfailed*"),
+                              ('TypeError', 'IndexError', "*1 failed*"),
+                              ('(AttributeError, TypeError)', 'IndexError', "*1 failed*"),
+                              ])
+    def test_xfail_raises(self, expected, actual, matchline, testdir):
         p = testdir.makepyfile("""
             import pytest
             @pytest.mark.xfail(raises=%s)
