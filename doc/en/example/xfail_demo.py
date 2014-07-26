@@ -27,4 +27,4 @@ def test_hello6():
 @xfail(raises=IndexError)
 def test_hello7()
     x = []
-    assert x[1] == 1
+    x[1] = 1
