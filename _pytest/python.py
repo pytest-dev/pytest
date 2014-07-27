@@ -1866,8 +1866,10 @@ def handle_mock_module_patching(function, startindex):
     Special treatment when test_function is decorated
     by mock.patch
     """
-    for candidate_module_name in ('unittest.mock', 'mock'):
-        # stdlib comes first
+    for candidate_module_name in ('mock', 'unittest.mock'):
+        # stdlib comes last, because mock might be also installed
+        # as a third party with upgraded version compare to
+        # unittest.mock
         try:
             mock = sys.modules[candidate_module_name]
         except KeyError:
