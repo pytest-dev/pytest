@@ -1861,28 +1861,17 @@ class FixtureDef:
         return ("<FixtureDef name=%r scope=%r baseid=%r >" %
                 (self.argname, self.scope, self.baseid))
 
-def handle_mock_module_patching(function, startindex):
-    """
-    Special treatment when test_function is decorated
-    by mock.patch
-    """
-    for candidate_module_name in ('mock', 'unittest.mock'):
-        # stdlib comes last, because mock might be also installed
-        # as a third party with upgraded version compare to
-        # unittest.mock
-        try:
-            mock = sys.modules[candidate_module_name]
-        except KeyError:
-            pass
-        else:
-            for patching in getattr(function, "patchings", []):
-                if (not patching.attribute_name
-                        and patching.new is mock.DEFAULT):
-                    startindex += 1
-            break
-    else:
-        startindex += len(getattr(function, "patchings", []))
-    return startindex
+def num_mock_patch_args(function):
+    """ return number of arguments used up by mock arguments (if any) """
+    patchings = getattr(function, "patchings", None)
+    if not patchings:
+        return 0
+    mock = sys.modules.get("mock", sys.modules.get("unittest.mock", None))
+    if mock is not None:
+        return len([p for p in patchings
+                        if not p.attribute_name and p.new is mock.DEFAULT])
+    return len(patchings)
+
 
 def getfuncargnames(function, startindex=None):
     # XXX merge with main.py's varnames
@@ -1893,7 +1882,7 @@ def getfuncargnames(function, startindex=None):
     if startindex is None:
         startindex = inspect.ismethod(function) and 1 or 0
     if realfunction != function:
-        startindex = handle_mock_module_patching(function, startindex)
+        startindex += num_mock_patch_args(function)
         function = realfunction
     argnames = inspect.getargs(py.code.getrawcode(function))[0]
     defaults = getattr(function, 'func_defaults',

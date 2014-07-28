@@ -6,6 +6,9 @@ NEXT
   or a tuple of exception classes.  Thanks David Mohr for the complete
   PR.
 
+- fix integration of pytest with unittest.mock.patch decorator when
+  it uses the "new" argument.  Thanks Nicolas Delaby for test and PR.
+
 
 2.6
 -----------------------------------
