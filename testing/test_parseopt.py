@@ -151,11 +151,13 @@ class TestParser:
                              'path.py@123',
                              'hello/path.py@123',
         ])
+        # we only remove "@NUM" syntax for .py files which are currently
+        # the only ones which can produce it.
         assert getattr(args, parseopt.FILE_OR_DIR) == [
-                    'path.txt@2::item',
-                    'path2.py::func2[param with .py@123]',
-                    'path.py',
-                    'hello/path.py',
+            'path.txt@2::item',
+            'path2.py::func2[param with .py@123]',
+            'path.py',
+            'hello/path.py',
         ]
 
     def test_parse_defaultgetter(self):
