@@ -9,6 +9,9 @@ NEXT
 - fix integration of pytest with unittest.mock.patch decorator when
   it uses the "new" argument.  Thanks Nicolas Delaby for test and PR.
 
+- fix issue with detecting conftest files if the arguments contain
+  "::" node id specifications (copy pasted from "-v" output)
+
 
 2.6
 -----------------------------------

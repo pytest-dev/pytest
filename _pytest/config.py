@@ -485,6 +485,11 @@ class Conftest(object):
         testpaths = namespace.file_or_dir
         foundanchor = False
         for path in testpaths:
+            path = str(path)
+            # remove node-id syntax
+            i = path.find("::")
+            if i != -1:
+                path = path[:i]
             anchor = current.join(path, abs=1)
             if exists(anchor): # we found some file object
                 self._try_load_conftest(anchor)
