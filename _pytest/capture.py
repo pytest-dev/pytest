@@ -20,7 +20,7 @@ patchsysdict = {0: 'stdin', 1: 'stdout', 2: 'stderr'}
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group._addoption(
-        '--capture', action="store", 
+        '--capture', action="store",
         default="fd" if hasattr(os, "dup") else "sys",
         metavar="method", choices=['fd', 'sys', 'no'],
         help="per-test capturing method: one of fd|sys|no.")
@@ -33,8 +33,6 @@ def pytest_addoption(parser):
 def pytest_load_initial_conftests(early_config, parser, args, __multicall__):
     ns = early_config.known_args_namespace
     pluginmanager = early_config.pluginmanager
-    if ns.capture == "no":
-        return
     capman = CaptureManager(ns.capture)
     pluginmanager.register(capman, "capturemanager")
 

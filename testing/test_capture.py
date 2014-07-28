@@ -392,13 +392,14 @@ class TestLoggingInteraction:
 
 
 class TestCaptureFixture:
-    def test_std_functional(self, testdir):
+    @pytest.mark.parametrize("opt", [[], ["-s"]])
+    def test_std_functional(self, testdir, opt):
         reprec = testdir.inline_runsource("""
             def test_hello(capsys):
                 print (42)
                 out, err = capsys.readouterr()
                 assert out.startswith("42")
-        """)
+        """, *opt)
         reprec.assertoutcome(passed=1)
 
     def test_capsyscapfd(self, testdir):
