@@ -237,3 +237,21 @@ def test_fixture_dependency(testdir, monkeypatch):
     """))
     result = testdir.runpytest("sub")
     result.stdout.fnmatch_lines(["*1 passed*"])
+
+
+def test_conftest_found_with_double_dash(testdir):
+    sub = testdir.mkdir("sub")
+    sub.join("conftest.py").write(py.std.textwrap.dedent("""
+        def pytest_addoption(parser):
+            parser.addoption("--hello-world", action="store_true")
+    """))
+    p = sub.join("test_hello.py")
+    p.write(py.std.textwrap.dedent("""
+        import pytest
+        def test_hello(found):
+            assert found == 1
+    """))
+    result = testdir.runpytest(str(p) + "@2::test_hello", "-h")
+    result.stdout.fnmatch_lines("""
+        *--hello-world*
+    """)

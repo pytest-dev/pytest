@@ -146,8 +146,19 @@ class TestParser:
         assert args.S == False
 
     def test_parse_removes_line_number_from_positional_arguments(self, parser):
-        args = parser.parse(['path@2::func', 'path2@5::func2[param with @]'])
-        assert getattr(args, parseopt.FILE_OR_DIR) == ['path::func', 'path2::func2[param with @]']
+        args = parser.parse(['path.txt@2::item',
+                             'path2.py::func2[param with .py@123]',
+                             'path.py@123',
+                             'hello/path.py@123',
+        ])
+        # we only remove "@NUM" syntax for .py files which are currently
+        # the only ones which can produce it.
+        assert getattr(args, parseopt.FILE_OR_DIR) == [
+            'path.txt@2::item',
+            'path2.py::func2[param with .py@123]',
+            'path.py',
+            'hello/path.py',
+        ]
 
     def test_parse_defaultgetter(self):
         def defaultget(option):

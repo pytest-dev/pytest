@@ -485,6 +485,11 @@ class Conftest(object):
         testpaths = namespace.file_or_dir
         foundanchor = False
         for path in testpaths:
+            path = str(path)
+            # remove node-id syntax
+            i = path.find("::")
+            if i != -1:
+                path = path[:i]
             anchor = current.join(path, abs=1)
             if exists(anchor): # we found some file object
                 self._try_load_conftest(anchor)
@@ -857,10 +862,11 @@ def getcfg(args, inibasenames):
     return {}
 
 
+rex_pyat = re.compile(r'(.*\.py)@\d+$')
+
 def node_with_line_number(string):
-    split = string.split('[')
-    split[0] = re.sub(r'@\d+', '', split[0])
-    return '['.join(split)
+    return "::".join(rex_pyat.sub(lambda m: m.group(1), part)
+                        for part in string.split("::"))
 
 
 def setns(obj, dic):
