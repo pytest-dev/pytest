@@ -112,6 +112,26 @@ class TestMockDecoration:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
+    def test_unittest_mock_and_fixture(self, testdir):
+        pytest.importorskip("unittest.mock")
+        testdir.makepyfile("""
+            import os.path
+            import unittest.mock
+            import pytest
+
+            @pytest.fixture
+            def inject_me():
+                pass
+
+            @unittest.mock.patch.object(os.path, "abspath",
+                                        new=unittest.mock.MagicMock)
+            def test_hello(inject_me):
+                import os
+                os.path.abspath("hello")
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
     def test_mock(self, testdir):
         pytest.importorskip("mock", "1.0.1")
         testdir.makepyfile("""
