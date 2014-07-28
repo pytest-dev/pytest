@@ -1,4 +1,13 @@
-NEXT (2.6)
+NEXT
+-----------------------------------
+
+- address issue170: allow pytest.mark.xfail(...) to specify expected exceptions via
+  an optional "raises=EXC" argument where EXC can be a single exception
+  or a tuple of exception classes.  Thanks David Mohr for the complete
+  PR.
+
+
+2.6
 -----------------------------------
 
 - Cache exceptions from fixtures according to their scope (issue 467).
