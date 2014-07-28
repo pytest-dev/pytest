@@ -863,9 +863,13 @@ def getcfg(args, inibasenames):
 
 
 def node_with_line_number(string):
-    split = string.split('[')
-    split[0] = re.sub(r'@\d+', '', split[0])
-    return '['.join(split)
+    newparts = []
+    for part in string.split("::"):
+        m = re.match(r'.*\.py@\d+$', part)
+        if m is not None:
+            part = part[:part.rfind("@")]
+        newparts.append(part)
+    return "::".join(newparts)
 
 
 def setns(obj, dic):

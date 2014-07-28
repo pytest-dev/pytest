@@ -12,6 +12,8 @@ NEXT
 - fix issue with detecting conftest files if the arguments contain
   "::" node id specifications (copy pasted from "-v" output)
 
+- fix issue544 by only removing "@NUM" at the end of "::" separated parts 
+  and if the part has an ".py" extension
 
 2.6
 -----------------------------------
