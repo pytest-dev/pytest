@@ -8,38 +8,44 @@ Talks and Tutorials
 
 .. _`funcargs`: funcargs.html
 
-Tutorial examples and blog postings
+Talks and blog postings
 ---------------------------------------------
 
 .. _`tutorial1 repository`: http://bitbucket.org/hpk42/pytest-tutorial1/
 .. _`pycon 2010 tutorial PDF`: http://bitbucket.org/hpk42/pytest-tutorial1/raw/tip/pytest-basic.pdf
 
-Basic usage and fixtures:
-
-- `Introduction to pytest by Andreas Pelme EuroPython 2014
+- `Introduction to pytest, Andreas Pelme, EuroPython 2014
   <https://www.youtube.com/watch?v=LdVJj65ikRY>`_.
 
-- `Advanced Uses of py.test Fixtures by Floris Bruynooghe EuroPython
+- `Advanced Uses of py.test Fixtures, Floris Bruynooghe, EuroPython
   2014 <https://www.youtube.com/watch?v=IBC_dxr-4ps>`_.
 
-- `pytest feature and release highlights (GERMAN, October 2013)
+- `Why i use py.test and maybe you should too, Andy Todd, Pycon AU 2013
+  <https://www.youtube.com/watch?v=P-AhpukDIik>`_
+
+- `3-part blog series about pytest from @pydanny alias Daniel Greenfeld (January
+  2014) <http://pydanny.com/pytest-no-boilerplate-testing.html>`_
+
+- `pytest: helps you write better Django apps, Andreas Pelme, DjangoCon
+  Europe 2014 <https://www.youtube.com/watch?v=aaArYVh6XSM>`_.
+
+- :ref:`fixtures`
+
+- `Testing Django Applications with pytest, Andreas Pelme, EuroPython
+  2013 <https://www.youtube.com/watch?v=aUf8Fkb7TaY>`_.
+
+- `Testes pythonics com py.test, Vinicius Belchior Assef Neto, Plone
+  Conf 2013, Brazil <https://www.youtube.com/watch?v=QUKoq2K7bis>`_.
+
+- `Introduction to py.test fixtures, FOSDEM 2013, Floris Bruynooghe
+  <https://www.youtube.com/watch?v=bJhRW4eZMco>`_.
+
+- `pytest feature and release highlights, Holger Krekel (GERMAN, October 2013)
   <http://pyvideo.org/video/2429/pytest-feature-and-new-release-highlights>`_
 
 - `pytest introduction from Brian Okken (January 2013)
   <http://pythontesting.net/framework/pytest-introduction/>`_
 
-- `3-part blog series about pytest from Daniel Greenfeld (January
-  2014) <http://pydanny.com/pytest-no-boilerplate-testing.html>`_
-
-- `pycon australia 2012 pytest talk from Brianna Laugher
-  <http://2012.pycon-au.org/schedule/52/view_talk?day=sunday>`_ (`video <http://www.youtube.com/watch?v=DTNejE9EraI>`_, `slides <http://www.slideshare.net/pfctdayelise/funcargs-other-fun-with-pytest>`_, `code <https://gist.github.com/3386951>`_)
-- `pycon 2012 US talk video from Holger Krekel <http://www.youtube.com/watch?v=9LVqBQcFmyw>`_
-- `pycon 2010 tutorial PDF`_ and `tutorial1 repository`_
-
-
-Fixtures and Function arguments:
-
-- :ref:`fixtures`
 - `monkey patching done right`_ (blog post, consult `monkeypatch
   plugin`_ for up-to-date API)
 
@@ -78,6 +84,11 @@ Plugin specific examples:
 
 Older conference talks and tutorials
 ----------------------------------------
+
+- `pycon australia 2012 pytest talk from Brianna Laugher
+  <http://2012.pycon-au.org/schedule/52/view_talk?day=sunday>`_ (`video <http://www.youtube.com/watch?v=DTNejE9EraI>`_, `slides <http://www.slideshare.net/pfctdayelise/funcargs-other-fun-with-pytest>`_, `code <https://gist.github.com/3386951>`_)
+- `pycon 2012 US talk video from Holger Krekel <http://www.youtube.com/watch?v=9LVqBQcFmyw>`_
+- `pycon 2010 tutorial PDF`_ and `tutorial1 repository`_
 
 - `ep2009-rapidtesting.pdf`_ tutorial slides (July 2009):
 
