@@ -4,8 +4,6 @@ Talks and Tutorials
 
 .. sidebar:: Next Open Trainings
 
-   `improving your automated testing with pytest <https://ep2014.europython.eu/en/schedule/sessions/92/>`_, July 25th 2014, Berlin, Germany
-
    `professional testing with pytest and tox <http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_, 24-26th November 2014, Freiburg, Germany
 
 .. _`funcargs`: funcargs.html
@@ -17,6 +15,12 @@ Tutorial examples and blog postings
 .. _`pycon 2010 tutorial PDF`: http://bitbucket.org/hpk42/pytest-tutorial1/raw/tip/pytest-basic.pdf
 
 Basic usage and fixtures:
+
+- `Introduction to pytest by Andreas Pelme EuroPython 2014
+  <https://www.youtube.com/watch?v=LdVJj65ikRY>`_.
+
+- `Advanced Uses of py.test Fixtures by Floris Bruynooghe EuroPython
+  2014 <https://www.youtube.com/watch?v=IBC_dxr-4ps>`_.
 
 - `pytest feature and release highlights (GERMAN, October 2013)
   <http://pyvideo.org/video/2429/pytest-feature-and-new-release-highlights>`_
