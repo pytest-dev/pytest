@@ -681,3 +681,59 @@ and run it::
 You'll see that the fixture finalizers could use the precise reporting
 information.
 
+Integrating pytest runner and cx_freeze
+-----------------------------------------------------------
+
+If you freeze your application using a tool like
+`cx_freeze <http://cx-freeze.readthedocs.org>`_ in order to distribute it
+to your end-users, it is a good idea to also package your test runner and run
+your tests using the frozen application.
+
+This way packaging errors such as dependencies not being
+included into the executable can be detected early while also allowing you to
+send test files to users so they can run them in their machines, which can be
+invaluable to obtain more information about a hard to reproduce bug.
+
+Unfortunately embedding the ``pytest`` runner into a frozen executable using
+``cx_freeze`` is not as straightforward as one would like,
+because ``pytest`` makes heavy use of dynamic module loading which
+``cx_freeze`` can't resolve by itself.
+
+To solve this, you have to manually include ``pytest`` and ``py``
+modules by using the ``build_exe`` option in your ``setup.py`` script, like this::
+
+    # contents of setup.py
+    from cx_Freeze import setup, Executable
+
+    includes = [
+        '_pytest.doctest',
+        '_pytest.unittest',
+        # ... lots more
+    ]
+    setup(
+        name="runtests",
+        options={"build_exe": {'includes': includes}},
+        # ... other options
+    )
+
+(For the complete list, check out the modules under ``_pytest`` in your
+site-packages).
+
+With that, you can make your program check for a certain flag and pass control
+over to ``pytest``::
+
+    # contents of app_main.py
+    import sys
+
+    if len(sys.argv) > 1 and sys.argv[1] == '--pytest':
+        import pytest
+        sys.exit(pytest.main(sys.argv[2:]))
+    else:
+        # normal application execution: at this point argv can be parsed
+        # by your argument-parsing library of choice as usual
+        ...
+
+This makes it convenient to execute your tests from within your frozen
+application, using standard ``py.test`` command-line::
+
+    $ ./app_main --pytest --verbose --tb=long --junit-xml=results.xml test-suite/
