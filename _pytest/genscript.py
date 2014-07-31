@@ -1,9 +1,13 @@
 """ generate a single-file self-contained version of pytest """
+import base64
+import pickle
 import py
 import sys
+import zlib
+
 
 def find_toplevel(name):
-    for syspath in py.std.sys.path:
+    for syspath in sys.path:
         base = py.path.local(syspath)
         lib = base/name
         if lib.check(dir=1):
@@ -29,9 +33,9 @@ def pkg_to_mapping(name):
     return name2src
 
 def compress_mapping(mapping):
-    data = py.std.pickle.dumps(mapping, 2)
-    data = py.std.zlib.compress(data, 9)
-    data = py.std.base64.encodestring(data)
+    data = pickle.dumps(mapping, 2)
+    data = zlib.compress(data, 9)
+    data = base64.encodestring(data)
     data = data.decode('ascii')
     return data
 

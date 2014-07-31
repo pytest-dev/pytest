@@ -1,9 +1,10 @@
 """ basic collect and runtest protocol implementations """
+import bdb
+import sys
+from time import time
 
 import py
 import pytest
-import sys
-from time import time
 from py._code.code import TerminalRepr
 
 def pytest_namespace():
@@ -118,7 +119,7 @@ def check_interactive_exception(call, report):
     return call.excinfo and not (
                 hasattr(report, "wasxfail") or
                 call.excinfo.errisinstance(skip.Exception) or
-                call.excinfo.errisinstance(py.std.bdb.BdbQuit))
+                call.excinfo.errisinstance(bdb.BdbQuit))
 
 def call_runtest_hook(item, when, **kwds):
     hookname = "pytest_runtest_" + when

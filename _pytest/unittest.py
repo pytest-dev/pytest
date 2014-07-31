@@ -1,6 +1,12 @@
 """ discovery and running of std-library "unittest" style tests. """
-import pytest, py
+from __future__ import absolute_import
+import traceback
+import unittest
 import sys
+
+import pytest
+import py
+
 
 # for transfering markers
 from _pytest.python import transfer_markers
@@ -45,7 +51,7 @@ class UnitTestCase(pytest.Class):
         if not getattr(cls, "__test__", True):
             return
         self.session._fixturemanager.parsefactories(self, unittest=True)
-        loader = py.std.unittest.TestLoader()
+        loader = unittest.TestLoader()
         module = self.getparent(pytest.Module).obj
         foundsomething = False
         for name in loader.getTestCaseNames(self.obj):
@@ -90,7 +96,7 @@ class TestCaseFunction(pytest.Function):
         except TypeError:
             try:
                 try:
-                    l = py.std.traceback.format_exception(*rawexcinfo)
+                    l = traceback.format_exception(*rawexcinfo)
                     l.insert(0, "NOTE: Incompatible Exception Representation, "
                         "displaying natively:\n\n")
                     pytest.fail("".join(l), pytrace=False)

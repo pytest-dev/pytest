@@ -1,4 +1,5 @@
 """ core implementation of testing process: init, session, runtest loop. """
+import re
 
 import py
 import pytest, _pytest
@@ -19,7 +20,7 @@ EXIT_INTERRUPTED = 2
 EXIT_INTERNALERROR = 3
 EXIT_USAGEERROR = 4
 
-name_re = py.std.re.compile("^[a-zA-Z_]\w*$")
+name_re = re.compile("^[a-zA-Z_]\w*$")
 
 def pytest_addoption(parser):
     parser.addini("norecursedirs", "directory patterns to avoid for recursion",
@@ -315,7 +316,7 @@ class Node(object):
         except py.builtin._sysex:
             raise
         except:
-            failure = py.std.sys.exc_info()
+            failure = sys.exc_info()
             setattr(self, exattrname, failure)
             raise
         setattr(self, attrname, res)
