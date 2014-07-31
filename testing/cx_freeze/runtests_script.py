@@ -1,7 +1,6 @@
 """
-Simple script that actually executes py.test runner when passed "--pytest" as
-first argument; in this case, all other arguments are forwarded to pytest's
-main().
+This is the script that is actually frozen into an executable: simply executes
+py.test main().
 """
 
 if __name__ == '__main__':

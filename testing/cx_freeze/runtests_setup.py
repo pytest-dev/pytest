@@ -1,6 +1,9 @@
+"""
+Sample setup.py script that generates an executable with pytest runner embedded.
+"""
 from cx_Freeze import setup, Executable
-
 import pytest
+
 setup(
     name="runtests",
     version="0.1",
