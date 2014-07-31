@@ -703,7 +703,8 @@ must declare them explicitly by using ``pytest.cx_freeze_support.includes()``::
     import pytest
 
     setup(
-        name="runtests",
+        name="app_main",
+        executables=[Executable("app_main.py")],
         options={"build_exe":
             {
             'includes': pytest.cx_freeze_support.includes()}
