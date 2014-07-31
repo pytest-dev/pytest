@@ -251,7 +251,7 @@ def test_conftest_found_with_double_dash(testdir):
         def test_hello(found):
             assert found == 1
     """))
-    result = testdir.runpytest(str(p) + "@2::test_hello", "-h")
+    result = testdir.runpytest(str(p) + "::test_hello", "-h")
     result.stdout.fnmatch_lines("""
         *--hello-world*
     """)

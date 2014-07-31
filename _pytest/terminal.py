@@ -380,9 +380,6 @@ class TerminalReporter:
             fspath = "%s <- %s" % (collect_fspath, fspath)
         if fspath:
             line = str(fspath)
-            if lineno is not None:
-                lineno += 1
-                line += "@" + str(lineno)
             if domain:
                 split = str(domain).split('[')
                 split[0] = split[0].replace('.', '::')  # don't replace '.' in params

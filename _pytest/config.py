@@ -2,7 +2,6 @@
 
 import py
 # DON't import pytest here because it causes import cycle troubles
-import re
 import sys, os
 from _pytest import hookspec # the extension point definitions
 from _pytest.core import PluginManager
@@ -181,8 +180,7 @@ class Parser:
                     a = option.attrs()
                     arggroup.add_argument(*n, **a)
         # bash like autocompletion for dirs (appending '/')
-        optparser.add_argument(FILE_OR_DIR, nargs='*', type=node_with_line_number,
-                               ).completer=filescompleter
+        optparser.add_argument(FILE_OR_DIR, nargs='*').completer=filescompleter
         return optparser
 
     def parse_setoption(self, args, option):
@@ -860,13 +858,6 @@ def getcfg(args, inibasenames):
                     if 'pytest' in iniconfig.sections:
                         return iniconfig['pytest']
     return {}
-
-
-rex_pyat = re.compile(r'(.*\.py)@\d+$')
-
-def node_with_line_number(string):
-    return "::".join(rex_pyat.sub(lambda m: m.group(1), part)
-                        for part in string.split("::"))
 
 
 def setns(obj, dic):
