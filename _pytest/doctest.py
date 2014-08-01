@@ -1,5 +1,6 @@
 """ discover and run doctests in modules and test files."""
-
+from __future__ import absolute_import
+import traceback
 import pytest, py
 from _pytest.python import FixtureRequest, FuncFixtureInfo
 from py._code.code import TerminalRepr, ReprFileLocation
@@ -43,7 +44,7 @@ class DoctestItem(pytest.Item):
         self.runner.run(self.dtest)
 
     def repr_failure(self, excinfo):
-        doctest = py.std.doctest
+        import doctest
         if excinfo.errisinstance((doctest.DocTestFailure,
                                   doctest.UnexpectedException)):
             doctestfailure = excinfo.value
@@ -56,8 +57,8 @@ class DoctestItem(pytest.Item):
                 lineno = test.lineno + example.lineno + 1
             message = excinfo.type.__name__
             reprlocation = ReprFileLocation(filename, lineno, message)
-            checker = py.std.doctest.OutputChecker()
-            REPORT_UDIFF = py.std.doctest.REPORT_UDIFF
+            checker = doctest.OutputChecker()
+            REPORT_UDIFF = doctest.REPORT_UDIFF
             filelines = py.path.local(filename).readlines(cr=0)
             lines = []
             if lineno is not None:
@@ -78,7 +79,7 @@ class DoctestItem(pytest.Item):
                 inner_excinfo = py.code.ExceptionInfo(excinfo.value.exc_info)
                 lines += ["UNEXPECTED EXCEPTION: %s" %
                             repr(inner_excinfo.value)]
-                lines += py.std.traceback.format_exception(*excinfo.value.exc_info)
+                lines += traceback.format_exception(*excinfo.value.exc_info)
             return ReprFailDoctest(reprlocation, lines)
         else:
             return super(DoctestItem, self).repr_failure(excinfo)
@@ -88,7 +89,7 @@ class DoctestItem(pytest.Item):
 
 class DoctestTextfile(DoctestItem, pytest.File):
     def runtest(self):
-        doctest = py.std.doctest
+        import doctest
         # satisfy `FixtureRequest` constructor...
         self.funcargs = {}
         fm = self.session._fixturemanager
@@ -106,7 +107,7 @@ class DoctestTextfile(DoctestItem, pytest.File):
 
 class DoctestModule(pytest.File):
     def collect(self):
-        doctest = py.std.doctest
+        import doctest
         if self.fspath.basename == "conftest.py":
             module = self.config._conftest.importconftest(self.fspath)
         else:

@@ -1,6 +1,10 @@
 """ support for providing temporary directories to test functions.  """
-import pytest, py
+import re
+
+import pytest
+import py
 from _pytest.monkeypatch import monkeypatch
+
 
 class TempdirHandler:
     def __init__(self, config):
@@ -63,7 +67,7 @@ def tmpdir(request):
     path object.
     """
     name = request.node.name
-    name = py.std.re.sub("[\W]", "_", name)
+    name = re.sub("[\W]", "_", name)
     MAXVAL = 30
     if len(name) > MAXVAL:
         name = name[:MAXVAL]

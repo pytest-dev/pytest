@@ -1,7 +1,11 @@
 """ interactive debugging with PDB, the Python Debugger. """
-
-import pytest, py
+from __future__ import absolute_import
+import pdb
 import sys
+
+import pytest
+import py
+
 
 def pytest_addoption(parser):
     group = parser.getgroup("general")
@@ -16,10 +20,10 @@ def pytest_configure(config):
     if config.getvalue("usepdb"):
         config.pluginmanager.register(PdbInvoke(), 'pdbinvoke')
 
-    old = (py.std.pdb.set_trace, pytestPDB._pluginmanager)
+    old = (pdb.set_trace, pytestPDB._pluginmanager)
     def fin():
-        py.std.pdb.set_trace, pytestPDB._pluginmanager = old
-    py.std.pdb.set_trace = pytest.set_trace
+        pdb.set_trace, pytestPDB._pluginmanager = old
+    pdb.set_trace = pytest.set_trace
     pytestPDB._pluginmanager = config.pluginmanager
     config._cleanup.append(fin)
 
@@ -38,7 +42,7 @@ class pytestPDB:
             tw = py.io.TerminalWriter()
             tw.line()
             tw.sep(">", "PDB set_trace (IO-capturing turned off)")
-        py.std.pdb.Pdb().set_trace(frame)
+        pdb.Pdb().set_trace(frame)
 
 
 class PdbInvoke:
@@ -74,7 +78,8 @@ def _enter_pdb(node, excinfo, rep):
 def _postmortem_traceback(excinfo):
     # A doctest.UnexpectedException is not useful for post_mortem.
     # Use the underlying exception instead:
-    if isinstance(excinfo.value, py.std.doctest.UnexpectedException):
+    from doctest import UnexpectedException
+    if isinstance(excinfo.value, UnexpectedException):
         return excinfo.value.exc_info[2]
     else:
         return excinfo._excinfo[2]
@@ -88,7 +93,6 @@ def _find_last_non_hidden_frame(stack):
 
 
 def post_mortem(t):
-    pdb = py.std.pdb
     class Pdb(pdb.Pdb):
         def get_stack(self, f, t):
             stack, i = pdb.Pdb.get_stack(self, f, t)

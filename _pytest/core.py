@@ -1,6 +1,7 @@
 """
 pytest PluginManager, basic initialization and tracing.
 """
+import os
 import sys
 import inspect
 import py
@@ -154,7 +155,7 @@ class PluginManager(object):
     # API for bootstrapping
     #
     def _envlist(self, varname):
-        val = py.std.os.environ.get(varname, None)
+        val = os.environ.get(varname, None)
         if val is not None:
             return val.split(',')
         return ()
@@ -221,7 +222,7 @@ class PluginManager(object):
                 return self.import_plugin(modname[7:])
             raise
         except:
-            e = py.std.sys.exc_info()[1]
+            e = sys.exc_info()[1]
             import pytest
             if not hasattr(pytest, 'skip') or not isinstance(e, pytest.skip.Exception):
                 raise

@@ -2,7 +2,6 @@
 
 Based on initial code from Ross Lawley.
 """
-
 import py
 import os
 import re
@@ -10,19 +9,12 @@ import sys
 import time
 
 # Python 2.X and 3.X compatibility
-try:
-    unichr(65)
-except NameError:
+if sys.version_info[0] < 3:
+    from codecs import open
+else:
     unichr = chr
-try:
-    unicode('A')
-except NameError:
     unicode = str
-try:
-    long(1)
-except NameError:
     long = int
-
 
 class Junit(py.xml.Namespace):
     pass
@@ -206,11 +198,7 @@ class LogXML(object):
         self.suite_start_time = time.time()
 
     def pytest_sessionfinish(self):
-        if py.std.sys.version_info[0] < 3:
-            logfile = py.std.codecs.open(self.logfile, 'w', encoding='utf-8')
-        else:
-            logfile = open(self.logfile, 'w', encoding='utf-8')
-
+        logfile = open(self.logfile, 'w', encoding='utf-8')
         suite_stop_time = time.time()
         suite_time_delta = suite_stop_time - self.suite_start_time
         numtests = self.passed + self.failed

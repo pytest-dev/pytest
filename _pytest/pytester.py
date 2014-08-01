@@ -1,14 +1,20 @@
 """ (disabled by default) support for testing pytest and pytest plugins. """
-
-import py, pytest
-import sys, os
+import inspect
+import sys
+import os
 import codecs
 import re
 import time
+import platform
 from fnmatch import fnmatch
-from _pytest.main import Session, EXIT_OK
+import subprocess
+
+import py
+import pytest
 from py.builtin import print_
 from _pytest.core import HookRelay
+
+from _pytest.main import Session, EXIT_OK
 
 
 def get_public_names(l):
@@ -87,10 +93,10 @@ class HookRecorder:
 
     def _makecallparser(self, method):
         name = method.__name__
-        args, varargs, varkw, default = py.std.inspect.getargspec(method)
+        args, varargs, varkw, default = inspect.getargspec(method)
         if not args or args[0] != "self":
             args.insert(0, 'self')
-        fspec = py.std.inspect.formatargspec(args, varargs, varkw, default)
+        fspec = inspect.formatargspec(args, varargs, varkw, default)
         # we use exec because we want to have early type
         # errors on wrong input arguments, using
         # *args/**kwargs delays this and gives errors
@@ -122,7 +128,7 @@ class HookRecorder:
         __tracebackhide__ = True
         i = 0
         entries = list(entries)
-        backlocals = py.std.sys._getframe(1).f_locals
+        backlocals = sys._getframe(1).f_locals
         while entries:
             name, check = entries.pop(0)
             for ind, call in enumerate(self.calls[i:]):
@@ -210,7 +216,7 @@ class TmpTestdir:
 
     def finalize(self):
         for p in self._syspathremove:
-            py.std.sys.path.remove(p)
+            sys.path.remove(p)
         if hasattr(self, '_olddir'):
             self._olddir.chdir()
         # delete modules that have been loaded from tmpdir
@@ -283,7 +289,7 @@ class TmpTestdir:
     def syspathinsert(self, path=None):
         if path is None:
             path = self.tmpdir
-        py.std.sys.path.insert(0, str(path))
+        sys.path.insert(0, str(path))
         self._syspathremove.append(str(path))
 
     def mkdir(self, name):
@@ -426,9 +432,8 @@ class TmpTestdir:
         env['PYTHONPATH'] = os.pathsep.join(filter(None, [
             str(os.getcwd()), env.get('PYTHONPATH', '')]))
         kw['env'] = env
-        #print "env", env
-        return py.std.subprocess.Popen(cmdargs,
-                                       stdout=stdout, stderr=stderr, **kw)
+        return subprocess.Popen(cmdargs,
+                                stdout=stdout, stderr=stderr, **kw)
 
     def run(self, *cmdargs):
         return self._run(*cmdargs)
@@ -474,9 +479,9 @@ class TmpTestdir:
     def _getpybinargs(self, scriptname):
         if not self.request.config.getvalue("notoolsonpath"):
             # XXX we rely on script referring to the correct environment
-            # we cannot use "(py.std.sys.executable,script)"
+            # we cannot use "(sys.executable,script)"
             # because on windows the script is e.g. a py.test.exe
-            return (py.std.sys.executable, _pytest_fullpath,) # noqa
+            return (sys.executable, _pytest_fullpath,) # noqa
         else:
             pytest.skip("cannot run %r with --no-tools-on-path" % scriptname)
 
@@ -496,7 +501,7 @@ class TmpTestdir:
 
     def runpython_c(self, command):
         command = self._getsysprepend() + command
-        return self.run(py.std.sys.executable, "-c", command)
+        return self.run(sys.executable, "-c", command)
 
     def runpytest(self, *args):
         p = py.path.local.make_numbered_dir(prefix="runpytest-",
@@ -523,7 +528,7 @@ class TmpTestdir:
 
     def spawn(self, cmd, expect_timeout=10.0):
         pexpect = pytest.importorskip("pexpect", "3.0")
-        if hasattr(sys, 'pypy_version_info') and '64' in py.std.platform.machine():
+        if hasattr(sys, 'pypy_version_info') and '64' in platform.machine():
             pytest.skip("pypy-64 bit not supported")
         if sys.platform == "darwin":
             pytest.xfail("pexpect does not work reliably on darwin?!")
@@ -670,7 +675,7 @@ class LineMatcher:
 
     def fnmatch_lines(self, lines2):
         def show(arg1, arg2):
-            py.builtin.print_(arg1, arg2, file=py.std.sys.stderr)
+            py.builtin.print_(arg1, arg2, file=sys.stderr)
         lines2 = self._getlines(lines2)
         lines1 = self.lines[:]
         nextline = None

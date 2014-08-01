@@ -5,6 +5,8 @@ This is a good source for looking at the various reporting hooks.
 import pytest
 import py
 import sys
+import time
+
 
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "reporting", after="general")
@@ -49,7 +51,7 @@ def getreportopt(config):
     optvalue = config.option.report
     if optvalue:
         py.builtin.print_("DEPRECATED: use -r instead of --report option.",
-            file=py.std.sys.stderr)
+            file=sys.stderr)
         if optvalue:
             for setting in optvalue.split(","):
                 setting = setting.strip()
@@ -95,7 +97,7 @@ class TerminalReporter:
         self.stats = {}
         self.startdir = self.curdir = py.path.local()
         if file is None:
-            file = py.std.sys.stdout
+            file = sys.stdout
         self._tw = self.writer = py.io.TerminalWriter(file)
         if self.config.option.color == 'yes':
             self._tw.hasmarkup = True
@@ -265,7 +267,7 @@ class TerminalReporter:
 
     @pytest.mark.trylast
     def pytest_sessionstart(self, session):
-        self._sessionstarttime = py.std.time.time()
+        self._sessionstarttime = time.time()
         if not self.showheader:
             return
         self.write_sep("=", "test session starts", bold=True)
@@ -466,7 +468,7 @@ class TerminalReporter:
             self._tw.line(content)
 
     def summary_stats(self):
-        session_duration = py.std.time.time() - self._sessionstarttime
+        session_duration = time.time() - self._sessionstarttime
 
         keys = ("failed passed skipped deselected "
                "xfailed xpassed warnings").split()

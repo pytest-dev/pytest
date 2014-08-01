@@ -17,6 +17,9 @@ NEXT
 - fix issue544 by only removing "@NUM" at the end of "::" separated parts 
   and if the part has an ".py" extension
 
+- don't use py.std import helper, rather import things directly.
+  Thanks Bruno Oliveira.
+
 2.6
 -----------------------------------
 

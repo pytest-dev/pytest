@@ -1,7 +1,10 @@
 """ support for skip/xfail functions and markers. """
-
-import py, pytest
+import os
 import sys
+import traceback
+
+import py
+import pytest
 
 def pytest_addoption(parser):
     group = parser.getgroup("general")
@@ -79,7 +82,7 @@ class MarkEvaluator:
                 msg = [" " * (self.exc[1].offset + 4) + "^",]
                 msg.append("SyntaxError: invalid syntax")
             else:
-                msg = py.std.traceback.format_exception_only(*self.exc[:2])
+                msg = traceback.format_exception_only(*self.exc[:2])
             pytest.fail("Error evaluating %r expression\n"
                         "    %s\n"
                         "%s"
@@ -87,7 +90,7 @@ class MarkEvaluator:
                         pytrace=False)
 
     def _getglobals(self):
-        d = {'os': py.std.os, 'sys': py.std.sys, 'config': self.item.config}
+        d = {'os': os, 'sys': sys, 'config': self.item.config}
         func = self.item.obj
         try:
             d.update(func.__globals__)
