@@ -1,7 +1,6 @@
 """ discovery and running of std-library "unittest" style tests. """
 from __future__ import absolute_import
 import traceback
-import unittest
 import sys
 
 import pytest
@@ -12,22 +11,15 @@ import py
 from _pytest.python import transfer_markers
 
 
-def is_unittest(obj):
-    """Is obj a subclass of unittest.TestCase?"""
-    unittest = sys.modules.get('unittest')
-    if unittest is None:
-        return  # nobody can have derived unittest.TestCase
-    try:
-        return issubclass(obj, unittest.TestCase)
-    except KeyboardInterrupt:
-        raise
-    except:
-        return False
-
-
 def pytest_pycollect_makeitem(collector, name, obj):
-    if is_unittest(obj):
-        return UnitTestCase(name, parent=collector)
+    # has unittest been imported and is obj a subclass of its TestCase?
+    try:
+        if not issubclass(obj, sys.modules["unittest"].TestCase):
+            return
+    except Exception:
+        return
+    # yes, so let's collect it
+    return UnitTestCase(name, parent=collector)
 
 
 class UnitTestCase(pytest.Class):
@@ -47,11 +39,12 @@ class UnitTestCase(pytest.Class):
         super(UnitTestCase, self).setup()
 
     def collect(self):
+        from unittest import TestLoader
         cls = self.obj
         if not getattr(cls, "__test__", True):
             return
         self.session._fixturemanager.parsefactories(self, unittest=True)
-        loader = unittest.TestLoader()
+        loader = TestLoader()
         module = self.getparent(pytest.Module).obj
         foundsomething = False
         for name in loader.getTestCaseNames(self.obj):

@@ -1,9 +1,6 @@
 """ generate a single-file self-contained version of pytest """
-import base64
-import pickle
 import py
 import sys
-import zlib
 
 
 def find_toplevel(name):
@@ -33,6 +30,7 @@ def pkg_to_mapping(name):
     return name2src
 
 def compress_mapping(mapping):
+    import base64, pickle, zlib
     data = pickle.dumps(mapping, 2)
     data = zlib.compress(data, 9)
     data = base64.encodestring(data)
