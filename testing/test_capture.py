@@ -340,6 +340,8 @@ class TestLoggingInteraction:
         p = testdir.makepyfile("""
             import sys
             def test_something():
+                # pytest does not import logging
+                assert 'logging' not in sys.modules
                 import logging
                 logging.basicConfig()
                 logging.warn("hello432")
