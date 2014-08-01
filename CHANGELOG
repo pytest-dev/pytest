@@ -1,6 +1,9 @@
 NEXT
 -----------------------------------
 
+- No longer show line numbers in the --verbose output, the output is now
+  purely the nodeid.  The line number is still shown in failure reports.
+
 - fix issue547 capsys/capfd also work when output capturing ("-s") is disabled.
 
 - address issue170: allow pytest.mark.xfail(...) to specify expected exceptions via
