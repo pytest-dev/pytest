@@ -131,7 +131,7 @@ class AssertionRewritingHook(object):
         pyc = os.path.join(cache_dir, cache_name)
         # Notice that even if we're in a read-only directory, I'm going
         # to check for a cached pyc. This may not be optimal...
-        co = _read_pyc(fn_pypath, pyc)
+        co = _read_pyc(fn_pypath, pyc, state.trace)
         if co is None:
             state.trace("rewriting %r" % (fn,))
             co = _rewrite_test(state, fn_pypath)
@@ -289,11 +289,13 @@ def _make_rewritten_pyc(state, fn, pyc, co):
         if _write_pyc(state, co, fn, proc_pyc):
             os.rename(proc_pyc, pyc)
 
-def _read_pyc(source, pyc):
+def _read_pyc(source, pyc, trace=None):
     """Possibly read a pytest pyc containing rewritten code.
 
     Return rewritten code if successful or None if not.
     """
+    if trace is None:
+        trace = lambda x: None
     try:
         fp = open(pyc, "rb")
     except IOError:
@@ -302,18 +304,21 @@ def _read_pyc(source, pyc):
         try:
             mtime = int(source.mtime())
             data = fp.read(8)
-        except EnvironmentError:
+        except EnvironmentError as e:
+            trace('_read_pyc(%s): EnvironmentError %s' % (source, e))
             return None
         # Check for invalid or out of date pyc file.
         if (len(data) != 8 or data[:4] != imp.get_magic() or
                 struct.unpack("<l", data[4:])[0] != mtime):
+            trace('_read_pyc(%s): invalid or out of date pyc' % source)
             return None
         try:
             co = marshal.load(fp)
-        except (EOFError, ValueError, TypeError):  # see docs
+        except Exception as e:
+            trace('_read_pyc(%s): marshal.load error %s' % (source, e))
             return None
         if not isinstance(co, types.CodeType):
-            # That's interesting....
+            trace('_read_pyc(%s): not a code object' % source)
             return None
         return co
     finally:
