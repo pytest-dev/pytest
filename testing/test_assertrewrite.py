@@ -539,3 +539,25 @@ class TestAssertionRewriteHookDetails(object):
         result.stdout.fnmatch_lines([
             '* 1 passed*',
         ])
+
+    def test_read_pyc(self, tmpdir):
+        """
+        Ensure that the `_read_pyc` can properly deal with corrupted pyc files.
+        In those circumstances it should just give up instead of generating
+        an exception that is propagated to the caller.
+        """
+        import py_compile
+        from _pytest.assertion.rewrite import _read_pyc
+
+        source = tmpdir.join('source.py')
+        pyc = source + 'c'
+
+        source.write('def test(): pass')
+        py_compile.compile(str(source), str(pyc))
+
+        contents = pyc.read(mode='rb')
+        strip_bytes = 20  # header is around 8 bytes, strip a little more
+        assert len(contents) > strip_bytes
+        pyc.write(contents[:strip_bytes], mode='wb')
+
+        assert _read_pyc(source, str(pyc)) is None  # no error

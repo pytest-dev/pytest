@@ -3,6 +3,10 @@ NEXT
 
 - No longer show line numbers in the --verbose output, the output is now
   purely the nodeid.  The line number is still shown in failure reports.
+  Thanks Floris Bruynooghe.
+
+- fix issue437 where assertion rewriting could cause pytest-xdist slaves
+  to collect different tests. Thanks Bruno Oliveira.
 
 - fix issue547 capsys/capfd also work when output capturing ("-s") is disabled.
 
