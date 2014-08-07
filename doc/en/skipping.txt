@@ -164,10 +164,10 @@ Running it with the report-on-xfail option gives this output::
 
     example $ py.test -rx xfail_demo.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.6 -- py-1.4.22 -- pytest-2.6.0
-    collected 6 items
+    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
+    collected 7 items
     
-    xfail_demo.py xxxxxx
+    xfail_demo.py xxxxxxx
     ========================= short test summary info ==========================
     XFAIL xfail_demo.py::test_hello
     XFAIL xfail_demo.py::test_hello2
@@ -180,8 +180,9 @@ Running it with the report-on-xfail option gives this output::
       condition: pytest.__version__[0] != "17"
     XFAIL xfail_demo.py::test_hello6
       reason: reason
+    XFAIL xfail_demo.py::test_hello7
     
-    ======================== 6 xfailed in 0.05 seconds =========================
+    ======================== 7 xfailed in 0.05 seconds =========================
 
 .. _`skip/xfail with parametrize`:
 

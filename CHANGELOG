@@ -1,4 +1,4 @@
-NEXT
+2.6.1
 -----------------------------------
 
 - No longer show line numbers in the --verbose output, the output is now
