@@ -240,9 +240,9 @@ class EncodedFile(object):
     def __getattr__(self, name):
         return getattr(self.buffer, name)
 
-    def __setattr__(self, dd):
-        """default implementation for __setattr__ because unpickling causes infinite
-           recursion if only __getattr__ is overloaded and __setattr__ is missing"""
+    def __setstate__(self, dd):
+        """default implementation for __setstate__ because unpickling causes infinite
+           recursion if only __getattr__ is overloaded and __setstate__ is missing"""
         self.__dict__ = dd
 
 
