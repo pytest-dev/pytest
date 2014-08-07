@@ -8,6 +8,9 @@ NEXT
 - fix issue437 where assertion rewriting could cause pytest-xdist slaves
   to collect different tests. Thanks Bruno Oliveira.
 
+- fix issue555: add "errors" attribute to capture-streams to satisfy
+  some distutils and possibly other code accessing sys.stdout.errors.
+
 - fix issue547 capsys/capfd also work when output capturing ("-s") is disabled.
 
 - address issue170: allow pytest.mark.xfail(...) to specify expected exceptions via
