@@ -18,7 +18,7 @@
 # The full version, including alpha/beta/rc tags.
 # The short X.Y version.
 version = "2.6"
-release = "2.6.0"
+release = "2.6.1"
 
 import sys, os
 
@@ -225,7 +225,7 @@ latex_documents = [
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
-#latex_logo = None
+latex_logo = 'img/pytest1.png'
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
