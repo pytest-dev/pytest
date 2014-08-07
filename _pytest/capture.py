@@ -238,8 +238,12 @@ class EncodedFile(object):
         self.write(data)
 
     def __getattr__(self, name):
-        if name != "buffer":
-            return getattr(self.buffer, name)
+        return getattr(self.buffer, name)
+
+    def __setattr__(self, dd):
+        """default implementation for __setattr__ because unpickling causes infinite
+           recursion if only __getattr__ is overloaded and __setattr__ is missing"""
+        self.__dict__ = dd
 
 
 class MultiCapture(object):
