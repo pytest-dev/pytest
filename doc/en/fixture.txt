@@ -75,26 +75,25 @@ will discover and call the :py:func:`@pytest.fixture <_pytest.python.fixture>`
 marked ``smtp`` fixture function.  Running the test looks like this::
 
     $ py.test test_smtpsimple.py
-    ============================= test session starts ==============================
-    platform linux2 -- Python 2.7.6 -- py-1.4.23 -- pytest-2.6.1
+    =========================== test session starts ============================
+    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.2.dev1
     collected 1 items
     
     test_smtpsimple.py F
     
-    =================================== FAILURES ===================================
-    __________________________________ test_ehlo ___________________________________
+    ================================= FAILURES =================================
+    ________________________________ test_ehlo _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x7ff89e00d7e8>
+    smtp = <smtplib.SMTP object at 0x2ade77b37e48>
     
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
             assert response == 250
-            assert "merlinux" in msg
-    >       assert 0 # for demo purposes
-    E       assert 0
+    >       assert "merlinux" in msg
+    E       TypeError: Type str doesn't support the buffer API
     
-    test_smtpsimple.py:12: AssertionError
-    =========================== 1 failed in 0.17 seconds ===========================
+    test_smtpsimple.py:11: TypeError
+    ========================= 1 failed in 0.18 seconds =========================
 
 In the failure traceback we see that the test function was called with a
 ``smtp`` argument, the ``smtplib.SMTP()`` instance created by the fixture
@@ -193,28 +192,27 @@ We deliberately insert failing ``assert 0`` statements in order to
 inspect what is going on and can now run the tests::
 
     $ py.test test_module.py
-    ============================= test session starts ==============================
-    platform linux2 -- Python 2.7.6 -- py-1.4.23 -- pytest-2.6.1
+    =========================== test session starts ============================
+    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.2.dev1
     collected 2 items
     
     test_module.py FF
     
-    =================================== FAILURES ===================================
-    __________________________________ test_ehlo ___________________________________
+    ================================= FAILURES =================================
+    ________________________________ test_ehlo _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x7f36c67e3ab8>
+    smtp = <smtplib.SMTP object at 0x2b4b07e38e48>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
             assert response[0] == 250
-            assert "merlinux" in response[1]
-    >       assert 0  # for demo purposes
-    E       assert 0
+    >       assert "merlinux" in response[1]
+    E       TypeError: Type str doesn't support the buffer API
     
-    test_module.py:6: AssertionError
-    __________________________________ test_noop ___________________________________
+    test_module.py:5: TypeError
+    ________________________________ test_noop _________________________________
     
-    smtp = <smtplib.SMTP instance at 0x7f36c67e3ab8>
+    smtp = <smtplib.SMTP object at 0x2b4b07e38e48>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -223,7 +221,7 @@ inspect what is going on and can now run the tests::
     E       assert 0
     
     test_module.py:11: AssertionError
-    =========================== 2 failed in 0.17 seconds ===========================
+    ========================= 2 failed in 0.18 seconds =========================
 
 You see the two ``assert 0`` failing and more importantly you can also see
 that the same (module-scoped) ``smtp`` object was passed into the two
@@ -311,8 +309,7 @@ We use the ``request.module`` attribute to optionally obtain an
 again, nothing much has changed::
 
     $ py.test -s -q --tb=no
-    FFteardown smtp
-    
+    FF
     2 failed in 0.17 seconds
 
 Let's quickly create another test module that actually sets the
@@ -329,11 +326,11 @@ Running it::
 
     $ py.test -qq --tb=short test_anothersmtp.py
     F
-    =================================== FAILURES ===================================
-    ________________________________ test_showhelo _________________________________
+    ================================= FAILURES =================================
+    ______________________________ test_showhelo _______________________________
     test_anothersmtp.py:5: in test_showhelo
         assert 0, smtp.helo()
-    E   AssertionError: (250, 'hq.merlinux.eu')
+    E   AssertionError: (250, b'mail.python.org')
 
 voila! The ``smtp`` fixture function picked up our mail server name
 from the module namespace.
@@ -377,46 +374,21 @@ So let's just do another run::
 
     $ py.test -q test_module.py
     FFFF
-    =================================== FAILURES ===================================
-    ____________________________ test_ehlo[merlinux.eu] ____________________________
+    ================================= FAILURES =================================
+    __________________________ test_ehlo[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP instance at 0x7f4fdf04cea8>
-    
-        def test_ehlo(smtp):
-            response = smtp.ehlo()
-            assert response[0] == 250
-            assert "merlinux" in response[1]
-    >       assert 0  # for demo purposes
-    E       assert 0
-    
-    test_module.py:6: AssertionError
-    ____________________________ test_noop[merlinux.eu] ____________________________
-    
-    smtp = <smtplib.SMTP instance at 0x7f4fdf04cea8>
-    
-        def test_noop(smtp):
-            response = smtp.noop()
-            assert response[0] == 250
-    >       assert 0  # for demo purposes
-    E       assert 0
-    
-    test_module.py:11: AssertionError
-    __________________________ test_ehlo[mail.python.org] __________________________
-    
-    smtp = <smtplib.SMTP instance at 0x7f4fdf07c290>
+    smtp = <smtplib.SMTP object at 0x2b824acf3e80>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
             assert response[0] == 250
     >       assert "merlinux" in response[1]
-    E       assert 'merlinux' in 'mail.python.org\nSIZE 25600000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8'
+    E       TypeError: Type str doesn't support the buffer API
     
-    test_module.py:5: AssertionError
-    ---------------------------- Captured stdout setup -----------------------------
-    finalizing <smtplib.SMTP instance at 0x7f4fdf04cea8>
-    __________________________ test_noop[mail.python.org] __________________________
+    test_module.py:5: TypeError
+    __________________________ test_noop[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP instance at 0x7f4fdf07c290>
+    smtp = <smtplib.SMTP object at 0x2b824acf3e80>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -425,7 +397,31 @@ So let's just do another run::
     E       assert 0
     
     test_module.py:11: AssertionError
-    4 failed in 6.26 seconds
+    ________________________ test_ehlo[mail.python.org] ________________________
+    
+    smtp = <smtplib.SMTP object at 0x2b824b19fb38>
+    
+        def test_ehlo(smtp):
+            response = smtp.ehlo()
+            assert response[0] == 250
+    >       assert "merlinux" in response[1]
+    E       TypeError: Type str doesn't support the buffer API
+    
+    test_module.py:5: TypeError
+    -------------------------- Captured stdout setup ---------------------------
+    finalizing <smtplib.SMTP object at 0x2b824acf3e80>
+    ________________________ test_noop[mail.python.org] ________________________
+    
+    smtp = <smtplib.SMTP object at 0x2b824b19fb38>
+    
+        def test_noop(smtp):
+            response = smtp.noop()
+            assert response[0] == 250
+    >       assert 0  # for demo purposes
+    E       assert 0
+    
+    test_module.py:11: AssertionError
+    4 failed in 6.37 seconds
 
 We see that our two test functions each ran twice, against the different
 ``smtp`` instances.  Note also, that with the ``mail.python.org``
@@ -464,14 +460,14 @@ Here we declare an ``app`` fixture which receives the previously defined
 ``smtp`` fixture and instantiates an ``App`` object with it.  Let's run it::
 
     $ py.test -v test_appsetup.py
-    ============================= test session starts ==============================
-    platform linux2 -- Python 2.7.6 -- py-1.4.23 -- pytest-2.6.1 -- /home/hpk/venv/0/bin/python
+    =========================== test session starts ============================
+    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.2.dev1 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
     collecting ... collected 2 items
     
     test_appsetup.py::test_smtp_exists[merlinux.eu] PASSED
     test_appsetup.py::test_smtp_exists[mail.python.org] PASSED
     
-    =========================== 2 passed in 5.46 seconds ===========================
+    ========================= 2 passed in 6.11 seconds =========================
 
 Due to the parametrization of ``smtp`` the test will run twice with two
 different ``App`` instances and respective smtp servers.  There is no
@@ -528,30 +524,30 @@ to show the setup/teardown flow::
 Let's run the tests in verbose mode and with looking at the print-output::
 
     $ py.test -v -s test_module.py
-    ============================= test session starts ==============================
-    platform linux2 -- Python 2.7.6 -- py-1.4.23 -- pytest-2.6.1 -- /home/hpk/venv/0/bin/python
+    =========================== test session starts ============================
+    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.2.dev1 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
     collecting ... collected 8 items
     
-    test_module.py::test_0[1] ('  test0', 1)
+    test_module.py::test_0[1]   test0 1
     PASSED
-    test_module.py::test_0[2] ('  test0', 2)
+    test_module.py::test_0[2]   test0 2
     PASSED
-    test_module.py::test_1[mod1] ('create', 'mod1')
-    ('  test1', 'mod1')
+    test_module.py::test_1[mod1] create mod1
+      test1 mod1
     PASSED
-    test_module.py::test_2[1-mod1] ('  test2', 1, 'mod1')
+    test_module.py::test_2[1-mod1]   test2 1 mod1
     PASSED
-    test_module.py::test_2[2-mod1] ('  test2', 2, 'mod1')
+    test_module.py::test_2[2-mod1]   test2 2 mod1
     PASSED
-    test_module.py::test_1[mod2] ('create', 'mod2')
-    ('  test1', 'mod2')
+    test_module.py::test_1[mod2] create mod2
+      test1 mod2
     PASSED
-    test_module.py::test_2[1-mod2] ('  test2', 1, 'mod2')
+    test_module.py::test_2[1-mod2]   test2 1 mod2
     PASSED
-    test_module.py::test_2[2-mod2] ('  test2', 2, 'mod2')
+    test_module.py::test_2[2-mod2]   test2 2 mod2
     PASSED
     
-    =========================== 8 passed in 0.01 seconds ===========================
+    ========================= 8 passed in 0.01 seconds =========================
 
 You can see that the parametrized module-scoped ``modarg`` resource caused
 an ordering of test execution that lead to the fewest possible "active" resources. The finalizer for the ``mod1`` parametrized resource was executed
