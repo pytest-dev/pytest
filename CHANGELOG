@@ -1,3 +1,8 @@
+NEXT
+-----------
+
+- fixed issue561: adapt autouse fixture example for python3.
+
 2.6.1
 -----------------------------------
 
