@@ -240,6 +240,8 @@ class EncodedFile(object):
     def __getattr__(self, name):
         if hasattr(self, "buffer"):
             return getattr(self.buffer, name)
+        else:
+            raise AttributeError("attribute buffer of %r not set" % self)
 
 
 class MultiCapture(object):

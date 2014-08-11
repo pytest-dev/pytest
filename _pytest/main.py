@@ -159,6 +159,8 @@ class HookProxy:
         self.config = config
 
     def __getattr__(self, name):
+        if not hasattr(self, "config"):
+            raise AttributeError("attribute config of %r not set" % self)
         hookmethod = getattr(self.config.hook, name)
 
         def call_matching_hooks(**kwargs):
