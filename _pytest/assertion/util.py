@@ -1,4 +1,5 @@
 """Utilities for assertion debugging"""
+import pprint
 
 import py
 try:
@@ -168,6 +169,7 @@ def _diff_text(left, right, verbose=False):
 
     If the input are bytes they will be safely converted to text.
     """
+    from difflib import ndiff
     explanation = []
     if isinstance(left, py.builtin.bytes):
         left = u(repr(left)[1:-1]).replace(r'\n', '\n')
@@ -195,8 +197,8 @@ def _diff_text(left, right, verbose=False):
                 left = left[:-i]
                 right = right[:-i]
     explanation += [line.strip('\n')
-                    for line in py.std.difflib.ndiff(left.splitlines(),
-                                                     right.splitlines())]
+                    for line in ndiff(left.splitlines(),
+                                      right.splitlines())]
     return explanation
 
 
@@ -214,8 +216,8 @@ def _compare_eq_sequence(left, right, verbose=False):
         explanation += [
             u('Right contains more items, first extra item: %s') %
             py.io.saferepr(right[len(left)],)]
-    return explanation  # + _diff_text(py.std.pprint.pformat(left),
-                        #             py.std.pprint.pformat(right))
+    return explanation  # + _diff_text(pprint.pformat(left),
+                        #              pprint.pformat(right))
 
 
 def _compare_eq_set(left, right, verbose=False):
@@ -242,7 +244,7 @@ def _compare_eq_dict(left, right, verbose=False):
                         len(same)]
     elif same:
         explanation += [u('Common items:')]
-        explanation += py.std.pprint.pformat(same).splitlines()
+        explanation += pprint.pformat(same).splitlines()
     diff = set(k for k in common if left[k] != right[k])
     if diff:
         explanation += [u('Differing items:')]
@@ -252,12 +254,12 @@ def _compare_eq_dict(left, right, verbose=False):
     extra_left = set(left) - set(right)
     if extra_left:
         explanation.append(u('Left contains more items:'))
-        explanation.extend(py.std.pprint.pformat(
+        explanation.extend(pprint.pformat(
             dict((k, left[k]) for k in extra_left)).splitlines())
     extra_right = set(right) - set(left)
     if extra_right:
         explanation.append(u('Right contains more items:'))
-        explanation.extend(py.std.pprint.pformat(
+        explanation.extend(pprint.pformat(
             dict((k, right[k]) for k in extra_right)).splitlines())
     return explanation
 

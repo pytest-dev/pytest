@@ -51,9 +51,9 @@ class TestTerminal:
         result = testdir.runpytest(*option.args)
         if option.verbose:
             result.stdout.fnmatch_lines([
-                "*test_pass_skip_fail.py@2::test_ok PASS*",
-                "*test_pass_skip_fail.py@4::test_skip SKIP*",
-                "*test_pass_skip_fail.py@6::test_func FAIL*",
+                "*test_pass_skip_fail.py::test_ok PASS*",
+                "*test_pass_skip_fail.py::test_skip SKIP*",
+                "*test_pass_skip_fail.py::test_func FAIL*",
             ])
         else:
             result.stdout.fnmatch_lines([
@@ -126,7 +126,7 @@ class TestTerminal:
         ])
         result = testdir.runpytest("-v", p2)
         result.stdout.fnmatch_lines([
-            "*test_p2.py <- *test_p1.py@2::TestMore::test_p1*",
+            "*test_p2.py <- *test_p1.py::TestMore::test_p1*",
         ])
 
     def test_itemreport_directclasses_not_shown_as_subclasses(self, testdir):
@@ -450,17 +450,17 @@ class TestTerminalFunctional:
         """)
         result = testdir.runpytest(p1, '-v')
         result.stdout.fnmatch_lines([
-            "*test_verbose_reporting.py@2::test_fail *FAIL*",
-            "*test_verbose_reporting.py@4::test_pass *PASS*",
-            "*test_verbose_reporting.py@7::TestClass::test_skip *SKIP*",
-            "*test_verbose_reporting.py@10::test_gen*0* *FAIL*",
+            "*test_verbose_reporting.py::test_fail *FAIL*",
+            "*test_verbose_reporting.py::test_pass *PASS*",
+            "*test_verbose_reporting.py::TestClass::test_skip *SKIP*",
+            "*test_verbose_reporting.py::test_gen*0* *FAIL*",
         ])
         assert result.ret == 1
 
         pytestconfig.pluginmanager.skipifmissing("xdist")
         result = testdir.runpytest(p1, '-v', '-n 1')
         result.stdout.fnmatch_lines([
-            "*FAIL*test_verbose_reporting.py@2::test_fail*",
+            "*FAIL*test_verbose_reporting.py::test_fail*",
         ])
         assert result.ret == 1
 

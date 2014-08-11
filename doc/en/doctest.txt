@@ -44,12 +44,12 @@ then you can just invoke ``py.test`` without command line options::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.6 -- py-1.4.22 -- pytest-2.6.0
+    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
     collected 1 items
     
     mymodule.py .
     
-    ========================= 1 passed in 0.04 seconds =========================
+    ========================= 1 passed in 0.06 seconds =========================
 
 It is possible to use fixtures using the ``getfixture`` helper::
 

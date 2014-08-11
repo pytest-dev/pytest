@@ -1,3 +1,5 @@
+import traceback
+import types
 import py
 import sys, inspect
 from compiler import parse, ast, pycodegen
@@ -477,7 +479,7 @@ def check(s, frame=None):
 def interpret(source, frame, should_fail=False):
     module = Interpretable(parse(source, 'exec').node)
     #print "got module", module
-    if isinstance(frame, py.std.types.FrameType):
+    if isinstance(frame, types.FrameType):
         frame = py.code.Frame(frame)
     try:
         module.run(frame)
@@ -487,7 +489,6 @@ def interpret(source, frame, should_fail=False):
     except passthroughex:
         raise
     except:
-        import traceback
         traceback.print_exc()
     if should_fail:
         return ("(assertion failed, but when it was re-run for "

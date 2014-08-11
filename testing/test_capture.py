@@ -1012,3 +1012,13 @@ def test_capturing_and_logging_fundamentals(testdir, method):
     """)
     assert "atexit" not in result.stderr.str()
 
+
+def test_error_attribute_issue555(testdir):
+    testdir.makepyfile("""
+        import sys
+        def test_capattr():
+            assert sys.stdout.errors == "strict"
+            assert sys.stderr.errors == "strict"
+    """)
+    reprec = testdir.inline_run()
+    reprec.assertoutcome(passed=1)

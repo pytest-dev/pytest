@@ -25,6 +25,6 @@ def test_hello6():
     pytest.xfail("reason")
 
 @xfail(raises=IndexError)
-def test_hello7()
+def test_hello7():
     x = []
     x[1] = 1

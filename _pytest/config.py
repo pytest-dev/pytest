@@ -1,8 +1,12 @@
 """ command line options, ini-file and conftest.py processing. """
+import argparse
+import shlex
+import traceback
+import types
+import warnings
 
 import py
 # DON't import pytest here because it causes import cycle troubles
-import re
 import sys, os
 from _pytest import hookspec # the extension point definitions
 from _pytest.core import PluginManager
@@ -29,7 +33,7 @@ def main(args=None, plugins=None):
     except ConftestImportFailure:
         e = sys.exc_info()[1]
         tw = py.io.TerminalWriter(sys.stderr)
-        for line in py.std.traceback.format_exception(*e.excinfo):
+        for line in traceback.format_exception(*e.excinfo):
             tw.line(line.rstrip(), red=True)
         tw.line("ERROR: could not load %s\n" % (e.path), red=True)
         return 4
@@ -71,7 +75,7 @@ def _prepareconfig(args=None, plugins=None):
     elif not isinstance(args, (tuple, list)):
         if not isinstance(args, str):
             raise ValueError("not a string or argument list: %r" % (args,))
-        args = py.std.shlex.split(args)
+        args = shlex.split(args)
     pluginmanager = get_plugin_manager()
     try:
         if plugins:
@@ -181,8 +185,7 @@ class Parser:
                     a = option.attrs()
                     arggroup.add_argument(*n, **a)
         # bash like autocompletion for dirs (appending '/')
-        optparser.add_argument(FILE_OR_DIR, nargs='*', type=node_with_line_number,
-                               ).completer=filescompleter
+        optparser.add_argument(FILE_OR_DIR, nargs='*').completer=filescompleter
         return optparser
 
     def parse_setoption(self, args, option):
@@ -229,7 +232,7 @@ class ArgumentError(Exception):
 
 
 class Argument:
-    """class that mimics the necessary behaviour of py.std.optparse.Option """
+    """class that mimics the necessary behaviour of optparse.Option """
     _typ_map = {
         'int': int,
         'string': str,
@@ -247,7 +250,7 @@ class Argument:
             try:
                 help = attrs['help']
                 if '%default' in help:
-                    py.std.warnings.warn(
+                    warnings.warn(
                         'pytest now uses argparse. "%default" should be'
                         ' changed to "%(default)s" ',
                         FutureWarning,
@@ -263,7 +266,7 @@ class Argument:
             if isinstance(typ, py.builtin._basestring):
                 if typ == 'choice':
                     if self.TYPE_WARN:
-                        py.std.warnings.warn(
+                        warnings.warn(
                             'type argument to addoption() is a string %r.'
                             ' For parsearg this is optional and when supplied '
                             ' should be a type.'
@@ -275,7 +278,7 @@ class Argument:
                     attrs['type'] = type(attrs['choices'][0])
                 else:
                     if self.TYPE_WARN:
-                        py.std.warnings.warn(
+                        warnings.warn(
                             'type argument to addoption() is a string %r.'
                             ' For parsearg this should be a type.'
                             ' (options: %s)' % (typ, names),
@@ -395,10 +398,10 @@ class OptionGroup:
         self.options.append(option)
 
 
-class MyOptionParser(py.std.argparse.ArgumentParser):
+class MyOptionParser(argparse.ArgumentParser):
     def __init__(self, parser):
         self._parser = parser
-        py.std.argparse.ArgumentParser.__init__(self, usage=parser._usage,
+        argparse.ArgumentParser.__init__(self, usage=parser._usage,
             add_help=False, formatter_class=DropShorterLongHelpFormatter)
 
     def parse_args(self, args=None, namespace=None):
@@ -407,12 +410,12 @@ class MyOptionParser(py.std.argparse.ArgumentParser):
         if argv:
             for arg in argv:
                 if arg and arg[0] == '-':
-                    msg = py.std.argparse._('unrecognized arguments: %s')
+                    msg = argparse._('unrecognized arguments: %s')
                     self.error(msg % ' '.join(argv))
             getattr(args, FILE_OR_DIR).extend(argv)
         return args
 
-class DropShorterLongHelpFormatter(py.std.argparse.HelpFormatter):
+class DropShorterLongHelpFormatter(argparse.HelpFormatter):
     """shorten help for long options that differ only in extra hyphens
 
     - collapse **long** options that are the same except for extra hyphens
@@ -422,7 +425,7 @@ class DropShorterLongHelpFormatter(py.std.argparse.HelpFormatter):
     - cache result on action object as this is called at least 2 times
     """
     def _format_action_invocation(self, action):
-        orgstr = py.std.argparse.HelpFormatter._format_action_invocation(self, action)
+        orgstr = argparse.HelpFormatter._format_action_invocation(self, action)
         if orgstr and orgstr[0] != '-': # only optional arguments
             return orgstr
         res = getattr(action, '_formatted_action_invocation', None)
@@ -746,7 +749,7 @@ class Config(object):
         self.hook.pytest_cmdline_preparse(config=self, args=args)
         args = self._parser.parse_setoption(args, self.option)
         if not args:
-            args.append(py.std.os.getcwd())
+            args.append(os.getcwd())
         self.args = args
 
     def addinivalue_line(self, name, line):
@@ -784,11 +787,11 @@ class Config(object):
         if type == "pathlist":
             dp = py.path.local(self.inicfg.config.path).dirpath()
             l = []
-            for relpath in py.std.shlex.split(value):
+            for relpath in shlex.split(value):
                 l.append(dp.join(relpath, abs=True))
             return l
         elif type == "args":
-            return py.std.shlex.split(value)
+            return shlex.split(value)
         elif type == "linelist":
             return [t for t in map(lambda x: x.strip(), value.split("\n")) if t]
         else:
@@ -862,13 +865,6 @@ def getcfg(args, inibasenames):
     return {}
 
 
-rex_pyat = re.compile(r'(.*\.py)@\d+$')
-
-def node_with_line_number(string):
-    return "::".join(rex_pyat.sub(lambda m: m.group(1), part)
-                        for part in string.split("::"))
-
-
 def setns(obj, dic):
     import pytest
     for name, value in dic.items():
@@ -876,7 +872,7 @@ def setns(obj, dic):
             mod = getattr(obj, name, None)
             if mod is None:
                 modname = "pytest.%s" % name
-                mod = py.std.types.ModuleType(modname)
+                mod = types.ModuleType(modname)
                 sys.modules[modname] = mod
                 mod.__all__ = []
                 setattr(obj, name, mod)

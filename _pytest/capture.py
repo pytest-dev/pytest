@@ -223,6 +223,7 @@ def safe_text_dupfile(f, mode, default_encoding="UTF8"):
 
 
 class EncodedFile(object):
+    errors = "strict"  # possibly needed by py3 code (issue555)
     def __init__(self, buffer, encoding):
         self.buffer = buffer
         self.encoding = encoding

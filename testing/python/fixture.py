@@ -1692,22 +1692,22 @@ class TestFixtureMarker:
         """)
         result = testdir.runpytest("-v")
         result.stdout.fnmatch_lines("""
-            test_mod1.py@1::test_func[s1] PASSED
-            test_mod2.py@1::test_func2[s1] PASSED
-            test_mod2.py@3::test_func3[s1-m1] PASSED
-            test_mod2.py@5::test_func3b[s1-m1] PASSED
-            test_mod2.py@3::test_func3[s1-m2] PASSED
-            test_mod2.py@5::test_func3b[s1-m2] PASSED
-            test_mod1.py@1::test_func[s2] PASSED
-            test_mod2.py@1::test_func2[s2] PASSED
-            test_mod2.py@3::test_func3[s2-m1] PASSED
-            test_mod2.py@5::test_func3b[s2-m1] PASSED
-            test_mod2.py@7::test_func4[m1] PASSED
-            test_mod2.py@3::test_func3[s2-m2] PASSED
-            test_mod2.py@5::test_func3b[s2-m2] PASSED
-            test_mod2.py@7::test_func4[m2] PASSED
-            test_mod1.py@3::test_func1[m1] PASSED
-            test_mod1.py@3::test_func1[m2] PASSED
+            test_mod1.py::test_func[s1] PASSED
+            test_mod2.py::test_func2[s1] PASSED
+            test_mod2.py::test_func3[s1-m1] PASSED
+            test_mod2.py::test_func3b[s1-m1] PASSED
+            test_mod2.py::test_func3[s1-m2] PASSED
+            test_mod2.py::test_func3b[s1-m2] PASSED
+            test_mod1.py::test_func[s2] PASSED
+            test_mod2.py::test_func2[s2] PASSED
+            test_mod2.py::test_func3[s2-m1] PASSED
+            test_mod2.py::test_func3b[s2-m1] PASSED
+            test_mod2.py::test_func4[m1] PASSED
+            test_mod2.py::test_func3[s2-m2] PASSED
+            test_mod2.py::test_func3b[s2-m2] PASSED
+            test_mod2.py::test_func4[m2] PASSED
+            test_mod1.py::test_func1[m1] PASSED
+            test_mod1.py::test_func1[m2] PASSED
         """)
 
     def test_class_ordering(self, testdir):
@@ -1744,18 +1744,18 @@ class TestFixtureMarker:
         """)
         result = testdir.runpytest("-vs")
         result.stdout.fnmatch_lines("""
-            test_class_ordering.py@4::TestClass2::test_1[1-a] PASSED
-            test_class_ordering.py@4::TestClass2::test_1[2-a] PASSED
-            test_class_ordering.py@6::TestClass2::test_2[1-a] PASSED
-            test_class_ordering.py@6::TestClass2::test_2[2-a] PASSED
-            test_class_ordering.py@4::TestClass2::test_1[1-b] PASSED
-            test_class_ordering.py@4::TestClass2::test_1[2-b] PASSED
-            test_class_ordering.py@6::TestClass2::test_2[1-b] PASSED
-            test_class_ordering.py@6::TestClass2::test_2[2-b] PASSED
-            test_class_ordering.py@9::TestClass::test_3[1-a] PASSED
-            test_class_ordering.py@9::TestClass::test_3[2-a] PASSED
-            test_class_ordering.py@9::TestClass::test_3[1-b] PASSED
-            test_class_ordering.py@9::TestClass::test_3[2-b] PASSED
+            test_class_ordering.py::TestClass2::test_1[1-a] PASSED
+            test_class_ordering.py::TestClass2::test_1[2-a] PASSED
+            test_class_ordering.py::TestClass2::test_2[1-a] PASSED
+            test_class_ordering.py::TestClass2::test_2[2-a] PASSED
+            test_class_ordering.py::TestClass2::test_1[1-b] PASSED
+            test_class_ordering.py::TestClass2::test_1[2-b] PASSED
+            test_class_ordering.py::TestClass2::test_2[1-b] PASSED
+            test_class_ordering.py::TestClass2::test_2[2-b] PASSED
+            test_class_ordering.py::TestClass::test_3[1-a] PASSED
+            test_class_ordering.py::TestClass::test_3[2-a] PASSED
+            test_class_ordering.py::TestClass::test_3[1-b] PASSED
+            test_class_ordering.py::TestClass::test_3[2-b] PASSED
         """)
 
     def test_parametrize_separated_order_higher_scope_first(self, testdir):

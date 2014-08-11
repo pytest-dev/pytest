@@ -8,8 +8,9 @@ import py
 import _pytest
 
 
+
 def find_toplevel(name):
-    for syspath in py.std.sys.path:
+    for syspath in sys.path:
         base = py.path.local(syspath)
         lib = base/name
         if lib.check(dir=1):
@@ -35,9 +36,10 @@ def pkg_to_mapping(name):
     return name2src
 
 def compress_mapping(mapping):
-    data = py.std.pickle.dumps(mapping, 2)
-    data = py.std.zlib.compress(data, 9)
-    data = py.std.base64.encodestring(data)
+    import base64, pickle, zlib
+    data = pickle.dumps(mapping, 2)
+    data = zlib.compress(data, 9)
+    data = base64.encodestring(data)
     data = data.decode('ascii')
     return data
 

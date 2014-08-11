@@ -27,7 +27,7 @@ Installation options::
 To check your installation has installed the correct version::
 
     $ py.test --version
-    This is pytest version 2.6.0, imported from /home/hpk/p/pytest/.tox/regen/local/lib/python2.7/site-packages/pytest.pyc
+    This is pytest version 2.6.1, imported from /home/hpk/p/pytest/.tox/regen/lib/python3.4/site-packages/pytest.py
 
 If you get an error checkout :ref:`installation issues`.
 
@@ -49,7 +49,7 @@ That's it. You can execute the test function now::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.6 -- py-1.4.22 -- pytest-2.6.0
+    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
     collected 1 items
     
     test_sample.py F
@@ -127,7 +127,7 @@ run the module by passing its filename::
     ================================= FAILURES =================================
     ____________________________ TestClass.test_two ____________________________
     
-    self = <test_class.TestClass instance at 0x2b0b0ac73098>
+    self = <test_class.TestClass object at 0x2ad4b005b710>
     
         def test_two(self):
             x = "hello"
@@ -159,21 +159,18 @@ We list the name ``tmpdir`` in the test function signature and
 before performing the test function call.  Let's just run it::
 
     $ py.test -q test_tmpdir.py
-    F
-    ================================= FAILURES =================================
-    _____________________________ test_needsfiles ______________________________
     
-    tmpdir = local('/tmp/pytest-24/test_needsfiles0')
-    
-        def test_needsfiles(tmpdir):
-            print tmpdir
-    >       assert 0
-    E       assert 0
-    
-    test_tmpdir.py:3: AssertionError
-    --------------------------- Captured stdout call ---------------------------
-    /tmp/pytest-24/test_needsfiles0
-    1 failed in 0.01 seconds
+    ================================== ERRORS ==================================
+    _____________________ ERROR collecting test_tmpdir.py ______________________
+    /home/hpk/p/pytest/.tox/regen/lib/python3.4/site-packages/_pytest/python.py:463: in _importtestmodule
+        mod = self.fspath.pyimport(ensuresyspath=True)
+    /home/hpk/p/pytest/.tox/regen/lib/python3.4/site-packages/py/_path/local.py:620: in pyimport
+        __import__(modname)
+    E     File "/tmp/doc-exec-187/test_tmpdir.py", line 2
+    E       print tmpdir
+    E                  ^
+    E   SyntaxError: invalid syntax
+    1 error in 0.03 seconds
 
 Before the test runs, a unique-per-test-invocation temporary directory
 was created.  More info at :ref:`tmpdir handling`.

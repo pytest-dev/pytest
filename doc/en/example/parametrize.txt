@@ -106,7 +106,7 @@ this is a fully self-contained example which you can run with::
 
     $ py.test test_scenarios.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.6 -- py-1.4.22 -- pytest-2.6.0
+    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
     collected 4 items
     
     test_scenarios.py ....
@@ -118,7 +118,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
 
     $ py.test --collect-only test_scenarios.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.6 -- py-1.4.22 -- pytest-2.6.0
+    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
     collected 4 items
     <Module 'test_scenarios.py'>
       <Class 'TestSampleWithScenarios'>
@@ -182,7 +182,7 @@ Let's first see how it looks like at collection time::
 
     $ py.test test_backends.py --collect-only
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.6 -- py-1.4.22 -- pytest-2.6.0
+    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
     collected 2 items
     <Module 'test_backends.py'>
       <Function 'test_db_initialized[d1]'>
@@ -197,7 +197,7 @@ And then when we run the test::
     ================================= FAILURES =================================
     _________________________ test_db_initialized[d2] __________________________
     
-    db = <conftest.DB2 instance at 0x2b45c2b12050>
+    db = <conftest.DB2 object at 0x2b83684b5eb8>
     
         def test_db_initialized(db):
             # a dummy test
@@ -251,9 +251,9 @@ argument sets to use for each test function.  Let's run it::
     $ py.test -q
     F..
     ================================= FAILURES =================================
-    ________________________ TestClass.test_equals[1-2] ________________________
+    ________________________ TestClass.test_equals[2-1] ________________________
     
-    self = <test_parametrize.TestClass instance at 0x2acd519c6200>, a = 1, b = 2
+    self = <test_parametrize.TestClass object at 0x2ae94130e390>, a = 1, b = 2
     
         def test_equals(self, a, b):
     >       assert a == b
@@ -281,10 +281,10 @@ Running it results in some skips if we don't have all the python interpreters in
    . $ py.test -rs -q multipython.py
    ssssssssssssssssssssssssssssssssssss......sssssssss......ssssssssssssssssss
    ========================= short test summary info ==========================
-   SKIP [21] /home/hpk/p/pytest/doc/en/example/multipython.py:22: 'python2.4' not found
-   SKIP [21] /home/hpk/p/pytest/doc/en/example/multipython.py:22: 'python2.8' not found
    SKIP [21] /home/hpk/p/pytest/doc/en/example/multipython.py:22: 'python2.5' not found
-   12 passed, 63 skipped in 0.66 seconds
+   SKIP [21] /home/hpk/p/pytest/doc/en/example/multipython.py:22: 'python2.8' not found
+   SKIP [21] /home/hpk/p/pytest/doc/en/example/multipython.py:22: 'python2.4' not found
+   12 passed, 63 skipped in 0.65 seconds
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------
@@ -331,12 +331,12 @@ If you run this with reporting for skips enabled::
 
     $ py.test -rs test_module.py
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.6 -- py-1.4.22 -- pytest-2.6.0
+    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
     collected 2 items
     
     test_module.py .s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-144/conftest.py:10: could not import 'opt2'
+    SKIP [1] /tmp/doc-exec-240/conftest.py:10: could not import 'opt2'
     
     =================== 1 passed, 1 skipped in 0.01 seconds ====================
 
