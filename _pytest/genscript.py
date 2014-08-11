@@ -99,16 +99,6 @@ def freeze_includes():
     """
     result = list(_iter_all_modules(py))
     result += list(_iter_all_modules(_pytest))
-
-    # builtin files imported by pytest using py.std implicit mechanism;
-    # should be removed if https://bitbucket.org/hpk42/pytest/pull-request/185
-    # gets merged
-    result += [
-        'argparse',
-        'shlex',
-        'warnings',
-        'types',
-    ]
     return result
 
 
