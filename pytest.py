@@ -13,7 +13,6 @@ if __name__ == '__main__': # if run as a script or by 'python -m pytest'
 
 from _pytest.config import main, UsageError, _preloadplugins, cmdline
 from _pytest import __version__
-from _pytest import cx_freeze_support
 
 _preloadplugins() # to populate pytest.* namespace so help(pytest) works
 

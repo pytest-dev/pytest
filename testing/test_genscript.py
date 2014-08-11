@@ -36,3 +36,13 @@ def test_gen(testdir, anypython, standalone):
     result = standalone.run(anypython, testdir, p)
     assert result.ret != 0
 
+
+def test_freeze_includes():
+    """
+    Smoke test for freeze_includes(), to ensure that it works across all
+    supported python versions.
+    """
+    includes = pytest.freeze_includes()
+    assert len(includes) > 1
+    assert '_pytest.genscript' in includes
+
