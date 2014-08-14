@@ -505,7 +505,6 @@ def test_unicode_in_longrepr(testdir):
     assert "UnicodeEncodeError" not in result.stderr.str()
 
 
-
 def test_failure_in_setup(testdir):
     testdir.makepyfile("""
         def setup_module():
@@ -515,3 +514,13 @@ def test_failure_in_setup(testdir):
     """)
     result = testdir.runpytest("--tb=line")
     assert "def setup_module" not in result.stdout.str()
+
+
+def test_makereport_getsource(testdir):
+    testdir.makepyfile("""
+        def test_foo():
+            if False: pass
+            else: assert False
+    """)
+    result = testdir.runpytest()
+    assert 'INTERNALERROR' not in result.stdout.str()

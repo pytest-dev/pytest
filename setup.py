@@ -17,7 +17,7 @@ long_description = open('README.rst').read()
 
 
 def main():
-    install_requires = ['py>=1.4.22']
+    install_requires = ['py>=1.4.24.dev1']
     if sys.version_info < (2, 7) or (3,) <= sys.version_info < (3, 2):
         install_requires.append('argparse')
     if sys.platform == 'win32':

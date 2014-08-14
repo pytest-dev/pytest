@@ -3,6 +3,9 @@ NEXT
 
 - fixed issue561: adapt autouse fixture example for python3.
 
+- fix issue560: correctly display code if an "else:" or "finally:" is
+  followed by statements on the same line.
+
 2.6.1
 -----------------------------------
 
