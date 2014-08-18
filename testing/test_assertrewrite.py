@@ -313,6 +313,17 @@ class TestAssertionRewrite:
             assert "%test" == "test"
         assert getmsg(f).startswith("assert '%test' == 'test'")
 
+    def test_custom_repr(self):
+        def f():
+            class Foo(object):
+                a = 1
+
+                def __repr__(self):
+                    return "\n{ \n~ \n}"
+            f = Foo()
+            assert 0 == f.a
+        assert r"where 1 = \n{ \n~ \n}.a" in util._format_lines([getmsg(f)])[0]
+
 
 class TestRewriteOnImport:
 

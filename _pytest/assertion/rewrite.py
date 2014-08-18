@@ -326,7 +326,15 @@ def rewrite_asserts(mod):
     AssertionRewriter().run(mod)
 
 
-_saferepr = py.io.saferepr
+def _saferepr(obj):
+    repr = py.io.saferepr(obj)
+    if py.builtin._istext(repr):
+        t = py.builtin.text
+    else:
+        t = py.builtin.bytes
+    return repr.replace(t("\n"), t("\\n"))
+
+
 from _pytest.assertion.util import format_explanation as _format_explanation # noqa
 
 def _should_repr_global_name(obj):
