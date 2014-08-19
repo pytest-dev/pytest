@@ -1,7 +1,7 @@
 .. _plugins:
 
 Working with plugins and conftest files
-=============================================
+=======================================
 
 ``pytest`` implements all aspects of configuration, collection, running and reporting by calling `well specified hooks`_.  Virtually any Python module can be registered as a plugin.  It can implement any number of hook functions (usually two or three) which all have a ``pytest_`` prefix, making hook functions easy to distinguish and find.  There are three basic location types:
 
@@ -16,7 +16,7 @@ Working with plugins and conftest files
 .. _`conftest`:
 
 conftest.py: local per-directory plugins
---------------------------------------------------------------
+----------------------------------------
 
 local ``conftest.py`` plugins contain directory-specific hook
 implementations.  Session and test running activities will
@@ -55,7 +55,7 @@ Here is how you might run it::
 .. _`extplugins`:
 
 Installing External Plugins / Searching
-------------------------------------------------------
+---------------------------------------
 
 Installing a plugin happens through any usual Python installation
 tool, for example::
@@ -119,6 +119,16 @@ You may also discover more plugins through a `pytest- pypi.python.org search`_.
 .. _`available installable plugins`:
 .. _`pytest- pypi.python.org search`: http://pypi.python.org/pypi?%3Aaction=search&term=pytest-&submit=search
 
+
+External plugin development
+---------------------------
+
+Pytest community cares about pytest users, in particular, it's important for the community
+to keep all pieces of the pytest ecosystem supported. External plugins are important for
+pytest users, as they implement many useful, and sometimes critical features which the pytest core does
+not implement.
+
+
 Writing a plugin by looking at examples
 ------------------------------------------------------
 
@@ -138,7 +148,7 @@ to extend and add functionality.
 .. _`setuptools entry points`:
 
 Making your plugin installable by others
------------------------------------------------
+----------------------------------------
 
 If you want to make your plugin externally available, you
 may define a so-called entry point for your distribution so
@@ -169,10 +179,11 @@ If a package is installed this way, ``pytest`` will load
 ``myproject.pluginmodule`` as a plugin which can define
 `well specified hooks`_.
 
+
 .. _`pluginorder`:
 
 Plugin discovery order at tool startup
---------------------------------------------
+--------------------------------------
 
 ``pytest`` loads plugin modules at tool startup in the following way:
 
@@ -187,8 +198,8 @@ Plugin discovery order at tool startup
   invocation:
 
   - if no test paths are specified use current dir as a test path
-  - if exists, load ``conftest.py`` and ``test*/conftest.py`` relative 
-    to the directory part of the first test path. 
+  - if exists, load ``conftest.py`` and ``test*/conftest.py`` relative
+    to the directory part of the first test path.
 
   Note that pytest does not find ``conftest.py`` files in deeper nested
   sub directories at tool startup.  It is usually a good idea to keep
@@ -199,7 +210,7 @@ Plugin discovery order at tool startup
 
 
 Requiring/Loading plugins in a test module or conftest file
--------------------------------------------------------------
+-----------------------------------------------------------
 
 You can require plugins in a test module or a conftest file like this::
 
@@ -214,7 +225,7 @@ which will import the specified module as a ``pytest`` plugin.
 
 
 Accessing another plugin by name
---------------------------------------------
+--------------------------------
 
 If a plugin wants to collaborate with code from
 another plugin it can obtain a reference through
@@ -230,7 +241,7 @@ the ``--traceconfig`` option.
 .. _`findpluginname`:
 
 Finding out which plugins are active
-----------------------------------------------------------------------------
+------------------------------------
 
 If you want to find out which plugins are active in your
 environment you can type::
@@ -244,7 +255,7 @@ and their names. It will also print local plugins aka
 .. _`cmdunregister`:
 
 Deactivating / unregistering a plugin by name
-----------------------------------------------------------------------------
+---------------------------------------------
 
 You can prevent plugins from loading or unregister them::
 
@@ -257,7 +268,7 @@ how to obtain the name of a plugin.
 .. _`builtin plugins`:
 
 pytest default plugin reference
-====================================
+===============================
 
 
 You can find the source code for the following plugins
@@ -305,7 +316,7 @@ by simply not specifying them.  If you mistype argument names or the
 hook name itself you get an error showing the available arguments.
 
 Initialization, command line and configuration hooks
---------------------------------------------------------------------
+----------------------------------------------------
 
 .. currentmodule:: _pytest.hookspec
 
@@ -319,7 +330,7 @@ Initialization, command line and configuration hooks
 .. autofunction:: pytest_unconfigure
 
 Generic "runtest" hooks
-------------------------------
+-----------------------
 
 All runtest related hooks receive a :py:class:`pytest.Item` object.
 
@@ -339,7 +350,7 @@ The :py:mod:`_pytest.terminal` reported specifically uses
 the reporting hook to print information about a test run.
 
 Collection hooks
-------------------------------
+----------------
 
 ``pytest`` calls the following hooks for collecting files and directories:
 
@@ -359,7 +370,7 @@ items, delete or otherwise amend the test items:
 .. autofunction:: pytest_collection_modifyitems
 
 Reporting hooks
-------------------------------
+---------------
 
 Session related reporting hooks:
 
@@ -375,7 +386,7 @@ test execution:
 
 
 Debugging/Interaction hooks
---------------------------------------
+---------------------------
 
 There are few hooks which can be used for special
 reporting or interaction with exceptions:
@@ -385,7 +396,7 @@ reporting or interaction with exceptions:
 .. autofunction:: pytest_exception_interact
 
 Reference of objects involved in hooks
-===========================================================
+======================================
 
 .. autoclass:: _pytest.config.Config()
     :members:
