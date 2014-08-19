@@ -3,6 +3,8 @@ NEXT
 
 - fixed issue561: adapt autouse fixture example for python3.
 
+- Fix example in monkeypatch documentation, thanks t-8ch.
+
 2.6.1
 -----------------------------------
 
