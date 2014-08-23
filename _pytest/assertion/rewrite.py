@@ -327,12 +327,15 @@ def rewrite_asserts(mod):
 
 
 def _saferepr(obj):
-    """Get a safe repr of an object for assertion error messages
+    """Get a safe repr of an object for assertion error messages.
 
     The assertion formatting (util.format_explanation()) requires
     newlines to be escaped since they are a special character for it.
-    But py.io.saferepr allows newlines, so we need to escape them
-    here.
+    Normally assertion.util.format_explanation() does this but for a
+    custom repr it is possible to contain one of the special escape
+    sequences, especially '\n{' and '\n}' are likely to be present in
+    JSON reprs.
+
     """
     repr = py.io.saferepr(obj)
     if py.builtin._istext(repr):
