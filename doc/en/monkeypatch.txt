@@ -48,7 +48,7 @@ requests in all your tests, you can do::
     import pytest
     @pytest.fixture(autouse=True)
     def no_requests(monkeypatch):
-        monkeypatch.delattr("requests.session.Session.request")
+        monkeypatch.delattr("requests.sessions.Session.request")
 
 This autouse fixture will be executed for each test function and it
 will delete the method ``request.session.Session.request`` 

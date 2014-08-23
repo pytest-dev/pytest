@@ -3,6 +3,12 @@ NEXT
 
 - fixed issue561: adapt autouse fixture example for python3.
 
+- Fix example in monkeypatch documentation, thanks t-8ch.
+
+- Do not mark as universal wheel because Python 2.6 is different from
+  other builds due to the extra argparse dependency.  Fixes issue566.
+  Thanks sontek.
+
 2.6.1
 -----------------------------------
 
