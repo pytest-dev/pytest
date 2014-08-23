@@ -329,6 +329,33 @@ def rewrite_asserts(mod):
 _saferepr = py.io.saferepr
 from _pytest.assertion.util import format_explanation as _format_explanation # noqa
 
+def _format_assertmsg(obj):
+    """Format the custom assertion message given.
+
+    For strings this simply replaces newlines with '\n~' so that
+    util.format_explanation() will preserve them instead of escaping
+    newlines.  For other objects py.io.saferepr() is used first.
+
+    """
+    # reprlib appears to have a bug which means that if a string
+    # contains a newline it gets escaped, however if an object has a
+    # .__repr__() which contains newlines it does not get escaped.
+    # However in either case we want to preserve the newline.
+    if py.builtin._istext(obj) or py.builtin._isbytes(obj):
+        s = obj
+        is_repr = False
+    else:
+        s = py.io.saferepr(obj)
+        is_repr = True
+    if py.builtin._istext(s):
+        t = py.builtin.text
+    else:
+        t = py.builtin.bytes
+    s = s.replace(t("\n"), t("\n~"))
+    if is_repr:
+        s = s.replace(t("\\n"), t("\n~"))
+    return s
+
 def _should_repr_global_name(obj):
     return not hasattr(obj, "__name__") and not py.builtin.callable(obj)
 
@@ -397,6 +424,56 @@ def set_location(node, lineno, col_offset):
 
 
 class AssertionRewriter(ast.NodeVisitor):
+    """Assertion rewriting implementation.
+
+    The main entrypoint is to call .run() with an ast.Module instance,
+    this will then find all the assert statements and re-write them to
+    provide intermediate values and a detailed assertion error.  See
+    http://pybites.blogspot.be/2011/07/behind-scenes-of-pytests-new-assertion.html
+    for an overview of how this works.
+
+    The entry point here is .run() which will iterate over all the
+    statenemts in an ast.Module and for each ast.Assert statement it
+    finds call .visit() with it.  Then .visit_Assert() takes over and
+    is responsible for creating new ast statements to replace the
+    original assert statement: it re-writes the test of an assertion
+    to provide intermediate values and replace it with an if statement
+    which raises an assertion error with a detailed explanation in
+    case the expression is false.
+
+    For this .visit_Assert() uses the visitor pattern to visit all the
+    AST nodes of the ast.Assert.test field, each visit call returning
+    an AST node and the corresponding explanation string.  During this
+    state is kept in several instance attributes:
+
+    :statements: All the AST statements which will replace the assert
+       statement.
+
+    :variables: This is populated by .variable() with each variable
+       used by the statements so that they can all be set to None at
+       the end of the statements.
+
+    :variable_counter: Counter to create new unique variables needed
+       by statements.  Variables are created using .variable() and
+       have the form of "@py_assert0".
+
+    :on_failure: The AST statements which will be executed if the
+       assertion test fails.  This is the code which will construct
+       the failure message and raises the AssertionError.
+
+    :explanation_specifiers: A dict filled by .explanation_param()
+       with %-formatting placeholders and their corresponding
+       expressions to use in the building of an assertion message.
+       This is used by .pop_format_context() to build a message.
+
+    :stack: A stack of the explanation_specifiers dicts maintained by
+       .push_format_context() and .pop_format_context() which allows
+       to build another %-formatted string while already building one.
+
+    This state is reset on every new assert statement visited and used
+    by the other visitors.
+
+    """
 
     def run(self, mod):
         """Find all assert statements in *mod* and rewrite them."""
@@ -478,15 +555,41 @@ class AssertionRewriter(ast.NodeVisitor):
         return ast.Attribute(builtin_name, name, ast.Load())
 
     def explanation_param(self, expr):
+        """Return a new named %-formatting placeholder for expr.
+
+        This creates a %-formatting placeholder for expr in the
+        current formatting context, e.g. ``%(py0)s``.  The placeholder
+        and expr are placed in the current format context so that it
+        can be used on the next call to .pop_format_context().
+
+        """
         specifier = "py" + str(next(self.variable_counter))
         self.explanation_specifiers[specifier] = expr
         return "%(" + specifier + ")s"
 
     def push_format_context(self):
+        """Create a new formatting context.
+
+        The format context is used for when an explanation wants to
+        have a variable value formatted in the assertion message.  In
+        this case the value required can be added using
+        .explanation_param().  Finally .pop_format_context() is used
+        to format a string of %-formatted values as added by
+        .explanation_param().
+
+        """
         self.explanation_specifiers = {}
         self.stack.append(self.explanation_specifiers)
 
     def pop_format_context(self, expl_expr):
+        """Format the %-formatted string with current format context.
+
+        The expl_expr should be an ast.Str instance constructed from
+        the %-placeholders created by .explanation_param().  This will
+        add the required code to format said string to .on_failure and
+        return the ast.Name instance of the formatted string.
+
+        """
         current = self.stack.pop()
         if self.stack:
             self.explanation_specifiers = self.stack[-1]
@@ -504,11 +607,15 @@ class AssertionRewriter(ast.NodeVisitor):
         return res, self.explanation_param(self.display(res))
 
     def visit_Assert(self, assert_):
-        if assert_.msg:
-            # There's already a message. Don't mess with it.
-            return [assert_]
+        """Return the AST statements to replace the ast.Assert instance.
+
+        This re-writes the test of an assertion to provide
+        intermediate values and replace it with an if statement which
+        raises an assertion error with a detailed explanation in case
+        the expression is false.
+
+        """
         self.statements = []
-        self.cond_chain = ()
         self.variables = []
         self.variable_counter = itertools.count()
         self.stack = []
@@ -520,8 +627,13 @@ class AssertionRewriter(ast.NodeVisitor):
         body = self.on_failure
         negation = ast.UnaryOp(ast.Not(), top_condition)
         self.statements.append(ast.If(negation, body, []))
-        explanation = "assert " + explanation
-        template = ast.Str(explanation)
+        if assert_.msg:
+            assertmsg = self.helper('format_assertmsg', assert_.msg)
+            explanation = "\n>assert " + explanation
+        else:
+            assertmsg = ast.Str("")
+            explanation = "assert " + explanation
+        template = ast.BinOp(assertmsg, ast.Add(), ast.Str(explanation))
         msg = self.pop_format_context(template)
         fmt = self.helper("format_explanation", msg)
         err_name = ast.Name("AssertionError", ast.Load())

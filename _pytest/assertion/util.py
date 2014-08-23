@@ -73,7 +73,7 @@ def _split_explanation(explanation):
     raw_lines = (explanation or u('')).split('\n')
     lines = [raw_lines[0]]
     for l in raw_lines[1:]:
-        if l.startswith('{') or l.startswith('}') or l.startswith('~'):
+        if l and l[0] in ['{', '}', '~', '>']:
             lines.append(l)
         else:
             lines[-1] += '\\n' + l
@@ -103,13 +103,14 @@ def _format_lines(lines):
             stackcnt.append(0)
             result.append(u(' +') + u('  ')*(len(stack)-1) + s + line[1:])
         elif line.startswith('}'):
-            assert line.startswith('}')
             stack.pop()
             stackcnt.pop()
             result[stack[-1]] += line[1:]
         else:
-            assert line.startswith('~')
-            result.append(u('  ')*len(stack) + line[1:])
+            assert line[0] in ['~', '>']
+            stack[-1] += 1
+            indent = len(stack) if line.startswith('~') else len(stack) - 1
+            result.append(u('  ')*indent + line[1:])
     assert len(stack) == 1
     return result
 

@@ -9,6 +9,10 @@ NEXT
   other builds due to the extra argparse dependency.  Fixes issue566.
   Thanks sontek.
 
+- Implement issue549: user-provided assertion messages now no longer
+  replace the py.test instrospection message but are shown in addition
+  to them.
+
 2.6.1
 -----------------------------------
 

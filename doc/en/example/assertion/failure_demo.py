@@ -211,3 +211,27 @@ class TestMoreErrors:
         finally:
             x = 0
 
+
+class TestCustomAssertMsg:
+
+    def test_single_line(self):
+        class A:
+            a = 1
+        b = 2
+        assert A.a == b, "A.a appears not to be b"
+
+    def test_multiline(self):
+        class A:
+            a = 1
+        b = 2
+        assert A.a == b, "A.a appears not to be b\n" \
+            "or does not appear to be b\none of those"
+
+    def test_custom_repr(self):
+        class JSON:
+            a = 1
+            def __repr__(self):
+                return "This is JSON\n{\n  'foo': 'bar'\n}"
+        a = JSON()
+        b = 2
+        assert a.a == b, a
