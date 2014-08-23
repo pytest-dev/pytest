@@ -1,6 +1,10 @@
 NEXT
 -----------
 
+- Added function pytest.freeze_includes(), which makes it easy to embed
+  pytest into executables using tools like cx_freeze.
+  See docs for examples and rationale. Thanks Bruno Oliveira.
+
 - fixed issue561: adapt autouse fixture example for python3.
 
 - Fix example in monkeypatch documentation, thanks t-8ch.
