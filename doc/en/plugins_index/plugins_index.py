@@ -96,7 +96,7 @@ def obtain_plugins_table(plugins, client):
             pad_right = ('%-' + str(len(target_markup)) + 's')
             return pad_right % image_markup, target_markup
         else:
-            return '`link <%s>`_' % target, ''
+            return ('`%s <%s>`_' % (target, target)), ''
     
     def sanitize_summary(summary):
         """Make sure summaries don't break our table formatting.
