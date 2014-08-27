@@ -3,6 +3,9 @@ NEXT
 
 - fixed issue561: adapt autouse fixture example for python3.
 
+- fixed issue453: assertion rewriting issue with __repr__ containing
+  "\n{", "\n}" and "\n~".
+
 - Fix example in monkeypatch documentation, thanks t-8ch.
 
 - Do not mark as universal wheel because Python 2.6 is different from
