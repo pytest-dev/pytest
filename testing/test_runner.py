@@ -524,3 +524,4 @@ def test_makereport_getsource(testdir):
     """)
     result = testdir.runpytest()
     assert 'INTERNALERROR' not in result.stdout.str()
+    result.stdout.fnmatch_lines(['*else: assert False*'])
