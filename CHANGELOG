@@ -1,6 +1,8 @@
 NEXT
 -----------
 
+- Improve assertion rewriting cache invalidation precision.
+
 - fixed issue561: adapt autouse fixture example for python3.
 
 - fixed issue453: assertion rewriting issue with __repr__ containing

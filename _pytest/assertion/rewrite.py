@@ -134,12 +134,12 @@ class AssertionRewritingHook(object):
         co = _read_pyc(fn_pypath, pyc, state.trace)
         if co is None:
             state.trace("rewriting %r" % (fn,))
-            co = _rewrite_test(state, fn_pypath)
+            source_stat, co = _rewrite_test(state, fn_pypath)
             if co is None:
                 # Probably a SyntaxError in the test.
                 return None
             if write:
-                _make_rewritten_pyc(state, fn_pypath, pyc, co)
+                _make_rewritten_pyc(state, source_stat, pyc, co)
         else:
             state.trace("found cached rewritten pyc for %r" % (fn,))
         self.modules[name] = co, pyc
@@ -192,13 +192,12 @@ class AssertionRewritingHook(object):
         pkg_resources.register_loader_type(cls, pkg_resources.DefaultProvider)
 
 
-def _write_pyc(state, co, source_path, pyc):
+def _write_pyc(state, co, source_stat, pyc):
     # Technically, we don't have to have the same pyc format as
     # (C)Python, since these "pycs" should never be seen by builtin
     # import. However, there's little reason deviate, and I hope
     # sometime to be able to use imp.load_compiled to load them. (See
     # the comment in load_module above.)
-    mtime = int(source_path.mtime())
     try:
         fp = open(pyc, "wb")
     except IOError:
@@ -210,7 +209,9 @@ def _write_pyc(state, co, source_path, pyc):
         return False
     try:
         fp.write(imp.get_magic())
-        fp.write(struct.pack("<l", mtime))
+        mtime = int(source_stat.mtime)
+        size = source_stat.size & 0xFFFFFFFF
+        fp.write(struct.pack("<ll", mtime, size))
         marshal.dump(co, fp)
     finally:
         fp.close()
@@ -225,9 +226,10 @@ BOM_UTF8 = '\xef\xbb\xbf'
 def _rewrite_test(state, fn):
     """Try to read and rewrite *fn* and return the code object."""
     try:
+        stat = fn.stat()
         source = fn.read("rb")
     except EnvironmentError:
-        return None
+        return None, None
     if ASCII_IS_DEFAULT_ENCODING:
         # ASCII is the default encoding in Python 2. Without a coding
         # declaration, Python 2 will complain about any bytes in the file
@@ -246,14 +248,15 @@ def _rewrite_test(state, fn):
             cookie_re.match(source[0:end1]) is None and
             cookie_re.match(source[end1 + 1:end2]) is None):
             if hasattr(state, "_indecode"):
-                return None  # encodings imported us again, we don't rewrite
+                # encodings imported us again, so don't rewrite.
+                return None, None
             state._indecode = True
             try:
                 try:
                     source.decode("ascii")
                 except UnicodeDecodeError:
                     # Let it fail in real import.
-                    return None
+                    return None, None
             finally:
                 del state._indecode
     # On Python versions which are not 2.7 and less than or equal to 3.1, the
@@ -265,7 +268,7 @@ def _rewrite_test(state, fn):
     except SyntaxError:
         # Let this pop up again in the real import.
         state.trace("failed to parse: %r" % (fn,))
-        return None
+        return None, None
     rewrite_asserts(tree)
     try:
         co = compile(tree, fn.strpath, "exec")
@@ -273,20 +276,20 @@ def _rewrite_test(state, fn):
         # It's possible that this error is from some bug in the
         # assertion rewriting, but I don't know of a fast way to tell.
         state.trace("failed to compile: %r" % (fn,))
-        return None
-    return co
+        return None, None
+    return stat, co
 
-def _make_rewritten_pyc(state, fn, pyc, co):
+def _make_rewritten_pyc(state, source_stat, pyc, co):
     """Try to dump rewritten code to *pyc*."""
     if sys.platform.startswith("win"):
         # Windows grants exclusive access to open files and doesn't have atomic
         # rename, so just write into the final file.
-        _write_pyc(state, co, fn, pyc)
+        _write_pyc(state, co, source_stat, pyc)
     else:
         # When not on windows, assume rename is atomic. Dump the code object
         # into a file specific to this process and atomically replace it.
         proc_pyc = pyc + "." + str(os.getpid())
-        if _write_pyc(state, co, fn, proc_pyc):
+        if _write_pyc(state, co, source_stat, proc_pyc):
             os.rename(proc_pyc, pyc)
 
 def _read_pyc(source, pyc, trace=lambda x: None):
@@ -301,13 +304,14 @@ def _read_pyc(source, pyc, trace=lambda x: None):
     with fp:
         try:
             mtime = int(source.mtime())
-            data = fp.read(8)
+            size = source.size()
+            data = fp.read(12)
         except EnvironmentError as e:
             trace('_read_pyc(%s): EnvironmentError %s' % (source, e))
             return None
         # Check for invalid or out of date pyc file.
-        if (len(data) != 8 or data[:4] != imp.get_magic() or
-                struct.unpack("<l", data[4:])[0] != mtime):
+        if (len(data) != 12 or data[:4] != imp.get_magic() or
+                struct.unpack("<ll", data[4:]) != (mtime, size)):
             trace('_read_pyc(%s): invalid or out of date pyc' % source)
             return None
         try:
@@ -318,6 +322,7 @@ def _read_pyc(source, pyc, trace=lambda x: None):
         if not isinstance(co, types.CodeType):
             trace('_read_pyc(%s): not a code object' % source)
             return None
+        open("/tmp/goop", "wb").write(b"hi")
         return co
 
 
