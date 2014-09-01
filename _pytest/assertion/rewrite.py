@@ -322,7 +322,6 @@ def _read_pyc(source, pyc, trace=lambda x: None):
         if not isinstance(co, types.CodeType):
             trace('_read_pyc(%s): not a code object' % source)
             return None
-        open("/tmp/goop", "wb").write(b"hi")
         return co
 
 
