@@ -682,33 +682,27 @@ included into the executable can be detected early while also allowing you to
 send test files to users so they can run them in their machines, which can be
 invaluable to obtain more information about a hard to reproduce bug.
 
-Unfortunately embedding the ``pytest`` runner into a frozen executable using
-``cx_freeze`` is not as straightforward as one would like,
-because ``pytest`` makes heavy use of dynamic module loading which
-``cx_freeze`` can't resolve by itself.
-
-To solve this, you have to manually include ``pytest`` and ``py``
-modules by using the ``build_exe`` option in your ``setup.py`` script, like this::
+Unfortunately ``cx_freeze`` can't discover them
+automatically because of ``pytest``'s use of dynamic module loading, so you
+must declare them explicitly by using ``pytest.freeze_includes()``::
 
     # contents of setup.py
     from cx_Freeze import setup, Executable
+    import pytest
 
-    includes = [
-        '_pytest.doctest',
-        '_pytest.unittest',
-        # ... lots more
-    ]
     setup(
-        name="runtests",
-        options={"build_exe": {'includes': includes}},
+        name="app_main",
+        executables=[Executable("app_main.py")],
+        options={"build_exe":
+            {
+            'includes': pytest.freeze_includes()}
+            },
         # ... other options
     )
 
-(For the complete list, check out the modules under ``_pytest`` in your
-site-packages).
-
-With that, you can make your program check for a certain flag and pass control
-over to ``pytest``::
+If you don't want to ship a different executable just in order to run your tests,
+you can make your program check for a certain flag and pass control
+over to ``pytest`` instead. For example::
 
     # contents of app_main.py
     import sys
@@ -722,7 +716,6 @@ over to ``pytest``::
         ...
 
 This makes it convenient to execute your tests from within your frozen
-application, using standard ``py.test`` command-line::
+application, using standard ``py.test`` command-line options::
 
-    $ ./app_main --pytest --verbose --tb=long --junit-xml=results.xml test-suite/    /bin/sh: 1: ./app_main: not found
-    /bin/sh: 1: ./app_main: not found
+    $ ./app_main --pytest --verbose --tb=long --junit-xml=results.xml test-suite/
