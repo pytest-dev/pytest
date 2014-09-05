@@ -57,7 +57,7 @@ class View(object):
     def __getattr__(self, attr):
         # attributes not found in the normal hierarchy rooted on View
         # are looked up in the object's real class
-        return getattr(self.__obj__, attr)
+        return getattr(object.__getattribute__(self, '__obj__'), attr)
 
     def __viewkey__(self):
         return self.__obj__.__class__
