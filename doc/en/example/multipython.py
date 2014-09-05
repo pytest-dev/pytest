@@ -5,7 +5,7 @@ serialization via the pickle module.
 import py
 import pytest
 
-pythonlist = ['python2.4', 'python2.5', 'python2.6', 'python2.7', 'python2.8']
+pythonlist = ['python2.6', 'python2.7', 'python3.4']
 @pytest.fixture(params=pythonlist)
 def python1(request, tmpdir):
     picklefile = tmpdir.join("data.pickle")

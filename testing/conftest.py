@@ -77,12 +77,11 @@ def pytest_runtest_teardown(item, __multicall__):
 winpymap = {
     'python2.7': r'C:\Python27\python.exe',
     'python2.6': r'C:\Python26\python.exe',
-    'python2.5': r'C:\Python25\python.exe',
-    'python2.4': r'C:\Python24\python.exe',
     'python3.1': r'C:\Python31\python.exe',
     'python3.2': r'C:\Python32\python.exe',
     'python3.3': r'C:\Python33\python.exe',
     'python3.4': r'C:\Python34\python.exe',
+    'python3.5': r'C:\Python35\python.exe',
 }
 
 def getexecutable(name, cache={}):
@@ -103,9 +102,8 @@ def getexecutable(name, cache={}):
         cache[name] = executable
         return executable
 
-@pytest.fixture(params=['python2.5', 'python2.6',
-                        'python2.7', 'python3.2', "python3.3",
-                        'pypy', 'jython'])
+@pytest.fixture(params=['python2.6', 'python2.7', 'python3.3', "python3.4",
+                        'pypy', 'pypy3', 'jython'])
 def anypython(request):
     name = request.param
     executable = getexecutable(name)

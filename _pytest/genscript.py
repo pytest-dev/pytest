@@ -72,11 +72,11 @@ def pytest_cmdline_main(config):
         deps =  ['py', '_pytest', 'pytest']
         if sys.version_info < (2,7):
             deps.append("argparse")
-            tw.line("generated script will run on python2.5-python3.3++")
+            tw.line("generated script will run on python2.6-python3.3++")
         else:
             tw.line("WARNING: generated script will not run on python2.6 "
-                    "or below due to 'argparse' dependency. Use python2.6 "
-                    "to generate a python2.5/6 compatible script", red=True)
+                    "due to 'argparse' dependency. Use python2.6 "
+                    "to generate a python2.6 compatible script", red=True)
         script = generate_script(
             'import pytest; raise SystemExit(pytest.cmdline.main())',
             deps,
