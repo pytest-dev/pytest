@@ -1,6 +1,7 @@
 # note: py.io capture tests where copied from
 # pylib 1.4.20.dev2 (rev 13d9af95547e)
 from __future__ import with_statement
+import pickle
 import os
 import sys
 import py
@@ -1022,3 +1023,12 @@ def test_error_attribute_issue555(testdir):
     """)
     reprec = testdir.inline_run()
     reprec.assertoutcome(passed=1)
+
+
+def test_pickling_and_unpickling_enocded_file():
+    # See https://bitbucket.org/hpk42/pytest/pull-request/194
+    # pickle.loads() raises infinite recursion if
+    # EncodedFile.__getattr__ is not implemented properly
+    ef = capture.EncodedFile(None, None)
+    ef_as_str = pickle.dumps(ef)
+    pickle.loads(ef_as_str)

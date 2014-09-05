@@ -153,13 +153,14 @@ def pytest_ignore_collect(path, config):
         ignore_paths.extend([py.path.local(x) for x in excludeopt])
     return path in ignore_paths
 
-class HookProxy:
+class HookProxy(object):
     def __init__(self, fspath, config):
         self.fspath = fspath
         self.config = config
 
     def __getattr__(self, name):
-        hookmethod = getattr(self.config.hook, name)
+        config = object.__getattribute__(self, "config")
+        hookmethod = getattr(config.hook, name)
 
         def call_matching_hooks(**kwargs):
             plugins = self.config._getmatchingplugins(self.fspath)
