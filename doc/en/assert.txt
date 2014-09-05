@@ -26,7 +26,7 @@ you will see the return value of the function call::
 
     $ py.test test_assert1.py
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
+    platform linux -- Python 3.4.0 -- py-1.4.24 -- pytest-2.6.2
     collected 1 items
     
     test_assert1.py F
@@ -132,7 +132,7 @@ if you run this module::
 
     $ py.test test_assert2.py
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
+    platform linux -- Python 3.4.0 -- py-1.4.24 -- pytest-2.6.2
     collected 1 items
     
     test_assert2.py F

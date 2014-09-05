@@ -64,7 +64,7 @@ of the failing function and hide the other one::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
+    platform linux -- Python 3.4.0 -- py-1.4.24 -- pytest-2.6.2
     collected 2 items
     
     test_module.py .F
@@ -78,7 +78,7 @@ of the failing function and hide the other one::
     
     test_module.py:9: AssertionError
     -------------------------- Captured stdout setup ---------------------------
-    setting up <function test_func2 at 0x2b5d6a81c9d8>
+    setting up <function test_func2 at 0x2ae19606fc80>
     ==================== 1 failed, 1 passed in 0.01 seconds ====================
 
 Accessing captured output from a test function

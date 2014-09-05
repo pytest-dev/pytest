@@ -164,7 +164,7 @@ Running it with the report-on-xfail option gives this output::
 
     example $ py.test -rx xfail_demo.py
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
+    platform linux -- Python 3.4.0 -- py-1.4.24 -- pytest-2.6.2
     collected 7 items
     
     xfail_demo.py xxxxxxx

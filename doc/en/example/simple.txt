@@ -108,7 +108,7 @@ directory with the above conftest.py::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
+    platform linux -- Python 3.4.0 -- py-1.4.24 -- pytest-2.6.2
     collected 0 items
     
     =============================  in 0.00 seconds =============================
@@ -152,12 +152,12 @@ and when running it will see a skipped "slow" test::
 
     $ py.test -rs    # "-rs" means report details on the little 's'
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
+    platform linux -- Python 3.4.0 -- py-1.4.24 -- pytest-2.6.2
     collected 2 items
     
     test_module.py .s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-243/conftest.py:9: need --runslow option to run
+    SKIP [1] /tmp/doc-exec-87/conftest.py:9: need --runslow option to run
     
     =================== 1 passed, 1 skipped in 0.01 seconds ====================
 
@@ -165,7 +165,7 @@ Or run it including the ``slow`` marked test::
 
     $ py.test --runslow
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
+    platform linux -- Python 3.4.0 -- py-1.4.24 -- pytest-2.6.2
     collected 2 items
     
     test_module.py ..
@@ -256,7 +256,7 @@ which will add the string to the test header accordingly::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
+    platform linux -- Python 3.4.0 -- py-1.4.24 -- pytest-2.6.2
     project deps: mylib-1.1
     collected 0 items
     
@@ -279,7 +279,7 @@ which will add info only when run with "--v"::
 
     $ py.test -v
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+    platform linux -- Python 3.4.0 -- py-1.4.24 -- pytest-2.6.2 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
     info1: did you know that ...
     did you?
     collecting ... collected 0 items
@@ -290,7 +290,7 @@ and nothing when run plainly::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
+    platform linux -- Python 3.4.0 -- py-1.4.24 -- pytest-2.6.2
     collected 0 items
     
     =============================  in 0.00 seconds =============================
@@ -322,7 +322,7 @@ Now we can profile which test functions execute the slowest::
 
     $ py.test --durations=3
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
+    platform linux -- Python 3.4.0 -- py-1.4.24 -- pytest-2.6.2
     collected 3 items
     
     test_some_are_slow.py ...
@@ -383,7 +383,7 @@ If we run this::
 
     $ py.test -rx
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
+    platform linux -- Python 3.4.0 -- py-1.4.24 -- pytest-2.6.2
     collected 4 items
     
     test_step.py .Fx.
@@ -391,7 +391,7 @@ If we run this::
     ================================= FAILURES =================================
     ____________________ TestUserHandling.test_modification ____________________
     
-    self = <test_step.TestUserHandling object at 0x2b2ef2a4feb8>
+    self = <test_step.TestUserHandling object at 0x2ae0c339e3c8>
     
         def test_modification(self):
     >       assert 0
@@ -401,7 +401,7 @@ If we run this::
     ========================= short test summary info ==========================
     XFAIL test_step.py::TestUserHandling::()::test_deletion
       reason: previous test failed (test_modification)
-    ============== 1 failed, 2 passed, 1 xfailed in 0.01 seconds ===============
+    ============== 1 failed, 2 passed, 1 xfailed in 0.02 seconds ===============
 
 We'll see that ``test_deletion`` was not executed because ``test_modification``
 failed.  It is reported as an "expected failure".
@@ -453,7 +453,7 @@ We can run this::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
+    platform linux -- Python 3.4.0 -- py-1.4.24 -- pytest-2.6.2
     collected 7 items
     
     test_step.py .Fx.
@@ -463,17 +463,17 @@ We can run this::
     
     ================================== ERRORS ==================================
     _______________________ ERROR at setup of test_root ________________________
-    file /tmp/doc-exec-243/b/test_error.py, line 1
+    file /tmp/doc-exec-87/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
             fixture 'db' not found
-            available fixtures: tmpdir, monkeypatch, capsys, capfd, pytestconfig, recwarn
+            available fixtures: recwarn, monkeypatch, pytestconfig, capfd, capsys, tmpdir
             use 'py.test --fixtures [testpath]' for help on them.
     
-    /tmp/doc-exec-243/b/test_error.py:1
+    /tmp/doc-exec-87/b/test_error.py:1
     ================================= FAILURES =================================
     ____________________ TestUserHandling.test_modification ____________________
     
-    self = <test_step.TestUserHandling object at 0x2b63a7aec710>
+    self = <test_step.TestUserHandling object at 0x2ac268bf0048>
     
         def test_modification(self):
     >       assert 0
@@ -482,23 +482,23 @@ We can run this::
     test_step.py:9: AssertionError
     _________________________________ test_a1 __________________________________
     
-    db = <conftest.DB object at 0x2b63a7b04470>
+    db = <conftest.DB object at 0x2ac268bf09e8>
     
         def test_a1(db):
     >       assert 0, db  # to show value
-    E       AssertionError: <conftest.DB object at 0x2b63a7b04470>
+    E       AssertionError: <conftest.DB object at 0x2ac268bf09e8>
     
     a/test_db.py:2: AssertionError
     _________________________________ test_a2 __________________________________
     
-    db = <conftest.DB object at 0x2b63a7b04470>
+    db = <conftest.DB object at 0x2ac268bf09e8>
     
         def test_a2(db):
     >       assert 0, db  # to show value
-    E       AssertionError: <conftest.DB object at 0x2b63a7b04470>
+    E       AssertionError: <conftest.DB object at 0x2ac268bf09e8>
     
     a/test_db2.py:2: AssertionError
-    ========== 3 failed, 2 passed, 1 xfailed, 1 error in 0.03 seconds ==========
+    ========== 3 failed, 2 passed, 1 xfailed, 1 error in 0.04 seconds ==========
 
 The two test modules in the ``a`` directory see the same ``db`` fixture instance
 while the one test in the sister-directory ``b`` doesn't see it.  We could of course
@@ -553,7 +553,7 @@ and run them::
 
     $ py.test test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
+    platform linux -- Python 3.4.0 -- py-1.4.24 -- pytest-2.6.2
     collected 2 items
     
     test_module.py FF
@@ -561,7 +561,7 @@ and run them::
     ================================= FAILURES =================================
     ________________________________ test_fail1 ________________________________
     
-    tmpdir = local('/tmp/pytest-509/test_fail10')
+    tmpdir = local('/tmp/pytest-15/test_fail10')
     
         def test_fail1(tmpdir):
     >       assert 0
@@ -575,12 +575,12 @@ and run them::
     E       assert 0
     
     test_module.py:4: AssertionError
-    ========================= 2 failed in 0.02 seconds =========================
+    ========================= 2 failed in 0.01 seconds =========================
 
 you will have a "failures" file which contains the failing test ids::
 
     $ cat failures
-    test_module.py::test_fail1 (/tmp/pytest-509/test_fail10)
+    test_module.py::test_fail1 (/tmp/pytest-15/test_fail10)
     test_module.py::test_fail2
 
 Making test result information available in fixtures
@@ -645,25 +645,25 @@ and run it::
     Traceback (most recent call last):
       File "/home/hpk/p/pytest/.tox/regen/lib/python3.4/site-packages/_pytest/config.py", line 513, in getconftestmodules
         return self._path2confmods[path]
-    KeyError: local('/tmp/doc-exec-243/test_module.py')
+    KeyError: local('/tmp/doc-exec-87/test_module.py')
     
     During handling of the above exception, another exception occurred:
     Traceback (most recent call last):
       File "/home/hpk/p/pytest/.tox/regen/lib/python3.4/site-packages/_pytest/config.py", line 537, in importconftest
         return self._conftestpath2mod[conftestpath]
-    KeyError: local('/tmp/doc-exec-243/conftest.py')
+    KeyError: local('/tmp/doc-exec-87/conftest.py')
     
     During handling of the above exception, another exception occurred:
     Traceback (most recent call last):
       File "/home/hpk/p/pytest/.tox/regen/lib/python3.4/site-packages/_pytest/config.py", line 543, in importconftest
         mod = conftestpath.pyimport()
-      File "/home/hpk/p/pytest/.tox/regen/lib/python3.4/site-packages/py/_path/local.py", line 620, in pyimport
+      File "/home/hpk/p/pytest/.tox/regen/lib/python3.4/site-packages/py/_path/local.py", line 640, in pyimport
         __import__(modname)
-      File "/tmp/doc-exec-243/conftest.py", line 22
+      File "/tmp/doc-exec-87/conftest.py", line 22
         print "setting up a test failed!", request.node.nodeid
                                         ^
     SyntaxError: invalid syntax
-    ERROR: could not load /tmp/doc-exec-243/conftest.py
+    ERROR: could not load /tmp/doc-exec-87/conftest.py
     
 
 You'll see that the fixture finalizers could use the precise reporting
@@ -719,3 +719,4 @@ This makes it convenient to execute your tests from within your frozen
 application, using standard ``py.test`` command-line options::
 
     $ ./app_main --pytest --verbose --tb=long --junit-xml=results.xml test-suite/
+    /bin/sh: 1: ./app_main: not found
