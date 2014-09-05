@@ -4,6 +4,9 @@ NEXT
 - fix issue582: fix setuptools example, thanks Laszlo Papp and Ronny
   Pfannschmidt.
 
+- Fix infinite recursion bug when pickling capture.EncodedFile, thanks
+  Uwe Schmitt.
+
 
 2.6.2
 -----------
