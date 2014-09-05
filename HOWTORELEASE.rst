@@ -25,18 +25,21 @@ How to release pytest (draft)
    which is ok (tox does not support skipping on
    per-platform basis yet).
 
-7. go to "doc/en" and upload docs with "make install"
+7. XXX "regen docs" (not easy to do currently as it requires
+   a development version of the regendoc tool from ronny)
+
+8. go to "doc/en" and upload docs with "make install"
    (the latter requires ssh-login permissions on pytest.org 
    because it uses rsync).  Note that the "install" target of
    doc/en/Makefile defines where the rsync goes to, typically
    to the "latest" section of pytest.org.
 
-8. publish to pypi "devpi push pytest-2.6.2 pypi:NAME" where NAME 
+9. publish to pypi "devpi push pytest-2.6.2 pypi:NAME" where NAME 
    is the name of pypi.python.org as configured in your 
    ~/.pypirc file -- it's the same you would use with 
    "setup.py upload -r NAME"
 
-9. send release announcement to mailing lists:
+10. send release announcement to mailing lists:
 
    pytest-dev
    testing-in-python
