@@ -103,7 +103,7 @@ def getexecutable(name, cache={}):
         return executable
 
 @pytest.fixture(params=['python2.6', 'python2.7', 'python3.3', "python3.4",
-                        'pypy', 'pypy3', 'jython'])
+                        'pypy', 'pypy3'])
 def anypython(request):
     name = request.param
     executable = getexecutable(name)
