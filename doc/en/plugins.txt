@@ -123,14 +123,38 @@ You may also discover more plugins through a `pytest- pypi.python.org search`_.
 External plugin development
 ---------------------------
 
-Pytest community cares about pytest users, in particular, it's important for the community
-to keep all pieces of the pytest ecosystem supported. External plugins are important for
+Pytest community cares about pytest users, in particular, it's crucial for the community
+to keep all pieces of the pytest ecosystem well supported. External plugins are important for
 pytest users, as they implement many useful, and sometimes critical features which the pytest core does
 not implement.
 
+To simplify the plugin development and/or support, it was decided to create teams(companies) on popular code hosting
+services (at the moment it's github and bitbucket):
+
+* `<https://github.com/pytestorg>`_:
+    probably the most popular hosting for pytest plugins
+    the name ``pytestorg`` is choosen because ``pytest`` was already taken by
+    some unknown person, who's not active on the github or just doesn't check the email used to register
+    that organization.
+* `<https://bitbucket.org/pytest>`_:
+    pytest is hosted on the bitbucket, also a lot of pytest plugins are hosted there.
+
+More code hosting services can be added in the future.
+
+Community encourages pytest plugin developers to move their plugins under those organizations (eg transfer ownership),
+paying with a better support, faster feedback, better discoverability, etc.
+
+Generic workflow of the ownership transfer looks like:
+
+* If not a member already, developer asks for a membership in the `pytest plugin developers community` organizations listed above, sending an email to `<pytest-dev@python.org>`_.
+
+* Developer transfers the ownership of his plugin repository to the organization listed above.
+
+* Existing organization members will make sure proper write permissions are set up for developer who transfered the ownership to the organization.
+
 
 Writing a plugin by looking at examples
-------------------------------------------------------
+---------------------------------------
 
 .. _`Distribute`: http://pypi.python.org/pypi/distribute
 .. _`setuptools`: http://pypi.python.org/pypi/setuptools
@@ -302,10 +326,10 @@ in the `pytest repository <http://bitbucket.org/hpk42/pytest/>`_.
 .. _`well specified hooks`:
 
 pytest hook reference
-====================================
+=====================
 
 Hook specification and validation
------------------------------------------
+---------------------------------
 
 ``pytest`` calls hook functions to implement initialization, running,
 test execution and reporting.  When ``pytest`` loads a plugin it validates
