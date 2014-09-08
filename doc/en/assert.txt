@@ -66,20 +66,23 @@ In order to write assertions about raised exceptions, you can use
 ``pytest.raises`` as a context manager like this::
 
     import pytest
-    with pytest.raises(ZeroDivisionError):
-        1 / 0
+
+    def test_zero_division():
+        with pytest.raises(ZeroDivisionError):
+            1 / 0
 
 and if you need to have access to the actual exception info you may use::
 
-    with pytest.raises(RuntimeError) as excinfo:
-        def f():
+    def test_recursion_depth():
+        with pytest.raises(RuntimeError) as excinfo:
+            def f():
+                f()
             f()
-        f()
-
-    # do checks related to excinfo.type, excinfo.value, excinfo.traceback
+        assert 'maximum recursion' in str(excinfo.value)
 
 ``excinfo`` is a `py.code.ExceptionInfo`_ instance, which is a wrapper around
-the actual exception raised.
+the actual exception raised.  The main attributes of interest are
+``.type``, ``.value`` and ``.traceback``.
 
 .. _py.code.ExceptionInfo:
     http://pylib.readthedocs.org/en/latest/code.html#py-code-exceptioninfo
