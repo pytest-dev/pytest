@@ -1,7 +1,7 @@
 A session-fixture which can look at all collected tests
 ----------------------------------------------------------------
 
-A session-scoped fixture effectively has access to all 
+A session-scoped fixture effectively has access to all
 collected test items.  Here is an example of a fixture
 function which walks all collected tests and looks
 if their test class defines a ``callme`` method and
@@ -13,7 +13,7 @@ calls it::
 
     @pytest.fixture(scope="session", autouse=True)
     def callattr_ahead_of_alltests(request):
-        print "callattr_ahead_of_alltests called"
+        print ("callattr_ahead_of_alltests called")
         seen = set([None])
         session = request.node
         for item in session.items:
@@ -31,55 +31,42 @@ will be called ahead of running any tests::
     class TestHello:
         @classmethod
         def callme(cls):
-            print "callme called!"
+            print ("callme called!")
 
         def test_method1(self):
-            print "test_method1 called"
-        
+            print ("test_method1 called")
+
         def test_method2(self):
-            print "test_method1 called"
+            print ("test_method1 called")
 
     class TestOther:
         @classmethod
         def callme(cls):
-            print "callme other called"
+            print ("callme other called")
         def test_other(self):
-            print "test other"
+            print ("test other")
 
     # works with unittest as well ...
     import unittest
-    
+
     class SomeTest(unittest.TestCase):
         @classmethod
         def callme(self):
-            print "SomeTest callme called"
+            print ("SomeTest callme called")
 
         def test_unit1(self):
-            print "test_unit1 method called"
+            print ("test_unit1 method called")
 
 If you run this without output capturing::
 
-    $ py.test -q -s test_module.py 
-    Traceback (most recent call last):
-      File "/home/hpk/p/pytest/.tox/regen/lib/python3.4/site-packages/_pytest/config.py", line 513, in getconftestmodules
-        return self._path2confmods[path]
-    KeyError: local('/tmp/doc-exec-88/test_module.py')
-    
-    During handling of the above exception, another exception occurred:
-    Traceback (most recent call last):
-      File "/home/hpk/p/pytest/.tox/regen/lib/python3.4/site-packages/_pytest/config.py", line 537, in importconftest
-        return self._conftestpath2mod[conftestpath]
-    KeyError: local('/tmp/doc-exec-88/conftest.py')
-    
-    During handling of the above exception, another exception occurred:
-    Traceback (most recent call last):
-      File "/home/hpk/p/pytest/.tox/regen/lib/python3.4/site-packages/_pytest/config.py", line 543, in importconftest
-        mod = conftestpath.pyimport()
-      File "/home/hpk/p/pytest/.tox/regen/lib/python3.4/site-packages/py/_path/local.py", line 640, in pyimport
-        __import__(modname)
-      File "/tmp/doc-exec-88/conftest.py", line 6
-        print "callattr_ahead_of_alltests called"
-                                                ^
-    SyntaxError: invalid syntax
-    ERROR: could not load /tmp/doc-exec-88/conftest.py
-    
+    $ py.test -q -s test_module.py
+    callattr_ahead_of_alltests called
+    callme called!
+    callme other called
+    SomeTest callme called
+    test_method1 called
+    .test_method1 called
+    .test other
+    .test_unit1 method called
+    .
+    4 passed in 0.05 seconds
