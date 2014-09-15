@@ -12,6 +12,10 @@ NEXT
   instead of presuming any RuntimeError is that one (implemented in py
   dep).  Thanks Charles Cloud for analysing the issue.
 
+- fix conftest related fixture visibility issue: when running with a
+  CWD outside a test package pytest would get fixture discovery wrong.
+  Thanks to Wolfgang Schnerring for figuring out a reproducable example.
+
 
 2.6.2
 -----------

@@ -1611,10 +1611,15 @@ class FixtureManager:
         except AttributeError:
             pass
         else:
+            # construct the base nodeid which is later used to check
+            # what fixtures are visible for particular tests (as denoted
+            # by their test id)
             if p.basename.startswith("conftest.py"):
-                nodeid = p.dirpath().relto(self.session.fspath)
+                nodeid = self.session.fspath.bestrelpath(p.dirpath())
                 if p.sep != "/":
                     nodeid = nodeid.replace(p.sep, "/")
+                if nodeid == ".":
+                    nodeid = ""
         self.parsefactories(plugin, nodeid)
         self._seenplugins.add(plugin)
 
