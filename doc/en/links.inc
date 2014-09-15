@@ -18,4 +18,4 @@
 .. _hudson: http://hudson-ci.org/
 .. _jenkins: http://jenkins-ci.org/
 .. _tox: http://testrun.org/tox
-.. _pylib: http://pylib.org
+.. _pylib: http://py.readthedocs.org/en/latest/
