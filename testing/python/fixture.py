@@ -1001,6 +1001,40 @@ class TestFixtureManagerParseFactories:
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=1)
 
+    def test_parsefactories_relative_node_ids(self, testdir):
+        # example mostly taken from:
+        # https://mail.python.org/pipermail/pytest-dev/2014-September/002617.html
+        runner = testdir.mkdir("runner")
+        package = testdir.mkdir("package")
+        package.join("conftest.py").write(dedent("""\
+            import pytest
+            @pytest.fixture
+            def one():
+                return 1
+        """))
+        package.join("test_x.py").write(dedent("""\
+            def test_x(one):
+                assert one == 1
+        """))
+        sub = package.mkdir("sub")
+        sub.join("__init__.py").ensure()
+        sub.join("conftest.py").write(dedent("""\
+            import pytest
+            @pytest.fixture
+            def one():
+                return 2
+        """))
+        sub.join("test_y.py").write(dedent("""\
+            def test_x(one):
+                assert one == 2
+        """))
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
+        with runner.as_cwd():
+            reprec = testdir.inline_run("..")
+            reprec.assertoutcome(passed=2)
+
+
 class TestAutouseDiscovery:
     def pytest_funcarg__testdir(self, testdir):
         testdir.makeconftest("""
