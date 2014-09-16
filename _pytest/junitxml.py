@@ -129,10 +129,10 @@ class LogXML(object):
             self.failed += 1
         self._write_captured_output(report)
 
-    def append_collect_failure(self, report):
+    def append_collect_error(self, report):
         #msg = str(report.longrepr.reprtraceback.extraline)
-        self.append(Junit.failure(bin_xml_escape(report.longrepr),
-                                  message="collection failure"))
+        self.append(Junit.error(bin_xml_escape(report.longrepr),
+                                message="collection failure"))
         self.errors += 1
 
     def append_collect_skipped(self, report):
@@ -181,7 +181,7 @@ class LogXML(object):
         if not report.passed:
             self._opentestcase(report)
             if report.failed:
-                self.append_collect_failure(report)
+                self.append_collect_error(report)
             else:
                 self.append_collect_skipped(report)
 

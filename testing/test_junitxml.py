@@ -252,7 +252,7 @@ class TestPython:
         assert_attr(tnode,
             #classname="test_collect_error",
             name="test_collect_error")
-        fnode = tnode.getElementsByTagName("failure")[0]
+        fnode = tnode.getElementsByTagName("error")[0]
         assert_attr(fnode, message="collection failure")
         assert "SyntaxError" in fnode.toxml()
 
@@ -489,7 +489,7 @@ def test_unicode_issue368(testdir):
     log.pytest_sessionstart()
     log._opentestcase(report)
     log.append_failure(report)
-    log.append_collect_failure(report)
+    log.append_collect_error(report)
     log.append_collect_skipped(report)
     log.append_error(report)
     report.longrepr = "filename", 1, ustr
