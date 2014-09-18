@@ -42,6 +42,7 @@ class pytestPDB:
             tw = py.io.TerminalWriter()
             tw.line()
             tw.sep(">", "PDB set_trace (IO-capturing turned off)")
+            self._pluginmanager.hook.pytest_enter_pdb()
         pdb.Pdb().set_trace(frame)
 
 
