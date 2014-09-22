@@ -1025,6 +1025,18 @@ def test_error_attribute_issue555(testdir):
     reprec.assertoutcome(passed=1)
 
 
+def test_dontreadfrominput_has_encoding(testdir):
+    testdir.makepyfile("""
+        import sys
+        def test_capattr():
+            # should not raise AttributeError
+            assert sys.stdout.encoding
+            assert sys.stderr.encoding
+    """)
+    reprec = testdir.inline_run()
+    reprec.assertoutcome(passed=1)
+
+
 def test_pickling_and_unpickling_enocded_file():
     # See https://bitbucket.org/hpk42/pytest/pull-request/194
     # pickle.loads() raises infinite recursion if

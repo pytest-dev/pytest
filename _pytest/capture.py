@@ -428,6 +428,9 @@ class DontReadFromInput:
     because in automated test runs it is better to crash than
     hang indefinitely.
     """
+
+    encoding = None
+
     def read(self, *args):
         raise IOError("reading from stdin while output is captured")
     readline = read
