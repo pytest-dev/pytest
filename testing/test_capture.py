@@ -744,6 +744,7 @@ class TestFDCapture:
             cap.done()
             pytest.raises(AttributeError, cap.suspend)
 
+
 @contextlib.contextmanager
 def saved_fd(fd):
     new_fd = os.dup(fd)
@@ -751,6 +752,7 @@ def saved_fd(fd):
         yield
     finally:
         os.dup2(new_fd, fd)
+        os.close(new_fd)
 
 
 class TestStdCapture:
