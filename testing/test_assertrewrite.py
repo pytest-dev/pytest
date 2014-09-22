@@ -121,7 +121,56 @@ class TestAssertionRewrite:
     def test_assert_already_has_message(self):
         def f():
             assert False, "something bad!"
-        assert getmsg(f) == "AssertionError: something bad!"
+        assert getmsg(f) == "AssertionError: something bad!\nassert False"
+
+    def test_assertion_message(self, testdir):
+        testdir.makepyfile("""
+            def test_foo():
+                assert 1 == 2, "The failure message"
+        """)
+        result = testdir.runpytest()
+        assert result.ret == 1
+        result.stdout.fnmatch_lines([
+            "*AssertionError*The failure message*",
+            "*assert 1 == 2*",
+        ])
+
+    def test_assertion_message_multiline(self, testdir):
+        testdir.makepyfile("""
+            def test_foo():
+                assert 1 == 2, "A multiline\\nfailure message"
+        """)
+        result = testdir.runpytest()
+        assert result.ret == 1
+        result.stdout.fnmatch_lines([
+            "*AssertionError*A multiline*",
+            "*failure message*",
+            "*assert 1 == 2*",
+        ])
+
+    def test_assertion_message_tuple(self, testdir):
+        testdir.makepyfile("""
+            def test_foo():
+                assert 1 == 2, (1, 2)
+        """)
+        result = testdir.runpytest()
+        assert result.ret == 1
+        result.stdout.fnmatch_lines([
+            "*AssertionError*%s*" % repr((1, 2)),
+            "*assert 1 == 2*",
+        ])
+
+    def test_assertion_message_expr(self, testdir):
+        testdir.makepyfile("""
+            def test_foo():
+                assert 1 == 2, 1 + 2
+        """)
+        result = testdir.runpytest()
+        assert result.ret == 1
+        result.stdout.fnmatch_lines([
+            "*AssertionError*3*",
+            "*assert 1 == 2*",
+        ])
 
     def test_boolop(self):
         def f():

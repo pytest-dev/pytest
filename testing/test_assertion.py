@@ -4,6 +4,7 @@ import sys
 import py, pytest
 import _pytest.assertion as plugin
 from _pytest.assertion import reinterpret
+from _pytest.assertion import util
 needsnewassert = pytest.mark.skipif("sys.version_info < (2,6)")
 
 
@@ -201,7 +202,7 @@ class TestAssert_reprcompare:
 
 class TestFormatExplanation:
 
-    def test_speical_chars_full(self, testdir):
+    def test_special_chars_full(self, testdir):
         # Issue 453, for the bug this would raise IndexError
         testdir.makepyfile("""
             def test_foo():
@@ -212,6 +213,83 @@ class TestFormatExplanation:
         result.stdout.fnmatch_lines([
             "*AssertionError*",
         ])
+
+    def test_fmt_simple(self):
+        expl = 'assert foo'
+        assert util.format_explanation(expl) == 'assert foo'
+
+    def test_fmt_where(self):
+        expl = '\n'.join(['assert 1',
+                          '{1 = foo',
+                          '} == 2'])
+        res = '\n'.join(['assert 1 == 2',
+                         ' +  where 1 = foo'])
+        assert util.format_explanation(expl) == res
+
+    def test_fmt_and(self):
+        expl = '\n'.join(['assert 1',
+                          '{1 = foo',
+                          '} == 2',
+                          '{2 = bar',
+                          '}'])
+        res = '\n'.join(['assert 1 == 2',
+                         ' +  where 1 = foo',
+                         ' +  and   2 = bar'])
+        assert util.format_explanation(expl) == res
+
+    def test_fmt_where_nested(self):
+        expl = '\n'.join(['assert 1',
+                          '{1 = foo',
+                          '{foo = bar',
+                          '}',
+                          '} == 2'])
+        res = '\n'.join(['assert 1 == 2',
+                         ' +  where 1 = foo',
+                         ' +    where foo = bar'])
+        assert util.format_explanation(expl) == res
+
+    def test_fmt_newline(self):
+        expl = '\n'.join(['assert "foo" == "bar"',
+                          '~- foo',
+                          '~+ bar'])
+        res = '\n'.join(['assert "foo" == "bar"',
+                         '  - foo',
+                         '  + bar'])
+        assert util.format_explanation(expl) == res
+
+    def test_fmt_newline_escaped(self):
+        expl = '\n'.join(['assert foo == bar',
+                          'baz'])
+        res = 'assert foo == bar\\nbaz'
+        assert util.format_explanation(expl) == res
+
+    def test_fmt_newline_before_where(self):
+        expl = '\n'.join(['the assertion message here',
+                          '>assert 1',
+                          '{1 = foo',
+                          '} == 2',
+                          '{2 = bar',
+                          '}'])
+        res = '\n'.join(['the assertion message here',
+                         'assert 1 == 2',
+                         ' +  where 1 = foo',
+                         ' +  and   2 = bar'])
+        assert util.format_explanation(expl) == res
+
+    def test_fmt_multi_newline_before_where(self):
+        expl = '\n'.join(['the assertion',
+                          '~message here',
+                          '>assert 1',
+                          '{1 = foo',
+                          '} == 2',
+                          '{2 = bar',
+                          '}'])
+        res = '\n'.join(['the assertion',
+                         '  message here',
+                         'assert 1 == 2',
+                         ' +  where 1 = foo',
+                         ' +  and   2 = bar'])
+        assert util.format_explanation(expl) == res
 
 
 def test_python25_compile_issue257(testdir):
