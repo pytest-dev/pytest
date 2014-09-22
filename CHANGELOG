@@ -1,6 +1,9 @@
 NEXT
 -----------
 
+- fix issue575: xunit-xml was reporting collection errors as failures
+  instead of errors, thanks Oleg Sinyavskiy.
+
 - fix issue582: fix setuptools example, thanks Laszlo Papp and Ronny
   Pfannschmidt.
 
