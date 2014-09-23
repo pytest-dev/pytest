@@ -20,7 +20,7 @@ NEXT
   Thanks to Wolfgang Schnerring for figuring out a reproducable example.
 
 - Introduce pytest_enter_pdb hook (needed e.g. by pytest_timeout to cancel the
-  timeout when interactively entering pdb).
+  timeout when interactively entering pdb).  Thanks Wolfgang Schnerring.
 
 2.6.2
 -----------
