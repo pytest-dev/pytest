@@ -267,3 +267,21 @@ class TestPDB:
             "*NameError*xxx*",
             "*1 error*",
         ])
+
+    def test_enter_pdb_hook_is_called(self, testdir):
+        testdir.makeconftest("""
+            def pytest_enter_pdb():
+                print 'enter_pdb_hook'
+        """)
+        p1 = testdir.makepyfile("""
+            import pytest
+
+            def test_foo():
+                pytest.set_trace()
+        """)
+        child = testdir.spawn_pytest(str(p1))
+        child.expect("enter_pdb_hook")
+        child.send('c\n')
+        child.sendeof()
+        if child.isalive():
+            child.wait()

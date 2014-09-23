@@ -19,6 +19,8 @@ NEXT
   CWD outside a test package pytest would get fixture discovery wrong.
   Thanks to Wolfgang Schnerring for figuring out a reproducable example.
 
+- Introduce pytest_enter_pdb hook (needed e.g. by pytest_timeout to cancel the
+  timeout when interactively entering pdb).
 
 2.6.2
 -----------

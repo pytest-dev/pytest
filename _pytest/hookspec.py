@@ -262,3 +262,5 @@ def pytest_exception_interact(node, call, report):
     that is not an internal exception like "skip.Exception".
     """
 
+def pytest_enter_pdb():
+    """ called upon pdb.set_trace()"""
