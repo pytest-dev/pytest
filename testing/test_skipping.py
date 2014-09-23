@@ -678,3 +678,23 @@ class TestBooleanCondition:
             *True123*
             *1 xfail*
         """)
+
+
+def test_xfail_item(testdir):
+    # Ensure pytest.xfail works with non-Python Item
+    testdir.makeconftest("""
+        import pytest
+
+        class MyItem(pytest.Item):
+            nodeid = 'foo'
+            def runtest(self):
+                pytest.xfail("Expected Failure")
+
+        def pytest_collect_file(path, parent):
+            return MyItem("foo", parent)
+    """)
+    result = testdir.inline_run()
+    passed, skipped, failed = result.listoutcomes()
+    assert not failed
+    xfailed = [r for r in skipped if hasattr(r, 'wasxfail')]
+    assert xfailed

@@ -58,6 +58,7 @@ class MarkEvaluator:
     @property
     def holder(self):
         return self.item.keywords.get(self.name, None)
+
     def __bool__(self):
         return bool(self.holder)
     __nonzero__ = __bool__
@@ -136,8 +137,6 @@ class MarkEvaluator:
 
 @pytest.mark.tryfirst
 def pytest_runtest_setup(item):
-    if not isinstance(item, pytest.Function):
-        return
     evalskip = MarkEvaluator(item, 'skipif')
     if evalskip.istrue():
         pytest.skip(evalskip.getexplanation())
@@ -155,8 +154,6 @@ def check_xfail_no_run(item):
                 pytest.xfail("[NOTRUN] " + evalxfail.getexplanation())
 
 def pytest_runtest_makereport(__multicall__, item, call):
-    if not isinstance(item, pytest.Function):
-        return
     # unitttest special case, see setting of _unexpectedsuccess
     if hasattr(item, '_unexpectedsuccess'):
         rep = __multicall__.execute()
