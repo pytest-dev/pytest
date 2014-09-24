@@ -131,12 +131,12 @@ not implement.
 To simplify the plugin development and/or support, it was decided to create teams(companies) on popular code hosting
 services (at the moment it's github and bitbucket):
 
-* `<https://github.com/pytestorg>`_:
+* `<https://github.com/pytest-dev>`_:
     probably the most popular hosting for pytest plugins
-    the name ``pytestorg`` is choosen because ``pytest`` was already taken by
+    the name ``pytest-dev`` is choosen because ``pytest`` was already taken by
     some unknown person, who's not active on the github or just doesn't check the email used to register
     that organization.
-* `<https://bitbucket.org/pytest>`_:
+* `<https://bitbucket.org/pytest-dev>`_:
     pytest is hosted on the bitbucket, also a lot of pytest plugins are hosted there.
 
 More code hosting services can be added in the future.
