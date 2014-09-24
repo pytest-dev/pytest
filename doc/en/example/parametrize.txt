@@ -106,7 +106,7 @@ this is a fully self-contained example which you can run with::
 
     $ py.test test_scenarios.py
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
+    platform linux -- Python 3.4.0 -- py-1.4.25 -- pytest-2.6.3
     collected 4 items
     
     test_scenarios.py ....
@@ -118,7 +118,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
 
     $ py.test --collect-only test_scenarios.py
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
+    platform linux -- Python 3.4.0 -- py-1.4.25 -- pytest-2.6.3
     collected 4 items
     <Module 'test_scenarios.py'>
       <Class 'TestSampleWithScenarios'>
@@ -182,7 +182,7 @@ Let's first see how it looks like at collection time::
 
     $ py.test test_backends.py --collect-only
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
+    platform linux -- Python 3.4.0 -- py-1.4.25 -- pytest-2.6.3
     collected 2 items
     <Module 'test_backends.py'>
       <Function 'test_db_initialized[d1]'>
@@ -197,7 +197,7 @@ And then when we run the test::
     ================================= FAILURES =================================
     _________________________ test_db_initialized[d2] __________________________
     
-    db = <conftest.DB2 object at 0x2b83684b5eb8>
+    db = <conftest.DB2 object at 0x2b24a8545390>
     
         def test_db_initialized(db):
             # a dummy test
@@ -206,7 +206,7 @@ And then when we run the test::
     E           Failed: deliberately failing for demo purposes
     
     test_backends.py:6: Failed
-    1 failed, 1 passed in 0.01 seconds
+    1 failed, 1 passed in 0.02 seconds
 
 The first invocation with ``db == "DB1"`` passed while the second with ``db == "DB2"`` failed.  Our ``db`` fixture function has instantiated each of the DB values during the setup phase while the ``pytest_generate_tests`` generated two according calls to the ``test_db_initialized`` during the collection phase.
 
@@ -251,16 +251,16 @@ argument sets to use for each test function.  Let's run it::
     $ py.test -q
     F..
     ================================= FAILURES =================================
-    ________________________ TestClass.test_equals[2-1] ________________________
+    ________________________ TestClass.test_equals[1-2] ________________________
     
-    self = <test_parametrize.TestClass object at 0x2ae94130e390>, a = 1, b = 2
+    self = <test_parametrize.TestClass object at 0x2b0ed5d8cdd8>, a = 1, b = 2
     
         def test_equals(self, a, b):
     >       assert a == b
     E       assert 1 == 2
     
     test_parametrize.py:18: AssertionError
-    1 failed, 2 passed in 0.01 seconds
+    1 failed, 2 passed in 0.02 seconds
 
 Indirect parametrization with multiple fixtures
 --------------------------------------------------------------
@@ -279,12 +279,345 @@ is to be run with different sets of arguments for its three arguments:
 Running it results in some skips if we don't have all the python interpreters installed and otherwise runs all combinations (5 interpreters times 5 interpreters times 3 objects to serialize/deserialize)::
 
    . $ py.test -rs -q multipython.py
-   ssssssssssssssssssssssssssssssssssss......sssssssss......ssssssssssssssssss
-   ========================= short test summary info ==========================
-   SKIP [21] /home/hpk/p/pytest/doc/en/example/multipython.py:22: 'python2.5' not found
-   SKIP [21] /home/hpk/p/pytest/doc/en/example/multipython.py:22: 'python2.8' not found
-   SKIP [21] /home/hpk/p/pytest/doc/en/example/multipython.py:22: 'python2.4' not found
-   12 passed, 63 skipped in 0.65 seconds
+   ..................FFFFFF...
+   ================================= FAILURES =================================
+   ________________ test_basic_objects[python3.4-python2.6-42] ________________
+   
+   python1 = <multipython.Python object at 0x2b02a1bc79b0>
+   python2 = <multipython.Python object at 0x2b02a1bc7630>, obj = 42
+   
+       @pytest.mark.parametrize("obj", [42, {}, {1:3},])
+       def test_basic_objects(python1, python2, obj):
+           python1.dumps(obj)
+   >       python2.load_and_is_true("obj == %s" % obj)
+   
+   multipython.py:51: 
+   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+   multipython.py:46: in load_and_is_true
+       py.process.cmdexec("%s %s" %(self.pythonpath, loadfile))
+   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+   
+   cmd = '/home/hpk/bin/python2.6 /tmp/pytest-21/test_basic_objects_python3_4_p0/load.py'
+   
+       def cmdexec(cmd):
+           """ return unicode output of executing 'cmd' in a separate process.
+       
+           raise cmdexec.Error exeception if the command failed.
+           the exception will provide an 'err' attribute containing
+           the error-output from the command.
+           if the subprocess module does not provide a proper encoding/unicode strings
+           sys.getdefaultencoding() will be used, if that does not exist, 'UTF-8'.
+           """
+           process = subprocess.Popen(cmd, shell=True,
+                   universal_newlines=True,
+                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+           out, err = process.communicate()
+           if sys.version_info[0] < 3: # on py3 we get unicode strings, on py2 not
+               try:
+                   default_encoding = sys.getdefaultencoding() # jython may not have it
+               except AttributeError:
+                   default_encoding = sys.stdout.encoding or 'UTF-8'
+               out = unicode(out, process.stdout.encoding or default_encoding)
+               err = unicode(err, process.stderr.encoding or default_encoding)
+           status = process.poll()
+           if status:
+   >           raise ExecutionFailed(status, status, cmd, out, err)
+   E           py.process.cmdexec.Error: ExecutionFailed: 1  /home/hpk/bin/python2.6 /tmp/pytest-21/test_basic_objects_python3_4_p0/load.py
+   E           Traceback (most recent call last):
+   E             File "/tmp/pytest-21/test_basic_objects_python3_4_p0/load.py", line 4, in <module>
+   E               obj = pickle.load(f)
+   E             File "/usr/lib/python2.6/pickle.py", line 1370, in load
+   E               return Unpickler(file).load()
+   E             File "/usr/lib/python2.6/pickle.py", line 858, in load
+   E               dispatch[key](self)
+   E             File "/usr/lib/python2.6/pickle.py", line 886, in load_proto
+   E               raise ValueError, "unsupported pickle protocol: %d" % proto
+   E           ValueError: unsupported pickle protocol: 3
+   
+   ../../../.tox/regen/lib/python3.4/site-packages/py/_process/cmdexec.py:28: Error
+   --------------------------- Captured stdout call ---------------------------
+   /tmp/pytest-21/test_basic_objects_python3_4_p0/load.py
+   _______________ test_basic_objects[python3.4-python2.6-obj1] _______________
+   
+   python1 = <multipython.Python object at 0x2b02a1b66f28>
+   python2 = <multipython.Python object at 0x2b02a1b66198>, obj = {}
+   
+       @pytest.mark.parametrize("obj", [42, {}, {1:3},])
+       def test_basic_objects(python1, python2, obj):
+           python1.dumps(obj)
+   >       python2.load_and_is_true("obj == %s" % obj)
+   
+   multipython.py:51: 
+   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+   multipython.py:46: in load_and_is_true
+       py.process.cmdexec("%s %s" %(self.pythonpath, loadfile))
+   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+   
+   cmd = '/home/hpk/bin/python2.6 /tmp/pytest-21/test_basic_objects_python3_4_p1/load.py'
+   
+       def cmdexec(cmd):
+           """ return unicode output of executing 'cmd' in a separate process.
+       
+           raise cmdexec.Error exeception if the command failed.
+           the exception will provide an 'err' attribute containing
+           the error-output from the command.
+           if the subprocess module does not provide a proper encoding/unicode strings
+           sys.getdefaultencoding() will be used, if that does not exist, 'UTF-8'.
+           """
+           process = subprocess.Popen(cmd, shell=True,
+                   universal_newlines=True,
+                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+           out, err = process.communicate()
+           if sys.version_info[0] < 3: # on py3 we get unicode strings, on py2 not
+               try:
+                   default_encoding = sys.getdefaultencoding() # jython may not have it
+               except AttributeError:
+                   default_encoding = sys.stdout.encoding or 'UTF-8'
+               out = unicode(out, process.stdout.encoding or default_encoding)
+               err = unicode(err, process.stderr.encoding or default_encoding)
+           status = process.poll()
+           if status:
+   >           raise ExecutionFailed(status, status, cmd, out, err)
+   E           py.process.cmdexec.Error: ExecutionFailed: 1  /home/hpk/bin/python2.6 /tmp/pytest-21/test_basic_objects_python3_4_p1/load.py
+   E           Traceback (most recent call last):
+   E             File "/tmp/pytest-21/test_basic_objects_python3_4_p1/load.py", line 4, in <module>
+   E               obj = pickle.load(f)
+   E             File "/usr/lib/python2.6/pickle.py", line 1370, in load
+   E               return Unpickler(file).load()
+   E             File "/usr/lib/python2.6/pickle.py", line 858, in load
+   E               dispatch[key](self)
+   E             File "/usr/lib/python2.6/pickle.py", line 886, in load_proto
+   E               raise ValueError, "unsupported pickle protocol: %d" % proto
+   E           ValueError: unsupported pickle protocol: 3
+   
+   ../../../.tox/regen/lib/python3.4/site-packages/py/_process/cmdexec.py:28: Error
+   --------------------------- Captured stdout call ---------------------------
+   /tmp/pytest-21/test_basic_objects_python3_4_p1/load.py
+   _______________ test_basic_objects[python3.4-python2.6-obj2] _______________
+   
+   python1 = <multipython.Python object at 0x2b02a1bcd320>
+   python2 = <multipython.Python object at 0x2b02a1bcd358>, obj = {1: 3}
+   
+       @pytest.mark.parametrize("obj", [42, {}, {1:3},])
+       def test_basic_objects(python1, python2, obj):
+           python1.dumps(obj)
+   >       python2.load_and_is_true("obj == %s" % obj)
+   
+   multipython.py:51: 
+   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+   multipython.py:46: in load_and_is_true
+       py.process.cmdexec("%s %s" %(self.pythonpath, loadfile))
+   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+   
+   cmd = '/home/hpk/bin/python2.6 /tmp/pytest-21/test_basic_objects_python3_4_p2/load.py'
+   
+       def cmdexec(cmd):
+           """ return unicode output of executing 'cmd' in a separate process.
+       
+           raise cmdexec.Error exeception if the command failed.
+           the exception will provide an 'err' attribute containing
+           the error-output from the command.
+           if the subprocess module does not provide a proper encoding/unicode strings
+           sys.getdefaultencoding() will be used, if that does not exist, 'UTF-8'.
+           """
+           process = subprocess.Popen(cmd, shell=True,
+                   universal_newlines=True,
+                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+           out, err = process.communicate()
+           if sys.version_info[0] < 3: # on py3 we get unicode strings, on py2 not
+               try:
+                   default_encoding = sys.getdefaultencoding() # jython may not have it
+               except AttributeError:
+                   default_encoding = sys.stdout.encoding or 'UTF-8'
+               out = unicode(out, process.stdout.encoding or default_encoding)
+               err = unicode(err, process.stderr.encoding or default_encoding)
+           status = process.poll()
+           if status:
+   >           raise ExecutionFailed(status, status, cmd, out, err)
+   E           py.process.cmdexec.Error: ExecutionFailed: 1  /home/hpk/bin/python2.6 /tmp/pytest-21/test_basic_objects_python3_4_p2/load.py
+   E           Traceback (most recent call last):
+   E             File "/tmp/pytest-21/test_basic_objects_python3_4_p2/load.py", line 4, in <module>
+   E               obj = pickle.load(f)
+   E             File "/usr/lib/python2.6/pickle.py", line 1370, in load
+   E               return Unpickler(file).load()
+   E             File "/usr/lib/python2.6/pickle.py", line 858, in load
+   E               dispatch[key](self)
+   E             File "/usr/lib/python2.6/pickle.py", line 886, in load_proto
+   E               raise ValueError, "unsupported pickle protocol: %d" % proto
+   E           ValueError: unsupported pickle protocol: 3
+   
+   ../../../.tox/regen/lib/python3.4/site-packages/py/_process/cmdexec.py:28: Error
+   --------------------------- Captured stdout call ---------------------------
+   /tmp/pytest-21/test_basic_objects_python3_4_p2/load.py
+   ________________ test_basic_objects[python3.4-python2.7-42] ________________
+   
+   python1 = <multipython.Python object at 0x2b02a1bc78d0>
+   python2 = <multipython.Python object at 0x2b02a1bc7128>, obj = 42
+   
+       @pytest.mark.parametrize("obj", [42, {}, {1:3},])
+       def test_basic_objects(python1, python2, obj):
+           python1.dumps(obj)
+   >       python2.load_and_is_true("obj == %s" % obj)
+   
+   multipython.py:51: 
+   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+   multipython.py:46: in load_and_is_true
+       py.process.cmdexec("%s %s" %(self.pythonpath, loadfile))
+   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+   
+   cmd = '/home/hpk/bin/python2.7 /tmp/pytest-21/test_basic_objects_python3_4_p3/load.py'
+   
+       def cmdexec(cmd):
+           """ return unicode output of executing 'cmd' in a separate process.
+       
+           raise cmdexec.Error exeception if the command failed.
+           the exception will provide an 'err' attribute containing
+           the error-output from the command.
+           if the subprocess module does not provide a proper encoding/unicode strings
+           sys.getdefaultencoding() will be used, if that does not exist, 'UTF-8'.
+           """
+           process = subprocess.Popen(cmd, shell=True,
+                   universal_newlines=True,
+                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+           out, err = process.communicate()
+           if sys.version_info[0] < 3: # on py3 we get unicode strings, on py2 not
+               try:
+                   default_encoding = sys.getdefaultencoding() # jython may not have it
+               except AttributeError:
+                   default_encoding = sys.stdout.encoding or 'UTF-8'
+               out = unicode(out, process.stdout.encoding or default_encoding)
+               err = unicode(err, process.stderr.encoding or default_encoding)
+           status = process.poll()
+           if status:
+   >           raise ExecutionFailed(status, status, cmd, out, err)
+   E           py.process.cmdexec.Error: ExecutionFailed: 1  /home/hpk/bin/python2.7 /tmp/pytest-21/test_basic_objects_python3_4_p3/load.py
+   E           Traceback (most recent call last):
+   E             File "/tmp/pytest-21/test_basic_objects_python3_4_p3/load.py", line 4, in <module>
+   E               obj = pickle.load(f)
+   E             File "/usr/lib/python2.7/pickle.py", line 1378, in load
+   E               return Unpickler(file).load()
+   E             File "/usr/lib/python2.7/pickle.py", line 858, in load
+   E               dispatch[key](self)
+   E             File "/usr/lib/python2.7/pickle.py", line 886, in load_proto
+   E               raise ValueError, "unsupported pickle protocol: %d" % proto
+   E           ValueError: unsupported pickle protocol: 3
+   
+   ../../../.tox/regen/lib/python3.4/site-packages/py/_process/cmdexec.py:28: Error
+   --------------------------- Captured stdout call ---------------------------
+   /tmp/pytest-21/test_basic_objects_python3_4_p3/load.py
+   _______________ test_basic_objects[python3.4-python2.7-obj1] _______________
+   
+   python1 = <multipython.Python object at 0x2b02a1bd2550>
+   python2 = <multipython.Python object at 0x2b02a1bd23c8>, obj = {}
+   
+       @pytest.mark.parametrize("obj", [42, {}, {1:3},])
+       def test_basic_objects(python1, python2, obj):
+           python1.dumps(obj)
+   >       python2.load_and_is_true("obj == %s" % obj)
+   
+   multipython.py:51: 
+   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+   multipython.py:46: in load_and_is_true
+       py.process.cmdexec("%s %s" %(self.pythonpath, loadfile))
+   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+   
+   cmd = '/home/hpk/bin/python2.7 /tmp/pytest-21/test_basic_objects_python3_4_p4/load.py'
+   
+       def cmdexec(cmd):
+           """ return unicode output of executing 'cmd' in a separate process.
+       
+           raise cmdexec.Error exeception if the command failed.
+           the exception will provide an 'err' attribute containing
+           the error-output from the command.
+           if the subprocess module does not provide a proper encoding/unicode strings
+           sys.getdefaultencoding() will be used, if that does not exist, 'UTF-8'.
+           """
+           process = subprocess.Popen(cmd, shell=True,
+                   universal_newlines=True,
+                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+           out, err = process.communicate()
+           if sys.version_info[0] < 3: # on py3 we get unicode strings, on py2 not
+               try:
+                   default_encoding = sys.getdefaultencoding() # jython may not have it
+               except AttributeError:
+                   default_encoding = sys.stdout.encoding or 'UTF-8'
+               out = unicode(out, process.stdout.encoding or default_encoding)
+               err = unicode(err, process.stderr.encoding or default_encoding)
+           status = process.poll()
+           if status:
+   >           raise ExecutionFailed(status, status, cmd, out, err)
+   E           py.process.cmdexec.Error: ExecutionFailed: 1  /home/hpk/bin/python2.7 /tmp/pytest-21/test_basic_objects_python3_4_p4/load.py
+   E           Traceback (most recent call last):
+   E             File "/tmp/pytest-21/test_basic_objects_python3_4_p4/load.py", line 4, in <module>
+   E               obj = pickle.load(f)
+   E             File "/usr/lib/python2.7/pickle.py", line 1378, in load
+   E               return Unpickler(file).load()
+   E             File "/usr/lib/python2.7/pickle.py", line 858, in load
+   E               dispatch[key](self)
+   E             File "/usr/lib/python2.7/pickle.py", line 886, in load_proto
+   E               raise ValueError, "unsupported pickle protocol: %d" % proto
+   E           ValueError: unsupported pickle protocol: 3
+   
+   ../../../.tox/regen/lib/python3.4/site-packages/py/_process/cmdexec.py:28: Error
+   --------------------------- Captured stdout call ---------------------------
+   /tmp/pytest-21/test_basic_objects_python3_4_p4/load.py
+   _______________ test_basic_objects[python3.4-python2.7-obj2] _______________
+   
+   python1 = <multipython.Python object at 0x2b02a1bcdeb8>
+   python2 = <multipython.Python object at 0x2b02a1bcdf98>, obj = {1: 3}
+   
+       @pytest.mark.parametrize("obj", [42, {}, {1:3},])
+       def test_basic_objects(python1, python2, obj):
+           python1.dumps(obj)
+   >       python2.load_and_is_true("obj == %s" % obj)
+   
+   multipython.py:51: 
+   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+   multipython.py:46: in load_and_is_true
+       py.process.cmdexec("%s %s" %(self.pythonpath, loadfile))
+   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+   
+   cmd = '/home/hpk/bin/python2.7 /tmp/pytest-21/test_basic_objects_python3_4_p5/load.py'
+   
+       def cmdexec(cmd):
+           """ return unicode output of executing 'cmd' in a separate process.
+       
+           raise cmdexec.Error exeception if the command failed.
+           the exception will provide an 'err' attribute containing
+           the error-output from the command.
+           if the subprocess module does not provide a proper encoding/unicode strings
+           sys.getdefaultencoding() will be used, if that does not exist, 'UTF-8'.
+           """
+           process = subprocess.Popen(cmd, shell=True,
+                   universal_newlines=True,
+                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+           out, err = process.communicate()
+           if sys.version_info[0] < 3: # on py3 we get unicode strings, on py2 not
+               try:
+                   default_encoding = sys.getdefaultencoding() # jython may not have it
+               except AttributeError:
+                   default_encoding = sys.stdout.encoding or 'UTF-8'
+               out = unicode(out, process.stdout.encoding or default_encoding)
+               err = unicode(err, process.stderr.encoding or default_encoding)
+           status = process.poll()
+           if status:
+   >           raise ExecutionFailed(status, status, cmd, out, err)
+   E           py.process.cmdexec.Error: ExecutionFailed: 1  /home/hpk/bin/python2.7 /tmp/pytest-21/test_basic_objects_python3_4_p5/load.py
+   E           Traceback (most recent call last):
+   E             File "/tmp/pytest-21/test_basic_objects_python3_4_p5/load.py", line 4, in <module>
+   E               obj = pickle.load(f)
+   E             File "/usr/lib/python2.7/pickle.py", line 1378, in load
+   E               return Unpickler(file).load()
+   E             File "/usr/lib/python2.7/pickle.py", line 858, in load
+   E               dispatch[key](self)
+   E             File "/usr/lib/python2.7/pickle.py", line 886, in load_proto
+   E               raise ValueError, "unsupported pickle protocol: %d" % proto
+   E           ValueError: unsupported pickle protocol: 3
+   
+   ../../../.tox/regen/lib/python3.4/site-packages/py/_process/cmdexec.py:28: Error
+   --------------------------- Captured stdout call ---------------------------
+   /tmp/pytest-21/test_basic_objects_python3_4_p5/load.py
+   6 failed, 21 passed in 1.36 seconds
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------
@@ -331,12 +664,12 @@ If you run this with reporting for skips enabled::
 
     $ py.test -rs test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.23 -- pytest-2.6.1
+    platform linux -- Python 3.4.0 -- py-1.4.25 -- pytest-2.6.3
     collected 2 items
     
     test_module.py .s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-240/conftest.py:10: could not import 'opt2'
+    SKIP [1] /tmp/doc-exec-226/conftest.py:10: could not import 'opt2'
     
     =================== 1 passed, 1 skipped in 0.01 seconds ====================
 

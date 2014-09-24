@@ -76,7 +76,7 @@ marked ``smtp`` fixture function.  Running the test looks like this::
 
     $ py.test test_smtpsimple.py
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.24 -- pytest-2.6.2
+    platform linux -- Python 3.4.0 -- py-1.4.25 -- pytest-2.6.3
     collected 1 items
     
     test_smtpsimple.py F
@@ -84,7 +84,7 @@ marked ``smtp`` fixture function.  Running the test looks like this::
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
     
-    smtp = <smtplib.SMTP object at 0x2aed2eae9da0>
+    smtp = <smtplib.SMTP object at 0x2b040fa62128>
     
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
@@ -93,7 +93,7 @@ marked ``smtp`` fixture function.  Running the test looks like this::
     E       TypeError: Type str doesn't support the buffer API
     
     test_smtpsimple.py:11: TypeError
-    ========================= 1 failed in 0.21 seconds =========================
+    ========================= 1 failed in 0.20 seconds =========================
 
 In the failure traceback we see that the test function was called with a
 ``smtp`` argument, the ``smtplib.SMTP()`` instance created by the fixture
@@ -193,7 +193,7 @@ inspect what is going on and can now run the tests::
 
     $ py.test test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.24 -- pytest-2.6.2
+    platform linux -- Python 3.4.0 -- py-1.4.25 -- pytest-2.6.3
     collected 2 items
     
     test_module.py FF
@@ -201,7 +201,7 @@ inspect what is going on and can now run the tests::
     ================================= FAILURES =================================
     ________________________________ test_ehlo _________________________________
     
-    smtp = <smtplib.SMTP object at 0x2b1a170a7240>
+    smtp = <smtplib.SMTP object at 0x2abe3c757208>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -212,7 +212,7 @@ inspect what is going on and can now run the tests::
     test_module.py:5: TypeError
     ________________________________ test_noop _________________________________
     
-    smtp = <smtplib.SMTP object at 0x2b1a170a7240>
+    smtp = <smtplib.SMTP object at 0x2abe3c757208>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -221,7 +221,7 @@ inspect what is going on and can now run the tests::
     E       assert 0
     
     test_module.py:11: AssertionError
-    ========================= 2 failed in 0.21 seconds =========================
+    ========================= 2 failed in 0.17 seconds =========================
 
 You see the two ``assert 0`` failing and more importantly you can also see
 that the same (module-scoped) ``smtp`` object was passed into the two
@@ -331,6 +331,7 @@ Running it::
     test_anothersmtp.py:5: in test_showhelo
         assert 0, smtp.helo()
     E   AssertionError: (250, b'mail.python.org')
+    E   assert 0
 
 voila! The ``smtp`` fixture function picked up our mail server name
 from the module namespace.
@@ -377,7 +378,7 @@ So let's just do another run::
     ================================= FAILURES =================================
     __________________________ test_ehlo[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP object at 0x2abe2d35dac8>
+    smtp = <smtplib.SMTP object at 0x2afbf4496828>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -388,7 +389,7 @@ So let's just do another run::
     test_module.py:5: TypeError
     __________________________ test_noop[merlinux.eu] __________________________
     
-    smtp = <smtplib.SMTP object at 0x2abe2d35dac8>
+    smtp = <smtplib.SMTP object at 0x2afbf4496828>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -399,7 +400,7 @@ So let's just do another run::
     test_module.py:11: AssertionError
     ________________________ test_ehlo[mail.python.org] ________________________
     
-    smtp = <smtplib.SMTP object at 0x2abe2d35d9b0>
+    smtp = <smtplib.SMTP object at 0x2afbf4496d68>
     
         def test_ehlo(smtp):
             response = smtp.ehlo()
@@ -409,10 +410,10 @@ So let's just do another run::
     
     test_module.py:5: TypeError
     -------------------------- Captured stdout setup ---------------------------
-    finalizing <smtplib.SMTP object at 0x2abe2d35dac8>
+    finalizing <smtplib.SMTP object at 0x2afbf4496828>
     ________________________ test_noop[mail.python.org] ________________________
     
-    smtp = <smtplib.SMTP object at 0x2abe2d35d9b0>
+    smtp = <smtplib.SMTP object at 0x2afbf4496d68>
     
         def test_noop(smtp):
             response = smtp.noop()
@@ -421,7 +422,7 @@ So let's just do another run::
     E       assert 0
     
     test_module.py:11: AssertionError
-    4 failed in 6.37 seconds
+    4 failed in 6.02 seconds
 
 We see that our two test functions each ran twice, against the different
 ``smtp`` instances.  Note also, that with the ``mail.python.org``
@@ -461,13 +462,13 @@ Here we declare an ``app`` fixture which receives the previously defined
 
     $ py.test -v test_appsetup.py
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.24 -- pytest-2.6.2 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+    platform linux -- Python 3.4.0 -- py-1.4.25 -- pytest-2.6.3 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
     collecting ... collected 2 items
     
     test_appsetup.py::test_smtp_exists[merlinux.eu] PASSED
     test_appsetup.py::test_smtp_exists[mail.python.org] PASSED
     
-    ========================= 2 passed in 6.37 seconds =========================
+    ========================= 2 passed in 5.45 seconds =========================
 
 Due to the parametrization of ``smtp`` the test will run twice with two
 different ``App`` instances and respective smtp servers.  There is no
@@ -525,7 +526,7 @@ Let's run the tests in verbose mode and with looking at the print-output::
 
     $ py.test -v -s test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.24 -- pytest-2.6.2 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+    platform linux -- Python 3.4.0 -- py-1.4.25 -- pytest-2.6.3 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
     collecting ... collected 8 items
     
     test_module.py::test_0[1]   test0 1
@@ -675,7 +676,7 @@ If we run it, we get two passing tests::
 
     $ py.test -q
     ..
-    2 passed in 0.02 seconds
+    2 passed in 0.01 seconds
 
 Here is how autouse fixtures work in other scopes:
 

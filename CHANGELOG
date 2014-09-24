@@ -1,4 +1,4 @@
-NEXT
+2.6.3
 -----------
 
 - fix issue575: xunit-xml was reporting collection errors as failures

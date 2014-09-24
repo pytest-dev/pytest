@@ -53,7 +53,7 @@ them in turn::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.24 -- pytest-2.6.2
+    platform linux -- Python 3.4.0 -- py-1.4.25 -- pytest-2.6.3
     collected 3 items
     
     test_expectation.py ..F
@@ -100,12 +100,12 @@ Let's run this::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.24 -- pytest-2.6.2
+    platform linux -- Python 3.4.0 -- py-1.4.25 -- pytest-2.6.3
     collected 3 items
     
     test_expectation.py ..x
     
-    =================== 2 passed, 1 xfailed in 0.01 seconds ====================
+    =================== 2 passed, 1 xfailed in 0.02 seconds ====================
 
 The one parameter set which caused a failure previously now
 shows up as an "xfailed (expected to fail)" test.
@@ -170,8 +170,8 @@ Let's also run with a stringinput that will lead to a failing test::
     
         def test_valid_string(stringinput):
     >       assert stringinput.isalpha()
-    E       assert <built-in method isalpha of str object at 0x2adc310adb58>()
-    E        +  where <built-in method isalpha of str object at 0x2adc310adb58> = '!'.isalpha
+    E       assert <built-in method isalpha of str object at 0x2b1c6de5bb20>()
+    E        +  where <built-in method isalpha of str object at 0x2b1c6de5bb20> = '!'.isalpha
     
     test_strings.py:3: AssertionError
     1 failed in 0.01 seconds
@@ -185,7 +185,7 @@ listlist::
     $ py.test -q -rs test_strings.py
     s
     ========================= short test summary info ==========================
-    SKIP [1] /home/hpk/p/pytest/.tox/regen/lib/python3.4/site-packages/_pytest/python.py:1139: got empty parameter set, function test_valid_string at /tmp/doc-exec-38/test_strings.py:1
+    SKIP [1] /home/hpk/p/pytest/.tox/regen/lib/python3.4/site-packages/_pytest/python.py:1139: got empty parameter set, function test_valid_string at /tmp/doc-exec-180/test_strings.py:1
     1 skipped in 0.01 seconds
 
 For further examples, you might want to look at :ref:`more

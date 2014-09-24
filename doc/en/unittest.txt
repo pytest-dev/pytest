@@ -88,7 +88,7 @@ the ``self.db`` values in the traceback::
 
     $ py.test test_unittest_db.py
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.24 -- pytest-2.6.2
+    platform linux -- Python 3.4.0 -- py-1.4.25 -- pytest-2.6.3
     collected 2 items
     
     test_unittest_db.py FF
@@ -101,7 +101,8 @@ the ``self.db`` values in the traceback::
         def test_method1(self):
             assert hasattr(self, "db")
     >       assert 0, self.db   # fail for demo purposes
-    E       AssertionError: <conftest.db_class.<locals>.DummyDB object at 0x2ad7f12df240>
+    E       AssertionError: <conftest.db_class.<locals>.DummyDB object at 0x2b938b865208>
+    E       assert 0
     
     test_unittest_db.py:9: AssertionError
     ___________________________ MyTest.test_method2 ____________________________
@@ -110,7 +111,8 @@ the ``self.db`` values in the traceback::
     
         def test_method2(self):
     >       assert 0, self.db   # fail for demo purposes
-    E       AssertionError: <conftest.db_class.<locals>.DummyDB object at 0x2ad7f12df240>
+    E       AssertionError: <conftest.db_class.<locals>.DummyDB object at 0x2b938b865208>
+    E       assert 0
     
     test_unittest_db.py:12: AssertionError
     ========================= 2 failed in 0.05 seconds =========================
@@ -160,7 +162,7 @@ Running this test module ...::
 
     $ py.test -q test_unittest_cleandir.py
     .
-    1 passed in 0.04 seconds
+    1 passed in 0.05 seconds
 
 ... gives us one passed test because the ``initdir`` fixture function
 was executed ahead of the ``test_method``.
