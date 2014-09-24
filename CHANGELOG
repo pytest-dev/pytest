@@ -22,6 +22,9 @@ NEXT
 - Introduce pytest_enter_pdb hook (needed e.g. by pytest_timeout to cancel the
   timeout when interactively entering pdb).  Thanks Wolfgang Schnerring.
 
+- check xfail/skip also with non-python function test items. Thanks
+  Floris Bruynooghe.
+
 2.6.2
 -----------
 
