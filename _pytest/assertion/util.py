@@ -135,18 +135,32 @@ def assertrepr_compare(config, op, left, right):
     isdict = lambda x: isinstance(x, dict)
     isset = lambda x: isinstance(x, (set, frozenset))
 
+    def isiterable(obj):
+        try:
+            iter(obj)
+            return not istext(obj)
+        except TypeError:
+            return False
+
     verbose = config.getoption('verbose')
     explanation = None
     try:
         if op == '==':
             if istext(left) and istext(right):
                 explanation = _diff_text(left, right, verbose)
-            elif issequence(left) and issequence(right):
-                explanation = _compare_eq_sequence(left, right, verbose)
-            elif isset(left) and isset(right):
-                explanation = _compare_eq_set(left, right, verbose)
-            elif isdict(left) and isdict(right):
-                explanation = _compare_eq_dict(left, right, verbose)
+            else:
+                if issequence(left) and issequence(right):
+                    explanation = _compare_eq_sequence(left, right, verbose)
+                elif isset(left) and isset(right):
+                    explanation = _compare_eq_set(left, right, verbose)
+                elif isdict(left) and isdict(right):
+                    explanation = _compare_eq_dict(left, right, verbose)
+                if isiterable(left) and isiterable(right):
+                    expl = _compare_eq_iterable(left, right, verbose)
+                    if explanation is not None:
+                        explanation.extend(expl)
+                    else:
+                        explanation = expl
         elif op == 'not in':
             if istext(left) and istext(right):
                 explanation = _notin_text(left, right, verbose)
@@ -200,6 +214,19 @@ def _diff_text(left, right, verbose=False):
     explanation += [line.strip('\n')
                     for line in ndiff(left.splitlines(),
                                       right.splitlines())]
+    return explanation
+
+
+def _compare_eq_iterable(left, right, verbose=False):
+    if not verbose:
+        return [u('Use -v to get the full diff')]
+    # dynamic import to speedup pytest
+    import difflib
+
+    left = pprint.pformat(left).splitlines()
+    right = pprint.pformat(right).splitlines()
+    explanation = [u('Full diff:')]
+    explanation.extend(line.strip() for line in difflib.ndiff(left, right))
     return explanation
 
 

@@ -1,3 +1,8 @@
+Unreleased
+----------
+
+- Improve assertion failure reporting on iterables, by using ndiff and pprint.
+
 2.6.3
 -----------
 
@@ -80,7 +85,7 @@
 - fix issue with detecting conftest files if the arguments contain
   "::" node id specifications (copy pasted from "-v" output)
 
-- fix issue544 by only removing "@NUM" at the end of "::" separated parts 
+- fix issue544 by only removing "@NUM" at the end of "::" separated parts
   and if the part has an ".py" extension
 
 - don't use py.std import helper, rather import things directly.
@@ -93,7 +98,7 @@
 
 - fix issue537: Avoid importing old assertion reinterpretation code by default.
 
-- fix issue364: shorten and enhance tracebacks representation by default.  
+- fix issue364: shorten and enhance tracebacks representation by default.
   The new "--tb=auto" option (default) will only display long tracebacks
   for the first and last entry.  You can get the old behaviour of printing
   all entries as long entries with "--tb=long".  Also short entries by
@@ -119,14 +124,14 @@
 - fix issue473: work around mock putting an unbound method into a class
   dict when double-patching.
 
-- fix issue498: if a fixture finalizer fails, make sure that 
+- fix issue498: if a fixture finalizer fails, make sure that
   the fixture is still invalidated.
 
 - fix issue453: the result of the pytest_assertrepr_compare hook now gets
   it's newlines escaped so that format_exception does not blow up.
 
 - internal new warning system: pytest will now produce warnings when
-  it detects oddities in your test collection or execution.  
+  it detects oddities in your test collection or execution.
   Warnings are ultimately sent to a new pytest_logwarning hook which is
   currently only implemented by the terminal plugin which displays
   warnings in the summary line and shows more details when -rw (report on
@@ -170,7 +175,7 @@
 
 - fix issue492: avoid leak in test_writeorg.  Thanks Marc Abramowitz.
 
-- fix issue493: don't run tests in doc directory with ``python setup.py test`` 
+- fix issue493: don't run tests in doc directory with ``python setup.py test``
   (use tox -e doctesting for that)
 
 - fix issue486: better reporting and handling of early conftest loading failures
@@ -184,8 +189,8 @@
   Groenholm.
 
 - support nose-style ``__test__`` attribute on modules, classes and
-  functions, including unittest-style Classes.  If set to False, the 
-  test will not be collected.  
+  functions, including unittest-style Classes.  If set to False, the
+  test will not be collected.
 
 - fix issue512: show "<notset>" for arguments which might not be set
   in monkeypatch plugin.  Improves output in documentation.
@@ -195,11 +200,11 @@
 -----------------------------------
 
 - fix issue409 -- better interoperate with cx_freeze by not
-  trying to import from collections.abc which causes problems 
+  trying to import from collections.abc which causes problems
   for py27/cx_freeze.  Thanks Wolfgang L. for reporting and tracking it down.
 
 - fixed docs and code to use "pytest" instead of "py.test" almost everywhere.
-  Thanks Jurko Gospodnetic for the complete PR.  
+  Thanks Jurko Gospodnetic for the complete PR.
 
 - fix issue425: mention at end of "py.test -h" that --markers
   and --fixtures work according to specified test path (or current dir)
@@ -210,7 +215,7 @@
 
 - copy, cleanup and integrate py.io capture
   from pylib 1.4.20.dev2 (rev 13d9af95547e)
-  
+
 - address issue416: clarify docs as to conftest.py loading semantics
 
 - fix issue429: comparing byte strings with non-ascii chars in assert
@@ -230,7 +235,7 @@
 
 - Allow parameterized fixtures to specify the ID of the parameters by
   adding an ids argument to pytest.fixture() and pytest.yield_fixture().
-  Thanks Floris Bruynooghe. 
+  Thanks Floris Bruynooghe.
 
 - fix issue404 by always using the binary xml escape in the junitxml
   plugin.  Thanks Ronny Pfannschmidt.
