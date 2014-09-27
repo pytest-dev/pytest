@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 import sys
+import textwrap
 
 import py, pytest
 import _pytest.assertion as plugin
 from _pytest.assertion import reinterpret
 from _pytest.assertion import util
+
 needsnewassert = pytest.mark.skipif("sys.version_info < (2,6)")
+PY3 = sys.version_info >= (3, 0)
 
 
 @pytest.fixture
@@ -85,6 +88,48 @@ class TestAssert_reprcompare:
     def test_list(self):
         expl = callequal([0, 1], [0, 2])
         assert len(expl) > 1
+
+    @pytest.mark.parametrize(
+        ['left', 'right', 'expected'], [
+            ([0, 1], [0, 2], """
+                Full diff:
+                - [0, 1]
+                ?     ^
+                + [0, 2]
+                ?     ^
+            """),
+            ({0: 1}, {0: 2}, """
+                Full diff:
+                - {0: 1}
+                ?     ^
+                + {0: 2}
+                ?     ^
+            """),
+            (set([0, 1]), set([0, 2]), """
+                Full diff:
+                - set([0, 1])
+                ?         ^
+                + set([0, 2])
+                ?         ^
+            """ if not PY3 else """
+                Full diff:
+                - {0, 1}
+                ?     ^
+                + {0, 2}
+                ?     ^
+            """)
+        ]
+    )
+    def test_iterable_full_diff(self, left, right, expected):
+        """Test the full diff assertion failure explanation.
+
+        When verbose is False, then just a -v notice to get the diff is rendered,
+        when verbose is True, then ndiff of the pprint is returned.
+        """
+        expl = callequal(left, right, verbose=False)
+        assert expl[-1] == 'Use -v to get the full diff'
+        expl = '\n'.join(callequal(left, right, verbose=True))
+        assert expl.endswith(textwrap.dedent(expected).strip())
 
     def test_list_different_lenghts(self):
         expl = callequal([0, 1], [0, 1, 2])
