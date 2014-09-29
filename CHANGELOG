@@ -3,6 +3,8 @@ Unreleased
 
 - Improve assertion failure reporting on iterables, by using ndiff and pprint.
 
+- removed outdated japanese docs from source tree.
+
 2.6.3
 -----------
 
