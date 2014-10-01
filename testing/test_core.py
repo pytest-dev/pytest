@@ -436,6 +436,11 @@ def test_varnames():
     assert varnames(A().f) == ('y',)
     assert varnames(B()) == ('z',)
 
+def test_varnames_default():
+    def f(x, y=3):
+        pass
+    assert varnames(f) == ("x",)
+
 def test_varnames_class():
     class C:
         def __init__(self, x):
@@ -494,12 +499,10 @@ class TestMultiCall:
             return x + z
         reslist = MultiCall([f], dict(x=23, y=24)).execute()
         assert reslist == [24]
-        reslist = MultiCall([f], dict(x=23, z=2)).execute()
-        assert reslist == [25]
 
     def test_tags_call_error(self):
         multicall = MultiCall([lambda x: x], {})
-        pytest.raises(TypeError, multicall.execute)
+        pytest.raises(KeyError, multicall.execute)
 
     def test_call_subexecute(self):
         def m(__multicall__):
