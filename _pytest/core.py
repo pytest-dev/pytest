@@ -292,6 +292,7 @@ class MultiCall:
     def __init__(self, methods, kwargs, firstresult=False):
         self.methods = list(methods)
         self.kwargs = kwargs
+        self.kwargs["__multicall__"] = self
         self.results = []
         self.firstresult = firstresult
 
@@ -302,11 +303,12 @@ class MultiCall:
     def execute(self):
         next_finalizers = []
         try:
+            all_kwargs = self.kwargs
             while self.methods:
                 method = self.methods.pop()
-                kwargs = self.getkwargs(method)
+                args = [all_kwargs[argname] for argname in varnames(method)]
                 if hasattr(method, "hookwrapper"):
-                    it = method(**kwargs)
+                    it = method(*args)
                     next = getattr(it, "next", None)
                     if next is None:
                         next = getattr(it, "__next__", None)
@@ -316,7 +318,7 @@ class MultiCall:
                     res = next()
                     next_finalizers.append((method, next))
                 else:
-                    res = method(**kwargs)
+                    res = method(*args)
                 if res is not None:
                     self.results.append(res)
                     if self.firstresult:
@@ -333,16 +335,6 @@ class MultiCall:
                     raise self.WrongHookWrapper(method,
                                 "wrapper contain more than one yield")
 
-
-    def getkwargs(self, method):
-        kwargs = {}
-        for argname in varnames(method):
-            try:
-                kwargs[argname] = self.kwargs[argname]
-            except KeyError:
-                if argname == "__multicall__":
-                    kwargs[argname] = self
-        return kwargs
 
 def varnames(func):
     """ return argument name tuple for a function, method, class or callable.
@@ -371,11 +363,16 @@ def varnames(func):
         x = rawcode.co_varnames[ismethod:rawcode.co_argcount]
     except AttributeError:
         x = ()
+    else:
+        defaults = func.__defaults__
+        if defaults:
+            x = x[:-len(defaults)]
     try:
         cache["_varnames"] = x
     except TypeError:
         pass
     return x
+
 
 class HookRelay:
     def __init__(self, hookspecs, pm, prefix="pytest_"):
