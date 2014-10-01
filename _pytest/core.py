@@ -72,6 +72,7 @@ class PluginManager(object):
         self._name2plugin = {}
         self._listattrcache = {}
         self._plugins = []
+        self._conftestplugins = []
         self._warnings = []
         self.trace = TagTracer().get("pluginmanage")
         self._plugin_distinfo = []
@@ -86,7 +87,7 @@ class PluginManager(object):
         assert not hasattr(self, "_registercallback")
         self._registercallback = callback
 
-    def register(self, plugin, name=None, prepend=False):
+    def register(self, plugin, name=None, prepend=False, conftest=False):
         if self._name2plugin.get(name, None) == -1:
             return
         name = name or getattr(plugin, '__name__', str(id(plugin)))
@@ -98,16 +99,22 @@ class PluginManager(object):
         reg = getattr(self, "_registercallback", None)
         if reg is not None:
             reg(plugin, name)
-        if not prepend:
-            self._plugins.append(plugin)
+        if conftest:
+            self._conftestplugins.append(plugin)
         else:
-            self._plugins.insert(0, plugin)
+            if not prepend:
+                self._plugins.append(plugin)
+            else:
+                self._plugins.insert(0, plugin)
         return True
 
     def unregister(self, plugin=None, name=None):
         if plugin is None:
             plugin = self.getplugin(name=name)
-        self._plugins.remove(plugin)
+        try:
+            self._plugins.remove(plugin)
+        except KeyError:
+            self._conftestplugins.remove(plugin)
         for name, value in list(self._name2plugin.items()):
             if value == plugin:
                 del self._name2plugin[name]
@@ -119,7 +126,7 @@ class PluginManager(object):
         while self._shutdown:
             func = self._shutdown.pop()
             func()
-        self._plugins = []
+        self._plugins = self._conftestplugins = []
         self._name2plugin.clear()
         self._listattrcache.clear()
 
@@ -134,7 +141,7 @@ class PluginManager(object):
         self.hook._addhooks(spec, prefix=prefix)
 
     def getplugins(self):
-        return list(self._plugins)
+        return self._plugins + self._conftestplugins
 
     def skipifmissing(self, name):
         if not self.hasplugin(name):
@@ -198,7 +205,8 @@ class PluginManager(object):
                 self.import_plugin(arg)
 
     def consider_conftest(self, conftestmodule):
-        if self.register(conftestmodule, name=conftestmodule.__file__):
+        if self.register(conftestmodule, name=conftestmodule.__file__,
+                         conftest=True):
             self.consider_module(conftestmodule)
 
     def consider_module(self, mod):
@@ -233,12 +241,7 @@ class PluginManager(object):
 
     def listattr(self, attrname, plugins=None):
         if plugins is None:
-            plugins = self._plugins
-        key = (attrname,) + tuple(plugins)
-        try:
-            return list(self._listattrcache[key])
-        except KeyError:
-            pass
+            plugins = self._plugins + self._conftestplugins
         l = []
         last = []
         wrappers = []
@@ -257,7 +260,7 @@ class PluginManager(object):
                 l.append(meth)
         l.extend(last)
         l.extend(wrappers)
-        self._listattrcache[key] = list(l)
+        #self._listattrcache[key] = list(l)
         return l
 
     def call_plugin(self, plugin, methname, kwargs):
@@ -397,6 +400,29 @@ class HookRelay:
             raise ValueError("did not find new %r hooks in %r" %(
                 prefix, hookspecs,))
 
+    def _getcaller(self, name, plugins):
+        caller = getattr(self, name)
+        methods = self._pm.listattr(name, plugins=plugins)
+        return CachedHookCaller(caller, methods)
+
+
+class CachedHookCaller:
+    def __init__(self, hookmethod, methods):
+        self.hookmethod = hookmethod
+        self.methods = methods
+
+    def __call__(self, **kwargs):
+        return self.hookmethod._docall(self.methods, kwargs)
+
+    def callextra(self, methods, **kwargs):
+        # XXX in theory we should respect "tryfirst/trylast" if set
+        # on the added methods but we currently only use it for
+        # pytest_generate_tests and it doesn't make sense there i'd think
+        all = self.methods
+        if methods:
+            all = all + methods
+        return self.hookmethod._docall(all, kwargs)
+
 
 class HookCaller:
     def __init__(self, hookrelay, name, firstresult):
@@ -410,10 +436,6 @@ class HookCaller:
 
     def __call__(self, **kwargs):
         methods = self.hookrelay._pm.listattr(self.name)
-        return self._docall(methods, kwargs)
-
-    def pcall(self, plugins, **kwargs):
-        methods = self.hookrelay._pm.listattr(self.name, plugins=plugins)
         return self._docall(methods, kwargs)
 
     def _docall(self, methods, kwargs):
