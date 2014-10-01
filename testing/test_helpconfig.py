@@ -1,5 +1,5 @@
 import py, pytest
-from _pytest.helpconfig import collectattr
+from _pytest.core import collectattr
 
 def test_version(testdir, pytestconfig):
     result = testdir.runpytest("--version")

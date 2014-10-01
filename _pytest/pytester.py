@@ -47,7 +47,6 @@ class PytestArg:
 
     def gethookrecorder(self, hook):
         hookrecorder = HookRecorder(hook._pm)
-        hookrecorder.start_recording(hook._hookspecs)
         self.request.addfinalizer(hookrecorder.finish_recording)
         return hookrecorder
 
@@ -69,9 +68,7 @@ class HookRecorder:
         self.calls = []
         self._recorders = {}
 
-    def start_recording(self, hookspecs):
-        if not isinstance(hookspecs, (list, tuple)):
-            hookspecs = [hookspecs]
+        hookspecs = self._pluginmanager.hook._hookspecs
         for hookspec in hookspecs:
             assert hookspec not in self._recorders
             class RecordCalls:

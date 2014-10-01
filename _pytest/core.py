@@ -95,10 +95,11 @@ class PluginManager(object):
             raise ValueError("Plugin already registered: %s=%s\n%s" %(
                               name, plugin, self._name2plugin))
         #self.trace("registering", name, plugin)
-        self._name2plugin[name] = plugin
         reg = getattr(self, "_registercallback", None)
         if reg is not None:
-            reg(plugin, name)
+            reg(plugin, name)  # may call addhooks
+        self.hook._scan_plugin(plugin)
+        self._name2plugin[name] = plugin
         if conftest:
             self._conftestplugins.append(plugin)
         else:
@@ -403,40 +404,85 @@ class HookRelay:
     def _getcaller(self, name, plugins):
         caller = getattr(self, name)
         methods = self._pm.listattr(name, plugins=plugins)
-        return CachedHookCaller(caller, methods)
-
-
-class CachedHookCaller:
-    def __init__(self, hookmethod, methods):
-        self.hookmethod = hookmethod
-        self.methods = methods
-
-    def __call__(self, **kwargs):
-        return self.hookmethod._docall(self.methods, kwargs)
-
-    def callextra(self, methods, **kwargs):
-        # XXX in theory we should respect "tryfirst/trylast" if set
-        # on the added methods but we currently only use it for
-        # pytest_generate_tests and it doesn't make sense there i'd think
-        all = self.methods
         if methods:
-            all = all + methods
-        return self.hookmethod._docall(all, kwargs)
+            return caller.new_cached_caller(methods)
+        return caller
+
+    def _scan_plugin(self, plugin):
+        methods = collectattr(plugin)
+        hooks = {}
+        for hookspec in self._hookspecs:
+            hooks.update(collectattr(hookspec))
+
+        stringio = py.io.TextIO()
+        def Print(*args):
+            if args:
+                stringio.write(" ".join(map(str, args)))
+            stringio.write("\n")
+
+        fail = False
+        while methods:
+            name, method = methods.popitem()
+            #print "checking", name
+            if isgenerichook(name):
+                continue
+            if name not in hooks:
+                if not getattr(method, 'optionalhook', False):
+                    Print("found unknown hook:", name)
+                    fail = True
+            else:
+                #print "checking", method
+                method_args = list(varnames(method))
+                if '__multicall__' in method_args:
+                    method_args.remove('__multicall__')
+                hook = hooks[name]
+                hookargs = varnames(hook)
+                for arg in method_args:
+                    if arg not in hookargs:
+                        Print("argument %r not available"  %(arg, ))
+                        Print("actual definition: %s" %(formatdef(method)))
+                        Print("available hook arguments: %s" %
+                                ", ".join(hookargs))
+                        fail = True
+                        break
+                #if not fail:
+                #    print "matching hook:", formatdef(method)
+                getattr(self, name).clear_method_cache()
+
+            if fail:
+                name = getattr(plugin, '__name__', plugin)
+                raise PluginValidationError("%s:\n%s" % (name, stringio.getvalue()))
 
 
 class HookCaller:
-    def __init__(self, hookrelay, name, firstresult):
+    def __init__(self, hookrelay, name, firstresult, methods=None):
         self.hookrelay = hookrelay
         self.name = name
         self.firstresult = firstresult
         self.trace = self.hookrelay.trace
+        self.methods = methods
+
+    def new_cached_caller(self, methods):
+        return HookCaller(self.hookrelay, self.name, self.firstresult,
+                          methods=methods)
 
     def __repr__(self):
         return "<HookCaller %r>" %(self.name,)
 
+    def clear_method_cache(self):
+        self.methods = None
+
     def __call__(self, **kwargs):
-        methods = self.hookrelay._pm.listattr(self.name)
+        methods = self.methods
+        if self.methods is None:
+            self.methods = methods = self.hookrelay._pm.listattr(self.name)
+            methods = self.methods
         return self._docall(methods, kwargs)
+
+    def callextra(self, methods, **kwargs):
+        if self.methods is None:
+            self.reload_methods()
+        return self._docall(self.methods + methods, kwargs)
 
     def _docall(self, methods, kwargs):
         self.trace(self.name, kwargs)
@@ -449,4 +495,26 @@ class HookCaller:
         finally:
             self.trace.root.indent -= 1
         return res
+
+
+
+class PluginValidationError(Exception):
+    """ plugin failed validation. """
+
+def isgenerichook(name):
+    return name == "pytest_plugins" or \
+           name.startswith("pytest_funcarg__")
+
+def collectattr(obj):
+    methods = {}
+    for apiname in dir(obj):
+        if apiname.startswith("pytest_"):
+            methods[apiname] = getattr(obj, apiname)
+    return methods
+
+def formatdef(func):
+    return "%s%s" % (
+        func.__name__,
+        inspect.formatargspec(*inspect.getargspec(func))
+    )
 
