@@ -71,28 +71,38 @@ def test_testdir_runs_with_plugin(testdir):
         "*1 passed*"
     ])
 
-def test_hookrecorder_basic():
-    rec = HookRecorder(PluginManager())
-    class ApiClass:
+
+def make_holder():
+    class apiclass:
         def pytest_xyz(self, arg):
             "x"
-    rec.start_recording(ApiClass)
+        def pytest_xyz_noarg(self):
+            "x"
+
+    apimod = type(os)('api')
+    def pytest_xyz(arg):
+        "x"
+    def pytest_xyz_noarg():
+        "x"
+    apimod.pytest_xyz = pytest_xyz
+    apimod.pytest_xyz_noarg = pytest_xyz_noarg
+    return apiclass, apimod
+
+
+@pytest.mark.parametrize("holder", make_holder())
+def test_hookrecorder_basic(holder):
+    pm = PluginManager()
+    pm.hook._addhooks(holder, "pytest_")
+    rec = HookRecorder(pm)
     rec.hook.pytest_xyz(arg=123)
     call = rec.popcall("pytest_xyz")
     assert call.arg == 123
     assert call._name == "pytest_xyz"
     pytest.raises(pytest.fail.Exception, "rec.popcall('abc')")
+    rec.hook.pytest_xyz_noarg()
+    call = rec.popcall("pytest_xyz_noarg")
+    assert call._name == "pytest_xyz_noarg"
 
-def test_hookrecorder_basic_no_args_hook():
-    rec = HookRecorder(PluginManager())
-    apimod = type(os)('api')
-    def pytest_xyz():
-        "x"
-    apimod.pytest_xyz = pytest_xyz
-    rec.start_recording(apimod)
-    rec.hook.pytest_xyz()
-    call = rec.popcall("pytest_xyz")
-    assert call._name == "pytest_xyz"
 
 def test_functional(testdir, linecomp):
     reprec = testdir.inline_runsource("""
@@ -102,8 +112,9 @@ def test_functional(testdir, linecomp):
         def test_func(_pytest):
             class ApiClass:
                 def pytest_xyz(self, arg):  "x"
-            hook = HookRelay([ApiClass], PluginManager())
-            rec = _pytest.gethookrecorder(hook)
+            pm = PluginManager()
+            pm.hook._addhooks(ApiClass, "pytest_")
+            rec = _pytest.gethookrecorder(pm.hook)
             class Plugin:
                 def pytest_xyz(self, arg):
                     return arg + 1

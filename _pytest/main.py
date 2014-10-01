@@ -164,28 +164,6 @@ class FSHookProxy(object):
         self.__dict__[name] = x
         return x
 
-        hookmethod = getattr(self.config.hook, name)
-        methods = self.config.pluginmanager.listattr(name, plugins=plugins)
-        self.__dict__[name] = x = HookCaller(hookmethod, methods)
-        return x
-
-
-class HookCaller:
-    def __init__(self, hookmethod, methods):
-        self.hookmethod = hookmethod
-        self.methods = methods
-
-    def __call__(self, **kwargs):
-        return self.hookmethod._docall(self.methods, kwargs)
-
-    def callextra(self, methods, **kwargs):
-        # XXX in theory we should respect "tryfirst/trylast" if set
-        # on the added methods but we currently only use it for
-        # pytest_generate_tests and it doesn't make sense there i'd think
-        all = self.methods
-        if methods:
-            all = all + methods
-        return self.hookmethod._docall(all, kwargs)
 
 def compatproperty(name):
     def fget(self):
