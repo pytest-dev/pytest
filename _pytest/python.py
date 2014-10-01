@@ -353,12 +353,14 @@ class PyCollector(PyobjMixin, pytest.Collector):
         fixtureinfo = fm.getfixtureinfo(self, funcobj, cls)
         metafunc = Metafunc(funcobj, fixtureinfo, self.config,
                             cls=cls, module=module)
-        gentesthook = self.config.hook.pytest_generate_tests
-        extra = [module]
-        if cls is not None:
-            extra.append(cls())
-        plugins = self.getplugins() + extra
-        gentesthook.pcall(plugins, metafunc=metafunc)
+        try:
+            methods = [module.pytest_generate_tests]
+        except AttributeError:
+            methods = []
+        if hasattr(cls, "pytest_generate_tests"):
+            methods.append(cls().pytest_generate_tests)
+        self.ihook.pytest_generate_tests.callextra(methods, metafunc=metafunc)
+
         Function = self._getcustomclass("Function")
         if not metafunc._calls:
             yield Function(name, parent=self)

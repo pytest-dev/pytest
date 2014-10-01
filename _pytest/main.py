@@ -153,19 +153,39 @@ def pytest_ignore_collect(path, config):
         ignore_paths.extend([py.path.local(x) for x in excludeopt])
     return path in ignore_paths
 
-class HookProxy(object):
+class FSHookProxy(object):
     def __init__(self, fspath, config):
         self.fspath = fspath
         self.config = config
 
     def __getattr__(self, name):
-        config = object.__getattribute__(self, "config")
-        hookmethod = getattr(config.hook, name)
+        plugins = self.config._getmatchingplugins(self.fspath)
+        x = self.config.hook._getcaller(name, plugins)
+        self.__dict__[name] = x
+        return x
 
-        def call_matching_hooks(**kwargs):
-            plugins = self.config._getmatchingplugins(self.fspath)
-            return hookmethod.pcall(plugins, **kwargs)
-        return call_matching_hooks
+        hookmethod = getattr(self.config.hook, name)
+        methods = self.config.pluginmanager.listattr(name, plugins=plugins)
+        self.__dict__[name] = x = HookCaller(hookmethod, methods)
+        return x
+
+
+class HookCaller:
+    def __init__(self, hookmethod, methods):
+        self.hookmethod = hookmethod
+        self.methods = methods
+
+    def __call__(self, **kwargs):
+        return self.hookmethod._docall(self.methods, kwargs)
+
+    def callextra(self, methods, **kwargs):
+        # XXX in theory we should respect "tryfirst/trylast" if set
+        # on the added methods but we currently only use it for
+        # pytest_generate_tests and it doesn't make sense there i'd think
+        all = self.methods
+        if methods:
+            all = all + methods
+        return self.hookmethod._docall(all, kwargs)
 
 def compatproperty(name):
     def fget(self):
@@ -520,6 +540,7 @@ class Session(FSCollector):
         self.trace = config.trace.root.get("collection")
         self._norecursepatterns = config.getini("norecursedirs")
         self.startdir = py.path.local()
+        self._fs2hookproxy = {}
 
     def pytest_collectstart(self):
         if self.shouldstop:
@@ -538,7 +559,11 @@ class Session(FSCollector):
         return path in self._initialpaths
 
     def gethookproxy(self, fspath):
-        return HookProxy(fspath, self.config)
+        try:
+            return self._fs2hookproxy[fspath]
+        except KeyError:
+            self._fs2hookproxy[fspath] = x = FSHookProxy(fspath, self.config)
+            return x
 
     def perform_collect(self, args=None, genitems=True):
         hook = self.config.hook
