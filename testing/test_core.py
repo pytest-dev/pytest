@@ -630,6 +630,18 @@ class TestHookRelay:
         assert l == [4]
         assert not hasattr(mcm, 'world')
 
+    def test_argmismatch(self):
+        class Api:
+            def hello(self, arg):
+                "api hook 1"
+        pm = PluginManager(Api, prefix="he")
+        class Plugin:
+            def hello(self, argwrong):
+                return arg + 1
+        with pytest.raises(PluginValidationError) as exc:
+            pm.register(Plugin())
+        assert "argwrong" in str(exc.value)
+
     def test_only_kwargs(self):
         pm = PluginManager()
         class Api:
