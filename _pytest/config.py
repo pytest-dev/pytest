@@ -98,7 +98,7 @@ class PytestPluginManager(PluginManager):
                 err = py.io.dupfile(err, encoding=encoding)
             except Exception:
                 pass
-            self.trace.root.setwriter(err.write)
+            self.set_tracing(err.write)
 
     def pytest_configure(self, config):
         config.addinivalue_line("markers",

@@ -1,8 +1,7 @@
 """ version info, help messages, tracing configuration.  """
 import py
 import pytest
-import os, inspect, sys
-from _pytest.core import varnames
+import os, sys
 
 def pytest_addoption(parser):
     group = parser.getgroup('debugconfig')
@@ -32,7 +31,7 @@ def pytest_cmdline_parse(__multicall__):
         f.write("versions pytest-%s, py-%s, python-%s\ncwd=%s\nargs=%s\n\n" %(
             pytest.__version__, py.__version__, ".".join(map(str, sys.version_info)),
             os.getcwd(), config._origargs))
-        config.trace.root.setwriter(f.write)
+        config.pluginmanager.set_tracing(f.write)
         sys.stderr.write("writing pytestdebug information to %s\n" % path)
     return config
 

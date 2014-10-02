@@ -70,7 +70,6 @@ class TagTracerSub:
 class PluginManager(object):
     def __init__(self, hookspecs=None, prefix="pytest_"):
         self._name2plugin = {}
-        self._listattrcache = {}
         self._plugins = []
         self._conftestplugins = []
         self._warnings = []
@@ -78,6 +77,26 @@ class PluginManager(object):
         self._plugin_distinfo = []
         self._shutdown = []
         self.hook = HookRelay(hookspecs or [], pm=self, prefix=prefix)
+
+    def set_tracing(self, writer):
+        self.trace.root.setwriter(writer)
+        # we reconfigure HookCalling to perform tracing
+        # and we avoid doing the "do we need to trace" check dynamically
+        # for speed reasons
+        assert HookCaller._docall.__name__ == "_docall"
+        real_docall = HookCaller._docall
+        def docall_tracing(self, methods, kwargs):
+            trace = self.hookrelay.trace
+            trace.root.indent += 1
+            trace(self.name, kwargs)
+            try:
+                res = real_docall(self, methods, kwargs)
+                if res:
+                    trace("finish", self.name, "-->", res)
+            finally:
+                trace.root.indent -= 1
+            return res
+        HookCaller._docall = docall_tracing
 
     def do_configure(self, config):
         # backward compatibility
@@ -129,7 +148,6 @@ class PluginManager(object):
             func()
         self._plugins = self._conftestplugins = []
         self._name2plugin.clear()
-        self._listattrcache.clear()
 
     def isregistered(self, plugin, name=None):
         if self.getplugin(name) is not None:
@@ -261,7 +279,6 @@ class PluginManager(object):
                 l.append(meth)
         l.extend(last)
         l.extend(wrappers)
-        #self._listattrcache[key] = list(l)
         return l
 
     def call_plugin(self, plugin, methname, kwargs):
@@ -336,7 +353,7 @@ class MultiCall:
                                 "wrapper contain more than one yield")
 
 
-def varnames(func):
+def varnames(func, startindex=None):
     """ return argument name tuple for a function, method, class or callable.
 
     In case of a class, its "__init__" method is considered.
@@ -353,14 +370,16 @@ def varnames(func):
             func = func.__init__
         except AttributeError:
             return ()
-        ismethod = True
+        startindex = 1
     else:
         if not inspect.isfunction(func) and not inspect.ismethod(func):
             func = getattr(func, '__call__', func)
-        ismethod = inspect.ismethod(func)
+        if startindex is None:
+            startindex = int(inspect.ismethod(func))
+
     rawcode = py.code.getrawcode(func)
     try:
-        x = rawcode.co_varnames[ismethod:rawcode.co_argcount]
+        x = rawcode.co_varnames[startindex:rawcode.co_argcount]
     except AttributeError:
         x = ()
     else:
@@ -388,12 +407,12 @@ class HookRelay:
     def _addhooks(self, hookspec, prefix):
         self._hookspecs.append(hookspec)
         added = False
-        for name in dir(hookspec):
+        isclass = int(inspect.isclass(hookspec))
+        for name, method in vars(hookspec).items():
             if name.startswith(prefix):
-                method = getattr(hookspec, name)
                 firstresult = getattr(method, 'firstresult', False)
                 hc = HookCaller(self, name, firstresult=firstresult,
-                                argnames=varnames(method))
+                                argnames=varnames(method, startindex=isclass))
                 setattr(self, name, hc)
                 added = True
                 #print ("setting new hook", name)
@@ -438,11 +457,10 @@ class HookCaller:
         self.hookrelay = hookrelay
         self.name = name
         self.firstresult = firstresult
-        self.trace = self.hookrelay.trace
         self.methods = methods
         self.argnames = ["__multicall__"]
         self.argnames.extend(argnames)
-        assert "self" not in argnames
+        assert "self" not in argnames  # prevent oversights
 
     def new_cached_caller(self, methods):
         return HookCaller(self.hookrelay, self.name, self.firstresult,
@@ -461,22 +479,11 @@ class HookCaller:
         return self._docall(methods, kwargs)
 
     def callextra(self, methods, **kwargs):
-        #if self.methods is None:
-        #    self.reload_methods()
         return self._docall(self.methods + methods, kwargs)
 
     def _docall(self, methods, kwargs):
-        self.trace(self.name, kwargs)
-        self.trace.root.indent += 1
-        mc = MultiCall(methods, kwargs, firstresult=self.firstresult)
-        try:
-            res = mc.execute()
-            if res:
-                self.trace("finish", self.name, "-->", res)
-        finally:
-            self.trace.root.indent -= 1
-        return res
-
+        return MultiCall(methods, kwargs,
+                         firstresult=self.firstresult).execute()
 
 
 class PluginValidationError(Exception):
@@ -485,13 +492,6 @@ class PluginValidationError(Exception):
 def isgenerichook(name):
     return name == "pytest_plugins" or \
            name.startswith("pytest_funcarg__")
-
-def collectattr(obj):
-    methods = {}
-    for apiname in dir(obj):
-        if apiname.startswith("pytest_"):
-            methods[apiname] = getattr(obj, apiname)
-    return methods
 
 def formatdef(func):
     return "%s%s" % (

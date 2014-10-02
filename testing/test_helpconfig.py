@@ -1,5 +1,4 @@
-import py, pytest
-from _pytest.core import collectattr
+import pytest
 
 def test_version(testdir, pytestconfig):
     result = testdir.runpytest("--version")
@@ -24,18 +23,6 @@ def test_help(testdir):
         *to see*markers*py.test --markers*
         *to see*fixtures*py.test --fixtures*
     """)
-
-def test_collectattr():
-    class A:
-        def pytest_hello(self):
-            pass
-    class B(A):
-        def pytest_world(self):
-            pass
-    methods = py.builtin.sorted(collectattr(B))
-    assert list(methods) == ['pytest_hello', 'pytest_world']
-    methods = py.builtin.sorted(collectattr(B()))
-    assert list(methods) == ['pytest_hello', 'pytest_world']
 
 def test_hookvalidation_unknown(testdir):
     testdir.makeconftest("""
