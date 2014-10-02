@@ -24,7 +24,7 @@ name_re = re.compile("^[a-zA-Z_]\w*$")
 
 def pytest_addoption(parser):
     parser.addini("norecursedirs", "directory patterns to avoid for recursion",
-        type="args", default=('.*', 'CVS', '_darcs', '{arch}', '*.egg'))
+        type="args", default=['.*', 'CVS', '_darcs', '{arch}', '*.egg'])
     #parser.addini("dirpatterns",
     #    "patterns specifying possible locations of test files",
     #    type="linelist", default=["**/test_*.txt",
