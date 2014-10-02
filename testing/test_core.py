@@ -274,7 +274,7 @@ class TestBootstrapping:
                 saveindent.append(pm.trace.root.indent)
                 raise ValueError(42)
         l = []
-        pm.trace.root.setwriter(l.append)
+        pm.set_tracing(l.append)
         indent = pm.trace.root.indent
         p = api1()
         pm.register(p)
@@ -405,11 +405,7 @@ class TestPytestPluginInteractions:
         pluginmanager.register(p3)
         methods = pluginmanager.listattr('m')
         assert methods == [p2.m, p3.m, p1.m]
-        # listattr keeps a cache and deleting
-        # a function attribute requires clearing it
-        pluginmanager._listattrcache.clear()
         del P1.m.__dict__['tryfirst']
-
         pytest.mark.trylast(getattr(P2.m, 'im_func', P2.m))
         methods = pluginmanager.listattr('m')
         assert methods == [p2.m, p1.m, p3.m]
