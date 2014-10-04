@@ -765,3 +765,23 @@ def test_importplugin_issue375(testdir):
     assert "qwe" not in str(excinfo.value)
     assert "aaaa" in str(excinfo.value)
 
+
+def test_wrapping():
+    class A:
+        def f(self):
+            return "A.f"
+
+    shutdown = []
+    l = []
+    def f(self):
+        l.append(1)
+        x = yield
+        l.append(2)
+    undo = add_method_controller(A, f)
+
+    assert A().f() == "A.f"
+    assert l == [1,2]
+    undo()
+    l[:] = []
+    assert A().f() == "A.f"
+    assert l == []
