@@ -12,7 +12,7 @@ import subprocess
 import py
 import pytest
 from py.builtin import print_
-from _pytest.core import HookRelay
+from _pytest.core import HookRelay, HookCaller, Wrapping
 
 from _pytest.main import Session, EXIT_OK
 
@@ -51,10 +51,8 @@ class PytestArg:
         return hookrecorder
 
 class ParsedCall:
-    def __init__(self, name, locals):
-        assert '_name' not in locals
-        self.__dict__.update(locals)
-        self.__dict__.pop('self')
+    def __init__(self, name, kwargs):
+        self.__dict__.update(kwargs)
         self._name = name
 
     def __repr__(self):
@@ -62,64 +60,24 @@ class ParsedCall:
         del d['_name']
         return "<ParsedCall %r(**%r)>" %(self._name, d)
 
+
 class HookRecorder:
     def __init__(self, pluginmanager):
         self._pluginmanager = pluginmanager
         self.calls = []
-        self._recorders = {}
-
-        hookspecs = self._pluginmanager.hook._hookspecs
-        for hookspec in hookspecs:
-            assert hookspec not in self._recorders
-            class RecordCalls:
-                _recorder = self
-            for name, method in vars(hookspec).items():
-                if name[0] != "_":
-                    setattr(RecordCalls, name, self._makecallparser(method))
-            recorder = RecordCalls()
-            self._recorders[hookspec] = recorder
-            self._pluginmanager.register(recorder)
-        self.hook = HookRelay(hookspecs, pm=self._pluginmanager,
-            prefix="pytest_")
+        self.wrapping = Wrapping()
+        @self.wrapping.method(HookCaller)
+        def _docall(hookcaller, methods, kwargs):
+            self.calls.append(ParsedCall(hookcaller.name, kwargs))
+            yield
 
     def finish_recording(self):
-        for recorder in self._recorders.values():
-            if self._pluginmanager.isregistered(recorder):
-                self._pluginmanager.unregister(recorder)
-        self._recorders.clear()
-
-    def _makecallparser(self, method):
-        name = method.__name__
-        args, varargs, varkw, default = inspect.getargspec(method)
-        if not args or args[0] != "self":
-            args.insert(0, 'self')
-        fspec = inspect.formatargspec(args, varargs, varkw, default)
-        # we use exec because we want to have early type
-        # errors on wrong input arguments, using
-        # *args/**kwargs delays this and gives errors
-        # elsewhere
-        exec (py.code.compile("""
-            def %(name)s%(fspec)s:
-                        self._recorder.calls.append(
-                            ParsedCall(%(name)r, locals()))
-        """ % locals()))
-        return locals()[name]
+        self.wrapping.undo()
 
     def getcalls(self, names):
         if isinstance(names, str):
             names = names.split()
-        for name in names:
-            for cls in self._recorders:
-                if name in vars(cls):
-                    break
-            else:
-                raise ValueError("callname %r not found in %r" %(
-                name, self._recorders.keys()))
-        l = []
-        for call in self.calls:
-            if call._name in names:
-                l.append(call)
-        return l
+        return [call for call in self.calls if call._name in names]
 
     def contains(self, entries):
         __tracebackhide__ = True
@@ -228,10 +186,9 @@ class TmpTestdir:
             obj = obj.config
         if hasattr(obj, 'hook'):
             obj = obj.hook
-        assert hasattr(obj, '_hookspecs'), obj
+        assert isinstance(obj, HookRelay)
         reprec = ReportRecorder(obj)
         reprec.hookrecorder = self._pytest.gethookrecorder(obj)
-        reprec.hook = reprec.hookrecorder.hook
         return reprec
 
     def chdir(self):

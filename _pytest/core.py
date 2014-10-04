@@ -416,7 +416,6 @@ class HookRelay:
     def __init__(self, hookspecs, pm, prefix="pytest_"):
         if not isinstance(hookspecs, list):
             hookspecs = [hookspecs]
-        self._hookspecs = []
         self._pm = pm
         self.trace = pm.trace.root.get("hook")
         self.prefix = prefix
@@ -424,7 +423,6 @@ class HookRelay:
             self._addhooks(hookspec, prefix)
 
     def _addhooks(self, hookspec, prefix):
-        self._hookspecs.append(hookspec)
         added = False
         isclass = int(inspect.isclass(hookspec))
         for name, method in vars(hookspec).items():
