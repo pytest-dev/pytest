@@ -94,12 +94,12 @@ def test_hookrecorder_basic(holder):
     pm = PluginManager()
     pm.hook._addhooks(holder, "pytest_")
     rec = HookRecorder(pm)
-    rec.hook.pytest_xyz(arg=123)
+    pm.hook.pytest_xyz(arg=123)
     call = rec.popcall("pytest_xyz")
     assert call.arg == 123
     assert call._name == "pytest_xyz"
     pytest.raises(pytest.fail.Exception, "rec.popcall('abc')")
-    rec.hook.pytest_xyz_noarg()
+    pm.hook.pytest_xyz_noarg()
     call = rec.popcall("pytest_xyz_noarg")
     assert call._name == "pytest_xyz_noarg"
 
@@ -119,7 +119,7 @@ def test_functional(testdir, linecomp):
                 def pytest_xyz(self, arg):
                     return arg + 1
             rec._pluginmanager.register(Plugin())
-            res = rec.hook.pytest_xyz(arg=41)
+            res = pm.hook.pytest_xyz(arg=41)
             assert res == [42]
     """)
     reprec.assertoutcome(passed=1)
