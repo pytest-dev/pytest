@@ -67,6 +67,24 @@ class TagTracerSub:
     def get(self, name):
         return self.__class__(self.root, self.tags + (name,))
 
+def add_method_controller(cls, func):
+    name = func.__name__
+    oldcall = getattr(cls, name)
+    def wrap_exec(*args, **kwargs):
+        gen = func(*args, **kwargs)
+        gen.next()  # first yield
+        res = oldcall(*args, **kwargs)
+        try:
+            gen.send(res)
+        except StopIteration:
+            pass
+        else:
+            raise ValueError("expected StopIteration")
+        return res
+    setattr(cls, name, wrap_exec)
+    return lambda: setattr(cls, name, oldcall)
+
+
 class PluginManager(object):
     def __init__(self, hookspecs=None, prefix="pytest_"):
         self._name2plugin = {}
@@ -80,23 +98,24 @@ class PluginManager(object):
 
     def set_tracing(self, writer):
         self.trace.root.setwriter(writer)
-        # we reconfigure HookCalling to perform tracing
-        # and we avoid doing the "do we need to trace" check dynamically
-        # for speed reasons
-        assert HookCaller._docall.__name__ == "_docall"
-        real_docall = HookCaller._docall
-        def docall_tracing(self, methods, kwargs):
+        # reconfigure HookCalling to perform tracing
+        assert not hasattr(self, "_wrapping")
+        self._wrapping = True
+
+        def _docall(self, methods, kwargs):
             trace = self.hookrelay.trace
             trace.root.indent += 1
             trace(self.name, kwargs)
+            res = None
             try:
-                res = real_docall(self, methods, kwargs)
+                res = yield
+            finally:
                 if res:
                     trace("finish", self.name, "-->", res)
-            finally:
                 trace.root.indent -= 1
-            return res
-        HookCaller._docall = docall_tracing
+
+        undo = add_method_controller(HookCaller, _docall)
+        self.add_shutdown(undo)
 
     def do_configure(self, config):
         # backward compatibility
