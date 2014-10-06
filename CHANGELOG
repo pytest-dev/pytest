@@ -5,6 +5,14 @@ Unreleased
 
 - removed outdated japanese docs from source tree.
 
+- docs for "pytest_addhooks" hook.  Thanks Bruno Oliveira.
+
+- updated plugin index docs.  Thanks Bruno Oliveira.
+
+- fix issue557: with "-k" we only allow the old style "-" for negation
+  at the beginning of strings and even that is deprecated.  Use "not" instead.
+  This should allow to pick parametrized tests where "-" appeared in the parameter.
+
 2.6.3
 -----------
 
