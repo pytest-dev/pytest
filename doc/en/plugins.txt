@@ -384,6 +384,54 @@ reporting or interaction with exceptions:
 .. autofunction:: pytest_keyboard_interrupt
 .. autofunction:: pytest_exception_interact
 
+
+Declaring new hooks
+------------------------
+
+Plugins and ``conftest.py`` files may declare new hooks that can then be
+implemented by other plugins in order to alter behaviour or interact with
+the new plugin:
+
+.. autofunction:: pytest_addhooks
+
+Hooks are usually declared as do-nothing functions that contain only
+documentation describing when the hook will be called and what return values
+are expected.
+
+For an example, see `newhooks.py`_ from :ref:`xdist`.
+
+.. _`newhooks.py`: https://bitbucket.org/hpk42/pytest-xdist/src/52082f70e7dd04b00361091b8af906c60fd6700f/xdist/newhooks.py?at=default
+
+
+Using hooks from 3rd party plugins
+-------------------------------------
+
+Using new hooks from plugins as explained above might be a little tricky
+because the standard `Hook specification and validation`_ mechanism:
+if you depend on a plugin that is not installed,
+validation will fail and the error message will not make much sense to your users.
+
+One approach is to defer the hook implementation to a new plugin instead of
+declaring the hook functions directly in your plugin module, for example::
+
+    # contents of myplugin.py
+
+    class DeferPlugin(object):
+        """Simple plugin to defer pytest-xdist hook functions."""
+
+        def pytest_testnodedown(self, node, error):
+            """standard xdist hook function.
+            """
+
+    def pytest_configure(config):
+        if config.pluginmanager.hasplugin('xdist'):
+            config.pluginmanager.register(DeferPlugin())
+
+
+This has the added benefit of allowing you to conditionally install hooks
+depending on which plugins are installed.
+
+
 Reference of objects involved in hooks
 ===========================================================
 
