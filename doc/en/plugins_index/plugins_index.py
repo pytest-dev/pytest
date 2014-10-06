@@ -61,7 +61,7 @@ def get_latest_versions(plugins):
         yield name, str(loose_version)
 
 
-def obtain_plugins_table(plugins, client):
+def obtain_plugins_table(plugins, client, verbose):
     """
     Returns information to populate a table of plugins, their versions,
     authors, etc.
@@ -72,6 +72,7 @@ def obtain_plugins_table(plugins, client):
 
     :param plugins: list of (name, version)
     :param client: ServerProxy
+    :param verbose: print plugin name and version as they are fetch
     """
     def get_repo_markup(repo):
         """
@@ -96,7 +97,7 @@ def obtain_plugins_table(plugins, client):
             pad_right = ('%-' + str(len(target_markup)) + 's')
             return pad_right % image_markup, target_markup
         else:
-            return ('`%s <%s>`_' % (target, target)), ''
+            return ('`link <%s>`_' % target), ''
     
     def sanitize_summary(summary):
         """Make sure summaries don't break our table formatting.
@@ -105,13 +106,14 @@ def obtain_plugins_table(plugins, client):
 
     rows = []
     ColumnData = namedtuple('ColumnData', 'text link')
-    headers = ['Name', 'Py27', 'Py34', 'Repo', 'Summary']
+    headers = ['Name', 'Py27', 'Py34', 'Home', 'Summary']
     pytest_version = pytest.__version__
     repositories = obtain_override_repositories()
-    print('*** pytest-{0} ***'.format(pytest_version))
+    print('Generating plugins_index page (pytest-{0})'.format(pytest_version))
     plugins = list(plugins)
     for index, (package_name, version) in enumerate(plugins):
-        print(package_name, version, '...', end='')
+        if verbose:
+            print(package_name, version, '...', end='')
 
         release_data = client.release_data(package_name, version)
 
@@ -128,7 +130,7 @@ def obtain_plugins_table(plugins, client):
         image_url = url.format(**common_params)
         image_url += '?py={py}&pytest={pytest}'
         row = (
-            ColumnData(package_name + "-" + version, release_data['package_url']),
+            ColumnData(package_name, release_data['package_url']),
             ColumnData(image_url.format(py='py27', pytest=pytest_version),
                        None),
             ColumnData(image_url.format(py='py34', pytest=pytest_version),
@@ -159,7 +161,10 @@ def obtain_plugins_table(plugins, client):
         assert len(row) == len(headers)
         rows.append(row)
 
-        print('OK (%d%%)' % ((index + 1) * 100 / len(plugins)))
+        if verbose:
+            print('OK (%d%%)' % ((index + 1) * 100 / len(plugins)))
+
+    print('Done: %d plugins' % len(plugins))
 
     return headers, rows
 
@@ -235,16 +240,17 @@ def generate_plugins_index_from_table(filename, headers, rows):
         print('*(Updated on %s)*' % today, file=f)
 
 
-def generate_plugins_index(client, filename):
+def generate_plugins_index(client, filename, verbose):
     """
     Generates an RST file with a table of the latest pytest plugins found in
     PyPI.
 
     :param client: ServerProxy
     :param filename: output filename
+    :param verbose: print name and version of each plugin as they are fetch
     """
     plugins = get_latest_versions(iter_plugins(client))
-    headers, rows = obtain_plugins_table(plugins, client)
+    headers, rows = obtain_plugins_table(plugins, client, verbose)
     generate_plugins_index_from_table(filename, headers, rows)
 
 
@@ -262,13 +268,15 @@ def main(argv):
                       help='output filename [default: %default]')
     parser.add_option('-u', '--url', default=url,
                       help='url of PyPI server to obtain data from [default: %default]')
+    parser.add_option('-v', '--verbose', default=False, action='store_true',
+                      help='verbose output')
     (options, _) = parser.parse_args(argv[1:])
 
     client = get_proxy(options.url)
-    generate_plugins_index(client, options.filename)
+    generate_plugins_index(client, options.filename, options.verbose)
 
     print()
-    print('%s Updated.' % options.filename)
+    print('%s updated.' % options.filename)
     return 0
 
 
