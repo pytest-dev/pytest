@@ -5,6 +5,9 @@ Unreleased
 
 - removed outdated japanese docs from source tree.
 
+- Escape % character in the assertion message.
+
+
 2.6.3
 -----------
 
