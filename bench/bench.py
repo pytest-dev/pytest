@@ -9,4 +9,4 @@ if __name__ == '__main__':
     p = pstats.Stats("prof")
     p.strip_dirs()
     p.sort_stats('cumulative')
-    print(p.print_stats(250))
+    print(p.print_stats(500))
