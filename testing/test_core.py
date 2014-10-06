@@ -149,7 +149,7 @@ class TestBootstrapping:
         mod.pytest_plugins = "pytest_a"
         aplugin = testdir.makepyfile(pytest_a="#")
         pluginmanager = get_plugin_manager()
-        reprec = testdir.getreportrecorder(pluginmanager)
+        reprec = testdir.make_hook_recorder(pluginmanager)
         #syspath.prepend(aplugin.dirpath())
         py.std.sys.path.insert(0, str(aplugin.dirpath()))
         pluginmanager.consider_module(mod)
@@ -771,11 +771,10 @@ def test_wrapping():
         def f(self):
             return "A.f"
 
-    shutdown = []
     l = []
     def f(self):
         l.append(1)
-        x = yield
+        yield
         l.append(2)
     undo = add_method_controller(A, f)
 

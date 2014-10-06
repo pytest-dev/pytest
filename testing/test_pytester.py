@@ -3,9 +3,9 @@ import os
 from _pytest.pytester import HookRecorder
 from _pytest.core import PluginManager
 
-def test_reportrecorder(testdir):
+def test_make_hook_recorder(testdir):
     item = testdir.getitem("def test_func(): pass")
-    recorder = testdir.getreportrecorder(item.config)
+    recorder = testdir.make_hook_recorder(item.config.pluginmanager)
     assert not recorder.getfailures()
 
     pytest.xfail("internal reportrecorder tests need refactoring")
@@ -102,27 +102,6 @@ def test_hookrecorder_basic(holder):
     pm.hook.pytest_xyz_noarg()
     call = rec.popcall("pytest_xyz_noarg")
     assert call._name == "pytest_xyz_noarg"
-
-
-def test_functional(testdir, linecomp):
-    reprec = testdir.inline_runsource("""
-        import pytest
-        from _pytest.core import HookRelay, PluginManager
-        pytest_plugins="pytester"
-        def test_func(_pytest):
-            class ApiClass:
-                def pytest_xyz(self, arg):  "x"
-            pm = PluginManager()
-            pm.hook._addhooks(ApiClass, "pytest_")
-            rec = _pytest.gethookrecorder(pm.hook)
-            class Plugin:
-                def pytest_xyz(self, arg):
-                    return arg + 1
-            rec._pluginmanager.register(Plugin())
-            res = pm.hook.pytest_xyz(arg=41)
-            assert res == [42]
-    """)
-    reprec.assertoutcome(passed=1)
 
 
 def test_makepyfile_unicode(testdir):

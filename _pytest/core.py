@@ -72,7 +72,7 @@ def add_method_controller(cls, func):
     oldcall = getattr(cls, name)
     def wrap_exec(*args, **kwargs):
         gen = func(*args, **kwargs)
-        gen.next()  # first yield
+        next(gen)   # first yield
         res = oldcall(*args, **kwargs)
         try:
             gen.send(res)
