@@ -5,6 +5,10 @@ Unreleased
 
 - removed outdated japanese docs from source tree.
 
+- docs for "pytest_addhooks" hook.  Thanks Bruno Oliveira.
+
+- updated plugin index docs.  Thanks Bruno Oliveira.
+
 2.6.3
 -----------
 
