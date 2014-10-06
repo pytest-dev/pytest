@@ -373,7 +373,7 @@ def _format_assertmsg(obj):
         t = py.builtin.text
     else:
         t = py.builtin.bytes
-    s = s.replace(t("\n"), t("\n~"))
+    s = s.replace(t("\n"), t("\n~")).replace(t("%"), t("%%"))
     if is_repr:
         s = s.replace(t("\\n"), t("\n~"))
     return s

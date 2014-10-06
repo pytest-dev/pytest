@@ -172,6 +172,18 @@ class TestAssertionRewrite:
             "*assert 1 == 2*",
         ])
 
+    def test_assertion_message_escape(self, testdir):
+        testdir.makepyfile("""
+            def test_foo():
+                assert 1 == 2, 'To be escaped: %'
+        """)
+        result = testdir.runpytest()
+        assert result.ret == 1
+        result.stdout.fnmatch_lines([
+            "*AssertionError: To be escaped: %",
+            "*assert 1 == 2",
+        ])
+
     def test_boolop(self):
         def f():
             f = g = False
