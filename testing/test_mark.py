@@ -234,12 +234,13 @@ def test_keyword_option_custom(spec, testdir):
 
 @pytest.mark.parametrize("spec", [
         ("None", ("test_func[None]",)),
-        ("1.3", ("test_func[1.3]",))
+        ("1.3", ("test_func[1.3]",)),
+        ("2-3", ("test_func[2-3]",))
 ])
 def test_keyword_option_parametrize(spec, testdir):
     testdir.makepyfile("""
         import pytest
-        @pytest.mark.parametrize("arg", [None, 1.3])
+        @pytest.mark.parametrize("arg", [None, 1.3, "2-3"])
         def test_func(arg):
             pass
     """)
@@ -497,7 +498,7 @@ class TestKeywordSelection:
         check('TestClass and test', 'test_method_one')
 
     @pytest.mark.parametrize("keyword", [
-        'xxx', 'xxx and test_2', 'TestClass', 'xxx and -test_1',
+        'xxx', 'xxx and test_2', 'TestClass', 'xxx and not test_1',
         'TestClass and test_2', 'xxx and TestClass and test_2'])
     def test_select_extra_keywords(self, testdir, keyword):
         p = testdir.makepyfile(test_select="""
