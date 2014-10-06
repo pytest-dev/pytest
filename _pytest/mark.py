@@ -56,6 +56,11 @@ def pytest_collection_modifyitems(items, config):
     matchexpr = config.option.markexpr
     if not keywordexpr and not matchexpr:
         return
+    # pytest used to allow "-" for negating
+    # but today we just allow "-" at the beginning, use "not" instead
+    # we probably remove "-" alltogether soon
+    if keywordexpr.startswith("-"):
+        keywordexpr = "not " + keywordexpr[1:]
     selectuntil = False
     if keywordexpr[-1:] == ":":
         selectuntil = True
@@ -122,7 +127,6 @@ def matchkeyword(colitem, keywordexpr):
     Additionally, matches on names in the 'extra_keyword_matches' set of
     any item, as well as names directly assigned to test functions.
     """
-    keywordexpr = keywordexpr.replace("-", "not ")
     mapped_names = set()
 
     # Add the names of the current item and any parent items
