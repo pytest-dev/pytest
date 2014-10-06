@@ -124,11 +124,11 @@ def pytest_addoption(parser):
     parser.addini("usefixtures", type="args", default=[],
         help="list of default fixtures to be used with this project")
     parser.addini("python_files", type="args",
-        default=('test_*.py', '*_test.py'),
+        default=['test_*.py', '*_test.py'],
         help="glob-style file patterns for Python test module discovery")
-    parser.addini("python_classes", type="args", default=("Test",),
+    parser.addini("python_classes", type="args", default=["Test",],
         help="prefixes for Python test class discovery")
-    parser.addini("python_functions", type="args", default=("test",),
+    parser.addini("python_functions", type="args", default=["test",],
         help="prefixes for Python test function and method discovery")
 
 def pytest_cmdline_main(config):
