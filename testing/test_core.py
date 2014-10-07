@@ -149,7 +149,7 @@ class TestBootstrapping:
         mod.pytest_plugins = "pytest_a"
         aplugin = testdir.makepyfile(pytest_a="#")
         pluginmanager = get_plugin_manager()
-        reprec = testdir.getreportrecorder(pluginmanager)
+        reprec = testdir.make_hook_recorder(pluginmanager)
         #syspath.prepend(aplugin.dirpath())
         py.std.sys.path.insert(0, str(aplugin.dirpath()))
         pluginmanager.consider_module(mod)
@@ -274,7 +274,7 @@ class TestBootstrapping:
                 saveindent.append(pm.trace.root.indent)
                 raise ValueError(42)
         l = []
-        pm.trace.root.setwriter(l.append)
+        pm.set_tracing(l.append)
         indent = pm.trace.root.indent
         p = api1()
         pm.register(p)
@@ -405,11 +405,7 @@ class TestPytestPluginInteractions:
         pluginmanager.register(p3)
         methods = pluginmanager.listattr('m')
         assert methods == [p2.m, p3.m, p1.m]
-        # listattr keeps a cache and deleting
-        # a function attribute requires clearing it
-        pluginmanager._listattrcache.clear()
         del P1.m.__dict__['tryfirst']
-
         pytest.mark.trylast(getattr(P2.m, 'im_func', P2.m))
         methods = pluginmanager.listattr('m')
         assert methods == [p2.m, p1.m, p3.m]
@@ -435,6 +431,11 @@ def test_varnames():
     assert varnames(f) == ("x",)
     assert varnames(A().f) == ('y',)
     assert varnames(B()) == ('z',)
+
+def test_varnames_default():
+    def f(x, y=3):
+        pass
+    assert varnames(f) == ("x",)
 
 def test_varnames_class():
     class C:
@@ -494,12 +495,10 @@ class TestMultiCall:
             return x + z
         reslist = MultiCall([f], dict(x=23, y=24)).execute()
         assert reslist == [24]
-        reslist = MultiCall([f], dict(x=23, z=2)).execute()
-        assert reslist == [25]
 
     def test_tags_call_error(self):
         multicall = MultiCall([lambda x: x], {})
-        pytest.raises(TypeError, multicall.execute)
+        pytest.raises(KeyError, multicall.execute)
 
     def test_call_subexecute(self):
         def m(__multicall__):
@@ -630,6 +629,18 @@ class TestHookRelay:
         assert l == [4]
         assert not hasattr(mcm, 'world')
 
+    def test_argmismatch(self):
+        class Api:
+            def hello(self, arg):
+                "api hook 1"
+        pm = PluginManager(Api, prefix="he")
+        class Plugin:
+            def hello(self, argwrong):
+                return arg + 1
+        with pytest.raises(PluginValidationError) as exc:
+            pm.register(Plugin())
+        assert "argwrong" in str(exc.value)
+
     def test_only_kwargs(self):
         pm = PluginManager()
         class Api:
@@ -754,3 +765,96 @@ def test_importplugin_issue375(testdir):
     assert "qwe" not in str(excinfo.value)
     assert "aaaa" in str(excinfo.value)
 
+class TestWrapMethod:
+    def test_basic_happypath(self):
+        class A:
+            def f(self):
+                return "A.f"
+
+        l = []
+        def f(self):
+            l.append(1)
+            yield
+            l.append(2)
+        undo = add_method_controller(A, f)
+
+        assert A().f() == "A.f"
+        assert l == [1,2]
+        undo()
+        l[:] = []
+        assert A().f() == "A.f"
+        assert l == []
+
+    def test_method_raises(self):
+        class A:
+            def error(self, val):
+                raise ValueError(val)
+
+        l = []
+        def error(self, val):
+            l.append(val)
+            try:
+                yield
+            except ValueError:
+                l.append(None)
+                raise
+
+
+        undo = add_method_controller(A, error)
+
+        with pytest.raises(ValueError):
+            A().error(42)
+        assert l == [42, None]
+        undo()
+        l[:] = []
+        with pytest.raises(ValueError):
+            A().error(42)
+        assert l == []
+
+    def test_controller_swallows_method_raises(self):
+        class A:
+            def error(self, val):
+                raise ValueError(val)
+
+        def error(self, val):
+            try:
+                yield
+            except ValueError:
+                yield 2
+
+        add_method_controller(A, error)
+        assert A().error(42) == 2
+
+    def test_reraise_on_controller_StopIteration(self):
+        class A:
+            def error(self, val):
+                raise ValueError(val)
+
+        def error(self, val):
+            try:
+                yield
+            except ValueError:
+                pass
+
+        add_method_controller(A, error)
+        with pytest.raises(ValueError):
+            A().error(42)
+
+    @pytest.mark.xfail(reason="if needed later")
+    def test_modify_call_args(self):
+        class A:
+            def error(self, val1, val2):
+                raise ValueError(val1+val2)
+
+        l = []
+        def error(self):
+            try:
+                yield (1,), {'val2': 2}
+            except ValueError as ex:
+                assert ex.args == (3,)
+                l.append(1)
+
+        add_method_controller(A, error)
+        with pytest.raises(ValueError):
+            A().error()
+        assert l == [1]

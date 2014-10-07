@@ -353,15 +353,17 @@ class PyCollector(PyobjMixin, pytest.Collector):
         fixtureinfo = fm.getfixtureinfo(self, funcobj, cls)
         metafunc = Metafunc(funcobj, fixtureinfo, self.config,
                             cls=cls, module=module)
-        gentesthook = self.config.hook.pytest_generate_tests
-        extra = [module]
-        if cls is not None:
-            extra.append(cls())
-        plugins = self.getplugins() + extra
-        gentesthook.pcall(plugins, metafunc=metafunc)
+        try:
+            methods = [module.pytest_generate_tests]
+        except AttributeError:
+            methods = []
+        if hasattr(cls, "pytest_generate_tests"):
+            methods.append(cls().pytest_generate_tests)
+        self.ihook.pytest_generate_tests.callextra(methods, metafunc=metafunc)
+
         Function = self._getcustomclass("Function")
         if not metafunc._calls:
-            yield Function(name, parent=self)
+            yield Function(name, parent=self, fixtureinfo=fixtureinfo)
         else:
             # add funcargs() as fixturedefs to fixtureinfo.arg2fixturedefs
             add_funcarg_pseudo_fixture_def(self, metafunc, fm)
@@ -370,6 +372,7 @@ class PyCollector(PyobjMixin, pytest.Collector):
                 subname = "%s[%s]" %(name, callspec.id)
                 yield Function(name=subname, parent=self,
                                callspec=callspec, callobj=funcobj,
+                               fixtureinfo=fixtureinfo,
                                keywords={callspec.id:True})
 
 def add_funcarg_pseudo_fixture_def(collector, metafunc, fixturemanager):
@@ -1065,28 +1068,27 @@ class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
     """
     _genid = None
     def __init__(self, name, parent, args=None, config=None,
-                 callspec=None, callobj=NOTSET, keywords=None, session=None):
+                 callspec=None, callobj=NOTSET, keywords=None, session=None,
+                 fixtureinfo=None):
         super(Function, self).__init__(name, parent, config=config,
                                        session=session)
         self._args = args
         if callobj is not NOTSET:
             self.obj = callobj
 
-        for name, val in (py.builtin._getfuncdict(self.obj) or {}).items():
-            self.keywords[name] = val
+        self.keywords.update(self.obj.__dict__)
         if callspec:
-            for name, val in callspec.keywords.items():
-                self.keywords[name] = val
-        if keywords:
-            for name, val in keywords.items():
-                self.keywords[name] = val
-
-        isyield = self._isyieldedfunction()
-        self._fixtureinfo = fi = self.session._fixturemanager.getfixtureinfo(
-                self.parent, self.obj, self.cls, funcargs=not isyield)
-        self.fixturenames = fi.names_closure
-        if callspec is not None:
             self.callspec = callspec
+            self.keywords.update(callspec.keywords)
+        if keywords:
+            self.keywords.update(keywords)
+
+        if fixtureinfo is None:
+            fixtureinfo = self.session._fixturemanager.getfixtureinfo(
+                self.parent, self.obj, self.cls,
+                funcargs=not self._isyieldedfunction())
+        self._fixtureinfo = fixtureinfo
+        self.fixturenames = fixtureinfo.names_closure
         self._initrequest()
 
     def _initrequest(self):
@@ -1571,15 +1573,8 @@ class FixtureManager:
         self._nodeid_and_autousenames = [("", self.config.getini("usefixtures"))]
         session.config.pluginmanager.register(self, "funcmanage")
 
-        self._nodename2fixtureinfo = {}
 
     def getfixtureinfo(self, node, func, cls, funcargs=True):
-        # node is the "collection node" for "func"
-        key = (node, func)
-        try:
-            return self._nodename2fixtureinfo[key]
-        except KeyError:
-            pass
         if funcargs and not hasattr(node, "nofuncargs"):
             if cls is not None:
                 startindex = 1
@@ -1595,10 +1590,7 @@ class FixtureManager:
         fm = node.session._fixturemanager
         names_closure, arg2fixturedefs = fm.getfixtureclosure(initialnames,
                                                               node)
-        fixtureinfo = FuncFixtureInfo(argnames, names_closure,
-                                      arg2fixturedefs)
-        self._nodename2fixtureinfo[key] = fixtureinfo
-        return fixtureinfo
+        return FuncFixtureInfo(argnames, names_closure, arg2fixturedefs)
 
     ### XXX this hook should be called for historic events like pytest_configure
     ### so that we don't have to do the below pytest_configure hook
