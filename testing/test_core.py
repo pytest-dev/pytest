@@ -765,22 +765,96 @@ def test_importplugin_issue375(testdir):
     assert "qwe" not in str(excinfo.value)
     assert "aaaa" in str(excinfo.value)
 
+class TestWrapMethod:
+    def test_basic_happypath(self):
+        class A:
+            def f(self):
+                return "A.f"
 
-def test_wrapping():
-    class A:
+        l = []
         def f(self):
-            return "A.f"
+            l.append(1)
+            yield
+            l.append(2)
+        undo = add_method_controller(A, f)
 
-    l = []
-    def f(self):
-        l.append(1)
-        yield
-        l.append(2)
-    undo = add_method_controller(A, f)
+        assert A().f() == "A.f"
+        assert l == [1,2]
+        undo()
+        l[:] = []
+        assert A().f() == "A.f"
+        assert l == []
 
-    assert A().f() == "A.f"
-    assert l == [1,2]
-    undo()
-    l[:] = []
-    assert A().f() == "A.f"
-    assert l == []
+    def test_method_raises(self):
+        class A:
+            def error(self, val):
+                raise ValueError(val)
+
+        l = []
+        def error(self, val):
+            l.append(val)
+            try:
+                yield
+            except ValueError:
+                l.append(None)
+                raise
+
+
+        undo = add_method_controller(A, error)
+
+        with pytest.raises(ValueError):
+            A().error(42)
+        assert l == [42, None]
+        undo()
+        l[:] = []
+        with pytest.raises(ValueError):
+            A().error(42)
+        assert l == []
+
+    def test_controller_swallows_method_raises(self):
+        class A:
+            def error(self, val):
+                raise ValueError(val)
+
+        def error(self, val):
+            try:
+                yield
+            except ValueError:
+                yield 2
+
+        add_method_controller(A, error)
+        assert A().error(42) == 2
+
+    def test_reraise_on_controller_StopIteration(self):
+        class A:
+            def error(self, val):
+                raise ValueError(val)
+
+        def error(self, val):
+            try:
+                yield
+            except ValueError:
+                pass
+
+        add_method_controller(A, error)
+        with pytest.raises(ValueError):
+            A().error(42)
+
+    @pytest.mark.xfail(reason="if needed later")
+    def test_modify_call_args(self):
+        class A:
+            def error(self, val1, val2):
+                raise ValueError(val1+val2)
+
+        l = []
+        def error(self):
+            try:
+                yield (1,), {'val2': 2}
+            except ValueError as ex:
+                assert ex.args == (3,)
+                l.append(1)
+
+        add_method_controller(A, error)
+        with pytest.raises(ValueError):
+            A().error()
+        assert l == [1]
