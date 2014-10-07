@@ -1,4 +1,4 @@
-Unreleased
+2.6.4.dev
 ----------
 
 - Improve assertion failure reporting on iterables, by using ndiff and pprint.
