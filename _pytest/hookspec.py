@@ -142,7 +142,7 @@ def pytest_generate_tests(metafunc):
 # -------------------------------------------------------------------------
 # generic runtest related hooks
 # -------------------------------------------------------------------------
-def pytest_itemstart(item, node=None):
+def pytest_itemstart(item, node):
     """ (deprecated, use pytest_runtest_logstart). """
 
 def pytest_runtest_protocol(item, nextitem):

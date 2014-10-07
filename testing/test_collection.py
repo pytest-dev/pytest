@@ -334,9 +334,9 @@ class TestSession:
         assert item.name == "test_func"
         newid = item.nodeid
         assert newid == id
-        py.std.pprint.pprint(hookrec.hookrecorder.calls)
+        py.std.pprint.pprint(hookrec.calls)
         topdir = testdir.tmpdir  # noqa
-        hookrec.hookrecorder.contains([
+        hookrec.assert_contains([
             ("pytest_collectstart", "collector.fspath == topdir"),
             ("pytest_make_collect_report", "collector.fspath == topdir"),
             ("pytest_collectstart", "collector.fspath == p"),
@@ -381,9 +381,9 @@ class TestSession:
         id = p.basename
 
         items, hookrec = testdir.inline_genitems(id)
-        py.std.pprint.pprint(hookrec.hookrecorder.calls)
+        py.std.pprint.pprint(hookrec.calls)
         assert len(items) == 2
-        hookrec.hookrecorder.contains([
+        hookrec.assert_contains([
             ("pytest_collectstart",
                 "collector.fspath == collector.session.fspath"),
             ("pytest_collectstart",
@@ -404,8 +404,8 @@ class TestSession:
 
         items, hookrec = testdir.inline_genitems()
         assert len(items) == 1
-        py.std.pprint.pprint(hookrec.hookrecorder.calls)
-        hookrec.hookrecorder.contains([
+        py.std.pprint.pprint(hookrec.calls)
+        hookrec.assert_contains([
             ("pytest_collectstart", "collector.fspath == test_aaa"),
             ("pytest_pycollect_makeitem", "name == 'test_func'"),
             ("pytest_collectreport",
@@ -425,8 +425,8 @@ class TestSession:
 
         items, hookrec = testdir.inline_genitems(id)
         assert len(items) == 2
-        py.std.pprint.pprint(hookrec.hookrecorder.calls)
-        hookrec.hookrecorder.contains([
+        py.std.pprint.pprint(hookrec.calls)
+        hookrec.assert_contains([
             ("pytest_collectstart", "collector.fspath == test_aaa"),
             ("pytest_pycollect_makeitem", "name == 'test_func'"),
             ("pytest_collectreport", "report.nodeid == 'aaa/test_aaa.py'"),

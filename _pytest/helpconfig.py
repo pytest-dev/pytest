@@ -1,8 +1,7 @@
 """ version info, help messages, tracing configuration.  """
 import py
 import pytest
-import os, inspect, sys
-from _pytest.core import varnames
+import os, sys
 
 def pytest_addoption(parser):
     group = parser.getgroup('debugconfig')
@@ -32,7 +31,7 @@ def pytest_cmdline_parse(__multicall__):
         f.write("versions pytest-%s, py-%s, python-%s\ncwd=%s\nargs=%s\n\n" %(
             pytest.__version__, py.__version__, ".".join(map(str, sys.version_info)),
             os.getcwd(), config._origargs))
-        config.trace.root.setwriter(f.write)
+        config.pluginmanager.set_tracing(f.write)
         sys.stderr.write("writing pytestdebug information to %s\n" % path)
     return config
 
@@ -126,71 +125,4 @@ def pytest_report_header(config):
             lines.append("    %-20s: %s" %(name, r))
     return lines
 
-
-# =====================================================
-# validate plugin syntax and hooks
-# =====================================================
-
-def pytest_plugin_registered(manager, plugin):
-    methods = collectattr(plugin)
-    hooks = {}
-    for hookspec in manager.hook._hookspecs:
-        hooks.update(collectattr(hookspec))
-
-    stringio = py.io.TextIO()
-    def Print(*args):
-        if args:
-            stringio.write(" ".join(map(str, args)))
-        stringio.write("\n")
-
-    fail = False
-    while methods:
-        name, method = methods.popitem()
-        #print "checking", name
-        if isgenerichook(name):
-            continue
-        if name not in hooks:
-            if not getattr(method, 'optionalhook', False):
-                Print("found unknown hook:", name)
-                fail = True
-        else:
-            #print "checking", method
-            method_args = list(varnames(method))
-            if '__multicall__' in method_args:
-                method_args.remove('__multicall__')
-            hook = hooks[name]
-            hookargs = varnames(hook)
-            for arg in method_args:
-                if arg not in hookargs:
-                    Print("argument %r not available"  %(arg, ))
-                    Print("actual definition: %s" %(formatdef(method)))
-                    Print("available hook arguments: %s" %
-                            ", ".join(hookargs))
-                    fail = True
-                    break
-            #if not fail:
-            #    print "matching hook:", formatdef(method)
-        if fail:
-            name = getattr(plugin, '__name__', plugin)
-            raise PluginValidationError("%s:\n%s" % (name, stringio.getvalue()))
-
-class PluginValidationError(Exception):
-    """ plugin failed validation. """
-
-def isgenerichook(name):
-    return name == "pytest_plugins" or \
-           name.startswith("pytest_funcarg__")
-
-def collectattr(obj):
-    methods = {}
-    for apiname in dir(obj):
-        if apiname.startswith("pytest_"):
-            methods[apiname] = getattr(obj, apiname)
-    return methods
-
-def formatdef(func):
-    return "%s%s" % (
-        func.__name__,
-        inspect.formatargspec(*inspect.getargspec(func))
-    )
 

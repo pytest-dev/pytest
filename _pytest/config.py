@@ -98,7 +98,7 @@ class PytestPluginManager(PluginManager):
                 err = py.io.dupfile(err, encoding=encoding)
             except Exception:
                 pass
-            self.trace.root.setwriter(err.write)
+            self.set_tracing(err.write)
 
     def pytest_configure(self, config):
         config.addinivalue_line("markers",
@@ -682,11 +682,8 @@ class Config(object):
                 setattr(self.option, opt.dest, opt.default)
 
     def _getmatchingplugins(self, fspath):
-        allconftests = self._conftest._conftestpath2mod.values()
-        plugins = [x for x in self.pluginmanager.getplugins()
-                        if x not in allconftests]
-        plugins += self._conftest.getconftestmodules(fspath)
-        return plugins
+        return self.pluginmanager._plugins + \
+               self._conftest.getconftestmodules(fspath)
 
     def pytest_load_initial_conftests(self, early_config):
         self._conftest.setinitial(early_config.known_args_namespace)
