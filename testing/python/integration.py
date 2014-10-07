@@ -262,5 +262,58 @@ class TestNoselikeTestAttribute:
         call = reprec.getcalls("pytest_collection_modifyitems")[0]
         assert len(call.items) == 1
         assert call.items[0].cls.__name__ == "TC"
-        
 
+
+@pytest.mark.issue351
+class TestParameterize:
+
+    def test_idfn_marker(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            def idfn(param):
+                if param == 0:
+                    return 'spam'
+                elif param == 1:
+                    return 'ham'
+                else:
+                    return None
+
+            @pytest.mark.parametrize('a,b', [(0, 2), (1, 2)], ids=idfn)
+            def test_params(a, b):
+                pass
+        """)
+        res = testdir.runpytest('--collect-only')
+        res.stdout.fnmatch_lines([
+            "*spam-2*",
+            "*ham-2*",
+        ])
+
+    def test_idfn_fixture(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            def idfn(param):
+                if param == 0:
+                    return 'spam'
+                elif param == 1:
+                    return 'ham'
+                else:
+                    return None
+
+            @pytest.fixture(params=[0, 1], ids=idfn)
+            def a(request):
+                return request.param
+
+            @pytest.fixture(params=[1, 2], ids=idfn)
+            def b(request):
+                return request.param
+
+            def test_params(a, b):
+                pass
+        """)
+        res = testdir.runpytest('--collect-only')
+        res.stdout.fnmatch_lines([
+            "*spam-2*",
+            "*ham-2*",
+        ])
