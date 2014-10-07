@@ -73,9 +73,9 @@ Different options for test IDs
 ------------------------------------
 
 pytest will build a string that is the test ID for each set of values in a
-parametrized test. These IDs can be used with "-k" to select specific cases
+parametrized test. These IDs can be used with ``-k`` to select specific cases
 to run, and they will also identify the specific case when one is failing.
-Running pytest with --collect-only will show the generated IDs.
+Running pytest with ``--collect-only`` will show the generated IDs.
 
 Numbers, strings, booleans and None will have their usual string representation
 used in the test ID. For other objects, pytest will make a string based on
