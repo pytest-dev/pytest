@@ -67,20 +67,39 @@ class TagTracerSub:
     def get(self, name):
         return self.__class__(self.root, self.tags + (name,))
 
+
 def add_method_controller(cls, func):
+    """ Use func as the method controler for the method found
+    at the class named func.__name__.
+
+    A method controler is invoked with the same arguments
+    as the function it substitutes and is required to yield once
+    which will trigger calling the controlled method.
+    If it yields a second value, the value will be returned
+    as the result of the invocation.  Errors in the controlled function
+    are re-raised to the controller during the first yield.
+    """
     name = func.__name__
     oldcall = getattr(cls, name)
     def wrap_exec(*args, **kwargs):
         gen = func(*args, **kwargs)
         next(gen)   # first yield
-        res = oldcall(*args, **kwargs)
         try:
-            gen.send(res)
-        except StopIteration:
-            pass
+            res = oldcall(*args, **kwargs)
+        except Exception:
+            excinfo = sys.exc_info()
+            try:
+                # reraise exception to controller
+                res = gen.throw(*excinfo)
+            except StopIteration:
+                py.builtin._reraise(*excinfo)
         else:
-            raise ValueError("expected StopIteration")
+            try:
+                res = gen.send(res)
+            except StopIteration:
+                pass
         return res
+
     setattr(cls, name, wrap_exec)
     return lambda: setattr(cls, name, oldcall)
 
