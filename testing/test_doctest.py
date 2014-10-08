@@ -289,3 +289,37 @@ class TestDoctests:
         """)
         reprec = testdir.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(failed=1, passed=1)
+
+    def test_ignored_whitespace(self, testdir):
+        testdir.makeini("""
+            [pytest]
+            doctest_optionflags = ELLIPSIS NORMALIZE_WHITESPACE
+        """)
+        p = testdir.makepyfile("""
+            class MyClass:
+                '''
+                >>> a = "foo    "
+                >>> print(a)
+                foo
+                '''
+                pass
+        """)
+        reprec = testdir.inline_run(p, "--doctest-modules")
+        reprec.assertoutcome(passed=1)
+
+    def test_non_ignored_whitespace(self, testdir):
+        testdir.makeini("""
+            [pytest]
+            doctest_optionflags = ELLIPSIS
+        """)
+        p = testdir.makepyfile("""
+            class MyClass:
+                '''
+                >>> a = "foo    "
+                >>> print(a)
+                foo
+                '''
+                pass
+        """)
+        reprec = testdir.inline_run(p, "--doctest-modules")
+        reprec.assertoutcome(failed=1, passed=0)
