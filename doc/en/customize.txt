@@ -126,3 +126,8 @@ Builtin configuration file options
    derived class.
 
    See :ref:`change naming conventions` for examples.
+
+.. confval:: doctest_optionflags
+
+   One or more doctest flag names from the standard ``doctest`` module.
+   `See how py.test handles doctests <doctest.html>`_.
