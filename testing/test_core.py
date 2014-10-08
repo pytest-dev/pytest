@@ -280,8 +280,9 @@ class TestBootstrapping:
         pm.register(p)
 
         assert pm.trace.root.indent == indent
-        assert len(l) == 1
+        assert len(l) == 2
         assert 'pytest_plugin_registered' in l[0]
+        assert 'finish' in l[1]
         pytest.raises(ValueError, lambda: pm.register(api1()))
         assert pm.trace.root.indent == indent
         assert saveindent[0] > indent
@@ -555,7 +556,7 @@ class TestMultiCall:
             l.append("m2 finish")
         m2.hookwrapper = True
         res = MultiCall([m2, m1], {}).execute()
-        assert res == [1, 2]
+        assert res == []
         assert l == ["m1 init", "m2 init", "m2 finish", "m1 finish"]
 
     def test_listattr_hookwrapper_ordering(self):
@@ -593,10 +594,8 @@ class TestMultiCall:
         m1.hookwrapper = True
 
         mc = MultiCall([m1], {})
-        with pytest.raises(mc.WrongHookWrapper) as ex:
+        with pytest.raises(TypeError):
             mc.execute()
-        assert ex.value.func == m1
-        assert ex.value.message
 
     def test_hookwrapper_too_many_yield(self):
         def m1():
@@ -605,10 +604,10 @@ class TestMultiCall:
         m1.hookwrapper = True
 
         mc = MultiCall([m1], {})
-        with pytest.raises(mc.WrongHookWrapper) as ex:
+        with pytest.raises(RuntimeError) as ex:
             mc.execute()
-        assert ex.value.func == m1
-        assert ex.value.message
+        assert "m1" in str(ex.value)
+        assert "test_core.py:" in str(ex.value)
 
 
 class TestHookRelay:
@@ -774,9 +773,10 @@ class TestWrapMethod:
         l = []
         def f(self):
             l.append(1)
-            yield
+            box = yield
+            assert box.result == "A.f"
             l.append(2)
-        undo = add_method_controller(A, f)
+        undo = add_method_wrapper(A, f)
 
         assert A().f() == "A.f"
         assert l == [1,2]
@@ -793,14 +793,10 @@ class TestWrapMethod:
         l = []
         def error(self, val):
             l.append(val)
-            try:
-                yield
-            except ValueError:
-                l.append(None)
-                raise
+            yield
+            l.append(None)
 
-
-        undo = add_method_controller(A, error)
+        undo = add_method_wrapper(A, error)
 
         with pytest.raises(ValueError):
             A().error(42)
@@ -817,12 +813,10 @@ class TestWrapMethod:
                 raise ValueError(val)
 
         def error(self, val):
-            try:
-                yield
-            except ValueError:
-                yield 2
+            box = yield
+            box.force_result(2)
 
-        add_method_controller(A, error)
+        add_method_wrapper(A, error)
         assert A().error(42) == 2
 
     def test_reraise_on_controller_StopIteration(self):
@@ -836,7 +830,7 @@ class TestWrapMethod:
             except ValueError:
                 pass
 
-        add_method_controller(A, error)
+        add_method_wrapper(A, error)
         with pytest.raises(ValueError):
             A().error(42)
 
@@ -848,13 +842,11 @@ class TestWrapMethod:
 
         l = []
         def error(self):
-            try:
-                yield (1,), {'val2': 2}
-            except ValueError as ex:
-                assert ex.args == (3,)
-                l.append(1)
+            box = yield (1,), {'val2': 2}
+            assert box.excinfo[1].args == (3,)
+            l.append(1)
 
-        add_method_controller(A, error)
+        add_method_wrapper(A, error)
         with pytest.raises(ValueError):
             A().error()
         assert l == [1]
