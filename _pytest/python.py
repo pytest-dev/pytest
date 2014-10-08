@@ -183,17 +183,18 @@ def pytestconfig(request):
     return request.config
 
 
-def pytest_pyfunc_call(__multicall__, pyfuncitem):
-    if not __multicall__.execute():
-        testfunction = pyfuncitem.obj
-        if pyfuncitem._isyieldedfunction():
-            testfunction(*pyfuncitem._args)
-        else:
-            funcargs = pyfuncitem.funcargs
-            testargs = {}
-            for arg in pyfuncitem._fixtureinfo.argnames:
-                testargs[arg] = funcargs[arg]
-            testfunction(**testargs)
+@pytest.mark.trylast
+def pytest_pyfunc_call(pyfuncitem):
+    testfunction = pyfuncitem.obj
+    if pyfuncitem._isyieldedfunction():
+        testfunction(*pyfuncitem._args)
+    else:
+        funcargs = pyfuncitem.funcargs
+        testargs = {}
+        for arg in pyfuncitem._fixtureinfo.argnames:
+            testargs[arg] = funcargs[arg]
+        testfunction(**testargs)
+    return True
 
 def pytest_collect_file(path, parent):
     ext = path.ext
@@ -210,30 +211,31 @@ def pytest_collect_file(path, parent):
 def pytest_pycollect_makemodule(path, parent):
     return Module(path, parent)
 
-def pytest_pycollect_makeitem(__multicall__, collector, name, obj):
-    res = __multicall__.execute()
+@pytest.mark.hookwrapper
+def pytest_pycollect_makeitem(collector, name, obj):
+    outcome = yield
+    res = outcome.get_result()
     if res is not None:
-        return res
+        raise StopIteration
+    # nothing was collected elsewhere, let's do it here
     if isclass(obj):
-        #if hasattr(collector.obj, 'unittest'):
-        #    return # we assume it's a mixin class for a TestCase derived one
         if collector.classnamefilter(name):
             Class = collector._getcustomclass("Class")
-            return Class(name, parent=collector)
-    elif collector.funcnamefilter(name) and hasattr(obj, "__call__") and \
+            outcome.force_result(Class(name, parent=collector))
+    elif collector.funcnamefilter(name) and hasattr(obj, "__call__") and\
         getfixturemarker(obj) is None:
-        # mock seems to store unbound methods (issue473), let's normalize it
+        # mock seems to store unbound methods (issue473), normalize it
         obj = getattr(obj, "__func__", obj)
         if not isfunction(obj):
             collector.warn(code="C2", message=
                 "cannot collect %r because it is not a function."
                 % name, )
-            return
         if getattr(obj, "__test__", True):
             if is_generator(obj):
-                return Generator(name, parent=collector)
+                res = Generator(name, parent=collector)
             else:
-                return list(collector._genfunctions(name, obj))
+                res = list(collector._genfunctions(name, obj))
+            outcome.force_result(res)
 
 def is_generator(func):
     try:

@@ -525,12 +525,15 @@ class TestConftestCustomization:
     def test_customized_pymakeitem(self, testdir):
         b = testdir.mkdir("a").mkdir("b")
         b.join("conftest.py").write(py.code.Source("""
-            def pytest_pycollect_makeitem(__multicall__):
-                result = __multicall__.execute()
-                if result:
-                    for func in result:
-                        func._some123 = "world"
-                return result
+            import pytest
+            @pytest.mark.hookwrapper
+            def pytest_pycollect_makeitem():
+                outcome = yield
+                if outcome.excinfo is None:
+                    result = outcome.result
+                    if result:
+                        for func in result:
+                            func._some123 = "world"
         """))
         b.join("test_module.py").write(py.code.Source("""
             import pytest

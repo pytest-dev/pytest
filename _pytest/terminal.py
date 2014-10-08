@@ -345,8 +345,10 @@ class TerminalReporter:
                 indent = (len(stack) - 1) * "  "
                 self._tw.line("%s%s" % (indent, col))
 
-    def pytest_sessionfinish(self, exitstatus, __multicall__):
-        __multicall__.execute()
+    @pytest.mark.hookwrapper
+    def pytest_sessionfinish(self, exitstatus):
+        outcome = yield
+        outcome.get_result()
         self._tw.line("")
         if exitstatus in (0, 1, 2, 4):
             self.summary_errors()

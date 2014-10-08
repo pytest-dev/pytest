@@ -16,7 +16,7 @@ def get_skip_exceptions():
     return tuple(skip_classes)
 
 
-def pytest_runtest_makereport(__multicall__, item, call):
+def pytest_runtest_makereport(item, call):
     if call.excinfo and call.excinfo.errisinstance(get_skip_exceptions()):
         # let's substitute the excinfo with a pytest.skip one
         call2 = call.__class__(lambda:

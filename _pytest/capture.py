@@ -29,8 +29,8 @@ def pytest_addoption(parser):
         help="shortcut for --capture=no.")
 
 
-@pytest.mark.tryfirst
-def pytest_load_initial_conftests(early_config, parser, args, __multicall__):
+@pytest.mark.hookwrapper
+def pytest_load_initial_conftests(early_config, parser, args):
     ns = early_config.known_args_namespace
     pluginmanager = early_config.pluginmanager
     capman = CaptureManager(ns.capture)
@@ -47,15 +47,11 @@ def pytest_load_initial_conftests(early_config, parser, args, __multicall__):
 
     # finally trigger conftest loading but while capturing (issue93)
     capman.init_capturings()
-    try:
-        try:
-            return __multicall__.execute()
-        finally:
-            out, err = capman.suspendcapture()
-    except:
+    outcome = yield
+    out, err = capman.suspendcapture()
+    if outcome.excinfo is not None:
         sys.stdout.write(out)
         sys.stderr.write(err)
-        raise
 
 
 class CaptureManager:
@@ -105,20 +101,19 @@ class CaptureManager:
         if capfuncarg is not None:
             capfuncarg.close()
 
-    @pytest.mark.tryfirst
-    def pytest_make_collect_report(self, __multicall__, collector):
-        if not isinstance(collector, pytest.File):
-            return
-        self.resumecapture()
-        try:
-            rep = __multicall__.execute()
-        finally:
+    @pytest.mark.hookwrapper
+    def pytest_make_collect_report(self, collector):
+        if isinstance(collector, pytest.File):
+            self.resumecapture()
+            outcome = yield
             out, err = self.suspendcapture()
-        if out:
-            rep.sections.append(("Captured stdout", out))
-        if err:
-            rep.sections.append(("Captured stderr", err))
-        return rep
+            rep = outcome.get_result()
+            if out:
+                rep.sections.append(("Captured stdout", out))
+            if err:
+                rep.sections.append(("Captured stderr", err))
+        else:
+            yield
 
     @pytest.mark.hookwrapper
     def pytest_runtest_setup(self, item):

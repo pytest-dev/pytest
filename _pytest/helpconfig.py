@@ -22,18 +22,21 @@ def pytest_addoption(parser):
                help="store internal tracing debug information in 'pytestdebug.log'.")
 
 
-def pytest_cmdline_parse(__multicall__):
-    config = __multicall__.execute()
+@pytest.mark.hookwrapper
+def pytest_cmdline_parse():
+    outcome = yield
+    config = outcome.get_result()
     if config.option.debug:
         path = os.path.abspath("pytestdebug.log")
         f = open(path, 'w')
         config._debugfile = f
-        f.write("versions pytest-%s, py-%s, python-%s\ncwd=%s\nargs=%s\n\n" %(
-            pytest.__version__, py.__version__, ".".join(map(str, sys.version_info)),
+        f.write("versions pytest-%s, py-%s, "
+                "python-%s\ncwd=%s\nargs=%s\n\n" %(
+            pytest.__version__, py.__version__,
+            ".".join(map(str, sys.version_info)),
             os.getcwd(), config._origargs))
         config.pluginmanager.set_tracing(f.write)
         sys.stderr.write("writing pytestdebug information to %s\n" % path)
-    return config
 
 @pytest.mark.trylast
 def pytest_unconfigure(config):
