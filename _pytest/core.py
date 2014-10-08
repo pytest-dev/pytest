@@ -10,6 +10,8 @@ import py
 assert py.__version__.split(".")[:2] >= ['1', '4'], ("installation problem: "
     "%s is too old, remove or upgrade 'py'" % (py.__version__))
 
+py3 = sys.version_info > (3,0)
+
 class TagTracer:
     def __init__(self):
         self._tag2proc = {}
@@ -68,40 +70,60 @@ class TagTracerSub:
         return self.__class__(self.root, self.tags + (name,))
 
 
-def add_method_controller(cls, func):
-    """ Use func as the method controler for the method found
-    at the class named func.__name__.
+def add_method_wrapper(cls, wrapper_func):
+    """ Substitute the function named "wrapperfunc.__name__" at class
+    "cls" with a function that wraps the call to the original function.
+    Return an undo function which can be called to reset the class to use
+    the old method again.
 
-    A method controler is invoked with the same arguments
-    as the function it substitutes and is required to yield once
-    which will trigger calling the controlled method.
-    If it yields a second value, the value will be returned
-    as the result of the invocation.  Errors in the controlled function
-    are re-raised to the controller during the first yield.
+    wrapper_func is called with the same arguments as the method
+    it wraps and its result is used as a wrap_controller for
+    calling the original function.
     """
-    name = func.__name__
+    name = wrapper_func.__name__
     oldcall = getattr(cls, name)
     def wrap_exec(*args, **kwargs):
-        gen = func(*args, **kwargs)
-        next(gen)   # first yield
-        try:
-            res = oldcall(*args, **kwargs)
-        except Exception:
-            excinfo = sys.exc_info()
-            try:
-                # reraise exception to controller
-                res = gen.throw(*excinfo)
-            except StopIteration:
-                py.builtin._reraise(*excinfo)
-        else:
-            try:
-                res = gen.send(res)
-            except StopIteration:
-                pass
-        return res
+        gen = wrapper_func(*args, **kwargs)
+        return wrapped_call(gen, lambda: oldcall(*args, **kwargs))
 
     setattr(cls, name, wrap_exec)
     return lambda: setattr(cls, name, oldcall)
+
+
+def wrapped_call(wrap_controller, func):
+    """ Wrap calling to a function with a generator.  The first yield
+    will trigger calling the function and receive an according CallOutcome
+    object representing an exception or a result.
+    """
+    next(wrap_controller)   # first yield
+    call_outcome = CallOutcome(func)
+    try:
+        wrap_controller.send(call_outcome)
+        co = wrap_controller.gi_frame.f_code
+        raise RuntimeError("wrap_controller for %r %s:%d has second yield" %
+                           (co.co_name, co.co_filename, co.co_firstlineno))
+    except StopIteration:
+        pass
+    if call_outcome.excinfo is None:
+        return call_outcome.result
+    else:
+        ex = call_outcome.excinfo
+        if py3:
+            raise ex[1].with_traceback(ex[2])
+        py.builtin._reraise(*ex)
+
+
+class CallOutcome:
+    excinfo = None
+    def __init__(self, func):
+        try:
+            self.result = func()
+        except Exception:
+            self.excinfo = sys.exc_info()
+
+    def force_result(self, result):
+        self.result = result
+        self.excinfo = None
 
 
 class PluginManager(object):
@@ -125,15 +147,12 @@ class PluginManager(object):
             trace = self.hookrelay.trace
             trace.root.indent += 1
             trace(self.name, kwargs)
-            res = None
-            try:
-                res = yield
-            finally:
-                if res:
-                    trace("finish", self.name, "-->", res)
-                trace.root.indent -= 1
+            box = yield
+            if box.excinfo is None:
+                trace("finish", self.name, "-->", box.result)
+            trace.root.indent -= 1
 
-        undo = add_method_controller(HookCaller, _docall)
+        undo = add_method_wrapper(HookCaller, _docall)
         self.add_shutdown(undo)
 
     def do_configure(self, config):
@@ -356,39 +375,19 @@ class MultiCall:
         return "<MultiCall %s, kwargs=%r>" %(status, self.kwargs)
 
     def execute(self):
-        next_finalizers = []
-        try:
-            all_kwargs = self.kwargs
-            while self.methods:
-                method = self.methods.pop()
-                args = [all_kwargs[argname] for argname in varnames(method)]
-                if hasattr(method, "hookwrapper"):
-                    it = method(*args)
-                    next = getattr(it, "next", None)
-                    if next is None:
-                        next = getattr(it, "__next__", None)
-                        if next is None:
-                            raise self.WrongHookWrapper(method,
-                                "wrapper does not contain a yield")
-                    res = next()
-                    next_finalizers.append((method, next))
-                else:
-                    res = method(*args)
-                if res is not None:
-                    self.results.append(res)
-                    if self.firstresult:
-                        return res
-            if not self.firstresult:
-                return self.results
-        finally:
-            for method, fin in reversed(next_finalizers):
-                try:
-                    fin()
-                except StopIteration:
-                    pass
-                else:
-                    raise self.WrongHookWrapper(method,
-                                "wrapper contain more than one yield")
+        all_kwargs = self.kwargs
+        while self.methods:
+            method = self.methods.pop()
+            args = [all_kwargs[argname] for argname in varnames(method)]
+            if hasattr(method, "hookwrapper"):
+                return wrapped_call(method(*args), self.execute)
+            res = method(*args)
+            if res is not None:
+                self.results.append(res)
+                if self.firstresult:
+                    return res
+        if not self.firstresult:
+            return self.results
 
 
 def varnames(func, startindex=None):
