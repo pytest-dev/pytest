@@ -95,7 +95,10 @@ def wrapped_call(wrap_controller, func):
     will trigger calling the function and receive an according CallOutcome
     object representing an exception or a result.
     """
-    next(wrap_controller)   # first yield
+    try:
+        next(wrap_controller)   # first yield
+    except StopIteration:
+        return
     call_outcome = CallOutcome(func)
     try:
         wrap_controller.send(call_outcome)
@@ -104,13 +107,7 @@ def wrapped_call(wrap_controller, func):
                            (co.co_name, co.co_filename, co.co_firstlineno))
     except StopIteration:
         pass
-    if call_outcome.excinfo is None:
-        return call_outcome.result
-    else:
-        ex = call_outcome.excinfo
-        if py3:
-            raise ex[1].with_traceback(ex[2])
-        py.builtin._reraise(*ex)
+    return call_outcome.get_result()
 
 
 class CallOutcome:
@@ -124,6 +121,15 @@ class CallOutcome:
     def force_result(self, result):
         self.result = result
         self.excinfo = None
+
+    def get_result(self):
+        if self.excinfo is None:
+            return self.result
+        else:
+            ex = self.excinfo
+            if py3:
+                raise ex[1].with_traceback(ex[2])
+            py.builtin._reraise(*ex)
 
 
 class PluginManager(object):

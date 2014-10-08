@@ -1,5 +1,7 @@
 """ submit failure or test session information to a pastebin service. """
+import pytest
 import py, sys
+import tempfile
 
 class url:
     base = "http://bpaste.net"
@@ -13,9 +15,8 @@ def pytest_addoption(parser):
         choices=['failed', 'all'],
         help="send failed|all info to bpaste.net pastebin service.")
 
-def pytest_configure(__multicall__, config):
-    import tempfile
-    __multicall__.execute()
+@pytest.mark.trylast
+def pytest_configure(config):
     if config.option.pastebin == "all":
         config._pastebinfile = tempfile.TemporaryFile('w+')
         tr = config.pluginmanager.getplugin('terminalreporter')

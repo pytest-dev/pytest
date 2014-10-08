@@ -509,11 +509,13 @@ class TestKeywordSelection:
                     pass
         """)
         testdir.makepyfile(conftest="""
-            def pytest_pycollect_makeitem(__multicall__, name):
+            import pytest
+            @pytest.mark.hookwrapper
+            def pytest_pycollect_makeitem(name):
+                outcome = yield
                 if name == "TestClass":
-                    item = __multicall__.execute()
+                    item = outcome.get_result()
                     item.extra_keyword_matches.add("xxx")
-                    return item
         """)
         reprec = testdir.inline_run(p.dirpath(), '-s', '-k', keyword)
         py.builtin.print_("keyword", repr(keyword))

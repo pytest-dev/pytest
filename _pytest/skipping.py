@@ -57,7 +57,7 @@ class MarkEvaluator:
 
     @property
     def holder(self):
-        return self.item.keywords.get(self.name, None)
+        return self.item.keywords.get(self.name)
 
     def __bool__(self):
         return bool(self.holder)
@@ -75,9 +75,7 @@ class MarkEvaluator:
     def istrue(self):
         try:
             return self._istrue()
-        except KeyboardInterrupt:
-            raise
-        except:
+        except Exception:
             self.exc = sys.exc_info()
             if isinstance(self.exc[1], SyntaxError):
                 msg = [" " * (self.exc[1].offset + 4) + "^",]
@@ -153,44 +151,32 @@ def check_xfail_no_run(item):
             if not evalxfail.get('run', True):
                 pytest.xfail("[NOTRUN] " + evalxfail.getexplanation())
 
-def pytest_runtest_makereport(__multicall__, item, call):
+@pytest.mark.hookwrapper
+def pytest_runtest_makereport(item, call):
+    outcome = yield
+    rep = outcome.get_result()
+    evalxfail = getattr(item, '_evalxfail', None)
     # unitttest special case, see setting of _unexpectedsuccess
-    if hasattr(item, '_unexpectedsuccess'):
-        rep = __multicall__.execute()
-        if rep.when == "call":
-            # we need to translate into how pytest encodes xpass
-            rep.wasxfail = "reason: " + repr(item._unexpectedsuccess)
-            rep.outcome = "failed"
-        return rep
-    if not (call.excinfo and
-        call.excinfo.errisinstance(pytest.xfail.Exception)):
-        evalxfail = getattr(item, '_evalxfail', None)
-        if not evalxfail:
-            return
-    if call.excinfo and call.excinfo.errisinstance(pytest.xfail.Exception):
-        if not item.config.getvalue("runxfail"):
-            rep = __multicall__.execute()
-            rep.wasxfail = "reason: " + call.excinfo.value.msg
-            rep.outcome = "skipped"
-            return rep
-    rep = __multicall__.execute()
-    evalxfail = item._evalxfail
-    if not rep.skipped:
-        if not item.config.option.runxfail:
-            if evalxfail.wasvalid() and evalxfail.istrue():
-                if call.excinfo:
-                    if evalxfail.invalidraise(call.excinfo.value):
-                        rep.outcome = "failed"
-                        return rep
-                    else:
-                        rep.outcome = "skipped"
-                elif call.when == "call":
-                    rep.outcome = "failed"
-                else:
-                    return rep
+    if hasattr(item, '_unexpectedsuccess') and rep.when == "call":
+        # we need to translate into how pytest encodes xpass
+        rep.wasxfail = "reason: " + repr(item._unexpectedsuccess)
+        rep.outcome = "failed"
+    elif item.config.option.runxfail:
+        pass   # don't interefere
+    elif call.excinfo and call.excinfo.errisinstance(pytest.xfail.Exception):
+        rep.wasxfail = "reason: " + call.excinfo.value.msg
+        rep.outcome = "skipped"
+    elif evalxfail and not rep.skipped and evalxfail.wasvalid() and \
+        evalxfail.istrue():
+        if call.excinfo:
+            if evalxfail.invalidraise(call.excinfo.value):
+                rep.outcome = "failed"
+            else:
+                rep.outcome = "skipped"
                 rep.wasxfail = evalxfail.getexplanation()
-                return rep
-    return rep
+        elif call.when == "call":
+            rep.outcome = "failed"  # xpass outcome
+            rep.wasxfail = evalxfail.getexplanation()
 
 # called by terminalreporter progress reporting
 def pytest_report_teststatus(report):
