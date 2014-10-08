@@ -6,6 +6,8 @@ from _pytest.python import FixtureRequest, FuncFixtureInfo
 from py._code.code import TerminalRepr, ReprFileLocation
 
 def pytest_addoption(parser):
+    parser.addini('doctest_optionflags', 'option flags for doctests',
+        type="args", default=["ELLIPSIS"])
     group = parser.getgroup("collect")
     group.addoption("--doctest-modules",
         action="store_true", default=False,
@@ -87,6 +89,27 @@ class DoctestItem(pytest.Item):
     def reportinfo(self):
         return self.fspath, None, "[doctest] %s" % self.name
 
+def _get_flag_lookup():
+    import doctest
+    return dict(DONT_ACCEPT_TRUE_FOR_1=doctest.DONT_ACCEPT_TRUE_FOR_1,
+                DONT_ACCEPT_BLANKLINE=doctest.DONT_ACCEPT_BLANKLINE,
+                NORMALIZE_WHITESPACE=doctest.NORMALIZE_WHITESPACE,
+                ELLIPSIS=doctest.ELLIPSIS,
+                IGNORE_EXCEPTION_DETAIL=doctest.IGNORE_EXCEPTION_DETAIL,
+                COMPARISON_FLAGS=doctest.COMPARISON_FLAGS)
+
+def get_optionflags(parent):
+    import doctest
+    optionflags_str = parent.config.getini("doctest_optionflags")
+    flag_lookup_table = _get_flag_lookup()
+    if not optionflags_str:
+        return doctest.ELLIPSIS
+
+    flag_acc = 0
+    for flag in optionflags_str:
+        flag_acc |= flag_lookup_table[flag]
+    return flag_acc
+
 class DoctestTextfile(DoctestItem, pytest.File):
     def runtest(self):
         import doctest
@@ -101,7 +124,7 @@ class DoctestTextfile(DoctestItem, pytest.File):
         fixture_request._fillfixtures()
         failed, tot = doctest.testfile(
             str(self.fspath), module_relative=False,
-            optionflags=doctest.ELLIPSIS,
+            optionflags=get_optionflags(self),
             extraglobs=dict(getfixture=fixture_request.getfuncargvalue),
             raise_on_error=True, verbose=0)
 
@@ -119,7 +142,8 @@ class DoctestModule(pytest.File):
         doctest_globals = dict(getfixture=fixture_request.getfuncargvalue)
         # uses internal doctest module parsing mechanism
         finder = doctest.DocTestFinder()
-        runner = doctest.DebugRunner(verbose=0, optionflags=doctest.ELLIPSIS)
+        optionflags= get_optionflags(self)
+        runner = doctest.DebugRunner(verbose=0, optionflags=optionflags)
         for test in finder.find(module, module.__name__,
                                 extraglobs=doctest_globals):
             if test.examples: # skip empty doctests
