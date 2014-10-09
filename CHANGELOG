@@ -10,11 +10,10 @@
 
 - use hookwrapper mechanism in builtin pytest plugins.
 
+- add a doctest option for doctest flags, thanks Holger Peters.
 
 2.6.4.dev
 ----------
-
-- add a doctest option for doctest flags
 
 - Improve assertion failure reporting on iterables, by using ndiff and pprint.
 
