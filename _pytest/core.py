@@ -89,30 +89,34 @@ def add_method_wrapper(cls, wrapper_func):
     setattr(cls, name, wrap_exec)
     return lambda: setattr(cls, name, oldcall)
 
+def raise_wrapfail(wrap_controller, msg):
+    co = wrap_controller.gi_code
+    raise RuntimeError("wrap_controller at %r %s:%d %s" %
+                   (co.co_name, co.co_filename, co.co_firstlineno, msg))
 
 def wrapped_call(wrap_controller, func):
-    """ Wrap calling to a function with a generator.  The first yield
-    will trigger calling the function and receive an according CallOutcome
-    object representing an exception or a result.  The generator then
-    needs to finish (raise StopIteration) in order for the wrapped call
-    to complete.
+    """ Wrap calling to a function with a generator which needs to yield
+    exactly once.  The yield point will trigger calling the wrapped function
+    and return its CallOutcome to the yield point.  The generator then needs
+    to finish (raise StopIteration) in order for the wrapped call to complete.
     """
     try:
         next(wrap_controller)   # first yield
     except StopIteration:
-        return
+        raise_wrapfail(wrap_controller, "did not yield")
     call_outcome = CallOutcome(func)
     try:
         wrap_controller.send(call_outcome)
-        co = wrap_controller.gi_frame.f_code
-        raise RuntimeError("wrap_controller for %r %s:%d has second yield" %
-                           (co.co_name, co.co_filename, co.co_firstlineno))
+        raise_wrapfail(wrap_controller, "has second yield")
     except StopIteration:
         pass
     return call_outcome.get_result()
 
 
 class CallOutcome:
+    """ Outcome of a function call, either an exception or a proper result.
+    Calling the ``get_result`` method will return the result or reraise
+    the exception raised when the function was called. """
     excinfo = None
     def __init__(self, func):
         try:
