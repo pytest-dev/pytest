@@ -1,4 +1,17 @@
-Unreleased
+2.7.0.dev
+----------
+
+- introduce and document new hookwrapper mechanism useful for plugins
+  which want to wrap the execution of certain hooks for their purposes.
+  This supersedes the undocumented ``__multicall__`` protocol which
+  pytest itself and some external plugins use.  Note that pytest-2.8
+  is scheduled to drop supporting the old ``__multicall__`` 
+  and only support the hookwrapper protocol.
+
+- use hookwrapper mechanism in builtin pytest plugins.
+
+
+2.6.4.dev
 ----------
 
 - Improve assertion failure reporting on iterables, by using ndiff and pprint.
