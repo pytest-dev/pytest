@@ -14,6 +14,8 @@
 2.6.4.dev
 ----------
 
+- add a doctest option for doctest flags
+
 - Improve assertion failure reporting on iterables, by using ndiff and pprint.
 
 - removed outdated japanese docs from source tree.
