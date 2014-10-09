@@ -93,7 +93,9 @@ def add_method_wrapper(cls, wrapper_func):
 def wrapped_call(wrap_controller, func):
     """ Wrap calling to a function with a generator.  The first yield
     will trigger calling the function and receive an according CallOutcome
-    object representing an exception or a result.
+    object representing an exception or a result.  The generator then
+    needs to finish (raise StopIteration) in order for the wrapped call
+    to complete.
     """
     try:
         next(wrap_controller)   # first yield
@@ -361,13 +363,6 @@ def importplugin(importspec):
 
 class MultiCall:
     """ execute a call into multiple python functions/methods. """
-
-    class WrongHookWrapper(Exception):
-        """ a hook wrapper does not behave correctly. """
-        def __init__(self, func, message):
-            Exception.__init__(self, func, message)
-            self.func = func
-            self.message = message
 
     def __init__(self, methods, kwargs, firstresult=False):
         self.methods = list(methods)
