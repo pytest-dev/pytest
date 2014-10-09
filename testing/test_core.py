@@ -184,8 +184,6 @@ class TestBootstrapping:
         assert pp.getplugin('hello') == a2
         pp.unregister(a1)
         assert not pp.isregistered(a1)
-        pp.unregister(name="hello")
-        assert not pp.isregistered(a2)
 
     def test_pm_ordering(self):
         pp = PluginManager()
@@ -612,21 +610,23 @@ class TestMultiCall:
 
 class TestHookRelay:
     def test_happypath(self):
-        pm = PluginManager()
         class Api:
             def hello(self, arg):
                 "api hook 1"
-
-        mcm = HookRelay(hookspecs=Api, pm=pm, prefix="he")
-        assert hasattr(mcm, 'hello')
-        assert repr(mcm.hello).find("hello") != -1
+        pm = PluginManager([Api], prefix="he")
+        hook = pm.hook
+        assert hasattr(hook, 'hello')
+        assert repr(hook.hello).find("hello") != -1
         class Plugin:
             def hello(self, arg):
                 return arg + 1
-        pm.register(Plugin())
-        l = mcm.hello(arg=3)
+        plugin = Plugin()
+        pm.register(plugin)
+        l = hook.hello(arg=3)
         assert l == [4]
-        assert not hasattr(mcm, 'world')
+        assert not hasattr(hook, 'world')
+        pm.unregister(plugin)
+        assert hook.hello(arg=3) == []
 
     def test_argmismatch(self):
         class Api:
@@ -649,18 +649,16 @@ class TestHookRelay:
         pytest.raises(TypeError, lambda: mcm.hello(3))
 
     def test_firstresult_definition(self):
-        pm = PluginManager()
         class Api:
             def hello(self, arg):
                 "api hook 1"
             hello.firstresult = True
-
-        mcm = HookRelay(hookspecs=Api, pm=pm, prefix="he")
+        pm = PluginManager([Api], "he")
         class Plugin:
             def hello(self, arg):
                 return arg + 1
         pm.register(Plugin())
-        res = mcm.hello(arg=3)
+        res = pm.hook.hello(arg=3)
         assert res == 4
 
 class TestTracer:

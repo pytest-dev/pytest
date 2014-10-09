@@ -139,6 +139,7 @@ class PluginManager(object):
         self._name2plugin = {}
         self._plugins = []
         self._conftestplugins = []
+        self._plugin2hookcallers = {}
         self._warnings = []
         self.trace = TagTracer().get("pluginmanage")
         self._plugin_distinfo = []
@@ -182,7 +183,8 @@ class PluginManager(object):
         reg = getattr(self, "_registercallback", None)
         if reg is not None:
             reg(plugin, name)  # may call addhooks
-        self.hook._scan_plugin(plugin)
+        hookcallers = list(self.hook._scan_plugin(plugin))
+        self._plugin2hookcallers[plugin] = hookcallers
         self._name2plugin[name] = plugin
         if conftest:
             self._conftestplugins.append(plugin)
@@ -191,11 +193,12 @@ class PluginManager(object):
                 self._plugins.append(plugin)
             else:
                 self._plugins.insert(0, plugin)
+        # finally make sure that the methods of the new plugin take part
+        for hookcaller in hookcallers:
+            hookcaller.scan_methods()
         return True
 
-    def unregister(self, plugin=None, name=None):
-        if plugin is None:
-            plugin = self.getplugin(name=name)
+    def unregister(self, plugin):
         try:
             self._plugins.remove(plugin)
         except KeyError:
@@ -203,6 +206,9 @@ class PluginManager(object):
         for name, value in list(self._name2plugin.items()):
             if value == plugin:
                 del self._name2plugin[name]
+        hookcallers = self._plugin2hookcallers.pop(plugin)
+        for hookcaller in hookcallers:
+            hookcaller.scan_methods()
 
     def add_shutdown(self, func):
         self._shutdown.append(func)
@@ -217,9 +223,7 @@ class PluginManager(object):
     def isregistered(self, plugin, name=None):
         if self.getplugin(name) is not None:
             return True
-        for val in self._name2plugin.values():
-            if plugin == val:
-                return True
+        return plugin in self._plugins or plugin in self._conftestplugins
 
     def addhooks(self, spec, prefix="pytest_"):
         self.hook._addhooks(spec, prefix=prefix)
@@ -281,8 +285,9 @@ class PluginManager(object):
     def consider_pluginarg(self, arg):
         if arg.startswith("no:"):
             name = arg[3:]
-            if self.getplugin(name) is not None:
-                self.unregister(None, name=name)
+            plugin = self.getplugin(name)
+            if plugin is not None:
+                self.unregister(plugin)
             self._name2plugin[name] = -1
         else:
             if self.getplugin(arg) is None:
@@ -485,18 +490,18 @@ class HookRelay:
                          "available hookargs: %s",
                          arg, formatdef(method),
                            ", ".join(hook.argnames))
-            getattr(self, name).clear_method_cache()
+            yield hook
 
 
 class HookCaller:
-    def __init__(self, hookrelay, name, firstresult, argnames, methods=None):
+    def __init__(self, hookrelay, name, firstresult, argnames, methods=()):
         self.hookrelay = hookrelay
         self.name = name
         self.firstresult = firstresult
-        self.methods = methods
         self.argnames = ["__multicall__"]
         self.argnames.extend(argnames)
-        assert "self" not in argnames  # prevent oversights
+        assert "self" not in argnames  # sanity check
+        self.methods = methods
 
     def new_cached_caller(self, methods):
         return HookCaller(self.hookrelay, self.name, self.firstresult,
@@ -505,14 +510,11 @@ class HookCaller:
     def __repr__(self):
         return "<HookCaller %r>" %(self.name,)
 
-    def clear_method_cache(self):
-        self.methods = None
+    def scan_methods(self):
+        self.methods = self.hookrelay._pm.listattr(self.name)
 
     def __call__(self, **kwargs):
-        methods = self.methods
-        if methods is None:
-            self.methods = methods = self.hookrelay._pm.listattr(self.name)
-        return self._docall(methods, kwargs)
+        return self._docall(self.methods, kwargs)
 
     def callextra(self, methods, **kwargs):
         return self._docall(self.methods + methods, kwargs)
