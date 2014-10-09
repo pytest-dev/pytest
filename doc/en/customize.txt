@@ -130,4 +130,4 @@ Builtin configuration file options
 .. confval:: doctest_optionflags
 
    One or more doctest flag names from the standard ``doctest`` module.
-   `See how py.test handles doctests <doctest.html>`_.
+   :doc:`See how py.test handles doctests <doctest>`.
