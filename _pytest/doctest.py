@@ -99,7 +99,6 @@ def _get_flag_lookup():
                 COMPARISON_FLAGS=doctest.COMPARISON_FLAGS)
 
 def get_optionflags(parent):
-    import doctest
     optionflags_str = parent.config.getini("doctest_optionflags")
     flag_lookup_table = _get_flag_lookup()
     flag_acc = 0
