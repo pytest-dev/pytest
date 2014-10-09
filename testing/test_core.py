@@ -783,6 +783,22 @@ class TestWrapMethod:
         assert A().f() == "A.f"
         assert l == []
 
+    def test_no_yield(self):
+        class A:
+            def method(self):
+                return
+
+        def method(self):
+            if 0:
+                yield
+
+        add_method_wrapper(A, method)
+        with pytest.raises(RuntimeError) as excinfo:
+            A().method()
+
+        assert "method" in str(excinfo.value)
+        assert "did not yield" in str(excinfo.value)
+
     def test_method_raises(self):
         class A:
             def error(self, val):

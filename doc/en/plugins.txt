@@ -187,8 +187,8 @@ Plugin discovery order at tool startup
   invocation:
 
   - if no test paths are specified use current dir as a test path
-  - if exists, load ``conftest.py`` and ``test*/conftest.py`` relative 
-    to the directory part of the first test path. 
+  - if exists, load ``conftest.py`` and ``test*/conftest.py`` relative
+    to the directory part of the first test path.
 
   Note that pytest does not find ``conftest.py`` files in deeper nested
   sub directories at tool startup.  It is usually a good idea to keep
@@ -431,6 +431,41 @@ declaring the hook functions directly in your plugin module, for example::
 This has the added benefit of allowing you to conditionally install hooks
 depending on which plugins are installed.
 
+hookwrapper: executing around other hooks
+-------------------------------------------------
+
+.. currentmodule:: _pytest.core
+
+.. versionadded:: 2.7 (experimental)
+
+pytest plugins can implement hook wrappers which which wrap the execution
+of other hook implementations.  A hook wrapper is a generator function
+which yields exactly once. When pytest invokes hooks it first executes
+hook wrappers and passes the same arguments as to the regular hooks.
+
+At the yield point of the hook wrapper pytest will execute the next hook
+implementations and return their result to the yield point in the form of
+a :py:class:`CallOutcome` instance which encapsulates a result or
+exception info.  The yield point itself will thus typically not raise
+exceptions (unless there are bugs).
+
+Here is an example definition of a hook wrapper::
+
+    import pytest
+
+    @pytest.mark.hookwrapper
+    def pytest_pyfunc_call(pyfuncitem):
+        # do whatever you want before the next hook executes
+        outcome = yield
+        # outcome.excinfo may be None or a (cls, val, tb) tuple
+        res = outcome.get_result()  # will raise if outcome was exception
+        # postprocess result
+
+Note that hook wrappers don't return results themselves, they merely
+perform tracing or other side effects around the actual hook implementations.
+If the result of the underlying hook is a mutable object, they may modify
+that result, however.
+
 
 Reference of objects involved in hooks
 ===========================================================
@@ -468,5 +503,8 @@ Reference of objects involved in hooks
     :members:
 
 .. autoclass:: _pytest.runner.TestReport()
+    :members:
+
+.. autoclass:: _pytest.core.CallOutcome()
     :members:
 
