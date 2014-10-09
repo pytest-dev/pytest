@@ -10,7 +10,7 @@
 
 - use hookwrapper mechanism in builtin pytest plugins.
 
-- add a doctest option for doctest flags, thanks Holger Peters.
+- add a doctest ini option for doctest flags, thanks Holger Peters.
 
 2.6.4.dev
 ----------
