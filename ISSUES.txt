@@ -49,7 +49,7 @@ probably makes sense in order to keep the declarative nature.   This mirrors
 the marker-mechanism with respect to a test module but puts it to a directory
 scale.
 
-When doing larger scoped parametrization it probably becomes neccessary 
+When doing larger scoped parametrization it probably becomes necessary
 to allow parametrization to be ignored if the according parameter is not
 used (currently any parametrized argument that is not present in a function will cause a ValueError). Example:
 
@@ -77,7 +77,7 @@ this would run the test_hello() function three times with three
 different values for self.db. This could also work with unittest/nose
 style tests, i.e. it leverages existing test suites without needing
 to rewrite them. Together with the previously mentioned setup_test()
-maybe the setupfunc could be ommitted?
+maybe the setupfunc could be omitted?
 
 optimizations 
 ---------------------------------------------------------------
@@ -229,7 +229,7 @@ tags: feature
 
 pytest.ensuretemp and pytest.config are probably the last
 objects containing global state.  Often using them is not
-neccessary.  This is about trying to get rid of them, i.e.
+necessary.  This is about trying to get rid of them, i.e.
 deprecating them and checking with PyPy's usages as well
 as others.
 
@@ -298,7 +298,7 @@ tags: feature
 
 The idea is that you can e.g. import modules in a test and afterwards
 sys.modules, sys.meta_path etc would be reverted.  It can go further
-then just importing however, e.g. current working direcroty, file
+then just importing however, e.g. current working directory, file
 descriptors, ...
 
 This would probably be done by marking::
@@ -357,7 +357,7 @@ a few use-cases come to mind:
             id, call = prepare_check(check)
             # bubble should only prevent exception propagation after a failure
             # the whole test should still fail
-            # there might be need for a loer level api and taking custom markers into account
+            # there might be need for a lower level api and taking custom markers into account
             with pytest.section(id, bubble=False):
                 call()
 

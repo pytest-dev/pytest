@@ -57,7 +57,7 @@ so that any attempts within tests to create http requests will fail.
 example: setting an attribute on some class
 ------------------------------------------------------
 
-If you need to patch out ``os.getcwd()`` to return an artifical
+If you need to patch out ``os.getcwd()`` to return an artificial
 value::
 
     def test_some_interaction(monkeypatch):

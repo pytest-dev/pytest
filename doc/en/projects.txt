@@ -78,6 +78,6 @@ Some organisations using pytest
 * `Stups department of Heinrich Heine University Duesseldorf <http://www.stups.uni-duesseldorf.de/projects.php>`_
 * `cellzome <http://www.cellzome.com/>`_
 * `Open End, Gothenborg <http://www.openend.se>`_
-* `Laboraratory of Bioinformatics, Warsaw <http://genesilico.pl/>`_
+* `Laboratory of Bioinformatics, Warsaw <http://genesilico.pl/>`_
 * `merlinux, Germany <http://merlinux.eu>`_
 * many more ... (please be so kind to send a note via :ref:`contact`)

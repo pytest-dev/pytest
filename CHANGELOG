@@ -428,7 +428,7 @@ v2.4.2
 
 - introduce node.get_marker/node.add_marker API for plugins
   like pytest-pep8 and pytest-flakes to avoid the messy
-  details of the node.keywords  pseudo-dicts.  Adapated
+  details of the node.keywords  pseudo-dicts.  Adapted
   docs.
 
 - remove attempt to "dup" stdout at startup as it's icky.
@@ -495,7 +495,7 @@ new features:
   as strings will remain fully supported.
 
 - reporting: color the last line red or green depending if
-  failures/errors occured or everything passed.  thanks Christian
+  failures/errors occurred or everything passed.  thanks Christian
   Theunert.
 
 - make "import pdb ; pdb.set_trace()" work natively wrt capturing (no

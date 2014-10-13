@@ -31,7 +31,7 @@ pytest: helps you write better programs
 **scales from simple unit to complex functional testing**
 
  - :ref:`modular parametrizeable fixtures <fixture>` (new in 2.3,
-   continously improved)
+   continuously improved)
  - :ref:`parametrized test functions <parametrized test functions>`
  - :ref:`mark`
  - :ref:`skipping` (improved in 2.4)
