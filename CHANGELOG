@@ -12,6 +12,10 @@
 
 - add a doctest ini option for doctest flags, thanks Holger Peters.
 
+- add note to docs that if you want to mark a parameter and the
+  parameter is a callable, you also need to pass in a reason to disambiguate
+  it from the "decorator" case.  Thanks Tom Viner.
+
 2.6.4.dev
 ----------
 
