@@ -455,7 +455,7 @@ class AssertionRewriter(ast.NodeVisitor):
     for an overview of how this works.
 
     The entry point here is .run() which will iterate over all the
-    statenemts in an ast.Module and for each ast.Assert statement it
+    statements in an ast.Module and for each ast.Assert statement it
     finds call .visit() with it.  Then .visit_Assert() takes over and
     is responsible for creating new ast statements to replace the
     original assert statement: it re-writes the test of an assertion

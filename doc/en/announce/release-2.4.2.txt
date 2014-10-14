@@ -21,7 +21,7 @@ pytest-2.4.2 is another bug-fixing release:
 
 - introduce node.get_marker/node.add_marker API for plugins
   like pytest-pep8 and pytest-flakes to avoid the messy
-  details of the node.keywords  pseudo-dicts.  Adapated
+  details of the node.keywords  pseudo-dicts.  Adapted
   docs.
 
 - remove attempt to "dup" stdout at startup as it's icky.
