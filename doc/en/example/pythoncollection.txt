@@ -26,17 +26,17 @@ the :confval:`python_files`, :confval:`python_classes` and
     [pytest]
     python_files=check_*.py
     python_classes=Check
-    python_functions=check
+    python_functions=*_check
 
-This would make ``pytest`` look for ``check_`` prefixes in
-Python filenames, ``Check`` prefixes in classes and ``check`` prefixes
-in functions and classes.  For example, if we have::
+This would make ``pytest`` look for tests in files that match the ``check_*
+.py`` glob-pattern, ``Check`` prefixes in classes, and functions and methods
+that match ``*_check``.  For example, if we have::
 
     # content of check_myapp.py
     class CheckMyApp:
-        def check_simple(self):
+        def simple_check(self):
             pass
-        def check_complex(self):
+        def complex_check(self):
             pass
 
 then the test collection looks like this::
@@ -48,14 +48,14 @@ then the test collection looks like this::
     <Module 'check_myapp.py'>
       <Class 'CheckMyApp'>
         <Instance '()'>
-          <Function 'check_simple'>
-          <Function 'check_complex'>
+          <Function 'simple_check'>
+          <Function 'complex_check'>
     
     =============================  in 0.01 seconds =============================
 
 .. note::
 
-   the ``python_functions`` and ``python_classes`` has no effect
+   the ``python_functions`` and ``python_classes`` options has no effect
    for ``unittest.TestCase`` test discovery because pytest delegates
    detection of test case methods to unittest code.
 

@@ -528,6 +528,30 @@ class Test_genitems:
         assert s.endswith("test_example_items1.testone")
         print(s)
 
+    def test_class_and_functions_discovery_using_glob(self, testdir):
+        """
+        tests that python_classes and python_functions config options work
+        as prefixes and glob-like patterns (issue #600).
+        """
+        testdir.makeini("""
+            [pytest]
+            python_classes = *Suite Test
+            python_functions = *_test test
+        """)
+        p = testdir.makepyfile('''
+            class MyTestSuite:
+                def x_test(self):
+                    pass
+
+            class TestCase:
+                def test_y(self):
+                    pass
+        ''')
+        items, reprec = testdir.inline_genitems(p)
+        ids = [x.getmodpath() for x in items]
+        assert ids == ['MyTestSuite.x_test', 'TestCase.test_y']
+
+
 def test_matchnodes_two_collections_same_file(testdir):
     testdir.makeconftest("""
         import pytest
