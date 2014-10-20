@@ -322,7 +322,11 @@ class PyCollector(PyobjMixin, pytest.Collector):
         for option in self.config.getini(option_name):
             if name.startswith(option):
                 return True
-            elif fnmatch.fnmatch(name, option):
+            # check that name looks like a glob-string before calling fnmatch
+            # because this is called for every name in each collected module,
+            # and fnmatch is somewhat expensive to call
+            elif ('*' in option or '?' in option or '[' in option) and \
+                    fnmatch.fnmatch(name, option):
                 return True
         return False
 
