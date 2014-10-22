@@ -19,6 +19,9 @@
 - "python_classes" and "python_functions" options now support glob-patterns
  for test discovery, as discussed in issue600. Thanks Ldiary Translations.
 
+- fix issue614: fixed pastebin support.
+
+
 2.6.4.dev
 ----------
 
