@@ -16,6 +16,9 @@
   parameter is a callable, you also need to pass in a reason to disambiguate
   it from the "decorator" case.  Thanks Tom Viner.
 
+- "python_classes" and "python_functions" options now support glob-patterns
+ for test discovery, as discussed in issue600. Thanks Ldiary Translations.
+
 2.6.4.dev
 ----------
 
@@ -86,7 +89,7 @@
   Thanks sontek.
 
 - Implement issue549: user-provided assertion messages now no longer
-  replace the py.test instrospection message but are shown in addition
+  replace the py.test introspection message but are shown in addition
   to them.
 
 2.6.1

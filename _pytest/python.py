@@ -1,4 +1,5 @@
 """ Python test discovery, setup and run of test functions. """
+import fnmatch
 import py
 import inspect
 import sys
@@ -127,9 +128,10 @@ def pytest_addoption(parser):
         default=['test_*.py', '*_test.py'],
         help="glob-style file patterns for Python test module discovery")
     parser.addini("python_classes", type="args", default=["Test",],
-        help="prefixes for Python test class discovery")
+        help="prefixes or glob names for Python test class discovery")
     parser.addini("python_functions", type="args", default=["test",],
-        help="prefixes for Python test function and method discovery")
+        help="prefixes or glob names for Python test function and "
+             "method discovery")
 
 def pytest_cmdline_main(config):
     if config.option.showfixtures:
@@ -307,14 +309,26 @@ class PyobjMixin(PyobjContext):
 class PyCollector(PyobjMixin, pytest.Collector):
 
     def funcnamefilter(self, name):
-        for prefix in self.config.getini("python_functions"):
-            if name.startswith(prefix):
-                return True
+        return self._matches_prefix_or_glob_option('python_functions', name)
 
     def classnamefilter(self, name):
-        for prefix in self.config.getini("python_classes"):
-            if name.startswith(prefix):
+        return self._matches_prefix_or_glob_option('python_classes', name)
+
+    def _matches_prefix_or_glob_option(self, option_name, name):
+        """
+        checks if the given name matches the prefix or glob-pattern defined
+        in ini configuration.
+        """
+        for option in self.config.getini(option_name):
+            if name.startswith(option):
                 return True
+            # check that name looks like a glob-string before calling fnmatch
+            # because this is called for every name in each collected module,
+            # and fnmatch is somewhat expensive to call
+            elif ('*' in option or '?' in option or '[' in option) and \
+                    fnmatch.fnmatch(name, option):
+                return True
+        return False
 
     def collect(self):
         if not getattr(self.obj, "__test__", True):

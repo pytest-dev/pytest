@@ -115,17 +115,33 @@ Builtin configuration file options
 
 .. confval:: python_classes
 
-   One or more name prefixes determining which test classes
-   are considered as test modules.
+   One or more name prefixes or glob-style patterns determining which classes
+   are considered for test collection. Here is an example of how to collect
+   tests from classes that end in ``Suite``::
+
+    # content of pytest.ini
+    [pytest]
+    python_classes = *Suite
+
+   Note that ``unittest.TestCase`` derived classes are always collected
+   regardless of this option, as ``unittest``'s own collection framework is used
+   to collect those tests.
 
 .. confval:: python_functions
 
-   One or more name prefixes determining which test functions
-   and methods are considered as test modules.  Note that this
-   has no effect on methods that live on a ``unittest.TestCase``
-   derived class.
+   One or more name prefixes or glob-patterns determining which test functions
+   and methods are considered tests. Here is an example of how
+   to collect test functions and methods that end in ``_test``::
 
-   See :ref:`change naming conventions` for examples.
+    # content of pytest.ini
+    [pytest]
+    python_functions = *_test
+
+   Note that this has no effect on methods that live on a ``unittest
+   .TestCase`` derived class, as ``unittest``'s own collection framework is used
+   to collect those tests.
+
+   See :ref:`change naming conventions` for more detailed examples.
 
 .. confval:: doctest_optionflags
 
