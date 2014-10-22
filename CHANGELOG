@@ -1,6 +1,10 @@
 2.7.0.dev
 ----------
 
+- implement issue351: add ability to specify parametrize ids as a callable
+  to generate custom test ids.  Thanks Brianna Laugher for the idea and
+  implementation.
+
 - introduce and document new hookwrapper mechanism useful for plugins
   which want to wrap the execution of certain hooks for their purposes.
   This supersedes the undocumented ``__multicall__`` protocol which
