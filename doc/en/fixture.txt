@@ -429,6 +429,61 @@ We see that our two test functions each ran twice, against the different
 connection the second test fails in ``test_ehlo`` because a
 different server string is expected than what arrived.
 
+pytest will build a string that is the test ID for each fixture value
+in a parametrized fixture, e.g. ``test_ehlo[merlinux.eu]`` and
+``test_ehlo[mail.python.org]`` in the above examples.  These IDs can
+be used with ``-k`` to select specific cases to run, and they will
+also identify the specific case when one is failing.  Running pytest
+with ``--collect-only`` will show the generated IDs.
+
+Numbers, strings, booleans and None will have their usual string
+representation used in the test ID. For other objects, pytest will
+make a string based on the argument name.  It is possible to customise
+the string used in a test ID for a certain fixture value by using the
+``ids`` keyword argument::
+
+   import pytest
+
+   @pytest.fixture(params=[0, 1], ids=["spam", "ham"])
+   def a(request):
+       return request.param
+
+   def test_a(a):
+       pass
+
+   def idfn(fixture_value):
+       if fixture_value == 0:
+           return "eggs"
+       else:
+           return None
+
+   @pytest.fixture(params=[0, 1], ids=idfn)
+   def b(request):
+       return request.param
+
+   def test_b(b):
+       pass
+
+The above shows how ``ids`` can be either a list of strings to use or
+a function which will be called with the fixture value and then
+has to return a string to use.  In the latter case if the function
+return ``None`` then pytest's auto-generated ID will be used.
+
+Running the above tests results in the following test IDs being used::
+
+   $ py.test --collect-only
+   ========================== test session starts ==========================
+   platform linux2 -- Python 2.7.6 -- py-1.4.25.dev2 -- pytest-2.6.0.dev1
+   plugins: xdist
+   collected 4 items
+   <Module 'test_ids.py'>
+     <Function 'test_a[spam]'>
+     <Function 'test_a[ham]'>
+     <Function 'test_b[eggs]'>
+     <Function 'test_b[1]'>
+
+   ===========================  in 0.05 seconds ============================
+
 
 .. _`interdependent fixtures`:
 
