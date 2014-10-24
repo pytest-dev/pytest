@@ -1,5 +1,5 @@
-2.7.0.dev
-----------
+2.7.0.dev (compared to 2.6.4)
+-----------------------------
 
 - implement issue351: add ability to specify parametrize ids as a callable
   to generate custom test ids.  Thanks Brianna Laugher for the idea and
@@ -23,13 +23,12 @@
 - "python_classes" and "python_functions" options now support glob-patterns
  for test discovery, as discussed in issue600. Thanks Ldiary Translations.
 
-- fix issue614: fixed pastebin support.
 
-
-2.6.4.dev
+2.6.4
 ----------
 
-- Improve assertion failure reporting on iterables, by using ndiff and pprint.
+- Improve assertion failure reporting on iterables, by using ndiff and
+  pprint.
 
 - removed outdated japanese docs from source tree.
 
@@ -42,6 +41,11 @@
   This should allow to pick parametrized tests where "-" appeared in the parameter.
 
 - fix issue604: Escape % character in the assertion message.
+
+- fix issue620: add explanation in the --genscript target about what
+  the binary blob means. Thanks Dinu Gherman.
+
+- fix issue614: fixed pastebin support.
 
 2.6.3
 -----------
