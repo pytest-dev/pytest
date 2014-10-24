@@ -1,10 +1,6 @@
 """ submit failure or test session information to a pastebin service. """
 import py, sys
 
-class url:
-    base = "http://bpaste.net"
-    xmlrpc = base + "/xmlrpc/"
-    show = base + "/show/"
 
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting")
@@ -27,22 +23,45 @@ def pytest_configure(__multicall__, config):
 
 def pytest_unconfigure(config):
     if hasattr(config, '_pastebinfile'):
+        # get terminal contents and delete file
         config._pastebinfile.seek(0)
         sessionlog = config._pastebinfile.read()
         config._pastebinfile.close()
         del config._pastebinfile
-        proxyid = getproxy().newPaste("python", sessionlog)
-        pastebinurl = "%s%s" % (url.show, proxyid)
-        sys.stderr.write("pastebin session-log: %s\n" % pastebinurl)
+        # undo our patching in the terminal reporter
         tr = config.pluginmanager.getplugin('terminalreporter')
         del tr._tw.__dict__['write']
+        # write summary
+        tr.write_sep("=", "Sending information to Paste Service")
+        pastebinurl = create_new_paste(sessionlog)
+        tr.write_line("pastebin session-log: %s\n" % pastebinurl)
 
-def getproxy():
+def create_new_paste(contents):
+    """
+    Creates a new paste using bpaste.net service.
+
+    :contents: paste contents
+    :returns: url to the pasted contents
+    """
+    import re
     if sys.version_info < (3, 0):
-        from xmlrpclib import ServerProxy
+        from urllib import urlopen, urlencode
     else:
-        from xmlrpc.client import ServerProxy
-    return ServerProxy(url.xmlrpc).pastes
+        from urllib.request import urlopen
+        from urllib.parse import urlencode
+
+    params = {
+        'code': contents,
+        'lexer': 'python3' if sys.version_info[0] == 3 else 'python',
+        'expiry': '1week',
+    }
+    url = 'https://bpaste.net'
+    response = urlopen(url, data=urlencode(params)).read()
+    m = re.search(r'href="/raw/(\w+)"', response)
+    if m:
+        return '%s/show/%s' % (url, m.group(1))
+    else:
+        return 'bad response: ' + response
 
 def pytest_terminal_summary(terminalreporter):
     if terminalreporter.config.option.pastebin != "failed":
@@ -50,9 +69,6 @@ def pytest_terminal_summary(terminalreporter):
     tr = terminalreporter
     if 'failed' in tr.stats:
         terminalreporter.write_sep("=", "Sending information to Paste Service")
-        if tr.config.option.debug:
-            terminalreporter.write_line("xmlrpcurl: %s" %(url.xmlrpc,))
-        serverproxy = getproxy()
         for rep in terminalreporter.stats.get('failed'):
             try:
                 msg = rep.longrepr.reprtraceback.reprentries[-1].reprfileloc
@@ -62,6 +78,5 @@ def pytest_terminal_summary(terminalreporter):
             rep.toterminal(tw)
             s = tw.stringio.getvalue()
             assert len(s)
-            proxyid = serverproxy.newPaste("python", s)
-            pastebinurl = "%s%s" % (url.show, proxyid)
+            pastebinurl = create_new_paste(s)
             tr.write_line("%s --> %s" %(msg, pastebinurl))

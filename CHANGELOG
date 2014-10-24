@@ -1,4 +1,4 @@
-2.6.4.dev
+2.6.4
 ----------
 
 - Improve assertion failure reporting on iterables, by using ndiff and pprint.
@@ -17,6 +17,8 @@
 
 - fix issue620: add explanation in the --genscript target about what
   the binary blob means. Thanks Dinu Gherman.
+
+- fix issue614: fixed pastebin support.
 
 
 2.6.3
