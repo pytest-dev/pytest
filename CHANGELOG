@@ -15,6 +15,10 @@
 
 - fix issue604: Escape % character in the assertion message.
 
+- fix issue620: add explanation in the --genscript target about what
+  the binary blob means. Thanks Dinu Gherman.
+
+
 2.6.3
 -----------
 
