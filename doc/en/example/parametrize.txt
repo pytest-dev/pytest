@@ -106,7 +106,7 @@ this is a fully self-contained example which you can run with::
 
     $ py.test test_scenarios.py
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.25 -- pytest-2.6.3
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
     collected 4 items
     
     test_scenarios.py ....
@@ -118,7 +118,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
 
     $ py.test --collect-only test_scenarios.py
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.25 -- pytest-2.6.3
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
     collected 4 items
     <Module 'test_scenarios.py'>
       <Class 'TestSampleWithScenarios'>
@@ -182,7 +182,7 @@ Let's first see how it looks like at collection time::
 
     $ py.test test_backends.py --collect-only
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.25 -- pytest-2.6.3
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
     collected 2 items
     <Module 'test_backends.py'>
       <Function 'test_db_initialized[d1]'>
@@ -197,7 +197,7 @@ And then when we run the test::
     ================================= FAILURES =================================
     _________________________ test_db_initialized[d2] __________________________
     
-    db = <conftest.DB2 object at 0x2b24a8545390>
+    db = <conftest.DB2 object at 0x2b04d7936be0>
     
         def test_db_initialized(db):
             # a dummy test
@@ -206,7 +206,7 @@ And then when we run the test::
     E           Failed: deliberately failing for demo purposes
     
     test_backends.py:6: Failed
-    1 failed, 1 passed in 0.02 seconds
+    1 failed, 1 passed in 0.01 seconds
 
 The first invocation with ``db == "DB1"`` passed while the second with ``db == "DB2"`` failed.  Our ``db`` fixture function has instantiated each of the DB values during the setup phase while the ``pytest_generate_tests`` generated two according calls to the ``test_db_initialized`` during the collection phase.
 
@@ -251,16 +251,16 @@ argument sets to use for each test function.  Let's run it::
     $ py.test -q
     F..
     ================================= FAILURES =================================
-    ________________________ TestClass.test_equals[1-2] ________________________
+    ________________________ TestClass.test_equals[2-1] ________________________
     
-    self = <test_parametrize.TestClass object at 0x2b0ed5d8cdd8>, a = 1, b = 2
+    self = <test_parametrize.TestClass object at 0x2af4cdee0da0>, a = 1, b = 2
     
         def test_equals(self, a, b):
     >       assert a == b
     E       assert 1 == 2
     
     test_parametrize.py:18: AssertionError
-    1 failed, 2 passed in 0.02 seconds
+    1 failed, 2 passed in 0.01 seconds
 
 Indirect parametrization with multiple fixtures
 --------------------------------------------------------------
@@ -283,8 +283,8 @@ Running it results in some skips if we don't have all the python interpreters in
    ================================= FAILURES =================================
    ________________ test_basic_objects[python3.4-python2.6-42] ________________
    
-   python1 = <multipython.Python object at 0x2b02a1bc79b0>
-   python2 = <multipython.Python object at 0x2b02a1bc7630>, obj = 42
+   python1 = <multipython.Python object at 0x2afc7d8c2828>
+   python2 = <multipython.Python object at 0x2afc7d8c2588>, obj = 42
    
        @pytest.mark.parametrize("obj", [42, {}, {1:3},])
        def test_basic_objects(python1, python2, obj):
@@ -297,7 +297,7 @@ Running it results in some skips if we don't have all the python interpreters in
        py.process.cmdexec("%s %s" %(self.pythonpath, loadfile))
    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
    
-   cmd = '/home/hpk/bin/python2.6 /tmp/pytest-21/test_basic_objects_python3_4_p0/load.py'
+   cmd = '/home/hpk/bin/python2.6 /tmp/pytest-111/test_basic_objects_python3_4_p0/load.py'
    
        def cmdexec(cmd):
            """ return unicode output of executing 'cmd' in a separate process.
@@ -322,9 +322,9 @@ Running it results in some skips if we don't have all the python interpreters in
            status = process.poll()
            if status:
    >           raise ExecutionFailed(status, status, cmd, out, err)
-   E           py.process.cmdexec.Error: ExecutionFailed: 1  /home/hpk/bin/python2.6 /tmp/pytest-21/test_basic_objects_python3_4_p0/load.py
+   E           py.process.cmdexec.Error: ExecutionFailed: 1  /home/hpk/bin/python2.6 /tmp/pytest-111/test_basic_objects_python3_4_p0/load.py
    E           Traceback (most recent call last):
-   E             File "/tmp/pytest-21/test_basic_objects_python3_4_p0/load.py", line 4, in <module>
+   E             File "/tmp/pytest-111/test_basic_objects_python3_4_p0/load.py", line 4, in <module>
    E               obj = pickle.load(f)
    E             File "/usr/lib/python2.6/pickle.py", line 1370, in load
    E               return Unpickler(file).load()
@@ -336,11 +336,11 @@ Running it results in some skips if we don't have all the python interpreters in
    
    ../../../.tox/regen/lib/python3.4/site-packages/py/_process/cmdexec.py:28: Error
    --------------------------- Captured stdout call ---------------------------
-   /tmp/pytest-21/test_basic_objects_python3_4_p0/load.py
+   /tmp/pytest-111/test_basic_objects_python3_4_p0/load.py
    _______________ test_basic_objects[python3.4-python2.6-obj1] _______________
    
-   python1 = <multipython.Python object at 0x2b02a1b66f28>
-   python2 = <multipython.Python object at 0x2b02a1b66198>, obj = {}
+   python1 = <multipython.Python object at 0x2afc7d8b8c88>
+   python2 = <multipython.Python object at 0x2afc7d8b8e48>, obj = {}
    
        @pytest.mark.parametrize("obj", [42, {}, {1:3},])
        def test_basic_objects(python1, python2, obj):
@@ -353,7 +353,7 @@ Running it results in some skips if we don't have all the python interpreters in
        py.process.cmdexec("%s %s" %(self.pythonpath, loadfile))
    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
    
-   cmd = '/home/hpk/bin/python2.6 /tmp/pytest-21/test_basic_objects_python3_4_p1/load.py'
+   cmd = '/home/hpk/bin/python2.6 /tmp/pytest-111/test_basic_objects_python3_4_p1/load.py'
    
        def cmdexec(cmd):
            """ return unicode output of executing 'cmd' in a separate process.
@@ -378,9 +378,9 @@ Running it results in some skips if we don't have all the python interpreters in
            status = process.poll()
            if status:
    >           raise ExecutionFailed(status, status, cmd, out, err)
-   E           py.process.cmdexec.Error: ExecutionFailed: 1  /home/hpk/bin/python2.6 /tmp/pytest-21/test_basic_objects_python3_4_p1/load.py
+   E           py.process.cmdexec.Error: ExecutionFailed: 1  /home/hpk/bin/python2.6 /tmp/pytest-111/test_basic_objects_python3_4_p1/load.py
    E           Traceback (most recent call last):
-   E             File "/tmp/pytest-21/test_basic_objects_python3_4_p1/load.py", line 4, in <module>
+   E             File "/tmp/pytest-111/test_basic_objects_python3_4_p1/load.py", line 4, in <module>
    E               obj = pickle.load(f)
    E             File "/usr/lib/python2.6/pickle.py", line 1370, in load
    E               return Unpickler(file).load()
@@ -392,11 +392,11 @@ Running it results in some skips if we don't have all the python interpreters in
    
    ../../../.tox/regen/lib/python3.4/site-packages/py/_process/cmdexec.py:28: Error
    --------------------------- Captured stdout call ---------------------------
-   /tmp/pytest-21/test_basic_objects_python3_4_p1/load.py
+   /tmp/pytest-111/test_basic_objects_python3_4_p1/load.py
    _______________ test_basic_objects[python3.4-python2.6-obj2] _______________
    
-   python1 = <multipython.Python object at 0x2b02a1bcd320>
-   python2 = <multipython.Python object at 0x2b02a1bcd358>, obj = {1: 3}
+   python1 = <multipython.Python object at 0x2afc7d8bf6d8>
+   python2 = <multipython.Python object at 0x2afc7d8bf860>, obj = {1: 3}
    
        @pytest.mark.parametrize("obj", [42, {}, {1:3},])
        def test_basic_objects(python1, python2, obj):
@@ -409,7 +409,7 @@ Running it results in some skips if we don't have all the python interpreters in
        py.process.cmdexec("%s %s" %(self.pythonpath, loadfile))
    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
    
-   cmd = '/home/hpk/bin/python2.6 /tmp/pytest-21/test_basic_objects_python3_4_p2/load.py'
+   cmd = '/home/hpk/bin/python2.6 /tmp/pytest-111/test_basic_objects_python3_4_p2/load.py'
    
        def cmdexec(cmd):
            """ return unicode output of executing 'cmd' in a separate process.
@@ -434,9 +434,9 @@ Running it results in some skips if we don't have all the python interpreters in
            status = process.poll()
            if status:
    >           raise ExecutionFailed(status, status, cmd, out, err)
-   E           py.process.cmdexec.Error: ExecutionFailed: 1  /home/hpk/bin/python2.6 /tmp/pytest-21/test_basic_objects_python3_4_p2/load.py
+   E           py.process.cmdexec.Error: ExecutionFailed: 1  /home/hpk/bin/python2.6 /tmp/pytest-111/test_basic_objects_python3_4_p2/load.py
    E           Traceback (most recent call last):
-   E             File "/tmp/pytest-21/test_basic_objects_python3_4_p2/load.py", line 4, in <module>
+   E             File "/tmp/pytest-111/test_basic_objects_python3_4_p2/load.py", line 4, in <module>
    E               obj = pickle.load(f)
    E             File "/usr/lib/python2.6/pickle.py", line 1370, in load
    E               return Unpickler(file).load()
@@ -448,11 +448,11 @@ Running it results in some skips if we don't have all the python interpreters in
    
    ../../../.tox/regen/lib/python3.4/site-packages/py/_process/cmdexec.py:28: Error
    --------------------------- Captured stdout call ---------------------------
-   /tmp/pytest-21/test_basic_objects_python3_4_p2/load.py
+   /tmp/pytest-111/test_basic_objects_python3_4_p2/load.py
    ________________ test_basic_objects[python3.4-python2.7-42] ________________
    
-   python1 = <multipython.Python object at 0x2b02a1bc78d0>
-   python2 = <multipython.Python object at 0x2b02a1bc7128>, obj = 42
+   python1 = <multipython.Python object at 0x2afc7d8b8710>
+   python2 = <multipython.Python object at 0x2afc7d8b8748>, obj = 42
    
        @pytest.mark.parametrize("obj", [42, {}, {1:3},])
        def test_basic_objects(python1, python2, obj):
@@ -465,7 +465,7 @@ Running it results in some skips if we don't have all the python interpreters in
        py.process.cmdexec("%s %s" %(self.pythonpath, loadfile))
    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
    
-   cmd = '/home/hpk/bin/python2.7 /tmp/pytest-21/test_basic_objects_python3_4_p3/load.py'
+   cmd = '/home/hpk/venv/0/bin/python2.7 /tmp/pytest-111/test_basic_objects_python3_4_p3/load.py'
    
        def cmdexec(cmd):
            """ return unicode output of executing 'cmd' in a separate process.
@@ -490,9 +490,9 @@ Running it results in some skips if we don't have all the python interpreters in
            status = process.poll()
            if status:
    >           raise ExecutionFailed(status, status, cmd, out, err)
-   E           py.process.cmdexec.Error: ExecutionFailed: 1  /home/hpk/bin/python2.7 /tmp/pytest-21/test_basic_objects_python3_4_p3/load.py
+   E           py.process.cmdexec.Error: ExecutionFailed: 1  /home/hpk/venv/0/bin/python2.7 /tmp/pytest-111/test_basic_objects_python3_4_p3/load.py
    E           Traceback (most recent call last):
-   E             File "/tmp/pytest-21/test_basic_objects_python3_4_p3/load.py", line 4, in <module>
+   E             File "/tmp/pytest-111/test_basic_objects_python3_4_p3/load.py", line 4, in <module>
    E               obj = pickle.load(f)
    E             File "/usr/lib/python2.7/pickle.py", line 1378, in load
    E               return Unpickler(file).load()
@@ -504,11 +504,11 @@ Running it results in some skips if we don't have all the python interpreters in
    
    ../../../.tox/regen/lib/python3.4/site-packages/py/_process/cmdexec.py:28: Error
    --------------------------- Captured stdout call ---------------------------
-   /tmp/pytest-21/test_basic_objects_python3_4_p3/load.py
+   /tmp/pytest-111/test_basic_objects_python3_4_p3/load.py
    _______________ test_basic_objects[python3.4-python2.7-obj1] _______________
    
-   python1 = <multipython.Python object at 0x2b02a1bd2550>
-   python2 = <multipython.Python object at 0x2b02a1bd23c8>, obj = {}
+   python1 = <multipython.Python object at 0x2afc7d8bfb38>
+   python2 = <multipython.Python object at 0x2afc7d8bf3c8>, obj = {}
    
        @pytest.mark.parametrize("obj", [42, {}, {1:3},])
        def test_basic_objects(python1, python2, obj):
@@ -521,7 +521,7 @@ Running it results in some skips if we don't have all the python interpreters in
        py.process.cmdexec("%s %s" %(self.pythonpath, loadfile))
    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
    
-   cmd = '/home/hpk/bin/python2.7 /tmp/pytest-21/test_basic_objects_python3_4_p4/load.py'
+   cmd = '/home/hpk/venv/0/bin/python2.7 /tmp/pytest-111/test_basic_objects_python3_4_p4/load.py'
    
        def cmdexec(cmd):
            """ return unicode output of executing 'cmd' in a separate process.
@@ -546,9 +546,9 @@ Running it results in some skips if we don't have all the python interpreters in
            status = process.poll()
            if status:
    >           raise ExecutionFailed(status, status, cmd, out, err)
-   E           py.process.cmdexec.Error: ExecutionFailed: 1  /home/hpk/bin/python2.7 /tmp/pytest-21/test_basic_objects_python3_4_p4/load.py
+   E           py.process.cmdexec.Error: ExecutionFailed: 1  /home/hpk/venv/0/bin/python2.7 /tmp/pytest-111/test_basic_objects_python3_4_p4/load.py
    E           Traceback (most recent call last):
-   E             File "/tmp/pytest-21/test_basic_objects_python3_4_p4/load.py", line 4, in <module>
+   E             File "/tmp/pytest-111/test_basic_objects_python3_4_p4/load.py", line 4, in <module>
    E               obj = pickle.load(f)
    E             File "/usr/lib/python2.7/pickle.py", line 1378, in load
    E               return Unpickler(file).load()
@@ -560,11 +560,11 @@ Running it results in some skips if we don't have all the python interpreters in
    
    ../../../.tox/regen/lib/python3.4/site-packages/py/_process/cmdexec.py:28: Error
    --------------------------- Captured stdout call ---------------------------
-   /tmp/pytest-21/test_basic_objects_python3_4_p4/load.py
+   /tmp/pytest-111/test_basic_objects_python3_4_p4/load.py
    _______________ test_basic_objects[python3.4-python2.7-obj2] _______________
    
-   python1 = <multipython.Python object at 0x2b02a1bcdeb8>
-   python2 = <multipython.Python object at 0x2b02a1bcdf98>, obj = {1: 3}
+   python1 = <multipython.Python object at 0x2afc7d8b86a0>
+   python2 = <multipython.Python object at 0x2afc7d8c2a90>, obj = {1: 3}
    
        @pytest.mark.parametrize("obj", [42, {}, {1:3},])
        def test_basic_objects(python1, python2, obj):
@@ -577,7 +577,7 @@ Running it results in some skips if we don't have all the python interpreters in
        py.process.cmdexec("%s %s" %(self.pythonpath, loadfile))
    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
    
-   cmd = '/home/hpk/bin/python2.7 /tmp/pytest-21/test_basic_objects_python3_4_p5/load.py'
+   cmd = '/home/hpk/venv/0/bin/python2.7 /tmp/pytest-111/test_basic_objects_python3_4_p5/load.py'
    
        def cmdexec(cmd):
            """ return unicode output of executing 'cmd' in a separate process.
@@ -602,9 +602,9 @@ Running it results in some skips if we don't have all the python interpreters in
            status = process.poll()
            if status:
    >           raise ExecutionFailed(status, status, cmd, out, err)
-   E           py.process.cmdexec.Error: ExecutionFailed: 1  /home/hpk/bin/python2.7 /tmp/pytest-21/test_basic_objects_python3_4_p5/load.py
+   E           py.process.cmdexec.Error: ExecutionFailed: 1  /home/hpk/venv/0/bin/python2.7 /tmp/pytest-111/test_basic_objects_python3_4_p5/load.py
    E           Traceback (most recent call last):
-   E             File "/tmp/pytest-21/test_basic_objects_python3_4_p5/load.py", line 4, in <module>
+   E             File "/tmp/pytest-111/test_basic_objects_python3_4_p5/load.py", line 4, in <module>
    E               obj = pickle.load(f)
    E             File "/usr/lib/python2.7/pickle.py", line 1378, in load
    E               return Unpickler(file).load()
@@ -616,8 +616,8 @@ Running it results in some skips if we don't have all the python interpreters in
    
    ../../../.tox/regen/lib/python3.4/site-packages/py/_process/cmdexec.py:28: Error
    --------------------------- Captured stdout call ---------------------------
-   /tmp/pytest-21/test_basic_objects_python3_4_p5/load.py
-   6 failed, 21 passed in 1.36 seconds
+   /tmp/pytest-111/test_basic_objects_python3_4_p5/load.py
+   6 failed, 21 passed in 1.66 seconds
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------
@@ -664,12 +664,12 @@ If you run this with reporting for skips enabled::
 
     $ py.test -rs test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.25 -- pytest-2.6.3
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
     collected 2 items
     
     test_module.py .s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-226/conftest.py:10: could not import 'opt2'
+    SKIP [1] /tmp/doc-exec-70/conftest.py:10: could not import 'opt2'
     
     =================== 1 passed, 1 skipped in 0.01 seconds ====================
 
