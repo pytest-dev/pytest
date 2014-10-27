@@ -270,15 +270,13 @@ class TestAssertionRewrite:
             assert not 5 % 4
         assert getmsg(f) == "assert not (5 % 4)"
 
-    @pytest.mark.xfail(reason='unfixed')
-    def test_and_or_percent(self):
-        # issue 615 - ValueError on compound assert with percent
+    def test_boolop_percent(self):
         def f():
-            assert 3 % 2 or False
-        assert getmsg(f) == "assert (3 % 2) or False"
+            assert 3 % 2 and False
+        assert getmsg(f) == "assert ((3 % 2) and False)"
         def f():
-            assert True and 7 % 3
-        assert getmsg(f) == "assert True and (7 % 3)"
+            assert False or 4 % 2
+        assert getmsg(f) == "assert (False or (4 % 2))"
 
     def test_call(self):
         def g(a=42, *args, **kwargs):
