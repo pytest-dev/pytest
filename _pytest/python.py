@@ -923,8 +923,8 @@ def idmaker(argnames, argvalues, idfn=None):
     ids = [_idvalset(valindex, valset, argnames, idfn)
            for valindex, valset in enumerate(argvalues)]
     if len(set(ids)) < len(ids):
-        # the user may have provided a bad idfn which means the ids are not unique
-        ids = ["{}".format(i) + testid for i, testid in enumerate(ids)]
+        # user may have provided a bad idfn which means the ids are not unique
+        ids = [str(i) + testid for i, testid in enumerate(ids)]
     return ids
 
 def showfixtures(config):
