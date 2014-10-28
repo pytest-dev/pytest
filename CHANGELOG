@@ -1,6 +1,11 @@
 2.7.0.dev (compared to 2.6.4)
 -----------------------------
 
+- fix issue615: assertion re-writing did not correctly escape % signs
+  when formatting boolean operations, which tripped over mixing
+  booleans with modulo operators.  Thanks to Tom Viner for the report,
+  triaging and fix.
+
 - implement issue351: add ability to specify parametrize ids as a callable
   to generate custom test ids.  Thanks Brianna Laugher for the idea and
   implementation.
