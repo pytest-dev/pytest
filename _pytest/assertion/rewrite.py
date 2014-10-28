@@ -382,7 +382,12 @@ def _should_repr_global_name(obj):
     return not hasattr(obj, "__name__") and not py.builtin.callable(obj)
 
 def _format_boolop(explanations, is_or):
-    return "(" + (is_or and " or " or " and ").join(explanations) + ")"
+    explanation = "(" + (is_or and " or " or " and ").join(explanations) + ")"
+    if py.builtin._istext(explanation):
+        t = py.builtin.text
+    else:
+        t = py.builtin.bytes
+    return explanation.replace(t('%'), t('%%'))
 
 def _call_reprcompare(ops, results, expls, each_obj):
     for i, res, expl in zip(range(len(ops)), results, expls):
