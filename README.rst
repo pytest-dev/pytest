@@ -1,7 +1,7 @@
 .. image:: https://drone.io/bitbucket.org/hpk42/pytest/status.png
    :target: https://drone.io/bitbucket.org/hpk42/pytest/latest
-.. image:: https://pypip.in/v/pytest/badge.png
-   :target: https://crate.io/packages/pytest/
+.. image:: http://img.shields.io/pypi/v/pytest.svg
+   :target: https://pypi.python.org/pypi/pytest
 
 Documentation: http://pytest.org/latest/
 
