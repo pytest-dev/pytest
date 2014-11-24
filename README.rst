@@ -1,6 +1,6 @@
 .. image:: https://drone.io/bitbucket.org/hpk42/pytest/status.png
    :target: https://drone.io/bitbucket.org/hpk42/pytest/latest
-.. image:: http://img.shields.io/pypi/v/pytest.svg
+.. image:: https://pypip.in/v/pytest/badge.png
    :target: https://pypi.python.org/pypi/pytest
 
 Documentation: http://pytest.org/latest/
