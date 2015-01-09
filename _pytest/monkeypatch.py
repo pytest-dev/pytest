@@ -66,14 +66,14 @@ class Notset:
 notset = Notset()
 
 class monkeypatch:
-    """ object keeping a record of setattr/item/env/syspath changes. """
+    """ Object keeping a record of setattr/item/env/syspath changes. """
     def __init__(self):
         self._setattr = []
         self._setitem = []
         self._cwd = None
 
     def setattr(self, target, name, value=notset, raising=True):
-        """ set attribute value on target, memorizing the old value.
+        """ Set attribute value on target, memorizing the old value.
         By default raise AttributeError if the attribute did not exist.
 
         For convenience you can specify a string as ``target`` which
@@ -108,15 +108,15 @@ class monkeypatch:
         setattr(target, name, value)
 
     def delattr(self, target, name=notset, raising=True):
-        """ delete attribute ``name`` from ``target``, by default raise
+        """ Delete attribute ``name`` from ``target``, by default raise
         AttributeError it the attribute did not previously exist.
 
         If no ``name`` is specified and ``target`` is a string
         it will be interpreted as a dotted import path with the
         last part being the attribute name.
 
-        If raising is set to false, the attribute is allowed to not
-        pre-exist.
+        If ``raising`` is set to False, no exception will be raised if the
+        attribute is missing.
         """
         __tracebackhide__ = True
         if name is notset:
@@ -135,12 +135,16 @@ class monkeypatch:
             delattr(target, name)
 
     def setitem(self, dic, name, value):
-        """ set dictionary entry ``name`` to value. """
+        """ Set dictionary entry ``name`` to value. """
         self._setitem.insert(0, (dic, name, dic.get(name, notset)))
         dic[name] = value
 
     def delitem(self, dic, name, raising=True):
-        """ delete ``name`` from dict, raise KeyError if it doesn't exist."""
+        """ Delete ``name`` from dict. Raise KeyError if it doesn't exist.
+
+        If ``raising`` is set to False, no exception will be raised if the
+        key is missing.
+        """
         if name not in dic:
             if raising:
                 raise KeyError(name)
@@ -149,7 +153,7 @@ class monkeypatch:
             del dic[name]
 
     def setenv(self, name, value, prepend=None):
-        """ set environment variable ``name`` to ``value``.  if ``prepend``
+        """ Set environment variable ``name`` to ``value``.  If ``prepend``
         is a character, read the current environment variable value
         and prepend the ``value`` adjoined with the ``prepend`` character."""
         value = str(value)
@@ -158,17 +162,22 @@ class monkeypatch:
         self.setitem(os.environ, name, value)
 
     def delenv(self, name, raising=True):
-        """ delete ``name`` from environment, raise KeyError it not exists."""
+        """ Delete ``name`` from the environment. Raise KeyError it does not
+        exist.
+
+        If ``raising`` is set to False, no exception will be raised if the
+        environment variable is missing.
+        """
         self.delitem(os.environ, name, raising=raising)
 
     def syspath_prepend(self, path):
-        """ prepend ``path`` to ``sys.path`` list of import locations. """
+        """ Prepend ``path`` to ``sys.path`` list of import locations. """
         if not hasattr(self, '_savesyspath'):
             self._savesyspath = sys.path[:]
         sys.path.insert(0, str(path))
 
     def chdir(self, path):
-        """ change the current working directory to the specified path
+        """ Change the current working directory to the specified path
         path can be a string or a py.path.local object
         """
         if self._cwd is None:
@@ -179,9 +188,9 @@ class monkeypatch:
             os.chdir(path)
 
     def undo(self):
-        """ undo previous changes.  This call consumes the
-        undo stack.  Calling it a second time has no effect unless
-        you  do more monkeypatching after the undo call."""
+        """ Undo previous changes.  This call consumes the
+        undo stack. Calling it a second time has no effect unless
+        you do more monkeypatching after the undo call."""
         for obj, name, value in self._setattr:
             if value is not notset:
                 setattr(obj, name, value)
