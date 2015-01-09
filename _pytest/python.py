@@ -15,6 +15,8 @@ NOTSET = object()
 isfunction = inspect.isfunction
 isclass = inspect.isclass
 callable = py.builtin.callable
+# used to work around a python2 exception info leak
+exc_clear = getattr(sys, 'exc_clear', lambda: None)
 
 def getfslineno(obj):
     # xxx let decorators etc specify a sane ordering
@@ -1389,10 +1391,12 @@ class FixtureRequest(FuncargnamesCompatAttr):
                         cached_result = (self, [0], None)
                     return PseudoFixtureDef
                 raise
-            result = self._getfuncargvalue(fixturedef)
-            self._funcargs[argname] = result
-            self._fixturedefs[argname] = fixturedef
-            return fixturedef
+        # remove indent to prevent the python3 exception
+        # from leaking into the call
+        result = self._getfuncargvalue(fixturedef)
+        self._funcargs[argname] = result
+        self._fixturedefs[argname] = fixturedef
+        return fixturedef
 
     def _get_fixturestack(self):
         current = self
@@ -1439,6 +1443,9 @@ class FixtureRequest(FuncargnamesCompatAttr):
                     (scope, argname, self.scope, "\n".join(lines))))
             __tracebackhide__ = False
 
+        # clear sys.exc_info before invoking the fixture (python bug?)
+        # if its not explicitly cleared it will leak into the call
+        exc_clear()
         try:
             # call the fixture function
             val = fixturedef.execute(request=subrequest)

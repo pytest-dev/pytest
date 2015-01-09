@@ -261,6 +261,29 @@ class TestFillFixtures:
         ])
         assert "INTERNAL" not in result.stdout.str()
 
+    def test_fixture_excinfo_leak(self, testdir):
+        # on python2 sys.excinfo would leak into fixture executions
+        testdir.makepyfile("""
+            import sys
+            import traceback
+            import pytest
+
+            @pytest.fixture
+            def leak():
+                if sys.exc_info()[0]:  # python3 bug :)
+                    traceback.print_exc()
+                #fails
+                assert sys.exc_info() == (None, None, None)
+
+            def test_leak(leak):
+                if sys.exc_info()[0]:  # python3 bug :)
+                    traceback.print_exc()
+                assert sys.exc_info() == (None, None, None)
+        """)
+        result = testdir.runpytest()
+        assert result.ret == 0
+
+
 class TestRequestBasic:
     def test_request_attributes(self, testdir):
         item = testdir.getitem("""

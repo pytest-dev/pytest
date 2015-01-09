@@ -1,6 +1,9 @@
 2.7.0.dev (compared to 2.6.4)
 -----------------------------
 
+- fix issue655: work around different ways that cause python2/3
+  to leak sys.exc_info into fixtures/tests causing failures in 3rd party code
+
 - fix issue615: assertion re-writing did not correctly escape % signs
   when formatting boolean operations, which tripped over mixing
   booleans with modulo operators.  Thanks to Tom Viner for the report,
@@ -14,7 +17,7 @@
   which want to wrap the execution of certain hooks for their purposes.
   This supersedes the undocumented ``__multicall__`` protocol which
   pytest itself and some external plugins use.  Note that pytest-2.8
-  is scheduled to drop supporting the old ``__multicall__`` 
+  is scheduled to drop supporting the old ``__multicall__``
   and only support the hookwrapper protocol.
 
 - use hookwrapper mechanism in builtin pytest plugins.
