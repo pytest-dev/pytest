@@ -14,13 +14,17 @@ def pytest_addoption(parser):
 @pytest.mark.trylast
 def pytest_configure(config):
     if config.option.pastebin == "all":
-        config._pastebinfile = tempfile.TemporaryFile('w+')
         tr = config.pluginmanager.getplugin('terminalreporter')
-        oldwrite = tr._tw.write
-        def tee_write(s, **kwargs):
-            oldwrite(s, **kwargs)
-            config._pastebinfile.write(str(s))
-        tr._tw.write = tee_write
+        # if no terminal reporter plugin is present, nothing we can do here;
+        # this can happen when this function executes in a slave node
+        # when using pytest-xdist, for example
+        if tr is not None:
+            config._pastebinfile = tempfile.TemporaryFile('w+')
+            oldwrite = tr._tw.write
+            def tee_write(s, **kwargs):
+                oldwrite(s, **kwargs)
+                config._pastebinfile.write(str(s))
+            tr._tw.write = tee_write
 
 def pytest_unconfigure(config):
     if hasattr(config, '_pastebinfile'):
