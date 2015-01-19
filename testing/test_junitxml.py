@@ -150,7 +150,7 @@ class TestPython:
             classname="test_failure_function",
             name="test_fail")
         fnode = tnode.getElementsByTagName("failure")[0]
-        assert_attr(fnode, message="test failure")
+        assert_attr(fnode, message="ValueError: 42")
         assert "ValueError" in fnode.toxml()
         systemout = fnode.nextSibling
         assert systemout.tagName == "system-out"
@@ -158,6 +158,19 @@ class TestPython:
         systemerr = systemout.nextSibling
         assert systemerr.tagName == "system-err"
         assert "hello-stderr" in systemerr.toxml()
+
+    def test_failure_verbose_message(self, testdir):
+        testdir.makepyfile("""
+            import sys
+            def test_fail():
+                assert 0, "An error"
+        """)
+
+        result, dom = runandparse(testdir)
+        node = dom.getElementsByTagName("testsuite")[0]
+        tnode = node.getElementsByTagName("testcase")[0]
+        fnode = tnode.getElementsByTagName("failure")[0]
+        assert_attr(fnode, message="AssertionError: An error assert 0")
 
     def test_failure_escape(self, testdir):
         testdir.makepyfile("""
@@ -371,7 +384,7 @@ class TestNonPython:
             #classname="test_collect_error",
             name="myfile.xyz")
         fnode = tnode.getElementsByTagName("failure")[0]
-        assert_attr(fnode, message="test failure")
+        assert_attr(fnode, message="custom item runtest failed")
         assert "custom item runtest failed" in fnode.toxml()
 
 
