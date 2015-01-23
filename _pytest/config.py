@@ -705,6 +705,8 @@ class Config(object):
     def _preparse(self, args, addopts=True):
         self._initini(args)
         if addopts:
+            env_addopts = os.environ.get('PYTEST_ADDOPTS', '')
+            args[:] = env_addopts.replace('"', '').split() + args
             args[:] = self.getini("addopts") + args
         self._checkversion()
         self.pluginmanager.consider_preparse(args)
