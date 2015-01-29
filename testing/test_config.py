@@ -1,5 +1,3 @@
-import os
-
 import py, pytest
 
 from _pytest.config import getcfg
@@ -20,14 +18,13 @@ class TestParseIni:
     def test_getcfg_empty_path(self, tmpdir):
         getcfg([''], ['setup.cfg']) #happens on py.test ""
 
-    def test_append_parse_args(self, testdir, tmpdir):
-        os.environ['PYTEST_ADDOPTS'] = '--color no -rs --tb="short"'
+    def test_append_parse_args(self, testdir, tmpdir, monkeypatch):
+        monkeypatch.setenv('PYTEST_ADDOPTS', '--color no -rs --tb="short"')
         tmpdir.join("setup.cfg").write(py.code.Source("""
             [pytest]
             addopts = --verbose
         """))
         config = testdir.parseconfig(tmpdir)
-        del os.environ['PYTEST_ADDOPTS']
         assert config.option.color == 'no'
         assert config.option.reportchars == 's'
         assert config.option.tbstyle == 'short'
