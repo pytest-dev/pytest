@@ -17,6 +17,10 @@ def pytest_addoption(parser):
         action="store", default="test*.txt", metavar="pat",
         help="doctests file matching pattern, default: test*.txt",
         dest="doctestglob")
+    group.addoption("--doctest-ignore-import-errors",
+        action="store_true", default=False,
+        help="ignore doctest ImportErrors",
+        dest="doctest_ignore_import_errors")
 
 def pytest_collect_file(path, parent):
     config = parent.config
@@ -130,7 +134,13 @@ class DoctestModule(pytest.File):
         if self.fspath.basename == "conftest.py":
             module = self.config._conftest.importconftest(self.fspath)
         else:
-            module = self.fspath.pyimport()
+            try:
+                module = self.fspath.pyimport()
+            except ImportError:
+                if self.config.getvalue('doctest_ignore_import_errors'):
+                    pytest.skip('unable to import module %r' % self.fspath)
+                else:
+                    raise
         # satisfy `FixtureRequest` constructor...
         self.funcargs = {}
         self._fixtureinfo = FuncFixtureInfo((), [], {})
@@ -138,9 +148,9 @@ class DoctestModule(pytest.File):
         doctest_globals = dict(getfixture=fixture_request.getfuncargvalue)
         # uses internal doctest module parsing mechanism
         finder = doctest.DocTestFinder()
-        optionflags= get_optionflags(self)
+        optionflags = get_optionflags(self)
         runner = doctest.DebugRunner(verbose=0, optionflags=optionflags)
         for test in finder.find(module, module.__name__,
                                 extraglobs=doctest_globals):
-            if test.examples: # skip empty doctests
+            if test.examples:  # skip empty doctests
                 yield DoctestItem(test.name, self, runner, test)
