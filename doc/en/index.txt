@@ -3,7 +3,10 @@
 
 .. note::
 
-   next training: `professional testing with pytest and tox <http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_, 24-26th November 2014, Freiburg, Germany
+   Are you an experienced pytest user, or an open source project that needs some help getting started with pytest? April 2015 is `adopt pytest month`_!
+
+
+.. _`adopt pytest month`: adopt.html
 
 
 pytest: helps you write better programs
