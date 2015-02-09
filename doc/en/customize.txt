@@ -60,6 +60,11 @@ progress output, you can write it into a configuration file::
     [pytest]
     addopts = -rsxX -q
 
+Alternatively, you can set a PYTEST_ADDOPTS environment variable to add command
+line options while the environment is in use::
+
+    export PYTEST_ADDOPTS="-rsxX -q"
+
 From now on, running ``pytest`` will add the specified options.
 
 Builtin configuration file options
