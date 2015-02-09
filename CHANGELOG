@@ -1,6 +1,8 @@
 2.7.0.dev (compared to 2.6.4)
 -----------------------------
 
+- add ability to set command line options by environment variable PYTEST_ADDOPTS.
+
 - fix issue655: work around different ways that cause python2/3
   to leak sys.exc_info into fixtures/tests causing failures in 3rd party code
 
