@@ -105,7 +105,7 @@ Is using pytest fixtures versus xUnit setup a style question?
 
 For simple applications and for people experienced with nose_ or
 unittest-style test setup using `xUnit style setup`_ probably
-feels natural.  For larger test suites, parameterized testing
+feels natural.  For larger test suites, parametrized testing
 or setup of complex test resources using funcargs_ may feel more natural.
 Moreover, funcargs are ideal for writing advanced test support
 code (like e.g. the monkeypatch_, the tmpdir_ or capture_ funcargs)
