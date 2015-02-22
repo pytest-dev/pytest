@@ -123,7 +123,12 @@ class LogXML(object):
                 Junit.skipped(message="xfail-marked test passes unexpectedly"))
             self.skipped += 1
         else:
-            fail = Junit.failure(message="test failure")
+            if isinstance(report.longrepr, (unicode, str)):
+                message = report.longrepr
+            else:
+                message = report.longrepr.reprcrash.message
+            message = bin_xml_escape(message)
+            fail = Junit.failure(message=message)
             fail.append(bin_xml_escape(report.longrepr))
             self.append(fail)
             self.failed += 1
