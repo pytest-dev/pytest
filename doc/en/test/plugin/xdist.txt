@@ -159,7 +159,7 @@ command line options
 
     each: send each test to each available environment.
 
-    load: send each test to available environment.
+    load: send each test to one available environment so it is run only once.
 
     (default) no: run tests inprocess, don't distribute.
 ``--tx=xspec``
