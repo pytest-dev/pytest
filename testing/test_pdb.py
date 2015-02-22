@@ -2,7 +2,6 @@
 import py
 import sys
 
-from test_doctest import xfail_if_pdbpp_installed
 
 class TestPDB:
     def pytest_funcarg__pdblist(self, request):
@@ -187,7 +186,6 @@ class TestPDB:
         if child.isalive():
             child.wait()
 
-    @xfail_if_pdbpp_installed
     def test_pdb_interaction_doctest(self, testdir):
         p1 = testdir.makepyfile("""
             import pytest

@@ -30,15 +30,15 @@ and does not handle Deferreds returned from a test in pytest style.
 If you are using trial's unittest.TestCase chances are that you can
 just run your tests even if you return Deferreds.  In addition,
 there also is a dedicated `pytest-twisted
-<http://pypi.python.org/pypi/pytest-twisted>`_ plugin which allows to
-return deferreds from pytest-style tests, allowing to use
+<http://pypi.python.org/pypi/pytest-twisted>`_ plugin which allows you to
+return deferreds from pytest-style tests, allowing the use of
 :ref:`fixtures` and other features.
 
 how does pytest work with Django?
 ++++++++++++++++++++++++++++++++++++++++++++++
 
 In 2012, some work is going into the `pytest-django plugin <http://pypi.python.org/pypi/pytest-django>`_.  It substitutes the usage of Django's
-``manage.py test`` and allows to use all pytest features_ most of which
+``manage.py test`` and allows the use of all pytest features_ most of which
 are not available from Django directly.
 
 .. _features: features.html
@@ -49,7 +49,7 @@ What's this "magic" with pytest? (historic notes)
 
 Around 2007 (version ``0.8``) some people thought that ``pytest``
 was using too much "magic".  It had been part of the `pylib`_ which
-contains a lot of unreleated python library code.  Around 2010 there
+contains a lot of unrelated python library code.  Around 2010 there
 was a major cleanup refactoring, which removed unused or deprecated code
 and resulted in the new ``pytest`` PyPI package which strictly contains
 only test-related code.  This release also brought a complete pluginification
@@ -63,7 +63,7 @@ A second "magic" issue was the assert statement debugging feature.
 Nowadays, ``pytest`` explicitely rewrites assert statements in test modules
 in order to provide more useful :ref:`assert feedback <assertfeedback>`.
 This completely avoids previous issues of confusing assertion-reporting.
-It also means, that you can use Python's ``-O`` optimization without loosing
+It also means, that you can use Python's ``-O`` optimization without losing
 assertions in test modules.
 
 ``pytest`` contains a second, mostly obsolete, assert debugging technique,
@@ -152,13 +152,13 @@ pytest interaction with other packages
 Issues with pytest, multiprocess and setuptools?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-On windows the multiprocess package will instantiate sub processes
+On Windows the multiprocess package will instantiate sub processes
 by pickling and thus implicitly re-import a lot of local modules.
 Unfortunately, setuptools-0.6.11 does not ``if __name__=='__main__'``
 protect its generated command line script.  This leads to infinite
 recursion when running a test that instantiates Processes.
 
-As of middle 2013, there shouldn't be a problem anymore when you
+As of mid-2013, there shouldn't be a problem anymore when you
 use the standard setuptools (note that distribute has been merged
 back into setuptools which is now shipped directly with virtualenv).
 
