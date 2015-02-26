@@ -95,7 +95,7 @@ class TerminalReporter:
         self._numcollected = 0
 
         self.stats = {}
-        self.startdir = self.curdir = py.path.local()
+        self.startdir = py.path.local()
         if file is None:
             file = sys.stdout
         self._tw = self.writer = py.io.TerminalWriter(file)
@@ -111,12 +111,12 @@ class TerminalReporter:
         char = {'xfailed': 'x', 'skipped': 's'}.get(char, char)
         return char in self.reportchars
 
-    def write_fspath_result(self, fspath, res):
+    def write_fspath_result(self, nodeid, res):
+        fspath = self.config.rootdir.join(nodeid.split("::")[0])
         if fspath != self.currentfspath:
             self.currentfspath = fspath
-            #fspath = self.startdir.bestrelpath(fspath)
+            fspath = self.startdir.bestrelpath(fspath)
             self._tw.line()
-            #relpath = self.startdir.bestrelpath(fspath)
             self._tw.write(fspath + " ")
         self._tw.write(res)
 
@@ -182,12 +182,12 @@ class TerminalReporter:
     def pytest_runtest_logstart(self, nodeid, location):
         # ensure that the path is printed before the
         # 1st test of a module starts running
-        fspath = nodeid.split("::")[0]
         if self.showlongtestinfo:
-            line = self._locationline(fspath, *location)
+            line = self._locationline(nodeid, *location)
             self.write_ensure_prefix(line, "")
         elif self.showfspath:
-            self.write_fspath_result(fspath, "")
+            fsid = nodeid.split("::")[0]
+            self.write_fspath_result(fsid, "")
 
     def pytest_runtest_logreport(self, report):
         rep = report
@@ -200,7 +200,7 @@ class TerminalReporter:
             return
         if self.verbosity <= 0:
             if not hasattr(rep, 'node') and self.showfspath:
-                self.write_fspath_result(rep.fspath, letter)
+                self.write_fspath_result(rep.nodeid, letter)
             else:
                 self._tw.write(letter)
         else:
@@ -213,7 +213,7 @@ class TerminalReporter:
                     markup = {'red':True}
                 elif rep.skipped:
                     markup = {'yellow':True}
-            line = self._locationline(str(rep.fspath), *rep.location)
+            line = self._locationline(rep.nodeid, *rep.location)
             if not hasattr(rep, 'node'):
                 self.write_ensure_prefix(line, word, **markup)
                 #self._tw.write(word, **markup)
@@ -237,7 +237,7 @@ class TerminalReporter:
         items = [x for x in report.result if isinstance(x, pytest.Item)]
         self._numcollected += len(items)
         if self.hasmarkup:
-            #self.write_fspath_result(report.fspath, 'E')
+            #self.write_fspath_result(report.nodeid, 'E')
             self.report_collect()
 
     def report_collect(self, final=False):
@@ -288,6 +288,10 @@ class TerminalReporter:
             self.write_line(line)
 
     def pytest_report_header(self, config):
+        inifile = ""
+        if config.inifile:
+            inifile = config.rootdir.bestrelpath(config.inifile)
+        lines = ["rootdir: %s, inifile: %s" %(config.rootdir, inifile)]
         plugininfo = config.pluginmanager._plugin_distinfo
         if plugininfo:
             l = []
@@ -296,7 +300,8 @@ class TerminalReporter:
                 if name.startswith("pytest-"):
                     name = name[7:]
                 l.append(name)
-            return "plugins: %s" % ", ".join(l)
+            lines.append("plugins: %s" % ", ".join(l))
+        return lines
 
     def pytest_collection_finish(self, session):
         if self.config.option.collectonly:
@@ -378,19 +383,24 @@ class TerminalReporter:
             else:
                 excrepr.reprcrash.toterminal(self._tw)
 
-    def _locationline(self, collect_fspath, fspath, lineno, domain):
+    def _locationline(self, nodeid, fspath, lineno, domain):
+        def mkrel(nodeid):
+            line = self.config.cwd_relative_nodeid(nodeid)
+            if domain and line.endswith(domain):
+                line = line[:-len(domain)]
+                l = domain.split("[")
+                l[0] = l[0].replace('.', '::')  # don't replace '.' in params
+                line += "[".join(l)
+            return line
         # collect_fspath comes from testid which has a "/"-normalized path
-        if fspath and fspath.replace("\\", "/") != collect_fspath:
-            fspath = "%s <- %s" % (collect_fspath, fspath)
+
         if fspath:
-            line = str(fspath)
-            if domain:
-                split = str(domain).split('[')
-                split[0] = split[0].replace('.', '::')  # don't replace '.' in params
-                line += "::" + '['.join(split)
+            res = mkrel(nodeid).replace("::()", "")  # parens-normalization
+            if nodeid.split("::")[0] != fspath.replace("\\", "/"):
+                res += " <- " + self.startdir.bestrelpath(fspath)
         else:
-            line = "[location]"
-        return line + " "
+            res = "[location]"
+        return res + " "
 
     def _getfailureheadline(self, rep):
         if hasattr(rep, 'location'):

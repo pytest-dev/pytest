@@ -306,9 +306,8 @@ class TmpTestdir:
         session = Session(config)
         assert '::' not in str(arg)
         p = py.path.local(arg)
-        x = session.fspath.bestrelpath(p)
         config.hook.pytest_sessionstart(session=session)
-        res = session.perform_collect([x], genitems=False)[0]
+        res = session.perform_collect([str(p)], genitems=False)[0]
         config.hook.pytest_sessionfinish(session=session, exitstatus=EXIT_OK)
         return res
 
@@ -395,8 +394,7 @@ class TmpTestdir:
     def parseconfigure(self, *args):
         config = self.parseconfig(*args)
         config.do_configure()
-        self.request.addfinalizer(lambda:
-        config.do_unconfigure())
+        self.request.addfinalizer(config.do_unconfigure)
         return config
 
     def getitem(self,  source, funcname="test_func"):

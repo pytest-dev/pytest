@@ -1653,11 +1653,9 @@ class FixtureManager:
             # what fixtures are visible for particular tests (as denoted
             # by their test id)
             if p.basename.startswith("conftest.py"):
-                nodeid = self.session.fspath.bestrelpath(p.dirpath())
+                nodeid = p.dirpath().relto(self.config.rootdir)
                 if p.sep != "/":
                     nodeid = nodeid.replace(p.sep, "/")
-                if nodeid == ".":
-                    nodeid = ""
         self.parsefactories(plugin, nodeid)
         self._seenplugins.add(plugin)
 

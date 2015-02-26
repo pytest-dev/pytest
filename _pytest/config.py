@@ -657,6 +657,12 @@ class Config(object):
                 sys.stderr.write("INTERNALERROR> %s\n" %line)
                 sys.stderr.flush()
 
+    def cwd_relative_nodeid(self, nodeid):
+        # nodeid's are relative to the rootpath, compute relative to cwd
+        if self.invocation_dir != self.rootdir:
+            fullpath = self.rootdir.join(nodeid)
+            nodeid = self.invocation_dir.bestrelpath(fullpath)
+        return nodeid
 
     @classmethod
     def fromdictargs(cls, option_dict, args):
@@ -691,14 +697,9 @@ class Config(object):
 
     def _initini(self, args):
         parsed_args = self._parser.parse_known_args(args)
-        if parsed_args.inifilename:
-            iniconfig = py.iniconfig.IniConfig(parsed_args.inifilename)
-            if 'pytest' in iniconfig.sections:
-                self.inicfg = iniconfig['pytest']
-            else:
-                self.inicfg = {}
-        else:
-            self.inicfg = getcfg(args, ["pytest.ini", "tox.ini", "setup.cfg"])
+        r = determine_setup(parsed_args.inifilename, parsed_args.file_or_dir)
+        self.rootdir, self.inifile, self.inicfg = r
+        self.invocation_dir = py.path.local()
         self._parser.addini('addopts', 'extra command line options', 'args')
         self._parser.addini('minversion', 'minimally required pytest version')
 
@@ -859,8 +860,58 @@ def getcfg(args, inibasenames):
                 if exists(p):
                     iniconfig = py.iniconfig.IniConfig(p)
                     if 'pytest' in iniconfig.sections:
-                        return iniconfig['pytest']
-    return {}
+                        return base, p, iniconfig['pytest']
+                    elif inibasename == "pytest.ini":
+                        # allowed to be empty
+                        return base, p, {}
+    return None, None, None
+
+
+def get_common_ancestor(args):
+    # args are what we get after early command line parsing (usually
+    # strings, but can be py.path.local objects as well)
+    common_ancestor = None
+    for arg in args:
+        if str(arg)[0] == "-":
+            continue
+        p = py.path.local(arg)
+        if common_ancestor is None:
+            common_ancestor = p
+        else:
+            if p.relto(common_ancestor) or p == common_ancestor:
+                continue
+            elif common_ancestor.relto(p):
+                common_ancestor = p
+            else:
+                shared = p.common(common_ancestor)
+                if shared is not None:
+                    common_ancestor = shared
+    if common_ancestor is None:
+        common_ancestor = py.path.local()
+    elif not common_ancestor.isdir():
+        common_ancestor = common_ancestor.dirpath()
+    return common_ancestor
+
+
+def determine_setup(inifile, args):
+    if inifile:
+        iniconfig = py.iniconfig.IniConfig(inifile)
+        try:
+            inicfg = iniconfig["pytest"]
+        except KeyError:
+            inicfg = None
+        rootdir = get_common_ancestor(args)
+    else:
+        ancestor = get_common_ancestor(args)
+        rootdir, inifile, inicfg = getcfg(
+            [ancestor], ["pytest.ini", "tox.ini", "setup.cfg"])
+        if rootdir is None:
+            for rootdir in ancestor.parts(reverse=True):
+                if rootdir.join("setup.py").exists():
+                    break
+            else:
+                rootdir = ancestor
+    return rootdir, inifile, inicfg or {}
 
 
 def setns(obj, dic):

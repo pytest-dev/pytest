@@ -1,9 +1,6 @@
 from _pytest.doctest import DoctestItem, DoctestModule, DoctestTextfile
 import py, pytest
 
-import pdb
-
-
 class TestDoctests:
 
     def test_collect_testtextfile(self, testdir):

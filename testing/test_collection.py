@@ -343,7 +343,7 @@ class TestSession:
             ("pytest_make_collect_report", "collector.fspath == p"),
             ("pytest_pycollect_makeitem", "name == 'test_func'"),
             ("pytest_collectreport", "report.nodeid.startswith(p.basename)"),
-            ("pytest_collectreport", "report.nodeid == '.'")
+            ("pytest_collectreport", "report.nodeid == ''")
         ])
 
     def test_collect_protocol_method(self, testdir):
@@ -478,7 +478,7 @@ class Test_getinitialnodes:
         config = testdir.parseconfigure(x)
         col = testdir.getnode(config, x)
         assert isinstance(col, pytest.Module)
-        assert col.name == 'subdir/x.py'
+        assert col.name == 'x.py'
         assert col.parent.parent is None
         for col in col.listchain():
             assert col.config is config
