@@ -3,6 +3,10 @@
 
 - add ability to set command line options by environment variable PYTEST_ADDOPTS.
 
+- fix issue650: new option ``--docttest-ignore-import-errors`` which
+  will turn import errors in doctests into skips.  Thanks Charles Cloud
+  for the complete PR.
+  
 - fix issue655: work around different ways that cause python2/3
   to leak sys.exc_info into fixtures/tests causing failures in 3rd party code
 
