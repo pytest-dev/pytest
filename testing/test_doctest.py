@@ -341,3 +341,19 @@ class TestDoctests:
         """)
         reprec = testdir.inline_run(p, "--doctest-glob=x*.txt")
         reprec.assertoutcome(failed=1, passed=0)
+
+    def test_ignore_import_errors_on_doctest(self, testdir):
+        p = testdir.makepyfile("""
+            import asdf
+
+            def add_one(x):
+                '''
+                >>> add_one(1)
+                2
+                '''
+                return x + 1
+        """)
+
+        reprec = testdir.inline_run(p, "--doctest-modules",
+                                    "--doctest-ignore-import-errors")
+        reprec.assertoutcome(skipped=1, failed=1, passed=0)
