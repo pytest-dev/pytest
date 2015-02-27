@@ -135,7 +135,7 @@ you can copy from:
 All of these plugins implement the documented `well specified hooks`_
 to extend and add functionality.
 
-You can also :doc:`contribute your plugin to pytest-dev<submitplugin>`
+You can also :ref:`contribute your plugin to pytest-dev<submitplugin>`
 once it has some happy users other than yourself.
 
 

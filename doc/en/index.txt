@@ -1,7 +1,8 @@
 
 .. _features:
+.. note::
 
-   Are you an experienced pytest user, or an open source project that needs some help getting started with pytest? April 2015 is `adopt pytest month`_!
+ Are you an experienced pytest user, or an open source project that needs some help getting started with pytest? **April 2015** is `adopt pytest month`_!
 
 
 .. _`adopt pytest month`: adopt.html
