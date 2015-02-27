@@ -209,10 +209,10 @@ Mercurial one, to remove confusion of people not knowing where it's better to
 put their issues and pull requests.  Also it wasn't easily possible to automate
 the mirroring process.
 
-However, it's still possible to use git to contribute to pytest using tools
-like `gitifyhg <https://github.com/buchuki/gitifyhg>`_ which allows you to
-clone and work with Mercurial repo still using git.
+In general we recommend to work with the same version control system of the
+original repository.  If you insist on using git with bitbucket/hg you
+may try `gitifyhg <https://github.com/buchuki/gitifyhg>`_ but are on your
+own and need to submit pull requests through the respective platform,
+nevertheless.
 
-.. warning::
-  Remember that git is **not** a default version control system for pytest and
-  you need to be careful using it.
+
