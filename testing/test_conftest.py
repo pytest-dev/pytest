@@ -259,88 +259,87 @@ def test_conftest_found_with_double_dash(testdir):
     """)
 
 
-# conftest visibility, related to issue616
+class TestConftestVisibility:
+    def _setup_tree(self, testdir):  # for issue616
+        # example mostly taken from:
+        # https://mail.python.org/pipermail/pytest-dev/2014-September/002617.html
+        runner = testdir.mkdir("empty")
+        package = testdir.mkdir("package")
 
-def _setup_tree(testdir):
-    # example mostly taken from:
-    # https://mail.python.org/pipermail/pytest-dev/2014-September/002617.html
-    runner = testdir.mkdir("empty")
-    package = testdir.mkdir("package")
+        package.join("conftest.py").write(dedent("""\
+            import pytest
+            @pytest.fixture
+            def fxtr():
+                return "from-package"
+        """))
+        package.join("test_pkgroot.py").write(dedent("""\
+            def test_pkgroot(fxtr):
+                assert fxtr == "from-package"
+        """))
 
-    package.join("conftest.py").write(dedent("""\
-        import pytest
-        @pytest.fixture
-        def fxtr():
-            return "from-package"
-    """))
-    package.join("test_pkgroot.py").write(dedent("""\
-        def test_pkgroot(fxtr):
-            assert fxtr == "from-package"
-    """))
+        swc = package.mkdir("swc")
+        swc.join("__init__.py").ensure()
+        swc.join("conftest.py").write(dedent("""\
+            import pytest
+            @pytest.fixture
+            def fxtr():
+                return "from-swc"
+        """))
+        swc.join("test_with_conftest.py").write(dedent("""\
+            def test_with_conftest(fxtr):
+                assert fxtr == "from-swc"
 
-    swc = package.mkdir("swc")
-    swc.join("__init__.py").ensure()
-    swc.join("conftest.py").write(dedent("""\
-        import pytest
-        @pytest.fixture
-        def fxtr():
-            return "from-swc"
-    """))
-    swc.join("test_with_conftest.py").write(dedent("""\
-        def test_with_conftest(fxtr):
-            assert fxtr == "from-swc"
+        """))
 
-    """))
+        snc = package.mkdir("snc")
+        snc.join("__init__.py").ensure()
+        snc.join("test_no_conftest.py").write(dedent("""\
+            def test_no_conftest(fxtr):
+                assert fxtr == "from-package"   # No local conftest.py, so should
+                                                # use value from parent dir's
 
-    snc = package.mkdir("snc")
-    snc.join("__init__.py").ensure()
-    snc.join("test_no_conftest.py").write(dedent("""\
-        def test_no_conftest(fxtr):
-            assert fxtr == "from-package"   # No local conftest.py, so should
-                                            # use value from parent dir's
+        """))
+        print ("created directory structure:")
+        for x in testdir.tmpdir.visit():
+            print ("   " + x.relto(testdir.tmpdir))
 
-    """))
-    print ("created directory structure:")
-    for x in testdir.tmpdir.visit():
-        print ("   " + x.relto(testdir.tmpdir))
+        return {
+            "runner": runner,
+            "package": package,
+            "swc": swc,
+            "snc": snc}
 
-    return {
-        "runner": runner,
-        "package": package,
-        "swc": swc,
-        "snc": snc}
+    # N.B.: "swc" stands for "subdir with conftest.py"
+    #       "snc" stands for "subdir no [i.e. without] conftest.py"
+    @pytest.mark.parametrize("chdir,testarg,expect_ntests_passed", [
+        ("runner",  "..",               3),
+        ("package", "..",               3),
+        ("swc",     "../..",            3),
+        ("snc",     "../..",            3),
 
-# N.B.: "swc" stands for "subdir with conftest.py"
-#       "snc" stands for "subdir no [i.e. without] conftest.py"
-@pytest.mark.parametrize("chdir,testarg,expect_ntests_passed", [
-    ("runner",  "..",               3),
-    ("package", "..",               3),
-    ("swc",     "../..",            3),
-    ("snc",     "../..",            3),
+        ("runner",  "../package",       3),
+        ("package", ".",                3),
+        ("swc",     "..",               3),
+        ("snc",     "..",               3),
 
-    ("runner",  "../package",       3),
-    ("package", ".",                3),
-    ("swc",     "..",               3),
-    ("snc",     "..",               3),
+        ("runner",  "../package/swc",   1),
+        ("package", "./swc",            1),
+        ("swc",     ".",                1),
+        ("snc",     "../swc",           1),
 
-    ("runner",  "../package/swc",   1),
-    ("package", "./swc",            1),
-    ("swc",     ".",                1),
-    ("snc",     "../swc",           1),
-
-    ("runner",  "../package/snc",   1),
-    ("package", "./snc",            1),
-    ("swc",     "../snc",           1),
-    ("snc",     ".",                1),
-])
-@pytest.mark.issue616
-def test_parsefactories_relative_node_ids(
-        testdir, chdir,testarg, expect_ntests_passed):
-    dirs = _setup_tree(testdir)
-    print("pytest run in cwd: %s" %(
-          dirs[chdir].relto(testdir.tmpdir)))
-    print("pytestarg        : %s" %(testarg))
-    print("expected pass    : %s" %(expect_ntests_passed))
-    with dirs[chdir].as_cwd():
-        reprec = testdir.inline_run(testarg, "-q", "--traceconfig")
-        reprec.assertoutcome(passed=expect_ntests_passed)
+        ("runner",  "../package/snc",   1),
+        ("package", "./snc",            1),
+        ("swc",     "../snc",           1),
+        ("snc",     ".",                1),
+    ])
+    @pytest.mark.issue616
+    def test_parsefactories_relative_node_ids(
+            self, testdir, chdir,testarg, expect_ntests_passed):
+        dirs = self._setup_tree(testdir)
+        print("pytest run in cwd: %s" %(
+              dirs[chdir].relto(testdir.tmpdir)))
+        print("pytestarg        : %s" %(testarg))
+        print("expected pass    : %s" %(expect_ntests_passed))
+        with dirs[chdir].as_cwd():
+            reprec = testdir.inline_run(testarg, "-q", "--traceconfig")
+            reprec.assertoutcome(passed=expect_ntests_passed)
