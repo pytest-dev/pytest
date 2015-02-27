@@ -2,7 +2,7 @@ import json
 import py
 import textwrap
 
-issues_url = "http://bitbucket.org/api/1.0/repositories/hpk42/pytest/issues"
+issues_url = "http://bitbucket.org/api/1.0/repositories/pytest-dev/pytest/issues"
 
 import requests
 
@@ -53,7 +53,7 @@ def report(issues):
         kind = metadata["kind"]
         status = issue["status"]
         id = issue["local_id"]
-        link = "https://bitbucket.org/hpk42/pytest/issue/%s/" % id
+        link = "https://bitbucket.org/pytest-dev/pytest/issue/%s/" % id
         print("----")
         print(status, kind, link)
         print(title)

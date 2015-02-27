@@ -1,5 +1,5 @@
 pytest development status
 ================================
 
-https://drone.io/bitbucket.org/hpk42/pytest
+https://drone.io/bitbucket.org/pytest-dev/pytest
 

@@ -1,18 +1,59 @@
-============
-Contributing
-============
+============================
+Contribution getting started
+============================
 
 Contributions are highly welcomed and appreciated.  Every little help counts,
 so do not hesitate!
 
+.. contents:: Contribution links
+   :depth: 2
 
-Types of contributions
-======================
+
+.. _submitplugin:
+
+Submit a plugin, co-develop pytest
+----------------------------------
+
+Pytest development of the core, some plugins and support code happens
+in repositories living under:
+
+- `the pytest-dev bitbucket team <https://bitbucket.org/pytest-dev>`_
+
+- `the pytest-dev github organisation <https://github.com/pytest-dev>`_
+
+All pytest-dev team members have write access to all contained
+repositories.  pytest core and plugins are generally developed
+using `pull requests`_ to respective repositories.
+
+You can submit your plugin by subscribing to the `pytest-dev mail list
+<https://mail.python.org/mailman/listinfo/pytest-dev>`_ and writing a
+mail pointing to your existing pytest plugin repository which must have
+the following:
+
+- PyPI presence with a ``setup.py`` that contains a license, ``pytest-`` 
+  prefixed, version number, authors, short and long description.  
+
+- a ``tox.ini`` for running tests using `tox <http://tox.testrun.org>`_.
+
+- a ``README.txt`` describing how to use the plugin and on which
+  platforms it runs.
+
+- an issue tracker unless you rather want to use the core ``pytest``
+  issue tracker.
+
+If no contributor strongly objects and two agree, the repo will be
+transferred to the ``pytest-dev`` organisation and you'll become a
+member of the ``pytest-dev`` team, with commit rights to all projects. 
+We recommend that each plugin has at least three people who have the
+right to release to pypi.
+
+
+.. _reportbugs:
 
 Report bugs
 -----------
 
-Report bugs at https://bitbucket.org/hpk42/pytest/issues.
+Report bugs for pytest at https://bitbucket.org/pytest-dev/pytest/issues
 
 If you are reporting a bug, please include:
 
@@ -22,13 +63,15 @@ If you are reporting a bug, please include:
   installed libraries and pytest version.
 * Detailed steps to reproduce the bug.
 
+.. _submitfeedback:
+
 Submit feedback for developers
 ------------------------------
 
 Do you like pytest?  Share some love on Twitter or in your blog posts!
 
 We'd also like to hear about your propositions and suggestions.  Feel free to
-`submit them as issues <https://bitbucket.org/hpk42/pytest/issues>`__ and:
+`submit them as issues <https://bitbucket.org/pytest-dev/pytest/issues>`__ and:
 
 * Set the "kind" to "enhancement" or "proposal" so that we can quickly find
   about them.
@@ -37,21 +80,24 @@ We'd also like to hear about your propositions and suggestions.  Feel free to
 * If you have required skills and/or knowledge, we are very happy for
   :ref:`pull requests <pull-requests>`.
 
+.. _fixbugs:
 
 Fix bugs
 --------
 
 Look through the BitBucket issues for bugs.  Here is sample filter you can use:
-https://bitbucket.org/hpk42/pytest/issues?status=new&status=open&kind=bug
+https://bitbucket.org/pytest-dev/pytest/issues?status=new&status=open&kind=bug
 
 :ref:`Talk <contact>` to developers to find out how you can fix specific bugs.
+
+.. _writeplugins:
 
 Implement features
 ------------------
 
 Look through the BitBucket issues for enhancements.  Here is sample filter you
 can use:
-https://bitbucket.org/hpk42/pytest/issues?status=new&status=open&kind=enhancement
+https://bitbucket.org/pytest-dev/pytest/issues?status=new&status=open&kind=enhancement
 
 :ref:`Talk <contact>` to developers to find out how you can implement specific
 features.
@@ -67,6 +113,7 @@ pytest could always use more documentation.  What exactly is needed?
 * Blog posts, articles and such -- they're all very appreciated.
 
 .. _pull-requests:
+.. _`pull requests`:
 
 Preparing Pull Requests on Bitbucket
 =====================================
@@ -74,7 +121,7 @@ Preparing Pull Requests on Bitbucket
 .. note::
   What is a "pull request"?  It informs project's core developers about the
   changes you want to review and merge.  Pull requests are stored on
-  `BitBucket servers <https://bitbucket.org/hpk42/pytest/pull-requests>`__.
+  `BitBucket servers <https://bitbucket.org/pytest-dev/pytest/pull-requests>`__.
   Once you send pull request, we can discuss it's potential modifications and
   even add more commits to it later on.
 
@@ -82,7 +129,7 @@ The primary development platform for pytest is BitBucket.  You can find all
 the issues there and submit your pull requests.
 
 1. Fork the
-   `pytest BitBucket repository <https://bitbucket.org/hpk42/pytest>`__.  It's
+   `pytest BitBucket repository <https://bitbucket.org/pytest-dev/pytest>`__.  It's
    fine to use ``pytest`` as your fork repository name because it will live
    under your user.
 
@@ -149,12 +196,12 @@ the issues there and submit your pull requests.
     source: YOUR_BITBUCKET_USERNAME/pytest
     branch: your-branch-name
 
-    target: hpk42/pytest
+    target: pytest-dev/pytest
     branch: default
 
 .. _contribution-using-git:
 
-What about git (and so GitHub)?
+Using git with bitbucket/hg
 -------------------------------
 
 There used to be the pytest GitHub mirror.  It was removed in favor of the
@@ -162,10 +209,10 @@ Mercurial one, to remove confusion of people not knowing where it's better to
 put their issues and pull requests.  Also it wasn't easily possible to automate
 the mirroring process.
 
-However, it's still possible to use git to contribute to pytest using tools
-like `gitifyhg <https://github.com/buchuki/gitifyhg>`_ which allows you to
-clone and work with Mercurial repo still using git.
+In general we recommend to work with the same version control system of the
+original repository.  If you insist on using git with bitbucket/hg you
+may try `gitifyhg <https://github.com/buchuki/gitifyhg>`_ but are on your
+own and need to submit pull requests through the respective platform,
+nevertheless.
 
-.. warning::
-  Remember that git is **not** a default version control system for pytest and
-  you need to be careful using it.
+

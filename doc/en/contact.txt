@@ -29,7 +29,7 @@ Contact channels
 - `merlinux.eu`_ offers pytest and tox-related professional teaching and
   consulting.
 
-.. _`pytest issue tracker`: http://bitbucket.org/hpk42/pytest/issues/
+.. _`pytest issue tracker`: http://bitbucket.org/pytest-dev/pytest/issues/
 .. _`old issue tracker`: http://bitbucket.org/hpk42/py-trunk/issues/
 
 .. _`merlinux.eu`: http://merlinux.eu

@@ -11,8 +11,8 @@ Talks and Tutorials
 Talks and blog postings
 ---------------------------------------------
 
-.. _`tutorial1 repository`: http://bitbucket.org/hpk42/pytest-tutorial1/
-.. _`pycon 2010 tutorial PDF`: http://bitbucket.org/hpk42/pytest-tutorial1/raw/tip/pytest-basic.pdf
+.. _`tutorial1 repository`: http://bitbucket.org/pytest-dev/pytest-tutorial1/
+.. _`pycon 2010 tutorial PDF`: http://bitbucket.org/pytest-dev/pytest-tutorial1/raw/tip/pytest-basic.pdf
 
 - `Introduction to pytest, Andreas Pelme, EuroPython 2014
   <https://www.youtube.com/watch?v=LdVJj65ikRY>`_.
