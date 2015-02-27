@@ -120,43 +120,9 @@ You may also discover more plugins through a `pytest- pypi.python.org search`_.
 .. _`pytest- pypi.python.org search`: http://pypi.python.org/pypi?%3Aaction=search&term=pytest-&submit=search
 
 
-External plugin development
----------------------------
-
-Pytest community cares about pytest users, in particular, it's crucial for the community
-to keep all pieces of the pytest ecosystem well supported. External plugins are important for
-pytest users, as they implement many useful, and sometimes critical features which the pytest core does
-not implement.
-
-To simplify the plugin development and/or support, it was decided to create teams(companies) on popular code hosting
-services (at the moment it's github and bitbucket):
-
-* `<https://github.com/pytest-dev>`_:
-    probably the most popular hosting for pytest plugins
-    the name ``pytest-dev`` is choosen because ``pytest`` was already taken by
-    some unknown person, who's not active on the github or just doesn't check the email used to register
-    that organization.
-* `<https://bitbucket.org/pytest-dev>`_:
-    pytest is hosted on the bitbucket, also a lot of pytest plugins are hosted there.
-
-More code hosting services can be added in the future.
-
-Community encourages pytest plugin developers to move their plugins under those organizations (eg transfer ownership),
-paying with a better support, faster feedback, better discoverability, etc.
-
-Generic workflow of the ownership transfer looks like:
-
-* If not a member already, developer asks for a membership in the `pytest plugin developers community` organizations listed above, sending an email to `<pytest-dev@python.org>`_.
-
-* Developer transfers the ownership of his plugin repository to the organization listed above.
-
-* Existing organization members will make sure proper write permissions are set up for developer who transfered the ownership to the organization.
-
-
 Writing a plugin by looking at examples
 ---------------------------------------
 
-.. _`Distribute`: http://pypi.python.org/pypi/distribute
 .. _`setuptools`: http://pypi.python.org/pypi/setuptools
 
 If you want to write a plugin, there are many real-life examples
@@ -169,6 +135,10 @@ you can copy from:
 All of these plugins implement the documented `well specified hooks`_
 to extend and add functionality.
 
+You can also :doc:`contribute your plugin to pytest-dev<submitplugin>`
+once it has some happy users other than yourself.
+
+
 .. _`setuptools entry points`:
 
 Making your plugin installable by others
@@ -177,10 +147,10 @@ Making your plugin installable by others
 If you want to make your plugin externally available, you
 may define a so-called entry point for your distribution so
 that ``pytest`` finds your plugin module.  Entry points are
-a feature that is provided by `setuptools`_ or `Distribute`_.
-pytest looks up the ``pytest11`` entrypoint to discover its
+a feature that is provided by `setuptools`_. pytest looks up
+the ``pytest11`` entrypoint to discover its
 plugins and you can thus make your plugin available by defining
-it in your setuptools/distribute-based setup-invocation:
+it in your setuptools-invocation:
 
 .. sourcecode:: python
 
