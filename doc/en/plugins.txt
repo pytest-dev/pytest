@@ -9,7 +9,7 @@ Working with plugins and conftest files
 * `external plugins`_: modules discovered through `setuptools entry points`_
 * `conftest.py plugins`_: modules auto-discovered in test directories
 
-.. _`pytest/plugin`: http://bitbucket.org/hpk42/pytest/src/tip/pytest/plugin/
+.. _`pytest/plugin`: http://bitbucket.org/pytest-dev/pytest/src/tip/pytest/plugin/
 .. _`conftest.py plugins`:
 .. _`conftest.py`:
 .. _`localplugin`:
@@ -266,7 +266,7 @@ pytest default plugin reference
 
 
 You can find the source code for the following plugins
-in the `pytest repository <http://bitbucket.org/hpk42/pytest/>`_.
+in the `pytest repository <http://bitbucket.org/pytest-dev/pytest/>`_.
 
 .. autosummary::
 
@@ -405,7 +405,7 @@ are expected.
 
 For an example, see `newhooks.py`_ from :ref:`xdist`.
 
-.. _`newhooks.py`: https://bitbucket.org/hpk42/pytest-xdist/src/52082f70e7dd04b00361091b8af906c60fd6700f/xdist/newhooks.py?at=default
+.. _`newhooks.py`: https://bitbucket.org/pytest-dev/pytest-xdist/src/52082f70e7dd04b00361091b8af906c60fd6700f/xdist/newhooks.py?at=default
 
 
 Using hooks from 3rd party plugins

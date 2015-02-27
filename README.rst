@@ -1,5 +1,5 @@
-.. image:: https://drone.io/bitbucket.org/hpk42/pytest/status.png
-   :target: https://drone.io/bitbucket.org/hpk42/pytest/latest
+.. image:: https://drone.io/bitbucket.org/pytest-dev/pytest/status.png
+   :target: https://drone.io/bitbucket.org/pytest-dev/pytest/latest
 .. image:: https://pypip.in/v/pytest/badge.png
    :target: https://pypi.python.org/pypi/pytest
 
@@ -7,9 +7,9 @@ Documentation: http://pytest.org/latest/
 
 Changelog: http://pytest.org/latest/changelog.html
 
-Issues: https://bitbucket.org/hpk42/pytest/issues?status=open
+Issues: https://bitbucket.org/pytest-dev/pytest/issues?status=open
 
-CI: https://drone.io/bitbucket.org/hpk42/pytest
+CI: https://drone.io/bitbucket.org/pytest-dev/pytest
 
 The ``pytest`` testing tool makes it easy to write small tests, yet
 scales to support complex functional testing.  It provides
@@ -44,11 +44,11 @@ For much more info, including PDF docs, see
 
 and report bugs at:
 
-    http://bitbucket.org/hpk42/pytest/issues/
+    http://bitbucket.org/pytest-dev/pytest/issues/
 
 and checkout or fork repo at:
 
-    http://bitbucket.org/hpk42/pytest/
+    http://bitbucket.org/pytest-dev/pytest/
 
 
 Copyright Holger Krekel and others, 2004-2014

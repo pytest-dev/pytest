@@ -1040,7 +1040,7 @@ def test_dontreadfrominput_has_encoding(testdir):
 
 
 def test_pickling_and_unpickling_enocded_file():
-    # See https://bitbucket.org/hpk42/pytest/pull-request/194
+    # See https://bitbucket.org/pytest-dev/pytest/pull-request/194
     # pickle.loads() raises infinite recursion if
     # EncodedFile.__getattr__ is not implemented properly
     ef = capture.EncodedFile(None, None)

@@ -1047,7 +1047,7 @@ def raises(ExpectedException, *args, **kwargs):
     if ExpectedException is AssertionError:
         # we want to catch a AssertionError
         # replace our subclass with the builtin one
-        # see https://bitbucket.org/hpk42/pytest/issue/176/pytestraises
+        # see https://bitbucket.org/pytest-dev/pytest/issue/176/pytestraises
         from _pytest.assertion.util import BuiltinAssertionError \
             as ExpectedException
     msg = ("exceptions must be old-style classes or"

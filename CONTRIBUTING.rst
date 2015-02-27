@@ -53,7 +53,7 @@ right to release to pypi.
 Report bugs
 -----------
 
-Report bugs for pytest at https://bitbucket.org/hpk42/pytest/issues
+Report bugs for pytest at https://bitbucket.org/pytest-dev/pytest/issues
 
 If you are reporting a bug, please include:
 
@@ -71,7 +71,7 @@ Submit feedback for developers
 Do you like pytest?  Share some love on Twitter or in your blog posts!
 
 We'd also like to hear about your propositions and suggestions.  Feel free to
-`submit them as issues <https://bitbucket.org/hpk42/pytest/issues>`__ and:
+`submit them as issues <https://bitbucket.org/pytest-dev/pytest/issues>`__ and:
 
 * Set the "kind" to "enhancement" or "proposal" so that we can quickly find
   about them.
@@ -86,7 +86,7 @@ Fix bugs
 --------
 
 Look through the BitBucket issues for bugs.  Here is sample filter you can use:
-https://bitbucket.org/hpk42/pytest/issues?status=new&status=open&kind=bug
+https://bitbucket.org/pytest-dev/pytest/issues?status=new&status=open&kind=bug
 
 :ref:`Talk <contact>` to developers to find out how you can fix specific bugs.
 
@@ -97,7 +97,7 @@ Implement features
 
 Look through the BitBucket issues for enhancements.  Here is sample filter you
 can use:
-https://bitbucket.org/hpk42/pytest/issues?status=new&status=open&kind=enhancement
+https://bitbucket.org/pytest-dev/pytest/issues?status=new&status=open&kind=enhancement
 
 :ref:`Talk <contact>` to developers to find out how you can implement specific
 features.
@@ -121,7 +121,7 @@ Preparing Pull Requests on Bitbucket
 .. note::
   What is a "pull request"?  It informs project's core developers about the
   changes you want to review and merge.  Pull requests are stored on
-  `BitBucket servers <https://bitbucket.org/hpk42/pytest/pull-requests>`__.
+  `BitBucket servers <https://bitbucket.org/pytest-dev/pytest/pull-requests>`__.
   Once you send pull request, we can discuss it's potential modifications and
   even add more commits to it later on.
 
@@ -129,7 +129,7 @@ The primary development platform for pytest is BitBucket.  You can find all
 the issues there and submit your pull requests.
 
 1. Fork the
-   `pytest BitBucket repository <https://bitbucket.org/hpk42/pytest>`__.  It's
+   `pytest BitBucket repository <https://bitbucket.org/pytest-dev/pytest>`__.  It's
    fine to use ``pytest`` as your fork repository name because it will live
    under your user.
 
@@ -196,7 +196,7 @@ the issues there and submit your pull requests.
     source: YOUR_BITBUCKET_USERNAME/pytest
     branch: your-branch-name
 
-    target: hpk42/pytest
+    target: pytest-dev/pytest
     branch: default
 
 .. _contribution-using-git:

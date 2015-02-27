@@ -21,7 +21,7 @@ fixes a number of bugs and brings some new features, mainly:
 Note also that 2.6.0 departs with the "zero reported bugs" policy
 because it has been too hard to keep up with it, unfortunately.
 Instead we are for now rather bound to work on "upvoted" issues in
-the https://bitbucket.org/hpk42/pytest/issues?status=new&status=open&sort=-votes
+the https://bitbucket.org/pytest-dev/pytest/issues?status=new&status=open&sort=-votes
 issue tracker.
 
 See docs at:
