@@ -112,11 +112,11 @@ pytest could always use more documentation.  What exactly is needed?
 * Docstrings.  There's never too much of them.
 * Blog posts, articles and such -- they're all very appreciated.
 
-.. _pull-requests:
 .. _`pull requests`:
+.. _pull-requests:
 
 Preparing Pull Requests on Bitbucket
-=====================================
+------------------------------------
 
 .. note::
   What is a "pull request"?  It informs project's core developers about the
