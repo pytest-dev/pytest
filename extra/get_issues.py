@@ -11,7 +11,7 @@ def get_issues():
     start = 0
     issues = []
     while 1:
-        post_data = {"accountname": "hpk42",
+        post_data = {"accountname": "pytest-dev",
                      "repo_slug": "pytest",
                      "start": start,
                      "limit": chunksize}
