@@ -10,7 +10,7 @@ This should be issued before every major documentation release to obtain latest
 versions from PyPI.
 
 Also includes plugin compatibility between different python and pytest versions,
-obtained from http://pytest-plugs.herokuapp.com.
+obtained from http://plugincompat.herokuapp.com.
 """
 from __future__ import print_function
 from collections import namedtuple
@@ -61,7 +61,7 @@ def get_latest_versions(plugins):
         yield name, str(loose_version)
 
 
-def obtain_plugins_table(plugins, client, verbose):
+def obtain_plugins_table(plugins, client, verbose, pytest_ver):
     """
     Returns information to populate a table of plugins, their versions,
     authors, etc.
@@ -73,7 +73,11 @@ def obtain_plugins_table(plugins, client, verbose):
     :param plugins: list of (name, version)
     :param client: ServerProxy
     :param verbose: print plugin name and version as they are fetch
+    :param pytest_ver: pytest version to use.
     """
+    if pytest_ver is None:
+        pytest_ver = pytest.__version__
+
     def get_repo_markup(repo):
         """
         obtains appropriate markup for the given repository, as two lines
@@ -107,9 +111,8 @@ def obtain_plugins_table(plugins, client, verbose):
     rows = []
     ColumnData = namedtuple('ColumnData', 'text link')
     headers = ['Name', 'Py27', 'Py34', 'Home', 'Summary']
-    pytest_version = pytest.__version__
     repositories = obtain_override_repositories()
-    print('Generating plugins_index page (pytest-{0})'.format(pytest_version))
+    print('Generating plugins_index page (pytest-{0})'.format(pytest_ver))
     plugins = list(plugins)
     for index, (package_name, version) in enumerate(plugins):
         if verbose:
@@ -118,7 +121,7 @@ def obtain_plugins_table(plugins, client, verbose):
         release_data = client.release_data(package_name, version)
 
         common_params = dict(
-            site='http://pytest-plugs.herokuapp.com',
+            site='http://plugincompat.herokuapp.com',
             name=package_name,
             version=version)
 
@@ -131,9 +134,9 @@ def obtain_plugins_table(plugins, client, verbose):
         image_url += '?py={py}&pytest={pytest}'
         row = (
             ColumnData(package_name, release_data['package_url']),
-            ColumnData(image_url.format(py='py27', pytest=pytest_version),
+            ColumnData(image_url.format(py='py27', pytest=pytest_ver),
                        None),
-            ColumnData(image_url.format(py='py34', pytest=pytest_version),
+            ColumnData(image_url.format(py='py34', pytest=pytest_ver),
                        None),
             ColumnData(
                 repo_markup_1,
@@ -150,9 +153,9 @@ def obtain_plugins_table(plugins, client, verbose):
 
         row = (
             ColumnData('', None),
-            ColumnData(output_url.format(py='py27', pytest=pytest_version),
+            ColumnData(output_url.format(py='py27', pytest=pytest_ver),
                        None),
-            ColumnData(output_url.format(py='py34', pytest=pytest_version),
+            ColumnData(output_url.format(py='py34', pytest=pytest_ver),
                        None),
             ColumnData(repo_markup_2, None),
             ColumnData('', None),
@@ -184,13 +187,14 @@ def obtain_override_repositories():
     }
 
 
-def generate_plugins_index_from_table(filename, headers, rows):
+def generate_plugins_index_from_table(filename, headers, rows, pytest_ver):
     """
     Generates a RST file with the table data given.
 
     :param filename: output filename
     :param headers: see `obtain_plugins_table`
     :param rows: see `obtain_plugins_table`
+    :param pytest_ver: see `obtain_plugins_table`
     """
     # creates a list of rows, each being a str containing appropriate column
     # text and link
@@ -215,7 +219,7 @@ def generate_plugins_index_from_table(filename, headers, rows):
 
     with open(filename, 'w') as f:
         # header
-        header_text = HEADER.format(pytest_version=pytest.__version__)
+        header_text = HEADER.format(pytest_version=pytest_ver)
         print(header_text, file=f)
         print(file=f)
 
@@ -240,7 +244,7 @@ def generate_plugins_index_from_table(filename, headers, rows):
         print('*(Updated on %s)*' % today, file=f)
 
 
-def generate_plugins_index(client, filename, verbose):
+def generate_plugins_index(client, filename, verbose, pytest_ver):
     """
     Generates an RST file with a table of the latest pytest plugins found in
     PyPI.
@@ -248,10 +252,12 @@ def generate_plugins_index(client, filename, verbose):
     :param client: ServerProxy
     :param filename: output filename
     :param verbose: print name and version of each plugin as they are fetch
+    :param pytest_ver: pytest version to use; if not given, use current pytest
+        version.
     """
     plugins = get_latest_versions(iter_plugins(client))
-    headers, rows = obtain_plugins_table(plugins, client, verbose)
-    generate_plugins_index_from_table(filename, headers, rows)
+    headers, rows = obtain_plugins_table(plugins, client, verbose, pytest_ver)
+    generate_plugins_index_from_table(filename, headers, rows, pytest_ver)
 
 
 def main(argv):
@@ -270,10 +276,12 @@ def main(argv):
                       help='url of PyPI server to obtain data from [default: %default]')
     parser.add_option('-v', '--verbose', default=False, action='store_true',
                       help='verbose output')
+    parser.add_option('--pytest-ver', default=None, action='store',
+                      help='generate index for this pytest version (default current version)')
     (options, _) = parser.parse_args(argv[1:])
 
     client = get_proxy(options.url)
-    generate_plugins_index(client, options.filename, options.verbose)
+    generate_plugins_index(client, options.filename, options.verbose, options.pytest_ver)
 
     print()
     print('%s updated.' % options.filename)
@@ -291,7 +299,7 @@ their status when tested using py.test **{pytest_version}** and python 2.7 and
 3.3.
 
 A complete listing can also be found at
-`pytest-plugs <http://pytest-plugs.herokuapp.com/>`_, which contains tests
+`plugincompat <http://plugincompat.herokuapp.com/>`_, which contains tests
 status against other py.test releases.
 '''
 

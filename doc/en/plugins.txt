@@ -112,7 +112,7 @@ for some popular plugins:
 
 To see a complete list of all plugins with their latest testing
 status against different py.test and Python versions, please visit
-`pytest-plugs <http://pytest-plugs.herokuapp.com/>`_.
+`plugincompat <http://plugincompat.herokuapp.com/>`_.
 
 You may also discover more plugins through a `pytest- pypi.python.org search`_.
 
