@@ -12,37 +12,73 @@ configurations files by using the general help option::
 This will display command line and configuration file settings
 which were registered by installed plugins.
 
+.. _rootdir:
 .. _inifiles:
 
-How test configuration is read from configuration INI-files
--------------------------------------------------------------
+initialization: determining rootdir and inifile
+-----------------------------------------------
 
-``pytest`` searches for the first matching ini-style configuration file
-in the directories of command line argument and the directories above.
-It looks for file basenames in this order::
+.. versionadded:: 2.7
 
+pytest determines a "rootdir" for each test run which depends on
+the command line arguments (specified test files, paths) and on
+the existence of inifiles.  The determined rootdir and ini-file are
+printed as part of the pytest header.  The rootdir is used for constructing
+"nodeids" during collection and may also be used by plugins to store
+project/testrun-specific information.
+
+Here is the algorithm which finds the rootdir from ``args``:
+
+- determine the common ancestor directory for the specified ``args``.
+
+- look for ``pytest.ini``, ``tox.ini`` and ``setup.cfg`` files in the
+  ancestor directory and upwards.  If one is matched, it becomes the
+  ini-file and its directory becomes the rootdir.  An existing
+  ``pytest.ini`` file will always be considered a match whereas
+  ``tox.ini`` and ``setup.cfg`` will only match if they contain
+  a ``[pytest]`` section.
+
+- if no ini-file was found, look for ``setup.py`` upwards from
+  the common ancestor directory to determine the ``rootdir``.
+
+- if no ini-file and no ``setup.py`` was found, use the already
+  determined common ancestor as root directory.  This allows to
+  work with pytest in structures that are not part of a package
+  and don't have any particular ini-file configuration.
+
+Note that options from multiple ini-files candidates are never merged,
+the first one wins (``pytest.ini`` always wins even if it does not
+contain a ``[pytest]`` section).
+
+The ``config`` object will subsequently carry these attributes:
+
+- ``config.rootdir``: the determined root directory, guaranteed to exist.
+
+- ``config.inifile``: the determined ini-file, may be ``None``.
+
+The rootdir is used a reference directory for constructing test
+addresses ("nodeids") and can be used also by plugins for storing
+per-testrun information.
+
+Example::
+
+    py.test path/to/testdir path/other/
+
+will determine the common ancestor as ``path`` and then
+check for ini-files as follows::
+
+    # first look for pytest.ini files
+    path/pytest.ini
+    path/setup.cfg  # must also contain [pytest] section to match
+    path/tox.ini    # must also contain [pytest] section to match
     pytest.ini
-    tox.ini
-    setup.cfg
+    ... # all the way down to the root
 
-Searching stops when the first ``[pytest]`` section is found in any of
-these files.  There is no merging of configuration values from multiple
-files.  Example::
+    # now look for setup.py
+    path/setup.py
+    setup.py
+    ... # all the way down to the root
 
-    py.test path/to/testdir
-
-will look in the following dirs for a config file::
-
-    path/to/testdir/pytest.ini
-    path/to/testdir/tox.ini
-    path/to/testdir/setup.cfg
-    path/to/pytest.ini
-    path/to/tox.ini
-    path/to/setup.cfg
-    ... # up until root of filesystem
-
-If argument is provided to a ``pytest`` run, the current working directory
-is used to start the search.
 
 .. _`how to change command line options defaults`:
 .. _`adding default options`:
@@ -66,6 +102,8 @@ line options while the environment is in use::
     export PYTEST_ADDOPTS="-rsxX -q"
 
 From now on, running ``pytest`` will add the specified options.
+
+
 
 Builtin configuration file options
 ----------------------------------------------

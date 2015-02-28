@@ -218,14 +218,14 @@ def show_simple(terminalreporter, lines, stat, format):
     failed = terminalreporter.stats.get(stat)
     if failed:
         for rep in failed:
-            pos = rep.nodeid
-            lines.append(format %(pos, ))
+            pos = terminalreporter.config.cwd_relative_nodeid(rep.nodeid)
+            lines.append(format %(pos,))
 
 def show_xfailed(terminalreporter, lines):
     xfailed = terminalreporter.stats.get("xfailed")
     if xfailed:
         for rep in xfailed:
-            pos = rep.nodeid
+            pos = terminalreporter.config.cwd_relative_nodeid(rep.nodeid)
             reason = rep.wasxfail
             lines.append("XFAIL %s" % (pos,))
             if reason:
@@ -235,7 +235,7 @@ def show_xpassed(terminalreporter, lines):
     xpassed = terminalreporter.stats.get("xpassed")
     if xpassed:
         for rep in xpassed:
-            pos = rep.nodeid
+            pos = terminalreporter.config.cwd_relative_nodeid(rep.nodeid)
             reason = rep.wasxfail
             lines.append("XPASS %s %s" %(pos, reason))
 

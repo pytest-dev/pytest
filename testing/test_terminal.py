@@ -77,11 +77,11 @@ class TestTerminal:
     def test_writeline(self, testdir, linecomp):
         modcol = testdir.getmodulecol("def test_one(): pass")
         rep = TerminalReporter(modcol.config, file=linecomp.stringio)
-        rep.write_fspath_result(py.path.local("xy.py"), '.')
+        rep.write_fspath_result(modcol.nodeid, ".")
         rep.write_line("hello world")
         lines = linecomp.stringio.getvalue().split('\n')
         assert not lines[0]
-        assert lines[1].endswith("xy.py .")
+        assert lines[1].endswith(modcol.name + " .")
         assert lines[2] == "hello world"
 
     def test_show_runtest_logstart(self, testdir, linecomp):
@@ -126,7 +126,7 @@ class TestTerminal:
         ])
         result = testdir.runpytest("-v", p2)
         result.stdout.fnmatch_lines([
-            "*test_p2.py <- *test_p1.py::TestMore::test_p1*",
+            "*test_p2.py::TestMore::test_p1* <- *test_p1.py*PASSED",
         ])
 
     def test_itemreport_directclasses_not_shown_as_subclasses(self, testdir):

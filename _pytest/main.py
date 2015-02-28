@@ -457,9 +457,7 @@ class FSCollector(Collector):
         self.fspath = fspath
 
     def _makeid(self):
-        if self == self.session:
-            return "."
-        relpath = self.session.fspath.bestrelpath(self.fspath)
+        relpath = self.fspath.relto(self.config.rootdir)
         if os.sep != "/":
             relpath = relpath.replace(os.sep, "/")
         return relpath
@@ -510,7 +508,7 @@ class Session(FSCollector):
         __module__ = 'builtins' # for py3
 
     def __init__(self, config):
-        FSCollector.__init__(self, py.path.local(), parent=None,
+        FSCollector.__init__(self, config.rootdir, parent=None,
                              config=config, session=self)
         self.config.pluginmanager.register(self, name="session", prepend=True)
         self._testsfailed = 0
@@ -519,6 +517,9 @@ class Session(FSCollector):
         self._norecursepatterns = config.getini("norecursedirs")
         self.startdir = py.path.local()
         self._fs2hookproxy = {}
+
+    def _makeid(self):
+        return ""
 
     def pytest_collectstart(self):
         if self.shouldstop:
@@ -663,7 +664,7 @@ class Session(FSCollector):
             arg = self._tryconvertpyarg(arg)
         parts = str(arg).split("::")
         relpath = parts[0].replace("/", os.sep)
-        path = self.fspath.join(relpath, abs=True)
+        path = self.config.invocation_dir.join(relpath, abs=True)
         if not path.check():
             if self.config.option.pyargs:
                 msg = "file or package not found: "

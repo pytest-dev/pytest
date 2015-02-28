@@ -1,6 +1,6 @@
 import py, pytest
 
-from _pytest.config import getcfg
+from _pytest.config import getcfg, get_common_ancestor, determine_setup
 
 class TestParseIni:
     def test_getcfg_and_config(self, testdir, tmpdir):
@@ -10,7 +10,7 @@ class TestParseIni:
             [pytest]
             name = value
         """))
-        cfg = getcfg([sub], ["setup.cfg"])
+        rootdir, inifile, cfg = getcfg([sub], ["setup.cfg"])
         assert cfg['name'] == "value"
         config = testdir.parseconfigure(sub)
         assert config.inicfg['name'] == 'value'
@@ -400,3 +400,55 @@ class TestWarning:
             *WT1*test_warn_on_test_item*:5*hello*
             *1 warning*
         """)
+
+class TestRootdir:
+    def test_simple_noini(self, tmpdir):
+        assert get_common_ancestor([tmpdir]) == tmpdir
+        assert get_common_ancestor([tmpdir.mkdir("a"), tmpdir]) == tmpdir
+        assert get_common_ancestor([tmpdir, tmpdir.join("a")]) == tmpdir
+        with tmpdir.as_cwd():
+            assert get_common_ancestor([]) == tmpdir
+
+    @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
+    def test_with_ini(self, tmpdir, name):
+        inifile = tmpdir.join(name)
+        inifile.write("[pytest]\n")
+
+        a = tmpdir.mkdir("a")
+        b = a.mkdir("b")
+        for args in ([tmpdir], [a], [b]):
+            rootdir, inifile, inicfg = determine_setup(None, args)
+            assert rootdir == tmpdir
+            assert inifile == inifile
+        rootdir, inifile, inicfg = determine_setup(None, [b,a])
+        assert rootdir == tmpdir
+        assert inifile == inifile
+
+    @pytest.mark.parametrize("name", "setup.cfg tox.ini".split())
+    def test_pytestini_overides_empty_other(self, tmpdir, name):
+        inifile = tmpdir.ensure("pytest.ini")
+        a = tmpdir.mkdir("a")
+        a.ensure(name)
+        rootdir, inifile, inicfg = determine_setup(None, [a])
+        assert rootdir == tmpdir
+        assert inifile == inifile
+
+    def test_setuppy_fallback(self, tmpdir):
+        a = tmpdir.mkdir("a")
+        a.ensure("setup.cfg")
+        tmpdir.ensure("setup.py")
+        rootdir, inifile, inicfg = determine_setup(None, [a])
+        assert rootdir == tmpdir
+        assert inifile is None
+        assert inicfg == {}
+
+    def test_nothing(self, tmpdir):
+        rootdir, inifile, inicfg = determine_setup(None, [tmpdir])
+        assert rootdir == tmpdir
+        assert inifile is None
+        assert inicfg == {}
+
+    def test_with_specific_inifile(self, tmpdir):
+        inifile = tmpdir.ensure("pytest.ini")
+        rootdir, inifile, inicfg = determine_setup(inifile, [tmpdir])
+        assert rootdir == tmpdir
