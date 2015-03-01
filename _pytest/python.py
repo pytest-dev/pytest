@@ -1714,7 +1714,7 @@ class FixtureManager:
             faclist = metafunc._arg2fixturedefs.get(argname)
             if faclist is None:
                 continue # will raise FixtureLookupError at setup time
-            for fixturedef in faclist:
+            for fixturedef in faclist[-1:]:
                 if fixturedef.params is not None:
                     metafunc.parametrize(argname, fixturedef.params,
                                          indirect=True, scope=fixturedef.scope,

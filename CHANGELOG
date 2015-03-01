@@ -1,10 +1,10 @@
 2.7.0.dev (compared to 2.6.4)
 -----------------------------
 
-- fix issue616: conftest.py files and their contained fixutres are now 
+- fix issue616: conftest.py files and their contained fixutres are now
   properly considered for visibility, independently from the exact
   current working directory and test arguments that are used.
-  Many thanks to Eric Siegerman and his PR235 which contains 
+  Many thanks to Eric Siegerman and his PR235 which contains
   systematic tests for conftest visibility and now passes.
   This change also introduces the concept of a ``rootdir`` which
   is printed as a new pytest header and documented in the pytest
@@ -12,7 +12,7 @@
 
 - change reporting of "diverted" tests, i.e. tests that are collected
   in one file but actually come from another (e.g. when tests in a test class
-  come from a base class in a different file).  We now show the nodeid 
+  come from a base class in a different file).  We now show the nodeid
   and indicate via a postfix the other file.
 
 - add ability to set command line options by environment variable PYTEST_ADDOPTS.
@@ -24,7 +24,7 @@
 - fix issue650: new option ``--docttest-ignore-import-errors`` which
   will turn import errors in doctests into skips.  Thanks Charles Cloud
   for the complete PR.
-  
+
 - fix issue655: work around different ways that cause python2/3
   to leak sys.exc_info into fixtures/tests causing failures in 3rd party code
 
@@ -55,6 +55,7 @@
 - "python_classes" and "python_functions" options now support glob-patterns
  for test discovery, as discussed in issue600. Thanks Ldiary Translations.
 
+- allow to override parametrized fixtures with non-parametrized ones and vice versa (bubenkoff).
 
 2.6.4
 ----------
