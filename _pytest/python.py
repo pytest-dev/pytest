@@ -1716,9 +1716,12 @@ class FixtureManager:
                 continue # will raise FixtureLookupError at setup time
             for fixturedef in faclist[-1:]:
                 if fixturedef.params is not None:
-                    metafunc.parametrize(argname, fixturedef.params,
-                                         indirect=True, scope=fixturedef.scope,
-                                         ids=fixturedef.ids)
+                    func_params = getattr(getattr(metafunc.function, 'parametrize', None), 'args', [[None]])
+                    # skip directly parametrized arguments
+                    if argname not in func_params and argname not in func_params[0]:
+                        metafunc.parametrize(argname, fixturedef.params,
+                                             indirect=True, scope=fixturedef.scope,
+                                             ids=fixturedef.ids)
 
     def pytest_collection_modifyitems(self, items):
         # separate parametrized setups
