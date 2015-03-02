@@ -393,9 +393,9 @@ class TestFunction:
                 return 'value'
 
             @pytest.mark.parametrize('value',
-                                     ['overrided'])
-            def test_overrided_via_param(value):
-                assert value == 'overrided'
+                                     ['overridden'])
+            def test_overridden_via_param(value):
+                assert value == 'overridden'
         """)
         rec = testdir.inline_run()
         rec.assertoutcome(passed=1)
@@ -411,9 +411,9 @@ class TestFunction:
                 return request.param
 
             @pytest.mark.parametrize('value',
-                                     ['overrided'])
-            def test_overrided_via_param(value):
-                assert value == 'overrided'
+                                     ['overridden'])
+            def test_overridden_via_param(value):
+                assert value == 'overridden'
         """)
         rec = testdir.inline_run()
         rec.assertoutcome(passed=1)
