@@ -16,9 +16,10 @@ clean:
 
 # generate documentation
 docs: develop
+	find doc/en -name '*.txt' -not -path 'doc/en/_build/*' | xargs .env/bin/regendoc
 	cd doc/en; make html
-	find doc/en/ -name '*.txt' | xargs .env/bin/regendoc
 
 # upload documentation
 upload-docs: develop
+	find doc/en -name '*.txt' -not -path 'doc/en/_build/*' | xargs .env/bin/regendoc --update
 	cd doc/en; make install
