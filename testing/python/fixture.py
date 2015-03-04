@@ -500,7 +500,7 @@ class TestRequestBasic:
         reprec.assertoutcome(passed=3)
 
     def test_fixtures_sub_subdir_normalize_sep(self, testdir):
-        # this tests that normlization of nodeids takes place
+        # this tests that normalization of nodeids takes place
         b = testdir.mkdir("tests").mkdir("unit")
         b.join("conftest.py").write(py.code.Source("""
             def pytest_funcarg__arg1():
@@ -2323,6 +2323,36 @@ class TestShowFixtures:
             *hello world*
         """)
 
+    def test_show_fixtures_trimmed_doc(self, testdir):
+        p = testdir.makepyfile('''
+            import pytest
+            @pytest.fixture
+            def arg1():
+                """
+                line1
+                line2
+
+                """
+            @pytest.fixture
+            def arg2():
+                """
+                line1
+                line2
+
+                """
+        ''')
+        result = testdir.runpytest("--fixtures", p)
+        mark = dedent("""
+            ------------- fixtures defined from test_show_fixtures_trimmed_doc -------------
+            arg2
+                line1
+                line2
+            arg1
+                line1
+                line2
+
+            """)
+        assert mark in result.stdout.str()
 
 
 class TestContextManagerFixtureFuncs:
