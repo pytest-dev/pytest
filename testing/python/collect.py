@@ -393,13 +393,30 @@ class TestFunction:
                 return 'value'
 
             @pytest.mark.parametrize('value',
-                                     ['overrided'])
-            def test_overrided_via_param(value):
-                assert value == 'overrided'
+                                     ['overridden'])
+            def test_overridden_via_param(value):
+                assert value == 'overridden'
         """)
         rec = testdir.inline_run()
         rec.assertoutcome(passed=1)
 
+
+    def test_parametrize_overrides_parametrized_fixture(self, testdir):
+        """Test parametrization when parameter overrides existing parametrized fixture with same name."""
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture(params=[1, 2])
+            def value(request):
+                return request.param
+
+            @pytest.mark.parametrize('value',
+                                     ['overridden'])
+            def test_overridden_via_param(value):
+                assert value == 'overridden'
+        """)
+        rec = testdir.inline_run()
+        rec.assertoutcome(passed=1)
 
     def test_parametrize_with_mark(selfself, testdir):
         items = testdir.getitems("""

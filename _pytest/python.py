@@ -1712,13 +1712,17 @@ class FixtureManager:
     def pytest_generate_tests(self, metafunc):
         for argname in metafunc.fixturenames:
             faclist = metafunc._arg2fixturedefs.get(argname)
-            if faclist is None:
-                continue # will raise FixtureLookupError at setup time
-            for fixturedef in faclist:
+            if faclist:
+                fixturedef = faclist[-1]
                 if fixturedef.params is not None:
-                    metafunc.parametrize(argname, fixturedef.params,
-                                         indirect=True, scope=fixturedef.scope,
-                                         ids=fixturedef.ids)
+                    func_params = getattr(getattr(metafunc.function, 'parametrize', None), 'args', [[None]])
+                    # skip directly parametrized arguments
+                    if argname not in func_params and argname not in func_params[0]:
+                        metafunc.parametrize(argname, fixturedef.params,
+                                             indirect=True, scope=fixturedef.scope,
+                                             ids=fixturedef.ids)
+            else:
+                continue # will raise FixtureLookupError at setup time
 
     def pytest_collection_modifyitems(self, items):
         # separate parametrized setups

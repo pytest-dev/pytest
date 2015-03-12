@@ -30,8 +30,8 @@ You can submit your plugin by subscribing to the `pytest-dev mail list
 mail pointing to your existing pytest plugin repository which must have
 the following:
 
-- PyPI presence with a ``setup.py`` that contains a license, ``pytest-`` 
-  prefixed, version number, authors, short and long description.  
+- PyPI presence with a ``setup.py`` that contains a license, ``pytest-``
+  prefixed, version number, authors, short and long description.
 
 - a ``tox.ini`` for running tests using `tox <http://tox.testrun.org>`_.
 
@@ -43,7 +43,7 @@ the following:
 
 If no contributor strongly objects and two agree, the repo will be
 transferred to the ``pytest-dev`` organisation and you'll become a
-member of the ``pytest-dev`` team, with commit rights to all projects. 
+member of the ``pytest-dev`` team, with commit rights to all projects.
 We recommend that each plugin has at least three people who have the
 right to release to pypi.
 
@@ -128,22 +128,18 @@ Preparing Pull Requests on Bitbucket
 The primary development platform for pytest is BitBucket.  You can find all
 the issues there and submit your pull requests.
 
-1. Fork the
+#. Fork the
    `pytest BitBucket repository <https://bitbucket.org/pytest-dev/pytest>`__.  It's
    fine to use ``pytest`` as your fork repository name because it will live
    under your user.
 
-.. _virtualenvactivate:
+#. Create a development environment
+   (will implicitly use http://www.virtualenv.org/en/latest/)::
 
-2. Create and activate a fork-specific virtualenv
-   (http://www.virtualenv.org/en/latest/)::
+    $ make develop
+    $ source .env/bin/activate
 
-    $ virtualenv pytest-venv
-    $ source pytest-venv/bin/activate
-
-.. _checkout:
-
-3. Clone your fork locally using `Mercurial <http://mercurial.selenic.com/>`_
+#. Clone your fork locally using `Mercurial <http://mercurial.selenic.com/>`_
    (``hg``) and create a branch::
 
     $ hg clone ssh://hg@bitbucket.org/YOUR_BITBUCKET_USERNAME/pytest
@@ -153,45 +149,46 @@ the issues there and submit your pull requests.
    If you need some help with Mercurial, follow this quick start
    guide: http://mercurial.selenic.com/wiki/QuickStart
 
-.. _testing-pytest:
+#. Create a development environment
+   (will implicitly use http://www.virtualenv.org/en/latest/)::
 
-4. You can now edit your local working copy.  To test you need to
-   install the "tox" tool into your virtualenv::
+    $ make develop
+    $ source .env/bin/activate
 
-    $ pip install tox
+#. You can now edit your local working copy.
 
-  You need to have Python 2.7 and 3.3 available in your system.  Now
-  running tests is as simple as issuing this command::
+   You need to have Python 2.7 and 3.4 available in your system.  Now
+   running tests is as simple as issuing this command::
 
-    $ python runtox.py -e py27,py33,flakes
+    $ python runtox.py -e py27,py34,flakes
 
-  This command will run tests via the "tox" tool against Python 2.7 and 3.3
-  and also perform "flakes" coding-style checks.  ``runtox.py`` is
-  a thin wrapper around ``tox`` which installs from a development package
-  index where newer (not yet released to pypi) versions of dependencies
-  (especially ``py``) might be present.
+   This command will run tests via the "tox" tool against Python 2.7 and 3.4
+   and also perform "flakes" coding-style checks.  ``runtox.py`` is
+   a thin wrapper around ``tox`` which installs from a development package
+   index where newer (not yet released to pypi) versions of dependencies
+   (especially ``py``) might be present.
 
-  To run tests on py27 and pass options (e.g. enter pdb on failure)
-  to pytest you can do::
+   To run tests on py27 and pass options (e.g. enter pdb on failure)
+   to pytest you can do::
 
     $ python runtox.py -e py27 -- --pdb
 
-  or to only run tests in a particular test module on py33::
+   or to only run tests in a particular test module on py34::
 
-    $ python runtox.py -e py33 -- testing/test_config.py
+    $ python runtox.py -e py34 -- testing/test_config.py
 
-5. Commit and push once your tests pass and you are happy with your change(s)::
+#. Commit and push once your tests pass and you are happy with your change(s)::
 
     $ hg commit -m"<commit message>"
     $ hg push -b .
 
-6. Finally, submit a pull request through the BitBucket website:
+#. Finally, submit a pull request through the BitBucket website:
 
-  .. image:: img/pullrequest.png
-     :width: 700px
-     :align: center
+   .. image:: img/pullrequest.png
+    :width: 700px
+    :align: center
 
-  ::
+   ::
 
     source: YOUR_BITBUCKET_USERNAME/pytest
     branch: your-branch-name
@@ -214,5 +211,3 @@ original repository.  If you insist on using git with bitbucket/hg you
 may try `gitifyhg <https://github.com/buchuki/gitifyhg>`_ but are on your
 own and need to submit pull requests through the respective platform,
 nevertheless.
-
-

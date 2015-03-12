@@ -226,6 +226,114 @@ class TestFillFixtures:
         result = testdir.runpytest()
         assert result.ret == 0
 
+    def test_override_parametrized_fixture_conftest_module(self, testdir):
+        """Test override of the parametrized fixture with non-parametrized one on the test module level."""
+        testdir.makeconftest("""
+            import pytest
+
+            @pytest.fixture(params=[1, 2, 3])
+            def spam(request):
+                return request.param
+        """)
+        testfile = testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture
+            def spam():
+                return 'spam'
+
+            def test_spam(spam):
+                assert spam == 'spam'
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*1 passed*"])
+        result = testdir.runpytest(testfile)
+        result.stdout.fnmatch_lines(["*1 passed*"])
+
+    def test_override_parametrized_fixture_conftest_conftest(self, testdir):
+        """Test override of the parametrized fixture with non-parametrized one on the conftest level."""
+        testdir.makeconftest("""
+            import pytest
+
+            @pytest.fixture(params=[1, 2, 3])
+            def spam(request):
+                return request.param
+        """)
+        subdir = testdir.mkpydir('subdir')
+        subdir.join("conftest.py").write(py.code.Source("""
+            import pytest
+
+            @pytest.fixture
+            def spam():
+                return 'spam'
+        """))
+        testfile = subdir.join("test_spam.py")
+        testfile.write(py.code.Source("""
+            def test_spam(spam):
+                assert spam == "spam"
+        """))
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*1 passed*"])
+        result = testdir.runpytest(testfile)
+        result.stdout.fnmatch_lines(["*1 passed*"])
+
+    def test_override_non_parametrized_fixture_conftest_module(self, testdir):
+        """Test override of the non-parametrized fixture with parametrized one on the test module level."""
+        testdir.makeconftest("""
+            import pytest
+
+            @pytest.fixture
+            def spam():
+                return 'spam'
+        """)
+        testfile = testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture(params=[1, 2, 3])
+            def spam(request):
+                return request.param
+
+            params = {'spam': 1}
+
+            def test_spam(spam):
+                assert spam == params['spam']
+                params['spam'] += 1
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*3 passed*"])
+        result = testdir.runpytest(testfile)
+        result.stdout.fnmatch_lines(["*3 passed*"])
+
+    def test_override_non_parametrized_fixture_conftest_conftest(self, testdir):
+        """Test override of the non-parametrized fixture with parametrized one on the conftest level."""
+        testdir.makeconftest("""
+            import pytest
+
+            @pytest.fixture
+            def spam():
+                return 'spam'
+        """)
+        subdir = testdir.mkpydir('subdir')
+        subdir.join("conftest.py").write(py.code.Source("""
+            import pytest
+
+            @pytest.fixture(params=[1, 2, 3])
+            def spam(request):
+                return request.param
+        """))
+        testfile = subdir.join("test_spam.py")
+        testfile.write(py.code.Source("""
+            params = {'spam': 1}
+
+            def test_spam(spam):
+                assert spam == params['spam']
+                params['spam'] += 1
+        """))
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*3 passed*"])
+        result = testdir.runpytest(testfile)
+        result.stdout.fnmatch_lines(["*3 passed*"])
+
     def test_autouse_fixture_plugin(self, testdir):
         # A fixture from a plugin has no baseid set, which screwed up
         # the autouse fixture handling.
