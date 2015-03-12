@@ -979,7 +979,7 @@ def _showfixtures_main(config, session):
         loc = getlocation(fixturedef.func, curdir)
         doc = fixturedef.func.__doc__ or ""
         if doc:
-            for line in doc.split("\n"):
+            for line in doc.strip().split("\n"):
                 tw.line("    " + line.strip())
         else:
             tw.line("    %s: no docstring available" %(loc,),
