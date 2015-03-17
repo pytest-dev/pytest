@@ -26,6 +26,7 @@ Here are some examples of projects using ``pytest`` (please send notes via :ref:
   `21000 tests <http://buildbot.pypy.org/summary?branch=%3Ctrunk%3E>`_
 * the `MoinMoin <http://moinmo.in>`_ Wiki Engine
 * `sentry <https://getsentry.com/welcome/>`_, realtime app-maintenance and exception tracking
+* `Astropy <http://www.astropy.org/>`_ and `affiliated packages <http://www.astropy.org/affiliated/index.html>`_
 * `tox <http://testrun.org/tox>`_, virtualenv/Hudson integration tool
 * `PIDA <http://pida.co.uk>`_ framework for integrated development
 * `PyPM <http://code.activestate.com/pypm/>`_ ActiveState's package manager
