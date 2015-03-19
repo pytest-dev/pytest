@@ -38,6 +38,9 @@ the following:
 - a ``README.txt`` describing how to use the plugin and on which
   platforms it runs.
 
+- a ``LICENSE.txt`` file or equivalent containing the licensing
+  information, with matching info in ``setup.py``.
+
 - an issue tracker unless you rather want to use the core ``pytest``
   issue tracker.
 
