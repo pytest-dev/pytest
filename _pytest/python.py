@@ -144,7 +144,7 @@ def pytest_cmdline_main(config):
 def pytest_generate_tests(metafunc):
     # this misspelling is common - raise a specific error to alert the user
     if hasattr(metafunc.function, 'parameterize'):
-        msg = "{} has mark 'parameterize', spelling should be 'parametrize'"
+        msg = "{0} has mark 'parameterize', spelling should be 'parametrize'"
         raise ValueError(msg.format(metafunc.function.__name__))
     try:
         markers = metafunc.function.parametrize
