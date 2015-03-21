@@ -86,7 +86,17 @@ def pytest_runtest_setup(item):
     item.session._setupstate.prepare(item)
 
 def pytest_runtest_call(item):
-    item.runtest()
+    try:
+        item.runtest()
+    except Exception:
+        # Store trace info to allow postmortem debugging
+        type, value, tb = sys.exc_info()
+        tb = tb.tb_next  # Skip *this* frame
+        sys.last_type = type
+        sys.last_value = value
+        sys.last_traceback = tb
+        del tb  # Get rid of it in this namespace
+        raise
 
 def pytest_runtest_teardown(item, nextitem):
     item.session._setupstate.teardown_exact(item, nextitem)
