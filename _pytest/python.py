@@ -143,6 +143,13 @@ def pytest_cmdline_main(config):
 
 def pytest_generate_tests(metafunc):
     try:
+        # this misspelling is common - raise a specific error to alert the user
+        markers = metafunc.function.parameterize
+        msg = "{} has mark 'parameterize', spelling should be 'parametrize'"
+        raise ValueError(msg.format(metafunc.function.__name__))
+    except AttributeError:
+        pass
+    try:
         markers = metafunc.function.parametrize
     except AttributeError:
         return
