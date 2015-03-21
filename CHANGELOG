@@ -1,6 +1,10 @@
 2.7.0.dev (compared to 2.6.4)
 -----------------------------
 
+- On failure, the ``sys.last_value``, ``sys.last_type`` and 
+  ``sys.last_traceback`` are set, so that a user can inspect the error
+  via postmortem debugging.
+
 - fix issue616: conftest.py files and their contained fixutres are now
   properly considered for visibility, independently from the exact
   current working directory and test arguments that are used.

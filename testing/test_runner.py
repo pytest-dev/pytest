@@ -525,3 +525,18 @@ def test_makereport_getsource(testdir):
     result = testdir.runpytest()
     assert 'INTERNALERROR' not in result.stdout.str()
     result.stdout.fnmatch_lines(['*else: assert False*'])
+
+
+def test_store_except_info_on_eror(testdir):
+    # Simulate item that raises a specific exception
+    class ItemThatRaises:
+        def runtest(self):
+            raise IndexError('TEST')
+    try:
+        runner.pytest_runtest_call(ItemThatRaises())
+    except IndexError:
+        pass
+    # Check that exception info is stored on sys
+    assert sys.last_type is IndexError
+    assert sys.last_value.args[0] == 'TEST'
+    assert sys.last_traceback
