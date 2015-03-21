@@ -527,7 +527,10 @@ def test_makereport_getsource(testdir):
     result.stdout.fnmatch_lines(['*else: assert False*'])
 
 
-def test_store_except_info_on_eror(testdir):
+def test_store_except_info_on_eror():
+    """ Test that upon test failure, the exception info is stored on
+    sys.last_traceback and friends.
+    """
     # Simulate item that raises a specific exception
     class ItemThatRaises:
         def runtest(self):
