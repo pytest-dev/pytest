@@ -1,6 +1,8 @@
 2.7.0.dev (compared to 2.6.4)
 -----------------------------
 
+- fix issue463: raise specific error for 'parameterize' misspelling.
+
 - fix issue616: conftest.py files and their contained fixutres are now
   properly considered for visibility, independently from the exact
   current working directory and test arguments that are used.
