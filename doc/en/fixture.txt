@@ -67,7 +67,6 @@ using it::
     def test_ehlo(smtp):
         response, msg = smtp.ehlo()
         assert response == 250
-        assert "merlinux" in msg
         assert 0 # for demo purposes
 
 Here, the ``test_ehlo`` needs the ``smtp`` fixture value.  pytest

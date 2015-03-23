@@ -641,3 +641,27 @@ class TestAssertionRewriteHookDetails(object):
         pyc.write(contents[:strip_bytes], mode='wb')
 
         assert _read_pyc(source, str(pyc)) is None  # no error
+
+    def test_reload_is_same(self, testdir):
+        # A file that will be picked up during collecting.
+        testdir.tmpdir.join("file.py").ensure()
+        testdir.tmpdir.join("pytest.ini").write(py.std.textwrap.dedent("""
+            [pytest]
+            python_files = *.py
+        """))
+
+        testdir.makepyfile(test_fun="""
+            import sys
+            try:
+                from imp import reload
+            except ImportError:
+                pass
+
+            def test_loader():
+                import file
+                assert sys.modules["file"] is reload(file)
+            """)
+        result = testdir.runpytest('-s')
+        result.stdout.fnmatch_lines([
+            "* 1 passed*",
+        ])

@@ -146,6 +146,12 @@ class AssertionRewritingHook(object):
         return self
 
     def load_module(self, name):
+        # If there is an existing module object named 'fullname' in
+        # sys.modules, the loader must use that existing module. (Otherwise,
+        # the reload() builtin will not work correctly.)
+        if name in sys.modules:
+            return sys.modules[name]
+
         co, pyc = self.modules.pop(name)
         # I wish I could just call imp.load_compiled here, but __file__ has to
         # be set properly. In Python 3.2+, this all would be handled correctly
