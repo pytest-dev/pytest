@@ -704,7 +704,7 @@ class TestMetafuncFunctional:
         reprec = testdir.inline_run('--collectonly')
         failures = reprec.getfailures()
         assert len(failures) == 1
-        expectederror = "ValueError: test_foo has mark 'parameterize', spelling should be 'parametrize'"
+        expectederror = "MarkerError: test_foo has 'parameterize', spelling should be 'parametrize'"
         assert expectederror in failures[0].longrepr.reprcrash.message
 
 
