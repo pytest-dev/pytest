@@ -1,10 +1,10 @@
 """ generic mechanism for marking and selecting python functions. """
 import py
 
+
 class MarkerError(Exception):
-    """
-    Error in use of a pytest marker/attribute.
-    """
+
+    """Error in use of a pytest marker/attribute."""
 
 
 def pytest_namespace():
