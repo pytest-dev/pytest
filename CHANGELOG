@@ -60,6 +60,8 @@
 
 - allow to override parametrized fixtures with non-parametrized ones and vice versa (bubenkoff).
 
+- fix issue463: raise specific error for 'parameterize' misspelling (pfctdayelise).
+
 2.6.4
 ----------
 

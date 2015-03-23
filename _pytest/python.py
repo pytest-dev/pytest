@@ -4,7 +4,7 @@ import py
 import inspect
 import sys
 import pytest
-from _pytest.mark import MarkDecorator
+from _pytest.mark import MarkDecorator, MarkerError
 from py._code.code import TerminalRepr
 
 import _pytest
@@ -142,6 +142,10 @@ def pytest_cmdline_main(config):
 
 
 def pytest_generate_tests(metafunc):
+    # this misspelling is common - raise a specific error to alert the user
+    if hasattr(metafunc.function, 'parameterize'):
+        msg = "{0} has 'parameterize', spelling should be 'parametrize'"
+        raise MarkerError(msg.format(metafunc.function.__name__))
     try:
         markers = metafunc.function.parametrize
     except AttributeError:
