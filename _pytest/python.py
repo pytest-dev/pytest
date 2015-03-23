@@ -774,7 +774,6 @@ class Metafunc(FuncargnamesCompatAttr):
         self.fixturenames = fixtureinfo.names_closure
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs
         self.cls = cls
-        self.module = module
         self._calls = []
         self._ids = py.builtin.set()
 
