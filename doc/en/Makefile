@@ -42,7 +42,7 @@ help:
 clean:
 	-rm -rf $(BUILDDIR)/*
 
-SITETARGET=latest
+SITETARGET=dev
 
 install: html
 	 # for access talk to someone with login rights to
