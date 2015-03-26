@@ -1,0 +1,34 @@
+pytest release checklist
+-------------------------
+
+For doing a release of pytest (status March 2015) holger does:
+
+- change version numbers in ``setup.py``, ``_pytest/__init__.py``
+
+- finalize changelog (especially the header)
+
+- ``devpi upload`` to an index, run ``devpi test`` from linux and
+  windows and make sure all relevant environments pass (some like py27-pexpect
+  on windows fail which is normal because pexpect does not work on windows
+  and tox can currently not have platform-conditional test envs)
+  If tests fail, fix and re-upload.
+
+- change "version" and "release" in doc/en/conf.py
+
+- regenerate doc examples with ``tox -e regen`` and check with ``hg diff``
+
+- change SITETARGET in ``doc/en/makefile`` to "latest" &&
+  ``cd doc/en && make install && make install-pdf``
+  creating and installing the pdf requires various latex
+  packages to work.
+
+- once everything seems fine, do a commit and ``hg tag`` the correct
+  version and issue ``devpi push pytest==VERSION pypi:pypi`` to push
+  the tested package to pypi (in my ``.pypirc`` pypi.python.org is aliased
+  as ``pypi``)
+
+- **after the release** bump the version numbers in ``setup.py``,
+  ``_pytest/__init__.py``, ``doc/en/conf.py`` and set ``SITETARGET=dev``
+  in ``doc/en/makefile``. commit.
+
+- congrats :)
