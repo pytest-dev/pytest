@@ -1,4 +1,4 @@
-2.7.0.dev (compared to 2.6.4)
+2.7.0 (compared to 2.6.4)
 -----------------------------
 
 - fix issue435: make reload() work when assert rewriting is active.
@@ -46,6 +46,8 @@
   pytest itself and some external plugins use.  Note that pytest-2.8
   is scheduled to drop supporting the old ``__multicall__``
   and only support the hookwrapper protocol.
+
+- majorly speed up invocation of plugin hooks
 
 - use hookwrapper mechanism in builtin pytest plugins.
 

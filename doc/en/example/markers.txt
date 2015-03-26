@@ -31,7 +31,8 @@ You can then restrict a test run to only run tests marked with ``webtest``::
 
     $ py.test -v -m webtest
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+    rootdir: /tmp/doc-exec-167, inifile: 
     collecting ... collected 4 items
     
     test_server.py::test_send_http PASSED
@@ -43,7 +44,8 @@ Or the inverse, running all tests except the webtest ones::
 
     $ py.test -v -m "not webtest"
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+    rootdir: /tmp/doc-exec-167, inifile: 
     collecting ... collected 4 items
     
     test_server.py::test_something_quick PASSED
@@ -62,7 +64,8 @@ tests based on their module, class, method, or function name::
 
     $ py.test -v test_server.py::TestClass::test_method
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+    rootdir: /tmp/doc-exec-167, inifile: 
     collecting ... collected 5 items
     
     test_server.py::TestClass::test_method PASSED
@@ -73,7 +76,8 @@ You can also select on the class::
 
     $ py.test -v test_server.py::TestClass
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+    rootdir: /tmp/doc-exec-167, inifile: 
     collecting ... collected 4 items
     
     test_server.py::TestClass::test_method PASSED
@@ -84,7 +88,8 @@ Or select multiple nodes::
 
   $ py.test -v test_server.py::TestClass test_server.py::test_send_http
   =========================== test session starts ============================
-  platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+  platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+  rootdir: /tmp/doc-exec-167, inifile: 
   collecting ... collected 8 items
   
   test_server.py::TestClass::test_method PASSED
@@ -120,7 +125,8 @@ select tests based on their names::
 
     $ py.test -v -k http  # running with the above defined example module
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+    rootdir: /tmp/doc-exec-167, inifile: 
     collecting ... collected 4 items
     
     test_server.py::test_send_http PASSED
@@ -132,7 +138,8 @@ And you can also run all tests except the ones that match the keyword::
 
     $ py.test -k "not send_http" -v
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+    rootdir: /tmp/doc-exec-167, inifile: 
     collecting ... collected 4 items
     
     test_server.py::test_something_quick PASSED
@@ -146,7 +153,8 @@ Or to select "http" and "quick" tests::
 
     $ py.test -k "http or quick" -v
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+    rootdir: /tmp/doc-exec-167, inifile: 
     collecting ... collected 4 items
     
     test_server.py::test_send_http PASSED
@@ -334,23 +342,25 @@ the test needs::
 
     $ py.test -E stage2
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
+    rootdir: /tmp/doc-exec-167, inifile: 
     collected 1 items
     
     test_someenv.py s
     
-    ======================== 1 skipped in 0.01 seconds =========================
+    ======================== 1 skipped in 0.00 seconds =========================
 
 and here is one that specifies exactly the environment needed::
 
     $ py.test -E stage1
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
+    rootdir: /tmp/doc-exec-167, inifile: 
     collected 1 items
     
     test_someenv.py .
     
-    ========================= 1 passed in 0.01 seconds =========================
+    ========================= 1 passed in 0.00 seconds =========================
 
 The ``--markers`` option always gives you a list of available markers::
 
@@ -463,12 +473,13 @@ then you will see two test skipped and two executed tests as expected::
 
     $ py.test -rs # this option reports skip reasons
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
+    rootdir: /tmp/doc-exec-167, inifile: 
     collected 4 items
     
     test_plat.py sss.
     ========================= short test summary info ==========================
-    SKIP [3] /tmp/doc-exec-68/conftest.py:12: cannot run on platform linux
+    SKIP [3] /tmp/doc-exec-167/conftest.py:12: cannot run on platform linux
     
     =================== 1 passed, 3 skipped in 0.01 seconds ====================
 
@@ -476,7 +487,8 @@ Note that if you specify a platform via the marker-command line option like this
 
     $ py.test -m linux2
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
+    rootdir: /tmp/doc-exec-167, inifile: 
     collected 4 items
     
     test_plat.py s
@@ -527,7 +539,8 @@ We can now use the ``-m option`` to select one set::
 
   $ py.test -m interface --tb=short
   =========================== test session starts ============================
-  platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
+  platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
+  rootdir: /tmp/doc-exec-167, inifile: 
   collected 4 items
   
   test_module.py FF
@@ -548,7 +561,8 @@ or to select both "event" and "interface" tests::
 
   $ py.test -m "interface or event" --tb=short
   =========================== test session starts ============================
-  platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
+  platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
+  rootdir: /tmp/doc-exec-167, inifile: 
   collected 4 items
   
   test_module.py FFF

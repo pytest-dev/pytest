@@ -5,7 +5,7 @@ serialization via the pickle module.
 import py
 import pytest
 
-pythonlist = ['python2.6', 'python2.7', 'python3.4']
+pythonlist = ['python2.6', 'python2.7', 'python3.3']
 @pytest.fixture(params=pythonlist)
 def python1(request, tmpdir):
     picklefile = tmpdir.join("data.pickle")
@@ -26,7 +26,7 @@ class Python:
         dumpfile.write(py.code.Source("""
             import pickle
             f = open(%r, 'wb')
-            s = pickle.dump(%r, f)
+            s = pickle.dump(%r, f, protocol=2)
             f.close()
         """ % (str(self.picklefile), obj)))
         py.process.cmdexec("%s %s" %(self.pythonpath, dumpfile))

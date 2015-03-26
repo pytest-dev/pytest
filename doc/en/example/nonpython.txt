@@ -27,7 +27,8 @@ now execute the test specification::
 
     nonpython $ py.test test_simple.yml
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
+    rootdir: /home/hpk/p/pytest/doc/en, inifile: pytest.ini
     collected 2 items
     
     test_simple.yml F.
@@ -56,11 +57,12 @@ consulted when reporting in ``verbose`` mode::
 
     nonpython $ py.test -v
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+    rootdir: /home/hpk/p/pytest/doc/en, inifile: pytest.ini
     collecting ... collected 2 items
     
-    test_simple.yml::usecase: hello FAILED
-    test_simple.yml::usecase: ok PASSED
+    test_simple.yml::hello FAILED
+    test_simple.yml::ok PASSED
     
     ================================= FAILURES =================================
     ______________________________ usecase: hello ______________________________
@@ -74,9 +76,10 @@ interesting to just look at the collection tree::
 
     nonpython $ py.test --collect-only
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
+    rootdir: /home/hpk/p/pytest/doc/en, inifile: pytest.ini
     collected 2 items
-    <YamlFile 'test_simple.yml'>
+    <YamlFile 'example/nonpython/test_simple.yml'>
       <YamlItem 'hello'>
       <YamlItem 'ok'>
     

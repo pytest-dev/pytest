@@ -108,7 +108,8 @@ directory with the above conftest.py::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
+    rootdir: /tmp/doc-exec-172, inifile: 
     collected 0 items
     
     =============================  in 0.00 seconds =============================
@@ -152,12 +153,13 @@ and when running it will see a skipped "slow" test::
 
     $ py.test -rs    # "-rs" means report details on the little 's'
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
+    rootdir: /tmp/doc-exec-172, inifile: 
     collected 2 items
     
     test_module.py .s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-73/conftest.py:9: need --runslow option to run
+    SKIP [1] /tmp/doc-exec-172/conftest.py:9: need --runslow option to run
     
     =================== 1 passed, 1 skipped in 0.01 seconds ====================
 
@@ -165,7 +167,8 @@ Or run it including the ``slow`` marked test::
 
     $ py.test --runslow
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
+    rootdir: /tmp/doc-exec-172, inifile: 
     collected 2 items
     
     test_module.py ..
@@ -256,7 +259,8 @@ which will add the string to the test header accordingly::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
+    rootdir: /tmp/doc-exec-172, inifile: 
     project deps: mylib-1.1
     collected 0 items
     
@@ -279,7 +283,8 @@ which will add info only when run with "--v"::
 
     $ py.test -v
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
+    rootdir: /tmp/doc-exec-172, inifile: 
     info1: did you know that ...
     did you?
     collecting ... collected 0 items
@@ -290,7 +295,8 @@ and nothing when run plainly::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
+    rootdir: /tmp/doc-exec-172, inifile: 
     collected 0 items
     
     =============================  in 0.00 seconds =============================
@@ -322,7 +328,8 @@ Now we can profile which test functions execute the slowest::
 
     $ py.test --durations=3
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
+    rootdir: /tmp/doc-exec-172, inifile: 
     collected 3 items
     
     test_some_are_slow.py ...
@@ -383,7 +390,8 @@ If we run this::
 
     $ py.test -rx
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
+    rootdir: /tmp/doc-exec-172, inifile: 
     collected 4 items
     
     test_step.py .Fx.
@@ -391,7 +399,7 @@ If we run this::
     ================================= FAILURES =================================
     ____________________ TestUserHandling.test_modification ____________________
     
-    self = <test_step.TestUserHandling object at 0x2aad15c6d048>
+    self = <test_step.TestUserHandling object at 0x2b9ab60ccfd0>
     
         def test_modification(self):
     >       assert 0
@@ -453,7 +461,8 @@ We can run this::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
+    rootdir: /tmp/doc-exec-172, inifile: 
     collected 7 items
     
     test_step.py .Fx.
@@ -463,17 +472,17 @@ We can run this::
     
     ================================== ERRORS ==================================
     _______________________ ERROR at setup of test_root ________________________
-    file /tmp/doc-exec-73/b/test_error.py, line 1
+    file /tmp/doc-exec-172/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
             fixture 'db' not found
-            available fixtures: monkeypatch, pytestconfig, tmpdir, capfd, capsys, recwarn
+            available fixtures: pytestconfig, tmpdir, monkeypatch, capfd, recwarn, capsys
             use 'py.test --fixtures [testpath]' for help on them.
     
-    /tmp/doc-exec-73/b/test_error.py:1
+    /tmp/doc-exec-172/b/test_error.py:1
     ================================= FAILURES =================================
     ____________________ TestUserHandling.test_modification ____________________
     
-    self = <test_step.TestUserHandling object at 0x2b058dc29e10>
+    self = <test_step.TestUserHandling object at 0x2aec569b87b8>
     
         def test_modification(self):
     >       assert 0
@@ -482,21 +491,21 @@ We can run this::
     test_step.py:9: AssertionError
     _________________________________ test_a1 __________________________________
     
-    db = <conftest.DB object at 0x2b058db494a8>
+    db = <conftest.DB object at 0x2aec569d1588>
     
         def test_a1(db):
     >       assert 0, db  # to show value
-    E       AssertionError: <conftest.DB object at 0x2b058db494a8>
+    E       AssertionError: <conftest.DB object at 0x2aec569d1588>
     E       assert 0
     
     a/test_db.py:2: AssertionError
     _________________________________ test_a2 __________________________________
     
-    db = <conftest.DB object at 0x2b058db494a8>
+    db = <conftest.DB object at 0x2aec569d1588>
     
         def test_a2(db):
     >       assert 0, db  # to show value
-    E       AssertionError: <conftest.DB object at 0x2b058db494a8>
+    E       AssertionError: <conftest.DB object at 0x2aec569d1588>
     E       assert 0
     
     a/test_db2.py:2: AssertionError
@@ -555,7 +564,8 @@ and run them::
 
     $ py.test test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
+    rootdir: /tmp/doc-exec-172, inifile: 
     collected 2 items
     
     test_module.py FF
@@ -563,7 +573,7 @@ and run them::
     ================================= FAILURES =================================
     ________________________________ test_fail1 ________________________________
     
-    tmpdir = local('/tmp/pytest-112/test_fail10')
+    tmpdir = local('/tmp/pytest-219/test_fail10')
     
         def test_fail1(tmpdir):
     >       assert 0
@@ -577,12 +587,12 @@ and run them::
     E       assert 0
     
     test_module.py:4: AssertionError
-    ========================= 2 failed in 0.02 seconds =========================
+    ========================= 2 failed in 0.01 seconds =========================
 
 you will have a "failures" file which contains the failing test ids::
 
     $ cat failures
-    test_module.py::test_fail1 (/tmp/pytest-112/test_fail10)
+    test_module.py::test_fail1 (/tmp/pytest-219/test_fail10)
     test_module.py::test_fail2
 
 Making test result information available in fixtures
@@ -645,7 +655,8 @@ and run it::
 
     $ py.test -s test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.6.4
+    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
+    rootdir: /tmp/doc-exec-172, inifile: 
     collected 3 items
     
     test_module.py Esetting up a test failed! test_module.py::test_setup_fails

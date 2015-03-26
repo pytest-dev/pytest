@@ -77,12 +77,10 @@ You can ask for available builtin or project-custom
         enables capturing of writes to sys.stdout/sys.stderr and makes
         captured output available via ``capsys.readouterr()`` method calls
         which return a ``(out, err)`` tuple.
-        
     capfd
         enables capturing of writes to file descriptors 1 and 2 and makes
         captured output available via ``capfd.readouterr()`` method calls
         which return a ``(out, err)`` tuple.
-        
     monkeypatch
         The returned ``monkeypatch`` funcarg provides these
         helper methods to modify objects, dictionaries or os.environ::
@@ -100,7 +98,6 @@ You can ask for available builtin or project-custom
         test function has finished. The ``raising``
         parameter determines if a KeyError or AttributeError
         will be raised if the set/deletion operation has no target.
-        
     pytestconfig
         the pytest config object with access to command line opts.
     recwarn
@@ -111,13 +108,11 @@ You can ask for available builtin or project-custom
         
         See http://docs.python.org/library/warnings.html for information
         on warning categories.
-        
     tmpdir
         return a temporary directory path object
         which is unique to each test function invocation,
         created as a sub directory of the base temporary
         directory.  The returned object is a `py.path.local`_
         path object.
-        
     
      in 0.00 seconds

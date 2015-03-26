@@ -2450,8 +2450,8 @@ class TestShowFixtures:
                 """
         ''')
         result = testdir.runpytest("--fixtures", p)
-        mark = dedent("""
-            ------------- fixtures defined from test_show_fixtures_trimmed_doc -------------
+        result.stdout.fnmatch_lines("""
+            * fixtures defined from test_show_fixtures_trimmed_doc *
             arg2
                 line1
                 line2
@@ -2459,8 +2459,7 @@ class TestShowFixtures:
                 line1
                 line2
 
-            """)
-        assert mark in result.stdout.str()
+        """)
 
 
 class TestContextManagerFixtureFuncs:
