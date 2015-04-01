@@ -1356,12 +1356,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         try:
             val = cache[cachekey]
         except KeyError:
-            __tracebackhide__ = True
-            if scopemismatch(self.scope, scope):
-                raise ScopeMismatchError("You tried to access a %r scoped "
-                    "resource with a %r scoped request object" %(
-                    (scope, self.scope)))
-            __tracebackhide__ = False
+            self._check_scope(self.fixturename, self.scope, scope)
             val = setup()
             cache[cachekey] = val
             if teardown is not None:
@@ -1392,6 +1387,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
                 if argname == "request":
                     class PseudoFixtureDef:
                         cached_result = (self, [0], None)
+                        scope = "function"
                     return PseudoFixtureDef
                 raise
         # remove indent to prevent the python3 exception
@@ -1435,16 +1431,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         subrequest = SubRequest(self, scope, param, param_index, fixturedef)
 
         # check if a higher-level scoped fixture accesses a lower level one
-        if scope is not None:
-            __tracebackhide__ = True
-            if scopemismatch(self.scope, scope):
-                # try to report something helpful
-                lines = subrequest._factorytraceback()
-                raise ScopeMismatchError("You tried to access the %r scoped "
-                    "fixture %r with a %r scoped request object, "
-                    "involved factories\n%s" %(
-                    (scope, argname, self.scope, "\n".join(lines))))
-            __tracebackhide__ = False
+        subrequest._check_scope(argname, self.scope, scope)
 
         # clear sys.exc_info before invoking the fixture (python bug?)
         # if its not explicitly cleared it will leak into the call
@@ -1457,6 +1444,18 @@ class FixtureRequest(FuncargnamesCompatAttr):
             self.session._setupstate.addfinalizer(fixturedef.finish,
                                                   subrequest.node)
         return val
+
+    def _check_scope(self, argname, invoking_scope, requested_scope):
+        if argname == "request":
+            return
+        if scopemismatch(invoking_scope, requested_scope):
+            # try to report something helpful
+            lines = self._factorytraceback()
+            pytest.fail("ScopeMismatch: you tried to access the %r scoped "
+                "fixture %r with a %r scoped request object, "
+                "involved factories\n%s" %(
+                (requested_scope, argname, invoking_scope, "\n".join(lines))),
+                pytrace=False)
 
     def _factorytraceback(self):
         lines = []
@@ -1517,6 +1516,7 @@ scopes = "session module class function".split()
 scopenum_function = scopes.index("function")
 def scopemismatch(currentscope, newscope):
     return scopes.index(newscope) > scopes.index(currentscope)
+
 
 class FixtureLookupError(LookupError):
     """ could not return a requested Fixture (missing or invalid). """
@@ -1867,6 +1867,7 @@ class FixtureDef:
         for argname in self.argnames:
             fixturedef = request._get_active_fixturedef(argname)
             result, arg_cache_key, exc = fixturedef.cached_result
+            request._check_scope(argname, request.scope, fixturedef.scope)
             kwargs[argname] = result
             if argname != "request":
                 fixturedef.addfinalizer(self.finish)

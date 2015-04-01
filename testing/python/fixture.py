@@ -906,6 +906,27 @@ class TestFixtureUsages:
             "*1 error*"
         ])
 
+    def test_receives_funcargs_scope_mismatch_issue660(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture(scope="function")
+            def arg1():
+                return 1
+
+            @pytest.fixture(scope="module")
+            def arg2(arg1):
+                return arg1 + 1
+
+            def test_add(arg1, arg2):
+                assert arg2 == 2
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*ScopeMismatch*involved factories*",
+            "* def arg2*",
+            "*1 error*"
+        ])
+
     def test_funcarg_parametrized_and_used_twice(self, testdir):
         testdir.makepyfile("""
             import pytest
