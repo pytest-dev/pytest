@@ -17,10 +17,13 @@
 #
 # The full version, including alpha/beta/rc tags.
 # The short X.Y version.
-version = "2.7"
-release = "2.7.1.dev"
 
-import sys, os
+import os, sys
+sys.path.insert(0, os.path.dirname(__file__))
+import _getdoctarget
+
+version = _getdoctarget.get_minor_version_string()
+release = _getdoctarget.get_version_string()
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -54,7 +57,7 @@ master_doc = 'contents'
 
 # General information about the project.
 project = u'pytest'
-copyright = u'2014, holger krekel'
+copyright = u'2015, holger krekel and pytest-dev team'
 
 
 
