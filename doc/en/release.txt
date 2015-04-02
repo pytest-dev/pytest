@@ -1,7 +1,7 @@
 pytest release checklist
 -------------------------
 
-For doing a release of pytest (status April 2015) this checklist is used:
+For doing a release of pytest (status April 2015) this rough checklist is used:
 
 1. change version numbers in ``_pytest/__init__.py`` to the to-be-released version.
    (the version number in ``setup.py`` reads from that init file as well)
@@ -33,8 +33,11 @@ For doing a release of pytest (status April 2015) this checklist is used:
 8. Once you have sufficiently passing tox tests you can do the actual release::
 
      cd doc/en/
-     make install
-     make install-pdf  # a bit optional, if you have latex packages installed
+     make install      # will install to 2.7, 2.8, ... according to _pytest/__init__.py
+     make install-pdf  # optional, requires latex packages installed
+     ssh pytest-dev@pytest.org # MANUAL: symlink "pytest.org/latest" to the just
+                               # installed release docs
+                               # browse to pytest.org to see
 
      devpi push pytest-VERSION pypi:NAME
      hg ci -m "... finalized pytest-VERSION"
@@ -44,9 +47,8 @@ For doing a release of pytest (status April 2015) this checklist is used:
 9. send out release announcement to pytest-dev@python.org,
     testing-in-python@lists.idyll.org and python-announce-list@python.org .
 
-10. **after the release** bump the version numbers in ``setup.py``,
-    ``_pytest/__init__.py``, ``doc/en/conf.py`` to the next Minor release
-    version (i.e. if you released ``pytest-2.8.0``, set it to ``pytest-2.9.0.dev1``)
-    and set ``SITETARGET=dev`` in ``doc/en/makefile``. Commit.
+10. **after the release** bump the version number in ``_pytest/__init__.py``,
+    to the next Minor release version (i.e. if you released ``pytest-2.8.0``,
+    set it to ``pytest-2.9.0.dev1``).
 
 11. already done :)
