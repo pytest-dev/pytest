@@ -9,15 +9,7 @@ Fixture functions using "yield" / context manager integration
 
 pytest-2.4 allows fixture functions to seamlessly use a ``yield`` instead 
 of a ``return`` statement to provide a fixture value while otherwise
-fully supporting all other fixture features.  
-
-.. note::
-
-   "yielding" fixture values is an experimental feature and its exact
-   declaration may change later but earliest in a 2.5 release.  You can thus
-   safely use this feature in the 2.4 series but may need to adapt later.
-   Test functions themselves will not need to change (as a general
-   feature, they are ignorant of how fixtures are setup).
+fully supporting all other fixture features.
 
 Let's look at a simple standalone-example using the new ``yield`` syntax::
 
