@@ -78,3 +78,23 @@ fixture functions to use ``yield`` is straightforward.
     This behaviour makes sense if you consider that many different
     test functions might use a module or session scoped fixture.
 
+
+Discussion and future considerations / feedback
+++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+There are some topics that are worth mentioning:
+
+- usually ``yield`` is used for producing multiple values.
+  But fixture functions can only yield exactly one value.
+  Yielding a second fixture value will get you an error.
+  It's possible we can evolve pytest to allow for producing
+  multiple values as an alternative to current parametrization.
+  For now, you can just use the normal
+  :ref:`fixture parametrization <fixture-parametrize>`
+  mechanisms together with ``yield``-style fixtures.
+
+- lastly ``yield`` introduces more than one way to write
+  fixture functions, so what's the obvious way to a newcomer?
+
+If you want to feedback or participate in discussion of the above
+topics, please join our :ref:`contact channels`, you are most welcome.
