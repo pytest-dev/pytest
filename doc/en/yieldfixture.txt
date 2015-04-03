@@ -11,7 +11,7 @@ pytest-2.4 allows fixture functions to seamlessly use a ``yield`` instead
 of a ``return`` statement to provide a fixture value while otherwise
 fully supporting all other fixture features.
 
-Let's look at a simple standalone-example using the new ``yield`` syntax::
+Let's look at a simple standalone-example using the ``yield`` syntax::
 
     # content of test_yield.py
     
@@ -64,9 +64,9 @@ The file ``f`` will be closed after the test finished execution
 because the Python ``file`` object supports finalization when
 the ``with`` statement ends. 
 
-Note that the new syntax is fully integrated with using ``scope``, 
-``params`` and other fixture features.  Changing existing 
-fixture functions to use ``yield`` is thus straight forward.
+Note that the yield fixture form supports all other fixture
+features such as ``scope``, ``params``, etc., thus changing existing
+fixture functions to use ``yield`` is straight forward.
 
 Discussion and future considerations / feedback
 ++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -106,7 +106,7 @@ However, there are also limitations or foreseeable irritations:
 - lastly ``yield`` introduces more than one way to write
   fixture functions, so what's the obvious way to a newcomer?
   Newcomers reading the docs will see feature examples using the
-  ``return`` style so should use that, if in doubt.  
+  ``return`` style so should use that, if in doubt.
   Others can start experimenting with writing yield-style fixtures
   and possibly help evolving them further.
 
