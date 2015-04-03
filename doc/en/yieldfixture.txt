@@ -66,7 +66,7 @@ the ``with`` statement ends.
 
 Note that the yield fixture form supports all other fixture
 features such as ``scope``, ``params``, etc., thus changing existing
-fixture functions to use ``yield`` is straight forward.
+fixture functions to use ``yield`` is straightforward.
 
 .. note::
 
