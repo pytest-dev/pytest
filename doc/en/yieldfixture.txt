@@ -9,17 +9,9 @@ Fixture functions using "yield" / context manager integration
 
 pytest-2.4 allows fixture functions to seamlessly use a ``yield`` instead 
 of a ``return`` statement to provide a fixture value while otherwise
-fully supporting all other fixture features.  
+fully supporting all other fixture features.
 
-.. note::
-
-   "yielding" fixture values is an experimental feature and its exact
-   declaration may change later but earliest in a 2.5 release.  You can thus
-   safely use this feature in the 2.4 series but may need to adapt later.
-   Test functions themselves will not need to change (as a general
-   feature, they are ignorant of how fixtures are setup).
-
-Let's look at a simple standalone-example using the new ``yield`` syntax::
+Let's look at a simple standalone-example using the ``yield`` syntax::
 
     # content of test_yield.py
     
@@ -72,24 +64,25 @@ The file ``f`` will be closed after the test finished execution
 because the Python ``file`` object supports finalization when
 the ``with`` statement ends. 
 
-Note that the new syntax is fully integrated with using ``scope``, 
-``params`` and other fixture features.  Changing existing 
-fixture functions to use ``yield`` is thus straight forward.
+Note that the yield fixture form supports all other fixture
+features such as ``scope``, ``params``, etc., thus changing existing
+fixture functions to use ``yield`` is straightforward.
+
+.. note::
+
+    While the ``yield`` syntax is similar to what
+    :py:func:`contextlib.contextmanager` decorated functions
+    provide, with pytest fixture functions the part after the
+    "yield" will always be invoked, independently from the
+    exception status of the test function which uses the fixture.
+    This behaviour makes sense if you consider that many different
+    test functions might use a module or session scoped fixture.
+
 
 Discussion and future considerations / feedback
 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The yield-syntax has been discussed by pytest users extensively.
-In general, the advantages of the using a ``yield`` fixture syntax are:
-
-- easy provision of fixtures in conjunction with context managers. 
-
-- no need to register a callback, providing for more synchronous
-  control flow in the fixture function.  Also there is no need to accept
-  the ``request`` object into the fixture function just for providing
-  finalization code.
-
-However, there are also limitations or foreseeable irritations:
+There are some topics that are worth mentioning:
 
 - usually ``yield`` is used for producing multiple values.
   But fixture functions can only yield exactly one value.
@@ -100,24 +93,8 @@ However, there are also limitations or foreseeable irritations:
   :ref:`fixture parametrization <fixture-parametrize>`
   mechanisms together with ``yield``-style fixtures.
 
-- the ``yield`` syntax is similar to what
-  :py:func:`contextlib.contextmanager` decorated functions
-  provide.  With pytest fixture functions, the "after yield" part will  
-  always be invoked, independently from the exception status
-  of the test function which uses the fixture.   The pytest
-  behaviour makes sense if you consider that many different
-  test functions might use a module or session scoped fixture.
-  Some test functions might raise exceptions and others not,
-  so how could pytest re-raise a single exception at the
-  ``yield`` point in the fixture function?
-
 - lastly ``yield`` introduces more than one way to write
   fixture functions, so what's the obvious way to a newcomer?
-  Newcomers reading the docs will see feature examples using the
-  ``return`` style so should use that, if in doubt.  
-  Others can start experimenting with writing yield-style fixtures
-  and possibly help evolving them further.
 
-If you want to feedback or participate in the ongoing
-discussion, please join our :ref:`contact channels`.
-you are most welcome.
+If you want to feedback or participate in discussion of the above
+topics, please join our :ref:`contact channels`, you are most welcome.
