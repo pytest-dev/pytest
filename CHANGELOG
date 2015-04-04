@@ -3,7 +3,10 @@
 
 - streamlined and documented release process.  Also all versions
   (in setup.py and documentation generation) are now read
-  from _pytest/__init__.py.
+  from _pytest/__init__.py. Thanks Holger Krekel.
+
+- fixed docs to remove the notion that yield-fixtures are experimental.
+  They are here to stay :)  Thanks Bruno Oliveira.
 
 2.7.0 (compared to 2.6.4)
 -----------------------------
