@@ -12,7 +12,7 @@
 {% set link_color = '#000' %}
 {% set link_hover_color = '#000' %}
 {% set base_font = 'sans-serif' %}
-{% set header_font = 'sans-serif' %}
+{% set header_font = 'serif' %}
 
 @import url("basic.css");
 
@@ -265,9 +265,10 @@ p.admonition-title:after {
     content: ":";
 }
 
-pre, tt {
+pre, tt, code {
     font-family: 'Consolas', 'Menlo', 'Deja Vu Sans Mono', 'Bitstream Vera Sans Mono', monospace;
     font-size: 0.9em;
+    background: #eee;
 }
 
 img.screenshot {

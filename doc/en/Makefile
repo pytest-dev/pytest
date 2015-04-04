@@ -15,45 +15,38 @@ ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest
 
-regen:
-	PYTHONDONTWRITEBYTECODE=1 COLUMNS=76 regendoc --update *.txt */*.txt
     
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  html       to make standalone HTML files"
-	@echo "  dirhtml    to make HTML files named index.html in directories"
-	@echo "  singlehtml to make a single large HTML file"
-	@echo "  pickle     to make pickle files"
-	@echo "  json       to make JSON files"
-	@echo "  htmlhelp   to make HTML files and a HTML help project"
-	@echo "  qthelp     to make HTML files and a qthelp project"
-	@echo "  devhelp    to make HTML files and a Devhelp project"
-	@echo "  epub       to make an epub"
-	@echo "  latex      to make LaTeX files, you can set PAPER=a4 or PAPER=letter"
-	@echo "  texinfo    to make Texinfo files"
-	@echo "  info       to make Texinfo files and run them through makeinfo"
 	@echo "  latexpdf   to make LaTeX files and run them through pdflatex"
-	@echo "  text       to make text files"
-	@echo "  man        to make manual pages"
-	@echo "  changes    to make an overview of all changed/added/deprecated items"
+	@echo "  showtarget to show the pytest.org target directory"
+	@echo "  install    to install docs to pytest.org/SITETARGET"
+	@echo "  install-ldf to install the doc pdf to pytest.org/SITETARGET"
+	@echo "  regen      to regenerate pytest examples using the installed pytest"
 	@echo "  linkcheck  to check all external links for integrity"
-	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
 clean:
 	-rm -rf $(BUILDDIR)/*
 
-SITETARGET=dev
+SITETARGET=$(shell ./_getdoctarget.py)
+
+showtarget:
+	@echo $(SITETARGET)
 
 install: html
 	 # for access talk to someone with login rights to
 	 # pytest-dev@pytest.org to add your ssh key
-	 rsync -avz _build/html/ pytest-dev@pytest.org:/www/pytest.org/$(SITETARGET)
+	 rsync -avz _build/html/ pytest-dev@pytest.org:pytest.org/$(SITETARGET)
 
 installpdf: latexpdf
-	@scp $(BUILDDIR)/latex/pytest.pdf pytest-dev@pytest.org:/www/pytest.org/$(SITETARGET)
+	@scp $(BUILDDIR)/latex/pytest.pdf pytest-dev@pytest.org:pytest.org/$(SITETARGET)
 
 installall: clean install installpdf
 	@echo "done"
+
+regen:
+	PYTHONDONTWRITEBYTECODE=1 COLUMNS=76 regendoc --update *.txt */*.txt
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html

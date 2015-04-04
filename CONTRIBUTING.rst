@@ -147,7 +147,9 @@ the issues there and submit your pull requests.
 
     $ hg clone ssh://hg@bitbucket.org/YOUR_BITBUCKET_USERNAME/pytest
     $ cd pytest
-    $ hg branch your-branch-name
+    $ hg up pytest-2.7   # if you want to fix a bug for the pytest-2.7 series
+    $ hg up default      # if you want to add a feature bound for the next minor release
+    $ hg branch your-branch-name  # your feature/bugfix branch
 
    If you need some help with Mercurial, follow this quick start
    guide: http://mercurial.selenic.com/wiki/QuickStart
@@ -197,7 +199,9 @@ the issues there and submit your pull requests.
     branch: your-branch-name
 
     target: pytest-dev/pytest
-    branch: default
+    branch: default         # if it's a feature
+    branch: pytest-VERSION  # if it's a bugfix
+
 
 .. _contribution-using-git:
 
