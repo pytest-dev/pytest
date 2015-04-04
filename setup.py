@@ -16,6 +16,15 @@ classifiers = ['Development Status :: 6 - Mature',
 with open('README.rst') as fd:
     long_description = fd.read()
 
+def get_version():
+    p = os.path.join(os.path.dirname(
+                     os.path.abspath(__file__)), "_pytest", "__init__.py")
+    with open(p) as f:
+        for line in f.readlines():
+            if "__version__" in line:
+                return line.strip().split("=")[-1].strip(" '")
+    raise ValueError("could not read version")
+
 
 def main():
     install_requires = ['py>=1.4.25']
@@ -28,7 +37,7 @@ def main():
         name='pytest',
         description='pytest: simple powerful testing with Python',
         long_description=long_description,
-        version='2.7.1.dev',
+        version=get_version(),
         url='http://pytest.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
