@@ -1,9 +1,7 @@
-2.7.1.dev (compared to 2.7.0)
+2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
-- streamlined and documented release process.  Also all versions
-  (in setup.py and documentation generation) are now read
-  from _pytest/__init__.py.
+
 
 2.7.0 (compared to 2.6.4)
 -----------------------------
