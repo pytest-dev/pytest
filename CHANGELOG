@@ -4,7 +4,7 @@
 - fix issue660: properly report scope-mismatch-access errors
   independently from ordering of fixture arguments.  Also
   avoid the pytest internal traceback which does not provide
-  information to the user.
+  information to the user. Thanks Holger Krekel.
 
 - streamlined and documented release process.  Also all versions
   (in setup.py and documentation generation) are now read
