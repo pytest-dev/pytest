@@ -40,7 +40,7 @@ def main():
     install_requires = ['py>=1.4.25']
     extras_require = {}
     if has_newish_setuptools():
-        extras_require[':python_version=="2.6"'] = ['argparse']
+        extras_require[':python_version=="2.6" or python_version=="3.0" or python_version=="3.1"'] = ['argparse']
         extras_require[':sys_platform=="win32"'] = ['colorama']
     else:
         if sys.version_info < (2, 7) or (3,) <= sys.version_info < (3, 2):
