@@ -26,12 +26,25 @@ def get_version():
     raise ValueError("could not read version")
 
 
+def has_newish_setuptools():
+    try:
+        import setuptools
+        return tuple(int(i) for i in str(setuptools.__version__).split('.')) > (0, 7)
+    except Exception:
+        return False
+
+
 def main():
     install_requires = ['py>=1.4.25']
-    if sys.version_info < (2, 7) or (3,) <= sys.version_info < (3, 2):
-        install_requires.append('argparse')
-    if sys.platform == 'win32':
-        install_requires.append('colorama')
+    extras_require = {}
+    if has_newish_setuptools():
+        extras_require[':python_version=="2.6"'] = ['argparse']
+        extras_require[':sys_platform=="win32"'] = ['colorama']
+    else:
+        if sys.version_info < (2, 7) or (3,) <= sys.version_info < (3, 2):
+            install_requires.append('argparse')
+        if sys.platform == 'win32':
+            install_requires.append('colorama')
 
     setup(
         name='pytest',
@@ -48,6 +61,7 @@ def main():
         cmdclass={'test': PyTest},
         # the following should be enabled for release
         install_requires=install_requires,
+        extras_require=extras_require,
         packages=['_pytest', '_pytest.assertion'],
         py_modules=['pytest'],
         zip_safe=False,
