@@ -29,8 +29,10 @@ def get_version():
 def has_newish_setuptools():
     try:
         import setuptools
-        return tuple(int(i) for i in str(setuptools.__version__).split('.')) > (0, 7)
-    except Exception:
+        import pkg_resources
+        return pkg_resources.parse_version(setuptools.__version__) >= pkg_resources.parse_version('0.7')
+    except Exception as exc:
+        sys.stderr.write("Could not test setuptool's version: %s\n" % exc)
         return False
 
 
