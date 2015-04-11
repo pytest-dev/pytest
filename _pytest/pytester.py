@@ -50,6 +50,13 @@ class ParsedCall:
 
 
 class HookRecorder:
+    """Record all hooks called in a plugin manager.
+
+    This wraps all the hook calls in the plugin manager, recording
+    each call before propagating the normal calls.
+
+    """
+
     def __init__(self, pluginmanager):
         self._pluginmanager = pluginmanager
         self.calls = []
@@ -180,6 +187,20 @@ def pytest_funcarg__testdir(request):
 
 rex_outcome = re.compile("(\d+) (\w+)")
 class RunResult:
+    """The result of running a command.
+
+    Attributes:
+
+    :ret: The return value.
+    :outlines: List of lines captured from stdout.
+    :errlines: List of lines captures from stderr.
+    :stdout: LineMatcher of stdout, use ``stdout.str()`` to
+       reconstruct stdout or the commonly used
+       ``stdout.fnmatch_lines()`` method.
+    :stderrr: LineMatcher of stderr.
+    :duration: Duration in seconds.
+
+    """
     def __init__(self, ret, outlines, errlines, duration):
         self.ret = ret
         self.outlines = outlines
@@ -199,6 +220,26 @@ class RunResult:
                     return d
 
 class TmpTestdir:
+    """Temporary test directory with tools to test/run py.test itself.
+
+    This is based on the ``tmpdir`` fixture but provides a number of
+    methods which aid with testing py.test itself.  Unless
+    :py:meth:`chdir` is used all methods will use :py:attr:`tmpdir` as
+    current working directory.
+
+    Attributes:
+
+    :tmpdir: The :py:class:`py.path.local` instance of the temporary
+       directory.
+
+    :plugins: A list of plugins to use with :py:meth:`parseconfig` and
+       :py:meth:`runpytest`.  Initially this is an empty list but
+       plugins can be added to the list.  The type of items to add to
+       the list depend on the method which uses them so refer to them
+       for details.
+
+    """
+
     def __init__(self, request):
         self.request = request
         self.Config = request.config.__class__
@@ -221,6 +262,14 @@ class TmpTestdir:
         return "<TmpTestdir %r>" % (self.tmpdir,)
 
     def finalize(self):
+        """Clean up global state artifacts.
+
+        Some methods modify the global interpreter state and this
+        tries to clean this up.  It does not remove the temporary
+        directlry however so it can be looked at after the test run
+        has finished.
+
+        """
         for p in self._syspathremove:
             sys.path.remove(p)
         if hasattr(self, '_olddir'):
@@ -233,12 +282,18 @@ class TmpTestdir:
                     del sys.modules[name]
 
     def make_hook_recorder(self, pluginmanager):
+        """Create a new :py:class:`HookRecorder` for a PluginManager."""
         assert not hasattr(pluginmanager, "reprec")
         pluginmanager.reprec = reprec = HookRecorder(pluginmanager)
         self.request.addfinalizer(reprec.finish_recording)
         return reprec
 
     def chdir(self):
+        """Cd into the temporary directory.
+
+        This is done automatically upon instantiation.
+
+        """
         old = self.tmpdir.chdir()
         if not hasattr(self, '_olddir'):
             self._olddir = old
@@ -267,42 +322,82 @@ class TmpTestdir:
                 ret = p
         return ret
 
-
     def makefile(self, ext, *args, **kwargs):
+        """Create a new file in the testdir.
+
+        ext: The extension the file should use, including the dot.
+           E.g. ".py".
+
+        args: All args will be treated as strings and joined using
+           newlines.  The result will be written as contents to the
+           file.  The name of the file will be based on the test
+           function requesting this fixture.
+           E.g. "testdir.makefile('.txt', 'line1', 'line2')"
+
+        kwargs: Each keyword is the name of a file, while the value of
+           it will be written as contents of the file.
+           E.g. "testdir.makefile('.ini', pytest='[pytest]\naddopts=-rs\n')"
+
+        """
         return self._makefile(ext, args, kwargs)
 
     def makeconftest(self, source):
+        """Write a contest.py file with 'source' as contents."""
         return self.makepyfile(conftest=source)
 
     def makeini(self, source):
+        """Write a tox.ini file with 'source' as contents."""
         return self.makefile('.ini', tox=source)
 
     def getinicfg(self, source):
+        """Return the pytest section from the tox.ini config file."""
         p = self.makeini(source)
         return py.iniconfig.IniConfig(p)['pytest']
 
     def makepyfile(self, *args, **kwargs):
+        """Shortcut for .makefile() with a .py extension."""
         return self._makefile('.py', args, kwargs)
 
     def maketxtfile(self, *args, **kwargs):
+        """Shortcut for .makefile() with a .txt extension."""
         return self._makefile('.txt', args, kwargs)
 
     def syspathinsert(self, path=None):
+        """Prepend a directory to sys.path, defaults to :py:attr:`tmpdir`.
+
+        This is undone automatically after the test.
+        """
         if path is None:
             path = self.tmpdir
         sys.path.insert(0, str(path))
         self._syspathremove.append(str(path))
 
     def mkdir(self, name):
+        """Create a new (sub)directory."""
         return self.tmpdir.mkdir(name)
 
     def mkpydir(self, name):
+        """Create a new python package.
+
+        This creates a (sub)direcotry with an empty ``__init__.py``
+        file so that is recognised as a python package.
+
+        """
         p = self.mkdir(name)
         p.ensure("__init__.py")
         return p
 
     Session = Session
     def getnode(self, config, arg):
+        """Return the collection node of a file.
+
+        :param config: :py:class:`_pytest.config.Config` instance, see
+           :py:meth:`parseconfig` and :py:meth:`parseconfigure` to
+           create the configuration.
+
+        :param arg: A :py:class:`py.path.local` instance of the file.
+
+        """
         session = Session(config)
         assert '::' not in str(arg)
         p = py.path.local(arg)
@@ -312,6 +407,15 @@ class TmpTestdir:
         return res
 
     def getpathnode(self, path):
+        """Return the collection node of a file.
+
+        This is like :py:meth:`getnode` but uses
+        :py:meth:`parseconfigure` to create the (configured) py.test
+        Config instance.
+
+        :param path: A :py:class:`py.path.local` instance of the file.
+
+        """
         config = self.parseconfigure(path)
         session = Session(config)
         x = session.fspath.bestrelpath(path)
@@ -321,6 +425,12 @@ class TmpTestdir:
         return res
 
     def genitems(self, colitems):
+        """Generate all test items from a collection node.
+
+        This recurses into the collection node and returns a list of
+        all the test items contained within.
+
+        """
         session = colitems[0].session
         result = []
         for colitem in colitems:
@@ -328,6 +438,14 @@ class TmpTestdir:
         return result
 
     def runitem(self, source):
+        """Run the "test_func" Item.
+
+        The calling test instance (the class which contains the test
+        method) must provide a ``.getrunner()`` method which should
+        return a runner which can run the test protocol for a single
+        item, like e.g. :py:func:`_pytest.runner.runtestprotocol`.
+
+        """
         # used from runner functional tests
         item = self.getitem(source)
         # the test class where we are called from wants to provide the runner
@@ -336,11 +454,32 @@ class TmpTestdir:
         return runner(item)
 
     def inline_runsource(self, source, *cmdlineargs):
+        """Run a test module in process using ``pytest.main()``.
+
+        This run writes "source" into a temporary file and runs
+        ``pytest.main()`` on it, returning a :py:class:`HookRecorder`
+        instance for the result.
+
+        :param source: The source code of the test module.
+
+        :param cmdlineargs: Any extra command line arguments to use.
+
+        :return: :py:class:`HookRecorder` instance of the result.
+
+        """
         p = self.makepyfile(source)
         l = list(cmdlineargs) + [p]
         return self.inline_run(*l)
 
     def inline_runsource1(self, *args):
+        """Run a test module in process using ``pytest.main()``.
+
+        This behaves exactly like :py:meth:`inline_runsource` and
+        takes identical arguments.  However the return value is a list
+        of the reports created by the pytest_runtest_logreport hook
+        during the run.
+
+        """
         args = list(args)
         source = args.pop()
         p = self.makepyfile(source)
@@ -351,14 +490,45 @@ class TmpTestdir:
         return reports[1]
 
     def inline_genitems(self, *args):
+        """Run ``pytest.main(['--collectonly'])`` in-process.
+
+        Retuns a tuple of the collected items and a
+        :py:class:`HookRecorder` instance.
+
+        """
         return self.inprocess_run(list(args) + ['--collectonly'])
 
     def inprocess_run(self, args, plugins=()):
+        """Run ``pytest.main()`` in-process, return Items and a HookRecorder.
+
+        This runs the :py:func:`pytest.main` function to run all of
+        py.test inside the test process itself like
+        :py:meth:`inline_run`.  However the return value is a tuple of
+        the collection items and a :py:class:`HookRecorder` instance.
+
+        """
         rec = self.inline_run(*args, plugins=plugins)
         items = [x.item for x in rec.getcalls("pytest_itemcollected")]
         return items, rec
 
     def inline_run(self, *args, **kwargs):
+        """Run ``pytest.main()`` in-process, returning a HookRecorder.
+
+        This runs the :py:func:`pytest.main` function to run all of
+        py.test inside the test process itself.  This means it can
+        return a :py:class:`HookRecorder` instance which gives more
+        detailed results from then run then can be done by matching
+        stdout/stderr from :py:meth:`runpytest`.
+
+        :param args: Any command line arguments to pass to
+           :py:func:`pytest.main`.
+
+        :param plugin: (keyword-only) Extra plugin instances the
+           ``pytest.main()`` instance should use.
+
+        :return: A :py:class:`HookRecorder` instance.
+
+        """
         rec = []
         class Collect:
             def pytest_configure(x, config):
@@ -372,6 +542,17 @@ class TmpTestdir:
         return reprec
 
     def parseconfig(self, *args):
+        """Return a new py.test Config instance from given commandline args.
+
+        This invokes the py.test bootstrapping code in _pytest.config
+        to create a new :py:class:`_pytest.core.PluginManager` and
+        call the pytest_cmdline_parse hook to create new
+        :py:class:`_pytest.config.Config` instance.
+
+        If :py:attr:`plugins` has been populated they should be plugin
+        modules which will be registered with the PluginManager.
+
+        """
         args = [str(x) for x in args]
         for x in args:
             if str(x).startswith('--basetemp'):
@@ -392,12 +573,31 @@ class TmpTestdir:
         return config
 
     def parseconfigure(self, *args):
+        """Return a new py.test configured Config instance.
+
+        This returns a new :py:class:`_pytest.config.Config` instance
+        like :py:meth:`parseconfig`, but also calls the
+        pytest_configure hook.
+
+        """
         config = self.parseconfig(*args)
         config.do_configure()
         self.request.addfinalizer(config.do_unconfigure)
         return config
 
     def getitem(self,  source, funcname="test_func"):
+        """Return the test item for a test function.
+
+        This writes the source to a python file and runs py.test's
+        collection on the resulting module, returning the test item
+        for the requested function name.
+
+        :param source: The module source.
+
+        :param funcname: The name of the test function for which the
+           Item must be returned.
+
+        """
         items = self.getitems(source)
         for item in items:
             if item.name == funcname:
@@ -406,10 +606,32 @@ class TmpTestdir:
                   funcname, source, items)
 
     def getitems(self,  source):
+        """Return all test items collected from the module.
+
+        This writes the source to a python file and runs py.test's
+        collection on the resulting module, returning all test items
+        contained within.
+
+        """
         modcol = self.getmodulecol(source)
         return self.genitems([modcol])
 
     def getmodulecol(self,  source, configargs=(), withinit=False):
+        """Return the module collection node for ``source``.
+
+        This writes ``source`` to a file using :py:meth:`makepyfile`
+        and then runs the py.test collection on it, returning the
+        collection node for the test module.
+
+        :param source: The source code of the module to collect.
+
+        :param configargs: Any extra arguments to pass to
+           :py:meth:`parseconfigure`.
+
+        :param withinit: Whether to also write a ``__init__.py`` file
+           to the temporarly directory to ensure it is a package.
+
+        """
         kw = {self.request.function.__name__: py.code.Source(source).strip()}
         path = self.makepyfile(**kw)
         if withinit:
@@ -419,11 +641,30 @@ class TmpTestdir:
         return node
 
     def collect_by_name(self, modcol, name):
+        """Return the collection node for name from the module collection.
+
+        This will search a module collection node for a collection
+        node matching the given name.
+
+        :param modcol: A module collection node, see
+           :py:meth:`getmodulecol`.
+
+        :param name: The name of the node to return.
+
+        """
         for colitem in modcol._memocollect():
             if colitem.name == name:
                 return colitem
 
     def popen(self, cmdargs, stdout, stderr, **kw):
+        """Invoke subprocess.Popen.
+
+        This calls subprocess.Popen making sure the current working
+        directory is the PYTHONPATH.
+
+        You probably want to use :py:meth:`run` instead.
+
+        """
         env = os.environ.copy()
         env['PYTHONPATH'] = os.pathsep.join(filter(None, [
             str(os.getcwd()), env.get('PYTHONPATH', '')]))
@@ -432,6 +673,14 @@ class TmpTestdir:
                                 stdout=stdout, stderr=stderr, **kw)
 
     def run(self, *cmdargs):
+        """Run a command with arguments.
+
+        Run a process using subprocess.Popen saving the stdout and
+        stderr.
+
+        Returns a :py:class:`RunResult`.
+
+        """
         return self._run(*cmdargs)
 
     def _run(self, *cmdargs):
@@ -469,6 +718,14 @@ class TmpTestdir:
             print("couldn't print to %s because of encoding" % (fp,))
 
     def runpybin(self, scriptname, *args):
+        """Run a py.* tool with arguments.
+
+        This can realy only be used to run py.test, you probably want
+            :py:meth:`runpytest` instead.
+
+        Returns a :py:class:`RunResult`.
+
+        """
         fullargs = self._getpybinargs(scriptname) + args
         return self.run(*fullargs)
 
@@ -482,6 +739,16 @@ class TmpTestdir:
             pytest.skip("cannot run %r with --no-tools-on-path" % scriptname)
 
     def runpython(self, script, prepend=True):
+        """Run a python script.
+
+        If ``prepend`` is True then the directory from which the py
+        package has been imported will be prepended to sys.path.
+
+        Returns a :py:class:`RunResult`.
+
+        """
+        # XXX The prepend feature is probably not very useful since the
+        #     split of py and pytest.
         if prepend:
             s = self._getsysprepend()
             if s:
@@ -496,10 +763,23 @@ class TmpTestdir:
         return s
 
     def runpython_c(self, command):
+        """Run python -c "command", return a :py:class:`RunResult`."""
         command = self._getsysprepend() + command
         return self.run(sys.executable, "-c", command)
 
     def runpytest(self, *args):
+        """Run py.test as a subprocess with given arguments.
+
+        Any plugins added to the :py:attr:`plugins` list will added
+        using the ``-p`` command line option.  Addtionally
+        ``--basetemp`` is used put any temporary files and directories
+        in a numbered directory prefixed with "runpytest-" so they do
+        not conflict with the normal numberd pytest location for
+        temporary files and directories.
+
+        Returns a :py:class:`RunResult`.
+
+        """
         p = py.path.local.make_numbered_dir(prefix="runpytest-",
             keep=None, rootdir=self.tmpdir)
         args = ('--basetemp=%s' % p, ) + args
@@ -515,6 +795,14 @@ class TmpTestdir:
         return self.runpybin("py.test", *args)
 
     def spawn_pytest(self, string, expect_timeout=10.0):
+        """Run py.test using pexpect.
+
+        This makes sure to use the right py.test and sets up the
+        temporary directory locations.
+
+        The pexpect child is returned.
+
+        """
         if self.request.config.getvalue("notoolsonpath"):
             pytest.skip("--no-tools-on-path prevents running pexpect-spawn tests")
         basetemp = self.tmpdir.mkdir("pexpect")
@@ -523,6 +811,10 @@ class TmpTestdir:
         return self.spawn(cmd, expect_timeout=expect_timeout)
 
     def spawn(self, cmd, expect_timeout=10.0):
+        """Run a command using pexpect.
+
+        The pexpect child is returned.
+        """
         pexpect = pytest.importorskip("pexpect", "3.0")
         if hasattr(sys, 'pypy_version_info') and '64' in platform.machine():
             pytest.skip("pypy-64 bit not supported")
@@ -560,10 +852,21 @@ class LineComp:
         return LineMatcher(lines1).fnmatch_lines(lines2)
 
 class LineMatcher:
+    """Flexible matching of text.
+
+    This is a convenience class to test large texts like the output of
+    commands.
+
+    The constructor takes a list of lines without their trailing
+    newlines, i.e. ``text.splitlines()``.
+
+    """
+
     def __init__(self,  lines):
         self.lines = lines
 
     def str(self):
+        """Return the entire original text."""
         return "\n".join(self.lines)
 
     def _getlines(self, lines2):
@@ -574,6 +877,12 @@ class LineMatcher:
         return lines2
 
     def fnmatch_lines_random(self, lines2):
+        """Check lines exist in the output.
+
+        The argument is a list of lines which have to occur in the
+        output, in any order.  Each line can contain glob whildcards.
+
+        """
         lines2 = self._getlines(lines2)
         for line in lines2:
             for x in self.lines:
@@ -584,12 +893,24 @@ class LineMatcher:
                 raise ValueError("line %r not found in output" % line)
 
     def get_lines_after(self, fnline):
+        """Return all lines following the given line in the text.
+
+        The given line can contain glob wildcards.
+        """
         for i, line in enumerate(self.lines):
             if fnline == line or fnmatch(line, fnline):
                 return self.lines[i+1:]
         raise ValueError("line %r not found in output" % fnline)
 
     def fnmatch_lines(self, lines2):
+        """Search the text for matching lines.
+
+        The argument is a list of lines which have to match and can
+        use glob wildcards.  If they do not match an pytest.fail() is
+        called.  The matches and non-matches are also printed on
+        stdout.
+
+        """
         def show(arg1, arg2):
             py.builtin.print_(arg1, arg2, file=sys.stderr)
         lines2 = self._getlines(lines2)
