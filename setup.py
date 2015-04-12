@@ -1,4 +1,6 @@
 import os, sys
+import setuptools
+import pkg_resources
 from setuptools import setup, Command
 
 classifiers = ['Development Status :: 6 - Mature',
@@ -26,12 +28,36 @@ def get_version():
     raise ValueError("could not read version")
 
 
+def has_environment_marker_support():
+    """
+    Tests that setuptools has support for PEP-426 environment marker support.
+    
+    The first known release to support it is 0.7 (and the earliest on PyPI seems to be 0.7.2 
+    so we're using that), see: http://pythonhosted.org/setuptools/history.html#id142
+    
+    References:
+    
+    * https://wheel.readthedocs.org/en/latest/index.html#defining-conditional-dependencies
+    * https://www.python.org/dev/peps/pep-0426/#environment-markers
+    """
+    try:
+        return pkg_resources.parse_version(setuptools.__version__) >= pkg_resources.parse_version('0.7.2')
+    except Exception as exc:
+        sys.stderr.write("Could not test setuptool's version: %s\n" % exc)
+        return False
+
+
 def main():
     install_requires = ['py>=1.4.25']
-    if sys.version_info < (2, 7) or (3,) <= sys.version_info < (3, 2):
-        install_requires.append('argparse')
-    if sys.platform == 'win32':
-        install_requires.append('colorama')
+    extras_require = {}
+    if has_environment_marker_support():
+        extras_require[':python_version=="2.6" or python_version=="3.0" or python_version=="3.1"'] = ['argparse']
+        extras_require[':sys_platform=="win32"'] = ['colorama']
+    else:
+        if sys.version_info < (2, 7) or (3,) <= sys.version_info < (3, 2):
+            install_requires.append('argparse')
+        if sys.platform == 'win32':
+            install_requires.append('colorama')
 
     setup(
         name='pytest',
@@ -48,6 +74,7 @@ def main():
         cmdclass={'test': PyTest},
         # the following should be enabled for release
         install_requires=install_requires,
+        extras_require=extras_require,
         packages=['_pytest', '_pytest.assertion'],
         py_modules=['pytest'],
         zip_safe=False,
