@@ -1,4 +1,6 @@
 import os, sys
+import setuptools
+import pkg_resources
 from setuptools import setup, Command
 
 classifiers = ['Development Status :: 6 - Mature',
@@ -39,8 +41,6 @@ def has_environment_marker_support():
     * https://www.python.org/dev/peps/pep-0426/#environment-markers
     """
     try:
-        import setuptools
-        import pkg_resources
         return pkg_resources.parse_version(setuptools.__version__) >= pkg_resources.parse_version('0.7.2')
     except Exception as exc:
         sys.stderr.write("Could not test setuptool's version: %s\n" % exc)
