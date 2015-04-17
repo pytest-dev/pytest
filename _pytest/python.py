@@ -1451,7 +1451,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         if scopemismatch(invoking_scope, requested_scope):
             # try to report something helpful
             lines = self._factorytraceback()
-            pytest.fail("ScopeMismatch: you tried to access the %r scoped "
+            pytest.fail("ScopeMismatch: You tried to access the %r scoped "
                 "fixture %r with a %r scoped request object, "
                 "involved factories\n%s" %(
                 (requested_scope, argname, invoking_scope, "\n".join(lines))),
