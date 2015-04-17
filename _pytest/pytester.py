@@ -254,7 +254,7 @@ class TmpTestdir:
             break
         self.tmpdir = tmpdir
         self.plugins = []
-        self._syspathremove = []
+        self._savesyspath = list(sys.path)
         self.chdir() # always chdir
         self.request.addfinalizer(self.finalize)
 
@@ -270,8 +270,7 @@ class TmpTestdir:
         has finished.
 
         """
-        for p in self._syspathremove:
-            sys.path.remove(p)
+        sys.path[:] = self._savesyspath
         if hasattr(self, '_olddir'):
             self._olddir.chdir()
         # delete modules that have been loaded from tmpdir
@@ -370,7 +369,6 @@ class TmpTestdir:
         if path is None:
             path = self.tmpdir
         sys.path.insert(0, str(path))
-        self._syspathremove.append(str(path))
 
     def mkdir(self, name):
         """Create a new (sub)directory."""

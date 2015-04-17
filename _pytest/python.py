@@ -485,7 +485,7 @@ class Module(pytest.File, PyCollector):
     def _importtestmodule(self):
         # we assume we are only called once per module
         try:
-            mod = self.fspath.pyimport(ensuresyspath=True)
+            mod = self.fspath.pyimport(ensuresyspath="append")
         except SyntaxError:
             raise self.CollectError(
                 py.code.ExceptionInfo().getrepr(style="short"))
@@ -2057,3 +2057,4 @@ def get_scope_node(node, scope):
             return node.session
         raise ValueError("unknown scope")
     return node.getparent(cls)
+
