@@ -353,6 +353,23 @@ class TestGeneralUsage:
             *unrecognized*
         """)
 
+    def test_getsourcelines_error_issue553(self, testdir):
+        p = testdir.makepyfile("""
+            def raise_error(obj):
+                raise IOError('source code not available')
+
+            import inspect
+            inspect.getsourcelines = raise_error
+
+            def test_foo(invalid_fixture):
+                pass
+        """)
+        res = testdir.runpytest(p)
+        res.stdout.fnmatch_lines([
+            "*source code not available*",
+            "*fixture 'invalid_fixture' not found",
+        ])
+
 
 class TestInvocationVariants:
     def test_earlyinit(self, testdir):

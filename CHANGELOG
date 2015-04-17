@@ -1,6 +1,11 @@
 2.7.1.dev (compared to 2.7.0)
 -----------------------------
 
+- fix issue553: properly handling inspect.getsourcelines failures in
+  FixtureLookupError which would lead to to an internal error,
+  obfuscating the original problem. Thanks talljosh for initial
+  diagnose/patch and Bruno Oliveira for final patch.
+
 - fix issue660: properly report scope-mismatch-access errors
   independently from ordering of fixture arguments.  Also
   avoid the pytest internal traceback which does not provide

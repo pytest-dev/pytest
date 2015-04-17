@@ -1537,13 +1537,18 @@ class FixtureLookupError(LookupError):
                                # it at the requesting side
         for function in stack:
             fspath, lineno = getfslineno(function)
-            lines, _ = inspect.getsourcelines(function)
-            addline("file %s, line %s" % (fspath, lineno+1))
-            for i, line in enumerate(lines):
-                line = line.rstrip()
-                addline("  " + line)
-                if line.lstrip().startswith('def'):
-                    break
+            try:
+                lines, _ = inspect.getsourcelines(function)
+            except IOError:
+                error_msg = "file %s, line %s: source code not available"
+                addline(error_msg % (fspath, lineno+1))
+            else:
+                addline("file %s, line %s" % (fspath, lineno+1))
+                for i, line in enumerate(lines):
+                    line = line.rstrip()
+                    addline("  " + line)
+                    if line.lstrip().startswith('def'):
+                        break
 
         if msg is None:
             fm = self.request._fixturemanager
