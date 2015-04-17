@@ -607,6 +607,21 @@ class TestMultiCall:
         assert "m1" in str(ex.value)
         assert "test_core.py:" in str(ex.value)
 
+    @pytest.mark.parametrize("exc", [ValueError, SystemExit])
+    def test_hookwrapper_exception(self, exc):
+        l = []
+        def m1():
+            l.append("m1 init")
+            yield None
+            l.append("m1 finish")
+        m1.hookwrapper = True
+
+        def m2():
+            raise exc
+        with pytest.raises(exc):
+            MultiCall([m2, m1], {}).execute()
+        assert l == ["m1 init", "m1 finish"]
+
 
 class TestHookRelay:
     def test_happypath(self):
