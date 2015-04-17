@@ -20,6 +20,10 @@
 - Support building wheels by using environment markers for the
   requirements.  Thanks Ionel Maries Cristian.
 
+- fixed regression to 2.6.4 which surfaced e.g. in lost stdout capture printing
+  when tests raised SystemExit. Thanks Holger Krekel.
+
+
 2.7.0 (compared to 2.6.4)
 -----------------------------
 

@@ -121,7 +121,7 @@ class CallOutcome:
     def __init__(self, func):
         try:
             self.result = func()
-        except Exception:
+        except BaseException:
             self.excinfo = sys.exc_info()
 
     def force_result(self, result):
