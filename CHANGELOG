@@ -14,6 +14,9 @@
   of pkg_under_test whereas before they would always pick 
   up the local version.  Thanks Holger Krekel.
 
+- pytester: add method ``TmpTestdir.delete_loaded_modules()``, and call it
+  from ``inline_run()`` to allow temporary modules to be reloaded.
+  Thanks Eduardo Schettino.
 
 2.7.1.dev (compared to 2.7.0)
 -----------------------------
