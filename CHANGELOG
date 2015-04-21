@@ -1,6 +1,8 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
+- pytester: add method ``TmpTestdir.delete_loaded_modules()``, and call it
+  from ``inline_run()`` to allow temporary modules to be reloaded.
 
 2.7.1.dev (compared to 2.7.0)
 -----------------------------

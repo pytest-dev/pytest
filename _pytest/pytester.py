@@ -266,7 +266,7 @@ class TmpTestdir:
 
         Some methods modify the global interpreter state and this
         tries to clean this up.  It does not remove the temporary
-        directlry however so it can be looked at after the test run
+        directory however so it can be looked at after the test run
         has finished.
 
         """
@@ -274,7 +274,15 @@ class TmpTestdir:
             sys.path.remove(p)
         if hasattr(self, '_olddir'):
             self._olddir.chdir()
-        # delete modules that have been loaded from tmpdir
+        self.delete_loaded_modules()
+
+    def delete_loaded_modules(self):
+        """Delete modules that have been loaded from tmpdir.
+
+        This allows the interpreter to catch module changes in case
+        the module is re-imported.
+
+        """
         for name, mod in list(sys.modules.items()):
             if mod:
                 fn = getattr(mod, '__file__', None)
@@ -539,6 +547,7 @@ class TmpTestdir:
         assert len(rec) == 1
         reprec = rec[0]
         reprec.ret = ret
+        self.delete_loaded_modules()
         return reprec
 
     def parseconfig(self, *args):

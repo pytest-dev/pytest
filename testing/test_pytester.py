@@ -2,6 +2,8 @@ import pytest
 import os
 from _pytest.pytester import HookRecorder
 from _pytest.core import PluginManager
+from _pytest.main import EXIT_OK, EXIT_TESTSFAILED
+
 
 def test_make_hook_recorder(testdir):
     item = testdir.getitem("def test_func(): pass")
@@ -121,3 +123,12 @@ def test_inprocess_plugins(testdir):
     testdir.inprocess_run([], [plugin])
 
     assert plugin.configured
+
+def test_inline_run_clean_modules(testdir):
+    test_mod = testdir.makepyfile("def test_foo(): assert True")
+    result = testdir.inline_run(str(test_mod))
+    assert result.ret == EXIT_OK
+    # rewrite module, now test should fail if module was re-imported
+    test_mod.write("def test_foo(): assert False")
+    result2 = testdir.inline_run(str(test_mod))
+    assert result2.ret == EXIT_TESTSFAILED
