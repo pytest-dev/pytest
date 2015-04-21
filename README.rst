@@ -1,5 +1,3 @@
-.. image:: https://drone.io/bitbucket.org/pytest-dev/pytest/status.png
-   :target: https://drone.io/bitbucket.org/pytest-dev/pytest/latest
 .. image:: https://pypip.in/v/pytest/badge.png
    :target: https://pypi.python.org/pypi/pytest
 
