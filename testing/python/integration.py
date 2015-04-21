@@ -238,7 +238,7 @@ def test_pytestconfig_is_session_scoped():
 
 
 class TestNoselikeTestAttribute:
-    def test_module(self, testdir):
+    def test_module_with_global_test(self, testdir):
         testdir.makepyfile("""
             __test__ = False
             def test_hello():
@@ -248,7 +248,7 @@ class TestNoselikeTestAttribute:
         assert not reprec.getfailedcollections()
         calls = reprec.getreports("pytest_runtest_logreport")
         assert not calls
-        
+
     def test_class_and_method(self, testdir):
         testdir.makepyfile("""
             __test__ = True

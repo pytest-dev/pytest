@@ -772,6 +772,7 @@ def test_default_markers(testdir):
     ])
 
 def test_importplugin_issue375(testdir):
+    testdir.syspathinsert(testdir.tmpdir)
     testdir.makepyfile(qwe="import aaaa")
     excinfo = pytest.raises(ImportError, lambda: importplugin("qwe"))
     assert "qwe" not in str(excinfo.value)
