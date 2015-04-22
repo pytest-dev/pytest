@@ -15,6 +15,24 @@ from _pytest.core import HookCaller, add_method_wrapper
 
 from _pytest.main import Session, EXIT_OK
 
+# used at least by pytest-xdist plugin
+@pytest.fixture
+def _pytest(request):
+    """ Return a helper which offers a gethookrecorder(hook)
+    method which returns a HookRecorder instance which helps
+    to make assertions about called hooks.
+    """
+    return PytestArg(request)
+
+class PytestArg:
+    def __init__(self, request):
+        self.request = request
+
+    def gethookrecorder(self, hook):
+        hookrecorder = HookRecorder(hook._pm)
+        self.request.addfinalizer(hookrecorder.finish_recording)
+        return hookrecorder
+
 
 def get_public_names(l):
     """Only return names from iterator l without a leading underscore."""
