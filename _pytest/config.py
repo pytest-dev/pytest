@@ -121,6 +121,12 @@ class PytestPluginManager(PluginManager):
             self._globalplugins.append(plugin)
         return ret
 
+    def _do_register(self, plugin, name):
+        # called from core PluginManager class
+        if hasattr(self, "config"):
+            self.config._register_plugin(plugin, name)
+        return super(PytestPluginManager, self)._do_register(plugin, name)
+
     def unregister(self, plugin):
         super(PytestPluginManager, self).unregister(plugin)
         try:
@@ -701,7 +707,6 @@ class Config(object):
         self._opt2dest = {}
         self._cleanup = []
         self.pluginmanager.register(self, "pytestconfig")
-        self.pluginmanager.set_register_callback(self._register_plugin)
         self._configured = False
 
     def _register_plugin(self, plugin, name):

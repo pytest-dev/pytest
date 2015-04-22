@@ -167,10 +167,6 @@ class PluginManager(object):
         # backward compatibility
         config.do_configure()
 
-    def set_register_callback(self, callback):
-        assert not hasattr(self, "_registercallback")
-        self._registercallback = callback
-
     def make_hook_caller(self, name, plugins):
         caller = getattr(self.hook, name)
         methods = self.listattr(name, plugins=plugins)
@@ -204,22 +200,26 @@ class PluginManager(object):
                            ", ".join(hook.argnames))
             yield hook
 
+    def _get_canonical_name(self, plugin):
+        return getattr(plugin, "__name__", None) or str(id(plugin))
+
     def register(self, plugin, name=None):
+        name = name or self._get_canonical_name(plugin)
         if self._name2plugin.get(name, None) == -1:
             return
-        name = name or getattr(plugin, '__name__', str(id(plugin)))
-        if self.isregistered(plugin, name):
+        if self.hasplugin(name):
             raise ValueError("Plugin already registered: %s=%s\n%s" %(
                               name, plugin, self._name2plugin))
         #self.trace("registering", name, plugin)
-        reg = getattr(self, "_registercallback", None)
-        if reg is not None:
-            reg(plugin, name)  # may call addhooks
+        # allow subclasses to intercept here by calling a helper
+        return self._do_register(plugin, name)
+
+    def _do_register(self, plugin, name):
         hookcallers = list(self._scan_plugin(plugin))
         self._plugin2hookcallers[plugin] = hookcallers
         self._name2plugin[name] = plugin
         self._plugins.append(plugin)
-        # finally make sure that the methods of the new plugin take part
+        # rescan all methods for the hookcallers we found
         for hookcaller in hookcallers:
             hookcaller.scan_methods()
         return True
@@ -243,11 +243,6 @@ class PluginManager(object):
         self._plugins = []
         self._name2plugin.clear()
 
-    def isregistered(self, plugin, name=None):
-        if self.getplugin(name) is not None:
-            return True
-        return plugin in self._plugins
-
     def addhooks(self, module_or_class):
         isclass = int(inspect.isclass(module_or_class))
         names = []
@@ -266,8 +261,12 @@ class PluginManager(object):
     def getplugins(self):
         return self._plugins
 
+    def isregistered(self, plugin):
+        return self.hasplugin(self._get_canonical_name(plugin)) or \
+               plugin in self._plugins
+
     def hasplugin(self, name):
-        return bool(self.getplugin(name))
+        return name in self._name2plugin
 
     def getplugin(self, name):
         return self._name2plugin.get(name)
