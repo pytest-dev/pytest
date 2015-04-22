@@ -135,6 +135,21 @@ class CallOutcome:
 
 
 class PluginManager(object):
+    """ Core Pluginmanager class which manages registration
+    of plugin objects and 1:N hook calling.
+
+    You can register new hooks by calling ``addhooks(module_or_class)``.
+    You can register plugin objects (which contain hooks) by calling
+    ``register(plugin)``.  The Pluginmanager is initialized with a
+    prefix that is searched for in the names of the dict of registered
+    plugin objects.  An optional excludefunc allows to blacklist names which
+    are not considered as hooks despite a matching prefix.
+
+    For debugging purposes you can call ``set_tracing(writer)``
+    which will subsequently send debug information to the specified
+    write function.
+    """
+
     def __init__(self, prefix, excludefunc=None):
         self._prefix = prefix
         self._excludefunc = excludefunc
@@ -142,10 +157,11 @@ class PluginManager(object):
         self._plugins = []
         self._plugin2hookcallers = {}
         self.trace = TagTracer().get("pluginmanage")
-        self._shutdown = []
         self.hook = HookRelay(pm=self)
 
     def set_tracing(self, writer):
+        """ turn on tracing to the given writer method and
+        return an undo function. """
         self.trace.root.setwriter(writer)
         # reconfigure HookCalling to perform tracing
         assert not hasattr(self, "_wrapping")
@@ -160,12 +176,7 @@ class PluginManager(object):
                 trace("finish", self.name, "-->", box.result)
             trace.root.indent -= 1
 
-        undo = add_method_wrapper(HookCaller, _docall)
-        self.add_shutdown(undo)
-
-    def do_configure(self, config):
-        # backward compatibility
-        config.do_configure()
+        return add_method_wrapper(HookCaller, _docall)
 
     def make_hook_caller(self, name, plugins):
         caller = getattr(self.hook, name)
@@ -232,16 +243,6 @@ class PluginManager(object):
         hookcallers = self._plugin2hookcallers.pop(plugin)
         for hookcaller in hookcallers:
             hookcaller.scan_methods()
-
-    def add_shutdown(self, func):
-        self._shutdown.append(func)
-
-    def ensure_shutdown(self):
-        while self._shutdown:
-            func = self._shutdown.pop()
-            func()
-        self._plugins = []
-        self._name2plugin.clear()
 
     def addhooks(self, module_or_class):
         isclass = int(inspect.isclass(module_or_class))

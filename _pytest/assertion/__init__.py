@@ -70,12 +70,11 @@ def pytest_configure(config):
     config._assertstate = AssertionState(config, mode)
     config._assertstate.hook = hook
     config._assertstate.trace("configured with mode set to %r" % (mode,))
-
-
-def pytest_unconfigure(config):
-    hook = config._assertstate.hook
-    if hook is not None and hook in sys.meta_path:
-        sys.meta_path.remove(hook)
+    def undo():
+        hook = config._assertstate.hook
+        if hook is not None and hook in sys.meta_path:
+            sys.meta_path.remove(hook)
+    config.add_cleanup(undo)
 
 
 def pytest_collection(session):

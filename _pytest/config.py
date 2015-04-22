@@ -77,19 +77,16 @@ def _prepareconfig(args=None, plugins=None):
             raise ValueError("not a string or argument list: %r" % (args,))
         args = shlex.split(args)
     pluginmanager = get_plugin_manager()
-    try:
-        if plugins:
-            for plugin in plugins:
-                pluginmanager.register(plugin)
-        return pluginmanager.hook.pytest_cmdline_parse(
-                pluginmanager=pluginmanager, args=args)
-    except Exception:
-        pluginmanager.ensure_shutdown()
-        raise
+    if plugins:
+        for plugin in plugins:
+            pluginmanager.register(plugin)
+    return pluginmanager.hook.pytest_cmdline_parse(
+            pluginmanager=pluginmanager, args=args)
 
 def exclude_pytest_names(name):
     return not name.startswith(name) or name == "pytest_plugins" or \
            name.startswith("pytest_funcarg__")
+
 
 class PytestPluginManager(PluginManager):
     def __init__(self):
@@ -723,16 +720,23 @@ class Config(object):
         if self._configured:
             call_plugin(plugin, "pytest_configure", {'config': self})
 
-    def do_configure(self):
+    def add_cleanup(self, func):
+        """ Add a function to be called when the config object gets out of
+        use (usually coninciding with pytest_unconfigure)."""
+        self._cleanup.append(func)
+
+    def _do_configure(self):
         assert not self._configured
         self._configured = True
         self.hook.pytest_configure(config=self)
 
-    def do_unconfigure(self):
-        assert self._configured
-        self._configured = False
-        self.hook.pytest_unconfigure(config=self)
-        self.pluginmanager.ensure_shutdown()
+    def _ensure_unconfigure(self):
+        if self._configured:
+            self._configured = False
+            self.hook.pytest_unconfigure(config=self)
+        while self._cleanup:
+            fin = self._cleanup.pop()
+            fin()
 
     def warn(self, code, message):
         """ generate a warning for this test session. """
@@ -746,11 +750,6 @@ class Config(object):
         assert self == pluginmanager.config, (self, pluginmanager.config)
         self.parse(args)
         return self
-
-    def pytest_unconfigure(config):
-        while config._cleanup:
-            fin = config._cleanup.pop()
-            fin()
 
     def notify_exception(self, excinfo, option=None):
         if option and option.fulltrace:

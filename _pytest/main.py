@@ -77,7 +77,7 @@ def wrap_session(config, doit):
     initstate = 0
     try:
         try:
-            config.do_configure()
+            config._do_configure()
             initstate = 1
             config.hook.pytest_sessionstart(session=session)
             initstate = 2
@@ -107,9 +107,7 @@ def wrap_session(config, doit):
             config.hook.pytest_sessionfinish(
                 session=session,
                 exitstatus=session.exitstatus)
-        if initstate >= 1:
-            config.do_unconfigure()
-        config.pluginmanager.ensure_shutdown()
+        config._ensure_unconfigure()
     return session.exitstatus
 
 def pytest_cmdline_main(config):

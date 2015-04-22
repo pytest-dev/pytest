@@ -18,6 +18,15 @@
   from ``inline_run()`` to allow temporary modules to be reloaded.
   Thanks Eduardo Schettino.
 
+- internally refactor pluginmanager API and code so that there
+  is a clear distinction between a pytest-agnostic rather simple 
+  pluginmanager and the PytestPluginManager which adds a lot of
+  behaviour, among it handling of the local conftest files.
+  In terms of documented methods this is a backward compatible
+  change but it might still break 3rd party plugins which relied on 
+  details like especially the pluginmanager.add_shutdown() API.
+  Thanks Holger Krekel.
+ 
 2.7.1.dev (compared to 2.7.0)
 -----------------------------
 

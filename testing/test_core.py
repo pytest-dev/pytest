@@ -155,13 +155,13 @@ class TestPytestPluginInteractions:
 
         config.pluginmanager.register(A())
         assert len(l) == 0
-        config.do_configure()
+        config._do_configure()
         assert len(l) == 1
         config.pluginmanager.register(A())  # leads to a configured() plugin
         assert len(l) == 2
         assert l[0] != l[1]
 
-        config.do_unconfigure()
+        config._ensure_unconfigure()
         config.pluginmanager.register(A())
         assert len(l) == 2
 

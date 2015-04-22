@@ -44,14 +44,14 @@ def pytest_addoption(parser):
 
 def pytest_cmdline_main(config):
     if config.option.markers:
-        config.do_configure()
+        config._do_configure()
         tw = py.io.TerminalWriter()
         for line in config.getini("markers"):
             name, rest = line.split(":", 1)
             tw.write("@pytest.mark.%s:" % name, bold=True)
             tw.line(rest)
             tw.line()
-        config.do_unconfigure()
+        config._ensure_unconfigure()
         return 0
 pytest_cmdline_main.tryfirst = True
 
