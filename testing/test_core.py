@@ -32,18 +32,6 @@ class TestPluginManager:
         pm.unregister(a1)
         assert not pm.isregistered(a1)
 
-    def test_pm_ordering(self, pm):
-        class A: pass
-        a1, a2 = A(), A()
-        pm.register(a1)
-        pm.register(a2, "hello")
-        l = pm.getplugins()
-        assert l.index(a1) < l.index(a2)
-        a3 = A()
-        pm.register(a3, prepend=True)
-        l = pm.getplugins()
-        assert l.index(a3) == 0
-
     def test_register_mismatch_method(self):
         pm = get_plugin_manager()
         class hello:

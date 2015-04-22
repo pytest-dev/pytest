@@ -205,7 +205,7 @@ class PluginManager(object):
                            ", ".join(hook.argnames))
             yield hook
 
-    def register(self, plugin, name=None, prepend=False, conftest=False):
+    def register(self, plugin, name=None, conftest=False):
         if self._name2plugin.get(name, None) == -1:
             return
         name = name or getattr(plugin, '__name__', str(id(plugin)))
@@ -222,10 +222,7 @@ class PluginManager(object):
         if conftest:
             self._conftestplugins.append(plugin)
         else:
-            if not prepend:
-                self._plugins.append(plugin)
-            else:
-                self._plugins.insert(0, plugin)
+            self._plugins.append(plugin)
         # finally make sure that the methods of the new plugin take part
         for hookcaller in hookcallers:
             hookcaller.scan_methods()
