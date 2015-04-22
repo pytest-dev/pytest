@@ -207,14 +207,11 @@ class PytestPluginManager(PluginManager):
             return
         try:
             mod = importplugin(modname)
-        except KeyboardInterrupt:
-            raise
         except ImportError:
             if modname.startswith("pytest_"):
                 return self.import_plugin(modname[7:])
             raise
-        except:
-            e = sys.exc_info()[1]
+        except Exception as e:
             import pytest
             if not hasattr(pytest, 'skip') or not isinstance(e, pytest.skip.Exception):
                 raise
