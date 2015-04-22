@@ -16,7 +16,12 @@ from _pytest.core import HookCaller, add_method_wrapper
 from _pytest.main import Session, EXIT_OK
 
 # used at least by pytest-xdist plugin
-def pytest_funcarg___pytest(request):
+@pytest.fixture
+def _pytest(request):
+    """ Return a helper which offers a gethookrecorder(hook)
+    method which returns a HookRecorder instance which helps
+    to make assertions about called hooks.
+    """
     return PytestArg(request)
 
 class PytestArg:
