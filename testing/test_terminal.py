@@ -457,7 +457,9 @@ class TestTerminalFunctional:
         ])
         assert result.ret == 1
 
-        pytestconfig.pluginmanager.skipifmissing("xdist")
+        if not pytestconfig.pluginmanager.hasplugin("xdist"):
+            pytest.skip("xdist plugin not installed")
+
         result = testdir.runpytest(p1, '-v', '-n 1')
         result.stdout.fnmatch_lines([
             "*FAIL*test_verbose_reporting.py::test_fail*",

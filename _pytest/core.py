@@ -1,12 +1,10 @@
 """
-pytest PluginManager, basic initialization and tracing.
+PluginManager, basic initialization and tracing.
 """
 import os
 import sys
 import inspect
 import py
-# don't import pytest to avoid circular imports
-
 
 py3 = sys.version_info > (3,0)
 
@@ -137,16 +135,16 @@ class CallOutcome:
 
 
 class PluginManager(object):
-    def __init__(self, hookspecs=None, prefix="pytest_"):
+    def __init__(self, prefix, excludefunc=None):
+        self._prefix = prefix
+        self._excludefunc = excludefunc
         self._name2plugin = {}
         self._plugins = []
         self._conftestplugins = []
         self._plugin2hookcallers = {}
-        self._warnings = []
         self.trace = TagTracer().get("pluginmanage")
-        self._plugin_distinfo = []
         self._shutdown = []
-        self.hook = HookRelay(hookspecs or [], pm=self, prefix=prefix)
+        self.hook = HookRelay(pm=self)
 
     def set_tracing(self, writer):
         self.trace.root.setwriter(writer)
@@ -174,6 +172,39 @@ class PluginManager(object):
         assert not hasattr(self, "_registercallback")
         self._registercallback = callback
 
+    def make_hook_caller(self, name, plugins):
+        caller = getattr(self.hook, name)
+        methods = self.listattr(name, plugins=plugins)
+        if methods:
+            return HookCaller(self.hook, caller.name, caller.firstresult,
+                              argnames=caller.argnames, methods=methods)
+        return caller
+
+    def _scan_plugin(self, plugin):
+        def fail(msg, *args):
+            name = getattr(plugin, '__name__', plugin)
+            raise PluginValidationError("plugin %r\n%s" %(name, msg % args))
+
+        for name in dir(plugin):
+            if name[0] == "_" or not name.startswith(self._prefix):
+                continue
+            hook = getattr(self.hook, name, None)
+            method = getattr(plugin, name)
+            if hook is None:
+                if self._excludefunc is not None and self._excludefunc(name):
+                    continue
+                if getattr(method, 'optionalhook', False):
+                    continue
+                fail("found unknown hook: %r", name)
+            for arg in varnames(method):
+                if arg not in hook.argnames:
+                    fail("argument %r not available\n"
+                         "actual definition: %s\n"
+                         "available hookargs: %s",
+                         arg, formatdef(method),
+                           ", ".join(hook.argnames))
+            yield hook
+
     def register(self, plugin, name=None, prepend=False, conftest=False):
         if self._name2plugin.get(name, None) == -1:
             return
@@ -185,7 +216,7 @@ class PluginManager(object):
         reg = getattr(self, "_registercallback", None)
         if reg is not None:
             reg(plugin, name)  # may call addhooks
-        hookcallers = list(self.hook._scan_plugin(plugin))
+        hookcallers = list(self._scan_plugin(plugin))
         self._plugin2hookcallers[plugin] = hookcallers
         self._name2plugin[name] = plugin
         if conftest:
@@ -227,108 +258,29 @@ class PluginManager(object):
             return True
         return plugin in self._plugins or plugin in self._conftestplugins
 
-    def addhooks(self, spec, prefix="pytest_"):
-        self.hook._addhooks(spec, prefix=prefix)
+    def addhooks(self, module_or_class):
+        isclass = int(inspect.isclass(module_or_class))
+        names = []
+        for name in dir(module_or_class):
+            if name.startswith(self._prefix):
+                method = module_or_class.__dict__[name]
+                firstresult = getattr(method, 'firstresult', False)
+                hc = HookCaller(self.hook, name, firstresult=firstresult,
+                                argnames=varnames(method, startindex=isclass))
+                setattr(self.hook, name, hc)
+                names.append(name)
+        if not names:
+            raise ValueError("did not find new %r hooks in %r"
+                             %(self._prefix, module_or_class))
 
     def getplugins(self):
         return self._plugins + self._conftestplugins
-
-    def skipifmissing(self, name):
-        if not self.hasplugin(name):
-            import pytest
-            pytest.skip("plugin %r is missing" % name)
 
     def hasplugin(self, name):
         return bool(self.getplugin(name))
 
     def getplugin(self, name):
-        if name is None:
-            return None
-        try:
-            return self._name2plugin[name]
-        except KeyError:
-            return self._name2plugin.get("_pytest." + name, None)
-
-    # API for bootstrapping
-    #
-    def _envlist(self, varname):
-        val = os.environ.get(varname, None)
-        if val is not None:
-            return val.split(',')
-        return ()
-
-    def consider_env(self):
-        for spec in self._envlist("PYTEST_PLUGINS"):
-            self.import_plugin(spec)
-
-    def consider_setuptools_entrypoints(self):
-        try:
-            from pkg_resources import iter_entry_points, DistributionNotFound
-        except ImportError:
-            return # XXX issue a warning
-        for ep in iter_entry_points('pytest11'):
-            name = ep.name
-            if name.startswith("pytest_"):
-                name = name[7:]
-            if ep.name in self._name2plugin or name in self._name2plugin:
-                continue
-            try:
-                plugin = ep.load()
-            except DistributionNotFound:
-                continue
-            self._plugin_distinfo.append((ep.dist, plugin))
-            self.register(plugin, name=name)
-
-    def consider_preparse(self, args):
-        for opt1,opt2 in zip(args, args[1:]):
-            if opt1 == "-p":
-                self.consider_pluginarg(opt2)
-
-    def consider_pluginarg(self, arg):
-        if arg.startswith("no:"):
-            name = arg[3:]
-            plugin = self.getplugin(name)
-            if plugin is not None:
-                self.unregister(plugin)
-            self._name2plugin[name] = -1
-        else:
-            if self.getplugin(arg) is None:
-                self.import_plugin(arg)
-
-    def consider_conftest(self, conftestmodule):
-        if self.register(conftestmodule, name=conftestmodule.__file__,
-                         conftest=True):
-            self.consider_module(conftestmodule)
-
-    def consider_module(self, mod):
-        attr = getattr(mod, "pytest_plugins", ())
-        if attr:
-            if not isinstance(attr, (list, tuple)):
-                attr = (attr,)
-            for spec in attr:
-                self.import_plugin(spec)
-
-    def import_plugin(self, modname):
-        assert isinstance(modname, str)
-        if self.getplugin(modname) is not None:
-            return
-        try:
-            mod = importplugin(modname)
-        except KeyboardInterrupt:
-            raise
-        except ImportError:
-            if modname.startswith("pytest_"):
-                return self.import_plugin(modname[7:])
-            raise
-        except:
-            e = sys.exc_info()[1]
-            import pytest
-            if not hasattr(pytest, 'skip') or not isinstance(e, pytest.skip.Exception):
-                raise
-            self._warnings.append("skipped plugin %r: %s" %((modname, e.msg)))
-        else:
-            self.register(mod, modname)
-            self.consider_module(mod)
+        return self._name2plugin.get(name)
 
     def listattr(self, attrname, plugins=None):
         if plugins is None:
@@ -357,16 +309,6 @@ class PluginManager(object):
         return MultiCall(methods=self.listattr(methname, plugins=[plugin]),
                 kwargs=kwargs, firstresult=True).execute()
 
-
-def importplugin(importspec):
-    name = importspec
-    try:
-        mod = "_pytest." + name
-        __import__(mod)
-        return sys.modules[mod]
-    except ImportError:
-        __import__(importspec)
-        return sys.modules[importspec]
 
 class MultiCall:
     """ execute a call into multiple python functions/methods. """
@@ -439,60 +381,9 @@ def varnames(func, startindex=None):
 
 
 class HookRelay:
-    def __init__(self, hookspecs, pm, prefix="pytest_"):
-        if not isinstance(hookspecs, list):
-            hookspecs = [hookspecs]
+    def __init__(self, pm):
         self._pm = pm
         self.trace = pm.trace.root.get("hook")
-        self.prefix = prefix
-        for hookspec in hookspecs:
-            self._addhooks(hookspec, prefix)
-
-    def _addhooks(self, hookspec, prefix):
-        added = False
-        isclass = int(inspect.isclass(hookspec))
-        for name, method in vars(hookspec).items():
-            if name.startswith(prefix):
-                firstresult = getattr(method, 'firstresult', False)
-                hc = HookCaller(self, name, firstresult=firstresult,
-                                argnames=varnames(method, startindex=isclass))
-                setattr(self, name, hc)
-                added = True
-                #print ("setting new hook", name)
-        if not added:
-            raise ValueError("did not find new %r hooks in %r" %(
-                prefix, hookspec,))
-
-    def _getcaller(self, name, plugins):
-        caller = getattr(self, name)
-        methods = self._pm.listattr(name, plugins=plugins)
-        if methods:
-            return caller.new_cached_caller(methods)
-        return caller
-
-    def _scan_plugin(self, plugin):
-        def fail(msg, *args):
-            name = getattr(plugin, '__name__', plugin)
-            raise PluginValidationError("plugin %r\n%s" %(name, msg % args))
-
-        for name in dir(plugin):
-            if not name.startswith(self.prefix):
-                continue
-            hook = getattr(self, name, None)
-            method = getattr(plugin, name)
-            if hook is None:
-                is_optional = getattr(method, 'optionalhook', False)
-                if not isgenerichook(name) and not is_optional:
-                    fail("found unknown hook: %r", name)
-                continue
-            for arg in varnames(method):
-                if arg not in hook.argnames:
-                    fail("argument %r not available\n"
-                         "actual definition: %s\n"
-                         "available hookargs: %s",
-                         arg, formatdef(method),
-                           ", ".join(hook.argnames))
-            yield hook
 
 
 class HookCaller:
@@ -504,10 +395,6 @@ class HookCaller:
         self.argnames.extend(argnames)
         assert "self" not in argnames  # sanity check
         self.methods = methods
-
-    def new_cached_caller(self, methods):
-        return HookCaller(self.hookrelay, self.name, self.firstresult,
-                          argnames=self.argnames, methods=methods)
 
     def __repr__(self):
         return "<HookCaller %r>" %(self.name,)
@@ -529,13 +416,9 @@ class HookCaller:
 class PluginValidationError(Exception):
     """ plugin failed validation. """
 
-def isgenerichook(name):
-    return name == "pytest_plugins" or \
-           name.startswith("pytest_funcarg__")
 
 def formatdef(func):
     return "%s%s" % (
         func.__name__,
         inspect.formatargspec(*inspect.getargspec(func))
     )
-

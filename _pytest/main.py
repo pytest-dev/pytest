@@ -160,7 +160,7 @@ class FSHookProxy(object):
 
     def __getattr__(self, name):
         plugins = self.config._getmatchingplugins(self.fspath)
-        x = self.config.hook._getcaller(name, plugins)
+        x = self.config.pluginmanager.make_hook_caller(name, plugins)
         self.__dict__[name] = x
         return x
 

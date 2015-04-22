@@ -87,9 +87,17 @@ def _prepareconfig(args=None, plugins=None):
         pluginmanager.ensure_shutdown()
         raise
 
+def exclude_pytest_names(name):
+    return not name.startswith(name) or name == "pytest_plugins" or \
+           name.startswith("pytest_funcarg__")
+
 class PytestPluginManager(PluginManager):
-    def __init__(self, hookspecs=[hookspec]):
-        super(PytestPluginManager, self).__init__(hookspecs=hookspecs)
+    def __init__(self):
+        super(PytestPluginManager, self).__init__(prefix="pytest_",
+                                                  excludefunc=exclude_pytest_names)
+        self._warnings = []
+        self._plugin_distinfo = []
+        self.addhooks(hookspec)
         self.register(self)
         if os.environ.get('PYTEST_DEBUG'):
             err = sys.stderr
@@ -100,6 +108,14 @@ class PytestPluginManager(PluginManager):
                 pass
             self.set_tracing(err.write)
 
+    def getplugin(self, name):
+        if name is None:
+            return name
+        plugin = super(PytestPluginManager, self).getplugin(name)
+        if plugin is None:
+            plugin = super(PytestPluginManager, self).getplugin("_pytest." + name)
+        return plugin
+
     def pytest_configure(self, config):
         config.addinivalue_line("markers",
             "tryfirst: mark a hook implementation function such that the "
@@ -109,6 +125,89 @@ class PytestPluginManager(PluginManager):
             "plugin machinery will try to call it last/as late as possible.")
         for warning in self._warnings:
             config.warn(code="I1", message=warning)
+
+    #
+    # API for bootstrapping plugin loading
+    #
+    #
+    def _envlist(self, varname):
+        val = os.environ.get(varname, None)
+        if val is not None:
+            return val.split(',')
+        return ()
+
+    def consider_env(self):
+        for spec in self._envlist("PYTEST_PLUGINS"):
+            self.import_plugin(spec)
+
+    def consider_setuptools_entrypoints(self):
+        try:
+            from pkg_resources import iter_entry_points, DistributionNotFound
+        except ImportError:
+            return # XXX issue a warning
+        for ep in iter_entry_points('pytest11'):
+            name = ep.name
+            if name.startswith("pytest_"):
+                name = name[7:]
+            if ep.name in self._name2plugin or name in self._name2plugin:
+                continue
+            try:
+                plugin = ep.load()
+            except DistributionNotFound:
+                continue
+            self._plugin_distinfo.append((ep.dist, plugin))
+            self.register(plugin, name=name)
+
+    def consider_preparse(self, args):
+        for opt1,opt2 in zip(args, args[1:]):
+            if opt1 == "-p":
+                self.consider_pluginarg(opt2)
+
+    def consider_pluginarg(self, arg):
+        if arg.startswith("no:"):
+            name = arg[3:]
+            plugin = self.getplugin(name)
+            if plugin is not None:
+                self.unregister(plugin)
+            self._name2plugin[name] = -1
+        else:
+            if self.getplugin(arg) is None:
+                self.import_plugin(arg)
+
+    def consider_conftest(self, conftestmodule):
+        if self.register(conftestmodule, name=conftestmodule.__file__,
+                         conftest=True):
+            self.consider_module(conftestmodule)
+
+    def consider_module(self, mod):
+        attr = getattr(mod, "pytest_plugins", ())
+        if attr:
+            if not isinstance(attr, (list, tuple)):
+                attr = (attr,)
+            for spec in attr:
+                self.import_plugin(spec)
+
+    def import_plugin(self, modname):
+        assert isinstance(modname, str)
+        if self.getplugin(modname) is not None:
+            return
+        try:
+            mod = importplugin(modname)
+        except KeyboardInterrupt:
+            raise
+        except ImportError:
+            if modname.startswith("pytest_"):
+                return self.import_plugin(modname[7:])
+            raise
+        except:
+            e = sys.exc_info()[1]
+            import pytest
+            if not hasattr(pytest, 'skip') or not isinstance(e, pytest.skip.Exception):
+                raise
+            self._warnings.append("skipped plugin %r: %s" %((modname, e.msg)))
+        else:
+            self.register(mod, modname)
+            self.consider_module(mod)
 
 
 class Parser:
@@ -933,3 +1032,15 @@ def setns(obj, dic):
             #if obj != pytest:
             #    pytest.__all__.append(name)
             setattr(pytest, name, value)
+
+
+def importplugin(importspec):
+    name = importspec
+    try:
+        mod = "_pytest." + name
+        __import__(mod)
+        return sys.modules[mod]
+    except ImportError:
+        __import__(importspec)
+        return sys.modules[importspec]
+
