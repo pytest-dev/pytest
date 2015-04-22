@@ -1,7 +1,6 @@
 """
 PluginManager, basic initialization and tracing.
 """
-import os
 import sys
 import inspect
 import py
@@ -186,35 +185,12 @@ class PluginManager(object):
                               argnames=caller.argnames, methods=methods)
         return caller
 
-    def _scan_plugin(self, plugin):
-        def fail(msg, *args):
-            name = getattr(plugin, '__name__', plugin)
-            raise PluginValidationError("plugin %r\n%s" %(name, msg % args))
-
-        for name in dir(plugin):
-            if name[0] == "_" or not name.startswith(self._prefix):
-                continue
-            hook = getattr(self.hook, name, None)
-            method = getattr(plugin, name)
-            if hook is None:
-                if self._excludefunc is not None and self._excludefunc(name):
-                    continue
-                if getattr(method, 'optionalhook', False):
-                    continue
-                fail("found unknown hook: %r", name)
-            for arg in varnames(method):
-                if arg not in hook.argnames:
-                    fail("argument %r not available\n"
-                         "actual definition: %s\n"
-                         "available hookargs: %s",
-                         arg, formatdef(method),
-                           ", ".join(hook.argnames))
-            yield hook
-
-    def _get_canonical_name(self, plugin):
-        return getattr(plugin, "__name__", None) or str(id(plugin))
-
     def register(self, plugin, name=None):
+        """ Register a plugin with the given name and ensure that all its
+        hook implementations are integrated.  If the name is not specified
+        we use the ``__name__`` attribute of the plugin object or, if that
+        doesn't exist, the id of the plugin.  This method will raise a
+        ValueError if the eventual name is already registered. """
         name = name or self._get_canonical_name(plugin)
         if self._name2plugin.get(name, None) == -1:
             return
@@ -236,6 +212,8 @@ class PluginManager(object):
         return True
 
     def unregister(self, plugin):
+        """ unregister the plugin object and all its contained hook implementations
+        from internal data structures. """
         self._plugins.remove(plugin)
         for name, value in list(self._name2plugin.items()):
             if value == plugin:
@@ -245,6 +223,8 @@ class PluginManager(object):
             hookcaller.scan_methods()
 
     def addhooks(self, module_or_class):
+        """ add new hook definitions from the given module_or_class using
+        the prefix/excludefunc with which the PluginManager was initialized. """
         isclass = int(inspect.isclass(module_or_class))
         names = []
         for name in dir(module_or_class):
@@ -260,16 +240,23 @@ class PluginManager(object):
                              %(self._prefix, module_or_class))
 
     def getplugins(self):
+        """ return the complete list of registered plugins. NOTE that
+        you will get the internal list and need to make a copy if you
+        modify the list."""
         return self._plugins
 
     def isregistered(self, plugin):
+        """ Return True if the plugin is already registered under its
+        canonical name. """
         return self.hasplugin(self._get_canonical_name(plugin)) or \
                plugin in self._plugins
 
     def hasplugin(self, name):
+        """ Return True if there is a registered with the given name. """
         return name in self._name2plugin
 
     def getplugin(self, name):
+        """ Return a plugin or None for the given name. """
         return self._name2plugin.get(name)
 
     def listattr(self, attrname, plugins=None):
@@ -298,6 +285,36 @@ class PluginManager(object):
     def call_plugin(self, plugin, methname, kwargs):
         return MultiCall(methods=self.listattr(methname, plugins=[plugin]),
                 kwargs=kwargs, firstresult=True).execute()
+
+
+    def _scan_plugin(self, plugin):
+        def fail(msg, *args):
+            name = getattr(plugin, '__name__', plugin)
+            raise PluginValidationError("plugin %r\n%s" %(name, msg % args))
+
+        for name in dir(plugin):
+            if name[0] == "_" or not name.startswith(self._prefix):
+                continue
+            hook = getattr(self.hook, name, None)
+            method = getattr(plugin, name)
+            if hook is None:
+                if self._excludefunc is not None and self._excludefunc(name):
+                    continue
+                if getattr(method, 'optionalhook', False):
+                    continue
+                fail("found unknown hook: %r", name)
+            for arg in varnames(method):
+                if arg not in hook.argnames:
+                    fail("argument %r not available\n"
+                         "actual definition: %s\n"
+                         "available hookargs: %s",
+                         arg, formatdef(method),
+                           ", ".join(hook.argnames))
+            yield hook
+
+    def _get_canonical_name(self, plugin):
+        return getattr(plugin, "__name__", None) or str(id(plugin))
+
 
 
 class MultiCall:
