@@ -7,8 +7,6 @@ import inspect
 import py
 # don't import pytest to avoid circular imports
 
-assert py.__version__.split(".")[:2] >= ['1', '4'], ("installation problem: "
-    "%s is too old, remove or upgrade 'py'" % (py.__version__))
 
 py3 = sys.version_info > (3,0)
 
