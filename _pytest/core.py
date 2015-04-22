@@ -140,7 +140,6 @@ class PluginManager(object):
         self._excludefunc = excludefunc
         self._name2plugin = {}
         self._plugins = []
-        self._conftestplugins = []
         self._plugin2hookcallers = {}
         self.trace = TagTracer().get("pluginmanage")
         self._shutdown = []
@@ -205,7 +204,7 @@ class PluginManager(object):
                            ", ".join(hook.argnames))
             yield hook
 
-    def register(self, plugin, name=None, conftest=False):
+    def register(self, plugin, name=None):
         if self._name2plugin.get(name, None) == -1:
             return
         name = name or getattr(plugin, '__name__', str(id(plugin)))
@@ -219,20 +218,14 @@ class PluginManager(object):
         hookcallers = list(self._scan_plugin(plugin))
         self._plugin2hookcallers[plugin] = hookcallers
         self._name2plugin[name] = plugin
-        if conftest:
-            self._conftestplugins.append(plugin)
-        else:
-            self._plugins.append(plugin)
+        self._plugins.append(plugin)
         # finally make sure that the methods of the new plugin take part
         for hookcaller in hookcallers:
             hookcaller.scan_methods()
         return True
 
     def unregister(self, plugin):
-        try:
-            self._plugins.remove(plugin)
-        except KeyError:
-            self._conftestplugins.remove(plugin)
+        self._plugins.remove(plugin)
         for name, value in list(self._name2plugin.items()):
             if value == plugin:
                 del self._name2plugin[name]
@@ -247,13 +240,13 @@ class PluginManager(object):
         while self._shutdown:
             func = self._shutdown.pop()
             func()
-        self._plugins = self._conftestplugins = []
+        self._plugins = []
         self._name2plugin.clear()
 
     def isregistered(self, plugin, name=None):
         if self.getplugin(name) is not None:
             return True
-        return plugin in self._plugins or plugin in self._conftestplugins
+        return plugin in self._plugins
 
     def addhooks(self, module_or_class):
         isclass = int(inspect.isclass(module_or_class))
@@ -271,7 +264,7 @@ class PluginManager(object):
                              %(self._prefix, module_or_class))
 
     def getplugins(self):
-        return self._plugins + self._conftestplugins
+        return self._plugins
 
     def hasplugin(self, name):
         return bool(self.getplugin(name))
@@ -281,7 +274,7 @@ class PluginManager(object):
 
     def listattr(self, attrname, plugins=None):
         if plugins is None:
-            plugins = self._plugins + self._conftestplugins
+            plugins = self._plugins
         l = []
         last = []
         wrappers = []

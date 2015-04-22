@@ -97,6 +97,7 @@ class PytestPluginManager(PluginManager):
                                                   excludefunc=exclude_pytest_names)
         self._warnings = []
         self._plugin_distinfo = []
+        self._globalplugins = []
         self.addhooks(hookspec)
         self.register(self)
         if os.environ.get('PYTEST_DEBUG'):
@@ -107,6 +108,19 @@ class PytestPluginManager(PluginManager):
             except Exception:
                 pass
             self.set_tracing(err.write)
+
+    def register(self, plugin, name=None, conftest=False):
+        ret = super(PytestPluginManager, self).register(plugin, name)
+        if ret and not conftest:
+            self._globalplugins.append(plugin)
+        return ret
+
+    def unregister(self, plugin):
+        super(PytestPluginManager, self).unregister(plugin)
+        try:
+            self._globalplugins.remove(plugin)
+        except ValueError:
+            pass
 
     def getplugin(self, name):
         if name is None:
@@ -787,7 +801,7 @@ class Config(object):
                 setattr(self.option, opt.dest, opt.default)
 
     def _getmatchingplugins(self, fspath):
-        return self.pluginmanager._plugins + \
+        return self.pluginmanager._globalplugins + \
                self._conftest.getconftestmodules(fspath)
 
     def pytest_load_initial_conftests(self, early_config):
