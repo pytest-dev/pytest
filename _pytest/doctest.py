@@ -132,7 +132,7 @@ class DoctestModule(pytest.File):
     def collect(self):
         import doctest
         if self.fspath.basename == "conftest.py":
-            module = self.config._conftest.importconftest(self.fspath)
+            module = self.config._conftest._importconftest(self.fspath)
         else:
             try:
                 module = self.fspath.pyimport()

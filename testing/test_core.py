@@ -94,7 +94,7 @@ class TestPytestPluginInteractions:
                 return xyz + 1
         """)
         config = get_plugin_manager().config
-        config._conftest.importconftest(conf)
+        config.pluginmanager._importconftest(conf)
         print(config.pluginmanager.getplugins())
         res = config.hook.pytest_myhook(xyz=10)
         assert res == [11]
@@ -143,7 +143,7 @@ class TestPytestPluginInteractions:
                 parser.addoption('--test123', action="store_true",
                     default=True)
         """)
-        config._conftest.importconftest(p)
+        config.pluginmanager._importconftest(p)
         assert config.option.test123
 
     def test_configure(self, testdir):
@@ -848,10 +848,6 @@ class TestPytestPluginManager:
         pytestpm.import_plugin(pluginname)
         mod = pytestpm.getplugin("pkg.plug")
         assert mod.x == 3
-
-    def test_config_sets_conftesthandle_onimport(self, testdir):
-        config = testdir.parseconfig([])
-        assert config._conftest._onimport == config._onimportconftest
 
     def test_consider_conftest_deps(self, testdir, pytestpm):
         mod = testdir.makepyfile("pytest_plugins='xyz'").pyimport()

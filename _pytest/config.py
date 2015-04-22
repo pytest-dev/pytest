@@ -98,6 +98,12 @@ class PytestPluginManager(PluginManager):
         self._warnings = []
         self._plugin_distinfo = []
         self._globalplugins = []
+
+        # state related to local conftest plugins
+        self._path2confmods = {}
+        self._conftestpath2mod = {}
+        self._confcutdir = None
+
         self.addhooks(hookspec)
         self.register(self)
         if os.environ.get('PYTEST_DEBUG'):
@@ -139,6 +145,89 @@ class PytestPluginManager(PluginManager):
             "plugin machinery will try to call it last/as late as possible.")
         for warning in self._warnings:
             config.warn(code="I1", message=warning)
+
+    #
+    # internal API for local conftest plugin handling
+    #
+    def _set_initial_conftests(self, namespace):
+        """ load initial conftest files given a preparsed "namespace".
+            As conftest files may add their own command line options
+            which have arguments ('--my-opt somepath') we might get some
+            false positives.  All builtin and 3rd party plugins will have
+            been loaded, however, so common options will not confuse our logic
+            here.
+        """
+        current = py.path.local()
+        self._confcutdir = current.join(namespace.confcutdir, abs=True) \
+                                if namespace.confcutdir else None
+        testpaths = namespace.file_or_dir
+        foundanchor = False
+        for path in testpaths:
+            path = str(path)
+            # remove node-id syntax
+            i = path.find("::")
+            if i != -1:
+                path = path[:i]
+            anchor = current.join(path, abs=1)
+            if exists(anchor): # we found some file object
+                self._try_load_conftest(anchor)
+                foundanchor = True
+        if not foundanchor:
+            self._try_load_conftest(current)
+
+    def _try_load_conftest(self, anchor):
+        self._getconftestmodules(anchor)
+        # let's also consider test* subdirs
+        if anchor.check(dir=1):
+            for x in anchor.listdir("test*"):
+                if x.check(dir=1):
+                    self._getconftestmodules(x)
+
+    def _getconftestmodules(self, path):
+        try:
+            return self._path2confmods[path]
+        except KeyError:
+            clist = []
+            for parent in path.parts():
+                if self._confcutdir and self._confcutdir.relto(parent):
+                    continue
+                conftestpath = parent.join("conftest.py")
+                if conftestpath.check(file=1):
+                    mod = self._importconftest(conftestpath)
+                    clist.append(mod)
+            self._path2confmods[path] = clist
+            return clist
+
+    def _rget_with_confmod(self, name, path):
+        modules = self._getconftestmodules(path)
+        for mod in reversed(modules):
+            try:
+                return mod, getattr(mod, name)
+            except AttributeError:
+                continue
+        raise KeyError(name)
+
+    def _importconftest(self, conftestpath):
+        try:
+            return self._conftestpath2mod[conftestpath]
+        except KeyError:
+            pkgpath = conftestpath.pypkgpath()
+            if pkgpath is None:
+                _ensure_removed_sysmodule(conftestpath.purebasename)
+            try:
+                mod = conftestpath.pyimport()
+            except Exception:
+                raise ConftestImportFailure(conftestpath, sys.exc_info())
+            self._conftestpath2mod[conftestpath] = mod
+            dirpath = conftestpath.dirpath()
+            if dirpath in self._path2confmods:
+                for path, mods in self._path2confmods.items():
+                    if path and path.relto(dirpath) or path == dirpath:
+                        assert mod not in mods
+                        mods.append(mod)
+            self.trace("loaded conftestmodule %r" %(mod))
+            self.consider_conftest(mod)
+            return mod
 
     #
     # API for bootstrapping plugin loading
@@ -572,96 +661,6 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
         return action._formatted_action_invocation
 
 
-class Conftest(object):
-    """ the single place for accessing values and interacting
-        towards conftest modules from pytest objects.
-    """
-    def __init__(self, onimport=None):
-        self._path2confmods = {}
-        self._onimport = onimport
-        self._conftestpath2mod = {}
-        self._confcutdir = None
-
-    def setinitial(self, namespace):
-        """ load initial conftest files given a preparsed "namespace".
-            As conftest files may add their own command line options
-            which have arguments ('--my-opt somepath') we might get some
-            false positives.  All builtin and 3rd party plugins will have
-            been loaded, however, so common options will not confuse our logic
-            here.
-        """
-        current = py.path.local()
-        self._confcutdir = current.join(namespace.confcutdir, abs=True) \
-                                if namespace.confcutdir else None
-        testpaths = namespace.file_or_dir
-        foundanchor = False
-        for path in testpaths:
-            path = str(path)
-            # remove node-id syntax
-            i = path.find("::")
-            if i != -1:
-                path = path[:i]
-            anchor = current.join(path, abs=1)
-            if exists(anchor): # we found some file object
-                self._try_load_conftest(anchor)
-                foundanchor = True
-        if not foundanchor:
-            self._try_load_conftest(current)
-
-    def _try_load_conftest(self, anchor):
-        self.getconftestmodules(anchor)
-        # let's also consider test* subdirs
-        if anchor.check(dir=1):
-            for x in anchor.listdir("test*"):
-                if x.check(dir=1):
-                    self.getconftestmodules(x)
-
-    def getconftestmodules(self, path):
-        try:
-            return self._path2confmods[path]
-        except KeyError:
-            clist = []
-            for parent in path.parts():
-                if self._confcutdir and self._confcutdir.relto(parent):
-                    continue
-                conftestpath = parent.join("conftest.py")
-                if conftestpath.check(file=1):
-                    mod = self.importconftest(conftestpath)
-                    clist.append(mod)
-            self._path2confmods[path] = clist
-            return clist
-
-    def rget_with_confmod(self, name, path):
-        modules = self.getconftestmodules(path)
-        for mod in reversed(modules):
-            try:
-                return mod, getattr(mod, name)
-            except AttributeError:
-                continue
-        raise KeyError(name)
-
-    def importconftest(self, conftestpath):
-        try:
-            return self._conftestpath2mod[conftestpath]
-        except KeyError:
-            pkgpath = conftestpath.pypkgpath()
-            if pkgpath is None:
-                _ensure_removed_sysmodule(conftestpath.purebasename)
-            try:
-                mod = conftestpath.pyimport()
-            except Exception:
-                raise ConftestImportFailure(conftestpath, sys.exc_info())
-            self._conftestpath2mod[conftestpath] = mod
-            dirpath = conftestpath.dirpath()
-            if dirpath in self._path2confmods:
-                for path, mods in self._path2confmods.items():
-                    if path and path.relto(dirpath) or path == dirpath:
-                        assert mod not in mods
-                        mods.append(mod)
-            if self._onimport:
-                self._onimport(mod)
-            return mod
-
 
 def _ensure_removed_sysmodule(modname):
     try:
@@ -697,7 +696,6 @@ class Config(object):
         #: a pluginmanager instance
         self.pluginmanager = pluginmanager
         self.trace = self.pluginmanager.trace.root.get("config")
-        self._conftest = Conftest(onimport=self._onimportconftest)
         self.hook = self.pluginmanager.hook
         self._inicache = {}
         self._opt2dest = {}
@@ -783,10 +781,6 @@ class Config(object):
             config.pluginmanager.consider_pluginarg(x)
         return config
 
-    def _onimportconftest(self, conftestmodule):
-        self.trace("loaded conftestmodule %r" %(conftestmodule,))
-        self.pluginmanager.consider_conftest(conftestmodule)
-
     def _processopt(self, opt):
         for name in opt._short_opts + opt._long_opts:
             self._opt2dest[name] = opt.dest
@@ -797,10 +791,10 @@ class Config(object):
 
     def _getmatchingplugins(self, fspath):
         return self.pluginmanager._globalplugins + \
-               self._conftest.getconftestmodules(fspath)
+               self.pluginmanager._getconftestmodules(fspath)
 
     def pytest_load_initial_conftests(self, early_config):
-        self._conftest.setinitial(early_config.known_args_namespace)
+        self.pluginmanager._set_initial_conftests(early_config.known_args_namespace)
     pytest_load_initial_conftests.trylast = True
 
     def _initini(self, args):
@@ -907,7 +901,7 @@ class Config(object):
 
     def _getconftest_pathlist(self, name, path):
         try:
-            mod, relroots = self._conftest.rget_with_confmod(name, path)
+            mod, relroots = self.pluginmanager._rget_with_confmod(name, path)
         except KeyError:
             return None
         modpath = py.path.local(mod.__file__).dirpath()
