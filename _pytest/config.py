@@ -208,8 +208,6 @@ class PytestPluginManager(PluginManager):
         try:
             mod = importplugin(modname)
         except ImportError:
-            if modname.startswith("pytest_"):
-                return self.import_plugin(modname[7:])
             raise
         except Exception as e:
             import pytest

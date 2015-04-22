@@ -64,7 +64,7 @@ def test_parseconfig(testdir):
 
 def test_testdir_runs_with_plugin(testdir):
     testdir.makepyfile("""
-        pytest_plugins = "pytest_pytester"
+        pytest_plugins = "pytester"
         def test_hello(testdir):
             assert 1
     """)
