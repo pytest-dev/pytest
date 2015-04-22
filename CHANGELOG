@@ -44,6 +44,8 @@
 - fixed regression to 2.6.4 which surfaced e.g. in lost stdout capture printing
   when tests raised SystemExit. Thanks Holger Krekel.
 
+- reintroduced _pytest fixture of the pytester plugin which is used
+  at least by pytest-xdist.
 
 2.7.0 (compared to 2.6.4)
 -----------------------------
