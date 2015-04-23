@@ -53,6 +53,10 @@ default_plugins = (
      "tmpdir monkeypatch recwarn pastebin helpconfig nose assertion genscript "
      "junitxml resultlog doctest").split()
 
+builtin_plugins = set(default_plugins)
+builtin_plugins.add("pytester")
+
+
 def _preloadplugins():
     assert not _preinit
     _preinit.append(get_plugin_manager())
@@ -130,14 +134,6 @@ class PytestPluginManager(PluginManager):
             self._globalplugins.remove(plugin)
         except ValueError:
             pass
-
-    def getplugin(self, name):
-        if name is None:
-            return name
-        plugin = super(PytestPluginManager, self).getplugin(name)
-        if plugin is None:
-            plugin = super(PytestPluginManager, self).getplugin("_pytest." + name)
-        return plugin
 
     def pytest_configure(self, config):
         config.addinivalue_line("markers",
@@ -294,11 +290,19 @@ class PytestPluginManager(PluginManager):
                 self.import_plugin(spec)
 
     def import_plugin(self, modname):
+        # most often modname refers to builtin modules, e.g. "pytester",
+        # "terminal" or "capture".  Those plugins are registered under their
+        # basename for historic purposes but must be imported with the
+        # _pytest prefix.
         assert isinstance(modname, str)
         if self.getplugin(modname) is not None:
             return
+        if modname in builtin_plugins:
+            importspec = "_pytest." + modname
+        else:
+            importspec = modname
         try:
-            mod = importplugin(modname)
+            __import__(importspec)
         except ImportError:
             raise
         except Exception as e:
@@ -307,6 +311,7 @@ class PytestPluginManager(PluginManager):
                 raise
             self._warnings.append("skipped plugin %r: %s" %((modname, e.msg)))
         else:
+            mod = sys.modules[importspec]
             self.register(mod, modname)
             self.consider_module(mod)
 
@@ -1039,15 +1044,4 @@ def setns(obj, dic):
             #if obj != pytest:
             #    pytest.__all__.append(name)
             setattr(pytest, name, value)
-
-
-def importplugin(importspec):
-    name = importspec
-    try:
-        mod = "_pytest." + name
-        __import__(mod)
-        return sys.modules[mod]
-    except ImportError:
-        __import__(importspec)
-        return sys.modules[importspec]
 

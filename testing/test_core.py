@@ -1,6 +1,6 @@
 import pytest, py, os
 from _pytest.core import * # noqa
-from _pytest.config import get_plugin_manager, importplugin
+from _pytest.config import get_plugin_manager
 
 
 @pytest.fixture
@@ -590,10 +590,11 @@ def test_default_markers(testdir):
         "*trylast*last*",
     ])
 
-def test_importplugin_issue375(testdir):
+def test_importplugin_issue375(testdir, pytestpm):
     testdir.syspathinsert(testdir.tmpdir)
     testdir.makepyfile(qwe="import aaaa")
-    excinfo = pytest.raises(ImportError, lambda: importplugin("qwe"))
+    with pytest.raises(ImportError) as excinfo:
+        pytestpm.import_plugin("qwe")
     assert "qwe" not in str(excinfo.value)
     assert "aaaa" in str(excinfo.value)
 
