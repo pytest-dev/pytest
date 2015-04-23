@@ -232,15 +232,6 @@ class PytestPluginManager(PluginManager):
     # API for bootstrapping plugin loading
     #
     #
-    def _envlist(self, varname):
-        val = os.environ.get(varname, None)
-        if val is not None:
-            return val.split(',')
-        return ()
-
-    def consider_env(self):
-        for spec in self._envlist("PYTEST_PLUGINS"):
-            self.import_plugin(spec)
 
     def consider_setuptools_entrypoints(self):
         try:
@@ -281,13 +272,18 @@ class PytestPluginManager(PluginManager):
                          conftest=True):
             self.consider_module(conftestmodule)
 
+    def consider_env(self):
+        self._import_plugin_specs(os.environ.get("PYTEST_PLUGINS"))
+
     def consider_module(self, mod):
-        attr = getattr(mod, "pytest_plugins", ())
-        if attr:
-            if not isinstance(attr, (list, tuple)):
-                attr = (attr,)
-            for spec in attr:
-                self.import_plugin(spec)
+        self._import_plugin_specs(getattr(mod, "pytest_plugins", None))
+
+    def _import_plugin_specs(self, spec):
+        if spec:
+            if isinstance(spec, str):
+                spec = spec.split(",")
+            for import_spec in spec:
+                self.import_plugin(import_spec)
 
     def import_plugin(self, modname):
         # most often modname refers to builtin modules, e.g. "pytester",
