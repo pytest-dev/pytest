@@ -25,6 +25,8 @@ syntax:glob
 doc/*/_build
 build/
 dist/
+testing/cx_freeze/build
+testing/cx_freeze/cx_freeze_source
 *.egg-info
 issue/
 env/
