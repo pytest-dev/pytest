@@ -181,10 +181,8 @@ class PluginManager(object):
     def make_hook_caller(self, name, plugins):
         caller = getattr(self.hook, name)
         methods = self.listattr(name, plugins=plugins)
-        if methods:
-            return HookCaller(caller.name, caller.firstresult,
-                              argnames=caller.argnames, methods=methods)
-        return caller
+        return HookCaller(caller.name, caller.firstresult,
+                          argnames=caller.argnames, methods=methods)
 
     def register(self, plugin, name=None):
         """ Register a plugin with the given name and ensure that all its
