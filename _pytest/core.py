@@ -166,14 +166,15 @@ class PluginManager(object):
         assert not hasattr(self, "_wrapping")
         self._wrapping = True
 
+        hooktrace = self.hook.trace
+
         def _docall(self, methods, kwargs):
-            trace = self.hookrelay.trace
-            trace.root.indent += 1
-            trace(self.name, kwargs)
+            hooktrace.root.indent += 1
+            hooktrace(self.name, kwargs)
             box = yield
             if box.excinfo is None:
-                trace("finish", self.name, "-->", box.result)
-            trace.root.indent -= 1
+                hooktrace("finish", self.name, "-->", box.result)
+            hooktrace.root.indent -= 1
 
         return add_method_wrapper(HookCaller, _docall)
 
@@ -181,7 +182,7 @@ class PluginManager(object):
         caller = getattr(self.hook, name)
         methods = self.listattr(name, plugins=plugins)
         if methods:
-            return HookCaller(self.hook, caller.name, caller.firstresult,
+            return HookCaller(caller.name, caller.firstresult,
                               argnames=caller.argnames, methods=methods)
         return caller
 
@@ -208,7 +209,7 @@ class PluginManager(object):
         self._plugins.append(plugin)
         # rescan all methods for the hookcallers we found
         for hookcaller in hookcallers:
-            hookcaller.scan_methods()
+            self._scan_methods(hookcaller)
         return True
 
     def unregister(self, plugin):
@@ -220,7 +221,7 @@ class PluginManager(object):
                 del self._name2plugin[name]
         hookcallers = self._plugin2hookcallers.pop(plugin)
         for hookcaller in hookcallers:
-            hookcaller.scan_methods()
+            self._scan_methods(hookcaller)
 
     def addhooks(self, module_or_class):
         """ add new hook definitions from the given module_or_class using
@@ -231,7 +232,7 @@ class PluginManager(object):
             if name.startswith(self._prefix):
                 method = module_or_class.__dict__[name]
                 firstresult = getattr(method, 'firstresult', False)
-                hc = HookCaller(self.hook, name, firstresult=firstresult,
+                hc = HookCaller(name, firstresult=firstresult,
                                 argnames=varnames(method, startindex=isclass))
                 setattr(self.hook, name, hc)
                 names.append(name)
@@ -281,6 +282,9 @@ class PluginManager(object):
         l.extend(last)
         l.extend(wrappers)
         return l
+
+    def _scan_methods(self, hookcaller):
+        hookcaller.methods = self.listattr(hookcaller.name)
 
     def call_plugin(self, plugin, methname, kwargs):
         return MultiCall(methods=self.listattr(methname, plugins=[plugin]),
@@ -394,8 +398,7 @@ class HookRelay:
 
 
 class HookCaller:
-    def __init__(self, hookrelay, name, firstresult, argnames, methods=()):
-        self.hookrelay = hookrelay
+    def __init__(self, name, firstresult, argnames, methods=()):
         self.name = name
         self.firstresult = firstresult
         self.argnames = ["__multicall__"]
@@ -405,9 +408,6 @@ class HookCaller:
 
     def __repr__(self):
         return "<HookCaller %r>" %(self.name,)
-
-    def scan_methods(self):
-        self.methods = self.hookrelay._pm.listattr(self.name)
 
     def __call__(self, **kwargs):
         return self._docall(self.methods, kwargs)
