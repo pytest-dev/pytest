@@ -7,16 +7,23 @@ import py
 
 py3 = sys.version_info > (3,0)
 
-def hookspec_opts(firstresult=False):
+def hookspec_opts(firstresult=False, historic=False):
     """ returns a decorator which will define a function as a hook specfication.
 
     If firstresult is True the 1:N hook call (N being the number of registered
     hook implementation functions) will stop at I<=N when the I'th function
     returns a non-None result.
+
+    If historic is True calls to a hook will be memorized and replayed
+    on later registered plugins.
     """
     def setattr_hookspec_opts(func):
+        if historic and firstresult:
+            raise ValueError("cannot have a historic firstresult hook")
         if firstresult:
             func.firstresult = firstresult
+        if historic:
+            func.historic = historic
         return func
     return setattr_hookspec_opts
 
@@ -226,6 +233,7 @@ class PluginManager(object):
 
     def make_hook_caller(self, name, plugins):
         caller = getattr(self.hook, name)
+        assert not caller.historic
         hc = HookCaller(caller.name, plugins, firstresult=caller.firstresult,
                         argnames=caller.argnames)
         for plugin in hc.plugins:
@@ -272,15 +280,18 @@ class PluginManager(object):
             if name.startswith(self._prefix):
                 specfunc = module_or_class.__dict__[name]
                 firstresult = getattr(specfunc, 'firstresult', False)
+                historic = getattr(specfunc, 'historic', False)
                 hc = getattr(self.hook, name, None)
                 argnames = varnames(specfunc, startindex=isclass)
                 if hc is None:
                     hc = HookCaller(name, [], firstresult=firstresult,
+                                    historic=historic,
                                     argnames=argnames)
                     setattr(self.hook, name, hc)
                 else:
                     # plugins registered this hook without knowing the spec
-                    hc.setspec(firstresult=firstresult, argnames=argnames)
+                    hc.setspec(firstresult=firstresult, argnames=argnames,
+                               historic=historic)
                     for plugin in hc.plugins:
                         self._verify_hook(hc, specfunc, plugin)
                         hc.add_method(getattr(plugin, name))
@@ -309,11 +320,6 @@ class PluginManager(object):
         """ Return a plugin or None for the given name. """
         return self._name2plugin.get(name)
 
-    def call_plugin(self, plugin, methname, kwargs):
-        meth = getattr(plugin, methname, None)
-        if meth is not None:
-            return MultiCall(methods=[meth], kwargs=kwargs, firstresult=True).execute()
-
     def _scan_plugin(self, plugin):
         hookcallers = []
         for name in dir(plugin):
@@ -334,6 +340,7 @@ class PluginManager(object):
                 self._verify_hook(hook, method, plugin)
                 hook.plugins.append(plugin)
                 hook.add_method(method)
+                hook._apply_history(method)
             hookcallers.append(hook)
         return hookcallers
 
@@ -441,25 +448,30 @@ class HookRelay:
 
 
 class HookCaller:
-    def __init__(self, name, plugins, argnames=None, firstresult=None):
+    def __init__(self, name, plugins, argnames=None, firstresult=None,
+                 historic=False):
         self.name = name
         self.plugins = plugins
         if argnames is not None:
             argnames = ["__multicall__"] + list(argnames)
+        self.historic = historic
         self.argnames = argnames
         self.firstresult = firstresult
         self.wrappers = []
         self.nonwrappers = []
+        if self.historic:
+            self._call_history = []
 
     @property
     def pre(self):
         return self.argnames is None
 
-    def setspec(self, argnames, firstresult):
+    def setspec(self, argnames, firstresult, historic):
         assert self.pre
         assert "self" not in argnames  # sanity check
         self.argnames = ["__multicall__"] + list(argnames)
         self.firstresult = firstresult
+        self.historic = historic
 
     def remove_plugin(self, plugin):
         self.plugins.remove(plugin)
@@ -472,6 +484,7 @@ class HookCaller:
     def add_method(self, meth):
         assert not self.pre
         if hasattr(meth, 'hookwrapper'):
+            assert not self.historic
             self.wrappers.append(meth)
         elif hasattr(meth, 'trylast'):
             self.nonwrappers.insert(0, meth)
@@ -493,16 +506,27 @@ class HookCaller:
         return "<HookCaller %r>" %(self.name,)
 
     def __call__(self, **kwargs):
+        assert not self.historic
         return self._docall(self.nonwrappers + self.wrappers, kwargs)
 
     def callextra(self, methods, **kwargs):
+        assert not self.historic
         return self._docall(self.nonwrappers + methods + self.wrappers,
                             kwargs)
 
     def _docall(self, methods, kwargs):
-        assert not self.pre, self.name
-        return MultiCall(methods, kwargs,
-                         firstresult=self.firstresult).execute()
+        return MultiCall(methods, kwargs, firstresult=self.firstresult).execute()
+
+    def call_historic(self, kwargs, proc=None):
+        self._call_history.append((kwargs, proc))
+        self._docall(self.nonwrappers + self.wrappers, kwargs)
+
+    def _apply_history(self, meth):
+        if hasattr(self, "_call_history"):
+            for kwargs, proc in self._call_history:
+                res = MultiCall([meth], kwargs, firstresult=True).execute()
+                if proc is not None:
+                    proc(res)
 
 
 class PluginValidationError(Exception):

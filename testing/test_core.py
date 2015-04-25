@@ -77,6 +77,61 @@ class TestPluginManager:
         #assert not pm._unverified_hooks
         assert pm.hook.he_method1(arg=1) == [2]
 
+    def test_register_unknown_hooks(self, pm):
+        class Plugin1:
+            def he_method1(self, arg):
+                return arg + 1
+
+        pm.register(Plugin1())
+        class Hooks:
+            def he_method1(self, arg):
+                pass
+        pm.addhooks(Hooks)
+        #assert not pm._unverified_hooks
+        assert pm.hook.he_method1(arg=1) == [2]
+
+    def test_register_historic(self, pm):
+        class Hooks:
+            @hookspec_opts(historic=True)
+            def he_method1(self, arg):
+                pass
+        pm.addhooks(Hooks)
+
+        pm.hook.he_method1.call_historic(kwargs=dict(arg=1))
+        l = []
+        class Plugin:
+            def he_method1(self, arg):
+                l.append(arg)
+
+        pm.register(Plugin())
+        assert l == [1]
+
+        class Plugin2:
+            def he_method1(self, arg):
+                l.append(arg*10)
+        pm.register(Plugin2())
+        assert l == [1, 10]
+        pm.hook.he_method1.call_historic(dict(arg=12))
+        assert l == [1, 10, 120, 12]
+
+    def test_with_result_memorized(self, pm):
+        class Hooks:
+            @hookspec_opts(historic=True)
+            def he_method1(self, arg):
+                pass
+        pm.addhooks(Hooks)
+
+        he_method1 = pm.hook.he_method1
+        he_method1.call_historic(proc=lambda res: l.append(res), kwargs=dict(arg=1))
+        l = []
+        class Plugin:
+            def he_method1(self, arg):
+                return arg * 10
+
+        pm.register(Plugin())
+
+        assert l == [10]
+
 
 class TestAddMethodOrdering:
     @pytest.fixture
@@ -256,8 +311,10 @@ class TestPytestPluginInteractions:
                 return xyz + 1
         """)
         config = get_plugin_manager().config
+        pm = config.pluginmanager
+        pm.hook.pytest_addhooks.call_historic(dict(pluginmanager=config.pluginmanager))
         config.pluginmanager._importconftest(conf)
-        print(config.pluginmanager.getplugins())
+        #print(config.pluginmanager.getplugins())
         res = config.hook.pytest_myhook(xyz=10)
         assert res == [11]
 

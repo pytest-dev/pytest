@@ -3,27 +3,23 @@
 from _pytest.core import hookspec_opts
 
 # -------------------------------------------------------------------------
-# Initialization
+# Initialization hooks called for every plugin
 # -------------------------------------------------------------------------
 
+@hookspec_opts(historic=True)
 def pytest_addhooks(pluginmanager):
-    """called at plugin load time to allow adding new hooks via a call to
+    """called at plugin registration time to allow adding new hooks via a call to
     pluginmanager.addhooks(module_or_class, prefix)."""
 
 
+@hookspec_opts(historic=True)
 def pytest_namespace():
     """return dict of name->object to be made globally available in
-    the pytest namespace.  This hook is called before command line options
-    are parsed.
+    the pytest namespace.  This hook is called at plugin registration
+    time.
     """
 
-@hookspec_opts(firstresult=True)
-def pytest_cmdline_parse(pluginmanager, args):
-    """return initialized config object, parsing the specified args. """
-
-def pytest_cmdline_preparse(config, args):
-    """(deprecated) modify command line arguments before option parsing. """
-
+@hookspec_opts(historic=True)
 def pytest_addoption(parser):
     """register argparse-style options and ini-style config values.
 
@@ -49,6 +45,26 @@ def pytest_addoption(parser):
     via (deprecated) ``pytest.config``.
     """
 
+@hookspec_opts(historic=True)
+def pytest_configure(config):
+    """ called after command line options have been parsed
+    and all plugins and initial conftest files been loaded.
+    This hook is called for every plugin.
+    """
+
+# -------------------------------------------------------------------------
+# Bootstrapping hooks called for plugins registered early enough:
+# internal and 3rd party plugins as well as directly
+# discoverable conftest.py local plugins.
+# -------------------------------------------------------------------------
+
+@hookspec_opts(firstresult=True)
+def pytest_cmdline_parse(pluginmanager, args):
+    """return initialized config object, parsing the specified args. """
+
+def pytest_cmdline_preparse(config, args):
+    """(deprecated) modify command line arguments before option parsing. """
+
 @hookspec_opts(firstresult=True)
 def pytest_cmdline_main(config):
     """ called for performing the main command line action. The default
@@ -58,18 +74,6 @@ def pytest_load_initial_conftests(args, early_config, parser):
     """ implements the loading of initial conftest files ahead
     of command line option parsing. """
 
-def pytest_configure(config):
-    """ called after command line options have been parsed
-        and all plugins and initial conftest files been loaded.
-    """
-
-def pytest_unconfigure(config):
-    """ called before test process is exited.  """
-
-@hookspec_opts(firstresult=True)
-def pytest_runtestloop(session):
-    """ called for performing the main runtest loop
-    (after collection finished). """
 
 # -------------------------------------------------------------------------
 # collection hooks
@@ -144,6 +148,12 @@ def pytest_generate_tests(metafunc):
 # -------------------------------------------------------------------------
 # generic runtest related hooks
 # -------------------------------------------------------------------------
+
+@hookspec_opts(firstresult=True)
+def pytest_runtestloop(session):
+    """ called for performing the main runtest loop
+    (after collection finished). """
+
 def pytest_itemstart(item, node):
     """ (deprecated, use pytest_runtest_logstart). """
 
@@ -200,6 +210,9 @@ def pytest_sessionstart(session):
 
 def pytest_sessionfinish(session, exitstatus):
     """ whole test run finishes. """
+
+def pytest_unconfigure(config):
+    """ called before test process is exited.  """
 
 
 # -------------------------------------------------------------------------
