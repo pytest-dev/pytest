@@ -143,6 +143,25 @@ class TestPluginManager:
         l = pm.hook.he_method1.call_extra([he_method1], dict(arg=1))
         assert l == [10]
 
+    def test_make_hook_caller_unregistered(self, pm):
+        class Hooks:
+            def he_method1(self, arg):
+                pass
+        pm.addhooks(Hooks)
+
+        l = []
+        class Plugin:
+            def he_method1(self, arg):
+                l.append(arg * 10)
+        plugin = Plugin()
+        pm.register(plugin)
+        hc = pm.make_hook_caller("he_method1", [plugin])
+        hc(arg=1)
+        assert l == [10]
+        pm.unregister(plugin)
+        hc(arg=2)
+        assert l == [10]
+
 
 class TestAddMethodOrdering:
     @pytest.fixture
@@ -163,7 +182,7 @@ class TestAddMethodOrdering:
                     func.trylast = True
                 if hookwrapper:
                     func.hookwrapper = True
-                hc.add_method(func)
+                hc._add_method(func)
                 return func
             return wrap
         return addmeth

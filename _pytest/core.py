@@ -233,7 +233,14 @@ class PluginManager(object):
 
     def make_hook_caller(self, name, plugins):
         caller = getattr(self.hook, name)
-        return caller.clone(plugins=plugins)
+        hc = HookCaller(caller.name, caller._specmodule_or_class)
+        for plugin in plugins:
+            if hasattr(plugin, name):
+                hc._add_plugin(plugin)
+                # we also keep track of this hook caller so it
+                # gets properly removed on plugin unregistration
+                self._plugin2hookcallers.setdefault(plugin, []).append(hc)
+        return hc
 
     def register(self, plugin, name=None):
         """ Register a plugin with the given name and ensure that all its
@@ -247,9 +254,8 @@ class PluginManager(object):
         if self.hasplugin(name):
             raise ValueError("Plugin already registered: %s=%s\n%s" %(
                               name, plugin, self._name2plugin))
-        #self.trace("registering", name, plugin)
-        self._plugin2hookcallers[plugin] = self._scan_plugin(plugin)
         self._name2plugin[name] = plugin
+        self._scan_plugin(plugin)
         self._plugins.append(plugin)
         return True
 
@@ -260,9 +266,8 @@ class PluginManager(object):
         for name, value in list(self._name2plugin.items()):
             if value == plugin:
                 del self._name2plugin[name]
-        hookcallers = self._plugin2hookcallers.pop(plugin)
-        for hookcaller in hookcallers:
-            hookcaller.remove_plugin(plugin)
+        for hookcaller in self._plugin2hookcallers.pop(plugin):
+            hookcaller._remove_plugin(plugin)
 
     def addhooks(self, module_or_class):
         """ add new hook definitions from the given module_or_class using
@@ -276,7 +281,7 @@ class PluginManager(object):
                     setattr(self.hook, name, hc)
                 else:
                     # plugins registered this hook without knowing the spec
-                    hc.setspec(module_or_class)
+                    hc.set_specification(module_or_class)
                     for plugin in hc._plugins:
                         self._verify_hook(hc, plugin)
                 names.append(name)
@@ -305,7 +310,7 @@ class PluginManager(object):
         return self._name2plugin.get(name)
 
     def _scan_plugin(self, plugin):
-        hookcallers = []
+        self._plugin2hookcallers[plugin] = hookcallers = []
         for name in dir(plugin):
             if name[0] == "_" or not name.startswith(self._prefix):
                 continue
@@ -319,9 +324,8 @@ class PluginManager(object):
             elif hook.has_spec():
                 self._verify_hook(hook, plugin)
                 hook._apply_history(method)
-            hook.add_plugin(plugin)
             hookcallers.append(hook)
-        return hookcallers
+            hook._add_plugin(plugin)
 
     def _verify_hook(self, hook, plugin):
         method = getattr(plugin, hook.name)
@@ -434,29 +438,12 @@ class HookCaller(object):
         self._wrappers = []
         self._nonwrappers = []
         if specmodule_or_class is not None:
-            self.setspec(specmodule_or_class)
+            self.set_specification(specmodule_or_class)
 
     def has_spec(self):
         return hasattr(self, "_specmodule_or_class")
 
-    def clone(self, plugins=None):
-        assert not self.is_historic()
-        hc = object.__new__(HookCaller)
-        hc.name = self.name
-        hc.argnames = self.argnames
-        hc.firstresult = self.firstresult
-        if plugins is None:
-            hc._plugins = self._plugins
-            hc._wrappers = list(self._wrappers)
-            hc._nonwrappers = list(self._nonwrappers)
-        else:
-            hc._plugins, hc._wrappers, hc._nonwrappers = [], [], []
-            for plugin in plugins:
-                if hasattr(plugin, hc.name):
-                    hc.add_plugin(plugin)
-        return hc
-
-    def setspec(self, specmodule_or_class):
+    def set_specification(self, specmodule_or_class):
         assert not self.has_spec()
         self._specmodule_or_class = specmodule_or_class
         specfunc = getattr(specmodule_or_class, self.name)
@@ -470,7 +457,7 @@ class HookCaller(object):
     def is_historic(self):
         return hasattr(self, "_call_history")
 
-    def remove_plugin(self, plugin):
+    def _remove_plugin(self, plugin):
         self._plugins.remove(plugin)
         meth = getattr(plugin, self.name)
         try:
@@ -478,11 +465,11 @@ class HookCaller(object):
         except ValueError:
             self._wrappers.remove(meth)
 
-    def add_plugin(self, plugin):
+    def _add_plugin(self, plugin):
         self._plugins.append(plugin)
-        self.add_method(getattr(plugin, self.name))
+        self._add_method(getattr(plugin, self.name))
 
-    def add_method(self, meth):
+    def _add_method(self, meth):
         if hasattr(meth, 'hookwrapper'):
             assert not self.is_historic()
             self._wrappers.append(meth)
@@ -511,11 +498,15 @@ class HookCaller(object):
         return self._docall(self._nonwrappers + self._wrappers, kwargs)
 
     def call_extra(self, methods, kwargs):
-        assert not self.is_historic()
-        hc = self.clone()
+        """ Call the hook with some additional temporarily participating
+        methods using the specified kwargs as call parameters. """
+        old = list(self._nonwrappers), list(self._wrappers)
         for method in methods:
-            hc.add_method(method)
-        return hc(**kwargs)
+            self._add_method(method)
+        try:
+            return self(**kwargs)
+        finally:
+            self._nonwrappers, self._wrappers = old
 
     def call_historic(self, proc=None, kwargs=None):
         self._call_history.append((kwargs or {}, proc))

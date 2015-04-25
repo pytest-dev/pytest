@@ -36,6 +36,9 @@
 - write/refine docs for "writing plugins" which now have their
   own page and are separate from the "using/installing plugins`` page.
 
+- fix issue732: properly unregister plugins from any hook calling
+  sites allowing to have temporary plugins during test execution.
+
  
 2.7.1.dev (compared to 2.7.0)
 -----------------------------
