@@ -99,7 +99,7 @@ class PytestPluginManager(PluginManager):
                                                   excludefunc=exclude_pytest_names)
         self._warnings = []
         self._plugin_distinfo = []
-        self._globalplugins = []
+        self._conftest_plugins = set()
 
         # state related to local conftest plugins
         self._path2confmods = {}
@@ -121,21 +121,12 @@ class PytestPluginManager(PluginManager):
     def register(self, plugin, name=None, conftest=False):
         ret = super(PytestPluginManager, self).register(plugin, name)
         if ret:
-            if not conftest:
-                self._globalplugins.append(plugin)
             self.hook.pytest_plugin_registered.call_historic(
                       kwargs=dict(plugin=plugin, manager=self))
         return ret
 
-    def unregister(self, plugin=None, name=None):
-        plugin = super(PytestPluginManager, self).unregister(plugin, name)
-        try:
-            self._globalplugins.remove(plugin)
-        except ValueError:
-            pass
-
     def getplugin(self, name):
-        # deprecated
+        # deprecated naming
         return self.get_plugin(name)
 
     def pytest_configure(self, config):
@@ -189,14 +180,20 @@ class PytestPluginManager(PluginManager):
         try:
             return self._path2confmods[path]
         except KeyError:
-            clist = []
-            for parent in path.parts():
-                if self._confcutdir and self._confcutdir.relto(parent):
-                    continue
-                conftestpath = parent.join("conftest.py")
-                if conftestpath.check(file=1):
-                    mod = self._importconftest(conftestpath)
-                    clist.append(mod)
+            if path.isfile():
+                clist = self._getconftestmodules(path.dirpath())
+            else:
+                # XXX these days we may rather want to use config.rootdir
+                # and allow users to opt into looking into the rootdir parent
+                # directories instead of requiring to specify confcutdir
+                clist = []
+                for parent in path.parts():
+                    if self._confcutdir and self._confcutdir.relto(parent):
+                        continue
+                    conftestpath = parent.join("conftest.py")
+                    if conftestpath.isfile():
+                        mod = self._importconftest(conftestpath)
+                        clist.append(mod)
 
             self._path2confmods[path] = clist
             return clist
@@ -222,6 +219,7 @@ class PytestPluginManager(PluginManager):
             except Exception:
                 raise ConftestImportFailure(conftestpath, sys.exc_info())
 
+            self._conftest_plugins.add(mod)
             self._conftestpath2mod[conftestpath] = mod
             dirpath = conftestpath.dirpath()
             if dirpath in self._path2confmods:
@@ -781,10 +779,6 @@ class Config(object):
         if hasattr(opt, 'default') and opt.dest:
             if not hasattr(self.option, opt.dest):
                 setattr(self.option, opt.dest, opt.default)
-
-    def _getmatchingplugins(self, fspath):
-        return self.pluginmanager._globalplugins + \
-               self.pluginmanager._getconftestmodules(fspath)
 
     def pytest_load_initial_conftests(self, early_config):
         self.pluginmanager._set_initial_conftests(early_config.known_args_namespace)

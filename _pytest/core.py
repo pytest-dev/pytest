@@ -238,7 +238,8 @@ class PluginManager(object):
 
     def subset_hook_caller(self, name, remove_plugins):
         """ Return a new HookCaller instance which manages calls to
-        the plugins but without hooks from remove_plugins taking part. """
+        the plugins but without hooks from the plugins in remove_plugins
+        taking part. """
         hc = getattr(self.hook, name)
         plugins_to_remove = [plugin for plugin in remove_plugins
                                     if hasattr(plugin, name)]
@@ -246,24 +247,6 @@ class PluginManager(object):
             hc = hc.clone()
             for plugin in plugins_to_remove:
                 hc._remove_plugin(plugin)
-            # we also keep track of this hook caller so it
-            # gets properly removed on plugin unregistration
-            self._plugin2hookcallers.setdefault(plugin, []).append(hc)
-        return hc
-
-    def make_hook_caller(self, name, plugins):
-        """ Return a new HookCaller instance which manages calls to
-        all methods named "name" in the plugins. The new hook caller
-        is registered internally such that when one of the plugins gets
-        unregistered, its method will be removed from the hook caller. """
-        caller = getattr(self.hook, name)
-        hc = HookCaller(caller.name, self._hookexec, caller._specmodule_or_class)
-        for plugin in plugins:
-            if hasattr(plugin, name):
-                hc._add_plugin(plugin)
-                # we also keep track of this hook caller so it
-                # gets properly removed on plugin unregistration
-                self._plugin2hookcallers.setdefault(plugin, []).append(hc)
         return hc
 
     def get_canonical_name(self, plugin):
@@ -271,8 +254,8 @@ class PluginManager(object):
         return getattr(plugin, "__name__", None) or str(id(plugin))
 
     def register(self, plugin, name=None):
-        """ Register a plugin and return its canonical name or None if it was
-        blocked from registering.  Raise a ValueError if the plugin is already
+        """ Register a plugin and return its canonical name or None if the name
+        is blocked from registering.  Raise a ValueError if the plugin is already
         registered. """
         plugin_name = name or self.get_canonical_name(plugin)
 
@@ -303,16 +286,15 @@ class PluginManager(object):
 
     def unregister(self, plugin=None, name=None):
         """ unregister a plugin object and all its contained hook implementations
-        from internal data structures.  One of ``plugin`` or ``name`` needs to
-        be specified. """
+        from internal data structures. """
         if name is None:
-            assert plugin is not None
+            assert plugin is not None, "one of name or plugin needs to be specified"
             name = self.get_name(plugin)
 
         if plugin is None:
             plugin = self.get_plugin(name)
 
-        # None signals blocked registrations, don't delete it
+        # if self._name2plugin[name] == None registration was blocked: ignore
         if self._name2plugin.get(name):
             del self._name2plugin[name]
 
@@ -485,6 +467,7 @@ class HookCaller(object):
         self._wrappers = []
         self._nonwrappers = []
         self._hookexec = hook_execute
+        self._subcaller = []
         if specmodule_or_class is not None:
             self.set_specification(specmodule_or_class)
 
@@ -502,6 +485,21 @@ class HookCaller(object):
         if hasattr(specfunc, "historic"):
             self._call_history = []
 
+    def clone(self):
+        assert not self.is_historic()
+        hc = object.__new__(HookCaller)
+        hc.name = self.name
+        hc._plugins = list(self._plugins)
+        hc._wrappers = list(self._wrappers)
+        hc._nonwrappers = list(self._nonwrappers)
+        hc._hookexec = self._hookexec
+        hc.argnames = self.argnames
+        hc.firstresult = self.firstresult
+        # we keep track of this hook caller so it
+        # gets properly removed on plugin unregistration
+        self._subcaller.append(hc)
+        return hc
+
     def is_historic(self):
         return hasattr(self, "_call_history")
 
@@ -512,6 +510,10 @@ class HookCaller(object):
             self._nonwrappers.remove(meth)
         except ValueError:
             self._wrappers.remove(meth)
+        if hasattr(self, "_subcaller"):
+            for hc in self._subcaller:
+                if plugin in hc._plugins:
+                    hc._remove_plugin(plugin)
 
     def _add_plugin(self, plugin):
         self._plugins.append(plugin)
