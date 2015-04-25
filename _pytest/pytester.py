@@ -83,7 +83,8 @@ class HookRecorder:
             self.calls.append(ParsedCall(hookcaller.name, kwargs))
             yield
         self._undo_wrapping = add_method_wrapper(HookCaller, _docall)
-        pluginmanager.add_shutdown(self._undo_wrapping)
+        #if hasattr(pluginmanager, "config"):
+        #    pluginmanager.add_shutdown(self._undo_wrapping)
 
     def finish_recording(self):
         self._undo_wrapping()
@@ -589,12 +590,7 @@ class TmpTestdir:
         # we don't know what the test will do with this half-setup config
         # object and thus we make sure it gets unconfigured properly in any
         # case (otherwise capturing could still be active, for example)
-        def ensure_unconfigure():
-            if hasattr(config.pluginmanager, "_config"):
-                config.pluginmanager.do_unconfigure(config)
-            config.pluginmanager.ensure_shutdown()
-
-        self.request.addfinalizer(ensure_unconfigure)
+        self.request.addfinalizer(config._ensure_unconfigure)
         return config
 
     def parseconfigure(self, *args):
@@ -606,8 +602,8 @@ class TmpTestdir:
 
         """
         config = self.parseconfig(*args)
-        config.do_configure()
-        self.request.addfinalizer(config.do_unconfigure)
+        config._do_configure()
+        self.request.addfinalizer(config._ensure_unconfigure)
         return config
 
     def getitem(self,  source, funcname="test_func"):

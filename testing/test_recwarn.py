@@ -22,7 +22,6 @@ def test_WarningRecorder(recwarn):
 
 def test_recwarn_functional(testdir):
     reprec = testdir.inline_runsource("""
-        pytest_plugins = 'pytest_recwarn',
         import warnings
         oldwarn = warnings.showwarning
         def test_method(recwarn):

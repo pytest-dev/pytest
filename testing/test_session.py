@@ -214,8 +214,8 @@ def test_plugin_specify(testdir):
 def test_plugin_already_exists(testdir):
     config = testdir.parseconfig("-p", "terminal")
     assert config.option.plugins == ['terminal']
-    config.do_configure()
-    config.do_unconfigure()
+    config._do_configure()
+    config._ensure_unconfigure()
 
 def test_exclude(testdir):
     hellodir = testdir.mkdir("hello")

@@ -37,13 +37,13 @@ def pytest_load_initial_conftests(early_config, parser, args):
     pluginmanager.register(capman, "capturemanager")
 
     # make sure that capturemanager is properly reset at final shutdown
-    pluginmanager.add_shutdown(capman.reset_capturings)
+    early_config.add_cleanup(capman.reset_capturings)
 
     # make sure logging does not raise exceptions at the end
     def silence_logging_at_shutdown():
         if "logging" in sys.modules:
             sys.modules["logging"].raiseExceptions = False
-    pluginmanager.add_shutdown(silence_logging_at_shutdown)
+    early_config.add_cleanup(silence_logging_at_shutdown)
 
     # finally trigger conftest loading but while capturing (issue93)
     capman.init_capturings()

@@ -1,7 +1,7 @@
 import pytest
 import os
 from _pytest.pytester import HookRecorder
-from _pytest.core import PluginManager
+from _pytest.config import PytestPluginManager
 from _pytest.main import EXIT_OK, EXIT_TESTSFAILED
 
 
@@ -64,7 +64,7 @@ def test_parseconfig(testdir):
 
 def test_testdir_runs_with_plugin(testdir):
     testdir.makepyfile("""
-        pytest_plugins = "pytest_pytester"
+        pytest_plugins = "pytester"
         def test_hello(testdir):
             assert 1
     """)
@@ -93,8 +93,8 @@ def make_holder():
 
 @pytest.mark.parametrize("holder", make_holder())
 def test_hookrecorder_basic(holder):
-    pm = PluginManager()
-    pm.hook._addhooks(holder, "pytest_")
+    pm = PytestPluginManager()
+    pm.addhooks(holder)
     rec = HookRecorder(pm)
     pm.hook.pytest_xyz(arg=123)
     call = rec.popcall("pytest_xyz")

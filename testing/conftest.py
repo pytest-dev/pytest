@@ -66,6 +66,7 @@ def check_open_files(config):
         error.append(error[0])
         raise AssertionError("\n".join(error))
 
+@pytest.mark.trylast
 def pytest_runtest_teardown(item, __multicall__):
     item.config._basedir.chdir()
     if hasattr(item.config, '_openfiles'):

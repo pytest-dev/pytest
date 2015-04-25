@@ -77,7 +77,7 @@ def wrap_session(config, doit):
     initstate = 0
     try:
         try:
-            config.do_configure()
+            config._do_configure()
             initstate = 1
             config.hook.pytest_sessionstart(session=session)
             initstate = 2
@@ -107,9 +107,7 @@ def wrap_session(config, doit):
             config.hook.pytest_sessionfinish(
                 session=session,
                 exitstatus=session.exitstatus)
-        if initstate >= 1:
-            config.do_unconfigure()
-        config.pluginmanager.ensure_shutdown()
+        config._ensure_unconfigure()
     return session.exitstatus
 
 def pytest_cmdline_main(config):
@@ -160,7 +158,7 @@ class FSHookProxy(object):
 
     def __getattr__(self, name):
         plugins = self.config._getmatchingplugins(self.fspath)
-        x = self.config.hook._getcaller(name, plugins)
+        x = self.config.pluginmanager.make_hook_caller(name, plugins)
         self.__dict__[name] = x
         return x
 
@@ -510,7 +508,7 @@ class Session(FSCollector):
     def __init__(self, config):
         FSCollector.__init__(self, config.rootdir, parent=None,
                              config=config, session=self)
-        self.config.pluginmanager.register(self, name="session", prepend=True)
+        self.config.pluginmanager.register(self, name="session")
         self._testsfailed = 0
         self.shouldstop = False
         self.trace = config.trace.root.get("collection")
@@ -521,10 +519,12 @@ class Session(FSCollector):
     def _makeid(self):
         return ""
 
+    @pytest.mark.tryfirst
     def pytest_collectstart(self):
         if self.shouldstop:
             raise self.Interrupted(self.shouldstop)
 
+    @pytest.mark.tryfirst
     def pytest_runtest_logreport(self, report):
         if report.failed and not hasattr(report, 'wasxfail'):
             self._testsfailed += 1

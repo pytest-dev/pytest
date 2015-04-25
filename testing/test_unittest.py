@@ -3,7 +3,6 @@ import pytest
 def test_simple_unittest(testdir):
     testpath = testdir.makepyfile("""
         import unittest
-        pytest_plugins = "pytest_unittest"
         class MyTestCase(unittest.TestCase):
             def testpassing(self):
                 self.assertEquals('foo', 'foo')
@@ -17,7 +16,6 @@ def test_simple_unittest(testdir):
 def test_runTest_method(testdir):
     testdir.makepyfile("""
         import unittest
-        pytest_plugins = "pytest_unittest"
         class MyTestCaseWithRunTest(unittest.TestCase):
             def runTest(self):
                 self.assertEquals('foo', 'foo')

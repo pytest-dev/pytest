@@ -6,7 +6,7 @@
 
 def pytest_addhooks(pluginmanager):
     """called at plugin load time to allow adding new hooks via a call to
-    pluginmanager.registerhooks(module)."""
+    pluginmanager.addhooks(module_or_class, prefix)."""
 
 
 def pytest_namespace():
