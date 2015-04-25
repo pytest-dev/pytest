@@ -34,6 +34,22 @@ class TestPluginManager:
         assert pm.unregister(a1) == a1
         assert not pm.is_registered(a1)
 
+    def test_pm_name(self, pm):
+        class A: pass
+        a1 = A()
+        name = pm.register(a1, name="hello")
+        assert name == "hello"
+        pm.unregister(a1)
+        assert pm.get_plugin(a1) is None
+        assert not pm.is_registered(a1)
+        assert not pm.get_plugins()
+        name2 = pm.register(a1, name="hello")
+        assert name2 == name
+        pm.unregister(name="hello")
+        assert pm.get_plugin(a1) is None
+        assert not pm.is_registered(a1)
+        assert not pm.get_plugins()
+
     def test_set_blocked(self, pm):
         class A: pass
         a1 = A()

@@ -237,6 +237,10 @@ class PluginManager(object):
         return TracedHookExecution(self, before, after).undo
 
     def make_hook_caller(self, name, plugins):
+        """ Return a new HookCaller instance which manages calls to
+        all methods named "name" in the plugins. The new hook caller
+        is registered internally such that when one of the plugins gets
+        unregistered, its method will be removed from the hook caller. """
         caller = getattr(self.hook, name)
         hc = HookCaller(caller.name, self._hookexec, caller._specmodule_or_class)
         for plugin in plugins:
@@ -248,7 +252,7 @@ class PluginManager(object):
         return hc
 
     def get_canonical_name(self, plugin):
-        """ Return canonical name for the plugin object. """
+        """ Return canonical name for a plugin object. """
         return getattr(plugin, "__name__", None) or str(id(plugin))
 
     def register(self, plugin, name=None):
@@ -288,7 +292,7 @@ class PluginManager(object):
         be specified. """
         if name is None:
             assert plugin is not None
-            name = self.get_canonical_name(plugin)
+            name = self.get_name(plugin)
 
         if plugin is None:
             plugin = self.get_plugin(name)
@@ -340,9 +344,15 @@ class PluginManager(object):
         """ Return a plugin or None for the given name. """
         return self._name2plugin.get(name)
 
+    def get_name(self, plugin):
+        """ Return name for registered plugin or None if not registered. """
+        for name, val in self._name2plugin.items():
+            if plugin == val:
+                return name
+
     def _verify_hook(self, hook, plugin):
         method = getattr(plugin, hook.name)
-        pluginname = self.get_canonical_name(plugin)
+        pluginname = self.get_name(plugin)
 
         if hook.is_historic() and hasattr(method, "hookwrapper"):
             raise PluginValidationError(
