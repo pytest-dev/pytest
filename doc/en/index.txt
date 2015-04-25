@@ -56,6 +56,7 @@ pytest: helps you write better programs
  - all collection, reporting, running aspects are delegated to hook functions
  - customizations can be per-directory, per-project or per PyPI released plugin
  - it is easy to add command line options or customize existing behaviour
+ - :ref:`easy to write your own plugins <writing-plugins>`
 
 
 .. _`easy`: http://bruynooghe.blogspot.com/2009/12/skipping-slow-test-by-default-in-pytest.html
