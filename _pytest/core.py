@@ -201,10 +201,6 @@ class PluginManager(object):
             raise ValueError("Plugin already registered: %s=%s\n%s" %(
                               name, plugin, self._name2plugin))
         #self.trace("registering", name, plugin)
-        # allow subclasses to intercept here by calling a helper
-        return self._do_register(plugin, name)
-
-    def _do_register(self, plugin, name):
         self._plugin2hookcallers[plugin] = self._scan_plugin(plugin)
         self._name2plugin[name] = plugin
         self._plugins.append(plugin)

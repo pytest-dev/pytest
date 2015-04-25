@@ -77,6 +77,7 @@ class TestPluginManager:
         #assert not pm._unverified_hooks
         assert pm.hook.he_method1(arg=1) == [2]
 
+
 class TestAddMethodOrdering:
     @pytest.fixture
     def hc(self, pm):
@@ -283,24 +284,30 @@ class TestPytestPluginInteractions:
         pytestpm = get_plugin_manager()  # fully initialized with plugins
         saveindent = []
         class api1:
-            x = 41
             def pytest_plugin_registered(self, plugin):
                 saveindent.append(pytestpm.trace.root.indent)
-                raise ValueError(42)
+        class api2:
+            def pytest_plugin_registered(self, plugin):
+                saveindent.append(pytestpm.trace.root.indent)
+                raise ValueError()
         l = []
-        pytestpm.set_tracing(l.append)
-        indent = pytestpm.trace.root.indent
-        p = api1()
-        pytestpm.register(p)
+        undo = pytestpm.set_tracing(l.append)
+        try:
+            indent = pytestpm.trace.root.indent
+            p = api1()
+            pytestpm.register(p)
+            assert pytestpm.trace.root.indent == indent
+            assert len(l) == 2
+            assert 'pytest_plugin_registered' in l[0]
+            assert 'finish' in l[1]
 
-        assert pytestpm.trace.root.indent == indent
-        assert len(l) == 2
-        assert 'pytest_plugin_registered' in l[0]
-        assert 'finish' in l[1]
-        with pytest.raises(ValueError):
-            pytestpm.register(api1())
-        assert pytestpm.trace.root.indent == indent
-        assert saveindent[0] > indent
+            l[:] = []
+            with pytest.raises(ValueError):
+                pytestpm.register(api2())
+            assert pytestpm.trace.root.indent == indent
+            assert saveindent[0] > indent
+        finally:
+            undo()
 
 
 def test_namespace_has_default_and_env_plugins(testdir):

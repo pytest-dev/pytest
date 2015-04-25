@@ -119,15 +119,12 @@ class PytestPluginManager(PluginManager):
 
     def register(self, plugin, name=None, conftest=False):
         ret = super(PytestPluginManager, self).register(plugin, name)
-        if ret and not conftest:
-            self._globalplugins.append(plugin)
+        if ret:
+            if not conftest:
+                self._globalplugins.append(plugin)
+            if hasattr(self, "config"):
+                self.config._register_plugin(plugin, name)
         return ret
-
-    def _do_register(self, plugin, name):
-        # called from core PluginManager class
-        if hasattr(self, "config"):
-            self.config._register_plugin(plugin, name)
-        return super(PytestPluginManager, self)._do_register(plugin, name)
 
     def unregister(self, plugin):
         super(PytestPluginManager, self).unregister(plugin)
@@ -710,8 +707,7 @@ class Config(object):
 
     def _register_plugin(self, plugin, name):
         call_plugin = self.pluginmanager.call_plugin
-        call_plugin(plugin, "pytest_addhooks",
-                    {'pluginmanager': self.pluginmanager})
+        call_plugin(plugin, "pytest_addhooks", {'pluginmanager': self.pluginmanager})
         self.hook.pytest_plugin_registered(plugin=plugin,
                                            manager=self.pluginmanager)
         dic = call_plugin(plugin, "pytest_namespace", {}) or {}
