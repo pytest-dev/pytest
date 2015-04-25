@@ -212,6 +212,7 @@ class PluginManager(object):
         self._excludefunc = excludefunc
         self._name2plugin = {}
         self._plugin2hookcallers = {}
+        self._plugin_distinfo = []
         self.trace = TagTracer().get("pluginmanage")
         self.hook = HookRelay(self.trace.root.get("hook"))
         self._inner_hookexec = lambda hook, methods, kwargs: \
@@ -378,6 +379,25 @@ class PluginManager(object):
                         if not getattr(method, "optionalhook", False):
                             raise PluginValidationError(
                                 "unknown hook %r in plugin %r" %(name, plugin))
+
+    def load_setuptools_entrypoints(self, entrypoint_name):
+        """ Load modules from querying the specified entrypoint name.
+        Return None if setuptools was not operable, otherwise
+        the number of loaded plugins. """
+        try:
+            from pkg_resources import iter_entry_points, DistributionNotFound
+        except ImportError:
+            return # XXX issue a warning
+        for ep in iter_entry_points(entrypoint_name):
+            if self.get_plugin(ep.name) or ep.name in self._name2plugin:
+                continue
+            try:
+                plugin = ep.load()
+            except DistributionNotFound:
+                continue
+            self.register(plugin, name=ep.name)
+            self._plugin_distinfo.append((ep.dist, plugin))
+        return len(self._plugin_distinfo)
 
 
 class MultiCall:

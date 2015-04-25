@@ -9,7 +9,7 @@ import py
 # DON't import pytest here because it causes import cycle troubles
 import sys, os
 from _pytest import hookspec # the extension point definitions
-from _pytest.core import PluginManager
+from _pytest.core import PluginManager, hookimpl_opts
 
 # pytest startup
 #
@@ -98,7 +98,6 @@ class PytestPluginManager(PluginManager):
         super(PytestPluginManager, self).__init__(prefix="pytest_",
                                                   excludefunc=exclude_pytest_names)
         self._warnings = []
-        self._plugin_distinfo = []
         self._conftest_plugins = set()
 
         # state related to local conftest plugins
@@ -126,16 +125,10 @@ class PytestPluginManager(PluginManager):
         return ret
 
     def getplugin(self, name):
-        # deprecated naming
+        # support deprecated naming because plugins (xdist e.g.) use it
         return self.get_plugin(name)
 
     def pytest_configure(self, config):
-        config.addinivalue_line("markers",
-            "tryfirst: mark a hook implementation function such that the "
-            "plugin machinery will try to call it first/as early as possible.")
-        config.addinivalue_line("markers",
-            "trylast: mark a hook implementation function such that the "
-            "plugin machinery will try to call it last/as late as possible.")
         for warning in self._warnings:
             config.warn(code="I1", message=warning)
 
@@ -235,21 +228,6 @@ class PytestPluginManager(PluginManager):
     # API for bootstrapping plugin loading
     #
     #
-
-    def consider_setuptools_entrypoints(self):
-        try:
-            from pkg_resources import iter_entry_points, DistributionNotFound
-        except ImportError:
-            return # XXX issue a warning
-        for ep in iter_entry_points('pytest11'):
-            if self.get_plugin(ep.name) or ep.name in self._name2plugin:
-                continue
-            try:
-                plugin = ep.load()
-            except DistributionNotFound:
-                continue
-            self.register(plugin, name=ep.name)
-            self._plugin_distinfo.append((ep.dist, plugin))
 
     def consider_preparse(self, args):
         for opt1,opt2 in zip(args, args[1:]):
@@ -679,6 +657,7 @@ class Notset:
 
 notset = Notset()
 FILE_OR_DIR = 'file_or_dir'
+
 class Config(object):
     """ access to configuration values, pluginmanager and plugin hooks.  """
 
@@ -779,9 +758,9 @@ class Config(object):
             if not hasattr(self.option, opt.dest):
                 setattr(self.option, opt.dest, opt.default)
 
+    @hookimpl_opts(trylast=True)
     def pytest_load_initial_conftests(self, early_config):
         self.pluginmanager._set_initial_conftests(early_config.known_args_namespace)
-    pytest_load_initial_conftests.trylast = True
 
     def _initini(self, args):
         parsed_args = self._parser.parse_known_args(args)
@@ -798,7 +777,7 @@ class Config(object):
             args[:] = self.getini("addopts") + args
         self._checkversion()
         self.pluginmanager.consider_preparse(args)
-        self.pluginmanager.consider_setuptools_entrypoints()
+        self.pluginmanager.load_setuptools_entrypoints("pytest11")
         self.pluginmanager.consider_env()
         self.known_args_namespace = ns = self._parser.parse_known_args(args)
         try:

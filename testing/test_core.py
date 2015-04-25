@@ -383,6 +383,32 @@ class TestAddMethodOrdering:
         results = pm.hook.he_myhook(arg1=17)
         assert results == 18
 
+    def test_load_setuptools_instantiation(self, monkeypatch, pm):
+        pkg_resources = pytest.importorskip("pkg_resources")
+        def my_iter(name):
+            assert name == "hello"
+            class EntryPoint:
+                name = "myname"
+                dist = None
+                def load(self):
+                    class PseudoPlugin:
+                        x = 42
+                    return PseudoPlugin()
+            return iter([EntryPoint()])
+
+        monkeypatch.setattr(pkg_resources, 'iter_entry_points', my_iter)
+        num = pm.load_setuptools_entrypoints("hello")
+        assert num == 1
+        plugin = pm.get_plugin("myname")
+        assert plugin.x == 42
+        assert pm._plugin_distinfo == [(None, plugin)]
+
+    def test_load_setuptools_not_installed(self, monkeypatch, pm):
+        monkeypatch.setitem(py.std.sys.modules, 'pkg_resources',
+            py.std.types.ModuleType("pkg_resources"))
+        assert pm.load_setuptools_entrypoints("qwe") is None
+        # ok, we did not explode
+
 
 class TestPytestPluginInteractions:
 
@@ -931,30 +957,6 @@ class TestPytestPluginManager:
         pytestpm.consider_env()
         l3 = len(pytestpm.get_plugins())
         assert l2 == l3
-
-    def test_consider_setuptools_instantiation(self, monkeypatch, pytestpm):
-        pkg_resources = pytest.importorskip("pkg_resources")
-        def my_iter(name):
-            assert name == "pytest11"
-            class EntryPoint:
-                name = "pytest_mytestplugin"
-                dist = None
-                def load(self):
-                    class PseudoPlugin:
-                        x = 42
-                    return PseudoPlugin()
-            return iter([EntryPoint()])
-
-        monkeypatch.setattr(pkg_resources, 'iter_entry_points', my_iter)
-        pytestpm.consider_setuptools_entrypoints()
-        plugin = pytestpm.get_plugin("pytest_mytestplugin")
-        assert plugin.x == 42
-
-    def test_consider_setuptools_not_installed(self, monkeypatch, pytestpm):
-        monkeypatch.setitem(py.std.sys.modules, 'pkg_resources',
-            py.std.types.ModuleType("pkg_resources"))
-        pytestpm.consider_setuptools_entrypoints()
-        # ok, we did not explode
 
     def test_pluginmanager_ENV_startup(self, testdir, monkeypatch):
         testdir.makepyfile(pytest_x500="#")
