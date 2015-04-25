@@ -112,10 +112,13 @@ class TagTracerSub:
     def __init__(self, root, tags):
         self.root = root
         self.tags = tags
+
     def __call__(self, *args):
         self.root.processmessage(self.tags, args)
+
     def setmyprocessor(self, processor):
         self.root.setprocessor(self.tags, processor)
+
     def get(self, name):
         return self.__class__(self.root, self.tags + (name,))
 
@@ -124,6 +127,7 @@ def raise_wrapfail(wrap_controller, msg):
     co = wrap_controller.gi_code
     raise RuntimeError("wrap_controller at %r %s:%d %s" %
                    (co.co_name, co.co_filename, co.co_firstlineno, msg))
+
 
 def wrapped_call(wrap_controller, func):
     """ Wrap calling to a function with a generator which needs to yield
@@ -208,7 +212,6 @@ class PluginManager(object):
         self._prefix = prefix
         self._excludefunc = excludefunc
         self._name2plugin = {}
-        self._plugins = []
         self._plugin2hookcallers = {}
         self.trace = TagTracer().get("pluginmanage")
         self.hook = HookRelay(self.trace.root.get("hook"))
@@ -244,22 +247,25 @@ class PluginManager(object):
                 self._plugin2hookcallers.setdefault(plugin, []).append(hc)
         return hc
 
-    def register(self, plugin, name=None):
-        """ Register a plugin with the given name and ensure that all its
-        hook implementations are integrated.  If the name is not specified
-        we use the ``__name__`` attribute of the plugin object or, if that
-        doesn't exist, the id of the plugin.  This method will raise a
-        ValueError if the eventual name is already registered. """
-        name = name or self._get_canonical_name(plugin)
-        if self._name2plugin.get(name, None) == -1:
-            return
-        if self.hasplugin(name):
-            raise ValueError("Plugin already registered: %s=%s\n%s" %(
-                              name, plugin, self._name2plugin))
-        self._name2plugin[name] = plugin
-        self._plugins.append(plugin)
+    def get_canonical_name(self, plugin):
+        """ Return canonical name for the plugin object. """
+        return getattr(plugin, "__name__", None) or str(id(plugin))
 
-        # register prefix-matching hooks of the plugin
+    def register(self, plugin, name=None):
+        """ Register a plugin and return its canonical name or None if it was
+        blocked from registering.  Raise a ValueError if the plugin is already
+        registered. """
+        plugin_name = name or self.get_canonical_name(plugin)
+
+        if plugin_name in self._name2plugin or plugin in self._plugin2hookcallers:
+            if self._name2plugin.get(plugin_name, -1) is None:
+                return  # blocked plugin, return None to indicate no registration
+            raise ValueError("Plugin already registered: %s=%s\n%s" %(
+                              plugin_name, plugin, self._name2plugin))
+
+        self._name2plugin[plugin_name] = plugin
+
+        # register prefix-matching hook specs of the plugin
         self._plugin2hookcallers[plugin] = hookcallers = []
         for name in dir(plugin):
             if name.startswith(self._prefix):
@@ -274,17 +280,32 @@ class PluginManager(object):
                     hook._maybe_apply_history(getattr(plugin, name))
                 hookcallers.append(hook)
                 hook._add_plugin(plugin)
-        return True
+        return plugin_name
 
-    def unregister(self, plugin):
-        """ unregister the plugin object and all its contained hook implementations
-        from internal data structures. """
-        self._plugins.remove(plugin)
-        for name, value in list(self._name2plugin.items()):
-            if value == plugin:
-                del self._name2plugin[name]
-        for hookcaller in self._plugin2hookcallers.pop(plugin):
+    def unregister(self, plugin=None, name=None):
+        """ unregister a plugin object and all its contained hook implementations
+        from internal data structures.  One of ``plugin`` or ``name`` needs to
+        be specified. """
+        if name is None:
+            assert plugin is not None
+            name = self.get_canonical_name(plugin)
+
+        if plugin is None:
+            plugin = self.get_plugin(name)
+
+        # None signals blocked registrations, don't delete it
+        if self._name2plugin.get(name):
+            del self._name2plugin[name]
+
+        for hookcaller in self._plugin2hookcallers.pop(plugin, []):
             hookcaller._remove_plugin(plugin)
+
+        return plugin
+
+    def set_blocked(self, name):
+        """ block registrations of the given name, unregister if already registered. """
+        self.unregister(name=name)
+        self._name2plugin[name] = None
 
     def addhooks(self, module_or_class):
         """ add new hook definitions from the given module_or_class using
@@ -302,33 +323,27 @@ class PluginManager(object):
                     for plugin in hc._plugins:
                         self._verify_hook(hc, plugin)
                 names.append(name)
+
         if not names:
             raise ValueError("did not find new %r hooks in %r"
                              %(self._prefix, module_or_class))
 
-    def getplugins(self):
-        """ return the complete list of registered plugins. NOTE that
-        you will get the internal list and need to make a copy if you
-        modify the list."""
-        return self._plugins
+    def get_plugins(self):
+        """ return the set of registered plugins. """
+        return set(self._plugin2hookcallers)
 
-    def isregistered(self, plugin):
-        """ Return True if the plugin is already registered under its
-        canonical name. """
-        return self.hasplugin(self._get_canonical_name(plugin)) or \
-               plugin in self._plugins
+    def is_registered(self, plugin):
+        """ Return True if the plugin is already registered. """
+        return plugin in self._plugin2hookcallers
 
-    def hasplugin(self, name):
-        """ Return True if there is a registered with the given name. """
-        return name in self._name2plugin
-
-    def getplugin(self, name):
+    def get_plugin(self, name):
         """ Return a plugin or None for the given name. """
         return self._name2plugin.get(name)
 
     def _verify_hook(self, hook, plugin):
         method = getattr(plugin, hook.name)
-        pluginname = self._get_canonical_name(plugin)
+        pluginname = self.get_canonical_name(plugin)
+
         if hook.is_historic() and hasattr(method, "hookwrapper"):
             raise PluginValidationError(
                 "Plugin %r\nhook %r\nhistoric incompatible to hookwrapper" %(
@@ -344,6 +359,8 @@ class PluginManager(object):
                        ", ".join(hook.argnames)))
 
     def check_pending(self):
+        """ Verify that all hooks which have not been verified against
+        a hook specification are optional, otherwise raise PluginValidationError"""
         for name in self.hook.__dict__:
             if name.startswith(self._prefix):
                 hook = getattr(self.hook, name)
@@ -353,10 +370,6 @@ class PluginManager(object):
                         if not getattr(method, "optionalhook", False):
                             raise PluginValidationError(
                                 "unknown hook %r in plugin %r" %(name, plugin))
-
-    def _get_canonical_name(self, plugin):
-        return getattr(plugin, "__name__", None) or str(id(plugin))
-
 
 
 class MultiCall:

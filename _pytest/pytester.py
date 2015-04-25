@@ -11,7 +11,7 @@ import subprocess
 import py
 import pytest
 from py.builtin import print_
-from _pytest.core import HookCaller, TracedHookExecution
+from _pytest.core import TracedHookExecution
 
 from _pytest.main import Session, EXIT_OK
 

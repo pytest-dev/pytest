@@ -127,12 +127,16 @@ class PytestPluginManager(PluginManager):
                       kwargs=dict(plugin=plugin, manager=self))
         return ret
 
-    def unregister(self, plugin):
-        super(PytestPluginManager, self).unregister(plugin)
+    def unregister(self, plugin=None, name=None):
+        plugin = super(PytestPluginManager, self).unregister(plugin, name)
         try:
             self._globalplugins.remove(plugin)
         except ValueError:
             pass
+
+    def getplugin(self, name):
+        # deprecated
+        return self.get_plugin(name)
 
     def pytest_configure(self, config):
         config.addinivalue_line("markers",
@@ -238,17 +242,14 @@ class PytestPluginManager(PluginManager):
         except ImportError:
             return # XXX issue a warning
         for ep in iter_entry_points('pytest11'):
-            name = ep.name
-            if name.startswith("pytest_"):
-                name = name[7:]
-            if ep.name in self._name2plugin or name in self._name2plugin:
+            if self.get_plugin(ep.name) or ep.name in self._name2plugin:
                 continue
             try:
                 plugin = ep.load()
             except DistributionNotFound:
                 continue
+            self.register(plugin, name=ep.name)
             self._plugin_distinfo.append((ep.dist, plugin))
-            self.register(plugin, name=name)
 
     def consider_preparse(self, args):
         for opt1,opt2 in zip(args, args[1:]):
@@ -257,14 +258,9 @@ class PytestPluginManager(PluginManager):
 
     def consider_pluginarg(self, arg):
         if arg.startswith("no:"):
-            name = arg[3:]
-            plugin = self.getplugin(name)
-            if plugin is not None:
-                self.unregister(plugin)
-            self._name2plugin[name] = -1
+            self.set_blocked(arg[3:])
         else:
-            if self.getplugin(arg) is None:
-                self.import_plugin(arg)
+            self.import_plugin(arg)
 
     def consider_conftest(self, conftestmodule):
         if self.register(conftestmodule, name=conftestmodule.__file__,
@@ -290,7 +286,7 @@ class PytestPluginManager(PluginManager):
         # basename for historic purposes but must be imported with the
         # _pytest prefix.
         assert isinstance(modname, str)
-        if self.getplugin(modname) is not None:
+        if self.get_plugin(modname) is not None:
             return
         if modname in builtin_plugins:
             importspec = "_pytest." + modname
@@ -736,7 +732,7 @@ class Config(object):
                                     fslocation=None, nodeid=None)
 
     def get_terminal_writer(self):
-        return self.pluginmanager.getplugin("terminalreporter")._tw
+        return self.pluginmanager.get_plugin("terminalreporter")._tw
 
     def pytest_cmdline_parse(self, pluginmanager, args):
         # REF1 assert self == pluginmanager.config, (self, pluginmanager.config)

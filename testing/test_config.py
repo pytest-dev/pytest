@@ -313,7 +313,7 @@ def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch):
     monkeypatch.setattr(pkg_resources, 'iter_entry_points', my_iter)
     config = testdir.parseconfig("-p", "no:mytestplugin")
     plugin = config.pluginmanager.getplugin("mytestplugin")
-    assert plugin == -1
+    assert plugin is None
 
 def test_cmdline_processargs_simple(testdir):
     testdir.makeconftest("""

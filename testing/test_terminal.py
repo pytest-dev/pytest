@@ -457,7 +457,7 @@ class TestTerminalFunctional:
         ])
         assert result.ret == 1
 
-        if not pytestconfig.pluginmanager.hasplugin("xdist"):
+        if not pytestconfig.pluginmanager.get_plugin("xdist"):
             pytest.skip("xdist plugin not installed")
 
         result = testdir.runpytest(p1, '-v', '-n 1')

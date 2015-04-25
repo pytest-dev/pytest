@@ -17,20 +17,34 @@ class TestPluginManager:
         pm.register(42, name="abc")
         with pytest.raises(ValueError):
             pm.register(42, name="abc")
+        with pytest.raises(ValueError):
+            pm.register(42, name="def")
 
     def test_pm(self, pm):
         class A: pass
         a1, a2 = A(), A()
         pm.register(a1)
-        assert pm.isregistered(a1)
+        assert pm.is_registered(a1)
         pm.register(a2, "hello")
-        assert pm.isregistered(a2)
-        l = pm.getplugins()
+        assert pm.is_registered(a2)
+        l = pm.get_plugins()
         assert a1 in l
         assert a2 in l
-        assert pm.getplugin('hello') == a2
-        pm.unregister(a1)
-        assert not pm.isregistered(a1)
+        assert pm.get_plugin('hello') == a2
+        assert pm.unregister(a1) == a1
+        assert not pm.is_registered(a1)
+
+    def test_set_blocked(self, pm):
+        class A: pass
+        a1 = A()
+        name = pm.register(a1)
+        assert pm.is_registered(a1)
+        pm.set_blocked(name)
+        assert not pm.is_registered(a1)
+
+        pm.set_blocked("somename")
+        assert not pm.register(A(), "somename")
+        pm.unregister(name="somename")
 
     def test_register_mismatch_method(self, pytestpm):
         class hello:
@@ -53,29 +67,16 @@ class TestPluginManager:
             pass
         my = MyPlugin()
         pm.register(my)
-        assert pm.getplugins()
+        assert pm.get_plugins()
         my2 = MyPlugin()
         pm.register(my2)
-        assert pm.getplugins()[-2:] == [my, my2]
+        assert set([my,my2]).issubset(pm.get_plugins())
 
-        assert pm.isregistered(my)
-        assert pm.isregistered(my2)
+        assert pm.is_registered(my)
+        assert pm.is_registered(my2)
         pm.unregister(my)
-        assert not pm.isregistered(my)
-        assert pm.getplugins()[-1:] == [my2]
-
-    def test_register_unknown_hooks(self, pm):
-        class Plugin1:
-            def he_method1(self, arg):
-                return arg + 1
-
-        pm.register(Plugin1())
-        class Hooks:
-            def he_method1(self, arg):
-                pass
-        pm.addhooks(Hooks)
-        #assert not pm._unverified_hooks
-        assert pm.hook.he_method1(arg=1) == [2]
+        assert not pm.is_registered(my)
+        assert my not in pm.get_plugins()
 
     def test_register_unknown_hooks(self, pm):
         class Plugin1:
@@ -231,6 +232,26 @@ class TestAddMethodOrdering:
             pass
         assert hc._nonwrappers == [he_method1, he_method1_middle, he_method1_b]
 
+    def test_adding_nonwrappers_trylast3(self, hc, addmeth):
+        @addmeth()
+        def he_method1_a():
+            pass
+
+        @addmeth(trylast=True)
+        def he_method1_b():
+            pass
+
+        @addmeth()
+        def he_method1_c():
+            pass
+
+        @addmeth(trylast=True)
+        def he_method1_d():
+            pass
+        assert hc._nonwrappers == [he_method1_d, he_method1_b,
+                                   he_method1_a, he_method1_c]
+
+
     def test_adding_nonwrappers_trylast2(self, hc, addmeth):
         @addmeth()
         def he_method1_middle():
@@ -258,24 +279,6 @@ class TestAddMethodOrdering:
         def he_method1_b():
             pass
         assert hc._nonwrappers == [he_method1_middle, he_method1_b, he_method1]
-
-    def test_adding_nonwrappers_trylast(self, hc, addmeth):
-        @addmeth()
-        def he_method1_a():
-            pass
-
-        @addmeth(trylast=True)
-        def he_method1_b():
-            pass
-
-        @addmeth()
-        def he_method1_c():
-            pass
-
-        @addmeth(trylast=True)
-        def he_method1_d():
-            pass
-        assert hc._nonwrappers == [he_method1_d, he_method1_b, he_method1_a, he_method1_c]
 
     def test_adding_wrappers_ordering(self, hc, addmeth):
         @addmeth(hookwrapper=True)
@@ -361,7 +364,7 @@ class TestPytestPluginInteractions:
         pm.hook.pytest_addhooks.call_historic(
                                 kwargs=dict(pluginmanager=config.pluginmanager))
         config.pluginmanager._importconftest(conf)
-        #print(config.pluginmanager.getplugins())
+        #print(config.pluginmanager.get_plugins())
         res = config.hook.pytest_myhook(xyz=10)
         assert res == [11]
 
@@ -814,21 +817,21 @@ class TestPytestPluginManager:
         pm = PytestPluginManager()
         mod = py.std.types.ModuleType("x.y.pytest_hello")
         pm.register(mod)
-        assert pm.isregistered(mod)
-        l = pm.getplugins()
+        assert pm.is_registered(mod)
+        l = pm.get_plugins()
         assert mod in l
         pytest.raises(ValueError, "pm.register(mod)")
         pytest.raises(ValueError, lambda: pm.register(mod))
-        #assert not pm.isregistered(mod2)
-        assert pm.getplugins() == l
+        #assert not pm.is_registered(mod2)
+        assert pm.get_plugins() == l
 
     def test_canonical_import(self, monkeypatch):
         mod = py.std.types.ModuleType("pytest_xyz")
         monkeypatch.setitem(py.std.sys.modules, 'pytest_xyz', mod)
         pm = PytestPluginManager()
         pm.import_plugin('pytest_xyz')
-        assert pm.getplugin('pytest_xyz') == mod
-        assert pm.isregistered(mod)
+        assert pm.get_plugin('pytest_xyz') == mod
+        assert pm.is_registered(mod)
 
     def test_consider_module(self, testdir, pytestpm):
         testdir.syspathinsert()
@@ -837,8 +840,8 @@ class TestPytestPluginManager:
         mod = py.std.types.ModuleType("temp")
         mod.pytest_plugins = ["pytest_p1", "pytest_p2"]
         pytestpm.consider_module(mod)
-        assert pytestpm.getplugin("pytest_p1").__name__ == "pytest_p1"
-        assert pytestpm.getplugin("pytest_p2").__name__ == "pytest_p2"
+        assert pytestpm.get_plugin("pytest_p1").__name__ == "pytest_p1"
+        assert pytestpm.get_plugin("pytest_p2").__name__ == "pytest_p2"
 
     def test_consider_module_import_module(self, testdir):
         pytestpm = get_config().pluginmanager
@@ -880,13 +883,13 @@ class TestPytestPluginManager:
         testdir.syspathinsert()
         testdir.makepyfile(xy123="#")
         monkeypatch.setitem(os.environ, 'PYTEST_PLUGINS', 'xy123')
-        l1 = len(pytestpm.getplugins())
+        l1 = len(pytestpm.get_plugins())
         pytestpm.consider_env()
-        l2 = len(pytestpm.getplugins())
+        l2 = len(pytestpm.get_plugins())
         assert l2 == l1 + 1
-        assert pytestpm.getplugin('xy123')
+        assert pytestpm.get_plugin('xy123')
         pytestpm.consider_env()
-        l3 = len(pytestpm.getplugins())
+        l3 = len(pytestpm.get_plugins())
         assert l2 == l3
 
     def test_consider_setuptools_instantiation(self, monkeypatch, pytestpm):
@@ -904,7 +907,7 @@ class TestPytestPluginManager:
 
         monkeypatch.setattr(pkg_resources, 'iter_entry_points', my_iter)
         pytestpm.consider_setuptools_entrypoints()
-        plugin = pytestpm.getplugin("mytestplugin")
+        plugin = pytestpm.get_plugin("pytest_mytestplugin")
         assert plugin.x == 42
 
     def test_consider_setuptools_not_installed(self, monkeypatch, pytestpm):
@@ -918,7 +921,7 @@ class TestPytestPluginManager:
         p = testdir.makepyfile("""
             import pytest
             def test_hello(pytestconfig):
-                plugin = pytestconfig.pluginmanager.getplugin('pytest_x500')
+                plugin = pytestconfig.pluginmanager.get_plugin('pytest_x500')
                 assert plugin is not None
         """)
         monkeypatch.setenv('PYTEST_PLUGINS', 'pytest_x500', prepend=",")
@@ -934,13 +937,13 @@ class TestPytestPluginManager:
         pluginname = "pytest_hello"
         testdir.makepyfile(**{pluginname: ""})
         pytestpm.import_plugin("pytest_hello")
-        len1 = len(pytestpm.getplugins())
+        len1 = len(pytestpm.get_plugins())
         pytestpm.import_plugin("pytest_hello")
-        len2 = len(pytestpm.getplugins())
+        len2 = len(pytestpm.get_plugins())
         assert len1 == len2
-        plugin1 = pytestpm.getplugin("pytest_hello")
+        plugin1 = pytestpm.get_plugin("pytest_hello")
         assert plugin1.__name__.endswith('pytest_hello')
-        plugin2 = pytestpm.getplugin("pytest_hello")
+        plugin2 = pytestpm.get_plugin("pytest_hello")
         assert plugin2 is plugin1
 
     def test_import_plugin_dotted_name(self, testdir, pytestpm):
@@ -951,7 +954,7 @@ class TestPytestPluginManager:
         testdir.mkpydir("pkg").join("plug.py").write("x=3")
         pluginname = "pkg.plug"
         pytestpm.import_plugin(pluginname)
-        mod = pytestpm.getplugin("pkg.plug")
+        mod = pytestpm.get_plugin("pkg.plug")
         assert mod.x == 3
 
     def test_consider_conftest_deps(self, testdir, pytestpm):
@@ -967,15 +970,16 @@ class TestPytestPluginManagerBootstrapming:
 
     def test_plugin_prevent_register(self, pytestpm):
         pytestpm.consider_preparse(["xyz", "-p", "no:abc"])
-        l1 = pytestpm.getplugins()
+        l1 = pytestpm.get_plugins()
         pytestpm.register(42, name="abc")
-        l2 = pytestpm.getplugins()
+        l2 = pytestpm.get_plugins()
         assert len(l2) == len(l1)
+        assert 42 not in l2
 
     def test_plugin_prevent_register_unregistered_alredy_registered(self, pytestpm):
         pytestpm.register(42, name="abc")
-        l1 = pytestpm.getplugins()
+        l1 = pytestpm.get_plugins()
         assert 42 in l1
         pytestpm.consider_preparse(["xyz", "-p", "no:abc"])
-        l2 = pytestpm.getplugins()
+        l2 = pytestpm.get_plugins()
         assert 42 not in l2
