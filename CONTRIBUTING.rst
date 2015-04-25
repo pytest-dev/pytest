@@ -136,12 +136,6 @@ the issues there and submit your pull requests.
    fine to use ``pytest`` as your fork repository name because it will live
    under your user.
 
-#. Create a development environment
-   (will implicitly use http://www.virtualenv.org/en/latest/)::
-
-    $ make develop
-    $ source .env/bin/activate
-
 #. Clone your fork locally using `Mercurial <http://mercurial.selenic.com/>`_
    (``hg``) and create a branch::
 
