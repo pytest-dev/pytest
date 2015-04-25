@@ -96,7 +96,7 @@ class TestAddMethodOrdering:
                     func.trylast = True
                 if hookwrapper:
                     func.hookwrapper = True
-                hc._add_method(func)
+                hc.add_method(func)
                 return func
             return wrap
         return addmeth

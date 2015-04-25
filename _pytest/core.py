@@ -185,7 +185,7 @@ class PluginManager(object):
         for plugin in hc.plugins:
             meth = getattr(plugin, name, None)
             if meth is not None:
-                hc._add_method(meth)
+                hc.add_method(meth)
         return hc
 
     def register(self, plugin, name=None):
@@ -219,8 +219,7 @@ class PluginManager(object):
                 del self._name2plugin[name]
         hookcallers = self._plugin2hookcallers.pop(plugin)
         for hookcaller in hookcallers:
-            hookcaller.plugins.remove(plugin)
-            hookcaller._scan_methods()
+            hookcaller.remove_plugin(plugin)
 
     def addhooks(self, module_or_class):
         """ add new hook definitions from the given module_or_class using
@@ -242,7 +241,7 @@ class PluginManager(object):
                     hc.setspec(firstresult=firstresult, argnames=argnames)
                     for plugin in hc.plugins:
                         self._verify_hook(hc, specfunc, plugin)
-                        hc._add_method(getattr(plugin, name))
+                        hc.add_method(getattr(plugin, name))
                 names.append(name)
         if not names:
             raise ValueError("did not find new %r hooks in %r"
@@ -292,7 +291,7 @@ class PluginManager(object):
                 # we have a hook spec, can verify early
                 self._verify_hook(hook, method, plugin)
                 hook.plugins.append(plugin)
-                hook._add_method(method)
+                hook.add_method(method)
             hookcallers.append(hook)
         return hookcallers
 
@@ -420,13 +419,15 @@ class HookCaller:
         self.argnames = ["__multicall__"] + list(argnames)
         self.firstresult = firstresult
 
-    def _scan_methods(self):
-        self.wrappers[:] = []
-        self.nonwrappers[:] = []
-        for plugin in self.plugins:
-            self._add_method(getattr(plugin, self.name))
+    def remove_plugin(self, plugin):
+        self.plugins.remove(plugin)
+        meth = getattr(plugin, self.name)
+        try:
+            self.nonwrappers.remove(meth)
+        except ValueError:
+            self.wrappers.remove(meth)
 
-    def _add_method(self, meth):
+    def add_method(self, meth):
         assert not self.pre
         if hasattr(meth, 'hookwrapper'):
             self.wrappers.append(meth)
