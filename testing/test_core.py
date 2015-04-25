@@ -64,20 +64,6 @@ class TestPluginManager:
         assert not pm.isregistered(my)
         assert pm.getplugins()[-1:] == [my2]
 
-    def test_listattr(self):
-        plugins = PluginManager("xyz")
-        class api1:
-            x = 41
-        class api2:
-            x = 42
-        class api3:
-            x = 43
-        plugins.register(api1())
-        plugins.register(api2())
-        plugins.register(api3())
-        l = list(plugins.listattr('x'))
-        assert l == [41, 42, 43]
-
     def test_register_unknown_hooks(self, pm):
         class Plugin1:
             def he_method1(self, arg):
@@ -90,6 +76,121 @@ class TestPluginManager:
         pm.addhooks(Hooks)
         #assert not pm._unverified_hooks
         assert pm.hook.he_method1(arg=1) == [2]
+
+class TestAddMethodOrdering:
+    @pytest.fixture
+    def hc(self, pm):
+        class Hooks:
+            def he_method1(self, arg):
+                pass
+        pm.addhooks(Hooks)
+        return pm.hook.he_method1
+
+    @pytest.fixture
+    def addmeth(self, hc):
+        def addmeth(tryfirst=False, trylast=False, hookwrapper=False):
+            def wrap(func):
+                if tryfirst:
+                    func.tryfirst = True
+                if trylast:
+                    func.trylast = True
+                if hookwrapper:
+                    func.hookwrapper = True
+                hc._add_method(func)
+                return func
+            return wrap
+        return addmeth
+
+    def test_adding_nonwrappers(self, hc, addmeth):
+        @addmeth()
+        def he_method1():
+            pass
+
+        @addmeth()
+        def he_method2():
+            pass
+
+        @addmeth()
+        def he_method3():
+            pass
+        assert hc.nonwrappers == [he_method1, he_method2, he_method3]
+
+    def test_adding_nonwrappers_trylast(self, hc, addmeth):
+        @addmeth()
+        def he_method1_middle():
+            pass
+
+        @addmeth(trylast=True)
+        def he_method1():
+            pass
+
+        @addmeth()
+        def he_method1_b():
+            pass
+        assert hc.nonwrappers == [he_method1, he_method1_middle, he_method1_b]
+
+    def test_adding_nonwrappers_trylast2(self, hc, addmeth):
+        @addmeth()
+        def he_method1_middle():
+            pass
+
+        @addmeth()
+        def he_method1_b():
+            pass
+
+        @addmeth(trylast=True)
+        def he_method1():
+            pass
+        assert hc.nonwrappers == [he_method1, he_method1_middle, he_method1_b]
+
+    def test_adding_nonwrappers_tryfirst(self, hc, addmeth):
+        @addmeth(tryfirst=True)
+        def he_method1():
+            pass
+
+        @addmeth()
+        def he_method1_middle():
+            pass
+
+        @addmeth()
+        def he_method1_b():
+            pass
+        assert hc.nonwrappers == [he_method1_middle, he_method1_b, he_method1]
+
+    def test_adding_nonwrappers_trylast(self, hc, addmeth):
+        @addmeth()
+        def he_method1_a():
+            pass
+
+        @addmeth(trylast=True)
+        def he_method1_b():
+            pass
+
+        @addmeth()
+        def he_method1_c():
+            pass
+
+        @addmeth(trylast=True)
+        def he_method1_d():
+            pass
+        assert hc.nonwrappers == [he_method1_d, he_method1_b, he_method1_a, he_method1_c]
+
+    def test_adding_wrappers_ordering(self, hc, addmeth):
+        @addmeth(hookwrapper=True)
+        def he_method1():
+            pass
+
+        @addmeth()
+        def he_method1_middle():
+            pass
+
+        @addmeth(hookwrapper=True)
+        def he_method3():
+            pass
+
+        assert hc.nonwrappers == [he_method1_middle]
+        assert hc.wrappers == [he_method1, he_method3]
+
 
 class TestPytestPluginInteractions:
 
@@ -200,43 +301,6 @@ class TestPytestPluginInteractions:
             pytestpm.register(api1())
         assert pytestpm.trace.root.indent == indent
         assert saveindent[0] > indent
-
-    # lower level API
-
-    def test_listattr(self):
-        pluginmanager = PluginManager("xyz")
-        class My2:
-            x = 42
-        pluginmanager.register(My2())
-        assert not pluginmanager.listattr("hello")
-        assert pluginmanager.listattr("x") == [42]
-
-    def test_listattr_tryfirst(self):
-        class P1:
-            @pytest.mark.tryfirst
-            def m(self):
-                return 17
-
-        class P2:
-            def m(self):
-                return 23
-        class P3:
-            def m(self):
-                return 19
-
-        pluginmanager = PluginManager("xyz")
-        p1 = P1()
-        p2 = P2()
-        p3 = P3()
-        pluginmanager.register(p1)
-        pluginmanager.register(p2)
-        pluginmanager.register(p3)
-        methods = pluginmanager.listattr('m')
-        assert methods == [p2.m, p3.m, p1.m]
-        del P1.m.__dict__['tryfirst']
-        pytest.mark.trylast(getattr(P2.m, 'im_func', P2.m))
-        methods = pluginmanager.listattr('m')
-        assert methods == [p2.m, p1.m, p3.m]
 
 
 def test_namespace_has_default_and_env_plugins(testdir):
@@ -385,35 +449,6 @@ class TestMultiCall:
         res = MultiCall([m2, m1], {}).execute()
         assert res == []
         assert l == ["m1 init", "m2 init", "m2 finish", "m1 finish"]
-
-    def test_listattr_hookwrapper_ordering(self):
-        class P1:
-            @pytest.mark.hookwrapper
-            def m(self):
-                return 17
-
-        class P2:
-            def m(self):
-                return 23
-
-        class P3:
-            @pytest.mark.tryfirst
-            def m(self):
-                return 19
-
-        pluginmanager = PluginManager("xyz")
-        p1 = P1()
-        p2 = P2()
-        p3 = P3()
-        pluginmanager.register(p1)
-        pluginmanager.register(p2)
-        pluginmanager.register(p3)
-        methods = pluginmanager.listattr('m')
-        assert methods == [p2.m, p3.m, p1.m]
-        ## listattr keeps a cache and deleting
-        ## a function attribute requires clearing it
-        #pluginmanager._listattrcache.clear()
-        #del P1.m.__dict__['tryfirst']
 
     def test_hookwrapper_not_yield(self):
         def m1():

@@ -355,7 +355,8 @@ def test_load_initial_conftest_last_ordering(testdir):
             pass
     m = My()
     pm.register(m)
-    l = pm.listattr("pytest_load_initial_conftests")
+    hc = pm.hook.pytest_load_initial_conftests
+    l = hc.nonwrappers + hc.wrappers
     assert l[-1].__module__ == "_pytest.capture"
     assert l[-2] == m.pytest_load_initial_conftests
     assert l[-3].__module__ == "_pytest.config"

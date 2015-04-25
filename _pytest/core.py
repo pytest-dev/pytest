@@ -180,9 +180,13 @@ class PluginManager(object):
 
     def make_hook_caller(self, name, plugins):
         caller = getattr(self.hook, name)
-        methods = self.listattr(name, plugins=plugins)
-        return HookCaller(caller.name, [plugins], firstresult=caller.firstresult,
-                          argnames=caller.argnames, methods=methods)
+        hc = HookCaller(caller.name, plugins, firstresult=caller.firstresult,
+                        argnames=caller.argnames)
+        for plugin in hc.plugins:
+            meth = getattr(plugin, name, None)
+            if meth is not None:
+                hc._add_method(meth)
+        return hc
 
     def register(self, plugin, name=None):
         """ Register a plugin with the given name and ensure that all its
@@ -216,7 +220,7 @@ class PluginManager(object):
         hookcallers = self._plugin2hookcallers.pop(plugin)
         for hookcaller in hookcallers:
             hookcaller.plugins.remove(plugin)
-            self._scan_methods(hookcaller)
+            hookcaller._scan_methods()
 
     def addhooks(self, module_or_class):
         """ add new hook definitions from the given module_or_class using
@@ -231,14 +235,14 @@ class PluginManager(object):
                 argnames = varnames(specfunc, startindex=isclass)
                 if hc is None:
                     hc = HookCaller(name, [], firstresult=firstresult,
-                                    argnames=argnames, methods=[])
+                                    argnames=argnames)
                     setattr(self.hook, name, hc)
                 else:
                     # plugins registered this hook without knowing the spec
                     hc.setspec(firstresult=firstresult, argnames=argnames)
-                    self._scan_methods(hc)
                     for plugin in hc.plugins:
                         self._verify_hook(hc, specfunc, plugin)
+                        hc._add_method(getattr(plugin, name))
                 names.append(name)
         if not names:
             raise ValueError("did not find new %r hooks in %r"
@@ -264,35 +268,10 @@ class PluginManager(object):
         """ Return a plugin or None for the given name. """
         return self._name2plugin.get(name)
 
-    def listattr(self, attrname, plugins=None):
-        if plugins is None:
-            plugins = self._plugins
-        l = []
-        last = []
-        wrappers = []
-        for plugin in plugins:
-            try:
-                meth = getattr(plugin, attrname)
-            except AttributeError:
-                continue
-            if hasattr(meth, 'hookwrapper'):
-                wrappers.append(meth)
-            elif hasattr(meth, 'tryfirst'):
-                last.append(meth)
-            elif hasattr(meth, 'trylast'):
-                l.insert(0, meth)
-            else:
-                l.append(meth)
-        l.extend(last)
-        l.extend(wrappers)
-        return l
-
-    def _scan_methods(self, hookcaller):
-        hookcaller.methods = self.listattr(hookcaller.name, hookcaller.plugins)
-
     def call_plugin(self, plugin, methname, kwargs):
-        return MultiCall(methods=self.listattr(methname, plugins=[plugin]),
-                kwargs=kwargs, firstresult=True).execute()
+        meth = getattr(plugin, methname, None)
+        if meth is not None:
+            return MultiCall(methods=[meth], kwargs=kwargs, firstresult=True).execute()
 
     def _scan_plugin(self, plugin):
         hookcallers = []
@@ -313,7 +292,7 @@ class PluginManager(object):
                 # we have a hook spec, can verify early
                 self._verify_hook(hook, method, plugin)
                 hook.plugins.append(plugin)
-                self._scan_methods(hook)
+                hook._add_method(method)
             hookcallers.append(hook)
         return hookcallers
 
@@ -348,7 +327,7 @@ class MultiCall:
     """ execute a call into multiple python functions/methods. """
 
     def __init__(self, methods, kwargs, firstresult=False):
-        self.methods = list(methods)
+        self.methods = methods
         self.kwargs = kwargs
         self.kwargs["__multicall__"] = self
         self.results = []
@@ -421,14 +400,15 @@ class HookRelay:
 
 
 class HookCaller:
-    def __init__(self, name, plugins, argnames=None, firstresult=None, methods=None):
+    def __init__(self, name, plugins, argnames=None, firstresult=None):
         self.name = name
         self.plugins = plugins
-        self.methods = methods
         if argnames is not None:
             argnames = ["__multicall__"] + list(argnames)
         self.argnames = argnames
         self.firstresult = firstresult
+        self.wrappers = []
+        self.nonwrappers = []
 
     @property
     def pre(self):
@@ -440,14 +420,41 @@ class HookCaller:
         self.argnames = ["__multicall__"] + list(argnames)
         self.firstresult = firstresult
 
+    def _scan_methods(self):
+        self.wrappers[:] = []
+        self.nonwrappers[:] = []
+        for plugin in self.plugins:
+            self._add_method(getattr(plugin, self.name))
+
+    def _add_method(self, meth):
+        assert not self.pre
+        if hasattr(meth, 'hookwrapper'):
+            self.wrappers.append(meth)
+        elif hasattr(meth, 'trylast'):
+            self.nonwrappers.insert(0, meth)
+        elif hasattr(meth, 'tryfirst'):
+            self.nonwrappers.append(meth)
+        else:
+            if not self.nonwrappers or not hasattr(self.nonwrappers[-1], "tryfirst"):
+                self.nonwrappers.append(meth)
+            else:
+                for i in reversed(range(len(self.nonwrappers)-1)):
+                    if hasattr(self.nonwrappers[i], "tryfirst"):
+                        continue
+                    self.nonwrappers.insert(i+1, meth)
+                    break
+                else:
+                    self.nonwrappers.insert(0, meth)
+
     def __repr__(self):
         return "<HookCaller %r>" %(self.name,)
 
     def __call__(self, **kwargs):
-        return self._docall(self.methods, kwargs)
+        return self._docall(self.nonwrappers + self.wrappers, kwargs)
 
     def callextra(self, methods, **kwargs):
-        return self._docall(self.methods + methods, kwargs)
+        return self._docall(self.nonwrappers + methods + self.wrappers,
+                            kwargs)
 
     def _docall(self, methods, kwargs):
         assert not self.pre, self.name
