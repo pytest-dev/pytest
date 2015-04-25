@@ -129,7 +129,18 @@ class TestPluginManager:
                 return arg * 10
 
         pm.register(Plugin())
+        assert l == [10]
 
+    def test_call_extra(self, pm):
+        class Hooks:
+            def he_method1(self, arg):
+                pass
+        pm.addhooks(Hooks)
+
+        def he_method1(arg):
+            return arg * 10
+
+        l = pm.hook.he_method1.callextra([he_method1], arg=1)
         assert l == [10]
 
 

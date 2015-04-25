@@ -447,7 +447,7 @@ class HookRelay:
         self.trace = pm.trace.root.get("hook")
 
 
-class HookCaller:
+class HookCaller(object):
     def __init__(self, name, plugins, argnames=None, firstresult=None,
                  historic=False):
         self.name = name
@@ -461,6 +461,17 @@ class HookCaller:
         self.nonwrappers = []
         if self.historic:
             self._call_history = []
+
+    def clone(self):
+        hc = object.__new__(HookCaller)
+        hc.name = self.name
+        hc.plugins = self.plugins
+        hc.historic = self.historic
+        hc.argnames = self.argnames
+        hc.firstresult = self.firstresult
+        hc.wrappers = list(self.wrappers)
+        hc.nonwrappers = list(self.nonwrappers)
+        return hc
 
     @property
     def pre(self):
@@ -511,8 +522,10 @@ class HookCaller:
 
     def callextra(self, methods, **kwargs):
         assert not self.historic
-        return self._docall(self.nonwrappers + methods + self.wrappers,
-                            kwargs)
+        hc = self.clone()
+        for method in methods:
+            hc.add_method(method)
+        return hc(**kwargs)
 
     def _docall(self, methods, kwargs):
         return MultiCall(methods, kwargs, firstresult=self.firstresult).execute()
@@ -521,10 +534,11 @@ class HookCaller:
         self._call_history.append((kwargs, proc))
         self._docall(self.nonwrappers + self.wrappers, kwargs)
 
-    def _apply_history(self, meth):
+    def _apply_history(self, method):
         if hasattr(self, "_call_history"):
             for kwargs, proc in self._call_history:
-                res = MultiCall([meth], kwargs, firstresult=True).execute()
+                args = [kwargs[argname] for argname in varnames(method)]
+                res = method(*args)
                 if proc is not None:
                     proc(res)
 
