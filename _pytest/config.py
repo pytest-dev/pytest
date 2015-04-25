@@ -115,7 +115,8 @@ class PytestPluginManager(PluginManager):
                 err = py.io.dupfile(err, encoding=encoding)
             except Exception:
                 pass
-            self.set_tracing(err.write)
+            self.trace.root.setwriter(err.write)
+            self.enable_tracing()
 
     def register(self, plugin, name=None, conftest=False):
         ret = super(PytestPluginManager, self).register(plugin, name)

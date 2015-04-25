@@ -426,7 +426,8 @@ class TestPytestPluginInteractions:
                 saveindent.append(pytestpm.trace.root.indent)
                 raise ValueError()
         l = []
-        undo = pytestpm.set_tracing(l.append)
+        pytestpm.trace.root.setwriter(l.append)
+        undo = pytestpm.enable_tracing()
         try:
             indent = pytestpm.trace.root.indent
             p = api1()
@@ -787,109 +788,6 @@ def test_importplugin_issue375(testdir, pytestpm):
         pytestpm.import_plugin("qwe")
     assert "qwe" not in str(excinfo.value)
     assert "aaaa" in str(excinfo.value)
-
-class TestWrapMethod:
-    def test_basic_hapmypath(self):
-        class A:
-            def f(self):
-                return "A.f"
-
-        l = []
-        def f(self):
-            l.append(1)
-            box = yield
-            assert box.result == "A.f"
-            l.append(2)
-        undo = add_method_wrapper(A, f)
-
-        assert A().f() == "A.f"
-        assert l == [1,2]
-        undo()
-        l[:] = []
-        assert A().f() == "A.f"
-        assert l == []
-
-    def test_no_yield(self):
-        class A:
-            def method(self):
-                return
-
-        def method(self):
-            if 0:
-                yield
-
-        add_method_wrapper(A, method)
-        with pytest.raises(RuntimeError) as excinfo:
-            A().method()
-
-        assert "method" in str(excinfo.value)
-        assert "did not yield" in str(excinfo.value)
-
-    def test_method_raises(self):
-        class A:
-            def error(self, val):
-                raise ValueError(val)
-
-        l = []
-        def error(self, val):
-            l.append(val)
-            yield
-            l.append(None)
-
-        undo = add_method_wrapper(A, error)
-
-        with pytest.raises(ValueError):
-            A().error(42)
-        assert l == [42, None]
-        undo()
-        l[:] = []
-        with pytest.raises(ValueError):
-            A().error(42)
-        assert l == []
-
-    def test_controller_swallows_method_raises(self):
-        class A:
-            def error(self, val):
-                raise ValueError(val)
-
-        def error(self, val):
-            box = yield
-            box.force_result(2)
-
-        add_method_wrapper(A, error)
-        assert A().error(42) == 2
-
-    def test_reraise_on_controller_StopIteration(self):
-        class A:
-            def error(self, val):
-                raise ValueError(val)
-
-        def error(self, val):
-            try:
-                yield
-            except ValueError:
-                pass
-
-        add_method_wrapper(A, error)
-        with pytest.raises(ValueError):
-            A().error(42)
-
-    @pytest.mark.xfail(reason="if needed later")
-    def test_modify_call_args(self):
-        class A:
-            def error(self, val1, val2):
-                raise ValueError(val1+val2)
-
-        l = []
-        def error(self):
-            box = yield (1,), {'val2': 2}
-            assert box.excinfo[1].args == (3,)
-            l.append(1)
-
-        add_method_wrapper(A, error)
-        with pytest.raises(ValueError):
-            A().error()
-        assert l == [1]
 
 
 ### to be shifted to own test file
