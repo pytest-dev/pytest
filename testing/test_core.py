@@ -131,6 +131,22 @@ class TestPluginManager:
         pm.register(Plugin())
         assert l == [10]
 
+    def test_register_historic_incompat_hookwrapper(self, pm):
+        class Hooks:
+            @hookspec_opts(historic=True)
+            def he_method1(self, arg):
+                pass
+        pm.addhooks(Hooks)
+
+        l = []
+        class Plugin:
+            @hookimpl_opts(hookwrapper=True)
+            def he_method1(self, arg):
+                l.append(arg)
+
+        with pytest.raises(PluginValidationError):
+            pm.register(Plugin())
+
     def test_call_extra(self, pm):
         class Hooks:
             def he_method1(self, arg):

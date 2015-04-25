@@ -257,8 +257,23 @@ class PluginManager(object):
             raise ValueError("Plugin already registered: %s=%s\n%s" %(
                               name, plugin, self._name2plugin))
         self._name2plugin[name] = plugin
-        self._scan_plugin(plugin)
         self._plugins.append(plugin)
+
+        # register prefix-matching hooks of the plugin
+        self._plugin2hookcallers[plugin] = hookcallers = []
+        for name in dir(plugin):
+            if name.startswith(self._prefix):
+                hook = getattr(self.hook, name, None)
+                if hook is None:
+                    if self._excludefunc is not None and self._excludefunc(name):
+                        continue
+                    hook = HookCaller(name, self._hookexec)
+                    setattr(self.hook, name, hook)
+                elif hook.has_spec():
+                    self._verify_hook(hook, plugin)
+                    hook._maybe_apply_history(getattr(plugin, name))
+                hookcallers.append(hook)
+                hook._add_plugin(plugin)
         return True
 
     def unregister(self, plugin):
@@ -311,29 +326,16 @@ class PluginManager(object):
         """ Return a plugin or None for the given name. """
         return self._name2plugin.get(name)
 
-    def _scan_plugin(self, plugin):
-        self._plugin2hookcallers[plugin] = hookcallers = []
-        for name in dir(plugin):
-            if name[0] == "_" or not name.startswith(self._prefix):
-                continue
-            hook = getattr(self.hook, name, None)
-            method = getattr(plugin, name)
-            if hook is None:
-                if self._excludefunc is not None and self._excludefunc(name):
-                    continue
-                hook = HookCaller(name, self._hookexec)
-                setattr(self.hook, name, hook)
-            elif hook.has_spec():
-                self._verify_hook(hook, plugin)
-                hook._apply_history(method)
-            hookcallers.append(hook)
-            hook._add_plugin(plugin)
-
     def _verify_hook(self, hook, plugin):
         method = getattr(plugin, hook.name)
+        pluginname = self._get_canonical_name(plugin)
+        if hook.is_historic() and hasattr(method, "hookwrapper"):
+            raise PluginValidationError(
+                "Plugin %r\nhook %r\nhistoric incompatible to hookwrapper" %(
+                 pluginname, hook.name))
+
         for arg in varnames(method):
             if arg not in hook.argnames:
-                pluginname = self._get_canonical_name(plugin)
                 raise PluginValidationError(
                     "Plugin %r\nhook %r\nargument %r not available\n"
                      "plugin definition: %s\n"
@@ -369,6 +371,8 @@ class MultiCall:
     def execute(self):
         all_kwargs = self.kwargs
         self.results = results = []
+        firstresult = self.firstresult
+
         while self.methods:
             method = self.methods.pop()
             args = [all_kwargs[argname] for argname in varnames(method)]
@@ -376,10 +380,11 @@ class MultiCall:
                 return wrapped_call(method(*args), self.execute)
             res = method(*args)
             if res is not None:
-                if self.firstresult:
+                if firstresult:
                     return res
                 results.append(res)
-        if not self.firstresult:
+
+        if not firstresult:
             return results
 
     def __repr__(self):
@@ -476,24 +481,19 @@ class HookCaller(object):
 
     def _add_method(self, meth):
         if hasattr(meth, 'hookwrapper'):
-            assert not self.is_historic()
             self._wrappers.append(meth)
         elif hasattr(meth, 'trylast'):
             self._nonwrappers.insert(0, meth)
         elif hasattr(meth, 'tryfirst'):
             self._nonwrappers.append(meth)
         else:
+            # find the last nonwrapper which is not tryfirst marked
             nonwrappers = self._nonwrappers
-            if not nonwrappers or not hasattr(nonwrappers[-1], "tryfirst"):
-                nonwrappers.append(meth)
-            else:
-                for i in reversed(range(len(nonwrappers)-1)):
-                    if hasattr(nonwrappers[i], "tryfirst"):
-                        continue
-                    nonwrappers.insert(i+1, meth)
-                    break
-                else:
-                    nonwrappers.insert(0, meth)
+            i = len(nonwrappers) - 1
+            while i >= 0 and hasattr(nonwrappers[i], "tryfirst"):
+                i -= 1
+            # and insert right in front of the tryfirst ones
+            nonwrappers.insert(i+1, meth)
 
     def __repr__(self):
         return "<HookCaller %r>" %(self.name,)
@@ -518,7 +518,7 @@ class HookCaller(object):
         finally:
             self._nonwrappers, self._wrappers = old
 
-    def _apply_history(self, method):
+    def _maybe_apply_history(self, method):
         if self.is_historic():
             for kwargs, proc in self._call_history:
                 res = self._hookexec(self, [method], kwargs)
