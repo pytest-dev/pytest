@@ -129,6 +129,14 @@ class PytestPluginManager(PluginManager):
         return self.get_plugin(name)
 
     def pytest_configure(self, config):
+        # XXX now that the pluginmanager exposes hookimpl_opts(tryfirst...)
+        # we should remove tryfirst/trylast as markers
+        config.addinivalue_line("markers",
+            "tryfirst: mark a hook implementation function such that the "
+            "plugin machinery will try to call it first/as early as possible.")
+        config.addinivalue_line("markers",
+            "trylast: mark a hook implementation function such that the "
+            "plugin machinery will try to call it last/as late as possible.")
         for warning in self._warnings:
             config.warn(code="I1", message=warning)
 
