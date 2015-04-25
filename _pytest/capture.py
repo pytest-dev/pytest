@@ -29,7 +29,7 @@ def pytest_addoption(parser):
         help="shortcut for --capture=no.")
 
 
-@pytest.mark.hookwrapper
+@pytest.hookimpl_opts(hookwrapper=True)
 def pytest_load_initial_conftests(early_config, parser, args):
     ns = early_config.known_args_namespace
     pluginmanager = early_config.pluginmanager
@@ -101,7 +101,7 @@ class CaptureManager:
         if capfuncarg is not None:
             capfuncarg.close()
 
-    @pytest.mark.hookwrapper
+    @pytest.hookimpl_opts(hookwrapper=True)
     def pytest_make_collect_report(self, collector):
         if isinstance(collector, pytest.File):
             self.resumecapture()
@@ -115,13 +115,13 @@ class CaptureManager:
         else:
             yield
 
-    @pytest.mark.hookwrapper
+    @pytest.hookimpl_opts(hookwrapper=True)
     def pytest_runtest_setup(self, item):
         self.resumecapture()
         yield
         self.suspendcapture_item(item, "setup")
 
-    @pytest.mark.hookwrapper
+    @pytest.hookimpl_opts(hookwrapper=True)
     def pytest_runtest_call(self, item):
         self.resumecapture()
         self.activate_funcargs(item)
@@ -129,17 +129,17 @@ class CaptureManager:
         #self.deactivate_funcargs() called from suspendcapture()
         self.suspendcapture_item(item, "call")
 
-    @pytest.mark.hookwrapper
+    @pytest.hookimpl_opts(hookwrapper=True)
     def pytest_runtest_teardown(self, item):
         self.resumecapture()
         yield
         self.suspendcapture_item(item, "teardown")
 
-    @pytest.mark.tryfirst
+    @pytest.hookimpl_opts(tryfirst=True)
     def pytest_keyboard_interrupt(self, excinfo):
         self.reset_capturings()
 
-    @pytest.mark.tryfirst
+    @pytest.hookimpl_opts(tryfirst=True)
     def pytest_internalerror(self, excinfo):
         self.reset_capturings()
 

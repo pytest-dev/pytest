@@ -458,7 +458,7 @@ Here is an example definition of a hook wrapper::
 
     import pytest
 
-    @pytest.mark.hookwrapper
+    @pytest.hookimpl_opts(hookwrapper=True)
     def pytest_pyfunc_call(pyfuncitem):
         # do whatever you want before the next hook executes
         outcome = yield

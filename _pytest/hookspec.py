@@ -1,5 +1,7 @@
 """ hook specifications for pytest plugins, invoked from main.py and builtin plugins.  """
 
+from _pytest.core import hookspec_opts
+
 # -------------------------------------------------------------------------
 # Initialization
 # -------------------------------------------------------------------------
@@ -15,9 +17,9 @@ def pytest_namespace():
     are parsed.
     """
 
+@hookspec_opts(firstresult=True)
 def pytest_cmdline_parse(pluginmanager, args):
     """return initialized config object, parsing the specified args. """
-pytest_cmdline_parse.firstresult = True
 
 def pytest_cmdline_preparse(config, args):
     """(deprecated) modify command line arguments before option parsing. """
@@ -47,10 +49,10 @@ def pytest_addoption(parser):
     via (deprecated) ``pytest.config``.
     """
 
+@hookspec_opts(firstresult=True)
 def pytest_cmdline_main(config):
     """ called for performing the main command line action. The default
     implementation will invoke the configure hooks and runtest_mainloop. """
-pytest_cmdline_main.firstresult = True
 
 def pytest_load_initial_conftests(args, early_config, parser):
     """ implements the loading of initial conftest files ahead
@@ -64,18 +66,18 @@ def pytest_configure(config):
 def pytest_unconfigure(config):
     """ called before test process is exited.  """
 
+@hookspec_opts(firstresult=True)
 def pytest_runtestloop(session):
     """ called for performing the main runtest loop
     (after collection finished). """
-pytest_runtestloop.firstresult = True
 
 # -------------------------------------------------------------------------
 # collection hooks
 # -------------------------------------------------------------------------
 
+@hookspec_opts(firstresult=True)
 def pytest_collection(session):
     """ perform the collection protocol for the given session. """
-pytest_collection.firstresult = True
 
 def pytest_collection_modifyitems(session, config, items):
     """ called after collection has been performed, may filter or re-order
@@ -84,16 +86,16 @@ def pytest_collection_modifyitems(session, config, items):
 def pytest_collection_finish(session):
     """ called after collection has been performed and modified. """
 
+@hookspec_opts(firstresult=True)
 def pytest_ignore_collect(path, config):
     """ return True to prevent considering this path for collection.
     This hook is consulted for all files and directories prior to calling
     more specific hooks.
     """
-pytest_ignore_collect.firstresult = True
 
+@hookspec_opts(firstresult=True)
 def pytest_collect_directory(path, parent):
     """ called before traversing a directory for collection files. """
-pytest_collect_directory.firstresult = True
 
 def pytest_collect_file(path, parent):
     """ return collection Node or None for the given path. Any new node
@@ -112,29 +114,29 @@ def pytest_collectreport(report):
 def pytest_deselected(items):
     """ called for test items deselected by keyword. """
 
+@hookspec_opts(firstresult=True)
 def pytest_make_collect_report(collector):
     """ perform ``collector.collect()`` and return a CollectReport. """
-pytest_make_collect_report.firstresult = True
 
 # -------------------------------------------------------------------------
 # Python test function related hooks
 # -------------------------------------------------------------------------
 
+@hookspec_opts(firstresult=True)
 def pytest_pycollect_makemodule(path, parent):
     """ return a Module collector or None for the given path.
     This hook will be called for each matching test module path.
     The pytest_collect_file hook needs to be used if you want to
     create test modules for files that do not match as a test module.
     """
-pytest_pycollect_makemodule.firstresult = True
 
+@hookspec_opts(firstresult=True)
 def pytest_pycollect_makeitem(collector, name, obj):
     """ return custom item/collector for a python object in a module, or None.  """
-pytest_pycollect_makeitem.firstresult = True
 
+@hookspec_opts(firstresult=True)
 def pytest_pyfunc_call(pyfuncitem):
     """ call underlying test function. """
-pytest_pyfunc_call.firstresult = True
 
 def pytest_generate_tests(metafunc):
     """ generate (multiple) parametrized calls to a test function."""
@@ -145,6 +147,7 @@ def pytest_generate_tests(metafunc):
 def pytest_itemstart(item, node):
     """ (deprecated, use pytest_runtest_logstart). """
 
+@hookspec_opts(firstresult=True)
 def pytest_runtest_protocol(item, nextitem):
     """ implements the runtest_setup/call/teardown protocol for
     the given test item, including capturing exceptions and calling
@@ -158,7 +161,6 @@ def pytest_runtest_protocol(item, nextitem):
 
     :return boolean: True if no further hook implementations should be invoked.
     """
-pytest_runtest_protocol.firstresult = True
 
 def pytest_runtest_logstart(nodeid, location):
     """ signal the start of running a single test item. """
@@ -178,12 +180,12 @@ def pytest_runtest_teardown(item, nextitem):
                    so that nextitem only needs to call setup-functions.
     """
 
+@hookspec_opts(firstresult=True)
 def pytest_runtest_makereport(item, call):
     """ return a :py:class:`_pytest.runner.TestReport` object
     for the given :py:class:`pytest.Item` and
     :py:class:`_pytest.runner.CallInfo`.
     """
-pytest_runtest_makereport.firstresult = True
 
 def pytest_runtest_logreport(report):
     """ process a test setup/call/teardown report relating to
@@ -220,9 +222,9 @@ def pytest_assertrepr_compare(config, op, left, right):
 def pytest_report_header(config, startdir):
     """ return a string to be displayed as header info for terminal reporting."""
 
+@hookspec_opts(firstresult=True)
 def pytest_report_teststatus(report):
     """ return result-category, shortletter and verbose word for reporting."""
-pytest_report_teststatus.firstresult = True
 
 def pytest_terminal_summary(terminalreporter):
     """ add additional section in terminal summary reporting.  """
@@ -236,9 +238,9 @@ def pytest_logwarning(message, code, nodeid, fslocation):
 # doctest hooks
 # -------------------------------------------------------------------------
 
+@hookspec_opts(firstresult=True)
 def pytest_doctest_prepare_content(content):
     """ return processed content for a given doctest"""
-pytest_doctest_prepare_content.firstresult = True
 
 # -------------------------------------------------------------------------
 # error handling and internal debugging hooks

@@ -7,6 +7,52 @@ import py
 
 py3 = sys.version_info > (3,0)
 
+def hookspec_opts(firstresult=False):
+    """ returns a decorator which will define a function as a hook specfication.
+
+    If firstresult is True the 1:N hook call (N being the number of registered
+    hook implementation functions) will stop at I<=N when the I'th function
+    returns a non-None result.
+    """
+    def setattr_hookspec_opts(func):
+        if firstresult:
+            func.firstresult = firstresult
+        return func
+    return setattr_hookspec_opts
+
+
+def hookimpl_opts(hookwrapper=False, optionalhook=False,
+                  tryfirst=False, trylast=False):
+    """ Return a decorator which marks a function as a hook implementation.
+
+    If optionalhook is True a missing matching hook specification will not result
+    in an error (by default it is an error if no matching spec is found).
+
+    If tryfirst is True this hook implementation will run as early as possible
+    in the chain of N hook implementations for a specfication.
+
+    If trylast is True this hook implementation will run as late as possible
+    in the chain of N hook implementations.
+
+    If hookwrapper is True the hook implementations needs to execute exactly
+    one "yield".  The code before the yield is run early before any non-hookwrapper
+    function is run.  The code after the yield is run after all non-hookwrapper
+    function have run.  The yield receives an ``CallOutcome`` object representing
+    the exception or result outcome of the inner calls (including other hookwrapper
+    calls).
+    """
+    def setattr_hookimpl_opts(func):
+        if hookwrapper:
+            func.hookwrapper = True
+        if optionalhook:
+            func.optionalhook = True
+        if tryfirst:
+            func.tryfirst = True
+        if trylast:
+            func.trylast = True
+        return func
+    return setattr_hookimpl_opts
+
 class TagTracer:
     def __init__(self):
         self._tag2proc = {}

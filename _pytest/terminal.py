@@ -265,7 +265,7 @@ class TerminalReporter:
     def pytest_collection_modifyitems(self):
         self.report_collect(True)
 
-    @pytest.mark.trylast
+    @pytest.hookimpl_opts(trylast=True)
     def pytest_sessionstart(self, session):
         self._sessionstarttime = time.time()
         if not self.showheader:
@@ -350,7 +350,7 @@ class TerminalReporter:
                 indent = (len(stack) - 1) * "  "
                 self._tw.line("%s%s" % (indent, col))
 
-    @pytest.mark.hookwrapper
+    @pytest.hookimpl_opts(hookwrapper=True)
     def pytest_sessionfinish(self, exitstatus):
         outcome = yield
         outcome.get_result()

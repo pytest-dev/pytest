@@ -172,7 +172,7 @@ def pytest_configure(config):
 def pytest_sessionstart(session):
     session._fixturemanager = FixtureManager(session)
 
-@pytest.mark.trylast
+@pytest.hookimpl_opts(trylast=True)
 def pytest_namespace():
     raises.Exception = pytest.fail.Exception
     return {
@@ -191,7 +191,7 @@ def pytestconfig(request):
     return request.config
 
 
-@pytest.mark.trylast
+@pytest.hookimpl_opts(trylast=True)
 def pytest_pyfunc_call(pyfuncitem):
     testfunction = pyfuncitem.obj
     if pyfuncitem._isyieldedfunction():
@@ -219,7 +219,7 @@ def pytest_collect_file(path, parent):
 def pytest_pycollect_makemodule(path, parent):
     return Module(path, parent)
 
-@pytest.mark.hookwrapper
+@pytest.hookimpl_opts(hookwrapper=True)
 def pytest_pycollect_makeitem(collector, name, obj):
     outcome = yield
     res = outcome.get_result()
@@ -1667,7 +1667,7 @@ class FixtureManager:
         self.parsefactories(plugin, nodeid)
         self._seenplugins.add(plugin)
 
-    @pytest.mark.tryfirst
+    @pytest.hookimpl_opts(tryfirst=True)
     def pytest_configure(self, config):
         plugins = config.pluginmanager.getplugins()
         for plugin in plugins:

@@ -26,6 +26,13 @@
   change but it might still break 3rd party plugins which relied on 
   details like especially the pluginmanager.add_shutdown() API.
   Thanks Holger Krekel.
+
+- pluginmanagement: introduce ``pytest.hookimpl_opts`` and 
+  ``pytest.hookspec_opts`` decorators for setting impl/spec 
+  specific parameters.  This substitutes the previous 
+  now deprecated use of ``pytest.mark`` which is meant to 
+  contain markers for test functions only.  
+
  
 2.7.1.dev (compared to 2.7.0)
 -----------------------------

@@ -192,6 +192,53 @@ class TestAddMethodOrdering:
         assert hc.nonwrappers == [he_method1_middle]
         assert hc.wrappers == [he_method1, he_method3]
 
+    def test_hookspec_opts(self, pm):
+        class HookSpec:
+            @hookspec_opts()
+            def he_myhook1(self, arg1):
+                pass
+
+            @hookspec_opts(firstresult=True)
+            def he_myhook2(self, arg1):
+                pass
+
+            @hookspec_opts(firstresult=False)
+            def he_myhook3(self, arg1):
+                pass
+
+        pm.addhooks(HookSpec)
+        assert not pm.hook.he_myhook1.firstresult
+        assert pm.hook.he_myhook2.firstresult
+        assert not pm.hook.he_myhook3.firstresult
+
+
+    def test_hookimpl_opts(self):
+        for name in ["hookwrapper", "optionalhook", "tryfirst", "trylast"]:
+            for val in [True, False]:
+                @hookimpl_opts(**{name: val})
+                def he_myhook1(self, arg1):
+                    pass
+                if val:
+                    assert getattr(he_myhook1, name)
+                else:
+                    assert not hasattr(he_myhook1, name)
+
+    def test_decorator_functional(self, pm):
+        class HookSpec:
+            @hookspec_opts(firstresult=True)
+            def he_myhook(self, arg1):
+                """ add to arg1 """
+        pm.addhooks(HookSpec)
+
+        class Plugin:
+            @hookimpl_opts()
+            def he_myhook(self, arg1):
+                return arg1 + 1
+
+        pm.register(Plugin())
+        results = pm.hook.he_myhook(arg1=17)
+        assert results == 18
+
 
 class TestPytestPluginInteractions:
 

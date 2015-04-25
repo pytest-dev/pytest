@@ -22,7 +22,7 @@ def pytest_addoption(parser):
                help="store internal tracing debug information in 'pytestdebug.log'.")
 
 
-@pytest.mark.hookwrapper
+@pytest.hookimpl_opts(hookwrapper=True)
 def pytest_cmdline_parse():
     outcome = yield
     config = outcome.get_result()
