@@ -381,7 +381,8 @@ class PyCollector(PyobjMixin, pytest.Collector):
         if hasattr(cls, "pytest_generate_tests"):
             methods.append(cls().pytest_generate_tests)
         if methods:
-            self.ihook.pytest_generate_tests.callextra(methods, metafunc=metafunc)
+            self.ihook.pytest_generate_tests.call_extra(methods,
+                                                        dict(metafunc=metafunc))
         else:
             self.ihook.pytest_generate_tests(metafunc=metafunc)
 
@@ -1623,7 +1624,6 @@ class FixtureManager:
         self.session = session
         self.config = session.config
         self._arg2fixturedefs = {}
-        self._seenplugins = set()
         self._holderobjseen = set()
         self._arg2finish = {}
         self._nodeid_and_autousenames = [("", self.config.getini("usefixtures"))]
@@ -1648,11 +1648,7 @@ class FixtureManager:
                                                               node)
         return FuncFixtureInfo(argnames, names_closure, arg2fixturedefs)
 
-    ### XXX this hook should be called for historic events like pytest_configure
-    ### so that we don't have to do the below pytest_configure hook
     def pytest_plugin_registered(self, plugin):
-        if plugin in self._seenplugins:
-            return
         nodeid = None
         try:
             p = py.path.local(plugin.__file__)
@@ -1667,13 +1663,6 @@ class FixtureManager:
                 if p.sep != "/":
                     nodeid = nodeid.replace(p.sep, "/")
         self.parsefactories(plugin, nodeid)
-        self._seenplugins.add(plugin)
-
-    @pytest.hookimpl_opts(tryfirst=True)
-    def pytest_configure(self, config):
-        plugins = config.pluginmanager.getplugins()
-        for plugin in plugins:
-            self.pytest_plugin_registered(plugin)
 
     def _getautousenames(self, nodeid):
         """ return a tuple of fixture names to be used. """

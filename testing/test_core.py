@@ -111,7 +111,7 @@ class TestPluginManager:
                 l.append(arg*10)
         pm.register(Plugin2())
         assert l == [1, 10]
-        pm.hook.he_method1.call_historic(dict(arg=12))
+        pm.hook.he_method1.call_historic(kwargs=dict(arg=12))
         assert l == [1, 10, 120, 12]
 
     def test_with_result_memorized(self, pm):
@@ -122,7 +122,7 @@ class TestPluginManager:
         pm.addhooks(Hooks)
 
         he_method1 = pm.hook.he_method1
-        he_method1.call_historic(proc=lambda res: l.append(res), kwargs=dict(arg=1))
+        he_method1.call_historic(lambda res: l.append(res), dict(arg=1))
         l = []
         class Plugin:
             def he_method1(self, arg):
@@ -140,7 +140,7 @@ class TestPluginManager:
         def he_method1(arg):
             return arg * 10
 
-        l = pm.hook.he_method1.callextra([he_method1], arg=1)
+        l = pm.hook.he_method1.call_extra([he_method1], dict(arg=1))
         assert l == [10]
 
 
@@ -323,7 +323,8 @@ class TestPytestPluginInteractions:
         """)
         config = get_plugin_manager().config
         pm = config.pluginmanager
-        pm.hook.pytest_addhooks.call_historic(dict(pluginmanager=config.pluginmanager))
+        pm.hook.pytest_addhooks.call_historic(
+                                kwargs=dict(pluginmanager=config.pluginmanager))
         config.pluginmanager._importconftest(conf)
         #print(config.pluginmanager.getplugins())
         res = config.hook.pytest_myhook(xyz=10)
@@ -399,10 +400,10 @@ class TestPytestPluginInteractions:
         pytestpm = get_plugin_manager()  # fully initialized with plugins
         saveindent = []
         class api1:
-            def pytest_plugin_registered(self, plugin):
+            def pytest_plugin_registered(self):
                 saveindent.append(pytestpm.trace.root.indent)
         class api2:
-            def pytest_plugin_registered(self, plugin):
+            def pytest_plugin_registered(self):
                 saveindent.append(pytestpm.trace.root.indent)
                 raise ValueError()
         l = []
@@ -412,7 +413,7 @@ class TestPytestPluginInteractions:
             p = api1()
             pytestpm.register(p)
             assert pytestpm.trace.root.indent == indent
-            assert len(l) == 2
+            assert len(l) >= 2
             assert 'pytest_plugin_registered' in l[0]
             assert 'finish' in l[1]
 

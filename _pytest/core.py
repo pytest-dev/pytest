@@ -2,7 +2,7 @@
 PluginManager, basic initialization and tracing.
 """
 import sys
-import inspect
+from inspect import isfunction, ismethod, isclass, formatargspec, getargspec
 import py
 
 py3 = sys.version_info > (3,0)
@@ -267,7 +267,6 @@ class PluginManager(object):
     def addhooks(self, module_or_class):
         """ add new hook definitions from the given module_or_class using
         the prefix/excludefunc with which the PluginManager was initialized. """
-        isclass = int(inspect.isclass(module_or_class))
         names = []
         for name in dir(module_or_class):
             if name.startswith(self._prefix):
@@ -394,17 +393,17 @@ def varnames(func, startindex=None):
         return cache["_varnames"]
     except KeyError:
         pass
-    if inspect.isclass(func):
+    if isclass(func):
         try:
             func = func.__init__
         except AttributeError:
             return ()
         startindex = 1
     else:
-        if not inspect.isfunction(func) and not inspect.ismethod(func):
+        if not isfunction(func) and not ismethod(func):
             func = getattr(func, '__call__', func)
         if startindex is None:
-            startindex = int(inspect.ismethod(func))
+            startindex = int(ismethod(func))
 
     rawcode = py.code.getrawcode(func)
     try:
@@ -461,10 +460,9 @@ class HookCaller(object):
         assert not self.has_spec()
         self._specmodule_or_class = specmodule_or_class
         specfunc = getattr(specmodule_or_class, self.name)
-        self.argnames = ["__multicall__"] + list(varnames(
-            specfunc, startindex=inspect.isclass(specmodule_or_class)
-        ))
-        assert "self" not in self.argnames  # sanity check
+        argnames = varnames(specfunc, startindex=isclass(specmodule_or_class))
+        assert "self" not in argnames  # sanity check
+        self.argnames = ["__multicall__"] + list(argnames)
         self.firstresult = getattr(specfunc, 'firstresult', False)
         if hasattr(specfunc, "historic"):
             self._call_history = []
@@ -512,27 +510,26 @@ class HookCaller(object):
         assert not self.is_historic()
         return self._docall(self._nonwrappers + self._wrappers, kwargs)
 
-    def callextra(self, methods, **kwargs):
+    def call_extra(self, methods, kwargs):
         assert not self.is_historic()
         hc = self.clone()
         for method in methods:
             hc.add_method(method)
         return hc(**kwargs)
 
-    def _docall(self, methods, kwargs):
-        return MultiCall(methods, kwargs, firstresult=self.firstresult).execute()
-
-    def call_historic(self, kwargs, proc=None):
-        self._call_history.append((kwargs, proc))
+    def call_historic(self, proc=None, kwargs=None):
+        self._call_history.append((kwargs or {}, proc))
         self._docall(self._nonwrappers + self._wrappers, kwargs)
 
     def _apply_history(self, method):
         if self.is_historic():
             for kwargs, proc in self._call_history:
-                args = [kwargs[argname] for argname in varnames(method)]
-                res = method(*args)
-                if proc is not None:
-                    proc(res)
+                res = self._docall([method], kwargs)
+                if res and proc is not None:
+                    proc(res[0])
+
+    def _docall(self, methods, kwargs):
+        return MultiCall(methods, kwargs, firstresult=self.firstresult).execute()
 
 
 class PluginValidationError(Exception):
@@ -542,5 +539,5 @@ class PluginValidationError(Exception):
 def formatdef(func):
     return "%s%s" % (
         func.__name__,
-        inspect.formatargspec(*inspect.getargspec(func))
+        formatargspec(*getargspec(func))
     )

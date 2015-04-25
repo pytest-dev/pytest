@@ -20,6 +20,11 @@ def pytest_namespace():
     """
 
 @hookspec_opts(historic=True)
+def pytest_plugin_registered(plugin, manager):
+    """ a new pytest plugin got registered. """
+
+
+@hookspec_opts(historic=True)
 def pytest_addoption(parser):
     """register argparse-style options and ini-style config values.
 
@@ -258,9 +263,6 @@ def pytest_doctest_prepare_content(content):
 # -------------------------------------------------------------------------
 # error handling and internal debugging hooks
 # -------------------------------------------------------------------------
-
-def pytest_plugin_registered(plugin, manager):
-    """ a new pytest plugin got registered. """
 
 def pytest_internalerror(excrepr, excinfo):
     """ called for internal errors. """

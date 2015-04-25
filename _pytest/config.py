@@ -122,8 +122,8 @@ class PytestPluginManager(PluginManager):
         if ret:
             if not conftest:
                 self._globalplugins.append(plugin)
-            self.hook.pytest_plugin_registered(plugin=plugin,
-                                               manager=self)
+            self.hook.pytest_plugin_registered.call_historic(
+                      kwargs=dict(plugin=plugin, manager=self))
         return ret
 
     def unregister(self, plugin):
@@ -707,8 +707,8 @@ class Config(object):
         def do_setns(dic):
             import pytest
             setns(pytest, dic)
-        self.hook.pytest_namespace.call_historic({}, proc=do_setns)
-        self.hook.pytest_addoption.call_historic(dict(parser=self._parser))
+        self.hook.pytest_namespace.call_historic(do_setns, {})
+        self.hook.pytest_addoption.call_historic(kwargs=dict(parser=self._parser))
 
     def add_cleanup(self, func):
         """ Add a function to be called when the config object gets out of
@@ -718,7 +718,7 @@ class Config(object):
     def _do_configure(self):
         assert not self._configured
         self._configured = True
-        self.hook.pytest_configure.call_historic(dict(config=self))
+        self.hook.pytest_configure.call_historic(kwargs=dict(config=self))
 
     def _ensure_unconfigure(self):
         if self._configured:
@@ -840,7 +840,8 @@ class Config(object):
         assert not hasattr(self, 'args'), (
                 "can only parse cmdline args at most once per Config object")
         self._origargs = args
-        self.hook.pytest_addhooks.call_historic(dict(pluginmanager=self.pluginmanager))
+        self.hook.pytest_addhooks.call_historic(
+                                  kwargs=dict(pluginmanager=self.pluginmanager))
         self._preparse(args)
         # XXX deprecated hook:
         self.hook.pytest_cmdline_preparse(config=self, args=args)
