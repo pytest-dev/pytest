@@ -118,7 +118,7 @@ class PytestPluginManager(PluginManager):
             self.trace.root.setwriter(err.write)
             self.enable_tracing()
 
-    def register(self, plugin, name=None, conftest=False):
+    def register(self, plugin, name=None):
         ret = super(PytestPluginManager, self).register(plugin, name)
         if ret:
             self.hook.pytest_plugin_registered.call_historic(
@@ -263,8 +263,7 @@ class PytestPluginManager(PluginManager):
             self.import_plugin(arg)
 
     def consider_conftest(self, conftestmodule):
-        if self.register(conftestmodule, name=conftestmodule.__file__,
-                         conftest=True):
+        if self.register(conftestmodule, name=conftestmodule.__file__):
             self.consider_module(conftestmodule)
 
     def consider_env(self):

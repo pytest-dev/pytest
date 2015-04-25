@@ -203,9 +203,8 @@ class PluginManager(object):
     plugin objects.  An optional excludefunc allows to blacklist names which
     are not considered as hooks despite a matching prefix.
 
-    For debugging purposes you can call ``set_tracing(writer)``
-    which will subsequently send debug information to the specified
-    write function.
+    For debugging purposes you can call ``enable_tracing()``
+    which will subsequently send debug information to the trace helper.
     """
 
     def __init__(self, prefix, excludefunc=None):
@@ -219,6 +218,8 @@ class PluginManager(object):
                                MultiCall(methods, kwargs, hook.firstresult).execute()
 
     def _hookexec(self, hook, methods, kwargs):
+        # called from all hookcaller instances.
+        # enable_tracing will set its own wrapping function at self._inner_hookexec
         return self._inner_hookexec(hook, methods, kwargs)
 
     def enable_tracing(self):
@@ -237,9 +238,9 @@ class PluginManager(object):
         return TracedHookExecution(self, before, after).undo
 
     def subset_hook_caller(self, name, remove_plugins):
-        """ Return a new HookCaller instance which manages calls to
-        the plugins but without hooks from the plugins in remove_plugins
-        taking part. """
+        """ Return a new HookCaller instance for the named method
+        which manages calls to all registered plugins except the
+        ones from remove_plugins. """
         hc = getattr(self.hook, name)
         plugins_to_remove = [plugin for plugin in remove_plugins
                                     if hasattr(plugin, name)]
@@ -496,7 +497,7 @@ class HookCaller(object):
         hc.argnames = self.argnames
         hc.firstresult = self.firstresult
         # we keep track of this hook caller so it
-        # gets properly removed on plugin unregistration
+        # gets properly pruned on plugin unregistration
         self._subcaller.append(hc)
         return hc
 
