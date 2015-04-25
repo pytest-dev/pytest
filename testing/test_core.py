@@ -180,7 +180,7 @@ class TestAddMethodOrdering:
         @addmeth()
         def he_method3():
             pass
-        assert hc.nonwrappers == [he_method1, he_method2, he_method3]
+        assert hc._nonwrappers == [he_method1, he_method2, he_method3]
 
     def test_adding_nonwrappers_trylast(self, hc, addmeth):
         @addmeth()
@@ -194,7 +194,7 @@ class TestAddMethodOrdering:
         @addmeth()
         def he_method1_b():
             pass
-        assert hc.nonwrappers == [he_method1, he_method1_middle, he_method1_b]
+        assert hc._nonwrappers == [he_method1, he_method1_middle, he_method1_b]
 
     def test_adding_nonwrappers_trylast2(self, hc, addmeth):
         @addmeth()
@@ -208,7 +208,7 @@ class TestAddMethodOrdering:
         @addmeth(trylast=True)
         def he_method1():
             pass
-        assert hc.nonwrappers == [he_method1, he_method1_middle, he_method1_b]
+        assert hc._nonwrappers == [he_method1, he_method1_middle, he_method1_b]
 
     def test_adding_nonwrappers_tryfirst(self, hc, addmeth):
         @addmeth(tryfirst=True)
@@ -222,7 +222,7 @@ class TestAddMethodOrdering:
         @addmeth()
         def he_method1_b():
             pass
-        assert hc.nonwrappers == [he_method1_middle, he_method1_b, he_method1]
+        assert hc._nonwrappers == [he_method1_middle, he_method1_b, he_method1]
 
     def test_adding_nonwrappers_trylast(self, hc, addmeth):
         @addmeth()
@@ -240,7 +240,7 @@ class TestAddMethodOrdering:
         @addmeth(trylast=True)
         def he_method1_d():
             pass
-        assert hc.nonwrappers == [he_method1_d, he_method1_b, he_method1_a, he_method1_c]
+        assert hc._nonwrappers == [he_method1_d, he_method1_b, he_method1_a, he_method1_c]
 
     def test_adding_wrappers_ordering(self, hc, addmeth):
         @addmeth(hookwrapper=True)
@@ -255,8 +255,8 @@ class TestAddMethodOrdering:
         def he_method3():
             pass
 
-        assert hc.nonwrappers == [he_method1_middle]
-        assert hc.wrappers == [he_method1, he_method3]
+        assert hc._nonwrappers == [he_method1_middle]
+        assert hc._wrappers == [he_method1, he_method3]
 
     def test_hookspec_opts(self, pm):
         class HookSpec:
