@@ -236,6 +236,21 @@ class PluginManager(object):
 
         return TracedHookExecution(self, before, after).undo
 
+    def subset_hook_caller(self, name, remove_plugins):
+        """ Return a new HookCaller instance which manages calls to
+        the plugins but without hooks from remove_plugins taking part. """
+        hc = getattr(self.hook, name)
+        plugins_to_remove = [plugin for plugin in remove_plugins
+                                    if hasattr(plugin, name)]
+        if plugins_to_remove:
+            hc = hc.clone()
+            for plugin in plugins_to_remove:
+                hc._remove_plugin(plugin)
+            # we also keep track of this hook caller so it
+            # gets properly removed on plugin unregistration
+            self._plugin2hookcallers.setdefault(plugin, []).append(hc)
+        return hc
+
     def make_hook_caller(self, name, plugins):
         """ Return a new HookCaller instance which manages calls to
         all methods named "name" in the plugins. The new hook caller

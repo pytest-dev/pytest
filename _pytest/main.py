@@ -362,9 +362,6 @@ class Node(object):
     def listnames(self):
         return [x.name for x in self.listchain()]
 
-    def getplugins(self):
-        return self.config._getmatchingplugins(self.fspath)
-
     def addfinalizer(self, fin):
         """ register a function to be called when this node is finalized.
 

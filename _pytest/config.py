@@ -197,6 +197,7 @@ class PytestPluginManager(PluginManager):
                 if conftestpath.check(file=1):
                     mod = self._importconftest(conftestpath)
                     clist.append(mod)
+
             self._path2confmods[path] = clist
             return clist
 
@@ -220,6 +221,7 @@ class PytestPluginManager(PluginManager):
                 mod = conftestpath.pyimport()
             except Exception:
                 raise ConftestImportFailure(conftestpath, sys.exc_info())
+
             self._conftestpath2mod[conftestpath] = mod
             dirpath = conftestpath.dirpath()
             if dirpath in self._path2confmods:

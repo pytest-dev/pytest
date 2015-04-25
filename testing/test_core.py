@@ -195,6 +195,44 @@ class TestPluginManager:
         hc(arg=2)
         assert l == [10]
 
+    def test_subset_hook_caller(self, pm):
+        class Hooks:
+            def he_method1(self, arg):
+                pass
+        pm.addhooks(Hooks)
+
+        l = []
+        class Plugin1:
+            def he_method1(self, arg):
+                l.append(arg)
+        class Plugin2:
+            def he_method1(self, arg):
+                l.append(arg*10)
+        class PluginNo:
+            pass
+
+        plugin1, plugin2, plugin3 = Plugin1(), Plugin2(), PluginNo()
+        pm.register(plugin1)
+        pm.register(plugin2)
+        pm.register(plugin3)
+        pm.hook.he_method1(arg=1)
+        assert l == [10, 1]
+        l[:] = []
+
+        hc = pm.subset_hook_caller("he_method1", [plugin1])
+        hc(arg=2)
+        assert l == [20]
+        l[:] = []
+
+        hc = pm.subset_hook_caller("he_method1", [plugin2])
+        hc(arg=2)
+        assert l == [2]
+        l[:] = []
+
+        pm.unregister(plugin1)
+        hc(arg=2)
+        assert l == []
+
 
 class TestAddMethodOrdering:
     @pytest.fixture
