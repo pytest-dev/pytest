@@ -348,8 +348,8 @@ def test_notify_exception(testdir, capfd):
 
 
 def test_load_initial_conftest_last_ordering(testdir):
-    from _pytest.config  import get_plugin_manager
-    pm = get_plugin_manager()
+    from _pytest.config  import get_config
+    pm = get_config().pluginmanager
     class My:
         def pytest_load_initial_conftests(self):
             pass

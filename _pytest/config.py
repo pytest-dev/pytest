@@ -60,17 +60,17 @@ builtin_plugins.add("pytester")
 
 def _preloadplugins():
     assert not _preinit
-    _preinit.append(get_plugin_manager())
+    _preinit.append(get_config())
 
-def get_plugin_manager():
+def get_config():
     if _preinit:
         return _preinit.pop(0)
     # subsequent calls to main will create a fresh instance
     pluginmanager = PytestPluginManager()
-    pluginmanager.config = Config(pluginmanager) # XXX attr needed?
+    config = Config(pluginmanager)
     for spec in default_plugins:
         pluginmanager.import_plugin(spec)
-    return pluginmanager
+    return config
 
 def _prepareconfig(args=None, plugins=None):
     if args is None:
@@ -81,7 +81,7 @@ def _prepareconfig(args=None, plugins=None):
         if not isinstance(args, str):
             raise ValueError("not a string or argument list: %r" % (args,))
         args = shlex.split(args)
-    pluginmanager = get_plugin_manager()
+    pluginmanager = get_config().pluginmanager
     if plugins:
         for plugin in plugins:
             pluginmanager.register(plugin)
@@ -738,7 +738,7 @@ class Config(object):
         return self.pluginmanager.getplugin("terminalreporter")._tw
 
     def pytest_cmdline_parse(self, pluginmanager, args):
-        assert self == pluginmanager.config, (self, pluginmanager.config)
+        # REF1 assert self == pluginmanager.config, (self, pluginmanager.config)
         self.parse(args)
         return self
 
@@ -768,8 +768,7 @@ class Config(object):
     @classmethod
     def fromdictargs(cls, option_dict, args):
         """ constructor useable for subprocesses. """
-        pluginmanager = get_plugin_manager()
-        config = pluginmanager.config
+        config = get_config()
         config._preparse(args, addopts=False)
         config.option.__dict__.update(option_dict)
         for x in config.option.plugins:

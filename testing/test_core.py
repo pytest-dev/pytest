@@ -1,6 +1,6 @@
 import pytest, py, os
 from _pytest.core import * # noqa
-from _pytest.config import get_plugin_manager
+from _pytest.config import get_config
 
 
 @pytest.fixture
@@ -41,14 +41,14 @@ class TestPluginManager:
             pytestpm.check_pending()
 
     def test_register_mismatch_arg(self):
-        pm = get_plugin_manager()
+        pm = get_config().pluginmanager
         class hello:
             def pytest_configure(self, asd):
                 pass
         pytest.raises(Exception, lambda: pm.register(hello()))
 
     def test_register(self):
-        pm = get_plugin_manager()
+        pm = get_config().pluginmanager
         class MyPlugin:
             pass
         my = MyPlugin()
@@ -340,7 +340,7 @@ class TestPytestPluginInteractions:
             def pytest_myhook(xyz):
                 return xyz + 1
         """)
-        config = get_plugin_manager().config
+        config = get_config()
         pm = config.pluginmanager
         pm.hook.pytest_addhooks.call_historic(
                                 kwargs=dict(pluginmanager=config.pluginmanager))
@@ -416,7 +416,7 @@ class TestPytestPluginInteractions:
         assert len(l) == 2
 
     def test_hook_tracing(self):
-        pytestpm = get_plugin_manager()  # fully initialized with plugins
+        pytestpm = get_config().pluginmanager  # fully initialized with plugins
         saveindent = []
         class api1:
             def pytest_plugin_registered(self):
@@ -927,7 +927,7 @@ class TestPytestPluginManager:
         assert pytestpm.getplugin("pytest_p2").__name__ == "pytest_p2"
 
     def test_consider_module_import_module(self, testdir):
-        pytestpm = get_plugin_manager()
+        pytestpm = get_config().pluginmanager
         mod = py.std.types.ModuleType("x")
         mod.pytest_plugins = "pytest_a"
         aplugin = testdir.makepyfile(pytest_a="#")
