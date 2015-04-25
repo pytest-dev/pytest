@@ -181,7 +181,7 @@ class PluginManager(object):
     def make_hook_caller(self, name, plugins):
         caller = getattr(self.hook, name)
         methods = self.listattr(name, plugins=plugins)
-        return HookCaller(caller.name, caller.firstresult,
+        return HookCaller(caller.name, [plugins], firstresult=caller.firstresult,
                           argnames=caller.argnames, methods=methods)
 
     def register(self, plugin, name=None):
@@ -201,13 +201,9 @@ class PluginManager(object):
         return self._do_register(plugin, name)
 
     def _do_register(self, plugin, name):
-        hookcallers = list(self._scan_plugin(plugin))
-        self._plugin2hookcallers[plugin] = hookcallers
+        self._plugin2hookcallers[plugin] = self._scan_plugin(plugin)
         self._name2plugin[name] = plugin
         self._plugins.append(plugin)
-        # rescan all methods for the hookcallers we found
-        for hookcaller in hookcallers:
-            self._scan_methods(hookcaller)
         return True
 
     def unregister(self, plugin):
@@ -219,6 +215,7 @@ class PluginManager(object):
                 del self._name2plugin[name]
         hookcallers = self._plugin2hookcallers.pop(plugin)
         for hookcaller in hookcallers:
+            hookcaller.plugins.remove(plugin)
             self._scan_methods(hookcaller)
 
     def addhooks(self, module_or_class):
@@ -228,11 +225,20 @@ class PluginManager(object):
         names = []
         for name in dir(module_or_class):
             if name.startswith(self._prefix):
-                method = module_or_class.__dict__[name]
-                firstresult = getattr(method, 'firstresult', False)
-                hc = HookCaller(name, firstresult=firstresult,
-                                argnames=varnames(method, startindex=isclass))
-                setattr(self.hook, name, hc)
+                specfunc = module_or_class.__dict__[name]
+                firstresult = getattr(specfunc, 'firstresult', False)
+                hc = getattr(self.hook, name, None)
+                argnames = varnames(specfunc, startindex=isclass)
+                if hc is None:
+                    hc = HookCaller(name, [], firstresult=firstresult,
+                                    argnames=argnames, methods=[])
+                    setattr(self.hook, name, hc)
+                else:
+                    # plugins registered this hook without knowing the spec
+                    hc.setspec(firstresult=firstresult, argnames=argnames)
+                    self._scan_methods(hc)
+                    for plugin in hc.plugins:
+                        self._verify_hook(hc, specfunc, plugin)
                 names.append(name)
         if not names:
             raise ValueError("did not find new %r hooks in %r"
@@ -282,18 +288,14 @@ class PluginManager(object):
         return l
 
     def _scan_methods(self, hookcaller):
-        hookcaller.methods = self.listattr(hookcaller.name)
+        hookcaller.methods = self.listattr(hookcaller.name, hookcaller.plugins)
 
     def call_plugin(self, plugin, methname, kwargs):
         return MultiCall(methods=self.listattr(methname, plugins=[plugin]),
                 kwargs=kwargs, firstresult=True).execute()
 
-
     def _scan_plugin(self, plugin):
-        def fail(msg, *args):
-            name = getattr(plugin, '__name__', plugin)
-            raise PluginValidationError("plugin %r\n%s" %(name, msg % args))
-
+        hookcallers = []
         for name in dir(plugin):
             if name[0] == "_" or not name.startswith(self._prefix):
                 continue
@@ -302,17 +304,40 @@ class PluginManager(object):
             if hook is None:
                 if self._excludefunc is not None and self._excludefunc(name):
                     continue
-                if getattr(method, 'optionalhook', False):
-                    continue
-                fail("found unknown hook: %r", name)
-            for arg in varnames(method):
-                if arg not in hook.argnames:
-                    fail("argument %r not available\n"
-                         "actual definition: %s\n"
-                         "available hookargs: %s",
-                         arg, formatdef(method),
-                           ", ".join(hook.argnames))
-            yield hook
+                hook = HookCaller(name, [plugin])
+                setattr(self.hook, name, hook)
+            elif hook.pre:
+                # there is only a pre non-specced stub
+                hook.plugins.append(plugin)
+            else:
+                # we have a hook spec, can verify early
+                self._verify_hook(hook, method, plugin)
+                hook.plugins.append(plugin)
+                self._scan_methods(hook)
+            hookcallers.append(hook)
+        return hookcallers
+
+    def _verify_hook(self, hook, method, plugin):
+        for arg in varnames(method):
+            if arg not in hook.argnames:
+                pluginname = self._get_canonical_name(plugin)
+                raise PluginValidationError(
+                    "Plugin %r\nhook %r\nargument %r not available\n"
+                     "plugin definition: %s\n"
+                     "available hookargs: %s" %(
+                     pluginname, hook.name, arg, formatdef(method),
+                       ", ".join(hook.argnames)))
+
+    def check_pending(self):
+        for name in self.hook.__dict__:
+            if name.startswith(self._prefix):
+                hook = getattr(self.hook, name)
+                if hook.pre:
+                    for plugin in hook.plugins:
+                        method = getattr(plugin, hook.name)
+                        if not getattr(method, "optionalhook", False):
+                            raise PluginValidationError(
+                                "unknown hook %r in plugin %r" %(name, plugin))
 
     def _get_canonical_name(self, plugin):
         return getattr(plugin, "__name__", None) or str(id(plugin))
@@ -396,13 +421,24 @@ class HookRelay:
 
 
 class HookCaller:
-    def __init__(self, name, firstresult, argnames, methods=()):
+    def __init__(self, name, plugins, argnames=None, firstresult=None, methods=None):
         self.name = name
-        self.firstresult = firstresult
-        self.argnames = ["__multicall__"]
-        self.argnames.extend(argnames)
-        assert "self" not in argnames  # sanity check
+        self.plugins = plugins
         self.methods = methods
+        if argnames is not None:
+            argnames = ["__multicall__"] + list(argnames)
+        self.argnames = argnames
+        self.firstresult = firstresult
+
+    @property
+    def pre(self):
+        return self.argnames is None
+
+    def setspec(self, argnames, firstresult):
+        assert self.pre
+        assert "self" not in argnames  # sanity check
+        self.argnames = ["__multicall__"] + list(argnames)
+        self.firstresult = firstresult
 
     def __repr__(self):
         return "<HookCaller %r>" %(self.name,)
@@ -414,6 +450,7 @@ class HookCaller:
         return self._docall(self.methods + methods, kwargs)
 
     def _docall(self, methods, kwargs):
+        assert not self.pre, self.name
         return MultiCall(methods, kwargs,
                          firstresult=self.firstresult).execute()
 

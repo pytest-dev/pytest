@@ -32,12 +32,13 @@ class TestPluginManager:
         pm.unregister(a1)
         assert not pm.isregistered(a1)
 
-    def test_register_mismatch_method(self):
-        pm = get_plugin_manager()
+    def test_register_mismatch_method(self, pytestpm):
         class hello:
             def pytest_gurgel(self):
                 pass
-        pytest.raises(Exception, lambda: pm.register(hello()))
+        pytestpm.register(hello())
+        with pytest.raises(PluginValidationError):
+            pytestpm.check_pending()
 
     def test_register_mismatch_arg(self):
         pm = get_plugin_manager()
@@ -77,6 +78,18 @@ class TestPluginManager:
         l = list(plugins.listattr('x'))
         assert l == [41, 42, 43]
 
+    def test_register_unknown_hooks(self, pm):
+        class Plugin1:
+            def he_method1(self, arg):
+                return arg + 1
+
+        pm.register(Plugin1())
+        class Hooks:
+            def he_method1(self, arg):
+                pass
+        pm.addhooks(Hooks)
+        #assert not pm._unverified_hooks
+        assert pm.hook.he_method1(arg=1) == [2]
 
 class TestPytestPluginInteractions:
 

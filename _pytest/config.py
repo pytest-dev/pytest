@@ -38,6 +38,7 @@ def main(args=None, plugins=None):
         tw.line("ERROR: could not load %s\n" % (e.path), red=True)
         return 4
     else:
+        config.pluginmanager.check_pending()
         return config.hook.pytest_cmdline_main(config=config)
 
 class cmdline:  # compatibility namespace
