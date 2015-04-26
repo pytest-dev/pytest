@@ -242,14 +242,19 @@ class PluginManager(object):
         """ Return a new HookCaller instance for the named method
         which manages calls to all registered plugins except the
         ones from remove_plugins. """
-        hc = getattr(self.hook, name)
+        orig = getattr(self.hook, name)
         plugins_to_remove = [plugin for plugin in remove_plugins
                                     if hasattr(plugin, name)]
         if plugins_to_remove:
-            hc = hc.clone()
-            for plugin in plugins_to_remove:
-                hc._remove_plugin(plugin)
-        return hc
+            hc = HookCaller(orig.name, orig._hookexec, orig._specmodule_or_class)
+            for plugin in orig._plugins:
+                if plugin not in plugins_to_remove:
+                    hc._add_plugin(plugin)
+                    # we also keep track of this hook caller so it
+                    # gets properly removed on plugin unregistration
+                    self._plugin2hookcallers.setdefault(plugin, []).append(hc)
+            return hc
+        return orig
 
     def get_canonical_name(self, plugin):
         """ Return canonical name for a plugin object. """
@@ -488,7 +493,6 @@ class HookCaller(object):
         self._wrappers = []
         self._nonwrappers = []
         self._hookexec = hook_execute
-        self._subcaller = []
         if specmodule_or_class is not None:
             self.set_specification(specmodule_or_class)
 
@@ -506,21 +510,6 @@ class HookCaller(object):
         if hasattr(specfunc, "historic"):
             self._call_history = []
 
-    def clone(self):
-        assert not self.is_historic()
-        hc = object.__new__(HookCaller)
-        hc.name = self.name
-        hc._plugins = list(self._plugins)
-        hc._wrappers = list(self._wrappers)
-        hc._nonwrappers = list(self._nonwrappers)
-        hc._hookexec = self._hookexec
-        hc.argnames = self.argnames
-        hc.firstresult = self.firstresult
-        # we keep track of this hook caller so it
-        # gets properly pruned on plugin unregistration
-        self._subcaller.append(hc)
-        return hc
-
     def is_historic(self):
         return hasattr(self, "_call_history")
 
@@ -531,10 +520,6 @@ class HookCaller(object):
             self._nonwrappers.remove(meth)
         except ValueError:
             self._wrappers.remove(meth)
-        if hasattr(self, "_subcaller"):
-            for hc in self._subcaller:
-                if plugin in hc._plugins:
-                    hc._remove_plugin(plugin)
 
     def _add_plugin(self, plugin):
         self._plugins.append(plugin)
@@ -553,6 +538,7 @@ class HookCaller(object):
             i = len(nonwrappers) - 1
             while i >= 0 and hasattr(nonwrappers[i], "tryfirst"):
                 i -= 1
+
             # and insert right in front of the tryfirst ones
             nonwrappers.insert(i+1, meth)
 
