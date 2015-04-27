@@ -172,7 +172,7 @@ def pytest_configure(config):
 def pytest_sessionstart(session):
     session._fixturemanager = FixtureManager(session)
 
-@pytest.mark.trylast
+@pytest.hookimpl_opts(trylast=True)
 def pytest_namespace():
     raises.Exception = pytest.fail.Exception
     return {
@@ -191,7 +191,7 @@ def pytestconfig(request):
     return request.config
 
 
-@pytest.mark.trylast
+@pytest.hookimpl_opts(trylast=True)
 def pytest_pyfunc_call(pyfuncitem):
     testfunction = pyfuncitem.obj
     if pyfuncitem._isyieldedfunction():
@@ -219,7 +219,7 @@ def pytest_collect_file(path, parent):
 def pytest_pycollect_makemodule(path, parent):
     return Module(path, parent)
 
-@pytest.mark.hookwrapper
+@pytest.hookimpl_opts(hookwrapper=True)
 def pytest_pycollect_makeitem(collector, name, obj):
     outcome = yield
     res = outcome.get_result()
@@ -375,13 +375,16 @@ class PyCollector(PyobjMixin, pytest.Collector):
         fixtureinfo = fm.getfixtureinfo(self, funcobj, cls)
         metafunc = Metafunc(funcobj, fixtureinfo, self.config,
                             cls=cls, module=module)
-        try:
-            methods = [module.pytest_generate_tests]
-        except AttributeError:
-            methods = []
+        methods = []
+        if hasattr(module, "pytest_generate_tests"):
+            methods.append(module.pytest_generate_tests)
         if hasattr(cls, "pytest_generate_tests"):
             methods.append(cls().pytest_generate_tests)
-        self.ihook.pytest_generate_tests.callextra(methods, metafunc=metafunc)
+        if methods:
+            self.ihook.pytest_generate_tests.call_extra(methods,
+                                                        dict(metafunc=metafunc))
+        else:
+            self.ihook.pytest_generate_tests(metafunc=metafunc)
 
         Function = self._getcustomclass("Function")
         if not metafunc._calls:
@@ -1621,7 +1624,6 @@ class FixtureManager:
         self.session = session
         self.config = session.config
         self._arg2fixturedefs = {}
-        self._seenplugins = set()
         self._holderobjseen = set()
         self._arg2finish = {}
         self._nodeid_and_autousenames = [("", self.config.getini("usefixtures"))]
@@ -1646,11 +1648,7 @@ class FixtureManager:
                                                               node)
         return FuncFixtureInfo(argnames, names_closure, arg2fixturedefs)
 
-    ### XXX this hook should be called for historic events like pytest_configure
-    ### so that we don't have to do the below pytest_configure hook
     def pytest_plugin_registered(self, plugin):
-        if plugin in self._seenplugins:
-            return
         nodeid = None
         try:
             p = py.path.local(plugin.__file__)
@@ -1665,13 +1663,6 @@ class FixtureManager:
                 if p.sep != "/":
                     nodeid = nodeid.replace(p.sep, "/")
         self.parsefactories(plugin, nodeid)
-        self._seenplugins.add(plugin)
-
-    @pytest.mark.tryfirst
-    def pytest_configure(self, config):
-        plugins = config.pluginmanager.getplugins()
-        for plugin in plugins:
-            self.pytest_plugin_registered(plugin)
 
     def _getautousenames(self, nodeid):
         """ return a tuple of fixture names to be used. """

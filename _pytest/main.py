@@ -151,17 +151,16 @@ def pytest_ignore_collect(path, config):
         ignore_paths.extend([py.path.local(x) for x in excludeopt])
     return path in ignore_paths
 
-class FSHookProxy(object):
-    def __init__(self, fspath, config):
+class FSHookProxy:
+    def __init__(self, fspath, pm, remove_mods):
         self.fspath = fspath
-        self.config = config
+        self.pm = pm
+        self.remove_mods = remove_mods
 
     def __getattr__(self, name):
-        plugins = self.config._getmatchingplugins(self.fspath)
-        x = self.config.pluginmanager.make_hook_caller(name, plugins)
+        x = self.pm.subset_hook_caller(name, remove_plugins=self.remove_mods)
         self.__dict__[name] = x
         return x
-
 
 def compatproperty(name):
     def fget(self):
@@ -362,9 +361,6 @@ class Node(object):
     def listnames(self):
         return [x.name for x in self.listchain()]
 
-    def getplugins(self):
-        return self.config._getmatchingplugins(self.fspath)
-
     def addfinalizer(self, fin):
         """ register a function to be called when this node is finalized.
 
@@ -519,12 +515,12 @@ class Session(FSCollector):
     def _makeid(self):
         return ""
 
-    @pytest.mark.tryfirst
+    @pytest.hookimpl_opts(tryfirst=True)
     def pytest_collectstart(self):
         if self.shouldstop:
             raise self.Interrupted(self.shouldstop)
 
-    @pytest.mark.tryfirst
+    @pytest.hookimpl_opts(tryfirst=True)
     def pytest_runtest_logreport(self, report):
         if report.failed and not hasattr(report, 'wasxfail'):
             self._testsfailed += 1
@@ -541,8 +537,20 @@ class Session(FSCollector):
         try:
             return self._fs2hookproxy[fspath]
         except KeyError:
-            self._fs2hookproxy[fspath] = x = FSHookProxy(fspath, self.config)
-            return x
+            # check if we have the common case of running
+            # hooks with all conftest.py filesall conftest.py
+            pm = self.config.pluginmanager
+            my_conftestmodules = pm._getconftestmodules(fspath)
+            remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
+            if remove_mods:
+                # one or more conftests are not in use at this fspath
+                proxy = FSHookProxy(fspath, pm, remove_mods)
+            else:
+                # all plugis are active for this fspath
+                proxy = self.config.hook
+
+            self._fs2hookproxy[fspath] = proxy
+            return proxy
 
     def perform_collect(self, args=None, genitems=True):
         hook = self.config.hook

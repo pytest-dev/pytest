@@ -313,7 +313,7 @@ def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch):
     monkeypatch.setattr(pkg_resources, 'iter_entry_points', my_iter)
     config = testdir.parseconfig("-p", "no:mytestplugin")
     plugin = config.pluginmanager.getplugin("mytestplugin")
-    assert plugin == -1
+    assert plugin is None
 
 def test_cmdline_processargs_simple(testdir):
     testdir.makeconftest("""
@@ -348,14 +348,15 @@ def test_notify_exception(testdir, capfd):
 
 
 def test_load_initial_conftest_last_ordering(testdir):
-    from _pytest.config  import get_plugin_manager
-    pm = get_plugin_manager()
+    from _pytest.config  import get_config
+    pm = get_config().pluginmanager
     class My:
         def pytest_load_initial_conftests(self):
             pass
     m = My()
     pm.register(m)
-    l = pm.listattr("pytest_load_initial_conftests")
+    hc = pm.hook.pytest_load_initial_conftests
+    l = hc._nonwrappers + hc._wrappers
     assert l[-1].__module__ == "_pytest.capture"
     assert l[-2] == m.pytest_load_initial_conftests
     assert l[-3].__module__ == "_pytest.config"

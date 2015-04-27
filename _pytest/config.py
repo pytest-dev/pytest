@@ -9,7 +9,7 @@ import py
 # DON't import pytest here because it causes import cycle troubles
 import sys, os
 from _pytest import hookspec # the extension point definitions
-from _pytest.core import PluginManager
+from _pytest.core import PluginManager, hookimpl_opts, varnames
 
 # pytest startup
 #
@@ -38,6 +38,7 @@ def main(args=None, plugins=None):
         tw.line("ERROR: could not load %s\n" % (e.path), red=True)
         return 4
     else:
+        config.pluginmanager.check_pending()
         return config.hook.pytest_cmdline_main(config=config)
 
 class cmdline:  # compatibility namespace
@@ -59,17 +60,17 @@ builtin_plugins.add("pytester")
 
 def _preloadplugins():
     assert not _preinit
-    _preinit.append(get_plugin_manager())
+    _preinit.append(get_config())
 
-def get_plugin_manager():
+def get_config():
     if _preinit:
         return _preinit.pop(0)
     # subsequent calls to main will create a fresh instance
     pluginmanager = PytestPluginManager()
-    pluginmanager.config = Config(pluginmanager) # XXX attr needed?
+    config = Config(pluginmanager)
     for spec in default_plugins:
         pluginmanager.import_plugin(spec)
-    return pluginmanager
+    return config
 
 def _prepareconfig(args=None, plugins=None):
     if args is None:
@@ -80,7 +81,7 @@ def _prepareconfig(args=None, plugins=None):
         if not isinstance(args, str):
             raise ValueError("not a string or argument list: %r" % (args,))
         args = shlex.split(args)
-    pluginmanager = get_plugin_manager()
+    pluginmanager = get_config().pluginmanager
     if plugins:
         for plugin in plugins:
             pluginmanager.register(plugin)
@@ -97,8 +98,7 @@ class PytestPluginManager(PluginManager):
         super(PytestPluginManager, self).__init__(prefix="pytest_",
                                                   excludefunc=exclude_pytest_names)
         self._warnings = []
-        self._plugin_distinfo = []
-        self._globalplugins = []
+        self._conftest_plugins = set()
 
         # state related to local conftest plugins
         self._path2confmods = {}
@@ -114,28 +114,35 @@ class PytestPluginManager(PluginManager):
                 err = py.io.dupfile(err, encoding=encoding)
             except Exception:
                 pass
-            self.set_tracing(err.write)
+            self.trace.root.setwriter(err.write)
+            self.enable_tracing()
 
-    def register(self, plugin, name=None, conftest=False):
+
+    def _verify_hook(self, hook, plugin):
+        super(PytestPluginManager, self)._verify_hook(hook, plugin)
+        method = getattr(plugin, hook.name)
+        if "__multicall__" in varnames(method):
+            fslineno = py.code.getfslineno(method)
+            warning = dict(code="I1",
+                           fslocation=fslineno,
+                           message="%r hook uses deprecated __multicall__ "
+                                   "argument" % (hook.name))
+            self._warnings.append(warning)
+
+    def register(self, plugin, name=None):
         ret = super(PytestPluginManager, self).register(plugin, name)
-        if ret and not conftest:
-            self._globalplugins.append(plugin)
+        if ret:
+            self.hook.pytest_plugin_registered.call_historic(
+                      kwargs=dict(plugin=plugin, manager=self))
         return ret
 
-    def _do_register(self, plugin, name):
-        # called from core PluginManager class
-        if hasattr(self, "config"):
-            self.config._register_plugin(plugin, name)
-        return super(PytestPluginManager, self)._do_register(plugin, name)
-
-    def unregister(self, plugin):
-        super(PytestPluginManager, self).unregister(plugin)
-        try:
-            self._globalplugins.remove(plugin)
-        except ValueError:
-            pass
+    def getplugin(self, name):
+        # support deprecated naming because plugins (xdist e.g.) use it
+        return self.get_plugin(name)
 
     def pytest_configure(self, config):
+        # XXX now that the pluginmanager exposes hookimpl_opts(tryfirst...)
+        # we should remove tryfirst/trylast as markers
         config.addinivalue_line("markers",
             "tryfirst: mark a hook implementation function such that the "
             "plugin machinery will try to call it first/as early as possible.")
@@ -143,7 +150,10 @@ class PytestPluginManager(PluginManager):
             "trylast: mark a hook implementation function such that the "
             "plugin machinery will try to call it last/as late as possible.")
         for warning in self._warnings:
-            config.warn(code="I1", message=warning)
+            if isinstance(warning, dict):
+                config.warn(**warning)
+            else:
+                config.warn(code="I1", message=warning)
 
     #
     # internal API for local conftest plugin handling
@@ -186,14 +196,21 @@ class PytestPluginManager(PluginManager):
         try:
             return self._path2confmods[path]
         except KeyError:
-            clist = []
-            for parent in path.parts():
-                if self._confcutdir and self._confcutdir.relto(parent):
-                    continue
-                conftestpath = parent.join("conftest.py")
-                if conftestpath.check(file=1):
-                    mod = self._importconftest(conftestpath)
-                    clist.append(mod)
+            if path.isfile():
+                clist = self._getconftestmodules(path.dirpath())
+            else:
+                # XXX these days we may rather want to use config.rootdir
+                # and allow users to opt into looking into the rootdir parent
+                # directories instead of requiring to specify confcutdir
+                clist = []
+                for parent in path.parts():
+                    if self._confcutdir and self._confcutdir.relto(parent):
+                        continue
+                    conftestpath = parent.join("conftest.py")
+                    if conftestpath.isfile():
+                        mod = self._importconftest(conftestpath)
+                        clist.append(mod)
+
             self._path2confmods[path] = clist
             return clist
 
@@ -217,6 +234,8 @@ class PytestPluginManager(PluginManager):
                 mod = conftestpath.pyimport()
             except Exception:
                 raise ConftestImportFailure(conftestpath, sys.exc_info())
+
+            self._conftest_plugins.add(mod)
             self._conftestpath2mod[conftestpath] = mod
             dirpath = conftestpath.dirpath()
             if dirpath in self._path2confmods:
@@ -233,24 +252,6 @@ class PytestPluginManager(PluginManager):
     #
     #
 
-    def consider_setuptools_entrypoints(self):
-        try:
-            from pkg_resources import iter_entry_points, DistributionNotFound
-        except ImportError:
-            return # XXX issue a warning
-        for ep in iter_entry_points('pytest11'):
-            name = ep.name
-            if name.startswith("pytest_"):
-                name = name[7:]
-            if ep.name in self._name2plugin or name in self._name2plugin:
-                continue
-            try:
-                plugin = ep.load()
-            except DistributionNotFound:
-                continue
-            self._plugin_distinfo.append((ep.dist, plugin))
-            self.register(plugin, name=name)
-
     def consider_preparse(self, args):
         for opt1,opt2 in zip(args, args[1:]):
             if opt1 == "-p":
@@ -258,18 +259,12 @@ class PytestPluginManager(PluginManager):
 
     def consider_pluginarg(self, arg):
         if arg.startswith("no:"):
-            name = arg[3:]
-            plugin = self.getplugin(name)
-            if plugin is not None:
-                self.unregister(plugin)
-            self._name2plugin[name] = -1
+            self.set_blocked(arg[3:])
         else:
-            if self.getplugin(arg) is None:
-                self.import_plugin(arg)
+            self.import_plugin(arg)
 
     def consider_conftest(self, conftestmodule):
-        if self.register(conftestmodule, name=conftestmodule.__file__,
-                         conftest=True):
+        if self.register(conftestmodule, name=conftestmodule.__file__):
             self.consider_module(conftestmodule)
 
     def consider_env(self):
@@ -291,7 +286,7 @@ class PytestPluginManager(PluginManager):
         # basename for historic purposes but must be imported with the
         # _pytest prefix.
         assert isinstance(modname, str)
-        if self.getplugin(modname) is not None:
+        if self.get_plugin(modname) is not None:
             return
         if modname in builtin_plugins:
             importspec = "_pytest." + modname
@@ -685,6 +680,7 @@ class Notset:
 
 notset = Notset()
 FILE_OR_DIR = 'file_or_dir'
+
 class Config(object):
     """ access to configuration values, pluginmanager and plugin hooks.  """
 
@@ -706,20 +702,11 @@ class Config(object):
         self._cleanup = []
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
-
-    def _register_plugin(self, plugin, name):
-        call_plugin = self.pluginmanager.call_plugin
-        call_plugin(plugin, "pytest_addhooks",
-                    {'pluginmanager': self.pluginmanager})
-        self.hook.pytest_plugin_registered(plugin=plugin,
-                                           manager=self.pluginmanager)
-        dic = call_plugin(plugin, "pytest_namespace", {}) or {}
-        if dic:
+        def do_setns(dic):
             import pytest
             setns(pytest, dic)
-        call_plugin(plugin, "pytest_addoption", {'parser': self._parser})
-        if self._configured:
-            call_plugin(plugin, "pytest_configure", {'config': self})
+        self.hook.pytest_namespace.call_historic(do_setns, {})
+        self.hook.pytest_addoption.call_historic(kwargs=dict(parser=self._parser))
 
     def add_cleanup(self, func):
         """ Add a function to be called when the config object gets out of
@@ -729,26 +716,27 @@ class Config(object):
     def _do_configure(self):
         assert not self._configured
         self._configured = True
-        self.hook.pytest_configure(config=self)
+        self.hook.pytest_configure.call_historic(kwargs=dict(config=self))
 
     def _ensure_unconfigure(self):
         if self._configured:
             self._configured = False
             self.hook.pytest_unconfigure(config=self)
+            self.hook.pytest_configure._call_history = []
         while self._cleanup:
             fin = self._cleanup.pop()
             fin()
 
-    def warn(self, code, message):
+    def warn(self, code, message, fslocation=None):
         """ generate a warning for this test session. """
         self.hook.pytest_logwarning(code=code, message=message,
-                                    fslocation=None, nodeid=None)
+                                    fslocation=fslocation, nodeid=None)
 
     def get_terminal_writer(self):
-        return self.pluginmanager.getplugin("terminalreporter")._tw
+        return self.pluginmanager.get_plugin("terminalreporter")._tw
 
     def pytest_cmdline_parse(self, pluginmanager, args):
-        assert self == pluginmanager.config, (self, pluginmanager.config)
+        # REF1 assert self == pluginmanager.config, (self, pluginmanager.config)
         self.parse(args)
         return self
 
@@ -778,8 +766,7 @@ class Config(object):
     @classmethod
     def fromdictargs(cls, option_dict, args):
         """ constructor useable for subprocesses. """
-        pluginmanager = get_plugin_manager()
-        config = pluginmanager.config
+        config = get_config()
         config._preparse(args, addopts=False)
         config.option.__dict__.update(option_dict)
         for x in config.option.plugins:
@@ -794,13 +781,9 @@ class Config(object):
             if not hasattr(self.option, opt.dest):
                 setattr(self.option, opt.dest, opt.default)
 
-    def _getmatchingplugins(self, fspath):
-        return self.pluginmanager._globalplugins + \
-               self.pluginmanager._getconftestmodules(fspath)
-
+    @hookimpl_opts(trylast=True)
     def pytest_load_initial_conftests(self, early_config):
         self.pluginmanager._set_initial_conftests(early_config.known_args_namespace)
-    pytest_load_initial_conftests.trylast = True
 
     def _initini(self, args):
         parsed_args = self._parser.parse_known_args(args)
@@ -817,7 +800,10 @@ class Config(object):
             args[:] = self.getini("addopts") + args
         self._checkversion()
         self.pluginmanager.consider_preparse(args)
-        self.pluginmanager.consider_setuptools_entrypoints()
+        try:
+            self.pluginmanager.load_setuptools_entrypoints("pytest11")
+        except ImportError as e:
+            self.warn("I2", "could not load setuptools entry import: %s" % (e,))
         self.pluginmanager.consider_env()
         self.known_args_namespace = ns = self._parser.parse_known_args(args)
         try:
@@ -850,6 +836,8 @@ class Config(object):
         assert not hasattr(self, 'args'), (
                 "can only parse cmdline args at most once per Config object")
         self._origargs = args
+        self.hook.pytest_addhooks.call_historic(
+                                  kwargs=dict(pluginmanager=self.pluginmanager))
         self._preparse(args)
         # XXX deprecated hook:
         self.hook.pytest_cmdline_preparse(config=self, args=args)

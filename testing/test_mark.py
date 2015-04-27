@@ -510,7 +510,7 @@ class TestKeywordSelection:
         """)
         testdir.makepyfile(conftest="""
             import pytest
-            @pytest.mark.hookwrapper
+            @pytest.hookimpl_opts(hookwrapper=True)
             def pytest_pycollect_makeitem(name):
                 outcome = yield
                 if name == "TestClass":

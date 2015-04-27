@@ -11,7 +11,7 @@ import subprocess
 import py
 import pytest
 from py.builtin import print_
-from _pytest.core import HookCaller, add_method_wrapper
+from _pytest.core import TracedHookExecution
 
 from _pytest.main import Session, EXIT_OK
 
@@ -79,12 +79,12 @@ class HookRecorder:
         self._pluginmanager = pluginmanager
         self.calls = []
 
-        def _docall(hookcaller, methods, kwargs):
-            self.calls.append(ParsedCall(hookcaller.name, kwargs))
-            yield
-        self._undo_wrapping = add_method_wrapper(HookCaller, _docall)
-        #if hasattr(pluginmanager, "config"):
-        #    pluginmanager.add_shutdown(self._undo_wrapping)
+        def before(hook, method, kwargs):
+            self.calls.append(ParsedCall(hook.name, kwargs))
+        def after(outcome, hook, method, kwargs):
+            pass
+        executor = TracedHookExecution(pluginmanager, before, after)
+        self._undo_wrapping = executor.undo
 
     def finish_recording(self):
         self._undo_wrapping()
