@@ -164,6 +164,8 @@ class TerminalReporter:
 
     def pytest_logwarning(self, code, fslocation, message, nodeid):
         warnings = self.stats.setdefault("warnings", [])
+        if isinstance(fslocation, tuple):
+            fslocation = "%s:%d" % fslocation
         warning = WarningReport(code=code, fslocation=fslocation,
                                 message=message, nodeid=nodeid)
         warnings.append(warning)

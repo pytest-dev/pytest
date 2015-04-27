@@ -408,6 +408,12 @@ class PluginManager(object):
 class MultiCall:
     """ execute a call into multiple python functions/methods. """
 
+    # XXX note that the __multicall__ argument is supported only
+    # for pytest compatibility reasons.  It was never officially
+    # supported there and is explicitely deprecated since 2.8
+    # so we can remove it soon, allowing to avoid the below recursion
+    # in execute() and simplify/speed up the execute loop.
+
     def __init__(self, methods, kwargs, firstresult=False):
         self.methods = methods
         self.kwargs = kwargs
@@ -527,20 +533,20 @@ class HookCaller(object):
 
     def _add_method(self, meth):
         if hasattr(meth, 'hookwrapper'):
-            self._wrappers.append(meth)
-        elif hasattr(meth, 'trylast'):
-            self._nonwrappers.insert(0, meth)
-        elif hasattr(meth, 'tryfirst'):
-            self._nonwrappers.append(meth)
+            methods = self._wrappers
         else:
-            # find the last nonwrapper which is not tryfirst marked
-            nonwrappers = self._nonwrappers
-            i = len(nonwrappers) - 1
-            while i >= 0 and hasattr(nonwrappers[i], "tryfirst"):
-                i -= 1
+            methods = self._nonwrappers
 
-            # and insert right in front of the tryfirst ones
-            nonwrappers.insert(i+1, meth)
+        if hasattr(meth, 'trylast'):
+            methods.insert(0, meth)
+        elif hasattr(meth, 'tryfirst'):
+            methods.append(meth)
+        else:
+            # find last non-tryfirst method
+            i = len(methods) - 1
+            while i >= 0 and hasattr(methods[i], "tryfirst"):
+                i -= 1
+            methods.insert(i + 1, meth)
 
     def __repr__(self):
         return "<HookCaller %r>" %(self.name,)

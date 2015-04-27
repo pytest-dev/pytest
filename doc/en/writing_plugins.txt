@@ -221,36 +221,21 @@ be "future-compatible": we can introduce new hook named parameters without
 breaking the signatures of existing hook implementations.  It is one of
 the reasons for the general long-lived compatibility of pytest plugins.
 
-Hook function results
----------------------
+Note that hook functions other than ``pytest_runtest_*`` are not
+allowed to raise exceptions.  Doing so will break the pytest run.
+
+
+
+firstresult: stop at first non-None result
+-------------------------------------------
 
 Most calls to ``pytest`` hooks result in a **list of results** which contains
 all non-None results of the called hook functions.
 
-Some hooks are specified so that the hook call only executes until the
-first function returned a non-None value which is then also the
-result of the overall hook call.  The remaining hook functions will
-not be called in this case.
-
-Note that hook functions other than ``pytest_runtest_*`` are not
-allowed to raise exceptions.  Doing so will break the pytest run.
-
-Hook function ordering
-----------------------
-
-For any given hook there may be more than one implementation and we thus
-generally view ``hook`` execution as a ``1:N`` function call where ``N``
-is the number of registered functions.  There are ways to
-influence if a hook implementation comes before or after others, i.e.
-the position in the ``N``-sized list of functions::
-
-    @pytest.hookimpl_spec(tryfirst=True)
-    def pytest_collection_modifyitems(items):
-        # will execute as early as possible
-
-    @pytest.hookimpl_spec(trylast=True)
-    def pytest_collection_modifyitems(items):
-        # will execute as late as possible
+Some hook specifications use the ``firstresult=True`` option so that the hook
+call only executes until the first of N registered functions returns a
+non-None result which is then taken as result of the overall hook call.
+The remaining hook functions will not be called in this case.
 
 
 hookwrapper: executing around other hooks
@@ -289,6 +274,47 @@ Note that hook wrappers don't return results themselves, they merely
 perform tracing or other side effects around the actual hook implementations.
 If the result of the underlying hook is a mutable object, they may modify
 that result, however.
+
+
+
+Hook function ordering / call example
+-------------------------------------
+
+For any given hook specification there may be more than one
+implementation and we thus generally view ``hook`` execution as a
+``1:N`` function call where ``N`` is the number of registered functions.
+There are ways to influence if a hook implementation comes before or
+after others, i.e.  the position in the ``N``-sized list of functions::
+
+    # Plugin 1
+    @pytest.hookimpl_spec(tryfirst=True)
+    def pytest_collection_modifyitems(items):
+        # will execute as early as possible
+
+    # Plugin 2
+    @pytest.hookimpl_spec(trylast=True)
+    def pytest_collection_modifyitems(items):
+        # will execute as late as possible
+
+    # Plugin 3
+    @pytest.hookimpl_spec(hookwrapper=True)
+    def pytest_collection_modifyitems(items):
+        # will execute even before the tryfirst one above!
+        outcome = yield
+        # will execute after all non-hookwrappers executed
+
+Here is the order of execution:
+
+1. Plugin3's pytest_collection_modifyitems called until the yield point
+2. Plugin1's pytest_collection_modifyitems is called
+3. Plugin2's pytest_collection_modifyitems is called
+4. Plugin3's pytest_collection_modifyitems called for executing after the yield
+   The yield receives a :py:class:`CallOutcome` instance which encapsulates
+   the result from calling the non-wrappers.  Wrappers cannot modify the result.
+
+It's possible to use ``tryfirst`` and ``trylast`` also in conjunction with
+``hookwrapper=True`` in which case it will influence the ordering of hookwrappers
+among each other.
 
 Declaring new hooks
 ------------------------

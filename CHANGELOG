@@ -39,6 +39,10 @@
 - fix issue732: properly unregister plugins from any hook calling
   sites allowing to have temporary plugins during test execution.
 
+- deprecate and warn about ``__multicall__`` argument in hook 
+  implementations.  Use the ``hookwrapper`` mechanism instead already 
+  introduced with pytest-2.7.
+
  
 2.7.1.dev (compared to 2.7.0)
 -----------------------------

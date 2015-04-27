@@ -336,6 +336,19 @@ class TestAddMethodOrdering:
         assert hc._nonwrappers == [he_method1_middle]
         assert hc._wrappers == [he_method1, he_method3]
 
+    def test_adding_wrappers_ordering_tryfirst(self, hc, addmeth):
+        @addmeth(hookwrapper=True, tryfirst=True)
+        def he_method1():
+            pass
+
+        @addmeth(hookwrapper=True)
+        def he_method2():
+            pass
+
+        assert hc._nonwrappers == []
+        assert hc._wrappers == [he_method2, he_method1]
+
+
     def test_hookspec_opts(self, pm):
         class HookSpec:
             @hookspec_opts()
@@ -529,6 +542,16 @@ class TestPytestPluginInteractions:
             assert saveindent[0] > indent
         finally:
             undo()
+
+    def test_warn_on_deprecated_multicall(self, pytestpm):
+        class Plugin:
+            def pytest_configure(self, __multicall__):
+                pass
+
+        before = list(pytestpm._warnings)
+        pytestpm.register(Plugin())
+        assert len(pytestpm._warnings) == len(before) + 1
+        assert "deprecated" in pytestpm._warnings[-1]["message"]
 
 
 def test_namespace_has_default_and_env_plugins(testdir):
@@ -969,7 +992,7 @@ class TestPytestPluginManager:
         monkeypatch.setenv('PYTEST_PLUGINS', 'pytest_x500', prepend=",")
         result = testdir.runpytest(p)
         assert result.ret == 0
-        result.stdout.fnmatch_lines(["*1 passed in*"])
+        result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_import_plugin_importname(self, testdir, pytestpm):
         pytest.raises(ImportError, 'pytestpm.import_plugin("qweqwex.y")')

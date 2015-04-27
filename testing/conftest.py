@@ -66,13 +66,12 @@ def check_open_files(config):
         error.append(error[0])
         raise AssertionError("\n".join(error))
 
-@pytest.hookimpl_opts(trylast=True)
-def pytest_runtest_teardown(item, __multicall__):
+@pytest.hookimpl_opts(hookwrapper=True, trylast=True)
+def pytest_runtest_teardown(item):
+    yield
     item.config._basedir.chdir()
     if hasattr(item.config, '_openfiles'):
-        x = __multicall__.execute()
         check_open_files(item.config)
-        return x
 
 # XXX copied from execnet's conftest.py - needs to be merged
 winpymap = {

@@ -9,7 +9,7 @@ import py
 # DON't import pytest here because it causes import cycle troubles
 import sys, os
 from _pytest import hookspec # the extension point definitions
-from _pytest.core import PluginManager, hookimpl_opts
+from _pytest.core import PluginManager, hookimpl_opts, varnames
 
 # pytest startup
 #
@@ -117,6 +117,18 @@ class PytestPluginManager(PluginManager):
             self.trace.root.setwriter(err.write)
             self.enable_tracing()
 
+
+    def _verify_hook(self, hook, plugin):
+        super(PytestPluginManager, self)._verify_hook(hook, plugin)
+        method = getattr(plugin, hook.name)
+        if "__multicall__" in varnames(method):
+            fslineno = py.code.getfslineno(method)
+            warning = dict(code="I1",
+                           fslocation=fslineno,
+                           message="%r hook uses deprecated __multicall__ "
+                                   "argument" % (hook.name))
+            self._warnings.append(warning)
+
     def register(self, plugin, name=None):
         ret = super(PytestPluginManager, self).register(plugin, name)
         if ret:
@@ -138,7 +150,10 @@ class PytestPluginManager(PluginManager):
             "trylast: mark a hook implementation function such that the "
             "plugin machinery will try to call it last/as late as possible.")
         for warning in self._warnings:
-            config.warn(code="I1", message=warning)
+            if isinstance(warning, dict):
+                config.warn(**warning)
+            else:
+                config.warn(code="I1", message=warning)
 
     #
     # internal API for local conftest plugin handling
@@ -712,10 +727,10 @@ class Config(object):
             fin = self._cleanup.pop()
             fin()
 
-    def warn(self, code, message):
+    def warn(self, code, message, fslocation=None):
         """ generate a warning for this test session. """
         self.hook.pytest_logwarning(code=code, message=message,
-                                    fslocation=None, nodeid=None)
+                                    fslocation=fslocation, nodeid=None)
 
     def get_terminal_writer(self):
         return self.pluginmanager.get_plugin("terminalreporter")._tw
