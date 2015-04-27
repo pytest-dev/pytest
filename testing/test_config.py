@@ -368,9 +368,8 @@ class TestWarning:
             def pytest_configure(config):
                 config.warn("C1", "hello")
             def pytest_logwarning(code, message):
-                assert code == "C1"
-                assert message == "hello"
-                l.append(1)
+                if message == "hello" and code == "C1":
+                    l.append(1)
         """)
         testdir.makepyfile("""
             def test_proper(pytestconfig):
@@ -391,15 +390,13 @@ class TestWarning:
                 pass
         """)
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines("""
-            *1 warning*
-        """)
+        assert result.parseoutcomes()["warnings"] > 0
         assert "hello" not in result.stdout.str()
+
         result = testdir.runpytest("-rw")
         result.stdout.fnmatch_lines("""
             ===*warning summary*===
             *WT1*test_warn_on_test_item*:5*hello*
-            *1 warning*
         """)
 
 class TestRootdir:

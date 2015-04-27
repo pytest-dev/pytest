@@ -412,7 +412,7 @@ class TestTerminalFunctional:
                 py.std.sys.platform, verinfo,
                 py.__version__, pytest.__version__),
             "*test_header_trailer_info.py .",
-            "=* 1 passed in *.[0-9][0-9] seconds *=",
+            "=* 1 passed*in *.[0-9][0-9] seconds *=",
         ])
         if pytest.config.pluginmanager._plugin_distinfo:
             result.stdout.fnmatch_lines([

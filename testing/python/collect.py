@@ -58,14 +58,10 @@ class TestClass:
             class TestClass1:
                 def __init__(self):
                     pass
-            class TestClass2(object):
-                def __init__(self):
-                    pass
         """)
         result = testdir.runpytest("-rw")
-        result.stdout.fnmatch_lines("""
+        result.stdout.fnmatch_lines_random("""
             WC1*test_class_with_init_warning.py*__init__*
-            *2 warnings*
         """)
 
     def test_class_subclassobject(self, testdir):

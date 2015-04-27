@@ -339,9 +339,7 @@ def test_SkipTest_during_collection(testdir):
             assert False
         """)
     result = testdir.runpytest(p)
-    outcome = result.parseoutcomes()
-    outcome.pop('seconds')
-    assert outcome == dict(skipped=1)
+    result.assertoutcome(skipped=1)
 
 
 def test_SkipTest_in_test(testdir):

@@ -375,9 +375,7 @@ class TestMetafuncFunctional:
                     assert metafunc.cls == TestClass
         """)
         result = testdir.runpytest(p, "-v")
-        result.stdout.fnmatch_lines([
-            "*2 passed in*",
-        ])
+        result.assertoutcome(passed=2)
 
     def test_addcall_with_two_funcargs_generators(self, testdir):
         testdir.makeconftest("""
