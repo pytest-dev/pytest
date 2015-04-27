@@ -256,10 +256,6 @@ class PluginManager(object):
             return hc
         return orig
 
-    def get_canonical_name(self, plugin):
-        """ Return canonical name for a plugin object. """
-        return getattr(plugin, "__name__", None) or str(id(plugin))
-
     def register(self, plugin, name=None):
         """ Register a plugin and return its canonical name or None if the name
         is blocked from registering.  Raise a ValueError if the plugin is already
@@ -344,6 +340,13 @@ class PluginManager(object):
         """ Return True if the plugin is already registered. """
         return plugin in self._plugin2hookcallers
 
+    def get_canonical_name(self, plugin):
+        """ Return canonical name for a plugin object. Note that a plugin
+        may be registered under a different name which was specified
+        by the caller of register(plugin, name). To obtain the name
+        of an registered plugin use ``get_name(plugin)`` instead."""
+        return getattr(plugin, "__name__", None) or str(id(plugin))
+
     def get_plugin(self, name):
         """ Return a plugin or None for the given name. """
         return self._name2plugin.get(name)
@@ -386,14 +389,11 @@ class PluginManager(object):
                                 "unknown hook %r in plugin %r" %(name, plugin))
 
     def load_setuptools_entrypoints(self, entrypoint_name):
-        """ Load modules from querying the specified entrypoint name.
-        Return None if setuptools was not operable, otherwise
-        the number of loaded plugins. """
-        try:
-            from pkg_resources import iter_entry_points, DistributionNotFound
-        except ImportError:
-            return # XXX issue a warning
+        """ Load modules from querying the specified setuptools entrypoint name.
+        Return the number of loaded plugins. """
+        from pkg_resources import iter_entry_points, DistributionNotFound
         for ep in iter_entry_points(entrypoint_name):
+            # is the plugin registered or blocked?
             if self.get_plugin(ep.name) or ep.name in self._name2plugin:
                 continue
             try:

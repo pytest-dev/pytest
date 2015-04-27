@@ -800,7 +800,10 @@ class Config(object):
             args[:] = self.getini("addopts") + args
         self._checkversion()
         self.pluginmanager.consider_preparse(args)
-        self.pluginmanager.load_setuptools_entrypoints("pytest11")
+        try:
+            self.pluginmanager.load_setuptools_entrypoints("pytest11")
+        except ImportError as e:
+            self.warn("I2", "could not load setuptools entry import: %s" % (e,))
         self.pluginmanager.consider_env()
         self.known_args_namespace = ns = self._parser.parse_known_args(args)
         try:

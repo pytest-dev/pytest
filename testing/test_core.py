@@ -419,8 +419,8 @@ class TestAddMethodOrdering:
     def test_load_setuptools_not_installed(self, monkeypatch, pm):
         monkeypatch.setitem(py.std.sys.modules, 'pkg_resources',
             py.std.types.ModuleType("pkg_resources"))
-        assert pm.load_setuptools_entrypoints("qwe") is None
-        # ok, we did not explode
+        with pytest.raises(ImportError):
+            pm.load_setuptools_entrypoints("qwe")
 
 
 class TestPytestPluginInteractions:
