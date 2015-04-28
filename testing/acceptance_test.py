@@ -203,7 +203,7 @@ class TestGeneralUsage:
             os.chdir(os.path.dirname(os.getcwd()))
             print (py.log)
         """))
-        result = testdir.runpython(p, prepend=False)
+        result = testdir.runpython(p)
         assert not result.ret
 
     def test_issue109_sibling_conftests_not_loaded(self, testdir):

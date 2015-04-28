@@ -186,11 +186,43 @@ the plugin manager like this:
 If you want to look at the names of existing plugins, use
 the ``--traceconfig`` option.
 
+Testing plugins
+---------------
+
+pytest comes with some facilities that you can enable for testing your
+plugin.  Given that you have an installed plugin you can enable the
+:py:class:`testdir <_pytest.pytester.Testdir>` fixture via specifying a
+command line option to include the pytester plugin (``-p pytester``) or
+by putting ``pytest_plugins = pytester`` into your test or
+``conftest.py`` file.  You then will have a ``testdir`` fixure which you
+can use like this::
+
+    # content of test_myplugin.py
+
+    pytest_plugins = pytester  # to get testdir fixture
+
+    def test_myplugin(testdir):
+        testdir.makepyfile("""
+            def test_example():
+                pass
+        """)
+        result = testdir.runpytest("--verbose")
+        result.fnmatch_lines("""
+            test_example*
+        """)
+
+Note that by default ``testdir.runpytest()`` will perform a pytest
+in-process.  You can pass the command line option ``--runpytest=subprocess``
+to have it happen in a subprocess.
+
+Also see the :py:class:`RunResult <_pytest.pytester.RunResult>` for more
+methods of the result object that you get from a call to ``runpytest``.
 
 .. _`writinghooks`:
 
 Writing hook functions
 ======================
+
 
 .. _validation:
 
@@ -493,3 +525,13 @@ Reference of objects involved in hooks
 .. autoclass:: _pytest.core.CallOutcome()
     :members:
 
+.. currentmodule:: _pytest.pytester
+
+.. autoclass:: Testdir()
+    :members: runpytest,runpytest_subprocess,runpytest_inprocess,makeconftest,makepyfile
+
+.. autoclass:: RunResult()
+    :members:
+
+.. autoclass:: LineMatcher()
+    :members:

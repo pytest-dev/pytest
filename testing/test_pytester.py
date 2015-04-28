@@ -69,9 +69,7 @@ def test_testdir_runs_with_plugin(testdir):
             assert 1
     """)
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines([
-        "*1 passed*"
-    ])
+    result.assert_outcomes(passed=1)
 
 
 def make_holder():
@@ -113,16 +111,6 @@ def test_makepyfile_unicode(testdir):
     except NameError:
         unichr = chr
     testdir.makepyfile(unichr(0xfffd))
-
-def test_inprocess_plugins(testdir):
-    class Plugin(object):
-        configured = False
-        def pytest_configure(self, config):
-            self.configured = True
-    plugin = Plugin()
-    testdir.inprocess_run([], [plugin])
-
-    assert plugin.configured
 
 def test_inline_run_clean_modules(testdir):
     test_mod = testdir.makepyfile("def test_foo(): assert True")

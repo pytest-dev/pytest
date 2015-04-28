@@ -2,6 +2,13 @@
 import py
 import sys
 
+def runpdb_and_get_report(testdir, source):
+    p = testdir.makepyfile(source)
+    result = testdir.runpytest_inprocess("--pdb", p)
+    reports = result.reprec.getreports("pytest_runtest_logreport")
+    assert len(reports) == 3, reports # setup/call/teardown
+    return reports[1]
+
 
 class TestPDB:
     def pytest_funcarg__pdblist(self, request):
@@ -14,7 +21,7 @@ class TestPDB:
         return pdblist
 
     def test_pdb_on_fail(self, testdir, pdblist):
-        rep = testdir.inline_runsource1('--pdb', """
+        rep = runpdb_and_get_report(testdir, """
             def test_func():
                 assert 0
         """)
@@ -24,7 +31,7 @@ class TestPDB:
         assert tb[-1].name == "test_func"
 
     def test_pdb_on_xfail(self, testdir, pdblist):
-        rep = testdir.inline_runsource1('--pdb', """
+        rep = runpdb_and_get_report(testdir, """
             import pytest
             @pytest.mark.xfail
             def test_func():
@@ -34,7 +41,7 @@ class TestPDB:
         assert not pdblist
 
     def test_pdb_on_skip(self, testdir, pdblist):
-        rep = testdir.inline_runsource1('--pdb', """
+        rep = runpdb_and_get_report(testdir, """
             import pytest
             def test_func():
                 pytest.skip("hello")
@@ -43,7 +50,7 @@ class TestPDB:
         assert len(pdblist) == 0
 
     def test_pdb_on_BdbQuit(self, testdir, pdblist):
-        rep = testdir.inline_runsource1('--pdb', """
+        rep = runpdb_and_get_report(testdir, """
             import bdb
             def test_func():
                 raise bdb.BdbQuit

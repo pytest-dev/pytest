@@ -312,7 +312,7 @@ class TestSession:
     def test_collect_topdir(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
         id = "::".join([p.basename, "test_func"])
-        # XXX migrate to inline_genitems? (see below)
+        # XXX migrate to collectonly? (see below)
         config = testdir.parseconfig(id)
         topdir = testdir.tmpdir
         rcol = Session(config)

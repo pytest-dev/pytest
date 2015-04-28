@@ -18,7 +18,7 @@ def test_nose_setup(testdir):
         test_hello.setup = lambda: l.append(1)
         test_hello.teardown = lambda: l.append(2)
     """)
-    result = testdir.inline_runpytest(p, '-p', 'nose')
+    result = testdir.runpytest_inprocess(p, '-p', 'nose')
     result.assert_outcomes(passed=2)
 
 
@@ -63,7 +63,7 @@ def test_nose_setup_func(testdir):
             assert l == [1,2]
 
     """)
-    result = testdir.inline_runpytest(p, '-p', 'nose')
+    result = testdir.runpytest_inprocess(p, '-p', 'nose')
     result.assert_outcomes(passed=2)
 
 
@@ -85,7 +85,7 @@ def test_nose_setup_func_failure(testdir):
             assert l == [1,2]
 
     """)
-    result = testdir.inline_runpytest(p, '-p', 'nose')
+    result = testdir.runpytest_inprocess(p, '-p', 'nose')
     result.stdout.fnmatch_lines([
         "*TypeError: <lambda>()*"
     ])
@@ -136,7 +136,7 @@ def test_nose_setup_partial(testdir):
         test_hello.setup = my_setup_partial
         test_hello.teardown = my_teardown_partial
     """)
-    result = testdir.inline_runpytest(p, '-p', 'nose')
+    result = testdir.runpytest_inprocess(p, '-p', 'nose')
     result.stdout.fnmatch_lines([
         "*2 passed*"
     ])
@@ -203,7 +203,7 @@ def test_nose_test_generator_fixtures(testdir):
                 #expect.append('setup')
                 eq_(self.called, expect)
     """)
-    result = testdir.inline_runpytest(p, '-p', 'nose')
+    result = testdir.runpytest_inprocess(p, '-p', 'nose')
     result.stdout.fnmatch_lines([
         "*10 passed*"
     ])
@@ -234,7 +234,7 @@ def test_module_level_setup(testdir):
             assert items[2] == 2
             assert 1 not in items
     """)
-    result = testdir.inline_runpytest('-p', 'nose')
+    result = testdir.runpytest_inprocess('-p', 'nose')
     result.stdout.fnmatch_lines([
         "*2 passed*",
     ])
@@ -256,7 +256,7 @@ def test_nose_style_setup_teardown(testdir):
         def test_world():
             assert l == [1]
         """)
-    result = testdir.inline_runpytest('-p', 'nose')
+    result = testdir.runpytest_inprocess('-p', 'nose')
     result.stdout.fnmatch_lines([
         "*2 passed*",
     ])
@@ -272,7 +272,7 @@ def test_nose_setup_ordering(testdir):
             def test_first(self):
                 pass
         """)
-    result = testdir.inline_runpytest()
+    result = testdir.runpytest_inprocess()
     result.stdout.fnmatch_lines([
         "*1 passed*",
     ])
@@ -297,7 +297,7 @@ def test_apiwrapper_problem_issue260(testdir):
             def test_fun(self):
                 pass
         """)
-    result = testdir.inline_runpytest()
+    result = testdir.runpytest_inprocess()
     result.assert_outcomes(passed=1)
 
 @pytest.mark.skipif("sys.version_info < (2,6)")
@@ -323,7 +323,7 @@ def test_setup_teardown_linking_issue265(testdir):
                 """Undoes the setup."""
                 raise Exception("should not call teardown for skipped tests")
         ''')
-    reprec = testdir.inline_runpytest()
+    reprec = testdir.runpytest_inprocess()
     reprec.assert_outcomes(passed=1, skipped=1)
 
 
@@ -334,7 +334,7 @@ def test_SkipTest_during_collection(testdir):
         def test_failing():
             assert False
         """)
-    result = testdir.inline_runpytest(p)
+    result = testdir.runpytest_inprocess(p)
     result.assert_outcomes(skipped=1)
 
 

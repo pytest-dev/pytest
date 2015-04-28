@@ -1,5 +1,5 @@
 from _pytest.doctest import DoctestItem, DoctestModule, DoctestTextfile
-import py, pytest
+import py
 
 class TestDoctests:
 

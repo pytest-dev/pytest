@@ -1,4 +1,5 @@
 """ (disabled by default) support for testing pytest and pytest plugins. """
+import gc
 import sys
 import traceback
 import os
@@ -15,6 +16,136 @@ from py.builtin import print_
 from _pytest.core import TracedHookExecution
 
 from _pytest.main import Session, EXIT_OK
+
+
+def pytest_addoption(parser):
+    # group = parser.getgroup("pytester", "pytester (self-tests) options")
+    parser.addoption('--lsof',
+           action="store_true", dest="lsof", default=False,
+           help=("run FD checks if lsof is available"))
+
+    parser.addoption('--runpytest', default="inprocess", dest="runpytest",
+           choices=("inprocess", "subprocess", ),
+           help=("run pytest sub runs in tests using an 'inprocess' "
+                 "or 'subprocess' (python -m main) method"))
+
+
+def pytest_configure(config):
+    # This might be called multiple times. Only take the first.
+    global _pytest_fullpath
+    try:
+        _pytest_fullpath
+    except NameError:
+        _pytest_fullpath = os.path.abspath(pytest.__file__.rstrip("oc"))
+        _pytest_fullpath = _pytest_fullpath.replace("$py.class", ".py")
+
+    if config.getvalue("lsof"):
+        checker = LsofFdLeakChecker()
+        if checker.matching_platform():
+            config.pluginmanager.register(checker)
+
+
+class LsofFdLeakChecker(object):
+    def get_open_files(self):
+        out = self._exec_lsof()
+        open_files = self._parse_lsof_output(out)
+        return open_files
+
+    def _exec_lsof(self):
+        pid = os.getpid()
+        return py.process.cmdexec("lsof -Ffn0 -p %d" % pid)
+
+    def _parse_lsof_output(self, out):
+        def isopen(line):
+            return line.startswith('f') and ("deleted" not in line and
+                'mem' not in line and "txt" not in line and 'cwd' not in line)
+
+        open_files = []
+
+        for line in out.split("\n"):
+            if isopen(line):
+                fields = line.split('\0')
+                fd = fields[0][1:]
+                filename = fields[1][1:]
+                if filename.startswith('/'):
+                    open_files.append((fd, filename))
+
+        return open_files
+
+    def matching_platform(self):
+        try:
+            py.process.cmdexec("lsof -v")
+        except py.process.cmdexec.Error:
+            return False
+        else:
+            return True
+
+    @pytest.hookimpl_opts(hookwrapper=True, tryfirst=True)
+    def pytest_runtest_item(self, item):
+        lines1 = self.get_open_files()
+        yield
+        if hasattr(sys, "pypy_version_info"):
+            gc.collect()
+        lines2 = self.get_open_files()
+
+        new_fds = set([t[0] for t in lines2]) - set([t[0] for t in lines1])
+        leaked_files = [t for t in lines2 if t[0] in new_fds]
+        if leaked_files:
+            error = []
+            error.append("***** %s FD leakage detected" % len(leaked_files))
+            error.extend([str(f) for f in leaked_files])
+            error.append("*** Before:")
+            error.extend([str(f) for f in lines1])
+            error.append("*** After:")
+            error.extend([str(f) for f in lines2])
+            error.append(error[0])
+            error.append("*** function %s:%s: %s " % item.location)
+            pytest.fail("\n".join(error), pytrace=False)
+
+
+# XXX copied from execnet's conftest.py - needs to be merged
+winpymap = {
+    'python2.7': r'C:\Python27\python.exe',
+    'python2.6': r'C:\Python26\python.exe',
+    'python3.1': r'C:\Python31\python.exe',
+    'python3.2': r'C:\Python32\python.exe',
+    'python3.3': r'C:\Python33\python.exe',
+    'python3.4': r'C:\Python34\python.exe',
+    'python3.5': r'C:\Python35\python.exe',
+}
+
+def getexecutable(name, cache={}):
+    try:
+        return cache[name]
+    except KeyError:
+        executable = py.path.local.sysfind(name)
+        if executable:
+            if name == "jython":
+                import subprocess
+                popen = subprocess.Popen([str(executable), "--version"],
+                    universal_newlines=True, stderr=subprocess.PIPE)
+                out, err = popen.communicate()
+                if not err or "2.5" not in err:
+                    executable = None
+                if "2.5.2" in err:
+                    executable = None # http://bugs.jython.org/issue1790
+        cache[name] = executable
+        return executable
+
+@pytest.fixture(params=['python2.6', 'python2.7', 'python3.3', "python3.4",
+                        'pypy', 'pypy3'])
+def anypython(request):
+    name = request.param
+    executable = getexecutable(name)
+    if executable is None:
+        if sys.platform == "win32":
+            executable = winpymap.get(name, None)
+            if executable:
+                executable = py.path.local(executable)
+                if executable.check():
+                    return executable
+        pytest.skip("no suitable %s found" % (name,))
+    return executable
 
 # used at least by pytest-xdist plugin
 @pytest.fixture
@@ -38,23 +169,6 @@ class PytestArg:
 def get_public_names(l):
     """Only return names from iterator l without a leading underscore."""
     return [x for x in l if x[0] != "_"]
-
-
-def pytest_addoption(parser):
-    group = parser.getgroup("pylib")
-    group.addoption('--no-tools-on-path',
-           action="store_true", dest="notoolsonpath", default=False,
-           help=("discover tools on PATH instead of going through py.cmdline.")
-    )
-
-def pytest_configure(config):
-    # This might be called multiple times. Only take the first.
-    global _pytest_fullpath
-    try:
-        _pytest_fullpath
-    except NameError:
-        _pytest_fullpath = os.path.abspath(pytest.__file__.rstrip("oc"))
-        _pytest_fullpath = _pytest_fullpath.replace("$py.class", ".py")
 
 
 class ParsedCall:
@@ -202,7 +316,7 @@ def pytest_funcarg__LineMatcher(request):
     return LineMatcher
 
 def pytest_funcarg__testdir(request):
-    tmptestdir = TmpTestdir(request)
+    tmptestdir = Testdir(request)
     return tmptestdir
 
 
@@ -216,10 +330,10 @@ class RunResult:
     :ret: The return value.
     :outlines: List of lines captured from stdout.
     :errlines: List of lines captures from stderr.
-    :stdout: LineMatcher of stdout, use ``stdout.str()`` to
+    :stdout: :py:class:`LineMatcher` of stdout, use ``stdout.str()`` to
        reconstruct stdout or the commonly used
        ``stdout.fnmatch_lines()`` method.
-    :stderrr: LineMatcher of stderr.
+    :stderrr: :py:class:`LineMatcher` of stderr.
     :duration: Duration in seconds.
 
     """
@@ -253,7 +367,7 @@ class RunResult:
 
 
 
-class TmpTestdir:
+class Testdir:
     """Temporary test directory with tools to test/run py.test itself.
 
     This is based on the ``tmpdir`` fixture but provides a number of
@@ -276,7 +390,6 @@ class TmpTestdir:
 
     def __init__(self, request):
         self.request = request
-        self.Config = request.config.__class__
         # XXX remove duplication with tmpdir plugin
         basetmp = request.config._tmpdirhandler.ensuretemp("testdir")
         name = request.function.__name__
@@ -292,9 +405,14 @@ class TmpTestdir:
         self._savemodulekeys = set(sys.modules)
         self.chdir() # always chdir
         self.request.addfinalizer(self.finalize)
+        method = self.request.config.getoption("--runpytest")
+        if method == "inprocess":
+            self._runpytest_method = self.runpytest_inprocess
+        elif method == "subprocess":
+            self._runpytest_method = self.runpytest_subprocess
 
     def __repr__(self):
-        return "<TmpTestdir %r>" % (self.tmpdir,)
+        return "<Testdir %r>" % (self.tmpdir,)
 
     def finalize(self):
         """Clean up global state artifacts.
@@ -315,7 +433,6 @@ class TmpTestdir:
 
         This allows the interpreter to catch module changes in case
         the module is re-imported.
-
         """
         for name in set(sys.modules).difference(self._savemodulekeys):
             # it seems zope.interfaces is keeping some state
@@ -512,35 +629,11 @@ class TmpTestdir:
         l = list(cmdlineargs) + [p]
         return self.inline_run(*l)
 
-    def inline_runsource1(self, *args):
-        """Run a test module in process using ``pytest.main()``.
-
-        This behaves exactly like :py:meth:`inline_runsource` and
-        takes identical arguments.  However the return value is a list
-        of the reports created by the pytest_runtest_logreport hook
-        during the run.
-
-        """
-        args = list(args)
-        source = args.pop()
-        p = self.makepyfile(source)
-        l = list(args) + [p]
-        reprec = self.inline_run(*l)
-        reports = reprec.getreports("pytest_runtest_logreport")
-        assert len(reports) == 3, reports # setup/call/teardown
-        return reports[1]
-
     def inline_genitems(self, *args):
         """Run ``pytest.main(['--collectonly'])`` in-process.
 
         Retuns a tuple of the collected items and a
         :py:class:`HookRecorder` instance.
-
-        """
-        return self.inprocess_run(list(args) + ['--collectonly'])
-
-    def inprocess_run(self, args, plugins=()):
-        """Run ``pytest.main()`` in-process, return Items and a HookRecorder.
 
         This runs the :py:func:`pytest.main` function to run all of
         py.test inside the test process itself like
@@ -548,7 +641,7 @@ class TmpTestdir:
         the collection items and a :py:class:`HookRecorder` instance.
 
         """
-        rec = self.inline_run(*args, plugins=plugins)
+        rec = self.inline_run("--collect-only", *args)
         items = [x.item for x in rec.getcalls("pytest_itemcollected")]
         return items, rec
 
@@ -586,7 +679,7 @@ class TmpTestdir:
         reprec.ret = ret
         return reprec
 
-    def inline_runpytest(self, *args, **kwargs):
+    def runpytest_inprocess(self, *args, **kwargs):
         """ Return result of running pytest in-process, providing a similar
         interface to what self.runpytest() provides. """
         if kwargs.get("syspathinsert"):
@@ -615,7 +708,11 @@ class TmpTestdir:
         return res
 
     def runpytest(self, *args, **kwargs):
-        return self.inline_runpytest(*args, **kwargs)
+        """ Run pytest inline or in a subprocess, depending on the command line
+        option "--runpytest" and return a :py:class:`RunResult`.
+
+        """
+        return self._runpytest_method(*args, **kwargs)
 
     def parseconfig(self, *args):
         """Return a new py.test Config instance from given commandline args.
@@ -788,57 +885,23 @@ class TmpTestdir:
         except UnicodeEncodeError:
             print("couldn't print to %s because of encoding" % (fp,))
 
-    def runpybin(self, scriptname, *args):
-        """Run a py.* tool with arguments.
+    def _getpytestargs(self):
+        # we cannot use "(sys.executable,script)"
+        # because on windows the script is e.g. a py.test.exe
+        return (sys.executable, _pytest_fullpath,) # noqa
 
-        This can realy only be used to run py.test, you probably want
-            :py:meth:`runpytest` instead.
-
-        Returns a :py:class:`RunResult`.
-
-        """
-        fullargs = self._getpybinargs(scriptname) + args
-        return self.run(*fullargs)
-
-    def _getpybinargs(self, scriptname):
-        if not self.request.config.getvalue("notoolsonpath"):
-            # XXX we rely on script referring to the correct environment
-            # we cannot use "(sys.executable,script)"
-            # because on windows the script is e.g. a py.test.exe
-            return (sys.executable, _pytest_fullpath,) # noqa
-        else:
-            pytest.skip("cannot run %r with --no-tools-on-path" % scriptname)
-
-    def runpython(self, script, prepend=True):
-        """Run a python script.
-
-        If ``prepend`` is True then the directory from which the py
-        package has been imported will be prepended to sys.path.
+    def runpython(self, script):
+        """Run a python script using sys.executable as interpreter.
 
         Returns a :py:class:`RunResult`.
-
         """
-        # XXX The prepend feature is probably not very useful since the
-        #     split of py and pytest.
-        if prepend:
-            s = self._getsysprepend()
-            if s:
-                script.write(s + "\n" + script.read())
         return self.run(sys.executable, script)
-
-    def _getsysprepend(self):
-        if self.request.config.getvalue("notoolsonpath"):
-            s = "import sys;sys.path.insert(0,%r);" % str(py._pydir.dirpath())
-        else:
-            s = ""
-        return s
 
     def runpython_c(self, command):
         """Run python -c "command", return a :py:class:`RunResult`."""
-        command = self._getsysprepend() + command
         return self.run(sys.executable, "-c", command)
 
-    def runpytest_subprocess(self, *args):
+    def runpytest_subprocess(self, *args, **kwargs):
         """Run py.test as a subprocess with given arguments.
 
         Any plugins added to the :py:attr:`plugins` list will added
@@ -863,7 +926,8 @@ class TmpTestdir:
         plugins = [x for x in self.plugins if isinstance(x, str)]
         if plugins:
             args = ('-p', plugins[0]) + args
-        return self.runpybin("py.test", *args)
+        args = self._getpytestargs() + args
+        return self.run(*args)
 
     def spawn_pytest(self, string, expect_timeout=10.0):
         """Run py.test using pexpect.
@@ -874,10 +938,8 @@ class TmpTestdir:
         The pexpect child is returned.
 
         """
-        if self.request.config.getvalue("notoolsonpath"):
-            pytest.skip("--no-tools-on-path prevents running pexpect-spawn tests")
         basetemp = self.tmpdir.mkdir("pexpect")
-        invoke = " ".join(map(str, self._getpybinargs("py.test")))
+        invoke = " ".join(map(str, self._getpytestargs()))
         cmd = "%s --basetemp=%s %s" % (invoke, basetemp, string)
         return self.spawn(cmd, expect_timeout=expect_timeout)
 

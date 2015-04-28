@@ -121,7 +121,7 @@ def test_capturing_unicode(testdir, method):
             print (sys.stdout)
             print (%s)
     """ % obj)
-    result = testdir.runpytest_subprocess("--capture=%s" % method)
+    result = testdir.runpytest("--capture=%s" % method)
     result.stdout.fnmatch_lines([
         "*1 passed*"
     ])
@@ -133,7 +133,7 @@ def test_capturing_bytes_in_utf8_encoding(testdir, method):
         def test_unicode():
             print ('b\\u00f6y')
     """)
-    result = testdir.runpytest_subprocess("--capture=%s" % method)
+    result = testdir.runpytest("--capture=%s" % method)
     result.stdout.fnmatch_lines([
         "*1 passed*"
     ])
@@ -144,7 +144,7 @@ def test_collect_capturing(testdir):
         print ("collect %s failure" % 13)
         import xyz42123
     """)
-    result = testdir.runpytest_subprocess(p)
+    result = testdir.runpytest(p)
     result.stdout.fnmatch_lines([
         "*Captured stdout*",
         "*collect 13 failure*",
@@ -165,7 +165,7 @@ class TestPerTestCapturing:
                 print ("in func2")
                 assert 0
         """)
-        result = testdir.runpytest_subprocess(p)
+        result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
             "setup module*",
             "setup test_func1*",
@@ -188,7 +188,7 @@ class TestPerTestCapturing:
             def teardown_function(func):
                 print ("in teardown")
         """)
-        result = testdir.runpytest_subprocess(p)
+        result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
             "*test_func():*",
             "*Captured stdout during setup*",
@@ -206,7 +206,7 @@ class TestPerTestCapturing:
                 print ("in func2")
                 assert 0
         """)
-        result = testdir.runpytest_subprocess(p)
+        result = testdir.runpytest(p)
         s = result.stdout.str()
         assert "in func1" not in s
         assert "in func2" in s
@@ -222,7 +222,7 @@ class TestPerTestCapturing:
                 print ("in func1")
                 pass
         """)
-        result = testdir.runpytest_subprocess(p)
+        result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
             '*teardown_function*',
             '*Captured stdout*',
@@ -240,7 +240,7 @@ class TestPerTestCapturing:
             def test_func():
                 pass
         """)
-        result = testdir.runpytest_subprocess(p)
+        result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
             "*def teardown_module(mod):*",
             "*Captured stdout*",
@@ -259,7 +259,7 @@ class TestPerTestCapturing:
                 sys.stderr.write(str(2))
                 raise ValueError
         """)
-        result = testdir.runpytest_subprocess(p1)
+        result = testdir.runpytest(p1)
         result.stdout.fnmatch_lines([
             "*test_capturing_outerr.py .F",
             "====* FAILURES *====",
@@ -410,7 +410,7 @@ class TestCaptureFixture:
             def test_two(capfd, capsys):
                 pass
         """)
-        result = testdir.runpytest_subprocess(p)
+        result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
             "*ERROR*setup*test_one*",
             "*capsys*capfd*same*time*",
@@ -425,7 +425,7 @@ class TestCaptureFixture:
                 print ("xxx42xxx")
                 assert 0
         """ % method)
-        result = testdir.runpytest_subprocess(p)
+        result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
             "xxx42xxx",
         ])
@@ -447,7 +447,7 @@ class TestCaptureFixture:
             def test_hello(capsys, missingarg):
                 pass
         """)
-        result = testdir.runpytest_subprocess(p)
+        result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
             "*test_partial_setup_failure*",
             "*1 error*",
@@ -485,7 +485,7 @@ def test_setup_failure_does_not_kill_capturing(testdir):
             raise ValueError(42)
     """))
     sub1.join("test_mod.py").write("def test_func1(): pass")
-    result = testdir.runpytest_subprocess(testdir.tmpdir, '--traceconfig')
+    result = testdir.runpytest(testdir.tmpdir, '--traceconfig')
     result.stdout.fnmatch_lines([
         "*ValueError(42)*",
         "*1 error*"
@@ -512,7 +512,7 @@ def test_capture_conftest_runtest_setup(testdir):
             print ("hello19")
     """)
     testdir.makepyfile("def test_func(): pass")
-    result = testdir.runpytest_subprocess()
+    result = testdir.runpytest()
     assert result.ret == 0
     assert 'hello19' not in result.stdout.str()
 
@@ -526,7 +526,7 @@ def test_capture_badoutput_issue412(testdir):
             os.write(1, omg)
             assert 0
         """)
-    result = testdir.runpytest_subprocess('--cap=fd')
+    result = testdir.runpytest('--cap=fd')
     result.stdout.fnmatch_lines('''
         *def test_func*
         *assert 0*
@@ -541,7 +541,7 @@ def test_capture_early_option_parsing(testdir):
             print ("hello19")
     """)
     testdir.makepyfile("def test_func(): pass")
-    result = testdir.runpytest_subprocess("-vs")
+    result = testdir.runpytest("-vs")
     assert result.ret == 0
     assert 'hello19' in result.stdout.str()
 
@@ -562,10 +562,8 @@ def test_capture_binary_output(testdir):
         if __name__ == '__main__':
             test_foo()
         """)
-    result = testdir.runpytest_subprocess('--assert=plain')
-    result.stdout.fnmatch_lines([
-        '*2 passed*',
-    ])
+    result = testdir.runpytest('--assert=plain')
+    result.assert_outcomes(passed=2)
 
 
 class TestTextIO:
