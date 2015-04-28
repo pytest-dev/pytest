@@ -296,7 +296,6 @@ class TestSession:
         subdir.ensure("__init__.py")
         target = subdir.join(p.basename)
         p.move(target)
-        testdir.chdir()
         subdir.chdir()
         config = testdir.parseconfig(p.basename)
         rcol = Session(config=config)
@@ -470,7 +469,6 @@ class Test_getinitialnodes:
             assert col.config is config
 
     def test_pkgfile(self, testdir):
-        testdir.chdir()
         tmpdir = testdir.tmpdir
         subdir = tmpdir.join("subdir")
         x = subdir.ensure("x.py")

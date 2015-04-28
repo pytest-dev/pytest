@@ -961,7 +961,7 @@ class TestPytestPluginManager:
         """)
         p.copy(p.dirpath("skipping2.py"))
         monkeypatch.setenv("PYTEST_PLUGINS", "skipping2")
-        result = testdir.runpytest("-rw", "-p", "skipping1", "--traceconfig")
+        result = testdir.runpytest("-rw", "-p", "skipping1", syspathinsert=True)
         assert result.ret == 0
         result.stdout.fnmatch_lines([
             "WI1*skipped plugin*skipping1*hello*",
@@ -990,7 +990,7 @@ class TestPytestPluginManager:
                 assert plugin is not None
         """)
         monkeypatch.setenv('PYTEST_PLUGINS', 'pytest_x500', prepend=",")
-        result = testdir.runpytest(p)
+        result = testdir.runpytest(p, syspathinsert=True)
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*1 passed*"])
 

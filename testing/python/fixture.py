@@ -99,10 +99,8 @@ class TestFillFixtures:
 
         sub1.join("test_in_sub1.py").write("def test_1(arg1): pass")
         sub2.join("test_in_sub2.py").write("def test_2(arg2): pass")
-        result = testdir.inline_runpytest("-v")
-        result.stdout.fnmatch_lines([
-            "*2 passed*"
-        ])
+        result = testdir.runpytest("-v")
+        result.assert_outcomes(passed=2)
 
     def test_extend_fixture_module_class(self, testdir):
         testfile = testdir.makepyfile("""

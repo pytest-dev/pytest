@@ -16,7 +16,6 @@ class Standalone:
         assert self.script.check()
 
     def run(self, anypython, testdir, *args):
-        testdir.chdir()
         return testdir._run(anypython, self.script, *args)
 
 def test_gen(testdir, anypython, standalone):

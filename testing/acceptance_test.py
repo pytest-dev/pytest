@@ -82,7 +82,7 @@ class TestGeneralUsage:
             def test_option(pytestconfig):
                 assert pytestconfig.option.xyz == "123"
         """)
-        result = testdir.runpytest("-p", "pytest_xyz", "--xyz=123")
+        result = testdir.runpytest("-p", "pytest_xyz", "--xyz=123", syspathinsert=True)
         assert result.ret == 0
         result.stdout.fnmatch_lines([
             '*1 passed*',
@@ -353,7 +353,8 @@ class TestGeneralUsage:
             *unrecognized*
         """)
 
-    def test_getsourcelines_error_issue553(self, testdir):
+    def test_getsourcelines_error_issue553(self, testdir, monkeypatch):
+        monkeypatch.setattr("inspect.getsourcelines", None)
         p = testdir.makepyfile("""
             def raise_error(obj):
                 raise IOError('source code not available')

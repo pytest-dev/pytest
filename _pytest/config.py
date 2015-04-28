@@ -38,8 +38,11 @@ def main(args=None, plugins=None):
             tw.line("ERROR: could not load %s\n" % (e.path), red=True)
             return 4
         else:
-            config.pluginmanager.check_pending()
-            return config.hook.pytest_cmdline_main(config=config)
+            try:
+                config.pluginmanager.check_pending()
+                return config.hook.pytest_cmdline_main(config=config)
+            finally:
+                config._ensure_unconfigure()
     except UsageError as e:
         for msg in e.args:
             sys.stderr.write("ERROR: %s\n" %(msg,))
@@ -85,12 +88,18 @@ def _prepareconfig(args=None, plugins=None):
         if not isinstance(args, str):
             raise ValueError("not a string or argument list: %r" % (args,))
         args = shlex.split(args)
-    pluginmanager = get_config().pluginmanager
-    if plugins:
-        for plugin in plugins:
-            pluginmanager.register(plugin)
-    return pluginmanager.hook.pytest_cmdline_parse(
-            pluginmanager=pluginmanager, args=args)
+    config = get_config()
+    pluginmanager = config.pluginmanager
+    try:
+        if plugins:
+            for plugin in plugins:
+                pluginmanager.register(plugin)
+        return pluginmanager.hook.pytest_cmdline_parse(
+                pluginmanager=pluginmanager, args=args)
+    except BaseException:
+        config._ensure_unconfigure()
+        raise
+
 
 def exclude_pytest_names(name):
     return not name.startswith(name) or name == "pytest_plugins" or \
@@ -263,7 +272,10 @@ class PytestPluginManager(PluginManager):
 
     def consider_pluginarg(self, arg):
         if arg.startswith("no:"):
-            self.set_blocked(arg[3:])
+            name = arg[3:]
+            self.set_blocked(name)
+            if not name.startswith("pytest_"):
+                self.set_blocked("pytest_" + name)
         else:
             self.import_plugin(arg)
 

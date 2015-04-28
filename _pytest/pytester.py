@@ -1,5 +1,6 @@
 """ (disabled by default) support for testing pytest and pytest plugins. """
 import sys
+import traceback
 import os
 import codecs
 import re
@@ -287,7 +288,8 @@ class TmpTestdir:
             break
         self.tmpdir = tmpdir
         self.plugins = []
-        self._savesyspath = list(sys.path)
+        self._savesyspath = (list(sys.path), list(sys.meta_path))
+        self._savemodulekeys = set(sys.modules)
         self.chdir() # always chdir
         self.request.addfinalizer(self.finalize)
 
@@ -303,23 +305,23 @@ class TmpTestdir:
         has finished.
 
         """
-        sys.path[:] = self._savesyspath
+        sys.path[:], sys.meta_path[:] = self._savesyspath
         if hasattr(self, '_olddir'):
             self._olddir.chdir()
         self.delete_loaded_modules()
 
     def delete_loaded_modules(self):
-        """Delete modules that have been loaded from tmpdir.
+        """Delete modules that have been loaded during a test.
 
         This allows the interpreter to catch module changes in case
         the module is re-imported.
 
         """
-        for name, mod in list(sys.modules.items()):
-            if mod:
-                fn = getattr(mod, '__file__', None)
-                if fn and fn.startswith(str(self.tmpdir)):
-                    del sys.modules[name]
+        for name in set(sys.modules).difference(self._savemodulekeys):
+            # it seems zope.interfaces is keeping some state
+            # (used by twisted related tests)
+            if name != "zope.interface":
+                del sys.modules[name]
 
     def make_hook_recorder(self, pluginmanager):
         """Create a new :py:class:`HookRecorder` for a PluginManager."""
@@ -584,22 +586,36 @@ class TmpTestdir:
         reprec.ret = ret
         return reprec
 
-    def inline_runpytest(self, *args):
+    def inline_runpytest(self, *args, **kwargs):
         """ Return result of running pytest in-process, providing a similar
         interface to what self.runpytest() provides. """
+        if kwargs.get("syspathinsert"):
+            self.syspathinsert()
         now = time.time()
-        capture = py.io.StdCaptureFD()
+        capture = py.io.StdCapture()
         try:
-            reprec = self.inline_run(*args)
+            try:
+                reprec = self.inline_run(*args)
+            except SystemExit as e:
+                class reprec:
+                    ret = e.args[0]
+            except Exception:
+                traceback.print_exc()
+                class reprec:
+                    ret = 3
         finally:
             out, err = capture.reset()
-        assert out or err
+            sys.stdout.write(out)
+            sys.stderr.write(err)
 
         res = RunResult(reprec.ret,
                         out.split("\n"), err.split("\n"),
                         time.time()-now)
         res.reprec = reprec
         return res
+
+    def runpytest(self, *args, **kwargs):
+        return self.inline_runpytest(*args, **kwargs)
 
     def parseconfig(self, *args):
         """Return a new py.test Config instance from given commandline args.
@@ -822,7 +838,7 @@ class TmpTestdir:
         command = self._getsysprepend() + command
         return self.run(sys.executable, "-c", command)
 
-    def runpytest(self, *args):
+    def runpytest_subprocess(self, *args):
         """Run py.test as a subprocess with given arguments.
 
         Any plugins added to the :py:attr:`plugins` list will added

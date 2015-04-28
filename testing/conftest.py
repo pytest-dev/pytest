@@ -1,5 +1,6 @@
 import pytest
 import sys
+import gc
 
 pytest_plugins = "pytester",
 
@@ -17,8 +18,8 @@ class LsofFdLeakChecker(object):
 
     def _parse_lsof_output(self, out):
         def isopen(line):
-            return line.startswith('f') and (
-                "deleted" not in line and 'mem' not in line and "txt" not in line and 'cwd' not in line)
+            return line.startswith('f') and ("deleted" not in line and
+                'mem' not in line and "txt" not in line and 'cwd' not in line)
 
         open_files = []
 
@@ -32,46 +33,49 @@ class LsofFdLeakChecker(object):
 
         return open_files
 
+    def matching_platform(self):
+        try:
+            py.process.cmdexec("lsof -v")
+        except py.process.cmdexec.Error:
+            return False
+        else:
+            return True
+
+    @pytest.hookimpl_opts(hookwrapper=True, tryfirst=True)
+    def pytest_runtest_item(self, item):
+        lines1 = self.get_open_files()
+        yield
+        if hasattr(sys, "pypy_version_info"):
+            gc.collect()
+        lines2 = self.get_open_files()
+
+        new_fds = set([t[0] for t in lines2]) - set([t[0] for t in lines1])
+        leaked_files = [t for t in lines2 if t[0] in new_fds]
+        if leaked_files:
+            error = []
+            error.append("***** %s FD leakage detected" % len(leaked_files))
+            error.extend([str(f) for f in leaked_files])
+            error.append("*** Before:")
+            error.extend([str(f) for f in lines1])
+            error.append("*** After:")
+            error.extend([str(f) for f in lines2])
+            error.append(error[0])
+            error.append("*** function %s:%s: %s " % item.location)
+            pytest.fail("\n".join(error), pytrace=False)
+
 
 def pytest_addoption(parser):
     parser.addoption('--lsof',
            action="store_true", dest="lsof", default=False,
            help=("run FD checks if lsof is available"))
 
-def pytest_runtest_setup(item):
-    config = item.config
-    config._basedir = py.path.local()
+
+def pytest_configure(config):
     if config.getvalue("lsof"):
-        try:
-            config._fd_leak_checker = LsofFdLeakChecker()
-            config._openfiles = config._fd_leak_checker.get_open_files()
-        except py.process.cmdexec.Error:
-            pass
+        checker = LsofFdLeakChecker()
+        if checker.matching_platform():
+            config.pluginmanager.register(checker)
 
-#def pytest_report_header():
-#    return "pid: %s" % os.getpid()
-
-def check_open_files(config):
-    lines2 = config._fd_leak_checker.get_open_files()
-    new_fds = set([t[0] for t in lines2]) - set([t[0] for t in config._openfiles])
-    open_files = [t for t in lines2 if t[0] in new_fds]
-    if open_files:
-        error = []
-        error.append("***** %s FD leakage detected" % len(open_files))
-        error.extend([str(f) for f in open_files])
-        error.append("*** Before:")
-        error.extend([str(f) for f in config._openfiles])
-        error.append("*** After:")
-        error.extend([str(f) for f in lines2])
-        error.append(error[0])
-        raise AssertionError("\n".join(error))
-
-@pytest.hookimpl_opts(hookwrapper=True, trylast=True)
-def pytest_runtest_teardown(item):
-    yield
-    item.config._basedir.chdir()
-    if hasattr(item.config, '_openfiles'):
-        check_open_files(item.config)
 
 # XXX copied from execnet's conftest.py - needs to be merged
 winpymap = {

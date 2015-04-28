@@ -260,7 +260,7 @@ class TestPDB:
 
     def test_pdb_collection_failure_is_shown(self, testdir):
         p1 = testdir.makepyfile("""xxx """)
-        result = testdir.runpytest("--pdb", p1)
+        result = testdir.runpytest_subprocess("--pdb", p1)
         result.stdout.fnmatch_lines([
             "*NameError*xxx*",
             "*1 error*",
