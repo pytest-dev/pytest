@@ -39,7 +39,7 @@ class TestParseIni:
             [pytest]
             minversion=9.0
         """)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         assert result.ret != 0
         result.stderr.fnmatch_lines([
             "*tox.ini:2*requires*9.0*actual*"
@@ -75,7 +75,7 @@ class TestParseIni:
             [pytest]
             addopts = --qwe
         """)
-        result = testdir.runpytest("--confcutdir=.")
+        result = testdir.inline_run("--confcutdir=.")
         assert result.ret == 0
 
 class TestConfigCmdlineParsing:
@@ -320,7 +320,7 @@ def test_cmdline_processargs_simple(testdir):
         def pytest_cmdline_preparse(args):
             args.append("-h")
     """)
-    result = testdir.runpytest()
+    result = testdir.inline_runpytest()
     result.stdout.fnmatch_lines([
         "*pytest*",
         "*-h*",
@@ -389,11 +389,11 @@ class TestWarning:
             def test_hello(fix):
                 pass
         """)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         assert result.parseoutcomes()["warnings"] > 0
         assert "hello" not in result.stdout.str()
 
-        result = testdir.runpytest("-rw")
+        result = testdir.inline_runpytest("-rw")
         result.stdout.fnmatch_lines("""
             ===*warning summary*===
             *WT1*test_warn_on_test_item*:5*hello*

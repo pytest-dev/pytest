@@ -29,17 +29,21 @@ def main(args=None, plugins=None):
                   initialization.
     """
     try:
-        config = _prepareconfig(args, plugins)
-    except ConftestImportFailure:
-        e = sys.exc_info()[1]
-        tw = py.io.TerminalWriter(sys.stderr)
-        for line in traceback.format_exception(*e.excinfo):
-            tw.line(line.rstrip(), red=True)
-        tw.line("ERROR: could not load %s\n" % (e.path), red=True)
+        try:
+            config = _prepareconfig(args, plugins)
+        except ConftestImportFailure as e:
+            tw = py.io.TerminalWriter(sys.stderr)
+            for line in traceback.format_exception(*e.excinfo):
+                tw.line(line.rstrip(), red=True)
+            tw.line("ERROR: could not load %s\n" % (e.path), red=True)
+            return 4
+        else:
+            config.pluginmanager.check_pending()
+            return config.hook.pytest_cmdline_main(config=config)
+    except UsageError as e:
+        for msg in e.args:
+            sys.stderr.write("ERROR: %s\n" %(msg,))
         return 4
-    else:
-        config.pluginmanager.check_pending()
-        return config.hook.pytest_cmdline_main(config=config)
 
 class cmdline:  # compatibility namespace
     main = staticmethod(main)

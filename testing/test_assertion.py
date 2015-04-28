@@ -451,7 +451,7 @@ def test_assertion_options(testdir):
             x = 3
             assert x == 4
     """)
-    result = testdir.runpytest()
+    result = testdir.inline_runpytest()
     assert "3 == 4" in result.stdout.str()
     off_options = (("--no-assert",),
                    ("--nomagic",),

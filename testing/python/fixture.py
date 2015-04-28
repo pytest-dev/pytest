@@ -33,7 +33,7 @@ class TestFillFixtures:
             def test_func(some):
                 pass
         """)
-        result = testdir.runpytest() # "--collect-only")
+        result = testdir.inline_runpytest() # "--collect-only")
         assert result.ret != 0
         result.stdout.fnmatch_lines([
             "*def test_func(some)*",
@@ -78,7 +78,7 @@ class TestFillFixtures:
                 def test_method(self, something):
                     assert something is self
         """)
-        result = testdir.runpytest(p)
+        result = testdir.inline_runpytest(p)
         result.stdout.fnmatch_lines([
             "*1 passed*"
         ])
@@ -99,7 +99,7 @@ class TestFillFixtures:
 
         sub1.join("test_in_sub1.py").write("def test_1(arg1): pass")
         sub2.join("test_in_sub2.py").write("def test_2(arg2): pass")
-        result = testdir.runpytest("-v")
+        result = testdir.inline_runpytest("-v")
         result.stdout.fnmatch_lines([
             "*2 passed*"
         ])
@@ -121,9 +121,9 @@ class TestFillFixtures:
                  def test_spam(self, spam):
                      assert spam == 'spamspam'
         """)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         result.stdout.fnmatch_lines(["*1 passed*"])
-        result = testdir.runpytest(testfile)
+        result = testdir.inline_runpytest(testfile)
         result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_extend_fixture_conftest_module(self, testdir):
@@ -144,9 +144,9 @@ class TestFillFixtures:
             def test_spam(spam):
                 assert spam == 'spamspam'
         """)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         result.stdout.fnmatch_lines(["*1 passed*"])
-        result = testdir.runpytest(testfile)
+        result = testdir.inline_runpytest(testfile)
         result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_extend_fixture_conftest_conftest(self, testdir):
@@ -170,9 +170,9 @@ class TestFillFixtures:
             def test_spam(spam):
                 assert spam == "spamspam"
         """))
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         result.stdout.fnmatch_lines(["*1 passed*"])
-        result = testdir.runpytest(testfile)
+        result = testdir.inline_runpytest(testfile)
         result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_extend_fixture_conftest_plugin(self, testdir):
@@ -197,7 +197,7 @@ class TestFillFixtures:
             def test_foo(foo):
                 assert foo == 14
         """)
-        result = testdir.runpytest('-s')
+        result = testdir.inline_runpytest('-s')
         assert result.ret == 0
 
     def test_extend_fixture_plugin_plugin(self, testdir):
@@ -223,7 +223,7 @@ class TestFillFixtures:
             def test_foo(foo):
                 assert foo == 14
         """)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         assert result.ret == 0
 
     def test_override_parametrized_fixture_conftest_module(self, testdir):
@@ -245,9 +245,9 @@ class TestFillFixtures:
             def test_spam(spam):
                 assert spam == 'spam'
         """)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         result.stdout.fnmatch_lines(["*1 passed*"])
-        result = testdir.runpytest(testfile)
+        result = testdir.inline_runpytest(testfile)
         result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_override_parametrized_fixture_conftest_conftest(self, testdir):
@@ -272,9 +272,9 @@ class TestFillFixtures:
             def test_spam(spam):
                 assert spam == "spam"
         """))
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         result.stdout.fnmatch_lines(["*1 passed*"])
-        result = testdir.runpytest(testfile)
+        result = testdir.inline_runpytest(testfile)
         result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_override_non_parametrized_fixture_conftest_module(self, testdir):
@@ -299,9 +299,9 @@ class TestFillFixtures:
                 assert spam == params['spam']
                 params['spam'] += 1
         """)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         result.stdout.fnmatch_lines(["*3 passed*"])
-        result = testdir.runpytest(testfile)
+        result = testdir.inline_runpytest(testfile)
         result.stdout.fnmatch_lines(["*3 passed*"])
 
     def test_override_non_parametrized_fixture_conftest_conftest(self, testdir):
@@ -329,9 +329,9 @@ class TestFillFixtures:
                 assert spam == params['spam']
                 params['spam'] += 1
         """))
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         result.stdout.fnmatch_lines(["*3 passed*"])
-        result = testdir.runpytest(testfile)
+        result = testdir.inline_runpytest(testfile)
         result.stdout.fnmatch_lines(["*3 passed*"])
 
     def test_autouse_fixture_plugin(self, testdir):
@@ -351,7 +351,7 @@ class TestFillFixtures:
             def test_foo(request):
                 assert request.function.foo == 7
         """)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         assert result.ret == 0
 
     def test_funcarg_lookup_error(self, testdir):
@@ -359,7 +359,7 @@ class TestFillFixtures:
             def test_lookup_error(unknown):
                 pass
         """)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         result.stdout.fnmatch_lines([
             "*ERROR*test_lookup_error*",
             "*def test_lookup_error(unknown):*",
@@ -388,7 +388,7 @@ class TestFillFixtures:
                     traceback.print_exc()
                 assert sys.exc_info() == (None, None, None)
         """)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         assert result.ret == 0
 
 
@@ -531,7 +531,7 @@ class TestRequestBasic:
             def test_second():
                 assert len(l) == 1
         """)
-        result = testdir.runpytest(p)
+        result = testdir.inline_runpytest(p)
         result.stdout.fnmatch_lines([
             "*1 error*"  # XXX the whole module collection fails
             ])
@@ -616,7 +616,7 @@ class TestRequestBasic:
         """))
         p = b.join("test_module.py")
         p.write("def test_func(arg1): pass")
-        result = testdir.runpytest(p, "--fixtures")
+        result = testdir.inline_runpytest(p, "--fixtures")
         assert result.ret == 0
         result.stdout.fnmatch_lines("""
             *fixtures defined*conftest*
@@ -785,7 +785,7 @@ class TestRequestCachedSetup:
             def test_two_different_setups(arg1, arg2):
                 assert arg1 != arg2
         """)
-        result = testdir.runpytest("-v")
+        result = testdir.inline_runpytest("-v")
         result.stdout.fnmatch_lines([
             "*1 passed*"
         ])
@@ -800,7 +800,7 @@ class TestRequestCachedSetup:
             def test_two_funcarg(arg1):
                 assert arg1 == 11
         """)
-        result = testdir.runpytest("-v")
+        result = testdir.inline_runpytest("-v")
         result.stdout.fnmatch_lines([
             "*1 passed*"
         ])
@@ -827,7 +827,7 @@ class TestRequestCachedSetup:
             def test_check_test0_has_teardown_correct():
                 assert test_0.l == [2]
         """)
-        result = testdir.runpytest("-v")
+        result = testdir.inline_runpytest("-v")
         result.stdout.fnmatch_lines([
             "*3 passed*"
         ])
@@ -843,7 +843,7 @@ class TestRequestCachedSetup:
             def test_func(app):
                 pass
         """)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         assert result.ret != 0
         result.stdout.fnmatch_lines([
             "*3/x*",
@@ -898,7 +898,7 @@ class TestFixtureUsages:
             def test_add(arg2):
                 assert arg2 == 2
         """)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         result.stdout.fnmatch_lines([
             "*ScopeMismatch*involved factories*",
             "* def arg2*",
@@ -920,7 +920,7 @@ class TestFixtureUsages:
             def test_add(arg1, arg2):
                 assert arg2 == 2
         """)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         result.stdout.fnmatch_lines([
             "*ScopeMismatch*involved factories*",
             "* def arg2*",
@@ -944,7 +944,7 @@ class TestFixtureUsages:
                 assert arg2 == arg1 + 1
                 assert len(l) == arg1
         """)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         result.stdout.fnmatch_lines([
             "*2 passed*"
         ])
@@ -964,7 +964,7 @@ class TestFixtureUsages:
             def test_missing(call_fail):
                 pass
             """)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         result.stdout.fnmatch_lines("""
             *pytest.fixture()*
             *def call_fail(fail)*
@@ -1046,7 +1046,7 @@ class TestFixtureUsages:
         reprec.assertoutcome(passed=2)
 
     def test_usefixtures_seen_in_showmarkers(self, testdir):
-        result = testdir.runpytest("--markers")
+        result = testdir.inline_runpytest("--markers")
         result.stdout.fnmatch_lines("""
             *usefixtures(fixturename1*mark tests*fixtures*
         """)
@@ -1313,7 +1313,7 @@ class TestAutouseDiscovery:
         conftest.move(a.join(conftest.basename))
         a.join("test_something.py").write("def test_func(): pass")
         b.join("test_otherthing.py").write("def test_func(): pass")
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         result.stdout.fnmatch_lines("""
             *1 passed*1 error*
         """)
@@ -1767,7 +1767,7 @@ class TestFixtureMarker:
                 def test_1(arg):
                     pass
             """ % method)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         assert result.ret != 0
         result.stdout.fnmatch_lines([
             "*ScopeMismatch*You tried*function*session*request*",
@@ -1825,7 +1825,7 @@ class TestFixtureMarker:
             def test_mismatch(arg):
                 pass
         """)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         result.stdout.fnmatch_lines([
             "*ScopeMismatch*",
             "*1 error*",
@@ -1876,7 +1876,7 @@ class TestFixtureMarker:
             def test_func4(marg):
                 pass
         """)
-        result = testdir.runpytest("-v")
+        result = testdir.inline_runpytest("-v")
         result.stdout.fnmatch_lines("""
             test_mod1.py::test_func[s1] PASSED
             test_mod2.py::test_func2[s1] PASSED
@@ -1928,7 +1928,7 @@ class TestFixtureMarker:
                 def test_3(self):
                     pass
         """)
-        result = testdir.runpytest("-vs")
+        result = testdir.inline_runpytest("-vs")
         result.stdout.fnmatch_lines("""
             test_class_ordering.py::TestClass2::test_1[1-a] PASSED
             test_class_ordering.py::TestClass2::test_1[2-a] PASSED
@@ -2019,7 +2019,7 @@ class TestFixtureMarker:
             def test_finish():
                 assert not l
         """)
-        result = testdir.runpytest("-v")
+        result = testdir.inline_runpytest("-v")
         result.stdout.fnmatch_lines("""
             *3 passed*
         """)
@@ -2049,7 +2049,7 @@ class TestFixtureMarker:
             def test_browser(browser):
                 assert browser['visited'] is True
         """))
-        reprec = testdir.runpytest("-s")
+        reprec = testdir.inline_runpytest("-s")
         for test in ['test_browser']:
             reprec.stdout.fnmatch_lines('*Finalized*')
 
@@ -2260,7 +2260,7 @@ class TestFixtureMarker:
             def test_foo(fix):
                 assert 1
         """)
-        res = testdir.runpytest('-v')
+        res = testdir.inline_runpytest('-v')
         res.stdout.fnmatch_lines([
             '*test_foo*alpha*',
             '*test_foo*beta*'])
@@ -2277,7 +2277,7 @@ class TestFixtureMarker:
             def test_foo(fix):
                 assert 1
         """)
-        res = testdir.runpytest('-v')
+        res = testdir.inline_runpytest('-v')
         res.stdout.fnmatch_lines([
             '*test_foo*alpha*',
             '*test_foo*beta*'])
@@ -2337,7 +2337,7 @@ class TestErrors:
             def test_something(gen):
                 pass
         """)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         assert result.ret != 0
         result.stdout.fnmatch_lines([
             "*def gen(qwe123):*",
@@ -2363,7 +2363,7 @@ class TestErrors:
             def test_3():
                 assert l[0] != l[1]
         """)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         result.stdout.fnmatch_lines("""
             *ERROR*teardown*test_1*
             *KeyError*
@@ -2383,7 +2383,7 @@ class TestErrors:
             def test_something():
                 pass
         """)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         assert result.ret != 0
         result.stdout.fnmatch_lines([
             "*def gen(qwe123):*",
@@ -2397,7 +2397,7 @@ class TestShowFixtures:
         assert config.option.showfixtures
 
     def test_show_fixtures(self, testdir):
-        result = testdir.runpytest("--fixtures")
+        result = testdir.inline_runpytest("--fixtures")
         result.stdout.fnmatch_lines([
                 "*tmpdir*",
                 "*temporary directory*",
@@ -2405,7 +2405,7 @@ class TestShowFixtures:
         )
 
     def test_show_fixtures_verbose(self, testdir):
-        result = testdir.runpytest("--fixtures", "-v")
+        result = testdir.inline_runpytest("--fixtures", "-v")
         result.stdout.fnmatch_lines([
                 "*tmpdir*--*tmpdir.py*",
                 "*temporary directory*",
@@ -2422,7 +2422,7 @@ class TestShowFixtures:
             def arg1():
                 """  hello world """
         ''')
-        result = testdir.runpytest("--fixtures", p)
+        result = testdir.inline_runpytest("--fixtures", p)
         result.stdout.fnmatch_lines("""
             *tmpdir
             *fixtures defined from*
@@ -2444,7 +2444,7 @@ class TestShowFixtures:
                 def test_hello():
                     pass
             """)
-        result = testdir.runpytest("--fixtures")
+        result = testdir.inline_runpytest("--fixtures")
         result.stdout.fnmatch_lines("""
             *tmpdir*
             *fixtures defined from*conftest*
@@ -2470,7 +2470,7 @@ class TestShowFixtures:
 
                 """
         ''')
-        result = testdir.runpytest("--fixtures", p)
+        result = testdir.inline_runpytest("--fixtures", p)
         result.stdout.fnmatch_lines("""
             * fixtures defined from test_show_fixtures_trimmed_doc *
             arg2
@@ -2498,7 +2498,7 @@ class TestContextManagerFixtureFuncs:
                 print ("test2 %s" % arg1)
                 assert 0
         """)
-        result = testdir.runpytest("-s")
+        result = testdir.inline_runpytest("-s")
         result.stdout.fnmatch_lines("""
             *setup*
             *test1 1*
@@ -2521,7 +2521,7 @@ class TestContextManagerFixtureFuncs:
             def test_2(arg1):
                 print ("test2 %s" % arg1)
         """)
-        result = testdir.runpytest("-s")
+        result = testdir.inline_runpytest("-s")
         result.stdout.fnmatch_lines("""
             *setup*
             *test1 1*
@@ -2539,7 +2539,7 @@ class TestContextManagerFixtureFuncs:
             def test_1(arg1):
                 pass
         """)
-        result = testdir.runpytest("-s")
+        result = testdir.inline_runpytest("-s")
         result.stdout.fnmatch_lines("""
             *pytest.fail*setup*
             *1 error*
@@ -2555,7 +2555,7 @@ class TestContextManagerFixtureFuncs:
             def test_1(arg1):
                 pass
         """)
-        result = testdir.runpytest("-s")
+        result = testdir.inline_runpytest("-s")
         result.stdout.fnmatch_lines("""
             *pytest.fail*teardown*
             *1 passed*1 error*
@@ -2571,7 +2571,7 @@ class TestContextManagerFixtureFuncs:
             def test_1(arg1):
                 pass
         """)
-        result = testdir.runpytest("-s")
+        result = testdir.inline_runpytest("-s")
         result.stdout.fnmatch_lines("""
             *fixture function*
             *test_yields*:2*
@@ -2587,7 +2587,7 @@ class TestContextManagerFixtureFuncs:
             def test_1(arg1):
                 pass
         """)
-        result = testdir.runpytest("-s")
+        result = testdir.inline_runpytest("-s")
         result.stdout.fnmatch_lines("""
             *yield_fixture*requires*yield*
             *yield_fixture*
@@ -2603,7 +2603,7 @@ class TestContextManagerFixtureFuncs:
             def test_1(arg1):
                 pass
         """)
-        result = testdir.runpytest("-s")
+        result = testdir.inline_runpytest("-s")
         result.stdout.fnmatch_lines("""
             *fixture*cannot use*yield*
             *def arg1*

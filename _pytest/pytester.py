@@ -204,6 +204,8 @@ def pytest_funcarg__testdir(request):
     tmptestdir = TmpTestdir(request)
     return tmptestdir
 
+
+
 rex_outcome = re.compile("(\d+) (\w+)")
 class RunResult:
     """The result of running a command.
@@ -229,6 +231,8 @@ class RunResult:
         self.duration = duration
 
     def parseoutcomes(self):
+        """ Return a dictionary of outcomestring->num from parsing
+        the terminal output that the test process produced."""
         for line in reversed(self.outlines):
             if 'seconds' in line:
                 outcomes = rex_outcome.findall(line)
@@ -238,11 +242,14 @@ class RunResult:
                         d[cat] = int(num)
                     return d
 
-    def assertoutcome(self, passed=0, skipped=0, failed=0):
+    def assert_outcomes(self, passed=0, skipped=0, failed=0):
+        """ assert that the specified outcomes appear with the respective
+        numbers (0 means it didn't occur) in the text output from a test run."""
         d = self.parseoutcomes()
         assert passed == d.get("passed", 0)
         assert skipped == d.get("skipped", 0)
         assert failed == d.get("failed", 0)
+
 
 
 class TmpTestdir:
@@ -568,11 +575,31 @@ class TmpTestdir:
         plugins = kwargs.get("plugins") or []
         plugins.append(Collect())
         ret = pytest.main(list(args), plugins=plugins)
-        assert len(rec) == 1
-        reprec = rec[0]
-        reprec.ret = ret
         self.delete_loaded_modules()
+        if len(rec) == 1:
+            reprec = rec.pop()
+        else:
+            class reprec:
+                pass
+        reprec.ret = ret
         return reprec
+
+    def inline_runpytest(self, *args):
+        """ Return result of running pytest in-process, providing a similar
+        interface to what self.runpytest() provides. """
+        now = time.time()
+        capture = py.io.StdCaptureFD()
+        try:
+            reprec = self.inline_run(*args)
+        finally:
+            out, err = capture.reset()
+        assert out or err
+
+        res = RunResult(reprec.ret,
+                        out.split("\n"), err.split("\n"),
+                        time.time()-now)
+        res.reprec = reprec
+        return res
 
     def parseconfig(self, *args):
         """Return a new py.test Config instance from given commandline args.

@@ -15,7 +15,7 @@ class TestModule:
         p.pyimport()
         del py.std.sys.modules['test_whatever']
         b.ensure("test_whatever.py")
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         result.stdout.fnmatch_lines([
             "*import*mismatch*",
             "*imported*test_whatever*",
@@ -59,7 +59,7 @@ class TestClass:
                 def __init__(self):
                     pass
         """)
-        result = testdir.runpytest("-rw")
+        result = testdir.inline_runpytest("-rw")
         result.stdout.fnmatch_lines_random("""
             WC1*test_class_with_init_warning.py*__init__*
         """)
@@ -69,7 +69,7 @@ class TestClass:
             class test(object):
                 pass
         """)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         result.stdout.fnmatch_lines([
             "*collected 0*",
         ])
@@ -86,7 +86,7 @@ class TestClass:
                 def teardown_class(cls):
                     pass
         """)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         result.stdout.fnmatch_lines([
             "*1 passed*",
         ])
@@ -534,7 +534,7 @@ class TestConftestCustomization:
         """)
         testdir.makepyfile("def test_some(): pass")
         testdir.makepyfile(test_xyz="def test_func(): pass")
-        result = testdir.runpytest("--collect-only")
+        result = testdir.inline_runpytest("--collect-only")
         result.stdout.fnmatch_lines([
             "*<Module*test_pytest*",
             "*<MyModule*xyz*",
@@ -590,7 +590,7 @@ class TestConftestCustomization:
                     return MyFunction(name, collector)
         """)
         testdir.makepyfile("def some(): pass")
-        result = testdir.runpytest("--collect-only")
+        result = testdir.inline_runpytest("--collect-only")
         result.stdout.fnmatch_lines([
             "*MyFunction*some*",
         ])
@@ -626,7 +626,7 @@ def test_setup_only_available_in_subdir(testdir):
     """))
     sub1.join("test_in_sub1.py").write("def test_1(): pass")
     sub2.join("test_in_sub2.py").write("def test_2(): pass")
-    result = testdir.runpytest("-v", "-s")
+    result = testdir.inline_runpytest("-v", "-s")
     result.stdout.fnmatch_lines([
         "*2 passed*"
     ])
@@ -650,7 +650,7 @@ class TestTracebackCutting:
                 raise ValueError("xyz")
         """)
         p = testdir.makepyfile("def test(hello): pass")
-        result = testdir.runpytest(p)
+        result = testdir.inline_runpytest(p)
         assert result.ret != 0
         out = result.stdout.str()
         assert out.find("xyz") != -1
@@ -658,7 +658,7 @@ class TestTracebackCutting:
         numentries = out.count("_ _ _") # separator for traceback entries
         assert numentries == 0
 
-        result = testdir.runpytest("--fulltrace", p)
+        result = testdir.inline_runpytest("--fulltrace", p)
         out = result.stdout.str()
         assert out.find("conftest.py:2: ValueError") != -1
         numentries = out.count("_ _ _ _") # separator for traceback entries
@@ -671,7 +671,7 @@ class TestTracebackCutting:
             x = 17
             asd
         """)
-        result = testdir.runpytest()
+        result = testdir.inline_runpytest()
         assert result.ret != 0
         out = result.stdout.str()
         assert "x = 1" not in out
@@ -680,7 +680,7 @@ class TestTracebackCutting:
             " *asd*",
             "E*NameError*",
         ])
-        result = testdir.runpytest("--fulltrace")
+        result = testdir.inline_runpytest("--fulltrace")
         out = result.stdout.str()
         assert "x = 1" in out
         assert "x = 2" in out
@@ -771,7 +771,7 @@ def test_customized_python_discovery(testdir):
     """)
     p2 = p.new(basename=p.basename.replace("test", "check"))
     p.move(p2)
-    result = testdir.runpytest("--collect-only", "-s")
+    result = testdir.inline_runpytest("--collect-only", "-s")
     result.stdout.fnmatch_lines([
         "*check_customized*",
         "*check_simple*",
@@ -779,7 +779,7 @@ def test_customized_python_discovery(testdir):
         "*check_meth*",
     ])
 
-    result = testdir.runpytest()
+    result = testdir.inline_runpytest()
     assert result.ret == 0
     result.stdout.fnmatch_lines([
         "*2 passed*",
@@ -795,12 +795,12 @@ def test_customized_python_discovery_functions(testdir):
         def _test_underscore():
             pass
     """)
-    result = testdir.runpytest("--collect-only", "-s")
+    result = testdir.inline_runpytest("--collect-only", "-s")
     result.stdout.fnmatch_lines([
         "*_test_underscore*",
     ])
 
-    result = testdir.runpytest()
+    result = testdir.inline_runpytest()
     assert result.ret == 0
     result.stdout.fnmatch_lines([
         "*1 passed*",
@@ -820,7 +820,7 @@ def test_collector_attributes(testdir):
          def test_hello():
             pass
     """)
-    result = testdir.runpytest()
+    result = testdir.inline_runpytest()
     result.stdout.fnmatch_lines([
         "*1 passed*",
     ])
@@ -844,7 +844,7 @@ def test_customize_through_attributes(testdir):
             def test_hello(self):
                 pass
     """)
-    result = testdir.runpytest("--collect-only")
+    result = testdir.inline_runpytest("--collect-only")
     result.stdout.fnmatch_lines([
         "*MyClass*",
         "*MyInstance*",
@@ -864,6 +864,6 @@ def test_unorderable_types(testdir):
             return Test
         TestFoo = make_test()
     """)
-    result = testdir.runpytest()
+    result = testdir.inline_runpytest()
     assert "TypeError" not in result.stdout.str()
     assert result.ret == 0
