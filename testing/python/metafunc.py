@@ -246,7 +246,7 @@ class TestMetafunc:
                 assert x in (10,20)
                 assert y == 2
         """)
-        result = testdir.runpytest_inprocess("-v")
+        result = testdir.runpytest("-v")
         result.stdout.fnmatch_lines([
             "*test_simple*1-2*",
             "*test_simple*2-2*",
@@ -290,7 +290,7 @@ class TestMetafunc:
                 def test_meth(self, x, y):
                     assert 0, x
         """)
-        result = testdir.runpytest_inprocess()
+        result = testdir.runpytest()
         assert result.ret == 1
         result.assert_outcomes(failed=6)
 
@@ -330,7 +330,7 @@ class TestMetafunc:
                def test_3(self, arg, arg2):
                   pass
         """)
-        result = testdir.runpytest_inprocess("-v")
+        result = testdir.runpytest("-v")
         assert result.ret == 0
         result.stdout.fnmatch_lines("""
             *test_1*1*
@@ -372,7 +372,7 @@ class TestMetafuncFunctional:
                     assert metafunc.function == unbound
                     assert metafunc.cls == TestClass
         """)
-        result = testdir.runpytest_inprocess(p, "-v")
+        result = testdir.runpytest(p, "-v")
         result.assert_outcomes(passed=2)
 
     def test_addcall_with_two_funcargs_generators(self, testdir):
@@ -389,7 +389,7 @@ class TestMetafuncFunctional:
                 def test_myfunc(self, arg1, arg2):
                     assert arg1 == arg2
         """)
-        result = testdir.runpytest_inprocess("-v", p)
+        result = testdir.runpytest("-v", p)
         result.stdout.fnmatch_lines([
             "*test_myfunc*0*PASS*",
             "*test_myfunc*1*FAIL*",
@@ -410,7 +410,7 @@ class TestMetafuncFunctional:
             def test_func2(arg1):
                 assert arg1 in (10, 20)
         """)
-        result = testdir.runpytest_inprocess("-v", p)
+        result = testdir.runpytest("-v", p)
         result.stdout.fnmatch_lines([
             "*test_func1*0*PASS*",
             "*test_func1*1*FAIL*",
@@ -427,7 +427,7 @@ class TestMetafuncFunctional:
                 def test_hello(xyz):
                     pass
         """)
-        result = testdir.runpytest_inprocess(p)
+        result = testdir.runpytest(p)
         result.assert_outcomes(passed=1)
 
 
@@ -450,7 +450,7 @@ class TestMetafuncFunctional:
                 def test_myfunc(self, arg1, arg2):
                     assert arg1 == arg2
         """)
-        result = testdir.runpytest_inprocess("-v", p)
+        result = testdir.runpytest("-v", p)
         result.stdout.fnmatch_lines([
             "*test_myfunc*hello*PASS*",
             "*test_myfunc*world*FAIL*",
@@ -466,7 +466,7 @@ class TestMetafuncFunctional:
                 def test_myfunc(self, hello):
                     assert hello == "world"
         """)
-        result = testdir.runpytest_inprocess("-v", p)
+        result = testdir.runpytest("-v", p)
         result.stdout.fnmatch_lines([
             "*test_myfunc*hello*PASS*",
             "*1 passed*"
@@ -483,7 +483,7 @@ class TestMetafuncFunctional:
                     assert not hasattr(self, 'x')
                     self.x = 1
         """)
-        result = testdir.runpytest_inprocess("-v", p)
+        result = testdir.runpytest("-v", p)
         result.stdout.fnmatch_lines([
             "*test_func*0*PASS*",
             "*test_func*1*PASS*",
@@ -501,7 +501,7 @@ class TestMetafuncFunctional:
                 def setup_method(self, func):
                     self.val = 1
             """)
-        result = testdir.runpytest_inprocess(p)
+        result = testdir.runpytest(p)
         result.assert_outcomes(passed=1)
 
     def test_parametrize_functional2(self, testdir):
@@ -512,7 +512,7 @@ class TestMetafuncFunctional:
             def test_hello(arg1, arg2):
                 assert 0, (arg1, arg2)
         """)
-        result = testdir.runpytest_inprocess()
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines([
             "*(1, 4)*",
             "*(1, 5)*",
@@ -537,7 +537,7 @@ class TestMetafuncFunctional:
             def test_func1(arg1, arg2):
                 assert arg1 == 11
         """)
-        result = testdir.runpytest_inprocess("-v", p)
+        result = testdir.runpytest("-v", p)
         result.stdout.fnmatch_lines([
             "*test_func1*1*PASS*",
             "*1 passed*"
@@ -558,7 +558,7 @@ class TestMetafuncFunctional:
             def test_func(arg2):
                 assert arg2 == 10
         """)
-        result = testdir.runpytest_inprocess("-v", p)
+        result = testdir.runpytest("-v", p)
         result.stdout.fnmatch_lines([
             "*test_func*1*PASS*",
             "*1 passed*"
@@ -574,7 +574,7 @@ class TestMetafuncFunctional:
             def test_function(a, b):
                 assert a == b
         """)
-        result = testdir.runpytest_inprocess("-v")
+        result = testdir.runpytest("-v")
         assert result.ret == 1
         result.stdout.fnmatch_lines_random([
             "*test_function*basic*PASSED",
@@ -591,7 +591,7 @@ class TestMetafuncFunctional:
             def test_function(a, b):
                 assert 1
         """)
-        result = testdir.runpytest_inprocess("-v")
+        result = testdir.runpytest("-v")
         result.stdout.fnmatch_lines("""
             *test_function*1-b0*
             *test_function*1.3-b1*
@@ -647,7 +647,7 @@ class TestMetafuncFunctional:
             def test_function():
                 pass
         """)
-        reprec = testdir.runpytest_inprocess()
+        reprec = testdir.runpytest()
         reprec.assert_outcomes(passed=1)
 
     def test_generate_tests_only_done_in_subdir(self, testdir):
@@ -679,7 +679,7 @@ class TestMetafuncFunctional:
             test_x = make_tests()
             test_y = make_tests()
         """)
-        reprec = testdir.runpytest_inprocess()
+        reprec = testdir.runpytest()
         reprec.assert_outcomes(passed=4)
 
     @pytest.mark.issue463
