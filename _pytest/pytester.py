@@ -238,6 +238,13 @@ class RunResult:
                         d[cat] = int(num)
                     return d
 
+    def assertoutcome(self, passed=0, skipped=0, failed=0):
+        d = self.parseoutcomes()
+        assert passed == d.get("passed", 0)
+        assert skipped == d.get("skipped", 0)
+        assert failed == d.get("failed", 0)
+
+
 class TmpTestdir:
     """Temporary test directory with tools to test/run py.test itself.
 
@@ -871,6 +878,7 @@ class LineComp:
         self.stringio.seek(0)
         lines1 = val.split("\n")
         return LineMatcher(lines1).fnmatch_lines(lines2)
+
 
 class LineMatcher:
     """Flexible matching of text.
