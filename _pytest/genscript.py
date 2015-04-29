@@ -70,7 +70,7 @@ def pytest_cmdline_main(config):
     genscript = config.getvalue("genscript")
     if genscript:
         tw = py.io.TerminalWriter()
-        deps =  ['py', '_pytest', 'pytest', 'pluggy']
+        deps =  ['py', 'pluggy', '_pytest', 'pytest']
         if sys.version_info < (2,7):
             deps.append("argparse")
             tw.line("generated script will run on python2.6-python3.3++")

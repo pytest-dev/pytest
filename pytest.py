@@ -11,8 +11,10 @@ if __name__ == '__main__': # if run as a script or by 'python -m pytest'
 
 # else we are imported
 
-from _pytest.config import main, UsageError, _preloadplugins, cmdline
-from pluggy import hookspec_opts, hookimpl_opts
+from _pytest.config import (
+    main, UsageError, _preloadplugins, cmdline,
+    hookspec_opts, hookimpl_opts
+)
 from _pytest import __version__
 
 _preloadplugins() # to populate pytest.* namespace so help(pytest) works

@@ -9,7 +9,10 @@ import py
 # DON't import pytest here because it causes import cycle troubles
 import sys, os
 from _pytest import hookspec # the extension point definitions
-from pluggy import PluginManager, hookimpl_opts, varnames
+from pluggy import PluginManager, Hookimpl, Hookspec
+
+hookimpl_opts = Hookimpl("pytest")
+hookspec_opts = Hookspec("pytest")
 
 # pytest startup
 #
@@ -106,10 +109,10 @@ def exclude_pytest_names(name):
            name.startswith("pytest_funcarg__")
 
 
+
 class PytestPluginManager(PluginManager):
     def __init__(self):
-        super(PytestPluginManager, self).__init__(prefix="pytest_",
-                                                  excludefunc=exclude_pytest_names)
+        super(PytestPluginManager, self).__init__("pytest")
         self._warnings = []
         self._conftest_plugins = set()
 
@@ -130,12 +133,31 @@ class PytestPluginManager(PluginManager):
             self.trace.root.setwriter(err.write)
             self.enable_tracing()
 
+    def get_hookimpl_opts(self, plugin, name):
+        method = getattr(plugin, name)
+        opts = super(PytestPluginManager, self).get_hookimpl_opts(plugin, name)
+        if opts is None:
+            if name.startswith("pytest_") and not exclude_pytest_names(name):
+                opts = {}
+                opts["tryfirst"] = hasattr(method, "tryfirst")
+                opts["trylast"] = hasattr(method, "trylast")
+                opts["optionalhook"] = hasattr(method, "optionalhook")
+                opts["hookwrapper"] = hasattr(method, "hookwrapper")
+        return opts
 
-    def _verify_hook(self, hook, plugin):
-        super(PytestPluginManager, self)._verify_hook(hook, plugin)
-        method = getattr(plugin, hook.name)
-        if "__multicall__" in varnames(method):
-            fslineno = py.code.getfslineno(method)
+    def get_hookspec_opts(self, module_or_class, name):
+        opts = super(PytestPluginManager, self).get_hookspec_opts(module_or_class, name)
+        if opts is None:
+            if name.startswith("pytest_"):
+                meth = getattr(module_or_class, name)
+                opts = {"firstresult": hasattr(meth, "firstresult"),
+                        "historic": hasattr(meth, "historic")}
+        return opts
+
+    def _verify_hook(self, hook, hookmethod):
+        super(PytestPluginManager, self)._verify_hook(hook, hookmethod)
+        if "__multicall__" in hookmethod.argnames:
+            fslineno = py.code.getfslineno(hookmethod.function)
             warning = dict(code="I1",
                            fslocation=fslineno,
                            message="%r hook uses deprecated __multicall__ "

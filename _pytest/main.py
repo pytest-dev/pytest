@@ -501,13 +501,13 @@ class Session(FSCollector):
     def __init__(self, config):
         FSCollector.__init__(self, config.rootdir, parent=None,
                              config=config, session=self)
-        self.config.pluginmanager.register(self, name="session")
+        self._fs2hookproxy = {}
         self._testsfailed = 0
         self.shouldstop = False
         self.trace = config.trace.root.get("collection")
         self._norecursepatterns = config.getini("norecursedirs")
         self.startdir = py.path.local()
-        self._fs2hookproxy = {}
+        self.config.pluginmanager.register(self, name="session")
 
     def _makeid(self):
         return ""
