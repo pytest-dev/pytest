@@ -9,7 +9,7 @@ import py
 # DON't import pytest here because it causes import cycle troubles
 import sys, os
 from _pytest import hookspec # the extension point definitions
-from _pytest.core import PluginManager, hookimpl_opts, varnames
+from pluggy import PluginManager, hookimpl_opts, varnames
 
 # pytest startup
 #

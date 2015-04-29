@@ -8,7 +8,11 @@ from _pytest.mark import MarkDecorator, MarkerError
 from py._code.code import TerminalRepr
 
 import _pytest
-cutdir = py.path.local(_pytest.__file__).dirpath()
+import pluggy
+
+cutdir2 = py.path.local(_pytest.__file__).dirpath()
+cutdir1 = py.path.local(pluggy.__file__.rstrip("oc"))
+
 
 NoneType = type(None)
 NOTSET = object()
@@ -17,6 +21,11 @@ isclass = inspect.isclass
 callable = py.builtin.callable
 # used to work around a python2 exception info leak
 exc_clear = getattr(sys, 'exc_clear', lambda: None)
+
+
+def filter_traceback(entry):
+    return entry.path != cutdir1 and not entry.path.relto(cutdir2)
+
 
 def getfslineno(obj):
     # xxx let decorators etc specify a sane ordering
@@ -604,7 +613,11 @@ class FunctionMixin(PyobjMixin):
             if ntraceback == traceback:
                 ntraceback = ntraceback.cut(path=path)
                 if ntraceback == traceback:
-                    ntraceback = ntraceback.cut(excludepath=cutdir)
+                    #ntraceback = ntraceback.cut(excludepath=cutdir2)
+                    ntraceback = ntraceback.filter(filter_traceback)
+                    if not ntraceback:
+                        ntraceback = traceback
+
             excinfo.traceback = ntraceback.filter()
             # issue364: mark all but first and last frames to
             # only show a single-line message for each frame

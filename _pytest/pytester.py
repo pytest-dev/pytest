@@ -13,7 +13,7 @@ import subprocess
 import py
 import pytest
 from py.builtin import print_
-from _pytest.core import TracedHookExecution
+from pluggy import _TracedHookExecution
 
 from _pytest.main import Session, EXIT_OK
 
@@ -198,7 +198,7 @@ class HookRecorder:
             self.calls.append(ParsedCall(hook.name, kwargs))
         def after(outcome, hook, method, kwargs):
             pass
-        executor = TracedHookExecution(pluginmanager, before, after)
+        executor = _TracedHookExecution(pluginmanager, before, after)
         self._undo_wrapping = executor.undo
 
     def finish_recording(self):
