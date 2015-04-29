@@ -43,6 +43,14 @@
   implementations.  Use the ``hookwrapper`` mechanism instead already 
   introduced with pytest-2.7.
 
+- speed up pytest's own test suite considerably by using inprocess
+  tests by default (testrun can be modified with --runpytest=subprocess
+  to create subprocesses in many places instead).  The main
+  APIs to run pytest in a test is "runpytest()" or "runpytest_subprocess"
+  and "runpytest_inprocess" if you need a particular way of running
+  the test.  In all cases you get back a RunResult but the inprocess
+  one will also have a "reprec" attribute with the recorded events/reports.
+
  
 2.7.1.dev (compared to 2.7.0)
 -----------------------------

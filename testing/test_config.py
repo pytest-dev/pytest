@@ -75,7 +75,7 @@ class TestParseIni:
             [pytest]
             addopts = --qwe
         """)
-        result = testdir.runpytest("--confcutdir=.")
+        result = testdir.inline_run("--confcutdir=.")
         assert result.ret == 0
 
 class TestConfigCmdlineParsing:

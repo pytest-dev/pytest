@@ -203,7 +203,6 @@ class TestNewSession(SessionTests):
 
 
 def test_plugin_specify(testdir):
-    testdir.chdir()
     pytest.raises(ImportError, """
             testdir.parseconfig("-p", "nqweotexistent")
     """)

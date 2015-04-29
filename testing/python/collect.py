@@ -627,9 +627,7 @@ def test_setup_only_available_in_subdir(testdir):
     sub1.join("test_in_sub1.py").write("def test_1(): pass")
     sub2.join("test_in_sub2.py").write("def test_2(): pass")
     result = testdir.runpytest("-v", "-s")
-    result.stdout.fnmatch_lines([
-        "*2 passed*"
-    ])
+    result.assert_outcomes(passed=2)
 
 def test_modulecol_roundtrip(testdir):
     modcol = testdir.getmodulecol("pass", withinit=True)

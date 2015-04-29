@@ -453,7 +453,7 @@ def test_rewritten():
                 assert not os.path.exists(__cached__)
                 assert not os.path.exists(os.path.dirname(__cached__))""")
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
-        assert testdir.runpytest().ret == 0
+        assert testdir.runpytest_subprocess().ret == 0
 
     @pytest.mark.skipif('"__pypy__" in sys.modules')
     def test_pyc_vs_pyo(self, testdir, monkeypatch):
@@ -468,12 +468,12 @@ def test_rewritten():
         tmp = "--basetemp=%s" % p
         monkeypatch.setenv("PYTHONOPTIMIZE", "2")
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
-        assert testdir.runpybin("py.test", tmp).ret == 0
+        assert testdir.runpytest_subprocess(tmp).ret == 0
         tagged = "test_pyc_vs_pyo." + PYTEST_TAG
         assert tagged + ".pyo" in os.listdir("__pycache__")
         monkeypatch.undo()
         monkeypatch.delenv("PYTHONDONTWRITEBYTECODE", raising=False)
-        assert testdir.runpybin("py.test", tmp).ret == 1
+        assert testdir.runpytest_subprocess(tmp).ret == 1
         assert tagged + ".pyc" in os.listdir("__pycache__")
 
     def test_package(self, testdir):
@@ -615,10 +615,8 @@ class TestAssertionRewriteHookDetails(object):
         testdir.makepyfile(**contents)
         testdir.maketxtfile(**{'testpkg/resource': "Load me please."})
 
-        result = testdir.runpytest()
-        result.stdout.fnmatch_lines([
-            '* 1 passed*',
-        ])
+        result = testdir.runpytest_subprocess()
+        result.assert_outcomes(passed=1)
 
     def test_read_pyc(self, tmpdir):
         """

@@ -53,14 +53,14 @@ def test_traceconfig(testdir):
     ])
 
 def test_debug(testdir, monkeypatch):
-    result = testdir.runpytest("--debug")
+    result = testdir.runpytest_subprocess("--debug")
     assert result.ret == 0
     p = testdir.tmpdir.join("pytestdebug.log")
     assert "pytest_sessionstart" in p.read()
 
 def test_PYTEST_DEBUG(testdir, monkeypatch):
     monkeypatch.setenv("PYTEST_DEBUG", "1")
-    result = testdir.runpytest()
+    result = testdir.runpytest_subprocess()
     assert result.ret == 0
     result.stderr.fnmatch_lines([
         "*pytest_plugin_registered*",

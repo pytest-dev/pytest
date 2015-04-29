@@ -282,7 +282,7 @@ class TestLoggingInteraction:
                 logging.basicConfig(stream=stream)
                 stream.close() # to free memory/release resources
         """)
-        result = testdir.runpytest(p)
+        result = testdir.runpytest_subprocess(p)
         result.stderr.str().find("atexit") == -1
 
     def test_logging_and_immediate_setupteardown(self, testdir):
@@ -301,7 +301,7 @@ class TestLoggingInteraction:
         """)
         for optargs in (('--capture=sys',), ('--capture=fd',)):
             print (optargs)
-            result = testdir.runpytest(p, *optargs)
+            result = testdir.runpytest_subprocess(p, *optargs)
             s = result.stdout.str()
             result.stdout.fnmatch_lines([
                 "*WARN*hello3",  # errors show first!
@@ -327,7 +327,7 @@ class TestLoggingInteraction:
         """)
         for optargs in (('--capture=sys',), ('--capture=fd',)):
             print (optargs)
-            result = testdir.runpytest(p, *optargs)
+            result = testdir.runpytest_subprocess(p, *optargs)
             s = result.stdout.str()
             result.stdout.fnmatch_lines([
                 "*WARN*hello3",  # errors come first
@@ -348,7 +348,7 @@ class TestLoggingInteraction:
                 logging.warn("hello432")
                 assert 0
         """)
-        result = testdir.runpytest(
+        result = testdir.runpytest_subprocess(
             p, "--traceconfig",
             "-p", "no:capturelog")
         assert result.ret != 0
@@ -364,7 +364,7 @@ class TestLoggingInteraction:
                 logging.warn("hello435")
         """)
         # make sure that logging is still captured in tests
-        result = testdir.runpytest("-s", "-p", "no:capturelog")
+        result = testdir.runpytest_subprocess("-s", "-p", "no:capturelog")
         assert result.ret == 0
         result.stderr.fnmatch_lines([
             "WARNING*hello435*",
@@ -383,7 +383,7 @@ class TestLoggingInteraction:
                 logging.warn("hello433")
                 assert 0
         """)
-        result = testdir.runpytest(p, "-p", "no:capturelog")
+        result = testdir.runpytest_subprocess(p, "-p", "no:capturelog")
         assert result.ret != 0
         result.stdout.fnmatch_lines([
             "WARNING*hello433*",
@@ -461,7 +461,7 @@ class TestCaptureFixture:
                 os.write(1, str(42).encode('ascii'))
                 raise KeyboardInterrupt()
         """)
-        result = testdir.runpytest(p)
+        result = testdir.runpytest_subprocess(p)
         result.stdout.fnmatch_lines([
             "*KeyboardInterrupt*"
         ])
@@ -474,7 +474,7 @@ class TestCaptureFixture:
             def test_log(capsys):
                 logging.error('x')
             """)
-        result = testdir.runpytest(p)
+        result = testdir.runpytest_subprocess(p)
         assert 'closed' not in result.stderr.str()
 
 
@@ -500,7 +500,7 @@ def test_fdfuncarg_skips_on_no_osdup(testdir):
         def test_hello(capfd):
             pass
     """)
-    result = testdir.runpytest("--capture=no")
+    result = testdir.runpytest_subprocess("--capture=no")
     result.stdout.fnmatch_lines([
         "*1 skipped*"
     ])
@@ -563,9 +563,7 @@ def test_capture_binary_output(testdir):
             test_foo()
         """)
     result = testdir.runpytest('--assert=plain')
-    result.stdout.fnmatch_lines([
-        '*2 passed*',
-    ])
+    result.assert_outcomes(passed=2)
 
 
 class TestTextIO:
@@ -885,7 +883,7 @@ class TestStdCaptureFD(TestStdCapture):
                 os.write(1, "hello\\n".encode("ascii"))
                 assert 0
         """)
-        result = testdir.runpytest()
+        result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines("""
             *test_x*
             *assert 0*
@@ -936,7 +934,7 @@ class TestStdCaptureFDinvalidFD:
                 cap = StdCaptureFD(out=False, err=False, in_=True)
                 cap.stop_capturing()
         """)
-        result = testdir.runpytest("--capture=fd")
+        result = testdir.runpytest_subprocess("--capture=fd")
         assert result.ret == 0
         assert result.parseoutcomes()['passed'] == 3
 
@@ -971,7 +969,7 @@ def test_close_and_capture_again(testdir):
             os.write(1, b"hello\\n")
             assert 0
     """)
-    result = testdir.runpytest()
+    result = testdir.runpytest_subprocess()
     result.stdout.fnmatch_lines("""
         *test_capture_again*
         *assert 0*

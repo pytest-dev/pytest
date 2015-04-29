@@ -83,10 +83,7 @@ def wrap_session(config, doit):
             initstate = 2
             doit(config, session)
         except pytest.UsageError:
-            args = sys.exc_info()[1].args
-            for msg in args:
-                sys.stderr.write("ERROR: %s\n" %(msg,))
-            session.exitstatus = EXIT_USAGEERROR
+            raise
         except KeyboardInterrupt:
             excinfo = py.code.ExceptionInfo()
             config.hook.pytest_keyboard_interrupt(excinfo=excinfo)

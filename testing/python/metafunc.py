@@ -292,9 +292,7 @@ class TestMetafunc:
         """)
         result = testdir.runpytest()
         assert result.ret == 1
-        result.stdout.fnmatch_lines([
-            "*6 fail*",
-        ])
+        result.assert_outcomes(failed=6)
 
     def test_parametrize_CSV(self, testdir):
         testdir.makepyfile("""
@@ -375,7 +373,7 @@ class TestMetafuncFunctional:
                     assert metafunc.cls == TestClass
         """)
         result = testdir.runpytest(p, "-v")
-        result.assertoutcome(passed=2)
+        result.assert_outcomes(passed=2)
 
     def test_addcall_with_two_funcargs_generators(self, testdir):
         testdir.makeconftest("""
@@ -430,9 +428,7 @@ class TestMetafuncFunctional:
                     pass
         """)
         result = testdir.runpytest(p)
-        result.stdout.fnmatch_lines([
-            "*1 pass*",
-        ])
+        result.assert_outcomes(passed=1)
 
 
     def test_generate_plugin_and_module(self, testdir):
@@ -506,9 +502,7 @@ class TestMetafuncFunctional:
                     self.val = 1
             """)
         result = testdir.runpytest(p)
-        result.stdout.fnmatch_lines([
-            "*1 pass*",
-        ])
+        result.assert_outcomes(passed=1)
 
     def test_parametrize_functional2(self, testdir):
         testdir.makepyfile("""
@@ -653,8 +647,8 @@ class TestMetafuncFunctional:
             def test_function():
                 pass
         """)
-        reprec = testdir.inline_run()
-        reprec.assertoutcome(passed=1)
+        reprec = testdir.runpytest()
+        reprec.assert_outcomes(passed=1)
 
     def test_generate_tests_only_done_in_subdir(self, testdir):
         sub1 = testdir.mkpydir("sub1")
@@ -670,9 +664,7 @@ class TestMetafuncFunctional:
         sub1.join("test_in_sub1.py").write("def test_1(): pass")
         sub2.join("test_in_sub2.py").write("def test_2(): pass")
         result = testdir.runpytest("-v", "-s", sub1, sub2, sub1)
-        result.stdout.fnmatch_lines([
-            "*3 passed*"
-        ])
+        result.assert_outcomes(passed=3)
 
     def test_generate_same_function_names_issue403(self, testdir):
         testdir.makepyfile("""
@@ -687,8 +679,8 @@ class TestMetafuncFunctional:
             test_x = make_tests()
             test_y = make_tests()
         """)
-        reprec = testdir.inline_run()
-        reprec.assertoutcome(passed=4)
+        reprec = testdir.runpytest()
+        reprec.assert_outcomes(passed=4)
 
     @pytest.mark.issue463
     def test_parameterize_misspelling(self, testdir):

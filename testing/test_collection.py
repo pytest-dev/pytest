@@ -296,7 +296,6 @@ class TestSession:
         subdir.ensure("__init__.py")
         target = subdir.join(p.basename)
         p.move(target)
-        testdir.chdir()
         subdir.chdir()
         config = testdir.parseconfig(p.basename)
         rcol = Session(config=config)
@@ -313,7 +312,7 @@ class TestSession:
     def test_collect_topdir(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
         id = "::".join([p.basename, "test_func"])
-        # XXX migrate to inline_genitems? (see below)
+        # XXX migrate to collectonly? (see below)
         config = testdir.parseconfig(id)
         topdir = testdir.tmpdir
         rcol = Session(config)
@@ -470,7 +469,6 @@ class Test_getinitialnodes:
             assert col.config is config
 
     def test_pkgfile(self, testdir):
-        testdir.chdir()
         tmpdir = testdir.tmpdir
         subdir = tmpdir.join("subdir")
         x = subdir.ensure("x.py")

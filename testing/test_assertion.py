@@ -461,7 +461,7 @@ def test_assertion_options(testdir):
                    ("--assert=plain", "--nomagic"),
                    ("--assert=plain", "--no-assert", "--nomagic"))
     for opt in off_options:
-        result = testdir.runpytest(*opt)
+        result = testdir.runpytest_subprocess(*opt)
         assert "3 == 4" not in result.stdout.str()
 
 def test_old_assert_mode(testdir):
@@ -469,7 +469,7 @@ def test_old_assert_mode(testdir):
         def test_in_old_mode():
             assert "@py_builtins" not in globals()
     """)
-    result = testdir.runpytest("--assert=reinterp")
+    result = testdir.runpytest_subprocess("--assert=reinterp")
     assert result.ret == 0
 
 def test_triple_quoted_string_issue113(testdir):
