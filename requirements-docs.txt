@@ -1,2 +1,2 @@
 sphinx==1.2.3
-hg+ssh://hg@bitbucket.org/RonnyPfannschmidt/regendoc#egg=regendoc
+hg+ssh://hg@bitbucket.org/pytest-dev/regendoc#egg=regendoc
