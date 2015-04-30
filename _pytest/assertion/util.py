@@ -45,13 +45,15 @@ def _collapse_false(explanation):
         if where == -1:
             break
         level = 0
+        prev_c = explanation[start]
         for i, c in enumerate(explanation[start:]):
-            if c == "{":
+            if prev_c + c == "\n{":
                 level += 1
-            elif c == "}":
+            elif prev_c + c == "\n}":
                 level -= 1
                 if not level:
                     break
+            prev_c = c
         else:
             raise AssertionError("unbalanced braces: %r" % (explanation,))
         end = start + i
