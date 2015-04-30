@@ -2,11 +2,11 @@
 How to release pytest (draft)
 --------------------------------------------
 
-1. bump version numbers in setup.py and pytest/__init__.py
+1. bump version numbers in pytest/__init__.py (setup.py reads it)
 
 2. check and finalize CHANGELOG
 
-3. write doc/en/announce/pytest-VERSION.txt and include
+3. write doc/en/announce/release-VERSION.txt and include
    it in doc/en/announce/index.txt
 
 4. use devpi for uploading a release tarball to a staging area:
