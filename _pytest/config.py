@@ -133,20 +133,21 @@ class PytestPluginManager(PluginManager):
             self.trace.root.setwriter(err.write)
             self.enable_tracing()
 
-    def get_hookimpl_opts(self, plugin, name):
-        method = getattr(plugin, name)
-        opts = super(PytestPluginManager, self).get_hookimpl_opts(plugin, name)
+    def parse_hookimpl_opts(self, method):
+        opts = super(PytestPluginManager, self).parse_hookimpl_opts(method)
         if opts is None:
-            if name.startswith("pytest_") and not exclude_pytest_names(name):
-                opts = {}
-                opts["tryfirst"] = hasattr(method, "tryfirst")
-                opts["trylast"] = hasattr(method, "trylast")
-                opts["optionalhook"] = hasattr(method, "optionalhook")
-                opts["hookwrapper"] = hasattr(method, "hookwrapper")
+            name = getattr(method, "__name__", None)
+            if name is not None:
+                if name.startswith("pytest_") and not exclude_pytest_names(name):
+                    opts = {}
+                    opts["tryfirst"] = hasattr(method, "tryfirst")
+                    opts["trylast"] = hasattr(method, "trylast")
+                    opts["optionalhook"] = hasattr(method, "optionalhook")
+                    opts["hookwrapper"] = hasattr(method, "hookwrapper")
         return opts
 
-    def get_hookspec_opts(self, module_or_class, name):
-        opts = super(PytestPluginManager, self).get_hookspec_opts(module_or_class, name)
+    def parse_hookspec_opts(self, module_or_class, name):
+        opts = super(PytestPluginManager, self).parse_hookspec_opts(module_or_class, name)
         if opts is None:
             if name.startswith("pytest_"):
                 meth = getattr(module_or_class, name)
