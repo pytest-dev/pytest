@@ -1,8 +1,8 @@
 """ hook specifications for pytest plugins, invoked from main.py and builtin plugins.  """
 
-from pluggy import Hookspec
+from pluggy import HookspecDecorator
 
-hookspec_opts = Hookspec("pytest")
+hookspec_opts = HookspecDecorator("pytest")
 
 # -------------------------------------------------------------------------
 # Initialization hooks called for every plugin

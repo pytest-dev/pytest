@@ -9,10 +9,10 @@ import py
 # DON't import pytest here because it causes import cycle troubles
 import sys, os
 from _pytest import hookspec # the extension point definitions
-from pluggy import PluginManager, Hookimpl, Hookspec
+from pluggy import PluginManager, HookimplDecorator, HookspecDecorator
 
-hookimpl_opts = Hookimpl("pytest")
-hookspec_opts = Hookspec("pytest")
+hookimpl_opts = HookimplDecorator("pytest")
+hookspec_opts = HookspecDecorator("pytest")
 
 # pytest startup
 #
@@ -112,7 +112,7 @@ def exclude_pytest_names(name):
 
 class PytestPluginManager(PluginManager):
     def __init__(self):
-        super(PytestPluginManager, self).__init__("pytest")
+        super(PytestPluginManager, self).__init__("pytest", implprefix="pytest_")
         self._warnings = []
         self._conftest_plugins = set()
 
@@ -121,7 +121,7 @@ class PytestPluginManager(PluginManager):
         self._conftestpath2mod = {}
         self._confcutdir = None
 
-        self.addhooks(hookspec)
+        self.add_hookspecs(hookspec)
         self.register(self)
         if os.environ.get('PYTEST_DEBUG'):
             err = sys.stderr
@@ -133,26 +133,33 @@ class PytestPluginManager(PluginManager):
             self.trace.root.setwriter(err.write)
             self.enable_tracing()
 
-    def parse_hookimpl_opts(self, method):
-        opts = super(PytestPluginManager, self).parse_hookimpl_opts(method)
-        if opts is None:
-            name = getattr(method, "__name__", None)
-            if name is not None:
-                if name.startswith("pytest_") and not exclude_pytest_names(name):
-                    opts = {}
-                    opts["tryfirst"] = hasattr(method, "tryfirst")
-                    opts["trylast"] = hasattr(method, "trylast")
-                    opts["optionalhook"] = hasattr(method, "optionalhook")
-                    opts["hookwrapper"] = hasattr(method, "hookwrapper")
+    def addhooks(self, module_or_class):
+        warning = dict(code="I2",
+                       fslocation=py.code.getfslineno(sys._getframe(1)),
+                       message="use pluginmanager.add_hookspecs instead of "
+                               "deprecated addhooks() method.")
+        self._warnings.append(warning)
+        return self.add_hookspecs(module_or_class)
+
+    def parse_hookimpl_opts(self, plugin, name):
+        if exclude_pytest_names(name):
+            return None
+
+        method = getattr(plugin, name)
+        opts = super(PytestPluginManager, self).parse_hookimpl_opts(plugin, name)
+        if opts is not None:
+            for name in ("tryfirst", "trylast", "optionalhook", "hookwrapper"):
+                opts.setdefault(name, hasattr(method, name))
         return opts
 
     def parse_hookspec_opts(self, module_or_class, name):
-        opts = super(PytestPluginManager, self).parse_hookspec_opts(module_or_class, name)
+        opts = super(PytestPluginManager, self).parse_hookspec_opts(
+                                                module_or_class, name)
         if opts is None:
+            method = getattr(module_or_class, name)
             if name.startswith("pytest_"):
-                meth = getattr(module_or_class, name)
-                opts = {"firstresult": hasattr(meth, "firstresult"),
-                        "historic": hasattr(meth, "historic")}
+                opts = {"firstresult": hasattr(method, "firstresult"),
+                        "historic": hasattr(method, "historic")}
         return opts
 
     def _verify_hook(self, hook, hookmethod):

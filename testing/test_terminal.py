@@ -1,7 +1,9 @@
 """
 terminal reporting of the full testing process.
 """
-import pytest, py
+import pytest
+import py
+import pluggy
 import sys
 
 from _pytest.terminal import TerminalReporter, repr_pythonversion, getreportopt
@@ -408,13 +410,13 @@ class TestTerminalFunctional:
         verinfo = ".".join(map(str, py.std.sys.version_info[:3]))
         result.stdout.fnmatch_lines([
             "*===== test session starts ====*",
-            "platform %s -- Python %s* -- py-%s -- pytest-%s" % (
+            "platform %s -- Python %s*pytest-%s*py-%s*pluggy-%s" % (
                 py.std.sys.platform, verinfo,
-                py.__version__, pytest.__version__),
+                pytest.__version__, py.__version__, pluggy.__version__),
             "*test_header_trailer_info.py .",
             "=* 1 passed*in *.[0-9][0-9] seconds *=",
         ])
-        if pytest.config.pluginmanager._plugin_distinfo:
+        if pytest.config.pluginmanager.list_plugin_distinfo():
             result.stdout.fnmatch_lines([
                 "plugins: *",
             ])

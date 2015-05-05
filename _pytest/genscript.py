@@ -4,8 +4,6 @@ import sys
 import pkgutil
 
 import py
-import pluggy
-
 import _pytest
 
 

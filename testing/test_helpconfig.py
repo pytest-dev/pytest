@@ -7,7 +7,7 @@ def test_version(testdir, pytestconfig):
     result.stderr.fnmatch_lines([
         '*pytest*%s*imported from*' % (pytest.__version__, )
     ])
-    if pytestconfig.pluginmanager._plugin_distinfo:
+    if pytestconfig.pluginmanager.list_plugin_distinfo():
         result.stderr.fnmatch_lines([
             "*setuptools registered plugins:",
             "*at*",
