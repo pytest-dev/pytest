@@ -663,3 +663,24 @@ class TestAssertionRewriteHookDetails(object):
         result.stdout.fnmatch_lines([
             "* 1 passed*",
         ])
+
+
+def test_issue731(testdir):
+    testdir.makepyfile("""
+    class LongReprWithBraces(object):
+        def __repr__(self):
+           return 'LongReprWithBraces({' + ('a' * 80) + '}' + ('a' * 120) + ')'
+
+        def some_method(self):
+            return False
+
+    def test_long_repr():
+        obj = LongReprWithBraces()
+        assert obj.some_method()
+    """)
+    result = testdir.runpytest()
+    assert 'unbalanced braces' not in result.stdout.str()
+
+
+def test_collapse_false_unbalanced_braces():
+    util._collapse_false('some text{ False\n{False = some more text\n}')

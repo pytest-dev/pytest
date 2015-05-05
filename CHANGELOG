@@ -55,6 +55,10 @@
 2.7.1.dev (compared to 2.7.0)
 -----------------------------
 
+- fix issue731: do not get confused by the braces which may be present
+  and unbalanced in an object's repr while collapsing False
+  explanations.  Thanks Carl Meyer for the report and test case.
+
 - fix issue553: properly handling inspect.getsourcelines failures in
   FixtureLookupError which would lead to to an internal error,
   obfuscating the original problem. Thanks talljosh for initial

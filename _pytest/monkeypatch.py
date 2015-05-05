@@ -177,8 +177,8 @@ class monkeypatch:
         sys.path.insert(0, str(path))
 
     def chdir(self, path):
-        """ Change the current working directory to the specified path
-        path can be a string or a py.path.local object
+        """ Change the current working directory to the specified path.
+        Path can be a string or a py.path.local object.
         """
         if self._cwd is None:
             self._cwd = os.getcwd()
