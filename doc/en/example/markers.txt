@@ -55,8 +55,8 @@ Or the inverse, running all tests except the webtest ones::
     ================= 1 tests deselected by "-m 'not webtest'" =================
     ================== 3 passed, 1 deselected in 0.01 seconds ==================
 
-Selecing tests based on their node ID
--------------------------------------
+Selecting tests based on their node ID
+--------------------------------------
 
 You can provide one or more :ref:`node IDs <node-id>` as positional
 arguments to select only specified tests. This makes it easy to select
