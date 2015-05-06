@@ -11,7 +11,7 @@ def pytest_addoption(parser):
         choices=['failed', 'all'],
         help="send failed|all info to bpaste.net pastebin service.")
 
-@pytest.hookimpl_opts(trylast=True)
+@pytest.hookimpl(trylast=True)
 def pytest_configure(config):
     if config.option.pastebin == "all":
         tr = config.pluginmanager.getplugin('terminalreporter')

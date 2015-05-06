@@ -534,7 +534,7 @@ case we just write some informations out to a ``failures`` file::
     import pytest
     import os.path
 
-    @pytest.hookimpl_opts(tryfirst=True)
+    @pytest.hookimpl(tryfirst=True)
     def pytest_runtest_makereport(item, call, __multicall__):
         # execute all other hooks to obtain the report object
         rep = __multicall__.execute()
@@ -607,7 +607,7 @@ here is a little example implemented via a local plugin::
 
     import pytest
 
-    @pytest.hookimpl_opts(tryfirst=True)
+    @pytest.hookimpl(tryfirst=True)
     def pytest_runtest_makereport(item, call, __multicall__):
         # execute all other hooks to obtain the report object
         rep = __multicall__.execute()

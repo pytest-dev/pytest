@@ -140,7 +140,7 @@ class TestCaseFunction(pytest.Function):
         if traceback:
             excinfo.traceback = traceback
 
-@pytest.hookimpl_opts(tryfirst=True)
+@pytest.hookimpl(tryfirst=True)
 def pytest_runtest_makereport(item, call):
     if isinstance(item, TestCaseFunction):
         if item._excinfo:
@@ -152,7 +152,7 @@ def pytest_runtest_makereport(item, call):
 
 # twisted trial support
 
-@pytest.hookimpl_opts(hookwrapper=True)
+@pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_protocol(item):
     if isinstance(item, TestCaseFunction) and \
        'twisted.trial.unittest' in sys.modules:

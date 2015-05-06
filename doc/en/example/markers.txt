@@ -201,9 +201,9 @@ You can ask which markers exist for your test suite - the list includes our just
     
     @pytest.mark.usefixtures(fixturename1, fixturename2, ...): mark tests as needing all of the specified fixtures. see http://pytest.org/latest/fixture.html#usefixtures 
     
-    @pytest.hookimpl_opts(tryfirst=True): mark a hook implementation function such that the plugin machinery will try to call it first/as early as possible.
+    @pytest.hookimpl(tryfirst=True): mark a hook implementation function such that the plugin machinery will try to call it first/as early as possible.
     
-    @pytest.hookimpl_opts(trylast=True): mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible.
+    @pytest.hookimpl(trylast=True): mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible.
     
 
 For an example on how to add and work with markers from a plugin, see
@@ -375,9 +375,9 @@ The ``--markers`` option always gives you a list of available markers::
     
     @pytest.mark.usefixtures(fixturename1, fixturename2, ...): mark tests as needing all of the specified fixtures. see http://pytest.org/latest/fixture.html#usefixtures 
     
-    @pytest.hookimpl_opts(tryfirst=True): mark a hook implementation function such that the plugin machinery will try to call it first/as early as possible.
+    @pytest.hookimpl(tryfirst=True): mark a hook implementation function such that the plugin machinery will try to call it first/as early as possible.
     
-    @pytest.hookimpl_opts(trylast=True): mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible.
+    @pytest.hookimpl(trylast=True): mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible.
     
 
 Reading markers which were set from multiple places

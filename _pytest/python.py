@@ -181,7 +181,7 @@ def pytest_configure(config):
 def pytest_sessionstart(session):
     session._fixturemanager = FixtureManager(session)
 
-@pytest.hookimpl_opts(trylast=True)
+@pytest.hookimpl(trylast=True)
 def pytest_namespace():
     raises.Exception = pytest.fail.Exception
     return {
@@ -200,7 +200,7 @@ def pytestconfig(request):
     return request.config
 
 
-@pytest.hookimpl_opts(trylast=True)
+@pytest.hookimpl(trylast=True)
 def pytest_pyfunc_call(pyfuncitem):
     testfunction = pyfuncitem.obj
     if pyfuncitem._isyieldedfunction():
@@ -228,7 +228,7 @@ def pytest_collect_file(path, parent):
 def pytest_pycollect_makemodule(path, parent):
     return Module(path, parent)
 
-@pytest.hookimpl_opts(hookwrapper=True)
+@pytest.hookimpl(hookwrapper=True)
 def pytest_pycollect_makeitem(collector, name, obj):
     outcome = yield
     res = outcome.get_result()

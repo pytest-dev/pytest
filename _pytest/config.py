@@ -8,11 +8,11 @@ import warnings
 import py
 # DON't import pytest here because it causes import cycle troubles
 import sys, os
-from _pytest import hookspec # the extension point definitions
-from pluggy import PluginManager, HookimplDecorator, HookspecDecorator
+import _pytest.hookspec  # the extension point definitions
+from pluggy import PluginManager, HookimplMarker, HookspecMarker
 
-hookimpl_opts = HookimplDecorator("pytest")
-hookspec_opts = HookspecDecorator("pytest")
+hookimpl = HookimplMarker("pytest")
+hookspec = HookspecMarker("pytest")
 
 # pytest startup
 #
@@ -121,7 +121,7 @@ class PytestPluginManager(PluginManager):
         self._conftestpath2mod = {}
         self._confcutdir = None
 
-        self.add_hookspecs(hookspec)
+        self.add_hookspecs(_pytest.hookspec)
         self.register(self)
         if os.environ.get('PYTEST_DEBUG'):
             err = sys.stderr
@@ -184,7 +184,7 @@ class PytestPluginManager(PluginManager):
         return self.get_plugin(name)
 
     def pytest_configure(self, config):
-        # XXX now that the pluginmanager exposes hookimpl_opts(tryfirst...)
+        # XXX now that the pluginmanager exposes hookimpl(tryfirst...)
         # we should remove tryfirst/trylast as markers
         config.addinivalue_line("markers",
             "tryfirst: mark a hook implementation function such that the "
@@ -827,7 +827,7 @@ class Config(object):
             if not hasattr(self.option, opt.dest):
                 setattr(self.option, opt.dest, opt.default)
 
-    @hookimpl_opts(trylast=True)
+    @hookimpl(trylast=True)
     def pytest_load_initial_conftests(self, early_config):
         self.pluginmanager._set_initial_conftests(early_config.known_args_namespace)
 

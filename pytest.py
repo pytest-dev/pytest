@@ -13,7 +13,7 @@ if __name__ == '__main__': # if run as a script or by 'python -m pytest'
 
 from _pytest.config import (
     main, UsageError, _preloadplugins, cmdline,
-    hookspec_opts, hookimpl_opts
+    hookspec, hookimpl
 )
 from _pytest import __version__
 

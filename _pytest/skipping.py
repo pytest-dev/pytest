@@ -133,7 +133,7 @@ class MarkEvaluator:
         return expl
 
 
-@pytest.hookimpl_opts(tryfirst=True)
+@pytest.hookimpl(tryfirst=True)
 def pytest_runtest_setup(item):
     evalskip = MarkEvaluator(item, 'skipif')
     if evalskip.istrue():
@@ -151,7 +151,7 @@ def check_xfail_no_run(item):
             if not evalxfail.get('run', True):
                 pytest.xfail("[NOTRUN] " + evalxfail.getexplanation())
 
-@pytest.hookimpl_opts(hookwrapper=True)
+@pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     outcome = yield
     rep = outcome.get_result()

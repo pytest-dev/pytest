@@ -512,12 +512,12 @@ class Session(FSCollector):
     def _makeid(self):
         return ""
 
-    @pytest.hookimpl_opts(tryfirst=True)
+    @pytest.hookimpl(tryfirst=True)
     def pytest_collectstart(self):
         if self.shouldstop:
             raise self.Interrupted(self.shouldstop)
 
-    @pytest.hookimpl_opts(tryfirst=True)
+    @pytest.hookimpl(tryfirst=True)
     def pytest_runtest_logreport(self, report):
         if report.failed and not hasattr(report, 'wasxfail'):
             self._testsfailed += 1

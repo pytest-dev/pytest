@@ -80,7 +80,7 @@ class LsofFdLeakChecker(object):
         else:
             return True
 
-    @pytest.hookimpl_opts(hookwrapper=True, tryfirst=True)
+    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_runtest_item(self, item):
         lines1 = self.get_open_files()
         yield
