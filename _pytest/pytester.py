@@ -712,7 +712,19 @@ class Testdir:
         option "--runpytest" and return a :py:class:`RunResult`.
 
         """
+        args = self._ensure_basetemp(args)
         return self._runpytest_method(*args, **kwargs)
+
+    def _ensure_basetemp(self, args):
+        args = [str(x) for x in args]
+        for x in args:
+            if str(x).startswith('--basetemp'):
+                #print ("basedtemp exists: %s" %(args,))
+                break
+        else:
+            args.append("--basetemp=%s" % self.tmpdir.dirpath('basetemp'))
+            #print ("added basetemp: %s" %(args,))
+        return args
 
     def parseconfig(self, *args):
         """Return a new py.test Config instance from given commandline args.
@@ -726,12 +738,8 @@ class Testdir:
         modules which will be registered with the PluginManager.
 
         """
-        args = [str(x) for x in args]
-        for x in args:
-            if str(x).startswith('--basetemp'):
-                break
-        else:
-            args.append("--basetemp=%s" % self.tmpdir.dirpath('basetemp'))
+        args = self._ensure_basetemp(args)
+
         import _pytest.config
         config = _pytest.config._prepareconfig(args, self.plugins)
         # we don't know what the test will do with this half-setup config

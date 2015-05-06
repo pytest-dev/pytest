@@ -48,7 +48,7 @@ def has_environment_marker_support():
 
 
 def main():
-    install_requires = ['py>=1.4.27.dev2', 'pluggy>=0.1.0,<1.0.0']
+    install_requires = ['py>=1.4.27.dev2', 'pluggy>=0.2.0,<0.3.0']
     extras_require = {}
     if has_environment_marker_support():
         extras_require[':python_version=="2.6" or python_version=="3.0" or python_version=="3.1"'] = ['argparse']
