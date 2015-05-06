@@ -22,7 +22,7 @@ def pytest_addoption(parser):
                help="store internal tracing debug information in 'pytestdebug.log'.")
 
 
-@pytest.hookimpl_opts(hookwrapper=True)
+@pytest.hookimpl(hookwrapper=True)
 def pytest_cmdline_parse():
     outcome = yield
     config = outcome.get_result()
@@ -96,10 +96,10 @@ conftest_options = [
 
 def getpluginversioninfo(config):
     lines = []
-    plugininfo = config.pluginmanager._plugin_distinfo
+    plugininfo = config.pluginmanager.list_plugin_distinfo()
     if plugininfo:
         lines.append("setuptools registered plugins:")
-        for dist, plugin in plugininfo:
+        for plugin, dist in plugininfo:
             loc = getattr(plugin, '__file__', repr(plugin))
             content = "%s-%s at %s" % (dist.project_name, dist.version, loc)
             lines.append("  " + content)
@@ -117,7 +117,7 @@ def pytest_report_header(config):
 
     if config.option.traceconfig:
         lines.append("active plugins:")
-        items = config.pluginmanager._name2plugin.items()
+        items = config.pluginmanager.list_name_plugin()
         for name, plugin in items:
             if hasattr(plugin, '__file__'):
                 r = plugin.__file__

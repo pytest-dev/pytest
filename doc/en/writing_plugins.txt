@@ -292,7 +292,7 @@ Here is an example definition of a hook wrapper::
 
     import pytest
 
-    @pytest.hookimpl_opts(hookwrapper=True)
+    @pytest.hookimpl(hookwrapper=True)
     def pytest_pyfunc_call(pyfuncitem):
         # do whatever you want before the next hook executes
 
@@ -305,8 +305,7 @@ Here is an example definition of a hook wrapper::
 Note that hook wrappers don't return results themselves, they merely
 perform tracing or other side effects around the actual hook implementations.
 If the result of the underlying hook is a mutable object, they may modify
-that result, however.
-
+that result but it's probably better to avoid it.
 
 
 Hook function ordering / call example
@@ -338,15 +337,23 @@ after others, i.e.  the position in the ``N``-sized list of functions::
 Here is the order of execution:
 
 1. Plugin3's pytest_collection_modifyitems called until the yield point
-2. Plugin1's pytest_collection_modifyitems is called
-3. Plugin2's pytest_collection_modifyitems is called
-4. Plugin3's pytest_collection_modifyitems called for executing after the yield
-   The yield receives a :py:class:`CallOutcome` instance which encapsulates
-   the result from calling the non-wrappers.  Wrappers cannot modify the result.
+   because it is a hook wrapper.
+
+2. Plugin1's pytest_collection_modifyitems is called because it is marked
+   with ``tryfirst=True``.
+
+3. Plugin2's pytest_collection_modifyitems is called because it is marked
+   with ``trylast=True`` (but even without this mark it would come after
+   Plugin1).
+
+4. Plugin3's pytest_collection_modifyitems then executing the code after the yield
+   point.  The yield receives a :py:class:`CallOutcome` instance which encapsulates
+   the result from calling the non-wrappers.  Wrappers shall not modify the result.
 
 It's possible to use ``tryfirst`` and ``trylast`` also in conjunction with
 ``hookwrapper=True`` in which case it will influence the ordering of hookwrappers
 among each other.
+
 
 Declaring new hooks
 ------------------------
@@ -368,11 +375,11 @@ For an example, see `newhooks.py`_ from :ref:`xdist`.
 .. _`newhooks.py`: https://bitbucket.org/pytest-dev/pytest-xdist/src/52082f70e7dd04b00361091b8af906c60fd6700f/xdist/newhooks.py?at=default
 
 
-Using hooks from 3rd party plugins
--------------------------------------
+Optionally using hooks from 3rd party plugins
+---------------------------------------------
 
 Using new hooks from plugins as explained above might be a little tricky
-because the standard :ref:`validation mechanism <validation>`:
+because of the standard :ref:`validation mechanism <validation>`:
 if you depend on a plugin that is not installed, validation will fail and
 the error message will not make much sense to your users.
 
@@ -394,7 +401,6 @@ declaring the hook functions directly in your plugin module, for example::
 
 This has the added benefit of allowing you to conditionally install hooks
 depending on which plugins are installed.
-
 
 .. _`well specified hooks`:
 

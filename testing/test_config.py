@@ -357,9 +357,9 @@ def test_load_initial_conftest_last_ordering(testdir):
     pm.register(m)
     hc = pm.hook.pytest_load_initial_conftests
     l = hc._nonwrappers + hc._wrappers
-    assert l[-1].__module__ == "_pytest.capture"
-    assert l[-2] == m.pytest_load_initial_conftests
-    assert l[-3].__module__ == "_pytest.config"
+    assert l[-1].function.__module__ == "_pytest.capture"
+    assert l[-2].function == m.pytest_load_initial_conftests
+    assert l[-3].function.__module__ == "_pytest.config"
 
 class TestWarning:
     def test_warn_config(self, testdir):

@@ -3,6 +3,7 @@
 This is a good source for looking at the various reporting hooks.
 """
 import pytest
+import pluggy
 import py
 import sys
 import time
@@ -267,7 +268,7 @@ class TerminalReporter:
     def pytest_collection_modifyitems(self):
         self.report_collect(True)
 
-    @pytest.hookimpl_opts(trylast=True)
+    @pytest.hookimpl(trylast=True)
     def pytest_sessionstart(self, session):
         self._sessionstarttime = time.time()
         if not self.showheader:
@@ -278,7 +279,8 @@ class TerminalReporter:
         if hasattr(sys, 'pypy_version_info'):
             verinfo = ".".join(map(str, sys.pypy_version_info[:3]))
             msg += "[pypy-%s-%s]" % (verinfo, sys.pypy_version_info[3])
-        msg += " -- py-%s -- pytest-%s" % (py.__version__, pytest.__version__)
+        msg += ", pytest-%s, py-%s, pluggy-%s" % (
+               pytest.__version__, py.__version__, pluggy.__version__)
         if self.verbosity > 0 or self.config.option.debug or \
            getattr(self.config.option, 'pastebin', None):
             msg += " -- " + str(sys.executable)
@@ -294,10 +296,11 @@ class TerminalReporter:
         if config.inifile:
             inifile = config.rootdir.bestrelpath(config.inifile)
         lines = ["rootdir: %s, inifile: %s" %(config.rootdir, inifile)]
-        plugininfo = config.pluginmanager._plugin_distinfo
+
+        plugininfo = config.pluginmanager.list_plugin_distinfo()
         if plugininfo:
             l = []
-            for dist, plugin in plugininfo:
+            for plugin, dist in plugininfo:
                 name = dist.project_name
                 if name.startswith("pytest-"):
                     name = name[7:]
@@ -352,7 +355,7 @@ class TerminalReporter:
                 indent = (len(stack) - 1) * "  "
                 self._tw.line("%s%s" % (indent, col))
 
-    @pytest.hookimpl_opts(hookwrapper=True)
+    @pytest.hookimpl(hookwrapper=True)
     def pytest_sessionfinish(self, exitstatus):
         outcome = yield
         outcome.get_result()

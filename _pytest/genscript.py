@@ -4,7 +4,6 @@ import sys
 import pkgutil
 
 import py
-
 import _pytest
 
 
@@ -33,6 +32,9 @@ def pkg_to_mapping(name):
         for pyfile in toplevel.visit('*.py'):
             pkg = pkgname(name, toplevel, pyfile)
             name2src[pkg] = pyfile.read()
+        # with wheels py source code might be not be installed
+        # and the resulting genscript is useless, just bail out.
+        assert name2src, "no source code found for %r at %r" %(name, toplevel)
     return name2src
 
 def compress_mapping(mapping):
@@ -69,7 +71,7 @@ def pytest_cmdline_main(config):
     genscript = config.getvalue("genscript")
     if genscript:
         tw = py.io.TerminalWriter()
-        deps =  ['py', '_pytest', 'pytest']
+        deps =  ['py', 'pluggy', '_pytest', 'pytest']
         if sys.version_info < (2,7):
             deps.append("argparse")
             tw.line("generated script will run on python2.6-python3.3++")

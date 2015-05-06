@@ -559,7 +559,7 @@ class TestConftestCustomization:
         b = testdir.mkdir("a").mkdir("b")
         b.join("conftest.py").write(py.code.Source("""
             import pytest
-            @pytest.hookimpl_opts(hookwrapper=True)
+            @pytest.hookimpl(hookwrapper=True)
             def pytest_pycollect_makeitem():
                 outcome = yield
                 if outcome.excinfo is None:

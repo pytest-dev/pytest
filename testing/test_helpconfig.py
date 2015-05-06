@@ -7,7 +7,7 @@ def test_version(testdir, pytestconfig):
     result.stderr.fnmatch_lines([
         '*pytest*%s*imported from*' % (pytest.__version__, )
     ])
-    if pytestconfig.pluginmanager._plugin_distinfo:
+    if pytestconfig.pluginmanager.list_plugin_distinfo():
         result.stderr.fnmatch_lines([
             "*setuptools registered plugins:",
             "*at*",
@@ -38,7 +38,7 @@ def test_hookvalidation_unknown(testdir):
 def test_hookvalidation_optional(testdir):
     testdir.makeconftest("""
         import pytest
-        @pytest.hookimpl_opts(optionalhook=True)
+        @pytest.hookimpl(optionalhook=True)
         def pytest_hello(xyz):
             pass
     """)

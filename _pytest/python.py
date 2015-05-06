@@ -8,7 +8,11 @@ from _pytest.mark import MarkDecorator, MarkerError
 from py._code.code import TerminalRepr
 
 import _pytest
-cutdir = py.path.local(_pytest.__file__).dirpath()
+import pluggy
+
+cutdir2 = py.path.local(_pytest.__file__).dirpath()
+cutdir1 = py.path.local(pluggy.__file__.rstrip("oc"))
+
 
 NoneType = type(None)
 NOTSET = object()
@@ -17,6 +21,11 @@ isclass = inspect.isclass
 callable = py.builtin.callable
 # used to work around a python2 exception info leak
 exc_clear = getattr(sys, 'exc_clear', lambda: None)
+
+
+def filter_traceback(entry):
+    return entry.path != cutdir1 and not entry.path.relto(cutdir2)
+
 
 def getfslineno(obj):
     # xxx let decorators etc specify a sane ordering
@@ -172,7 +181,7 @@ def pytest_configure(config):
 def pytest_sessionstart(session):
     session._fixturemanager = FixtureManager(session)
 
-@pytest.hookimpl_opts(trylast=True)
+@pytest.hookimpl(trylast=True)
 def pytest_namespace():
     raises.Exception = pytest.fail.Exception
     return {
@@ -191,7 +200,7 @@ def pytestconfig(request):
     return request.config
 
 
-@pytest.hookimpl_opts(trylast=True)
+@pytest.hookimpl(trylast=True)
 def pytest_pyfunc_call(pyfuncitem):
     testfunction = pyfuncitem.obj
     if pyfuncitem._isyieldedfunction():
@@ -219,7 +228,7 @@ def pytest_collect_file(path, parent):
 def pytest_pycollect_makemodule(path, parent):
     return Module(path, parent)
 
-@pytest.hookimpl_opts(hookwrapper=True)
+@pytest.hookimpl(hookwrapper=True)
 def pytest_pycollect_makeitem(collector, name, obj):
     outcome = yield
     res = outcome.get_result()
@@ -604,7 +613,11 @@ class FunctionMixin(PyobjMixin):
             if ntraceback == traceback:
                 ntraceback = ntraceback.cut(path=path)
                 if ntraceback == traceback:
-                    ntraceback = ntraceback.cut(excludepath=cutdir)
+                    #ntraceback = ntraceback.cut(excludepath=cutdir2)
+                    ntraceback = ntraceback.filter(filter_traceback)
+                    if not ntraceback:
+                        ntraceback = traceback
+
             excinfo.traceback = ntraceback.filter()
             # issue364: mark all but first and last frames to
             # only show a single-line message for each frame

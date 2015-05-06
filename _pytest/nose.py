@@ -24,7 +24,7 @@ def pytest_runtest_makereport(item, call):
         call.excinfo = call2.excinfo
 
 
-@pytest.hookimpl_opts(trylast=True)
+@pytest.hookimpl(trylast=True)
 def pytest_runtest_setup(item):
     if is_potential_nosetest(item):
         if isinstance(item.parent, pytest.Generator):

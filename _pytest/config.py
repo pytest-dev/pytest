@@ -8,8 +8,11 @@ import warnings
 import py
 # DON't import pytest here because it causes import cycle troubles
 import sys, os
-from _pytest import hookspec # the extension point definitions
-from _pytest.core import PluginManager, hookimpl_opts, varnames
+import _pytest.hookspec  # the extension point definitions
+from pluggy import PluginManager, HookimplMarker, HookspecMarker
+
+hookimpl = HookimplMarker("pytest")
+hookspec = HookspecMarker("pytest")
 
 # pytest startup
 #
@@ -106,10 +109,10 @@ def exclude_pytest_names(name):
            name.startswith("pytest_funcarg__")
 
 
+
 class PytestPluginManager(PluginManager):
     def __init__(self):
-        super(PytestPluginManager, self).__init__(prefix="pytest_",
-                                                  excludefunc=exclude_pytest_names)
+        super(PytestPluginManager, self).__init__("pytest", implprefix="pytest_")
         self._warnings = []
         self._conftest_plugins = set()
 
@@ -118,7 +121,7 @@ class PytestPluginManager(PluginManager):
         self._conftestpath2mod = {}
         self._confcutdir = None
 
-        self.addhooks(hookspec)
+        self.add_hookspecs(_pytest.hookspec)
         self.register(self)
         if os.environ.get('PYTEST_DEBUG'):
             err = sys.stderr
@@ -130,12 +133,39 @@ class PytestPluginManager(PluginManager):
             self.trace.root.setwriter(err.write)
             self.enable_tracing()
 
+    def addhooks(self, module_or_class):
+        warning = dict(code="I2",
+                       fslocation=py.code.getfslineno(sys._getframe(1)),
+                       message="use pluginmanager.add_hookspecs instead of "
+                               "deprecated addhooks() method.")
+        self._warnings.append(warning)
+        return self.add_hookspecs(module_or_class)
 
-    def _verify_hook(self, hook, plugin):
-        super(PytestPluginManager, self)._verify_hook(hook, plugin)
-        method = getattr(plugin, hook.name)
-        if "__multicall__" in varnames(method):
-            fslineno = py.code.getfslineno(method)
+    def parse_hookimpl_opts(self, plugin, name):
+        if exclude_pytest_names(name):
+            return None
+
+        method = getattr(plugin, name)
+        opts = super(PytestPluginManager, self).parse_hookimpl_opts(plugin, name)
+        if opts is not None:
+            for name in ("tryfirst", "trylast", "optionalhook", "hookwrapper"):
+                opts.setdefault(name, hasattr(method, name))
+        return opts
+
+    def parse_hookspec_opts(self, module_or_class, name):
+        opts = super(PytestPluginManager, self).parse_hookspec_opts(
+                                                module_or_class, name)
+        if opts is None:
+            method = getattr(module_or_class, name)
+            if name.startswith("pytest_"):
+                opts = {"firstresult": hasattr(method, "firstresult"),
+                        "historic": hasattr(method, "historic")}
+        return opts
+
+    def _verify_hook(self, hook, hookmethod):
+        super(PytestPluginManager, self)._verify_hook(hook, hookmethod)
+        if "__multicall__" in hookmethod.argnames:
+            fslineno = py.code.getfslineno(hookmethod.function)
             warning = dict(code="I1",
                            fslocation=fslineno,
                            message="%r hook uses deprecated __multicall__ "
@@ -154,7 +184,7 @@ class PytestPluginManager(PluginManager):
         return self.get_plugin(name)
 
     def pytest_configure(self, config):
-        # XXX now that the pluginmanager exposes hookimpl_opts(tryfirst...)
+        # XXX now that the pluginmanager exposes hookimpl(tryfirst...)
         # we should remove tryfirst/trylast as markers
         config.addinivalue_line("markers",
             "tryfirst: mark a hook implementation function such that the "
@@ -797,7 +827,7 @@ class Config(object):
             if not hasattr(self.option, opt.dest):
                 setattr(self.option, opt.dest, opt.default)
 
-    @hookimpl_opts(trylast=True)
+    @hookimpl(trylast=True)
     def pytest_load_initial_conftests(self, early_config):
         self.pluginmanager._set_initial_conftests(early_config.known_args_namespace)
 
