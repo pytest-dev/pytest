@@ -132,8 +132,8 @@ class TestTerminal:
         ])
 
     def test_itemreport_directclasses_not_shown_as_subclasses(self, testdir):
-        a = testdir.mkpydir("a")
-        a.join("test_hello.py").write(py.code.Source("""
+        a = testdir.mkpydir("a123")
+        a.join("test_hello123.py").write(py.code.Source("""
             class TestClass:
                 def test_method(self):
                     pass
@@ -141,7 +141,7 @@ class TestTerminal:
         result = testdir.runpytest("-v")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
-            "*a/test_hello.py*PASS*",
+            "*a123/test_hello123.py*PASS*",
         ])
         assert " <- " not in result.stdout.str()
 
@@ -155,7 +155,7 @@ class TestTerminal:
                 raise KeyboardInterrupt   # simulating the user
         """)
 
-        result = testdir.runpytest(*option.args)
+        result = testdir.runpytest(*option.args, no_reraise_ctrlc=True)
         result.stdout.fnmatch_lines([
             "    def test_foobar():",
             ">       assert 0",
@@ -178,7 +178,7 @@ class TestTerminal:
                 pass
         """)
 
-        result = testdir.runpytest()
+        result = testdir.runpytest(no_reraise_ctrlc=True)
         assert result.ret == 2
         result.stdout.fnmatch_lines(['*KeyboardInterrupt*'])
 

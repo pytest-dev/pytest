@@ -13,7 +13,6 @@ import subprocess
 import py
 import pytest
 from py.builtin import print_
-from pluggy import _TracedHookExecution
 
 from _pytest.main import Session, EXIT_OK
 
@@ -194,12 +193,13 @@ class HookRecorder:
         self._pluginmanager = pluginmanager
         self.calls = []
 
-        def before(hook, method, kwargs):
-            self.calls.append(ParsedCall(hook.name, kwargs))
-        def after(outcome, hook, method, kwargs):
+        def before(hook_name, hook_impls, kwargs):
+            self.calls.append(ParsedCall(hook_name, kwargs))
+
+        def after(outcome, hook_name, hook_impls, kwargs):
             pass
-        executor = _TracedHookExecution(pluginmanager, before, after)
-        self._undo_wrapping = executor.undo
+
+        self._undo_wrapping = pluginmanager.add_hookcall_monitoring(before, after)
 
     def finish_recording(self):
         self._undo_wrapping()
@@ -667,6 +667,7 @@ class Testdir:
         class Collect:
             def pytest_configure(x, config):
                 rec.append(self.make_hook_recorder(config.pluginmanager))
+
         plugins = kwargs.get("plugins") or []
         plugins.append(Collect())
         ret = pytest.main(list(args), plugins=plugins)
@@ -677,6 +678,13 @@ class Testdir:
             class reprec:
                 pass
         reprec.ret = ret
+
+        # typically we reraise keyboard interrupts from the child run
+        # because it's our user requesting interruption of the testing
+        if ret == 2 and not kwargs.get("no_reraise_ctrlc"):
+            calls = reprec.getcalls("pytest_keyboard_interrupt")
+            if calls and calls[-1].excinfo.type == KeyboardInterrupt:
+                raise KeyboardInterrupt()
         return reprec
 
     def runpytest_inprocess(self, *args, **kwargs):
@@ -688,7 +696,7 @@ class Testdir:
         capture = py.io.StdCapture()
         try:
             try:
-                reprec = self.inline_run(*args)
+                reprec = self.inline_run(*args, **kwargs)
             except SystemExit as e:
                 class reprec:
                     ret = e.args[0]
