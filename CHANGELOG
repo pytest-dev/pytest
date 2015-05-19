@@ -1,4 +1,4 @@
-2.7.1.dev (compared to 2.7.0)
+2.7.1 (compared to 2.7.0)
 -----------------------------
 
 - fix issue731: do not get confused by the braces which may be present
@@ -91,7 +91,7 @@
   it from the "decorator" case.  Thanks Tom Viner.
 
 - "python_classes" and "python_functions" options now support glob-patterns
- for test discovery, as discussed in issue600. Thanks Ldiary Translations.
+  for test discovery, as discussed in issue600. Thanks Ldiary Translations.
 
 - allow to override parametrized fixtures with non-parametrized ones and vice versa (bubenkoff).
 
