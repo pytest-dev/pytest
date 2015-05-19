@@ -2,7 +2,7 @@
 How to release pytest (draft)
 --------------------------------------------
 
-1. bump version numbers in pytest/__init__.py (setup.py reads it)
+1. bump version numbers in _pytest/__init__.py (setup.py reads it)
 
 2. check and finalize CHANGELOG
 
@@ -11,7 +11,7 @@ How to release pytest (draft)
 
 4. use devpi for uploading a release tarball to a staging area:
    - ``devpi use https://devpi.net/USER/dev`` 
-   - ``devpi upload``
+   - ``devpi upload --formats sdist,bdist_wheel``
 
 5. run from multiple machines:
    - ``devpi use https://devpi.net/USER/dev`` 
@@ -25,22 +25,33 @@ How to release pytest (draft)
    which is ok (tox does not support skipping on
    per-platform basis yet).
 
-7. Regenerate the docs using the toplevel makefile::
-      make docs
+7. Regenerate the docs examples using tox::
+      # Create and activate a virtualenv with regendoc installed
+      # (currently needs revision 4a9ec1035734)
+      tox -e regen
 
-8. Upload the docs using the toplevel makefile::
-      make upload-docs
+8. Build the docs, you need a virtualenv with, py and sphinx
+   installed::
+      cd docs/en
+      make html
+
+9. Tag the release::
+      hg tag VERSION
+
+10. Upload the docs using docs/en/Makefile::
+      cd docs/en
+      make install  # or "installall" if you have LaTeX installed
    This requires ssh-login permission on pytest.org because it uses
    rsync.
    Note that the "install" target of doc/en/Makefile defines where the
    rsync goes to, typically to the "latest" section of pytest.org.
 
-9. publish to pypi "devpi push pytest-2.6.2 pypi:NAME" where NAME 
+11. publish to pypi "devpi push pytest-VERSION pypi:NAME" where NAME 
    is the name of pypi.python.org as configured in your 
    ~/.pypirc file -- it's the same you would use with 
    "setup.py upload -r NAME"
 
-10. send release announcement to mailing lists:
+12. send release announcement to mailing lists:
 
    pytest-dev
    testing-in-python

@@ -89,7 +89,7 @@ holger krekel
   it from the "decorator" case.  Thanks Tom Viner.
 
 - "python_classes" and "python_functions" options now support glob-patterns
- for test discovery, as discussed in issue600. Thanks Ldiary Translations.
+  for test discovery, as discussed in issue600. Thanks Ldiary Translations.
 
 - allow to override parametrized fixtures with non-parametrized ones and vice versa (bubenkoff).
 

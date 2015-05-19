@@ -26,8 +26,8 @@ you will see the return value of the function call::
 
     $ py.test test_assert1.py
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
-    rootdir: /tmp/doc-exec-98, inifile: 
+    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
+    rootdir: /tmp/doc-exec-87, inifile: 
     collected 1 items
     
     test_assert1.py F
@@ -136,8 +136,8 @@ if you run this module::
 
     $ py.test test_assert2.py
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
-    rootdir: /tmp/doc-exec-98, inifile: 
+    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
+    rootdir: /tmp/doc-exec-87, inifile: 
     collected 1 items
     
     test_assert2.py F
@@ -213,7 +213,7 @@ the conftest file::
    E            vals: 1 != 2
    
    test_foocompare.py:8: AssertionError
-   1 failed in 0.00 seconds
+   1 failed in 0.01 seconds
 
 .. _assert-details:
 .. _`assert introspection`:

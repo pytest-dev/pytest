@@ -27,18 +27,18 @@ now execute the test specification::
 
     nonpython $ py.test test_simple.yml
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
-    rootdir: /home/hpk/p/pytest/doc/en, inifile: pytest.ini
+    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
+    rootdir: /tmp/sandbox/pytest/doc/en, inifile: pytest.ini
     collected 2 items
     
-    test_simple.yml F.
+    test_simple.yml .F
     
     ================================= FAILURES =================================
     ______________________________ usecase: hello ______________________________
     usecase execution failed
        spec failed: 'some': 'other'
        no further details known at this point.
-    ==================== 1 failed, 1 passed in 0.03 seconds ====================
+    ==================== 1 failed, 1 passed in 0.19 seconds ====================
 
 You get one dot for the passing ``sub1: sub1`` check and one failure.
 Obviously in the above ``conftest.py`` you'll want to implement a more
@@ -57,30 +57,30 @@ consulted when reporting in ``verbose`` mode::
 
     nonpython $ py.test -v
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
-    rootdir: /home/hpk/p/pytest/doc/en, inifile: pytest.ini
+    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1 -- /tmp/sandbox/pytest/.tox/regen/bin/python3.4
+    rootdir: /tmp/sandbox/pytest/doc/en, inifile: pytest.ini
     collecting ... collected 2 items
     
-    test_simple.yml::hello FAILED
     test_simple.yml::ok PASSED
+    test_simple.yml::hello FAILED
     
     ================================= FAILURES =================================
     ______________________________ usecase: hello ______________________________
     usecase execution failed
        spec failed: 'some': 'other'
        no further details known at this point.
-    ==================== 1 failed, 1 passed in 0.03 seconds ====================
+    ==================== 1 failed, 1 passed in 0.05 seconds ====================
 
 While developing your custom test collection and execution it's also
 interesting to just look at the collection tree::
 
     nonpython $ py.test --collect-only
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
-    rootdir: /home/hpk/p/pytest/doc/en, inifile: pytest.ini
+    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
+    rootdir: /tmp/sandbox/pytest/doc/en, inifile: pytest.ini
     collected 2 items
     <YamlFile 'example/nonpython/test_simple.yml'>
-      <YamlItem 'hello'>
       <YamlItem 'ok'>
+      <YamlItem 'hello'>
     
-    =============================  in 0.03 seconds =============================
+    =============================  in 0.04 seconds =============================

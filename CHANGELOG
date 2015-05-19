@@ -52,7 +52,7 @@
   one will also have a "reprec" attribute with the recorded events/reports.
 
  
-2.7.1.dev (compared to 2.7.0)
+2.7.1 (compared to 2.7.0)
 -----------------------------
 
 - fix issue731: do not get confused by the braces which may be present
