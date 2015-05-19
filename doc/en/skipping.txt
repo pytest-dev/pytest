@@ -164,8 +164,8 @@ Running it with the report-on-xfail option gives this output::
 
     example $ py.test -rx xfail_demo.py
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
-    rootdir: /home/hpk/p/pytest/doc/en, inifile: pytest.ini
+    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
+    rootdir: /tmp/sandbox/pytest/doc/en, inifile: pytest.ini
     collected 7 items
     
     xfail_demo.py xxxxxxx
@@ -183,7 +183,7 @@ Running it with the report-on-xfail option gives this output::
       reason: reason
     XFAIL xfail_demo.py::test_hello7
     
-    ======================== 7 xfailed in 0.05 seconds =========================
+    ======================== 7 xfailed in 0.06 seconds =========================
 
 .. _`skip/xfail with parametrize`:
 

@@ -108,8 +108,8 @@ directory with the above conftest.py::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
-    rootdir: /tmp/doc-exec-172, inifile: 
+    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
+    rootdir: /tmp/doc-exec-162, inifile: 
     collected 0 items
     
     =============================  in 0.00 seconds =============================
@@ -153,13 +153,13 @@ and when running it will see a skipped "slow" test::
 
     $ py.test -rs    # "-rs" means report details on the little 's'
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
-    rootdir: /tmp/doc-exec-172, inifile: 
+    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
+    rootdir: /tmp/doc-exec-162, inifile: 
     collected 2 items
     
     test_module.py .s
     ========================= short test summary info ==========================
-    SKIP [1] /tmp/doc-exec-172/conftest.py:9: need --runslow option to run
+    SKIP [1] /tmp/doc-exec-162/conftest.py:9: need --runslow option to run
     
     =================== 1 passed, 1 skipped in 0.01 seconds ====================
 
@@ -167,8 +167,8 @@ Or run it including the ``slow`` marked test::
 
     $ py.test --runslow
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
-    rootdir: /tmp/doc-exec-172, inifile: 
+    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
+    rootdir: /tmp/doc-exec-162, inifile: 
     collected 2 items
     
     test_module.py ..
@@ -205,13 +205,13 @@ Let's run our little function::
     F
     ================================= FAILURES =================================
     ______________________________ test_something ______________________________
-
+    
         def test_something():
     >       checkconfig(42)
     E       Failed: not configured: 42
-
+    
     test_checkconfig.py:8: Failed
-    1 failed in 0.01 seconds
+    1 failed in 0.02 seconds
 
 Detect if running from within a pytest run
 --------------------------------------------------------------
@@ -259,8 +259,8 @@ which will add the string to the test header accordingly::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
-    rootdir: /tmp/doc-exec-172, inifile: 
+    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
+    rootdir: /tmp/doc-exec-162, inifile: 
     project deps: mylib-1.1
     collected 0 items
     
@@ -283,8 +283,8 @@ which will add info only when run with "--v"::
 
     $ py.test -v
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0 -- /home/hpk/p/pytest/.tox/regen/bin/python3.4
-    rootdir: /tmp/doc-exec-172, inifile: 
+    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1 -- /tmp/sandbox/pytest/.tox/regen/bin/python3.4
+    rootdir: /tmp/doc-exec-162, inifile: 
     info1: did you know that ...
     did you?
     collecting ... collected 0 items
@@ -295,8 +295,8 @@ and nothing when run plainly::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
-    rootdir: /tmp/doc-exec-172, inifile: 
+    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
+    rootdir: /tmp/doc-exec-162, inifile: 
     collected 0 items
     
     =============================  in 0.00 seconds =============================
@@ -328,8 +328,8 @@ Now we can profile which test functions execute the slowest::
 
     $ py.test --durations=3
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
-    rootdir: /tmp/doc-exec-172, inifile: 
+    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
+    rootdir: /tmp/doc-exec-162, inifile: 
     collected 3 items
     
     test_some_are_slow.py ...
@@ -390,8 +390,8 @@ If we run this::
 
     $ py.test -rx
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
-    rootdir: /tmp/doc-exec-172, inifile: 
+    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
+    rootdir: /tmp/doc-exec-162, inifile: 
     collected 4 items
     
     test_step.py .Fx.
@@ -399,7 +399,7 @@ If we run this::
     ================================= FAILURES =================================
     ____________________ TestUserHandling.test_modification ____________________
     
-    self = <test_step.TestUserHandling object at 0x2b9ab60ccfd0>
+    self = <test_step.TestUserHandling object at 0x7ff60bbb83c8>
     
         def test_modification(self):
     >       assert 0
@@ -409,7 +409,7 @@ If we run this::
     ========================= short test summary info ==========================
     XFAIL test_step.py::TestUserHandling::()::test_deletion
       reason: previous test failed (test_modification)
-    ============== 1 failed, 2 passed, 1 xfailed in 0.01 seconds ===============
+    ============== 1 failed, 2 passed, 1 xfailed in 0.02 seconds ===============
 
 We'll see that ``test_deletion`` was not executed because ``test_modification``
 failed.  It is reported as an "expected failure".
@@ -461,8 +461,8 @@ We can run this::
 
     $ py.test
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
-    rootdir: /tmp/doc-exec-172, inifile: 
+    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
+    rootdir: /tmp/doc-exec-162, inifile: 
     collected 7 items
     
     test_step.py .Fx.
@@ -472,17 +472,17 @@ We can run this::
     
     ================================== ERRORS ==================================
     _______________________ ERROR at setup of test_root ________________________
-    file /tmp/doc-exec-172/b/test_error.py, line 1
+    file /tmp/doc-exec-162/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
             fixture 'db' not found
-            available fixtures: pytestconfig, tmpdir, monkeypatch, capfd, recwarn, capsys
+            available fixtures: pytestconfig, capsys, recwarn, monkeypatch, tmpdir, capfd
             use 'py.test --fixtures [testpath]' for help on them.
     
-    /tmp/doc-exec-172/b/test_error.py:1
+    /tmp/doc-exec-162/b/test_error.py:1
     ================================= FAILURES =================================
     ____________________ TestUserHandling.test_modification ____________________
     
-    self = <test_step.TestUserHandling object at 0x2aec569b87b8>
+    self = <test_step.TestUserHandling object at 0x7f8ecd5b87f0>
     
         def test_modification(self):
     >       assert 0
@@ -491,25 +491,25 @@ We can run this::
     test_step.py:9: AssertionError
     _________________________________ test_a1 __________________________________
     
-    db = <conftest.DB object at 0x2aec569d1588>
+    db = <conftest.DB object at 0x7f8ecdc11470>
     
         def test_a1(db):
     >       assert 0, db  # to show value
-    E       AssertionError: <conftest.DB object at 0x2aec569d1588>
+    E       AssertionError: <conftest.DB object at 0x7f8ecdc11470>
     E       assert 0
     
     a/test_db.py:2: AssertionError
     _________________________________ test_a2 __________________________________
     
-    db = <conftest.DB object at 0x2aec569d1588>
+    db = <conftest.DB object at 0x7f8ecdc11470>
     
         def test_a2(db):
     >       assert 0, db  # to show value
-    E       AssertionError: <conftest.DB object at 0x2aec569d1588>
+    E       AssertionError: <conftest.DB object at 0x7f8ecdc11470>
     E       assert 0
     
     a/test_db2.py:2: AssertionError
-    ========== 3 failed, 2 passed, 1 xfailed, 1 error in 0.03 seconds ==========
+    ========== 3 failed, 2 passed, 1 xfailed, 1 error in 0.05 seconds ==========
 
 The two test modules in the ``a`` directory see the same ``db`` fixture instance
 while the one test in the sister-directory ``b`` doesn't see it.  We could of course
@@ -564,8 +564,8 @@ and run them::
 
     $ py.test test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
-    rootdir: /tmp/doc-exec-172, inifile: 
+    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
+    rootdir: /tmp/doc-exec-162, inifile: 
     collected 2 items
     
     test_module.py FF
@@ -573,7 +573,7 @@ and run them::
     ================================= FAILURES =================================
     ________________________________ test_fail1 ________________________________
     
-    tmpdir = local('/tmp/pytest-219/test_fail10')
+    tmpdir = local('/tmp/pytest-22/test_fail10')
     
         def test_fail1(tmpdir):
     >       assert 0
@@ -587,12 +587,12 @@ and run them::
     E       assert 0
     
     test_module.py:4: AssertionError
-    ========================= 2 failed in 0.01 seconds =========================
+    ========================= 2 failed in 0.02 seconds =========================
 
 you will have a "failures" file which contains the failing test ids::
 
     $ cat failures
-    test_module.py::test_fail1 (/tmp/pytest-219/test_fail10)
+    test_module.py::test_fail1 (/tmp/pytest-22/test_fail10)
     test_module.py::test_fail2
 
 Making test result information available in fixtures
@@ -655,8 +655,8 @@ and run it::
 
     $ py.test -s test_module.py
     =========================== test session starts ============================
-    platform linux -- Python 3.4.0 -- py-1.4.26 -- pytest-2.7.0
-    rootdir: /tmp/doc-exec-172, inifile: 
+    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
+    rootdir: /tmp/doc-exec-162, inifile: 
     collected 3 items
     
     test_module.py Esetting up a test failed! test_module.py::test_setup_fails
@@ -689,7 +689,7 @@ and run it::
     E       assert 0
     
     test_module.py:15: AssertionError
-    ==================== 2 failed, 1 error in 0.01 seconds =====================
+    ==================== 2 failed, 1 error in 0.02 seconds =====================
 
 You'll see that the fixture finalizers could use the precise reporting
 information.
