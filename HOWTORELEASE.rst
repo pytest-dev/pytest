@@ -11,7 +11,7 @@ How to release pytest (draft)
 
 4. use devpi for uploading a release tarball to a staging area:
    - ``devpi use https://devpi.net/USER/dev`` 
-   - ``devpi upload``
+   - ``devpi upload --formats sdist,bdist_wheel``
 
 5. run from multiple machines:
    - ``devpi use https://devpi.net/USER/dev`` 
@@ -35,7 +35,10 @@ How to release pytest (draft)
       cd docs/en
       make html
 
-9. Upload the docs using docs/en/Makefile::
+9. Tag the release::
+      hg tag VERSION
+
+10. Upload the docs using docs/en/Makefile::
       cd docs/en
       make install  # or "installall" if you have LaTeX installed
    This requires ssh-login permission on pytest.org because it uses
@@ -43,12 +46,12 @@ How to release pytest (draft)
    Note that the "install" target of doc/en/Makefile defines where the
    rsync goes to, typically to the "latest" section of pytest.org.
 
-10. publish to pypi "devpi push pytest-2.6.2 pypi:NAME" where NAME 
+11. publish to pypi "devpi push pytest-VERSION pypi:NAME" where NAME 
    is the name of pypi.python.org as configured in your 
    ~/.pypirc file -- it's the same you would use with 
    "setup.py upload -r NAME"
 
-11. send release announcement to mailing lists:
+12. send release announcement to mailing lists:
 
    pytest-dev
    testing-in-python
