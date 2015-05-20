@@ -37,3 +37,4 @@ env3/
 .coverage
 .ropeproject
 *.sublime-*
+.dir-locals.el
