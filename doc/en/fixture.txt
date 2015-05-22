@@ -302,7 +302,7 @@ read an optional server URL from the test module which uses our fixture::
         def fin():
             print ("finalizing %s (%s)" % (smtp, server))
             smtp.close()
-
+        request.addfinalizer(fin)
         return smtp
 
 We use the ``request.module`` attribute to optionally obtain an
