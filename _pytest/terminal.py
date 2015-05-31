@@ -7,6 +7,7 @@ import pluggy
 import py
 import sys
 import time
+import platform
 
 
 def pytest_addoption(parser):
@@ -274,7 +275,7 @@ class TerminalReporter:
         if not self.showheader:
             return
         self.write_sep("=", "test session starts", bold=True)
-        verinfo = ".".join(map(str, sys.version_info[:3]))
+        verinfo = platform.python_version()
         msg = "platform %s -- Python %s" % (sys.platform, verinfo)
         if hasattr(sys, 'pypy_version_info'):
             verinfo = ".".join(map(str, sys.pypy_version_info[:3]))
