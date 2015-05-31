@@ -11,7 +11,6 @@ In 2015 we are trying this for the first time. In February and March 2015 we wil
 
 .. _`issue tracker`: https://bitbucket.org/pytest-dev/pytest/issue/676/adopt-pytest-month-2015
 .. _`pytest-dev mailing list`: https://mail.python.org/mailman/listinfo/pytest-dev
-.. _``:
 
 
 The ideal pytest helper
