@@ -10,7 +10,7 @@ Pass different values to a test function, depending on command line options
 .. regendoc:wipe
 
 Suppose we want to write a test that depends on a command line option.
-Here is a basic pattern how to achieve this::
+Here is a basic pattern to achieve this::
 
     # content of test_sample.py
     def test_answer(cmdopt):
@@ -41,9 +41,9 @@ Let's run this without supplying our new option::
     F
     ================================= FAILURES =================================
     _______________________________ test_answer ________________________________
-    
+
     cmdopt = 'type1'
-    
+
         def test_answer(cmdopt):
             if cmdopt == "type1":
                 print ("first")
@@ -51,7 +51,7 @@ Let's run this without supplying our new option::
                 print ("second")
     >       assert 0 # to see what was printed
     E       assert 0
-    
+
     test_sample.py:6: AssertionError
     --------------------------- Captured stdout call ---------------------------
     first
@@ -109,9 +109,9 @@ directory with the above conftest.py::
     $ py.test
     =========================== test session starts ============================
     platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
-    rootdir: /tmp/doc-exec-162, inifile: 
+    rootdir: /tmp/doc-exec-162, inifile:
     collected 0 items
-    
+
     =============================  in 0.00 seconds =============================
 
 .. _`excontrolskip`:
@@ -154,13 +154,13 @@ and when running it will see a skipped "slow" test::
     $ py.test -rs    # "-rs" means report details on the little 's'
     =========================== test session starts ============================
     platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
-    rootdir: /tmp/doc-exec-162, inifile: 
+    rootdir: /tmp/doc-exec-162, inifile:
     collected 2 items
-    
+
     test_module.py .s
     ========================= short test summary info ==========================
     SKIP [1] /tmp/doc-exec-162/conftest.py:9: need --runslow option to run
-    
+
     =================== 1 passed, 1 skipped in 0.01 seconds ====================
 
 Or run it including the ``slow`` marked test::
@@ -168,11 +168,11 @@ Or run it including the ``slow`` marked test::
     $ py.test --runslow
     =========================== test session starts ============================
     platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
-    rootdir: /tmp/doc-exec-162, inifile: 
+    rootdir: /tmp/doc-exec-162, inifile:
     collected 2 items
-    
+
     test_module.py ..
-    
+
     ========================= 2 passed in 0.01 seconds =========================
 
 Writing well integrated assertion helpers
@@ -205,11 +205,11 @@ Let's run our little function::
     F
     ================================= FAILURES =================================
     ______________________________ test_something ______________________________
-    
+
         def test_something():
     >       checkconfig(42)
     E       Failed: not configured: 42
-    
+
     test_checkconfig.py:8: Failed
     1 failed in 0.02 seconds
 
@@ -260,10 +260,10 @@ which will add the string to the test header accordingly::
     $ py.test
     =========================== test session starts ============================
     platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
-    rootdir: /tmp/doc-exec-162, inifile: 
+    rootdir: /tmp/doc-exec-162, inifile:
     project deps: mylib-1.1
     collected 0 items
-    
+
     =============================  in 0.00 seconds =============================
 
 .. regendoc:wipe
@@ -284,11 +284,11 @@ which will add info only when run with "--v"::
     $ py.test -v
     =========================== test session starts ============================
     platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1 -- /tmp/sandbox/pytest/.tox/regen/bin/python3.4
-    rootdir: /tmp/doc-exec-162, inifile: 
+    rootdir: /tmp/doc-exec-162, inifile:
     info1: did you know that ...
     did you?
     collecting ... collected 0 items
-    
+
     =============================  in 0.00 seconds =============================
 
 and nothing when run plainly::
@@ -296,9 +296,9 @@ and nothing when run plainly::
     $ py.test
     =========================== test session starts ============================
     platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
-    rootdir: /tmp/doc-exec-162, inifile: 
+    rootdir: /tmp/doc-exec-162, inifile:
     collected 0 items
-    
+
     =============================  in 0.00 seconds =============================
 
 profiling test duration
@@ -329,11 +329,11 @@ Now we can profile which test functions execute the slowest::
     $ py.test --durations=3
     =========================== test session starts ============================
     platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
-    rootdir: /tmp/doc-exec-162, inifile: 
+    rootdir: /tmp/doc-exec-162, inifile:
     collected 3 items
-    
+
     test_some_are_slow.py ...
-    
+
     ========================= slowest 3 test durations =========================
     0.20s call     test_some_are_slow.py::test_funcslow2
     0.10s call     test_some_are_slow.py::test_funcslow1
@@ -391,20 +391,20 @@ If we run this::
     $ py.test -rx
     =========================== test session starts ============================
     platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
-    rootdir: /tmp/doc-exec-162, inifile: 
+    rootdir: /tmp/doc-exec-162, inifile:
     collected 4 items
-    
+
     test_step.py .Fx.
-    
+
     ================================= FAILURES =================================
     ____________________ TestUserHandling.test_modification ____________________
-    
+
     self = <test_step.TestUserHandling object at 0x7ff60bbb83c8>
-    
+
         def test_modification(self):
     >       assert 0
     E       assert 0
-    
+
     test_step.py:9: AssertionError
     ========================= short test summary info ==========================
     XFAIL test_step.py::TestUserHandling::()::test_deletion
@@ -462,14 +462,14 @@ We can run this::
     $ py.test
     =========================== test session starts ============================
     platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
-    rootdir: /tmp/doc-exec-162, inifile: 
+    rootdir: /tmp/doc-exec-162, inifile:
     collected 7 items
-    
+
     test_step.py .Fx.
     a/test_db.py F
     a/test_db2.py F
     b/test_error.py E
-    
+
     ================================== ERRORS ==================================
     _______________________ ERROR at setup of test_root ________________________
     file /tmp/doc-exec-162/b/test_error.py, line 1
@@ -477,37 +477,37 @@ We can run this::
             fixture 'db' not found
             available fixtures: pytestconfig, capsys, recwarn, monkeypatch, tmpdir, capfd
             use 'py.test --fixtures [testpath]' for help on them.
-    
+
     /tmp/doc-exec-162/b/test_error.py:1
     ================================= FAILURES =================================
     ____________________ TestUserHandling.test_modification ____________________
-    
+
     self = <test_step.TestUserHandling object at 0x7f8ecd5b87f0>
-    
+
         def test_modification(self):
     >       assert 0
     E       assert 0
-    
+
     test_step.py:9: AssertionError
     _________________________________ test_a1 __________________________________
-    
+
     db = <conftest.DB object at 0x7f8ecdc11470>
-    
+
         def test_a1(db):
     >       assert 0, db  # to show value
     E       AssertionError: <conftest.DB object at 0x7f8ecdc11470>
     E       assert 0
-    
+
     a/test_db.py:2: AssertionError
     _________________________________ test_a2 __________________________________
-    
+
     db = <conftest.DB object at 0x7f8ecdc11470>
-    
+
         def test_a2(db):
     >       assert 0, db  # to show value
     E       AssertionError: <conftest.DB object at 0x7f8ecdc11470>
     E       assert 0
-    
+
     a/test_db2.py:2: AssertionError
     ========== 3 failed, 2 passed, 1 xfailed, 1 error in 0.05 seconds ==========
 
@@ -565,27 +565,27 @@ and run them::
     $ py.test test_module.py
     =========================== test session starts ============================
     platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
-    rootdir: /tmp/doc-exec-162, inifile: 
+    rootdir: /tmp/doc-exec-162, inifile:
     collected 2 items
-    
+
     test_module.py FF
-    
+
     ================================= FAILURES =================================
     ________________________________ test_fail1 ________________________________
-    
+
     tmpdir = local('/tmp/pytest-22/test_fail10')
-    
+
         def test_fail1(tmpdir):
     >       assert 0
     E       assert 0
-    
+
     test_module.py:2: AssertionError
     ________________________________ test_fail2 ________________________________
-    
+
         def test_fail2():
     >       assert 0
     E       assert 0
-    
+
     test_module.py:4: AssertionError
     ========================= 2 failed in 0.02 seconds =========================
 
@@ -656,38 +656,38 @@ and run it::
     $ py.test -s test_module.py
     =========================== test session starts ============================
     platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
-    rootdir: /tmp/doc-exec-162, inifile: 
+    rootdir: /tmp/doc-exec-162, inifile:
     collected 3 items
-    
+
     test_module.py Esetting up a test failed! test_module.py::test_setup_fails
     Fexecuting test failed test_module.py::test_call_fails
     F
-    
+
     ================================== ERRORS ==================================
     ____________________ ERROR at setup of test_setup_fails ____________________
-    
+
         @pytest.fixture
         def other():
     >       assert 0
     E       assert 0
-    
+
     test_module.py:6: AssertionError
     ================================= FAILURES =================================
     _____________________________ test_call_fails ______________________________
-    
+
     something = None
-    
+
         def test_call_fails(something):
     >       assert 0
     E       assert 0
-    
+
     test_module.py:12: AssertionError
     ________________________________ test_fail2 ________________________________
-    
+
         def test_fail2():
     >       assert 0
     E       assert 0
-    
+
     test_module.py:15: AssertionError
     ==================== 2 failed, 1 error in 0.02 seconds =====================
 
