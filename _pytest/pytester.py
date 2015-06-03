@@ -871,7 +871,8 @@ class Testdir:
         cmdargs = [str(x) for x in cmdargs]
         p1 = self.tmpdir.join("stdout")
         p2 = self.tmpdir.join("stderr")
-        print_("running", cmdargs, "curdir=", py.path.local())
+        print_("running:", ' '.join(cmdargs))
+        print_("     in:", str(py.path.local()))
         f1 = codecs.open(str(p1), "w", encoding="utf8")
         f2 = codecs.open(str(p2), "w", encoding="utf8")
         try:
