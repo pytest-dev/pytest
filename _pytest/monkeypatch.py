@@ -27,7 +27,7 @@ def pytest_funcarg__monkeypatch(request):
 
 
 
-def derive_importpath(import_path):
+def derive_importpath(import_path, raising):
     import pytest
     if not isinstance(import_path, _basestring) or "." not in import_path:
         raise TypeError("must be absolute import path string, not %r" %
@@ -51,7 +51,8 @@ def derive_importpath(import_path):
                     attr = rest.pop()
                     obj = getattr(obj, attr)
                 attr = rest[0]
-                getattr(obj, attr)
+                if raising:
+                    getattr(obj, attr)
             except AttributeError:
                 __tracebackhide__ = True
                 pytest.fail("object %r has no attribute %r" % (obj, attr))
@@ -95,7 +96,7 @@ class monkeypatch:
                    "setattr(target, value) with target being a dotted "
                    "import string")
             value = name
-            name, target = derive_importpath(target)
+            name, target = derive_importpath(target, raising)
 
         oldval = getattr(target, name, notset)
         if raising and oldval is notset:
@@ -124,7 +125,7 @@ class monkeypatch:
                 raise TypeError("use delattr(target, name) or "
                                 "delattr(target) with target being a dotted "
                                 "import string")
-            name, target = derive_importpath(target)
+            name, target = derive_importpath(target, raising)
 
         if not hasattr(target, name):
             if raising:

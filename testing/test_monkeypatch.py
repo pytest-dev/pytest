@@ -62,6 +62,11 @@ class TestSetattrWithImportPath:
         pytest.raises(pytest.fail.Exception,
                       lambda: monkeypatch.setattr("os.path.qweqwe", None))
 
+    def test_unknown_attr_non_raising(self, monkeypatch):
+        # https://bitbucket.org/pytest-dev/pytest/issue/746/
+        monkeypatch.setattr('os.path.qweqwe', 42, raising=False)
+        assert os.path.qweqwe == 42
+
     def test_delattr(self, monkeypatch):
         monkeypatch.delattr("os.path.abspath")
         assert not hasattr(os.path, "abspath")
