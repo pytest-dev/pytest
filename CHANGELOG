@@ -54,6 +54,9 @@
 - fix monkeypatch.setattr("x.y", raising=False) to actually not raise
   if "y" is not a pre-existing attribute. Thanks Florian Bruhin.
 
+- fix issue741: make running output from testdir.run copy/pasteable
+  Thanks Bruno Oliveira.
+
  
 2.7.1 (compared to 2.7.0)
 -----------------------------
