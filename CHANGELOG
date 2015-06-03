@@ -51,6 +51,9 @@
   the test.  In all cases you get back a RunResult but the inprocess
   one will also have a "reprec" attribute with the recorded events/reports.
 
+- fix monkeypatch.setattr("x.y", raising=False) to actually not raise
+  if "y" is not a pre-existing attribute. Thanks Florian Bruhin.
+
  
 2.7.1 (compared to 2.7.0)
 -----------------------------
