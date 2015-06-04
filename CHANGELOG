@@ -1,6 +1,8 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
+- fix issue735: assertion failures on debug versions of Python 3.4+
+
 - change test module importing behaviour to append to sys.path
   instead of prepending.  This better allows to run test modules
   against installated versions of a package even if the package

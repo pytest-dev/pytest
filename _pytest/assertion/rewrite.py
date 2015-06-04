@@ -442,6 +442,13 @@ binop_map = {
     ast.NotIn: "not in"
 }
 
+# Python 3.4+ compatibility
+if hasattr(ast, "NameConstant"):
+    _NameConstant = ast.NameConstant
+else:
+    def _NameConstant(c):
+        return ast.Name(str(c), ast.Load())
+
 
 def set_location(node, lineno, col_offset):
     """Set node location information recursively."""
@@ -680,7 +687,7 @@ class AssertionRewriter(ast.NodeVisitor):
         if self.variables:
             variables = [ast.Name(name, ast.Store())
                          for name in self.variables]
-            clear = ast.Assign(variables, ast.Name("None", ast.Load()))
+            clear = ast.Assign(variables, _NameConstant(None))
             self.statements.append(clear)
         # Fix line numbers.
         for stmt in self.statements:
