@@ -1,3 +1,9 @@
+2.7.2 (compared to 2.7.1)
+-----------------------------
+
+- fix issue735: assertion failures on debug versions of Python 3.4+
+  Thanks Benjamin Peterson.
+
 2.7.1 (compared to 2.7.0)
 -----------------------------
 
