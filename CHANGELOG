@@ -1,6 +1,9 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
+- Include setup and teardown in junitxml test durations.
+  Thanks Janne Vanhala.
+
 - fix issue735: assertion failures on debug versions of Python 3.4+
 
 - change test module importing behaviour to append to sys.path
@@ -10,10 +13,10 @@
 
         testing/__init__.py
         testing/test_pkg_under_test.py
-        pkg_under_test/ 
+        pkg_under_test/
 
-  the tests will preferrably run against the installed version 
-  of pkg_under_test whereas before they would always pick 
+  the tests will preferrably run against the installed version
+  of pkg_under_test whereas before they would always pick
   up the local version.  Thanks Holger Krekel.
 
 - pytester: add method ``TmpTestdir.delete_loaded_modules()``, and call it
@@ -21,19 +24,19 @@
   Thanks Eduardo Schettino.
 
 - internally refactor pluginmanager API and code so that there
-  is a clear distinction between a pytest-agnostic rather simple 
+  is a clear distinction between a pytest-agnostic rather simple
   pluginmanager and the PytestPluginManager which adds a lot of
   behaviour, among it handling of the local conftest files.
   In terms of documented methods this is a backward compatible
-  change but it might still break 3rd party plugins which relied on 
+  change but it might still break 3rd party plugins which relied on
   details like especially the pluginmanager.add_shutdown() API.
   Thanks Holger Krekel.
 
-- pluginmanagement: introduce ``pytest.hookimpl`` and 
-  ``pytest.hookspec`` decorators for setting impl/spec 
-  specific parameters.  This substitutes the previous 
-  now deprecated use of ``pytest.mark`` which is meant to 
-  contain markers for test functions only.  
+- pluginmanagement: introduce ``pytest.hookimpl`` and
+  ``pytest.hookspec`` decorators for setting impl/spec
+  specific parameters.  This substitutes the previous
+  now deprecated use of ``pytest.mark`` which is meant to
+  contain markers for test functions only.
 
 - write/refine docs for "writing plugins" which now have their
   own page and are separate from the "using/installing plugins`` page.
@@ -41,8 +44,8 @@
 - fix issue732: properly unregister plugins from any hook calling
   sites allowing to have temporary plugins during test execution.
 
-- deprecate and warn about ``__multicall__`` argument in hook 
-  implementations.  Use the ``hookwrapper`` mechanism instead already 
+- deprecate and warn about ``__multicall__`` argument in hook
+  implementations.  Use the ``hookwrapper`` mechanism instead already
   introduced with pytest-2.7.
 
 - speed up pytest's own test suite considerably by using inprocess
@@ -59,7 +62,7 @@
 - fix issue741: make running output from testdir.run copy/pasteable
   Thanks Bruno Oliveira.
 
- 
+
 2.7.1 (compared to 2.7.0)
 -----------------------------
 
