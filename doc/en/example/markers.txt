@@ -30,30 +30,30 @@ You can "mark" a test function with custom metadata like this::
 You can then restrict a test run to only run tests marked with ``webtest``::
 
     $ py.test -v -m webtest
-    =========================== test session starts ============================
-    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1 -- /tmp/sandbox/pytest/.tox/regen/bin/python3.4
-    rootdir: /tmp/doc-exec-157, inifile: 
+    ======= test session starts ========
+    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0 -- $PWD/.env/bin/python2.7
+    rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
     
     test_server.py::test_send_http PASSED
     
-    =================== 3 tests deselected by "-m 'webtest'" ===================
-    ================== 1 passed, 3 deselected in 0.01 seconds ==================
+    ======= 3 tests deselected by "-m 'webtest'" ========
+    ======= 1 passed, 3 deselected in 0.12 seconds ========
 
 Or the inverse, running all tests except the webtest ones::
 
     $ py.test -v -m "not webtest"
-    =========================== test session starts ============================
-    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1 -- /tmp/sandbox/pytest/.tox/regen/bin/python3.4
-    rootdir: /tmp/doc-exec-157, inifile: 
+    ======= test session starts ========
+    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0 -- $PWD/.env/bin/python2.7
+    rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
     
     test_server.py::test_something_quick PASSED
     test_server.py::test_another PASSED
     test_server.py::TestClass::test_method PASSED
     
-    ================= 1 tests deselected by "-m 'not webtest'" =================
-    ================== 3 passed, 1 deselected in 0.01 seconds ==================
+    ======= 1 tests deselected by "-m 'not webtest'" ========
+    ======= 3 passed, 1 deselected in 0.12 seconds ========
 
 Selecting tests based on their node ID
 --------------------------------------
@@ -63,39 +63,39 @@ arguments to select only specified tests. This makes it easy to select
 tests based on their module, class, method, or function name::
 
     $ py.test -v test_server.py::TestClass::test_method
-    =========================== test session starts ============================
-    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1 -- /tmp/sandbox/pytest/.tox/regen/bin/python3.4
-    rootdir: /tmp/doc-exec-157, inifile: 
+    ======= test session starts ========
+    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0 -- $PWD/.env/bin/python2.7
+    rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 5 items
     
     test_server.py::TestClass::test_method PASSED
     
-    ========================= 1 passed in 0.01 seconds =========================
+    ======= 1 passed in 0.12 seconds ========
 
 You can also select on the class::
 
     $ py.test -v test_server.py::TestClass
-    =========================== test session starts ============================
-    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1 -- /tmp/sandbox/pytest/.tox/regen/bin/python3.4
-    rootdir: /tmp/doc-exec-157, inifile: 
+    ======= test session starts ========
+    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0 -- $PWD/.env/bin/python2.7
+    rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
     
     test_server.py::TestClass::test_method PASSED
     
-    ========================= 1 passed in 0.01 seconds =========================
+    ======= 1 passed in 0.12 seconds ========
 
 Or select multiple nodes::
 
   $ py.test -v test_server.py::TestClass test_server.py::test_send_http
-  =========================== test session starts ============================
-  platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1 -- /tmp/sandbox/pytest/.tox/regen/bin/python3.4
-  rootdir: /tmp/doc-exec-157, inifile: 
+  ======= test session starts ========
+  platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0 -- $PWD/.env/bin/python2.7
+  rootdir: $REGENDOC_TMPDIR, inifile: 
   collecting ... collected 8 items
   
   test_server.py::TestClass::test_method PASSED
   test_server.py::test_send_http PASSED
   
-  ========================= 2 passed in 0.01 seconds =========================
+  ======= 2 passed in 0.12 seconds ========
 
 .. _node-id:
 
@@ -124,44 +124,44 @@ exact match on markers that ``-m`` provides.  This makes it easy to
 select tests based on their names::
 
     $ py.test -v -k http  # running with the above defined example module
-    =========================== test session starts ============================
-    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1 -- /tmp/sandbox/pytest/.tox/regen/bin/python3.4
-    rootdir: /tmp/doc-exec-157, inifile: 
+    ======= test session starts ========
+    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0 -- $PWD/.env/bin/python2.7
+    rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
     
     test_server.py::test_send_http PASSED
     
-    ====================== 3 tests deselected by '-khttp' ======================
-    ================== 1 passed, 3 deselected in 0.01 seconds ==================
+    ======= 3 tests deselected by '-khttp' ========
+    ======= 1 passed, 3 deselected in 0.12 seconds ========
 
 And you can also run all tests except the ones that match the keyword::
 
     $ py.test -k "not send_http" -v
-    =========================== test session starts ============================
-    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1 -- /tmp/sandbox/pytest/.tox/regen/bin/python3.4
-    rootdir: /tmp/doc-exec-157, inifile: 
+    ======= test session starts ========
+    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0 -- $PWD/.env/bin/python2.7
+    rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
     
     test_server.py::test_something_quick PASSED
     test_server.py::test_another PASSED
     test_server.py::TestClass::test_method PASSED
     
-    ================= 1 tests deselected by '-knot send_http' ==================
-    ================== 3 passed, 1 deselected in 0.01 seconds ==================
+    ======= 1 tests deselected by '-knot send_http' ========
+    ======= 3 passed, 1 deselected in 0.12 seconds ========
 
 Or to select "http" and "quick" tests::
 
     $ py.test -k "http or quick" -v
-    =========================== test session starts ============================
-    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1 -- /tmp/sandbox/pytest/.tox/regen/bin/python3.4
-    rootdir: /tmp/doc-exec-157, inifile: 
+    ======= test session starts ========
+    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0 -- $PWD/.env/bin/python2.7
+    rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
     
     test_server.py::test_send_http PASSED
     test_server.py::test_something_quick PASSED
     
-    ================= 2 tests deselected by '-khttp or quick' ==================
-    ================== 2 passed, 2 deselected in 0.01 seconds ==================
+    ======= 2 tests deselected by '-khttp or quick' ========
+    ======= 2 passed, 2 deselected in 0.12 seconds ========
 
 .. note::
 
@@ -201,9 +201,9 @@ You can ask which markers exist for your test suite - the list includes our just
     
     @pytest.mark.usefixtures(fixturename1, fixturename2, ...): mark tests as needing all of the specified fixtures. see http://pytest.org/latest/fixture.html#usefixtures 
     
-    @pytest.hookimpl(tryfirst=True): mark a hook implementation function such that the plugin machinery will try to call it first/as early as possible.
+    @pytest.mark.tryfirst: mark a hook implementation function such that the plugin machinery will try to call it first/as early as possible.
     
-    @pytest.hookimpl(trylast=True): mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible.
+    @pytest.mark.trylast: mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible.
     
 
 For an example on how to add and work with markers from a plugin, see
@@ -341,26 +341,26 @@ and an example invocations specifying a different environment than what
 the test needs::
 
     $ py.test -E stage2
-    =========================== test session starts ============================
-    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
-    rootdir: /tmp/doc-exec-157, inifile: 
+    ======= test session starts ========
+    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
     test_someenv.py s
     
-    ======================== 1 skipped in 0.01 seconds =========================
+    ======= 1 skipped in 0.12 seconds ========
 
 and here is one that specifies exactly the environment needed::
 
     $ py.test -E stage1
-    =========================== test session starts ============================
-    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
-    rootdir: /tmp/doc-exec-157, inifile: 
+    ======= test session starts ========
+    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
     test_someenv.py .
     
-    ========================= 1 passed in 0.01 seconds =========================
+    ======= 1 passed in 0.12 seconds ========
 
 The ``--markers`` option always gives you a list of available markers::
 
@@ -375,9 +375,9 @@ The ``--markers`` option always gives you a list of available markers::
     
     @pytest.mark.usefixtures(fixturename1, fixturename2, ...): mark tests as needing all of the specified fixtures. see http://pytest.org/latest/fixture.html#usefixtures 
     
-    @pytest.hookimpl(tryfirst=True): mark a hook implementation function such that the plugin machinery will try to call it first/as early as possible.
+    @pytest.mark.tryfirst: mark a hook implementation function such that the plugin machinery will try to call it first/as early as possible.
     
-    @pytest.hookimpl(trylast=True): mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible.
+    @pytest.mark.trylast: mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible.
     
 
 Reading markers which were set from multiple places
@@ -420,7 +420,7 @@ Let's run this without capturing output and see what we get::
     glob args=('class',) kwargs={'x': 2}
     glob args=('module',) kwargs={'x': 1}
     .
-    1 passed in 0.01 seconds
+    1 passed in 0.12 seconds
 
 marking platform specific tests with pytest
 --------------------------------------------------------------
@@ -472,29 +472,29 @@ Let's do a little test file to show how this looks like::
 then you will see two test skipped and two executed tests as expected::
 
     $ py.test -rs # this option reports skip reasons
-    =========================== test session starts ============================
-    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
-    rootdir: /tmp/doc-exec-157, inifile: 
+    ======= test session starts ========
+    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
-    test_plat.py sss.
-    ========================= short test summary info ==========================
-    SKIP [3] /tmp/doc-exec-157/conftest.py:12: cannot run on platform linux
+    test_plat.py s.s.
+    ======= short test summary info ========
+    SKIP [2] $REGENDOC_TMPDIR/conftest.py:12: cannot run on platform linux2
     
-    =================== 1 passed, 3 skipped in 0.01 seconds ====================
+    ======= 2 passed, 2 skipped in 0.12 seconds ========
 
 Note that if you specify a platform via the marker-command line option like this::
 
     $ py.test -m linux2
-    =========================== test session starts ============================
-    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
-    rootdir: /tmp/doc-exec-157, inifile: 
+    ======= test session starts ========
+    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
-    test_plat.py s
+    test_plat.py .
     
-    =================== 3 tests deselected by "-m 'linux2'" ====================
-    ================= 1 skipped, 3 deselected in 0.01 seconds ==================
+    ======= 3 tests deselected by "-m 'linux2'" ========
+    ======= 1 passed, 3 deselected in 0.12 seconds ========
 
 then the unmarked-tests will not be run.  It is thus a way to restrict the run to the specific tests.
 
@@ -538,47 +538,47 @@ We want to dynamically define two markers and can do it in a
 We can now use the ``-m option`` to select one set::
 
   $ py.test -m interface --tb=short
-  =========================== test session starts ============================
-  platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
-  rootdir: /tmp/doc-exec-157, inifile: 
+  ======= test session starts ========
+  platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+  rootdir: $REGENDOC_TMPDIR, inifile: 
   collected 4 items
   
   test_module.py FF
   
-  ================================= FAILURES =================================
-  __________________________ test_interface_simple ___________________________
+  ======= FAILURES ========
+  _______ test_interface_simple ________
   test_module.py:3: in test_interface_simple
       assert 0
   E   assert 0
-  __________________________ test_interface_complex __________________________
+  _______ test_interface_complex ________
   test_module.py:6: in test_interface_complex
       assert 0
   E   assert 0
-  ================== 2 tests deselected by "-m 'interface'" ==================
-  ================== 2 failed, 2 deselected in 0.02 seconds ==================
+  ======= 2 tests deselected by "-m 'interface'" ========
+  ======= 2 failed, 2 deselected in 0.12 seconds ========
 
 or to select both "event" and "interface" tests::
 
   $ py.test -m "interface or event" --tb=short
-  =========================== test session starts ============================
-  platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
-  rootdir: /tmp/doc-exec-157, inifile: 
+  ======= test session starts ========
+  platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+  rootdir: $REGENDOC_TMPDIR, inifile: 
   collected 4 items
   
   test_module.py FFF
   
-  ================================= FAILURES =================================
-  __________________________ test_interface_simple ___________________________
+  ======= FAILURES ========
+  _______ test_interface_simple ________
   test_module.py:3: in test_interface_simple
       assert 0
   E   assert 0
-  __________________________ test_interface_complex __________________________
+  _______ test_interface_complex ________
   test_module.py:6: in test_interface_complex
       assert 0
   E   assert 0
-  ____________________________ test_event_simple _____________________________
+  _______ test_event_simple ________
   test_module.py:9: in test_event_simple
       assert 0
   E   assert 0
-  ============= 1 tests deselected by "-m 'interface or event'" ==============
-  ================== 3 failed, 1 deselected in 0.02 seconds ==================
+  ======= 1 tests deselected by "-m 'interface or event'" ========
+  ======= 3 failed, 1 deselected in 0.12 seconds ========

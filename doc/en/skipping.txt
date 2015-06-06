@@ -163,13 +163,13 @@ a simple test file with the several usages:
 Running it with the report-on-xfail option gives this output::
 
     example $ py.test -rx xfail_demo.py
-    =========================== test session starts ============================
-    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
-    rootdir: /tmp/sandbox/pytest/doc/en, inifile: pytest.ini
+    ======= test session starts ========
+    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    rootdir: $PWD/doc/en, inifile: pytest.ini
     collected 7 items
     
     xfail_demo.py xxxxxxx
-    ========================= short test summary info ==========================
+    ======= short test summary info ========
     XFAIL xfail_demo.py::test_hello
     XFAIL xfail_demo.py::test_hello2
       reason: [NOTRUN] 
@@ -183,7 +183,7 @@ Running it with the report-on-xfail option gives this output::
       reason: reason
     XFAIL xfail_demo.py::test_hello7
     
-    ======================== 7 xfailed in 0.06 seconds =========================
+    ======= 7 xfailed in 0.12 seconds ========
 
 .. _`skip/xfail with parametrize`:
 

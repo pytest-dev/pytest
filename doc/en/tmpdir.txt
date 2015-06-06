@@ -28,17 +28,17 @@ Running this would result in a passed test except for the last
 ``assert 0`` line which we use to look at values::
 
     $ py.test test_tmpdir.py
-    =========================== test session starts ============================
-    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
-    rootdir: /tmp/doc-exec-118, inifile: 
+    ======= test session starts ========
+    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
     test_tmpdir.py F
     
-    ================================= FAILURES =================================
-    _____________________________ test_create_file _____________________________
+    ======= FAILURES ========
+    _______ test_create_file ________
     
-    tmpdir = local('/tmp/pytest-19/test_create_file0')
+    tmpdir = local('/tmp/pytest-NaN/test_create_file0')
     
         def test_create_file(tmpdir):
             p = tmpdir.mkdir("sub").join("hello.txt")
@@ -49,7 +49,7 @@ Running this would result in a passed test except for the last
     E       assert 0
     
     test_tmpdir.py:7: AssertionError
-    ========================= 1 failed in 0.04 seconds =========================
+    ======= 1 failed in 0.12 seconds ========
 
 .. _`base temporary directory`:
 
