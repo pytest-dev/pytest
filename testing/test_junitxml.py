@@ -44,6 +44,10 @@ class TestPython:
     def test_timing_function(self, testdir):
         testdir.makepyfile("""
             import time, pytest
+            def setup_module():
+                time.sleep(0.01)
+            def teardown_module():
+                time.sleep(0.01)
             def test_sleep():
                 time.sleep(0.01)
         """)
@@ -51,7 +55,7 @@ class TestPython:
         node = dom.getElementsByTagName("testsuite")[0]
         tnode = node.getElementsByTagName("testcase")[0]
         val = tnode.getAttributeNode("time").value
-        assert float(val) >= 0.001
+        assert float(val) >= 0.03
 
     def test_setup_error(self, testdir):
         testdir.makepyfile("""

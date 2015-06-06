@@ -96,7 +96,7 @@ class LogXML(object):
         self.tests.append(Junit.testcase(
             classname=".".join(classnames),
             name=bin_xml_escape(names[-1]),
-            time=getattr(report, 'duration', 0)
+            time=0
         ))
 
     def _write_captured_output(self, report):
@@ -168,18 +168,18 @@ class LogXML(object):
         self._write_captured_output(report)
 
     def pytest_runtest_logreport(self, report):
+        if report.when == "setup":
+            self._opentestcase(report)
+        self.tests[-1].attr.time += getattr(report, 'duration', 0)
         if report.passed:
             if report.when == "call": # ignore setup/teardown
-                self._opentestcase(report)
                 self.append_pass(report)
         elif report.failed:
-            self._opentestcase(report)
             if report.when != "call":
                 self.append_error(report)
             else:
                 self.append_failure(report)
         elif report.skipped:
-            self._opentestcase(report)
             self.append_skipped(report)
 
     def pytest_collectreport(self, report):
