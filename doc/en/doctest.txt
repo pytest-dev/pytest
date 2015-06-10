@@ -43,14 +43,14 @@ and another like this::
 then you can just invoke ``py.test`` without command line options::
 
     $ py.test
-    =========================== test session starts ============================
-    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
-    rootdir: /tmp/doc-exec-96, inifile: pytest.ini
+    ======= test session starts ========
+    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 1 items
     
     mymodule.py .
     
-    ========================= 1 passed in 0.06 seconds =========================
+    ======= 1 passed in 0.12 seconds ========
 
 It is possible to use fixtures using the ``getfixture`` helper::
 

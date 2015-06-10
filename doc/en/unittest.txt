@@ -87,36 +87,36 @@ Due to the deliberately failing assert statements, we can take a look at
 the ``self.db`` values in the traceback::
 
     $ py.test test_unittest_db.py
-    =========================== test session starts ============================
-    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
-    rootdir: /tmp/doc-exec-119, inifile: 
+    ======= test session starts ========
+    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
     test_unittest_db.py FF
     
-    ================================= FAILURES =================================
-    ___________________________ MyTest.test_method1 ____________________________
+    ======= FAILURES ========
+    _______ MyTest.test_method1 ________
     
     self = <test_unittest_db.MyTest testMethod=test_method1>
     
         def test_method1(self):
             assert hasattr(self, "db")
     >       assert 0, self.db   # fail for demo purposes
-    E       AssertionError: <conftest.db_class.<locals>.DummyDB object at 0x7f97382031d0>
+    E       AssertionError: <conftest.DummyDB instance at 0xdeadbeef>
     E       assert 0
     
     test_unittest_db.py:9: AssertionError
-    ___________________________ MyTest.test_method2 ____________________________
+    _______ MyTest.test_method2 ________
     
     self = <test_unittest_db.MyTest testMethod=test_method2>
     
         def test_method2(self):
     >       assert 0, self.db   # fail for demo purposes
-    E       AssertionError: <conftest.db_class.<locals>.DummyDB object at 0x7f97382031d0>
+    E       AssertionError: <conftest.DummyDB instance at 0xdeadbeef>
     E       assert 0
     
     test_unittest_db.py:12: AssertionError
-    ========================= 2 failed in 0.04 seconds =========================
+    ======= 2 failed in 0.12 seconds ========
 
 This default pytest traceback shows that the two test methods
 share the same ``self.db`` instance which was our intention
@@ -163,7 +163,7 @@ Running this test module ...::
 
     $ py.test -q test_unittest_cleandir.py
     .
-    1 passed in 0.25 seconds
+    1 passed in 0.12 seconds
 
 ... gives us one passed test because the ``initdir`` fixture function
 was executed ahead of the ``test_method``.
