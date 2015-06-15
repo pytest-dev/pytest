@@ -1,9 +1,30 @@
 sudo: false
 language: python
 # command to install dependencies
-install: "pip install -U detox"
+install: "pip install -U tox"
 # # command to run tests
-script: detox --recreate -i ALL=https://devpi.net/hpk/dev/
+env:
+  matrix:
+    - TESTENV=flakes
+    - TESTENV=py26
+    - TESTENV=py27
+    - TESTENV=py34
+    - TESTENV=pypy
+    - TESTENV=py27-pexpect
+    - TESTENV=py33-pexpect
+    - TESTENV=py27-nobyte
+    - TESTENV=py33
+    - TESTENV=py27-xdist
+    - TESTENV=py33-xdist
+    - TESTENV=py27
+    - TESTENV=py27-trial
+    - TESTENV=py33
+    - TESTENV=py33-trial
+    - TESTENV=py27-subprocess
+    - TESTENV=doctesting
+    - TESTENV=py27-cxfreeze
+    - TESTENV=coveralls
+script: tox --recreate -i ALL=https://devpi.net/hpk/dev/ -e $TESTENV
 
 notifications:
   irc:
