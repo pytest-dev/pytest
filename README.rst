@@ -5,6 +5,8 @@ pytest
 The ``pytest`` testing tool makes it easy to write small tests, yet
 scales to support complex functional testing.
 
+.. image:: https://coveralls.io/repos/pytest-dev/pytest/badge.png?branch=master
+   :target: https://coveralls.io/r/pytest-dev/pytest
 .. image:: https://pypip.in/v/pytest/badge.png
    :target: https://pypi.python.org/pypi/pytest
 
