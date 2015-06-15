@@ -1,3 +1,4 @@
+sudo: false
 language: python
 # command to install dependencies
 install: "pip install -U tox"
