@@ -17,9 +17,9 @@ Submit a plugin, co-develop pytest
 Pytest development of the core, some plugins and support code happens
 in repositories living under:
 
-- `the pytest-dev bitbucket team <https://bitbucket.org/pytest-dev>`_
-
 - `the pytest-dev github organisation <https://github.com/pytest-dev>`_
+
+- `the pytest-dev bitbucket team <https://bitbucket.org/pytest-dev>`_
 
 All pytest-dev team members have write access to all contained
 repositories.  pytest core and plugins are generally developed
@@ -56,7 +56,7 @@ right to release to pypi.
 Report bugs
 -----------
 
-Report bugs for pytest at https://bitbucket.org/pytest-dev/pytest/issues
+Report bugs for pytest at https://github.com/pytest-dev/pytest/issues
 
 If you are reporting a bug, please include:
 
@@ -74,7 +74,7 @@ Submit feedback for developers
 Do you like pytest?  Share some love on Twitter or in your blog posts!
 
 We'd also like to hear about your propositions and suggestions.  Feel free to
-`submit them as issues <https://bitbucket.org/pytest-dev/pytest/issues>`__ and:
+`submit them as issues <https://github.com/pytest-dev/pytest/issues>`__ and:
 
 * Set the "kind" to "enhancement" or "proposal" so that we can quickly find
   about them.
@@ -88,8 +88,8 @@ We'd also like to hear about your propositions and suggestions.  Feel free to
 Fix bugs
 --------
 
-Look through the BitBucket issues for bugs.  Here is sample filter you can use:
-https://bitbucket.org/pytest-dev/pytest/issues?status=new&status=open&kind=bug
+Look through the GitHub issues for bugs.  Here is sample filter you can use:
+https://github.com/pytest-dev/pytest/labels/bug
 
 :ref:`Talk <contact>` to developers to find out how you can fix specific bugs.
 
@@ -98,9 +98,9 @@ https://bitbucket.org/pytest-dev/pytest/issues?status=new&status=open&kind=bug
 Implement features
 ------------------
 
-Look through the BitBucket issues for enhancements.  Here is sample filter you
+Look through the GitHub issues for enhancements.  Here is sample filter you
 can use:
-https://bitbucket.org/pytest-dev/pytest/issues?status=new&status=open&kind=enhancement
+https://github.com/pytest-dev/pytest/labels/enhancement
 
 :ref:`Talk <contact>` to developers to find out how you can implement specific
 features.
@@ -118,35 +118,35 @@ pytest could always use more documentation.  What exactly is needed?
 .. _`pull requests`:
 .. _pull-requests:
 
-Preparing Pull Requests on Bitbucket
-------------------------------------
+Preparing Pull Requests on GitHub
+---------------------------------
 
 .. note::
   What is a "pull request"?  It informs project's core developers about the
   changes you want to review and merge.  Pull requests are stored on
-  `BitBucket servers <https://bitbucket.org/pytest-dev/pytest/pull-requests>`__.
+  `GitHub servers <https://github.com/pytest-dev/pytest/pulls>`_.
   Once you send pull request, we can discuss it's potential modifications and
   even add more commits to it later on.
 
-The primary development platform for pytest is BitBucket.  You can find all
-the issues there and submit your pull requests.
+There's an excellent tutorial on how Pull Requests work in the
+`GitHub Help Center <https://help.github.com/articles/using-pull-requests/>`_,
+but here is a simple overview:
 
 #. Fork the
-   `pytest BitBucket repository <https://bitbucket.org/pytest-dev/pytest>`__.  It's
+   `pytest GitHub repository <https://github.com/pytest-dev/pytest>`__.  It's
    fine to use ``pytest`` as your fork repository name because it will live
    under your user.
 
-#. Clone your fork locally using `Mercurial <http://mercurial.selenic.com/>`_
-   (``hg``) and create a branch::
+#. Clone your fork locally using `git <https://git-scm.com/>`_ and create a branch::
 
-    $ hg clone ssh://hg@bitbucket.org/YOUR_BITBUCKET_USERNAME/pytest
+    $ git clone git@github.com:YOUR_GITHUB_USERNAME/pytest.git
     $ cd pytest
-    $ hg up pytest-2.7   # if you want to fix a bug for the pytest-2.7 series
-    $ hg up default      # if you want to add a feature bound for the next minor release
-    $ hg branch your-branch-name  # your feature/bugfix branch
+    $ git checkout pytest-2.7      # if you want to fix a bug for the pytest-2.7 series
+    $ git checkout master          # if you want to add a feature bound for the next minor release
+    $ git branch your-branch-name  # your feature/bugfix branch
 
-   If you need some help with Mercurial, follow this quick start
-   guide: http://mercurial.selenic.com/wiki/QuickStart
+   If you need some help with Git, follow this quick start
+   guide: https://git.wiki.kernel.org/index.php/QuickStart
 
 #. Create a development environment
    (will implicitly use http://www.virtualenv.org/en/latest/)::
@@ -178,10 +178,10 @@ the issues there and submit your pull requests.
 
 #. Commit and push once your tests pass and you are happy with your change(s)::
 
-    $ hg commit -m"<commit message>"
-    $ hg push -b .
+    $ git commit -a -m "<commit message>"
+    $ git push -u
 
-#. Finally, submit a pull request through the BitBucket website:
+#. Finally, submit a pull request through the GitHub website:
 
    .. image:: img/pullrequest.png
     :width: 700px
@@ -189,26 +189,11 @@ the issues there and submit your pull requests.
 
    ::
 
-    source: YOUR_BITBUCKET_USERNAME/pytest
-    branch: your-branch-name
+    head-fork: YOUR_GITHUB_USERNAME/pytest
+    compare: your-branch-name
 
-    target: pytest-dev/pytest
-    branch: default         # if it's a feature
-    branch: pytest-VERSION  # if it's a bugfix
+    base-fork: pytest-dev/pytest
+    base: master          # if it's a feature
+    base: pytest-VERSION  # if it's a bugfix
 
 
-.. _contribution-using-git:
-
-Using git with bitbucket/hg
--------------------------------
-
-There used to be the pytest GitHub mirror.  It was removed in favor of the
-Mercurial one, to remove confusion of people not knowing where it's better to
-put their issues and pull requests.  Also it wasn't easily possible to automate
-the mirroring process.
-
-In general we recommend to work with the same version control system of the
-original repository.  If you insist on using git with bitbucket/hg you
-may try `gitifyhg <https://github.com/buchuki/gitifyhg>`_ but are on your
-own and need to submit pull requests through the respective platform,
-nevertheless.
