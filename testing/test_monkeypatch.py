@@ -63,7 +63,7 @@ class TestSetattrWithImportPath:
                       lambda: monkeypatch.setattr("os.path.qweqwe", None))
 
     def test_unknown_attr_non_raising(self, monkeypatch):
-        # https://bitbucket.org/pytest-dev/pytest/issue/746/
+        # https://github.com/pytest-dev/pytest/issues/746
         monkeypatch.setattr('os.path.qweqwe', 42, raising=False)
         assert os.path.qweqwe == 42
 

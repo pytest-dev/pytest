@@ -1,3 +1,10 @@
+======
+pytest
+======
+
+The ``pytest`` testing tool makes it easy to write small tests, yet
+scales to support complex functional testing.
+
 .. image:: https://pypip.in/v/pytest/badge.png
    :target: https://pypi.python.org/pypi/pytest
 
@@ -5,12 +12,12 @@ Documentation: http://pytest.org/latest/
 
 Changelog: http://pytest.org/latest/changelog.html
 
-Issues: https://bitbucket.org/pytest-dev/pytest/issues?status=open
+Issues: https://github.com/pytest-dev/pytest/issues
 
 CI: https://drone.io/bitbucket.org/pytest-dev/pytest
 
-The ``pytest`` testing tool makes it easy to write small tests, yet
-scales to support complex functional testing.  It provides
+Features
+--------
 
 - `auto-discovery
   <http://pytest.org/latest/goodpractises.html#python-test-discovery>`_
@@ -27,7 +34,9 @@ scales to support complex functional testing.  It provides
 
 - many `external plugins <http://pytest.org/latest/plugins.html#installing-external-plugins-searching>`_.
 
-A simple example for a test::
+A simple example for a test:
+
+.. code-block:: python
 
     # content of test_module.py
     def test_function():
@@ -42,11 +51,11 @@ For much more info, including PDF docs, see
 
 and report bugs at:
 
-    http://bitbucket.org/pytest-dev/pytest/issues/
+    https://github.com/pytest-dev/pytest/issues
 
 and checkout or fork repo at:
 
-    http://bitbucket.org/pytest-dev/pytest/
+    https://github.com/pytest-dev/pytest
 
 
 Copyright Holger Krekel and others, 2004-2014

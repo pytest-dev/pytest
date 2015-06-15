@@ -118,7 +118,7 @@ pytest default plugin reference
 
 
 You can find the source code for the following plugins
-in the `pytest repository <http://bitbucket.org/pytest-dev/pytest/>`_.
+in the `pytest repository <https://github.com/pytest-dev/pytest>`_.
 
 .. autosummary::
 
