@@ -7,7 +7,7 @@ scales to support complex functional testing.
 
 .. image:: http://img.shields.io/pypi/v/pytest.png
    :target: https://pypi.python.org/pypi/pytest
-.. image:: https://coveralls.io/repos/pytest-dev/pytest/badge.png?branch=master
+.. image:: http://img.shields.io/coveralls/pytest-dev/pytest.png?branch=master
    :target: https://coveralls.io/r/pytest-dev/pytest
 .. image:: https://travis-ci.org/pytest-dev/pytest.svg?branch=master
     :target: https://travis-ci.org/pytest-dev/pytest
