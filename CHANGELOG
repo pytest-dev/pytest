@@ -1,6 +1,9 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
+- fix issue713: JUnit XML reports for doctest failures.
+  Thanks Punyashloka Biswal.
+
 - Include setup and teardown in junitxml test durations.
   Thanks Janne Vanhala.
 
