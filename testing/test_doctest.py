@@ -354,3 +354,19 @@ class TestDoctests:
         reprec = testdir.inline_run(p, "--doctest-modules",
                                     "--doctest-ignore-import-errors")
         reprec.assertoutcome(skipped=1, failed=1, passed=0)
+
+    def test_junit_report_for_doctest(self, testdir):
+        """
+        #713: Fix --junit-xml option when used with --doctest-modules.
+        """
+        p = testdir.makepyfile("""
+            def foo():
+                '''
+                >>> 1 + 1
+                3
+                '''
+                pass
+        """)
+        reprec = testdir.inline_run(p, "--doctest-modules",
+                                    "--junit-xml=junit.xml")
+        reprec.assertoutcome(failed=1)
