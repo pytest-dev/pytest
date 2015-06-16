@@ -1,6 +1,9 @@
 2.7.2 (compared to 2.7.1)
 -----------------------------
 
+- Automatically create directory for junitxml and results log.
+  Thanks Aron Curzon.
+
 - fix issue735: assertion failures on debug versions of Python 3.4+
   Thanks Benjamin Peterson.
 
