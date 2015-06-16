@@ -9,6 +9,8 @@ scales to support complex functional testing.
    :target: https://coveralls.io/r/pytest-dev/pytest
 .. image:: https://travis-ci.org/pytest-dev/pytest.svg?branch=master
     :target: https://travis-ci.org/pytest-dev/pytest
+.. image:: https://ci.appveyor.com/api/projects/status/mrgbjaua7t33pg6b?svg=true
+    :target: https://ci.appveyor.com/project/pytestbot/pytest
 .. image:: https://pypip.in/v/pytest/badge.png
    :target: https://pypi.python.org/pypi/pytest
 
