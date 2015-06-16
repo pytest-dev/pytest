@@ -1,6 +1,9 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
+- Automatically create directory for junitxml and results log.
+  Thanks Aron Curzon.
+
 - Include setup and teardown in junitxml test durations.
   Thanks Janne Vanhala.
 
