@@ -478,6 +478,15 @@ def test_logxml_changingdir(testdir):
     assert result.ret == 0
     assert testdir.tmpdir.join("a/x.xml").check()
 
+def test_logxml_makedir(testdir):
+    testdir.makepyfile("""
+        def test_pass():
+            pass
+    """)
+    result = testdir.runpytest("--junitxml=path/to/results.xml")
+    assert result.ret == 0
+    assert testdir.tmpdir.join("path/to/results.xml").check()
+
 def test_escaped_parametrized_names_xml(testdir):
     testdir.makepyfile("""
         import pytest
