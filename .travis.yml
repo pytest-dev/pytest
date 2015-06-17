@@ -20,7 +20,9 @@ env:
     - TESTENV=py27-trial
     - TESTENV=py33
     - TESTENV=py33-trial
-    - TESTENV=py27-subprocess
+    # inprocess tests by default were introduced in 2.8 only;
+    # this TESTENV should be enabled when merged back to master
+    #- TESTENV=py27-subprocess
     - TESTENV=doctesting
     - TESTENV=py27-cxfreeze
     - TESTENV=coveralls
