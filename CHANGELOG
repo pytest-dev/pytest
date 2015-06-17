@@ -65,6 +65,17 @@
 - fix issue741: make running output from testdir.run copy/pasteable
   Thanks Bruno Oliveira.
 
+2.7.2 (compared to 2.7.1)
+-----------------------------
+
+- Automatically create directory for junitxml and results log.
+  Thanks Aron Curzon.
+
+- fix issue713: JUnit XML reports for doctest failures.
+  Thanks Punyashloka Biswal.
+
+- fix issue735: assertion failures on debug versions of Python 3.4+
+  Thanks Benjamin Peterson.
 
 2.7.1 (compared to 2.7.0)
 -----------------------------
