@@ -531,6 +531,16 @@ Reference of objects involved in hooks
 .. autoclass:: _pytest.core.CallOutcome()
     :members:
 
+.. autofunction:: _pytest.config.get_plugin_manager()
+
+.. autoclass:: _pytest.config.PytestPluginManager()
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. autoclass:: pluggy.PluginManager()
+    :members:
+
 .. currentmodule:: _pytest.pytester
 
 .. autoclass:: Testdir()

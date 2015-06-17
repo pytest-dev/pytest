@@ -82,6 +82,17 @@ def get_config():
         pluginmanager.import_plugin(spec)
     return config
 
+def get_plugin_manager():
+    """
+    Obtain a new instance of the
+    :py:class:`_pytest.config.PytestPluginManager`, with default plugins
+    already loaded.
+
+    This function can be used by integration with other tools, like hooking
+    into pytest to run tests into an IDE.
+    """
+    return get_config().pluginmanager
+
 def _prepareconfig(args=None, plugins=None):
     if args is None:
         args = sys.argv[1:]
@@ -111,6 +122,14 @@ def exclude_pytest_names(name):
 
 
 class PytestPluginManager(PluginManager):
+    """
+    Overwrites :py:class:`pluggy.PluginManager` to add pytest-specific
+    functionality:
+
+    * loading plugins from the command line, ``PYTEST_PLUGIN`` env variable and
+      ``pytest_plugins`` global variables found in plugins being loaded;
+    * ``conftest.py`` loading during start-up;
+    """
     def __init__(self):
         super(PytestPluginManager, self).__init__("pytest", implprefix="pytest_")
         self._warnings = []
@@ -135,6 +154,11 @@ class PytestPluginManager(PluginManager):
             self.enable_tracing()
 
     def addhooks(self, module_or_class):
+        """
+        .. deprecated:: 2.8
+
+        Use :py:meth:`pluggy.PluginManager.add_hookspecs` instead.
+        """
         warning = dict(code="I2",
                        fslocation=py.code.getfslineno(sys._getframe(1)),
                        message="use pluginmanager.add_hookspecs instead of "
