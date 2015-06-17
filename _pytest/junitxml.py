@@ -206,7 +206,7 @@ class LogXML(object):
 
     def pytest_sessionfinish(self):
         dirname = os.path.dirname(os.path.abspath(self.logfile))
-        if not os.path.exists(dirname):
+        if not os.path.isdir(dirname):
             os.makedirs(dirname)
         logfile = open(self.logfile, 'w', encoding='utf-8')
         suite_stop_time = time.time()

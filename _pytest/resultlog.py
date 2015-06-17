@@ -16,7 +16,7 @@ def pytest_configure(config):
     # prevent opening resultlog on slave nodes (xdist)
     if resultlog and not hasattr(config, 'slaveinput'):
         dirname = os.path.dirname(os.path.abspath(resultlog))
-        if not os.path.exists(dirname):
+        if not os.path.isdir(dirname):
             os.makedirs(dirname)
         logfile = open(resultlog, 'w', 1) # line buffered
         config._resultlog = ResultLog(config, logfile)
