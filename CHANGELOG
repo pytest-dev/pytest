@@ -1,6 +1,9 @@
 2.7.2 (compared to 2.7.1)
 -----------------------------
 
+- Automatically create directory for junitxml and results log.
+  Thanks Aron Curzon.
+
 - fix issue713: JUnit XML reports for doctest failures.
   Thanks Punyashloka Biswal.
 
