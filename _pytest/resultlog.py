@@ -3,6 +3,7 @@ text file.
 """
 
 import py
+import os
 
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "resultlog plugin options")
@@ -14,6 +15,9 @@ def pytest_configure(config):
     resultlog = config.option.resultlog
     # prevent opening resultlog on slave nodes (xdist)
     if resultlog and not hasattr(config, 'slaveinput'):
+        dirname = os.path.dirname(os.path.abspath(resultlog))
+        if not os.path.isdir(dirname):
+            os.makedirs(dirname)
         logfile = open(resultlog, 'w', 1) # line buffered
         config._resultlog = ResultLog(config, logfile)
         config.pluginmanager.register(config._resultlog)
