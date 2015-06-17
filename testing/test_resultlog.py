@@ -181,6 +181,7 @@ def test_generic(testdir, LineMatcher):
     ])
 
 def test_makedir_for_resultlog(testdir, LineMatcher):
+    """--resultlog should automatically create directories for the log file"""
     testdir.plugins.append("resultlog")
     testdir.makepyfile("""
         import pytest

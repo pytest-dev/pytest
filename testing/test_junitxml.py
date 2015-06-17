@@ -475,6 +475,7 @@ def test_logxml_changingdir(testdir):
     assert testdir.tmpdir.join("a/x.xml").check()
 
 def test_logxml_makedir(testdir):
+    """--junitxml should automatically create directories for the xml file"""
     testdir.makepyfile("""
         def test_pass():
             pass
