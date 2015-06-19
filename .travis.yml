@@ -28,6 +28,10 @@ script: tox --recreate -i ALL=https://devpi.net/hpk/dev/ -e $TESTENV
 
 notifications:
   irc:
-    - "chat.freenode.net#pytest-dev"
+    channels:
+      - "chat.freenode.net#pytest"
+    on_success: change
+    on_failure: change
+    skip_join: true
   email:
     - pytest-commit@python.org
