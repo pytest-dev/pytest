@@ -698,4 +698,17 @@ def test_issue333_result_clearing(testdir):
     reprec = testdir.inline_run()
     reprec.assertoutcome(failed=1)
 
+@pytest.mark.skipif("sys.version_info < (2,7)")
+def test_unittest_raise_skip_issue748(testdir):
+    testdir.makepyfile(test_foo="""
+        import unittest
 
+        class MyTestCase(unittest.TestCase):
+            def test_one(self):
+                raise unittest.SkipTest('skipping due to reasons')
+    """)
+    result = testdir.runpytest("-v", '-rs')
+    result.stdout.fnmatch_lines("""
+        *SKIP*[1]*test_foo.py*skipping due to reasons*
+        *1 skipped*
+    """)

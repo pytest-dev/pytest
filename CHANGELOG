@@ -77,6 +77,12 @@
 - fix issue735: assertion failures on debug versions of Python 3.4+
   Thanks Benjamin Peterson.
 
+- fix issue114: skipif marker reports to internal skipping plugin;
+  Thanks Floris Bruynooghe for reporting and Bruno Oliveira for the PR.
+
+- fix issue748: unittest.SkipTest reports to internal pytest unittest plugin.
+  Thanks Thomas De Schampheleire for reporting and Bruno Oliveira for the PR.
+
 2.7.1 (compared to 2.7.0)
 -----------------------------
 
