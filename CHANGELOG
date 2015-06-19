@@ -16,6 +16,9 @@
 - fix issue748: unittest.SkipTest reports to internal pytest unittest plugin.
   Thanks Thomas De Schampheleire for reporting and Bruno Oliveira for the PR.
 
+- fix issue718: failed to create representation of sets containing unsortable
+  elements in python 2. Thanks Edison Gustavo Muenz
+
 2.7.1 (compared to 2.7.0)
 -----------------------------
 
