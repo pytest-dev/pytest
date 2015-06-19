@@ -9,6 +9,7 @@ import py
 
 # for transfering markers
 from _pytest.python import transfer_markers
+from _pytest.skipping import MarkEvaluator
 
 
 def pytest_pycollect_makeitem(collector, name, obj):
@@ -113,6 +114,8 @@ class TestCaseFunction(pytest.Function):
         try:
             pytest.skip(reason)
         except pytest.skip.Exception:
+            self._evalskip = MarkEvaluator(self, 'SkipTest')
+            self._evalskip.result = True
             self._addexcinfo(sys.exc_info())
 
     def addExpectedFailure(self, testcase, rawexcinfo, reason=""):

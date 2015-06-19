@@ -137,6 +137,7 @@ class MarkEvaluator:
 def pytest_runtest_setup(item):
     evalskip = MarkEvaluator(item, 'skipif')
     if evalskip.istrue():
+        item._evalskip = evalskip
         pytest.skip(evalskip.getexplanation())
     item._evalxfail = MarkEvaluator(item, 'xfail')
     check_xfail_no_run(item)
@@ -156,6 +157,7 @@ def pytest_runtest_makereport(item, call):
     outcome = yield
     rep = outcome.get_result()
     evalxfail = getattr(item, '_evalxfail', None)
+    evalskip = getattr(item, '_evalskip', None)
     # unitttest special case, see setting of _unexpectedsuccess
     if hasattr(item, '_unexpectedsuccess') and rep.when == "call":
         # we need to translate into how pytest encodes xpass
@@ -177,6 +179,13 @@ def pytest_runtest_makereport(item, call):
         elif call.when == "call":
             rep.outcome = "failed"  # xpass outcome
             rep.wasxfail = evalxfail.getexplanation()
+    elif evalskip is not None and rep.skipped and type(rep.longrepr) is tuple:
+        # skipped by mark.skipif; change the location of the failure
+        # to point to the item definition, otherwise it will display
+        # the location of where the skip exception was raised within pytest
+        filename, line, reason = rep.longrepr
+        filename, line = item.location[:2]
+        rep.longrepr = filename, line, reason
 
 # called by terminalreporter progress reporting
 def pytest_report_teststatus(report):
