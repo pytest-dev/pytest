@@ -1,6 +1,10 @@
 2.7.2 (compared to 2.7.1)
 -----------------------------
 
+- fix issue767: pytest.raises value attribute does not contain the exception
+  instance on Python 2.6. Thanks Eric Siegerman for providing the test
+  case and Bruno Oliveira for PR.
+
 - Automatically create directory for junitxml and results log.
   Thanks Aron Curzon.
 
