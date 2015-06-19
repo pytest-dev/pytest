@@ -396,7 +396,7 @@ class TestSkipif:
 
 
     def test_skipif_reporting(self, testdir):
-        p = testdir.makepyfile("""
+        p = testdir.makepyfile(test_foo="""
             import pytest
             @pytest.mark.skipif("hasattr(sys, 'platform')")
             def test_that():
@@ -404,7 +404,7 @@ class TestSkipif:
         """)
         result = testdir.runpytest(p, '-s', '-rs')
         result.stdout.fnmatch_lines([
-            "*SKIP*1*platform*",
+            "*SKIP*1*test_foo.py*platform*",
             "*1 skipped*"
         ])
         assert result.ret == 0
