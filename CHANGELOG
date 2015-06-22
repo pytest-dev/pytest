@@ -23,6 +23,10 @@
 - fix issue718: failed to create representation of sets containing unsortable
   elements in python 2. Thanks Edison Gustavo Muenz
 
+- fix issue756, fix issue752 (and similar issues): depend on py-1.4.29
+  which has a refined algorithm for traceback generation.
+
+
 2.7.1 (compared to 2.7.0)
 -----------------------------
 

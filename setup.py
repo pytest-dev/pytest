@@ -31,12 +31,12 @@ def get_version():
 def has_environment_marker_support():
     """
     Tests that setuptools has support for PEP-426 environment marker support.
-    
-    The first known release to support it is 0.7 (and the earliest on PyPI seems to be 0.7.2 
+
+    The first known release to support it is 0.7 (and the earliest on PyPI seems to be 0.7.2
     so we're using that), see: http://pythonhosted.org/setuptools/history.html#id142
-    
+
     References:
-    
+
     * https://wheel.readthedocs.org/en/latest/index.html#defining-conditional-dependencies
     * https://www.python.org/dev/peps/pep-0426/#environment-markers
     """
@@ -48,7 +48,7 @@ def has_environment_marker_support():
 
 
 def main():
-    install_requires = ['py>=1.4.25']
+    install_requires = ['py>=1.4.29']
     extras_require = {}
     if has_environment_marker_support():
         extras_require[':python_version=="2.6" or python_version=="3.0" or python_version=="3.1"'] = ['argparse']
