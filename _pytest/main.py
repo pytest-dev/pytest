@@ -54,6 +54,9 @@ def pytest_addoption(parser):
     group.addoption('--confcutdir', dest="confcutdir", default=None,
         metavar="dir",
         help="only load conftest.py's relative to specified dir.")
+    group.addoption('--noconftest', action="store_true",
+        dest="noconftest", default=False,
+        help="Don't load any conftest.py files.")
 
     group = parser.getgroup("debugconfig",
         "test session debugging and configuration")
