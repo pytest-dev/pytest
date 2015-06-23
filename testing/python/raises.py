@@ -46,6 +46,7 @@ class TestRaises:
                     1/0
                 print (excinfo)
                 assert excinfo.type == ZeroDivisionError
+                assert isinstance(excinfo.value, ZeroDivisionError)
 
             def test_noraise():
                 with pytest.raises(pytest.raises.Exception):

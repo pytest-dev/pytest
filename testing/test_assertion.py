@@ -569,3 +569,39 @@ def test_AssertionError_message(testdir):
         *assert 0, (x,y)*
         *AssertionError: (1, 2)*
     """)
+
+@pytest.mark.skipif(PY3, reason='This bug does not exist on PY3')
+def test_set_with_unsortable_elements():
+    # issue #718
+    class UnsortableKey(object):
+        def __init__(self, name):
+            self.name = name
+
+        def __lt__(self, other):
+            raise RuntimeError()
+
+        def __repr__(self):
+            return 'repr({0})'.format(self.name)
+
+        def __eq__(self, other):
+            return self.name == other.name
+
+        def __hash__(self):
+            return hash(self.name)
+
+    left_set = set(UnsortableKey(str(i)) for i in range(1, 3))
+    right_set = set(UnsortableKey(str(i)) for i in range(2, 4))
+    expl = callequal(left_set, right_set, verbose=True)
+    # skip first line because it contains the "construction" of the set, which does not have a guaranteed order
+    expl = expl[1:]
+    dedent = textwrap.dedent("""
+        Extra items in the left set:
+        repr(1)
+        Extra items in the right set:
+        repr(3)
+        Full diff (fallback to calling repr on each item):
+        - repr(1)
+        repr(2)
+        + repr(3)
+    """).strip()
+    assert '\n'.join(expl) == dedent

@@ -160,6 +160,7 @@ def test_conftest_confcutdir(testdir):
     """))
     result = testdir.runpytest("-h", "--confcutdir=%s" % x, x)
     result.stdout.fnmatch_lines(["*--xyz*"])
+    assert 'warning: could not load initial' not in result.stdout.str()
 
 def test_conftest_existing_resultlog(testdir):
     x = testdir.mkdir("tests")

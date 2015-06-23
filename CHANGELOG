@@ -68,6 +68,10 @@
 2.7.2 (compared to 2.7.1)
 -----------------------------
 
+- fix issue767: pytest.raises value attribute does not contain the exception
+  instance on Python 2.6. Thanks Eric Siegerman for providing the test
+  case and Bruno Oliveira for PR.
+
 - Automatically create directory for junitxml and results log.
   Thanks Aron Curzon.
 
@@ -82,6 +86,13 @@
 
 - fix issue748: unittest.SkipTest reports to internal pytest unittest plugin.
   Thanks Thomas De Schampheleire for reporting and Bruno Oliveira for the PR.
+
+- fix issue718: failed to create representation of sets containing unsortable
+  elements in python 2. Thanks Edison Gustavo Muenz
+
+- fix issue756, fix issue752 (and similar issues): depend on py-1.4.29
+  which has a refined algorithm for traceback generation.
+
 
 2.7.1 (compared to 2.7.0)
 -----------------------------

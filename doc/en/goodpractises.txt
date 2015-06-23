@@ -1,7 +1,7 @@
 .. highlightlang:: python
 .. _`goodpractises`:
 
-Good Integration Practises
+Good Integration Practices
 =================================================
 
 Work with virtual environments
