@@ -62,5 +62,5 @@ and checkout or fork repo at:
     https://github.com/pytest-dev/pytest
 
 
-Copyright Holger Krekel and others, 2004-2014
+Copyright Holger Krekel and others, 2004-2015
 Licensed under the MIT license.
