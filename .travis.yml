@@ -9,6 +9,7 @@ env:
     - TESTENV=py26
     - TESTENV=py27
     - TESTENV=py34
+    - TESTENV=py35
     - TESTENV=pypy
     - TESTENV=py27-pexpect
     - TESTENV=py33-pexpect
