@@ -56,4 +56,3 @@ How to release pytest (draft)
    pytest-dev
    testing-in-python
    python-announce-list@python.org
-
