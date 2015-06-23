@@ -239,7 +239,7 @@ class PytestPluginManager(PluginManager):
 
     def _getconftestmodules(self, path):
         if self._noconftest:
-            self._path2confmods[path] = []
+            return []
         try:
             return self._path2confmods[path]
         except KeyError:
