@@ -65,6 +65,8 @@
 - fix issue741: make running output from testdir.run copy/pasteable
   Thanks Bruno Oliveira.
 
+- add a new ``--noconftest`` argument which ignores all ``conftest.py`` files.
+
 2.7.2 (compared to 2.7.1)
 -----------------------------
 

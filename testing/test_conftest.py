@@ -24,6 +24,7 @@ def conftest_setinitial(conftest, args, confcutdir=None):
         def __init__(self):
             self.file_or_dir = args
             self.confcutdir = str(confcutdir)
+            self.noconftest = False
     conftest._set_initial_conftests(Namespace())
 
 class TestConftestValueAccessGlobal:
@@ -161,6 +162,11 @@ def test_conftest_confcutdir(testdir):
     result = testdir.runpytest("-h", "--confcutdir=%s" % x, x)
     result.stdout.fnmatch_lines(["*--xyz*"])
     assert 'warning: could not load initial' not in result.stdout.str()
+
+def test_no_conftest(testdir):
+    testdir.makeconftest("assert 0")
+    result = testdir.runpytest("--noconftest")
+    assert result.ret == 0
 
 def test_conftest_existing_resultlog(testdir):
     x = testdir.mkdir("tests")

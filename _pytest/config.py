@@ -120,6 +120,7 @@ class PytestPluginManager(PluginManager):
         self._path2confmods = {}
         self._conftestpath2mod = {}
         self._confcutdir = None
+        self._noconftest = False
 
         self.add_hookspecs(_pytest.hookspec)
         self.register(self)
@@ -212,6 +213,7 @@ class PytestPluginManager(PluginManager):
         current = py.path.local()
         self._confcutdir = current.join(namespace.confcutdir, abs=True) \
                                 if namespace.confcutdir else None
+        self._noconftest = namespace.noconftest
         testpaths = namespace.file_or_dir
         foundanchor = False
         for path in testpaths:
@@ -236,6 +238,8 @@ class PytestPluginManager(PluginManager):
                     self._getconftestmodules(x)
 
     def _getconftestmodules(self, path):
+        if self._noconftest:
+            return []
         try:
             return self._path2confmods[path]
         except KeyError:
