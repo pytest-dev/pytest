@@ -3,17 +3,19 @@ import sys
 
 pytest_plugins = "pytester",
 
-import os, py
+import os, py, gc
 
 class LsofFdLeakChecker(object):
     def get_open_files(self):
+        gc.collect()
         out = self._exec_lsof()
         open_files = self._parse_lsof_output(out)
         return open_files
 
     def _exec_lsof(self):
         pid = os.getpid()
-        return py.process.cmdexec("lsof -Ffn0 -p %d" % pid)
+        #return py.process.cmdexec("lsof -Ffn0 -p %d" % pid)
+        return py.process.cmdexec("lsof -p %d" % pid)
 
     def _parse_lsof_output(self, out):
         def isopen(line):
