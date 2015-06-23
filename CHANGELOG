@@ -1985,7 +1985,7 @@ v1.0.0b1
 * introduced new "funcarg" setup method,
   see doc/test/funcarg.txt
 
-* introduced plugin architecuture and many
+* introduced plugin architecture and many
   new py.test plugins, see
   doc/test/plugins.txt
 
