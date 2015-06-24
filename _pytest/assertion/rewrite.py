@@ -774,22 +774,18 @@ class AssertionRewriter(ast.NodeVisitor):
         new_args = []
         new_kwargs = []
         for arg in call.args:
+            res, expl = self.visit(arg)
             if type(arg) is ast.Starred:
-                new_star, expl = self.visit(arg)
                 arg_expls.append("*" + expl)
-                new_args.append(new_star)
             else:
-                res, expl = self.visit(arg)
-                new_args.append(res)
                 arg_expls.append(expl)
+            new_args.append(res)
         for keyword in call.keywords:
+            res, expl = self.visit(keyword.value)
+            new_kwargs.append(ast.keyword(keyword.arg, res))
             if keyword.arg:
-                res, expl = self.visit(keyword.value)
-                new_kwargs.append(ast.keyword(keyword.arg, res))
                 arg_expls.append(keyword.arg + "=" + expl)
             else: ## **args have `arg` keywords with an .arg of None
-                res, expl = self.visit(keyword.value)
-                new_kwargs.append(ast.keyword(keyword.arg, res))
                 arg_expls.append("**" + expl)
 
         expl = "%s(%s)" % (func_expl, ', '.join(arg_expls))

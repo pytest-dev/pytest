@@ -238,18 +238,24 @@ class DebugInterpreter(ast.NodeVisitor):
             arg_explanations.append(arg_explanation)
         for keyword in call.keywords:
             arg_explanation, arg_result = self.visit(keyword.value)
-            arg_name = "__exprinfo_%s" % (len(ns),)
-            ns[arg_name] = arg_result
-            keyword_source = "%s=%%s" % (keyword.arg)
-            arguments.append(keyword_source % (arg_name,))
-            arg_explanations.append(keyword_source % (arg_explanation,))
-        if sys.version_info <= (3,4) and call.starargs:
+            if keyword.arg:
+                arg_name = "__exprinfo_%s" % (len(ns),)
+                ns[arg_name] = arg_result
+                keyword_source = "%s=%%s" % (keyword.arg)
+                arguments.append(keyword_source % (arg_name,))
+                arg_explanations.append(keyword_source % (arg_explanation,))
+            else: # starargs in 3.5+
+                arg_name = "__exprinfo_star"
+                ns[arg_name] = arg_result
+                arguments.append("*%s" % (arg_name,))
+                arg_explanations.append("*%s" % (arg_explanation,))
+        if getattr(call, 'starargs', None): # no starargs in 3.5
             arg_explanation, arg_result = self.visit(call.starargs)
             arg_name = "__exprinfo_star"
             ns[arg_name] = arg_result
             arguments.append("*%s" % (arg_name,))
             arg_explanations.append("*%s" % (arg_explanation,))
-        if sys.version_info <= (3,4) and call.kwargs:
+        if call.kwargs:
             arg_explanation, arg_result = self.visit(call.kwargs)
             arg_name = "__exprinfo_kwds"
             ns[arg_name] = arg_result
