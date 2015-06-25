@@ -64,12 +64,12 @@ def test_deprecated_call_ret():
     assert ret == 42
 
 def test_deprecated_call_preserves():
-    r = py.std.warnings.onceregistry.copy()
-    f = py.std.warnings.filters[:]
+    warn = py.std.warnings.warn
+    warn_explicit = py.std.warnings.warn_explicit
     test_deprecated_call_raises()
     test_deprecated_call()
-    assert r == py.std.warnings.onceregistry
-    assert f == py.std.warnings.filters
+    assert warn == py.std.warnings.warn
+    assert warn_explicit == py.std.warnings.warn_explicit
 
 def test_deprecated_explicit_call_raises():
     pytest.raises(AssertionError,
