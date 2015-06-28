@@ -1,6 +1,9 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
+- Allow use of keywords like "-k myfile.py::MyClass::my_test",
+  as output by the pytest runner.
+
 - fix issue713: JUnit XML reports for doctest failures.
   Thanks Punyashloka Biswal.
 
