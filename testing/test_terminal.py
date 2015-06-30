@@ -732,11 +732,11 @@ def test_terminal_summary(testdir):
     ("red",    "1 passed, 1 error",      {"error":      (1,), "passed": (1,)}),
 
     # (a status that's not known to the code)
-    ("green",  "1 weird",                {"weird":      (1,)}),
-    ("green",  "1 passed, 1 weird",      {"weird":      (1,), "passed": (1,)}),
+    ("yellow", "1 weird",                {"weird":      (1,)}),
+    ("yellow", "1 passed, 1 weird",      {"weird":      (1,), "passed": (1,)}),
 
-    ("green",  "1 warnings",             {"warnings":   (1,)}),
-    ("green",  "1 passed, 1 warnings",   {"warnings":   (1,), "passed": (1,)}),
+    ("yellow", "1 warnings",             {"warnings":   (1,)}),
+    ("yellow", "1 passed, 1 warnings",   {"warnings":   (1,), "passed": (1,)}),
 
     ("green",  "5 passed",               {"passed":     (1,2,3,4,5)}),
 
