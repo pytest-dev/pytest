@@ -755,6 +755,10 @@ def test_terminal_summary(testdir):
     # No tests were found at all
     ("green",  "",                       {}),
 
+    # Test the empty-key special case
+    ("green",  "",                       {"": (1,)}),
+    ("green",  "1 passed",               {"": (1,), "passed": (1,)}),
+
 
     # A couple more complex combinations
     ("red",    "1 failed, 2 passed, 3 xfailed",
