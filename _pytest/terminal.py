@@ -545,7 +545,9 @@ def build_summary_stats_line(stats):
         color = 'red'
     elif 'warnings' in stats or unknown_key_seen:
         color = 'yellow'
-    else:
+    elif 'passed' in stats:
         color = 'green'
+    else:
+        color = 'yellow'
 
     return (line, color)

@@ -725,6 +725,7 @@ def test_terminal_summary(testdir):
     # dict value, not the actual contents, so tuples of anything
     # suffice
 
+    # Important statuses -- the highest priority of these always wins
     ("red",    "1 failed",               {"failed":     (1,)}),
     ("red",    "1 failed, 1 passed",     {"failed":     (1,), "passed": (1,)}),
 
@@ -740,23 +741,28 @@ def test_terminal_summary(testdir):
 
     ("green",  "5 passed",               {"passed":     (1,2,3,4,5)}),
 
-    ("green",  "1 skipped",              {"skipped":    (1,)}),
+
+    # "Boring" statuses.  These have no effect on the color of the summary
+    # line.  Thus, if *every* test has a boring status, the summary line stays
+    # at its default color, i.e. yellow, to warn the user that the test run
+    # produced no useful information
+    ("yellow", "1 skipped",              {"skipped":    (1,)}),
     ("green",  "1 passed, 1 skipped",    {"skipped":    (1,), "passed": (1,)}),
 
-    ("green",  "1 deselected",           {"deselected": (1,)}),
+    ("yellow", "1 deselected",           {"deselected": (1,)}),
     ("green",  "1 passed, 1 deselected", {"deselected": (1,), "passed": (1,)}),
 
-    ("green",  "1 xfailed",              {"xfailed":    (1,)}),
+    ("yellow", "1 xfailed",              {"xfailed":    (1,)}),
     ("green",  "1 passed, 1 xfailed",    {"xfailed":    (1,), "passed": (1,)}),
 
-    ("green",  "1 xpassed",              {"xpassed":    (1,)}),
+    ("yellow", "1 xpassed",              {"xpassed":    (1,)}),
     ("green",  "1 passed, 1 xpassed",    {"xpassed":    (1,), "passed": (1,)}),
 
-    # No tests were found at all
-    ("green",  "",                       {}),
+    # Likewise if no tests were found at all
+    ("yellow", "",                       {}),
 
     # Test the empty-key special case
-    ("green",  "",                       {"": (1,)}),
+    ("yellow", "",                       {"": (1,)}),
     ("green",  "1 passed",               {"": (1,), "passed": (1,)}),
 
 
