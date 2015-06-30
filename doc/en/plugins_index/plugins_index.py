@@ -38,15 +38,16 @@ def get_proxy(url):
     return ServerProxy(url)
 
 
-def iter_plugins(client, search='pytest-'):
+def iter_plugins(client):
     """
     Returns an iterator of (name, version) from PyPI.
 
     :param client: ServerProxy
     :param search: package names to search for
     """
-    for plug_data in client.search({'name': search}):
-        yield plug_data['name'], plug_data['version']
+    for plug_data in client.search({'name': 'pytest'}):
+        if plug_data['name'].startswith('pytest-'):
+            yield plug_data['name'], plug_data['version']
 
 
 def get_latest_versions(plugins):
@@ -219,8 +220,7 @@ def generate_plugins_index_from_table(filename, headers, rows, pytest_ver):
 
     with open(filename, 'w') as f:
         # header
-        header_text = HEADER.format(pytest_version=pytest_ver)
-        print(header_text, file=f)
+        print(HEADER, file=f)
         print(file=f)
 
         # table
@@ -295,8 +295,7 @@ List of Third-Party Plugins
 ===========================
 
 The table below contains a listing of plugins found in PyPI and
-their status when tested using py.test **{pytest_version}** and python 2.7 and
-3.3.
+their status when tested when using latest py.test and python versions.
 
 A complete listing can also be found at
 `plugincompat <http://plugincompat.herokuapp.com/>`_, which contains tests
