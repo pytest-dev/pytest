@@ -527,7 +527,7 @@ def flatten(l):
 
 def build_summary_stats_line(stats):
     keys = ("failed passed skipped deselected "
-           "xfailed xpassed warnings").split()
+           "xfailed xpassed warnings error").split()
     for key in stats.keys():
         if key not in keys:
             if key: # setup/teardown reports have an empty key, ignore them
