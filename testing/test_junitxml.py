@@ -70,6 +70,8 @@ class TestPython:
         assert_attr(node, errors=1, tests=0)
         tnode = node.getElementsByTagName("testcase")[0]
         assert_attr(tnode,
+            file="test_setup_error.py",
+            line="2",
             classname="test_setup_error",
             name="test_function")
         fnode = tnode.getElementsByTagName("error")[0]
@@ -88,6 +90,8 @@ class TestPython:
         assert_attr(node, skips=1)
         tnode = node.getElementsByTagName("testcase")[0]
         assert_attr(tnode,
+            file="test_skip_contains_name_reason.py",
+            line="1",
             classname="test_skip_contains_name_reason",
             name="test_skip")
         snode = tnode.getElementsByTagName("skipped")[0]
@@ -108,6 +112,8 @@ class TestPython:
         assert_attr(node, failures=1)
         tnode = node.getElementsByTagName("testcase")[0]
         assert_attr(tnode,
+            file="test_classname_instance.py",
+            line="1",
             classname="test_classname_instance.TestClass",
             name="test_method")
 
@@ -120,6 +126,8 @@ class TestPython:
         assert_attr(node, failures=1)
         tnode = node.getElementsByTagName("testcase")[0]
         assert_attr(tnode,
+            file=os.path.join("sub", "test_hello.py"),
+            line="0",
             classname="sub.test_hello",
             name="test_func")
 
@@ -151,6 +159,8 @@ class TestPython:
         assert_attr(node, failures=1, tests=1)
         tnode = node.getElementsByTagName("testcase")[0]
         assert_attr(tnode,
+            file="test_failure_function.py",
+            line="1",
             classname="test_failure_function",
             name="test_fail")
         fnode = tnode.getElementsByTagName("failure")[0]
@@ -193,6 +203,8 @@ class TestPython:
 
             tnode = node.getElementsByTagName("testcase")[index]
             assert_attr(tnode,
+                file="test_failure_escape.py",
+                line="1",
                 classname="test_failure_escape",
                 name="test_func[%s]" % char)
             sysout = tnode.getElementsByTagName('system-out')[0]
@@ -214,10 +226,14 @@ class TestPython:
         assert_attr(node, failures=1, tests=2)
         tnode = node.getElementsByTagName("testcase")[0]
         assert_attr(tnode,
+            file="test_junit_prefixing.py",
+            line="0",
             classname="xyz.test_junit_prefixing",
             name="test_func")
         tnode = node.getElementsByTagName("testcase")[1]
         assert_attr(tnode,
+            file="test_junit_prefixing.py",
+            line="3",
             classname="xyz.test_junit_prefixing."
                       "TestHello",
             name="test_hello")
@@ -234,6 +250,8 @@ class TestPython:
         assert_attr(node, skips=1, tests=0)
         tnode = node.getElementsByTagName("testcase")[0]
         assert_attr(tnode,
+            file="test_xfailure_function.py",
+            line="1",
             classname="test_xfailure_function",
             name="test_xfail")
         fnode = tnode.getElementsByTagName("skipped")[0]
@@ -253,6 +271,8 @@ class TestPython:
         assert_attr(node, skips=1, tests=0)
         tnode = node.getElementsByTagName("testcase")[0]
         assert_attr(tnode,
+            file="test_xfailure_xpass.py",
+            line="1",
             classname="test_xfailure_xpass",
             name="test_xpass")
         fnode = tnode.getElementsByTagName("skipped")[0]
@@ -267,8 +287,10 @@ class TestPython:
         assert_attr(node, errors=1, tests=0)
         tnode = node.getElementsByTagName("testcase")[0]
         assert_attr(tnode,
+            file="test_collect_error.py",
             #classname="test_collect_error",
             name="test_collect_error")
+        assert tnode.getAttributeNode("line") is None
         fnode = tnode.getElementsByTagName("error")[0]
         assert_attr(fnode, message="collection failure")
         assert "SyntaxError" in fnode.toxml()
@@ -281,8 +303,10 @@ class TestPython:
         assert_attr(node, skips=1, tests=0)
         tnode = node.getElementsByTagName("testcase")[0]
         assert_attr(tnode,
+            file="test_collect_skipped.py",
             #classname="test_collect_error",
             name="test_collect_skipped")
+        assert tnode.getAttributeNode("line") is None # py.test doesn't give us a line here.
         fnode = tnode.getElementsByTagName("skipped")[0]
         assert_attr(fnode, message="collection skipped")
 
@@ -510,6 +534,7 @@ def test_unicode_issue368(testdir):
         longrepr = ustr
         sections = []
         nodeid = "something"
+        location = 'tests/filename.py', 42, 'TestClass.method'
     report = Report()
 
     # hopefully this is not too brittle ...
