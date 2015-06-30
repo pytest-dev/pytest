@@ -530,13 +530,13 @@ def build_summary_stats_line(stats):
            "xfailed xpassed warnings").split()
     for key in stats.keys():
         if key not in keys:
-            keys.append(key)
+            if key: # setup/teardown reports have an empty key, ignore them
+                keys.append(key)
     parts = []
     for key in keys:
-        if key: # setup/teardown reports have an empty key, ignore them
-            val = stats.get(key, None)
-            if val:
-                parts.append("%d %s" % (len(val), key))
+        val = stats.get(key, None)
+        if val:
+            parts.append("%d %s" % (len(val), key))
     line = ", ".join(parts)
 
     if 'failed' in stats or 'error' in stats:
