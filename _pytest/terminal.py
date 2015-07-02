@@ -487,26 +487,9 @@ class TerminalReporter:
 
     def summary_stats(self):
         session_duration = time.time() - self._sessionstarttime
-
-        keys = ("failed passed skipped deselected "
-               "xfailed xpassed warnings").split()
-        for key in self.stats.keys():
-            if key not in keys:
-                keys.append(key)
-        parts = []
-        for key in keys:
-            if key: # setup/teardown reports have an empty key, ignore them
-                val = self.stats.get(key, None)
-                if val:
-                    parts.append("%d %s" % (len(val), key))
-        line = ", ".join(parts)
+        (line, color) = build_summary_stats_line(self.stats)
         msg = "%s in %.2f seconds" % (line, session_duration)
-
-        markup = {'bold': True}
-        if 'failed' in self.stats or 'error' in self.stats:
-            markup = {'red': True, 'bold': True}
-        else:
-            markup = {'green': True, 'bold': True}
+        markup = {color: True, 'bold': True}
 
         if self.verbosity >= 0:
             self.write_sep("=", msg, **markup)
@@ -542,3 +525,23 @@ def flatten(l):
         else:
             yield x
 
+def build_summary_stats_line(stats):
+    keys = ("failed passed skipped deselected "
+           "xfailed xpassed warnings").split()
+    for key in stats.keys():
+        if key not in keys:
+            keys.append(key)
+    parts = []
+    for key in keys:
+        if key: # setup/teardown reports have an empty key, ignore them
+            val = stats.get(key, None)
+            if val:
+                parts.append("%d %s" % (len(val), key))
+    line = ", ".join(parts)
+
+    if 'failed' in stats or 'error' in stats:
+        color = 'red'
+    else:
+        color = 'green'
+
+    return (line, color)

@@ -7,6 +7,7 @@ import pluggy
 import sys
 
 from _pytest.terminal import TerminalReporter, repr_pythonversion, getreportopt
+from _pytest.terminal import build_summary_stats_line
 from _pytest import runner
 
 def basic_run_report(item):
@@ -718,3 +719,55 @@ def test_terminal_summary(testdir):
         *==== hello ====*
         world
     """)
+
+@pytest.mark.parametrize("exp_color, exp_line, stats_arg", [
+    # The method under test only cares about the length of each
+    # dict value, not the actual contents, so tuples of anything
+    # suffice
+
+    ("red",    "1 failed",               {"failed":     (1,)}),
+    ("red",    "1 failed, 1 passed",     {"failed":     (1,), "passed": (1,)}),
+
+    ("red",    "1 error",                {"error":      (1,)}),
+    ("red",    "1 passed, 1 error",      {"error":      (1,), "passed": (1,)}),
+
+    # (a status that's not known to the code)
+    ("green",  "1 weird",                {"weird":      (1,)}),
+    ("green",  "1 passed, 1 weird",      {"weird":      (1,), "passed": (1,)}),
+
+    ("green",  "1 warnings",             {"warnings":   (1,)}),
+    ("green",  "1 passed, 1 warnings",   {"warnings":   (1,), "passed": (1,)}),
+
+    ("green",  "5 passed",               {"passed":     (1,2,3,4,5)}),
+
+    ("green",  "1 skipped",              {"skipped":    (1,)}),
+    ("green",  "1 passed, 1 skipped",    {"skipped":    (1,), "passed": (1,)}),
+
+    ("green",  "1 deselected",           {"deselected": (1,)}),
+    ("green",  "1 passed, 1 deselected", {"deselected": (1,), "passed": (1,)}),
+
+    ("green",  "1 xfailed",              {"xfailed":    (1,)}),
+    ("green",  "1 passed, 1 xfailed",    {"xfailed":    (1,), "passed": (1,)}),
+
+    ("green",  "1 xpassed",              {"xpassed":    (1,)}),
+    ("green",  "1 passed, 1 xpassed",    {"xpassed":    (1,), "passed": (1,)}),
+
+    # No tests were found at all
+    ("green",  "",                       {}),
+
+
+    # A couple more complex combinations
+    ("red",    "1 failed, 2 passed, 3 xfailed",
+        {"passed": (1,2), "failed": (1,), "xfailed": (1,2,3)}),
+
+    ("green",  "1 passed, 2 skipped, 3 deselected, 2 xfailed",
+        {"passed":    (1,),
+        "skipped":    (1,2),
+        "deselected": (1,2,3),
+        "xfailed":    (1,2)}),
+])
+def test_summary_stats(exp_line, exp_color, stats_arg):
+    (line, color) = build_summary_stats_line(stats_arg)
+    assert line == exp_line
+    assert color == exp_color
+
