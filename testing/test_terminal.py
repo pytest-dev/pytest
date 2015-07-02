@@ -726,55 +726,55 @@ def test_terminal_summary(testdir):
     # suffice
 
     # Important statuses -- the highest priority of these always wins
-    ("red",    "1 failed",               {"failed":     (1,)}),
-    ("red",    "1 failed, 1 passed",     {"failed":     (1,), "passed": (1,)}),
+    ("red", "1 failed", {"failed": (1,)}),
+    ("red", "1 failed, 1 passed", {"failed": (1,), "passed": (1,)}),
 
-    ("red",    "1 error",                {"error":      (1,)}),
-    ("red",    "1 passed, 1 error",      {"error":      (1,), "passed": (1,)}),
+    ("red", "1 error", {"error": (1,)}),
+    ("red", "1 passed, 1 error", {"error": (1,), "passed": (1,)}),
 
     # (a status that's not known to the code)
-    ("yellow", "1 weird",                {"weird":      (1,)}),
-    ("yellow", "1 passed, 1 weird",      {"weird":      (1,), "passed": (1,)}),
+    ("yellow", "1 weird", {"weird": (1,)}),
+    ("yellow", "1 passed, 1 weird", {"weird": (1,), "passed": (1,)}),
 
-    ("yellow", "1 warnings",             {"warnings":   (1,)}),
-    ("yellow", "1 passed, 1 warnings",   {"warnings":   (1,), "passed": (1,)}),
+    ("yellow", "1 warnings", {"warnings": (1,)}),
+    ("yellow", "1 passed, 1 warnings", {"warnings": (1,), "passed": (1,)}),
 
-    ("green",  "5 passed",               {"passed":     (1,2,3,4,5)}),
+    ("green", "5 passed", {"passed": (1,2,3,4,5)}),
 
 
     # "Boring" statuses.  These have no effect on the color of the summary
     # line.  Thus, if *every* test has a boring status, the summary line stays
     # at its default color, i.e. yellow, to warn the user that the test run
     # produced no useful information
-    ("yellow", "1 skipped",              {"skipped":    (1,)}),
-    ("green",  "1 passed, 1 skipped",    {"skipped":    (1,), "passed": (1,)}),
+    ("yellow", "1 skipped", {"skipped": (1,)}),
+    ("green", "1 passed, 1 skipped", {"skipped": (1,), "passed": (1,)}),
 
-    ("yellow", "1 deselected",           {"deselected": (1,)}),
-    ("green",  "1 passed, 1 deselected", {"deselected": (1,), "passed": (1,)}),
+    ("yellow", "1 deselected", {"deselected": (1,)}),
+    ("green", "1 passed, 1 deselected", {"deselected": (1,), "passed": (1,)}),
 
-    ("yellow", "1 xfailed",              {"xfailed":    (1,)}),
-    ("green",  "1 passed, 1 xfailed",    {"xfailed":    (1,), "passed": (1,)}),
+    ("yellow", "1 xfailed", {"xfailed": (1,)}),
+    ("green", "1 passed, 1 xfailed", {"xfailed": (1,), "passed": (1,)}),
 
-    ("yellow", "1 xpassed",              {"xpassed":    (1,)}),
-    ("green",  "1 passed, 1 xpassed",    {"xpassed":    (1,), "passed": (1,)}),
+    ("yellow", "1 xpassed", {"xpassed": (1,)}),
+    ("green", "1 passed, 1 xpassed", {"xpassed": (1,), "passed": (1,)}),
 
     # Likewise if no tests were found at all
-    ("yellow", "",                       {}),
+    ("yellow", "", {}),
 
     # Test the empty-key special case
-    ("yellow", "",                       {"": (1,)}),
-    ("green",  "1 passed",               {"": (1,), "passed": (1,)}),
+    ("yellow", "", {"": (1,)}),
+    ("green", "1 passed", {"": (1,), "passed": (1,)}),
 
 
     # A couple more complex combinations
-    ("red",    "1 failed, 2 passed, 3 xfailed",
+    ("red", "1 failed, 2 passed, 3 xfailed",
         {"passed": (1,2), "failed": (1,), "xfailed": (1,2,3)}),
 
-    ("green",  "1 passed, 2 skipped, 3 deselected, 2 xfailed",
-        {"passed":    (1,),
-        "skipped":    (1,2),
+    ("green", "1 passed, 2 skipped, 3 deselected, 2 xfailed",
+        {"passed": (1,),
+        "skipped": (1,2),
         "deselected": (1,2,3),
-        "xfailed":    (1,2)}),
+        "xfailed": (1,2)}),
 ])
 def test_summary_stats(exp_line, exp_color, stats_arg):
     print("Based on stats: %s" % stats_arg)
