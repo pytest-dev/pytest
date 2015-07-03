@@ -77,11 +77,10 @@ def pytest_collection_modifyitems(items, config):
     # class and function substrings, for now
     def _colon_pair_replacer(match_obj):
         return "(%s and %s)" % (match_obj.group(2), match_obj.group(3))
-    colon_pair_regex = r'\b(\S*?::)?(\w+)::(\w+)(\b|\s)'
+    colon_pair_regex = r'(?iu)\b(\S*?::)?(\w+)::(\w+)(\b|\s)'
     keywordexpr = re.sub(colon_pair_regex, 
                          _colon_pair_replacer, 
-                         keywordexpr, 
-                         flags=re.IGNORECASE | re.UNICODE)
+                         keywordexpr)
 
     remaining = []
     deselected = []
