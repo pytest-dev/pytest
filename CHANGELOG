@@ -2,7 +2,8 @@
 -----------------------------
 
 - partial fix for issue500: color the summary bar yellow for warning
-  situations, including the case where no tests were run
+  situations, including the case where no tests were run. 
+  Thanks Eric Siegerman.
 
 - fix issue713: JUnit XML reports for doctest failures.
   Thanks Punyashloka Biswal.
