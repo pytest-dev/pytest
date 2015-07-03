@@ -163,6 +163,20 @@ Or to select "http" and "quick" tests::
     ======= 2 tests deselected by '-khttp or quick' ========
     ======= 2 passed, 2 deselected in 0.12 seconds ========
 
+Colon-pair notation (eg. copied from py.test output) also works, as a logical AND::
+    
+    $ py.test -k "Class::test_meth" -v
+    ======= test session starts ========
+    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0 -- $PWD/.env/bin/python2.7
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collecting ... collected 4 items
+    
+    test_server.py::TestClass::test_method PASSED
+    
+    ======= 3 tests deselected by '-kClass::test_meth' ========
+    ======= 1 passed, 3 deselected in 0.12 seconds ========
+
+
 .. note::
 
     If you are using expressions such as "X and Y" then both X and Y

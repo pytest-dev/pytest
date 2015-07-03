@@ -1,6 +1,6 @@
 """ generic mechanism for marking and selecting python functions. """
 import py
-
+import re
 
 class MarkerError(Exception):
 
@@ -24,7 +24,8 @@ def pytest_addoption(parser):
              "contains 'test_method' or 'test_other'. "
              "Additionally keywords are matched to classes and functions "
              "containing extra names in their 'extra_keyword_matches' set, "
-             "as well as functions which have names assigned directly to them."
+             "as well as functions which have names assigned directly to them. "
+             "The notation \"MyClass::test_method\" is also recognized as a logical AND."
     )
 
     group._addoption(
@@ -70,6 +71,16 @@ def pytest_collection_modifyitems(items, config):
     if keywordexpr[-1:] == ":":
         selectuntil = True
         keywordexpr = keywordexpr[:-1]
+
+    # we recognize keywords in the form "[myfile.py::]MyClass::my_test", as 
+    # output by py.test, although we ignore the "myfile.py" part and only consider
+    # class and function substrings, for now
+    def _colon_pair_replacer(match_obj):
+        return "(%s and %s)" % (match_obj.group(2), match_obj.group(3))
+    colon_pair_regex = r'(?iu)\b(\S*?::)?(\w+)::(\w+)(\b|\s)'
+    keywordexpr = re.sub(colon_pair_regex, 
+                         _colon_pair_replacer, 
+                         keywordexpr)
 
     remaining = []
     deselected = []

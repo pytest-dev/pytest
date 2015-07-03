@@ -4,7 +4,7 @@ from _pytest.mark import MarkGenerator as Mark
 class TestMark:
     def test_markinfo_repr(self):
         from _pytest.mark import MarkInfo
-        m = MarkInfo("hello", (1,2), {})
+        m = MarkInfo("hello", (1, 2), {})
         repr(m)
 
     def test_pytest_exists_in_namespace_all(self):
@@ -109,7 +109,7 @@ def test_markers_option(testdir):
             a1: this is a webtest marker
             a1some: another marker
     """)
-    result = testdir.runpytest("--markers", )
+    result = testdir.runpytest("--markers",)
     result.stdout.fnmatch_lines([
         "*a1*this is a webtest*",
         "*a1some*another marker",
@@ -214,6 +214,8 @@ def test_mark_option_custom(spec, testdir):
         ("not interface", ("test_nointer", "test_pass")),
         ("pass", ("test_pass",)),
         ("not pass", ("test_interface", "test_nointer")),
+        ("inte and face", ("test_interface",)),
+        ("inte and r and not face", ("test_nointer",)),
 ])
 def test_keyword_option_custom(spec, testdir):
     testdir.makepyfile("""
@@ -231,6 +233,33 @@ def test_keyword_option_custom(spec, testdir):
     assert len(passed) == len(passed_result)
     assert list(passed) == list(passed_result)
 
+@pytest.mark.parametrize("spec", [
+        ("MyClass::test_ab", True, ("test_ab",)),
+        ("lass::_a", False, ("test_ab",)),
+        ("lass::b", True, ("test_ab", "test_bc")),
+        ("badClass::test_ab", False, ()),
+        ("test_ab", True, ()),  # "file.py::function" doesn't work
+        ("test_ab or MyClass::test_bc", False, ("test_ab", "test_bc")),
+])
+def test_keyword_with_colon_pairs(spec, testdir):
+    localfile = testdir.makepyfile("""
+        class TestMyClass:
+            def test_ab(self):
+                pass
+            def test_bc(self):
+                pass
+            def test_cd(self):
+                pass
+    """)
+    filename = localfile.basename
+    opt, add_filename, passed_result = spec
+    if add_filename:
+        opt = filename + "::" + opt
+    rec = testdir.inline_run("-k", opt)
+    passed, skipped, fail = rec.listoutcomes()
+    passed = [x.nodeid.split("::")[-1] for x in passed]
+    assert len(passed) == len(passed_result)
+    assert list(passed) == list(passed_result)
 
 @pytest.mark.parametrize("spec", [
         ("None", ("test_func[None]",)),
@@ -348,7 +377,7 @@ class TestFunctional:
         assert len(l) == 3
         assert l[0].args == ("pos0",)
         assert l[1].args == ()
-        assert l[2].args == ("pos1", )
+        assert l[2].args == ("pos1",)
 
     @pytest.mark.xfail(reason='unfixed')
     def test_merging_markers_deep(self, testdir):
