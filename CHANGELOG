@@ -1,8 +1,9 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
-- partial fix for issue500: color the summary bar yellow for warning
-  situations, including the case where no tests were run. 
+- Summary bar now is colored yellow for warning
+  situations such as: all tests either were skipped or xpass/xfailed,
+  or no tests were run at all (this is a partial fix for issue500). 
   Thanks Eric Siegerman.
 
 - fix issue713: JUnit XML reports for doctest failures.
