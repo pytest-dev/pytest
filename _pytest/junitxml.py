@@ -1,5 +1,7 @@
 """ report test results in JUnit-XML format, for use with Hudson and build integration servers.
 
+Output conforms to https://github.com/jenkinsci/xunit-plugin/blob/master/src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd
+
 Based on initial code from Ross Lawley.
 """
 import py
@@ -93,11 +95,15 @@ class LogXML(object):
         classnames = names[:-1]
         if self.prefix:
             classnames.insert(0, self.prefix)
-        self.tests.append(Junit.testcase(
-            classname=".".join(classnames),
-            name=bin_xml_escape(names[-1]),
-            time=0
-        ))
+        attrs = {
+            "classname": ".".join(classnames),
+            "name": bin_xml_escape(names[-1]),
+            "file": report.location[0],
+            "time": 0,
+        }
+        if report.location[1] is not None:
+            attrs["line"] = report.location[1]
+        self.tests.append(Junit.testcase(**attrs))
 
     def _write_captured_output(self, report):
         for capname in ('out', 'err'):

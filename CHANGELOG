@@ -67,6 +67,8 @@
 
 - add a new ``--noconftest`` argument which ignores all ``conftest.py`` files.
 
+- add ``file`` and ``line`` attributes to JUnit-XML output.
+
 2.7.2 (compared to 2.7.1)
 -----------------------------
 
