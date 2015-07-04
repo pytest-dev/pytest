@@ -19,6 +19,7 @@ EXIT_TESTSFAILED = 1
 EXIT_INTERRUPTED = 2
 EXIT_INTERNALERROR = 3
 EXIT_USAGEERROR = 4
+EXIT_NOTESTSCOLLECTED = 5
 
 name_re = re.compile("^[a-zA-Z_]\w*$")
 
@@ -102,6 +103,8 @@ def wrap_session(config, doit):
         else:
             if session._testsfailed:
                 session.exitstatus = EXIT_TESTSFAILED
+            elif session._testscollected == 0:
+                session.exitstatus = EXIT_NOTESTSCOLLECTED
     finally:
         excinfo = None  # Explicitly break reference cycle.
         session.startdir.chdir()
@@ -510,6 +513,7 @@ class Session(FSCollector):
                              config=config, session=self)
         self._fs2hookproxy = {}
         self._testsfailed = 0
+        self._testscollected = 0
         self.shouldstop = False
         self.trace = config.trace.root.get("collection")
         self._norecursepatterns = config.getini("norecursedirs")
@@ -564,6 +568,7 @@ class Session(FSCollector):
                 config=self.config, items=items)
         finally:
             hook.pytest_collection_finish(session=self)
+        self._testscollected = len(items)
         return items
 
     def _perform_collect(self, args, genitems):

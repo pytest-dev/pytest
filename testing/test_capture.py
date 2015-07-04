@@ -10,6 +10,7 @@ import contextlib
 
 from _pytest import capture
 from _pytest.capture import CaptureManager
+from _pytest.main import EXIT_NOTESTSCOLLECTED
 from py.builtin import print_
 
 needsosdup = pytest.mark.xfail("not hasattr(os, 'dup')")
@@ -365,7 +366,7 @@ class TestLoggingInteraction:
         """)
         # make sure that logging is still captured in tests
         result = testdir.runpytest_subprocess("-s", "-p", "no:capturelog")
-        assert result.ret == 0
+        assert result.ret == EXIT_NOTESTSCOLLECTED
         result.stderr.fnmatch_lines([
             "WARNING*hello435*",
         ])

@@ -2,6 +2,8 @@
 
 This is a good source for looking at the various reporting hooks.
 """
+from _pytest.main import EXIT_OK, EXIT_TESTSFAILED, EXIT_INTERRUPTED, \
+    EXIT_USAGEERROR, EXIT_NOTESTSCOLLECTED
 import pytest
 import pluggy
 import py
@@ -359,12 +361,15 @@ class TerminalReporter:
         outcome = yield
         outcome.get_result()
         self._tw.line("")
-        if exitstatus in (0, 1, 2, 4):
+        summary_exit_codes = (
+            EXIT_OK, EXIT_TESTSFAILED, EXIT_INTERRUPTED, EXIT_USAGEERROR,
+            EXIT_NOTESTSCOLLECTED)
+        if exitstatus in summary_exit_codes:
             self.summary_errors()
             self.summary_failures()
             self.summary_warnings()
             self.config.hook.pytest_terminal_summary(terminalreporter=self)
-        if exitstatus == 2:
+        if exitstatus == EXIT_INTERRUPTED:
             self._report_keyboardinterrupt()
             del self._keyboardinterrupt_memo
         self.summary_deselected()

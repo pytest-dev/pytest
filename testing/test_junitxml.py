@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from xml.dom import minidom
+from _pytest.main import EXIT_NOTESTSCOLLECTED
 import py, sys, os
 from _pytest.junitxml import LogXML
 
@@ -298,7 +299,7 @@ class TestPython:
     def test_collect_skipped(self, testdir):
         testdir.makepyfile("import pytest; pytest.skip('xyz')")
         result, dom = runandparse(testdir)
-        assert not result.ret
+        assert result.ret == EXIT_NOTESTSCOLLECTED
         node = dom.getElementsByTagName("testsuite")[0]
         assert_attr(node, skips=1, tests=0)
         tnode = node.getElementsByTagName("testcase")[0]

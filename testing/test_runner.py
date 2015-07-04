@@ -431,6 +431,27 @@ def test_pytest_fail_notrace(testdir):
     ])
     assert 'def teardown_function' not in result.stdout.str()
 
+
+def test_pytest_no_tests_collected_exit_status(testdir):
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines('*collected 0 items*')
+    assert result.ret == main.EXIT_NOTESTSCOLLECTED
+
+    testdir.makepyfile(test_foo="""
+        def test_foo():
+            assert 1
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines('*collected 1 items*')
+    result.stdout.fnmatch_lines('*1 passed*')
+    assert result.ret == main.EXIT_OK
+
+    result = testdir.runpytest('-k nonmatch')
+    result.stdout.fnmatch_lines('*collected 1 items*')
+    result.stdout.fnmatch_lines('*1 deselected*')
+    assert result.ret == main.EXIT_NOTESTSCOLLECTED
+
+
 def test_exception_printing_skip():
     try:
         pytest.skip("hello")
