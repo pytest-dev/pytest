@@ -101,9 +101,9 @@ def wrap_session(config, doit):
             if excinfo.errisinstance(SystemExit):
                 sys.stderr.write("mainloop: caught Spurious SystemExit!\n")
         else:
-            if session._testsfailed:
+            if session.testsfailed:
                 session.exitstatus = EXIT_TESTSFAILED
-            elif session._testscollected == 0:
+            elif session.testscollected == 0:
                 session.exitstatus = EXIT_NOTESTSCOLLECTED
     finally:
         excinfo = None  # Explicitly break reference cycle.
@@ -512,8 +512,8 @@ class Session(FSCollector):
         FSCollector.__init__(self, config.rootdir, parent=None,
                              config=config, session=self)
         self._fs2hookproxy = {}
-        self._testsfailed = 0
-        self._testscollected = 0
+        self.testsfailed = 0
+        self.testscollected = 0
         self.shouldstop = False
         self.trace = config.trace.root.get("collection")
         self._norecursepatterns = config.getini("norecursedirs")
@@ -531,11 +531,11 @@ class Session(FSCollector):
     @pytest.hookimpl(tryfirst=True)
     def pytest_runtest_logreport(self, report):
         if report.failed and not hasattr(report, 'wasxfail'):
-            self._testsfailed += 1
+            self.testsfailed += 1
             maxfail = self.config.getvalue("maxfail")
-            if maxfail and self._testsfailed >= maxfail:
+            if maxfail and self.testsfailed >= maxfail:
                 self.shouldstop = "stopping after %d failures" % (
-                    self._testsfailed)
+                    self.testsfailed)
     pytest_collectreport = pytest_runtest_logreport
 
     def isinitpath(self, path):
@@ -568,7 +568,7 @@ class Session(FSCollector):
                 config=self.config, items=items)
         finally:
             hook.pytest_collection_finish(session=self)
-        self._testscollected = len(items)
+        self.testscollected = len(items)
         return items
 
     def _perform_collect(self, args, genitems):
