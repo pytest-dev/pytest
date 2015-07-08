@@ -747,14 +747,14 @@ Here is how autouse fixtures work in other scopes:
   functions automatically use it.
 
 - if an autouse fixture is defined in a conftest.py file then all tests in
-  all test modules belows its directory will invoke the fixture.
+  all test modules below its directory will invoke the fixture.
 
 - lastly, and **please use that with care**: if you define an autouse
   fixture in a plugin, it will be invoked for all tests in all projects
   where the plugin is installed.  This can be useful if a fixture only
   anyway works in the presence of certain settings e. g. in the ini-file.  Such
   a global fixture should always quickly determine if it should do
-  any work and avoid expensive imports or computation otherwise.
+  any work and avoid otherwise expensive imports or computation.
 
 Note that the above ``transact`` fixture may very well be a fixture that
 you want to make available in your project without having it generally
