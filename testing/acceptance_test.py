@@ -564,6 +564,12 @@ class TestInvocationVariants:
             "*1 failed*",
         ])
 
+    def test_core_backward_compatibility(self):
+        """Test backward compatibility for get_plugin_manager function. See #787."""
+        import _pytest.config
+        assert type(_pytest.config.get_plugin_manager()) is _pytest.config.PytestPluginManager
+
+
 class TestDurations:
     source = """
         import time
