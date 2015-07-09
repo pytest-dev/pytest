@@ -1,6 +1,11 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
+- rootdir and inifile are now displayed during usage errors to help
+  users diagnose problems such as unexpected ini files which add
+  unknown options being picked up by pytest. Thanks to Pavel Savchenko for
+  bringing the problem to attention in #821 and Bruno Oliveira for the PR.
+
 - Summary bar now is colored yellow for warning
   situations such as: all tests either were skipped or xpass/xfailed,
   or no tests were run at all (this is a partial fix for issue500). 

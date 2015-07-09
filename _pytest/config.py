@@ -382,7 +382,11 @@ class PytestPluginManager(PluginManager):
 
 
 class Parser:
-    """ Parser for command line arguments and ini-file values.  """
+    """ Parser for command line arguments and ini-file values.
+
+    :ivar extra_info: dict of generic param -> value to display in case
+        there's an error processing the command line arguments.
+    """
 
     def __init__(self, usage=None, processopt=None):
         self._anonymous = OptionGroup("custom options", parser=self)
@@ -391,6 +395,7 @@ class Parser:
         self._usage = usage
         self._inidict = {}
         self._ininames = []
+        self.extra_info = {}
 
     def processoption(self, option):
         if self._processopt:
@@ -444,7 +449,7 @@ class Parser:
 
     def _getparser(self):
         from _pytest._argcomplete import filescompleter
-        optparser = MyOptionParser(self)
+        optparser = MyOptionParser(self, self.extra_info)
         groups = self._groups + [self._anonymous]
         for group in groups:
             if group.options:
@@ -669,10 +674,15 @@ class OptionGroup:
 
 
 class MyOptionParser(argparse.ArgumentParser):
-    def __init__(self, parser):
+    def __init__(self, parser, extra_info=None):
+        if not extra_info:
+            extra_info = {}
         self._parser = parser
         argparse.ArgumentParser.__init__(self, usage=parser._usage,
             add_help=False, formatter_class=DropShorterLongHelpFormatter)
+        # extra_info is a dict of (param -> value) to display if there's
+        # an usage error to provide more contextual information to the user
+        self.extra_info = extra_info
 
     def parse_args(self, args=None, namespace=None):
         """allow splitting of positional arguments"""
@@ -680,8 +690,10 @@ class MyOptionParser(argparse.ArgumentParser):
         if argv:
             for arg in argv:
                 if arg and arg[0] == '-':
-                    msg = argparse._('unrecognized arguments: %s')
-                    self.error(msg % ' '.join(argv))
+                    lines = ['unrecognized arguments: %s' % (' '.join(argv))]
+                    for k, v in sorted(self.extra_info.items()):
+                        lines.append('  %s: %s' % (k, v))
+                    self.error('\n'.join(lines))
             getattr(args, FILE_OR_DIR).extend(argv)
         return args
 
@@ -863,6 +875,8 @@ class Config(object):
         parsed_args = self._parser.parse_known_args(args)
         r = determine_setup(parsed_args.inifilename, parsed_args.file_or_dir)
         self.rootdir, self.inifile, self.inicfg = r
+        self._parser.extra_info['rootdir'] = self.rootdir
+        self._parser.extra_info['inifile'] = self.inifile
         self.invocation_dir = py.path.local()
         self._parser.addini('addopts', 'extra command line options', 'args')
         self._parser.addini('minversion', 'minimally required pytest version')
