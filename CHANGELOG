@@ -6,6 +6,13 @@
   or no tests were run at all (this is a partial fix for issue500). 
   Thanks Eric Siegerman.
 
+- New `testdirs` ini option: list of directories to search for tests
+  when executing pytest from the root directory. This can be used
+  to speed up test collection when a project has well specified directories
+  for tests, being usually more practical than configuring norecursedirs for
+  all directories that do not contain tests.
+  Thanks to Adrian for idea (#694) and Bruno Oliveira for the PR.
+
 - fix issue713: JUnit XML reports for doctest failures.
   Thanks Punyashloka Biswal.
 

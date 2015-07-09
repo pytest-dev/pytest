@@ -917,7 +917,11 @@ class Config(object):
         self.hook.pytest_cmdline_preparse(config=self, args=args)
         args = self._parser.parse_setoption(args, self.option)
         if not args:
-            args.append(os.getcwd())
+            cwd = os.getcwd()
+            if cwd == self.rootdir:
+                args = self.getini('testpaths')
+            if not args:
+                args = [cwd]
         self.args = args
 
     def addinivalue_line(self, name, line):
