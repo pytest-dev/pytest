@@ -107,10 +107,11 @@ As with the class-decorator, the ``pytestmark`` special name tells
 ``pytest`` to apply it to each test function in the class.
 
 If you want to skip all test functions of a module, you must use
-the ``pytestmark`` name on the global level::
+the ``pytestmark`` name on the global level:
+
+.. code-block:: python
 
     # test_module.py
-
     pytestmark = pytest.mark.skipif(...)
 
 If multiple "skipif" decorators are applied to a test function, it

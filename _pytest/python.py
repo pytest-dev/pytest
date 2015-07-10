@@ -787,6 +787,27 @@ class FuncargnamesCompatAttr:
         return self.fixturenames
 
 class Metafunc(FuncargnamesCompatAttr):
+    """
+    Metafunc objects are passed to the ``pytest_generate_tests`` hook.
+    They help to inspect a test function and to generate tests according to
+    test configuration or values specified in the class or module where a
+    test function is defined.
+
+    :ivar fixturenames: set of fixture names required by the test function
+
+    :ivar function: underlying python test function
+
+    :ivar cls: class object where the test function is defined in or ``None``.
+
+    :ivar module: the module object where the test function is defined in.
+
+    :ivar config: access to the :class:`_pytest.config.Config` object for the
+        test session.
+
+    :ivar funcargnames:
+        .. deprecated:: 2.3
+            Use ``fixturenames`` instead.
+    """
     def __init__(self, function, fixtureinfo, config, cls=None, module=None):
         self.config = config
         self.module = module

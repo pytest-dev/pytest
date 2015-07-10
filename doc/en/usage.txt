@@ -93,10 +93,10 @@ interactive use, this allows one to drop into postmortem debugging with
 any debug tool. One can also manually access the exception information,
 for example::
 
-    >> import sys
-    >> sys.last_traceback.tb_lineno
+    >>> import sys
+    >>> sys.last_traceback.tb_lineno
     42
-    >> sys.last_value
+    >>> sys.last_value
     AssertionError('assert result == "ok"',)
 
 Setting a breakpoint / aka ``set_trace()``

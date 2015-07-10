@@ -87,7 +87,9 @@ Accessing captured output from a test function
 
 The ``capsys`` and ``capfd`` fixtures allow to access stdout/stderr
 output created during test execution.  Here is an example test function
-that performs some output related checks::
+that performs some output related checks:
+
+.. code-block:: python
 
     def test_myoutput(capsys): # or use "capfd" for fd-level
         print ("hello")

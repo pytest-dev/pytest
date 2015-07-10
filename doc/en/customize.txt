@@ -89,7 +89,9 @@ How to change command line options defaults
 It can be tedious to type the same series of command line options
 every time you use ``pytest``.  For example, if you always want to see
 detailed info on skipped and xfailed tests, as well as have terser "dot"
-progress output, you can write it into a configuration file::
+progress output, you can write it into a configuration file:
+
+.. code-block:: ini
 
     # content of pytest.ini
     # (or tox.ini or setup.cfg)
@@ -117,14 +119,16 @@ Builtin configuration file options
 .. confval:: addopts
 
    Add the specified ``OPTS`` to the set of command line arguments as if they
-   had been specified by the user. Example: if you have this ini file content::
+   had been specified by the user. Example: if you have this ini file content:
 
-       [pytest]
-       addopts = --maxfail=2 -rf  # exit after 2 failures, report fail info
+   .. code-block:: ini
+
+        [pytest]
+        addopts = --maxfail=2 -rf  # exit after 2 failures, report fail info
 
    issuing ``py.test test_hello.py`` actually means::
 
-       py.test --maxfail=2 -rf test_hello.py
+        py.test --maxfail=2 -rf test_hello.py
 
    Default is to add no options.
 
@@ -142,11 +146,13 @@ Builtin configuration file options
 
    Default patterns are ``'.*', 'CVS', '_darcs', '{arch}', '*.egg'``.
    Setting a ``norecursedirs`` replaces the default.  Here is an example of
-   how to avoid certain directories::
+   how to avoid certain directories:
 
-    # content of setup.cfg
-    [pytest]
-    norecursedirs = .svn _build tmp*
+   .. code-block:: ini
+
+        # content of setup.cfg
+        [pytest]
+        norecursedirs = .svn _build tmp*
 
    This would tell ``pytest`` to not look into typical subversion or
    sphinx-build directories or into any ``tmp`` prefixed directory.
@@ -160,11 +166,13 @@ Builtin configuration file options
 
    One or more name prefixes or glob-style patterns determining which classes
    are considered for test collection. Here is an example of how to collect
-   tests from classes that end in ``Suite``::
+   tests from classes that end in ``Suite``:
 
-    # content of pytest.ini
-    [pytest]
-    python_classes = *Suite
+   .. code-block:: ini
+
+        # content of pytest.ini
+        [pytest]
+        python_classes = *Suite
 
    Note that ``unittest.TestCase`` derived classes are always collected
    regardless of this option, as ``unittest``'s own collection framework is used
@@ -174,11 +182,13 @@ Builtin configuration file options
 
    One or more name prefixes or glob-patterns determining which test functions
    and methods are considered tests. Here is an example of how
-   to collect test functions and methods that end in ``_test``::
+   to collect test functions and methods that end in ``_test``:
 
-    # content of pytest.ini
-    [pytest]
-    python_functions = *_test
+   .. code-block:: ini
+
+        # content of pytest.ini
+        [pytest]
+        python_functions = *_test
 
    Note that this has no effect on methods that live on a ``unittest
    .TestCase`` derived class, as ``unittest``'s own collection framework is used

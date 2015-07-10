@@ -232,7 +232,9 @@ traceback.  As a result, the two test functions using ``smtp`` run as
 quick as a single one because they reuse the same instance.
 
 If you decide that you rather want to have a session-scoped ``smtp``
-instance, you can simply declare it::
+instance, you can simply declare it:
+
+.. code-block:: python
 
     @pytest.fixture(scope="session")
     def smtp(...):
@@ -669,20 +671,25 @@ to verify our fixture is activated and the tests pass::
     ..
     2 passed in 0.12 seconds
 
-You can specify multiple fixtures like this::
+You can specify multiple fixtures like this:
+
+.. code-block:: python
 
     @pytest.mark.usefixtures("cleandir", "anotherfixture")
 
 and you may specify fixture usage at the test module level, using
-a generic feature of the mark mechanism::
+a generic feature of the mark mechanism:
+
+.. code-block:: python
 
     pytestmark = pytest.mark.usefixtures("cleandir")
 
 Lastly you can put fixtures required by all tests in your project
-into an ini-file::
+into an ini-file:
+
+.. code-block:: ini
 
     # content of pytest.ini
-
     [pytest]
     usefixtures = cleandir
 
