@@ -289,7 +289,7 @@ class TestExecutionNonForked(BaseFunctionalTests):
             pytest.fail("did not raise")
 
 class TestExecutionForked(BaseFunctionalTests):
-    pytestmark = pytest.mark.skipif("not hasattr(os, 'fork')")
+    pytest_marks = pytest.mark.skipif("not hasattr(os, 'fork')")
 
     def getrunner(self):
         # XXX re-arrange this test to live in pytest-xdist

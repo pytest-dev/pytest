@@ -251,6 +251,13 @@ def test_keyword_option_parametrize(spec, testdir):
     assert len(passed) == len(passed_result)
     assert list(passed) == list(passed_result)
 
+# parametrize tests to ensure they work with both versions of the mark holder
+# variable name
+# The name of the variable used to hold markers is now "pytest_marks", but
+# previously to 2.8 it was named "pytestmark"
+parametrize_mark_names = pytest.mark.parametrize('var_name',
+                                                 ['pytest_marks', 'pytestmark'])
+
 class TestFunctional:
 
     def test_mark_per_function(self, testdir):
@@ -263,42 +270,44 @@ class TestFunctional:
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines(["*1 passed*"])
 
-    def test_mark_per_module(self, testdir):
+    @parametrize_mark_names
+    def test_mark_per_module(self, testdir, var_name):
         item = testdir.getitem("""
             import pytest
-            pytestmark = pytest.mark.hello
+            %s = pytest.mark.hello
             def test_func():
                 pass
-        """)
+        """ % var_name)
         keywords = item.keywords
         assert 'hello' in keywords
 
-    def test_marklist_per_class(self, testdir):
+    @parametrize_mark_names
+    def test_marklist_per_class(self, testdir, var_name):
         item = testdir.getitem("""
             import pytest
             class TestClass:
-                pytestmark = [pytest.mark.hello, pytest.mark.world]
+                %s = [pytest.mark.hello, pytest.mark.world]
                 def test_func(self):
                     assert TestClass.test_func.hello
                     assert TestClass.test_func.world
-        """)
+        """ % var_name)
         keywords = item.keywords
         assert 'hello' in keywords
 
-    def test_marklist_per_module(self, testdir):
+    @parametrize_mark_names
+    def test_marklist_per_module(self, testdir, var_name):
         item = testdir.getitem("""
             import pytest
-            pytestmark = [pytest.mark.hello, pytest.mark.world]
+            %s = [pytest.mark.hello, pytest.mark.world]
             class TestClass:
                 def test_func(self):
                     assert TestClass.test_func.hello
                     assert TestClass.test_func.world
-        """)
+        """ % var_name)
         keywords = item.keywords
         assert 'hello' in keywords
         assert 'world' in keywords
 
-    @pytest.mark.skipif("sys.version_info < (2,6)")
     def test_mark_per_class_decorator(self, testdir):
         item = testdir.getitem("""
             import pytest
@@ -310,32 +319,33 @@ class TestFunctional:
         keywords = item.keywords
         assert 'hello' in keywords
 
-    @pytest.mark.skipif("sys.version_info < (2,6)")
-    def test_mark_per_class_decorator_plus_existing_dec(self, testdir):
+    @parametrize_mark_names
+    def test_mark_per_class_decorator_plus_existing_dec(self, testdir, var_name):
         item = testdir.getitem("""
             import pytest
             @pytest.mark.hello
             class TestClass:
-                pytestmark = pytest.mark.world
+                %s = pytest.mark.world
                 def test_func(self):
                     assert TestClass.test_func.hello
                     assert TestClass.test_func.world
-        """)
+        """ % var_name)
         keywords = item.keywords
         assert 'hello' in keywords
         assert 'world' in keywords
 
-    def test_merging_markers(self, testdir):
+    @parametrize_mark_names
+    def test_merging_markers(self, testdir, var_name):
         p = testdir.makepyfile("""
             import pytest
-            pytestmark = pytest.mark.hello("pos1", x=1, y=2)
+            %(var_name)s = pytest.mark.hello("pos1", x=1, y=2)
             class TestClass:
                 # classlevel overrides module level
-                pytestmark = pytest.mark.hello(x=3)
+                %(var_name)s = pytest.mark.hello(x=3)
                 @pytest.mark.hello("pos0", z=4)
                 def test_func(self):
                     pass
-        """)
+        """ % {'var_name': var_name})
         items, rec = testdir.inline_genitems(p)
         item, = items
         keywords = item.keywords
@@ -348,35 +358,37 @@ class TestFunctional:
         assert len(l) == 3
         assert l[0].args == ("pos0",)
         assert l[1].args == ()
-        assert l[2].args == ("pos1", )
+        assert l[2].args == ("pos1",)
 
     @pytest.mark.xfail(reason='unfixed')
-    def test_merging_markers_deep(self, testdir):
+    @parametrize_mark_names
+    def test_merging_markers_deep(self, testdir, var_name):
         # issue 199 - propagate markers into nested classes
         p = testdir.makepyfile("""
             import pytest
             class TestA:
-                pytestmark = pytest.mark.a
+                %s = pytest.mark.a
                 def test_b(self):
                     assert True
                 class TestC:
                     # this one didnt get marked
                     def test_d(self):
                         assert True
-        """)
+        """ % var_name)
         items, rec = testdir.inline_genitems(p)
         for item in items:
             print (item, item.keywords)
             assert 'a' in item.keywords
 
-    def test_mark_with_wrong_marker(self, testdir):
+    @parametrize_mark_names
+    def test_mark_with_wrong_marker(self, testdir, var_name):
         reprec = testdir.inline_runsource("""
                 import pytest
-                class pytestmark:
+                class %s:
                     pass
                 def test_func():
                     pass
-        """)
+        """ % var_name)
         l = reprec.getfailedcollections()
         assert len(l) == 1
         assert "TypeError" in str(l[0].longrepr)

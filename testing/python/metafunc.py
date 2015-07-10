@@ -282,11 +282,11 @@ class TestMetafunc:
     def test_parametrize_multiple_times(self, testdir):
         testdir.makepyfile("""
             import pytest
-            pytestmark = pytest.mark.parametrize("x", [1,2])
+            pytest_marks = pytest.mark.parametrize("x", [1,2])
             def test_func(x):
                 assert 0, x
             class TestClass:
-                pytestmark = pytest.mark.parametrize("y", [3,4])
+                pytest_marks = pytest.mark.parametrize("y", [3,4])
                 def test_meth(self, x, y):
                     assert 0, x
         """)
@@ -699,7 +699,7 @@ class TestMetafuncFunctional:
 
 
 class TestMarkersWithParametrization:
-    pytestmark = pytest.mark.issue308
+    pytest_marks = pytest.mark.issue308
     def test_simple_mark(self, testdir):
         s = """
             import pytest

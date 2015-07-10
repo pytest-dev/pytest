@@ -295,11 +295,11 @@ def test_testcase_totally_incompatible_exception_info(testdir):
     excinfo = item._excinfo.pop(0)
     assert 'ERROR: Unknown Incompatible' in str(excinfo.getrepr())
 
-def test_module_level_pytestmark(testdir):
+def test_module_level_pytest_marks(testdir):
     testpath = testdir.makepyfile("""
         import unittest
         import pytest
-        pytestmark = pytest.mark.xfail
+        pytest_marks = pytest.mark.xfail
         class MyTestCase(unittest.TestCase):
             def test_func1(self):
                 assert 0

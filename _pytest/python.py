@@ -475,15 +475,16 @@ def transfer_markers(funcobj, cls, mod):
     # XXX this should rather be code in the mark plugin or the mark
     # plugin should merge with the python plugin.
     for holder in (cls, mod):
-        try:
-            pytestmark = holder.pytestmark
-        except AttributeError:
-            continue
-        if isinstance(pytestmark, list):
-            for mark in pytestmark:
-                mark(funcobj)
-        else:
-            pytestmark(funcobj)
+        for var_name in ('pytest_marks', 'pytestmark'):
+            try:
+                marks = getattr(holder, var_name)
+            except AttributeError:
+                continue
+            if isinstance(marks, list):
+                for mark in marks:
+                    mark(funcobj)
+            else:
+                marks(funcobj)
 
 class Module(pytest.File, PyCollector):
     """ Collector for test classes and functions. """

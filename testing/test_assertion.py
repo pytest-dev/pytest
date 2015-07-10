@@ -26,7 +26,7 @@ def interpret(expr):
     return reinterpret.reinterpret(expr, py.code.Frame(sys._getframe(1)))
 
 class TestBinReprIntegration:
-    pytestmark = needsnewassert
+    pytest_marks = needsnewassert
 
     def test_pytest_assertrepr_compare_called(self, testdir):
         testdir.makeconftest("""

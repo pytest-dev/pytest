@@ -2282,7 +2282,7 @@ class TestFixtureMarker:
 
 
 class TestRequestScopeAccess:
-    pytestmark = pytest.mark.parametrize(("scope", "ok", "error"),[
+    pytest_marks = pytest.mark.parametrize(("scope", "ok", "error"),[
         ["session", "", "fspath class function module"],
         ["module", "module fspath", "cls function"],
         ["class", "module fspath cls", "function"],

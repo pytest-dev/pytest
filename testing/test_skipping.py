@@ -114,7 +114,7 @@ class TestEvaluator:
         item, = testdir.getitems("""
             import pytest
             class TestClass:
-                pytestmark = pytest.mark.skipif("config._hackxyz")
+                pytest_marks = pytest.mark.skipif("config._hackxyz")
                 def test_func(self):
                     pass
         """)
@@ -427,7 +427,7 @@ def test_skipif_class(testdir):
         import pytest
 
         class TestClass:
-            pytestmark = pytest.mark.skipif("True")
+            pytest_marks = pytest.mark.skipif("True")
             def test_that(self):
                 assert 0
             def test_though(self):
