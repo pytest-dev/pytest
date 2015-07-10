@@ -256,14 +256,15 @@ class MarkDecorator:
             if len(args) == 1 and (istestfunc(func) or
                                    hasattr(func, '__bases__')):
                 if hasattr(func, '__bases__'):
-                    if hasattr(func, 'pytestmark'):
-                        l = func.pytestmark
-                        if not isinstance(l, list):
-                            func.pytestmark = [l, self]
+                    for var_name in ('pytest_marks', 'pytestmark'):
+                        if hasattr(func, var_name):
+                            l = getattr(func, var_name)
+                            if not isinstance(l, list):
+                                setattr(func, var_name, [l, self])
+                            else:
+                                l.append(self)
                         else:
-                            l.append(self)
-                    else:
-                        func.pytestmark = [self]
+                            setattr(func, var_name, [self])
                 else:
                     holder = getattr(func, self.name, None)
                     if holder is None:

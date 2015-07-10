@@ -242,27 +242,33 @@ This is equivalent to directly applying the decorator to the
 two test functions.
 
 To remain backward-compatible with Python 2.4 you can also set a
-``pytestmark`` attribute on a TestClass like this::
+``pytest_marks`` attribute on a TestClass like this::
 
     import pytest
 
     class TestClass:
-        pytestmark = pytest.mark.webtest
+        pytest_marks = pytest.mark.webtest
 
 or if you need to use multiple markers you can use a list::
 
     import pytest
 
     class TestClass:
-        pytestmark = [pytest.mark.webtest, pytest.mark.slowtest]
+        pytest_marks = [pytest.mark.webtest, pytest.mark.slowtest]
 
 You can also set a module level marker::
 
     import pytest
-    pytestmark = pytest.mark.webtest
+    pytest_marks = pytest.mark.webtest
 
 in which case it will be applied to all functions and
 methods defined in the module.
+
+.. deprecated:: 2.8
+    Previously the variable was named ``pytestmark``, but for consistency
+    with other pytest variables it was renamed to ``pytest_marks``.
+    ``pytestmark`` still works, but users are encouraged to use ``pytest_marks``
+    in new code.
 
 .. _`marking individual tests when using parametrize`:
 
@@ -392,7 +398,7 @@ code you can read over all such settings.  Example::
 
     # content of test_mark_three_times.py
     import pytest
-    pytestmark = pytest.mark.glob("module", x=1)
+    pytest_marks = pytest.mark.glob("module", x=1)
 
     @pytest.mark.glob("class", x=2)
     class TestClass:

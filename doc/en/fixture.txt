@@ -676,7 +676,7 @@ You can specify multiple fixtures like this::
 and you may specify fixture usage at the test module level, using
 a generic feature of the mark mechanism::
 
-    pytestmark = pytest.mark.usefixtures("cleandir")
+    pytest_marks = pytest.mark.usefixtures("cleandir")
 
 Lastly you can put fixtures required by all tests in your project
 into an ini-file::

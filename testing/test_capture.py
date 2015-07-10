@@ -659,7 +659,7 @@ def lsof_check():
 
 
 class TestFDCapture:
-    pytestmark = needsosdup
+    pytest_marks = needsosdup
 
     def test_simple(self, tmpfile):
         fd = tmpfile.fileno()
@@ -873,7 +873,7 @@ class TestStdCapture:
 
 
 class TestStdCaptureFD(TestStdCapture):
-    pytestmark = needsosdup
+    pytest_marks = needsosdup
     captureclass = staticmethod(StdCaptureFD)
 
     def test_simple_only_fd(self, testdir):
@@ -912,7 +912,7 @@ class TestStdCaptureFD(TestStdCapture):
 
 
 class TestStdCaptureFDinvalidFD:
-    pytestmark = needsosdup
+    pytest_marks = needsosdup
 
     def test_stdcapture_fd_invalid_fd(self, testdir):
         testdir.makepyfile("""
