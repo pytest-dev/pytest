@@ -30,7 +30,9 @@ pytest supports test parametrization in several well-integrated ways:
 
 .. regendoc: wipe
 
-.. versionadded:: 2.2, improved in 2.4
+.. versionadded:: 2.2
+.. versionchanged:: 2.4
+    Several improvements.
 
 The builtin ``pytest.mark.parametrize`` decorator enables
 parametrization of arguments for a test function.  Here is a typical example
@@ -199,25 +201,7 @@ The **metafunc** object
 -------------------------------------------
 
 .. currentmodule:: _pytest.python
+.. autoclass:: Metafunc
 
-metafunc objects are passed to the ``pytest_generate_tests`` hook.
-They help to inspect a testfunction and to generate tests
-according to test configuration or values specified
-in the class or module where a test function is defined:
-
-``metafunc.fixturenames``: set of required function arguments for given function
-
-``metafunc.function``: underlying python test function
-
-``metafunc.cls``: class object where the test function is defined in or None.
-
-``metafunc.module``: the module object where the test function is defined in.
-
-``metafunc.config``: access to command line opts and general config
-
-``metafunc.funcargnames``: alias for ``fixturenames``, for pre-2.3 compatibility
-
-.. automethod:: Metafunc.parametrize
-.. automethod:: Metafunc.addcall(funcargs=None,id=_notexists,param=_notexists)
-
-
+    .. automethod:: Metafunc.parametrize
+    .. automethod:: Metafunc.addcall(funcargs=None,id=_notexists,param=_notexists)

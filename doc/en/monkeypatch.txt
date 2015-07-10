@@ -44,7 +44,6 @@ If you want to prevent the "requests" library from performing http
 requests in all your tests, you can do::
 
     # content of conftest.py
-
     import pytest
     @pytest.fixture(autouse=True)
     def no_requests(monkeypatch):

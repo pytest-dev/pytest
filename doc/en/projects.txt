@@ -81,4 +81,5 @@ Some organisations using pytest
 * `Open End, Gothenborg <http://www.openend.se>`_
 * `Laboratory of Bioinformatics, Warsaw <http://genesilico.pl/>`_
 * `merlinux, Germany <http://merlinux.eu>`_
+* `ESSS, Brazil <http://www.esss.com.br>`_
 * many more ... (please be so kind to send a note via :ref:`contact`)

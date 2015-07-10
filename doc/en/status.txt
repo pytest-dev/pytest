@@ -1,5 +1,5 @@
 pytest development status
 ================================
 
-https://drone.io/bitbucket.org/pytest-dev/pytest
+https://travis-ci.org/pytest-dev/pytest
 

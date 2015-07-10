@@ -11,7 +11,7 @@ For doing a release of pytest (status April 2015) this rough checklist is used:
 3. write ``doc/en/announce/release-VERSION.txt``
    (usually copying from an earlier release version).
 
-4. regenerate doc examples with ``tox -e regen`` and check with ``hg diff``
+4. regenerate doc examples with ``tox -e regen`` and check with ``git diff``
    if the differences show regressions.  It's a bit of a manual process because
    there a large part of the diff is about pytest headers or differences in
    speed ("tests took X.Y seconds"). (XXX automate doc/example diffing to ignore
@@ -40,9 +40,9 @@ For doing a release of pytest (status April 2015) this rough checklist is used:
                                # browse to pytest.org to see
 
      devpi push pytest-VERSION pypi:NAME
-     hg ci -m "... finalized pytest-VERSION"
-     hg tag VERSION
-     hg push
+     git commit -a -m "... finalized pytest-VERSION"
+     git tag VERSION
+     git push
 
 9. send out release announcement to pytest-dev@python.org,
     testing-in-python@lists.idyll.org and python-announce-list@python.org .

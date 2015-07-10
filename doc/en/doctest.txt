@@ -15,7 +15,9 @@ python test modules)::
     py.test --doctest-modules
 
 You can make these changes permanent in your project by
-putting them into a pytest.ini file like this::
+putting them into a pytest.ini file like this:
+
+.. code-block:: ini
 
     # content of pytest.ini
     [pytest]

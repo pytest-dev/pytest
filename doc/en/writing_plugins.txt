@@ -239,7 +239,9 @@ When we implement a ``pytest_collection_modifyitems`` function in our plugin
 pytest will during registration verify that you use argument
 names which match the specification and bail out if not.
 
-Let's look at a possible implementation::
+Let's look at a possible implementation:
+
+.. code-block:: python
 
     def pytest_collection_modifyitems(config, items):
         # called after collectin is completed
@@ -315,7 +317,9 @@ For any given hook specification there may be more than one
 implementation and we thus generally view ``hook`` execution as a
 ``1:N`` function call where ``N`` is the number of registered functions.
 There are ways to influence if a hook implementation comes before or
-after others, i.e.  the position in the ``N``-sized list of functions::
+after others, i.e.  the position in the ``N``-sized list of functions:
+
+.. code-block:: python
 
     # Plugin 1
     @pytest.hookimpl_spec(tryfirst=True)

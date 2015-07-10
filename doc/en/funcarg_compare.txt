@@ -205,7 +205,7 @@ fixtures:
   ``request.cached_setup()`` calls and allowed using other funcargs via 
   ``request.getfuncargvalue()`` calls.  These intricate APIs made it hard 
   to do proper parametrization and implement resource caching. The
-  new :py:func:`pytest.fixture`` decorator allows to declare the scope
+  new :py:func:`pytest.fixture` decorator allows to declare the scope
   and let pytest figure things out for you.
 
 * if you used parametrization and funcarg factories which made use of
