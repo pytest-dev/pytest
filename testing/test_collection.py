@@ -116,6 +116,35 @@ class TestCollectFS:
         rec = testdir.inline_run("xyz123/test_2.py")
         rec.assertoutcome(failed=1)
 
+    def test_testpaths_ini(self, testdir, monkeypatch):
+        testdir.makeini("""
+            [pytest]
+            testpaths = gui uts
+        """)
+        tmpdir = testdir.tmpdir
+        tmpdir.ensure("env", "test_1.py").write("def test_env(): pass")
+        tmpdir.ensure("gui", "test_2.py").write("def test_gui(): pass")
+        tmpdir.ensure("uts", "test_3.py").write("def test_uts(): pass")
+
+        # executing from rootdir only tests from `testpaths` directories
+        # are collected
+        items, reprec = testdir.inline_genitems('-v')
+        assert [x.name for x in items] == ['test_gui', 'test_uts']
+
+        # check that explicitly passing directories in the command-line
+        # collects the tests
+        for dirname in ('env', 'gui', 'uts'):
+            items, reprec = testdir.inline_genitems(tmpdir.join(dirname))
+            assert [x.name for x in items] == ['test_%s' % dirname]
+
+        # changing cwd to each subdirectory and running pytest without
+        # arguments collects the tests in that directory normally
+        for dirname in ('env', 'gui', 'uts'):
+            monkeypatch.chdir(testdir.tmpdir.join(dirname))
+            items, reprec = testdir.inline_genitems()
+            assert [x.name for x in items] == ['test_%s' % dirname]
+
+
 class TestCollectPluginHookRelay:
     def test_pytest_collect_file(self, testdir):
         wascalled = []

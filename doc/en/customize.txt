@@ -157,6 +157,25 @@ Builtin configuration file options
    This would tell ``pytest`` to not look into typical subversion or
    sphinx-build directories or into any ``tmp`` prefixed directory.
 
+.. confval:: testpaths
+
+   .. versionadded:: 2.8
+
+   Sets list of directories that should be searched for tests when
+   no specific directories or files are given in the command line when
+   executing pytest from the :ref:`rootdir <rootdir>` directory.
+   Useful when all project tests are in a known location to speed up
+   test collection and to avoid picking up undesired tests by accident.
+
+   .. code-block:: ini
+
+        # content of pytest.ini
+        [pytest]
+        testpaths = testing doc
+
+   This tells pytest to only look for tests in ``testing`` and ``doc``
+   directories when executing from the root directory.
+
 .. confval:: python_files
 
    One or more Glob-style file patterns determining which python files
