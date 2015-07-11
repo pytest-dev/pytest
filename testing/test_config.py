@@ -326,6 +326,19 @@ def test_cmdline_processargs_simple(testdir):
         "*-h*",
     ])
 
+def test_invalid_options_show_extra_information(testdir):
+    """display extra information when pytest exits due to unrecognized
+    options in the command-line"""
+    testdir.makeini("""
+        [pytest]
+        addopts = --invalid-option
+    """)
+    result = testdir.runpytest()
+    result.stderr.fnmatch_lines([
+        "*error: unrecognized arguments: --invalid-option*",
+        "*  inifile: %s*" % testdir.tmpdir.join('tox.ini'),
+        "*  rootdir: %s*" % testdir.tmpdir,
+    ])
 
 @pytest.mark.skipif("sys.platform == 'win32'")
 def test_toolongargs_issue224(testdir):
