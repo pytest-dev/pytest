@@ -64,7 +64,7 @@ _preinit = []
 default_plugins = (
      "mark main terminal runner python pdb unittest capture skipping "
      "tmpdir monkeypatch recwarn pastebin helpconfig nose assertion genscript "
-     "junitxml resultlog doctest").split()
+     "junitxml resultlog doctest cacheprovider").split()
 
 builtin_plugins = set(default_plugins)
 builtin_plugins.add("pytester")

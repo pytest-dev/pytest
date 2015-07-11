@@ -28,6 +28,7 @@ dist/
 *.egg-info
 issue/
 env/
+.env/
 3rdparty/
 .tox
 .cache
