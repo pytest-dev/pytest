@@ -664,6 +664,21 @@ class TestAssertionRewriteHookDetails(object):
             "* 1 passed*",
         ])
 
+    def test_get_data_support(self, testdir):
+        """Implement optional PEP302 api (#808).
+        """
+        path = testdir.mkpydir("foo")
+        path.join("test_foo.py").write(py.code.Source("""
+            class Test:
+                def test_foo(self):
+                    import pkgutil
+                    data = pkgutil.get_data('foo.test_foo', 'data.txt')
+                    assert data == b'Hey'
+        """))
+        path.join('data.txt').write('Hey')
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines('*1 passed*')
+
 
 def test_issue731(testdir):
     testdir.makepyfile("""
