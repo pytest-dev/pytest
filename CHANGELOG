@@ -4,6 +4,11 @@
 - preserve warning functions after call to pytest.deprecated_call. Thanks
   Pieter Mulder for PR.
 
+- fix issue833: --fixtures does not show fixtures defined in test files,
+  except for the first one collected. Thanks Florian Bruhin for reporting
+  and Bruno Oliveira for the PR.
+
+
 2.7.2 (compared to 2.7.1)
 -----------------------------
 
@@ -27,7 +32,7 @@
   Thanks Thomas De Schampheleire for reporting and Bruno Oliveira for the PR.
 
 - fix issue718: failed to create representation of sets containing unsortable
-  elements in python 2. Thanks Edison Gustavo Muenz
+  elements in python 2. Thanks Edison Gustavo Muenz.
 
 - fix issue756, fix issue752 (and similar issues): depend on py-1.4.29
   which has a refined algorithm for traceback generation.
