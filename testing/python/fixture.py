@@ -1379,7 +1379,7 @@ class TestAutouseManagement:
                 yield f, -3
         """)
         reprec = testdir.inline_run()
-        reprec.assertoutcome(passed=2)
+        reprec.assertoutcome(passed=1)
 
 
 

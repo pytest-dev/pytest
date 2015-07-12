@@ -63,9 +63,10 @@ class SessionTests:
             def test_1():
                 yield None
         """)
-        failures = reprec.getfailedcollections()
-        out = failures[0].longrepr.reprcrash.message
-        i = out.find('TypeError')
+        passed, skipped, failed = reprec.listoutcomes()
+        assert len(failed) == 1
+        out = failed[0].longrepr.reprcrash.message
+        i = out.find('not a check')
         assert i != -1
 
     def test_syntax_error_module(self, testdir):

@@ -142,6 +142,8 @@ def test_nose_setup_partial(testdir):
     ])
 
 
+@pytest.mark.xfail(
+    reason='generator tests dont hook into setup/teardown')
 def test_nose_test_generator_fixtures(testdir):
     p = testdir.makepyfile("""
         # taken from nose-0.11.1 unit_tests/test_generator_fixtures.py

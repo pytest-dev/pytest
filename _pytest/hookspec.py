@@ -156,6 +156,10 @@ def pytest_pycollect_makeitem(collector, name, obj):
 def pytest_pyfunc_call(pyfuncitem):
     """ call underlying test function. """
 
+@hookspec(firstresult=True)
+def pytest_pyfunc_interpret_result(pyfuncitem, result):
+    """ interpret the return value of the underlying test function. """
+
 def pytest_generate_tests(metafunc):
     """ generate (multiple) parametrized calls to a test function."""
 
