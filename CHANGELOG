@@ -1,6 +1,11 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
+- fix issue 808: pytest's internal assertion rewrite hook now implements the
+  optional PEP302 get_data API so tests can access data files next to them.
+  Thanks xmo-odoo for request and example and Bruno Oliveira for
+  the PR.
+
 - rootdir and inifile are now displayed during usage errors to help
   users diagnose problems such as unexpected ini files which add
   unknown options being picked up by pytest. Thanks to Pavel Savchenko for

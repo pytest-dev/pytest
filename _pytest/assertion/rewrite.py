@@ -197,6 +197,12 @@ class AssertionRewritingHook(object):
         #  DefaultProvider is appropriate.
         pkg_resources.register_loader_type(cls, pkg_resources.DefaultProvider)
 
+    def get_data(self, pathname):
+        """Optional PEP302 get_data API.
+        """
+        with open(pathname, 'rb') as f:
+            return f.read()
+
 
 def _write_pyc(state, co, source_stat, pyc):
     # Technically, we don't have to have the same pyc format as
