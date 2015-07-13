@@ -1,6 +1,9 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
+- fix issue768: docstrings found in python modules were not setting up session
+  fixtures. Thanks Jason R. Coombs for reporting and Bruno Oliveira for the PR.
+
 - fix issue 808: pytest's internal assertion rewrite hook now implements the
   optional PEP302 get_data API so tests can access data files next to them.
   Thanks xmo-odoo for request and example and Bruno Oliveira for
