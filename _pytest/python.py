@@ -939,21 +939,13 @@ def showfixtures(config):
 def _showfixtures_main(config, session):
     session.perform_collect()
     curdir = py.path.local()
-    if session.items:
-        nodeid = session.items[0].nodeid
-    else:
-        part = session._initialparts[0]
-        nodeid = "::".join(map(str, [curdir.bestrelpath(part[0])] + part[1:]))
-        nodeid.replace(session.fspath.sep, "/")
-
     tw = py.io.TerminalWriter()
     verbose = config.getvalue("verbose")
 
     fm = session._fixturemanager
 
     available = []
-    for argname in fm._arg2fixturedefs:
-        fixturedefs = fm.getfixturedefs(argname, nodeid)
+    for argname, fixturedefs in fm._arg2fixturedefs.items():
         assert fixturedefs is not None
         if not fixturedefs:
             continue
