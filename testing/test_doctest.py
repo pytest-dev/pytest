@@ -368,3 +368,36 @@ class TestDoctests:
         reprec = testdir.inline_run(p, "--doctest-modules",
                                     "--junit-xml=junit.xml")
         reprec.assertoutcome(failed=1)
+
+    def test_doctest_module_session_fixture(self, testdir):
+        """Test that session fixtures are initialized for doctest modules (#768)
+        """
+        # session fixture which changes some global data, which will
+        # be accessed by doctests in a module
+        testdir.makeconftest("""
+            import pytest
+            import sys
+
+            @pytest.yield_fixture(autouse=True, scope='session')
+            def myfixture():
+                assert not hasattr(sys, 'pytest_session_data')
+                sys.pytest_session_data = 1
+                yield
+                del sys.pytest_session_data
+        """)
+        testdir.makepyfile(foo="""
+            import sys
+
+            def foo():
+              '''
+              >>> assert sys.pytest_session_data == 1
+              '''
+
+            def bar():
+              '''
+              >>> assert sys.pytest_session_data == 1
+              '''
+        """)
+        result = testdir.runpytest("--doctest-modules")
+        result.stdout.fnmatch_lines('*2 passed*')
+

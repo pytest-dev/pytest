@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 import traceback
 import pytest, py
-from _pytest.python import FixtureRequest, FuncFixtureInfo
+from _pytest.python import FixtureRequest
 from py._code.code import TerminalRepr, ReprFileLocation
 
 def pytest_addoption(parser):
@@ -113,15 +113,7 @@ def get_optionflags(parent):
 class DoctestTextfile(DoctestItem, pytest.File):
     def runtest(self):
         import doctest
-        # satisfy `FixtureRequest` constructor...
-        self.funcargs = {}
-        fm = self.session._fixturemanager
-        def func():
-            pass
-        self._fixtureinfo = fm.getfixtureinfo(node=self, func=func,
-                                              cls=None, funcargs=False)
-        fixture_request = FixtureRequest(self)
-        fixture_request._fillfixtures()
+        fixture_request = _setup_fixtures(self)
         failed, tot = doctest.testfile(
             str(self.fspath), module_relative=False,
             optionflags=get_optionflags(self),
@@ -132,7 +124,7 @@ class DoctestModule(pytest.File):
     def collect(self):
         import doctest
         if self.fspath.basename == "conftest.py":
-            module = self.config._conftest._importconftest(self.fspath)
+            module = self.config.pluginmanager._importconftest(self.fspath)
         else:
             try:
                 module = self.fspath.pyimport()
@@ -142,9 +134,7 @@ class DoctestModule(pytest.File):
                 else:
                     raise
         # satisfy `FixtureRequest` constructor...
-        self.funcargs = {}
-        self._fixtureinfo = FuncFixtureInfo((), [], {})
-        fixture_request = FixtureRequest(self)
+        fixture_request = _setup_fixtures(self)
         doctest_globals = dict(getfixture=fixture_request.getfuncargvalue)
         # uses internal doctest module parsing mechanism
         finder = doctest.DocTestFinder()
@@ -154,3 +144,19 @@ class DoctestModule(pytest.File):
                                 extraglobs=doctest_globals):
             if test.examples:  # skip empty doctests
                 yield DoctestItem(test.name, self, runner, test)
+
+
+def _setup_fixtures(doctest_item):
+    """
+    Used by DoctestTextfile and DoctestModule to setup fixture information.
+    """
+    def func():
+        pass
+
+    doctest_item.funcargs = {}
+    fm = doctest_item.session._fixturemanager
+    doctest_item._fixtureinfo = fm.getfixtureinfo(node=doctest_item, func=func,
+                                                  cls=None, funcargs=False)
+    fixture_request = FixtureRequest(doctest_item)
+    fixture_request._fillfixtures()
+    return fixture_request
