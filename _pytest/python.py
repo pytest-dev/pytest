@@ -1,5 +1,6 @@
 """ Python test discovery, setup and run of test functions. """
 import fnmatch
+import functools
 import py
 import inspect
 import sys
@@ -24,7 +25,7 @@ def get_real_func(obj):
     """
     while hasattr(obj, "__wrapped__"):
         obj = obj.__wrapped__
-    if isinstance(obj, py.std.functools.partial):
+    if isinstance(obj, functools.partial):
         obj = obj.func
     return obj
 
@@ -603,10 +604,7 @@ class FunctionMixin(PyobjMixin):
 
     def _prunetraceback(self, excinfo):
         if hasattr(self, '_obj') and not self.config.option.fulltrace:
-            if isinstance(self.obj, py.std.functools.partial):
-                code = py.code.Code(self.obj.func)
-            else:
-                code = py.code.Code(self.obj)
+            code = py.code.Code(get_real_func(self.obj))
             path, firstlineno = code.path, code.firstlineno
             traceback = excinfo.traceback
             ntraceback = traceback.cut(path=path, firstlineno=firstlineno)
@@ -1949,7 +1947,7 @@ def getfuncargnames(function, startindex=None):
     if realfunction != function:
         startindex += num_mock_patch_args(function)
         function = realfunction
-    if isinstance(function, py.std.functools.partial):
+    if isinstance(function, functools.partial):
         argnames = inspect.getargs(py.code.getrawcode(function.func))[0]
         partial = function
         argnames = argnames[len(partial.args):]
