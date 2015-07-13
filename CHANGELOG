@@ -4,9 +4,9 @@
 - preserve warning functions after call to pytest.deprecated_call. Thanks
   Pieter Mulder for PR.
 
-- fix issue833: --fixtures does not show fixtures defined in test files,
-  except for the first one collected. Thanks Florian Bruhin for reporting
-  and Bruno Oliveira for the PR.
+- fix issue833: --fixtures now shows all fixtures of collected test files, instead of just the
+  fixtures declared on the first one.
+  Thanks Florian Bruhin for reporting and Bruno Oliveira for the PR.
 
 
 2.7.2 (compared to 2.7.1)
