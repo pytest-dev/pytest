@@ -274,6 +274,11 @@ using the ``--pytest-args`` or ``-a`` command-line option. For example::
 
 is equivalent to running ``py.test --durations=5``.
 
+.. seealso::
+
+    For a more powerful solution, take a look at the
+    `pytest-runner <https://pypi.python.org/pypi/pytest-runner>`_ plugin.
+
 .. _`test discovery`:
 .. _`Python test discovery`:
 
