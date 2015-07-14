@@ -12,6 +12,12 @@
   fixtures declared on the first one.
   Thanks Florian Bruhin for reporting and Bruno Oliveira for the PR.
 
+- optimized tmpdir fixture initialization, which should make test sessions
+  faster (specially when using pytest-xdist). The only visible effect
+  is that now pytest uses a subdirectory in the $TEMP directory for all
+  directories created by this fixture (defaults to $TEMP/pytest-$USER).
+  Thanks Bruno Oliveira for the PR.
+
 
 2.7.2 (compared to 2.7.1)
 -----------------------------
