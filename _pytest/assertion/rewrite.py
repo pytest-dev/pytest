@@ -775,10 +775,7 @@ class AssertionRewriter(ast.NodeVisitor):
         new_kwargs = []
         for arg in call.args:
             res, expl = self.visit(arg)
-            if type(arg) is ast.Starred:
-                arg_expls.append("*" + expl)
-            else:
-                arg_expls.append(expl)
+            arg_expls.append(expl)
             new_args.append(res)
         for keyword in call.keywords:
             res, expl = self.visit(keyword.value)
@@ -794,6 +791,11 @@ class AssertionRewriter(ast.NodeVisitor):
         res_expl = self.explanation_param(self.display(res))
         outer_expl = "%s\n{%s = %s\n}" % (res_expl, res_expl, expl)
         return res, outer_expl
+
+    def visit_Starred(self, starred):
+        # From Python 3.5, a Starred node can appear in a function call
+        res, expl = self.visit(starred.value)
+        return starred, '*' + expl
 
     def visit_Call_legacy(self, call):
         """
