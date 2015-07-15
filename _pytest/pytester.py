@@ -309,16 +309,18 @@ class HookRecorder:
         self.calls[:] = []
 
 
-def pytest_funcarg__linecomp(request):
+@pytest.fixture
+def linecomp(request):
     return LineComp()
+
 
 def pytest_funcarg__LineMatcher(request):
     return LineMatcher
 
-def pytest_funcarg__testdir(request):
-    tmptestdir = Testdir(request)
-    return tmptestdir
 
+@pytest.fixture
+def testdir(request, tmpdir_factory):
+    return Testdir(request, tmpdir_factory)
 
 
 rex_outcome = re.compile("(\d+) (\w+)")
@@ -388,10 +390,10 @@ class Testdir:
 
     """
 
-    def __init__(self, request):
+    def __init__(self, request, tmpdir_factory):
         self.request = request
         # XXX remove duplication with tmpdir plugin
-        basetmp = request.config._tmpdirhandler.ensuretemp("testdir")
+        basetmp = tmpdir_factory.ensuretemp("testdir")
         name = request.function.__name__
         for i in range(100):
             try:

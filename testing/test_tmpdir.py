@@ -1,7 +1,7 @@
 import py
 import pytest
 
-from _pytest.tmpdir import tmpdir, TempdirHandler
+from _pytest.tmpdir import tmpdir, TempdirFactory
 
 def test_funcarg(testdir):
     testdir.makepyfile("""
@@ -13,16 +13,15 @@ def test_funcarg(testdir):
     reprec = testdir.inline_run()
     calls = reprec.getcalls("pytest_runtest_setup")
     item = calls[0].item
-    # pytest_unconfigure has deleted the TempdirHandler already
     config = item.config
-    config._tmpdirhandler = TempdirHandler(config)
+    tmpdirhandler = TempdirFactory(config)
     item._initrequest()
-    p = tmpdir(item._request)
+    p = tmpdir(item._request, tmpdirhandler)
     assert p.check()
     bn = p.basename.strip("0123456789")
     assert bn.endswith("test_func_a_")
     item.name = "qwe/\\abc"
-    p = tmpdir(item._request)
+    p = tmpdir(item._request, tmpdirhandler)
     assert p.check()
     bn = p.basename.strip("0123456789")
     assert bn == "qwe__abc"
@@ -38,7 +37,7 @@ class TestTempdirHandler:
     def test_mktemp(self, testdir):
         config = testdir.parseconfig()
         config.option.basetemp = testdir.mkdir("hello")
-        t = TempdirHandler(config)
+        t = TempdirFactory(config)
         tmp = t.mktemp("world")
         assert tmp.relto(t.getbasetemp()) == "world0"
         tmp = t.mktemp("this")
@@ -49,17 +48,19 @@ class TestTempdirHandler:
 
 class TestConfigTmpdir:
     def test_getbasetemp_custom_removes_old(self, testdir):
-        p = testdir.tmpdir.join("xyz")
-        config = testdir.parseconfigure("--basetemp=xyz")
-        b = config._tmpdirhandler.getbasetemp()
-        assert b == p
-        h = b.ensure("hello")
-        config._tmpdirhandler.getbasetemp()
-        assert h.check()
-        config = testdir.parseconfigure("--basetemp=xyz")
-        b2 = config._tmpdirhandler.getbasetemp()
-        assert b2.check()
-        assert not h.check()
+        mytemp = testdir.tmpdir.join("xyz")
+        p = testdir.makepyfile("""
+            def test_1(tmpdir):
+                pass
+        """)
+        testdir.runpytest(p, '--basetemp=%s' % mytemp)
+        mytemp.check()
+        mytemp.ensure("hello")
+
+        testdir.runpytest(p, '--basetemp=%s' % mytemp)
+        mytemp.check()
+        assert not mytemp.join("hello").check()
+
 
 def test_basetemp(testdir):
     mytemp = testdir.tmpdir.mkdir("mytemp")

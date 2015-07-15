@@ -5,10 +5,10 @@
 Temporary directories and files
 ================================================
 
-The 'tmpdir' test function argument
------------------------------------
+The 'tmpdir' fixture
+--------------------
 
-You can use the ``tmpdir`` function argument which will
+You can use the ``tmpdir`` fixture which will
 provide a temporary directory unique to the test invocation,
 created in the `base temporary directory`_.
 
@@ -50,6 +50,44 @@ Running this would result in a passed test except for the last
     
     test_tmpdir.py:7: AssertionError
     ======= 1 failed in 0.12 seconds ========
+
+
+The 'tmpdir_factory' fixture
+----------------------------
+
+.. versionadded:: 2.8
+
+The ``tmpdir_factory`` is a session-scoped fixture which can be used
+to create arbitrary temporary directories from any other fixture or test.
+
+For example, suppose your test suite needs a large image on disk, which is
+generated procedurally. Instead of computing the same image for each test
+that uses it into its own ``tmpdir``, you can generate it once per-session
+to save time:
+
+.. code-block:: python
+
+    # contents of conftest.py
+    import pytest
+
+    @pytest.fixture(scope='session')
+    def image_file(tmpdir_factory):
+        img = compute_expensive_image()
+        fn = tmpdir_factory.mktemp('data').join('img.png')
+        img.save(str(fn))
+        return fn
+
+    # contents of test_image.py
+    def test_histogram(image_file):
+        img = load_image(image_file)
+        # compute and test histogram
+
+``tmpdir_factory`` instances have the following methods:
+
+.. currentmodule:: _pytest.tmpdir
+
+.. automethod:: TempdirFactory.mktemp
+.. automethod:: TempdirFactory.getbasetemp
 
 .. _`base temporary directory`:
 

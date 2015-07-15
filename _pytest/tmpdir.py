@@ -6,7 +6,12 @@ import py
 from _pytest.monkeypatch import monkeypatch
 
 
-class TempdirHandler:
+class TempdirFactory:
+    """Factory for temporary directories under the common base temp directory.
+
+    The base directory can be configured using the ``--basetemp`` option.
+    """
+
     def __init__(self, config):
         self.config = config
         self.trace = config.trace.get("tmpdir")
@@ -22,6 +27,10 @@ class TempdirHandler:
         return self.getbasetemp().ensure(string, dir=dir)
 
     def mktemp(self, basename, numbered=True):
+        """Create a subdirectory of the base temporary directory and return it.
+        If ``numbered``, ensure the directory is unique by adding a number
+        prefix greater than any existing one.
+        """
         basetemp = self.getbasetemp()
         if not numbered:
             p = basetemp.mkdir(basename)
@@ -51,15 +60,33 @@ class TempdirHandler:
     def finish(self):
         self.trace("finish")
 
+# backward compatibility
+TempdirHandler = TempdirFactory
+
+
 def pytest_configure(config):
+    """Create a TempdirFactory and attach it to the config object.
+
+    This is to comply with existing plugins which expect the handler to be
+    available at pytest_configure time, but ideally should be moved entirely
+    to the tmpdir_factory session fixture.
+    """
     mp = monkeypatch()
-    t = TempdirHandler(config)
+    t = TempdirFactory(config)
     config._cleanup.extend([mp.undo, t.finish])
     mp.setattr(config, '_tmpdirhandler', t, raising=False)
     mp.setattr(pytest, 'ensuretemp', t.ensuretemp, raising=False)
 
+
+@pytest.fixture(scope='session')
+def tmpdir_factory(request):
+    """Return a TempdirFactory instance for the test session.
+    """
+    return request.config._tmpdirhandler
+
+
 @pytest.fixture
-def tmpdir(request):
+def tmpdir(request, tmpdir_factory):
     """return a temporary directory path object
     which is unique to each test function invocation,
     created as a sub directory of the base temporary
@@ -71,5 +98,5 @@ def tmpdir(request):
     MAXVAL = 30
     if len(name) > MAXVAL:
         name = name[:MAXVAL]
-    x = request.config._tmpdirhandler.mktemp(name, numbered=True)
+    x = tmpdir_factory.mktemp(name, numbered=True)
     return x

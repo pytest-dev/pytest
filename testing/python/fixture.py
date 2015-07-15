@@ -555,7 +555,8 @@ class TestRequestBasic:
                 pass
             def test_function(request, farg):
                 assert set(get_public_names(request.fixturenames)) == \
-                       set(["tmpdir", "sarg", "arg1", "request", "farg"])
+                       set(["tmpdir", "sarg", "arg1", "request", "farg",
+                            "tmpdir_factory"])
         """)
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
