@@ -1,6 +1,12 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
+- optimized tmpdir fixture initialization, which should make test sessions
+  faster (specially when using pytest-xdist). The only visible effect
+  is that now pytest uses a subdirectory in the $TEMP directory for all
+  directories created by this fixture (defaults to $TEMP/pytest-$USER).
+  Thanks Bruno Oliveira for the PR.
+
 - fix issue768: docstrings found in python modules were not setting up session
   fixtures. Thanks Jason R. Coombs for reporting and Bruno Oliveira for the PR.
 
