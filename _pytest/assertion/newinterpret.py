@@ -33,6 +33,12 @@ else:
     def _is_ast_stmt(node):
         return isinstance(node, ast.stmt)
 
+try:
+    _Starred = ast.Starred
+except AttributeError:
+    # Python 2. Define a dummy class so isinstance() will always be False.
+    class _Starred(object): pass
+
 
 class Failure(Exception):
     """Error found while interpreting AST."""
@@ -232,7 +238,7 @@ class DebugInterpreter(ast.NodeVisitor):
         arguments = []
         for arg in call.args:
             arg_explanation, arg_result = self.visit(arg)
-            if type(arg) is ast.Starred:
+            if isinstance(arg, _Starred):
                 arg_name = "__exprinfo_star"
                 ns[arg_name] = arg_result
                 arguments.append("*%s" % (arg_name,))
