@@ -1,7 +1,7 @@
 import py
 import pytest
 
-from _pytest.tmpdir import tmpdir, TempdirFactory
+from _pytest.tmpdir import tmpdir
 
 def test_funcarg(testdir):
     testdir.makepyfile("""
@@ -10,6 +10,7 @@ def test_funcarg(testdir):
                 metafunc.addcall(id='b')
             def test_func(tmpdir): pass
     """)
+    from _pytest.tmpdir import TempdirFactory
     reprec = testdir.inline_run()
     calls = reprec.getcalls("pytest_runtest_setup")
     item = calls[0].item
@@ -35,6 +36,7 @@ def test_ensuretemp(recwarn):
 
 class TestTempdirHandler:
     def test_mktemp(self, testdir):
+        from _pytest.tmpdir import TempdirFactory
         config = testdir.parseconfig()
         config.option.basetemp = testdir.mkdir("hello")
         t = TempdirFactory(config)
