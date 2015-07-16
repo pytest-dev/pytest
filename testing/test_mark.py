@@ -531,6 +531,39 @@ class TestFunctional:
                                 if isinstance(v, MarkInfo)])
             assert marker_names == set(expected_markers)
 
+    def test_class_makker_applies_to_its_own_methods_only(self, testdir):
+        """Check that markers applied using class decorators apply markers
+        only to methods defined in the class itself but not to methods
+        in super classes (#725).
+        """
+        testdir.makepyfile("""
+            import pytest
+
+            class Base:
+                def test_base(self):
+                    pass
+
+            @pytest.mark.a
+            class Test1(Base):
+                def test_foo(self):
+                    pass
+
+            @pytest.mark.b
+            class Test2(Base):
+                def test_bar(self):
+                    pass
+        """)
+        result = testdir.runpytest('--collect-only', '-m', 'a')
+        result.stdout.fnmatch_lines([
+            '*test_foo*',
+            '*3 deselected*'
+        ])
+        result = testdir.runpytest('--collect-only', '-m', 'b')
+        result.stdout.fnmatch_lines([
+            '*test_bar*',
+            '*3 deselected*'
+        ])
+
 
 class TestKeywordSelection:
     def test_select_simple(self, testdir):

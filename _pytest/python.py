@@ -483,16 +483,23 @@ class FuncFixtureInfo:
 def transfer_markers(funcobj, cls, mod):
     # XXX this should rather be code in the mark plugin or the mark
     # plugin should merge with the python plugin.
-    for holder in (cls, mod):
+    def transfer(holder):
         try:
             pytestmark = holder.pytestmark
         except AttributeError:
-            continue
-        if isinstance(pytestmark, list):
-            for mark in pytestmark:
-                mark(funcobj)
+            pass
         else:
-            pytestmark(funcobj)
+            if isinstance(pytestmark, list):
+                for mark in pytestmark:
+                    mark(funcobj)
+            else:
+                pytestmark(funcobj)
+
+    # transfer markers from class decorators only if the method is defined
+    # in the class itself
+    if cls is not None and funcobj.__name__ in cls.__dict__:
+        transfer(cls)
+    transfer(mod)
 
 class Module(pytest.File, PyCollector):
     """ Collector for test classes and functions. """

@@ -33,6 +33,11 @@
   all directories that do not contain tests.
   Thanks to Adrian for idea (#694) and Bruno Oliveira for the PR.
 
+- fix issue725: pytest.mark in class decorators will mark methods defined
+  in the class body only, instead of propagating marks to the superclass'
+  test methods.
+  Thanks to foobarbazquux for the report and Bruno Oliveira for the PR.
+
 - fix issue713: JUnit XML reports for doctest failures.
   Thanks Punyashloka Biswal.
 
