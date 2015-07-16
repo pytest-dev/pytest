@@ -37,8 +37,8 @@ ASCII_IS_DEFAULT_ENCODING = sys.version_info[0] < 3
 
 if sys.version_info >= (3,5):
     ast_Call = ast.Call
-else :
-    ast_Call = lambda a,b,c : ast.Call(a, b, c, None, None)
+else:
+    ast_Call = lambda a,b,c: ast.Call(a, b, c, None, None)
 
 
 class AssertionRewritingHook(object):
