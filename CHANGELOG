@@ -4,6 +4,13 @@
 - fix issue768: docstrings found in python modules were not setting up session
   fixtures. Thanks Jason R. Coombs for reporting and Bruno Oliveira for the PR.
 
+- added `tmpdir_factory`, a session-scoped fixture that can be used to create
+  directories under the base temporary directory. Previously this object was
+  installed as a `_tmpdirhandler` attribute of the `config` object, but now it
+  is part of the official API and using `config._tmpdirhandler` is
+  deprecated.
+  Thanks Bruno Oliveira for the PR.
+
 - fix issue 808: pytest's internal assertion rewrite hook now implements the
   optional PEP302 get_data API so tests can access data files next to them.
   Thanks xmo-odoo for request and example and Bruno Oliveira for
