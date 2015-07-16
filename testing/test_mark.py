@@ -369,6 +369,45 @@ class TestFunctional:
             print (item, item.keywords)
             assert 'a' in item.keywords
 
+    def test_mark_decorator_subclass_does_not_propagate_to_base(self, testdir):
+        p = testdir.makepyfile("""
+            import pytest
+
+            @pytest.mark.a
+            class Base: pass
+
+            @pytest.mark.b
+            class Test1(Base):
+                def test_foo(self): pass
+
+            class Test2(Base):
+                def test_bar(self): pass
+        """)
+        items, rec = testdir.inline_genitems(p)
+        self.assert_markers(items, test_foo=('a', 'b'), test_bar=('a',))
+
+    def test_mark_decorator_baseclasses_merged(self, testdir):
+        p = testdir.makepyfile("""
+            import pytest
+
+            @pytest.mark.a
+            class Base: pass
+
+            @pytest.mark.b
+            class Base2(Base): pass
+
+            @pytest.mark.c
+            class Test1(Base2):
+                def test_foo(self): pass
+
+            class Test2(Base2):
+                @pytest.mark.d
+                def test_bar(self): pass
+        """)
+        items, rec = testdir.inline_genitems(p)
+        self.assert_markers(items, test_foo=('a', 'b', 'c'),
+                            test_bar=('a', 'b', 'd'))
+
     def test_mark_with_wrong_marker(self, testdir):
         reprec = testdir.inline_runsource("""
                 import pytest
@@ -476,6 +515,22 @@ class TestFunctional:
         """)
         reprec = testdir.inline_run("-m", "mark1")
         reprec.assertoutcome(passed=1)
+
+    def assert_markers(self, items, **expected):
+        """assert that given items have expected marker names applied to them.
+        expected should be a dict of (item name -> seq of expected marker names)
+
+        .. note:: this could be moved to ``testdir`` if proven to be useful
+        to other modules.
+        """
+        from _pytest.mark import MarkInfo
+        items = dict((x.name, x) for x in items)
+        for name, expected_markers in expected.items():
+            markers = items[name].keywords._markers
+            marker_names = set([name for (name, v) in markers.items()
+                                if isinstance(v, MarkInfo)])
+            assert marker_names == set(expected_markers)
+
 
 class TestKeywordSelection:
     def test_select_simple(self, testdir):

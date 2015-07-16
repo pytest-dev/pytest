@@ -1,6 +1,10 @@
 2.7.3 (compared to 2.7.2)
 -----------------------------
 
+- fix issue842: applying markers in classes no longer propagate this markers
+  to superclasses which also have markers.
+  Thanks xmo-odoo for the report and Bruno Oliveira for the PR.
+
 - preserve warning functions after call to pytest.deprecated_call. Thanks
   Pieter Mulder for PR.
 
