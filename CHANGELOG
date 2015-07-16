@@ -9,6 +9,10 @@
   Thanks xmo-odoo for request and example and Bruno Oliveira for
   the PR.
 
+- fix issue842: applying markers in classes no longer propagate this markers
+  to superclasses which also have markers.
+  Thanks xmo-odoo for the report and Bruno Oliveira for the PR.
+
 - rootdir and inifile are now displayed during usage errors to help
   users diagnose problems such as unexpected ini files which add
   unknown options being picked up by pytest. Thanks to Pavel Savchenko for
