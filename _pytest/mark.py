@@ -1,4 +1,5 @@
 """ generic mechanism for marking and selecting python functions. """
+import inspect
 import py
 
 
@@ -253,15 +254,17 @@ class MarkDecorator:
             otherwise add *args/**kwargs in-place to mark information. """
         if args and not kwargs:
             func = args[0]
-            if len(args) == 1 and (istestfunc(func) or
-                                   hasattr(func, '__bases__')):
-                if hasattr(func, '__bases__'):
+            is_class = inspect.isclass(func)
+            if len(args) == 1 and (istestfunc(func) or is_class):
+                if is_class:
                     if hasattr(func, 'pytestmark'):
-                        l = func.pytestmark
-                        if not isinstance(l, list):
-                            func.pytestmark = [l, self]
-                        else:
-                            l.append(self)
+                        mark_list = func.pytestmark
+                        if not isinstance(mark_list, list):
+                            mark_list = [mark_list]
+                        # always work on a copy to avoid updating pytestmark
+                        # from a superclass by accident
+                        mark_list = mark_list + [self]
+                        func.pytestmark = mark_list
                     else:
                         func.pytestmark = [self]
                 else:
