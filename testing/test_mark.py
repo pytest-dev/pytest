@@ -525,7 +525,7 @@ class TestFunctional:
         for name, expected_markers in expected.items():
             markers = items[name].keywords._markers
             marker_names = set([name for (name, v) in markers.items()
-                                if type(v) is MarkInfo])
+                                if isinstance(v, MarkInfo)])
             assert marker_names == set(expected_markers)
 
 
