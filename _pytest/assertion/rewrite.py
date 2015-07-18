@@ -35,6 +35,12 @@ PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
 REWRITE_NEWLINES = sys.version_info[:2] != (2, 7) and sys.version_info < (3, 2)
 ASCII_IS_DEFAULT_ENCODING = sys.version_info[0] < 3
 
+if sys.version_info >= (3,5):
+    ast_Call = ast.Call
+else:
+    ast_Call = lambda a,b,c: ast.Call(a, b, c, None, None)
+
+
 class AssertionRewritingHook(object):
     """PEP302 Import hook which rewrites asserts."""
 
@@ -587,7 +593,7 @@ class AssertionRewriter(ast.NodeVisitor):
         """Call a helper in this module."""
         py_name = ast.Name("@pytest_ar", ast.Load())
         attr = ast.Attribute(py_name, "_" + name, ast.Load())
-        return ast.Call(attr, list(args), [], None, None)
+        return ast_Call(attr, list(args), [])
 
     def builtin(self, name):
         """Return the builtin called *name*."""
@@ -677,7 +683,7 @@ class AssertionRewriter(ast.NodeVisitor):
         msg = self.pop_format_context(template)
         fmt = self.helper("format_explanation", msg)
         err_name = ast.Name("AssertionError", ast.Load())
-        exc = ast.Call(err_name, [fmt], [], None, None)
+        exc = ast_Call(err_name, [fmt], [])
         if sys.version_info[0] >= 3:
             raise_ = ast.Raise(exc, None)
         else:
@@ -697,7 +703,7 @@ class AssertionRewriter(ast.NodeVisitor):
     def visit_Name(self, name):
         # Display the repr of the name if it's a local variable or
         # _should_repr_global_name() thinks it's acceptable.
-        locs = ast.Call(self.builtin("locals"), [], [], None, None)
+        locs = ast_Call(self.builtin("locals"), [], [])
         inlocs = ast.Compare(ast.Str(name.id), [ast.In()], [locs])
         dorepr = self.helper("should_repr_global_name", name)
         test = ast.BoolOp(ast.Or(), [inlocs, dorepr])
@@ -724,7 +730,7 @@ class AssertionRewriter(ast.NodeVisitor):
             res, expl = self.visit(v)
             body.append(ast.Assign([ast.Name(res_var, ast.Store())], res))
             expl_format = self.pop_format_context(ast.Str(expl))
-            call = ast.Call(app, [expl_format], [], None, None)
+            call = ast_Call(app, [expl_format], [])
             self.on_failure.append(ast.Expr(call))
             if i < levels:
                 cond = res
@@ -753,7 +759,42 @@ class AssertionRewriter(ast.NodeVisitor):
         res = self.assign(ast.BinOp(left_expr, binop.op, right_expr))
         return res, explanation
 
-    def visit_Call(self, call):
+    def visit_Call_35(self, call):
+        """
+        visit `ast.Call` nodes on Python3.5 and after
+        """
+        new_func, func_expl = self.visit(call.func)
+        arg_expls = []
+        new_args = []
+        new_kwargs = []
+        for arg in call.args:
+            res, expl = self.visit(arg)
+            arg_expls.append(expl)
+            new_args.append(res)
+        for keyword in call.keywords:
+            res, expl = self.visit(keyword.value)
+            new_kwargs.append(ast.keyword(keyword.arg, res))
+            if keyword.arg:
+                arg_expls.append(keyword.arg + "=" + expl)
+            else: ## **args have `arg` keywords with an .arg of None
+                arg_expls.append("**" + expl)
+
+        expl = "%s(%s)" % (func_expl, ', '.join(arg_expls))
+        new_call = ast.Call(new_func, new_args, new_kwargs)
+        res = self.assign(new_call)
+        res_expl = self.explanation_param(self.display(res))
+        outer_expl = "%s\n{%s = %s\n}" % (res_expl, res_expl, expl)
+        return res, outer_expl
+
+    def visit_Starred(self, starred):
+        # From Python 3.5, a Starred node can appear in a function call
+        res, expl = self.visit(starred.value)
+        return starred, '*' + expl
+
+    def visit_Call_legacy(self, call):
+        """
+        visit `ast.Call nodes on 3.4 and below`
+        """
         new_func, func_expl = self.visit(call.func)
         arg_expls = []
         new_args = []
@@ -780,6 +821,15 @@ class AssertionRewriter(ast.NodeVisitor):
         res_expl = self.explanation_param(self.display(res))
         outer_expl = "%s\n{%s = %s\n}" % (res_expl, res_expl, expl)
         return res, outer_expl
+
+    # ast.Call signature changed on 3.5,
+    # conditionally change  which methods is named
+    # visit_Call depending on Python version
+    if sys.version_info >= (3, 5):
+        visit_Call = visit_Call_35
+    else:
+        visit_Call = visit_Call_legacy
+
 
     def visit_Attribute(self, attr):
         if not isinstance(attr.ctx, ast.Load):

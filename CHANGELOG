@@ -1,6 +1,10 @@
 2.7.3 (compared to 2.7.2)
 -----------------------------
 
+- fix issue744: fix for ast.Call changes in Python 3.5+.  Thanks
+  Guido van Rossum, Matthias Bussonnier, Stefan Zimmermann and
+  Thomas Kluyver.
+
 - fix issue842: applying markers in classes no longer propagate this markers
   to superclasses which also have markers.
   Thanks xmo-odoo for the report and Bruno Oliveira for the PR.
