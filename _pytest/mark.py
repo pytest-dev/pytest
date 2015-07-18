@@ -1,6 +1,5 @@
 """ generic mechanism for marking and selecting python functions. """
 import inspect
-import py
 
 
 class MarkerError(Exception):

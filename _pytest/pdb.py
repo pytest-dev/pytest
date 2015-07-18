@@ -4,7 +4,6 @@ import pdb
 import sys
 
 import pytest
-import py
 
 
 def pytest_addoption(parser):
