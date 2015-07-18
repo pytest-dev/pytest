@@ -66,9 +66,10 @@ def pytest_addoption(parser):
         help="create standalone pytest script at given target path.")
 
 def pytest_cmdline_main(config):
+    import _pytest.config
     genscript = config.getvalue("genscript")
     if genscript:
-        tw = py.io.TerminalWriter()
+        tw = _pytest.config.create_terminal_writer(config)
         deps =  ['py', '_pytest', 'pytest']
         if sys.version_info < (2,7):
             deps.append("argparse")

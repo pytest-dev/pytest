@@ -947,9 +947,10 @@ def showfixtures(config):
     return wrap_session(config, _showfixtures_main)
 
 def _showfixtures_main(config, session):
+    import _pytest.config
     session.perform_collect()
     curdir = py.path.local()
-    tw = py.io.TerminalWriter()
+    tw = _pytest.config.create_terminal_writer(config)
     verbose = config.getvalue("verbose")
 
     fm = session._fixturemanager
