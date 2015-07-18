@@ -80,7 +80,10 @@ def _prepareconfig(args=None, plugins=None):
     try:
         if plugins:
             for plugin in plugins:
-                pluginmanager.register(plugin)
+                if isinstance(plugin, py.builtin._basestring):
+                    pluginmanager.consider_pluginarg(plugin)
+                else:
+                    pluginmanager.register(plugin)
         return pluginmanager.hook.pytest_cmdline_parse(
                 pluginmanager=pluginmanager, args=args)
     except Exception:
