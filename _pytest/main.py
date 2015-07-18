@@ -498,10 +498,12 @@ class Item(Node):
 class NoMatch(Exception):
     """ raised if matching cannot locate a matching names. """
 
+class Interrupted(KeyboardInterrupt):
+    """ signals an interrupted test run. """
+    __module__ = 'builtins' # for py3
+
 class Session(FSCollector):
-    class Interrupted(KeyboardInterrupt):
-        """ signals an interrupted test run. """
-        __module__ = 'builtins' # for py3
+    Interrupted = Interrupted
 
     def __init__(self, config):
         FSCollector.__init__(self, config.rootdir, parent=None,
