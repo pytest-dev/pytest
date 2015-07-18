@@ -98,24 +98,36 @@ class MarkEvaluator:
         return d
 
     def _istrue(self):
+        if hasattr(self, 'result'):
+            return self.result
         if self.holder:
             d = self._getglobals()
             if self.holder.args:
                 self.result = False
-                for expr in self.holder.args:
-                    self.expr = expr
-                    if isinstance(expr, py.builtin._basestring):
-                        result = cached_eval(self.item.config, expr, d)
-                    else:
-                        if self.get("reason") is None:
-                            # XXX better be checked at collection time
-                            pytest.fail("you need to specify reason=STRING "
-                                        "when using booleans as conditions.")
-                        result = bool(expr)
-                    if result:
-                        self.result = True
+                # "holder" might be a MarkInfo or a MarkDecorator; only
+                # MarkInfo keeps track of all parameters it received in an
+                # _arglist attribute
+                if hasattr(self.holder, '_arglist'):
+                    arglist = self.holder._arglist
+                else:
+                    arglist = [(self.holder.args, self.holder.kwargs)]
+                for args, kwargs in arglist:
+                    for expr in args:
                         self.expr = expr
-                        break
+                        if isinstance(expr, py.builtin._basestring):
+                            result = cached_eval(self.item.config, expr, d)
+                        else:
+                            if "reason" not in kwargs:
+                                # XXX better be checked at collection time
+                                msg = "you need to specify reason=STRING " \
+                                      "when using booleans as conditions."
+                                pytest.fail(msg)
+                            result = bool(expr)
+                        if result:
+                            self.result = True
+                            self.reason = kwargs.get('reason', None)
+                            self.expr = expr
+                            return self.result
             else:
                 self.result = True
         return getattr(self, 'result', False)
@@ -124,7 +136,7 @@ class MarkEvaluator:
         return self.holder.kwargs.get(attr, default)
 
     def getexplanation(self):
-        expl = self.get('reason', None)
+        expl = getattr(self, 'reason', None) or self.get('reason', None)
         if not expl:
             if not hasattr(self, 'expr'):
                 return ""
