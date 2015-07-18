@@ -25,7 +25,7 @@ env:
     - TESTENV=doctesting
     - TESTENV=py27-cxfreeze
     - TESTENV=coveralls
-  -  allow_failures:
+  allow_failures:
     - TESTENV=py35
 script: tox --recreate -i ALL=https://devpi.net/hpk/dev/ -e $TESTENV
 
