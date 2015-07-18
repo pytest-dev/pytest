@@ -1,7 +1,7 @@
 sudo: false
 language: python
 python:
-    - 'nightly'
+  - 3.5
 # command to install dependencies
 install: "pip install -U tox"
 # # command to run tests
