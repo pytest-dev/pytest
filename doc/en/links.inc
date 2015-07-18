@@ -6,7 +6,7 @@
 .. _`pytest_nose`: plugin/nose.html
 .. _`reStructured Text`: http://docutils.sourceforge.net
 .. _`Python debugger`: http://docs.python.org/lib/module-pdb.html
-.. _nose: http://somethingaboutorange.com/mrl/projects/nose/
+.. _nose: https://nose.readthedocs.org/en/latest/
 .. _pytest: http://pypi.python.org/pypi/pytest
 .. _mercurial: http://mercurial.selenic.com/wiki/
 .. _`setuptools`: http://pypi.python.org/pypi/setuptools
