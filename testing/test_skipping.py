@@ -409,6 +409,26 @@ class TestSkipif:
         ])
         assert result.ret == 0
 
+    @pytest.mark.parametrize('marker, msg1, msg2', [
+        ('skipif', 'SKIP', 'skipped'),
+        ('xfail', 'XPASS', 'xpassed'),
+    ])
+    def test_skipif_reporting_multiple(self, testdir, marker, msg1, msg2):
+        testdir.makepyfile(test_foo="""
+            import pytest
+            @pytest.mark.{marker}(False, reason='first_condition')
+            @pytest.mark.{marker}(True, reason='second_condition')
+            def test_foobar():
+                assert 1
+        """.format(marker=marker))
+        result = testdir.runpytest('-s', '-rsxX')
+        result.stdout.fnmatch_lines([
+            "*{msg1}*test_foo.py*second_condition*".format(msg1=msg1),
+            "*1 {msg2}*".format(msg2=msg2),
+        ])
+        assert result.ret == 0
+
+
 def test_skip_not_report_default(testdir):
     p = testdir.makepyfile(test_one="""
         import pytest
