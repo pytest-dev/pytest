@@ -2482,6 +2482,44 @@ class TestShowFixtures:
         """)
 
 
+    def test_show_fixtures_different_files(self, testdir):
+        """
+        #833: --fixtures only shows fixtures from first file
+        """
+        testdir.makepyfile(test_a='''
+            import pytest
+
+            @pytest.fixture
+            def fix_a():
+                """Fixture A"""
+                pass
+
+            def test_a(fix_a):
+                pass
+        ''')
+        testdir.makepyfile(test_b='''
+            import pytest
+
+            @pytest.fixture
+            def fix_b():
+                """Fixture B"""
+                pass
+
+            def test_b(fix_b):
+                pass
+        ''')
+        result = testdir.runpytest("--fixtures")
+        result.stdout.fnmatch_lines("""
+            * fixtures defined from test_a *
+            fix_a
+                Fixture A
+
+            * fixtures defined from test_b *
+            fix_b
+                Fixture B
+        """)
+
+
 class TestContextManagerFixtureFuncs:
     def test_simple(self, testdir):
         testdir.makepyfile("""

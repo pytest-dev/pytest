@@ -1,5 +1,6 @@
 """ Python test discovery, setup and run of test functions. """
 import fnmatch
+import functools
 import py
 import inspect
 import sys
@@ -22,15 +23,23 @@ callable = py.builtin.callable
 # used to work around a python2 exception info leak
 exc_clear = getattr(sys, 'exc_clear', lambda: None)
 
-
 def filter_traceback(entry):
     return entry.path != cutdir1 and not entry.path.relto(cutdir2)
 
 
-def getfslineno(obj):
-    # xxx let decorators etc specify a sane ordering
+def get_real_func(obj):
+    """gets the real function object of the (possibly) wrapped object by
+    functools.wraps or functools.partial.
+    """
     while hasattr(obj, "__wrapped__"):
         obj = obj.__wrapped__
+    if isinstance(obj, functools.partial):
+        obj = obj.func
+    return obj
+
+def getfslineno(obj):
+    # xxx let decorators etc specify a sane ordering
+    obj = get_real_func(obj)
     if hasattr(obj, 'place_as'):
         obj = obj.place_as
     fslineno = py.code.getfslineno(obj)
@@ -606,7 +615,7 @@ class FunctionMixin(PyobjMixin):
 
     def _prunetraceback(self, excinfo):
         if hasattr(self, '_obj') and not self.config.option.fulltrace:
-            code = py.code.Code(self.obj)
+            code = py.code.Code(get_real_func(self.obj))
             path, firstlineno = code.path, code.firstlineno
             traceback = excinfo.traceback
             ntraceback = traceback.cut(path=path, firstlineno=firstlineno)
@@ -976,21 +985,13 @@ def showfixtures(config):
 def _showfixtures_main(config, session):
     session.perform_collect()
     curdir = py.path.local()
-    if session.items:
-        nodeid = session.items[0].nodeid
-    else:
-        part = session._initialparts[0]
-        nodeid = "::".join(map(str, [curdir.bestrelpath(part[0])] + part[1:]))
-        nodeid.replace(session.fspath.sep, "/")
-
     tw = py.io.TerminalWriter()
     verbose = config.getvalue("verbose")
 
     fm = session._fixturemanager
 
     available = []
-    for argname in fm._arg2fixturedefs:
-        fixturedefs = fm.getfixturedefs(argname, nodeid)
+    for argname, fixturedefs in fm._arg2fixturedefs.items():
         assert fixturedefs is not None
         if not fixturedefs:
             continue
@@ -1582,7 +1583,7 @@ class FixtureLookupError(LookupError):
         for function in stack:
             fspath, lineno = getfslineno(function)
             try:
-                lines, _ = inspect.getsourcelines(function)
+                lines, _ = inspect.getsourcelines(get_real_func(function))
             except IOError:
                 error_msg = "file %s, line %s: source code not available"
                 addline(error_msg % (fspath, lineno+1))
@@ -1970,7 +1971,15 @@ def getfuncargnames(function, startindex=None):
     if realfunction != function:
         startindex += num_mock_patch_args(function)
         function = realfunction
-    argnames = inspect.getargs(py.code.getrawcode(function))[0]
+    if isinstance(function, functools.partial):
+        argnames = inspect.getargs(py.code.getrawcode(function.func))[0]
+        partial = function
+        argnames = argnames[len(partial.args):]
+        if partial.keywords:
+            for kw in partial.keywords:
+                argnames.remove(kw)
+    else:
+        argnames = inspect.getargs(py.code.getrawcode(function))[0]
     defaults = getattr(function, 'func_defaults',
                        getattr(function, '__defaults__', None)) or ()
     numdefaults = len(defaults)

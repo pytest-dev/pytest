@@ -1,10 +1,6 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
-- fix issue744: fix for ast.Call changes in Python 3.5+.  Thanks
-  Guido van Rossum, Matthias Bussonnier, Stefan Zimmermann and
-  Thomas Kluyver.
-
 - fix issue768: docstrings found in python modules were not setting up session
   fixtures. Thanks Jason R. Coombs for reporting and Bruno Oliveira for the PR.
 
@@ -27,7 +23,7 @@
 
 - Summary bar now is colored yellow for warning
   situations such as: all tests either were skipped or xpass/xfailed,
-  or no tests were run at all (this is a partial fix for issue500). 
+  or no tests were run at all (this is a partial fix for issue500).
   Thanks Eric Siegerman.
 
 - New `testdirs` ini option: list of directories to search for tests
@@ -105,6 +101,34 @@
 
 - add ``file`` and ``line`` attributes to JUnit-XML output.
 
+2.7.3 (compared to 2.7.2)
+-----------------------------
+
+- fix issue744: fix for ast.Call changes in Python 3.5+.  Thanks
+  Guido van Rossum, Matthias Bussonnier, Stefan Zimmermann and
+  Thomas Kluyver.
+
+- fix issue842: applying markers in classes no longer propagate this markers
+  to superclasses which also have markers.
+  Thanks xmo-odoo for the report and Bruno Oliveira for the PR.
+
+- preserve warning functions after call to pytest.deprecated_call. Thanks
+  Pieter Mulder for PR.
+
+- fix issue833: --fixtures now shows all fixtures of collected test files, instead of just the
+  fixtures declared on the first one.
+  Thanks Florian Bruhin for reporting and Bruno Oliveira for the PR.
+
+- fix issue863: skipped tests now report the correct reason when a skip/xfail
+  condition is met when using multiple markers.
+  Thanks Raphael Pierzina for reporting and Bruno Oliveira for the PR.
+
+- optimized tmpdir fixture initialization, which should make test sessions
+  faster (specially when using pytest-xdist). The only visible effect
+  is that now pytest uses a subdirectory in the $TEMP directory for all
+  directories created by this fixture (defaults to $TEMP/pytest-$USER).
+  Thanks Bruno Oliveira for the PR.
+
 2.7.2 (compared to 2.7.1)
 -----------------------------
 
@@ -128,7 +152,7 @@
   Thanks Thomas De Schampheleire for reporting and Bruno Oliveira for the PR.
 
 - fix issue718: failed to create representation of sets containing unsortable
-  elements in python 2. Thanks Edison Gustavo Muenz
+  elements in python 2. Thanks Edison Gustavo Muenz.
 
 - fix issue756, fix issue752 (and similar issues): depend on py-1.4.29
   which has a refined algorithm for traceback generation.

@@ -45,8 +45,8 @@ def deprecated_call(func, *args, **kwargs):
     try:
         ret = func(*args, **kwargs)
     finally:
-        warnings.warn_explicit = warn_explicit
-        warnings.warn = warn
+        warnings.warn_explicit = oldwarn_explicit
+        warnings.warn = oldwarn
     if not l:
         __tracebackhide__ = True
         raise AssertionError("%r did not produce DeprecationWarning" %(func,))

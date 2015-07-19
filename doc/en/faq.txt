@@ -106,15 +106,16 @@ Is using pytest fixtures versus xUnit setup a style question?
 For simple applications and for people experienced with nose_ or
 unittest-style test setup using `xUnit style setup`_ probably
 feels natural.  For larger test suites, parametrized testing
-or setup of complex test resources using funcargs_ may feel more natural.
-Moreover, funcargs are ideal for writing advanced test support
-code (like e.g. the monkeypatch_, the tmpdir_ or capture_ funcargs)
+or setup of complex test resources using fixtures_ may feel more natural.
+Moreover, fixtures are ideal for writing advanced test support
+code (like e.g. the monkeypatch_, the tmpdir_ or capture_ fixtures)
 because the support code can register setup/teardown functions
 in a managed class/module/function scope.
 
 .. _monkeypatch: monkeypatch.html
 .. _tmpdir: tmpdir.html
 .. _capture: capture.html
+.. _fixtures: fixture.html
 
 .. _`why pytest_pyfuncarg__ methods?`:
 
