@@ -1924,10 +1924,13 @@ class FixtureDef:
             self.finish()
             assert not hasattr(self, "cached_result")
 
+        fixturefunc = self.func
+
         if self.unittest:
-            result = self.func(request.instance, **kwargs)
+            if request.instance is not None:
+                # bind the unbound method to the TestCase instance
+                fixturefunc = self.func.__get__(request.instance)
         else:
-            fixturefunc = self.func
             # the fixture function needs to be bound to the actual
             # request.instance so that code working with "self" behaves
             # as expected.
@@ -1935,12 +1938,13 @@ class FixtureDef:
                 fixturefunc = getimfunc(self.func)
                 if fixturefunc != self.func:
                     fixturefunc = fixturefunc.__get__(request.instance)
-            try:
-                result = call_fixture_func(fixturefunc, request, kwargs,
-                                           self.yieldctx)
-            except Exception:
-                self.cached_result = (None, my_cache_key, sys.exc_info())
-                raise
+
+        try:
+            result = call_fixture_func(fixturefunc, request, kwargs,
+                                       self.yieldctx)
+        except Exception:
+            self.cached_result = (None, my_cache_key, sys.exc_info())
+            raise
         self.cached_result = (result, my_cache_key, None)
         return result
 
