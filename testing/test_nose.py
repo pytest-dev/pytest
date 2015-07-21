@@ -300,20 +300,19 @@ def test_apiwrapper_problem_issue260(testdir):
     result = testdir.runpytest()
     result.assert_outcomes(passed=1)
 
-@pytest.mark.skipif("sys.version_info < (2,6)")
+
 def test_setup_teardown_linking_issue265(testdir):
     # we accidentally didnt integrate nose setupstate with normal setupstate
     # this test ensures that won't happen again
     testdir.makepyfile('''
         import pytest
 
-        class TestGeneric(object):
-            def test_nothing(self):
-                """Tests the API of the implementation (for generic and specialized)."""
-
         @pytest.mark.skipif("True", reason=
                     "Skip tests to check if teardown is skipped as well.")
-        class TestSkipTeardown(TestGeneric):
+        class TestSkipTeardown(object):
+
+            def test_nothing(self):
+                pass
 
             def setup(self):
                 """Sets up my specialized implementation for $COOL_PLATFORM."""
@@ -324,7 +323,7 @@ def test_setup_teardown_linking_issue265(testdir):
                 raise Exception("should not call teardown for skipped tests")
         ''')
     reprec = testdir.runpytest()
-    reprec.assert_outcomes(passed=1, skipped=1)
+    reprec.assert_outcomes(passed=0, skipped=1)
 
 
 def test_SkipTest_during_collection(testdir):
