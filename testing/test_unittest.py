@@ -607,18 +607,23 @@ def test_unittest_unexpected_failure(testdir):
     ])
 
 
-
-def test_unittest_setup_interaction(testdir):
+@pytest.mark.parametrize('fix_type, stmt', [
+    ('fixture', 'return'),
+    ('yield_fixture', 'yield'),
+])
+def test_unittest_setup_interaction(testdir, fix_type, stmt):
     testdir.makepyfile("""
         import unittest
         import pytest
         class MyTestCase(unittest.TestCase):
-            @pytest.fixture(scope="class", autouse=True)
+            @pytest.{fix_type}(scope="class", autouse=True)
             def perclass(self, request):
                 request.cls.hello = "world"
-            @pytest.fixture(scope="function", autouse=True)
+                {stmt}
+            @pytest.{fix_type}(scope="function", autouse=True)
             def perfunction(self, request):
                 request.instance.funcname = request.function.__name__
+                {stmt}
 
             def test_method1(self):
                 assert self.funcname == "test_method1"
@@ -629,7 +634,7 @@ def test_unittest_setup_interaction(testdir):
 
             def test_classattr(self):
                 assert self.__class__.hello == "world"
-    """)
+    """.format(fix_type=fix_type, stmt=stmt))
     result = testdir.runpytest()
     result.stdout.fnmatch_lines("*3 passed*")
 
