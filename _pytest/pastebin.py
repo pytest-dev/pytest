@@ -1,6 +1,6 @@
 """ submit failure or test session information to a pastebin service. """
 import pytest
-import py, sys
+import sys
 import tempfile
 
 
