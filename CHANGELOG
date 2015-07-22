@@ -26,7 +26,7 @@
   or no tests were run at all (this is a partial fix for issue500).
   Thanks Eric Siegerman.
 
-- New `testdirs` ini option: list of directories to search for tests
+- New `testpaths` ini option: list of directories to search for tests
   when executing pytest from the root directory. This can be used
   to speed up test collection when a project has well specified directories
   for tests, being usually more practical than configuring norecursedirs for
