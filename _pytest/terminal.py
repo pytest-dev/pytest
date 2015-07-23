@@ -87,6 +87,7 @@ class WarningReport:
 
 class TerminalReporter:
     def __init__(self, config, file=None):
+        import _pytest.config
         self.config = config
         self.verbosity = self.config.option.verbose
         self.showheader = self.verbosity >= 0
@@ -98,11 +99,8 @@ class TerminalReporter:
         self.startdir = py.path.local()
         if file is None:
             file = sys.stdout
-        self._tw = self.writer = py.io.TerminalWriter(file)
-        if self.config.option.color == 'yes':
-            self._tw.hasmarkup = True
-        if self.config.option.color == 'no':
-            self._tw.hasmarkup = False
+        self._tw = self.writer = _pytest.config.create_terminal_writer(config,
+                                                                       file)
         self.currentfspath = None
         self.reportchars = getreportopt(config)
         self.hasmarkup = self._tw.hasmarkup

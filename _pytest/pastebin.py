@@ -1,6 +1,6 @@
 """ submit failure or test session information to a pastebin service. """
 import pytest
-import py, sys
+import sys
 import tempfile
 
 
@@ -69,6 +69,7 @@ def create_new_paste(contents):
         return 'bad response: ' + response
 
 def pytest_terminal_summary(terminalreporter):
+    import _pytest.config
     if terminalreporter.config.option.pastebin != "failed":
         return
     tr = terminalreporter
@@ -79,7 +80,7 @@ def pytest_terminal_summary(terminalreporter):
                 msg = rep.longrepr.reprtraceback.reprentries[-1].reprfileloc
             except AttributeError:
                 msg = tr._getfailureheadline(rep)
-            tw = py.io.TerminalWriter(stringio=True)
+            tw = _pytest.config.create_terminal_writer(terminalreporter.config, stringio=True)
             rep.toterminal(tw)
             s = tw.stringio.getvalue()
             assert len(s)

@@ -1,6 +1,5 @@
 """ generic mechanism for marking and selecting python functions. """
 import inspect
-import py
 
 
 class MarkerError(Exception):
@@ -44,9 +43,10 @@ def pytest_addoption(parser):
 
 
 def pytest_cmdline_main(config):
+    import _pytest.config
     if config.option.markers:
         config.do_configure()
-        tw = py.io.TerminalWriter()
+        tw = _pytest.config.create_terminal_writer(config)
         for line in config.getini("markers"):
             name, rest = line.split(":", 1)
             tw.write("@pytest.mark.%s:" % name, bold=True)
