@@ -471,6 +471,19 @@ def test_importorskip_imports_last_module_part():
     ospath = pytest.importorskip("os.path")
     assert os.path == ospath
 
+def test_importorskip_dev_module():
+    try:
+        mod = py.std.types.ModuleType("mockmodule")
+        mod.__version__ = '0.13.0.dev-43290'
+        sys.modules['mockmodule'] = mod
+        mod2 = pytest.importorskip('mockmodule', minversion='0.12.0')
+        assert mod2 == mod
+        pytest.raises(pytest.skip.Exception, """
+            pytest.importorskip('mockmodule1', minversion='0.14.0')""")
+    except pytest.skip.Exception:
+        print(py.code.ExceptionInfo())
+        pytest.fail("spurious skip")
+
 
 def test_pytest_cmdline_main(testdir):
     p = testdir.makepyfile("""
