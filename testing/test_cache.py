@@ -36,7 +36,7 @@ class TestNewAPI:
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*1 passed*"])
 
-    def XXX_test_cachefuncarg(self, testdir):
+    def test_cachefuncarg(self, testdir):
         testdir.makepyfile("""
             import pytest
             def test_cachefuncarg(cache):

@@ -171,6 +171,10 @@ def pytest_configure(config):
     config.pluginmanager.register(LFPlugin(config), "lfplugin")
 
 
+@pytest.fixture
+def cache(request):
+    return request.config.cache
+
 def pytest_report_header(config):
     if config.option.verbose:
         relpath = py.path.local().bestrelpath(config.cache._cachedir)
