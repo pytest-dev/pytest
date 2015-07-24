@@ -3,6 +3,8 @@ import bdb
 import sys
 from time import time
 
+from pkg_resources import parse_version
+
 import py
 import pytest
 from py._code.code import TerminalRepr
@@ -496,9 +498,7 @@ def importorskip(modname, minversion=None):
     if minversion is None:
         return mod
     verattr = getattr(mod, '__version__', None)
-    def intver(verstring):
-        return [int(x) for x in verstring.split(".")]
-    if verattr is None or intver(verattr) < intver(minversion):
+    if verattr is None or parse_version(verattr) < parse_version(minversion):
         skip("module %r has __version__ %r, required is: %r" %(
              modname, verattr, minversion))
     return mod
