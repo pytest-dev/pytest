@@ -104,8 +104,16 @@
 2.7.3 (compared to 2.7.2)
 -----------------------------
 
+- Allow 'dev', 'rc', or other non-integer version strings in `importorskip`.
+  Thanks to Eric Hunsberger for the PR.
+
 - fix issue856: consider --color parameter in all outputs (for example
   --fixtures). Thanks Barney Gale for the report and Bruno Oliveira for the PR.
+
+- fix issue855: passing str objects as `plugins` argument to pytest.main
+  is now interpreted as a module name to be imported and registered as a
+  plugin, instead of silently having no effect.
+  Thanks xmo-odoo for the report and Bruno Oliveira for the PR.
 
 - fix issue744: fix for ast.Call changes in Python 3.5+.  Thanks
   Guido van Rossum, Matthias Bussonnier, Stefan Zimmermann and

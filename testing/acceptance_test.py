@@ -1,3 +1,4 @@
+import sys
 import py, pytest
 
 class TestGeneralUsage:
@@ -370,6 +371,21 @@ class TestGeneralUsage:
             "*source code not available*",
             "*fixture 'invalid_fixture' not found",
         ])
+
+    def test_plugins_given_as_strings(self, tmpdir, monkeypatch):
+        """test that str values passed to main() as `plugins` arg
+        are interpreted as module names to be imported and registered.
+        #855.
+        """
+        with pytest.raises(ImportError) as excinfo:
+            pytest.main([str(tmpdir)], plugins=['invalid.module'])
+        assert 'invalid' in str(excinfo.value)
+
+        p = tmpdir.join('test_test_plugins_given_as_strings.py')
+        p.write('def test_foo(): pass')
+        mod = py.std.types.ModuleType("myplugin")
+        monkeypatch.setitem(sys.modules, 'myplugin', mod)
+        assert pytest.main(args=[str(tmpdir)], plugins=['myplugin']) == 0
 
 
 class TestInvocationVariants:
