@@ -104,6 +104,9 @@
 2.7.3 (compared to 2.7.2)
 -----------------------------
 
+- fix issue856: consider --color parameter in all outputs (for example
+  --fixtures). Thanks Barney Gale for the report and Bruno Oliveira for the PR.
+
 - fix issue744: fix for ast.Call changes in Python 3.5+.  Thanks
   Guido van Rossum, Matthias Bussonnier, Stefan Zimmermann and
   Thomas Kluyver.
@@ -114,6 +117,10 @@
 
 - preserve warning functions after call to pytest.deprecated_call. Thanks
   Pieter Mulder for PR.
+
+- fix issue854: autouse yield_fixtures defined as class members of
+  unittest.TestCase subclasses now work as expected.
+  Thannks xmo-odoo for the report and Bruno Oliveira for the PR.
 
 - fix issue833: --fixtures now shows all fixtures of collected test files, instead of just the
   fixtures declared on the first one.

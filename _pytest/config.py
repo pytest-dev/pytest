@@ -1121,3 +1121,15 @@ def setns(obj, dic):
             #    pytest.__all__.append(name)
             setattr(pytest, name, value)
 
+
+def create_terminal_writer(config, *args, **kwargs):
+    """Create a TerminalWriter instance configured according to the options
+    in the config object. Every code which requires a TerminalWriter object
+    and has access to a config object should use this function.
+    """
+    tw = py.io.TerminalWriter(*args, **kwargs)
+    if config.option.color == 'yes':
+        tw.hasmarkup = True
+    if config.option.color == 'no':
+        tw.hasmarkup = False
+    return tw

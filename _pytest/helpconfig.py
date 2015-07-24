@@ -62,7 +62,8 @@ def pytest_cmdline_main(config):
         return 0
 
 def showhelp(config):
-    tw = py.io.TerminalWriter()
+    import _pytest.config
+    tw = _pytest.config.create_terminal_writer(config)
     tw.write(config._parser.optparser.format_help())
     tw.line()
     tw.line()

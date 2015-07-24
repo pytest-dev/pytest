@@ -4,7 +4,6 @@ import pdb
 import sys
 
 import pytest
-import py
 
 
 def pytest_addoption(parser):
@@ -23,23 +22,27 @@ def pytest_configure(config):
     old = (pdb.set_trace, pytestPDB._pluginmanager)
     def fin():
         pdb.set_trace, pytestPDB._pluginmanager = old
+        pytestPDB._config = None
     pdb.set_trace = pytest.set_trace
     pytestPDB._pluginmanager = config.pluginmanager
+    pytestPDB._config = config
     config._cleanup.append(fin)
 
 class pytestPDB:
     """ Pseudo PDB that defers to the real pdb. """
     _pluginmanager = None
+    _config = None
 
     def set_trace(self):
         """ invoke PDB set_trace debugging, dropping any IO capturing. """
+        import _pytest.config
         frame = sys._getframe().f_back
         capman = None
         if self._pluginmanager is not None:
             capman = self._pluginmanager.getplugin("capturemanager")
             if capman:
                 capman.suspendcapture(in_=True)
-            tw = py.io.TerminalWriter()
+            tw = _pytest.config.create_terminal_writer(self._config)
             tw.line()
             tw.sep(">", "PDB set_trace (IO-capturing turned off)")
             self._pluginmanager.hook.pytest_enter_pdb()
