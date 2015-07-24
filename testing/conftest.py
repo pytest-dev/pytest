@@ -15,7 +15,13 @@ class LsofFdLeakChecker(object):
     def _exec_lsof(self):
         pid = os.getpid()
         #return py.process.cmdexec("lsof -Ffn0 -p %d" % pid)
-        return py.process.cmdexec("lsof -p %d" % pid)
+        try:
+            return py.process.cmdexec("lsof -p %d" % pid)
+        except UnicodeDecodeError:
+            # cmdexec may raise UnicodeDecodeError on Windows systems
+            # with locale other than english:
+            # https://bitbucket.org/pytest-dev/py/issues/66
+            return ''
 
     def _parse_lsof_output(self, out):
         def isopen(line):
