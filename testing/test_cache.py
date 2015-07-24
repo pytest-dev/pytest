@@ -1,7 +1,4 @@
-import os
 import pytest
-import shutil
-import py
 
 pytest_plugins = "pytester",
 
@@ -57,7 +54,7 @@ class TestNewAPI:
 
 
 def test_cache_reportheader(testdir):
-    p = testdir.makepyfile("""
+    testdir.makepyfile("""
         def test_hello():
             pass
     """)
@@ -72,7 +69,7 @@ def test_cache_show(testdir):
     result.stdout.fnmatch_lines([
         "*cache is empty*"
     ])
-    p = testdir.makeconftest("""
+    testdir.makeconftest("""
         def pytest_configure(config):
             config.cache.set("my/name", [1,2,3])
             config.cache.set("other/some", {1:2})

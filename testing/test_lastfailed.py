@@ -54,11 +54,11 @@ class TestLastFailed:
         ])
 
     def test_failedfirst_order(self, testdir):
-        always_pass = testdir.tmpdir.join('test_a.py').write(py.code.Source("""
+        testdir.tmpdir.join('test_a.py').write(py.code.Source("""
             def test_always_passes():
                 assert 1
         """))
-        always_fail = testdir.tmpdir.join('test_b.py').write(py.code.Source("""
+        testdir.tmpdir.join('test_b.py').write(py.code.Source("""
             def test_always_fails():
                 assert 0
         """))
@@ -114,7 +114,7 @@ class TestLastFailed:
     @pytest.mark.skipif("sys.version_info < (2,6)")
     def test_lastfailed_usecase_splice(self, testdir, monkeypatch):
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", 1)
-        p1 = testdir.makepyfile("""
+        testdir.makepyfile("""
             def test_1():
                 assert 0
         """)
@@ -137,7 +137,7 @@ class TestLastFailed:
         ])
 
     def test_lastfailed_xpass(self, testdir):
-        rep = testdir.inline_runsource("""
+        testdir.inline_runsource("""
             import pytest
             @pytest.mark.xfail
             def test_hello():
