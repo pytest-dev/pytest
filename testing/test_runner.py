@@ -439,7 +439,7 @@ def test_exception_printing_skip():
         s = excinfo.exconly(tryshort=True)
         assert s.startswith("Skipped")
 
-def test_importorskip():
+def test_importorskip(monkeypatch):
     importorskip = pytest.importorskip
     def f():
         importorskip("asdlkj")
@@ -457,7 +457,7 @@ def test_importorskip():
         pytest.raises(SyntaxError, "pytest.importorskip('x=y')")
         mod = py.std.types.ModuleType("hello123")
         mod.__version__ = "1.3"
-        sys.modules["hello123"] = mod
+        monkeypatch.setitem(sys.modules, "hello123", mod)
         pytest.raises(pytest.skip.Exception, """
             pytest.importorskip("hello123", minversion="1.3.1")
         """)
@@ -471,11 +471,11 @@ def test_importorskip_imports_last_module_part():
     ospath = pytest.importorskip("os.path")
     assert os.path == ospath
 
-def test_importorskip_dev_module():
+def test_importorskip_dev_module(monkeypatch):
     try:
         mod = py.std.types.ModuleType("mockmodule")
         mod.__version__ = '0.13.0.dev-43290'
-        sys.modules['mockmodule'] = mod
+        monkeypatch.setitem(sys.modules, 'mockmodule', mod)
         mod2 = pytest.importorskip('mockmodule', minversion='0.12.0')
         assert mod2 == mod
         pytest.raises(pytest.skip.Exception, """
