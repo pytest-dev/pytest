@@ -1,7 +1,7 @@
 sudo: false
 language: python
 python:
-    - 'nightly'
+    - '3.5.0b3'
 # command to install dependencies
 install: "pip install -U tox"
 # # command to run tests
@@ -27,10 +27,6 @@ env:
     - TESTENV=py34-xdist
     - TESTENV=py35
     - TESTENV=pypy
-matrix:
-  allow_failures:
-    # py35 is currently broken on travis, see #744
-    - env: TESTENV=py35
 script: tox --recreate -i ALL=https://devpi.net/hpk/dev/ -e $TESTENV
 
 notifications:
