@@ -67,7 +67,7 @@ def test_cache_reportheader(testdir):
     ])
 
 def test_cache_show(testdir):
-    result = testdir.runpytest("--cache")
+    result = testdir.runpytest("--show-cache")
     assert result.ret == 0
     result.stdout.fnmatch_lines([
         "*cache is empty*"
@@ -82,7 +82,7 @@ def test_cache_show(testdir):
     """)
     result = testdir.runpytest()
     assert result.ret == 0
-    result = testdir.runpytest("--cache")
+    result = testdir.runpytest("--show-cache")
     result.stdout.fnmatch_lines_random([
         "*cachedir:*",
         "-*cache values*-",

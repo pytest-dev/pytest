@@ -11,7 +11,7 @@ import json
 from os.path import sep as _sep, altsep as _altsep
 
 
-class Cache:
+class Cache(object):
     def __init__(self, config):
         self.config = config
         self._cachedir = config.rootdir.join(".cache")
@@ -152,7 +152,7 @@ def pytest_addoption(parser):
              "This may re-order tests and thus lead to "
              "repeated fixture setup/teardown")
     group.addoption(
-        '--cache', action='store_true', dest="showcache",
+        '--show-cache', action='store_true', dest="showcache",
         help="show cache contents, don't perform collection or tests")
     group.addoption(
         '--clearcache', action='store_true', dest="clearcache",
