@@ -650,7 +650,7 @@ def lsof_check():
     try:
         out = py.process.cmdexec("lsof -p %d" % pid)
     except (py.process.cmdexec.Error, UnicodeDecodeError):
-        # about UnicodeDecodeError, see note on conftest.py 
+        # about UnicodeDecodeError, see note on pytester
         pytest.skip("could not run 'lsof'")
     yield
     out2 = py.process.cmdexec("lsof -p %d" % pid)

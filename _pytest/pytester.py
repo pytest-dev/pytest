@@ -74,7 +74,10 @@ class LsofFdLeakChecker(object):
     def matching_platform(self):
         try:
             py.process.cmdexec("lsof -v")
-        except py.process.cmdexec.Error:
+        except (py.process.cmdexec.Error, UnicodeDecodeError):
+            # cmdexec may raise UnicodeDecodeError on Windows systems
+            # with locale other than english:
+            # https://bitbucket.org/pytest-dev/py/issues/66
             return False
         else:
             return True
