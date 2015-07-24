@@ -3,6 +3,8 @@ import bdb
 import sys
 from time import time
 
+from pkg_resources import parse_version
+
 import py
 import pytest
 from py._code.code import TerminalRepr
@@ -483,8 +485,6 @@ def importorskip(modname, minversion=None):
     """ return imported module if it has at least "minversion" as its
     __version__ attribute.  If no minversion is specified the a skip
     is only triggered if the module can not be imported.
-    Note that version comparison only works with simple version strings
-    like "1.2.3" but not "1.2.3.dev1" or others.
     """
     __tracebackhide__ = True
     compile(modname, '', 'eval') # to catch syntaxerrors
@@ -496,9 +496,7 @@ def importorskip(modname, minversion=None):
     if minversion is None:
         return mod
     verattr = getattr(mod, '__version__', None)
-    def intver(verstring):
-        return [int(x) for x in verstring.split(".")]
-    if verattr is None or intver(verattr) < intver(minversion):
+    if verattr is None or parse_version(verattr) < parse_version(minversion):
         skip("module %r has __version__ %r, required is: %r" %(
              modname, verattr, minversion))
     return mod
