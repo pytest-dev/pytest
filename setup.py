@@ -63,7 +63,7 @@ def main():
         name='pytest',
         description='pytest: simple powerful testing with Python',
         long_description=long_description,
-        version=get_version(),
+        use_scm_version={'write_to': '_pytest/__init__.py'},
         url='http://pytest.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
@@ -75,6 +75,7 @@ def main():
         # the following should be enabled for release
         install_requires=install_requires,
         extras_require=extras_require,
+        setup_requires=['setuptools_scm'],
         packages=['_pytest', '_pytest.assertion'],
         py_modules=['pytest'],
         zip_safe=False,
