@@ -1,6 +1,10 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
+- fix issue751: multiple parametrize with ids bug if it parametrizes class with
+  two or more test methods. Thanks Sergey Chipiga for reporting and Jan
+  Bednarik for PR.
+
 - fix issue82: avoid loading conftest files from setup.cfg/pytest.ini/tox.ini
   files and upwards by default (--confcutdir can still be set to override this).
   Thanks Bruno Oliveira for the PR.
