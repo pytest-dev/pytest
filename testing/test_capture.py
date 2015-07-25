@@ -572,6 +572,7 @@ def test_error_during_readouterr(testdir):
         from _pytest.capture import FDCapture
         def bad_snap(self):
             raise Exception('boom')
+        assert FDCapture.snap
         FDCapture.snap = bad_snap
     """)
     result = testdir.runpytest_subprocess(
