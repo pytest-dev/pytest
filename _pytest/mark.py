@@ -291,7 +291,7 @@ class MarkInfo:
         #: positional argument list, empty if none specified
         self.args = args
         #: keyword argument dictionary, empty if nothing specified
-        self.kwargs = kwargs
+        self.kwargs = kwargs.copy()
         self._arglist = [(args, kwargs.copy())]
 
     def __repr__(self):

@@ -472,6 +472,24 @@ class TestFunction:
         config.pluginmanager.register(MyPlugin2())
         config.hook.pytest_pyfunc_call(pyfuncitem=item)
 
+    def test_issue751_multiple_parametrize_with_ids(self, testdir):
+        modcol = testdir.getmodulecol("""
+            import pytest
+            @pytest.mark.parametrize('x', [0], ids=['c'])
+            @pytest.mark.parametrize('y', [0, 1], ids=['a', 'b'])
+            class Test(object):
+                def test1(self, x, y):
+                    pass
+                def test2(self, x, y):
+                    pass
+        """)
+        colitems = modcol.collect()[0].collect()[0].collect()
+        assert colitems[0].name == 'test1[a-c]'
+        assert colitems[1].name == 'test1[b-c]'
+        assert colitems[2].name == 'test2[a-c]'
+        assert colitems[3].name == 'test2[b-c]'
+
+
 class TestSorting:
     def test_check_equality(self, testdir):
         modcol = testdir.getmodulecol("""
