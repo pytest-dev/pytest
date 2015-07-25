@@ -145,8 +145,8 @@ class CaptureManager:
 
     def suspendcapture_item(self, item, when):
         out, err = self.suspendcapture()
-        item.add_report_section(when, "out", out)
-        item.add_report_section(when, "err", err)
+        item.add_report_section(when, "out", out.encode("utf8"))
+        item.add_report_section(when, "err", err.encode("utf8"))
 
 error_capsysfderror = "cannot use capsys and capfd at the same time"
 
