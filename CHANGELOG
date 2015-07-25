@@ -1,6 +1,10 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
+- fix issue82: avoid loading conftest files from setup.cfg/pytest.ini/tox.ini
+  files and upwards by default (--confcutdir can still be set to override this).
+  Thanks Bruno Oliveira for the PR.
+
 - fix issue768: docstrings found in python modules were not setting up session
   fixtures. Thanks Jason R. Coombs for reporting and Bruno Oliveira for the PR.
 

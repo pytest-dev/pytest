@@ -897,6 +897,9 @@ class Config(object):
             self.warn("I2", "could not load setuptools entry import: %s" % (e,))
         self.pluginmanager.consider_env()
         self.known_args_namespace = ns = self._parser.parse_known_args(args)
+        if self.known_args_namespace.confcutdir is None and self.inifile:
+            confcutdir = py.path.local(self.inifile).dirname
+            self.known_args_namespace.confcutdir = confcutdir
         try:
             self.hook.pytest_load_initial_conftests(early_config=self,
                     args=args, parser=self._parser)

@@ -343,3 +343,44 @@ class TestConftestVisibility:
         with dirs[chdir].as_cwd():
             reprec = testdir.inline_run(testarg, "-q", "--traceconfig")
             reprec.assertoutcome(passed=expect_ntests_passed)
+
+
+@pytest.mark.parametrize('confcutdir,passed,error', [
+    ('.', 2, 0),
+    ('src', 1, 1),
+    (None, 1, 1),
+])
+def test_search_conftest_up_to_inifile(testdir, confcutdir, passed, error):
+    """Test that conftest files are detected only up to a ini file, unless
+    an explicit --confcutdir option is given.
+    """
+    root = testdir.tmpdir
+    src = root.join('src').ensure(dir=1)
+    src.join('pytest.ini').write('[pytest]')
+    src.join('conftest.py').write(py.code.Source("""
+        import pytest
+        @pytest.fixture
+        def fix1(): pass
+    """))
+    src.join('test_foo.py').write(py.code.Source("""
+        def test_1(fix1):
+            pass
+        def test_2(out_of_reach):
+            pass
+    """))
+    root.join('conftest.py').write(py.code.Source("""
+        import pytest
+        @pytest.fixture
+        def out_of_reach(): pass
+    """))
+
+    args = [str(src)]
+    if confcutdir:
+        args = ['--confcutdir=%s' % root.join(confcutdir)]
+    result = testdir.runpytest(*args)
+    match = ''
+    if passed:
+        match += '*%d passed*' % passed
+    if error:
+        match += '*%d error*' % error
+    result.stdout.fnmatch_lines(match)

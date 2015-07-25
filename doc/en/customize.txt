@@ -219,3 +219,10 @@ Builtin configuration file options
 
    One or more doctest flag names from the standard ``doctest`` module.
    :doc:`See how py.test handles doctests <doctest>`.
+
+.. confval:: confcutdir
+
+   Sets a directory where search upwards for ``conftest.py`` files stops.
+   By default, pytest will stop searching for ``conftest.py`` files upwards
+   from ``pytest.ini``/``tox.ini``/``setup.cfg`` of the project if any,
+   or up to the file-system root.
