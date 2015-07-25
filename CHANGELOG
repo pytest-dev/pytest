@@ -193,6 +193,9 @@
 2.7.3 (compared to 2.7.2)
 -----------------------------
 
+- fix issue 877: propperly handle assertion explanations with non-ascii repr
+  Thanks Mathieu Agopian for the report
+
 - Allow 'dev', 'rc', or other non-integer version strings in `importorskip`.
   Thanks to Eric Hunsberger for the PR.
 
