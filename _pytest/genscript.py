@@ -1,4 +1,4 @@
-""" generate a single-file self-contained version of pytest """
+""" (deprecated) generate a single-file self-contained version of pytest """
 import os
 import sys
 import pkgutil
@@ -72,6 +72,8 @@ def pytest_cmdline_main(config):
     genscript = config.getvalue("genscript")
     if genscript:
         tw = _pytest.config.create_terminal_writer(config)
+        tw.line("WARNING: usage of genscript is deprecated.",
+                red=True)
         deps =  ['py', 'pluggy', '_pytest', 'pytest']
         if sys.version_info < (2,7):
             deps.append("argparse")
