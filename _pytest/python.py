@@ -837,7 +837,7 @@ class Metafunc(FuncargnamesCompatAttr):
         :arg argnames: a comma-separated string denoting one or more argument
                        names, or a list/tuple of argument strings.
 
-        :arg argvalues: The list of argvalues determines how often a
+        :arg argvalues: The list/generator of argvalues determines how often a
             test is invoked with different argument values.  If only one
             argname was specified argvalues is a list of simple values.  If N
             argnames were specified, argvalues must be a list of N-tuples,
@@ -849,7 +849,7 @@ class Metafunc(FuncargnamesCompatAttr):
             function so that it can perform more expensive setups during the
             setup phase of a test rather than at collection time.
 
-        :arg ids: list of string ids, or a callable.
+        :arg ids: list of string ids, generator or a callable.
             If strings, each is corresponding to the argvalues so that they are
             part of the test id.
             If callable, it should take one argument (a single argvalue) and return
@@ -869,6 +869,10 @@ class Metafunc(FuncargnamesCompatAttr):
         # at Function init
         newkeywords = {}
         unwrapped_argvalues = []
+
+        if argvalues and not hasattr(argvalues, '__len__'):
+            argvalues = list(argvalues)
+
         for i, argval in enumerate(argvalues):
             while isinstance(argval, MarkDecorator):
                 newmark = MarkDecorator(argval.markname,
@@ -900,6 +904,8 @@ class Metafunc(FuncargnamesCompatAttr):
         if callable(ids):
             idfn = ids
             ids = None
+        if ids and not hasattr(ids, '__len__'):
+            ids = list(ids)
         if ids and len(ids) != len(argvalues):
             raise ValueError('%d tests specified with %d ids' %(
                              len(argvalues), len(ids)))
