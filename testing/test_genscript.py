@@ -27,13 +27,17 @@ def test_gen(testdir, anypython, standalone):
             pytest.skip("genscript called from python2.7 cannot work "
                         "earlier python versions")
     result = standalone.run(anypython, testdir, '--version')
-    assert result.ret == 0
-    result.stderr.fnmatch_lines([
-        "*imported from*mypytest*"
-    ])
-    p = testdir.makepyfile("def test_func(): assert 0")
-    result = standalone.run(anypython, testdir, p)
-    assert result.ret != 0
+    if result.ret == 2:
+        result.stderr.fnmatch_lines(["*ERROR: setuptools not installed*"])
+    elif result.ret == 0:
+        result.stderr.fnmatch_lines([
+            "*imported from*mypytest*"
+        ])
+        p = testdir.makepyfile("def test_func(): assert 0")
+        result = standalone.run(anypython, testdir, p)
+        assert result.ret != 0
+    else:
+        pytest.fail("Unexpected return code")
 
 
 def test_freeze_includes():
