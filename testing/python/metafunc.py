@@ -342,6 +342,50 @@ class TestMetafunc:
             *6 passed*
         """)
 
+    def test_parametrize_generators(self):
+        def generator_ids():
+            for value in ['1', '2']:
+                yield value
+
+        def generator_argvalues():
+            for value in [(1, 2), (3, 4)]:
+                yield value
+
+        metafunc = self.Metafunc(lambda x, y: None)
+        metafunc.parametrize(("x", "y"), generator_argvalues(), ids=generator_ids())
+        for i in [1, 2]:
+            ids = [x.id for x in metafunc._calls]
+            assert ids == ['1', '2']
+            assert len(metafunc._calls) == 2
+            assert metafunc._calls[0].funcargs == dict(x=1, y=2)
+            assert metafunc._calls[1].funcargs == dict(x=3, y=4)
+
+    def test_parametrize_generators_multiple_times(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            def generator_ids():
+                for value in ['1']:
+                    yield value
+
+            def generator_argvalues():
+                for value in [(1)]:
+                    yield value
+
+
+            @pytest.mark.parametrize("x", generator_argvalues(), ids=generator_ids())
+            def test_func(x):
+                assert 1 == x
+
+            class TestClass:
+                @pytest.mark.parametrize("y", generator_argvalues(), ids=generator_ids())
+                def test_meth(self, y):
+                    assert 1 == y
+        """)
+        result = testdir.runpytest()
+        assert result.ret == 0
+        result.assert_outcomes(passed=2)
+
 class TestMetafuncFunctional:
     def test_attributes(self, testdir):
         p = testdir.makepyfile("""
