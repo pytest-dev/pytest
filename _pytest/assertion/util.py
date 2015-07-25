@@ -129,7 +129,14 @@ def assertrepr_compare(config, op, left, right):
     width = 80 - 15 - len(op) - 2  # 15 chars indentation, 1 space around op
     left_repr = py.io.saferepr(left, maxsize=int(width/2))
     right_repr = py.io.saferepr(right, maxsize=width-len(left_repr))
-    summary = u('%s %s %s') % (left_repr, op, right_repr)
+
+    # the reencoding is needed for python2 repr
+    # with non-ascii characters (see isssue 877)
+    summary = u('%s %s %s') % (
+        u(left_repr, 'utf-8', 'replace'),
+        op,
+        u(right_repr, 'utf-8', 'replace'),
+    )
 
     issequence = lambda x: (isinstance(x, (list, tuple, Sequence))
                             and not isinstance(x, basestring))
