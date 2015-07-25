@@ -1,6 +1,10 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
+- fix issue751: multiple parametrize with ids bug if it parametrizes class with
+  two or more test methods. Thanks Sergey Chipiga for reporting and Jan
+  Bednarik for PR.
+
 - fix issue768: docstrings found in python modules were not setting up session
   fixtures. Thanks Jason R. Coombs for reporting and Bruno Oliveira for the PR.
 
