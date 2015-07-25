@@ -1,5 +1,7 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
+- fix issue730: deprecate and warn about the --genscript option.
+  Thanks Ronny Pfannschmidt for the report and Christian Pommranz for the PR.
 
 - fix issue751: multiple parametrize with ids bug if it parametrizes class with
   two or more test methods. Thanks Sergey Chipiga for reporting and Jan
