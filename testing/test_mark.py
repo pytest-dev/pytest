@@ -1,3 +1,5 @@
+import os
+
 import py, pytest
 from _pytest.mark import MarkGenerator as Mark
 
@@ -82,6 +84,22 @@ class TestMark:
         assert g.some.args[0] == "world"
         assert 'reason' not in g.some.kwargs
         assert g.some.kwargs['reason2'] == "456"
+
+
+def test_marked_class_run_twice(testdir, request):
+    """Test fails file is run twice that contains marked class.
+    See issue#683.
+    """
+    py_file = testdir.makepyfile("""
+    import pytest
+    @pytest.mark.parametrize('abc', [1, 2, 3])
+    class Test1(object):
+        def test_1(self, abc):
+            assert abc in [1, 2, 3]
+    """)
+    file_name = os.path.basename(py_file.strpath)
+    rec = testdir.inline_run(file_name, file_name)
+    rec.assertoutcome(passed=6)
 
 
 def test_ini_markers(testdir):

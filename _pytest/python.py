@@ -480,6 +480,19 @@ class FuncFixtureInfo:
         self.names_closure = names_closure
         self.name2fixturedefs = name2fixturedefs
 
+
+def _marked(func, mark):
+    """Returns True if :func: is already marked with :mark:, False orherwise.
+    This can happen if marker is applied to class and the test file is
+    invoked more than once.
+    """
+    try:
+        func_mark = getattr(func, mark.name)
+    except AttributeError:
+        return False
+    return mark.args == func_mark.args and mark.kwargs == func_mark.kwargs
+
+
 def transfer_markers(funcobj, cls, mod):
     # XXX this should rather be code in the mark plugin or the mark
     # plugin should merge with the python plugin.
@@ -490,9 +503,11 @@ def transfer_markers(funcobj, cls, mod):
             continue
         if isinstance(pytestmark, list):
             for mark in pytestmark:
-                mark(funcobj)
+                if not _marked(funcobj, mark):
+                    mark(funcobj)
         else:
-            pytestmark(funcobj)
+            if not _marked(funcobj, pytestmark):
+                pytestmark(funcobj)
 
 class Module(pytest.File, PyCollector):
     """ Collector for test classes and functions. """
