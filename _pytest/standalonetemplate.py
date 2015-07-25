@@ -68,6 +68,11 @@ class DictImporter(object):
         return res
 
 if __name__ == "__main__":
+    try:
+        import pkg_resources  # noqa
+    except ImportError:
+        sys.stderr.write("ERROR: setuptools not installed\n")
+        sys.exit(2)
     if sys.version_info >= (3, 0):
         exec("def do_exec(co, loc): exec(co, loc)\n")
         import pickle
@@ -80,6 +85,5 @@ if __name__ == "__main__":
 
     importer = DictImporter(sources)
     sys.meta_path.insert(0, importer)
-
     entry = "@ENTRY@"
     do_exec(entry, locals()) # noqa
