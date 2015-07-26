@@ -21,7 +21,7 @@ in repositories living under:
 
 - `the pytest-dev bitbucket team <https://bitbucket.org/pytest-dev>`_
 
-All pytest-dev team members have write access to all contained
+All pytest-dev Contributors team members have write access to all contained
 repositories.  pytest core and plugins are generally developed
 using `pull requests`_ to respective repositories.
 
@@ -46,9 +46,9 @@ the following:
 
 If no contributor strongly objects and two agree, the repo will be
 transferred to the ``pytest-dev`` organisation and you'll become a
-member of the ``pytest-dev`` team, with commit rights to all projects.
-We recommend that each plugin has at least three people who have the
-right to release to pypi.
+member of the ``pytest-dev Contributors`` team, with commit rights
+to all projects. We recommend that each plugin has at least three
+people who have the right to release to pypi.
 
 
 .. _reportbugs:
