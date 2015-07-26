@@ -66,6 +66,10 @@ If you are reporting a bug, please include:
   installed libraries and pytest version.
 * Detailed steps to reproduce the bug.
 
+If you can write a demonstration test that currently fails but should pass (xfail),
+that is a very useful commit to make as well, even if you can't find how
+to fix the bug yet.
+
 .. _submitfeedback:
 
 Submit feedback for developers
@@ -93,6 +97,8 @@ https://github.com/pytest-dev/pytest/labels/bug
 
 :ref:`Talk <contact>` to developers to find out how you can fix specific bugs.
 
+Don't forget to check the issue trackers of your favourite plugins, too!
+
 .. _writeplugins:
 
 Implement features
@@ -111,9 +117,13 @@ Write documentation
 pytest could always use more documentation.  What exactly is needed?
 
 * More complementary documentation.  Have you perhaps found something unclear?
-* Documentation translations.  We currently have English and Japanese versions.
+* Documentation translations.  We currently have only English.
 * Docstrings.  There's never too much of them.
 * Blog posts, articles and such -- they're all very appreciated.
+
+You can also edit documentation files directly in the Github web interface
+without needing to make a fork and local copy. This can be convenient for
+small fixes.
 
 .. _`pull requests`:
 .. _pull-requests:
