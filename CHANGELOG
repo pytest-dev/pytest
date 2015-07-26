@@ -1,5 +1,9 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
+
+- Deal with capturing failures better so fewer exceptions get lost to
+  /dev/null.  Thanks David Szotten for the PR.
+
 - fix issue730: deprecate and warn about the --genscript option.
   Thanks Ronny Pfannschmidt for the report and Christian Pommranz for the PR.
 

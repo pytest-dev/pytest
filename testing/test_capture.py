@@ -566,6 +566,25 @@ def test_capture_binary_output(testdir):
     result.assert_outcomes(passed=2)
 
 
+def test_error_during_readouterr(testdir):
+    """Make sure we suspend capturing if errors occurr during readouterr"""
+    testdir.makepyfile(pytest_xyz="""
+        from _pytest.capture import FDCapture
+        def bad_snap(self):
+            raise Exception('boom')
+        assert FDCapture.snap
+        FDCapture.snap = bad_snap
+    """)
+    result = testdir.runpytest_subprocess(
+        "-p", "pytest_xyz", "--version", syspathinsert=True
+    )
+    result.stderr.fnmatch_lines([
+        "*in bad_snap",
+        "    raise Exception('boom')",
+        "Exception: boom",
+    ])
+
+
 class TestTextIO:
     def test_text(self):
         f = capture.TextIO()
