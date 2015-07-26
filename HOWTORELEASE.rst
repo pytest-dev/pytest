@@ -1,58 +1,87 @@
-
-How to release pytest (draft)
+How to release pytest
 --------------------------------------------
 
-1. bump version numbers in _pytest/__init__.py (setup.py reads it)
+Note: this assumes you have already registered on pypi.
 
-2. check and finalize CHANGELOG
+1. Bump version numbers in _pytest/__init__.py (setup.py reads it)
 
-3. write doc/en/announce/release-VERSION.txt and include
+2. Check and finalize CHANGELOG
+
+3. Write doc/en/announce/release-VERSION.txt and include
    it in doc/en/announce/index.txt
 
-4. use devpi for uploading a release tarball to a staging area:
-   - ``devpi use https://devpi.net/USER/dev`` 
-   - ``devpi upload --formats sdist,bdist_wheel``
+4. Use devpi for uploading a release tarball to a staging area:
 
-5. run from multiple machines:
-   - ``devpi use https://devpi.net/USER/dev`` 
-   - ``devpi test pytest==VERSION``
+     ``devpi use https://devpi.net/USER/dev``
+     ``devpi upload --formats sdist,bdist_wheel``
 
-6. check that tests pass for relevant combinations with
-   ``devpi list pytest`` 
+5. Run from multiple machines:
+
+     ``devpi use https://devpi.net/USER/dev``
+     ``devpi test pytest==VERSION``
+
+6. Check that tests pass for relevant combinations with
+
+     ``devpi list pytest``
+
    or look at failures with "devpi list -f pytest".
    There will be some failed environments like e.g. the py33-trial 
    or py27-pexpect tox environments on Win32 platforms
    which is ok (tox does not support skipping on
    per-platform basis yet).
 
-7. Regenerate the docs examples using tox::
-      # Create and activate a virtualenv with regendoc installed
-      # (currently needs revision 4a9ec1035734)
+7. Regenerate the docs examples using tox, and check for regressions::
+
       tox -e regen
+      git diff
+
 
 8. Build the docs, you need a virtualenv with, py and sphinx
    installed::
+
       cd docs/en
       make html
 
+   Commit any changes before tagging the release.
+
 9. Tag the release::
-      hg tag VERSION
+
+      git tag VERSION
+      git push
 
 10. Upload the docs using docs/en/Makefile::
+
       cd docs/en
-      make install  # or "installall" if you have LaTeX installed
+      make install  # or "installall" if you have LaTeX installed for PDF
+
    This requires ssh-login permission on pytest.org because it uses
    rsync.
    Note that the "install" target of doc/en/Makefile defines where the
    rsync goes to, typically to the "latest" section of pytest.org.
 
-11. publish to pypi "devpi push pytest-VERSION pypi:NAME" where NAME 
-   is the name of pypi.python.org as configured in your 
-   ~/.pypirc file -- it's the same you would use with 
-   "setup.py upload -r NAME"
+   If you are making a minor release (e.g. 5.4), you also need to manually
+   create a symlink for "latest"::
 
-12. send release announcement to mailing lists:
+     ssh pytest-dev@pytest.org
+     ln -s 5.4 latest
 
-   pytest-dev
-   testing-in-python
-   python-announce-list@python.org
+   Browse to pytest.org to verify.
+
+11. Publish to pypi::
+
+      devpi push pytest-VERSION pypi:NAME
+
+    where NAME is the name of pypi.python.org as configured in your
+    ~/.pypirc file `for devpi <http://doc.devpi.net/latest/quickstart-releaseprocess.html?highlight=pypirc#devpi-push-releasing-to-an-external-index>`_.
+
+
+12. Send release announcement to mailing lists:
+
+    - pytest-dev
+    - testing-in-python
+    - python-announce-list@python.org
+
+
+13. **after the release** Bump the version number in ``_pytest/__init__.py``,
+    to the next Minor release version (i.e. if you released ``pytest-2.8.0``,
+    set it to ``pytest-2.9.0.dev1``).
