@@ -1,6 +1,8 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
+- Fix #683: Do not apply an already applied mark.  Thanks ojake for the PR.
+
 - Deal with capturing failures better so fewer exceptions get lost to
   /dev/null.  Thanks David Szotten for the PR.
 
