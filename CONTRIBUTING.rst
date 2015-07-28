@@ -191,6 +191,10 @@ but here is a simple overview:
     $ git commit -a -m "<commit message>"
     $ git push -u
 
+   Make sure you add a CHANGELOG message, and add yourself to AUTHORS. If you
+   are unsure about either of these steps, submit your pull request and we'll
+   help you fix it up.
+
 #. Finally, submit a pull request through the GitHub website:
 
    .. image:: img/pullrequest.png
