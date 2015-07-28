@@ -95,12 +95,26 @@ def test_tmpdir_always_is_realpath(testdir):
     result = testdir.runpytest("-s", p, '--basetemp=%s/bt' % linktemp)
     assert not result.ret
 
+
 def test_tmpdir_too_long_on_parametrization(testdir):
     testdir.makepyfile("""
         import pytest
         @pytest.mark.parametrize("arg", ["1"*1000])
         def test_some(arg, tmpdir):
             tmpdir.ensure("hello")
+    """)
+    reprec = testdir.inline_run()
+    reprec.assertoutcome(passed=1)
+
+
+def test_tmpdir_factory(testdir):
+    testdir.makepyfile("""
+        import pytest
+        @pytest.fixture(scope='session')
+        def session_dir(tmpdir_factory):
+            return tmpdir_factory.mktemp('data', numbered=False)
+        def test_some(session_dir):
+            session_dir.isdir()
     """)
     reprec = testdir.inline_run()
     reprec.assertoutcome(passed=1)

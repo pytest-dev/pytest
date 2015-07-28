@@ -56,7 +56,7 @@ class TempdirFactory:
                 # make_numbered_dir() call
                 import getpass
                 temproot = py.path.local.get_temproot()
-                rootdir = temproot.join('pytest-%s' % getpass.getuser())
+                rootdir = temproot.join('pytest-of-%s' % getpass.getuser())
                 rootdir.ensure(dir=1)
                 basetemp = py.path.local.make_numbered_dir(prefix='pytest-',
                                                            rootdir=rootdir)
