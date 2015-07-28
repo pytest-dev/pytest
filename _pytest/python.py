@@ -1052,8 +1052,8 @@ def getlocation(function, curdir):
 
 # builtin pytest.raises helper
 
-def raises(ExpectedException, *args, **kwargs):
-    """ assert that a code block/function call raises @ExpectedException
+def raises(expected_exception, *args, **kwargs):
+    """ assert that a code block/function call raises @expected_exception
     and raise a failure exception otherwise.
 
     This helper produces a ``py.code.ExceptionInfo()`` object.
@@ -1101,23 +1101,23 @@ def raises(ExpectedException, *args, **kwargs):
 
     """
     __tracebackhide__ = True
-    if ExpectedException is AssertionError:
+    if expected_exception is AssertionError:
         # we want to catch a AssertionError
         # replace our subclass with the builtin one
         # see https://github.com/pytest-dev/pytest/issues/176
         from _pytest.assertion.util import BuiltinAssertionError \
-            as ExpectedException
+            as expected_exception
     msg = ("exceptions must be old-style classes or"
            " derived from BaseException, not %s")
-    if isinstance(ExpectedException, tuple):
-        for exc in ExpectedException:
+    if isinstance(expected_exception, tuple):
+        for exc in expected_exception:
             if not inspect.isclass(exc):
                 raise TypeError(msg % type(exc))
-    elif not inspect.isclass(ExpectedException):
-        raise TypeError(msg % type(ExpectedException))
+    elif not inspect.isclass(expected_exception):
+        raise TypeError(msg % type(expected_exception))
 
     if not args:
-        return RaisesContext(ExpectedException)
+        return RaisesContext(expected_exception)
     elif isinstance(args[0], str):
         code, = args
         assert isinstance(code, str)
@@ -1130,19 +1130,19 @@ def raises(ExpectedException, *args, **kwargs):
             py.builtin.exec_(code, frame.f_globals, loc)
             # XXX didn'T mean f_globals == f_locals something special?
             #     this is destroyed here ...
-        except ExpectedException:
+        except expected_exception:
             return py.code.ExceptionInfo()
     else:
         func = args[0]
         try:
             func(*args[1:], **kwargs)
-        except ExpectedException:
+        except expected_exception:
             return py.code.ExceptionInfo()
     pytest.fail("DID NOT RAISE")
 
 class RaisesContext(object):
-    def __init__(self, ExpectedException):
-        self.ExpectedException = ExpectedException
+    def __init__(self, expected_exception):
+        self.expected_exception = expected_exception
         self.excinfo = None
 
     def __enter__(self):
@@ -1161,7 +1161,7 @@ class RaisesContext(object):
                 exc_type, value, traceback = tp
                 tp = exc_type, exc_type(value), traceback
         self.excinfo.__init__(tp)
-        return issubclass(self.excinfo.type, self.ExpectedException)
+        return issubclass(self.excinfo.type, self.expected_exception)
 
 #
 #  the basic pytest Function item
@@ -2123,4 +2123,3 @@ def get_scope_node(node, scope):
             return node.session
         raise ValueError("unknown scope")
     return node.getparent(cls)
-
