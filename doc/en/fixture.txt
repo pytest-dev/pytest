@@ -478,20 +478,17 @@ return ``None`` then pytest's auto-generated ID will be used.
 Running the above tests results in the following test IDs being used::
 
    $ py.test --collect-only
-   ======= test session starts ========
-   platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+   ============================= test session starts =============================
+   platform win32 -- Python 2.7.10 -- py-1.4.30 -- pytest-2.7.2
    rootdir: $REGENDOC_TMPDIR, inifile: 
-   collected 6 items
-   <Module 'test_anothersmtp.py'>
-     <Function 'test_showhelo[merlinux.eu]'>
-     <Function 'test_showhelo[mail.python.org]'>
-   <Module 'test_module.py'>
-     <Function 'test_ehlo[merlinux.eu]'>
-     <Function 'test_noop[merlinux.eu]'>
-     <Function 'test_ehlo[mail.python.org]'>
-     <Function 'test_noop[mail.python.org]'>
-   
-   =======  in 0.12 seconds ========
+   collected 4 items
+   <Module 'test_parameterize_ids.py'>
+     <Function 'test_a[spam]'>
+     <Function 'test_a[ham]'>
+     <Function 'test_b[eggs]'>
+     <Function 'test_b[1]'>
+
+   ==============================  in 0.04 seconds ===============================
 
 .. _`interdependent fixtures`:
 
