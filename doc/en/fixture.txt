@@ -443,6 +443,7 @@ make a string based on the argument name.  It is possible to customise
 the string used in a test ID for a certain fixture value by using the
 ``ids`` keyword argument::
 
+   # content of test_ids.py
    import pytest
 
    @pytest.fixture(params=[0, 1], ids=["spam", "ham"])
@@ -472,7 +473,7 @@ return ``None`` then pytest's auto-generated ID will be used.
 
 Running the above tests results in the following test IDs being used::
 
-   $ py.test --collect-only
+   $ py.test --collect-only test_ids.py
    =========================== test session starts ============================
    platform linux -- Python 3.4.1 -- py-1.4.27 -- pytest-2.7.1
    rootdir: /tmp/doc-exec-98, inifile: 
