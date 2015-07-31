@@ -62,7 +62,7 @@ using it::
     @pytest.fixture
     def smtp():
         import smtplib
-        return smtplib.SMTP("merlinux.eu")
+        return smtplib.SMTP("smtp.gmail.com")
 
     def test_ehlo(smtp):
         response, msg = smtp.ehlo()
@@ -169,7 +169,7 @@ access the fixture function::
 
     @pytest.fixture(scope="module")
     def smtp():
-        return smtplib.SMTP("merlinux.eu")
+        return smtplib.SMTP("smtp.gmail.com")
 
 The name of the fixture again is ``smtp`` and you can access its result by
 listing the name ``smtp`` as an input parameter in any test or fixture
@@ -178,14 +178,14 @@ function (in or below the directory where ``conftest.py`` is located)::
     # content of test_module.py
 
     def test_ehlo(smtp):
-        response = smtp.ehlo()
-        assert response[0] == 250
-        assert "merlinux" in response[1]
+        response, msg = smtp.ehlo()
+        assert response == 250
+        assert "smtp.gmail.com" in str(msg, 'ascii')
         assert 0  # for demo purposes
 
     def test_noop(smtp):
-        response = smtp.noop()
-        assert response[0] == 250
+        response, msg = smtp.noop()
+        assert response == 250
         assert 0  # for demo purposes
 
 We deliberately insert failing ``assert 0`` statements in order to
@@ -255,7 +255,7 @@ or multiple times::
 
     @pytest.fixture(scope="module")
     def smtp(request):
-        smtp = smtplib.SMTP("merlinux.eu")
+        smtp = smtplib.SMTP("smtp.gmail.com")
         def fin():
             print ("teardown smtp")
             smtp.close()
@@ -296,7 +296,7 @@ read an optional server URL from the test module which uses our fixture::
 
     @pytest.fixture(scope="module")
     def smtp(request):
-        server = getattr(request.module, "smtpserver", "merlinux.eu")
+        server = getattr(request.module, "smtpserver", "smtp.gmail.com")
         smtp = smtplib.SMTP(server)
 
         def fin():
@@ -359,7 +359,7 @@ through the special :py:class:`request <FixtureRequest>` object::
     import smtplib
 
     @pytest.fixture(scope="module",
-                    params=["merlinux.eu", "mail.python.org"])
+                    params=["smtp.gmail.com", "mail.python.org"])
     def smtp(request):
         smtp = smtplib.SMTP(request.param)
         def fin():
@@ -431,7 +431,7 @@ connection the second test fails in ``test_ehlo`` because a
 different server string is expected than what arrived.
 
 pytest will build a string that is the test ID for each fixture value
-in a parametrized fixture, e.g. ``test_ehlo[merlinux.eu]`` and
+in a parametrized fixture, e.g. ``test_ehlo[smtp.gmail.com]`` and
 ``test_ehlo[mail.python.org]`` in the above examples.  These IDs can
 be used with ``-k`` to select specific cases to run, and they will
 also identify the specific case when one is failing.  Running pytest
