@@ -761,11 +761,12 @@ class CallSpec2(object):
     def id(self):
         return "-".join(map(str, filter(None, self._idlist)))
 
-    def setmulti(self, valtype, argnames, valset, id, keywords, scopenum,
+    def setmulti(self, valtypes, argnames, valset, id, keywords, scopenum,
                  param_index):
         for arg,val in zip(argnames, valset):
             self._checkargnotcontained(arg)
-            getattr(self, valtype)[arg] = val
+            valtype_for_arg = valtypes[arg]
+            getattr(self, valtype_for_arg)[arg] = val
             self.indices[arg] = param_index
             self._arg2scopenum[arg] = scopenum
             if val is _notexists:
@@ -844,7 +845,9 @@ class Metafunc(FuncargnamesCompatAttr):
             where each tuple-element specifies a value for its respective
             argname.
 
-        :arg indirect: if True each argvalue corresponding to an argname will
+        :arg indirect: The list of argnames or boolean. A list of arguments'
+            names (subset of argnames). If True the list contains all names from
+            the argnames. Each argvalue corresponding to an argname in this list will
             be passed as request.param to its respective argname fixture
             function so that it can perform more expensive setups during the
             setup phase of a test rather than at collection time.
@@ -889,13 +892,22 @@ class Metafunc(FuncargnamesCompatAttr):
         if scope is None:
             scope = "function"
         scopenum = scopes.index(scope)
+        valtypes = {arg: "funcargs" for arg in argnames}
         if not indirect:
             #XXX should we also check for the opposite case?
             for arg in argnames:
                 if arg not in self.fixturenames:
                     raise ValueError("%r uses no fixture %r" %(
                                      self.function, arg))
-        valtype = indirect and "params" or "funcargs"
+        else:
+            if not isinstance(indirect, (tuple, list)):
+                valtypes = {arg: "params" for arg in argnames}
+            else:
+                for arg in indirect:
+                    if arg not in argnames:
+                        raise ValueError("indirect: fixture %r doesn't exist" %(
+                                         arg))
+                    valtypes[arg] = "params"
         idfn = None
         if callable(ids):
             idfn = ids
@@ -910,7 +922,7 @@ class Metafunc(FuncargnamesCompatAttr):
             for param_index, valset in enumerate(argvalues):
                 assert len(valset) == len(argnames)
                 newcallspec = callspec.copy(self)
-                newcallspec.setmulti(valtype, argnames, valset, ids[param_index],
+                newcallspec.setmulti(valtypes, argnames, valset, ids[param_index],
                                      newkeywords.get(param_index, {}), scopenum,
                                      param_index)
                 newcalls.append(newcallspec)

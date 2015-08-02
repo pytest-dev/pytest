@@ -220,6 +220,46 @@ class TestMetafunc:
         assert metafunc._calls[0].params == dict(x=1,y=2, unnamed=1)
         assert metafunc._calls[1].params == dict(x=1,y=3, unnamed=1)
 
+    def test_parametrize_indirect_list(self):
+        def func(x, y): pass
+        metafunc = self.Metafunc(func)
+        metafunc.parametrize('x, y', [('a', 'b')], indirect=['x'])
+        assert metafunc._calls[0].funcargs == dict(y='b')
+        assert metafunc._calls[0].params == dict(x='a')
+
+    def test_parametrize_indirect_list_all(self):
+        def func(x, y): pass
+        metafunc = self.Metafunc(func)
+        metafunc.parametrize('x, y', [('a', 'b')], indirect=['x', 'y'])
+        assert metafunc._calls[0].funcargs == {}
+        assert metafunc._calls[0].params == dict(x='a', y='b')
+
+    def test_parametrize_indirect_list_empty(self):
+        def func(x, y): pass
+        metafunc = self.Metafunc(func)
+        metafunc.parametrize('x, y', [('a', 'b')], indirect=[])
+        assert metafunc._calls[0].funcargs == dict(x='a', y='b')
+        assert metafunc._calls[0].params == {}
+
+    def test_parametrize_indirect_list_functional(self, testdir):
+        testdir.makepyfile("""
+            def pytest_generate_tests(metafunc):
+                metafunc.parametrize('x, y', [('a', 'b')], indirect=['x'])
+            def pytest_funcarg__x(request):
+                return request.param * 3
+            def pytest_funcarg__y(request):
+                return request.param * 2
+
+            def test_simple(x,y):
+                assert len(x) == 3
+                assert len(y) == 1
+        """)
+        result = testdir.runpytest("-v")
+        result.stdout.fnmatch_lines([
+            "*test_simple*a-b*",
+            "*1 passed*",
+        ])
+
     def test_addcalls_and_parametrize_indirect(self):
         def func(x, y): pass
         metafunc = self.Metafunc(func)
