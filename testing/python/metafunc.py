@@ -261,6 +261,25 @@ class TestMetafunc:
             "*1 passed*",
         ])
 
+    def test_parametrize_indirect_bad_arg(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture(scope='function')
+            def x(request):
+                return request.param * 3
+            @pytest.fixture(scope='function')
+            def y(request):
+                return request.param * 2
+            @pytest.mark.parametrize('x, y', [('a', 'b')], indirect=['x', 'z'])
+            def test_simple(x,y):
+                assert len(x) == 3
+                assert len(y) == 1
+        """)
+        result = testdir.runpytest("-v")
+        result.stdout.fnmatch_lines([
+            "*indirect: fixture 'z' doesn't exist*",
+        ])
+
     def test_addcalls_and_parametrize_indirect(self):
         def func(x, y): pass
         metafunc = self.Metafunc(func)
