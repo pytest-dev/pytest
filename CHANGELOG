@@ -101,6 +101,9 @@
 
 - add ``file`` and ``line`` attributes to JUnit-XML output.
 
+- fix issue714: add ability to apply indirect=True parameter on particular argnames.
+
+
 2.7.3 (compared to 2.7.2)
 -----------------------------
 
