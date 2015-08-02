@@ -892,7 +892,7 @@ class Metafunc(FuncargnamesCompatAttr):
         if scope is None:
             scope = "function"
         scopenum = scopes.index(scope)
-        valtypes = {arg: "funcargs" for arg in argnames}
+        valtypes = dict.fromkeys(argnames, "funcargs")
         if not indirect:
             #XXX should we also check for the opposite case?
             for arg in argnames:
@@ -901,7 +901,7 @@ class Metafunc(FuncargnamesCompatAttr):
                                      self.function, arg))
         else:
             if not isinstance(indirect, (tuple, list)):
-                valtypes = {arg: "params" for arg in argnames}
+                valtypes = dict.fromkeys(argnames, "params")
             else:
                 for arg in indirect:
                     if arg not in argnames:
