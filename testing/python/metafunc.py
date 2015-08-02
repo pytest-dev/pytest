@@ -243,13 +243,14 @@ class TestMetafunc:
 
     def test_parametrize_indirect_list_functional(self, testdir):
         testdir.makepyfile("""
-            def pytest_generate_tests(metafunc):
-                metafunc.parametrize('x, y', [('a', 'b')], indirect=['x'])
-            def pytest_funcarg__x(request):
+            import pytest
+            @pytest.fixture(scope='function')
+            def x(request):
                 return request.param * 3
-            def pytest_funcarg__y(request):
+            @pytest.fixture(scope='function')
+            def y(request):
                 return request.param * 2
-
+            @pytest.mark.parametrize('x, y', [('a', 'b')], indirect=['x'])
             def test_simple(x,y):
                 assert len(x) == 3
                 assert len(y) == 1
