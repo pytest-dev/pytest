@@ -36,10 +36,10 @@ Note: this assumes you have already registered on pypi.
       git diff
 
 
-8. Build the docs, you need a virtualenv with, py and sphinx
+8. Build the docs, you need a virtualenv with py and sphinx
    installed::
 
-      cd docs/en
+      cd doc/en
       make html
 
    Commit any changes before tagging the release.
@@ -49,9 +49,9 @@ Note: this assumes you have already registered on pypi.
       git tag VERSION
       git push
 
-10. Upload the docs using docs/en/Makefile::
+10. Upload the docs using doc/en/Makefile::
 
-      cd docs/en
+      cd doc/en
       make install  # or "installall" if you have LaTeX installed for PDF
 
    This requires ssh-login permission on pytest.org because it uses
