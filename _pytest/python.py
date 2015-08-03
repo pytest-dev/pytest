@@ -833,7 +833,7 @@ class Metafunc(FuncargnamesCompatAttr):
         """ Add new invocations to the underlying test function using the list
         of argvalues for the given argnames.  Parametrization is performed
         during the collection phase.  If you need to setup expensive resources
-        see about setting indirect=True to do it rather at test setup time.
+        see about setting indirect to do it rather at test setup time.
 
         :arg argnames: a comma-separated string denoting one or more argument
                        names, or a list/tuple of argument strings.
