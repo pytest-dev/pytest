@@ -892,22 +892,23 @@ class Metafunc(FuncargnamesCompatAttr):
         if scope is None:
             scope = "function"
         scopenum = scopes.index(scope)
-        valtypes = dict.fromkeys(argnames, "funcargs")
-        if not indirect:
+        valtypes = {}
+        if indirect is True:
+            valtypes = dict.fromkeys(argnames, "params")
+        elif indirect is False:
+            valtypes = dict.fromkeys(argnames, "funcargs")
             #XXX should we also check for the opposite case?
             for arg in argnames:
                 if arg not in self.fixturenames:
                     raise ValueError("%r uses no fixture %r" %(
                                      self.function, arg))
-        else:
-            if not isinstance(indirect, (tuple, list)):
-                valtypes = dict.fromkeys(argnames, "params")
-            else:
-                for arg in indirect:
-                    if arg not in argnames:
-                        raise ValueError("indirect: fixture %r doesn't exist" %(
-                                         arg))
-                    valtypes[arg] = "params"
+        elif isinstance(indirect, (tuple, list)):
+            valtypes = dict.fromkeys(argnames, "funcargs")
+            for arg in indirect:
+                if arg not in argnames:
+                    raise ValueError("indirect given to %r: fixture %r doesn't exist" %(
+                                     self.function, arg))
+                valtypes[arg] = "params"
         idfn = None
         if callable(ids):
             idfn = ids
