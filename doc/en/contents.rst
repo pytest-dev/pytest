@@ -17,11 +17,11 @@ Full pytest documentation
    example/index
    talks
    contributing
-   funcarg_compare.txt
+   funcarg_compare
    announce/index
 
 .. toctree::
    :hidden:
 
-   changelog.txt
+   changelog
 

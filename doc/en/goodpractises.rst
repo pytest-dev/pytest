@@ -155,7 +155,7 @@ to create a JUnitXML file that Jenkins_ can pick up and generate reports.
 .. _`genscript method`:
 
 (deprecated) Create a pytest standalone script
--------------------------------------------
+-----------------------------------------------
 
 If you are a maintainer or application developer and want people
 who don't deal with python much to easily run tests you may generate
