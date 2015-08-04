@@ -21,11 +21,11 @@ clean:
 
 # generate documentation
 docs: develop
-	find doc/en -name '*.txt' -not -path 'doc/en/_build/*' | xargs .env/bin/regendoc ${REGENDOC_ARGS}
+	find doc/en -name '*.rst' -not -path 'doc/en/_build/*' | xargs .env/bin/regendoc ${REGENDOC_ARGS}
 	cd doc/en; make html
 
 # upload documentation
 upload-docs: develop
-	find doc/en -name '*.txt' -not -path 'doc/en/_build/*' | xargs .env/bin/regendoc ${REGENDOC_ARGS} --update
+	find doc/en -name '*.rst' -not -path 'doc/en/_build/*' | xargs .env/bin/regendoc ${REGENDOC_ARGS} --update
 	#cd doc/en; make install
 
