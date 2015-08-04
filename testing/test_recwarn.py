@@ -1,7 +1,7 @@
 import warnings
 import py
 import pytest
-from _pytest.recwarn import WarningsChecker, WarningsRecorder
+from _pytest.recwarn import WarningsRecorder
 
 
 def test_recwarn_functional(testdir):
@@ -42,6 +42,7 @@ class TestWarningsRecorderChecker(object):
         assert showwarning == py.std.warnings.showwarning
 
     def test_typechecking(self):
+        from _pytest.recwarn import WarningsChecker
         with pytest.raises(TypeError):
             WarningsChecker(5)
         with pytest.raises(TypeError):
