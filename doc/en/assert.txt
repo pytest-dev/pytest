@@ -114,6 +114,16 @@ like documenting unfixed bugs (where the test describes what "should" happen)
 or bugs in dependencies.
 
 
+.. _`assertwarns`:
+
+Assertions about expected warnings
+-----------------------------------------
+
+.. versionadded:: 2.8
+
+You can check that code raises a particular warning using
+:ref:`pytest.warns <warns>`.
+
 
 .. _newreport:
 

@@ -34,7 +34,6 @@ class TestRaises:
             raise BuiltinAssertionError
         """)
 
-    @pytest.mark.skipif('sys.version < "2.5"')
     def test_raises_as_contextmanager(self, testdir):
         testdir.makepyfile("""
             from __future__ import with_statement
