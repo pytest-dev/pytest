@@ -46,7 +46,7 @@ installall: clean install installpdf
 	@echo "done"
 
 regen:
-	PYTHONDONTWRITEBYTECODE=1 COLUMNS=76 regendoc --update *.txt */*.txt
+	PYTHONDONTWRITEBYTECODE=1 COLUMNS=76 regendoc --update *.rst */*.rst
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
