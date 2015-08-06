@@ -167,3 +167,9 @@ class TestWarns(object):
         assert len(record) == 2
         assert str(record[0].message) == "user"
         assert str(record[1].message) == "runtime"
+
+    @pytest.mark.parametrize('run', [1, 2])
+    def test_doubletest(self, run):
+        """If a test is run again, the warning should still be raised"""
+        with pytest.warns(RuntimeWarning):
+            warnings.warn("runtime", RuntimeWarning)

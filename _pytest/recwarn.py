@@ -143,10 +143,14 @@ class WarningsRecorder(object):
                 message, category, filename, lineno, file, line))
 
             # still perform old showwarning functionality
-            self._showwarning(message, category, filename, lineno,
-                              file=file, line=line)
+            self._showwarning(
+                message, category, filename, lineno, file=file, line=line)
 
         self._module.showwarning = showwarning
+
+        # allow the same warning to be raised more than once
+        self._module.simplefilter('always', append=True)
+
         return self
 
     def __exit__(self, *exc_info):
