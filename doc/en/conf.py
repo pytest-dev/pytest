@@ -47,7 +47,7 @@ extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.autosummary',
 templates_path = ['_templates']
 
 # The suffix of source filenames.
-source_suffix = '.txt'
+source_suffix = '.rst'
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'
@@ -73,13 +73,13 @@ copyright = u'2015, holger krekel and pytest-dev team'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['links.inc', '_build', 'naming20.txt', 'test/*',
+exclude_patterns = ['links.inc', '_build', 'naming20.rst', 'test/*',
     "old_*",
     '*attic*',
     '*/attic*',
-    'funcargs.txt',
-    'setup.txt',
-    'example/remoteinterp.txt',
+    'funcargs.rst',
+    'setup.rst',
+    'example/remoteinterp.rst',
     ]
 
 

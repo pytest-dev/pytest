@@ -25,10 +25,10 @@ The following examples aim at various use cases you might encounter.
 .. toctree::
    :maxdepth: 2
 
-   reportingdemo.txt
-   simple.txt
-   parametrize.txt
-   markers.txt
-   special.txt
-   pythoncollection.txt
-   nonpython.txt
+   reportingdemo
+   simple
+   parametrize
+   markers
+   special
+   pythoncollection
+   nonpython

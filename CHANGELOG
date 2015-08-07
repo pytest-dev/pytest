@@ -120,6 +120,8 @@
 
 - add ``file`` and ``line`` attributes to JUnit-XML output.
 
+- converted all txt documentation to rst format.
+
 2.7.3 (compared to 2.7.2)
 -----------------------------
 

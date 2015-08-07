@@ -5,10 +5,10 @@ Getting started basics
 .. toctree::
    :maxdepth: 2
 
-   index.txt
-   getting-started.txt
-   usage.txt
-   goodpractises.txt
-   projects.txt
-   faq.txt
+   index
+   getting-started
+   usage
+   goodpractises
+   projects
+   faq
 
