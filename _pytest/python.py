@@ -1,4 +1,5 @@
 """ Python test discovery, setup and run of test functions. """
+import re
 import fnmatch
 import functools
 import py
@@ -976,8 +977,22 @@ def _idval(val, argname, idx, idfn):
                 return s
         except Exception:
             pass
+
+    try:
+        import enum
+    except ImportError:
+        # Only available in Python 3.4+
+        enum = None
+
     if isinstance(val, (float, int, str, bool, NoneType)):
         return str(val)
+    elif isinstance(val, type(re.compile(''))):
+        # The type of re.compile objects is not exposed in Python.
+        return val.pattern
+    elif enum is not None and isinstance(val, enum.Enum):
+        return str(val)
+    elif isinstance(val, type) and hasattr(val, '__name__'):
+        return val.__name__
     return str(argname)+str(idx)
 
 def _idvalset(idx, valset, argnames, idfn):
