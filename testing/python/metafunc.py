@@ -683,18 +683,20 @@ class TestMetafuncFunctional:
         reprec.assert_outcomes(passed=4)
 
     @pytest.mark.issue463
-    def test_parameterize_misspelling(self, testdir):
+    @pytest.mark.parametrize('attr', ['parametrise', 'parameterize',
+                                     'parameterise'])
+    def test_parametrize_misspelling(self, testdir, attr):
         testdir.makepyfile("""
             import pytest
 
-            @pytest.mark.parameterize("x", range(2))
+            @pytest.mark.{0}("x", range(2))
             def test_foo(x):
                 pass
-        """)
+        """.format(attr))
         reprec = testdir.inline_run('--collectonly')
         failures = reprec.getfailures()
         assert len(failures) == 1
-        expectederror = "MarkerError: test_foo has 'parameterize', spelling should be 'parametrize'"
+        expectederror = "MarkerError: test_foo has '{0}', spelling should be 'parametrize'".format(attr)
         assert expectederror in failures[0].longrepr.reprcrash.message
 
 
