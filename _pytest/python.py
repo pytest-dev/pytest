@@ -983,15 +983,16 @@ def _idval(val, argname, idx, idfn):
     except ImportError:
         # Only available in Python 3.4+
         enum = None
+    # The type of re.compile objects is not exposed in Python.
+    RegexType = type(re.compile(''))
 
     if isinstance(val, (float, int, str, bool, NoneType)):
         return str(val)
-    elif isinstance(val, type(re.compile(''))):
-        # The type of re.compile objects is not exposed in Python.
+    elif isinstance(val, RegexType):
         return val.pattern
     elif enum is not None and isinstance(val, enum.Enum):
         return str(val)
-    elif isinstance(val, type) and hasattr(val, '__name__'):
+    elif inspect.isclass(val) and hasattr(val, '__name__'):
         return val.__name__
     return str(argname)+str(idx)
 
