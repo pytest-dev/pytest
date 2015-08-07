@@ -160,10 +160,13 @@ def pytest_cmdline_main(config):
 
 
 def pytest_generate_tests(metafunc):
-    # this misspelling is common - raise a specific error to alert the user
-    if hasattr(metafunc.function, 'parameterize'):
-        msg = "{0} has 'parameterize', spelling should be 'parametrize'"
-        raise MarkerError(msg.format(metafunc.function.__name__))
+    # those alternative spellings are common - raise a specific error to alert
+    # the user
+    alt_spellings = ['parameterize', 'parametrise', 'parameterise']
+    for attr in alt_spellings:
+        if hasattr(metafunc.function, attr):
+            msg = "{0} has '{1}', spelling should be 'parametrize'"
+            raise MarkerError(msg.format(metafunc.function.__name__, attr))
     try:
         markers = metafunc.function.parametrize
     except AttributeError:
