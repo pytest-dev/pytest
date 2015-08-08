@@ -23,6 +23,8 @@ isclass = inspect.isclass
 callable = py.builtin.callable
 # used to work around a python2 exception info leak
 exc_clear = getattr(sys, 'exc_clear', lambda: None)
+# The type of re.compile objects is not exposed in Python.
+REGEX_TYPE = type(re.compile(''))
 
 def filter_traceback(entry):
     return entry.path != cutdir1 and not entry.path.relto(cutdir2)
@@ -983,16 +985,14 @@ def _idval(val, argname, idx, idfn):
     except ImportError:
         # Only available in Python 3.4+
         enum = None
-    # The type of re.compile objects is not exposed in Python.
-    RegexType = type(re.compile(''))
 
     if isinstance(val, (float, int, str, bool, NoneType)):
         return str(val)
-    elif isinstance(val, RegexType):
+    elif isinstance(val, REGEX_TYPE):
         return val.pattern
     elif enum is not None and isinstance(val, enum.Enum):
         return str(val)
-    elif inspect.isclass(val) and hasattr(val, '__name__'):
+    elif isclass(val) and hasattr(val, '__name__'):
         return val.__name__
     return str(argname)+str(idx)
 
