@@ -249,7 +249,9 @@ class TestMetafunc:
     def test_parametrize_indirect_list_functional(self, testdir):
         """
         Test parametrization with 'indirect' parameter applied on
-        particular arguments.
+        particular arguments. As y is is direct, its value should
+        be used directly rather than being passed to the fixture
+        y.
 
         :param testdir: the instance of Testdir class, a temporary
         test directory.
@@ -279,6 +281,64 @@ class TestMetafunc:
         metafunc = self.Metafunc(func)
         with pytest.raises(ValueError):
             metafunc.parametrize('x, y', [('a', 'b')], indirect=['x', 'z'])
+
+    @pytest.mark.issue714
+    def test_parametrize_uses_no_fixture_error_indirect_false(self, testdir):
+        """The 'uses no fixture' error tells the user at collection time
+        that the parametrize data they've set up doesn't correspond to the
+        fixtures in their test function, rather than silently ignoring this
+        and letting the test potentially pass.
+        """
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.mark.parametrize('x, y', [('a', 'b')], indirect=False)
+            def test_simple(x):
+                assert len(x) == 3
+        """)
+        result = testdir.runpytest("--collect-only")
+        result.stdout.fnmatch_lines([
+            "*uses no fixture 'y'*",
+        ])
+
+    @pytest.mark.xfail
+    @pytest.mark.issue714
+    def test_parametrize_uses_no_fixture_error_indirect_true(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture(scope='function')
+            def x(request):
+                return request.param * 3
+            @pytest.fixture(scope='function')
+            def y(request):
+                return request.param * 2
+
+            @pytest.mark.parametrize('x, y', [('a', 'b')], indirect=True)
+            def test_simple(x):
+                assert len(x) == 3
+        """)
+        result = testdir.runpytest("--collect-only")
+        result.stdout.fnmatch_lines([
+            "*uses no fixture 'y'*",
+        ])
+
+    @pytest.mark.xfail
+    @pytest.mark.issue714
+    def test_parametrize_indirect_uses_no_fixture_error_indirect_list(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture(scope='function')
+            def x(request):
+                return request.param * 3
+
+            @pytest.mark.parametrize('x, y', [('a', 'b')], indirect=['x'])
+            def test_simple(x):
+                assert len(x) == 3
+        """)
+        result = testdir.runpytest("--collect-only")
+        result.stdout.fnmatch_lines([
+            "*uses no fixture 'y'*",
+        ])
 
     def test_addcalls_and_parametrize_indirect(self):
         def func(x, y): pass
