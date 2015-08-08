@@ -197,7 +197,7 @@ but here is a simple overview:
 
 #. Finally, submit a pull request through the GitHub website:
 
-   .. image:: img/pullrequest.png
+   .. image:: doc/en/img/pullrequest.png
     :width: 700px
     :align: center
 
