@@ -1,6 +1,10 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
+- parametrize now also generates meaningful test IDs for enum, regex and class
+  objects (as opposed to class instances).
+  Thanks to Florian Bruhin for the PR.
+
 - Add 'warns' to assert that warnings are thrown (like 'raises').
   Thanks to Eric Hunsberger for the PR.
 

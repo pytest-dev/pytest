@@ -1,4 +1,5 @@
 """ Python test discovery, setup and run of test functions. """
+import re
 import fnmatch
 import functools
 import py
@@ -7,6 +8,12 @@ import sys
 import pytest
 from _pytest.mark import MarkDecorator, MarkerError
 from py._code.code import TerminalRepr
+
+try:
+    import enum
+except ImportError:  # pragma: no cover
+    # Only available in Python 3.4+ or as a backport
+    enum = None
 
 import _pytest
 import pluggy
@@ -22,6 +29,8 @@ isclass = inspect.isclass
 callable = py.builtin.callable
 # used to work around a python2 exception info leak
 exc_clear = getattr(sys, 'exc_clear', lambda: None)
+# The type of re.compile objects is not exposed in Python.
+REGEX_TYPE = type(re.compile(''))
 
 def filter_traceback(entry):
     return entry.path != cutdir1 and not entry.path.relto(cutdir2)
@@ -979,8 +988,15 @@ def _idval(val, argname, idx, idfn):
                 return s
         except Exception:
             pass
+
     if isinstance(val, (float, int, str, bool, NoneType)):
         return str(val)
+    elif isinstance(val, REGEX_TYPE):
+        return val.pattern
+    elif enum is not None and isinstance(val, enum.Enum):
+        return str(val)
+    elif isclass(val) and hasattr(val, '__name__'):
+        return val.__name__
     return str(argname)+str(idx)
 
 def _idvalset(idx, valset, argnames, idfn):
