@@ -743,5 +743,4 @@ over to ``pytest`` instead. For example::
 This makes it convenient to execute your tests from within your frozen
 application, using standard ``py.test`` command-line options::
 
-    $ ./app_main --pytest --verbose --tb=long --junit-xml=results.xml test-suite/
-    /bin/sh: ./app_main: No such file or directory
+    ./app_main --pytest --verbose --tb=long --junit-xml=results.xml test-suite/
