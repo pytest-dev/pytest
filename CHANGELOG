@@ -1,6 +1,8 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
+- Fix #562: @nose.tools.istest now fully respected.
+
 - parametrize now also generates meaningful test IDs for enum, regex and class
   objects (as opposed to class instances).
   Thanks to Florian Bruhin for the PR.
