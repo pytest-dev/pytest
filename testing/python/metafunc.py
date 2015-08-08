@@ -208,6 +208,7 @@ class TestMetafunc:
         assert metafunc._calls[0].id == "0-2"
         assert metafunc._calls[1].id == "0-3"
 
+    @pytest.mark.issue714
     def test_parametrize_indirect(self):
         def func(x, y): pass
         metafunc = self.Metafunc(func)
@@ -219,6 +220,65 @@ class TestMetafunc:
         assert metafunc._calls[1].funcargs == {}
         assert metafunc._calls[0].params == dict(x=1,y=2, unnamed=1)
         assert metafunc._calls[1].params == dict(x=1,y=3, unnamed=1)
+
+    @pytest.mark.issue714
+    def test_parametrize_indirect_list(self):
+        def func(x, y): pass
+        metafunc = self.Metafunc(func)
+        metafunc.parametrize('x, y', [('a', 'b')], indirect=['x'])
+        assert metafunc._calls[0].funcargs == dict(y='b')
+        assert metafunc._calls[0].params == dict(x='a')
+
+    @pytest.mark.issue714
+    def test_parametrize_indirect_list_all(self):
+        def func(x, y): pass
+        metafunc = self.Metafunc(func)
+        metafunc.parametrize('x, y', [('a', 'b')], indirect=['x', 'y'])
+        assert metafunc._calls[0].funcargs == {}
+        assert metafunc._calls[0].params == dict(x='a', y='b')
+
+    @pytest.mark.issue714
+    def test_parametrize_indirect_list_empty(self):
+        def func(x, y): pass
+        metafunc = self.Metafunc(func)
+        metafunc.parametrize('x, y', [('a', 'b')], indirect=[])
+        assert metafunc._calls[0].funcargs == dict(x='a', y='b')
+        assert metafunc._calls[0].params == {}
+
+    @pytest.mark.issue714
+    def test_parametrize_indirect_list_functional(self, testdir):
+        """
+        Test parametrization with 'indirect' parameter applied on
+        particular arguments.
+
+        :param testdir: the instance of Testdir class, a temporary
+        test directory.
+        """
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture(scope='function')
+            def x(request):
+                return request.param * 3
+            @pytest.fixture(scope='function')
+            def y(request):
+                return request.param * 2
+            @pytest.mark.parametrize('x, y', [('a', 'b')], indirect=['x'])
+            def test_simple(x,y):
+                assert len(x) == 3
+                assert len(y) == 1
+        """)
+        result = testdir.runpytest("-v")
+        result.stdout.fnmatch_lines([
+            "*test_simple*a-b*",
+            "*1 passed*",
+        ])
+
+    @pytest.mark.issue714
+    def test_parametrize_indirect_list_error(self, testdir):
+        def func(x, y): pass
+        metafunc = self.Metafunc(func)
+        with pytest.raises(ValueError):
+            metafunc.parametrize('x, y', [('a', 'b')], indirect=['x', 'z'])
 
     def test_addcalls_and_parametrize_indirect(self):
         def func(x, y): pass
