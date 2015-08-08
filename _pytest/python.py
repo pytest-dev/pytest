@@ -1155,9 +1155,9 @@ def raises(expected_exception, *args, **kwargs):
            " derived from BaseException, not %s")
     if isinstance(expected_exception, tuple):
         for exc in expected_exception:
-            if not inspect.isclass(exc):
+            if not isclass(exc):
                 raise TypeError(msg % type(exc))
-    elif not inspect.isclass(expected_exception):
+    elif not isclass(expected_exception):
         raise TypeError(msg % type(expected_exception))
 
     if not args:
