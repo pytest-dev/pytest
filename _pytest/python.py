@@ -9,6 +9,12 @@ import pytest
 from _pytest.mark import MarkDecorator, MarkerError
 from py._code.code import TerminalRepr
 
+try:
+    import enum
+except ImportError:  # pragma: no cover
+    # Only available in Python 3.4+ or as a backport
+    enum = None
+
 import _pytest
 import pluggy
 
@@ -979,12 +985,6 @@ def _idval(val, argname, idx, idfn):
                 return s
         except Exception:
             pass
-
-    try:
-        import enum
-    except ImportError:
-        # Only available in Python 3.4+
-        enum = None
 
     if isinstance(val, (float, int, str, bool, NoneType)):
         return str(val)
