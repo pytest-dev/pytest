@@ -300,10 +300,15 @@ class TerminalReporter:
         if plugininfo:
             l = []
             for plugin, dist in plugininfo:
-                name = dist.project_name
+                # gets us name and version!
+                name = str(dist)
+                # questionable convenience, but it keeps things short
                 if name.startswith("pytest-"):
                     name = name[7:]
-                l.append(name)
+                # we decided to print python package names
+                # they can have more than one plugin
+                if name not in l:
+                    l.append(name)
             lines.append("plugins: %s" % ", ".join(l))
         return lines
 
