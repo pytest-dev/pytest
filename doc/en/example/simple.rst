@@ -534,23 +534,24 @@ case we just write some informations out to a ``failures`` file::
     import pytest
     import os.path
 
-    @pytest.hookimpl(tryfirst=True)
-    def pytest_runtest_makereport(item, call, __multicall__):
+    @pytest.hookimpl(tryfirst=True, hookwrapper=True)
+    def pytest_runtest_makereport(item, call):
         # execute all other hooks to obtain the report object
-        rep = __multicall__.execute()
+        outcome = yield
+        rep = outcome.get_result()
 
         # we only look at actual failing test calls, not setup/teardown
         if rep.when == "call" and rep.failed:
             mode = "a" if os.path.exists("failures") else "w"
             with open("failures", mode) as f:
                 # let's also access a fixture for the fun of it
-                if "tmpdir" in item.funcargs:
+                if "tmpdir" in item.fixturenames:
                     extra = " (%s)" % item.funcargs["tmpdir"]
                 else:
                     extra = ""
 
                 f.write(rep.nodeid + extra + "\n")
-        return rep
+
 
 if you then have failing tests::
 
@@ -606,16 +607,16 @@ here is a little example implemented via a local plugin::
 
     import pytest
 
-    @pytest.hookimpl(tryfirst=True)
-    def pytest_runtest_makereport(item, call, __multicall__):
+    @pytest.hookimpl(tryfirst=True, hookwrapper=True)
+    def pytest_runtest_makereport(item, call):
         # execute all other hooks to obtain the report object
-        rep = __multicall__.execute()
+        outcome = yield
+        rep = outcome.get_result()
 
         # set an report attribute for each phase of a call, which can
         # be "setup", "call", "teardown"
 
         setattr(item, "rep_" + rep.when, rep)
-        return rep
 
 
     @pytest.fixture
@@ -742,5 +743,4 @@ over to ``pytest`` instead. For example::
 This makes it convenient to execute your tests from within your frozen
 application, using standard ``py.test`` command-line options::
 
-    $ ./app_main --pytest --verbose --tb=long --junit-xml=results.xml test-suite/
-    /bin/sh: ./app_main: No such file or directory
+    ./app_main --pytest --verbose --tb=long --junit-xml=results.xml test-suite/
