@@ -586,6 +586,11 @@ class TestInvocationVariants:
         assert type(_pytest.config.get_plugin_manager()) is _pytest.config.PytestPluginManager
 
 
+    def test_has_plugin(self, request):
+        """Test hasplugin function of the plugin manager (#932)."""
+        assert request.config.pluginmanager.hasplugin('python')
+
+
 class TestDurations:
     source = """
         import time
