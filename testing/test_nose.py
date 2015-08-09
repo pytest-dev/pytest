@@ -347,3 +347,49 @@ def test_SkipTest_in_test(testdir):
         """)
     reprec = testdir.inline_run()
     reprec.assertoutcome(skipped=1)
+
+def test_istest_function_decorator(testdir):
+    p = testdir.makepyfile("""
+        import nose.tools
+        @nose.tools.istest
+        def not_test_prefix():
+            pass
+        """)
+    result = testdir.runpytest(p)
+    result.assert_outcomes(passed=1)
+
+def test_nottest_function_decorator(testdir):
+    testdir.makepyfile("""
+        import nose.tools
+        @nose.tools.nottest
+        def test_prefix():
+            pass
+        """)
+    reprec = testdir.inline_run()
+    assert not reprec.getfailedcollections()
+    calls = reprec.getreports("pytest_runtest_logreport")
+    assert not calls
+
+def test_istest_class_decorator(testdir):
+    p = testdir.makepyfile("""
+        import nose.tools
+        @nose.tools.istest
+        class NotTestPrefix:
+            def test_method(self):
+                pass
+        """)
+    result = testdir.runpytest(p)
+    result.assert_outcomes(passed=1)
+
+def test_nottest_class_decorator(testdir):
+    testdir.makepyfile("""
+        import nose.tools
+        @nose.tools.nottest
+        class TestPrefix:
+            def test_method(self):
+                pass
+        """)
+    reprec = testdir.inline_run()
+    assert not reprec.getfailedcollections()
+    calls = reprec.getreports("pytest_runtest_logreport")
+    assert not calls

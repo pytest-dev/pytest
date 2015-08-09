@@ -37,7 +37,7 @@ def filter_traceback(entry):
 
 
 def get_real_func(obj):
-    """gets the real function object of the (possibly) wrapped object by
+    """ gets the real function object of the (possibly) wrapped object by
     functools.wraps or functools.partial.
     """
     while hasattr(obj, "__wrapped__"):
@@ -63,6 +63,17 @@ def getimfunc(func):
             return func.im_func
         except AttributeError:
             return func
+
+def safe_getattr(object, name, default):
+    """ Like getattr but return default upon any Exception.
+
+    Attribute access can potentially fail for 'evil' Python objects.
+    See issue214
+    """
+    try:
+        return getattr(object, name, default)
+    except Exception:
+        return default
 
 
 class FixtureFunctionMarker:
@@ -257,11 +268,10 @@ def pytest_pycollect_makeitem(collector, name, obj):
         raise StopIteration
     # nothing was collected elsewhere, let's do it here
     if isclass(obj):
-        if collector.classnamefilter(name):
+        if collector.istestclass(obj, name):
             Class = collector._getcustomclass("Class")
             outcome.force_result(Class(name, parent=collector))
-    elif collector.funcnamefilter(name) and hasattr(obj, "__call__") and\
-        getfixturemarker(obj) is None:
+    elif collector.istestfunction(obj, name):
         # mock seems to store unbound methods (issue473), normalize it
         obj = getattr(obj, "__func__", obj)
         if not isfunction(obj):
@@ -347,8 +357,23 @@ class PyCollector(PyobjMixin, pytest.Collector):
     def funcnamefilter(self, name):
         return self._matches_prefix_or_glob_option('python_functions', name)
 
+    def isnosetest(self, obj):
+        """ Look for the __test__ attribute, which is applied by the
+        @nose.tools.istest decorator
+        """
+        return safe_getattr(obj, '__test__', False)
+
     def classnamefilter(self, name):
         return self._matches_prefix_or_glob_option('python_classes', name)
+
+    def istestfunction(self, obj, name):
+        return (
+            (self.funcnamefilter(name) or self.isnosetest(obj))
+            and safe_getattr(obj, "__call__", False) and getfixturemarker(obj) is None
+        )
+
+    def istestclass(self, obj, name):
+        return self.classnamefilter(name) or self.isnosetest(obj)
 
     def _matches_prefix_or_glob_option(self, option_name, name):
         """
@@ -494,7 +519,7 @@ class FuncFixtureInfo:
 
 
 def _marked(func, mark):
-    """Returns True if :func: is already marked with :mark:, False orherwise.
+    """ Returns True if :func: is already marked with :mark:, False otherwise.
     This can happen if marker is applied to class and the test file is
     invoked more than once.
     """
@@ -1130,9 +1155,9 @@ def raises(expected_exception, *args, **kwargs):
            " derived from BaseException, not %s")
     if isinstance(expected_exception, tuple):
         for exc in expected_exception:
-            if not inspect.isclass(exc):
+            if not isclass(exc):
                 raise TypeError(msg % type(exc))
-    elif not inspect.isclass(expected_exception):
+    elif not isclass(expected_exception):
         raise TypeError(msg % type(expected_exception))
 
     if not args:
@@ -1379,7 +1404,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         return self._pyfuncitem.session
 
     def addfinalizer(self, finalizer):
-        """add finalizer/teardown function to be called after the
+        """ add finalizer/teardown function to be called after the
         last test within the requesting test context finished
         execution. """
         # XXX usually this method is shadowed by fixturedef specific ones
