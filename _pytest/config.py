@@ -211,6 +211,10 @@ class PytestPluginManager(PluginManager):
         # support deprecated naming because plugins (xdist e.g.) use it
         return self.get_plugin(name)
 
+    def hasplugin(self, name):
+        """Return True if the plugin with the given name is registered."""
+        return bool(self.get_plugin(name))
+
     def pytest_configure(self, config):
         # XXX now that the pluginmanager exposes hookimpl(tryfirst...)
         # we should remove tryfirst/trylast as markers
