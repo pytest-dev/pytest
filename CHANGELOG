@@ -3,6 +3,10 @@
 
 - Fix #562: @nose.tools.istest now fully respected.
 
+- Fix issue736: Fix a bug where fixture params would be discarded when combined
+  with parametrization markers.
+  Thanks to Markus Unterwaditzer for the PR.
+
 - parametrize now also generates meaningful test IDs for enum, regex and class
   objects (as opposed to class instances).
   Thanks to Florian Bruhin for the PR.
@@ -10,7 +14,7 @@
 - Add 'warns' to assert that warnings are thrown (like 'raises').
   Thanks to Eric Hunsberger for the PR.
 
-- Fix #683: Do not apply an already applied mark.  Thanks ojake for the PR.
+- Fix issue683: Do not apply an already applied mark.  Thanks ojake for the PR.
 
 - Deal with capturing failures better so fewer exceptions get lost to
   /dev/null.  Thanks David Szotten for the PR.
@@ -36,7 +40,7 @@
   deprecated.
   Thanks Bruno Oliveira for the PR.
 
-- fix issue 808: pytest's internal assertion rewrite hook now implements the
+- fix issue808: pytest's internal assertion rewrite hook now implements the
   optional PEP302 get_data API so tests can access data files next to them.
   Thanks xmo-odoo for request and example and Bruno Oliveira for
   the PR.

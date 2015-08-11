@@ -412,9 +412,19 @@ class TestFunction:
                                      ['overridden'])
             def test_overridden_via_param(value):
                 assert value == 'overridden'
+
+            @pytest.mark.parametrize('somevalue', ['overridden'])
+            def test_not_overridden(value, somevalue):
+                assert value == 'value'
+                assert somevalue == 'overridden'
+
+            @pytest.mark.parametrize('other,value', [('foo', 'overridden')])
+            def test_overridden_via_multiparam(other, value):
+                assert other == 'foo'
+                assert value == 'overridden'
         """)
         rec = testdir.inline_run()
-        rec.assertoutcome(passed=1)
+        rec.assertoutcome(passed=3)
 
 
     def test_parametrize_overrides_parametrized_fixture(self, testdir):
