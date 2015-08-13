@@ -63,7 +63,7 @@ class DoctestItem(pytest.Item):
                 lineno = test.lineno + example.lineno + 1
             message = excinfo.type.__name__
             reprlocation = ReprFileLocation(filename, lineno, message)
-            checker = doctest.OutputChecker()
+            checker = _get_unicode_checker()
             REPORT_UDIFF = doctest.REPORT_UDIFF
             filelines = py.path.local(filename).readlines(cr=0)
             lines = []
@@ -100,7 +100,8 @@ def _get_flag_lookup():
                 NORMALIZE_WHITESPACE=doctest.NORMALIZE_WHITESPACE,
                 ELLIPSIS=doctest.ELLIPSIS,
                 IGNORE_EXCEPTION_DETAIL=doctest.IGNORE_EXCEPTION_DETAIL,
-                COMPARISON_FLAGS=doctest.COMPARISON_FLAGS)
+                COMPARISON_FLAGS=doctest.COMPARISON_FLAGS,
+                ALLOW_UNICODE=_get_allow_unicode_flag())
 
 def get_optionflags(parent):
     optionflags_str = parent.config.getini("doctest_optionflags")
@@ -110,15 +111,30 @@ def get_optionflags(parent):
         flag_acc |= flag_lookup_table[flag]
     return flag_acc
 
+
 class DoctestTextfile(DoctestItem, pytest.File):
+
     def runtest(self):
         import doctest
         fixture_request = _setup_fixtures(self)
-        failed, tot = doctest.testfile(
-            str(self.fspath), module_relative=False,
-            optionflags=get_optionflags(self),
-            extraglobs=dict(getfixture=fixture_request.getfuncargvalue),
-            raise_on_error=True, verbose=0)
+
+        # inspired by doctest.testfile; ideally we would use it directly,
+        # but it doesn't support passing a custom checker
+        text = self.fspath.read()
+        filename = str(self.fspath)
+        name = self.fspath.basename
+        globs = dict(getfixture=fixture_request.getfuncargvalue)
+        if '__name__' not in globs:
+            globs['__name__'] = '__main__'
+
+        optionflags = get_optionflags(self)
+        runner = doctest.DebugRunner(verbose=0, optionflags=optionflags,
+                                     checker=_get_unicode_checker())
+
+        parser = doctest.DocTestParser()
+        test = parser.get_doctest(text, globs, name, filename, 0)
+        runner.run(test)
+
 
 class DoctestModule(pytest.File):
     def collect(self):
@@ -139,7 +155,8 @@ class DoctestModule(pytest.File):
         # uses internal doctest module parsing mechanism
         finder = doctest.DocTestFinder()
         optionflags = get_optionflags(self)
-        runner = doctest.DebugRunner(verbose=0, optionflags=optionflags)
+        runner = doctest.DebugRunner(verbose=0, optionflags=optionflags,
+                                     checker=_get_unicode_checker())
         for test in finder.find(module, module.__name__,
                                 extraglobs=doctest_globals):
             if test.examples:  # skip empty doctests
@@ -160,3 +177,54 @@ def _setup_fixtures(doctest_item):
     fixture_request = FixtureRequest(doctest_item)
     fixture_request._fillfixtures()
     return fixture_request
+
+
+def _get_unicode_checker():
+    """
+    Returns a doctest.OutputChecker subclass that takes in account the
+    ALLOW_UNICODE option to ignore u'' prefixes in strings. Useful
+    when the same doctest should run in Python 2 and Python 3.
+
+    An inner class is used to avoid importing "doctest" at the module
+    level.
+    """
+    if hasattr(_get_unicode_checker, 'UnicodeOutputChecker'):
+        return _get_unicode_checker.UnicodeOutputChecker()
+
+    import doctest
+    import re
+
+    class UnicodeOutputChecker(doctest.OutputChecker):
+        """
+        Copied from doctest_nose_plugin.py from the nltk project:
+            https://github.com/nltk/nltk
+        """
+
+        _literal_re = re.compile(r"(\W|^)[uU]([rR]?[\'\"])", re.UNICODE)
+
+        def _remove_u_prefixes(self, txt):
+            return re.sub(self._literal_re, r'\1\2', txt)
+
+        def check_output(self, want, got, optionflags):
+            res = doctest.OutputChecker.check_output(self, want, got, optionflags)
+            if res:
+                return True
+
+            if not (optionflags & _get_allow_unicode_flag()):
+                return False
+
+            cleaned_want = self._remove_u_prefixes(want)
+            cleaned_got = self._remove_u_prefixes(got)
+            res = doctest.OutputChecker.check_output(self, cleaned_want, cleaned_got, optionflags)
+            return res
+
+    _get_unicode_checker.UnicodeOutputChecker = UnicodeOutputChecker
+    return _get_unicode_checker.UnicodeOutputChecker()
+
+
+def _get_allow_unicode_flag():
+    """
+    Registers and returns the ALLOW_UNICODE flag.
+    """
+    import doctest
+    return doctest.register_optionflag('ALLOW_UNICODE')
