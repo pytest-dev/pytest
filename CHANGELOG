@@ -7,6 +7,11 @@
   with parametrization markers.
   Thanks to Markus Unterwaditzer for the PR.
 
+- fix issue710: introduce ALLOW_UNICODE doctest option: when enabled, the
+  ``u`` prefix is stripped from unicode strings in expected doctest output. This
+  allows doctests which use unicode to run in Python 2 and 3 unchanged.
+  Thanks Jason R. Coombs for the report and Bruno Oliveira for the PR.
+
 - parametrize now also generates meaningful test IDs for enum, regex and class
   objects (as opposed to class instances).
   Thanks to Florian Bruhin for the PR.
