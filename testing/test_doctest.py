@@ -432,16 +432,17 @@ class TestDoctests:
         reprec = testdir.inline_run("--doctest-modules")
         reprec.assertoutcome(passed=2)
 
-    @pytest.mark.skipif(sys.version_info[0] >= 3, reason='Python 2 only')
-    def test_unicode_string_fails(self, testdir):
+    def test_unicode_string(self, testdir):
         """Test that doctests which output unicode fail in Python 2 when
-        the ALLOW_UNICODE option is not used.
+        the ALLOW_UNICODE option is not used. The same test should pass
+        in Python 3.
         """
         testdir.maketxtfile(test_doc="""
-            >>> b'12'.decode('ascii') {comment}
+            >>> b'12'.decode('ascii')
             '12'
         """)
         reprec = testdir.inline_run()
-        reprec.assertoutcome(failed=1)
+        passed = int(sys.version_info[0] >= 3)
+        reprec.assertoutcome(passed=passed, failed=int(not passed))
 
 

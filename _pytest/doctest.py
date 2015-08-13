@@ -202,21 +202,26 @@ def _get_unicode_checker():
 
         _literal_re = re.compile(r"(\W|^)[uU]([rR]?[\'\"])", re.UNICODE)
 
-        def _remove_u_prefixes(self, txt):
-            return re.sub(self._literal_re, r'\1\2', txt)
-
         def check_output(self, want, got, optionflags):
-            res = doctest.OutputChecker.check_output(self, want, got, optionflags)
+            res = doctest.OutputChecker.check_output(self, want, got,
+                                                     optionflags)
             if res:
                 return True
 
             if not (optionflags & _get_allow_unicode_flag()):
                 return False
 
-            cleaned_want = self._remove_u_prefixes(want)
-            cleaned_got = self._remove_u_prefixes(got)
-            res = doctest.OutputChecker.check_output(self, cleaned_want, cleaned_got, optionflags)
-            return res
+            else:  # pragma: no cover
+                # the code below will end up executed only in Python 2 in
+                # our tests, and our coverage check runs in Python 3 only
+                def remove_u_prefixes(txt):
+                    return re.sub(self._literal_re, r'\1\2', txt)
+
+                want = remove_u_prefixes(want)
+                got = remove_u_prefixes(got)
+                res = doctest.OutputChecker.check_output(self, want, got,
+                                                         optionflags)
+                return res
 
     _get_unicode_checker.UnicodeOutputChecker = UnicodeOutputChecker
     return _get_unicode_checker.UnicodeOutputChecker()
