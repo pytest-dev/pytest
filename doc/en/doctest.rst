@@ -72,3 +72,18 @@ ignore lengthy exception stack traces you can just write::
     # content of pytest.ini
     [pytest]
     doctest_optionflags= NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL
+
+
+py.test also introduces a new ``ALLOW_UNICODE`` option flag: when enabled, the
+``u`` prefix is stripped from unicode strings in expected doctest output. This
+allows doctests which use unicode to run in Python 2 and 3 unchanged.
+
+As with any other option flag, this flag can be enabled in ``pytest.ini`` using
+the ``doctest_optionflags`` ini option or by an inline comment in the doc test
+itself::
+
+    # content of example.rst
+    >>> get_unicode_greeting()  # doctest: +ALLOW_UNICODE
+    'Hello'
+
+
