@@ -298,18 +298,9 @@ class TerminalReporter:
 
         plugininfo = config.pluginmanager.list_plugin_distinfo()
         if plugininfo:
-            l = []
-            for plugin, dist in plugininfo:
-                # gets us name and version!
-                name = '{dist.project_name}-{dist.version}'.format(dist=dist)
-                # questionable convenience, but it keeps things short
-                if name.startswith("pytest-"):
-                    name = name[7:]
-                # we decided to print python package names
-                # they can have more than one plugin
-                if name not in l:
-                    l.append(name)
-            lines.append("plugins: %s" % ", ".join(l))
+
+            lines.append(
+                "plugins: %s" % ", ".join(_plugin_nameversions(plugininfo)))
         return lines
 
     def pytest_collection_finish(self, session):
@@ -554,3 +545,18 @@ def build_summary_stats_line(stats):
         color = 'yellow'
 
     return (line, color)
+
+
+def _plugin_nameversions(plugininfo):
+    l = []
+    for plugin, dist in plugininfo:
+        # gets us name and version!
+        name = '{dist.project_name}-{dist.version}'.format(dist=dist)
+        # questionable convenience, but it keeps things short
+        if name.startswith("pytest-"):
+            name = name[7:]
+        # we decided to print python package names
+        # they can have more than one plugin
+        if name not in l:
+            l.append(name)
+    return l
