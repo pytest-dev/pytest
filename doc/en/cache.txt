@@ -1,6 +1,8 @@
 cache: working with cross-testrun state
 =======================================
 
+.. versionadded:: 2.8
+
 Usage
 ---------
 
@@ -241,9 +243,8 @@ in many places.
 Under the hood, the cache plugin uses the simple
 dumps/loads API of the json stdlib module
 
-.. currentmodule:: pytest_cache
+.. currentmodule:: _pytest.cacheprovider
 
 .. automethod:: Cache.get
 .. automethod:: Cache.set
 .. automethod:: Cache.makedir
-
