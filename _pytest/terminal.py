@@ -301,7 +301,7 @@ class TerminalReporter:
             l = []
             for plugin, dist in plugininfo:
                 # gets us name and version!
-                name = str(dist)
+                name = '{dist.project_name}-{dist.version}'.format(dist=dist)
                 # questionable convenience, but it keeps things short
                 if name.startswith("pytest-"):
                     name = name[7:]
