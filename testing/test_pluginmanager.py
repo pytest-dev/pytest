@@ -3,6 +3,7 @@ import py
 import os
 
 from _pytest.config import get_config, PytestPluginManager
+from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 @pytest.fixture
 def pytestpm():
@@ -223,7 +224,7 @@ class TestPytestPluginManager:
         p.copy(p.dirpath("skipping2.py"))
         monkeypatch.setenv("PYTEST_PLUGINS", "skipping2")
         result = testdir.runpytest("-rw", "-p", "skipping1", syspathinsert=True)
-        assert result.ret == 0
+        assert result.ret == EXIT_NOTESTSCOLLECTED
         result.stdout.fnmatch_lines([
             "WI1*skipped plugin*skipping1*hello*",
             "WI1*skipped plugin*skipping2*hello*",

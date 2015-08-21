@@ -1,6 +1,8 @@
 import sys
 from textwrap import dedent
 import pytest, py
+from _pytest.main import EXIT_NOTESTSCOLLECTED
+
 
 class TestModule:
     def test_failing_import(self, testdir):
@@ -906,7 +908,7 @@ def test_unorderable_types(testdir):
     """)
     result = testdir.runpytest()
     assert "TypeError" not in result.stdout.str()
-    assert result.ret == 0
+    assert result.ret == EXIT_NOTESTSCOLLECTED    
 
 
 def test_collect_functools_partial(testdir):

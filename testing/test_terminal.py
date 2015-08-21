@@ -7,6 +7,7 @@ import py
 import pluggy
 import sys
 
+from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.terminal import TerminalReporter, repr_pythonversion, getreportopt
 from _pytest.terminal import build_summary_stats_line, _plugin_nameversions
 from _pytest import runner
@@ -596,7 +597,7 @@ def test_traceconfig(testdir, monkeypatch):
     result.stdout.fnmatch_lines([
         "*active plugins*"
     ])
-    assert result.ret == 0
+    assert result.ret == EXIT_NOTESTSCOLLECTED
 
 
 class TestGenericReporting:

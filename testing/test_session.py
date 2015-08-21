@@ -1,5 +1,7 @@
 import pytest
 
+from _pytest.main import EXIT_NOTESTSCOLLECTED
+
 class SessionTests:
     def test_basic_testitem_events(self, testdir):
         tfile = testdir.makepyfile("""
@@ -239,4 +241,4 @@ def test_sessionfinish_with_start(testdir):
 
     """)
     res = testdir.runpytest("--collect-only")
-    assert res.ret == 0
+    assert res.ret == EXIT_NOTESTSCOLLECTED

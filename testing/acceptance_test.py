@@ -1,5 +1,7 @@
 import sys
 import py, pytest
+from _pytest.main import EXIT_NOTESTSCOLLECTED, EXIT_USAGEERROR
+
 
 class TestGeneralUsage:
     def test_config_error(self, testdir):
@@ -147,7 +149,7 @@ class TestGeneralUsage:
                 pytest.skip("early")
         """)
         result = testdir.runpytest()
-        assert result.ret == 0
+        assert result.ret == EXIT_NOTESTSCOLLECTED
         result.stdout.fnmatch_lines([
             "*1 skip*"
         ])
@@ -177,7 +179,7 @@ class TestGeneralUsage:
             sys.stderr.write("stder42\\n")
         """)
         result = testdir.runpytest()
-        assert result.ret == 0
+        assert result.ret == EXIT_NOTESTSCOLLECTED
         assert "should not be seen" not in result.stdout.str()
         assert "stderr42" not in result.stderr.str()
 
@@ -212,13 +214,13 @@ class TestGeneralUsage:
         sub2 = testdir.tmpdir.mkdir("sub2")
         sub1.join("conftest.py").write("assert 0")
         result = testdir.runpytest(sub2)
-        assert result.ret == 0
+        assert result.ret == EXIT_NOTESTSCOLLECTED
         sub2.ensure("__init__.py")
         p = sub2.ensure("test_hello.py")
         result = testdir.runpytest(p)
-        assert result.ret == 0
+        assert result.ret == EXIT_NOTESTSCOLLECTED
         result = testdir.runpytest(sub1)
-        assert result.ret != 0
+        assert result.ret == EXIT_USAGEERROR
 
     def test_directory_skipped(self, testdir):
         testdir.makeconftest("""
@@ -228,7 +230,7 @@ class TestGeneralUsage:
         """)
         testdir.makepyfile("def test_hello(): pass")
         result = testdir.runpytest()
-        assert result.ret == 0
+        assert result.ret == EXIT_NOTESTSCOLLECTED
         result.stdout.fnmatch_lines([
             "*1 skipped*"
         ])
@@ -479,7 +481,7 @@ class TestInvocationVariants:
 
     def test_invoke_with_path(self, tmpdir, capsys):
         retcode = pytest.main(tmpdir)
-        assert not retcode
+        assert retcode == EXIT_NOTESTSCOLLECTED
         out, err = capsys.readouterr()
 
     def test_invoke_plugin_api(self, testdir, capsys):
