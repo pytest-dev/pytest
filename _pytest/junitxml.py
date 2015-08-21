@@ -9,6 +9,7 @@ import os
 import re
 import sys
 import time
+import pytest
 
 # Python 2.X and 3.X compatibility
 if sys.version_info[0] < 3:
@@ -53,12 +54,13 @@ def bin_xml_escape(arg):
             return unicode('#x%04X') % i
     return py.xml.raw(illegal_xml_re.sub(repl, py.xml.escape(arg)))
 
-def record_property(name, value):
-    if hasattr(record_property, 'binding'):
-        record_property.binding(name, value)
-
-def pytest_namespace():
-    return dict(record_property=record_property)
+@pytest.fixture
+def record_xml_property(request):
+    if hasattr(request.config, "_xml"):
+        return request.config._xml.record_property
+    def dummy(*args, **kwargs):
+        pass
+    return dummy
 
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting")
@@ -76,17 +78,11 @@ def pytest_configure(config):
         config._xml = LogXML(xmlpath, config.option.junitprefix)
         config.pluginmanager.register(config._xml)
 
-        def binding(name, value):
-            config._xml.record_property(name, value)
-        record_property.binding = binding
-
 def pytest_unconfigure(config):
     xml = getattr(config, '_xml', None)
     if xml:
         del config._xml
         config.pluginmanager.unregister(xml)
-
-        del record_property.binding
 
 def mangle_testnames(names):
     names = [x.replace(".py", "") for x in names if x != '()']

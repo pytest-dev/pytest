@@ -138,6 +138,9 @@
 - fix issue890: changed extension of all documentation files from ``txt`` to
   ``rst``. Thanks to Abhijeet for the PR.
 
+- implement feature on issue951: support to log additional information on xml
+  output.
+
 2.7.3 (compared to 2.7.2)
 -----------------------------
 

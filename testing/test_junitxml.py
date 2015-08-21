@@ -554,9 +554,8 @@ def test_unicode_issue368(testdir):
 
 def test_record_property(testdir):
     testdir.makepyfile("""
-        from pytest import record_property
-        def test_record():
-            record_property("foo", "<1");
+        def test_record(record_xml_property):
+            record_xml_property("foo", "<1");
     """)
     result, dom = runandparse(testdir)
     node = dom.getElementsByTagName("testsuite")[0]
