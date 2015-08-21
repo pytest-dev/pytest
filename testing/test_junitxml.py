@@ -553,4 +553,12 @@ def test_unicode_issue368(testdir):
     log.append_skipped(report)
     log.pytest_sessionfinish()
 
-
+def test_record_property(testdir):
+    testdir.makepyfile("""
+        def test_record(record_xml_property):
+            record_xml_property("foo", "<1");
+    """)
+    result, dom = runandparse(testdir)
+    node = dom.getElementsByTagName("testsuite")[0]
+    tnode = node.getElementsByTagName("testcase")[0]
+    assert_attr(tnode, foo="<1")

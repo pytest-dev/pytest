@@ -153,6 +153,19 @@ integration servers, use this invocation::
 
 to create an XML file at ``path``.
 
+If you want to log additional information for a test, you can use
+record_property("key", value)::
+
+    import pytest
+    def test_function():
+        ...
+        pytest.record_property("example_key", 1)
+        ...
+
+Warning:
+ - This is a preliminary feature.
+ - Using this feature will break any schema verification.
+
 Creating resultlog format files
 ----------------------------------------------------
 

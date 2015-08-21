@@ -9,6 +9,7 @@ import os
 import re
 import sys
 import time
+import pytest
 
 # Python 2.X and 3.X compatibility
 if sys.version_info[0] < 3:
@@ -53,6 +54,14 @@ def bin_xml_escape(arg):
             return unicode('#x%04X') % i
     return py.xml.raw(illegal_xml_re.sub(repl, py.xml.escape(arg)))
 
+@pytest.fixture
+def record_xml_property(request):
+    if hasattr(request.config, "_xml"):
+        return request.config._xml.record_property
+    def dummy(*args, **kwargs):
+        pass
+    return dummy
+
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting")
     group.addoption('--junitxml', '--junit-xml', action="store",
@@ -75,7 +84,6 @@ def pytest_unconfigure(config):
         del config._xml
         config.pluginmanager.unregister(xml)
 
-
 def mangle_testnames(names):
     names = [x.replace(".py", "") for x in names if x != '()']
     names[0] = names[0].replace("/", '.')
@@ -89,6 +97,10 @@ class LogXML(object):
         self.tests = []
         self.passed = self.skipped = 0
         self.failed = self.errors = 0
+        self.custom_properties = {}
+
+    def record_property(self, name, value):
+        self.custom_properties[str(name)] = bin_xml_escape(str(value))
 
     def _opentestcase(self, report):
         names = mangle_testnames(report.nodeid.split("::"))
@@ -117,6 +129,10 @@ class LogXML(object):
 
     def append(self, obj):
         self.tests[-1].append(obj)
+
+    def append_custom_properties(self):
+        self.tests[-1].attr.__dict__.update(self.custom_properties)
+        self.custom_properties.clear()
 
     def append_pass(self, report):
         self.passed += 1
@@ -179,6 +195,7 @@ class LogXML(object):
         if report.when == "setup":
             self._opentestcase(report)
         self.tests[-1].attr.time += getattr(report, 'duration', 0)
+        self.append_custom_properties()
         if report.passed:
             if report.when == "call": # ignore setup/teardown
                 self.append_pass(report)
