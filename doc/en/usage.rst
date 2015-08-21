@@ -162,7 +162,9 @@ record_property("key", value)::
         pytest.record_property("example_key", 1)
         ...
 
-Warning: using this feature will break any schema verification.
+Warning:
+ - This is a preliminary feature.
+ - Using this feature will break any schema verification.
 
 Creating resultlog format files
 ----------------------------------------------------
