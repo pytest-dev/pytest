@@ -214,12 +214,11 @@ class TestMetafunc:
         metafunc = self.Metafunc(func)
         metafunc.parametrize('x', [1], indirect=True)
         metafunc.parametrize('y', [2,3], indirect=True)
-        metafunc.parametrize('unnamed', [1], indirect=True)
         assert len(metafunc._calls) == 2
         assert metafunc._calls[0].funcargs == {}
         assert metafunc._calls[1].funcargs == {}
-        assert metafunc._calls[0].params == dict(x=1,y=2, unnamed=1)
-        assert metafunc._calls[1].params == dict(x=1,y=3, unnamed=1)
+        assert metafunc._calls[0].params == dict(x=1,y=2)
+        assert metafunc._calls[1].params == dict(x=1,y=3)
 
     @pytest.mark.issue714
     def test_parametrize_indirect_list(self):
