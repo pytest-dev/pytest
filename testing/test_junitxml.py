@@ -557,7 +557,8 @@ def test_record_property(testdir):
         def test_record(record_xml_property):
             record_xml_property("foo", "<1");
     """)
-    result, dom = runandparse(testdir)
+    result, dom = runandparse(testdir, '-rw')
     node = dom.getElementsByTagName("testsuite")[0]
     tnode = node.getElementsByTagName("testcase")[0]
     assert_attr(tnode, foo="<1")
+    result.stdout.fnmatch_lines('*C3*test_record_property.py*experimental*')

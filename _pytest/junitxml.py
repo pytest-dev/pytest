@@ -56,11 +56,17 @@ def bin_xml_escape(arg):
 
 @pytest.fixture
 def record_xml_property(request):
-    if hasattr(request.config, "_xml"):
-        return request.config._xml.record_property
-    def dummy(*args, **kwargs):
-        pass
-    return dummy
+    """Fixture that adds extra xml properties to the tag for the calling test.
+    The fixture is callable with (name, value), with value being automatically
+    xml-encoded.
+    """
+    def inner(name, value):
+        if hasattr(request.config, "_xml"):
+            request.config._xml.add_custom_property(name, value)
+        msg = 'record_xml_property is an experimental feature'
+        request.config.warn(code='C3', message=msg,
+                            fslocation=request.node.location[:2])
+    return inner
 
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting")
@@ -99,7 +105,7 @@ class LogXML(object):
         self.failed = self.errors = 0
         self.custom_properties = {}
 
-    def record_property(self, name, value):
+    def add_custom_property(self, name, value):
         self.custom_properties[str(name)] = bin_xml_escape(str(value))
 
     def _opentestcase(self, report):
