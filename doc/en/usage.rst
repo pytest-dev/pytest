@@ -153,6 +153,36 @@ integration servers, use this invocation::
 
 to create an XML file at ``path``.
 
+record_xml_property
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 2.8
+
+If you want to log additional information for a test, you can use the
+``record_xml_property`` fixture:
+
+.. code-block:: python
+
+    def test_function(record_xml_property):
+        record_xml_property("example_key", 1)
+        assert 0
+
+This will add an extra property ``example_key="1"`` to the generated
+``testcase`` tag:
+
+.. code-block:: xml
+
+    <testcase classname="test_function" example_key="1" file="test_function.py" line="0" name="test_function" time="0.0009">
+
+.. warning::
+
+    This is an experimental feature, and its interface might be replaced
+    by something more powerful and general in future versions. The
+    functionality per-se will be kept, however.
+
+    Also please note that using this feature will break any schema verification.
+    This might be a problem when used with some CI servers.
+
 Creating resultlog format files
 ----------------------------------------------------
 
