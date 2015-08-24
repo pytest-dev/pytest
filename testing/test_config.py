@@ -1,6 +1,7 @@
 import py, pytest
 
 from _pytest.config import getcfg, get_common_ancestor, determine_setup
+from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 class TestParseIni:
     def test_getcfg_and_config(self, testdir, tmpdir):
@@ -343,7 +344,7 @@ def test_invalid_options_show_extra_information(testdir):
 @pytest.mark.skipif("sys.platform == 'win32'")
 def test_toolongargs_issue224(testdir):
     result = testdir.runpytest("-m", "hello" * 500)
-    assert result.ret == 0
+    assert result.ret == EXIT_NOTESTSCOLLECTED
 
 def test_notify_exception(testdir, capfd):
     config = testdir.parseconfig()

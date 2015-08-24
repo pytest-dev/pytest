@@ -86,8 +86,10 @@ class CaptureManager:
         self.deactivate_funcargs()
         cap = getattr(self, "_capturing", None)
         if cap is not None:
-            outerr = cap.readouterr()
-            cap.suspend_capturing(in_=in_)
+            try:
+                outerr = cap.readouterr()
+            finally:
+                cap.suspend_capturing(in_=in_)
             return outerr
 
     def activate_funcargs(self, pyfuncitem):

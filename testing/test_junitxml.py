@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from xml.dom import minidom
+from _pytest.main import EXIT_NOTESTSCOLLECTED
 import py, sys, os
 from _pytest.junitxml import LogXML
 
@@ -298,7 +299,7 @@ class TestPython:
     def test_collect_skipped(self, testdir):
         testdir.makepyfile("import pytest; pytest.skip('xyz')")
         result, dom = runandparse(testdir)
-        assert not result.ret
+        assert result.ret == EXIT_NOTESTSCOLLECTED
         node = dom.getElementsByTagName("testsuite")[0]
         assert_attr(node, skips=1, tests=0)
         tnode = node.getElementsByTagName("testcase")[0]
@@ -552,4 +553,13 @@ def test_unicode_issue368(testdir):
     log.append_skipped(report)
     log.pytest_sessionfinish()
 
-
+def test_record_property(testdir):
+    testdir.makepyfile("""
+        def test_record(record_xml_property):
+            record_xml_property("foo", "<1");
+    """)
+    result, dom = runandparse(testdir, '-rw')
+    node = dom.getElementsByTagName("testsuite")[0]
+    tnode = node.getElementsByTagName("testcase")[0]
+    assert_attr(tnode, foo="<1")
+    result.stdout.fnmatch_lines('*C3*test_record_property.py*experimental*')

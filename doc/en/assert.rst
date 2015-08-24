@@ -114,6 +114,16 @@ like documenting unfixed bugs (where the test describes what "should" happen)
 or bugs in dependencies.
 
 
+.. _`assertwarns`:
+
+Assertions about expected warnings
+-----------------------------------------
+
+.. versionadded:: 2.8
+
+You can check that code raises a particular warning using
+:ref:`pytest.warns <warns>`.
+
 
 .. _newreport:
 
@@ -228,9 +238,7 @@ Reporting details about a failing assertion is achieved either by rewriting
 assert statements before they are run or re-evaluating the assert expression and
 recording the intermediate values. Which technique is used depends on the
 location of the assert, ``pytest`` configuration, and Python version being used
-to run ``pytest``.  Note that for assert statements with a manually provided
-message, i.e. ``assert expr, message``, no assertion introspection takes place
-and the manually provided message will be rendered in tracebacks.
+to run ``pytest``.
 
 By default, if the Python version is greater than or equal to 2.6, ``pytest``
 rewrites assert statements in test modules. Rewritten assert statements put

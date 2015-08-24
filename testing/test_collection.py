@@ -1,6 +1,6 @@
 import pytest, py
 
-from _pytest.main import Session
+from _pytest.main import Session, EXIT_NOTESTSCOLLECTED
 
 class TestCollector:
     def test_collect_versus_item(self):
@@ -247,10 +247,10 @@ class TestCustomConftests:
         p = testdir.makepyfile("def test_hello(): pass")
         result = testdir.runpytest(p)
         assert result.ret == 0
-        assert "1 passed" in result.stdout.str()
+        result.stdout.fnmatch_lines("*1 passed*")
         result = testdir.runpytest()
-        assert result.ret == 0
-        assert "1 passed" not in result.stdout.str()
+        assert result.ret == EXIT_NOTESTSCOLLECTED
+        result.stdout.fnmatch_lines("*collected 0 items*")
 
     def test_collectignore_exclude_on_option(self, testdir):
         testdir.makeconftest("""
@@ -264,7 +264,7 @@ class TestCustomConftests:
         testdir.mkdir("hello")
         testdir.makepyfile(test_world="def test_hello(): pass")
         result = testdir.runpytest()
-        assert result.ret == 0
+        assert result.ret == EXIT_NOTESTSCOLLECTED
         assert "passed" not in result.stdout.str()
         result = testdir.runpytest("--XX")
         assert result.ret == 0

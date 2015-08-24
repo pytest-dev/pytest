@@ -1,3 +1,4 @@
+import re
 
 import pytest, py
 from _pytest import python as funcargs
@@ -138,6 +139,8 @@ class TestMetafunc:
                                       ("three", "three hundred"),
                                       (True, False),
                                       (None, None),
+                                      (re.compile('foo'), re.compile('bar')),
+                                      (str, int),
                                       (list("six"), [66, 66]),
                                       (set([7]), set("seven")),
                                       (tuple("eight"), (8, -8, 8))
@@ -147,9 +150,18 @@ class TestMetafunc:
                           "three-three hundred",
                           "True-False",
                           "None-None",
-                          "a5-b5",
-                          "a6-b6",
-                          "a7-b7"]
+                          "foo-bar",
+                          "str-int",
+                          "a7-b7",
+                          "a8-b8",
+                          "a9-b9"]
+
+    def test_idmaker_enum(self):
+        from _pytest.python import idmaker
+        enum = pytest.importorskip("enum")
+        e = enum.Enum("Foo", "one, two")
+        result = idmaker(("a", "b"), [(e.one, e.two)])
+        assert result == ["Foo.one-Foo.two"]
 
     @pytest.mark.issue351
     def test_idmaker_idfn(self):
@@ -742,18 +754,20 @@ class TestMetafuncFunctional:
         reprec.assert_outcomes(passed=4)
 
     @pytest.mark.issue463
-    def test_parameterize_misspelling(self, testdir):
+    @pytest.mark.parametrize('attr', ['parametrise', 'parameterize',
+                                     'parameterise'])
+    def test_parametrize_misspelling(self, testdir, attr):
         testdir.makepyfile("""
             import pytest
 
-            @pytest.mark.parameterize("x", range(2))
+            @pytest.mark.{0}("x", range(2))
             def test_foo(x):
                 pass
-        """)
+        """.format(attr))
         reprec = testdir.inline_run('--collectonly')
         failures = reprec.getfailures()
         assert len(failures) == 1
-        expectederror = "MarkerError: test_foo has 'parameterize', spelling should be 'parametrize'"
+        expectederror = "MarkerError: test_foo has '{0}', spelling should be 'parametrize'".format(attr)
         assert expectederror in failures[0].longrepr.reprcrash.message
 
 

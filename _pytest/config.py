@@ -211,6 +211,10 @@ class PytestPluginManager(PluginManager):
         # support deprecated naming because plugins (xdist e.g.) use it
         return self.get_plugin(name)
 
+    def hasplugin(self, name):
+        """Return True if the plugin with the given name is registered."""
+        return bool(self.get_plugin(name))
+
     def pytest_configure(self, config):
         # XXX now that the pluginmanager exposes hookimpl(tryfirst...)
         # we should remove tryfirst/trylast as markers
@@ -897,6 +901,9 @@ class Config(object):
             self.warn("I2", "could not load setuptools entry import: %s" % (e,))
         self.pluginmanager.consider_env()
         self.known_args_namespace = ns = self._parser.parse_known_args(args)
+        if self.known_args_namespace.confcutdir is None and self.inifile:
+            confcutdir = py.path.local(self.inifile).dirname
+            self.known_args_namespace.confcutdir = confcutdir
         try:
             self.hook.pytest_load_initial_conftests(early_config=self,
                     args=args, parser=self._parser)

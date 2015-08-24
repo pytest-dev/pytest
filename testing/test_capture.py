@@ -10,6 +10,7 @@ import contextlib
 
 from _pytest import capture
 from _pytest.capture import CaptureManager
+from _pytest.main import EXIT_NOTESTSCOLLECTED
 from py.builtin import print_
 
 needsosdup = pytest.mark.xfail("not hasattr(os, 'dup')")
@@ -365,7 +366,7 @@ class TestLoggingInteraction:
         """)
         # make sure that logging is still captured in tests
         result = testdir.runpytest_subprocess("-s", "-p", "no:capturelog")
-        assert result.ret == 0
+        assert result.ret == EXIT_NOTESTSCOLLECTED
         result.stderr.fnmatch_lines([
             "WARNING*hello435*",
         ])
@@ -564,6 +565,25 @@ def test_capture_binary_output(testdir):
         """)
     result = testdir.runpytest('--assert=plain')
     result.assert_outcomes(passed=2)
+
+
+def test_error_during_readouterr(testdir):
+    """Make sure we suspend capturing if errors occurr during readouterr"""
+    testdir.makepyfile(pytest_xyz="""
+        from _pytest.capture import FDCapture
+        def bad_snap(self):
+            raise Exception('boom')
+        assert FDCapture.snap
+        FDCapture.snap = bad_snap
+    """)
+    result = testdir.runpytest_subprocess(
+        "-p", "pytest_xyz", "--version", syspathinsert=True
+    )
+    result.stderr.fnmatch_lines([
+        "*in bad_snap",
+        "    raise Exception('boom')",
+        "Exception: boom",
+    ])
 
 
 class TestTextIO:

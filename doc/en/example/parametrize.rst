@@ -81,7 +81,7 @@ Numbers, strings, booleans and None will have their usual string representation
 used in the test ID. For other objects, pytest will make a string based on
 the argument name::
 
-    # contents of test_time.py
+    # content of test_time.py
 
     from datetime import datetime, timedelta
 

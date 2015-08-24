@@ -114,6 +114,18 @@ Let's run this::
 The one parameter set which caused a failure previously now
 shows up as an "xfailed (expected to fail)" test.
 
+To get all combinations of multiple parametrized arguments you can stack
+``parametrize`` decorators::
+
+    import pytest
+    @pytest.mark.parametrize("x", [0, 1])
+    @pytest.mark.parametrize("y", [2, 3])
+    def test_foo(x, y):
+        pass
+
+This will run the test with the arguments set to x=0/y=2, x=0/y=3, x=1/y=2 and
+x=1/y=3.
+
 .. note::
 
     In versions prior to 2.4 one needed to specify the argument

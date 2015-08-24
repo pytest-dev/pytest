@@ -1,4 +1,5 @@
 """ Python test discovery, setup and run of test functions. """
+import re
 import fnmatch
 import functools
 import py
@@ -7,6 +8,12 @@ import sys
 import pytest
 from _pytest.mark import MarkDecorator, MarkerError
 from py._code.code import TerminalRepr
+
+try:
+    import enum
+except ImportError:  # pragma: no cover
+    # Only available in Python 3.4+ or as a backport
+    enum = None
 
 import _pytest
 import pluggy
@@ -22,13 +29,15 @@ isclass = inspect.isclass
 callable = py.builtin.callable
 # used to work around a python2 exception info leak
 exc_clear = getattr(sys, 'exc_clear', lambda: None)
+# The type of re.compile objects is not exposed in Python.
+REGEX_TYPE = type(re.compile(''))
 
 def filter_traceback(entry):
     return entry.path != cutdir1 and not entry.path.relto(cutdir2)
 
 
 def get_real_func(obj):
-    """gets the real function object of the (possibly) wrapped object by
+    """ gets the real function object of the (possibly) wrapped object by
     functools.wraps or functools.partial.
     """
     while hasattr(obj, "__wrapped__"):
@@ -54,6 +63,17 @@ def getimfunc(func):
             return func.im_func
         except AttributeError:
             return func
+
+def safe_getattr(object, name, default):
+    """ Like getattr but return default upon any Exception.
+
+    Attribute access can potentially fail for 'evil' Python objects.
+    See issue214
+    """
+    try:
+        return getattr(object, name, default)
+    except Exception:
+        return default
 
 
 class FixtureFunctionMarker:
@@ -160,10 +180,13 @@ def pytest_cmdline_main(config):
 
 
 def pytest_generate_tests(metafunc):
-    # this misspelling is common - raise a specific error to alert the user
-    if hasattr(metafunc.function, 'parameterize'):
-        msg = "{0} has 'parameterize', spelling should be 'parametrize'"
-        raise MarkerError(msg.format(metafunc.function.__name__))
+    # those alternative spellings are common - raise a specific error to alert
+    # the user
+    alt_spellings = ['parameterize', 'parametrise', 'parameterise']
+    for attr in alt_spellings:
+        if hasattr(metafunc.function, attr):
+            msg = "{0} has '{1}', spelling should be 'parametrize'"
+            raise MarkerError(msg.format(metafunc.function.__name__, attr))
     try:
         markers = metafunc.function.parametrize
     except AttributeError:
@@ -245,11 +268,10 @@ def pytest_pycollect_makeitem(collector, name, obj):
         raise StopIteration
     # nothing was collected elsewhere, let's do it here
     if isclass(obj):
-        if collector.classnamefilter(name):
+        if collector.istestclass(obj, name):
             Class = collector._getcustomclass("Class")
             outcome.force_result(Class(name, parent=collector))
-    elif collector.funcnamefilter(name) and hasattr(obj, "__call__") and\
-        getfixturemarker(obj) is None:
+    elif collector.istestfunction(obj, name):
         # mock seems to store unbound methods (issue473), normalize it
         obj = getattr(obj, "__func__", obj)
         if not isfunction(obj):
@@ -335,8 +357,23 @@ class PyCollector(PyobjMixin, pytest.Collector):
     def funcnamefilter(self, name):
         return self._matches_prefix_or_glob_option('python_functions', name)
 
+    def isnosetest(self, obj):
+        """ Look for the __test__ attribute, which is applied by the
+        @nose.tools.istest decorator
+        """
+        return safe_getattr(obj, '__test__', False)
+
     def classnamefilter(self, name):
         return self._matches_prefix_or_glob_option('python_classes', name)
+
+    def istestfunction(self, obj, name):
+        return (
+            (self.funcnamefilter(name) or self.isnosetest(obj))
+            and safe_getattr(obj, "__call__", False) and getfixturemarker(obj) is None
+        )
+
+    def istestclass(self, obj, name):
+        return self.classnamefilter(name) or self.isnosetest(obj)
 
     def _matches_prefix_or_glob_option(self, option_name, name):
         """
@@ -480,6 +517,19 @@ class FuncFixtureInfo:
         self.names_closure = names_closure
         self.name2fixturedefs = name2fixturedefs
 
+
+def _marked(func, mark):
+    """ Returns True if :func: is already marked with :mark:, False otherwise.
+    This can happen if marker is applied to class and the test file is
+    invoked more than once.
+    """
+    try:
+        func_mark = getattr(func, mark.name)
+    except AttributeError:
+        return False
+    return mark.args == func_mark.args and mark.kwargs == func_mark.kwargs
+
+
 def transfer_markers(funcobj, cls, mod):
     # XXX this should rather be code in the mark plugin or the mark
     # plugin should merge with the python plugin.
@@ -490,9 +540,11 @@ def transfer_markers(funcobj, cls, mod):
             continue
         if isinstance(pytestmark, list):
             for mark in pytestmark:
-                mark(funcobj)
+                if not _marked(funcobj, mark):
+                    mark(funcobj)
         else:
-            pytestmark(funcobj)
+            if not _marked(funcobj, pytestmark):
+                pytestmark(funcobj)
 
 class Module(pytest.File, PyCollector):
     """ Collector for test classes and functions. """
@@ -973,8 +1025,15 @@ def _idval(val, argname, idx, idfn):
                 return s
         except Exception:
             pass
+
     if isinstance(val, (float, int, str, bool, NoneType)):
         return str(val)
+    elif isinstance(val, REGEX_TYPE):
+        return val.pattern
+    elif enum is not None and isinstance(val, enum.Enum):
+        return str(val)
+    elif isclass(val) and hasattr(val, '__name__'):
+        return val.__name__
     return str(argname)+str(idx)
 
 def _idvalset(idx, valset, argnames, idfn):
@@ -1049,8 +1108,8 @@ def getlocation(function, curdir):
 
 # builtin pytest.raises helper
 
-def raises(ExpectedException, *args, **kwargs):
-    """ assert that a code block/function call raises @ExpectedException
+def raises(expected_exception, *args, **kwargs):
+    """ assert that a code block/function call raises @expected_exception
     and raise a failure exception otherwise.
 
     This helper produces a ``py.code.ExceptionInfo()`` object.
@@ -1098,23 +1157,23 @@ def raises(ExpectedException, *args, **kwargs):
 
     """
     __tracebackhide__ = True
-    if ExpectedException is AssertionError:
+    if expected_exception is AssertionError:
         # we want to catch a AssertionError
         # replace our subclass with the builtin one
         # see https://github.com/pytest-dev/pytest/issues/176
         from _pytest.assertion.util import BuiltinAssertionError \
-            as ExpectedException
+            as expected_exception
     msg = ("exceptions must be old-style classes or"
            " derived from BaseException, not %s")
-    if isinstance(ExpectedException, tuple):
-        for exc in ExpectedException:
-            if not inspect.isclass(exc):
+    if isinstance(expected_exception, tuple):
+        for exc in expected_exception:
+            if not isclass(exc):
                 raise TypeError(msg % type(exc))
-    elif not inspect.isclass(ExpectedException):
-        raise TypeError(msg % type(ExpectedException))
+    elif not isclass(expected_exception):
+        raise TypeError(msg % type(expected_exception))
 
     if not args:
-        return RaisesContext(ExpectedException)
+        return RaisesContext(expected_exception)
     elif isinstance(args[0], str):
         code, = args
         assert isinstance(code, str)
@@ -1127,19 +1186,19 @@ def raises(ExpectedException, *args, **kwargs):
             py.builtin.exec_(code, frame.f_globals, loc)
             # XXX didn'T mean f_globals == f_locals something special?
             #     this is destroyed here ...
-        except ExpectedException:
+        except expected_exception:
             return py.code.ExceptionInfo()
     else:
         func = args[0]
         try:
             func(*args[1:], **kwargs)
-        except ExpectedException:
+        except expected_exception:
             return py.code.ExceptionInfo()
     pytest.fail("DID NOT RAISE")
 
 class RaisesContext(object):
-    def __init__(self, ExpectedException):
-        self.ExpectedException = ExpectedException
+    def __init__(self, expected_exception):
+        self.expected_exception = expected_exception
         self.excinfo = None
 
     def __enter__(self):
@@ -1158,7 +1217,7 @@ class RaisesContext(object):
                 exc_type, value, traceback = tp
                 tp = exc_type, exc_type(value), traceback
         self.excinfo.__init__(tp)
-        return issubclass(self.excinfo.type, self.ExpectedException)
+        return issubclass(self.excinfo.type, self.expected_exception)
 
 #
 #  the basic pytest Function item
@@ -1357,7 +1416,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         return self._pyfuncitem.session
 
     def addfinalizer(self, finalizer):
-        """add finalizer/teardown function to be called after the
+        """ add finalizer/teardown function to be called after the
         last test within the requesting test context finished
         execution. """
         # XXX usually this method is shadowed by fixturedef specific ones
@@ -1771,7 +1830,7 @@ class FixtureManager:
                 if fixturedef.params is not None:
                     func_params = getattr(getattr(metafunc.function, 'parametrize', None), 'args', [[None]])
                     # skip directly parametrized arguments
-                    if argname not in func_params and argname not in func_params[0]:
+                    if argname not in func_params:
                         metafunc.parametrize(argname, fixturedef.params,
                                              indirect=True, scope=fixturedef.scope,
                                              ids=fixturedef.ids)
@@ -2120,4 +2179,3 @@ def get_scope_node(node, scope):
             return node.session
         raise ValueError("unknown scope")
     return node.getparent(cls)
-

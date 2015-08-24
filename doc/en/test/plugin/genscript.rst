@@ -1,5 +1,5 @@
 
-generate standalone test script to be distributed along with an application.
+(deprecated) generate standalone test script to be distributed along with an application.
 ============================================================================
 
 

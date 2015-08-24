@@ -1,6 +1,8 @@
 import sys
 from textwrap import dedent
 import pytest, py
+from _pytest.main import EXIT_NOTESTSCOLLECTED
+
 
 class TestModule:
     def test_failing_import(self, testdir):
@@ -412,9 +414,19 @@ class TestFunction:
                                      ['overridden'])
             def test_overridden_via_param(value):
                 assert value == 'overridden'
+
+            @pytest.mark.parametrize('somevalue', ['overridden'])
+            def test_not_overridden(value, somevalue):
+                assert value == 'value'
+                assert somevalue == 'overridden'
+
+            @pytest.mark.parametrize('other,value', [('foo', 'overridden')])
+            def test_overridden_via_multiparam(other, value):
+                assert other == 'foo'
+                assert value == 'overridden'
         """)
         rec = testdir.inline_run()
-        rec.assertoutcome(passed=1)
+        rec.assertoutcome(passed=3)
 
 
     def test_parametrize_overrides_parametrized_fixture(self, testdir):
@@ -471,6 +483,38 @@ class TestFunction:
         config.pluginmanager.register(MyPlugin1())
         config.pluginmanager.register(MyPlugin2())
         config.hook.pytest_pyfunc_call(pyfuncitem=item)
+
+    def test_multiple_parametrize(self, testdir):
+        modcol = testdir.getmodulecol("""
+            import pytest
+            @pytest.mark.parametrize('x', [0, 1])
+            @pytest.mark.parametrize('y', [2, 3])
+            def test1(x, y):
+                pass
+        """)
+        colitems = modcol.collect()
+        assert colitems[0].name == 'test1[2-0]'
+        assert colitems[1].name == 'test1[2-1]'
+        assert colitems[2].name == 'test1[3-0]'
+        assert colitems[3].name == 'test1[3-1]'
+
+    def test_issue751_multiple_parametrize_with_ids(self, testdir):
+        modcol = testdir.getmodulecol("""
+            import pytest
+            @pytest.mark.parametrize('x', [0], ids=['c'])
+            @pytest.mark.parametrize('y', [0, 1], ids=['a', 'b'])
+            class Test(object):
+                def test1(self, x, y):
+                    pass
+                def test2(self, x, y):
+                    pass
+        """)
+        colitems = modcol.collect()[0].collect()[0].collect()
+        assert colitems[0].name == 'test1[a-c]'
+        assert colitems[1].name == 'test1[b-c]'
+        assert colitems[2].name == 'test2[a-c]'
+        assert colitems[3].name == 'test2[b-c]'
+
 
 class TestSorting:
     def test_check_equality(self, testdir):
@@ -864,7 +908,7 @@ def test_unorderable_types(testdir):
     """)
     result = testdir.runpytest()
     assert "TypeError" not in result.stdout.str()
-    assert result.ret == 0
+    assert result.ret == EXIT_NOTESTSCOLLECTED    
 
 
 def test_collect_functools_partial(testdir):

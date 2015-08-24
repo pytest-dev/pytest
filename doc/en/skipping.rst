@@ -83,7 +83,7 @@ As with all function :ref:`marking <mark>` you can skip test functions at the
 `whole class- or module level`_.  If your code targets python2.6 or above you
 use the skipif decorator (and any other marker) on classes::
 
-    @pytest.mark.skipif(sys.platform == 'win32',
+    @pytest.mark.skipif(sys.platform != 'win32',
                         reason="requires windows")
     class TestPosixCalls:
 
@@ -97,7 +97,7 @@ If your code targets python2.5 where class-decorators are not available,
 you can set the ``pytestmark`` attribute of a class::
 
     class TestPosixCalls:
-        pytestmark = pytest.mark.skipif(sys.platform == 'win32',
+        pytestmark = pytest.mark.skipif(sys.platform != 'win32',
                                         reason="requires Windows")
 
         def test_function(self):

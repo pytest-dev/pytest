@@ -1,6 +1,40 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
+- Fix #562: @nose.tools.istest now fully respected.
+
+- Fix issue736: Fix a bug where fixture params would be discarded when combined
+  with parametrization markers.
+  Thanks to Markus Unterwaditzer for the PR.
+
+- fix issue710: introduce ALLOW_UNICODE doctest option: when enabled, the
+  ``u`` prefix is stripped from unicode strings in expected doctest output. This
+  allows doctests which use unicode to run in Python 2 and 3 unchanged.
+  Thanks Jason R. Coombs for the report and Bruno Oliveira for the PR.
+
+- parametrize now also generates meaningful test IDs for enum, regex and class
+  objects (as opposed to class instances).
+  Thanks to Florian Bruhin for the PR.
+
+- Add 'warns' to assert that warnings are thrown (like 'raises').
+  Thanks to Eric Hunsberger for the PR.
+
+- Fix issue683: Do not apply an already applied mark.  Thanks ojake for the PR.
+
+- Deal with capturing failures better so fewer exceptions get lost to
+  /dev/null.  Thanks David Szotten for the PR.
+
+- fix issue730: deprecate and warn about the --genscript option.
+  Thanks Ronny Pfannschmidt for the report and Christian Pommranz for the PR.
+
+- fix issue751: multiple parametrize with ids bug if it parametrizes class with
+  two or more test methods. Thanks Sergey Chipiga for reporting and Jan
+  Bednarik for PR.
+
+- fix issue82: avoid loading conftest files from setup.cfg/pytest.ini/tox.ini
+  files and upwards by default (--confcutdir can still be set to override this).
+  Thanks Bruno Oliveira for the PR.
+
 - fix issue768: docstrings found in python modules were not setting up session
   fixtures. Thanks Jason R. Coombs for reporting and Bruno Oliveira for the PR.
 
@@ -11,7 +45,7 @@
   deprecated.
   Thanks Bruno Oliveira for the PR.
 
-- fix issue 808: pytest's internal assertion rewrite hook now implements the
+- fix issue808: pytest's internal assertion rewrite hook now implements the
   optional PEP302 get_data API so tests can access data files next to them.
   Thanks xmo-odoo for request and example and Bruno Oliveira for
   the PR.
@@ -24,6 +58,15 @@
 - Summary bar now is colored yellow for warning
   situations such as: all tests either were skipped or xpass/xfailed,
   or no tests were run at all (this is a partial fix for issue500).
+- fix issue812: pytest now exits with status code 5 in situations where no
+  tests were run at all, such as the directory given in the command line does
+  not contain any tests or as result of a command line option filters
+  all out all tests (-k for example).
+  Thanks Eric Siegerman (issue812) and Bruno Oliveira for the PR.
+
+- Summary bar now is colored yellow for warning
+  situations such as: all tests either were skipped or xpass/xfailed,
+  or no tests were run at all (related to issue500).
   Thanks Eric Siegerman.
 
 - New `testpaths` ini option: list of directories to search for tests
@@ -103,6 +146,11 @@
 
 - fix issue714: add ability to apply indirect=True parameter on particular argnames.
 
+- fix issue890: changed extension of all documentation files from ``txt`` to
+  ``rst``. Thanks to Abhijeet for the PR.
+
+- issue951: add new record_xml_property fixture, that supports logging
+  additional information on xml output. Thanks David Diaz for the PR.
 
 2.7.3 (compared to 2.7.2)
 -----------------------------

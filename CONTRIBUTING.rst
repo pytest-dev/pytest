@@ -21,7 +21,7 @@ in repositories living under:
 
 - `the pytest-dev bitbucket team <https://bitbucket.org/pytest-dev>`_
 
-All pytest-dev team members have write access to all contained
+All pytest-dev Contributors team members have write access to all contained
 repositories.  pytest core and plugins are generally developed
 using `pull requests`_ to respective repositories.
 
@@ -46,9 +46,9 @@ the following:
 
 If no contributor strongly objects and two agree, the repo will be
 transferred to the ``pytest-dev`` organisation and you'll become a
-member of the ``pytest-dev`` team, with commit rights to all projects.
-We recommend that each plugin has at least three people who have the
-right to release to pypi.
+member of the ``pytest-dev Contributors`` team, with commit rights
+to all projects. We recommend that each plugin has at least three
+people who have the right to release to pypi.
 
 
 .. _reportbugs:
@@ -65,6 +65,10 @@ If you are reporting a bug, please include:
   specifically Python interpreter version,
   installed libraries and pytest version.
 * Detailed steps to reproduce the bug.
+
+If you can write a demonstration test that currently fails but should pass (xfail),
+that is a very useful commit to make as well, even if you can't find how
+to fix the bug yet.
 
 .. _submitfeedback:
 
@@ -93,6 +97,8 @@ https://github.com/pytest-dev/pytest/labels/bug
 
 :ref:`Talk <contact>` to developers to find out how you can fix specific bugs.
 
+Don't forget to check the issue trackers of your favourite plugins, too!
+
 .. _writeplugins:
 
 Implement features
@@ -111,9 +117,13 @@ Write documentation
 pytest could always use more documentation.  What exactly is needed?
 
 * More complementary documentation.  Have you perhaps found something unclear?
-* Documentation translations.  We currently have English and Japanese versions.
+* Documentation translations.  We currently have only English.
 * Docstrings.  There's never too much of them.
 * Blog posts, articles and such -- they're all very appreciated.
+
+You can also edit documentation files directly in the Github web interface
+without needing to make a fork and local copy. This can be convenient for
+small fixes.
 
 .. _`pull requests`:
 .. _pull-requests:
@@ -181,9 +191,13 @@ but here is a simple overview:
     $ git commit -a -m "<commit message>"
     $ git push -u
 
+   Make sure you add a CHANGELOG message, and add yourself to AUTHORS. If you
+   are unsure about either of these steps, submit your pull request and we'll
+   help you fix it up.
+
 #. Finally, submit a pull request through the GitHub website:
 
-   .. image:: img/pullrequest.png
+   .. image:: doc/en/img/pullrequest.png
     :width: 700px
     :align: center
 
