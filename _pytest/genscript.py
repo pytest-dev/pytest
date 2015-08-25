@@ -79,7 +79,7 @@ def pytest_cmdline_main(config):
         tw = _pytest.config.create_terminal_writer(config)
         tw.line("WARNING: usage of genscript is deprecated.",
                 red=True)
-        deps =  ['py', 'pluggy', '_pytest', 'pytest']
+        deps =  ['py', '_pytest', 'pytest']  # pluggy is vendored
         if sys.version_info < (2,7):
             deps.append("argparse")
             tw.line("generated script will run on python2.6-python3.3++")

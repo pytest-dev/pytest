@@ -5,11 +5,12 @@ This is a good source for looking at the various reporting hooks.
 from _pytest.main import EXIT_OK, EXIT_TESTSFAILED, EXIT_INTERRUPTED, \
     EXIT_USAGEERROR, EXIT_NOTESTSCOLLECTED
 import pytest
-import pluggy
 import py
 import sys
 import time
 import platform
+
+import _pytest._pluggy as pluggy
 
 
 def pytest_addoption(parser):

@@ -48,7 +48,7 @@ def has_environment_marker_support():
 
 
 def main():
-    install_requires = ['py>=1.4.29', 'pluggy>=0.3.0,<0.4.0']
+    install_requires = ['py>=1.4.29']  # pluggy is vendored in _pytest.vendored_packages
     extras_require = {}
     if has_environment_marker_support():
         extras_require[':python_version=="2.6" or python_version=="3.0" or python_version=="3.1"'] = ['argparse']
@@ -76,7 +76,7 @@ def main():
         install_requires=install_requires,
         extras_require=extras_require,
         setup_requires=['setuptools_scm'],
-        packages=['_pytest', '_pytest.assertion'],
+        packages=['_pytest', '_pytest.assertion', '_pytest.vendored_packages'],
         py_modules=['pytest'],
         zip_safe=False,
     )

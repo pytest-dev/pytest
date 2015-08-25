@@ -4,13 +4,13 @@ terminal reporting of the full testing process.
 import collections
 import pytest
 import py
-import pluggy
 import sys
 
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.terminal import TerminalReporter, repr_pythonversion, getreportopt
 from _pytest.terminal import build_summary_stats_line, _plugin_nameversions
 from _pytest import runner
+import _pytest._pluggy as pluggy
 
 def basic_run_report(item):
     runner.call_and_report(item, "setup", log=False)
