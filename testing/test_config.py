@@ -341,6 +341,31 @@ def test_invalid_options_show_extra_information(testdir):
         "*  rootdir: %s*" % testdir.tmpdir,
     ])
 
+
+@pytest.mark.parametrize('args', [
+    ['dir1', 'dir2', '-v'],
+    ['dir1', '-v', 'dir2'],
+    ['dir2', '-v', 'dir1'],
+    ['-v', 'dir2', 'dir1'],
+])
+def test_consider_args_after_options_for_rootdir_and_inifile(testdir, args):
+    """
+    Consider all arguments in the command-line for rootdir and inifile
+    discovery, even if they happen to occur after an option. #949
+    """
+    # replace "dir1" and "dir2" from "args" into their real directory
+    root = testdir.tmpdir.mkdir('myroot')
+    d1 = root.mkdir('dir1')
+    d2 = root.mkdir('dir2')
+    for i, arg in enumerate(args):
+        if arg == 'dir1':
+            args[i] = d1
+        elif arg == 'dir2':
+            args[i] = d2
+    result = testdir.runpytest(*args)
+    result.stdout.fnmatch_lines(['*rootdir: *myroot, inifile: '])
+
+
 @pytest.mark.skipif("sys.platform == 'win32'")
 def test_toolongargs_issue224(testdir):
     result = testdir.runpytest("-m", "hello" * 500)

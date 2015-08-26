@@ -150,6 +150,10 @@
 - issue951: add new record_xml_property fixture, that supports logging
   additional information on xml output. Thanks David Diaz for the PR.
 
+- issue949: paths after normal options (for example `-s`, `-v`, etc) are now
+  properly used to discover `rootdir` and `ini` files.
+  Thanks Peter Lauri for the report and Bruno Oliveira for the PR.
+
 2.7.3 (compared to 2.7.2)
 -----------------------------
 
