@@ -159,6 +159,10 @@
 - fix issue890: changed extension of all documentation files from ``txt`` to
   ``rst``. Thanks to Abhijeet for the PR.
 
+- fix issue957: "# doctest: SKIP" option will now register doctests as SKIPPED
+  rather than PASSED.
+  Thanks Thomas Grainger for the report and Bruno Oliveira for the PR.
+
 - issue951: add new record_xml_property fixture, that supports logging
   additional information on xml output. Thanks David Diaz for the PR.
 
