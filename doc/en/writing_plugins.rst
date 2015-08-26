@@ -16,7 +16,7 @@ reporting by calling `well specified hooks`_ of the following plugins:
 
 * :ref:`builtin plugins`: loaded from pytest's internal ``_pytest`` directory.
 
-* :ref:`external plugins <extplugin>`: modules discovered through
+* :ref:`external plugins <plugins_index>`: modules discovered through
   `setuptools entry points`_
 
 * `conftest.py plugins`_: modules auto-discovered in test directories
@@ -100,8 +100,8 @@ Here is how you might run it::
     conftest.py file.
 
 
-Writing a plugin by looking at examples
----------------------------------------
+Writing your own plugin
+-----------------------
 
 .. _`setuptools`: http://pypi.python.org/pypi/setuptools
 
@@ -110,12 +110,22 @@ you can copy from:
 
 * a custom collection example plugin: :ref:`yaml plugin`
 * around 20 doc:`builtin plugins` which provide pytest's own functionality
-* many :doc:`external plugins` providing additional features
+* many :ref:`external plugins <plugins_index>` providing additional features
 
 All of these plugins implement the documented `well specified hooks`_
 to extend and add functionality.
 
-You can also :ref:`contribute your plugin to pytest-dev<submitplugin>`
+.. note::
+    Make sure to check out the excellent
+    `cookiecutter-pytest-plugin <https://github.com/pytest-dev/cookiecutter-pytest-plugin>`_
+    project, which is a `cookiecutter template <https://github.com/audreyr/cookiecutter>`_
+    for authoring plugins.
+
+    The template provides an excellent starting point with a working plugin,
+    tests running with tox, comprehensive README and
+    entry-pointy already pre-configured.
+
+Also consider :ref:`contributing your plugin to pytest-dev<submitplugin>`
 once it has some happy users other than yourself.
 
 
@@ -244,7 +254,7 @@ Let's look at a possible implementation:
 .. code-block:: python
 
     def pytest_collection_modifyitems(config, items):
-        # called after collectin is completed
+        # called after collection is completed
         # you can modify the ``items`` list
 
 Here, ``pytest`` will pass in ``config`` (the pytest config object)
