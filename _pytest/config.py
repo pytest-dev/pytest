@@ -479,7 +479,7 @@ class Parser:
     def parse_known_args(self, args):
         optparser = self._getparser()
         args = [str(x) for x in args]
-        return optparser.parse_known_args(args)[0]
+        return optparser.parse_known_args(args)
 
     def addini(self, name, help, type=None, default=None):
         """ register an ini-file option.
@@ -879,8 +879,9 @@ class Config(object):
         self.pluginmanager._set_initial_conftests(early_config.known_args_namespace)
 
     def _initini(self, args):
-        parsed_args = self._parser.parse_known_args(args)
-        r = determine_setup(parsed_args.inifilename, parsed_args.file_or_dir)
+        parsed_args, extra_args = self._parser.parse_known_args(args)
+        r = determine_setup(parsed_args.inifilename,
+                            parsed_args.file_or_dir + extra_args)
         self.rootdir, self.inifile, self.inicfg = r
         self._parser.extra_info['rootdir'] = self.rootdir
         self._parser.extra_info['inifile'] = self.inifile
@@ -900,7 +901,8 @@ class Config(object):
         except ImportError as e:
             self.warn("I2", "could not load setuptools entry import: %s" % (e,))
         self.pluginmanager.consider_env()
-        self.known_args_namespace = ns = self._parser.parse_known_args(args)
+        ns, _ = self._parser.parse_known_args(args)
+        self.known_args_namespace = ns
         if self.known_args_namespace.confcutdir is None and self.inifile:
             confcutdir = py.path.local(self.inifile).dirname
             self.known_args_namespace.confcutdir = confcutdir
