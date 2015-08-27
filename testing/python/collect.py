@@ -908,7 +908,7 @@ def test_unorderable_types(testdir):
     """)
     result = testdir.runpytest()
     assert "TypeError" not in result.stdout.str()
-    assert result.ret == EXIT_NOTESTSCOLLECTED    
+    assert result.ret == EXIT_NOTESTSCOLLECTED
 
 
 def test_collect_functools_partial(testdir):
