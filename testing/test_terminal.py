@@ -756,8 +756,9 @@ def test_terminal_summary(testdir):
     ("yellow", "1 weird", {"weird": (1,)}),
     ("yellow", "1 passed, 1 weird", {"weird": (1,), "passed": (1,)}),
 
-    ("yellow", "1 warnings", {"warnings": (1,)}),
-    ("yellow", "1 passed, 1 warnings", {"warnings": (1,), "passed": (1,)}),
+    ("yellow", "1 pytest-warnings", {"warnings": (1,)}),
+    ("yellow", "1 passed, 1 pytest-warnings", {"warnings": (1,),
+                                               "passed": (1,)}),
 
     ("green", "5 passed", {"passed": (1,2,3,4,5)}),
 

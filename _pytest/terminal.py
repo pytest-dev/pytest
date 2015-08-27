@@ -438,7 +438,7 @@ class TerminalReporter:
             warnings = self.stats.get("warnings")
             if not warnings:
                 return
-            self.write_sep("=", "warning summary")
+            self.write_sep("=", "pytest-warning summary")
             for w in warnings:
                 self._tw.line("W%s %s %s" % (w.code,
                               w.fslocation, w.message))
@@ -527,6 +527,7 @@ def flatten(l):
 def build_summary_stats_line(stats):
     keys = ("failed passed skipped deselected "
            "xfailed xpassed warnings error").split()
+    key_translation = {'warnings': 'pytest-warnings'}
     unknown_key_seen = False
     for key in stats.keys():
         if key not in keys:
@@ -537,7 +538,8 @@ def build_summary_stats_line(stats):
     for key in keys:
         val = stats.get(key, None)
         if val:
-            parts.append("%d %s" % (len(val), key))
+            key_name = key_translation.get(key, key)
+            parts.append("%d %s" % (len(val), key_name))
     line = ", ".join(parts)
 
     if 'failed' in stats or 'error' in stats:
