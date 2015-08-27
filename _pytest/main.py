@@ -87,7 +87,7 @@ def wrap_session(config, doit):
             initstate = 1
             config.hook.pytest_sessionstart(session=session)
             initstate = 2
-            doit(config, session)
+            session.exitstatus = doit(config, session) or 0
         except pytest.UsageError:
             raise
         except KeyboardInterrupt:
@@ -100,11 +100,7 @@ def wrap_session(config, doit):
             session.exitstatus = EXIT_INTERNALERROR
             if excinfo.errisinstance(SystemExit):
                 sys.stderr.write("mainloop: caught Spurious SystemExit!\n")
-        else:
-            if session.testsfailed:
-                session.exitstatus = EXIT_TESTSFAILED
-            elif session.testscollected == 0:
-                session.exitstatus = EXIT_NOTESTSCOLLECTED
+
     finally:
         excinfo = None  # Explicitly break reference cycle.
         session.startdir.chdir()
@@ -123,6 +119,11 @@ def _main(config, session):
     running tests and reporting. """
     config.hook.pytest_collection(session=session)
     config.hook.pytest_runtestloop(session=session)
+
+    if session.testsfailed:
+        return EXIT_TESTSFAILED
+    elif session.testscollected == 0:
+        return EXIT_NOTESTSCOLLECTED
 
 def pytest_collection(session):
     return session.perform_collect()

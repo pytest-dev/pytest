@@ -78,7 +78,7 @@ def test_cache_show(testdir):
             dp.ensure("world")
     """)
     result = testdir.runpytest()
-    assert result.ret == 0
+    assert result.ret == 5  # no tests executed
     result = testdir.runpytest("--show-cache")
     result.stdout.fnmatch_lines_random([
         "*cachedir:*",
