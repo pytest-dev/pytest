@@ -3,11 +3,17 @@ cache: working with cross-testrun state
 
 .. versionadded:: 2.8
 
+.. warning::
+
+  the external pytest-cache plugin used execnet_ as serializer,
+  which supported a wider range of builtin objects.
+  the buitin one however uses json.
+
 Usage
 ---------
 
 plugins can access the `config.cache`_ object
-which helps sharing values between ``py.test`` invocations.
+which helps sharing **json encodable** values between ``py.test`` invocations.
 
 The plugin provides two options to rerun failures, namely:
 

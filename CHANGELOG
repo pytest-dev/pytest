@@ -42,7 +42,10 @@
 - fix issue82: avoid loading conftest files from setup.cfg/pytest.ini/tox.ini
   files and upwards by default (--confcutdir can still be set to override this).
   Thanks Bruno Oliveira for the PR.
-- merge the pytest-cache extension into core
+
+- merge a refined variant of the pytest-cache extension into core
+  it uses json instead of execnet for the serializer
+  and deactivates the external cache plugin
 
 - fix issue768: docstrings found in python modules were not setting up session
   fixtures. Thanks Jason R. Coombs for reporting and Bruno Oliveira for the PR.
@@ -67,6 +70,7 @@
 - Summary bar now is colored yellow for warning
   situations such as: all tests either were skipped or xpass/xfailed,
   or no tests were run at all (this is a partial fix for issue500).
+
 - fix issue812: pytest now exits with status code 5 in situations where no
   tests were run at all, such as the directory given in the command line does
   not contain any tests or as result of a command line option filters
