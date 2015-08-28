@@ -20,6 +20,11 @@ It's easy to create custom markers or to apply markers
 to whole test classes or modules. See :ref:`mark examples` for examples
 which also serve as documentation.
 
+.. note::
+
+    Marks can only be applied to tests, having no effect on
+    :ref:`fixtures <fixtures>`.
+
 
 API reference for mark related objects
 ------------------------------------------------
