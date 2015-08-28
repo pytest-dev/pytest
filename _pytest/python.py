@@ -1,4 +1,5 @@
 """ Python test discovery, setup and run of test functions. """
+import re
 import fnmatch
 import functools
 import py
@@ -7,6 +8,12 @@ import sys
 import pytest
 from _pytest.mark import MarkDecorator, MarkerError
 from py._code.code import TerminalRepr
+
+try:
+    import enum
+except ImportError:  # pragma: no cover
+    # Only available in Python 3.4+ or as a backport
+    enum = None
 
 import _pytest
 import pluggy
@@ -22,13 +29,15 @@ isclass = inspect.isclass
 callable = py.builtin.callable
 # used to work around a python2 exception info leak
 exc_clear = getattr(sys, 'exc_clear', lambda: None)
+# The type of re.compile objects is not exposed in Python.
+REGEX_TYPE = type(re.compile(''))
 
 def filter_traceback(entry):
     return entry.path != cutdir1 and not entry.path.relto(cutdir2)
 
 
 def get_real_func(obj):
-    """gets the real function object of the (possibly) wrapped object by
+    """ gets the real function object of the (possibly) wrapped object by
     functools.wraps or functools.partial.
     """
     while hasattr(obj, "__wrapped__"):
@@ -54,6 +63,17 @@ def getimfunc(func):
             return func.im_func
         except AttributeError:
             return func
+
+def safe_getattr(object, name, default):
+    """ Like getattr but return default upon any Exception.
+
+    Attribute access can potentially fail for 'evil' Python objects.
+    See issue214
+    """
+    try:
+        return getattr(object, name, default)
+    except Exception:
+        return default
 
 
 class FixtureFunctionMarker:
@@ -248,11 +268,10 @@ def pytest_pycollect_makeitem(collector, name, obj):
         raise StopIteration
     # nothing was collected elsewhere, let's do it here
     if isclass(obj):
-        if collector.classnamefilter(name):
+        if collector.istestclass(obj, name):
             Class = collector._getcustomclass("Class")
             outcome.force_result(Class(name, parent=collector))
-    elif collector.funcnamefilter(name) and hasattr(obj, "__call__") and\
-        getfixturemarker(obj) is None:
+    elif collector.istestfunction(obj, name):
         # mock seems to store unbound methods (issue473), normalize it
         obj = getattr(obj, "__func__", obj)
         if not isfunction(obj):
@@ -338,8 +357,23 @@ class PyCollector(PyobjMixin, pytest.Collector):
     def funcnamefilter(self, name):
         return self._matches_prefix_or_glob_option('python_functions', name)
 
+    def isnosetest(self, obj):
+        """ Look for the __test__ attribute, which is applied by the
+        @nose.tools.istest decorator
+        """
+        return safe_getattr(obj, '__test__', False)
+
     def classnamefilter(self, name):
         return self._matches_prefix_or_glob_option('python_classes', name)
+
+    def istestfunction(self, obj, name):
+        return (
+            (self.funcnamefilter(name) or self.isnosetest(obj))
+            and safe_getattr(obj, "__call__", False) and getfixturemarker(obj) is None
+        )
+
+    def istestclass(self, obj, name):
+        return self.classnamefilter(name) or self.isnosetest(obj)
 
     def _matches_prefix_or_glob_option(self, option_name, name):
         """
@@ -485,7 +519,7 @@ class FuncFixtureInfo:
 
 
 def _marked(func, mark):
-    """Returns True if :func: is already marked with :mark:, False orherwise.
+    """ Returns True if :func: is already marked with :mark:, False otherwise.
     This can happen if marker is applied to class and the test file is
     invoked more than once.
     """
@@ -911,15 +945,14 @@ class Metafunc(FuncargnamesCompatAttr):
             scope = "function"
         scopenum = scopes.index(scope)
         valtypes = {}
+        for arg in argnames:
+            if arg not in self.fixturenames:
+                raise ValueError("%r uses no fixture %r" %(self.function, arg))
+
         if indirect is True:
             valtypes = dict.fromkeys(argnames, "params")
         elif indirect is False:
             valtypes = dict.fromkeys(argnames, "funcargs")
-            #XXX should we also check for the opposite case?
-            for arg in argnames:
-                if arg not in self.fixturenames:
-                    raise ValueError("%r uses no fixture %r" %(
-                                     self.function, arg))
         elif isinstance(indirect, (tuple, list)):
             valtypes = dict.fromkeys(argnames, "funcargs")
             for arg in indirect:
@@ -992,8 +1025,15 @@ def _idval(val, argname, idx, idfn):
                 return s
         except Exception:
             pass
+
     if isinstance(val, (float, int, str, bool, NoneType)):
         return str(val)
+    elif isinstance(val, REGEX_TYPE):
+        return val.pattern
+    elif enum is not None and isinstance(val, enum.Enum):
+        return str(val)
+    elif isclass(val) and hasattr(val, '__name__'):
+        return val.__name__
     return str(argname)+str(idx)
 
 def _idvalset(idx, valset, argnames, idfn):
@@ -1127,9 +1167,9 @@ def raises(expected_exception, *args, **kwargs):
            " derived from BaseException, not %s")
     if isinstance(expected_exception, tuple):
         for exc in expected_exception:
-            if not inspect.isclass(exc):
+            if not isclass(exc):
                 raise TypeError(msg % type(exc))
-    elif not inspect.isclass(expected_exception):
+    elif not isclass(expected_exception):
         raise TypeError(msg % type(expected_exception))
 
     if not args:
@@ -1376,7 +1416,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         return self._pyfuncitem.session
 
     def addfinalizer(self, finalizer):
-        """add finalizer/teardown function to be called after the
+        """ add finalizer/teardown function to be called after the
         last test within the requesting test context finished
         execution. """
         # XXX usually this method is shadowed by fixturedef specific ones
@@ -1790,7 +1830,7 @@ class FixtureManager:
                 if fixturedef.params is not None:
                     func_params = getattr(getattr(metafunc.function, 'parametrize', None), 'args', [[None]])
                     # skip directly parametrized arguments
-                    if argname not in func_params and argname not in func_params[0]:
+                    if argname not in func_params:
                         metafunc.parametrize(argname, fixturedef.params,
                                              indirect=True, scope=fixturedef.scope,
                                              ids=fixturedef.ids)

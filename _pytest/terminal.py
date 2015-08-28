@@ -2,6 +2,8 @@
 
 This is a good source for looking at the various reporting hooks.
 """
+from _pytest.main import EXIT_OK, EXIT_TESTSFAILED, EXIT_INTERRUPTED, \
+    EXIT_USAGEERROR, EXIT_NOTESTSCOLLECTED
 import pytest
 import pluggy
 import py
@@ -298,13 +300,9 @@ class TerminalReporter:
 
         plugininfo = config.pluginmanager.list_plugin_distinfo()
         if plugininfo:
-            l = []
-            for plugin, dist in plugininfo:
-                name = dist.project_name
-                if name.startswith("pytest-"):
-                    name = name[7:]
-                l.append(name)
-            lines.append("plugins: %s" % ", ".join(l))
+
+            lines.append(
+                "plugins: %s" % ", ".join(_plugin_nameversions(plugininfo)))
         return lines
 
     def pytest_collection_finish(self, session):
@@ -359,12 +357,15 @@ class TerminalReporter:
         outcome = yield
         outcome.get_result()
         self._tw.line("")
-        if exitstatus in (0, 1, 2, 4):
+        summary_exit_codes = (
+            EXIT_OK, EXIT_TESTSFAILED, EXIT_INTERRUPTED, EXIT_USAGEERROR,
+            EXIT_NOTESTSCOLLECTED)
+        if exitstatus in summary_exit_codes:
             self.summary_errors()
             self.summary_failures()
             self.summary_warnings()
             self.config.hook.pytest_terminal_summary(terminalreporter=self)
-        if exitstatus == 2:
+        if exitstatus == EXIT_INTERRUPTED:
             self._report_keyboardinterrupt()
             del self._keyboardinterrupt_memo
         self.summary_deselected()
@@ -549,3 +550,18 @@ def build_summary_stats_line(stats):
         color = 'yellow'
 
     return (line, color)
+
+
+def _plugin_nameversions(plugininfo):
+    l = []
+    for plugin, dist in plugininfo:
+        # gets us name and version!
+        name = '{dist.project_name}-{dist.version}'.format(dist=dist)
+        # questionable convenience, but it keeps things short
+        if name.startswith("pytest-"):
+            name = name[7:]
+        # we decided to print python package names
+        # they can have more than one plugin
+        if name not in l:
+            l.append(name)
+    return l

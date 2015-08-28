@@ -1,5 +1,7 @@
+import sys
 from _pytest.doctest import DoctestItem, DoctestModule, DoctestTextfile
 import py
+import pytest
 
 class TestDoctests:
 
@@ -400,4 +402,47 @@ class TestDoctests:
         """)
         result = testdir.runpytest("--doctest-modules")
         result.stdout.fnmatch_lines('*2 passed*')
+
+    @pytest.mark.parametrize('config_mode', ['ini', 'comment'])
+    def test_allow_unicode(self, testdir, config_mode):
+        """Test that doctests which output unicode work in all python versions
+        tested by pytest when the ALLOW_UNICODE option is used (either in
+        the ini file or by an inline comment).
+        """
+        if config_mode == 'ini':
+            testdir.makeini('''
+            [pytest]
+            doctest_optionflags = ALLOW_UNICODE
+            ''')
+            comment = ''
+        else:
+            comment = '#doctest: +ALLOW_UNICODE'
+
+        testdir.maketxtfile(test_doc="""
+            >>> b'12'.decode('ascii') {comment}
+            '12'
+        """.format(comment=comment))
+        testdir.makepyfile(foo="""
+            def foo():
+              '''
+              >>> b'12'.decode('ascii') {comment}
+              '12'
+              '''
+        """.format(comment=comment))
+        reprec = testdir.inline_run("--doctest-modules")
+        reprec.assertoutcome(passed=2)
+
+    def test_unicode_string(self, testdir):
+        """Test that doctests which output unicode fail in Python 2 when
+        the ALLOW_UNICODE option is not used. The same test should pass
+        in Python 3.
+        """
+        testdir.maketxtfile(test_doc="""
+            >>> b'12'.decode('ascii')
+            '12'
+        """)
+        reprec = testdir.inline_run()
+        passed = int(sys.version_info[0] >= 3)
+        reprec.assertoutcome(passed=passed, failed=int(not passed))
+
 

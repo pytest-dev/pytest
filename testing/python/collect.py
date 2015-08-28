@@ -1,6 +1,8 @@
 import sys
 from textwrap import dedent
 import pytest, py
+from _pytest.main import EXIT_NOTESTSCOLLECTED
+
 
 class TestModule:
     def test_failing_import(self, testdir):
@@ -412,9 +414,19 @@ class TestFunction:
                                      ['overridden'])
             def test_overridden_via_param(value):
                 assert value == 'overridden'
+
+            @pytest.mark.parametrize('somevalue', ['overridden'])
+            def test_not_overridden(value, somevalue):
+                assert value == 'value'
+                assert somevalue == 'overridden'
+
+            @pytest.mark.parametrize('other,value', [('foo', 'overridden')])
+            def test_overridden_via_multiparam(other, value):
+                assert other == 'foo'
+                assert value == 'overridden'
         """)
         rec = testdir.inline_run()
-        rec.assertoutcome(passed=1)
+        rec.assertoutcome(passed=3)
 
 
     def test_parametrize_overrides_parametrized_fixture(self, testdir):
@@ -896,7 +908,7 @@ def test_unorderable_types(testdir):
     """)
     result = testdir.runpytest()
     assert "TypeError" not in result.stdout.str()
-    assert result.ret == 0
+    assert result.ret == EXIT_NOTESTSCOLLECTED    
 
 
 def test_collect_functools_partial(testdir):

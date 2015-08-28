@@ -1,18 +1,23 @@
 """
 terminal reporting of the full testing process.
 """
+import collections
 import pytest
 import py
 import pluggy
 import sys
 
+from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.terminal import TerminalReporter, repr_pythonversion, getreportopt
-from _pytest.terminal import build_summary_stats_line
+from _pytest.terminal import build_summary_stats_line, _plugin_nameversions
 from _pytest import runner
 
 def basic_run_report(item):
     runner.call_and_report(item, "setup", log=False)
     return runner.call_and_report(item, "call", log=False)
+
+DistInfo = collections.namedtuple('DistInfo', ['project_name', 'version'])
+
 
 class Option:
     def __init__(self, verbose=False, fulltrace=False):
@@ -38,6 +43,21 @@ def pytest_generate_tests(metafunc):
                          funcargs={'option': Option(verbose= -1)})
         metafunc.addcall(id="fulltrace",
                          funcargs={'option': Option(fulltrace=True)})
+
+
+@pytest.mark.parametrize('input,expected', [
+    ([DistInfo(project_name='test', version=1)], ['test-1']),
+    ([DistInfo(project_name='pytest-test', version=1)], ['test-1']),
+    ([
+        DistInfo(project_name='test', version=1),
+        DistInfo(project_name='test', version=1)
+    ], ['test-1']),
+], ids=['normal', 'prefix-strip', 'deduplicate'])
+
+def test_plugin_nameversion(input, expected):
+    pluginlist = [(None, x) for x in input]
+    result = _plugin_nameversions(pluginlist)
+    assert result == expected
 
 
 class TestTerminal:
@@ -577,7 +597,7 @@ def test_traceconfig(testdir, monkeypatch):
     result.stdout.fnmatch_lines([
         "*active plugins*"
     ])
-    assert result.ret == 0
+    assert result.ret == EXIT_NOTESTSCOLLECTED
 
 
 class TestGenericReporting:
@@ -783,4 +803,3 @@ def test_summary_stats(exp_line, exp_color, stats_arg):
     print("Actually got:   \"%s\"; with color \"%s\"" % (line, color))
     assert line == exp_line
     assert color == exp_color
-

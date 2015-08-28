@@ -1,6 +1,7 @@
 from textwrap import dedent
 import py, pytest
 from _pytest.config import PytestPluginManager
+from _pytest.main import EXIT_NOTESTSCOLLECTED, EXIT_USAGEERROR
 
 
 @pytest.fixture(scope="module", params=["global", "inpackage"])
@@ -166,7 +167,10 @@ def test_conftest_confcutdir(testdir):
 def test_no_conftest(testdir):
     testdir.makeconftest("assert 0")
     result = testdir.runpytest("--noconftest")
-    assert result.ret == 0
+    assert result.ret == EXIT_NOTESTSCOLLECTED
+
+    result = testdir.runpytest()
+    assert result.ret == EXIT_USAGEERROR
 
 def test_conftest_existing_resultlog(testdir):
     x = testdir.mkdir("tests")

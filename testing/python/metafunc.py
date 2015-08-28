@@ -1,3 +1,4 @@
+import re
 
 import pytest, py
 from _pytest import python as funcargs
@@ -138,6 +139,8 @@ class TestMetafunc:
                                       ("three", "three hundred"),
                                       (True, False),
                                       (None, None),
+                                      (re.compile('foo'), re.compile('bar')),
+                                      (str, int),
                                       (list("six"), [66, 66]),
                                       (set([7]), set("seven")),
                                       (tuple("eight"), (8, -8, 8))
@@ -147,9 +150,18 @@ class TestMetafunc:
                           "three-three hundred",
                           "True-False",
                           "None-None",
-                          "a5-b5",
-                          "a6-b6",
-                          "a7-b7"]
+                          "foo-bar",
+                          "str-int",
+                          "a7-b7",
+                          "a8-b8",
+                          "a9-b9"]
+
+    def test_idmaker_enum(self):
+        from _pytest.python import idmaker
+        enum = pytest.importorskip("enum")
+        e = enum.Enum("Foo", "one, two")
+        result = idmaker(("a", "b"), [(e.one, e.two)])
+        assert result == ["Foo.one-Foo.two"]
 
     @pytest.mark.issue351
     def test_idmaker_idfn(self):
@@ -214,12 +226,11 @@ class TestMetafunc:
         metafunc = self.Metafunc(func)
         metafunc.parametrize('x', [1], indirect=True)
         metafunc.parametrize('y', [2,3], indirect=True)
-        metafunc.parametrize('unnamed', [1], indirect=True)
         assert len(metafunc._calls) == 2
         assert metafunc._calls[0].funcargs == {}
         assert metafunc._calls[1].funcargs == {}
-        assert metafunc._calls[0].params == dict(x=1,y=2, unnamed=1)
-        assert metafunc._calls[1].params == dict(x=1,y=3, unnamed=1)
+        assert metafunc._calls[0].params == dict(x=1,y=2)
+        assert metafunc._calls[1].params == dict(x=1,y=3)
 
     @pytest.mark.issue714
     def test_parametrize_indirect_list(self):

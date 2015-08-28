@@ -12,6 +12,7 @@ if sys.platform.startswith("java"):
 
 from _pytest.assertion import util
 from _pytest.assertion.rewrite import rewrite_asserts, PYTEST_TAG
+from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 
 def setup_module(mod):
@@ -429,7 +430,7 @@ class TestRewriteOnImport:
             import sys
             sys.path.append(%r)
             import test_gum.test_lizard""" % (z_fn,))
-        assert testdir.runpytest().ret == 0
+        assert testdir.runpytest().ret == EXIT_NOTESTSCOLLECTED
 
     def test_readonly(self, testdir):
         sub = testdir.mkdir("testing")
@@ -497,7 +498,7 @@ def test_rewritten():
         pkg = testdir.mkdir('a_package_without_init_py')
         pkg.join('module.py').ensure()
         testdir.makepyfile("import a_package_without_init_py.module")
-        assert testdir.runpytest().ret == 0
+        assert testdir.runpytest().ret == EXIT_NOTESTSCOLLECTED
 
 class TestAssertionRewriteHookDetails(object):
     def test_loader_is_package_false_for_module(self, testdir):

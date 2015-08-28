@@ -17,6 +17,11 @@ include/
 *.orig
 *~
 
+.eggs/
+
+# this file is managed by setuptools_scm
+_pytest/__init__.py
+
 doc/*/_build
 build/
 dist/

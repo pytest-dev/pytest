@@ -1598,6 +1598,22 @@ class TestFixtureMarker:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=4)
 
+    def test_multiple_parametrization_issue_736(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture(params=[1,2,3])
+            def foo(request):
+                return request.param
+
+            @pytest.mark.parametrize('foobar', [4,5,6])
+            def test_issue(foo, foobar):
+                assert foo in [1,2,3]
+                assert foobar in [4,5,6]
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=9)
+
     def test_scope_session(self, testdir):
         testdir.makepyfile("""
             import pytest
