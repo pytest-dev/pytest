@@ -411,8 +411,13 @@ def test_assert_compare_truncate_longmessage(testdir):
     """)
 
     result = testdir.runpytest()
+    # without -vv, truncate the message showing a few diff lines only
     result.stdout.fnmatch_lines([
-        "*truncated*use*-vv*",
+        "*- 1",
+        "*- 3",
+        "*- 5",
+        "*- 7",
+        "*truncated (191 more lines)*use*-vv*",
     ])
 
 
