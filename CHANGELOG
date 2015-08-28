@@ -1,9 +1,13 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
-- Fix #562: @nose.tools.istest now fully respected.
+- fix issue562: @nose.tools.istest now fully respected.
 
-- Fix issue736: Fix a bug where fixture params would be discarded when combined
+- fix issue934: when string comparison fails and a diff is too large to display
+  without passing -vv, still show a few lines of the diff.
+  Thanks Florian Bruhin for the report and Bruno Oliveira for the PR.
+
+- fix issue736: Fix a bug where fixture params would be discarded when combined
   with parametrization markers.
   Thanks to Markus Unterwaditzer for the PR.
 

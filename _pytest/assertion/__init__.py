@@ -114,8 +114,11 @@ def pytest_runtest_setup(item):
             if new_expl:
                 if (sum(len(p) for p in new_expl[1:]) > 80*8
                         and item.config.option.verbose < 2):
-                    new_expl[1:] = [py.builtin._totext(
-                        'Detailed information truncated, use "-vv" to show')]
+                    show_max = 10
+                    truncated_lines = len(new_expl) - show_max
+                    new_expl[show_max:] = [py.builtin._totext(
+                        'Detailed information truncated (%d more lines)'
+                        ', use "-vv" to show' % truncated_lines)]
                 new_expl = [line.replace("\n", "\\n") for line in new_expl]
                 res = py.builtin._totext("\n~").join(new_expl)
                 if item.config.getvalue("assertmode") == "rewrite":
