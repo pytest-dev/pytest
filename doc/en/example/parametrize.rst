@@ -280,6 +280,46 @@ The first invocation with ``db == "DB1"`` passed while the second with ``db == "
 
 .. regendoc:wipe
 
+Apply indirect on particular arguments
+---------------------------------------------------
+
+Very often parametrization uses more than one argument name. There is opportunity to apply ``indirect``
+parameter on particular arguments. It can be done by passing list or tuple of
+arguments' names to ``indirect``. In the example below there is a function ``test_indirect`` which uses
+two fixtures: ``x`` and ``y``. Here we give to indirect the list, which contains the name of the
+fixture ``x``. The indirect parameter will be applied to this argument only, and the value ``a``
+will be passed to respective fixture function.
+
+    # content of test_indirect_list.py
+
+    import pytest
+    @pytest.fixture(scope='function')
+    def x(request):
+        return request.param * 3
+
+    @pytest.fixture(scope='function')
+    def y(request):
+        return request.param * 2
+
+    @pytest.mark.parametrize('x, y', [('a', 'b')], indirect=['x'])
+    def test_indirect(x,y):
+        assert x == 'aaa'
+        assert y == 'b'
+
+The result of this test will be successful:
+
+    $ py.test test_indirect_list.py --collect-only
+    ============================= test session starts ==============================
+    platform linux2 -- Python 2.7.3, pytest-2.8.0.dev4, py-1.4.30, pluggy-0.3.0
+    rootdir: /home/elizabeth/work/pytest, inifile: tox.ini
+    collected 1 items
+    <Module 'testing/test_argnames.py'>
+      <Function 'test_simple[a-b]'>
+
+    ===============================  in 0.02 seconds ===============================
+
+.. regendoc:wipe
+
 Parametrizing test methods through per-class configuration
 --------------------------------------------------------------
 
