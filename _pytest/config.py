@@ -477,6 +477,15 @@ class Parser:
         return getattr(parsedoption, FILE_OR_DIR)
 
     def parse_known_args(self, args):
+        """parses and returns a namespace object with known arguments at this
+        point.
+        """
+        return self.parse_known_and_unknown_args(args)[0]
+
+    def parse_known_and_unknown_args(self, args):
+        """parses and returns a namespace object with known arguments, and
+        the remaining arguments unknown at this point.
+        """
         optparser = self._getparser()
         args = [str(x) for x in args]
         return optparser.parse_known_args(args)
@@ -879,9 +888,8 @@ class Config(object):
         self.pluginmanager._set_initial_conftests(early_config.known_args_namespace)
 
     def _initini(self, args):
-        parsed_args, extra_args = self._parser.parse_known_args(args)
-        r = determine_setup(parsed_args.inifilename,
-                            parsed_args.file_or_dir + extra_args)
+        ns, unknown_args = self._parser.parse_known_and_unknown_args(args)
+        r = determine_setup(ns.inifilename, ns.file_or_dir + unknown_args)
         self.rootdir, self.inifile, self.inicfg = r
         self._parser.extra_info['rootdir'] = self.rootdir
         self._parser.extra_info['inifile'] = self.inifile
@@ -901,8 +909,7 @@ class Config(object):
         except ImportError as e:
             self.warn("I2", "could not load setuptools entry import: %s" % (e,))
         self.pluginmanager.consider_env()
-        ns, _ = self._parser.parse_known_args(args)
-        self.known_args_namespace = ns
+        self.known_args_namespace = ns = self._parser.parse_known_args(args)
         if self.known_args_namespace.confcutdir is None and self.inifile:
             confcutdir = py.path.local(self.inifile).dirname
             self.known_args_namespace.confcutdir = confcutdir
