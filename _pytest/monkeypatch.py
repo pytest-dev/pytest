@@ -197,7 +197,7 @@ class monkeypatch:
         called automatically during tear-down.
         
         Note that the same `monkeypatch` fixture is used across a
-        single test invocation. If `monkeypatch` is used both by
+        single test function invocation. If `monkeypatch` is used both by
         the test function itself and one of the test fixtures, 
         calling `undo()` will undo all of the changes made in
         both functions.
