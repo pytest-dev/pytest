@@ -1614,6 +1614,22 @@ class TestFixtureMarker:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=9)
 
+    @pytest.mark.parametrize('param_args', ["'fixt, val'", "'fixt,val'", "['fixt', 'val']", "('fixt', 'val')"])
+    def test_override_parametrized_fixture_issue_979(self, testdir, param_args):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture(params=[1, 2])
+            def fixt(request):
+                return request.param
+
+            @pytest.mark.parametrize(%s, [(3, 'x'), (4, 'x')])
+            def test_foo(fixt, val):
+                pass
+        """ % param_args)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
+
     def test_scope_session(self, testdir):
         testdir.makepyfile("""
             import pytest
