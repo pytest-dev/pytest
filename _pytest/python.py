@@ -1830,7 +1830,10 @@ class FixtureManager:
                 if fixturedef.params is not None:
                     func_params = getattr(getattr(metafunc.function, 'parametrize', None), 'args', [[None]])
                     # skip directly parametrized arguments
-                    if argname not in func_params:
+                    argnames = func_params[0]
+                    if not isinstance(argnames, (tuple, list)):
+                        argnames = [x.strip() for x in argnames.split(",") if x.strip()]
+                    if argname not in func_params and argname not in argnames:
                         metafunc.parametrize(argname, fixturedef.params,
                                              indirect=True, scope=fixturedef.scope,
                                              ids=fixturedef.ids)
