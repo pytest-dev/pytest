@@ -1616,6 +1616,10 @@ class TestFixtureMarker:
 
     @pytest.mark.parametrize('param_args', ["'fixt, val'", "'fixt,val'", "['fixt', 'val']", "('fixt', 'val')"])
     def test_override_parametrized_fixture_issue_979(self, testdir, param_args):
+        """Make sure a parametrized argument can override a parametrized fixture.
+
+        This was a regression introduced in the fix for #736.
+        """
         testdir.makepyfile("""
             import pytest
 
