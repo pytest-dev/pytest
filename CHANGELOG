@@ -83,6 +83,11 @@
 - fix issue713: JUnit XML reports for doctest failures.
   Thanks Punyashloka Biswal.
 
+- fix issue970: internal pytest warnings now appear as "pytest-warnings" in
+  the terminal instead of "warnings", so it is clear for users that those
+  warnings are from pytest and not from the builtin "warnings" module.
+  Thanks Bruno Oliveira.
+
 - Include setup and teardown in junitxml test durations.
   Thanks Janne Vanhala.
 

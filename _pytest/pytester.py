@@ -326,7 +326,7 @@ def testdir(request, tmpdir_factory):
     return Testdir(request, tmpdir_factory)
 
 
-rex_outcome = re.compile("(\d+) (\w+)")
+rex_outcome = re.compile("(\d+) ([\w-]+)")
 class RunResult:
     """The result of running a command.
 
