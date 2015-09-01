@@ -446,3 +446,50 @@ class TestDoctests:
         reprec.assertoutcome(passed=passed, failed=int(not passed))
 
 
+class TestDocTestSkips:
+    """
+    If all examples in a doctest are skipped due to the SKIP option, then
+    the tests should be SKIPPED rather than PASSED. (#957)
+    """
+
+    @pytest.fixture(params=['text', 'module'])
+    def makedoctest(self, testdir, request):
+        def makeit(doctest):
+            mode = request.param
+            if mode == 'text':
+                testdir.maketxtfile(doctest)
+            else:
+                assert mode == 'module'
+                testdir.makepyfile('"""\n%s"""' % doctest)
+
+        return makeit
+
+    def test_one_skipped(self, testdir, makedoctest):
+        makedoctest("""
+            >>> 1 + 1  # doctest: +SKIP
+            2
+            >>> 2 + 2
+            4
+        """)
+        reprec = testdir.inline_run("--doctest-modules")
+        reprec.assertoutcome(passed=1)
+
+    def test_one_skipped_failed(self, testdir, makedoctest):
+        makedoctest("""
+            >>> 1 + 1  # doctest: +SKIP
+            2
+            >>> 2 + 2
+            200
+        """)
+        reprec = testdir.inline_run("--doctest-modules")
+        reprec.assertoutcome(failed=1)
+
+    def test_all_skipped(self, testdir, makedoctest):
+        makedoctest("""
+            >>> 1 + 1  # doctest: +SKIP
+            2
+            >>> 2 + 2  # doctest: +SKIP
+            200
+        """)
+        reprec = testdir.inline_run("--doctest-modules")
+        reprec.assertoutcome(skipped=1)
