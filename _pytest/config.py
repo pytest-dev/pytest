@@ -16,6 +16,8 @@ hookspec = HookspecMarker("pytest")
 
 # pytest startup
 #
+
+
 class ConftestImportFailure(Exception):
     def __init__(self, path, excinfo):
         Exception.__init__(self, path, excinfo)
@@ -135,7 +137,6 @@ class PytestPluginManager(PluginManager):
     """
     def __init__(self):
         super(PytestPluginManager, self).__init__("pytest", implprefix="pytest_")
-        self._warnings = []
         self._conftest_plugins = set()
 
         # state related to local conftest plugins
@@ -166,7 +167,7 @@ class PytestPluginManager(PluginManager):
                        fslocation=py.code.getfslineno(sys._getframe(1)),
                        message="use pluginmanager.add_hookspecs instead of "
                                "deprecated addhooks() method.")
-        self._warnings.append(warning)
+        self._warn(warning)
         return self.add_hookspecs(module_or_class)
 
     def parse_hookimpl_opts(self, plugin, name):
@@ -196,9 +197,10 @@ class PytestPluginManager(PluginManager):
             fslineno = py.code.getfslineno(hookmethod.function)
             warning = dict(code="I1",
                            fslocation=fslineno,
+                           nodeid=None,
                            message="%r hook uses deprecated __multicall__ "
                                    "argument" % (hook.name))
-            self._warnings.append(warning)
+            self._warn(warning)
 
     def register(self, plugin, name=None):
         ret = super(PytestPluginManager, self).register(plugin, name)
@@ -224,11 +226,15 @@ class PytestPluginManager(PluginManager):
         config.addinivalue_line("markers",
             "trylast: mark a hook implementation function such that the "
             "plugin machinery will try to call it last/as late as possible.")
-        for warning in self._warnings:
-            if isinstance(warning, dict):
-                config.warn(**warning)
-            else:
-                config.warn(code="I1", message=warning)
+
+    def _warn(self, message):
+        kwargs = message if isinstance(message, dict) else {
+            'code': 'I1',
+            'message': message,
+            'fslocation': None,
+            'nodeid': None,
+        }
+        self.hook.pytest_logwarning.call_historic(kwargs=kwargs)
 
     #
     # internal API for local conftest plugin handling
@@ -381,7 +387,7 @@ class PytestPluginManager(PluginManager):
             import pytest
             if not hasattr(pytest, 'skip') or not isinstance(e, pytest.skip.Exception):
                 raise
-            self._warnings.append("skipped plugin %r: %s" %((modname, e.msg)))
+            self._warn("skipped plugin %r: %s" %((modname, e.msg)))
         else:
             mod = sys.modules[importspec]
             self.register(mod, modname)
@@ -713,6 +719,7 @@ class MyOptionParser(argparse.ArgumentParser):
             getattr(args, FILE_OR_DIR).extend(argv)
         return args
 
+
 class DropShorterLongHelpFormatter(argparse.HelpFormatter):
     """shorten help for long options that differ only in extra hyphens
 
@@ -802,6 +809,7 @@ class Config(object):
         self._inicache = {}
         self._opt2dest = {}
         self._cleanup = []
+        self._warn = self.pluginmanager._warn
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
         def do_setns(dic):
@@ -831,8 +839,9 @@ class Config(object):
 
     def warn(self, code, message, fslocation=None):
         """ generate a warning for this test session. """
-        self.hook.pytest_logwarning(code=code, message=message,
-                                    fslocation=fslocation, nodeid=None)
+        self.hook.pytest_logwarning.call_historic(kwargs=dict(
+            code=code, message=message,
+            fslocation=fslocation, nodeid=None))
 
     def get_terminal_writer(self):
         return self.pluginmanager.get_plugin("terminalreporter")._tw
@@ -921,8 +930,7 @@ class Config(object):
             if ns.help or ns.version:
                 # we don't want to prevent --help/--version to work
                 # so just let is pass and print a warning at the end
-                self.pluginmanager._warnings.append(
-                        "could not load initial conftests (%s)\n" % e.path)
+                self._warn("could not load initial conftests (%s)\n" % e.path)
             else:
                 raise
 

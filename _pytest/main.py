@@ -279,9 +279,9 @@ class Node(object):
         else:
             fslocation = "%s:%s" % fslocation[:2]
 
-        self.ihook.pytest_logwarning(code=code, message=message,
-                                     nodeid=self.nodeid,
-                                     fslocation=fslocation)
+        self.ihook.pytest_logwarning.call_historic(kwargs=dict(
+            code=code, message=message,
+            nodeid=self.nodeid, fslocation=fslocation))
 
     # methods for ordering nodes
     @property
@@ -742,5 +742,3 @@ class Session(FSCollector):
                     for x in self.genitems(subnode):
                         yield x
             node.ihook.pytest_collectreport(report=rep)
-
-

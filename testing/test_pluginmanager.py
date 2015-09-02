@@ -129,14 +129,21 @@ class TestPytestPluginInteractions:
             undo()
 
     def test_warn_on_deprecated_multicall(self, pytestpm):
+        warnings = []
+
+        class get_warnings:
+            def pytest_logwarning(self, message):
+                warnings.append(message)
+
         class Plugin:
             def pytest_configure(self, __multicall__):
                 pass
 
-        before = list(pytestpm._warnings)
+        pytestpm.register(get_warnings())
+        before = list(warnings)
         pytestpm.register(Plugin())
-        assert len(pytestpm._warnings) == len(before) + 1
-        assert "deprecated" in pytestpm._warnings[-1]["message"]
+        assert len(warnings) == len(before) + 1
+        assert "deprecated" in warnings[-1]
 
 
 def test_namespace_has_default_and_env_plugins(testdir):

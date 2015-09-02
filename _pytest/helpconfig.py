@@ -62,8 +62,8 @@ def pytest_cmdline_main(config):
         return 0
 
 def showhelp(config):
-    import _pytest.config
-    tw = _pytest.config.create_terminal_writer(config)
+    reporter = config.pluginmanager.get_plugin('terminalreporter')
+    tw = reporter._tw
     tw.write(config._parser.optparser.format_help())
     tw.line()
     tw.line()
@@ -86,8 +86,9 @@ def showhelp(config):
     tw.line("to see available fixtures type: py.test --fixtures")
     tw.line("(shown according to specified file_or_dir or current dir "
             "if not specified)")
-    for warning in config.pluginmanager._warnings:
-        tw.line("warning: %s" % (warning,), red=True)
+    tw.line(str(reporter.stats))
+    for warningreport in reporter.stats.get('warnings', []):
+        tw.line("warning : " + warningreport.message, red=True)
     return
 
 
@@ -126,5 +127,3 @@ def pytest_report_header(config):
                 r = repr(plugin)
             lines.append("    %-20s: %s" %(name, r))
     return lines
-
-
