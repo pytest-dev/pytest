@@ -249,6 +249,8 @@ def pytest_report_teststatus(report):
 def pytest_terminal_summary(terminalreporter):
     """ add additional section in terminal summary reporting.  """
 
+
+@hookspec(historic=True)
 def pytest_logwarning(message, code, nodeid, fslocation):
     """ process a warning specified by a message, a code string,
     a nodeid and fslocation (both of which may be None

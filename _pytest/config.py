@@ -16,6 +16,8 @@ hookspec = HookspecMarker("pytest")
 
 # pytest startup
 #
+
+
 class ConftestImportFailure(Exception):
     def __init__(self, path, excinfo):
         Exception.__init__(self, path, excinfo)
@@ -135,8 +137,6 @@ class PytestPluginManager(PluginManager):
     """
     def __init__(self):
         super(PytestPluginManager, self).__init__("pytest", implprefix="pytest_")
-        self._warnings = []
-        self._pushwarning = self._warnings.append
         self._conftest_plugins = set()
 
         # state related to local conftest plugins
@@ -227,30 +227,14 @@ class PytestPluginManager(PluginManager):
             "trylast: mark a hook implementation function such that the "
             "plugin machinery will try to call it last/as late as possible.")
 
-    def pytest_plugin_registered(self, plugin):
-        if self.get_name(plugin) == 'terminalreporter':
-            warnings = self._warnings
-            self._warnings = None
-            config = self.get_plugin('pytestconfig')
-
-            def pushwarning(args):
-                assert args.pop('nodeid', None) is None
-                config.warn(**args)
-
-            self._pushwarning = pushwarning
-            for warning in warnings:
-                config.hook.pytest_logwarning(**warning)
-
     def _warn(self, message):
-        if isinstance(message, dict):
-            self._pushwarning(message)
-        else:
-            self._pushwarning({
-                'code': 'I1',
-                'message': message,
-                'fslocation': None,
-                'nodeid': None,
-            })
+        kwargs = message if isinstance(message, dict) else {
+            'code': 'I1',
+            'message': message,
+            'fslocation': None,
+            'nodeid': None,
+        }
+        self.hook.pytest_logwarning.call_historic(kwargs=kwargs)
 
     #
     # internal API for local conftest plugin handling
@@ -726,6 +710,7 @@ class MyOptionParser(argparse.ArgumentParser):
             getattr(args, FILE_OR_DIR).extend(argv)
         return args
 
+
 class DropShorterLongHelpFormatter(argparse.HelpFormatter):
     """shorten help for long options that differ only in extra hyphens
 
@@ -845,8 +830,9 @@ class Config(object):
 
     def warn(self, code, message, fslocation=None):
         """ generate a warning for this test session. """
-        self.hook.pytest_logwarning(code=code, message=message,
-                                    fslocation=fslocation, nodeid=None)
+        self.hook.pytest_logwarning.call_historic(kwargs=dict(
+            code=code, message=message,
+            fslocation=fslocation, nodeid=None))
 
     def get_terminal_writer(self):
         return self.pluginmanager.get_plugin("terminalreporter")._tw
