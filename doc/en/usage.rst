@@ -46,12 +46,14 @@ Several test run options::
     py.test test_mod.py   # run tests in module
     py.test somepath      # run all tests below somepath
     py.test -k stringexpr # only run tests with names that match the
-                          # the "string expression", e.g. "MyClass and not method" 
+                          # the "string expression", e.g. "MyClass and not method"
                           # will select TestMyClass.test_something
                           # but not TestMyClass.test_method_simple
     py.test test_mod.py::test_func  # only run tests that match the "node ID",
                                     # e.g "test_mod.py::test_func" will select
                                     # only test_func in test_mod.py
+    py.test test_mod.py::TestClass::test_method  # run a single method in
+                                                 # a single class
 
 Import 'pkg' and use its filesystem location to find and run tests::
 
@@ -87,7 +89,7 @@ failure situation::
     py.test -x --pdb   # drop to PDB on first failure, then end test session
     py.test --pdb --maxfail=3  # drop to PDB for first three failures
 
-Note that on any failure the exception information is stored on 
+Note that on any failure the exception information is stored on
 ``sys.last_value``, ``sys.last_type`` and ``sys.last_traceback``. In
 interactive use, this allows one to drop into postmortem debugging with
 any debug tool. One can also manually access the exception information,
@@ -260,6 +262,6 @@ hook was invoked::
 
     $ python myinvoke.py
     *** test run reporting finishing
-    
+
 
 .. include:: links.inc
