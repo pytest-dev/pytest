@@ -64,8 +64,10 @@ def getreportopt(config):
     reportchars = config.option.reportchars
     if reportchars:
         for char in reportchars:
-            if char not in reportopts:
+            if char not in reportopts and char != 'a':
                 reportopts += char
+            elif char == 'a':
+                reportopts = 'fEsxXw'
     return reportopts
 
 def pytest_report_teststatus(report):
