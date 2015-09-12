@@ -1,6 +1,10 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
+- "-r" option now accepts "a" to include all possible reports, similar
+  to passing "fEsxXw" explicitly (isse960).
+  Thanks Abhijeet Kasurde for the PR.
+
 - fix issue562: @nose.tools.istest now fully respected.
 
 - fix issue934: when string comparison fails and a diff is too large to display
