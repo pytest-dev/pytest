@@ -231,6 +231,17 @@ class TestAssert_reprcompare:
         assert expl[1] == py.builtin._totext('- £€', 'utf-8')
         assert expl[2] == py.builtin._totext('+ £', 'utf-8')
 
+    def test_nonascii_text(self):
+        """
+        :issue: 877
+        non ascii python2 str caused a UnicodeDecodeError
+        """
+        class A(str):
+            def __repr__(self):
+                return '\xff'
+        expl = callequal(A(), '1')
+        assert expl
+
     def test_mojibake(self):
         # issue 429
         left = 'e'
