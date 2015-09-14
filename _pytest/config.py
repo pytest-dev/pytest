@@ -9,7 +9,7 @@ import py
 # DON't import pytest here because it causes import cycle troubles
 import sys, os
 import _pytest.hookspec  # the extension point definitions
-from pluggy import PluginManager, HookimplMarker, HookspecMarker
+from _pytest._pluggy import PluginManager, HookimplMarker, HookspecMarker
 
 hookimpl = HookimplMarker("pytest")
 hookspec = HookspecMarker("pytest")

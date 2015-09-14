@@ -16,7 +16,7 @@ except ImportError:  # pragma: no cover
     enum = None
 
 import _pytest
-import pluggy
+import _pytest._pluggy as pluggy
 
 cutdir2 = py.path.local(_pytest.__file__).dirpath()
 cutdir1 = py.path.local(pluggy.__file__.rstrip("oc"))
