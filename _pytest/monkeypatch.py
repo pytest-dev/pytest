@@ -72,6 +72,7 @@ class monkeypatch:
         self._setattr = []
         self._setitem = []
         self._cwd = None
+        self._savesyspath = None
 
     def setattr(self, target, name, value=notset, raising=True):
         """ Set attribute value on target, memorizing the old value.
@@ -173,7 +174,7 @@ class monkeypatch:
 
     def syspath_prepend(self, path):
         """ Prepend ``path`` to ``sys.path`` list of import locations. """
-        if not hasattr(self, '_savesyspath'):
+        if self._savesyspath is None:
             self._savesyspath = sys.path[:]
         sys.path.insert(0, str(path))
 
@@ -217,9 +218,9 @@ class monkeypatch:
             else:
                 dictionary[name] = value
         self._setitem[:] = []
-        if hasattr(self, '_savesyspath'):
+        if self._savesyspath is not None:
             sys.path[:] = self._savesyspath
-            del self._savesyspath
+            self._savesyspath = None
 
         if self._cwd is not None:
             os.chdir(self._cwd)
