@@ -73,10 +73,10 @@ install:
   # compiled extensions and are not provided as pre-built wheel packages,
   # pip will build them from source using the MSVC compiler matching the
   # target Python version and architecture
-  - "%CMD_IN_ENV% pip install tox"
+  - C:\Python27\python -m pip install tox
 
 build: false  # Not a C# project, build stuff at the test step instead.
 
 test_script:
   # Build the compiled extension and run the project tests
-  - "%CMD_IN_ENV% tox -e %TESTENV%"
+  - C:\Python27\python -m tox -e %TESTENV%
