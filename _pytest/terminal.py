@@ -22,7 +22,7 @@ def pytest_addoption(parser):
     group._addoption('-r',
          action="store", dest="reportchars", default=None, metavar="chars",
          help="show extra test summary info as specified by chars (f)ailed, "
-              "(E)error, (s)skipped, (x)failed, (X)passed (w)warnings.")
+              "(E)error, (s)skipped, (x)failed, (X)passed (w)warnings (a)all.")
     group._addoption('-l', '--showlocals',
          action="store_true", dest="showlocals", default=False,
          help="show locals in tracebacks (disabled by default).")
@@ -67,8 +67,10 @@ def getreportopt(config):
     reportchars = config.option.reportchars
     if reportchars:
         for char in reportchars:
-            if char not in reportopts:
+            if char not in reportopts and char != 'a':
                 reportopts += char
+            elif char == 'a':
+                reportopts = 'fEsxXw'
     return reportopts
 
 def pytest_report_teststatus(report):
