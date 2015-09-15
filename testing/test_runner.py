@@ -293,7 +293,7 @@ class TestExecutionForked(BaseFunctionalTests):
 
     def getrunner(self):
         # XXX re-arrange this test to live in pytest-xdist
-        xplugin = pytest.importorskip("xdist.plugin")
+        xplugin = pytest.importorskip("xdist.boxed")
         return xplugin.forked_run_report
 
     def test_suicide(self, testdir):
