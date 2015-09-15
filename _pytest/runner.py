@@ -1,7 +1,6 @@
 """ basic collect and runtest protocol implementations """
 import bdb
 import sys
-import re
 from time import time
 
 import py
