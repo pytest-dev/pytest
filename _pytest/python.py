@@ -38,7 +38,8 @@ if hasattr(inspect, 'signature'):
         sig = inspect.signature(func)
         params = list(sig.parameters.values())
         if params:
-            return params[0].kind in (sig.POSITIONAL_ONLY, sig.POSITIONAL_OR_KEYWORD)
+            return params[0].kind in (params[0].POSITIONAL_ONLY,
+                                      params[0].POSITIONAL_OR_KEYWORD)
         else:
             return False
 
