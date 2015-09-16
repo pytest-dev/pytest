@@ -21,7 +21,6 @@ class TestMetafunc:
         metafunc = self.Metafunc(function)
         assert not metafunc.fixturenames
         repr(metafunc._calls)
-        assert funcargs._format_args(function) == '()'
 
     def test_function_basic(self):
         def func(arg1, arg2="qwe"): pass
@@ -30,7 +29,6 @@ class TestMetafunc:
         assert 'arg1' in metafunc.fixturenames
         assert metafunc.function is func
         assert metafunc.cls is None
-        assert funcargs._format_args(func) == "(arg1, arg2='qwe')"
 
     def test_addcall_no_args(self):
         def func(arg1): pass
@@ -40,7 +38,6 @@ class TestMetafunc:
         call = metafunc._calls[0]
         assert call.id == "0"
         assert not hasattr(call, 'param')
-        assert funcargs._format_args(func) == "(arg1)"
 
     def test_addcall_id(self):
         def func(arg1): pass
@@ -88,7 +85,6 @@ class TestMetafunc:
         metafunc.parametrize("y", [1,2])
         pytest.raises(ValueError, lambda: metafunc.parametrize("y", [5,6]))
         pytest.raises(ValueError, lambda: metafunc.parametrize("y", [5,6]))
-        assert funcargs._format_args(func) == '(x, y)'
 
     def test_parametrize_and_id(self):
         def func(x, y): pass
@@ -476,6 +472,20 @@ class TestMetafunc:
             *test_3*2*
             *6 passed*
         """)
+
+    def test_format_args(self):
+        def function1(): pass
+        assert funcargs._format_args(function1) == '()'
+
+        def function2(arg1): pass
+        assert funcargs._format_args(function2) == "(arg1)"
+
+        def function3(arg1, arg2="qwe"): pass
+        assert funcargs._format_args(function3) == "(arg1, arg2='qwe')"
+
+        def function4(arg1, *args, **kwargs): pass
+        assert funcargs._format_args(function4) == "(arg1, *args, **kwargs)"
+
 
 class TestMetafuncFunctional:
     def test_attributes(self, testdir):
