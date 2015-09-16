@@ -37,7 +37,7 @@ if hasattr(inspect, 'signature'):
     def _has_positional_arg(func):
         sig = inspect.signature(func)
         params = list(sig.parameters.values())
-        if len(params):
+        if params:
             return params[0].kind in (sig.POSITIONAL_ONLY, sig.POSITIONAL_OR_KEYWORD)
         else:
             return False
