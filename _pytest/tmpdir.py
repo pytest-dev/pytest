@@ -56,7 +56,11 @@ class TempdirFactory:
                 # make_numbered_dir() call
                 import getpass
                 temproot = py.path.local.get_temproot()
-                rootdir = temproot.join('pytest-of-%s' % getpass.getuser())
+                try:
+                    rootdir = temproot.join('pytest-of-%s' % getpass.getuser())
+                except ImportError:
+                    # see issue #1010
+                    rootdir = temproot.join('pytest-tox')
                 rootdir.ensure(dir=1)
                 basetemp = py.path.local.make_numbered_dir(prefix='pytest-',
                                                            rootdir=rootdir)

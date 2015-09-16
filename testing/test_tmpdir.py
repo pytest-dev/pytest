@@ -118,3 +118,18 @@ def test_tmpdir_factory(testdir):
     """)
     reprec = testdir.inline_run()
     reprec.assertoutcome(passed=1)
+
+
+def test_tmpdir_fallback_tox_env(testdir, monkeypatch):
+    """Test that tmpdir works even if environment variables required by getpass
+    module are missing (#1010).
+    """
+    monkeypatch.delenv('USER', raising=False)
+    monkeypatch.delenv('USERNAME', raising=False)
+    testdir.makepyfile("""
+        import pytest
+        def test_some(tmpdir):
+            assert tmpdir.isdir()
+    """)
+    reprec = testdir.inline_run()
+    reprec.assertoutcome(passed=1)
