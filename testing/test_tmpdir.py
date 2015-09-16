@@ -145,4 +145,4 @@ def test_get_user(monkeypatch):
     from _pytest.tmpdir import get_user
     monkeypatch.delenv('USER', raising=False)
     monkeypatch.delenv('USERNAME', raising=False)
-    assert get_user() == 'tox'
+    assert get_user() is None
