@@ -54,13 +54,8 @@ class TempdirFactory:
             else:
                 # use a sub-directory in the temproot to speed-up
                 # make_numbered_dir() call
-                import getpass
                 temproot = py.path.local.get_temproot()
-                try:
-                    rootdir = temproot.join('pytest-of-%s' % getpass.getuser())
-                except ImportError:
-                    # see issue #1010
-                    rootdir = temproot.join('pytest-tox')
+                rootdir = temproot.join('pytest-of-%s' % get_user())
                 rootdir.ensure(dir=1)
                 basetemp = py.path.local.make_numbered_dir(prefix='pytest-',
                                                            rootdir=rootdir)
@@ -70,6 +65,18 @@ class TempdirFactory:
 
     def finish(self):
         self.trace("finish")
+
+
+def get_user():
+    """Return the current user name, falling back to using "tox" as user name
+    because getpass relies on environment variables which might not be
+    available in a tox environment (see #1010).
+    """
+    import getpass
+    try:
+        return getpass.getuser()
+    except ImportError:
+        return 'tox'
 
 # backward compatibility
 TempdirHandler = TempdirFactory

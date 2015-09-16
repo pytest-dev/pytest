@@ -133,3 +133,13 @@ def test_tmpdir_fallback_tox_env(testdir, monkeypatch):
     """)
     reprec = testdir.inline_run()
     reprec.assertoutcome(passed=1)
+
+
+def test_get_user(monkeypatch):
+    """Test that get_user() function works even if environment variables
+    required by getpass module are missing from the environment (#1010).
+    """
+    from _pytest.tmpdir import get_user
+    monkeypatch.delenv('USER', raising=False)
+    monkeypatch.delenv('USERNAME', raising=False)
+    assert get_user() == 'tox'
