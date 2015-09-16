@@ -1,3 +1,4 @@
+import sys
 import py
 import pytest
 
@@ -135,9 +136,11 @@ def test_tmpdir_fallback_tox_env(testdir, monkeypatch):
     reprec.assertoutcome(passed=1)
 
 
+@pytest.mark.skipif(not sys.platform.startswith('win'), reason='win only')
 def test_get_user(monkeypatch):
     """Test that get_user() function works even if environment variables
-    required by getpass module are missing from the environment (#1010).
+    required by getpass module are missing from the environment on Windows
+    (#1010).
     """
     from _pytest.tmpdir import get_user
     monkeypatch.delenv('USER', raising=False)
