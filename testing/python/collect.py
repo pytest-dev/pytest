@@ -27,7 +27,7 @@ class TestModule:
             "*HINT*",
         ])
 
-    def test_import_appends_for_import(self, testdir, monkeypatch):
+    def test_import_prepend_append(self, testdir, monkeypatch):
         syspath = list(sys.path)
         monkeypatch.setattr(sys, "path", syspath)
         root1 = testdir.mkdir("root1")
@@ -35,15 +35,17 @@ class TestModule:
         root1.ensure("x456.py")
         root2.ensure("x456.py")
         p = root2.join("test_x456.py")
+        monkeypatch.syspath_prepend(str(root1))
         p.write(dedent("""\
             import x456
             def test():
                 assert x456.__file__.startswith(%r)
-        """ % str(root1)))
-        syspath.insert(0, str(root1))
+        """ % str(root2)))
         with root2.as_cwd():
+            reprec = testdir.inline_run("--import-mode=append")
+            reprec.assertoutcome(passed=0, failed=1)
             reprec = testdir.inline_run()
-        reprec.assertoutcome(passed=1)
+            reprec.assertoutcome(passed=1)
 
     def test_syntax_error_in_module(self, testdir):
         modcol = testdir.getmodulecol("this is a syntax error")
