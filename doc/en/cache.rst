@@ -69,8 +69,7 @@ If you run this for the first time you will see two failures::
     test_50.py:6: Failed
     2 failed, 48 passed in 0.04 seconds
 
-If you then run it with ``--lf`` you will run only the two failing test
-from the last run::
+If you then run it with ``--lf``::
 
     $ py.test --lf
     =========================== test session starts ============================
@@ -106,11 +105,12 @@ from the last run::
     test_50.py:6: Failed
     ================= 2 failed, 48 deselected in 0.02 seconds ==================
 
-The last line indicates that 48 tests have not been run.
+You have run only the two failing test from the last run, while 48 tests have
+not been run ("deselected").
 
-If you run with the ``--ff`` option, all tests will be run but the first
-failures will be executed first (as can be seen from the series of ``FF`` and
-dots)::
+Now, if you run with the ``--ff`` option, all tests will be run but the first
+previous failures will be executed first (as can be seen from the series
+of ``FF`` and dots)::
 
     $ py.test --ff
     =========================== test session starts ============================
