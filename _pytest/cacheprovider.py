@@ -16,7 +16,7 @@ class Cache(object):
         self.config = config
         self._cachedir = config.rootdir.join(".cache")
         self.trace = config.trace.root.get("cache")
-        if config.getvalue("clearcache"):
+        if config.getvalue("cacheclear"):
             self.trace("clearing cachedir")
             if self._cachedir.check():
                 self._cachedir.remove()
@@ -135,7 +135,7 @@ class LFPlugin:
 
     def pytest_sessionfinish(self, session):
         config = self.config
-        if config.getvalue("showcache") or hasattr(config, "slaveinput"):
+        if config.getvalue("cacheshow") or hasattr(config, "slaveinput"):
             return
         config.cache.set("cache/lastfailed", self.lastfailed)
 
@@ -152,17 +152,17 @@ def pytest_addoption(parser):
              "This may re-order tests and thus lead to "
              "repeated fixture setup/teardown")
     group.addoption(
-        '--show-cache', action='store_true', dest="showcache",
+        '--cache-show', action='store_true', dest="cacheshow",
         help="show cache contents, don't perform collection or tests")
     group.addoption(
-        '--clearcache', action='store_true', dest="clearcache",
+        '--cache-clear', action='store_true', dest="cacheclear",
         help="remove all cache contents at start of test run.")
 
 
 def pytest_cmdline_main(config):
-    if config.option.showcache:
+    if config.option.cacheshow:
         from _pytest.main import wrap_session
-        return wrap_session(config, showcache)
+        return wrap_session(config, cacheshow)
 
 
 
@@ -182,7 +182,7 @@ def pytest_report_header(config):
         return "cachedir: %s" % relpath
 
 
-def showcache(config, session):
+def cacheshow(config, session):
     from pprint import pprint
     tw = py.io.TerminalWriter()
     tw.line("cachedir: " + str(config.cache._cachedir))

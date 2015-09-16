@@ -13,17 +13,18 @@ cache: working with cross-testrun state
 Usage
 ---------
 
-plugins can access the `config.cache`_ object
-which helps sharing **json encodable** values between ``py.test`` invocations.
-
-The plugin provides two options to rerun failures, namely:
+The plugin provides two command line options to rerun failures from the
+last ``py.test`` invocation:
 
 * ``--lf`` (last failures) - to only re-run the failures.
 * ``--ff`` (failures first) - to run the failures first and then the rest of
   the tests.
 
-For cleanup (usually not needed), a ``--clearcache`` option allows to remove
+For cleanup (usually not needed), a ``--cache-clear`` option allows to remove
 all cross-session cache contents ahead of a test run.
+
+Other plugins may access the `config.cache`_ object to set/get 
+**json encodable** values between ``py.test`` invocations.
 
 
 Rerunning only failures or failures first
@@ -43,66 +44,67 @@ If you run this for the first time you will see two failures::
 
     $ py.test -q
     .................F.......F........................
-    =================================== FAILURES ===================================
-    _________________________________ test_num[17] _________________________________
-
+    ================================= FAILURES =================================
+    _______________________________ test_num[17] _______________________________
+    
     i = 17
-
+    
         @pytest.mark.parametrize("i", range(50))
         def test_num(i):
-            if i in (17,25):
+            if i in (17, 25):
     >          pytest.fail("bad luck")
     E          Failed: bad luck
-
+    
     test_50.py:6: Failed
-    _________________________________ test_num[25] _________________________________
-
+    _______________________________ test_num[25] _______________________________
+    
     i = 25
-
+    
         @pytest.mark.parametrize("i", range(50))
         def test_num(i):
-            if i in (17,25):
+            if i in (17, 25):
     >          pytest.fail("bad luck")
     E          Failed: bad luck
-
+    
     test_50.py:6: Failed
+    2 failed, 48 passed in 0.04 seconds
 
 If you then run it with ``--lf`` you will run only the two failing test
 from the last run::
 
     $ py.test --lf
-    ============================= test session starts ==============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.5
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.6, pytest-2.7.3.dev426+ng9a90aac.d20150916, py-1.4.30, pluggy-0.3.0
     run-last-failure: rerun last 2 failures
-    plugins: cache
+    rootdir: /tmp/doc-exec-9, inifile: 
     collected 50 items
-
+    
     test_50.py FF
-
-    =================================== FAILURES ===================================
-    _________________________________ test_num[17] _________________________________
-
+    
+    ================================= FAILURES =================================
+    _______________________________ test_num[17] _______________________________
+    
     i = 17
-
+    
         @pytest.mark.parametrize("i", range(50))
         def test_num(i):
-            if i in (17,25):
+            if i in (17, 25):
     >          pytest.fail("bad luck")
     E          Failed: bad luck
-
+    
     test_50.py:6: Failed
-    _________________________________ test_num[25] _________________________________
-
+    _______________________________ test_num[25] _______________________________
+    
     i = 25
-
+    
         @pytest.mark.parametrize("i", range(50))
         def test_num(i):
-            if i in (17,25):
+            if i in (17, 25):
     >          pytest.fail("bad luck")
     E          Failed: bad luck
-
+    
     test_50.py:6: Failed
-    =================== 2 failed, 48 deselected in 0.02 seconds ====================
+    ================= 2 failed, 48 deselected in 0.02 seconds ==================
 
 The last line indicates that 48 tests have not been run.
 
@@ -111,38 +113,38 @@ failures will be executed first (as can be seen from the series of ``FF`` and
 dots)::
 
     $ py.test --ff
-    ============================= test session starts ==============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.5
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.6, pytest-2.7.3.dev426+ng9a90aac.d20150916, py-1.4.30, pluggy-0.3.0
     run-last-failure: rerun last 2 failures first
-    plugins: cache
+    rootdir: /tmp/doc-exec-9, inifile: 
     collected 50 items
-
+    
     test_50.py FF................................................
-
-    =================================== FAILURES ===================================
-    _________________________________ test_num[17] _________________________________
-
+    
+    ================================= FAILURES =================================
+    _______________________________ test_num[17] _______________________________
+    
     i = 17
-
+    
         @pytest.mark.parametrize("i", range(50))
         def test_num(i):
-            if i in (17,25):
+            if i in (17, 25):
     >          pytest.fail("bad luck")
     E          Failed: bad luck
-
+    
     test_50.py:6: Failed
-    _________________________________ test_num[25] _________________________________
-
+    _______________________________ test_num[25] _______________________________
+    
     i = 25
-
+    
         @pytest.mark.parametrize("i", range(50))
         def test_num(i):
-            if i in (17,25):
+            if i in (17, 25):
     >          pytest.fail("bad luck")
     E          Failed: bad luck
-
+    
     test_50.py:6: Failed
-    ===================== 2 failed, 48 passed in 0.07 seconds ======================
+    =================== 2 failed, 48 passed in 0.04 seconds ====================
 
 .. _`config.cache`:
 
@@ -175,32 +177,34 @@ of the sleep::
 
     $ py.test -q
     F
-    =================================== FAILURES ===================================
-    ________________________________ test_function _________________________________
-
+    ================================= FAILURES =================================
+    ______________________________ test_function _______________________________
+    
     mydata = 42
-
+    
         def test_function(mydata):
     >       assert mydata == 23
     E       assert 42 == 23
-
+    
     test_caching.py:12: AssertionError
+    1 failed in 5.41 seconds
 
 If you run it a second time the value will be retrieved from
 the cache and this will be quick::
 
     $ py.test -q
     F
-    =================================== FAILURES ===================================
-    ________________________________ test_function _________________________________
-
+    ================================= FAILURES =================================
+    ______________________________ test_function _______________________________
+    
     mydata = 42
-
+    
         def test_function(mydata):
     >       assert mydata == 23
     E       assert 42 == 23
-
+    
     test_caching.py:12: AssertionError
+    1 failed in 0.01 seconds
 
 See the `cache-api`_ for more details.
 
@@ -209,28 +213,35 @@ Inspecting Cache content
 -------------------------------
 
 You can always peek at the content of the cache using the
-``--cache`` command line option::
+``--cache-clear`` command line option::
 
-    $ py.test --cache
-    ============================= test session starts ==============================
-    platform linux2 -- Python 2.7.3 -- pytest-2.3.5
-    plugins: cache
-    cachedir: /tmp/doc-exec-6/.cache
-    --------------------------------- cache values ---------------------------------
-    example/value contains:
-      42
-    cache/lastfailed contains:
-      set(['test_caching.py::test_function'])
-
-    ===============================  in 0.01 seconds ===============================
+    $ py.test --cache-clear
+    =========================== test session starts ============================
+    platform linux2 -- Python 2.7.6, pytest-2.7.3.dev426+ng9a90aac.d20150916, py-1.4.30, pluggy-0.3.0
+    rootdir: /tmp/doc-exec-9, inifile: 
+    collected 1 items
+    
+    test_caching.py F
+    
+    ================================= FAILURES =================================
+    ______________________________ test_function _______________________________
+    
+    mydata = 42
+    
+        def test_function(mydata):
+    >       assert mydata == 23
+    E       assert 42 == 23
+    
+    test_caching.py:12: AssertionError
+    ========================= 1 failed in 5.41 seconds =========================
 
 Clearing Cache content
 -------------------------------
 
 You can instruct pytest to clear all cache files and values
-by adding the ``--clearcache`` option like this::
+by adding the ``--cache-clear`` option like this::
 
-    py.test --clearcache
+    py.test --cache-clear
 
 This is recommended for invocations from Continous Integration
 servers where isolation and correctness is more important
