@@ -46,7 +46,7 @@ if hasattr(inspect, 'signature'):
         return str(inspect.signature(func))
 else:
     def _has_positional_arg(func):
-        return inspect.getargspec(func)[0] is not None
+        return bool(inspect.getargspec(func).args)
 
     def _format_args(func):
         return inspect.formatargspec(*inspect.getargspec(func))
