@@ -52,11 +52,14 @@ class TempdirFactory:
                     basetemp.remove()
                 basetemp.mkdir()
             else:
-                # use a sub-directory in the temproot to speed-up
-                # make_numbered_dir() call
-                import getpass
                 temproot = py.path.local.get_temproot()
-                rootdir = temproot.join('pytest-of-%s' % getpass.getuser())
+                user = get_user()
+                if user:
+                    # use a sub-directory in the temproot to speed-up
+                    # make_numbered_dir() call
+                    rootdir = temproot.join('pytest-of-%s' % user)
+                else:
+                    rootdir = temproot
                 rootdir.ensure(dir=1)
                 basetemp = py.path.local.make_numbered_dir(prefix='pytest-',
                                                            rootdir=rootdir)
@@ -66,6 +69,17 @@ class TempdirFactory:
 
     def finish(self):
         self.trace("finish")
+
+
+def get_user():
+    """Return the current user name, or None if getuser() does not work
+    in the current environment (see #1010).
+    """
+    import getpass
+    try:
+        return getpass.getuser()
+    except ImportError:
+        return None
 
 # backward compatibility
 TempdirHandler = TempdirFactory
