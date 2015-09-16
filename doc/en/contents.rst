@@ -12,6 +12,7 @@ Full pytest documentation
 
    overview
    apiref
+   cache
    plugins
    plugins_index/index
    example/index

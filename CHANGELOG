@@ -1,6 +1,13 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
+- new ``--lf`` and ``-ff`` options to run only the last failing tests or
+  "failing tests first" from the last run.  This functionality is provided 
+  through porting the formerly external pytest-cache plugin into pytest core.
+  BACKWARD INCOMPAT: if you used pytest-cache's functionality to persist
+  data between test runs be aware that we don't serialize sets anymore.
+  Thanks Ronny Pfannschmidt for most of the merging work.
+
 - "-r" option now accepts "a" to include all possible reports, similar
   to passing "fEsxXw" explicitly (isse960).
   Thanks Abhijeet Kasurde for the PR.
@@ -42,10 +49,6 @@
 - fix issue82: avoid loading conftest files from setup.cfg/pytest.ini/tox.ini
   files and upwards by default (--confcutdir can still be set to override this).
   Thanks Bruno Oliveira for the PR.
-
-- merge a refined variant of the pytest-cache extension into core
-  it uses json instead of execnet for the serializer
-  and deactivates the external cache plugin
 
 - fix issue768: docstrings found in python modules were not setting up session
   fixtures. Thanks Jason R. Coombs for reporting and Bruno Oliveira for the PR.

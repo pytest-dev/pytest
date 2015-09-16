@@ -32,6 +32,7 @@ pytest: helps you write better programs
  - :ref:`skipping` (improved in 2.4)
  - :ref:`distribute tests to multiple CPUs <xdistcpu>` through :ref:`xdist plugin <xdist>`
  - :ref:`continuously re-run failing tests <looponfailing>`
+ - :doc:`cache`
  - flexible :ref:`Python test discovery`
 
 **integrates with other testing methods and tools**:

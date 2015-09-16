@@ -5,9 +5,10 @@ cache: working with cross-testrun state
 
 .. warning::
 
-  the external pytest-cache plugin used execnet_ as serializer,
-  which supported a wider range of builtin objects.
-  the buitin one however uses json.
+  The functionality of this core plugin was previosuly distributed
+  as a third party plugin named ``pytest-cache``.  The core plugin
+  is compatible regarding command line options and API usage except that you
+  can only store/receive data between test runs that is json-serializable.
 
 Usage
 ---------
@@ -201,8 +202,7 @@ the cache and this will be quick::
 
     test_caching.py:12: AssertionError
 
-Consult the `pytest-cache API <http://packages.python.org/pytest-cache/api.html>`_
-for more details.
+See the `cache-api`_ for more details.
 
 
 Inspecting Cache content
@@ -236,6 +236,8 @@ This is recommended for invocations from Continous Integration
 servers where isolation and correctness is more important
 than speed.
 
+
+.. _`cache-api`:
 
 config.cache API
 ========================================
