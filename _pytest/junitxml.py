@@ -137,7 +137,15 @@ class LogXML(object):
         self.tests[-1].append(obj)
 
     def append_custom_properties(self):
-        self.tests[-1].attr.__dict__.update(self.custom_properties)
+        if self.custom_properties:
+            self.tests[-1].append(
+                Junit.properties(
+                    [
+                        Junit.property(name=name, value=value)
+                        for name, value in self.custom_properties.items()
+                    ]
+                )
+            )
         self.custom_properties.clear()
 
     def append_pass(self, report):

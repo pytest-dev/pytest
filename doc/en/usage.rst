@@ -174,7 +174,11 @@ This will add an extra property ``example_key="1"`` to the generated
 
 .. code-block:: xml
 
-    <testcase classname="test_function" example_key="1" file="test_function.py" line="0" name="test_function" time="0.0009">
+    <testcase classname="test_function" file="test_function.py" line="0" name="test_function" time="0.0009">
+      <properties>
+        <property name="example_key" value="1" />
+      </properties>
+    </testcase>
 
 .. warning::
 

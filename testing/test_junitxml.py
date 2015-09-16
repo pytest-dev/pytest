@@ -561,5 +561,7 @@ def test_record_property(testdir):
     result, dom = runandparse(testdir, '-rw')
     node = dom.getElementsByTagName("testsuite")[0]
     tnode = node.getElementsByTagName("testcase")[0]
-    assert_attr(tnode, foo="<1")
+    psnode = tnode.getElementsByTagName('properties')[0]
+    pnode = psnode.getElementsByTagName('property')[0]
+    assert_attr(pnode, name="foo", value="<1")
     result.stdout.fnmatch_lines('*C3*test_record_property.py*experimental*')
