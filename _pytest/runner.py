@@ -3,8 +3,6 @@ import bdb
 import sys
 from time import time
 
-from pkg_resources import parse_version
-
 import py
 import pytest
 from py._code.code import TerminalRepr
@@ -496,7 +494,14 @@ def importorskip(modname, minversion=None):
     if minversion is None:
         return mod
     verattr = getattr(mod, '__version__', None)
-    if verattr is None or parse_version(verattr) < parse_version(minversion):
-        skip("module %r has __version__ %r, required is: %r" %(
-             modname, verattr, minversion))
+    if minversion is not None:
+        try:
+            from pkg_resources import parse_version as pv
+        except ImportError:
+            skip("we have a required version for %r but can not import "
+                 "no pkg_resources to parse version strings." %(modname,))
+        if verattr is None or pv(verattr) < pv(minversion):
+            skip("module %r has __version__ %r, required is: %r" %(
+                 modname, verattr, minversion))
     return mod
+
