@@ -73,9 +73,9 @@ If you then run it with ``--lf``::
 
     $ py.test --lf
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.6, pytest-2.7.3.dev426+ng9a90aac.d20150916, py-1.4.30, pluggy-0.3.0
+    platform linux2 -- Python 2.7.6, pytest-2.7.3.dev428+ng79d22bf.d20150916, py-1.4.30, pluggy-0.3.0
     run-last-failure: rerun last 2 failures
-    rootdir: /tmp/doc-exec-9, inifile: 
+    rootdir: /tmp/doc-exec-94, inifile: 
     collected 50 items
     
     test_50.py FF
@@ -103,7 +103,7 @@ If you then run it with ``--lf``::
     E          Failed: bad luck
     
     test_50.py:6: Failed
-    ================= 2 failed, 48 deselected in 0.02 seconds ==================
+    ================= 2 failed, 48 deselected in 0.01 seconds ==================
 
 You have run only the two failing test from the last run, while 48 tests have
 not been run ("deselected").
@@ -114,9 +114,9 @@ of ``FF`` and dots)::
 
     $ py.test --ff
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.6, pytest-2.7.3.dev426+ng9a90aac.d20150916, py-1.4.30, pluggy-0.3.0
+    platform linux2 -- Python 2.7.6, pytest-2.7.3.dev428+ng79d22bf.d20150916, py-1.4.30, pluggy-0.3.0
     run-last-failure: rerun last 2 failures first
-    rootdir: /tmp/doc-exec-9, inifile: 
+    rootdir: /tmp/doc-exec-94, inifile: 
     collected 50 items
     
     test_50.py FF................................................
@@ -144,7 +144,7 @@ of ``FF`` and dots)::
     E          Failed: bad luck
     
     test_50.py:6: Failed
-    =================== 2 failed, 48 passed in 0.04 seconds ====================
+    =================== 2 failed, 48 passed in 0.03 seconds ====================
 
 .. _`config.cache`:
 
@@ -153,15 +153,17 @@ The new config.cache object
 
 .. regendoc:wipe
 
-Plugins or conftest.py support code can get a cached value
-using the pytest ``config`` object.  Here is a basic example
-plugin which implements a `funcarg <http://pytest.org/latest/funcargs.html>`_
-which re-uses previously created state across py.test invocations::
+Plugins or conftest.py support code can get a cached value using the
+pytest ``config`` object.  Here is a basic example plugin which
+implements a :ref:`fixture` which re-uses previously created state
+across py.test invocations::
 
     # content of test_caching.py
+    import pytest
     import time
 
-    def pytest_funcarg__mydata(request):
+    @pytest.fixture
+    def mydata(request):
         val = request.config.cache.get("example/value", None)
         if val is None:
             time.sleep(9*0.6) # expensive computation :)
@@ -186,7 +188,7 @@ of the sleep::
     >       assert mydata == 23
     E       assert 42 == 23
     
-    test_caching.py:12: AssertionError
+    test_caching.py:14: AssertionError
     1 failed in 5.41 seconds
 
 If you run it a second time the value will be retrieved from
@@ -203,7 +205,7 @@ the cache and this will be quick::
     >       assert mydata == 23
     E       assert 42 == 23
     
-    test_caching.py:12: AssertionError
+    test_caching.py:14: AssertionError
     1 failed in 0.01 seconds
 
 See the `cache-api`_ for more details.
@@ -217,8 +219,8 @@ You can always peek at the content of the cache using the
 
     $ py.test --cache-clear
     =========================== test session starts ============================
-    platform linux2 -- Python 2.7.6, pytest-2.7.3.dev426+ng9a90aac.d20150916, py-1.4.30, pluggy-0.3.0
-    rootdir: /tmp/doc-exec-9, inifile: 
+    platform linux2 -- Python 2.7.6, pytest-2.7.3.dev428+ng79d22bf.d20150916, py-1.4.30, pluggy-0.3.0
+    rootdir: /tmp/doc-exec-94, inifile: 
     collected 1 items
     
     test_caching.py F
@@ -232,7 +234,7 @@ You can always peek at the content of the cache using the
     >       assert mydata == 23
     E       assert 42 == 23
     
-    test_caching.py:12: AssertionError
+    test_caching.py:14: AssertionError
     ========================= 1 failed in 5.41 seconds =========================
 
 Clearing Cache content
