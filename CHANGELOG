@@ -1,6 +1,13 @@
 2.8.0.dev (compared to 2.7.X)
 -----------------------------
 
+- new ``--lf`` and ``-ff`` options to run only the last failing tests or
+  "failing tests first" from the last run.  This functionality is provided 
+  through porting the formerly external pytest-cache plugin into pytest core.
+  BACKWARD INCOMPAT: if you used pytest-cache's functionality to persist
+  data between test runs be aware that we don't serialize sets anymore.
+  Thanks Ronny Pfannschmidt for most of the merging work.
+
 - "-r" option now accepts "a" to include all possible reports, similar
   to passing "fEsxXw" explicitly (isse960).
   Thanks Abhijeet Kasurde for the PR.
@@ -66,6 +73,7 @@
 - Summary bar now is colored yellow for warning
   situations such as: all tests either were skipped or xpass/xfailed,
   or no tests were run at all (this is a partial fix for issue500).
+
 - fix issue812: pytest now exits with status code 5 in situations where no
   tests were run at all, such as the directory given in the command line does
   not contain any tests or as result of a command line option filters

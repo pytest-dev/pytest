@@ -53,7 +53,6 @@ def pytest_generate_tests(metafunc):
         DistInfo(project_name='test', version=1)
     ], ['test-1']),
 ], ids=['normal', 'prefix-strip', 'deduplicate'])
-
 def test_plugin_nameversion(input, expected):
     pluginlist = [(None, x) for x in input]
     result = _plugin_nameversions(pluginlist)

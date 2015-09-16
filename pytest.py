@@ -2,7 +2,14 @@
 """
 pytest: unit and functional testing with Python.
 """
-__all__ = ['main']
+__all__ = [
+    'main',
+    'UsageError',
+    'cmdline',
+    'hookspec',
+    'hookimpl',
+    '__version__',
+]
 
 if __name__ == '__main__': # if run as a script or by 'python -m pytest'
     # we trigger the below "else" condition by the following import
