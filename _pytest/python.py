@@ -34,23 +34,15 @@ REGEX_TYPE = type(re.compile(''))
 
 
 if hasattr(inspect, 'signature'):
-    def _has_positional_arg(func):
-        sig = inspect.signature(func)
-        params = list(sig.parameters.values())
-        if params:
-            return params[0].kind in (params[0].POSITIONAL_ONLY,
-                                      params[0].POSITIONAL_OR_KEYWORD)
-        else:
-            return False
-
     def _format_args(func):
         return str(inspect.signature(func))
 else:
-    def _has_positional_arg(func):
-        return bool(inspect.getargspec(func).args)
-
     def _format_args(func):
         return inspect.formatargspec(*inspect.getargspec(func))
+
+
+def _has_positional_arg(func):
+    return func.__code__.co_argcount
 
 
 def filter_traceback(entry):
