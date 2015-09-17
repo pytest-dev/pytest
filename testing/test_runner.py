@@ -349,7 +349,10 @@ reporttypes = [
 
 @pytest.mark.parametrize('reporttype', reporttypes, ids=[x.__name__ for x in reporttypes])
 def test_report_extra_parameters(reporttype):
-    args = py.std.inspect.getargspec(reporttype.__init__)[0][1:]
+    if hasattr(py.std.inspect, 'signature'):
+        args = list(py.std.inspect.signature(reporttype.__init__).parameters.keys())[1:]
+    else:
+        args = py.std.inspect.getargspec(reporttype.__init__)[0][1:]
     basekw = dict.fromkeys(args, [])
     report = reporttype(newthing=1, **basekw)
     assert report.newthing == 1

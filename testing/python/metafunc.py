@@ -473,6 +473,20 @@ class TestMetafunc:
             *6 passed*
         """)
 
+    def test_format_args(self):
+        def function1(): pass
+        assert funcargs._format_args(function1) == '()'
+
+        def function2(arg1): pass
+        assert funcargs._format_args(function2) == "(arg1)"
+
+        def function3(arg1, arg2="qwe"): pass
+        assert funcargs._format_args(function3) == "(arg1, arg2='qwe')"
+
+        def function4(arg1, *args, **kwargs): pass
+        assert funcargs._format_args(function4) == "(arg1, *args, **kwargs)"
+
+
 class TestMetafuncFunctional:
     def test_attributes(self, testdir):
         p = testdir.makepyfile("""

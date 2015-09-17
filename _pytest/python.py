@@ -32,6 +32,19 @@ exc_clear = getattr(sys, 'exc_clear', lambda: None)
 # The type of re.compile objects is not exposed in Python.
 REGEX_TYPE = type(re.compile(''))
 
+
+if hasattr(inspect, 'signature'):
+    def _format_args(func):
+        return str(inspect.signature(func))
+else:
+    def _format_args(func):
+        return inspect.formatargspec(*inspect.getargspec(func))
+
+
+def _has_positional_arg(func):
+    return func.__code__.co_argcount
+
+
 def filter_traceback(entry):
     return entry.path != cutdir1 and not entry.path.relto(cutdir2)
 
@@ -593,7 +606,7 @@ class Module(pytest.File, PyCollector):
             #XXX: nose compat hack, move to nose plugin
             # if it takes a positional arg, its probably a pytest style one
             # so we pass the current module object
-            if inspect.getargspec(setup_module)[0]:
+            if _has_positional_arg(setup_module):
                 setup_module(self.obj)
             else:
                 setup_module()
@@ -604,7 +617,7 @@ class Module(pytest.File, PyCollector):
             #XXX: nose compat hack, move to nose plugin
             # if it takes a positional arg, it's probably a pytest style one
             # so we pass the current module object
-            if inspect.getargspec(fin)[0]:
+            if _has_positional_arg(fin):
                 finalizer = lambda: fin(self.obj)
             else:
                 finalizer = fin
@@ -1587,7 +1600,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
             factory = fixturedef.func
             fs, lineno = getfslineno(factory)
             p = self._pyfuncitem.session.fspath.bestrelpath(fs)
-            args = inspect.formatargspec(*inspect.getargspec(factory))
+            args = _format_args(factory)
             lines.append("%s:%d:  def %s%s" %(
                 p, lineno, factory.__name__, args))
         return lines
