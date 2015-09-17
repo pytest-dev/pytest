@@ -33,7 +33,7 @@ Features
   on `unittest <http://pytest.org/latest/unittest.html>`_ (or trial),
   `nose <http://pytest.org/latest/nose.html>`_
 - single-source compatibility from Python2.6 all the way up to
-  Python3.4, PyPy-2.3, (jython-2.5 untested)
+  Python3.5, PyPy-2.3, (jython-2.5 untested)
 
 
 - many `external plugins <http://pytest.org/latest/plugins.html#installing-external-plugins-searching>`_.
