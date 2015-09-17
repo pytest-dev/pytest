@@ -12,6 +12,9 @@
   to passing "fEsxXw" explicitly (isse960).
   Thanks Abhijeet Kasurde for the PR.
 
+- avoid python3.5 deprecation warnings by introducing version
+  specific inspection helpers, thanks Michael Droettboom.
+
 - fix issue562: @nose.tools.istest now fully respected.
 
 - fix issue934: when string comparison fails and a diff is too large to display
