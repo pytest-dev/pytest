@@ -5,7 +5,6 @@ setup.py as described here:
 http://stackoverflow.com/questions/25107697/compiling-cx-freeze-under-ubuntu
 """
 import glob
-import shutil
 import tarfile
 import os
 import sys
