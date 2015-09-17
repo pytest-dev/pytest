@@ -31,12 +31,7 @@ def pkg_to_mapping(name):
     else: # package
         for pyfile in toplevel.visit('*.py'):
             pkg = pkgname(name, toplevel, pyfile)
-            if pkg == '_pytest.__init__':
-                # remove the coding comment line to avoid  python bug
-                lines = pyfile.read().splitlines(True)
-                name2src[pkg] = ''.join(lines[1:])
-            else:
-                name2src[pkg] = pyfile.read()
+            name2src[pkg] = pyfile.read()
         # with wheels py source code might be not be installed
         # and the resulting genscript is useless, just bail out.
         assert name2src, "no source code found for %r at %r" %(name, toplevel)
