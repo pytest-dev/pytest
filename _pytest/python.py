@@ -173,6 +173,12 @@ def pytest_addoption(parser):
         help="prefixes or glob names for Python test function and "
              "method discovery")
 
+    group.addoption("--import-mode", default="prepend",
+        choices=["prepend", "append"], dest="importmode",
+        help="prepend/append to sys.path when importing test modules, "
+             "default is to prepend.")
+
+
 def pytest_cmdline_main(config):
     if config.option.showfixtures:
         showfixtures(config)
@@ -557,8 +563,9 @@ class Module(pytest.File, PyCollector):
 
     def _importtestmodule(self):
         # we assume we are only called once per module
+        importmode = self.config.getoption("--import-mode")
         try:
-            mod = self.fspath.pyimport(ensuresyspath="append")
+            mod = self.fspath.pyimport(ensuresyspath=importmode)
         except SyntaxError:
             raise self.CollectError(
                 py.code.ExceptionInfo().getrepr(style="short"))

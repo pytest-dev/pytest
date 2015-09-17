@@ -105,18 +105,18 @@
 
 - fix issue735: assertion failures on debug versions of Python 3.4+
 
-- change test module importing behaviour to append to sys.path
-  instead of prepending.  This better allows to run test modules
-  against installated versions of a package even if the package
-  under test has the same import root.  In this example::
+- new option ``--import-mode`` to allow to change test module importing 
+  behaviour to append to sys.path instead of prepending.  This better allows 
+  to run test modules against installated versions of a package even if the 
+  package under test has the same import root.  In this example::
 
         testing/__init__.py
         testing/test_pkg_under_test.py
         pkg_under_test/
 
-  the tests will preferrably run against the installed version
-  of pkg_under_test whereas before they would always pick
-  up the local version.  Thanks Holger Krekel.
+  the tests will run against the installed version
+  of pkg_under_test when ``--import-mode=append`` is used whereas 
+  by default they would always pick up the local version.  Thanks Holger Krekel.
 
 - pytester: add method ``TmpTestdir.delete_loaded_modules()``, and call it
   from ``inline_run()`` to allow temporary modules to be reloaded.
