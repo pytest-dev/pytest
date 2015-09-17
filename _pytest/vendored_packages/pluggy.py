@@ -40,7 +40,7 @@ Pluggy currently consists of functionality for:
   is possible to register plugins for which a hook specification is not yet
   known and validate all hooks when the system is in a more referentially
   consistent state.  Setting an "optionalhook" attribution to a hook
-  implementation will avoid PluginValidationError's if a specifcation
+  implementation will avoid PluginValidationError's if a specification
   is missing.  This allows to have optional integration between plugins.
 
 - a "hook" relay object from which you can launch 1:N calls to
@@ -67,7 +67,7 @@ Pluggy currently consists of functionality for:
 import sys
 import inspect
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 __all__ = ["PluginManager", "PluginValidationError",
            "HookspecMarker", "HookimplMarker"]
 
@@ -763,8 +763,15 @@ class PluginValidationError(Exception):
     """ plugin failed validation. """
 
 
-def _formatdef(func):
-    return "%s%s" % (
-        func.__name__,
-        inspect.formatargspec(*inspect.getargspec(func))
-    )
+if hasattr(inspect, 'signature'):
+    def _formatdef(func):
+        return "%s%s" % (
+            func.__name__,
+            str(inspect.signature(func))
+        )
+else:
+    def _formatdef(func):
+        return "%s%s" % (
+            func.__name__,
+            inspect.formatargspec(*inspect.getargspec(func))
+        )
