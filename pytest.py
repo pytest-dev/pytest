@@ -22,7 +22,7 @@ from _pytest.config import (
     main, UsageError, _preloadplugins, cmdline,
     hookspec, hookimpl
 )
-from _pytest import version as __version__
+from _pytest import __version__
 
 _preloadplugins() # to populate pytest.* namespace so help(pytest) works
 

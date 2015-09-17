@@ -19,9 +19,6 @@ include/
 
 .eggs/
 
-# this file is managed by setuptools_scm
-_pytest/__init__.py
-
 doc/*/_build
 build/
 dist/
@@ -35,4 +32,3 @@ env/
 .coverage
 .ropeproject
 .idea
-
