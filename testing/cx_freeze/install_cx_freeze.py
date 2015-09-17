@@ -21,7 +21,7 @@ if __name__ == '__main__':
             sys.exit(res)
         sys.exit(0)
 
-    rootdir = py.path.make_numbered_dir(prefix='cx_freeze')
+    rootdir = py.path.local.make_numbered_dir(prefix='cx_freeze')
 
     res = os.system('pip install --download %s --no-use-wheel '
                     'cx_freeze' % rootdir)
