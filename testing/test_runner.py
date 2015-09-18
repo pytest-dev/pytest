@@ -6,7 +6,7 @@ import os
 import py
 import pytest
 import sys
-from _pytest import runner, main
+from _pytest import runner, main, outcomes
 
 
 class TestSetupState(object):
@@ -449,8 +449,17 @@ def test_runtest_in_module_ordering(testdir):
 
 
 def test_outcomeexception_exceptionattributes():
-    outcome = runner.OutcomeException('test')
+    outcome = outcomes.OutcomeException('test')
     assert outcome.args[0] == outcome.msg
+
+
+def test_outcomeexception_passes_except_Exception():
+    with pytest.raises(outcomes.OutcomeException):
+        try:
+            raise outcomes.OutcomeException('test')
+        except Exception:
+            pass
+
 
 
 def test_pytest_exit():

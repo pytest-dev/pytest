@@ -47,11 +47,11 @@ You can use the following functions in your test, fixture or setup
 functions to force a certain test outcome.  Note that most often
 you can rather use declarative marks, see :ref:`skipping`.
 
-.. autofunction:: _pytest.runner.fail
-.. autofunction:: _pytest.runner.skip
-.. autofunction:: _pytest.runner.importorskip
-.. autofunction:: _pytest.skipping.xfail
-.. autofunction:: _pytest.runner.exit
+.. autofunction:: _pytest.outcomes.fail
+.. autofunction:: _pytest.outcomes.skip
+.. autofunction:: _pytest.outcomes.importorskip
+.. autofunction:: _pytest.outcomes.xfail
+.. autofunction:: _pytest.outcomes.exit
 
 Fixtures and requests
 -----------------------------------------------------
