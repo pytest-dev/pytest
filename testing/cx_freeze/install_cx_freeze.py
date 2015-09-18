@@ -56,7 +56,7 @@ if __name__ == '__main__':
     with open(setup_py_filename, 'w') as f:
         f.writelines(lines)
 
-    os.chdir('%s/%s' % (basename, rootdir))
+    os.chdir('%s/%s' % (rootdir, basename))
     res = os.system('python setup.py install')
     if res != 0:
         sys.exit(res)
