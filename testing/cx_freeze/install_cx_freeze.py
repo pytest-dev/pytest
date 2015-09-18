@@ -5,11 +5,11 @@ setup.py as described here:
 http://stackoverflow.com/questions/25107697/compiling-cx-freeze-under-ubuntu
 """
 import glob
-import shutil
 import tarfile
 import os
 import sys
 import platform
+import py
 
 if __name__ == '__main__':
     if 'ubuntu' not in platform.version().lower():
@@ -21,27 +21,25 @@ if __name__ == '__main__':
             sys.exit(res)
         sys.exit(0)
 
-    if os.path.isdir('cx_freeze_source'):
-        shutil.rmtree('cx_freeze_source')
-    os.mkdir('cx_freeze_source')
+    rootdir = py.path.local.make_numbered_dir(prefix='cx_freeze')
 
-    res = os.system('pip install --download cx_freeze_source --no-use-wheel '
-                    'cx_freeze')
+    res = os.system('pip install --download %s --no-use-wheel '
+                    'cx_freeze' % rootdir)
     if res != 0:
         sys.exit(res)
 
-    packages = glob.glob('cx_freeze_source/*.tar.gz')
+    packages = glob.glob('%s/*.tar.gz' % rootdir)
     assert len(packages) == 1
     tar_filename = packages[0]
 
     tar_file = tarfile.open(tar_filename)
     try:
-        tar_file.extractall(path='cx_freeze_source')
+        tar_file.extractall(path=str(rootdir))
     finally:
         tar_file.close()
 
     basename = os.path.basename(tar_filename).replace('.tar.gz', '')
-    setup_py_filename = 'cx_freeze_source/%s/setup.py' % basename
+    setup_py_filename = '%s/%s/setup.py' % (rootdir, basename)
     with open(setup_py_filename) as f:
         lines = f.readlines()
 
@@ -58,7 +56,7 @@ if __name__ == '__main__':
     with open(setup_py_filename, 'w') as f:
         f.writelines(lines)
 
-    os.chdir('cx_freeze_source/%s' % basename)
+    os.chdir('%s/%s' % (rootdir, basename))
     res = os.system('python setup.py install')
     if res != 0:
         sys.exit(res)
