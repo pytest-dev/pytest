@@ -404,6 +404,15 @@ def test_outcomeexception_exceptionattributes():
     outcome = runner.OutcomeException('test')
     assert outcome.args[0] == outcome.msg
 
+
+def test_outcomeexception_passes_except_Exception():
+    with pytest.raises(runner.OutcomeException):
+        try:
+            raise runner.OutcomeException('test')
+        except Exception:
+            pass
+
+
 def test_pytest_exit():
     try:
         pytest.exit("hello")

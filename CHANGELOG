@@ -27,6 +27,11 @@
   Thanks Mathieu Agopian for the report and Ronny Pfannschmidt for the PR.
 
 - fix issue 1029: transform errors when writing cache values into pytest-warnings
+2.8.1
+-----------------------------
+
+- fix issue 580: make pytest.fail/skip/xfail instances of BaseException
+
 
 2.8.0
 -----------------------------
