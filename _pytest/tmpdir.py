@@ -78,7 +78,7 @@ def get_user():
     import getpass
     try:
         return getpass.getuser()
-    except ImportError:
+    except (ImportError, KeyError):
         return None
 
 # backward compatibility
