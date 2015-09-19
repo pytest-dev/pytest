@@ -252,6 +252,9 @@ def pytest_terminal_summary(terminalreporter):
             show_skipped(terminalreporter, lines)
         elif char == "E":
             show_simple(terminalreporter, lines, 'error', "ERROR %s")
+        elif char == 'p':
+            show_simple(terminalreporter, lines, 'passed', "PASSED %s")
+
     if lines:
         tr._tw.sep("=", "short test summary info")
         for line in lines:
