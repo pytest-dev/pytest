@@ -37,7 +37,6 @@ def deprecated_call(func=None, *args, **kwargs):
         ...    myobject.deprecated_method()
     """
     if not func:
-        warnings.simplefilter('always')
         return WarningsChecker(expected_warning=DeprecationWarning)
 
     wrec = WarningsRecorder()
@@ -158,8 +157,8 @@ class WarningsRecorder(object):
         self._module.showwarning = showwarning
 
         # allow the same warning to be raised more than once
-        self._module.simplefilter('always', append=True)
 
+        self._module.simplefilter('always')
         return self
 
     def __exit__(self, *exc_info):
