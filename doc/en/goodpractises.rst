@@ -38,7 +38,7 @@ Choosing a test layout / import rules
   want to keep tests separate from actual application code (often a good
   idea)::
 
-    setup.py   # your distutils/setuptools Python package metadata
+    setup.py   # your setuptools Python package metadata
     mypkg/
         __init__.py
         appmodule.py
@@ -51,7 +51,7 @@ Choosing a test layout / import rules
   have direct relation between (unit-)test and application modules and
   want to distribute your tests along with your application::
 
-    setup.py   # your distutils/setuptools Python package metadata
+    setup.py   # your setuptools Python package metadata
     mypkg/
         __init__.py
         appmodule.py
@@ -178,10 +178,10 @@ You can tell people to download the script and then e.g.  run it like this::
 
 
 
-Integrating with distutils / ``python setup.py test``
---------------------------------------------------------
+Integrating with setuptools / ``python setup.py test``
+------------------------------------------------------
 
-You can integrate test runs into your distutils or
+You can integrate test runs into your
 setuptools based project.  Use the `genscript method`_
 to generate a standalone ``pytest`` script::
 
