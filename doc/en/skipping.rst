@@ -29,14 +29,14 @@ corresponding to the "short" letters shown in the test progress::
 Marking a test function to be skipped
 -------------------------------------------
 
-.. versionadded:: 2.0, 2.4
-
-The simplest way to skip a function is to mark it with the `skip` decorator,
-which may be passed an optional `reason`:
+The simplest way to skip a function is to mark it with the `skip` decorator
+(added in 2.8) which may be passed an optional `reason`:
 
     @pytest.mark.skip(reason="no way of currently testing this")
     def test_the_unknown():
         ...
+
+.. versionadded:: 2.0, 2.4
 
 If you wish to skip something conditionally then you can use `skipif` instead.
 Here is an example of marking a test function to bwe skipped
@@ -176,12 +176,12 @@ Running it with the report-on-xfail option gives this output::
     platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR/example, inifile: 
     collected 7 items
-    
+
     xfail_demo.py xxxxxxx
     ======= short test summary info ========
     XFAIL xfail_demo.py::test_hello
     XFAIL xfail_demo.py::test_hello2
-      reason: [NOTRUN] 
+      reason: [NOTRUN]
     XFAIL xfail_demo.py::test_hello3
       condition: hasattr(os, 'sep')
     XFAIL xfail_demo.py::test_hello4
@@ -191,7 +191,7 @@ Running it with the report-on-xfail option gives this output::
     XFAIL xfail_demo.py::test_hello6
       reason: reason
     XFAIL xfail_demo.py::test_hello7
-    
+
     ======= 7 xfailed in 0.12 seconds ========
 
 .. _`skip/xfail with parametrize`:
