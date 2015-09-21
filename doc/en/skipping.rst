@@ -29,7 +29,7 @@ corresponding to the "short" letters shown in the test progress::
 Marking a test function to be skipped
 -------------------------------------------
 
-The simplest way to skip a function is to mark it with the `skip` decorator
+The simplest way to skip a test function is to mark it with the `skip` decorator
 (added in 2.8) which may be passed an optional `reason`:
 
     @pytest.mark.skip(reason="no way of currently testing this")
@@ -39,7 +39,7 @@ The simplest way to skip a function is to mark it with the `skip` decorator
 .. versionadded:: 2.0, 2.4
 
 If you wish to skip something conditionally then you can use `skipif` instead.
-Here is an example of marking a test function to bwe skipped
+Here is an example of marking a test function to be skipped
 when run on a Python3.3 interpreter::
 
     import sys
