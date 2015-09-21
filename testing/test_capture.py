@@ -556,7 +556,6 @@ def test_capture_binary_output(testdir):
             import subprocess
             subprocess.call([sys.executable, __file__])
 
-        @pytest.mark.skip
         def test_foo():
             import os;os.write(1, b'\xc3')
 
