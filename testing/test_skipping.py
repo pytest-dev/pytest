@@ -382,7 +382,48 @@ class TestXFailwithSetupTeardown:
         ])
 
 
-class TestSkipif:
+class TestSkip(object):
+    def test_skip_no_reason(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.skip
+            def test_foo():
+                pass
+        """)
+        rec = testdir.inline_run()
+        rec.assertoutcome(skipped=1)
+
+    def test_skip_with_reason(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.skip(reason="for lolz")
+            def test_bar():
+                pass
+        """)
+        # cant use assertoutcome because we cant
+        # also check the reason
+        result = testdir.runpytest('-rs')
+        result.stdout.fnmatch_lines([
+            "*for lolz*",
+            "*1 skipped*",
+        ])
+
+    def test_only_skips_marked_test(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.skip
+            def test_foo():
+                pass
+            @pytest.mark.skip(reason="none")
+            def test_bar()  :
+                pass
+            def test_baz():
+                assert True
+        """)
+        rec = testdir.inline_run()
+        rec.assertoutcome(passed=1, skipped=2)
+
+class TestSkipif(object):
     def test_skipif_conditional(self, testdir):
         item = testdir.getitem("""
             import pytest
