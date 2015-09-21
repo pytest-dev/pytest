@@ -158,13 +158,15 @@ but here is a simple overview:
    If you need some help with Git, follow this quick start
    guide: https://git.wiki.kernel.org/index.php/QuickStart
 
-#. Create a development environment
+#. Install tox
+
+   Tox is used to run all the tests and will automatically setup virtualenvs
+   to run the tests in.
    (will implicitly use http://www.virtualenv.org/en/latest/)::
 
-    $ make develop
-    $ source .env/bin/activate
+    $ pip install tox
 
-#. You can now edit your local working copy.
+#. Run all the tests
 
    You need to have Python 2.7 and 3.4 available in your system.  Now
    running tests is as simple as issuing this command::
@@ -177,7 +179,11 @@ but here is a simple overview:
    index where newer (not yet released to pypi) versions of dependencies
    (especially ``py``) might be present.
 
-   To run tests on py27 and pass options (e.g. enter pdb on failure)
+#. You can now edit your local working copy.
+
+   You can now make the changes you want and run the tests again as necessary.
+
+   To run tests on py27 and pass options to pytest (e.g. enter pdb on failure)
    to pytest you can do::
 
     $ python runtox.py -e py27 -- --pdb
