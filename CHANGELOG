@@ -1,3 +1,9 @@
+x.y.z
+-----
+
+- Fix issue #766 by removing documentation references to distutils.
+  Thanks Russel Winder.
+
 2.8.0
 -----------------------------
 
