@@ -383,6 +383,22 @@ class TestXFailwithSetupTeardown:
 
 
 class TestSkip(object):
+    def test_skip_class(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.skip
+            class TestSomething(object):
+                def test_foo(self):
+                    pass
+                def test_bar(self):
+                    pass
+
+            def test_baz():
+                pass
+        """)
+        rec = testdir.inline_run()
+        rec.assertoutcome(skipped=2, passed=1)
+
     def test_skip_no_reason(self, testdir):
         testdir.makepyfile("""
             import pytest
