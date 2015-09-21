@@ -6,6 +6,7 @@
 
 - Fix issue #411: Add __eq__ method to assertion comparison example.
   Thanks Ben Webb.
+- Fix issue #653: deprecated_call can be used as context manager.
 
 2.8.0
 -----------------------------
