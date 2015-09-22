@@ -354,7 +354,7 @@ class SetupState(object):
             fin = finalizers.pop()
             try:
                 fin()
-            except Exception:
+            except (Exception, OutcomeException):
                 # XXX Only first exception will be seen by user,
                 #     ideally all should be reported.
                 if exc is None:
@@ -401,7 +401,7 @@ class SetupState(object):
             self.stack.append(col)
             try:
                 col.setup()
-            except Exception:
+            except (Exception, OutcomeException):
                 col._prepare_exc = sys.exc_info()
                 raise
 
