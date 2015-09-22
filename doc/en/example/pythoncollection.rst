@@ -43,7 +43,7 @@ then the test collection looks like this::
 
     $ py.test --collect-only
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
+    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: setup.cfg
     collected 2 items
     <Module 'check_myapp.py'>
@@ -89,7 +89,7 @@ You can always peek at the collection tree without running tests like this::
 
     . $ py.test --collect-only pythoncollection.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
+    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 3 items
     <Module 'CWD/pythoncollection.py'>
@@ -143,7 +143,7 @@ interpreters and will leave out the setup.py file::
 
     $ py.test --collect-only
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
+    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 1 items
     <Module 'pkg/module_py2.py'>

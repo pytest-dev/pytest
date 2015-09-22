@@ -127,15 +127,15 @@ objects, they are still using the default pytest representation::
 
     $ py.test test_time.py --collect-only
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
+    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 0 items / 1 errors
     
     ======= ERRORS ========
     _______ ERROR collecting test_time.py ________
-    /home/private/Projects/pytest-dev/pytest/.tox/regen/lib/python2.7/site-packages/_pytest/python.py:581: in _importtestmodule
+    $PYTHON_PREFIX/lib/python2.7/site-packages/_pytest/python.py:581: in _importtestmodule
         mod = self.fspath.pyimport(ensuresyspath=importmode)
-    /home/private/Projects/pytest-dev/pytest/.tox/regen/lib/python2.7/site-packages/py/_path/local.py:650: in pyimport
+    $PYTHON_PREFIX/lib/python2.7/site-packages/py/_path/local.py:650: in pyimport
         __import__(modname)
     E     File "$REGENDOC_TMPDIR/test_time.py", line 6
     E       
@@ -181,7 +181,7 @@ this is a fully self-contained example which you can run with::
 
     $ py.test test_scenarios.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
+    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
@@ -194,7 +194,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
 
     $ py.test --collect-only test_scenarios.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
+    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     <Module 'test_scenarios.py'>
@@ -259,7 +259,7 @@ Let's first see how it looks like at collection time::
 
     $ py.test test_backends.py --collect-only
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
+    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     <Module 'test_backends.py'>
@@ -320,7 +320,7 @@ The result of this test will be successful:
 
     $ py.test test_indirect_list.py --collect-only
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
+    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     <Module 'test_indirect_list.py'>
@@ -369,7 +369,7 @@ argument sets to use for each test function.  Let's run it::
     $ py.test -q
     F..
     ======= FAILURES ========
-    _______ TestClass.test_equals[1-2] ________
+    _______ TestClass.test_equals[2-1] ________
     
     self = <test_parametrize.TestClass instance at 0xdeadbeef>, a = 1, b = 2
     
@@ -448,7 +448,7 @@ If you run this with reporting for skips enabled::
 
     $ py.test -rs test_module.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
+    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     

@@ -75,7 +75,7 @@ marked ``smtp`` fixture function.  Running the test looks like this::
 
     $ py.test test_smtpsimple.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
+    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
@@ -193,7 +193,7 @@ inspect what is going on and can now run the tests::
 
     $ py.test test_module.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
+    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -478,7 +478,7 @@ Running the above tests results in the following test IDs being used::
 
    $ py.test --collect-only
    ======= test session starts ========
-   platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
+   platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
    rootdir: $REGENDOC_TMPDIR, inifile: 
    collected 10 items
    <Module 'test_anothersmtp.py'>
@@ -529,7 +529,7 @@ Here we declare an ``app`` fixture which receives the previously defined
 
     $ py.test -v test_appsetup.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1 -- /home/private/Projects/pytest-dev/pytest/.tox/regen/bin/python2.7
+    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python2.7
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 2 items
@@ -595,7 +595,7 @@ Let's run the tests in verbose mode and with looking at the print-output::
 
     $ py.test -v -s test_module.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1 -- /home/private/Projects/pytest-dev/pytest/.tox/regen/bin/python2.7
+    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python2.7
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 8 items

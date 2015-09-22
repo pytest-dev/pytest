@@ -74,7 +74,7 @@ You can ask for available builtin or project-custom
 
     $ py.test -q --fixtures
     cache
-        /home/private/Projects/pytest-dev/pytest/.tox/regen/lib/python2.7/site-packages/_pytest/cacheprovider.py:176: no docstring available
+        $PYTHON_PREFIX/lib/python2.7/site-packages/_pytest/cacheprovider.py:176: no docstring available
     capsys
         enables capturing of writes to sys.stdout/sys.stderr and makes
         captured output available via ``capsys.readouterr()`` method calls

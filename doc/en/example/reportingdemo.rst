@@ -13,7 +13,7 @@ get on the terminal - we are working on that):
 
     assertion $ py.test failure_demo.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
+    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR/assertion, inifile: 
     collected 42 items
     
@@ -361,7 +361,7 @@ get on the terminal - we are working on that):
     >   int(s)
     E   ValueError: invalid literal for int() with base 10: 'qwe'
     
-    <0-codegen /home/private/Projects/pytest-dev/pytest/.tox/regen/lib/python2.7/site-packages/_pytest/python.py:1205>:1: ValueError
+    <0-codegen $PYTHON_PREFIX/lib/python2.7/site-packages/_pytest/python.py:1205>:1: ValueError
     _______ TestRaises.test_raises_doesnt ________
     
     self = <failure_demo.TestRaises instance at 0xdeadbeef>

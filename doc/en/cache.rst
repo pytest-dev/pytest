@@ -73,7 +73,7 @@ If you then run it with ``--lf``::
 
     $ py.test --lf
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
+    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     run-last-failure: rerun last 2 failures
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 50 items
@@ -114,7 +114,7 @@ of ``FF`` and dots)::
 
     $ py.test --ff
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
+    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     run-last-failure: rerun last 2 failures first
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 50 items
@@ -219,7 +219,7 @@ You can always peek at the content of the cache using the
 
     $ py.test --cache-clear
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
+    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
