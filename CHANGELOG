@@ -1,4 +1,4 @@
-x.y.z
+2.8.x
 -----
 
 - (experimental) adapt more SEMVER style versioning and change meaning of 
@@ -9,6 +9,8 @@ x.y.z
 - Fix issue #766 by removing documentation references to distutils.
   Thanks Russel Winder.
 
+- Fix issue #411: Add __eq__ method to assertion comparison example.
+  Thanks Ben Webb.
 
 2.8.0
 -----------------------------
