@@ -1,16 +1,6 @@
-2.8.x
------
+2.9.0.dev 
+---------
 
-- (experimental) adapt more SEMVER style versioning and change meaning of 
-  master branch in git repo: "master" branch now keeps the bugfixes, changes 
-  aimed for micro releases.  "features" branch will only be be released 
-  with minor or major pytest releases.
-
-- Fix issue #766 by removing documentation references to distutils.
-  Thanks Russel Winder.
-
-- Fix issue #411: Add __eq__ method to assertion comparison example.
-  Thanks Ben Webb.
 
 2.8.0
 -----------------------------
