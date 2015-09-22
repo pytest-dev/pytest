@@ -1,3 +1,4 @@
+import sys
 import pytest
 import os
 import shutil
@@ -24,6 +25,36 @@ class TestNewAPI:
         config.cache._getvaluepath("key/name").write("123invalid")
         val = config.cache.get("key/name", -2)
         assert val == -2
+
+    def test_cache_writefail_cachfile_silent(self, testdir):
+        testdir.makeini("[pytest]")
+        testdir.tmpdir.join('.cache').write('gone wrong')
+        config = testdir.parseconfigure()
+        cache = config.cache
+        cache.set('test/broken', [])
+
+    @pytest.mark.skipif(sys.platform.startswith('win'), reason='no chmod on windows')
+    def test_cache_writefail_permissions(self, testdir):
+        testdir.makeini("[pytest]")
+        testdir.tmpdir.ensure_dir('.cache').chmod(0)
+        config = testdir.parseconfigure()
+        cache = config.cache
+        cache.set('test/broken', [])
+
+    @pytest.mark.skipif(sys.platform.startswith('win'), reason='no chmod on windows')
+    def test_cache_failure_warns(self, testdir):
+        testdir.tmpdir.ensure_dir('.cache').chmod(0)
+        testdir.makepyfile("""
+            def test_pass():
+                pass
+
+        """)
+        result = testdir.runpytest('-rw')
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "*could not create cache path*",
+            "*1 pytest-warnings*",
+        ])
 
     def test_config_cache(self, testdir):
         testdir.makeconftest("""
