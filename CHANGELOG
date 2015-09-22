@@ -11,6 +11,7 @@
 
 - Fix issue #411: Add __eq__ method to assertion comparison example.
   Thanks Ben Webb.
+- Fix issue #653: deprecated_call can be used as context manager.
 
 - fix issue 877: propperly handle assertion explanations with non-ascii repr
   Thanks Mathieu Agopian for the report and Ronny Pfannschmidt for the PR.
