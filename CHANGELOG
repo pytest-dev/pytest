@@ -1,5 +1,5 @@
-2.8.x
------
+2.8.1.dev
+---------
 
 - (experimental) adapt more SEMVER style versioning and change meaning of 
   master branch in git repo: "master" branch now keeps the bugfixes, changes 
