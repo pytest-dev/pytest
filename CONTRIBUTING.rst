@@ -153,11 +153,11 @@ but here is a simple overview:
     $ cd pytest
     # now, to fix a bug create your own branch off "master":
     
-        $ git checkout master -b your-bugfix-branch-name
+        $ git checkout -b your-bugfix-branch-name master
 
     # or to instead add a feature create your own branch off "features":
     
-        $ git checkout features -b your-feature-branch-name
+        $ git checkout -b your-feature-branch-name features
 
    Given we have "major.minor.micro" version numbers, bugfixes will usually 
    be released in micro releases whereas features will be released in 
