@@ -854,7 +854,7 @@ class Metafunc(FuncargnamesCompatAttr):
 
         :arg argvalues: The list of argvalues determines how often a
             test is invoked with different argument values.  If only one
-            argname was specified argvalues is a list of simple values.  If N
+            argname was specified argvalues is a list of values.  If N
             argnames were specified, argvalues must be a list of N-tuples,
             where each tuple-element specifies a value for its respective
             argname.
