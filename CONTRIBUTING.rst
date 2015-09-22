@@ -151,9 +151,17 @@ but here is a simple overview:
 
     $ git clone git@github.com:YOUR_GITHUB_USERNAME/pytest.git
     $ cd pytest
-    $ git checkout 2.8.X   # if you want to fix a bug for the pytest-2.8 series
-    $ git checkout master  # if you want to add a feature bound for the next minor release
-    $ git branch your-branch-name  # your feature/bugfix branch
+    # now, to fix a bug create your own branch off "master":
+    
+        $ git checkout master -b your-bugfix-branch-name
+
+    # or to instead add a feature create your own branch off "features":
+    
+        $ git checkout features -b your-feature-branch-name
+
+   Given we have "macro.minor.micro" version numbers, bugfixes will usually 
+   be released in micro releases whereas features will be released in 
+   minor releases and incompatible changes in major releases.
 
    If you need some help with Git, follow this quick start
    guide: https://git.wiki.kernel.org/index.php/QuickStart
