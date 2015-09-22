@@ -73,7 +73,7 @@ class Cache(object):
             path.dirpath().ensure_dir()
         except (py.error.EEXIST, py.error.EACCES):
             self.config.warn(
-                code='I9', message='cache could not create cache path %s' % (path,)
+                code='I9', message='could not create cache path %s' % (path,)
             )
             return
         try:

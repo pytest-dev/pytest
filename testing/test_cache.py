@@ -32,13 +32,26 @@ class TestNewAPI:
         cache = config.cache
         cache.set('test/broken', [])
 
-    def test_cache_writefail_permissions(selfself, testdir):
+    def test_cache_writefail_permissions(self, testdir):
         testdir.makeini("[pytest]")
         testdir.tmpdir.ensure_dir('.cache').chmod(0)
         config = testdir.parseconfigure()
         cache = config.cache
         cache.set('test/broken', [])
 
+    def test_cache_failure_warns(self, testdir):
+        testdir.tmpdir.ensure_dir('.cache').chmod(0)
+        testdir.makepyfile("""
+            def test_pass():
+                pass
+
+        """)
+        result = testdir.runpytest('-rw')
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "*could not create cache path*",
+            "*1 pytest-warnings*",
+        ])
 
     def test_config_cache(self, testdir):
         testdir.makeconftest("""
