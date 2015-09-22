@@ -159,7 +159,7 @@ but here is a simple overview:
     
         $ git checkout features -b your-feature-branch-name
 
-   Given we have "macro.minor.micro" version numbers, bugfixes will usually 
+   Given we have "major.minor.micro" version numbers, bugfixes will usually 
    be released in micro releases whereas features will be released in 
    minor releases and incompatible changes in major releases.
 
