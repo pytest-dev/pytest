@@ -12,6 +12,10 @@
 - Fix issue #411: Add __eq__ method to assertion comparison example.
   Thanks Ben Webb.
 
+- fix issue 877: propperly handle assertion explanations with non-ascii repr
+  Thanks Mathieu Agopian for the report and Ronny Pfannschmidt for the PR.
+
+
 2.8.0
 -----------------------------
 
@@ -206,9 +210,6 @@
 
 2.7.3 (compared to 2.7.2)
 -----------------------------
-
-- fix issue 877: propperly handle assertion explanations with non-ascii repr
-  Thanks Mathieu Agopian for the report
 
 - Allow 'dev', 'rc', or other non-integer version strings in `importorskip`.
   Thanks to Eric Hunsberger for the PR.
