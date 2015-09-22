@@ -69,10 +69,22 @@ class Cache(object):
                like e. g. lists of dictionaries.
         """
         path = self._getvaluepath(key)
-        path.dirpath().ensure_dir()
-        with path.open("w") as f:
-            self.trace("cache-write %s: %r" % (key, value,))
-            json.dump(value, f, indent=2, sort_keys=True)
+        try:
+            path.dirpath().ensure_dir()
+        except (py.error.EEXIST, py.error.EACCES):
+            self.config.warn(
+                code='I9', message='cache could not create cache path %s' % (path,)
+            )
+            return
+        try:
+            f = path.open('w')
+        except py.error.ENOTDIR:
+            self.config.warn(
+                code='I9', message='cache could not write path %s' % (path,))
+        else:
+            with f:
+                self.trace("cache-write %s: %r" % (key, value,))
+                json.dump(value, f, indent=2, sort_keys=True)
 
 
 class LFPlugin:

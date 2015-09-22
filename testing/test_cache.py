@@ -25,6 +25,21 @@ class TestNewAPI:
         val = config.cache.get("key/name", -2)
         assert val == -2
 
+    def test_cache_writefail_cachfile_silent(self, testdir):
+        testdir.makeini("[pytest]")
+        testdir.tmpdir.join('.cache').write('gone wrong')
+        config = testdir.parseconfigure()
+        cache = config.cache
+        cache.set('test/broken', [])
+
+    def test_cache_writefail_permissions(selfself, testdir):
+        testdir.makeini("[pytest]")
+        testdir.tmpdir.ensure_dir('.cache').chmod(0)
+        config = testdir.parseconfigure()
+        cache = config.cache
+        cache.set('test/broken', [])
+
+
     def test_config_cache(self, testdir):
         testdir.makeconftest("""
             def pytest_configure(config):
