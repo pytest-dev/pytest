@@ -27,7 +27,7 @@ Installation options::
 To check your installation has installed the correct version::
 
     $ py.test --version
-    This is pytest version 2.8.0.dev4, imported from $PWD/pytest.pyc
+    This is pytest version 2.8.0, imported from /home/private/Projects/pytest-dev/pytest/.tox/regen/lib/python2.7/site-packages/pytest.pyc
 
 If you get an error checkout :ref:`installation issues`.
 
@@ -49,7 +49,7 @@ That's it. You can execute the test function now::
 
     $ py.test
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
@@ -164,7 +164,7 @@ before performing the test function call.  Let's just run it::
     ======= FAILURES ========
     _______ test_needsfiles ________
     
-    tmpdir = local('/tmp/pytest-NaN/test_needsfiles0')
+    tmpdir = local('PYTEST_TMPDIR/test_needsfiles0')
     
         def test_needsfiles(tmpdir):
             print (tmpdir)
@@ -172,8 +172,8 @@ before performing the test function call.  Let's just run it::
     E       assert 0
     
     test_tmpdir.py:3: AssertionError
-    ----------------------------- Captured stdout call -----------------------------
-    /tmp/pytest-NaN/test_needsfiles0
+    --------------------------- Captured stdout call ---------------------------
+    PYTEST_TMPDIR/test_needsfiles0
     1 failed in 0.12 seconds
 
 Before the test runs, a unique-per-test-invocation temporary directory

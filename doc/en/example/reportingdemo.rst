@@ -13,8 +13,8 @@ get on the terminal - we are working on that):
 
     assertion $ py.test failure_demo.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
-    rootdir: $PWD/doc/en, inifile: pytest.ini
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
+    rootdir: $REGENDOC_TMPDIR/assertion, inifile: 
     collected 42 items
     
     failure_demo.py FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -55,7 +55,7 @@ get on the terminal - we are working on that):
     >                 6*9)
     
     failure_demo.py:33: 
-    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
     
     a = 42, b = 54
     
@@ -277,7 +277,7 @@ get on the terminal - we are working on that):
     E         ?           +++
     
     failure_demo.py:90: AssertionError
-    _______ TestSpecialisedExplanations.test_not_in_text_single_long_term ________
+    ______ TestSpecialisedExplanations.test_not_in_text_single_long_term _______
     
     self = <failure_demo.TestSpecialisedExplanations object at 0xdeadbeef>
     
@@ -323,7 +323,7 @@ get on the terminal - we are working on that):
     >       assert i.b == 2
     
     failure_demo.py:116: 
-    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
     
     self = <failure_demo.Foo object at 0xdeadbeef>
     
@@ -356,12 +356,12 @@ get on the terminal - we are working on that):
     >       raises(TypeError, "int(s)")
     
     failure_demo.py:133: 
-    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
     
     >   int(s)
     E   ValueError: invalid literal for int() with base 10: 'qwe'
     
-    <0-codegen $PWD/_pytest/python.py:1091>:1: ValueError
+    <0-codegen /home/private/Projects/pytest-dev/pytest/.tox/regen/lib/python2.7/site-packages/_pytest/python.py:1205>:1: ValueError
     _______ TestRaises.test_raises_doesnt ________
     
     self = <failure_demo.TestRaises instance at 0xdeadbeef>
@@ -389,7 +389,7 @@ get on the terminal - we are working on that):
     E       ValueError: need more than 1 value to unpack
     
     failure_demo.py:142: ValueError
-    _______ TestRaises.test_reinterpret_fails_with_print_for_the_fun_of_it ________
+    ______ TestRaises.test_reinterpret_fails_with_print_for_the_fun_of_it ______
     
     self = <failure_demo.TestRaises instance at 0xdeadbeef>
     
@@ -400,7 +400,7 @@ get on the terminal - we are working on that):
     E       TypeError: 'int' object is not iterable
     
     failure_demo.py:147: TypeError
-    ----------------------------- Captured stdout call -----------------------------
+    --------------------------- Captured stdout call ---------------------------
     l is [1, 2, 3]
     _______ TestRaises.test_some_error ________
     
@@ -423,13 +423,13 @@ get on the terminal - we are working on that):
     >       module.foo()
     
     failure_demo.py:165: 
-    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
     
         def foo():
     >    assert 1 == 0
     E    assert 1 == 0
     
-    <2-codegen 'abc-123' $PWD/doc/en/example/assertion/failure_demo.py:162>:2: AssertionError
+    <2-codegen 'abc-123' $REGENDOC_TMPDIR/assertion/failure_demo.py:162>:2: AssertionError
     _______ TestMoreErrors.test_complex_error ________
     
     self = <failure_demo.TestMoreErrors instance at 0xdeadbeef>
@@ -442,10 +442,10 @@ get on the terminal - we are working on that):
     >       somefunc(f(), g())
     
     failure_demo.py:175: 
-    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
     failure_demo.py:8: in somefunc
         otherfunc(x,y)
-    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
     
     a = 44, b = 43
     

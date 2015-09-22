@@ -29,7 +29,7 @@ Running this would result in a passed test except for the last
 
     $ py.test test_tmpdir.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
@@ -38,7 +38,7 @@ Running this would result in a passed test except for the last
     ======= FAILURES ========
     _______ test_create_file ________
     
-    tmpdir = local('/tmp/pytest-NaN/test_create_file0')
+    tmpdir = local('PYTEST_TMPDIR/test_create_file0')
     
         def test_create_file(tmpdir):
             p = tmpdir.mkdir("sub").join("hello.txt")
@@ -50,7 +50,6 @@ Running this would result in a passed test except for the last
     
     test_tmpdir.py:7: AssertionError
     ======= 1 failed in 0.12 seconds ========
-
 
 The 'tmpdir_factory' fixture
 ----------------------------

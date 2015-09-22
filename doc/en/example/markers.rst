@@ -31,7 +31,8 @@ You can then restrict a test run to only run tests marked with ``webtest``::
 
     $ py.test -v -m webtest
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0 -- $PWD/.env/bin/python2.7
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1 -- /home/private/Projects/pytest-dev/pytest/.tox/regen/bin/python2.7
+    cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
     
@@ -44,7 +45,8 @@ Or the inverse, running all tests except the webtest ones::
 
     $ py.test -v -m "not webtest"
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0 -- $PWD/.env/bin/python2.7
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1 -- /home/private/Projects/pytest-dev/pytest/.tox/regen/bin/python2.7
+    cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
     
@@ -64,7 +66,8 @@ tests based on their module, class, method, or function name::
 
     $ py.test -v test_server.py::TestClass::test_method
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0 -- $PWD/.env/bin/python2.7
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1 -- /home/private/Projects/pytest-dev/pytest/.tox/regen/bin/python2.7
+    cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 5 items
     
@@ -76,7 +79,8 @@ You can also select on the class::
 
     $ py.test -v test_server.py::TestClass
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0 -- $PWD/.env/bin/python2.7
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1 -- /home/private/Projects/pytest-dev/pytest/.tox/regen/bin/python2.7
+    cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
     
@@ -88,7 +92,8 @@ Or select multiple nodes::
 
   $ py.test -v test_server.py::TestClass test_server.py::test_send_http
   ======= test session starts ========
-  platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0 -- $PWD/.env/bin/python2.7
+  platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1 -- /home/private/Projects/pytest-dev/pytest/.tox/regen/bin/python2.7
+  cachedir: .cache
   rootdir: $REGENDOC_TMPDIR, inifile: 
   collecting ... collected 8 items
   
@@ -125,7 +130,8 @@ select tests based on their names::
 
     $ py.test -v -k http  # running with the above defined example module
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0 -- $PWD/.env/bin/python2.7
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1 -- /home/private/Projects/pytest-dev/pytest/.tox/regen/bin/python2.7
+    cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
     
@@ -138,7 +144,8 @@ And you can also run all tests except the ones that match the keyword::
 
     $ py.test -k "not send_http" -v
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0 -- $PWD/.env/bin/python2.7
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1 -- /home/private/Projects/pytest-dev/pytest/.tox/regen/bin/python2.7
+    cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
     
@@ -153,7 +160,8 @@ Or to select "http" and "quick" tests::
 
     $ py.test -k "http or quick" -v
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0 -- $PWD/.env/bin/python2.7
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1 -- /home/private/Projects/pytest-dev/pytest/.tox/regen/bin/python2.7
+    cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
     
@@ -342,7 +350,7 @@ the test needs::
 
     $ py.test -E stage2
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
@@ -354,7 +362,7 @@ and here is one that specifies exactly the environment needed::
 
     $ py.test -E stage1
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
@@ -473,7 +481,7 @@ then you will see two test skipped and two executed tests as expected::
 
     $ py.test -rs # this option reports skip reasons
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
@@ -487,7 +495,7 @@ Note that if you specify a platform via the marker-command line option like this
 
     $ py.test -m linux2
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
@@ -539,7 +547,7 @@ We can now use the ``-m option`` to select one set::
 
   $ py.test -m interface --tb=short
   ======= test session starts ========
-  platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+  platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
   rootdir: $REGENDOC_TMPDIR, inifile: 
   collected 4 items
   
@@ -561,7 +569,7 @@ or to select both "event" and "interface" tests::
 
   $ py.test -m "interface or event" --tb=short
   ======= test session starts ========
-  platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+  platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
   rootdir: $REGENDOC_TMPDIR, inifile: 
   collected 4 items
   

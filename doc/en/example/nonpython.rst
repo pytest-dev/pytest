@@ -27,11 +27,11 @@ now execute the test specification::
 
     nonpython $ py.test test_simple.yml
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
-    rootdir: $PWD/doc/en, inifile: pytest.ini
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
+    rootdir: $REGENDOC_TMPDIR/nonpython, inifile: 
     collected 2 items
     
-    test_simple.yml .F
+    test_simple.yml F.
     
     ======= FAILURES ========
     _______ usecase: hello ________
@@ -39,6 +39,8 @@ now execute the test specification::
        spec failed: 'some': 'other'
        no further details known at this point.
     ======= 1 failed, 1 passed in 0.12 seconds ========
+
+.. regendoc:wipe
 
 You get one dot for the passing ``sub1: sub1`` check and one failure.
 Obviously in the above ``conftest.py`` you'll want to implement a more
@@ -57,12 +59,13 @@ consulted when reporting in ``verbose`` mode::
 
     nonpython $ py.test -v
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0 -- $PWD/.env/bin/python2.7
-    rootdir: $PWD/doc/en, inifile: pytest.ini
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1 -- /home/private/Projects/pytest-dev/pytest/.tox/regen/bin/python2.7
+    cachedir: .cache
+    rootdir: $REGENDOC_TMPDIR/nonpython, inifile: 
     collecting ... collected 2 items
     
-    test_simple.yml::ok PASSED
     test_simple.yml::hello FAILED
+    test_simple.yml::ok PASSED
     
     ======= FAILURES ========
     _______ usecase: hello ________
@@ -71,16 +74,18 @@ consulted when reporting in ``verbose`` mode::
        no further details known at this point.
     ======= 1 failed, 1 passed in 0.12 seconds ========
 
+.. regendoc:wipe
+
 While developing your custom test collection and execution it's also
 interesting to just look at the collection tree::
 
     nonpython $ py.test --collect-only
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
-    rootdir: $PWD/doc/en, inifile: pytest.ini
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
+    rootdir: $REGENDOC_TMPDIR/nonpython, inifile: 
     collected 2 items
-    <YamlFile 'example/nonpython/test_simple.yml'>
-      <YamlItem 'ok'>
+    <YamlFile 'test_simple.yml'>
       <YamlItem 'hello'>
+      <YamlItem 'ok'>
     
     =======  in 0.12 seconds ========

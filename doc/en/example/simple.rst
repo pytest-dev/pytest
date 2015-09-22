@@ -53,7 +53,7 @@ Let's run this without supplying our new option::
     E       assert 0
     
     test_sample.py:6: AssertionError
-    ----------------------------- Captured stdout call -----------------------------
+    --------------------------- Captured stdout call ---------------------------
     first
     1 failed in 0.12 seconds
 
@@ -75,7 +75,7 @@ And now with supplying a command line option::
     E       assert 0
     
     test_sample.py:6: AssertionError
-    ----------------------------- Captured stdout call -----------------------------
+    --------------------------- Captured stdout call ---------------------------
     second
     1 failed in 0.12 seconds
 
@@ -108,7 +108,7 @@ directory with the above conftest.py::
 
     $ py.test
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 0 items
     
@@ -153,7 +153,7 @@ and when running it will see a skipped "slow" test::
 
     $ py.test -rs    # "-rs" means report details on the little 's'
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -167,7 +167,7 @@ Or run it including the ``slow`` marked test::
 
     $ py.test --runslow
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -259,7 +259,7 @@ which will add the string to the test header accordingly::
 
     $ py.test
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
     project deps: mylib-1.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 0 items
@@ -283,7 +283,8 @@ which will add info only when run with "--v"::
 
     $ py.test -v
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0 -- $PWD/.env/bin/python2.7
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1 -- /home/private/Projects/pytest-dev/pytest/.tox/regen/bin/python2.7
+    cachedir: .cache
     info1: did you know that ...
     did you?
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -295,7 +296,7 @@ and nothing when run plainly::
 
     $ py.test
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 0 items
     
@@ -328,7 +329,7 @@ Now we can profile which test functions execute the slowest::
 
     $ py.test --durations=3
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 3 items
     
@@ -390,7 +391,7 @@ If we run this::
 
     $ py.test -rx
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
@@ -461,7 +462,7 @@ We can run this::
 
     $ py.test
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 7 items
     
@@ -475,7 +476,7 @@ We can run this::
     file $REGENDOC_TMPDIR/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
             fixture 'db' not found
-            available fixtures: pytestconfig, recwarn, monkeypatch, capfd, capsys, tmpdir
+            available fixtures: capsys, tmpdir_factory, capfd, tmpdir, record_xml_property, recwarn, monkeypatch, pytestconfig, cache
             use 'py.test --fixtures [testpath]' for help on them.
     
     $REGENDOC_TMPDIR/b/test_error.py:1
@@ -565,7 +566,7 @@ and run them::
 
     $ py.test test_module.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -574,7 +575,7 @@ and run them::
     ======= FAILURES ========
     _______ test_fail1 ________
     
-    tmpdir = local('/tmp/pytest-NaN/test_fail10')
+    tmpdir = local('PYTEST_TMPDIR/test_fail10')
     
         def test_fail1(tmpdir):
     >       assert 0
@@ -593,7 +594,8 @@ and run them::
 you will have a "failures" file which contains the failing test ids::
 
     $ cat failures
-    cat: failures: No such file or directory
+    test_module.py::test_fail1 (PYTEST_TMPDIR/test_fail10)
+    test_module.py::test_fail2
 
 Making test result information available in fixtures
 -----------------------------------------------------------
@@ -655,7 +657,7 @@ and run it::
 
     $ py.test -s test_module.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux2 -- Python 2.7.10, pytest-2.8.0, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 3 items
     
@@ -689,7 +691,7 @@ and run it::
     E       assert 0
     
     test_module.py:15: AssertionError
-    ======= 2 failed, 1 warnings, 1 error in 0.12 seconds ========
+    ======= 2 failed, 1 error in 0.12 seconds ========
 
 You'll see that the fixture finalizers could use the precise reporting
 information.
