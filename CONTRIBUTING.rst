@@ -151,9 +151,17 @@ but here is a simple overview:
 
     $ git clone git@github.com:YOUR_GITHUB_USERNAME/pytest.git
     $ cd pytest
-    $ git checkout pytest-2.7      # if you want to fix a bug for the pytest-2.7 series
-    $ git checkout master          # if you want to add a feature bound for the next minor release
-    $ git branch your-branch-name  # your feature/bugfix branch
+    # now, to fix a bug create your own branch off "master":
+    
+        $ git checkout master -b your-bugfix-branch-name
+
+    # or to instead add a feature create your own branch off "features":
+    
+        $ git checkout features -b your-feature-branch-name
+
+   Given we have "major.minor.micro" version numbers, bugfixes will usually 
+   be released in micro releases whereas features will be released in 
+   minor releases and incompatible changes in major releases.
 
    If you need some help with Git, follow this quick start
    guide: https://git.wiki.kernel.org/index.php/QuickStart
@@ -168,12 +176,12 @@ but here is a simple overview:
 
 #. Run all the tests
 
-   You need to have Python 2.7 and 3.4 available in your system.  Now
+   You need to have Python 2.7 and 3.5 available in your system.  Now
    running tests is as simple as issuing this command::
 
-    $ python runtox.py -e py27,py34,flakes
+    $ python runtox.py -e py27,py35,flakes
 
-   This command will run tests via the "tox" tool against Python 2.7 and 3.4
+   This command will run tests via the "tox" tool against Python 2.7 and 3.5
    and also perform "flakes" coding-style checks.  ``runtox.py`` is
    a thin wrapper around ``tox`` which installs from a development package
    index where newer (not yet released to pypi) versions of dependencies
@@ -188,9 +196,9 @@ but here is a simple overview:
 
     $ python runtox.py -e py27 -- --pdb
 
-   or to only run tests in a particular test module on py34::
+   or to only run tests in a particular test module on py35::
 
-    $ python runtox.py -e py34 -- testing/test_config.py
+    $ python runtox.py -e py35 -- testing/test_config.py
 
 #. Commit and push once your tests pass and you are happy with your change(s)::
 
