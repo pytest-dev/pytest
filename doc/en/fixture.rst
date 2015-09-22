@@ -75,7 +75,7 @@ marked ``smtp`` fixture function.  Running the test looks like this::
 
     $ py.test test_smtpsimple.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
@@ -84,7 +84,7 @@ marked ``smtp`` fixture function.  Running the test looks like this::
     ======= FAILURES ========
     _______ test_ehlo ________
     
-    smtp = <smtplib.SMTP instance at 0xdeadbeef>
+    smtp = <smtplib.SMTP object at 0xdeadbeef>
     
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
@@ -180,7 +180,7 @@ function (in or below the directory where ``conftest.py`` is located)::
     def test_ehlo(smtp):
         response, msg = smtp.ehlo()
         assert response == 250
-        assert "smtp.gmail.com" in msg
+        assert b"smtp.gmail.com" in msg
         assert 0  # for demo purposes   
 
     def test_noop(smtp):
@@ -193,7 +193,7 @@ inspect what is going on and can now run the tests::
 
     $ py.test test_module.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -202,19 +202,19 @@ inspect what is going on and can now run the tests::
     ======= FAILURES ========
     _______ test_ehlo ________
     
-    smtp = <smtplib.SMTP instance at 0xdeadbeef>
+    smtp = <smtplib.SMTP object at 0xdeadbeef>
     
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
             assert response == 250
-            assert "smtp.gmail.com" in msg
+            assert b"smtp.gmail.com" in msg
     >       assert 0  # for demo purposes
     E       assert 0
     
     test_module.py:6: AssertionError
     _______ test_noop ________
     
-    smtp = <smtplib.SMTP instance at 0xdeadbeef>
+    smtp = <smtplib.SMTP object at 0xdeadbeef>
     
         def test_noop(smtp):
             response, msg = smtp.noop()
@@ -313,7 +313,7 @@ We use the ``request.module`` attribute to optionally obtain an
 again, nothing much has changed::
 
     $ py.test -s -q --tb=no
-    FFfinalizing <smtplib.SMTP instance at 0xdeadbeef> (smtp.gmail.com)
+    FFfinalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
     
     2 failed in 0.12 seconds
 
@@ -335,7 +335,7 @@ Running it::
     _______ test_showhelo ________
     test_anothersmtp.py:5: in test_showhelo
         assert 0, smtp.helo()
-    E   AssertionError: (250, 'mail.python.org')
+    E   AssertionError: (250, b'mail.python.org')
     E   assert 0
 
 voila! The ``smtp`` fixture function picked up our mail server name
@@ -383,19 +383,19 @@ So let's just do another run::
     ======= FAILURES ========
     _______ test_ehlo[smtp.gmail.com] ________
     
-    smtp = <smtplib.SMTP instance at 0xdeadbeef>
+    smtp = <smtplib.SMTP object at 0xdeadbeef>
     
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
             assert response == 250
-            assert "smtp.gmail.com" in msg
+            assert b"smtp.gmail.com" in msg
     >       assert 0  # for demo purposes
     E       assert 0
     
     test_module.py:6: AssertionError
     _______ test_noop[smtp.gmail.com] ________
     
-    smtp = <smtplib.SMTP instance at 0xdeadbeef>
+    smtp = <smtplib.SMTP object at 0xdeadbeef>
     
         def test_noop(smtp):
             response, msg = smtp.noop()
@@ -406,20 +406,20 @@ So let's just do another run::
     test_module.py:11: AssertionError
     _______ test_ehlo[mail.python.org] ________
     
-    smtp = <smtplib.SMTP instance at 0xdeadbeef>
+    smtp = <smtplib.SMTP object at 0xdeadbeef>
     
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
             assert response == 250
-    >       assert "smtp.gmail.com" in msg
-    E       assert 'smtp.gmail.com' in 'mail.python.org\nSIZE 51200000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8'
+    >       assert b"smtp.gmail.com" in msg
+    E       assert b'smtp.gmail.com' in b'mail.python.org\nSIZE 51200000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8'
     
     test_module.py:5: AssertionError
     -------------------------- Captured stdout setup ---------------------------
-    finalizing <smtplib.SMTP instance at 0xdeadbeef>
+    finalizing <smtplib.SMTP object at 0xdeadbeef>
     _______ test_noop[mail.python.org] ________
     
-    smtp = <smtplib.SMTP instance at 0xdeadbeef>
+    smtp = <smtplib.SMTP object at 0xdeadbeef>
     
         def test_noop(smtp):
             response, msg = smtp.noop()
@@ -480,7 +480,7 @@ Running the above tests results in the following test IDs being used::
 
    $ py.test --collect-only
    ======= test session starts ========
-   platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+   platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
    rootdir: $REGENDOC_TMPDIR, inifile: 
    collected 10 items
    <Module 'test_anothersmtp.py'>
@@ -531,7 +531,7 @@ Here we declare an ``app`` fixture which receives the previously defined
 
     $ py.test -v test_appsetup.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python2.7
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.4
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 2 items
@@ -597,28 +597,28 @@ Let's run the tests in verbose mode and with looking at the print-output::
 
     $ py.test -v -s test_module.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python2.7
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.4
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 8 items
     
-    test_module.py::test_0[1] ('  test0', 1)
+    test_module.py::test_0[1]   test0 1
     PASSED
-    test_module.py::test_0[2] ('  test0', 2)
+    test_module.py::test_0[2]   test0 2
     PASSED
-    test_module.py::test_1[mod1] ('create', 'mod1')
-    ('  test1', 'mod1')
+    test_module.py::test_1[mod1] create mod1
+      test1 mod1
     PASSED
-    test_module.py::test_2[1-mod1] ('  test2', 1, 'mod1')
+    test_module.py::test_2[1-mod1]   test2 1 mod1
     PASSED
-    test_module.py::test_2[2-mod1] ('  test2', 2, 'mod1')
+    test_module.py::test_2[2-mod1]   test2 2 mod1
     PASSED
-    test_module.py::test_1[mod2] ('create', 'mod2')
-    ('  test1', 'mod2')
+    test_module.py::test_1[mod2] create mod2
+      test1 mod2
     PASSED
-    test_module.py::test_2[1-mod2] ('  test2', 1, 'mod2')
+    test_module.py::test_2[1-mod2]   test2 1 mod2
     PASSED
-    test_module.py::test_2[2-mod2] ('  test2', 2, 'mod2')
+    test_module.py::test_2[2-mod2]   test2 2 mod2
     PASSED
     
     ======= 8 passed in 0.12 seconds ========

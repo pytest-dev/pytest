@@ -108,7 +108,7 @@ directory with the above conftest.py::
 
     $ py.test
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 0 items
     
@@ -153,7 +153,7 @@ and when running it will see a skipped "slow" test::
 
     $ py.test -rs    # "-rs" means report details on the little 's'
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -167,7 +167,7 @@ Or run it including the ``slow`` marked test::
 
     $ py.test --runslow
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -259,7 +259,7 @@ which will add the string to the test header accordingly::
 
     $ py.test
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     project deps: mylib-1.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 0 items
@@ -283,7 +283,7 @@ which will add info only when run with "--v"::
 
     $ py.test -v
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python2.7
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.4
     cachedir: .cache
     info1: did you know that ...
     did you?
@@ -296,7 +296,7 @@ and nothing when run plainly::
 
     $ py.test
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 0 items
     
@@ -329,7 +329,7 @@ Now we can profile which test functions execute the slowest::
 
     $ py.test --durations=3
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 3 items
     
@@ -391,7 +391,7 @@ If we run this::
 
     $ py.test -rx
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
@@ -400,7 +400,7 @@ If we run this::
     ======= FAILURES ========
     _______ TestUserHandling.test_modification ________
     
-    self = <test_step.TestUserHandling instance at 0xdeadbeef>
+    self = <test_step.TestUserHandling object at 0xdeadbeef>
     
         def test_modification(self):
     >       assert 0
@@ -462,7 +462,7 @@ We can run this::
 
     $ py.test
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 7 items
     
@@ -476,14 +476,14 @@ We can run this::
     file $REGENDOC_TMPDIR/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
             fixture 'db' not found
-            available fixtures: recwarn, monkeypatch, cache, tmpdir_factory, tmpdir, record_xml_property, capfd, capsys, pytestconfig
+            available fixtures: cache, record_xml_property, pytestconfig, tmpdir_factory, monkeypatch, capsys, recwarn, tmpdir, capfd
             use 'py.test --fixtures [testpath]' for help on them.
     
     $REGENDOC_TMPDIR/b/test_error.py:1
     ======= FAILURES ========
     _______ TestUserHandling.test_modification ________
     
-    self = <test_step.TestUserHandling instance at 0xdeadbeef>
+    self = <test_step.TestUserHandling object at 0xdeadbeef>
     
         def test_modification(self):
     >       assert 0
@@ -492,21 +492,21 @@ We can run this::
     test_step.py:9: AssertionError
     _______ test_a1 ________
     
-    db = <conftest.DB instance at 0xdeadbeef>
+    db = <conftest.DB object at 0xdeadbeef>
     
         def test_a1(db):
     >       assert 0, db  # to show value
-    E       AssertionError: <conftest.DB instance at 0xdeadbeef>
+    E       AssertionError: <conftest.DB object at 0xdeadbeef>
     E       assert 0
     
     a/test_db.py:2: AssertionError
     _______ test_a2 ________
     
-    db = <conftest.DB instance at 0xdeadbeef>
+    db = <conftest.DB object at 0xdeadbeef>
     
         def test_a2(db):
     >       assert 0, db  # to show value
-    E       AssertionError: <conftest.DB instance at 0xdeadbeef>
+    E       AssertionError: <conftest.DB object at 0xdeadbeef>
     E       assert 0
     
     a/test_db2.py:2: AssertionError
@@ -566,7 +566,7 @@ and run them::
 
     $ py.test test_module.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -657,12 +657,12 @@ and run it::
 
     $ py.test -s test_module.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 3 items
     
-    test_module.py E('setting up a test failed!', 'test_module.py::test_setup_fails')
-    F('executing test failed', 'test_module.py::test_call_fails')
+    test_module.py Esetting up a test failed! test_module.py::test_setup_fails
+    Fexecuting test failed test_module.py::test_call_fails
     F
     
     ======= ERRORS ========

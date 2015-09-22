@@ -27,7 +27,7 @@ Installation options::
 To check your installation has installed the correct version::
 
     $ py.test --version
-    This is pytest version 2.8.1.dev1, imported from $PYTHON_PREFIX/lib/python2.7/site-packages/pytest.pyc
+    This is pytest version 2.8.1.dev1, imported from $PYTHON_PREFIX/lib/python3.4/site-packages/pytest.py
 
 If you get an error checkout :ref:`installation issues`.
 
@@ -49,7 +49,7 @@ That's it. You can execute the test function now::
 
     $ py.test
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
@@ -128,7 +128,7 @@ run the module by passing its filename::
     ======= FAILURES ========
     _______ TestClass.test_two ________
     
-    self = <test_class.TestClass instance at 0xdeadbeef>
+    self = <test_class.TestClass object at 0xdeadbeef>
     
         def test_two(self):
             x = "hello"

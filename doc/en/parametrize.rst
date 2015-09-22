@@ -55,7 +55,7 @@ them in turn::
 
     $ py.test
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 3 items
     
@@ -103,7 +103,7 @@ Let's run this::
 
     $ py.test
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 3 items
     
@@ -201,7 +201,7 @@ listlist::
     $ py.test -q -rs test_strings.py
     s
     ======= short test summary info ========
-    SKIP [1] $PYTHON_PREFIX/lib/python2.7/site-packages/_pytest/python.py:1322: got empty parameter set, function test_valid_string at $REGENDOC_TMPDIR/test_strings.py:1
+    SKIP [1] $PYTHON_PREFIX/lib/python3.4/site-packages/_pytest/python.py:1322: got empty parameter set, function test_valid_string at $REGENDOC_TMPDIR/test_strings.py:1
     1 skipped in 0.12 seconds
 
 For further examples, you might want to look at :ref:`more

@@ -88,7 +88,7 @@ the ``self.db`` values in the traceback::
 
     $ py.test test_unittest_db.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -102,7 +102,7 @@ the ``self.db`` values in the traceback::
         def test_method1(self):
             assert hasattr(self, "db")
     >       assert 0, self.db   # fail for demo purposes
-    E       AssertionError: <conftest.DummyDB instance at 0xdeadbeef>
+    E       AssertionError: <conftest.db_class.<locals>.DummyDB object at 0xdeadbeef>
     E       assert 0
     
     test_unittest_db.py:9: AssertionError
@@ -112,7 +112,7 @@ the ``self.db`` values in the traceback::
     
         def test_method2(self):
     >       assert 0, self.db   # fail for demo purposes
-    E       AssertionError: <conftest.DummyDB instance at 0xdeadbeef>
+    E       AssertionError: <conftest.db_class.<locals>.DummyDB object at 0xdeadbeef>
     E       assert 0
     
     test_unittest_db.py:12: AssertionError

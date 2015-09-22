@@ -46,7 +46,7 @@ then you can just invoke ``py.test`` without command line options::
 
     $ py.test
     ======= test session starts ========
-    platform linux2 -- Python 2.7.10, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 1 items
     
