@@ -180,8 +180,8 @@ function (in or below the directory where ``conftest.py`` is located)::
     def test_ehlo(smtp):
         response, msg = smtp.ehlo()
         assert response == 250
-        assert "smtp.gmail.com" in str(msg, 'ascii')
-        assert 0  # for demo purposes
+        assert "smtp.gmail.com" in msg
+        assert 0  # for demo purposes   
 
     def test_noop(smtp):
         response, msg = smtp.noop()
@@ -207,10 +207,11 @@ inspect what is going on and can now run the tests::
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
             assert response == 250
-    >       assert "smtp.gmail.com" in str(msg, 'ascii')
-    E       TypeError: str() takes at most 1 argument (2 given)
+            assert "smtp.gmail.com" in msg
+    >       assert 0  # for demo purposes
+    E       assert 0
     
-    test_module.py:5: TypeError
+    test_module.py:6: AssertionError
     _______ test_noop ________
     
     smtp = <smtplib.SMTP instance at 0xdeadbeef>
@@ -387,10 +388,11 @@ So let's just do another run::
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
             assert response == 250
-    >       assert "smtp.gmail.com" in str(msg, 'ascii')
-    E       TypeError: str() takes at most 1 argument (2 given)
+            assert "smtp.gmail.com" in msg
+    >       assert 0  # for demo purposes
+    E       assert 0
     
-    test_module.py:5: TypeError
+    test_module.py:6: AssertionError
     _______ test_noop[smtp.gmail.com] ________
     
     smtp = <smtplib.SMTP instance at 0xdeadbeef>
@@ -409,10 +411,10 @@ So let's just do another run::
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
             assert response == 250
-    >       assert "smtp.gmail.com" in str(msg, 'ascii')
-    E       TypeError: str() takes at most 1 argument (2 given)
+    >       assert "smtp.gmail.com" in msg
+    E       assert 'smtp.gmail.com' in 'mail.python.org\nSIZE 51200000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8'
     
-    test_module.py:5: TypeError
+    test_module.py:5: AssertionError
     -------------------------- Captured stdout setup ---------------------------
     finalizing <smtplib.SMTP instance at 0xdeadbeef>
     _______ test_noop[mail.python.org] ________

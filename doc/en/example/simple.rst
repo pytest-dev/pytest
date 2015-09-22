@@ -476,7 +476,7 @@ We can run this::
     file $REGENDOC_TMPDIR/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
             fixture 'db' not found
-            available fixtures: record_xml_property, tmpdir_factory, tmpdir, monkeypatch, pytestconfig, cache, capsys, capfd, recwarn
+            available fixtures: recwarn, monkeypatch, cache, tmpdir_factory, tmpdir, record_xml_property, capfd, capsys, pytestconfig
             use 'py.test --fixtures [testpath]' for help on them.
     
     $REGENDOC_TMPDIR/b/test_error.py:1
