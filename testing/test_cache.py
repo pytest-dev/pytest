@@ -1,3 +1,4 @@
+import sys
 import pytest
 import os
 import shutil
@@ -32,6 +33,7 @@ class TestNewAPI:
         cache = config.cache
         cache.set('test/broken', [])
 
+    @pytest.mark.skipif(sys.platform.startswith('win'), reason='no chmod on windows')
     def test_cache_writefail_permissions(self, testdir):
         testdir.makeini("[pytest]")
         testdir.tmpdir.ensure_dir('.cache').chmod(0)
@@ -39,6 +41,7 @@ class TestNewAPI:
         cache = config.cache
         cache.set('test/broken', [])
 
+    @pytest.mark.skipif(sys.platform.startswith('win'), reason='no chmod on windows')
     def test_cache_failure_warns(self, testdir):
         testdir.tmpdir.ensure_dir('.cache').chmod(0)
         testdir.makepyfile("""
