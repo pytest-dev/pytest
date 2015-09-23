@@ -186,7 +186,19 @@ def pytest_configure(config):
 
 @pytest.fixture
 def cache(request):
+    """
+    Return a cache object that can persist state between testing sessions.
+
+    cache.get(key, default)
+    cache.set(key, value)
+
+    Keys must be strings not containing a "/" separator. Add a unique identifier
+    (such as plugin/app name) to avoid clashes with other cache users.
+
+    Values can be any object handled by the json stdlib module.
+    """
     return request.config.cache
+
 
 def pytest_report_header(config):
     if config.option.verbose:
