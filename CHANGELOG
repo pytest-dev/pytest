@@ -9,6 +9,13 @@
 - Fix issue #766 by removing documentation references to distutils.
   Thanks Russel Winder.
 
+- Fix issue #1030: now byte-strings are escaped to produce item node ids
+  to make them always serializable.
+  Thanks Andy Freeland for the report and Bruno Oliveira for the PR.
+
+- Python 2: if unicode parametrized values are convertible to ascii, their
+  ascii representation is used for the node id.
+
 - Fix issue #411: Add __eq__ method to assertion comparison example.
   Thanks Ben Webb.
 

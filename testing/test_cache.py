@@ -269,6 +269,22 @@ class TestLastFailed:
         lastfailed = config.cache.get("cache/lastfailed", -1)
         assert not lastfailed
 
+    def test_non_serializable_parametrize(self, testdir):
+        """Test that failed parametrized tests with unmarshable parameters
+        don't break pytest-cache.
+        """
+        testdir.makepyfile(r"""
+            import pytest
+
+            @pytest.mark.parametrize('val', [
+                b'\xac\x10\x02G',
+            ])
+            def test_fail(val):
+                assert False
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines('*1 failed in*')
+
     def test_lastfailed_collectfailure(self, testdir, monkeypatch):
 
         testdir.makepyfile(test_maybe="""
