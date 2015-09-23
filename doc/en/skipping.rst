@@ -29,8 +29,10 @@ corresponding to the "short" letters shown in the test progress::
 Marking a test function to be skipped
 -------------------------------------------
 
+.. versionadded:: 2.9
+
 The simplest way to skip a test function is to mark it with the `skip` decorator
-(added in 2.8) which may be passed an optional `reason`:
+which may be passed an optional `reason`:
 
     @pytest.mark.skip(reason="no way of currently testing this")
     def test_the_unknown():
