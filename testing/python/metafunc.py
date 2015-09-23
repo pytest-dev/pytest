@@ -129,11 +129,12 @@ class TestMetafunc:
                                       (object(), object())])
         assert result == ["a0-1.0", "a1-b1"]
         # unicode mixing, issue250
-        result = idmaker((py.builtin._totext("a"), "b"), [({}, '\xc3\xb4')])
-        assert result == ['a0-\xc3\xb4']
+        result = idmaker((py.builtin._totext("a"), "b"), [({}, b'\xc3\xb4')])
+        assert result == ['a0-\\xc3\\xb4']
 
     def test_idmaker_native_strings(self):
         from _pytest.python import idmaker
+        totext = py.builtin._totext
         result = idmaker(("a", "b"), [(1.0, -1.1),
                                       (2, -202),
                                       ("three", "three hundred"),
@@ -143,7 +144,9 @@ class TestMetafunc:
                                       (str, int),
                                       (list("six"), [66, 66]),
                                       (set([7]), set("seven")),
-                                      (tuple("eight"), (8, -8, 8))
+                                      (tuple("eight"), (8, -8, 8)),
+                                      (b'\xc3\xb4', b"name"),
+                                      (b'\xc3\xb4', totext("other")),
         ])
         assert result == ["1.0--1.1",
                           "2--202",
@@ -154,7 +157,10 @@ class TestMetafunc:
                           "str-int",
                           "a7-b7",
                           "a8-b8",
-                          "a9-b9"]
+                          "a9-b9",
+                          "\\xc3\\xb4-name",
+                          "\\xc3\\xb4-other",
+                          ]
 
     def test_idmaker_enum(self):
         from _pytest.python import idmaker
@@ -312,7 +318,6 @@ class TestMetafunc:
             "*uses no fixture 'y'*",
         ])
 
-    @pytest.mark.xfail
     @pytest.mark.issue714
     def test_parametrize_uses_no_fixture_error_indirect_true(self, testdir):
         testdir.makepyfile("""
@@ -333,7 +338,6 @@ class TestMetafunc:
             "*uses no fixture 'y'*",
         ])
 
-    @pytest.mark.xfail
     @pytest.mark.issue714
     def test_parametrize_indirect_uses_no_fixture_error_indirect_list(self, testdir):
         testdir.makepyfile("""
