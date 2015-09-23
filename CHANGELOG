@@ -12,13 +12,21 @@
 - Fix issue #766 by removing documentation references to distutils.
   Thanks Russel Winder.
 
+- Fix issue #1030: now byte-strings are escaped to produce item node ids
+  to make them always serializable.
+  Thanks Andy Freeland for the report and Bruno Oliveira for the PR.
+
+- Python 2: if unicode parametrized values are convertible to ascii, their
+  ascii representation is used for the node id.
+
 - Fix issue #411: Add __eq__ method to assertion comparison example.
   Thanks Ben Webb.
 - Fix issue #653: deprecated_call can be used as context manager.
 
-- fix issue 877: propperly handle assertion explanations with non-ascii repr
+- fix issue 877: properly handle assertion explanations with non-ascii repr
   Thanks Mathieu Agopian for the report and Ronny Pfannschmidt for the PR.
 
+- fix issue 1029: transform errors when writing cache values into pytest-warnings
 
 2.8.0
 -----------------------------
@@ -195,8 +203,6 @@
 
 - fix issue714: add ability to apply indirect=True parameter on particular argnames.
   Thanks Elizaveta239.
-
-- fix issue714: add ability to apply indirect=True parameter on particular argnames.
 
 - fix issue890: changed extension of all documentation files from ``txt`` to
   ``rst``. Thanks to Abhijeet for the PR.

@@ -32,6 +32,9 @@ exc_clear = getattr(sys, 'exc_clear', lambda: None)
 # The type of re.compile objects is not exposed in Python.
 REGEX_TYPE = type(re.compile(''))
 
+_PY3 = sys.version_info > (3, 0)
+_PY2 = not _PY3
+
 
 if hasattr(inspect, 'signature'):
     def _format_args(func):
@@ -912,7 +915,7 @@ class Metafunc(FuncargnamesCompatAttr):
 
         :arg argvalues: The list of argvalues determines how often a
             test is invoked with different argument values.  If only one
-            argname was specified argvalues is a list of simple values.  If N
+            argname was specified argvalues is a list of values.  If N
             argnames were specified, argvalues must be a list of N-tuples,
             where each tuple-element specifies a value for its respective
             argname.
@@ -1037,6 +1040,35 @@ class Metafunc(FuncargnamesCompatAttr):
         self._calls.append(cs)
 
 
+if _PY3:
+    def _escape_bytes(val):
+        """
+        If val is pure ascii, returns it as a str(), otherwise escapes
+        into a sequence of escaped bytes:
+        b'\xc3\xb4\xc5\xd6' -> u'\\xc3\\xb4\\xc5\\xd6'
+
+        note:
+           the obvious "v.decode('unicode-escape')" will return
+           valid utf-8 unicode if it finds them in the string, but we
+           want to return escaped bytes for any byte, even if they match
+           a utf-8 string.
+        """
+        # source: http://goo.gl/bGsnwC
+        import codecs
+        encoded_bytes, _ = codecs.escape_encode(val)
+        return encoded_bytes.decode('ascii')
+else:
+    def _escape_bytes(val):
+        """
+        In py2 bytes and str are the same, so return it unchanged if it
+        is a full ascii string, otherwise escape it into its binary form.
+        """
+        try:
+            return val.encode('ascii')
+        except UnicodeDecodeError:
+            return val.encode('string-escape')
+
+
 def _idval(val, argname, idx, idfn):
     if idfn:
         try:
@@ -1046,7 +1078,9 @@ def _idval(val, argname, idx, idfn):
         except Exception:
             pass
 
-    if isinstance(val, (float, int, str, bool, NoneType)):
+    if isinstance(val, bytes):
+        return _escape_bytes(val)
+    elif isinstance(val, (float, int, str, bool, NoneType)):
         return str(val)
     elif isinstance(val, REGEX_TYPE):
         return val.pattern
@@ -1054,6 +1088,14 @@ def _idval(val, argname, idx, idfn):
         return str(val)
     elif isclass(val) and hasattr(val, '__name__'):
         return val.__name__
+    elif _PY2 and isinstance(val, unicode):
+        # special case for python 2: if a unicode string is
+        # convertible to ascii, return it as an str() object instead
+        try:
+            return str(val)
+        except UnicodeDecodeError:
+            # fallthrough
+            pass
     return str(argname)+str(idx)
 
 def _idvalset(idx, valset, argnames, idfn):

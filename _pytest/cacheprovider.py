@@ -69,10 +69,22 @@ class Cache(object):
                like e. g. lists of dictionaries.
         """
         path = self._getvaluepath(key)
-        path.dirpath().ensure_dir()
-        with path.open("w") as f:
-            self.trace("cache-write %s: %r" % (key, value,))
-            json.dump(value, f, indent=2, sort_keys=True)
+        try:
+            path.dirpath().ensure_dir()
+        except (py.error.EEXIST, py.error.EACCES):
+            self.config.warn(
+                code='I9', message='could not create cache path %s' % (path,)
+            )
+            return
+        try:
+            f = path.open('w')
+        except py.error.ENOTDIR:
+            self.config.warn(
+                code='I9', message='cache could not write path %s' % (path,))
+        else:
+            with f:
+                self.trace("cache-write %s: %r" % (key, value,))
+                json.dump(value, f, indent=2, sort_keys=True)
 
 
 class LFPlugin:
@@ -174,7 +186,19 @@ def pytest_configure(config):
 
 @pytest.fixture
 def cache(request):
+    """
+    Return a cache object that can persist state between testing sessions.
+
+    cache.get(key, default)
+    cache.set(key, value)
+
+    Keys must be strings not containing a "/" separator. Add a unique identifier
+    (such as plugin/app name) to avoid clashes with other cache users.
+
+    Values can be any object handled by the json stdlib module.
+    """
     return request.config.cache
+
 
 def pytest_report_header(config):
     if config.option.verbose:

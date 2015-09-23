@@ -22,7 +22,7 @@ def pytest_addoption(parser):
     group._addoption('-r',
          action="store", dest="reportchars", default=None, metavar="chars",
          help="show extra test summary info as specified by chars (f)ailed, "
-              "(E)error, (s)skipped, (x)failed, (X)passed (w)warnings (a)all.")
+              "(E)error, (s)skipped, (x)failed, (X)passed (w)pytest-warnings (a)all.")
     group._addoption('-l', '--showlocals',
          action="store_true", dest="showlocals", default=False,
          help="show locals in tracebacks (disabled by default).")
