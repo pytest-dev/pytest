@@ -266,7 +266,6 @@ class TestConfigAPI:
 
 
 class TestConfigFromdictargs:
-    @pytest.mark.xfail(reason="fromdictargs currently broken #1060")
     def test_basic_behavior(self):
         from _pytest.config import Config
         option_dict = {
@@ -282,7 +281,6 @@ class TestConfigFromdictargs:
         assert config.option.foo == 'bar'
         assert config.args == args
 
-    @pytest.mark.xfail(reason="fromdictargs currently broken #1060")
     def test_origargs(self):
         """Show that fromdictargs can handle args in their "orig" format"""
         from _pytest.config import Config
