@@ -264,6 +264,51 @@ class TestConfigAPI:
         assert len(l) == 2
         assert l == ["456", "123"]
 
+
+class TestConfigFromdictargs:
+    @pytest.mark.xfail(reason="fromdictargs currently broken #1060")
+    def test_basic_behavior(self):
+        from _pytest.config import Config
+        option_dict = {
+            'verbose': 1e100,
+            'foo': 'bar',
+        }
+        args = ['a', 'b']
+
+        config = Config.fromdictargs(option_dict, args)
+        with pytest.raises(AssertionError):
+            config.parse(['should to parse again'])
+        assert config.option.verbose == 1e100
+        assert config.option.foo == 'bar'
+        assert config.args == args
+
+    @pytest.mark.xfail(reason="fromdictargs currently broken #1060")
+    def test_origargs(self):
+        """Show that fromdictargs can handle args in their "orig" format"""
+        from _pytest.config import Config
+        option_dict = {}
+        args = ['-vvvv', 'a', 'b']
+
+        config = Config.fromdictargs(option_dict, args)
+        assert config.args == ['a', 'b']
+        assert config._origargs == ['-vvvv', 'a', 'b']
+        assert config.option.verbose == 4
+
+    @pytest.mark.xfail(reason="fromdictargs currently broken #1060")
+    def test_inifilename(self):
+        from _pytest.config import Config
+        inifile = '../../foo/bar.ini',
+        option_dict = {
+            'inifilename': inifile,
+        }
+
+        config = Config.fromdictargs(option_dict, ())
+        assert config.option.inifilename == inifile
+
+        # this indicates this is the file used for getting configuration values
+        assert config.inifile == inifile
+
+
 def test_options_on_small_file_do_not_blow_up(testdir):
     def runfiletest(opts):
         reprec = testdir.inline_run(*opts)
