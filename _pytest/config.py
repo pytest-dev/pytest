@@ -878,7 +878,7 @@ class Config(object):
     def fromdictargs(cls, option_dict, args):
         """ constructor useable for subprocesses. """
         config = get_config()
-        config._preparse(args, addopts=False)
+        config.parse(args, addopts=False)
         config.option.__dict__.update(option_dict)
         for x in config.option.plugins:
             config.pluginmanager.consider_pluginarg(x)
@@ -946,14 +946,14 @@ class Config(object):
                     self.inicfg.config.path, self.inicfg.lineof('minversion'),
                     minver, pytest.__version__))
 
-    def parse(self, args):
+    def parse(self, args, addopts=True):
         # parse given cmdline arguments into this config object.
         assert not hasattr(self, 'args'), (
                 "can only parse cmdline args at most once per Config object")
         self._origargs = args
         self.hook.pytest_addhooks.call_historic(
                                   kwargs=dict(pluginmanager=self.pluginmanager))
-        self._preparse(args)
+        self._preparse(args, addopts=addopts)
         # XXX deprecated hook:
         self.hook.pytest_cmdline_preparse(config=self, args=args)
         args = self._parser.parse_setoption(args, self.option)
