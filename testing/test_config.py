@@ -269,15 +269,16 @@ class TestConfigFromdictargs:
     def test_basic_behavior(self):
         from _pytest.config import Config
         option_dict = {
-            'verbose': 1e100,
+            'verbose': 444,
             'foo': 'bar',
+            'capture': 'no',
         }
         args = ['a', 'b']
 
         config = Config.fromdictargs(option_dict, args)
         with pytest.raises(AssertionError):
-            config.parse(['should to parse again'])
-        assert config.option.verbose == 1e100
+            config.parse(['should refuse to parse again'])
+        assert config.option.verbose == 444
         assert config.option.foo == 'bar'
         assert config.args == args
 
@@ -285,22 +286,29 @@ class TestConfigFromdictargs:
         """Show that fromdictargs can handle args in their "orig" format"""
         from _pytest.config import Config
         option_dict = {}
-        args = ['-vvvv', 'a', 'b']
+        args = ['-vvvv', '-s', 'a', 'b']
 
         config = Config.fromdictargs(option_dict, args)
         assert config.args == ['a', 'b']
-        assert config._origargs == ['-vvvv', 'a', 'b']
+        assert config._origargs == args
         assert config.option.verbose == 4
 
-    @pytest.mark.xfail(reason="fromdictargs currently broken #1060")
-    def test_inifilename(self):
+    def test_inifilename(self, tmpdir):
+        tmpdir.join("foo/bar.ini").ensure().write(py.code.Source("""
+            [pytest]
+            name = value
+        """))
+
         from _pytest.config import Config
-        inifile = '../../foo/bar.ini',
+        inifile = '../../foo/bar.ini'
         option_dict = {
             'inifilename': inifile,
+            'capture': 'no',
         }
 
-        config = Config.fromdictargs(option_dict, ())
+        with tmpdir.join('a/b').ensure(dir=True).as_cwd():
+            config = Config.fromdictargs(option_dict, ())
+
         assert config.option.inifilename == inifile
 
         # this indicates this is the file used for getting configuration values
