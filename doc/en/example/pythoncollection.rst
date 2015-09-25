@@ -43,7 +43,7 @@ then the test collection looks like this::
 
     $ py.test --collect-only
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: setup.cfg
     collected 2 items
     <Module 'check_myapp.py'>
@@ -89,10 +89,10 @@ You can always peek at the collection tree without running tests like this::
 
     . $ py.test --collect-only pythoncollection.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
-    rootdir: $PWD/doc/en, inifile: pytest.ini
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 3 items
-    <Module 'example/pythoncollection.py'>
+    <Module 'CWD/pythoncollection.py'>
       <Function 'test_function'>
       <Class 'TestClass'>
         <Instance '()'>
@@ -143,11 +143,9 @@ interpreters and will leave out the setup.py file::
 
     $ py.test --collect-only
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
-    collected 1 items
-    <Module 'pkg/module_py2.py'>
-      <Function 'test_only_on_python2'>
+    collected 0 items
     
     =======  in 0.12 seconds ========
 

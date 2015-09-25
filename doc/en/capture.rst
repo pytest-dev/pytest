@@ -64,7 +64,7 @@ of the failing function and hide the other one::
 
     $ py.test
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -78,7 +78,7 @@ of the failing function and hide the other one::
     E       assert False
     
     test_module.py:9: AssertionError
-    ---------------------------- Captured stdout setup -----------------------------
+    -------------------------- Captured stdout setup ---------------------------
     setting up <function test_func2 at 0xdeadbeef>
     ======= 1 failed, 1 passed in 0.12 seconds ========
 

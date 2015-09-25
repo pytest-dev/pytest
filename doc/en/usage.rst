@@ -266,6 +266,6 @@ hook was invoked::
 
     $ python myinvoke.py
     *** test run reporting finishing
-
+    
 
 .. include:: links.inc

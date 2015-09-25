@@ -127,11 +127,21 @@ objects, they are still using the default pytest representation::
 
     $ py.test test_time.py --collect-only
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
+    collected 0 items / 1 errors
     
-    =======  in 0.12 seconds ========
-    ERROR: file not found: test_time.py
+    ======= ERRORS ========
+    _______ ERROR collecting test_time.py ________
+    $PYTHON_PREFIX/lib/python3.4/site-packages/_pytest/python.py:581: in _importtestmodule
+        mod = self.fspath.pyimport(ensuresyspath=importmode)
+    $PYTHON_PREFIX/lib/python3.4/site-packages/py/_path/local.py:650: in pyimport
+        __import__(modname)
+    E     File "$REGENDOC_TMPDIR/test_time.py", line 5
+    E       (datetime(2001, 12, 11), datetime(2001, 12, 12), timedelta(-1)),
+    E                                                                      ^
+    E   SyntaxError: unexpected EOF while parsing
+    ======= 1 error in 0.12 seconds ========
 
 A quick port of "testscenarios"
 ------------------------------------
@@ -171,7 +181,7 @@ this is a fully self-contained example which you can run with::
 
     $ py.test test_scenarios.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
@@ -184,7 +194,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
 
     $ py.test --collect-only test_scenarios.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     <Module 'test_scenarios.py'>
@@ -249,7 +259,7 @@ Let's first see how it looks like at collection time::
 
     $ py.test test_backends.py --collect-only
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     <Module 'test_backends.py'>
@@ -265,7 +275,7 @@ And then when we run the test::
     ======= FAILURES ========
     _______ test_db_initialized[d2] ________
     
-    db = <conftest.DB2 instance at 0xdeadbeef>
+    db = <conftest.DB2 object at 0xdeadbeef>
     
         def test_db_initialized(db):
             # a dummy test
@@ -309,14 +319,14 @@ will be passed to respective fixture function.
 The result of this test will be successful:
 
     $ py.test test_indirect_list.py --collect-only
-    ============================= test session starts ==============================
-    platform linux2 -- Python 2.7.3, pytest-2.8.0.dev4, py-1.4.30, pluggy-0.3.0
-    rootdir: /home/elizabeth/work/pytest, inifile: tox.ini
+    ======= test session starts ========
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
-    <Module 'testing/test_argnames.py'>
-      <Function 'test_simple[a-b]'>
-
-    ===============================  in 0.02 seconds ===============================
+    <Module 'test_indirect_list.py'>
+      <Function 'test_indirect[a-b]'>
+    
+    =======  in 0.12 seconds ========
 
 .. regendoc:wipe
 
@@ -361,7 +371,7 @@ argument sets to use for each test function.  Let's run it::
     ======= FAILURES ========
     _______ TestClass.test_equals[1-2] ________
     
-    self = <test_parametrize.TestClass instance at 0xdeadbeef>, a = 1, b = 2
+    self = <test_parametrize.TestClass object at 0xdeadbeef>, a = 1, b = 2
     
         def test_equals(self, a, b):
     >       assert a == b
@@ -389,8 +399,8 @@ Running it results in some skips if we don't have all the python interpreters in
    . $ py.test -rs -q multipython.py
    ssssssssssss...ssssssssssss
    ======= short test summary info ========
-   SKIP [12] $PWD/doc/en/example/multipython.py:22: 'python3.3' not found
-   SKIP [12] $PWD/doc/en/example/multipython.py:22: 'python2.6' not found
+   SKIP [12] $REGENDOC_TMPDIR/CWD/multipython.py:22: 'python3.3' not found
+   SKIP [12] $REGENDOC_TMPDIR/CWD/multipython.py:22: 'python2.6' not found
    3 passed, 24 skipped in 0.12 seconds
 
 Indirect parametrization of optional implementations/imports
@@ -438,7 +448,7 @@ If you run this with reporting for skips enabled::
 
     $ py.test -rs test_module.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     

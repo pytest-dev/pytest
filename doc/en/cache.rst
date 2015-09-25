@@ -44,8 +44,8 @@ If you run this for the first time you will see two failures::
 
     $ py.test -q
     .................F.......F........................
-    ================================= FAILURES =================================
-    _______________________________ test_num[17] _______________________________
+    ======= FAILURES ========
+    _______ test_num[17] ________
     
     i = 17
     
@@ -56,7 +56,7 @@ If you run this for the first time you will see two failures::
     E          Failed: bad luck
     
     test_50.py:6: Failed
-    _______________________________ test_num[25] _______________________________
+    _______ test_num[25] ________
     
     i = 25
     
@@ -67,21 +67,21 @@ If you run this for the first time you will see two failures::
     E          Failed: bad luck
     
     test_50.py:6: Failed
-    2 failed, 48 passed in 0.04 seconds
+    2 failed, 48 passed in 0.12 seconds
 
 If you then run it with ``--lf``::
 
     $ py.test --lf
-    =========================== test session starts ============================
-    platform linux2 -- Python 2.7.6, pytest-2.7.3.dev428+ng79d22bf.d20150916, py-1.4.30, pluggy-0.3.0
+    ======= test session starts ========
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     run-last-failure: rerun last 2 failures
-    rootdir: /tmp/doc-exec-94, inifile: 
+    rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 50 items
     
     test_50.py FF
     
-    ================================= FAILURES =================================
-    _______________________________ test_num[17] _______________________________
+    ======= FAILURES ========
+    _______ test_num[17] ________
     
     i = 17
     
@@ -92,7 +92,7 @@ If you then run it with ``--lf``::
     E          Failed: bad luck
     
     test_50.py:6: Failed
-    _______________________________ test_num[25] _______________________________
+    _______ test_num[25] ________
     
     i = 25
     
@@ -103,7 +103,7 @@ If you then run it with ``--lf``::
     E          Failed: bad luck
     
     test_50.py:6: Failed
-    ================= 2 failed, 48 deselected in 0.01 seconds ==================
+    ======= 2 failed, 48 deselected in 0.12 seconds ========
 
 You have run only the two failing test from the last run, while 48 tests have
 not been run ("deselected").
@@ -113,16 +113,16 @@ previous failures will be executed first (as can be seen from the series
 of ``FF`` and dots)::
 
     $ py.test --ff
-    =========================== test session starts ============================
-    platform linux2 -- Python 2.7.6, pytest-2.7.3.dev428+ng79d22bf.d20150916, py-1.4.30, pluggy-0.3.0
+    ======= test session starts ========
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     run-last-failure: rerun last 2 failures first
-    rootdir: /tmp/doc-exec-94, inifile: 
+    rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 50 items
     
     test_50.py FF................................................
     
-    ================================= FAILURES =================================
-    _______________________________ test_num[17] _______________________________
+    ======= FAILURES ========
+    _______ test_num[17] ________
     
     i = 17
     
@@ -133,7 +133,7 @@ of ``FF`` and dots)::
     E          Failed: bad luck
     
     test_50.py:6: Failed
-    _______________________________ test_num[25] _______________________________
+    _______ test_num[25] ________
     
     i = 25
     
@@ -144,7 +144,7 @@ of ``FF`` and dots)::
     E          Failed: bad luck
     
     test_50.py:6: Failed
-    =================== 2 failed, 48 passed in 0.03 seconds ====================
+    ======= 2 failed, 48 passed in 0.12 seconds ========
 
 .. _`config.cache`:
 
@@ -179,8 +179,8 @@ of the sleep::
 
     $ py.test -q
     F
-    ================================= FAILURES =================================
-    ______________________________ test_function _______________________________
+    ======= FAILURES ========
+    _______ test_function ________
     
     mydata = 42
     
@@ -189,15 +189,15 @@ of the sleep::
     E       assert 42 == 23
     
     test_caching.py:14: AssertionError
-    1 failed in 5.41 seconds
+    1 failed in 0.12 seconds
 
 If you run it a second time the value will be retrieved from
 the cache and this will be quick::
 
     $ py.test -q
     F
-    ================================= FAILURES =================================
-    ______________________________ test_function _______________________________
+    ======= FAILURES ========
+    _______ test_function ________
     
     mydata = 42
     
@@ -206,7 +206,7 @@ the cache and this will be quick::
     E       assert 42 == 23
     
     test_caching.py:14: AssertionError
-    1 failed in 0.01 seconds
+    1 failed in 0.12 seconds
 
 See the `cache-api`_ for more details.
 
@@ -218,15 +218,15 @@ You can always peek at the content of the cache using the
 ``--cache-clear`` command line option::
 
     $ py.test --cache-clear
-    =========================== test session starts ============================
-    platform linux2 -- Python 2.7.6, pytest-2.7.3.dev428+ng79d22bf.d20150916, py-1.4.30, pluggy-0.3.0
-    rootdir: /tmp/doc-exec-94, inifile: 
+    ======= test session starts ========
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
     test_caching.py F
     
-    ================================= FAILURES =================================
-    ______________________________ test_function _______________________________
+    ======= FAILURES ========
+    _______ test_function ________
     
     mydata = 42
     
@@ -235,7 +235,7 @@ You can always peek at the content of the cache using the
     E       assert 42 == 23
     
     test_caching.py:14: AssertionError
-    ========================= 1 failed in 5.41 seconds =========================
+    ======= 1 failed in 0.12 seconds ========
 
 Clearing Cache content
 -------------------------------
