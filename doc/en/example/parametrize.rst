@@ -298,7 +298,7 @@ parameter on particular arguments. It can be done by passing list or tuple of
 arguments' names to ``indirect``. In the example below there is a function ``test_indirect`` which uses
 two fixtures: ``x`` and ``y``. Here we give to indirect the list, which contains the name of the
 fixture ``x``. The indirect parameter will be applied to this argument only, and the value ``a``
-will be passed to respective fixture function.
+will be passed to respective fixture function::
 
     # content of test_indirect_list.py
 
@@ -316,7 +316,7 @@ will be passed to respective fixture function.
         assert x == 'aaa'
         assert y == 'b'
 
-The result of this test will be successful:
+The result of this test will be successful::
 
     $ py.test test_indirect_list.py --collect-only
     ======= test session starts ========
