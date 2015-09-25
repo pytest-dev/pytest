@@ -74,7 +74,15 @@ You can ask for available builtin or project-custom
 
     $ py.test -q --fixtures
     cache
-        $PYTHON_PREFIX/lib/python3.4/site-packages/_pytest/cacheprovider.py:176: no docstring available
+        Return a cache object that can persist state between testing sessions.
+        
+        cache.get(key, default)
+        cache.set(key, value)
+        
+        Keys must be strings not containing a "/" separator. Add a unique identifier
+        (such as plugin/app name) to avoid clashes with other cache users.
+        
+        Values can be any object handled by the json stdlib module.
     capsys
         enables capturing of writes to sys.stdout/sys.stderr and makes
         captured output available via ``capsys.readouterr()`` method calls
