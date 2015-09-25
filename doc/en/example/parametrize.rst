@@ -83,35 +83,38 @@ the argument name::
 
     # content of test_time.py
 
+    import pytest
+
     from datetime import datetime, timedelta
 
-    testdata = [(datetime(2001, 12, 12), datetime(2001, 12, 11), timedelta(1)),
-	       	(datetime(2001, 12, 11), datetime(2001, 12, 12), timedelta(-1)),
-		]
+    testdata = [
+        (datetime(2001, 12, 12), datetime(2001, 12, 11), timedelta(1)),
+        (datetime(2001, 12, 11), datetime(2001, 12, 12), timedelta(-1)),
+    ]
 
 
     @pytest.mark.parametrize("a,b,expected", testdata)
     def test_timedistance_v0(a, b, expected):
-	diff = a - b
-	assert diff == expected
+        diff = a - b
+        assert diff == expected
 
 
     @pytest.mark.parametrize("a,b,expected", testdata, ids=["forward", "backward"])
     def test_timedistance_v1(a, b, expected):
-	diff = a - b
-	assert diff == expected
+        diff = a - b
+        assert diff == expected
 
 
     def idfn(val):
-	if isinstance(val, (datetime,)):
-	    # note this wouldn't show any hours/minutes/seconds
-	    return val.strftime('%Y%m%d')
+        if isinstance(val, (datetime,)):
+            # note this wouldn't show any hours/minutes/seconds
+            return val.strftime('%Y%m%d')
 
 
     @pytest.mark.parametrize("a,b,expected", testdata, ids=idfn)
     def test_timedistance_v2(a, b, expected):
-	diff = a - b
-	assert diff == expected
+        diff = a - b
+        assert diff == expected
 
 
 In ``test_timedistance_v0``, we let pytest generate the test IDs.
@@ -127,21 +130,18 @@ objects, they are still using the default pytest representation::
 
     $ py.test test_time.py --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
-    collected 0 items / 1 errors
+    collected 6 items
+    <Module 'test_time.py'>
+      <Function 'test_timedistance_v0[a0-b0-expected0]'>
+      <Function 'test_timedistance_v0[a1-b1-expected1]'>
+      <Function 'test_timedistance_v1[forward]'>
+      <Function 'test_timedistance_v1[backward]'>
+      <Function 'test_timedistance_v2[20011212-20011211-expected0]'>
+      <Function 'test_timedistance_v2[20011211-20011212-expected1]'>
     
-    ======= ERRORS ========
-    _______ ERROR collecting test_time.py ________
-    $PYTHON_PREFIX/lib/python3.4/site-packages/_pytest/python.py:581: in _importtestmodule
-        mod = self.fspath.pyimport(ensuresyspath=importmode)
-    $PYTHON_PREFIX/lib/python3.4/site-packages/py/_path/local.py:650: in pyimport
-        __import__(modname)
-    E     File "$REGENDOC_TMPDIR/test_time.py", line 5
-    E       (datetime(2001, 12, 11), datetime(2001, 12, 12), timedelta(-1)),
-    E                                                                      ^
-    E   SyntaxError: unexpected EOF while parsing
-    ======= 1 error in 0.12 seconds ========
+    =======  in 0.12 seconds ========
 
 A quick port of "testscenarios"
 ------------------------------------
@@ -298,7 +298,7 @@ parameter on particular arguments. It can be done by passing list or tuple of
 arguments' names to ``indirect``. In the example below there is a function ``test_indirect`` which uses
 two fixtures: ``x`` and ``y``. Here we give to indirect the list, which contains the name of the
 fixture ``x``. The indirect parameter will be applied to this argument only, and the value ``a``
-will be passed to respective fixture function.
+will be passed to respective fixture function::
 
     # content of test_indirect_list.py
 
@@ -316,7 +316,7 @@ will be passed to respective fixture function.
         assert x == 'aaa'
         assert y == 'b'
 
-The result of this test will be successful:
+The result of this test will be successful::
 
     $ py.test test_indirect_list.py --collect-only
     ======= test session starts ========
