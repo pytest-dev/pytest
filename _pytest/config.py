@@ -454,11 +454,11 @@ class Parser:
         """
         self._anonymous.addoption(*opts, **attrs)
 
-    def parse(self, args):
+    def parse(self, args, namespace=None):
         from _pytest._argcomplete import try_argcomplete
         self.optparser = self._getparser()
         try_argcomplete(self.optparser)
-        return self.optparser.parse_args([str(x) for x in args])
+        return self.optparser.parse_args([str(x) for x in args], namespace=namespace)
 
     def _getparser(self):
         from _pytest._argcomplete import filescompleter
@@ -476,25 +476,25 @@ class Parser:
         optparser.add_argument(FILE_OR_DIR, nargs='*').completer=filescompleter
         return optparser
 
-    def parse_setoption(self, args, option):
-        parsedoption = self.parse(args)
+    def parse_setoption(self, args, option, namespace=None):
+        parsedoption = self.parse(args, namespace=namespace)
         for name, value in parsedoption.__dict__.items():
             setattr(option, name, value)
         return getattr(parsedoption, FILE_OR_DIR)
 
-    def parse_known_args(self, args):
+    def parse_known_args(self, args, namespace=None):
         """parses and returns a namespace object with known arguments at this
         point.
         """
-        return self.parse_known_and_unknown_args(args)[0]
+        return self.parse_known_and_unknown_args(args, namespace=namespace)[0]
 
-    def parse_known_and_unknown_args(self, args):
+    def parse_known_and_unknown_args(self, args, namespace=None):
         """parses and returns a namespace object with known arguments, and
         the remaining arguments unknown at this point.
         """
         optparser = self._getparser()
         args = [str(x) for x in args]
-        return optparser.parse_known_args(args)
+        return optparser.parse_known_args(args, namespace=namespace)
 
     def addini(self, name, help, type=None, default=None):
         """ register an ini-file option.
@@ -778,10 +778,16 @@ def _ensure_removed_sysmodule(modname):
 
 class CmdOptions(object):
     """ holds cmdline options as attributes."""
-    def __init__(self, **kwargs):
-        self.__dict__.update(kwargs)
+    def __init__(self, values=()):
+        self.update(values)
     def __repr__(self):
         return "<CmdOptions %r>" %(self.__dict__,)
+    def update(self, values):
+        self.__dict__.update(values)
+    def copy(self):
+        copy = CmdOptions()
+        copy.update(self.__dict__)
+        return copy
 
 class Notset:
     def __repr__(self):
@@ -878,8 +884,8 @@ class Config(object):
     def fromdictargs(cls, option_dict, args):
         """ constructor useable for subprocesses. """
         config = get_config()
+        config.option.update(option_dict)
         config.parse(args, addopts=False)
-        config.option.__dict__.update(option_dict)
         for x in config.option.plugins:
             config.pluginmanager.consider_pluginarg(x)
         return config
@@ -897,7 +903,7 @@ class Config(object):
         self.pluginmanager._set_initial_conftests(early_config.known_args_namespace)
 
     def _initini(self, args):
-        ns, unknown_args = self._parser.parse_known_and_unknown_args(args)
+        ns, unknown_args = self._parser.parse_known_and_unknown_args(args, namespace=self.option.copy())
         r = determine_setup(ns.inifilename, ns.file_or_dir + unknown_args)
         self.rootdir, self.inifile, self.inicfg = r
         self._parser.extra_info['rootdir'] = self.rootdir
@@ -918,7 +924,7 @@ class Config(object):
         except ImportError as e:
             self.warn("I2", "could not load setuptools entry import: %s" % (e,))
         self.pluginmanager.consider_env()
-        self.known_args_namespace = ns = self._parser.parse_known_args(args)
+        self.known_args_namespace = ns = self._parser.parse_known_args(args, namespace=self.option.copy())
         if self.known_args_namespace.confcutdir is None and self.inifile:
             confcutdir = py.path.local(self.inifile).dirname
             self.known_args_namespace.confcutdir = confcutdir
@@ -956,7 +962,8 @@ class Config(object):
         self._preparse(args, addopts=addopts)
         # XXX deprecated hook:
         self.hook.pytest_cmdline_preparse(config=self, args=args)
-        args = self._parser.parse_setoption(args, self.option)
+        args = self._parser.parse_setoption(args, self.option, namespace=self.option)
+        #args = self._parser.parse_known_args(args, namespace=self.option)
         if not args:
             cwd = os.getcwd()
             if cwd == self.rootdir:
