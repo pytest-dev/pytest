@@ -243,7 +243,7 @@ instance, you can simply declare it:
 
 .. _`finalization`:
 
-fixture finalization / executing teardown code
+Fixture finalization / executing teardown code
 -------------------------------------------------------------
 
 pytest supports execution of fixture specific finalization code
@@ -630,7 +630,7 @@ before the ``mod2`` resource was setup.
 
 .. _`usefixtures`:
 
-using fixtures from classes, modules or projects
+Using fixtures from classes, modules or projects
 ----------------------------------------------------------------------
 
 .. regendoc:wipe
@@ -692,6 +692,9 @@ a generic feature of the mark mechanism:
 
     pytestmark = pytest.mark.usefixtures("cleandir")
 
+Note that the assigned variable *must* be called ``pytestmark``, assigning e.g.
+``foomark`` will not activate the fixtures.
+
 Lastly you can put fixtures required by all tests in your project
 into an ini-file:
 
@@ -705,7 +708,7 @@ into an ini-file:
 .. _`autouse`:
 .. _`autouse fixtures`:
 
-autouse fixtures (xUnit setup on steroids)
+Autouse fixtures (xUnit setup on steroids)
 ----------------------------------------------------------------------
 
 .. regendoc:wipe
