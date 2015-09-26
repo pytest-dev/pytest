@@ -25,7 +25,7 @@ class StepwisePlugin:
         self.session = None
 
         if self.active:
-            self.lastfailed = config.cache.get('cache/stepwise', set())
+            self.lastfailed = config.cache.get('cache/stepwise', None)
             self.skip = config.getvalue('skip')
 
     def pytest_sessionstart(self, session):
@@ -40,7 +40,7 @@ class StepwisePlugin:
 
         # Make a list of all tests that has been runned before the last failing one.
         for item in items:
-            if item.nodeid in self.lastfailed:
+            if item.nodeid == self.lastfailed:
                 found = True
                 break
             else:
@@ -69,22 +69,25 @@ class StepwisePlugin:
             if self.skip:
                 # Remove test from the failed ones (if it exists) and unset the skip option
                 # to make sure the following tests will not be skipped.
-                self.lastfailed.discard(report.nodeid)
+                if report.nodeid == self.lastfailed:
+                    self.lastfailed = None
+
                 self.skip = False
             else:
                 # Mark test as the last failing and interrupt the test session.
-                self.lastfailed.add(report.nodeid)
+                self.lastfailed = report.nodeid
                 self.session.shouldstop = 'Test failed, continuing from this test next run.'
 
         else:
             # If the test was actually run and did pass.
             if report.when == 'call':
                 # Remove test from the failed ones, if exists.
-                self.lastfailed.discard(report.nodeid)
+                if report.nodeid == self.lastfailed:
+                    self.lastfailed = None
 
     def pytest_sessionfinish(self, session):
         if self.active:
             self.config.cache.set('cache/stepwise', self.lastfailed)
         else:
             # Clear the list of failing tests if the plugin is not active.
-            self.config.cache.set('cache/stepwise', set())
+            self.config.cache.set('cache/stepwise', [])
