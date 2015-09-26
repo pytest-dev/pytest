@@ -66,7 +66,7 @@ That's it. You can execute the test function now::
     test_sample.py:5: AssertionError
     ======= 1 failed in 0.12 seconds ========
 
-``pytest`` found the ``test_answer`` function by following :ref:`standard test discovery rules <test discovery>`, basically detecting the ``test_`` prefixes.  We got a failure report because our little ``func(3)`` call did not return ``5``.
+We got a failure report because our little ``func(3)`` call did not return ``5``.
 
 .. note::
 
@@ -78,6 +78,12 @@ That's it. You can execute the test function now::
 .. _`JUnit legacy methods`: http://docs.python.org/library/unittest.html#test-cases
 
 .. _`assert statement`: http://docs.python.org/reference/simple_stmts.html#the-assert-statement
+
+Running multiple tests
+----------------------------------------------------------
+
+``pytest`` will run all files in the current directory and its subdirectories of the form test_*.py or \*_test.py. More generally, it follows :ref:`standard test discovery rules <test discovery>`.
+
 
 Asserting that a certain exception is raised
 --------------------------------------------------------------
