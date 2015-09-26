@@ -1,4 +1,4 @@
-cache: working with cross-testrun state
+Cache: working with cross-testrun state
 =======================================
 
 .. versionadded:: 2.8
@@ -253,7 +253,7 @@ than speed.
 .. _`cache-api`:
 
 config.cache API
-========================================
+------------------
 
 The `config.cache`` object allows other plugins,
 including ``conftest.py`` files,

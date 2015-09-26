@@ -113,8 +113,8 @@ how to obtain the name of a plugin.
 
 .. _`builtin plugins`:
 
-pytest default plugin reference
-===============================
+Pytest default plugin reference
+-------------------------------
 
 
 You can find the source code for the following plugins

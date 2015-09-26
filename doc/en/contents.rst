@@ -12,12 +12,12 @@ Full pytest documentation
 
    overview
    apiref
-   cache
-   plugins
-   plugins_index/index
    example/index
-   talks
+   plugins
+   cache
    contributing
+   plugins_index/index
+   talks
    funcarg_compare
    announce/index
 
