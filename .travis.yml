@@ -21,10 +21,9 @@ env:
     - TESTENV=py33
     - TESTENV=py33
     - TESTENV=py34
-    - TESTENV=py34-pexpect
-    - TESTENV=py34-trial
-    - TESTENV=py34-trial
-    - TESTENV=py34-xdist
+    - TESTENV=py35-pexpect
+    - TESTENV=py35-trial
+    - TESTENV=py35-xdist
     - TESTENV=py35
     - TESTENV=pypy
 
