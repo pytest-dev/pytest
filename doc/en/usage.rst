@@ -186,6 +186,8 @@ This will add an extra property ``example_key="1"`` to the generated
     by something more powerful and general in future versions. The
     functionality per-se will be kept, however.
 
+    Currently it does not work when used with the ``pytest-xdist`` plugin.
+
     Also please note that using this feature will break any schema verification.
     This might be a problem when used with some CI servers.
 

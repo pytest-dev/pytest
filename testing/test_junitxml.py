@@ -4,6 +4,8 @@ from xml.dom import minidom
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 import py, sys, os
 from _pytest.junitxml import LogXML
+import pytest
+
 
 def runandparse(testdir, *args):
     resultpath = testdir.tmpdir.join("junit.xml")
@@ -553,6 +555,7 @@ def test_unicode_issue368(testdir):
     log.append_skipped(report)
     log.pytest_sessionfinish()
 
+
 def test_record_property(testdir):
     testdir.makepyfile("""
         def test_record(record_xml_property):
@@ -565,3 +568,25 @@ def test_record_property(testdir):
     pnode = psnode.getElementsByTagName('property')[0]
     assert_attr(pnode, name="foo", value="<1")
     result.stdout.fnmatch_lines('*C3*test_record_property.py*experimental*')
+
+
+def test_random_report_log_xdist(testdir):
+    """xdist calls pytest_runtest_logreport as they are executed by the slaves,
+    with nodes from several nodes overlapping, so junitxml must cope with that
+    to produce correct reports. #1064
+    """
+    pytest.importorskip('xdist')
+    testdir.makepyfile("""
+        import pytest, time
+        @pytest.mark.parametrize('i', list(range(30)))
+        def test_x(i):
+            assert i != 22
+    """)
+    _, dom = runandparse(testdir, '-n2')
+    suite_node = dom.getElementsByTagName("testsuite")[0]
+    failed = []
+    for case_node in suite_node.getElementsByTagName("testcase"):
+        if case_node.getElementsByTagName('failure'):
+            failed.append(case_node.getAttributeNode('name').value)
+
+    assert failed == ['test_x[22]']
