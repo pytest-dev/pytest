@@ -52,6 +52,18 @@ environment:
       PYTHON_ARCH: "32"
       TESTENV: "py26"
 
+    # xdist testing
+
+    - PYTHON: "C:\\Python27"
+      PYTHON_VERSION: "2.7.x" # currently 2.7.9
+      PYTHON_ARCH: "32"
+      TESTENV: "py27-xdist"
+
+    - PYTHON: "C:\\Python35"
+      PYTHON_VERSION: "3.5.x" # currently 3.5.0
+      PYTHON_ARCH: "32"
+      TESTENV: "py35-xdist"
+
 
 install:
   - ECHO "Filesystem root:"
