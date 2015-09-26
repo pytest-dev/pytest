@@ -1,5 +1,4 @@
-import pytest
-from .compat import Cache
+from .compat import Cache, tryfirst
 
 
 def pytest_addoption(parser):
@@ -12,7 +11,7 @@ def pytest_addoption(parser):
                     help='ignore the first failing test but stop on the next failing test')
 
 
-@pytest.hookimpl(tryfirst=True)
+@tryfirst
 def pytest_configure(config):
     config.cache = Cache(config)
     config.pluginmanager.register(StepwisePlugin(config), 'stepwiseplugin')
