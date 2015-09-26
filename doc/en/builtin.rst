@@ -73,6 +73,16 @@ You can ask for available builtin or project-custom
 :ref:`fixtures <fixtures>` by typing::
 
     $ py.test -q --fixtures
+    cache
+        Return a cache object that can persist state between testing sessions.
+        
+        cache.get(key, default)
+        cache.set(key, value)
+        
+        Keys must be strings not containing a "/" separator. Add a unique identifier
+        (such as plugin/app name) to avoid clashes with other cache users.
+        
+        Values can be any object handled by the json stdlib module.
     capsys
         enables capturing of writes to sys.stdout/sys.stderr and makes
         captured output available via ``capsys.readouterr()`` method calls
@@ -81,6 +91,10 @@ You can ask for available builtin or project-custom
         enables capturing of writes to file descriptors 1 and 2 and makes
         captured output available via ``capfd.readouterr()`` method calls
         which return a ``(out, err)`` tuple.
+    record_xml_property
+        Fixture that adds extra xml properties to the tag for the calling test.
+        The fixture is callable with (name, value), with value being automatically
+        xml-encoded.
     monkeypatch
         The returned ``monkeypatch`` funcarg provides these
         helper methods to modify objects, dictionaries or os.environ::
@@ -108,6 +122,8 @@ You can ask for available builtin or project-custom
         
         See http://docs.python.org/library/warnings.html for information
         on warning categories.
+    tmpdir_factory
+        Return a TempdirFactory instance for the test session.
     tmpdir
         return a temporary directory path object
         which is unique to each test function invocation,

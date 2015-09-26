@@ -101,6 +101,8 @@ class LogXML(object):
         self.logfile = os.path.normpath(os.path.abspath(logfile))
         self.prefix = prefix
         self.tests = []
+        self.tests_by_nodeid = {}  # nodeid -> Junit.testcase
+        self.durations = {}  # nodeid -> total duration (setup+call+teardown)
         self.passed = self.skipped = 0
         self.failed = self.errors = 0
         self.custom_properties = {}
@@ -117,11 +119,16 @@ class LogXML(object):
             "classname": ".".join(classnames),
             "name": bin_xml_escape(names[-1]),
             "file": report.location[0],
-            "time": 0,
+            "time": self.durations.get(report.nodeid, 0),
         }
         if report.location[1] is not None:
             attrs["line"] = report.location[1]
-        self.tests.append(Junit.testcase(**attrs))
+        testcase = Junit.testcase(**attrs)
+        custom_properties = self.pop_custom_properties()
+        if custom_properties:
+            testcase.append(custom_properties)
+        self.tests.append(testcase)
+        self.tests_by_nodeid[report.nodeid] = testcase
 
     def _write_captured_output(self, report):
         for capname in ('out', 'err'):
@@ -136,17 +143,20 @@ class LogXML(object):
     def append(self, obj):
         self.tests[-1].append(obj)
 
-    def append_custom_properties(self):
+    def pop_custom_properties(self):
+        """Return a Junit node containing custom properties set for
+        the current test, if any, and reset the current custom properties.
+        """
         if self.custom_properties:
-            self.tests[-1].append(
-                Junit.properties(
-                    [
-                        Junit.property(name=name, value=value)
-                        for name, value in self.custom_properties.items()
-                    ]
-                )
+            result = Junit.properties(
+                [
+                    Junit.property(name=name, value=value)
+                    for name, value in self.custom_properties.items()
+                ]
             )
-        self.custom_properties.clear()
+            self.custom_properties.clear()
+            return result
+        return None
 
     def append_pass(self, report):
         self.passed += 1
@@ -206,20 +216,54 @@ class LogXML(object):
         self._write_captured_output(report)
 
     def pytest_runtest_logreport(self, report):
-        if report.when == "setup":
-            self._opentestcase(report)
-        self.tests[-1].attr.time += getattr(report, 'duration', 0)
-        self.append_custom_properties()
+        """handle a setup/call/teardown report, generating the appropriate
+        xml tags as necessary.
+
+        note: due to plugins like xdist, this hook may be called in interlaced
+        order with reports from other nodes. for example:
+
+        usual call order:
+            -> setup node1
+            -> call node1
+            -> teardown node1
+            -> setup node2
+            -> call node2
+            -> teardown node2
+
+        possible call order in xdist:
+            -> setup node1
+            -> call node1
+            -> setup node2
+            -> call node2
+            -> teardown node2
+            -> teardown node1
+        """
         if report.passed:
-            if report.when == "call": # ignore setup/teardown
+            if report.when == "call":  # ignore setup/teardown
+                self._opentestcase(report)
                 self.append_pass(report)
         elif report.failed:
+            self._opentestcase(report)
             if report.when != "call":
                 self.append_error(report)
             else:
                 self.append_failure(report)
         elif report.skipped:
+            self._opentestcase(report)
             self.append_skipped(report)
+        self.update_testcase_duration(report)
+
+    def update_testcase_duration(self, report):
+        """accumulates total duration for nodeid from given report and updates
+        the Junit.testcase with the new total if already created.
+        """
+        total = self.durations.get(report.nodeid, 0.0)
+        total += getattr(report, 'duration', 0.0)
+        self.durations[report.nodeid] = total
+
+        testcase = self.tests_by_nodeid.get(report.nodeid)
+        if testcase is not None:
+            testcase.attr.time = total
 
     def pytest_collectreport(self, report):
         if not report.passed:

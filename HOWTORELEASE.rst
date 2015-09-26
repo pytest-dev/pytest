@@ -10,19 +10,19 @@ Note: this assumes you have already registered on pypi.
 3. Write doc/en/announce/release-VERSION.txt and include
    it in doc/en/announce/index.txt
 
-4. Use devpi for uploading a release tarball to a staging area:
+4. Use devpi for uploading a release tarball to a staging area::
 
-     ``devpi use https://devpi.net/USER/dev``
-     ``devpi upload --formats sdist,bdist_wheel``
+     devpi use https://devpi.net/USER/dev
+     devpi upload --formats sdist,bdist_wheel
 
-5. Run from multiple machines:
+5. Run from multiple machines::
 
-     ``devpi use https://devpi.net/USER/dev``
-     ``devpi test pytest==VERSION``
+     devpi use https://devpi.net/USER/dev
+     devpi test pytest==VERSION
 
-6. Check that tests pass for relevant combinations with
+6. Check that tests pass for relevant combinations with::
 
-     ``devpi list pytest``
+       devpi list pytest
 
    or look at failures with "devpi list -f pytest".
    There will be some failed environments like e.g. the py33-trial 
@@ -56,7 +56,7 @@ Note: this assumes you have already registered on pypi.
 
    This requires ssh-login permission on pytest.org because it uses
    rsync.
-   Note that the "install" target of doc/en/Makefile defines where the
+   Note that the ``install`` target of ``doc/en/Makefile`` defines where the
    rsync goes to, typically to the "latest" section of pytest.org.
 
    If you are making a minor release (e.g. 5.4), you also need to manually
@@ -71,8 +71,8 @@ Note: this assumes you have already registered on pypi.
 
       devpi push pytest-VERSION pypi:NAME
 
-    where NAME is the name of pypi.python.org as configured in your
-    ~/.pypirc file `for devpi <http://doc.devpi.net/latest/quickstart-releaseprocess.html?highlight=pypirc#devpi-push-releasing-to-an-external-index>`_.
+   where NAME is the name of pypi.python.org as configured in your ``~/.pypirc``
+   file `for devpi <http://doc.devpi.net/latest/quickstart-releaseprocess.html?highlight=pypirc#devpi-push-releasing-to-an-external-index>`_.
 
 
 12. Send release announcement to mailing lists:
@@ -83,5 +83,5 @@ Note: this assumes you have already registered on pypi.
 
 
 13. **after the release** Bump the version number in ``_pytest/__init__.py``,
-    to the next Minor release version (i.e. if you released ``pytest-2.8.0``,
-    set it to ``pytest-2.9.0.dev1``).
+   to the next Minor release version (i.e. if you released ``pytest-2.8.0``,
+   set it to ``pytest-2.9.0.dev1``).

@@ -26,7 +26,7 @@ you will see the return value of the function call::
 
     $ py.test test_assert1.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
@@ -146,7 +146,7 @@ if you run this module::
 
     $ py.test test_assert2.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
@@ -225,7 +225,7 @@ the conftest file::
    E       assert Comparing Foo instances:
    E            vals: 1 != 2
    
-   test_foocompare.py:8: AssertionError
+   test_foocompare.py:11: AssertionError
    1 failed in 0.12 seconds
 
 .. _assert-details:

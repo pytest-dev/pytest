@@ -83,35 +83,38 @@ the argument name::
 
     # content of test_time.py
 
+    import pytest
+
     from datetime import datetime, timedelta
 
-    testdata = [(datetime(2001, 12, 12), datetime(2001, 12, 11), timedelta(1)),
-	       	(datetime(2001, 12, 11), datetime(2001, 12, 12), timedelta(-1)),
-		]
+    testdata = [
+        (datetime(2001, 12, 12), datetime(2001, 12, 11), timedelta(1)),
+        (datetime(2001, 12, 11), datetime(2001, 12, 12), timedelta(-1)),
+    ]
 
 
     @pytest.mark.parametrize("a,b,expected", testdata)
     def test_timedistance_v0(a, b, expected):
-	diff = a - b
-	assert diff == expected
+        diff = a - b
+        assert diff == expected
 
 
     @pytest.mark.parametrize("a,b,expected", testdata, ids=["forward", "backward"])
     def test_timedistance_v1(a, b, expected):
-	diff = a - b
-	assert diff == expected
+        diff = a - b
+        assert diff == expected
 
 
     def idfn(val):
-	if isinstance(val, (datetime,)):
-	    # note this wouldn't show any hours/minutes/seconds
-	    return val.strftime('%Y%m%d')
+        if isinstance(val, (datetime,)):
+            # note this wouldn't show any hours/minutes/seconds
+            return val.strftime('%Y%m%d')
 
 
     @pytest.mark.parametrize("a,b,expected", testdata, ids=idfn)
     def test_timedistance_v2(a, b, expected):
-	diff = a - b
-	assert diff == expected
+        diff = a - b
+        assert diff == expected
 
 
 In ``test_timedistance_v0``, we let pytest generate the test IDs.
@@ -127,11 +130,18 @@ objects, they are still using the default pytest representation::
 
     $ py.test test_time.py --collect-only
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux -- Python 3.4.3, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
+    collected 6 items
+    <Module 'test_time.py'>
+      <Function 'test_timedistance_v0[a0-b0-expected0]'>
+      <Function 'test_timedistance_v0[a1-b1-expected1]'>
+      <Function 'test_timedistance_v1[forward]'>
+      <Function 'test_timedistance_v1[backward]'>
+      <Function 'test_timedistance_v2[20011212-20011211-expected0]'>
+      <Function 'test_timedistance_v2[20011211-20011212-expected1]'>
     
     =======  in 0.12 seconds ========
-    ERROR: file not found: test_time.py
 
 A quick port of "testscenarios"
 ------------------------------------
@@ -171,7 +181,7 @@ this is a fully self-contained example which you can run with::
 
     $ py.test test_scenarios.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
@@ -184,7 +194,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
 
     $ py.test --collect-only test_scenarios.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     <Module 'test_scenarios.py'>
@@ -249,7 +259,7 @@ Let's first see how it looks like at collection time::
 
     $ py.test test_backends.py --collect-only
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     <Module 'test_backends.py'>
@@ -265,7 +275,7 @@ And then when we run the test::
     ======= FAILURES ========
     _______ test_db_initialized[d2] ________
     
-    db = <conftest.DB2 instance at 0xdeadbeef>
+    db = <conftest.DB2 object at 0xdeadbeef>
     
         def test_db_initialized(db):
             # a dummy test
@@ -288,7 +298,7 @@ parameter on particular arguments. It can be done by passing list or tuple of
 arguments' names to ``indirect``. In the example below there is a function ``test_indirect`` which uses
 two fixtures: ``x`` and ``y``. Here we give to indirect the list, which contains the name of the
 fixture ``x``. The indirect parameter will be applied to this argument only, and the value ``a``
-will be passed to respective fixture function.
+will be passed to respective fixture function::
 
     # content of test_indirect_list.py
 
@@ -306,17 +316,17 @@ will be passed to respective fixture function.
         assert x == 'aaa'
         assert y == 'b'
 
-The result of this test will be successful:
+The result of this test will be successful::
 
     $ py.test test_indirect_list.py --collect-only
-    ============================= test session starts ==============================
-    platform linux2 -- Python 2.7.3, pytest-2.8.0.dev4, py-1.4.30, pluggy-0.3.0
-    rootdir: /home/elizabeth/work/pytest, inifile: tox.ini
+    ======= test session starts ========
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
-    <Module 'testing/test_argnames.py'>
-      <Function 'test_simple[a-b]'>
-
-    ===============================  in 0.02 seconds ===============================
+    <Module 'test_indirect_list.py'>
+      <Function 'test_indirect[a-b]'>
+    
+    =======  in 0.12 seconds ========
 
 .. regendoc:wipe
 
@@ -361,7 +371,7 @@ argument sets to use for each test function.  Let's run it::
     ======= FAILURES ========
     _______ TestClass.test_equals[1-2] ________
     
-    self = <test_parametrize.TestClass instance at 0xdeadbeef>, a = 1, b = 2
+    self = <test_parametrize.TestClass object at 0xdeadbeef>, a = 1, b = 2
     
         def test_equals(self, a, b):
     >       assert a == b
@@ -389,8 +399,8 @@ Running it results in some skips if we don't have all the python interpreters in
    . $ py.test -rs -q multipython.py
    ssssssssssss...ssssssssssss
    ======= short test summary info ========
-   SKIP [12] $PWD/doc/en/example/multipython.py:22: 'python3.3' not found
-   SKIP [12] $PWD/doc/en/example/multipython.py:22: 'python2.6' not found
+   SKIP [12] $REGENDOC_TMPDIR/CWD/multipython.py:22: 'python3.3' not found
+   SKIP [12] $REGENDOC_TMPDIR/CWD/multipython.py:22: 'python2.6' not found
    3 passed, 24 skipped in 0.12 seconds
 
 Indirect parametrization of optional implementations/imports
@@ -438,7 +448,7 @@ If you run this with reporting for skips enabled::
 
     $ py.test -rs test_module.py
     ======= test session starts ========
-    platform linux2 -- Python 2.7.9, pytest-2.8.0.dev4, py-1.4.28, pluggy-0.3.0
+    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     

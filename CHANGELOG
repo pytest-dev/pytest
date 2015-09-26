@@ -4,6 +4,10 @@
 2.8.1.dev
 ---------
 
+- Fix issue #1064: ""--junitxml" regression when used with the
+  "pytest-xdist" plugin, with test reports being assigned to the wrong tests.
+  Thanks Daniel Grunwald for the report and Bruno Oliveira for the PR.
+
 - (experimental) adapt more SEMVER style versioning and change meaning of 
   master branch in git repo: "master" branch now keeps the bugfixes, changes 
   aimed for micro releases.  "features" branch will only be be released 
