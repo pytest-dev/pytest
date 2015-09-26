@@ -34,6 +34,16 @@ environment:
       PYTHON_ARCH: "64"
       TESTENV: "py34"
 
+    - PYTHON: "C:\\Python35"
+      PYTHON_VERSION: "3.5.x" # currently 3.5.0
+      PYTHON_ARCH: "32"
+      TESTENV: "py35"
+
+    - PYTHON: "C:\\Python35-x64"
+      PYTHON_VERSION: "3.5.x" # currently 3.5.0
+      PYTHON_ARCH: "64"
+      TESTENV: "py35"
+
     # Also test a Python version not pre-installed
     # See: https://github.com/ogrisel/python-appveyor-demo/issues/10
 
