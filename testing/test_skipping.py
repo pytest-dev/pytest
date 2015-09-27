@@ -399,6 +399,16 @@ class TestSkip(object):
         rec = testdir.inline_run()
         rec.assertoutcome(skipped=2, passed=1)
 
+    def test_skips_on_false_string(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.skip('False')
+            def test_foo():
+                pass
+        """)
+        rec = testdir.inline_run()
+        rec.assertoutcome(skipped=1)
+
     def test_skip_no_reason(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -430,14 +440,19 @@ class TestSkip(object):
             @pytest.mark.skip
             def test_foo():
                 pass
-            @pytest.mark.skip(reason="none")
-            def test_bar()  :
+            @pytest.mark.skip(reason="no reason")
+            def test_bar():
                 pass
             def test_baz():
                 assert True
         """)
-        rec = testdir.inline_run()
-        rec.assertoutcome(passed=1, skipped=2)
+        # cant use assertoutcome because we cant
+        # also check the reason
+        result = testdir.runpytest('-rs')
+        result.stdout.fnmatch_lines([
+            "*no reason*",
+            "*1 passed*2 skipped*",
+        ])
 
 class TestSkipif(object):
     def test_skipif_conditional(self, testdir):
