@@ -1,6 +1,11 @@
 2.8.1.dev
 ---------
 
+- 'deprecated_call' is now only satisfied with a DeprecationWarning or
+  PendingDeprecationWarning. Before 2.8.0, it accepted any warning, and 2.8.0
+  made it accept only DeprecationWarning (but not PendingDeprecationWarning).
+  Thanks Alex Gaynor for the issue and Eric Hunsberger for the PR.
+
 - fix issue #1073: avoid calling __getattr__ on potential plugin objects.
   This fixes an incompatibility with pytest-django.  Thanks Andreas Pelme,
   Bruno Oliveira and Ronny Pfannschmidt for contributing and Holger Krekel

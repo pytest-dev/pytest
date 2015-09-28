@@ -115,6 +115,14 @@ class TestDeprecatedCall(object):
         f = lambda: py.std.warnings.warn(PendingDeprecationWarning("hi"))
         pytest.deprecated_call(f)
 
+    def test_deprecated_call_specificity(self):
+        other_warnings = [Warning, UserWarning, SyntaxWarning, RuntimeWarning,
+                          FutureWarning, ImportWarning, UnicodeWarning]
+        for warning in other_warnings:
+            f = lambda: py.std.warnings.warn(warning("hi"))
+            with pytest.raises(AssertionError):
+                pytest.deprecated_call(f)
+
 
 class TestWarns(object):
     def test_strings(self):
