@@ -1,6 +1,11 @@
 2.8.1.dev
 ---------
 
+- fix issue #1073: avoid calling __getattr__ on potential plugin objects.
+  This fixes an incompatibility with pytest-django.  Thanks Andreas Pelme,
+  Bruno Oliveira and Ronny Pfannschmidt for contributing and Holger Krekel
+  for the fix.
+
 - Fix issue #704: handle versionconflict during plugin loading more
   gracefully.  Thanks Bruno Oliveira for the PR.
 
