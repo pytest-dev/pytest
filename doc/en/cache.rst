@@ -10,15 +10,6 @@ cache: working with cross-testrun state
   is compatible regarding command line options and API usage except that you
   can only store/receive data between test runs that is json-serializable.
 
-  If for any reason you want to disable this plugin, you can do so by
-  adding ``-p no:cacheprovider`` to the command-line, or more permanently
-  to your ``pytest.ini`` file:
-
-  .. code-block:: ini
-
-      [pytest]
-      addopts = -p no:cacheprovider
-
 
 Usage
 ---------
@@ -35,6 +26,12 @@ all cross-session cache contents ahead of a test run.
 
 Other plugins may access the `config.cache`_ object to set/get 
 **json encodable** values between ``py.test`` invocations.
+
+.. note::
+
+    This plugin is enabled by default, but can be disabled if needed: see
+    :ref:`cmdunregister` (the internal name for this plugin is
+    ``cacheprovider``).
 
 
 Rerunning only failures or failures first

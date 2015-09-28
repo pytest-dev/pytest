@@ -108,8 +108,21 @@ You can prevent plugins from loading or unregister them::
     py.test -p no:NAME
 
 This means that any subsequent try to activate/load the named
-plugin will it already existing.  See :ref:`findpluginname` for
-how to obtain the name of a plugin.
+plugin will not work.
+
+If you want to unconditionally disable a plugin for a project, you can add
+this option to your ``pytest.ini`` file:
+
+.. code-block:: ini
+
+      [pytest]
+      addopts = -p no:NAME
+
+Alternatively to disable it only in certain environments (for example in a
+CI server), you can set ``PYTEST_ADDOPTS`` environment variable to
+``-p no:name``.
+
+See :ref:`findpluginname` for how to obtain the name of a plugin.
 
 .. _`builtin plugins`:
 
@@ -123,6 +136,7 @@ in the `pytest repository <https://github.com/pytest-dev/pytest>`_.
 .. autosummary::
 
     _pytest.assertion
+    _pytest.cacheprovider
     _pytest.capture
     _pytest.config
     _pytest.doctest
