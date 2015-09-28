@@ -120,12 +120,6 @@ def _prepareconfig(args=None, plugins=None):
         raise
 
 
-def exclude_pytest_names(name):
-    return not name.startswith(name) or name == "pytest_plugins" or \
-           name.startswith("pytest_funcarg__")
-
-
-
 class PytestPluginManager(PluginManager):
     """
     Overwrites :py:class:`pluggy.PluginManager` to add pytest-specific
@@ -171,13 +165,13 @@ class PytestPluginManager(PluginManager):
         return self.add_hookspecs(module_or_class)
 
     def parse_hookimpl_opts(self, plugin, name):
-        if exclude_pytest_names(name):
-            return None
-
         # pytest hooks are always prefixed with pytest_
         # so we avoid accessing possibly non-readable attributes
         # (see issue #1073)
         if not name.startswith("pytest_"):
+            return
+        # ignore some historic special names which can not be hooks anyway
+        if name == "pytest_plugins" or name.startswith("pytest_funcarg__"):
             return
 
         method = getattr(plugin, name)
