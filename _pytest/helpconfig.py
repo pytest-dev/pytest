@@ -86,7 +86,7 @@ def showhelp(config):
     tw.line("to see available fixtures type: py.test --fixtures")
     tw.line("(shown according to specified file_or_dir or current dir "
             "if not specified)")
-    tw.line(str(reporter.stats))
+
     for warningreport in reporter.stats.get('warnings', []):
         tw.line("warning : " + warningreport.message, red=True)
     return
