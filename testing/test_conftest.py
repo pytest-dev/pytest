@@ -388,3 +388,19 @@ def test_search_conftest_up_to_inifile(testdir, confcutdir, passed, error):
     if error:
         match += '*%d error*' % error
     result.stdout.fnmatch_lines(match)
+
+
+def test_issue1073_conftest_special_objects(testdir):
+    testdir.makeconftest("""
+        class DontTouchMe:
+            def __getattr__(self, x):
+                raise Exception('cant touch me')
+
+        x = DontTouchMe()
+    """)
+    testdir.makepyfile("""
+        def test_some():
+            pass
+    """)
+    res = testdir.runpytest()
+    assert res.ret == 0

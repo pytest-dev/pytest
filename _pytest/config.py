@@ -174,6 +174,12 @@ class PytestPluginManager(PluginManager):
         if exclude_pytest_names(name):
             return None
 
+        # pytest hooks are always prefixed with pytest_
+        # so we avoid accessing possibly non-readable attributes
+        # (see issue #1073)
+        if not name.startswith("pytest_"):
+            return
+
         method = getattr(plugin, name)
         opts = super(PytestPluginManager, self).parse_hookimpl_opts(plugin, name)
         if opts is not None:
