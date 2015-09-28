@@ -1,6 +1,9 @@
 2.8.1.dev
 ---------
 
+- Fix issue #704: handle versionconflict during plugin loading more
+  gracefully.  Thanks Bruno Oliveira for the PR.
+
 - Fix issue #1064: ""--junitxml" regression when used with the
   "pytest-xdist" plugin, with test reports being assigned to the wrong tests.
   Thanks Daniel Grunwald for the report and Bruno Oliveira for the PR.
