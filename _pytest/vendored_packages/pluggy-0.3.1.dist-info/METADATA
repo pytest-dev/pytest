@@ -1,6 +1,6 @@
 Metadata-Version: 2.0
 Name: pluggy
-Version: 0.3.0
+Version: 0.3.1
 Summary: plugin and hook calling mechanisms for python
 Home-page: UNKNOWN
 Author: Holger Krekel
@@ -10,7 +10,7 @@ Platform: unix
 Platform: linux
 Platform: osx
 Platform: win32
-Classifier: Development Status :: 3 - Alpha 
+Classifier: Development Status :: 4 - Beta
 Classifier: Intended Audience :: Developers
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: POSIX
@@ -25,6 +25,7 @@ Classifier: Programming Language :: Python :: 2.7
 Classifier: Programming Language :: Python :: 3
 Classifier: Programming Language :: Python :: 3.3
 Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
 
 Plugin registration and hook calling for Python
 ===============================================
