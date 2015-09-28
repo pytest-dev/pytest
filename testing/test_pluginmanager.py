@@ -145,6 +145,23 @@ class TestPytestPluginInteractions:
         assert len(warnings) == len(before) + 1
         assert "deprecated" in warnings[-1]
 
+    def test_warn_on_deprecated_addhooks(self, pytestpm):
+        warnings = []
+
+        class get_warnings:
+            def pytest_logwarning(self, code, fslocation, message, nodeid):
+                warnings.append(message)
+
+        class Plugin:
+            def pytest_testhook():
+                pass
+
+        pytestpm.register(get_warnings())
+        before = list(warnings)
+        pytestpm.addhooks(Plugin())
+        assert len(warnings) == len(before) + 1
+        assert "deprecated" in warnings[-1]
+
 
 def test_namespace_has_default_and_env_plugins(testdir):
     p = testdir.makepyfile("""

@@ -159,6 +159,7 @@ class PytestPluginManager(PluginManager):
         """
         warning = dict(code="I2",
                        fslocation=py.code.getfslineno(sys._getframe(1)),
+                       nodeid=None,
                        message="use pluginmanager.add_hookspecs instead of "
                                "deprecated addhooks() method.")
         self._warn(warning)
