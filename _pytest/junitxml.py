@@ -1,9 +1,13 @@
-""" report test results in JUnit-XML format, for use with Hudson and build integration servers.
+"""
+    report test results in JUnit-XML format,
+    for use with Jenkins and build integration servers.
 
-Output conforms to https://github.com/jenkinsci/xunit-plugin/blob/master/src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd
 
 Based on initial code from Ross Lawley.
 """
+# Output conforms to https://github.com/jenkinsci/xunit-plugin/blob/master/
+# src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd
+
 import py
 import os
 import re
@@ -19,9 +23,9 @@ else:
     unicode = str
     long = int
 
+
 class Junit(py.xml.Namespace):
     pass
-
 
 # We need to get the subset of the invalid unicode ranges according to
 # XML 1.0 which are valid in this python build.  Hence we calculate
@@ -30,20 +34,18 @@ class Junit(py.xml.Namespace):
 #                    | [#x10000-#x10FFFF]
 _legal_chars = (0x09, 0x0A, 0x0d)
 _legal_ranges = (
-    (0x20, 0x7E),
-    (0x80, 0xD7FF),
-    (0xE000, 0xFFFD),
-    (0x10000, 0x10FFFF),
+    (0x20, 0x7E), (0x80, 0xD7FF), (0xE000, 0xFFFD), (0x10000, 0x10FFFF),
 )
-_legal_xml_re = [unicode("%s-%s") % (unichr(low), unichr(high))
-                  for (low, high) in _legal_ranges
-                  if low < sys.maxunicode]
+_legal_xml_re = [
+    unicode("%s-%s") % (unichr(low), unichr(high))
+    for (low, high) in _legal_ranges if low < sys.maxunicode
+]
 _legal_xml_re = [unichr(x) for x in _legal_chars] + _legal_xml_re
-illegal_xml_re = re.compile(unicode('[^%s]') %
-                            unicode('').join(_legal_xml_re))
+illegal_xml_re = re.compile(unicode('[^%s]') % unicode('').join(_legal_xml_re))
 del _legal_chars
 del _legal_ranges
 del _legal_xml_re
+
 
 def bin_xml_escape(arg):
     def repl(matchobj):
@@ -52,7 +54,9 @@ def bin_xml_escape(arg):
             return unicode('#x%02X') % i
         else:
             return unicode('#x%04X') % i
+
     return py.xml.raw(illegal_xml_re.sub(repl, py.xml.escape(arg)))
+
 
 @pytest.fixture
 def record_xml_property(request):
@@ -60,22 +64,34 @@ def record_xml_property(request):
     The fixture is callable with (name, value), with value being automatically
     xml-encoded.
     """
+
     def inner(name, value):
         if hasattr(request.config, "_xml"):
             request.config._xml.add_custom_property(name, value)
         msg = 'record_xml_property is an experimental feature'
-        request.config.warn(code='C3', message=msg,
+        request.config.warn(code='C3',
+                            message=msg,
                             fslocation=request.node.location[:2])
+
     return inner
+
 
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting")
-    group.addoption('--junitxml', '--junit-xml', action="store",
-           dest="xmlpath", metavar="path", default=None,
-           help="create junit-xml style report file at given path.")
-    group.addoption('--junitprefix', '--junit-prefix', action="store",
-           metavar="str", default=None,
-           help="prepend prefix to classnames in junit-xml output")
+    group.addoption(
+        '--junitxml', '--junit-xml',
+        action="store",
+        dest="xmlpath",
+        metavar="path",
+        default=None,
+        help="create junit-xml style report file at given path.")
+    group.addoption(
+        '--junitprefix', '--junit-prefix',
+        action="store",
+        metavar="str",
+        default=None,
+        help="prepend prefix to classnames in junit-xml output")
+
 
 def pytest_configure(config):
     xmlpath = config.option.xmlpath
@@ -84,16 +100,19 @@ def pytest_configure(config):
         config._xml = LogXML(xmlpath, config.option.junitprefix)
         config.pluginmanager.register(config._xml)
 
+
 def pytest_unconfigure(config):
     xml = getattr(config, '_xml', None)
     if xml:
         del config._xml
         config.pluginmanager.unregister(xml)
 
+
 def mangle_testnames(names):
     names = [x.replace(".py", "") for x in names if x != '()']
     names[0] = names[0].replace("/", '.')
     return names
+
 
 class LogXML(object):
     def __init__(self, logfile, prefix):
@@ -134,10 +153,10 @@ class LogXML(object):
         for capname in ('out', 'err'):
             allcontent = ""
             for name, content in report.get_sections("Captured std%s" %
-                                                    capname):
+                                                     capname):
                 allcontent += content
             if allcontent:
-                tag = getattr(Junit, 'system-'+capname)
+                tag = getattr(Junit, 'system-' + capname)
                 self.append(tag(bin_xml_escape(allcontent)))
 
     def append(self, obj):
@@ -150,10 +169,10 @@ class LogXML(object):
         if self.custom_properties:
             result = Junit.properties(
                 [
-                    Junit.property(name=name, value=value)
+                    Junit.property(name=name,
+                                   value=value)
                     for name, value in self.custom_properties.items()
-                ]
-            )
+                ])
             self.custom_properties.clear()
             return result
         return None
@@ -163,7 +182,7 @@ class LogXML(object):
         self._write_captured_output(report)
 
     def append_failure(self, report):
-        #msg = str(report.longrepr.reprtraceback.extraline)
+        # msg = str(report.longrepr.reprtraceback.extraline)
         if hasattr(report, "wasxfail"):
             self.append(
                 Junit.skipped(message="xfail-marked test passes unexpectedly"))
@@ -183,13 +202,13 @@ class LogXML(object):
         self._write_captured_output(report)
 
     def append_collect_error(self, report):
-        #msg = str(report.longrepr.reprtraceback.extraline)
+        # msg = str(report.longrepr.reprtraceback.extraline)
         self.append(Junit.error(bin_xml_escape(report.longrepr),
                                 message="collection failure"))
         self.errors += 1
 
     def append_collect_skipped(self, report):
-        #msg = str(report.longrepr.reprtraceback.extraline)
+        # msg = str(report.longrepr.reprtraceback.extraline)
         self.append(Junit.skipped(bin_xml_escape(report.longrepr),
                                   message="collection skipped"))
         self.skipped += 1
@@ -210,8 +229,7 @@ class LogXML(object):
             self.append(
                 Junit.skipped("%s:%s: %s" % (filename, lineno, skipreason),
                               type="pytest.skip",
-                              message=skipreason
-                ))
+                              message=skipreason))
         self.skipped += 1
         self._write_captured_output(report)
 
@@ -278,9 +296,10 @@ class LogXML(object):
         data = bin_xml_escape(excrepr)
         self.tests.append(
             Junit.testcase(
-                    Junit.error(data, message="internal error"),
-                    classname="pytest",
-                    name="internal"))
+                Junit.error(data,
+                            message="internal error"),
+                classname="pytest",
+                name="internal"))
 
     def pytest_sessionstart(self):
         self.suite_start_time = time.time()
@@ -302,9 +321,9 @@ class LogXML(object):
             failures=self.failed,
             skips=self.skipped,
             tests=numtests,
-            time="%.3f" % suite_time_delta,
-        ).unicode(indent=0))
+            time="%.3f" % suite_time_delta, ).unicode(indent=0))
         logfile.close()
 
     def pytest_terminal_summary(self, terminalreporter):
-        terminalreporter.write_sep("-", "generated xml file: %s" % (self.logfile))
+        terminalreporter.write_sep("-",
+                                   "generated xml file: %s" % (self.logfile))
