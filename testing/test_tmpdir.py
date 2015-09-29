@@ -136,15 +136,20 @@ def test_tmpdir_fallback_tox_env(testdir, monkeypatch):
     reprec.assertoutcome(passed=1)
 
 
+@pytest.fixture
+def break_getuser(monkeypatch):
+    monkeypatch.setattr('os.getuid', lambda: -1)
+    # taken from python 2.7/3.4
+    for envvar in ('LOGNAME', 'USER', 'LNAME', 'USERNAME'):
+        monkeypatch.delenv(envvar, raising=False)
+
+
+@pytest.mark.usefixtures("break_getuser")
 @pytest.mark.skipif(sys.platform.startswith('win'), reason='no os.getuid on windows')
-def test_tmpdir_fallback_uid_not_found(testdir, monkeypatch):
+def test_tmpdir_fallback_uid_not_found(testdir):
     """Test that tmpdir works even if the current process's user id does not
     correspond to a valid user.
     """
-    import os
-    monkeypatch.setattr(os, 'getuid', lambda: -1)
-    monkeypatch.delenv('USER', raising=False)
-    monkeypatch.delenv('USERNAME', raising=False)
 
     testdir.makepyfile("""
         import pytest
@@ -155,17 +160,13 @@ def test_tmpdir_fallback_uid_not_found(testdir, monkeypatch):
     reprec.assertoutcome(passed=1)
 
 
+@pytest.mark.usefixtures("break_getuser")
 @pytest.mark.skipif(sys.platform.startswith('win'), reason='no os.getuid on windows')
-def test_get_user_uid_not_found(monkeypatch):
+def test_get_user_uid_not_found():
     """Test that get_user() function works even if the current process's
     user id does not correspond to a valid user (e.g. running pytest in a
     Docker container with 'docker run -u'.
     """
-    import os
-    monkeypatch.setattr(os, 'getuid', lambda: -1)
-    monkeypatch.delenv('USER', raising=False)
-    monkeypatch.delenv('USERNAME', raising=False)
-
     from _pytest.tmpdir import get_user
     assert get_user() is None
 
