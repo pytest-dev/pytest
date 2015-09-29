@@ -226,7 +226,7 @@ def pytest_runtest_makereport(item, call):
                 longrepr = item._repr_failure_py(excinfo,
                                             style=item.config.option.tbstyle)
     for rwhen, key, content in item._report_sections:
-        sections.append(("Captured std%s %s" %(key, rwhen), content))
+        sections.append(("Captured %s %s" %(key, rwhen), content))
     return TestReport(item.nodeid, item.location,
                       keywords, outcome, longrepr, when,
                       sections, duration)
