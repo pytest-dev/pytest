@@ -209,19 +209,13 @@ but here is a simple overview:
    are unsure about either of these steps, submit your pull request and we'll
    help you fix it up.
 
-#. Finally, submit a pull request through the GitHub website:
-
-   .. image:: doc/en/img/pullrequest.png
-    :width: 700px
-    :align: center
-
-   ::
+#. Finally, submit a pull request through the GitHub website using this data::
 
     head-fork: YOUR_GITHUB_USERNAME/pytest
     compare: your-branch-name
 
     base-fork: pytest-dev/pytest
-    base: master          # if it's a feature
-    base: pytest-VERSION  # if it's a bugfix
+    base: master          # if it's a bugfix
+    base: feature         # if it's a feature
 
 

@@ -18,11 +18,16 @@ Full pytest documentation
    contributing
    plugins_index/index
    talks
-   funcarg_compare
-   announce/index
 
-.. toctree::
-   :hidden:
+.. only:: html
+   .. toctree::
 
-   changelog
+      funcarg_compare
+      announce/index
+
+.. only:: html
+   .. toctree::
+      :hidden:
+
+      changelog
 

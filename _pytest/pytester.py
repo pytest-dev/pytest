@@ -534,6 +534,20 @@ class Testdir:
         if path is None:
             path = self.tmpdir
         sys.path.insert(0, str(path))
+        # a call to syspathinsert() usually means that the caller
+        # wants to import some dynamically created files.
+        # with python3 we thus invalidate import caches.
+        self._possibly_invalidate_import_caches()
+
+    def _possibly_invalidate_import_caches(self):
+        # invalidate caches if we can (py33 and above)
+        try:
+            import importlib
+        except ImportError:
+            pass
+        else:
+            if hasattr(importlib, "invalidate_caches"):
+                importlib.invalidate_caches()
 
     def mkdir(self, name):
         """Create a new (sub)directory."""
