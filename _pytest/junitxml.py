@@ -262,10 +262,10 @@ class LogXML(object):
                 self.append_pass(report)
         elif report.failed:
             self._opentestcase(report)
-            if report.when != "call":
-                self.append_error(report)
-            else:
+            if report.when == "call":
                 self.append_failure(report)
+            else:
+                self.append_error(report)
         elif report.skipped:
             self._opentestcase(report)
             self.append_skipped(report)
