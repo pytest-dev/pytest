@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import re
 
 import pytest, py
@@ -117,6 +118,24 @@ class TestMetafunc:
         assert metafunc._calls[1].id == "x0-b"
         assert metafunc._calls[2].id == "x1-a"
         assert metafunc._calls[3].id == "x1-b"
+
+    @pytest.mark.skipif('sys.version_info[0] >= 3')
+    def test_unicode_idval_python2(self):
+        """unittest for the expected behavior to obtain ids for parametrized
+        unicode values in Python 2: if convertible to ascii, they should appear
+        as ascii values, otherwise fallback to hide the value behind the name
+        of the parametrized variable name. #1086
+        """
+        from _pytest.python import _idval
+        values = [
+            (u'', ''),
+            (u'ascii', 'ascii'),
+            (u'ação', 'a6'),
+            (u'josé@blah.com', 'a6'),
+            (u'δοκ.ιμή@παράδειγμα.δοκιμή', 'a6'),
+        ]
+        for val, expected in values:
+            assert _idval(val, 'a', 6, None) == expected
 
     @pytest.mark.issue250
     def test_idmaker_autoname(self):

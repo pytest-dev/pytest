@@ -1093,7 +1093,7 @@ def _idval(val, argname, idx, idfn):
         # convertible to ascii, return it as an str() object instead
         try:
             return str(val)
-        except UnicodeDecodeError:
+        except UnicodeError:
             # fallthrough
             pass
     return str(argname)+str(idx)
