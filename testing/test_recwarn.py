@@ -82,7 +82,7 @@ class TestDeprecatedCall(object):
 
     def test_deprecated_call_raises(self):
         excinfo = pytest.raises(AssertionError,
-                       "pytest.deprecated_call(dep, 3)")
+                                "pytest.deprecated_call(dep, 3)")
         assert str(excinfo).find("did not produce") != -1
 
     def test_deprecated_call(self):
@@ -106,7 +106,7 @@ class TestDeprecatedCall(object):
 
     def test_deprecated_explicit_call_raises(self):
         pytest.raises(AssertionError,
-                       "pytest.deprecated_call(dep_explicit, 3)")
+                      "pytest.deprecated_call(dep_explicit, 3)")
 
     def test_deprecated_explicit_call(self):
         pytest.deprecated_call(dep_explicit, 0)
@@ -121,6 +121,18 @@ class TestDeprecatedCall(object):
     def test_deprecated_call_as_context_manager(self):
         with pytest.deprecated_call():
             dep(0)
+
+    def test_deprecated_call_pending(self):
+        f = lambda: py.std.warnings.warn(PendingDeprecationWarning("hi"))
+        pytest.deprecated_call(f)
+
+    def test_deprecated_call_specificity(self):
+        other_warnings = [Warning, UserWarning, SyntaxWarning, RuntimeWarning,
+                          FutureWarning, ImportWarning, UnicodeWarning]
+        for warning in other_warnings:
+            f = lambda: py.std.warnings.warn(warning("hi"))
+            with pytest.raises(AssertionError):
+                pytest.deprecated_call(f)
 
 
 class TestWarns(object):
@@ -192,4 +204,3 @@ class TestWarns(object):
         ''')
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(['*2 passed in*'])
-

@@ -27,11 +27,11 @@ now execute the test specification::
 
     nonpython $ py.test test_simple.yml
     ======= test session starts ========
-    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile: 
     collected 2 items
     
-    test_simple.yml .F
+    test_simple.yml F.
     
     ======= FAILURES ========
     _______ usecase: hello ________
@@ -59,13 +59,13 @@ consulted when reporting in ``verbose`` mode::
 
     nonpython $ py.test -v
     ======= test session starts ========
-    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.4
+    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.4
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile: 
     collecting ... collected 2 items
     
-    test_simple.yml::ok PASSED
     test_simple.yml::hello FAILED
+    test_simple.yml::ok PASSED
     
     ======= FAILURES ========
     _______ usecase: hello ________
@@ -81,11 +81,11 @@ interesting to just look at the collection tree::
 
     nonpython $ py.test --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.4.2, pytest-2.8.1.dev1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile: 
     collected 2 items
     <YamlFile 'test_simple.yml'>
-      <YamlItem 'ok'>
       <YamlItem 'hello'>
+      <YamlItem 'ok'>
     
     =======  in 0.12 seconds ========

@@ -2,7 +2,28 @@
 ---------
  
 2.8.1.dev
+2.8.2.dev
 ---------
+
+
+2.8.1
+-----
+
+- fix #1034: Add missing nodeid on pytest_logwarning call in
+  addhook.  Thanks Simon Gomizelj for the PR.
+
+- 'deprecated_call' is now only satisfied with a DeprecationWarning or
+  PendingDeprecationWarning. Before 2.8.0, it accepted any warning, and 2.8.0
+  made it accept only DeprecationWarning (but not PendingDeprecationWarning).
+  Thanks Alex Gaynor for the issue and Eric Hunsberger for the PR.
+
+- fix issue #1073: avoid calling __getattr__ on potential plugin objects.
+  This fixes an incompatibility with pytest-django.  Thanks Andreas Pelme,
+  Bruno Oliveira and Ronny Pfannschmidt for contributing and Holger Krekel
+  for the fix.
+
+- Fix issue #704: handle versionconflict during plugin loading more
+  gracefully.  Thanks Bruno Oliveira for the PR.
 
 - Fix issue #1064: ""--junitxml" regression when used with the
   "pytest-xdist" plugin, with test reports being assigned to the wrong tests.

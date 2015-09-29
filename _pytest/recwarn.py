@@ -44,7 +44,8 @@ def deprecated_call(func=None, *args, **kwargs):
         warnings.simplefilter('always')  # ensure all warnings are triggered
         ret = func(*args, **kwargs)
 
-    if not any(r.category is DeprecationWarning for r in wrec):
+    depwarnings = (DeprecationWarning, PendingDeprecationWarning)
+    if not any(r.category in depwarnings for r in wrec):
         __tracebackhide__ = True
         raise AssertionError("%r did not produce DeprecationWarning" % (func,))
 
