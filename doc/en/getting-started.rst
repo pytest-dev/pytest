@@ -106,7 +106,6 @@ Running it with, this time in "quiet" reporting mode::
     .
     1 passed in 0.12 seconds
 
-.. todo:: For further ways to assert exceptions see the `raises`
 
 Grouping multiple tests in a class
 --------------------------------------------------------------
