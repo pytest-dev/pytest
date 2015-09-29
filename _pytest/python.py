@@ -1053,10 +1053,14 @@ if _PY3:
            want to return escaped bytes for any byte, even if they match
            a utf-8 string.
         """
-        # source: http://goo.gl/bGsnwC
-        import codecs
-        encoded_bytes, _ = codecs.escape_encode(val)
-        return encoded_bytes.decode('ascii')
+        if val:
+            # source: http://goo.gl/bGsnwC
+            import codecs
+            encoded_bytes, _ = codecs.escape_encode(val)
+            return encoded_bytes.decode('ascii')
+        else:
+            # empty bytes crashes codecs.escape_encode (#1087)
+            return ''
 else:
     def _escape_bytes(val):
         """
@@ -1064,7 +1068,7 @@ else:
         is a full ascii string, otherwise escape it into its binary form.
         """
         try:
-            return val.encode('ascii')
+            return val.decode('ascii')
         except UnicodeDecodeError:
             return val.encode('string-escape')
 

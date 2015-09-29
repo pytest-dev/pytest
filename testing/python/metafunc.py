@@ -137,6 +137,23 @@ class TestMetafunc:
         for val, expected in values:
             assert _idval(val, 'a', 6, None) == expected
 
+    def test_bytes_idval(self):
+        """unittest for the expected behavior to obtain ids for parametrized
+        bytes values:
+        - python2: non-ascii strings are considered bytes and formatted using
+        "binary escape", where any byte < 127 is escaped into its hex form.
+        - python3: bytes objects are always escaped using "binary escape".
+        """
+        from _pytest.python import _idval
+        values = [
+            (b'', ''),
+            (b'\xc3\xb4\xff\xe4', '\\xc3\\xb4\\xff\\xe4'),
+            (b'ascii', 'ascii'),
+            (u'αρά'.encode('utf-8'), '\\xce\\xb1\\xcf\\x81\\xce\\xac'),
+        ]
+        for val, expected in values:
+            assert _idval(val, 'a', 6, None) == expected
+
     @pytest.mark.issue250
     def test_idmaker_autoname(self):
         from _pytest.python import idmaker
