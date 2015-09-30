@@ -778,7 +778,7 @@ class TestTracebackCutting:
 
         tb = py.code.Traceback(tb)
         assert isinstance(tb[-1].path, str)  # symptom of the py.code bug
-        assert filter_traceback(tb[-1])
+        assert not filter_traceback(tb[-1])
 
 
 class TestReportInfo:
