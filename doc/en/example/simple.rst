@@ -136,12 +136,14 @@ We can now write a test module like this::
     # content of test_module.py
 
     import pytest
-    slow = pytest.mark.slow
 
     def test_func_fast():
         pass
 
-    @slow
+    @pytest.mark.skipif(
+        not pytest.config.getoption("--runslow"),
+        reason="need --runslow option to run"
+    )
     def test_func_slow():
         pass
 
