@@ -1041,6 +1041,8 @@ class Metafunc(FuncargnamesCompatAttr):
 
 
 if _PY3:
+    import codecs
+
     def _escape_bytes(val):
         """
         If val is pure ascii, returns it as a str(), otherwise escapes
@@ -1055,7 +1057,6 @@ if _PY3:
         """
         if val:
             # source: http://goo.gl/bGsnwC
-            import codecs
             encoded_bytes, _ = codecs.escape_encode(val)
             return encoded_bytes.decode('ascii')
         else:
@@ -1064,7 +1065,7 @@ if _PY3:
 else:
     def _escape_bytes(val):
         """
-        In py2 bytes and str are the same, so return it unchanged if it
+        In py2 bytes and str are the same type, so return it unchanged if it
         is a full ascii string, otherwise escape it into its binary form.
         """
         try:
