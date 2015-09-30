@@ -733,6 +733,54 @@ class TestTracebackCutting:
             "E*NameError*",
         ])
 
+    def test_traceback_filter_error_during_fixture_collection(self, testdir):
+        """integration test for issue #995.
+        """
+        testdir.makepyfile("""
+            import pytest
+
+            def fail_me(func):
+                ns = {}
+                exec('def w(): raise ValueError("fail me")', ns)
+                return ns['w']
+
+            @pytest.fixture(scope='class')
+            @fail_me
+            def fail_fixture():
+                pass
+
+            def test_failing_fixture(fail_fixture):
+               pass
+        """)
+        result = testdir.runpytest()
+        assert result.ret != 0
+        out = result.stdout.str()
+        assert "INTERNALERROR>" not in out
+        result.stdout.fnmatch_lines([
+            "*ValueError: fail me*",
+            "* 1 error in *",
+        ])
+
+    def test_filter_traceback_accepts_non_paths(self):
+        """test that filter_traceback() works around py.code.Code bug
+        where sometimes its "path" attribute is not a py.path.local object:
+            https://bitbucket.org/pytest-dev/py/issues/71
+        This fixes #995.
+        """
+        from _pytest.python import filter_traceback
+        try:
+            ns = {}
+            exec('def foo(): raise ValueError', ns)
+            ns['foo']()
+        except ValueError:
+            import sys
+            _, _, tb = sys.exc_info()
+
+        tb = py.code.Traceback(tb)
+        assert isinstance(tb[-1].path, str)  # symptom of the py.code bug
+        assert filter_traceback(tb[-1])
+
+
 class TestReportInfo:
     def test_itemreport_reportinfo(self, testdir, linecomp):
         testdir.makeconftest("""

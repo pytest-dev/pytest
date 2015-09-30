@@ -49,7 +49,10 @@ def _has_positional_arg(func):
 
 
 def filter_traceback(entry):
-    return entry.path != cutdir1 and not entry.path.relto(cutdir2)
+    # ensure entry.path is always a py.path.local object
+    # see https://bitbucket.org/pytest-dev/py/issues/71
+    path = py.path.local(entry.path)
+    return path != cutdir1 and not path.relto(cutdir2)
 
 
 def get_real_func(obj):
