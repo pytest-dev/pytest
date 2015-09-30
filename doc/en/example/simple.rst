@@ -131,10 +131,6 @@ line option to control skipping of ``slow`` marked tests::
         parser.addoption("--runslow", action="store_true",
             help="run slow tests")
 
-    def pytest_runtest_setup(item):
-        if 'slow' in item.keywords and not item.config.getoption("--runslow"):
-            pytest.skip("need --runslow option to run")
-
 We can now write a test module like this::
 
     # content of test_module.py
