@@ -332,12 +332,12 @@ after others, i.e.  the position in the ``N``-sized list of functions:
 .. code-block:: python
 
     # Plugin 1
-    @pytest.mark.tryfirst
+    @pytest.hookimpl(tryfirst=True)
     def pytest_collection_modifyitems(items):
         # will execute as early as possible
 
     # Plugin 2
-    @pytest.mark.trylast
+    @pytest.hookimpl(trylast=True)
     def pytest_collection_modifyitems(items):
         # will execute as late as possible
 
