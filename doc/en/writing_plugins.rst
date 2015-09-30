@@ -332,17 +332,17 @@ after others, i.e.  the position in the ``N``-sized list of functions:
 .. code-block:: python
 
     # Plugin 1
-    @pytest.hookimpl_spec(tryfirst=True)
+    @pytest.hookimpl(tryfirst=True)
     def pytest_collection_modifyitems(items):
         # will execute as early as possible
 
     # Plugin 2
-    @pytest.hookimpl_spec(trylast=True)
+    @pytest.hookimpl(trylast=True)
     def pytest_collection_modifyitems(items):
         # will execute as late as possible
 
     # Plugin 3
-    @pytest.hookimpl_spec(hookwrapper=True)
+    @pytest.hookimpl(hookwrapper=True)
     def pytest_collection_modifyitems(items):
         # will execute even before the tryfirst one above!
         outcome = yield
