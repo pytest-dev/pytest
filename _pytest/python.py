@@ -1048,6 +1048,8 @@ class Metafunc(FuncargnamesCompatAttr):
 
 
 if _PY3:
+    import codecs
+
     def _escape_bytes(val):
         """
         If val is pure ascii, returns it as a str(), otherwise escapes
@@ -1060,18 +1062,21 @@ if _PY3:
            want to return escaped bytes for any byte, even if they match
            a utf-8 string.
         """
-        # source: http://goo.gl/bGsnwC
-        import codecs
-        encoded_bytes, _ = codecs.escape_encode(val)
-        return encoded_bytes.decode('ascii')
+        if val:
+            # source: http://goo.gl/bGsnwC
+            encoded_bytes, _ = codecs.escape_encode(val)
+            return encoded_bytes.decode('ascii')
+        else:
+            # empty bytes crashes codecs.escape_encode (#1087)
+            return ''
 else:
     def _escape_bytes(val):
         """
-        In py2 bytes and str are the same, so return it unchanged if it
+        In py2 bytes and str are the same type, so return it unchanged if it
         is a full ascii string, otherwise escape it into its binary form.
         """
         try:
-            return val.encode('ascii')
+            return val.decode('ascii')
         except UnicodeDecodeError:
             return val.encode('string-escape')
 
@@ -1100,7 +1105,7 @@ def _idval(val, argname, idx, idfn):
         # convertible to ascii, return it as an str() object instead
         try:
             return str(val)
-        except UnicodeDecodeError:
+        except UnicodeError:
             # fallthrough
             pass
     return str(argname)+str(idx)
