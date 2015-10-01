@@ -148,15 +148,24 @@ class MarkEvaluator(object):
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_runtest_setup(item):
-    eval_skipif = MarkEvaluator(item, 'skipif')
+    # Check if skip or skipif are specified as pytest marks
 
-    if eval_skipif.istrue():
-        item._evalskip = eval_skipif
-        pytest.skip(eval_skipif.getexplanation())
-    elif isinstance(item.keywords.get('skip'), MarkInfo):
-        eval_skip = MarkEvaluator(item, 'skip')
-        item._evalskip = eval_skip
-        pytest.skip(eval_skip.getexplanation())
+    skipif_info = item.keywords.get('skipif')
+    if isinstance(skipif_info, MarkInfo):
+        eval_skipif = MarkEvaluator(item, 'skipif')
+        if eval_skipif.istrue():
+            item._evalskip = eval_skipif
+            pytest.skip(eval_skipif.getexplanation())
+
+    skip_info = item.keywords.get('skip')
+    if isinstance(skip_info, MarkInfo):
+        item._evalskip = True
+        if 'reason' in skip_info.kwargs:
+            pytest.skip(skip_info.kwargs['reason'])
+        elif skip_info.args:
+            pytest.skip(skip_info.args[0])
+        else:
+            pytest.skip()
 
     item._evalxfail = MarkEvaluator(item, 'xfail')
     check_xfail_no_run(item)

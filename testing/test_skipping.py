@@ -409,6 +409,19 @@ class TestSkip(object):
         rec = testdir.inline_run()
         rec.assertoutcome(skipped=1)
 
+    def test_arg_as_reason(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.skip('testing stuff')
+            def test_bar():
+                pass
+        """)
+        result = testdir.runpytest('-rs')
+        result.stdout.fnmatch_lines([
+            "*testing stuff*",
+            "*1 skipped*",
+        ])
+
     def test_skip_no_reason(self, testdir):
         testdir.makepyfile("""
             import pytest
