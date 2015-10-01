@@ -4,6 +4,7 @@ import sys
 from _pytest.skipping import MarkEvaluator, folded_skips, pytest_runtest_setup
 from _pytest.runner import runtestprotocol
 
+
 class TestEvaluator(object):
     def test_no_marker(self, testdir):
         item = testdir.getitem("def test_func(): pass")

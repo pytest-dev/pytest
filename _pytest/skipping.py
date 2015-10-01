@@ -7,11 +7,13 @@ import py
 import pytest
 from _pytest.mark import MarkInfo
 
+
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group.addoption('--runxfail',
            action="store_true", dest="runxfail", default=False,
            help="run tests even if they are marked xfail")
+
 
 def pytest_configure(config):
     if config.option.runxfail:
@@ -39,17 +41,21 @@ def pytest_configure(config):
         "See http://pytest.org/latest/skipping.html"
     )
 
+
 def pytest_namespace():
     return dict(xfail=xfail)
 
+
 class XFailed(pytest.fail.Exception):
     """ raised from an explicit call to pytest.xfail() """
+
 
 def xfail(reason=""):
     """ xfail an executing test or setup functions with the given reason."""
     __tracebackhide__ = True
     raise XFailed(reason)
 xfail.Exception = XFailed
+
 
 class MarkEvaluator(object):
     def __init__(self, item, name):
