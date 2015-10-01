@@ -416,8 +416,11 @@ class TestSkip(object):
             def test_foo():
                 pass
         """)
-        rec = testdir.inline_run()
-        rec.assertoutcome(skipped=1)
+        result = testdir.runpytest('-rs')
+        result.stdout.fnmatch_lines([
+            "*Skipped instance*",
+            "*1 skipped*",
+        ])
 
     def test_skip_with_reason(self, testdir):
         testdir.makepyfile("""
