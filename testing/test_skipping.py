@@ -4,7 +4,7 @@ import sys
 from _pytest.skipping import MarkEvaluator, folded_skips, pytest_runtest_setup
 from _pytest.runner import runtestprotocol
 
-class TestEvaluator:
+class TestEvaluator(object):
     def test_no_marker(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         evalskipif = MarkEvaluator(item, 'skipif')
@@ -125,7 +125,7 @@ class TestEvaluator:
         assert expl == "condition: config._hackxyz"
 
 
-class TestXFail:
+class TestXFail(object):
     def test_xfail_simple(self, testdir):
         item = testdir.getitem("""
             import pytest
@@ -350,7 +350,7 @@ class TestXFail:
         ])
 
 
-class TestXFailwithSetupTeardown:
+class TestXFailwithSetupTeardown(object):
     def test_failing_setup_issue9(self, testdir):
         testdir.makepyfile("""
             import pytest
