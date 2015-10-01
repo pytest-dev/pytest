@@ -155,9 +155,8 @@ def pytest_runtest_setup(item):
         pytest.skip(eval_skipif.getexplanation())
     elif isinstance(item.keywords.get('skip'), MarkInfo):
         eval_skip = MarkEvaluator(item, 'skip')
-        if eval_skip.istrue():
-            item._evalskip = eval_skip
-            pytest.skip(eval_skip.getexplanation())
+        item._evalskip = eval_skip
+        pytest.skip(eval_skip.getexplanation())
 
     item._evalxfail = MarkEvaluator(item, 'xfail')
     check_xfail_no_run(item)
