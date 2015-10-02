@@ -1214,7 +1214,7 @@ def raises(expected_exception, *args, **kwargs):
                    assert 1 == 1  # this will execute as expected
                    raise OSError(errno.EEXISTS, 'directory exists')
 
-               assert err.errno = errno.EEXISTS  # this will now execute 
+               assert err.errno = errno.EEXISTS  # this will now execute
 
     Or you can specify a callable by passing a to-be-called lambda::
 
