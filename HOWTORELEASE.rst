@@ -40,6 +40,7 @@ Note: this assumes you have already registered on pypi.
    installed::
 
       cd doc/en
+      python plugins_index/plugins_index.py
       make html
 
    Commit any changes before tagging the release.
