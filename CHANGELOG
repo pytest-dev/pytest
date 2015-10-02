@@ -14,6 +14,10 @@
   Thanks Daniel Hahler, Ashley C Straw, Philippe Gauthier and Pavel Savchenko
   for contributing and Bruno Oliveira for the PR.
 
+- fix #1100 and #1057: errors when using autouse fixtures and doctest modules.
+  Thanks Sergey B Kirpichev and Vital Kudzelka for contributing and Bruno
+  Oliveira for the PR.
+
 2.8.1
 -----
 
