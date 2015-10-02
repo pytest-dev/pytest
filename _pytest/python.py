@@ -1194,6 +1194,28 @@ def raises(expected_exception, *args, **kwargs):
         >>> with raises(ZeroDivisionError):
         ...    1/0
 
+    .. note::
+
+       When using ``pytest.raises`` as a context manager, it's worthwhile to
+       note that normal context manager rules apply and that the exception
+       raised *must* be the final line in the scope of the context manager.
+       Lines of code after that, within the scope of the context manager will
+       not be executed. For example::
+
+           >>> with raises(OSError) as err:
+                   assert 1 == 1  # this will execute as expected
+                   raise OSError(errno.EEXISTS, 'directory exists')
+                   assert err.errno = errno.EEXISTS  # this will not execute
+
+       Instead, the following approach must be taken (note the difference in
+       scope)::
+
+           >>> with raises(OSError) as err:
+                   assert 1 == 1  # this will execute as expected
+                   raise OSError(errno.EEXISTS, 'directory exists')
+
+               assert err.errno = errno.EEXISTS  # this will now execute 
+
     Or you can specify a callable by passing a to-be-called lambda::
 
         >>> raises(ZeroDivisionError, lambda: 1/0)
