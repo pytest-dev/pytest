@@ -1194,6 +1194,25 @@ def raises(expected_exception, *args, **kwargs):
         >>> with raises(ZeroDivisionError):
         ...    1/0
 
+    Or you can specify a callable by passing a to-be-called lambda::
+
+        >>> raises(ZeroDivisionError, lambda: 1/0)
+        <ExceptionInfo ...>
+
+    or you can specify an arbitrary callable with arguments::
+
+        >>> def f(x): return 1/x
+        ...
+        >>> raises(ZeroDivisionError, f, 0)
+        <ExceptionInfo ...>
+        >>> raises(ZeroDivisionError, f, x=0)
+        <ExceptionInfo ...>
+
+    A third possibility is to use a string to be executed::
+
+        >>> raises(ZeroDivisionError, "f(0)")
+        <ExceptionInfo ...>
+
     .. note::
 
        When using ``pytest.raises`` as a context manager, it's worthwhile to
@@ -1215,25 +1234,6 @@ def raises(expected_exception, *args, **kwargs):
                    raise OSError(errno.EEXISTS, 'directory exists')
 
                assert err.errno = errno.EEXISTS  # this will now execute
-
-    Or you can specify a callable by passing a to-be-called lambda::
-
-        >>> raises(ZeroDivisionError, lambda: 1/0)
-        <ExceptionInfo ...>
-
-    or you can specify an arbitrary callable with arguments::
-
-        >>> def f(x): return 1/x
-        ...
-        >>> raises(ZeroDivisionError, f, 0)
-        <ExceptionInfo ...>
-        >>> raises(ZeroDivisionError, f, x=0)
-        <ExceptionInfo ...>
-
-    A third possibility is to use a string to be executed::
-
-        >>> raises(ZeroDivisionError, "f(0)")
-        <ExceptionInfo ...>
 
     Performance note:
     -----------------
