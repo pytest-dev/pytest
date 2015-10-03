@@ -443,8 +443,6 @@ class TestSkip:
             def test_bar():
                 pass
         """)
-        # cant use assertoutcome because we cant
-        # also check the reason
         result = testdir.runpytest('-rs')
         result.stdout.fnmatch_lines([
             "*for lolz*",
@@ -463,8 +461,6 @@ class TestSkip:
             def test_baz():
                 assert True
         """)
-        # cant use assertoutcome because we cant
-        # also check the reason
         result = testdir.runpytest('-rs')
         result.stdout.fnmatch_lines([
             "*no reason*",
