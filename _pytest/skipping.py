@@ -171,7 +171,7 @@ def pytest_runtest_setup(item):
         elif skip_info.args:
             pytest.skip(skip_info.args[0])
         else:
-            pytest.skip()
+            pytest.skip("unconditional skip")
 
     item._evalxfail = MarkEvaluator(item, 'xfail')
     check_xfail_no_run(item)
