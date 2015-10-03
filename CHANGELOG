@@ -1,6 +1,8 @@
-2.9.0.dev 
+2.9.0.dev
 ---------
- 
+
+* Add unconditional skip mechanism (`pytest.mark.skip`)
+
 2.8.1.dev
 2.8.2.dev
 ---------
@@ -29,9 +31,9 @@
   "pytest-xdist" plugin, with test reports being assigned to the wrong tests.
   Thanks Daniel Grunwald for the report and Bruno Oliveira for the PR.
 
-- (experimental) adapt more SEMVER style versioning and change meaning of 
-  master branch in git repo: "master" branch now keeps the bugfixes, changes 
-  aimed for micro releases.  "features" branch will only be be released 
+- (experimental) adapt more SEMVER style versioning and change meaning of
+  master branch in git repo: "master" branch now keeps the bugfixes, changes
+  aimed for micro releases.  "features" branch will only be be released
   with minor or major pytest releases.
 
 - Fix issue #766 by removing documentation references to distutils.
@@ -57,7 +59,7 @@
 -----------------------------
 
 - new ``--lf`` and ``-ff`` options to run only the last failing tests or
-  "failing tests first" from the last run.  This functionality is provided 
+  "failing tests first" from the last run.  This functionality is provided
   through porting the formerly external pytest-cache plugin into pytest core.
   BACKWARD INCOMPAT: if you used pytest-cache's functionality to persist
   data between test runs be aware that we don't serialize sets anymore.
@@ -163,9 +165,9 @@
 
 - fix issue735: assertion failures on debug versions of Python 3.4+
 
-- new option ``--import-mode`` to allow to change test module importing 
-  behaviour to append to sys.path instead of prepending.  This better allows 
-  to run test modules against installated versions of a package even if the 
+- new option ``--import-mode`` to allow to change test module importing
+  behaviour to append to sys.path instead of prepending.  This better allows
+  to run test modules against installated versions of a package even if the
   package under test has the same import root.  In this example::
 
         testing/__init__.py
@@ -173,7 +175,7 @@
         pkg_under_test/
 
   the tests will run against the installed version
-  of pkg_under_test when ``--import-mode=append`` is used whereas 
+  of pkg_under_test when ``--import-mode=append`` is used whereas
   by default they would always pick up the local version.  Thanks Holger Krekel.
 
 - pytester: add method ``TmpTestdir.delete_loaded_modules()``, and call it
