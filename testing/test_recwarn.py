@@ -79,6 +79,7 @@ def dep_explicit(i):
                                       filename="hello", lineno=3)
 
 class TestDeprecatedCall(object):
+
     def test_deprecated_call_raises(self):
         excinfo = pytest.raises(AssertionError,
                                 "pytest.deprecated_call(dep, 3)")
@@ -110,6 +111,16 @@ class TestDeprecatedCall(object):
     def test_deprecated_explicit_call(self):
         pytest.deprecated_call(dep_explicit, 0)
         pytest.deprecated_call(dep_explicit, 0)
+
+    def test_deprecated_call_as_context_manager_no_warning(self):
+        with pytest.raises(pytest.fail.Exception) as ex:
+            with pytest.deprecated_call():
+                dep(1)
+        assert str(ex.value) == "DID NOT WARN"
+
+    def test_deprecated_call_as_context_manager(self):
+        with pytest.deprecated_call():
+            dep(0)
 
     def test_deprecated_call_pending(self):
         f = lambda: py.std.warnings.warn(PendingDeprecationWarning("hi"))
