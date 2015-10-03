@@ -126,7 +126,7 @@ class TestEvaluator:
         assert expl == "condition: config._hackxyz"
 
 
-class TestXFail(object):
+class TestXFail:
     def test_xfail_simple(self, testdir):
         item = testdir.getitem("""
             import pytest
