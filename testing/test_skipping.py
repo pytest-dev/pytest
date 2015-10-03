@@ -455,7 +455,7 @@ class TestSkip:
             @pytest.mark.skip
             def test_foo():
                 pass
-            @pytest.mark.skip(reason="no reason")
+            @pytest.mark.skip(reason="nothing in particular")
             def test_bar():
                 pass
             def test_baz():
@@ -463,7 +463,7 @@ class TestSkip:
         """)
         result = testdir.runpytest('-rs')
         result.stdout.fnmatch_lines([
-            "*no reason*",
+            "*nothing in particular*",
             "*1 passed*2 skipped*",
         ])
 
