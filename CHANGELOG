@@ -1,9 +1,9 @@
 2.9.0.dev
 ---------
 
-* Add unconditional skip mechanism (`pytest.mark.skip`)
+* New `pytest.mark.skip` mark, which unconditional skips marked tests.
+  Thanks Michael Aquilina for the complete PR.
 
-2.8.1.dev
 2.8.2.dev
 ---------
 
