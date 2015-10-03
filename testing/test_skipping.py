@@ -432,7 +432,7 @@ class TestSkip:
         """)
         result = testdir.runpytest('-rs')
         result.stdout.fnmatch_lines([
-            "*Skipped instance*",
+            "*unconditional skip*",
             "*1 skipped*",
         ])
 
