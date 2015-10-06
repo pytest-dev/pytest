@@ -1,5 +1,5 @@
-2.8.2.dev
----------
+2.8.2
+-----
 
 - fix #1085: proper handling of encoding errors when passing encoded byte
   strings to pytest.parametrize in Python 2.
