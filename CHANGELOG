@@ -1,6 +1,8 @@
 2.8.3.dev
 ---------
 
+- fix #1035: collecting tests if test module level obj has __getattr__().
+  Thanks Suor for the report and Bruno Oliveira / Tom Viner for the PR.
 
 2.8.2
 -----
