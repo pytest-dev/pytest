@@ -3,6 +3,8 @@
 
 * New `pytest.mark.skip` mark, which unconditional skips marked tests.
   Thanks Michael Aquilina for the complete PR.
+* fix issue #680: the -s and -c options should now work under xdist;
+  `Config.fromdictargs` now represents its input much more faithfully.
 
 2.8.2.dev
 ---------
