@@ -309,6 +309,11 @@ class TestConfigFromdictargs:
         }
 
         cwd = tmpdir.join('a/b')
+        cwd.join('pytest.ini').ensure().write(py.code.Source("""
+            [pytest]
+            name = wrong-value
+            should_not_be_set = true
+        """))
         with cwd.ensure(dir=True).as_cwd():
             config = Config.fromdictargs(option_dict, ())
 
@@ -319,6 +324,7 @@ class TestConfigFromdictargs:
         # this indicates this is the file used for getting configuration values
         assert config.inifile == inifile
         assert config.inicfg.get('name') == 'value'
+        assert config.inicfg.get('should_not_be_set') is None
 
 
 def test_options_on_small_file_do_not_blow_up(testdir):
