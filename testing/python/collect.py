@@ -95,6 +95,16 @@ class TestClass:
             "*1 passed*",
         ])
 
+    def test_issue1035_obj_has_getattr(self, testdir):
+        modcol = testdir.getmodulecol("""
+            class Chameleon(object):
+                def __getattr__(self, name):
+                    return True
+            chameleon = Chameleon()
+        """)
+        colitems = modcol.collect()
+        assert len(colitems) == 0
+
 
 class TestGenerator:
     def test_generative_functions(self, testdir):

@@ -4,6 +4,7 @@ import fnmatch
 import functools
 import py
 import inspect
+import types
 import sys
 import pytest
 from _pytest.mark import MarkDecorator, MarkerError
@@ -43,6 +44,14 @@ else:
     def _format_args(func):
         return inspect.formatargspec(*inspect.getargspec(func))
 
+if  sys.version_info[:2] == (2, 6):
+    def isclass(object):
+        """ Return true if the object is a class. Overrides inspect.isclass for
+        python 2.6 because it will return True for objects which always return
+        something on __getattr__ calls (see #1035).
+        Backport of https://hg.python.org/cpython/rev/35bf8f7a8edc
+        """
+        return isinstance(object, (type, types.ClassType))
 
 def _has_positional_arg(func):
     return func.__code__.co_argcount
@@ -2137,7 +2146,7 @@ def num_mock_patch_args(function):
 
 def getfuncargnames(function, startindex=None):
     # XXX merge with main.py's varnames
-    #assert not inspect.isclass(function)
+    #assert not isclass(function)
     realfunction = function
     while hasattr(realfunction, "__wrapped__"):
         realfunction = realfunction.__wrapped__
