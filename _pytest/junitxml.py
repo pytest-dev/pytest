@@ -336,4 +336,3 @@ class LogXML(object):
     def pytest_terminal_summary(self, terminalreporter):
         terminalreporter.write_sep("-",
                                    "generated xml file: %s" % (self.logfile))
-        terminalreporter.write(str(self.stats))
