@@ -18,8 +18,13 @@ def runandparse(testdir, *args):
 
 def assert_attr(node, **kwargs):
     __tracebackhide__ = True
+    def nodeval(node, name):
+        anode = node.getAttributeNode(name)
+        if anode is not None:
+            return anode.value
+
     expected = dict((name, str(value)) for name, value in kwargs.items())
-    on_node = dict((name, node.getAttributeNode(name).value) for name in expected)
+    on_node = dict((name, nodeval(node, name)) for name in expected)
     assert on_node == expected
 
 
