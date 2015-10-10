@@ -184,6 +184,12 @@ class _NodeReporter(object):
         self._write_captured_output(report)
 
 
+    def finalize(self):
+        data = self.to_xml().unicode(indent=0)
+        self.__dict__.clear()
+        self.to_xml = lambda: py.xml.raw(data)
+
+
 @pytest.fixture
 def record_xml_property(request):
     """Fixture that adds extra xml properties to the tag for the calling test.
@@ -312,6 +318,8 @@ class LogXML(object):
             reporter = self._opentestcase(report)
             reporter.append_skipped(report)
         self.update_testcase_duration(report)
+        if report.when == "teardown":
+            self.nodereporter(report.nodeid).finalize()
 
     def update_testcase_duration(self, report):
         """accumulates total duration for nodeid from given report and updates
