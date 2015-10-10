@@ -64,10 +64,14 @@ class _NodeReporter(object):
         self.id = nodeid
         self.duration = 0
         self.properties = {}
+        self.property_insert_order = []
         self.testcase = None
 
     def add_property(self, name, value):
-        self.properties[str(name)] = bin_xml_escape(value)
+        name = str(name)
+        if name not in self.property_insert_order:
+            self.property_insert_order.append(name)
+        self.properties[name] = bin_xml_escape(value)
 
 
     def make_properties_node(self):
@@ -76,8 +80,8 @@ class _NodeReporter(object):
         """
         if self.properties:
             return Junit.properties([
-                Junit.property(name=name, value=value)
-                for name, value in self.properties.items()
+                Junit.property(name=name, value=self.properties[name])
+                for name in self.property_insert_order
             ])
 
 
