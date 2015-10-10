@@ -52,7 +52,7 @@ class DomNode(object):
 
     def find_by_tag(self, tag):
         t = type(self)
-        return map(t, self.__node.getElementsByTagName(tag))
+        return [t(x) for x in self.__node.getElementsByTagName(tag)]
 
     def __getitem__(self, key):
         node = self.__node.getAttributeNode(key)
