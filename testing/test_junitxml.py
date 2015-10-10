@@ -12,7 +12,6 @@ import pytest
 def runandparse(testdir, *args):
     resultpath = testdir.tmpdir.join("junit.xml")
     result = testdir.runpytest("--junitxml=%s" % resultpath, *args)
-    print(resultpath.read())
     xmldoc = minidom.parse(str(resultpath))
     return result, DomNode(xmldoc)
 
@@ -61,6 +60,7 @@ class DomNode(object):
             return node.value
 
     def assert_attr(self, **kwargs):
+        __tracebackhide__ = True
         return assert_attr(self.__node, **kwargs)
 
     def toxml(self):

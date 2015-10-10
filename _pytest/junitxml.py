@@ -132,8 +132,6 @@ class _NodeReporter(object):
                 tag = getattr(Junit, 'system-' + capname)
                 self.append(tag(bin_xml_escape(allcontent)))
 
-
-
     def append_pass(self, report):
         self.add_stats('passed')
         self._write_captured_output(report)
@@ -257,6 +255,7 @@ class LogXML(object):
             'skipped',
         ], 0)
         self.nodereporters = {}  # nodeid -> _NodeReporter
+        self.nodereporters_ordered = []
 
     def nodereporter(self, nodeid):
         if nodeid in self.nodereporters:
@@ -264,6 +263,7 @@ class LogXML(object):
             return self.nodereporters[nodeid]
         reporter = _NodeReporter(nodeid, self)
         self.nodereporters[nodeid] = reporter
+        self.nodereporters_ordered.append(reporter)
         return reporter
 
     def add_stats(self, key):
@@ -348,7 +348,7 @@ class LogXML(object):
 
         logfile.write('<?xml version="1.0" encoding="utf-8"?>')
         logfile.write(Junit.testsuite(
-            [x.to_xml() for x in self.nodereporters.values()],
+            [x.to_xml() for x in self.nodereporters_ordered],
             name="pytest",
             errors=self.stats['error'],
             failures=self.stats['failure'],
