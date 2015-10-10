@@ -87,10 +87,10 @@ def record_xml_property(request):
     The fixture is callable with (name, value), with value being automatically
     xml-encoded.
     """
-    request.config.warn(
+    request.node.warn(
         code='C3',
         message='record_xml_property is an experimental feature',
-        fslocation=request.node.location[:2])
+    )
     xml = getattr(request.config, "_xml", None)
     if xml is not None:
         nodereporter = xml.nodereporter(request.node.nodeid)
