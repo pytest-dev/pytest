@@ -12,6 +12,7 @@ import pytest
 def runandparse(testdir, *args):
     resultpath = testdir.tmpdir.join("junit.xml")
     result = testdir.runpytest("--junitxml=%s" % resultpath, *args)
+    print(resultpath.read())
     xmldoc = minidom.parse(str(resultpath))
     return result, DomNode(xmldoc)
 
@@ -600,21 +601,21 @@ def test_unicode_issue368(testdir):
         nodeid = "something"
         location = 'tests/filename.py', 42, 'TestClass.method'
 
-    report = Report()
+    test_report = Report()
 
     # hopefully this is not too brittle ...
     log.pytest_sessionstart()
-    log._opentestcase(report)
-    log.append_failure(report)
-    log.append_collect_error(report)
-    log.append_collect_skipped(report)
-    log.append_error(report)
-    report.longrepr = "filename", 1, ustr
-    log.append_skipped(report)
-    report.longrepr = "filename", 1, "Skipped: 卡嘣嘣"
-    log.append_skipped(report)
-    report.wasxfail = ustr
-    log.append_skipped(report)
+    node_reporter = log._opentestcase(test_report)
+    node_reporter.append_failure(test_report)
+    node_reporter.append_collect_error(test_report)
+    node_reporter.append_collect_skipped(test_report)
+    node_reporter.append_error(test_report)
+    test_report.longrepr = "filename", 1, ustr
+    node_reporter.append_skipped(test_report)
+    test_report.longrepr = "filename", 1, "Skipped: 卡嘣嘣"
+    node_reporter.append_skipped(test_report)
+    test_report.wasxfail = ustr
+    node_reporter.append_skipped(test_report)
     log.pytest_sessionfinish()
 
 

@@ -62,10 +62,19 @@ class _NodeReporter(object):
     def __init__(self, nodeid, xml):
 
         self.id = nodeid
+        self.xml = xml
+        self.add_stats = self.xml.add_stats
         self.duration = 0
         self.properties = {}
         self.property_insert_order = []
+        self.nodes = []
         self.testcase = None
+        self.attrs = {}
+
+
+    def append(self, node):
+        self.xml.add_stats(type(node).__name__)
+        self.nodes.append(node)
 
     def add_property(self, name, value):
         name = str(name)
@@ -83,6 +92,98 @@ class _NodeReporter(object):
                 Junit.property(name=name, value=self.properties[name])
                 for name in self.property_insert_order
             ])
+        return ''
+
+
+    def record_testreport(self, testreport):
+        assert not self.testcase
+        names = mangle_testnames(testreport.nodeid.split("::"))
+        classnames = names[:-1]
+        if self.xml.prefix:
+            classnames.insert(0, self.xml.prefix)
+        attrs = {
+            "classname": ".".join(classnames),
+            "name": bin_xml_escape(names[-1]),
+            "file": testreport.location[0],
+        }
+        if testreport.location[1] is not None:
+            attrs["line"] = testreport.location[1]
+        self.attrs = attrs
+
+    def to_xml(self):
+        testcase = Junit.testcase(time=self.duration, **self.attrs)
+        testcase.append(self.make_properties_node())
+        for node in self.nodes:
+            testcase.append(node)
+        return testcase
+
+    def _add_simple(self, kind, message, data=None):
+        data = bin_xml_escape(data)
+        node = kind(data, message=message)
+        self.append(node)
+
+    def _write_captured_output(self, report):
+        for capname in ('out', 'err'):
+            allcontent = ""
+            for name, content in report.get_sections("Captured std%s" %
+                                                     capname):
+                allcontent += content
+            if allcontent:
+                tag = getattr(Junit, 'system-' + capname)
+                self.append(tag(bin_xml_escape(allcontent)))
+
+
+
+    def append_pass(self, report):
+        self.add_stats('passed')
+        self._write_captured_output(report)
+
+    def append_failure(self, report):
+        # msg = str(report.longrepr.reprtraceback.extraline)
+        if hasattr(report, "wasxfail"):
+            self._add_simple(
+                Junit.skipped,
+                "xfail-marked test passes unexpectedly")
+        else:
+            if hasattr(report.longrepr, "reprcrash"):
+                message = report.longrepr.reprcrash.message
+            elif isinstance(report.longrepr, (unicode, str)):
+                message = report.longrepr
+            else:
+                message = str(report.longrepr)
+            message = bin_xml_escape(message)
+            fail = Junit.failure(message=message)
+            fail.append(bin_xml_escape(report.longrepr))
+            self.append(fail)
+        self._write_captured_output(report)
+
+    def append_collect_error(self, report):
+        # msg = str(report.longrepr.reprtraceback.extraline)
+        self.append(Junit.error(bin_xml_escape(report.longrepr),
+                                message="collection failure"))
+
+    def append_collect_skipped(self, report):
+        self._add_simple(
+            Junit.skipped, "collection skipped", report.longrepr)
+
+    def append_error(self, report):
+        self._add_simple(
+            Junit.error, "test setup failure", report.longrepr)
+
+    def append_skipped(self, report):
+        if hasattr(report, "wasxfail"):
+            self._add_simple(
+                Junit.skipped, "expected test failure", report.wasxfail
+            )
+        else:
+            filename, lineno, skipreason = report.longrepr
+            if skipreason.startswith("Skipped: "):
+                skipreason = bin_xml_escape(skipreason[9:])
+            self.append(
+                Junit.skipped("%s:%s: %s" % (filename, lineno, skipreason),
+                              type="pytest.skip",
+                              message=skipreason))
+        self._write_captured_output(report)
 
 
 @pytest.fixture
@@ -149,125 +250,30 @@ class LogXML(object):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
         self.prefix = prefix
-        self.tests = []
         self.stats = dict.fromkeys([
             'error',
             'passed',
             'failure',
             'skipped',
         ], 0)
-        self.nodereporters = {}  # nodeid -> Junit.testcase
-        self.tests_by_nodeid = {}
+        self.nodereporters = {}  # nodeid -> _NodeReporter
 
     def nodereporter(self, nodeid):
         if nodeid in self.nodereporters:
+            #TODO: breasks for --dist=each
             return self.nodereporters[nodeid]
         reporter = _NodeReporter(nodeid, self)
         self.nodereporters[nodeid] = reporter
         return reporter
 
-
-    def _addtestcase(self, attrs=None, **kw):
-        testcase = Junit.testcase(**(attrs or kw))
-        self.tests.append(testcase)
-        return testcase
-
-    def _add_stats(self, key):
+    def add_stats(self, key):
         if key in self.stats:
             self.stats[key] += 1
 
-    def _add_simple(self, kind, message, data=None):
-        data = bin_xml_escape(data)
-        node = kind(data, message=message)
-        self.append(node)
-
     def _opentestcase(self, report):
         reporter = self.nodereporter(report.nodeid)
-        names = mangle_testnames(report.nodeid.split("::"))
-        classnames = names[:-1]
-        if self.prefix:
-            classnames.insert(0, self.prefix)
-        attrs = {
-            "classname": ".".join(classnames),
-            "name": bin_xml_escape(names[-1]),
-            "file": report.location[0],
-            "time": reporter.duration,
-        }
-        if report.location[1] is not None:
-            attrs["line"] = report.location[1]
-        testcase = self._addtestcase(attrs)
-        reporter = self.nodereporter(report.nodeid)
-        custom_properties = reporter.make_properties_node()
-        if custom_properties:
-            testcase.append(custom_properties)
-        self.tests_by_nodeid[report.nodeid] = testcase
-
-    def _write_captured_output(self, report):
-        for capname in ('out', 'err'):
-            allcontent = ""
-            for name, content in report.get_sections("Captured std%s" %
-                                                     capname):
-                allcontent += content
-            if allcontent:
-                tag = getattr(Junit, 'system-' + capname)
-                self.append(tag(bin_xml_escape(allcontent)))
-
-    def append(self, obj):
-        self._add_stats(type(obj).__name__)
-        self.tests[-1].append(obj)
-
-
-
-    def append_pass(self, report):
-        self._add_stats('passed')
-        self._write_captured_output(report)
-
-    def append_failure(self, report):
-        # msg = str(report.longrepr.reprtraceback.extraline)
-        if hasattr(report, "wasxfail"):
-            self._add_simple(
-                Junit.skipped,
-                "xfail-marked test passes unexpectedly")
-        else:
-            if hasattr(report.longrepr, "reprcrash"):
-                message = report.longrepr.reprcrash.message
-            elif isinstance(report.longrepr, (unicode, str)):
-                message = report.longrepr
-            else:
-                message = str(report.longrepr)
-            message = bin_xml_escape(message)
-            fail = Junit.failure(message=message)
-            fail.append(bin_xml_escape(report.longrepr))
-            self.append(fail)
-        self._write_captured_output(report)
-
-    def append_collect_error(self, report):
-        # msg = str(report.longrepr.reprtraceback.extraline)
-        self.append(Junit.error(bin_xml_escape(report.longrepr),
-                                message="collection failure"))
-
-    def append_collect_skipped(self, report):
-        self._add_simple(
-            Junit.skipped, "collection skipped", report.longrepr)
-
-    def append_error(self, report):
-        self._add_simple(
-            Junit.error, "test setup failure", report.longrepr)
-
-    def append_skipped(self, report):
-        if hasattr(report, "wasxfail"):
-            self._add_simple(
-                Junit.skipped, "expected test failure", report.wasxfail
-            )
-        else:
-            filename, lineno, skipreason = report.longrepr
-            if skipreason.startswith("Skipped: "):
-                skipreason = bin_xml_escape(skipreason[9:])
-            self.append(
-                Junit.skipped("%s:%s: %s" % (filename, lineno, skipreason),
-                              type="pytest.skip",
-                              message=skipreason))
-        self._write_captured_output(report)
+        reporter.record_testreport(report)
+        return reporter
 
     def pytest_runtest_logreport(self, report):
         """handle a setup/call/teardown report, generating the appropriate
@@ -294,17 +300,17 @@ class LogXML(object):
         """
         if report.passed:
             if report.when == "call":  # ignore setup/teardown
-                self._opentestcase(report)
-                self.append_pass(report)
+                reporter = self._opentestcase(report)
+                reporter.append_pass(report)
         elif report.failed:
-            self._opentestcase(report)
+            reporter = self._opentestcase(report)
             if report.when == "call":
-                self.append_failure(report)
+                reporter.append_failure(report)
             else:
-                self.append_error(report)
+                reporter.append_error(report)
         elif report.skipped:
-            self._opentestcase(report)
-            self.append_skipped(report)
+            reporter = self._opentestcase(report)
+            reporter.append_skipped(report)
         self.update_testcase_duration(report)
 
     def update_testcase_duration(self, report):
@@ -314,22 +320,18 @@ class LogXML(object):
         reporter = self.nodereporter(report.nodeid)
         reporter.duration += getattr(report, 'duration', 0.0)
 
-        testcase = self.tests_by_nodeid.get(report.nodeid)
-        if testcase is not None:
-            testcase.attr.time = reporter.duration
-
     def pytest_collectreport(self, report):
         if not report.passed:
-            self._opentestcase(report)
+            reporter = self._opentestcase(report)
             if report.failed:
-                self.append_collect_error(report)
+                reporter.append_collect_error(report)
             else:
-                self.append_collect_skipped(report)
+                reporter.append_collect_skipped(report)
 
     def pytest_internalerror(self, excrepr):
-
-        self._addtestcase(classname="pytest", name='internal')
-        self._add_simple(Junit.error, 'internal error', excrepr)
+        reporter = self.nodereporter('internal')
+        reporter.attrs.update(classname="pytest", name='internal')
+        reporter._add_simple(Junit.error, 'internal error', excrepr)
 
     def pytest_sessionstart(self):
         self.suite_start_time = time.time()
@@ -346,7 +348,7 @@ class LogXML(object):
 
         logfile.write('<?xml version="1.0" encoding="utf-8"?>')
         logfile.write(Junit.testsuite(
-            self.tests,
+            [x.to_xml() for x in self.nodereporters.values()],
             name="pytest",
             errors=self.stats['error'],
             failures=self.stats['failure'],
