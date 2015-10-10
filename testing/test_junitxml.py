@@ -612,7 +612,12 @@ def test_unicode_issue368(testdir):
 
 def test_record_property(testdir):
     testdir.makepyfile("""
-        def test_record(record_xml_property):
+        import pytest
+
+        @pytest.fixture
+        def other(record_xml_property):
+            record_xml_property("bar", 1)
+        def test_record(record_xml_property, other):
             record_xml_property("foo", "<1");
     """)
     result, dom = runandparse(testdir, '-rw')
