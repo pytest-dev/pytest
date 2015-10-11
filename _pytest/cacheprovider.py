@@ -91,7 +91,7 @@ class LFPlugin:
     """ Plugin which implements the --lf (run last-failing) option """
     def __init__(self, config):
         self.config = config
-        active_keys = 'lf', 'failedfirst'
+        active_keys = 'lf', 'failedfirst', 'lf_keep'
         self.active = any(config.getvalue(key) for key in active_keys)
         if self.active:
             self.lastfailed = config.cache.get("cache/lastfailed", {})
@@ -149,6 +149,12 @@ class LFPlugin:
         config = self.config
         if config.getvalue("cacheshow") or hasattr(config, "slaveinput"):
             return
+        if self.lastfailed and config.getvalue('lf_keep'):
+            # transfer the last failures into the current failure set
+            # this allows use-cases like
+            # running a new test and adding it to the failure set
+            self.lastfailed.update(
+                config.cache.get("cache/lastfailed", {}))
         config.cache.set("cache/lastfailed", self.lastfailed)
 
 
@@ -158,6 +164,9 @@ def pytest_addoption(parser):
         '--lf', action='store_true', dest="lf",
         help="rerun only the tests that failed "
              "at the last run (or all if none failed)")
+    group.addoption(
+        '--lf-keep', action='store_true', dest="lf_keep",
+        help="remember once failed tests until all tests pass again")
     group.addoption(
         '--ff', action='store_true', dest="failedfirst",
         help="run all tests but run the last failures first.  "

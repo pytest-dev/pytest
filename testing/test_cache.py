@@ -353,3 +353,32 @@ class TestLastFailed:
         result.stdout.fnmatch_lines([
             '*2 passed*',
         ])
+
+
+    def test_lastfailed_keepfailure(self, testdir, rlf, monkeypatch):
+        testdir.makepyfile(test_maybe2="""
+            from os import environ as env
+            def test_hello():
+                assert False
+
+            def test_pass():
+                pass
+        """)
+
+        result, lastfailed = rlf(fail_run=1)
+        assert lastfailed == [
+            'test_maybe.py::test_hello',
+            'test_maybe2.py::test_hello',
+        ]
+        result.stdout.fnmatch_lines([
+            '*2 failed, 1 passed*',
+        ])
+
+        result, lastfailed = rlf(args=['--lf-keep'])
+        assert lastfailed == [
+            'test_maybe.py::test_hello',
+            'test_maybe2.py::test_hello',
+        ]
+        result.stdout.fnmatch_lines([
+            '*1 failed, 1 passed, 1 deselected*',
+        ])
