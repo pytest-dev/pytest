@@ -1013,3 +1013,27 @@ def test_collect_functools_partial(testdir):
     """)
     result = testdir.inline_run()
     result.assertoutcome(passed=6, failed=2)
+
+
+def test_dont_collect_non_function_callable(testdir):
+    """Test for issue https://github.com/pytest-dev/pytest/issues/331
+
+    In this case an INTERNALERROR occurred trying to report the failure of
+    a test like this one because py test failed to get the source lines.
+    """
+    testdir.makepyfile("""
+        class Oh(object):
+            def __call__(self):
+                pass
+
+        test_a = Oh()
+
+        def test_real():
+            pass
+    """)
+    result = testdir.runpytest('-rw')
+    result.stdout.fnmatch_lines([
+        '*collected 1 item*',
+        'WC2 *',
+        '*1 passed, 1 pytest-warnings in *',
+    ])

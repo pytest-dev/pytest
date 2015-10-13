@@ -312,11 +312,14 @@ def pytest_pycollect_makeitem(collector, name, obj):
     elif collector.istestfunction(obj, name):
         # mock seems to store unbound methods (issue473), normalize it
         obj = getattr(obj, "__func__", obj)
-        if not isfunction(obj):
+        # We need to try and unwrap the function if it's a functools.partial
+        # or a funtools.wrapped.
+        # We musn't if it's been wrapped with mock.patch (python 2 only)
+        if not (isfunction(obj) or isfunction(get_real_func(obj))):
             collector.warn(code="C2", message=
                 "cannot collect %r because it is not a function."
                 % name, )
-        if getattr(obj, "__test__", True):
+        elif getattr(obj, "__test__", True):
             if is_generator(obj):
                 res = Generator(name, parent=collector)
             else:
