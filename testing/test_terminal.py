@@ -475,7 +475,7 @@ class TestTerminalFunctional:
             "*test_verbose_reporting.py::test_fail *FAIL*",
             "*test_verbose_reporting.py::test_pass *PASS*",
             "*test_verbose_reporting.py::TestClass::test_skip *SKIP*",
-            "*test_verbose_reporting.py::test_gen*0* *FAIL*",
+            "*test_verbose_reporting.py::test_gen *FAIL*",
         ])
         assert result.ret == 1
 

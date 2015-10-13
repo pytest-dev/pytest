@@ -144,6 +144,15 @@
   users diagnose problems such as unexpected ini files which add
   unknown options being picked up by pytest. Thanks to Pavel Savchenko for
   bringing the problem to attention in #821 and Bruno Oliveira for the PR.
+- introduce the hook pytest_pyfunc_interpret_result
+  this eases interpreting test functions results like generators,
+  twisted inline defereds, futures and asyncio generators
+
+- replace the Generator concept with the pytest_pyfunc_interpret_result hook
+  (Note: this change reduces reporting detail for generator tests,
+   that will be addressed in a later release)
+
+  the Generator class is now a alias to Function
 
 - Summary bar now is colored yellow for warning
   situations such as: all tests either were skipped or xpass/xfailed,
