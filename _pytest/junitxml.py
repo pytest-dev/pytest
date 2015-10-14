@@ -202,8 +202,8 @@ def record_xml_property(request):
     )
     xml = getattr(request.config, "_xml", None)
     if xml is not None:
-        nodereporter = xml.nodereporter(request.node.nodeid)
-        return nodereporter.add_property
+        node_reporter = xml.node_reporter(request.node.nodeid)
+        return node_reporter.add_property
     else:
         def add_property_noop(name, value):
             pass
@@ -260,16 +260,16 @@ class LogXML(object):
             'failure',
             'skipped',
         ], 0)
-        self.nodereporters = {}  # nodeid -> _NodeReporter
-        self.nodereporters_ordered = []
+        self.nodere_porters = {}  # nodeid -> _NodeReporter
+        self.nodere_porters_ordered = []
 
-    def nodereporter(self, nodeid):
-        if nodeid in self.nodereporters:
+    def node_reporter(self, nodeid):
+        if nodeid in self.nodere_porters:
             #TODO: breasks for --dist=each
-            return self.nodereporters[nodeid]
+            return self.nodere_porters[nodeid]
         reporter = _NodeReporter(nodeid, self)
-        self.nodereporters[nodeid] = reporter
-        self.nodereporters_ordered.append(reporter)
+        self.nodere_porters[nodeid] = reporter
+        self.nodere_porters_ordered.append(reporter)
         return reporter
 
     def add_stats(self, key):
@@ -277,7 +277,7 @@ class LogXML(object):
             self.stats[key] += 1
 
     def _opentestcase(self, report):
-        reporter = self.nodereporter(report.nodeid)
+        reporter = self.node_reporter(report.nodeid)
         reporter.record_testreport(report)
         return reporter
 
@@ -319,13 +319,13 @@ class LogXML(object):
             reporter.append_skipped(report)
         self.update_testcase_duration(report)
         if report.when == "teardown":
-            self.nodereporter(report.nodeid).finalize()
+            self.node_reporter(report.nodeid).finalize()
 
     def update_testcase_duration(self, report):
         """accumulates total duration for nodeid from given report and updates
         the Junit.testcase with the new total if already created.
         """
-        reporter = self.nodereporter(report.nodeid)
+        reporter = self.node_reporter(report.nodeid)
         reporter.duration += getattr(report, 'duration', 0.0)
 
     def pytest_collectreport(self, report):
@@ -337,7 +337,7 @@ class LogXML(object):
                 reporter.append_collect_skipped(report)
 
     def pytest_internalerror(self, excrepr):
-        reporter = self.nodereporter('internal')
+        reporter = self.node_reporter('internal')
         reporter.attrs.update(classname="pytest", name='internal')
         reporter._add_simple(Junit.error, 'internal error', excrepr)
 
@@ -356,7 +356,7 @@ class LogXML(object):
 
         logfile.write('<?xml version="1.0" encoding="utf-8"?>')
         logfile.write(Junit.testsuite(
-            [x.to_xml() for x in self.nodereporters_ordered],
+            [x.to_xml() for x in self.nodere_porters_ordered],
             name="pytest",
             errors=self.stats['error'],
             failures=self.stats['failure'],
