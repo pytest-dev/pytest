@@ -1,6 +1,6 @@
 import pytest
 import os
-from _pytest.pytester import HookRecorder
+from _pytest.pytester import HookRecorder, LineMatcher
 from _pytest.config import PytestPluginManager
 from _pytest.main import EXIT_OK, EXIT_TESTSFAILED
 
@@ -120,3 +120,9 @@ def test_inline_run_clean_modules(testdir):
     test_mod.write("def test_foo(): assert False")
     result2 = testdir.inline_run(str(test_mod))
     assert result2.ret == EXIT_TESTSFAILED
+
+def test_linematcher_case_sensitive(testdir):
+    matcher = LineMatcher(['spamfilter'])
+    matcher.fnmatch_lines(['*spam*'])
+    with pytest.raises(pytest.fail.Exception):
+        matcher.fnmatch_lines(['*Spam*'])
