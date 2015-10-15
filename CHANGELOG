@@ -7,6 +7,10 @@
 - fix #331: don't collect tests if their failure cannot be reported correctly
   e.g. they are a callable instance of a class.
 
+- ``fnmatch_lines`` is now case-sensitive on all platforms, it used to be
+  case-insensitive on Windows. Thanks Bruno Oliveira for discovering this and
+  Florian Bruhin for the PR.
+
 2.8.2
 -----
 

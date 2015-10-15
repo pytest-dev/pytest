@@ -7,7 +7,7 @@ import codecs
 import re
 import time
 import platform
-from fnmatch import fnmatch
+from fnmatch import fnmatchcase
 import subprocess
 
 import py
@@ -1056,7 +1056,7 @@ class LineMatcher:
         lines2 = self._getlines(lines2)
         for line in lines2:
             for x in self.lines:
-                if line == x or fnmatch(x, line):
+                if line == x or fnmatchcase(x, line):
                     print_("matched: ", repr(line))
                     break
             else:
@@ -1068,7 +1068,7 @@ class LineMatcher:
         The given line can contain glob wildcards.
         """
         for i, line in enumerate(self.lines):
-            if fnline == line or fnmatch(line, fnline):
+            if fnline == line or fnmatchcase(line, fnline):
                 return self.lines[i+1:]
         raise ValueError("line %r not found in output" % fnline)
 
@@ -1095,7 +1095,7 @@ class LineMatcher:
                 if line == nextline:
                     show("exact match:", repr(line))
                     break
-                elif fnmatch(nextline, line):
+                elif fnmatchcase(nextline, line):
                     show("fnmatch:", repr(line))
                     show("   with:", repr(nextline))
                     break
