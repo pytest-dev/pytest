@@ -771,10 +771,12 @@ class TestTracebackCutting:
             "* 1 error in *",
         ])
 
-    def test_filter_traceback_accepts_non_paths(self):
-        """test that filter_traceback() works around py.code.Code bug
-        where sometimes its "path" attribute is not a py.path.local object:
-            https://bitbucket.org/pytest-dev/py/issues/71
+    def test_filter_traceback_generated_code(self):
+        """test that filter_traceback() works with the fact that
+        py.code.Code.path attribute might return an str object.
+        In this case, one of the entries on the traceback was produced by
+        dynamically generated code.
+        See: https://bitbucket.org/pytest-dev/py/issues/71
         This fixes #995.
         """
         from _pytest.python import filter_traceback
@@ -783,12 +785,34 @@ class TestTracebackCutting:
             exec('def foo(): raise ValueError', ns)
             ns['foo']()
         except ValueError:
-            import sys
             _, _, tb = sys.exc_info()
 
         tb = py.code.Traceback(tb)
-        assert isinstance(tb[-1].path, str)  # symptom of the py.code bug
+        assert isinstance(tb[-1].path, str)
         assert not filter_traceback(tb[-1])
+
+    def test_filter_traceback_path_no_longer_valid(self, testdir):
+        """test that filter_traceback() works with the fact that
+        py.code.Code.path attribute might return an str object.
+        In this case, one of the files in the traceback no longer exists.
+        This fixes #1133.
+        """
+        from _pytest.python import filter_traceback
+        testdir.syspathinsert()
+        testdir.makepyfile(filter_traceback_entry_as_str='''
+            def foo():
+                raise ValueError
+        ''')
+        try:
+            import filter_traceback_entry_as_str
+            filter_traceback_entry_as_str.foo()
+        except ValueError:
+            _, _, tb = sys.exc_info()
+
+        testdir.tmpdir.join('filter_traceback_entry_as_str.py').remove()
+        tb = py.code.Traceback(tb)
+        assert isinstance(tb[-1].path, str)
+        assert filter_traceback(tb[-1])
 
 
 class TestReportInfo:

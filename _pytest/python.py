@@ -58,14 +58,17 @@ def _has_positional_arg(func):
 
 
 def filter_traceback(entry):
-    # entry.path might sometimes return a str() object when the entry
+    # entry.path might sometimes return a str object when the entry
     # points to dynamically generated code
     # see https://bitbucket.org/pytest-dev/py/issues/71
     raw_filename = entry.frame.code.raw.co_filename
     is_generated = '<' in raw_filename and '>' in raw_filename
     if is_generated:
         return False
-    return entry.path != cutdir1 and not entry.path.relto(cutdir2)
+    # entry.path might point to an inexisting file, in which case it will
+    # alsso return a str object. see #1133
+    p = py.path.local(entry.path)
+    return p != cutdir1 and not p.relto(cutdir2)
 
 
 def get_real_func(obj):
