@@ -180,3 +180,11 @@ was executed ahead of the ``test_method``.
    to selectively leave away the ``unittest.TestCase`` subclassing, use
    plain asserts and get the unlimited pytest feature set.
 
+
+Converting from unittest to pytest
+---------------------------------------
+
+If you want to convert your unittest testcases to pytest, there are
+some helpers like `unittest2pytest
+<https://pypi.python.org/pypi/unittest2pytest/>`__, which uses lib2to3
+and introspection for the transformation.
