@@ -84,8 +84,7 @@ class _NodeReporter(object):
 
 
     def make_properties_node(self):
-        """Return a Junit node containing custom properties set for
-        the current test, if any, and reset the current custom properties.
+        """Return a Junit node containing custom properties, if any.
         """
         if self.properties:
             return Junit.properties([
