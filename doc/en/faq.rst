@@ -141,10 +141,10 @@ However, with pytest-2.3 you can use the :ref:`@pytest.fixture` decorator
 and specify ``params`` so that all tests depending on the factory-created
 resource will run multiple times with different parameters.
 
-You can also use the `pytest_generate_tests`_ hook to
-implement the `parametrization scheme of your choice`_.
+You can also use the ``pytest_generate_tests`` hook to
+implement the `parametrization scheme of your choice`_. See also
+:ref:`paramexamples` for more examples.
 
-.. _`pytest_generate_tests`: test/funcargs.html#parametrizing-tests
 .. _`parametrization scheme of your choice`: http://tetamap.wordpress.com/2009/05/13/parametrizing-python-tests-generalized/
 
 pytest interaction with other packages
