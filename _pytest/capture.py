@@ -479,10 +479,10 @@ class ForgetCapture:
         os.dup2(targetfd_save, self.targetfd)
         os.close(targetfd_save)
         self.syscapture.done()
-        self.tmpfile.close()
         with open(self.tmpfile, 'r') as fh:
             for line in fh.readlines():
                 print(line)
+        self.tmpfile.close()
 
     def suspend(self):
         self.syscapture.suspend()
