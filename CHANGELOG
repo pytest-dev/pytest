@@ -11,6 +11,10 @@
   belongs to a file which is no longer available.
   Thanks Bruno Oliveira for the PR.
 
+- enhancement made to highlight in red the name of the failing tests so
+  they stand out in the output.
+  Thanks Gabriel Reis for the PR.
+
 2.8.2
 -----
 
