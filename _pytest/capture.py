@@ -479,7 +479,7 @@ class ForgetCapture:
         os.dup2(targetfd_save, self.targetfd)
         os.close(targetfd_save)
         self.syscapture.done()
-        with open(self.tmpfile, 'r') as fh:
+        with open(self.tmpfile_fd, 'r') as fh:
             for line in fh.readlines():
                 print(line)
         self.tmpfile.close()
