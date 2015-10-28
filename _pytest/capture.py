@@ -478,7 +478,6 @@ class ForgetCapture:
         targetfd_save = self.__dict__.pop("targetfd_save")
         os.dup2(targetfd_save, self.targetfd)
         os.close(targetfd_save)
-        os.remove(self.targetfd)
         self.syscapture.done()
         self.tmpfile.close()
 
@@ -492,9 +491,10 @@ class ForgetCapture:
 
     def writeorg(self, data):
         """ write to original file descriptor. """
-        if py.builtin._istext(data):
-            data = data.encode("utf8") # XXX use encoding of original stream
-        os.write(self.targetfd_save, data)
+        # if py.builtin._istext(data):
+        #     data = data.encode("utf8") # XXX use encoding of original stream
+        # os.write(self.targetfd_save, data)
+        pass
 
 
 class DontReadFromInput:
