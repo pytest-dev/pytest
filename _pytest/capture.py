@@ -112,9 +112,9 @@ class CaptureManager:
             outcome = yield
             out, err = self.suspendcapture()
             rep = outcome.get_result()
-            if out and self.method != "forget":
+            if out:
                 rep.sections.append(("Captured stdout", out))
-            if err and self.method != "forget":
+            if err:
                 rep.sections.append(("Captured stderr", err))
         else:
             yield
@@ -483,11 +483,11 @@ class ForgetCapture:
         os.remove(targetfd_save)
 
     def suspend(self):
-        # self.syscapture.suspend()
+        self.syscapture.suspend()
         os.dup2(self.targetfd_save, self.targetfd)
 
     def resume(self):
-        # self.syscapture.resume()
+        self.syscapture.resume()
         os.dup2(self.tmpfile_fd, self.targetfd)
 
     def writeorg(self, data):
