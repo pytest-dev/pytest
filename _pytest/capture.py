@@ -112,9 +112,9 @@ class CaptureManager:
             outcome = yield
             out, err = self.suspendcapture()
             rep = outcome.get_result()
-            if out:
+            if out and self.method != "forget":
                 rep.sections.append(("Captured stdout", out))
-            if err:
+            if err and self.method != "forget":
                 rep.sections.append(("Captured stderr", err))
         else:
             yield
