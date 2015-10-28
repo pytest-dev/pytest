@@ -440,10 +440,11 @@ class ForgetCapture:
                     f = TemporaryFile()
                     with f:
                         tmpfile = safe_text_dupfile(f, mode="wb+")
-                if targetfd in patchsysdict:
-                    self.syscapture = SysCapture(targetfd, tmpfile)
-                else:
-                    self.syscapture = NoCapture()
+                # if targetfd in patchsysdict:
+                #     self.syscapture = SysCapture(targetfd, tmpfile)
+                # else:
+                #     self.syscapture = NoCapture()
+                self.syscapture = NoCapture()
             self.tmpfile = tmpfile
             self.tmpfile_fd = tmpfile.fileno()
 
@@ -479,9 +480,6 @@ class ForgetCapture:
         os.dup2(targetfd_save, self.targetfd)
         os.close(targetfd_save)
         self.syscapture.done()
-        with open(self.tmpfile_fd, 'r') as fh:
-            for line in fh.readlines():
-                print(line)
         self.tmpfile.close()
 
     def suspend(self):
