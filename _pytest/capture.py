@@ -366,6 +366,7 @@ class FDCapture:
         os.close(targetfd_save)
         self.syscapture.done()
         self.tmpfile.close()
+        os.remove(self.targetfd)
 
     def suspend(self):
         self.syscapture.suspend()
