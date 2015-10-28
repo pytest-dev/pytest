@@ -364,7 +364,7 @@ class FDCapture:
         targetfd_save = self.__dict__.pop("targetfd_save")
         os.dup2(targetfd_save, self.targetfd)
         os.close(targetfd_save)
-        os.remove(targetfd_save)
+        os.remove(self.targetfd)
         self.syscapture.done()
         self.tmpfile.close()
 
