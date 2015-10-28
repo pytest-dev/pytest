@@ -480,7 +480,9 @@ class ForgetCapture:
         os.close(targetfd_save)
         self.syscapture.done()
         self.tmpfile.close()
-        os.remove(self.tmpfile)
+        with open(self.tmpfile, 'r') as fh:
+            for line in fh.readlines():
+                print(line)
 
     def suspend(self):
         self.syscapture.suspend()
