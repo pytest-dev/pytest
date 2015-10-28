@@ -425,40 +425,9 @@ class ForgetCapture(FDCapture):
 
     def __init__(self, targetfd, tmpfile=None):
         super().__init__(targetfd, tmpfile=None)
-        # self.targetfd = targetfd
-        # try:
-        #     self.targetfd_save = os.dup(self.targetfd)
-        # except OSError:
-        #     self.start = lambda: None
-        #     self.done = lambda: None
-        # else:
-        #     if targetfd == 0:
-        #         assert not tmpfile, "cannot set tmpfile with stdin"
-        #         tmpfile = open(os.devnull, "r")
-        #         self.syscapture = SysCapture(targetfd)
-        #     else:
-        #         if tmpfile is None:
-        #             f = TemporaryFile()
-        #             with f:
-        #                 tmpfile = safe_text_dupfile(f, mode="wb+")
-        #         if targetfd in patchsysdict:
-        #             self.syscapture = SysCapture(targetfd, tmpfile)
-        #         else:
-        #             self.syscapture = NoCapture()
-        #     self.tmpfile = tmpfile
-        #     self.tmpfile_fd = tmpfile.fileno()
 
     def __repr__(self):
         return "<ForgetCapture %s oldfd=%s>" % (self.targetfd, self.targetfd_save)
-
-    # def start(self):
-    #     """ Start capturing on targetfd using memorized tmpfile. """
-    #     try:
-    #         os.fstat(self.targetfd_save)
-    #     except (AttributeError, OSError):
-    #         raise ValueError("saved filedescriptor not valid anymore")
-    #     os.dup2(self.tmpfile_fd, self.targetfd)
-    #     self.syscapture.start()
 
     def snap(self):
         f = self.tmpfile
@@ -470,31 +439,7 @@ class ForgetCapture(FDCapture):
                 res = py.builtin._totext(res, enc, "replace")
             f.truncate(0)
             f.seek(0)
-            # return res
         return ''
-
-    # def done(self):
-    #     """ stop capturing, restore streams, return original capture file,
-    #     seeked to position zero. """
-    #     targetfd_save = self.__dict__.pop("targetfd_save")
-    #     os.dup2(targetfd_save, self.targetfd)
-    #     os.close(targetfd_save)
-    #     self.syscapture.done()
-    #     self.tmpfile.close()
-    #
-    # def suspend(self):
-    #     self.syscapture.suspend()
-    #     os.dup2(self.targetfd_save, self.targetfd)
-    #
-    # def resume(self):
-    #     self.syscapture.resume()
-    #     os.dup2(self.tmpfile_fd, self.targetfd)
-    #
-    # def writeorg(self, data):
-    #     """ write to original file descriptor. """
-    #     if py.builtin._istext(data):
-    #         data = data.encode("utf8") # XXX use encoding of original stream
-    #     os.write(self.targetfd_save, data)
 
 
 class DontReadFromInput:
