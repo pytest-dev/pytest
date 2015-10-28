@@ -22,8 +22,8 @@ def pytest_addoption(parser):
     group._addoption(
         '--capture', action="store",
         default="fd" if hasattr(os, "dup") else "sys",
-        metavar="method", choices=['fd', 'sys', 'no'],
-        help="per-test capturing method: one of fd|sys|no.")
+        metavar="method", choices=['fd', 'sys', 'no', 'forget'],
+        help="per-test capturing method: one of fd|sys|no|forget.")
     group._addoption(
         '-s', action="store_const", const="no", dest="capture",
         help="shortcut for --capture=no.")
@@ -63,6 +63,8 @@ class CaptureManager:
             return MultiCapture(out=True, err=True, Capture=FDCapture)
         elif method == "sys":
             return MultiCapture(out=True, err=True, Capture=SysCapture)
+        elif method == "forget":
+            return MultiCapture(out=False, err=False, Capture=FDCapture)
         elif method == "no":
             return MultiCapture(out=False, err=False, in_=False)
         else:
