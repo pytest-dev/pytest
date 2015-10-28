@@ -448,7 +448,7 @@ class ForgetCapture:
             self.tmpfile_fd = tmpfile.fileno()
 
     def __repr__(self):
-        return "<FDCapture %s oldfd=%s>" % (self.targetfd, self.targetfd_save)
+        return "<ForgetCapture %s oldfd=%s>" % (self.targetfd, self.targetfd_save)
 
     def start(self):
         """ Start capturing on targetfd using memorized tmpfile. """
@@ -457,7 +457,7 @@ class ForgetCapture:
         except (AttributeError, OSError):
             raise ValueError("saved filedescriptor not valid anymore")
         os.dup2(self.tmpfile_fd, self.targetfd)
-        # self.syscapture.start()
+        self.syscapture.start()
 
     def snap(self):
         f = self.tmpfile
@@ -480,6 +480,7 @@ class ForgetCapture:
         os.close(targetfd_save)
         self.syscapture.done()
         self.tmpfile.close()
+        os.remove(targetfd_save)
 
     def suspend(self):
         # self.syscapture.suspend()
