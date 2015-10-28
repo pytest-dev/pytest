@@ -424,7 +424,7 @@ class ForgetCapture(FDCapture):
     """ Capture IO to/from a given os-level filedescriptor and forget it. """
 
     def __init__(self, targetfd, tmpfile=None):
-        super.__init__(targetfd, tmpfile=None)
+        super().__init__(targetfd, tmpfile=None)
         # self.targetfd = targetfd
         # try:
         #     self.targetfd_save = os.dup(self.targetfd)
