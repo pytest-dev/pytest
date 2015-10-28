@@ -458,7 +458,8 @@ class TerminalReporter:
                     self.write_line(line)
                 else:
                     msg = self._getfailureheadline(rep)
-                    self.write_sep("_", msg)
+                    markup = {'red': True, 'bold': True}
+                    self.write_sep("_", msg, **markup)
                     self._outrep_summary(rep)
 
     def summary_errors(self):
