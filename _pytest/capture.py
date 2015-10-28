@@ -440,11 +440,10 @@ class ForgetCapture:
                     f = TemporaryFile()
                     with f:
                         tmpfile = safe_text_dupfile(f, mode="wb+")
-                # if targetfd in patchsysdict:
-                #     self.syscapture = SysCapture(targetfd, tmpfile)
-                # else:
-                #     self.syscapture = NoCapture()
-                self.syscapture = NoCapture()
+                if targetfd in patchsysdict:
+                    self.syscapture = SysCapture(targetfd, tmpfile)
+                else:
+                    self.syscapture = NoCapture()
             self.tmpfile = tmpfile
             self.tmpfile_fd = tmpfile.fileno()
 
@@ -470,7 +469,7 @@ class ForgetCapture:
                 res = py.builtin._totext(res, enc, "replace")
             f.truncate(0)
             f.seek(0)
-            return res
+            # return res
         return ''
 
     def done(self):
