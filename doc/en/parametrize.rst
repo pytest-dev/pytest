@@ -196,7 +196,7 @@ As expected our test function fails.
 
 If you don't specify a stringinput it will be skipped because
 ``metafunc.parametrize()`` will be called with an empty parameter
-listlist::
+list::
 
     $ py.test -q -rs test_strings.py
     s
