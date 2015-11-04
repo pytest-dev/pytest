@@ -1,6 +1,13 @@
 Changing standard (Python) test discovery
 ===============================================
 
+Ignore paths during test collection
+-----------------------------------
+
+You can easily ignore certain test directories and modules during collection
+by passing the ``--ignore=path`` option on the cli. ``pytest`` allows multiple
+``--ignore`` options.
+
 Changing directory recursion
 -----------------------------------------------------
 
