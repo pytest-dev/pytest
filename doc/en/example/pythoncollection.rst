@@ -23,6 +23,22 @@ by passing the ``--ignore=path`` option on the cli. ``pytest`` allows multiple
             ├── test_world_02.py
             └── test_world_03.py
 
+Now invoke ``pytest`` with ``--ignore`` to ignore a particular directory and a module as follows::
+
+    $ py.test tests --ignore=tests/foobar/test_foobar_03.py --ignore=tests/hello/
+    ========= test session starts ==========
+    platform darwin -- Python 2.7.10, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 5 items
+
+    tests/example/test_example_01.py .
+    tests/example/test_example_02.py .
+    tests/example/test_example_03.py .
+    tests/foobar/test_foobar_01.py .
+    tests/foobar/test_foobar_02.py .
+
+    ======= 5 passed in 0.02 seconds =======
+
 
 Changing directory recursion
 -----------------------------------------------------
