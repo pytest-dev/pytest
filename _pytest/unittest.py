@@ -134,6 +134,7 @@ class TestCaseFunction(pytest.Function):
         pass
 
     def runtest(self):
+        setattr(self._testcase, "__name__", self.name)
         self._testcase(result=self)
 
     def _prunetraceback(self, excinfo):
