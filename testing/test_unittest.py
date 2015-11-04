@@ -718,3 +718,16 @@ def test_unittest_raise_skip_issue748(testdir):
         *SKIP*[1]*test_foo.py*skipping due to reasons*
         *1 skipped*
     """)
+
+def test_unittest_skip_issue1169(testdir):
+    testpath = testdir.makepyfile(test_foo="""
+        import unittest
+        
+        class MyTestCase(unittest.TestCase):
+            @unittest.skip
+            def test_skip(self):
+                 self.fail()
+        """)
+    reprec = testdir.inline_run(testpath)
+    reprec.assertoutcome(passed=1)
+    
