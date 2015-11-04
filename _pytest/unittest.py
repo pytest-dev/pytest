@@ -69,6 +69,16 @@ class TestCaseFunction(pytest.Function):
 
     def setup(self):
         self._testcase = self.parent.obj(self.name)
+        #
+        # See issue #1169
+        #
+        # The @unittest.skip decorator calls functools.wraps(self._testcase)
+        # The call to functools.wraps() fails unless self._testcase
+        # has a __name__ attribute. This is usually automatically supplied
+        # if the test is a function or method, but we need to add manually
+        # here.
+        #
+        setattr(self._testcase, "__name__", self.name)
         self._obj = getattr(self._testcase, self.name)
         if hasattr(self._testcase, 'setup_method'):
             self._testcase.setup_method(self._obj)
@@ -134,7 +144,6 @@ class TestCaseFunction(pytest.Function):
         pass
 
     def runtest(self):
-        setattr(self._testcase, "__name__", self.name)
         self._testcase(result=self)
 
     def _prunetraceback(self, excinfo):
