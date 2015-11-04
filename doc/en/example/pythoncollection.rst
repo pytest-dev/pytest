@@ -23,9 +23,9 @@ by passing the ``--ignore=path`` option on the cli. ``pytest`` allows multiple
             ├── test_world_02.py
             └── test_world_03.py
 
-Now invoke ``pytest`` with ``--ignore`` to ignore a particular directory and a module as follows::
+Now if you invoke ``pytest`` with ``--ignore=tests/foobar/test_foobar_03.py --ignore=tests/hello/``,
+you will see that ``pytest`` only collects test-modules, which do not match the patterns specified::
 
-    $ py.test tests --ignore=tests/foobar/test_foobar_03.py --ignore=tests/hello/
     ========= test session starts ==========
     platform darwin -- Python 2.7.10, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile:
