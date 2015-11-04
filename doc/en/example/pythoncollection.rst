@@ -6,7 +6,23 @@ Ignore paths during test collection
 
 You can easily ignore certain test directories and modules during collection
 by passing the ``--ignore=path`` option on the cli. ``pytest`` allows multiple
-``--ignore`` options.
+``--ignore`` options. Example::
+
+    tests/
+    ├── example
+    │   ├── test_example_01.py
+    │   ├── test_example_02.py
+    │   └── test_example_03.py
+    ├── foobar
+    │   ├── test_foobar_01.py
+    │   ├── test_foobar_02.py
+    │   └── test_foobar_03.py
+    └── hello
+        └── world
+            ├── test_world_01.py
+            ├── test_world_02.py
+            └── test_world_03.py
+
 
 Changing directory recursion
 -----------------------------------------------------
