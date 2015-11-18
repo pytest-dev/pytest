@@ -55,6 +55,5 @@ The py.test Development Team
 - add more talks to the documentation
 - extend documentation on the --ignore cli option 
 - use pytest-runner for setuptools integration 
-- minor fixes for interaction with elcapitan system integrity protection (thanks Florian)
-
+- minor fixes for interaction with OS X El Capitan system integrity protection (thanks Florian)
 
