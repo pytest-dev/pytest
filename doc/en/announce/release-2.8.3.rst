@@ -15,13 +15,17 @@ As usual, you can upgrade from pypi via::
 
 Thanks to all who contributed to this release, among them:
 
-    Bruno Oliveira
-    Demian Brecht
-    Florian Bruhin
-    Ionel Cristian Mărieș
-    Raphael Pierzina
-    Ronny Pfannschmidt
-    holger krekel
+        Bruno Oliveira
+        Florian Bruhin
+        Gabe Hollombe
+        Gabriel Reis
+        Hartmut Goebel
+        John Vandenberg
+        Lee Kamentsky
+        Michael Birtwell
+        Raphael Pierzina
+        Ronny Pfannschmidt
+        William Martin Stewart
 
 Happy testing,
 The py.test Development Team
