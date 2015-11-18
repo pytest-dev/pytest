@@ -1,5 +1,5 @@
-2.8.3.dev
----------
+2.8.3
+-----
 
 - fix #1169: add __name__ attribute to testcases in TestCaseFunction to
   support the @unittest.skip decorator on functions and methods.
