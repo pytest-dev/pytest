@@ -3,7 +3,7 @@ pytest-2.8.3: bug fixes
 
 pytest is a mature Python testing tool with more than a 1100 tests
 against itself, passing on many different interpreters and platforms.
-This release is supposed to be drop-in compatible to 2.8.1.
+This release is supposed to be drop-in compatible to 2.8.2.
 
 See below for the changes and see docs at:
 
