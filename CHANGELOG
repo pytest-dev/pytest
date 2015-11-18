@@ -19,6 +19,14 @@
   they stand out in the output.
   Thanks Gabriel Reis for the PR.
 
+- add more talks to the documentation
+- extend documentation on the --ignore cli option 
+- use pytest-runner for setuptools integration 
+- minor fixes for interaction with elcapitan system integrity protection (thanks Florian)
+
+
+
+
 2.8.2
 -----
 
