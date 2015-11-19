@@ -354,7 +354,7 @@ class SetupState(object):
             fin = finalizers.pop()
             try:
                 fin()
-            except Exception:
+            except (Exception, OutcomeException):
                 # XXX Only first exception will be seen by user,
                 #     ideally all should be reported.
                 if exc is None:
@@ -401,7 +401,7 @@ class SetupState(object):
             self.stack.append(col)
             try:
                 col.setup()
-            except Exception:
+            except (Exception, OutcomeException):
                 col._prepare_exc = sys.exc_info()
                 raise
 
@@ -419,12 +419,12 @@ def collect_one_node(collector):
 # Test OutcomeExceptions and helpers for creating them.
 
 
-class OutcomeException(Exception):
+class OutcomeException(BaseException):
     """ OutcomeException and its subclass instances indicate and
         contain info about test and collection outcomes.
     """
     def __init__(self, msg=None, pytrace=True):
-        Exception.__init__(self, msg)
+        BaseException.__init__(self, msg)
         self.msg = msg
         self.pytrace = pytrace
 
