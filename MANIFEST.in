@@ -1,7 +1,34 @@
 include CHANGELOG
-include README.rst
-include setup.py
-include tox.ini
 include LICENSE
-graft doc
+include AUTHORS
+
+include README.rst
+include CONTRIBUTING.rst
+
+include tox.ini
+include setup.py
+
+include .coveragerc
+
+recursive-include bench *.py
+recursive-include extra *.py
+
+
 graft testing
+graft doc
+
+exclude _pytest/impl
+
+graft _pytest/vendored_packages
+
+recursive-exclude * *.pyc *.pyo
+
+exclude appveyor/install.ps1
+exclude appveyor.yml
+exclude appveyor
+
+exclude ISSUES.txt
+exclude HOWTORELEASE.rst
+exclude plugin-test.sh
+exclude requirements-docs.txt
+exclude runtox.py
