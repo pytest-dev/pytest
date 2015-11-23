@@ -291,4 +291,6 @@ def pytest_exception_interact(node, call, report):
     """
 
 def pytest_enter_pdb():
-    """ called upon pdb.set_trace()"""
+    """ called upon pdb.set_trace(), can be used by plugins to take special
+    action just before the python debugger enters in interactive mode.
+    """

@@ -501,7 +501,7 @@ reporting or interaction with exceptions:
 .. autofunction:: pytest_internalerror
 .. autofunction:: pytest_keyboard_interrupt
 .. autofunction:: pytest_exception_interact
-
+.. autofunction:: pytest_enter_pdb
 
 
 Reference of objects involved in hooks
