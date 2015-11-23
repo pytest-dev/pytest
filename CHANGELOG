@@ -4,6 +4,9 @@
 * New `pytest.mark.skip` mark, which unconditional skips marked tests.
   Thanks Michael Aquilina for the complete PR.
 
+* `pytest_enter_pdb` now optionally receives the pytest config object.
+  Thanks Bruno Oliveira for the PR.
+
 2.8.2.dev
 ---------
 

@@ -275,8 +275,12 @@ class TestPDB:
 
     def test_enter_pdb_hook_is_called(self, testdir):
         testdir.makeconftest("""
-            def pytest_enter_pdb():
+            def pytest_enter_pdb(config):
+                assert config.testing_verification == 'configured'
                 print 'enter_pdb_hook'
+
+            def pytest_configure(config):
+                config.testing_verification = 'configured'
         """)
         p1 = testdir.makepyfile("""
             import pytest
