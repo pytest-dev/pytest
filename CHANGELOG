@@ -7,6 +7,9 @@
   `Config.fromdictargs` now represents its input much more faithfully.
   Thanks to Buck Evan for the complete PR.
 
+* `pytest_enter_pdb` now optionally receives the pytest config object.
+  Thanks Bruno Oliveira for the PR.
+
 2.8.2.dev
 ---------
 
