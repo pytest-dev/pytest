@@ -10,9 +10,12 @@ include setup.py
 
 include .coveragerc
 
+include plugin-test.sh
+include requirements-docs.txt
+include runtox.py
+
 recursive-include bench *.py
 recursive-include extra *.py
-
 
 graft testing
 graft doc
@@ -29,6 +32,3 @@ exclude appveyor
 
 exclude ISSUES.txt
 exclude HOWTORELEASE.rst
-exclude plugin-test.sh
-exclude requirements-docs.txt
-exclude runtox.py
