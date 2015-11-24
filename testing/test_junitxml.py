@@ -659,3 +659,14 @@ def test_random_report_log_xdist(testdir):
             failed.append(case_node['name'])
 
     assert failed == ['test_x[22]']
+
+
+@pytest.mark.xfail(reason='duplicate test ids kill us')
+def test_runs_twice(testdir):
+    f = testdir.makepyfile('''
+        def test_pass():
+            pass
+    ''')
+
+    result = testdir.runpytest(f, f, '--junitxml', testdir.tmpdir.join("test.xml"))
+    assert 'INTERNALERROR' not in result.stdout
