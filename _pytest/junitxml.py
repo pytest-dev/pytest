@@ -259,16 +259,16 @@ class LogXML(object):
             'failure',
             'skipped',
         ], 0)
-        self.nodere_porters = {}  # nodeid -> _NodeReporter
-        self.nodere_porters_ordered = []
+        self.node_reporters = {}  # nodeid -> _NodeReporter
+        self.node_reporters_ordered = []
 
     def node_reporter(self, nodeid):
-        if nodeid in self.nodere_porters:
+        if nodeid in self.node_reporters:
             #TODO: breasks for --dist=each
-            return self.nodere_porters[nodeid]
+            return self.node_reporters[nodeid]
         reporter = _NodeReporter(nodeid, self)
-        self.nodere_porters[nodeid] = reporter
-        self.nodere_porters_ordered.append(reporter)
+        self.node_reporters[nodeid] = reporter
+        self.node_reporters_ordered.append(reporter)
         return reporter
 
     def add_stats(self, key):
@@ -355,7 +355,7 @@ class LogXML(object):
 
         logfile.write('<?xml version="1.0" encoding="utf-8"?>')
         logfile.write(Junit.testsuite(
-            [x.to_xml() for x in self.nodere_porters_ordered],
+            [x.to_xml() for x in self.node_reporters_ordered],
             name="pytest",
             errors=self.stats['error'],
             failures=self.stats['failure'],
