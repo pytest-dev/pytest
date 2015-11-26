@@ -29,29 +29,39 @@ def pytest_namespace():
 
 
 def deprecated_call(func, *args, **kwargs):
-    """ assert that calling ``func(*args, **kwargs)``
-    triggers a DeprecationWarning.
-    """
-    l = []
-    oldwarn_explicit = getattr(warnings, 'warn_explicit')
-    def warn_explicit(*args, **kwargs):
-        l.append(args)
-        oldwarn_explicit(*args, **kwargs)
-    oldwarn = getattr(warnings, 'warn')
-    def warn(*args, **kwargs):
-        l.append(args)
-        oldwarn(*args, **kwargs)
+    """ assert that calling ``func(*args, **kwargs)`` triggers a
+    ``DeprecationWarning`` or ``PendingDeprecationWarning``.
 
+    Note: we cannot use WarningsRecorder here because it is still subject
+    to the mechanism that prevents warnings of the same type from being
+    triggered twice for the same module. See #1190.
+    """
+    categories = []
+
+    def warn_explicit(message, category, *args, **kwargs):
+        categories.append(category)
+        old_warn_explicit(message, category, *args, **kwargs)
+
+    def warn(message, category=None, **kwargs):
+        if isinstance(message, Warning):
+            categories.append(message.__class__)
+        else:
+            categories.append(category)
+        old_warn(message, category, *args, **kwargs)
+
+    old_warn = warnings.warn
+    old_warn_explicit = warnings.warn_explicit
     warnings.warn_explicit = warn_explicit
     warnings.warn = warn
     try:
         ret = func(*args, **kwargs)
     finally:
-        warnings.warn_explicit = oldwarn_explicit
-        warnings.warn = oldwarn
-    if not l:
+        warnings.warn_explicit = old_warn_explicit
+        warnings.warn = old_warn
+    deprecation_categories = (DeprecationWarning, PendingDeprecationWarning)
+    if not any(issubclass(c, deprecation_categories) for c in categories):
         __tracebackhide__ = True
-        raise AssertionError("%r did not produce DeprecationWarning" %(func,))
+        raise AssertionError("%r did not produce DeprecationWarning" % (func,))
     return ret
 
 
