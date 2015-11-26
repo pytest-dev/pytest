@@ -29,18 +29,29 @@ def pytest_namespace():
 
 
 def deprecated_call(func, *args, **kwargs):
-    """Assert that ``func(*args, **kwargs)`` triggers a DeprecationWarning.
+    """ assert that calling ``func(*args, **kwargs)``
+    triggers a DeprecationWarning.
     """
-    wrec = WarningsRecorder()
-    with wrec:
-        warnings.simplefilter('always')  # ensure all warnings are triggered
+    l = []
+    oldwarn_explicit = getattr(warnings, 'warn_explicit')
+    def warn_explicit(*args, **kwargs):
+        l.append(args)
+        oldwarn_explicit(*args, **kwargs)
+    oldwarn = getattr(warnings, 'warn')
+    def warn(*args, **kwargs):
+        l.append(args)
+        oldwarn(*args, **kwargs)
+
+    warnings.warn_explicit = warn_explicit
+    warnings.warn = warn
+    try:
         ret = func(*args, **kwargs)
-
-    depwarnings = (DeprecationWarning, PendingDeprecationWarning)
-    if not any(r.category in depwarnings for r in wrec):
+    finally:
+        warnings.warn_explicit = oldwarn_explicit
+        warnings.warn = oldwarn
+    if not l:
         __tracebackhide__ = True
-        raise AssertionError("%r did not produce DeprecationWarning" % (func,))
-
+        raise AssertionError("%r did not produce DeprecationWarning" %(func,))
     return ret
 
 
