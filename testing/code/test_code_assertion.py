@@ -1,17 +1,10 @@
-"PYTEST_DONT_REWRITE"
-import py
-import pytest
-from _pytest.assertion import util
-
+import pytest, py
 
 def exvalue():
     return py.std.sys.exc_info()[1]
 
 def f():
     return 2
-
-def test_not_being_rewritten():
-    assert "@py_builtins" not in globals()
 
 def test_assert():
     try:
@@ -21,12 +14,6 @@ def test_assert():
         s = str(e)
         assert s.startswith('assert 2 == 3\n')
 
-def test_assert_with_explicit_message():
-    try:
-        assert f() == 3, "hello"
-    except AssertionError:
-        e = exvalue()
-        assert e.msg == 'hello'
 
 def test_assert_within_finally():
     excinfo = pytest.raises(ZeroDivisionError, """
@@ -80,6 +67,7 @@ def test_is():
         assert s.startswith("assert 1 is 2")
 
 
+@pytest.mark.skipif("sys.version_info < (2,6)")
 def test_attrib():
     class Foo(object):
         b = 1
@@ -91,6 +79,7 @@ def test_attrib():
         s = str(e)
         assert s.startswith("assert 1 == 2")
 
+@pytest.mark.skipif("sys.version_info < (2,6)")
 def test_attrib_inst():
     class Foo(object):
         b = 1
@@ -111,15 +100,6 @@ def test_len():
         assert s.startswith("assert 42 == 100")
         assert "where 42 = len([" in s
 
-def test_assert_non_string_message():
-    class A:
-        def __str__(self):
-            return "hello"
-    try:
-        assert 0 == 1, A()
-    except AssertionError:
-        e = exvalue()
-        assert e.msg == "hello"
 
 def test_assert_keyword_arg():
     def f(x=3):
@@ -129,18 +109,6 @@ def test_assert_keyword_arg():
     except AssertionError:
         e = exvalue()
         assert "x=5" in e.msg
-
-def test_private_class_variable():
-    class X:
-        def __init__(self):
-            self.__v = 41
-        def m(self):
-            assert self.__v == 42
-    try:
-        X().m()
-    except AssertionError:
-        e = exvalue()
-        assert "== 42" in e.msg
 
 # These tests should both fail, but should fail nicely...
 class WeirdRepr:
@@ -196,7 +164,74 @@ def test_power():
         assert "assert (2 ** 3) == 7" in e.msg
 
 
+class TestView:
+
+    def setup_class(cls):
+        cls.View = pytest.importorskip("_pytest._code._assertionold").View
+
+    def test_class_dispatch(self):
+        ### Use a custom class hierarchy with existing instances
+
+        class Picklable(self.View):
+            pass
+
+        class Simple(Picklable):
+            __view__ = object
+            def pickle(self):
+                return repr(self.__obj__)
+
+        class Seq(Picklable):
+            __view__ = list, tuple, dict
+            def pickle(self):
+                return ';'.join(
+                    [Picklable(item).pickle() for item in self.__obj__])
+
+        class Dict(Seq):
+            __view__ = dict
+            def pickle(self):
+                return Seq.pickle(self) + '!' + Seq(self.values()).pickle()
+
+        assert Picklable(123).pickle() == '123'
+        assert Picklable([1,[2,3],4]).pickle() == '1;2;3;4'
+        assert Picklable({1:2}).pickle() == '1!2'
+
+    def test_viewtype_class_hierarchy(self):
+        # Use a custom class hierarchy based on attributes of existing instances
+        class Operation:
+            "Existing class that I don't want to change."
+            def __init__(self, opname, *args):
+                self.opname = opname
+                self.args = args
+
+        existing = [Operation('+', 4, 5),
+                    Operation('getitem', '', 'join'),
+                    Operation('setattr', 'x', 'y', 3),
+                    Operation('-', 12, 1)]
+
+        class PyOp(self.View):
+            def __viewkey__(self):
+                return self.opname
+            def generate(self):
+                return '%s(%s)' % (self.opname, ', '.join(map(repr, self.args)))
+
+        class PyBinaryOp(PyOp):
+            __view__ = ('+', '-', '*', '/')
+            def generate(self):
+                return '%s %s %s' % (self.args[0], self.opname, self.args[1])
+
+        codelines = [PyOp(op).generate() for op in existing]
+        assert codelines == ["4 + 5", "getitem('', 'join')",
+            "setattr('x', 'y', 3)", "12 - 1"]
+
+def test_underscore_api():
+    import _pytest._code
+    _pytest._code._AssertionError
+    _pytest._code._reinterpret_old # used by pypy
+    _pytest._code._reinterpret
+
+@pytest.mark.skipif("sys.version_info < (2,6)")
 def test_assert_customizable_reprcompare(monkeypatch):
+    util = pytest.importorskip("_pytest.assertion.util")
     monkeypatch.setattr(util, '_reprcompare', lambda *args: 'hello')
     try:
         assert 3 == 4
@@ -229,7 +264,6 @@ def test_assert_long_source_2():
 
 def test_assert_raise_alias(testdir):
     testdir.makepyfile("""
-    "PYTEST_DONT_REWRITE"
     import sys
     EX = AssertionError
     def test_hello():
@@ -245,6 +279,7 @@ def test_assert_raise_alias(testdir):
     ])
 
 
+@pytest.mark.skipif("sys.version_info < (2,5)")
 def test_assert_raise_subclass():
     class SomeEx(AssertionError):
         def __init__(self, *args):

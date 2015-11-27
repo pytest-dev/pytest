@@ -4,6 +4,8 @@ from __future__ import with_statement
 import pickle
 import os
 import sys
+
+import _pytest._code
 import py
 import pytest
 import contextlib
@@ -481,7 +483,7 @@ class TestCaptureFixture:
 
 def test_setup_failure_does_not_kill_capturing(testdir):
     sub1 = testdir.mkpydir("sub1")
-    sub1.join("conftest.py").write(py.code.Source("""
+    sub1.join("conftest.py").write(_pytest._code.Source("""
         def pytest_runtest_setup(item):
             raise ValueError(42)
     """))

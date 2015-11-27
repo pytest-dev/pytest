@@ -1,7 +1,7 @@
 # encoding: utf-8
 import sys
+import _pytest._code
 from _pytest.doctest import DoctestItem, DoctestModule, DoctestTextfile
-import py
 import pytest
 
 class TestDoctests:
@@ -181,7 +181,7 @@ class TestDoctests:
         assert 'text-line-after' not in result.stdout.str()
 
     def test_doctest_linedata_missing(self, testdir):
-        testdir.tmpdir.join('hello.py').write(py.code.Source("""
+        testdir.tmpdir.join('hello.py').write(_pytest._code.Source("""
             class Fun(object):
                 @property
                 def test(self):
@@ -201,7 +201,7 @@ class TestDoctests:
 
 
     def test_doctest_unex_importerror(self, testdir):
-        testdir.tmpdir.join("hello.py").write(py.code.Source("""
+        testdir.tmpdir.join("hello.py").write(_pytest._code.Source("""
             import asdalsdkjaslkdjasd
         """))
         testdir.maketxtfile("""
@@ -229,7 +229,7 @@ class TestDoctests:
 
     def test_doctestmodule_external_and_issue116(self, testdir):
         p = testdir.mkpydir("hello")
-        p.join("__init__.py").write(py.code.Source("""
+        p.join("__init__.py").write(_pytest._code.Source("""
             def somefunc():
                 '''
                     >>> i = 0

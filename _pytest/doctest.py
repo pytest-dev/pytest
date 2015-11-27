@@ -1,9 +1,13 @@
 """ discover and run doctests in modules and test files."""
 from __future__ import absolute_import
+
 import traceback
-import pytest, py
+
+import py
+import pytest
+from _pytest._code.code import TerminalRepr, ReprFileLocation, ExceptionInfo
 from _pytest.python import FixtureRequest
-from py._code.code import TerminalRepr, ReprFileLocation
+
 
 
 def pytest_addoption(parser):
@@ -107,7 +111,7 @@ class DoctestItem(pytest.Item):
                 lines += checker.output_difference(example,
                         doctestfailure.got, REPORT_UDIFF).split("\n")
             else:
-                inner_excinfo = py.code.ExceptionInfo(excinfo.value.exc_info)
+                inner_excinfo = ExceptionInfo(excinfo.value.exc_info)
                 lines += ["UNEXPECTED EXCEPTION: %s" %
                             repr(inner_excinfo.value)]
                 lines += traceback.format_exception(*excinfo.value.exc_info)

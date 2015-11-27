@@ -2,15 +2,17 @@
 terminal reporting of the full testing process.
 """
 import collections
-import pytest
-import py
 import sys
 
+import _pytest._pluggy as pluggy
+import _pytest._code
+import py
+import pytest
+from _pytest import runner
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.terminal import TerminalReporter, repr_pythonversion, getreportopt
 from _pytest.terminal import build_summary_stats_line, _plugin_nameversions
-from _pytest import runner
-import _pytest._pluggy as pluggy
+
 
 def basic_run_report(item):
     runner.call_and_report(item, "setup", log=False)
@@ -153,7 +155,7 @@ class TestTerminal:
 
     def test_itemreport_directclasses_not_shown_as_subclasses(self, testdir):
         a = testdir.mkpydir("a123")
-        a.join("test_hello123.py").write(py.code.Source("""
+        a.join("test_hello123.py").write(_pytest._code.Source("""
             class TestClass:
                 def test_method(self):
                     pass
@@ -268,7 +270,7 @@ class TestCollectonly:
         p = testdir.makepyfile("import Errlkjqweqwe")
         result = testdir.runpytest("--collect-only", p)
         assert result.ret == 1
-        result.stdout.fnmatch_lines(py.code.Source("""
+        result.stdout.fnmatch_lines(_pytest._code.Source("""
             *ERROR*
             *import Errlk*
             *ImportError*

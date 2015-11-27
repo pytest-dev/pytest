@@ -1,5 +1,6 @@
 import py, pytest
 
+import _pytest._code
 from _pytest.config import getcfg, get_common_ancestor, determine_setup
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 
@@ -7,7 +8,7 @@ class TestParseIni:
     def test_getcfg_and_config(self, testdir, tmpdir):
         sub = tmpdir.mkdir("sub")
         sub.chdir()
-        tmpdir.join("setup.cfg").write(py.code.Source("""
+        tmpdir.join("setup.cfg").write(_pytest._code.Source("""
             [pytest]
             name = value
         """))
@@ -21,7 +22,7 @@ class TestParseIni:
 
     def test_append_parse_args(self, testdir, tmpdir, monkeypatch):
         monkeypatch.setenv('PYTEST_ADDOPTS', '--color no -rs --tb="short"')
-        tmpdir.join("setup.cfg").write(py.code.Source("""
+        tmpdir.join("setup.cfg").write(_pytest._code.Source("""
             [pytest]
             addopts = --verbose
         """))
@@ -296,7 +297,7 @@ class TestConfigFromdictargs:
         assert config.option.capture == 'no'
 
     def test_inifilename(self, tmpdir):
-        tmpdir.join("foo/bar.ini").ensure().write(py.code.Source("""
+        tmpdir.join("foo/bar.ini").ensure().write(_pytest._code.Source("""
             [pytest]
             name = value
         """))
@@ -309,7 +310,7 @@ class TestConfigFromdictargs:
         }
 
         cwd = tmpdir.join('a/b')
-        cwd.join('pytest.ini').ensure().write(py.code.Source("""
+        cwd.join('pytest.ini').ensure().write(_pytest._code.Source("""
             [pytest]
             name = wrong-value
             should_not_be_set = true
