@@ -1,3 +1,11 @@
+2.8.4.dev
+---------
+
+- fix #1190: ``deprecated_call()`` now works when the deprecated
+  function has been already called by another test in the same
+  module. Thanks Mikhail Chernykh for the report and Bruno Oliveira for the
+  PR.
+
 2.8.3
 -----
 
