@@ -126,7 +126,7 @@ when writing the class-scoped fixture function above.
 autouse fixtures and accessing other fixtures
 -------------------------------------------------------------------
 
-Although it's usually better to explicitely declare use of fixtures you need
+Although it's usually better to explicitly declare use of fixtures you need
 for a given test, you may sometimes want to have fixtures that are 
 automatically used in a given context.  After all, the traditional 
 style of unittest-setup mandates the use of this implicit fixture writing

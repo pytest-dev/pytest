@@ -204,7 +204,7 @@ plugin.  Given that you have an installed plugin you can enable the
 :py:class:`testdir <_pytest.pytester.Testdir>` fixture via specifying a
 command line option to include the pytester plugin (``-p pytester``) or
 by putting ``pytest_plugins = "pytester"`` into your test or
-``conftest.py`` file.  You then will have a ``testdir`` fixure which you
+``conftest.py`` file.  You then will have a ``testdir`` fixture which you
 can use like this::
 
     # content of test_myplugin.py

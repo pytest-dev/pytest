@@ -333,12 +333,12 @@ The result of this test will be successful::
 Parametrizing test methods through per-class configuration
 --------------------------------------------------------------
 
-.. _`unittest parameterizer`: http://code.google.com/p/unittest-ext/source/browse/trunk/params.py
+.. _`unittest parametrizer`: http://code.google.com/p/unittest-ext/source/browse/trunk/params.py
 
 
 Here is an example ``pytest_generate_function`` function implementing a
 parametrization scheme similar to Michael Foord's `unittest
-parameterizer`_ but in a lot less code::
+parametrizer`_ but in a lot less code::
 
     # content of ./test_parametrize.py
     import pytest

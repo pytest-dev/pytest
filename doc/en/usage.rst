@@ -123,7 +123,7 @@ automatically disables its output capture when you enter PDB_ tracing:
   such.
 * Any later output produced within the same test will not be captured and will
   instead get sent directly to ``sys.stdout``. Note that this holds true even
-  for test output occuring after you exit the interactive PDB_ tracing session
+  for test output occurring after you exit the interactive PDB_ tracing session
   and continue with the regular test run.
 
 .. versionadded: 2.4.0
