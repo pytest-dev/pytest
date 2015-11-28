@@ -313,7 +313,7 @@ profiling test duration
 .. versionadded: 2.2
 
 If you have a slow running large test suite you might want to find
-out which tests are the slowest. Let's make an artifical test suite::
+out which tests are the slowest. Let's make an artificial test suite::
 
     # content of test_some_are_slow.py
 
@@ -427,7 +427,7 @@ by placing fixture functions in a ``conftest.py`` file in that directory
 You can use all types of fixtures including :ref:`autouse fixtures
 <autouse fixtures>` which are the equivalent of xUnit's setup/teardown
 concept.  It's however recommended to have explicit fixture references in your
-tests or test classes rather than relying on implicitely executing
+tests or test classes rather than relying on implicitly executing
 setup/teardown functions, especially if they are far away from the actual tests.
 
 Here is a an example for making a ``db`` fixture available in a directory::

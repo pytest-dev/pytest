@@ -175,7 +175,7 @@ And then if you have a module file like this::
 and a setup.py dummy file like this::
 
     # content of setup.py
-    0/0  # will raise exeption if imported
+    0/0  # will raise exception if imported
 
 then a pytest run on python2 will find the one test when run with a python2
 interpreters and will leave out the setup.py file::

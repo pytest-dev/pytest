@@ -209,7 +209,7 @@ fixtures:
   and let pytest figure things out for you.
 
 * if you used parametrization and funcarg factories which made use of
-  ``request.cached_setup()`` it is recommeneded to invest a few minutes
+  ``request.cached_setup()`` it is recommended to invest a few minutes
   and simplify your fixture function code to use the :ref:`@pytest.fixture`
   decorator instead.  This will also allow to take advantage of 
   the automatic per-resource grouping of tests.
