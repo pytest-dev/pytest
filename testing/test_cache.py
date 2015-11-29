@@ -285,50 +285,43 @@ class TestLastFailed:
         result = testdir.runpytest()
         result.stdout.fnmatch_lines('*1 failed in*')
 
-    def test_lastfailed_collectfailure(self, testdir, monkeypatch):
 
+    @pytest.fixture()
+    def rlf(self, testdir, monkeypatch):
         testdir.makepyfile(test_maybe="""
-            import py
-            env = py.std.os.environ
+            from os import environ as env
             if '1' == env['FAILIMPORT']:
                 raise ImportError('fail')
             def test_hello():
                 assert '0' == env['FAILTEST']
         """)
 
-        def rlf(fail_import, fail_run):
+        def inner_rlf(fail_import=0, fail_run=0, args=()):
             monkeypatch.setenv('FAILIMPORT', fail_import)
             monkeypatch.setenv('FAILTEST', fail_run)
 
-            testdir.runpytest('-q')
+            result = testdir.runpytest('-q', '--lf', *args)
             config = testdir.parseconfigure()
             lastfailed = config.cache.get("cache/lastfailed", -1)
-            return lastfailed
+            return result, sorted(lastfailed)
+        return inner_rlf
 
-        lastfailed = rlf(fail_import=0, fail_run=0)
+    def test_lastfailed_collectfailure(self, rlf):
+
+
+        result, lastfailed = rlf()
         assert not lastfailed
 
-        lastfailed = rlf(fail_import=1, fail_run=0)
-        assert list(lastfailed) == ['test_maybe.py']
+        result, lastfailed = rlf(fail_import=1)
+        assert lastfailed == ['test_maybe.py']
 
-        lastfailed = rlf(fail_import=0, fail_run=1)
-        assert list(lastfailed) == ['test_maybe.py::test_hello']
+        result, lastfailed = rlf(fail_run=1)
+        assert lastfailed == ['test_maybe.py::test_hello']
 
 
-    def test_lastfailed_failure_subset(self, testdir, monkeypatch):
-
-        testdir.makepyfile(test_maybe="""
-            import py
-            env = py.std.os.environ
-            if '1' == env['FAILIMPORT']:
-                raise ImportError('fail')
-            def test_hello():
-                assert '0' == env['FAILTEST']
-        """)
-
+    def test_lastfailed_failure_subset(self, testdir, rlf):
         testdir.makepyfile(test_maybe2="""
-            import py
-            env = py.std.os.environ
+            from os import environ as env
             if '1' == env['FAILIMPORT']:
                 raise ImportError('fail')
             def test_hello():
@@ -338,36 +331,54 @@ class TestLastFailed:
                 pass
         """)
 
-        def rlf(fail_import, fail_run, args=()):
-            monkeypatch.setenv('FAILIMPORT', fail_import)
-            monkeypatch.setenv('FAILTEST', fail_run)
-
-            result = testdir.runpytest('-q', '--lf', *args)
-            config = testdir.parseconfigure()
-            lastfailed = config.cache.get("cache/lastfailed", -1)
-            return result, lastfailed
-
-        result, lastfailed = rlf(fail_import=0, fail_run=0)
+        result, lastfailed = rlf()
         assert not lastfailed
         result.stdout.fnmatch_lines([
             '*3 passed*',
         ])
 
-        result, lastfailed = rlf(fail_import=1, fail_run=0)
-        assert sorted(list(lastfailed)) == ['test_maybe.py', 'test_maybe2.py']
+        result, lastfailed = rlf(fail_import=1)
+        assert lastfailed == ['test_maybe.py', 'test_maybe2.py']
 
 
-        result, lastfailed = rlf(fail_import=0, fail_run=0,
-                                 args=('test_maybe2.py',))
-        assert list(lastfailed) == ['test_maybe.py']
+        result, lastfailed = rlf(args=('test_maybe2.py',))
+        assert lastfailed == ['test_maybe.py']
 
 
         # edge case of test selection - even if we remember failures
         # from other tests we still need to run all tests if no test
         # matches the failures
-        result, lastfailed = rlf(fail_import=0, fail_run=0,
-                                 args=('test_maybe2.py',))
-        assert list(lastfailed) == ['test_maybe.py']
+        result, lastfailed = rlf(args=('test_maybe2.py',))
+        assert lastfailed == ['test_maybe.py']
         result.stdout.fnmatch_lines([
             '*2 passed*',
+        ])
+
+
+    def test_lastfailed_keepfailure(self, testdir, rlf, monkeypatch):
+        testdir.makepyfile(test_maybe2="""
+            from os import environ as env
+            def test_hello():
+                assert False
+
+            def test_pass():
+                pass
+        """)
+
+        result, lastfailed = rlf(fail_run=1)
+        assert lastfailed == [
+            'test_maybe.py::test_hello',
+            'test_maybe2.py::test_hello',
+        ]
+        result.stdout.fnmatch_lines([
+            '*2 failed, 1 passed*',
+        ])
+
+        result, lastfailed = rlf(args=['--lf-keep'])
+        assert lastfailed == [
+            'test_maybe.py::test_hello',
+            'test_maybe2.py::test_hello',
+        ]
+        result.stdout.fnmatch_lines([
+            '*1 failed, 1 passed, 1 deselected*',
         ])

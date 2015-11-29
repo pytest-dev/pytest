@@ -13,17 +13,21 @@ Cache: working with cross-testrun state
 Usage
 ---------
 
-The plugin provides two command line options to rerun failures from the
+The plugin provides command line options to rerun failures from the
 last ``py.test`` invocation:
 
 * ``--lf`` (last failures) - to only re-run the failures.
 * ``--ff`` (failures first) - to run the failures first and then the rest of
   the tests.
+* ``--lf-keep`` (last full failure set) - will prevent partial clearning
+  of the set of the last failed set, so all once failed tests stay in the set
+  until all tests pass, this works in particular well in the combination
+  ``--ff --lf-keep -x``
 
 For cleanup (usually not needed), a ``--cache-clear`` option allows to remove
 all cross-session cache contents ahead of a test run.
 
-Other plugins may access the `config.cache`_ object to set/get 
+Other plugins may access the `config.cache`_ object to set/get
 **json encodable** values between ``py.test`` invocations.
 
 
@@ -46,26 +50,26 @@ If you run this for the first time you will see two failures::
     .................F.......F........................
     ======= FAILURES ========
     _______ test_num[17] ________
-    
+
     i = 17
-    
+
         @pytest.mark.parametrize("i", range(50))
         def test_num(i):
             if i in (17, 25):
     >          pytest.fail("bad luck")
     E          Failed: bad luck
-    
+
     test_50.py:6: Failed
     _______ test_num[25] ________
-    
+
     i = 25
-    
+
         @pytest.mark.parametrize("i", range(50))
         def test_num(i):
             if i in (17, 25):
     >          pytest.fail("bad luck")
     E          Failed: bad luck
-    
+
     test_50.py:6: Failed
     2 failed, 48 passed in 0.12 seconds
 
@@ -75,33 +79,33 @@ If you then run it with ``--lf``::
     ======= test session starts ========
     platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
     run-last-failure: rerun last 2 failures
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 50 items
-    
+
     test_50.py FF
-    
+
     ======= FAILURES ========
     _______ test_num[17] ________
-    
+
     i = 17
-    
+
         @pytest.mark.parametrize("i", range(50))
         def test_num(i):
             if i in (17, 25):
     >          pytest.fail("bad luck")
     E          Failed: bad luck
-    
+
     test_50.py:6: Failed
     _______ test_num[25] ________
-    
+
     i = 25
-    
+
         @pytest.mark.parametrize("i", range(50))
         def test_num(i):
             if i in (17, 25):
     >          pytest.fail("bad luck")
     E          Failed: bad luck
-    
+
     test_50.py:6: Failed
     ======= 2 failed, 48 deselected in 0.12 seconds ========
 
@@ -116,33 +120,33 @@ of ``FF`` and dots)::
     ======= test session starts ========
     platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
     run-last-failure: rerun last 2 failures first
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 50 items
-    
+
     test_50.py FF................................................
-    
+
     ======= FAILURES ========
     _______ test_num[17] ________
-    
+
     i = 17
-    
+
         @pytest.mark.parametrize("i", range(50))
         def test_num(i):
             if i in (17, 25):
     >          pytest.fail("bad luck")
     E          Failed: bad luck
-    
+
     test_50.py:6: Failed
     _______ test_num[25] ________
-    
+
     i = 25
-    
+
         @pytest.mark.parametrize("i", range(50))
         def test_num(i):
             if i in (17, 25):
     >          pytest.fail("bad luck")
     E          Failed: bad luck
-    
+
     test_50.py:6: Failed
     ======= 2 failed, 48 passed in 0.12 seconds ========
 
@@ -181,13 +185,13 @@ of the sleep::
     F
     ======= FAILURES ========
     _______ test_function ________
-    
+
     mydata = 42
-    
+
         def test_function(mydata):
     >       assert mydata == 23
     E       assert 42 == 23
-    
+
     test_caching.py:14: AssertionError
     1 failed in 0.12 seconds
 
@@ -198,13 +202,13 @@ the cache and this will be quick::
     F
     ======= FAILURES ========
     _______ test_function ________
-    
+
     mydata = 42
-    
+
         def test_function(mydata):
     >       assert mydata == 23
     E       assert 42 == 23
-    
+
     test_caching.py:14: AssertionError
     1 failed in 0.12 seconds
 
@@ -220,20 +224,20 @@ You can always peek at the content of the cache using the
     $ py.test --cache-clear
     ======= test session starts ========
     platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 items
-    
+
     test_caching.py F
-    
+
     ======= FAILURES ========
     _______ test_function ________
-    
+
     mydata = 42
-    
+
         def test_function(mydata):
     >       assert mydata == 23
     E       assert 42 == 23
-    
+
     test_caching.py:14: AssertionError
     ======= 1 failed in 0.12 seconds ========
 
