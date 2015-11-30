@@ -9,6 +9,9 @@
 - fix #1204: another error when collecting with a nasty __getattr__().
   Thanks Florian Bruhin for the PR.
 
+- fix the summary printed when no tests did run.
+  Thanks Florian Bruhin for the PR.
+
 2.8.3
 -----
 

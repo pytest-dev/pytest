@@ -544,7 +544,11 @@ def build_summary_stats_line(stats):
         if val:
             key_name = key_translation.get(key, key)
             parts.append("%d %s" % (len(val), key_name))
-    line = ", ".join(parts)
+
+    if parts:
+        line = ", ".join(parts)
+    else:
+        line = "no tests run"
 
     if 'failed' in stats or 'error' in stats:
         color = 'red'

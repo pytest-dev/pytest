@@ -779,10 +779,10 @@ def test_terminal_summary(testdir):
     ("green", "1 passed, 1 xpassed", {"xpassed": (1,), "passed": (1,)}),
 
     # Likewise if no tests were found at all
-    ("yellow", "", {}),
+    ("yellow", "no tests run", {}),
 
     # Test the empty-key special case
-    ("yellow", "", {"": (1,)}),
+    ("yellow", "no tests run", {"": (1,)}),
     ("green", "1 passed", {"": (1,), "passed": (1,)}),
 
 
