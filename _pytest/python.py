@@ -405,7 +405,10 @@ class PyCollector(PyobjMixin, pytest.Collector):
         """ Look for the __test__ attribute, which is applied by the
         @nose.tools.istest decorator
         """
-        return safe_getattr(obj, '__test__', False)
+        # We explicitly check for "is True" here to not mistakenly treat
+        # classes with a custom __getattr__ returning something truthy (like a
+        # function) as test classes.
+        return safe_getattr(obj, '__test__', False) is True
 
     def classnamefilter(self, name):
         return self._matches_prefix_or_glob_option('python_classes', name)
