@@ -548,7 +548,7 @@ def build_summary_stats_line(stats):
     if parts:
         line = ", ".join(parts)
     else:
-        line = "no tests run"
+        line = "no tests ran"
 
     if 'failed' in stats or 'error' in stats:
         color = 'red'
