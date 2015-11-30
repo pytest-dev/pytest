@@ -880,6 +880,21 @@ class TestReportInfo:
                     pass
        """
 
+    def test_reportinfo_with_nasty_getattr(self, testdir):
+        # https://github.com/pytest-dev/pytest/issues/1204
+        modcol = testdir.getmodulecol("""
+            # lineno 0
+            class TestClass:
+                def __getattr__(self, name):
+                    return "this is not an int"
+
+                def test_foo(self):
+                    pass
+        """)
+        classcol = testdir.collect_by_name(modcol, "TestClass")
+        instance = classcol.collect()[0]
+        fspath, lineno, msg = instance.reportinfo()
+
 
 def test_customized_python_discovery(testdir):
     testdir.makeini("""

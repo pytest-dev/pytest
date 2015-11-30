@@ -384,12 +384,13 @@ class PyobjMixin(PyobjContext):
     def reportinfo(self):
         # XXX caching?
         obj = self.obj
-        if hasattr(obj, 'compat_co_firstlineno'):
+        compat_co_firstlineno = getattr(obj, 'compat_co_firstlineno', None)
+        if isinstance(compat_co_firstlineno, int):
             # nose compatibility
             fspath = sys.modules[obj.__module__].__file__
             if fspath.endswith(".pyc"):
                 fspath = fspath[:-1]
-            lineno = obj.compat_co_firstlineno
+            lineno = compat_co_firstlineno
         else:
             fspath, lineno = getfslineno(obj)
         modpath = self.getmodpath()
