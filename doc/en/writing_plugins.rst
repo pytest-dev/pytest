@@ -386,7 +386,7 @@ are expected.
 
 For an example, see `newhooks.py`_ from :ref:`xdist`.
 
-.. _`newhooks.py`: https://bitbucket.org/pytest-dev/pytest-xdist/src/52082f70e7dd04b00361091b8af906c60fd6700f/xdist/newhooks.py?at=default
+.. _`newhooks.py`: https://github.com/pytest-dev/pytest-xdist/blob/974bd566c599dc6a9ea291838c6f226197208b46/xdist/newhooks.py
 
 
 Optionally using hooks from 3rd party plugins
