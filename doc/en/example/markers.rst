@@ -219,7 +219,7 @@ For an example on how to add and work with markers from a plugin, see
 
 .. note::
 
-    It is recommended to explicitely register markers so that:
+    It is recommended to explicitly register markers so that:
 
     * there is one place in your test suite defining your markers
 
