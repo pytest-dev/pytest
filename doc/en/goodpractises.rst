@@ -28,29 +28,6 @@ For examples of how to customize your test discovery :doc:`example/pythoncollect
 Within Python modules, ``pytest`` also discovers tests using the standard
 :ref:`unittest.TestCase <unittest.TestCase>` subclassing technique.
 
-Work with virtual environments
------------------------------------------------------------
-
-We recommend to use virtualenv_ environments and pip_
- for installing your application and any dependencies
-as well as the ``pytest`` package itself.  This way you will get an isolated
-and reproducible environment.    Given you have installed virtualenv_
-and execute it from the command line, here is an example session for unix
-or windows::
-
-    virtualenv .   # create a virtualenv directory in the current directory
-
-    source bin/activate  # on unix
-
-    scripts/activate     # on Windows
-
-We can now install pytest::
-
-    pip install pytest
-
-Due to the ``activate`` step above the ``pip`` will come from
-the virtualenv directory and install any package into the isolated
-virtual environment.
 
 Choosing a test layout / import rules
 ------------------------------------------
@@ -160,7 +137,12 @@ required configurations.
 .. _`use tox`:
 
 Tox
----
+------
+
+For development, we recommend to use virtualenv_ environments and pip_
+ for installing your application and any dependencies
+as well as the ``pytest`` package itself. This ensures your code and
+dependencies are isolated from the system Python installation.
 
 If you frequently release code and want to make sure that your actual
 package passes all tests you may want to look into `tox`_, the
@@ -172,8 +154,8 @@ options.  It will run tests against the installed package and not
 against your source code checkout, helping to detect packaging
 glitches.
 
-If you want to use Jenkins_ you can use the ``--junitxml=PATH`` option
-to create a JUnitXML file that Jenkins_ can pick up and generate reports.
+Continuous integration services such as Jenkins_ can make use of the
+``--junitxml=PATH`` option to create a JUnitXML file and generate reports.
 
 
 Integrating with setuptools / ``python setup.py test`` / ``pytest-runner``
