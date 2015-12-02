@@ -384,12 +384,13 @@ class PyobjMixin(PyobjContext):
     def reportinfo(self):
         # XXX caching?
         obj = self.obj
-        if hasattr(obj, 'compat_co_firstlineno'):
+        compat_co_firstlineno = getattr(obj, 'compat_co_firstlineno', None)
+        if isinstance(compat_co_firstlineno, int):
             # nose compatibility
             fspath = sys.modules[obj.__module__].__file__
             if fspath.endswith(".pyc"):
                 fspath = fspath[:-1]
-            lineno = obj.compat_co_firstlineno
+            lineno = compat_co_firstlineno
         else:
             fspath, lineno = getfslineno(obj)
         modpath = self.getmodpath()
@@ -405,7 +406,10 @@ class PyCollector(PyobjMixin, pytest.Collector):
         """ Look for the __test__ attribute, which is applied by the
         @nose.tools.istest decorator
         """
-        return safe_getattr(obj, '__test__', False)
+        # We explicitly check for "is True" here to not mistakenly treat
+        # classes with a custom __getattr__ returning something truthy (like a
+        # function) as test classes.
+        return safe_getattr(obj, '__test__', False) is True
 
     def classnamefilter(self, name):
         return self._matches_prefix_or_glob_option('python_classes', name)

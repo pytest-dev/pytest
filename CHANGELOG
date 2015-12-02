@@ -9,6 +9,12 @@
 - fix #1198: ``--pastebin`` option now works on Python 3. Thanks
   Mehdy Khoshnoody for the PR.
 
+- fix #1204: another error when collecting with a nasty __getattr__().
+  Thanks Florian Bruhin for the PR.
+
+- fix the summary printed when no tests did run.
+  Thanks Florian Bruhin for the PR.
+
 2.8.3
 -----
 

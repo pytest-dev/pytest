@@ -573,7 +573,7 @@ class _MultiCall:
 
     # XXX note that the __multicall__ argument is supported only
     # for pytest compatibility reasons.  It was never officially
-    # supported there and is explicitely deprecated since 2.8
+    # supported there and is explicitly deprecated since 2.8
     # so we can remove it soon, allowing to avoid the below recursion
     # in execute() and simplify/speed up the execute loop.
 
