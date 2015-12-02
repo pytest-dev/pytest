@@ -31,8 +31,8 @@ Within Python modules, ``pytest`` also discovers tests using the standard
 Work with virtual environments
 -----------------------------------------------------------
 
-We recommend to use virtualenv_ environments and use pip_
-(or easy_install_) for installing your application and any dependencies
+We recommend to use virtualenv_ environments and pip_
+ for installing your application and any dependencies
 as well as the ``pytest`` package itself.  This way you will get an isolated
 and reproducible environment.    Given you have installed virtualenv_
 and execute it from the command line, here is an example session for unix
@@ -159,8 +159,8 @@ required configurations.
 
 .. _`use tox`:
 
-Use tox and Continuous Integration servers
--------------------------------------------------
+Tox
+---
 
 If you frequently release code and want to make sure that your actual
 package passes all tests you may want to look into `tox`_, the
@@ -180,9 +180,11 @@ Integrating with setuptools / ``python setup.py test`` / ``pytest-runner``
 --------------------------------------------------------------------------
 
 You can integrate test runs into your setuptools based project
-with pytest-runner.
+with the `pytest-runner <https://pypi.python.org/pypi/pytest-runner>`_ plugin.
 
-Add this to ``setup.py`` file::
+Add this to ``setup.py`` file:
+
+.. code-block:: python
 
     from distutils.core import setup
     # you can also import from setuptools
@@ -194,7 +196,10 @@ Add this to ``setup.py`` file::
         #...,
     )
 
-And create an alias into ``setup.cfg``file::
+And create an alias into ``setup.cfg``file:
+
+
+.. code-block:: ini
 
     [aliases]
     test=pytest
@@ -210,12 +215,13 @@ arguments to py.test such as your test directory or other
 options using ``--addopts``.
 
 
-Integration with setuptools test commands
-----------------------------------------------------
+Manual Integration
+^^^^^^^^^^^^^^^^^^
 
-Setuptools supports writing our own Test command for invoking pytest.
-Most often it is better to use tox_ instead, but here is how you can
-get started with setuptools integration::
+If for some reason you don't want/can't use ``pytest-runner``, you can write
+your own setuptools Test command for invoking pytest.
+
+.. code-block:: python
 
     import sys
 
@@ -254,10 +260,6 @@ using the ``--pytest-args`` or ``-a`` command-line option. For example::
 
 is equivalent to running ``py.test --durations=5``.
 
-.. seealso::
-
-    For a more powerful solution, take a look at the
-    `pytest-runner <https://pypi.python.org/pypi/pytest-runner>`_ plugin.
 
 .. _standalone:
 .. _`genscript method`:
