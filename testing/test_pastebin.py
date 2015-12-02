@@ -1,7 +1,7 @@
 import sys
 import pytest
 
-class TestPasting:
+class TestPasteCapture:
 
     @pytest.fixture
     def pastebinlist(self, monkeypatch, request):
@@ -62,7 +62,7 @@ class TestPaste:
             class DummyFile:
                 def read(self):
                     # part of html of a normal response
-                    return 'View <a href="/raw/3c0c6750bd">raw</a>.'
+                    return b'View <a href="/raw/3c0c6750bd">raw</a>.'
             return DummyFile()
 
         if sys.version_info < (3, 0):
@@ -78,10 +78,11 @@ class TestPaste:
         assert result == 'https://bpaste.net/show/3c0c6750bd'
         assert len(mocked_urlopen) == 1
         url, data = mocked_urlopen[0]
+        assert type(data) is bytes
         lexer = 'python3' if sys.version_info[0] == 3 else 'python'
         assert url == 'https://bpaste.net'
-        assert 'lexer=%s' % lexer in data
-        assert 'code=full-paste-contents' in data
-        assert 'expiry=1week' in data
+        assert 'lexer=%s' % lexer in data.decode()
+        assert 'code=full-paste-contents' in data.decode()
+        assert 'expiry=1week' in data.decode()
 
 

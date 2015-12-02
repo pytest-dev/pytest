@@ -6,6 +6,9 @@
   module. Thanks Mikhail Chernykh for the report and Bruno Oliveira for the
   PR.
 
+- fix #1198: ``--pastebin`` option now works on Python 3. Thanks
+  Mehdy Khoshnoody for the PR.
+
 - fix #1204: another error when collecting with a nasty __getattr__().
   Thanks Florian Bruhin for the PR.
 

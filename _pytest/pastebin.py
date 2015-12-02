@@ -61,8 +61,8 @@ def create_new_paste(contents):
         'expiry': '1week',
     }
     url = 'https://bpaste.net'
-    response = urlopen(url, data=urlencode(params)).read()
-    m = re.search(r'href="/raw/(\w+)"', response)
+    response = urlopen(url, data=urlencode(params).encode()).read()
+    m = re.search(r'href="/raw/(\w+)"', response.decode())
     if m:
         return '%s/show/%s' % (url, m.group(1))
     else:
