@@ -175,31 +175,6 @@ glitches.
 If you want to use Jenkins_ you can use the ``--junitxml=PATH`` option
 to create a JUnitXML file that Jenkins_ can pick up and generate reports.
 
-.. _standalone:
-.. _`genscript method`:
-
-(deprecated) Create a pytest standalone script
------------------------------------------------
-
-If you are a maintainer or application developer and want people
-who don't deal with python much to easily run tests you may generate
-a standalone ``pytest`` script::
-
-    py.test --genscript=runtests.py
-
-This generates a ``runtests.py`` script which is a fully functional basic
-``pytest`` script, running unchanged under Python2 and Python3.
-You can tell people to download the script and then e.g.  run it like this::
-
-    python runtests.py
-
-.. note::
-
-   You must have pytest and its dependencies installed as an sdist, not
-   as wheels because genscript need the source code for generating a
-   standalone script.
-
-
 
 Integrating with setuptools / ``python setup.py test`` / ``pytest-runner``
 --------------------------------------------------------------------------
@@ -329,6 +304,30 @@ is equivalent to running ``py.test --durations=5``.
 
     For a more powerful solution, take a look at the
     `pytest-runner <https://pypi.python.org/pypi/pytest-runner>`_ plugin.
+
+.. _standalone:
+.. _`genscript method`:
+
+(deprecated) Create a pytest standalone script
+-----------------------------------------------
+
+If you are a maintainer or application developer and want people
+who don't deal with python much to easily run tests you may generate
+a standalone ``pytest`` script::
+
+    py.test --genscript=runtests.py
+
+This generates a ``runtests.py`` script which is a fully functional basic
+``pytest`` script, running unchanged under Python2 and Python3.
+You can tell people to download the script and then e.g.  run it like this::
+
+    python runtests.py
+
+.. note::
+
+   You must have pytest and its dependencies installed as an sdist, not
+   as wheels because genscript need the source code for generating a
+   standalone script.
 
 
 .. include:: links.inc
