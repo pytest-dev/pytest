@@ -209,52 +209,6 @@ required for calling the test command. You can also pass additional
 arguments to py.test such as your test directory or other
 options using ``--addopts``.
 
-Integrating with setuptools / ``python setup.py test`` / ``genscript``
-----------------------------------------------------------------------
-
-You can integrate test runs into your
-setuptools based project.  Use the `genscript method`_
-to generate a standalone ``pytest`` script::
-
-    py.test --genscript=runtests.py
-
-and make this script part of your distribution and then add
-this to your ``setup.py`` file::
-
-    from distutils.core import setup, Command
-    # you can also import from setuptools
-
-    class PyTest(Command):
-        user_options = []
-        def initialize_options(self):
-            pass
-
-        def finalize_options(self):
-            pass
-
-        def run(self):
-            import subprocess
-            import sys
-            errno = subprocess.call([sys.executable, 'runtests.py'])
-            raise SystemExit(errno)
-
-
-    setup(
-        #...,
-        cmdclass = {'test': PyTest},
-        #...,
-    )
-
-If you now type::
-
-    python setup.py test
-
-this will execute your tests using ``runtests.py``. As this is a
-standalone version of ``pytest`` no prior installation whatsoever is
-required for calling the test command. You can also pass additional
-arguments to the subprocess-calls such as your test directory or other
-options.
-
 
 Integration with setuptools test commands
 ----------------------------------------------------
@@ -310,6 +264,8 @@ is equivalent to running ``py.test --durations=5``.
 
 (deprecated) Create a pytest standalone script
 -----------------------------------------------
+
+.. deprecated:: 2.7
 
 If you are a maintainer or application developer and want people
 who don't deal with python much to easily run tests you may generate
