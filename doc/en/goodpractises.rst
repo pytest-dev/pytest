@@ -140,7 +140,7 @@ Tox
 ------
 
 For development, we recommend to use virtualenv_ environments and pip_
- for installing your application and any dependencies
+for installing your application and any dependencies
 as well as the ``pytest`` package itself. This ensures your code and
 dependencies are isolated from the system Python installation.
 
@@ -178,7 +178,8 @@ Add this to ``setup.py`` file:
         #...,
     )
 
-And create an alias into ``setup.cfg``file:
+
+And create an alias into ``setup.cfg`` file:
 
 
 .. code-block:: ini
