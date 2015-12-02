@@ -4,6 +4,30 @@
 Good Integration Practices
 =================================================
 
+
+.. _`test discovery`:
+.. _`Python test discovery`:
+
+Conventions for Python test discovery
+-------------------------------------------------
+
+``pytest`` implements the following standard test discovery:
+
+* collection starts from paths specified in :confval:`testpaths` if configured,
+  otherwise from initial command line arguments which may be directories,
+  filenames or test ids. If :confval:`testpaths` is not configured and no
+  directories or files were given in the command line, start collection from
+  the current directory.
+* recurse into directories, unless they match :confval:`norecursedirs`
+* ``test_*.py`` or ``*_test.py`` files, imported by their `test package name`_.
+* ``Test`` prefixed test classes (without an ``__init__`` method)
+* ``test_`` prefixed test functions or methods are test items
+
+For examples of how to customize your test discovery :doc:`example/pythoncollection`.
+
+Within Python modules, ``pytest`` also discovers tests using the standard
+:ref:`unittest.TestCase <unittest.TestCase>` subclassing technique.
+
 Work with virtual environments
 -----------------------------------------------------------
 
@@ -306,27 +330,5 @@ is equivalent to running ``py.test --durations=5``.
     For a more powerful solution, take a look at the
     `pytest-runner <https://pypi.python.org/pypi/pytest-runner>`_ plugin.
 
-.. _`test discovery`:
-.. _`Python test discovery`:
-
-Conventions for Python test discovery
--------------------------------------------------
-
-``pytest`` implements the following standard test discovery:
-
-* collection starts from paths specified in :confval:`testpaths` if configured,
-  otherwise from initial command line arguments which may be directories,
-  filenames or test ids. If :confval:`testpaths` is not configured and no
-  directories or files were given in the command line, start collection from
-  the current directory.
-* recurse into directories, unless they match :confval:`norecursedirs`
-* ``test_*.py`` or ``*_test.py`` files, imported by their `test package name`_.
-* ``Test`` prefixed test classes (without an ``__init__`` method)
-* ``test_`` prefixed test functions or methods are test items
-
-For examples of how to customize your test discovery :doc:`example/pythoncollection`.
-
-Within Python modules, ``pytest`` also discovers tests using the standard
-:ref:`unittest.TestCase <unittest.TestCase>` subclassing technique.
 
 .. include:: links.inc
