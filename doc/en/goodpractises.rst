@@ -168,8 +168,7 @@ Add this to ``setup.py`` file:
 
 .. code-block:: python
 
-    from distutils.core import setup
-    # you can also import from setuptools
+    from setuptools import setup
 
     setup(
         #...,
