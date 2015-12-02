@@ -277,11 +277,5 @@ You can tell people to download the script and then e.g.  run it like this::
 
     python runtests.py
 
-.. note::
-
-   You must have pytest and its dependencies installed as an sdist, not
-   as wheels because genscript need the source code for generating a
-   standalone script.
-
 
 .. include:: links.inc
