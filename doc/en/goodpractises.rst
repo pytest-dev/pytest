@@ -258,8 +258,7 @@ is equivalent to running ``py.test --durations=5``.
     * It cannot support plugins, rendering its usefulness extremely limited;
     * Tooling has become much better since ``genscript`` was introduced;
     * It is possible to build a zipped ``pytest`` application without the
-      shortcomings above (this will be documented in more detail in a later
-      version of this documentation).
+      shortcomings above.
 
     There's no planned version in which this command will be removed
     at the moment of this writing, but its use is discouraged for new
