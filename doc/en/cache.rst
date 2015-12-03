@@ -5,7 +5,7 @@ Cache: working with cross-testrun state
 
 .. warning::
 
-  The functionality of this core plugin was previosuly distributed
+  The functionality of this core plugin was previously distributed
   as a third party plugin named ``pytest-cache``.  The core plugin
   is compatible regarding command line options and API usage except that you
   can only store/receive data between test runs that is json-serializable.
