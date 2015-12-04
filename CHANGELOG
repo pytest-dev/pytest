@@ -9,6 +9,9 @@
 - fix #1198: ``--pastebin`` option now works on Python 3. Thanks
   Mehdy Khoshnoody for the PR.
 
+- fix #1219: ``--pastebin`` now works correctly when captured output contains
+  non-ascii characters. Thanks Bruno Oliveira for the PR.
+
 - fix #1204: another error when collecting with a nasty __getattr__().
   Thanks Florian Bruhin for the PR.
 
