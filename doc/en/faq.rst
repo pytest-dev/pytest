@@ -76,7 +76,7 @@ be the same, confusing the reinterpreter and obfuscating the initial
 error (this is also explained at the command line if it happens).
 
 You can also turn off all assertion interaction using the
-``--assertmode=off`` option.
+``--assert=plain`` option.
 
 .. _`py namespaces`: index.html
 .. _`py/__init__.py`: http://bitbucket.org/hpk42/py-trunk/src/trunk/py/__init__.py

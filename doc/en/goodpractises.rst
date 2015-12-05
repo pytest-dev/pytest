@@ -4,29 +4,28 @@
 Good Integration Practices
 =================================================
 
-Work with virtual environments
------------------------------------------------------------
 
-We recommend to use virtualenv_ environments and use pip_
-(or easy_install_) for installing your application and any dependencies
-as well as the ``pytest`` package itself.  This way you will get an isolated
-and reproducible environment.    Given you have installed virtualenv_
-and execute it from the command line, here is an example session for unix
-or windows::
+.. _`test discovery`:
+.. _`Python test discovery`:
 
-    virtualenv .   # create a virtualenv directory in the current directory
+Conventions for Python test discovery
+-------------------------------------------------
 
-    source bin/activate  # on unix
+``pytest`` implements the following standard test discovery:
 
-    scripts/activate     # on Windows
+* If no arguments are specified then collection starts from :confval:`testpaths`
+  (if configured) or the current directory. Alternatively, command line arguments
+  can be used in any combination of directories, file names or node ids.
+* recurse into directories, unless they match :confval:`norecursedirs`
+* ``test_*.py`` or ``*_test.py`` files, imported by their `test package name`_.
+* ``Test`` prefixed test classes (without an ``__init__`` method)
+* ``test_`` prefixed test functions or methods are test items
 
-We can now install pytest::
+For examples of how to customize your test discovery :doc:`example/pythoncollection`.
 
-    pip install pytest
+Within Python modules, ``pytest`` also discovers tests using the standard
+:ref:`unittest.TestCase <unittest.TestCase>` subclassing technique.
 
-Due to the ``activate`` step above the ``pip`` will come from
-the virtualenv directory and install any package into the isolated
-virtual environment.
 
 Choosing a test layout / import rules
 ------------------------------------------
@@ -135,8 +134,13 @@ required configurations.
 
 .. _`use tox`:
 
-Use tox and Continuous Integration servers
--------------------------------------------------
+Tox
+------
+
+For development, we recommend to use virtualenv_ environments and pip_
+for installing your application and any dependencies
+as well as the ``pytest`` package itself. This ensures your code and
+dependencies are isolated from the system Python installation.
 
 If you frequently release code and want to make sure that your actual
 package passes all tests you may want to look into `tox`_, the
@@ -148,45 +152,21 @@ options.  It will run tests against the installed package and not
 against your source code checkout, helping to detect packaging
 glitches.
 
-If you want to use Jenkins_ you can use the ``--junitxml=PATH`` option
-to create a JUnitXML file that Jenkins_ can pick up and generate reports.
-
-.. _standalone:
-.. _`genscript method`:
-
-(deprecated) Create a pytest standalone script
------------------------------------------------
-
-If you are a maintainer or application developer and want people
-who don't deal with python much to easily run tests you may generate
-a standalone ``pytest`` script::
-
-    py.test --genscript=runtests.py
-
-This generates a ``runtests.py`` script which is a fully functional basic
-``pytest`` script, running unchanged under Python2 and Python3.
-You can tell people to download the script and then e.g.  run it like this::
-
-    python runtests.py
-
-.. note::
-
-   You must have pytest and its dependencies installed as an sdist, not
-   as wheels because genscript need the source code for generating a
-   standalone script.
-
+Continuous integration services such as Jenkins_ can make use of the
+``--junitxml=PATH`` option to create a JUnitXML file and generate reports.
 
 
 Integrating with setuptools / ``python setup.py test`` / ``pytest-runner``
 --------------------------------------------------------------------------
 
 You can integrate test runs into your setuptools based project
-with pytest-runner.
+with the `pytest-runner <https://pypi.python.org/pypi/pytest-runner>`_ plugin.
 
-Add this to ``setup.py`` file::
+Add this to ``setup.py`` file:
 
-    from distutils.core import setup
-    # you can also import from setuptools
+.. code-block:: python
+
+    from setuptools import setup
 
     setup(
         #...,
@@ -195,7 +175,11 @@ Add this to ``setup.py`` file::
         #...,
     )
 
-And create an alias into ``setup.cfg``file::
+
+And create an alias into ``setup.cfg`` file:
+
+
+.. code-block:: ini
 
     [aliases]
     test=pytest
@@ -210,59 +194,14 @@ required for calling the test command. You can also pass additional
 arguments to py.test such as your test directory or other
 options using ``--addopts``.
 
-Integrating with setuptools / ``python setup.py test`` / ``genscript``
-----------------------------------------------------------------------
 
-You can integrate test runs into your
-setuptools based project.  Use the `genscript method`_
-to generate a standalone ``pytest`` script::
+Manual Integration
+^^^^^^^^^^^^^^^^^^
 
-    py.test --genscript=runtests.py
+If for some reason you don't want/can't use ``pytest-runner``, you can write
+your own setuptools Test command for invoking pytest.
 
-and make this script part of your distribution and then add
-this to your ``setup.py`` file::
-
-    from distutils.core import setup, Command
-    # you can also import from setuptools
-
-    class PyTest(Command):
-        user_options = []
-        def initialize_options(self):
-            pass
-
-        def finalize_options(self):
-            pass
-
-        def run(self):
-            import subprocess
-            import sys
-            errno = subprocess.call([sys.executable, 'runtests.py'])
-            raise SystemExit(errno)
-
-
-    setup(
-        #...,
-        cmdclass = {'test': PyTest},
-        #...,
-    )
-
-If you now type::
-
-    python setup.py test
-
-this will execute your tests using ``runtests.py``. As this is a
-standalone version of ``pytest`` no prior installation whatsoever is
-required for calling the test command. You can also pass additional
-arguments to the subprocess-calls such as your test directory or other
-options.
-
-
-Integration with setuptools test commands
-----------------------------------------------------
-
-Setuptools supports writing our own Test command for invoking pytest.
-Most often it is better to use tox_ instead, but here is how you can
-get started with setuptools integration::
+.. code-block:: python
 
     import sys
 
@@ -275,11 +214,6 @@ get started with setuptools integration::
         def initialize_options(self):
             TestCommand.initialize_options(self)
             self.pytest_args = []
-
-        def finalize_options(self):
-            TestCommand.finalize_options(self)
-            self.test_args = []
-            self.test_suite = True
 
         def run_tests(self):
             #import here, cause outside the eggs aren't loaded
@@ -306,32 +240,39 @@ using the ``--pytest-args`` or ``-a`` command-line option. For example::
 
 is equivalent to running ``py.test --durations=5``.
 
-.. seealso::
 
-    For a more powerful solution, take a look at the
-    `pytest-runner <https://pypi.python.org/pypi/pytest-runner>`_ plugin.
+.. _standalone:
+.. _`genscript method`:
 
-.. _`test discovery`:
-.. _`Python test discovery`:
+(deprecated) Create a pytest standalone script
+-----------------------------------------------
 
-Conventions for Python test discovery
--------------------------------------------------
+.. deprecated:: 2.8
 
-``pytest`` implements the following standard test discovery:
+.. note::
 
-* collection starts from paths specified in :confval:`testpaths` if configured,
-  otherwise from initial command line arguments which may be directories,
-  filenames or test ids. If :confval:`testpaths` is not configured and no
-  directories or files were given in the command line, start collection from
-  the current directory.
-* recurse into directories, unless they match :confval:`norecursedirs`
-* ``test_*.py`` or ``*_test.py`` files, imported by their `test package name`_.
-* ``Test`` prefixed test classes (without an ``__init__`` method)
-* ``test_`` prefixed test functions or methods are test items
+    ``genscript`` has been deprecated because:
 
-For examples of how to customize your test discovery :doc:`example/pythoncollection`.
+    * It cannot support plugins, rendering its usefulness extremely limited;
+    * Tooling has become much better since ``genscript`` was introduced;
+    * It is possible to build a zipped ``pytest`` application without the
+      shortcomings above.
 
-Within Python modules, ``pytest`` also discovers tests using the standard
-:ref:`unittest.TestCase <unittest.TestCase>` subclassing technique.
+    There's no planned version in which this command will be removed
+    at the moment of this writing, but its use is discouraged for new
+    applications.
+
+If you are a maintainer or application developer and want people
+who don't deal with python much to easily run tests you may generate
+a standalone ``pytest`` script::
+
+    py.test --genscript=runtests.py
+
+This generates a ``runtests.py`` script which is a fully functional basic
+``pytest`` script, running unchanged under Python2 and Python3.
+You can tell people to download the script and then e.g.  run it like this::
+
+    python runtests.py
+
 
 .. include:: links.inc
