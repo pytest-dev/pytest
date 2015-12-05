@@ -97,8 +97,8 @@ If your code targets python2.5 where class-decorators are not available,
 you can set the ``pytestmark`` attribute of a class::
 
     class TestPosixCalls:
-        pytestmark = pytest.mark.skipif(sys.platform != 'win32',
-                                        reason="requires Windows")
+        pytestmark = pytest.mark.skipif(sys.platform == 'win32',
+                                        reason="does not run on windows")
 
         def test_function(self):
             "will not be setup or run under 'win32' platform"
