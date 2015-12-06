@@ -1,4 +1,4 @@
-pytest-2.8.3
+pytest-2.8.4
 ============
 
 pytest is a mature Python testing tool with more than a 1100 tests
