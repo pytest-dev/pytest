@@ -88,7 +88,7 @@ the ``self.db`` values in the traceback::
 
     $ py.test test_unittest_db.py
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.3, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     

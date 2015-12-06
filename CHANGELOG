@@ -1,5 +1,8 @@
-2.8.4.dev
----------
+2.8.5.dev0
+----------
+
+2.8.4
+-----
 
 - fix #1190: ``deprecated_call()`` now works when the deprecated
   function has been already called by another test in the same
@@ -17,6 +20,9 @@
 
 - fix the summary printed when no tests did run.
   Thanks Florian Bruhin for the PR.
+
+- a number of documentation modernizations wrt good practices.
+  Thanks Bruno Oliveira for the PR.
 
 2.8.3
 -----
