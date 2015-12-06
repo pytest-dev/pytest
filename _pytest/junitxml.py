@@ -262,12 +262,18 @@ class LogXML(object):
         self.node_reporters = {}  # nodeid -> _NodeReporter
         self.node_reporters_ordered = []
 
-    def node_reporter(self, nodeid):
-        if nodeid in self.node_reporters:
+    def node_reporter(self, report):
+        nodeid = getattr(report, 'nodeid', report)
+        # local hack to handle xdist report order
+        slavenode = getattr(report, 'node', None)
+
+        key = nodeid, slavenode
+
+        if key in self.node_reporters:
             #TODO: breasks for --dist=each
-            return self.node_reporters[nodeid]
+            return self.node_reporters[key]
         reporter = _NodeReporter(nodeid, self)
-        self.node_reporters[nodeid] = reporter
+        self.node_reporters[key] = reporter
         self.node_reporters_ordered.append(reporter)
         return reporter
 
@@ -276,7 +282,7 @@ class LogXML(object):
             self.stats[key] += 1
 
     def _opentestcase(self, report):
-        reporter = self.node_reporter(report.nodeid)
+        reporter = self.node_reporter(report)
         reporter.record_testreport(report)
         return reporter
 
@@ -318,13 +324,13 @@ class LogXML(object):
             reporter.append_skipped(report)
         self.update_testcase_duration(report)
         if report.when == "teardown":
-            self.node_reporter(report.nodeid).finalize()
+            self.node_reporter(report).finalize()
 
     def update_testcase_duration(self, report):
         """accumulates total duration for nodeid from given report and updates
         the Junit.testcase with the new total if already created.
         """
-        reporter = self.node_reporter(report.nodeid)
+        reporter = self.node_reporter(report)
         reporter.duration += getattr(report, 'duration', 0.0)
 
     def pytest_collectreport(self, report):

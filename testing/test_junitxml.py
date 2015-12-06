@@ -661,7 +661,6 @@ def test_random_report_log_xdist(testdir):
     assert failed == ['test_x[22]']
 
 
-@pytest.mark.xfail(reason='duplicate test ids kill us')
 def test_runs_twice(testdir):
     f = testdir.makepyfile('''
         def test_pass():
@@ -669,4 +668,17 @@ def test_runs_twice(testdir):
     ''')
 
     result = testdir.runpytest(f, f, '--junitxml', testdir.tmpdir.join("test.xml"))
-    assert 'INTERNALERROR' not in result.stdout
+    assert 'INTERNALERROR' not in str(result.stdout)
+
+
+def test_runs_twice_xdist(testdir):
+    pytest.importorskip('xdist')
+    f = testdir.makepyfile('''
+        def test_pass():
+            pass
+    ''')
+
+    result = testdir.runpytest(f,
+        '--dist', 'each', '--tx', '2*popen',
+        '--junitxml', testdir.tmpdir.join("test.xml"))
+    assert 'INTERNALERROR' not in str(result.stdout)
