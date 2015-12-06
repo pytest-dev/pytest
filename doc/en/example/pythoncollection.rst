@@ -82,7 +82,7 @@ then the test collection looks like this::
 
     $ py.test --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.3, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: setup.cfg
     collected 2 items
     <Module 'check_myapp.py'>
@@ -91,7 +91,7 @@ then the test collection looks like this::
           <Function 'simple_check'>
           <Function 'complex_check'>
     
-    =======  in 0.12 seconds ========
+    ======= no tests ran in 0.12 seconds ========
 
 .. note::
 
@@ -128,7 +128,7 @@ You can always peek at the collection tree without running tests like this::
 
     . $ py.test --collect-only pythoncollection.py
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.3, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 3 items
     <Module 'CWD/pythoncollection.py'>
@@ -138,7 +138,7 @@ You can always peek at the collection tree without running tests like this::
           <Function 'test_method'>
           <Function 'test_anothermethod'>
     
-    =======  in 0.12 seconds ========
+    ======= no tests ran in 0.12 seconds ========
 
 customizing test collection to find all .py files
 ---------------------------------------------------------
@@ -182,11 +182,11 @@ interpreters and will leave out the setup.py file::
 
     $ py.test --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.3, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 0 items
     
-    =======  in 0.12 seconds ========
+    ======= no tests ran in 0.12 seconds ========
 
 If you run with a Python3 interpreter the moduled added through the conftest.py file will not be considered for test collection.
 

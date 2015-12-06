@@ -131,4 +131,4 @@ You can ask for available builtin or project-custom
         directory.  The returned object is a `py.path.local`_
         path object.
     
-     in 0.12 seconds
+    no tests ran in 0.12 seconds
