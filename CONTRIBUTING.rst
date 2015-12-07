@@ -118,7 +118,7 @@ pytest could always use more documentation.  What exactly is needed?
 
 * More complementary documentation.  Have you perhaps found something unclear?
 * Documentation translations.  We currently have only English.
-* Docstrings.  There's never too much of them.
+* Docstrings.  There can never be too many of them.
 * Blog posts, articles and such -- they're all very appreciated.
 
 You can also edit documentation files directly in the Github web interface

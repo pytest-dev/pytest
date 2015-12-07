@@ -13,17 +13,21 @@ def pytest_addoption(parser):
 
 @pytest.hookimpl(trylast=True)
 def pytest_configure(config):
+    import py
     if config.option.pastebin == "all":
         tr = config.pluginmanager.getplugin('terminalreporter')
         # if no terminal reporter plugin is present, nothing we can do here;
         # this can happen when this function executes in a slave node
         # when using pytest-xdist, for example
         if tr is not None:
-            config._pastebinfile = tempfile.TemporaryFile('w+')
+            # pastebin file will be utf-8 encoded binary file
+            config._pastebinfile = tempfile.TemporaryFile('w+b')
             oldwrite = tr._tw.write
             def tee_write(s, **kwargs):
                 oldwrite(s, **kwargs)
-                config._pastebinfile.write(str(s))
+                if py.builtin._istext(s):
+                    s = s.encode('utf-8')
+                config._pastebinfile.write(s)
             tr._tw.write = tee_write
 
 def pytest_unconfigure(config):
@@ -45,7 +49,7 @@ def create_new_paste(contents):
     """
     Creates a new paste using bpaste.net service.
 
-    :contents: paste contents
+    :contents: paste contents as utf-8 encoded bytes
     :returns: url to the pasted contents
     """
     import re
@@ -61,8 +65,8 @@ def create_new_paste(contents):
         'expiry': '1week',
     }
     url = 'https://bpaste.net'
-    response = urlopen(url, data=urlencode(params)).read()
-    m = re.search(r'href="/raw/(\w+)"', response)
+    response = urlopen(url, data=urlencode(params).encode('ascii')).read()
+    m = re.search(r'href="/raw/(\w+)"', response.decode('utf-8'))
     if m:
         return '%s/show/%s' % (url, m.group(1))
     else:

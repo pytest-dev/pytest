@@ -46,7 +46,7 @@ Several test run options::
     py.test test_mod.py   # run tests in module
     py.test somepath      # run all tests below somepath
     py.test -k stringexpr # only run tests with names that match the
-                          # the "string expression", e.g. "MyClass and not method"
+                          # "string expression", e.g. "MyClass and not method"
                           # will select TestMyClass.test_something
                           # but not TestMyClass.test_method_simple
     py.test test_mod.py::test_func  # only run tests that match the "node ID",
@@ -123,7 +123,7 @@ automatically disables its output capture when you enter PDB_ tracing:
   such.
 * Any later output produced within the same test will not be captured and will
   instead get sent directly to ``sys.stdout``. Note that this holds true even
-  for test output occuring after you exit the interactive PDB_ tracing session
+  for test output occurring after you exit the interactive PDB_ tracing session
   and continue with the regular test run.
 
 .. versionadded: 2.4.0

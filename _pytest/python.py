@@ -4,6 +4,7 @@ import fnmatch
 import functools
 import py
 import inspect
+import types
 import sys
 import pytest
 from _pytest.mark import MarkDecorator, MarkerError
@@ -43,13 +44,31 @@ else:
     def _format_args(func):
         return inspect.formatargspec(*inspect.getargspec(func))
 
+if  sys.version_info[:2] == (2, 6):
+    def isclass(object):
+        """ Return true if the object is a class. Overrides inspect.isclass for
+        python 2.6 because it will return True for objects which always return
+        something on __getattr__ calls (see #1035).
+        Backport of https://hg.python.org/cpython/rev/35bf8f7a8edc
+        """
+        return isinstance(object, (type, types.ClassType))
 
 def _has_positional_arg(func):
     return func.__code__.co_argcount
 
 
 def filter_traceback(entry):
-    return entry.path != cutdir1 and not entry.path.relto(cutdir2)
+    # entry.path might sometimes return a str object when the entry
+    # points to dynamically generated code
+    # see https://bitbucket.org/pytest-dev/py/issues/71
+    raw_filename = entry.frame.code.raw.co_filename
+    is_generated = '<' in raw_filename and '>' in raw_filename
+    if is_generated:
+        return False
+    # entry.path might point to an inexisting file, in which case it will
+    # alsso return a str object. see #1133
+    p = py.path.local(entry.path)
+    return p != cutdir1 and not p.relto(cutdir2)
 
 
 def get_real_func(obj):
@@ -296,11 +315,14 @@ def pytest_pycollect_makeitem(collector, name, obj):
     elif collector.istestfunction(obj, name):
         # mock seems to store unbound methods (issue473), normalize it
         obj = getattr(obj, "__func__", obj)
-        if not isfunction(obj):
+        # We need to try and unwrap the function if it's a functools.partial
+        # or a funtools.wrapped.
+        # We musn't if it's been wrapped with mock.patch (python 2 only)
+        if not (isfunction(obj) or isfunction(get_real_func(obj))):
             collector.warn(code="C2", message=
                 "cannot collect %r because it is not a function."
                 % name, )
-        if getattr(obj, "__test__", True):
+        elif getattr(obj, "__test__", True):
             if is_generator(obj):
                 res = Generator(name, parent=collector)
             else:
@@ -362,12 +384,13 @@ class PyobjMixin(PyobjContext):
     def reportinfo(self):
         # XXX caching?
         obj = self.obj
-        if hasattr(obj, 'compat_co_firstlineno'):
+        compat_co_firstlineno = getattr(obj, 'compat_co_firstlineno', None)
+        if isinstance(compat_co_firstlineno, int):
             # nose compatibility
             fspath = sys.modules[obj.__module__].__file__
             if fspath.endswith(".pyc"):
                 fspath = fspath[:-1]
-            lineno = obj.compat_co_firstlineno
+            lineno = compat_co_firstlineno
         else:
             fspath, lineno = getfslineno(obj)
         modpath = self.getmodpath()
@@ -383,7 +406,10 @@ class PyCollector(PyobjMixin, pytest.Collector):
         """ Look for the __test__ attribute, which is applied by the
         @nose.tools.istest decorator
         """
-        return safe_getattr(obj, '__test__', False)
+        # We explicitly check for "is True" here to not mistakenly treat
+        # classes with a custom __getattr__ returning something truthy (like a
+        # function) as test classes.
+        return safe_getattr(obj, '__test__', False) is True
 
     def classnamefilter(self, name):
         return self._matches_prefix_or_glob_option('python_classes', name)
@@ -1041,6 +1067,8 @@ class Metafunc(FuncargnamesCompatAttr):
 
 
 if _PY3:
+    import codecs
+
     def _escape_bytes(val):
         """
         If val is pure ascii, returns it as a str(), otherwise escapes
@@ -1053,18 +1081,21 @@ if _PY3:
            want to return escaped bytes for any byte, even if they match
            a utf-8 string.
         """
-        # source: http://goo.gl/bGsnwC
-        import codecs
-        encoded_bytes, _ = codecs.escape_encode(val)
-        return encoded_bytes.decode('ascii')
+        if val:
+            # source: http://goo.gl/bGsnwC
+            encoded_bytes, _ = codecs.escape_encode(val)
+            return encoded_bytes.decode('ascii')
+        else:
+            # empty bytes crashes codecs.escape_encode (#1087)
+            return ''
 else:
     def _escape_bytes(val):
         """
-        In py2 bytes and str are the same, so return it unchanged if it
+        In py2 bytes and str are the same type, so return it unchanged if it
         is a full ascii string, otherwise escape it into its binary form.
         """
         try:
-            return val.encode('ascii')
+            return val.decode('ascii')
         except UnicodeDecodeError:
             return val.encode('string-escape')
 
@@ -1093,7 +1124,7 @@ def _idval(val, argname, idx, idfn):
         # convertible to ascii, return it as an str() object instead
         try:
             return str(val)
-        except UnicodeDecodeError:
+        except UnicodeError:
             # fallthrough
             pass
     return str(argname)+str(idx)
@@ -1181,6 +1212,28 @@ def raises(expected_exception, *args, **kwargs):
 
         >>> with raises(ZeroDivisionError):
         ...    1/0
+
+    .. note::
+
+       When using ``pytest.raises`` as a context manager, it's worthwhile to
+       note that normal context manager rules apply and that the exception
+       raised *must* be the final line in the scope of the context manager.
+       Lines of code after that, within the scope of the context manager will
+       not be executed. For example::
+
+           >>> with raises(OSError) as err:
+                   assert 1 == 1  # this will execute as expected
+                   raise OSError(errno.EEXISTS, 'directory exists')
+                   assert err.errno == errno.EEXISTS  # this will not execute
+
+       Instead, the following approach must be taken (note the difference in
+       scope)::
+
+           >>> with raises(OSError) as err:
+                   assert 1 == 1  # this will execute as expected
+                   raise OSError(errno.EEXISTS, 'directory exists')
+
+               assert err.errno == errno.EEXISTS  # this will now execute
 
     Or you can specify a callable by passing a to-be-called lambda::
 
@@ -2103,7 +2156,7 @@ def num_mock_patch_args(function):
 
 def getfuncargnames(function, startindex=None):
     # XXX merge with main.py's varnames
-    #assert not inspect.isclass(function)
+    #assert not isclass(function)
     realfunction = function
     while hasattr(realfunction, "__wrapped__"):
         realfunction = realfunction.__wrapped__

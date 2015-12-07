@@ -26,7 +26,7 @@ you will see the return value of the function call::
 
     $ py.test test_assert1.py
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
@@ -146,7 +146,7 @@ if you run this module::
 
     $ py.test test_assert2.py
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
@@ -192,8 +192,8 @@ provides an alternative explanation for ``Foo`` objects::
    from test_foocompare import Foo
    def pytest_assertrepr_compare(op, left, right):
        if isinstance(left, Foo) and isinstance(right, Foo) and op == "==":
-        return ['Comparing Foo instances:',
-                  '   vals: %s != %s' % (left.val, right.val)]
+           return ['Comparing Foo instances:',
+                   '   vals: %s != %s' % (left.val, right.val)]
 
 now, given this test module::
 

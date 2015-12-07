@@ -1,7 +1,8 @@
+# encoding: utf-8
 import sys
 import pytest
 
-class TestPasting:
+class TestPasteCapture:
 
     @pytest.fixture
     def pastebinlist(self, monkeypatch, request):
@@ -27,6 +28,7 @@ class TestPasting:
         assert reprec.countoutcomes() == [1,1,1]
 
     def test_all(self, testdir, pastebinlist):
+        from _pytest.pytester import LineMatcher
         testpath = testdir.makepyfile("""
             import pytest
             def test_pass():
@@ -39,9 +41,34 @@ class TestPasting:
         reprec = testdir.inline_run(testpath, "--pastebin=all", '-v')
         assert reprec.countoutcomes() == [1,1,1]
         assert len(pastebinlist) == 1
-        s = pastebinlist[0]
-        for x in 'test_fail test_skip test_pass'.split():
-            assert x in s
+        contents = pastebinlist[0].decode('utf-8')
+        matcher = LineMatcher(contents.splitlines())
+        matcher.fnmatch_lines([
+            '*test_pass PASSED*',
+            '*test_fail FAILED*',
+            '*test_skip SKIPPED*',
+            '*== 1 failed, 1 passed, 1 skipped in *'
+        ])
+
+    def test_non_ascii_paste_text(self, testdir):
+        """Make sure that text which contains non-ascii characters is pasted
+        correctly. See #1219.
+        """
+        testdir.makepyfile(test_unicode="""
+            # encoding: utf-8
+            def test():
+                assert '☺' == 1
+        """)
+        result = testdir.runpytest('--pastebin=all')
+        if sys.version_info[0] == 3:
+            expected_msg = "*assert '☺' == 1*"
+        else:
+            expected_msg = "*assert '\\xe2\\x98\\xba' == 1*"
+        result.stdout.fnmatch_lines([
+            expected_msg,
+            "*== 1 failed in *",
+            '*Sending information to Paste Service*',
+        ])
 
 
 class TestPaste:
@@ -62,7 +89,7 @@ class TestPaste:
             class DummyFile:
                 def read(self):
                     # part of html of a normal response
-                    return 'View <a href="/raw/3c0c6750bd">raw</a>.'
+                    return b'View <a href="/raw/3c0c6750bd">raw</a>.'
             return DummyFile()
 
         if sys.version_info < (3, 0):
@@ -74,14 +101,15 @@ class TestPaste:
         return calls
 
     def test_create_new_paste(self, pastebin, mocked_urlopen):
-        result = pastebin.create_new_paste('full-paste-contents')
+        result = pastebin.create_new_paste(b'full-paste-contents')
         assert result == 'https://bpaste.net/show/3c0c6750bd'
         assert len(mocked_urlopen) == 1
         url, data = mocked_urlopen[0]
+        assert type(data) is bytes
         lexer = 'python3' if sys.version_info[0] == 3 else 'python'
         assert url == 'https://bpaste.net'
-        assert 'lexer=%s' % lexer in data
-        assert 'code=full-paste-contents' in data
-        assert 'expiry=1week' in data
+        assert 'lexer=%s' % lexer in data.decode()
+        assert 'code=full-paste-contents' in data.decode()
+        assert 'expiry=1week' in data.decode()
 
 

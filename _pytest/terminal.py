@@ -458,7 +458,8 @@ class TerminalReporter:
                     self.write_line(line)
                 else:
                     msg = self._getfailureheadline(rep)
-                    self.write_sep("_", msg)
+                    markup = {'red': True, 'bold': True}
+                    self.write_sep("_", msg, **markup)
                     self._outrep_summary(rep)
 
     def summary_errors(self):
@@ -543,7 +544,11 @@ def build_summary_stats_line(stats):
         if val:
             key_name = key_translation.get(key, key)
             parts.append("%d %s" % (len(val), key_name))
-    line = ", ".join(parts)
+
+    if parts:
+        line = ", ".join(parts)
+    else:
+        line = "no tests ran"
 
     if 'failed' in stats or 'error' in stats:
         color = 'red'

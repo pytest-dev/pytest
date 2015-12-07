@@ -718,3 +718,19 @@ def test_unittest_raise_skip_issue748(testdir):
         *SKIP*[1]*test_foo.py*skipping due to reasons*
         *1 skipped*
     """)
+
+@pytest.mark.skipif("sys.version_info < (2,7)")
+def test_unittest_skip_issue1169(testdir):
+    testdir.makepyfile(test_foo="""
+        import unittest
+        
+        class MyTestCase(unittest.TestCase):
+            @unittest.skip("skipping due to reasons")
+            def test_skip(self):
+                 self.fail()
+        """)
+    result = testdir.runpytest("-v", '-rs')
+    result.stdout.fnmatch_lines("""
+        *SKIP*[1]*skipping due to reasons*
+        *1 skipped*
+    """)
