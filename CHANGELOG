@@ -20,6 +20,7 @@
 
 - fix the summary printed when no tests did run.
   Thanks Florian Bruhin for the PR.
+- fix #1185 - ensure MANIFEST.in exactly matches what should go to a sdist
 
 - a number of documentation modernizations wrt good practices.
   Thanks Bruno Oliveira for the PR.
