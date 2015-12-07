@@ -130,7 +130,7 @@ objects, they are still using the default pytest representation::
 
     $ py.test test_time.py --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 6 items
     <Module 'test_time.py'>
@@ -141,7 +141,7 @@ objects, they are still using the default pytest representation::
       <Function 'test_timedistance_v2[20011212-20011211-expected0]'>
       <Function 'test_timedistance_v2[20011211-20011212-expected1]'>
     
-    =======  in 0.12 seconds ========
+    ======= no tests ran in 0.12 seconds ========
 
 A quick port of "testscenarios"
 ------------------------------------
@@ -181,7 +181,7 @@ this is a fully self-contained example which you can run with::
 
     $ py.test test_scenarios.py
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
@@ -194,7 +194,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
 
     $ py.test --collect-only test_scenarios.py
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     <Module 'test_scenarios.py'>
@@ -205,7 +205,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
           <Function 'test_demo1[advanced]'>
           <Function 'test_demo2[advanced]'>
     
-    =======  in 0.12 seconds ========
+    ======= no tests ran in 0.12 seconds ========
 
 Note that we told ``metafunc.parametrize()`` that your scenario values
 should be considered class-scoped.  With pytest-2.3 this leads to a
@@ -259,14 +259,14 @@ Let's first see how it looks like at collection time::
 
     $ py.test test_backends.py --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     <Module 'test_backends.py'>
       <Function 'test_db_initialized[d1]'>
       <Function 'test_db_initialized[d2]'>
     
-    =======  in 0.12 seconds ========
+    ======= no tests ran in 0.12 seconds ========
 
 And then when we run the test::
 
@@ -320,25 +320,25 @@ The result of this test will be successful::
 
     $ py.test test_indirect_list.py --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     <Module 'test_indirect_list.py'>
       <Function 'test_indirect[a-b]'>
     
-    =======  in 0.12 seconds ========
+    ======= no tests ran in 0.12 seconds ========
 
 .. regendoc:wipe
 
 Parametrizing test methods through per-class configuration
 --------------------------------------------------------------
 
-.. _`unittest parameterizer`: http://code.google.com/p/unittest-ext/source/browse/trunk/params.py
+.. _`unittest parametrizer`: http://code.google.com/p/unittest-ext/source/browse/trunk/params.py
 
 
 Here is an example ``pytest_generate_function`` function implementing a
 parametrization scheme similar to Michael Foord's `unittest
-parameterizer`_ but in a lot less code::
+parametrizer`_ but in a lot less code::
 
     # content of ./test_parametrize.py
     import pytest
@@ -397,8 +397,11 @@ is to be run with different sets of arguments for its three arguments:
 Running it results in some skips if we don't have all the python interpreters installed and otherwise runs all combinations (5 interpreters times 5 interpreters times 3 objects to serialize/deserialize)::
 
    . $ py.test -rs -q multipython.py
-   ...........................
-   27 passed in 0.12 seconds
+   ssssssssssss...ssssssssssss
+   ======= short test summary info ========
+   SKIP [12] $REGENDOC_TMPDIR/CWD/multipython.py:22: 'python2.6' not found
+   SKIP [12] $REGENDOC_TMPDIR/CWD/multipython.py:22: 'python3.3' not found
+   3 passed, 24 skipped in 0.12 seconds
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------
@@ -445,7 +448,7 @@ If you run this with reporting for skips enabled::
 
     $ py.test -rs test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     

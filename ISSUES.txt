@@ -115,7 +115,7 @@ tags: feature
 
 - introduce pytest.mark.nocollect for not considering a function for
   test collection at all.  maybe also introduce a pytest.mark.test to
-  explicitely mark a function to become a tested one.  Lookup JUnit ways
+  explicitly mark a function to become a tested one.  Lookup JUnit ways
   of tagging tests.
 
 introduce pytest.mark.importorskip

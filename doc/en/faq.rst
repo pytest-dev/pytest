@@ -60,7 +60,7 @@ and customizable testing framework for Python.   Note, however, that
 thus likely not something for Python beginners.
 
 A second "magic" issue was the assert statement debugging feature.
-Nowadays, ``pytest`` explicitely rewrites assert statements in test modules
+Nowadays, ``pytest`` explicitly rewrites assert statements in test modules
 in order to provide more useful :ref:`assert feedback <assertfeedback>`.
 This completely avoids previous issues of confusing assertion-reporting.
 It also means, that you can use Python's ``-O`` optimization without losing
@@ -76,7 +76,7 @@ be the same, confusing the reinterpreter and obfuscating the initial
 error (this is also explained at the command line if it happens).
 
 You can also turn off all assertion interaction using the
-``--assertmode=off`` option.
+``--assert=plain`` option.
 
 .. _`py namespaces`: index.html
 .. _`py/__init__.py`: http://bitbucket.org/hpk42/py-trunk/src/trunk/py/__init__.py

@@ -162,7 +162,7 @@ Builtin configuration file options
    .. versionadded:: 2.8
 
    Sets list of directories that should be searched for tests when
-   no specific directories or files are given in the command line when
+   no specific directories, files or test ids are given in the command line when
    executing pytest from the :ref:`rootdir <rootdir>` directory.
    Useful when all project tests are in a known location to speed up
    test collection and to avoid picking up undesired tests by accident.

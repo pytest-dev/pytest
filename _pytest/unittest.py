@@ -69,11 +69,25 @@ class TestCaseFunction(pytest.Function):
 
     def setup(self):
         self._testcase = self.parent.obj(self.name)
+        self._fix_unittest_skip_decorator()
         self._obj = getattr(self._testcase, self.name)
         if hasattr(self._testcase, 'setup_method'):
             self._testcase.setup_method(self._obj)
         if hasattr(self, "_request"):
             self._request._fillfixtures()
+
+    def _fix_unittest_skip_decorator(self):
+        """
+        The @unittest.skip decorator calls functools.wraps(self._testcase)
+        The call to functools.wraps() fails unless self._testcase
+        has a __name__ attribute. This is usually automatically supplied
+        if the test is a function or method, but we need to add manually
+        here.
+
+        See issue #1169
+        """
+        if sys.version_info[0] == 2:
+            setattr(self._testcase, "__name__", self.name)
 
     def teardown(self):
         if hasattr(self._testcase, 'teardown_method'):

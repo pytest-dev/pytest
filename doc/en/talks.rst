@@ -14,6 +14,9 @@ Talks and blog postings
 .. _`tutorial1 repository`: http://bitbucket.org/pytest-dev/pytest-tutorial1/
 .. _`pycon 2010 tutorial PDF`: http://bitbucket.org/pytest-dev/pytest-tutorial1/raw/tip/pytest-basic.pdf
 
+- `Improve your testing with Pytest and Mock, Gabe Hollombe, PyCon SG 2015
+  <https://www.youtube.com/watch?v=RcN26hznmk4>`_.
+
 - `Introduction to pytest, Andreas Pelme, EuroPython 2014
   <https://www.youtube.com/watch?v=LdVJj65ikRY>`_.
 
