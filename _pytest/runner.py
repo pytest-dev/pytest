@@ -177,9 +177,13 @@ class BaseReport(object):
         self.__dict__.update(kw)
 
     def toterminal(self, out):
-        longrepr = self.longrepr
         if hasattr(self, 'node'):
             out.line(getslaveinfoline(self.node))
+
+        longrepr = self.longrepr
+        if longrepr is None:
+            return
+
         if hasattr(longrepr, 'toterminal'):
             longrepr.toterminal(out)
         else:

@@ -40,6 +40,9 @@ def pytest_addoption(parser):
                action="store", dest="color", default='auto',
                choices=['yes', 'no', 'auto'],
                help="color terminal output (yes/no/auto).")
+    group._addoption('--report-passing',
+        action="store_true", dest="report_passing", default=False,
+        help="show full reports for passing tests.")
 
 def pytest_configure(config):
     config.option.verbose -= config.option.quiet
@@ -371,6 +374,9 @@ class TerminalReporter:
         if exitstatus == EXIT_INTERRUPTED:
             self._report_keyboardinterrupt()
             del self._keyboardinterrupt_memo
+        if self.config.option.report_passing:
+            self.summary_passes()
+
         self.summary_deselected()
         self.summary_stats()
 
@@ -445,6 +451,17 @@ class TerminalReporter:
             for w in warnings:
                 self._tw.line("W%s %s %s" % (w.code,
                               w.fslocation, w.message))
+
+    def summary_passes(self):
+        if self.config.option.tbstyle != "no":
+            reports = self.getreports('passed')
+            if not reports:
+                return
+            self.write_sep("=", "PASSES")
+            for rep in reports:
+                msg = self._getfailureheadline(rep)
+                self.write_sep("_", msg)
+                self._outrep_summary(rep)
 
     def summary_failures(self):
         if self.config.option.tbstyle != "no":
