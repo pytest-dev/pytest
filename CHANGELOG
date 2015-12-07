@@ -1,3 +1,16 @@
+2.9.0.dev
+---------
+
+* New `pytest.mark.skip` mark, which unconditional skips marked tests.
+  Thanks Michael Aquilina for the complete PR.
+
+* fix issue #680: the -s and -c options should now work under xdist;
+  `Config.fromdictargs` now represents its input much more faithfully.
+  Thanks to Buck Evan for the complete PR.
+
+* `pytest_enter_pdb` now optionally receives the pytest config object.
+  Thanks Bruno Oliveira for the PR.
+
 2.8.5.dev0
 ----------
 
@@ -119,6 +132,7 @@
 
 - Fix issue #411: Add __eq__ method to assertion comparison example.
   Thanks Ben Webb.
+- Fix issue #653: deprecated_call can be used as context manager.
 
 - fix issue 877: properly handle assertion explanations with non-ascii repr
   Thanks Mathieu Agopian for the report and Ronny Pfannschmidt for the PR.

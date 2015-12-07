@@ -28,14 +28,22 @@ def pytest_namespace():
             'warns': warns}
 
 
-def deprecated_call(func, *args, **kwargs):
+def deprecated_call(func=None, *args, **kwargs):
     """ assert that calling ``func(*args, **kwargs)`` triggers a
     ``DeprecationWarning`` or ``PendingDeprecationWarning``.
+
+    This function can be used as a context manager::
+
+        >>> with deprecated_call():
+        ...    myobject.deprecated_method()
 
     Note: we cannot use WarningsRecorder here because it is still subject
     to the mechanism that prevents warnings of the same type from being
     triggered twice for the same module. See #1190.
     """
+    if not func:
+        return WarningsChecker(expected_warning=DeprecationWarning)
+
     categories = []
 
     def warn_explicit(message, category, *args, **kwargs):
@@ -171,8 +179,8 @@ class WarningsRecorder(object):
         self._module.showwarning = showwarning
 
         # allow the same warning to be raised more than once
-        self._module.simplefilter('always', append=True)
 
+        self._module.simplefilter('always')
         return self
 
     def __exit__(self, *exc_info):

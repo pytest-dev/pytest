@@ -122,3 +122,9 @@ command ``warnings.simplefilter('always')``::
         warnings.warn("deprecated", DeprecationWarning)
         assert len(recwarn) == 1
         assert recwarn.pop(DeprecationWarning)
+
+You can also use it as a contextmanager::
+
+    def test_global():
+        with pytest.deprecated_call():
+            myobject.deprecated_method()

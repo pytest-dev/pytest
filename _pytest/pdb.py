@@ -37,7 +37,6 @@ class pytestPDB:
         """ invoke PDB set_trace debugging, dropping any IO capturing. """
         import _pytest.config
         frame = sys._getframe().f_back
-        capman = None
         if self._pluginmanager is not None:
             capman = self._pluginmanager.getplugin("capturemanager")
             if capman:
@@ -45,7 +44,7 @@ class pytestPDB:
             tw = _pytest.config.create_terminal_writer(self._config)
             tw.line()
             tw.sep(">", "PDB set_trace (IO-capturing turned off)")
-            self._pluginmanager.hook.pytest_enter_pdb()
+            self._pluginmanager.hook.pytest_enter_pdb(config=self._config)
         pdb.Pdb().set_trace(frame)
 
 
