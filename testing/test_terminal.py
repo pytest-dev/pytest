@@ -522,6 +522,33 @@ def test_fail_reporting_on_pass(testdir):
     result = testdir.runpytest('-rf')
     assert 'short test summary' not in result.stdout.str()
 
+def test_pass_extra_reporting(testdir):
+    testdir.makepyfile("def test_this(): assert 1")
+    result = testdir.runpytest()
+    assert 'short test summary' not in result.stdout.str()
+    result = testdir.runpytest('-rp')
+    result.stdout.fnmatch_lines([
+        "*test summary*",
+        "PASS*test_pass_extra_reporting*",
+    ])
+
+def test_pass_reporting_on_fail(testdir):
+    testdir.makepyfile("def test_this(): assert 0")
+    result = testdir.runpytest('-rp')
+    assert 'short test summary' not in result.stdout.str()
+
+def test_pass_output_reporting(testdir):
+    testdir.makepyfile("""
+        def test_pass_output():
+            print("Four score and seven years ago...")
+    """)
+    result = testdir.runpytest()
+    assert 'Four score and seven years ago...' not in result.stdout.str()
+    result = testdir.runpytest('-rP')
+    result.stdout.fnmatch_lines([
+        "Four score and seven years ago...",
+    ])
+
 def test_color_yes(testdir):
     testdir.makepyfile("def test_this(): assert 1")
     result = testdir.runpytest('--color=yes')
