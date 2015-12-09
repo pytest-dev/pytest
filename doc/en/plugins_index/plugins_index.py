@@ -13,11 +13,11 @@ Also includes plugin compatibility between different python and pytest versions,
 obtained from http://plugincompat.herokuapp.com.
 """
 from __future__ import print_function
+from argparse import ArgumentParser
 from collections import namedtuple
 import datetime
 from distutils.version import LooseVersion
 import itertools
-from optparse import OptionParser
 import os
 import sys
 import pytest
@@ -103,7 +103,7 @@ def obtain_plugins_table(plugins, client, verbose, pytest_ver):
             return pad_right % image_markup, target_markup
         else:
             return ('`link <%s>`_' % target), ''
-    
+
     def sanitize_summary(summary):
         """Make sure summaries don't break our table formatting.
         """
@@ -268,20 +268,21 @@ def main(argv):
     filename = os.path.join(os.path.dirname(__file__), 'index.rst')
     url = 'http://pypi.python.org/pypi'
 
-    parser = OptionParser(
-        description='Generates a restructured document of pytest plugins from PyPI')
-    parser.add_option('-f', '--filename', default=filename,
-                      help='output filename [default: %default]')
-    parser.add_option('-u', '--url', default=url,
-                      help='url of PyPI server to obtain data from [default: %default]')
-    parser.add_option('-v', '--verbose', default=False, action='store_true',
-                      help='verbose output')
-    parser.add_option('--pytest-ver', default=None, action='store',
-                      help='generate index for this pytest version (default current version)')
-    (options, _) = parser.parse_args(argv[1:])
+    parser = ArgumentParser(
+        description='Generates a document with all pytest plugins from PyPI')
+    parser.add_argument('-f', '--filename', default=filename,
+                        help='output filename [default: %default]')
+    parser.add_argument('-u', '--url', default=url,
+                        help='url of PyPI server to obtain data from [default: %default]')
+    parser.add_argument('-v', '--verbose', default=False, action='store_true',
+                        help='verbose output')
+    parser.add_argument('version', default=None, action='store',
+                        help='generate index for this pytest version')
+    options = parser.parse_args()
 
     client = get_proxy(options.url)
-    generate_plugins_index(client, options.filename, options.verbose, options.pytest_ver)
+    generate_plugins_index(client, options.filename, options.verbose,
+                           options.version)
 
     print()
     print('%s updated.' % options.filename)

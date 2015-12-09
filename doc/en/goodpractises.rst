@@ -177,9 +177,41 @@ You can tell people to download the script and then e.g.  run it like this::
 
 
 
+Integrating with setuptools / ``python setup.py test`` / ``pytest-runner``
+--------------------------------------------------------------------------
 
-Integrating with setuptools / ``python setup.py test``
-------------------------------------------------------
+You can integrate test runs into your setuptools based project
+with pytest-runner.
+
+Add this to ``setup.py`` file::
+
+    from distutils.core import setup
+    # you can also import from setuptools
+
+    setup(
+        #...,
+        setup_requires=['pytest-runner', ...],
+        tests_require=['pytest', ...],
+        #...,
+    )
+
+And create an alias into ``setup.cfg``file::
+
+    [aliases]
+    test=pytest
+
+If you now type::
+
+    python setup.py test
+
+this will execute your tests using ``pytest-runner``. As this is a
+standalone version of ``pytest`` no prior installation whatsoever is
+required for calling the test command. You can also pass additional
+arguments to py.test such as your test directory or other
+options using ``--addopts``.
+
+Integrating with setuptools / ``python setup.py test`` / ``genscript``
+----------------------------------------------------------------------
 
 You can integrate test runs into your
 setuptools based project.  Use the `genscript method`_

@@ -88,7 +88,7 @@ the ``self.db`` values in the traceback::
 
     $ py.test test_unittest_db.py
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.3, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -180,3 +180,11 @@ was executed ahead of the ``test_method``.
    to selectively leave away the ``unittest.TestCase`` subclassing, use
    plain asserts and get the unlimited pytest feature set.
 
+
+Converting from unittest to pytest
+---------------------------------------
+
+If you want to convert your unittest testcases to pytest, there are
+some helpers like `unittest2pytest
+<https://pypi.python.org/pypi/unittest2pytest/>`__, which uses lib2to3
+and introspection for the transformation.

@@ -4,6 +4,7 @@ import fnmatch
 import functools
 import py
 import inspect
+import types
 import sys
 import pytest
 from _pytest.mark import MarkDecorator, MarkerError
@@ -43,20 +44,31 @@ else:
     def _format_args(func):
         return inspect.formatargspec(*inspect.getargspec(func))
 
+if  sys.version_info[:2] == (2, 6):
+    def isclass(object):
+        """ Return true if the object is a class. Overrides inspect.isclass for
+        python 2.6 because it will return True for objects which always return
+        something on __getattr__ calls (see #1035).
+        Backport of https://hg.python.org/cpython/rev/35bf8f7a8edc
+        """
+        return isinstance(object, (type, types.ClassType))
 
 def _has_positional_arg(func):
     return func.__code__.co_argcount
 
 
 def filter_traceback(entry):
-    # entry.path might sometimes return a str() object when the entry
+    # entry.path might sometimes return a str object when the entry
     # points to dynamically generated code
     # see https://bitbucket.org/pytest-dev/py/issues/71
     raw_filename = entry.frame.code.raw.co_filename
     is_generated = '<' in raw_filename and '>' in raw_filename
     if is_generated:
         return False
-    return entry.path != cutdir1 and not entry.path.relto(cutdir2)
+    # entry.path might point to an inexisting file, in which case it will
+    # alsso return a str object. see #1133
+    p = py.path.local(entry.path)
+    return p != cutdir1 and not p.relto(cutdir2)
 
 
 def get_real_func(obj):
@@ -303,11 +315,14 @@ def pytest_pycollect_makeitem(collector, name, obj):
     elif collector.istestfunction(obj, name):
         # mock seems to store unbound methods (issue473), normalize it
         obj = getattr(obj, "__func__", obj)
-        if not isfunction(obj):
+        # We need to try and unwrap the function if it's a functools.partial
+        # or a funtools.wrapped.
+        # We musn't if it's been wrapped with mock.patch (python 2 only)
+        if not (isfunction(obj) or isfunction(get_real_func(obj))):
             collector.warn(code="C2", message=
                 "cannot collect %r because it is not a function."
                 % name, )
-        if getattr(obj, "__test__", True):
+        elif getattr(obj, "__test__", True):
             if is_generator(obj):
                 res = Generator(name, parent=collector)
             else:
@@ -2137,7 +2152,7 @@ def num_mock_patch_args(function):
 
 def getfuncargnames(function, startindex=None):
     # XXX merge with main.py's varnames
-    #assert not inspect.isclass(function)
+    #assert not isclass(function)
     realfunction = function
     while hasattr(realfunction, "__wrapped__"):
         realfunction = realfunction.__wrapped__
