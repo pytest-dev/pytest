@@ -8,7 +8,9 @@ Note: this assumes you have already registered on pypi.
 2. Check and finalize CHANGELOG
 
 3. Write doc/en/announce/release-VERSION.txt and include
-   it in doc/en/announce/index.txt
+   it in doc/en/announce/index.txt::
+
+        git log 2.8.2..HEAD --format='%aN' | sort -u # lists the names of authors involved
 
 4. Use devpi for uploading a release tarball to a staging area::
 
@@ -40,6 +42,7 @@ Note: this assumes you have already registered on pypi.
    installed::
 
       cd doc/en
+      python plugins_index/plugins_index.py
       make html
 
    Commit any changes before tagging the release.

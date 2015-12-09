@@ -240,16 +240,10 @@ class Node(object):
         # used for storing artificial fixturedefs for direct parametrization
         self._name2pseudofixturedef = {}
 
-        #self.extrainit()
-
     @property
     def ihook(self):
         """ fspath sensitive hook proxy used to call pytest hooks"""
         return self.session.gethookproxy(self.fspath)
-
-    #def extrainit(self):
-    #    """"extra initialization after Node is initialized.  Implemented
-    #    by some subclasses. """
 
     Module = compatproperty("Module")
     Class = compatproperty("Class")

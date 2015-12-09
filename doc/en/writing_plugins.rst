@@ -203,13 +203,13 @@ pytest comes with some facilities that you can enable for testing your
 plugin.  Given that you have an installed plugin you can enable the
 :py:class:`testdir <_pytest.pytester.Testdir>` fixture via specifying a
 command line option to include the pytester plugin (``-p pytester``) or
-by putting ``pytest_plugins = pytester`` into your test or
+by putting ``pytest_plugins = "pytester"`` into your test or
 ``conftest.py`` file.  You then will have a ``testdir`` fixure which you
 can use like this::
 
     # content of test_myplugin.py
 
-    pytest_plugins = pytester  # to get testdir fixture
+    pytest_plugins = "pytester"  # to get testdir fixture
 
     def test_myplugin(testdir):
         testdir.makepyfile("""
@@ -332,17 +332,17 @@ after others, i.e.  the position in the ``N``-sized list of functions:
 .. code-block:: python
 
     # Plugin 1
-    @pytest.hookimpl_spec(tryfirst=True)
+    @pytest.hookimpl(tryfirst=True)
     def pytest_collection_modifyitems(items):
         # will execute as early as possible
 
     # Plugin 2
-    @pytest.hookimpl_spec(trylast=True)
+    @pytest.hookimpl(trylast=True)
     def pytest_collection_modifyitems(items):
         # will execute as late as possible
 
     # Plugin 3
-    @pytest.hookimpl_spec(hookwrapper=True)
+    @pytest.hookimpl(hookwrapper=True)
     def pytest_collection_modifyitems(items):
         # will execute even before the tryfirst one above!
         outcome = yield
