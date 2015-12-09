@@ -10,6 +10,7 @@ Cache: working with cross-testrun state
   is compatible regarding command line options and API usage except that you
   can only store/receive data between test runs that is json-serializable.
 
+
 Usage
 ---------
 
@@ -25,6 +26,12 @@ all cross-session cache contents ahead of a test run.
 
 Other plugins may access the `config.cache`_ object to set/get 
 **json encodable** values between ``py.test`` invocations.
+
+.. note::
+
+    This plugin is enabled by default, but can be disabled if needed: see
+    :ref:`cmdunregister` (the internal name for this plugin is
+    ``cacheprovider``).
 
 
 Rerunning only failures or failures first
@@ -73,7 +80,7 @@ If you then run it with ``--lf``::
 
     $ py.test --lf
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
     run-last-failure: rerun last 2 failures
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 50 items
@@ -114,7 +121,7 @@ of ``FF`` and dots)::
 
     $ py.test --ff
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
     run-last-failure: rerun last 2 failures first
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 50 items
@@ -219,7 +226,7 @@ You can always peek at the content of the cache using the
 
     $ py.test --cache-clear
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     

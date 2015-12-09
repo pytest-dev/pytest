@@ -1,11 +1,11 @@
 """
-Script to generate the file `index.txt` with information about
+Script to generate the file `index.rst` with information about
 pytest plugins taken directly from PyPI.
 
 Usage:
     python plugins_index.py
 
-This command will update `index.txt` in the same directory found as this script.
+This command will update `index.rst` in the same directory found as this script.
 This should be issued before every major documentation release to obtain latest
 versions from PyPI.
 
@@ -265,7 +265,7 @@ def main(argv):
     Script entry point. Configures an option parser and calls the appropriate
     internal function.
     """
-    filename = os.path.join(os.path.dirname(__file__), 'index.txt')
+    filename = os.path.join(os.path.dirname(__file__), 'index.rst')
     url = 'http://pypi.python.org/pypi'
 
     parser = OptionParser(

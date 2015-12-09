@@ -5,6 +5,7 @@ Release announcements
 .. toctree::
    :maxdepth: 2
 
+   release-2.8.2
    release-2.7.2
    release-2.7.1
    release-2.7.0

@@ -49,6 +49,13 @@ def _has_positional_arg(func):
 
 
 def filter_traceback(entry):
+    # entry.path might sometimes return a str() object when the entry
+    # points to dynamically generated code
+    # see https://bitbucket.org/pytest-dev/py/issues/71
+    raw_filename = entry.frame.code.raw.co_filename
+    is_generated = '<' in raw_filename and '>' in raw_filename
+    if is_generated:
+        return False
     return entry.path != cutdir1 and not entry.path.relto(cutdir2)
 
 
@@ -1041,6 +1048,8 @@ class Metafunc(FuncargnamesCompatAttr):
 
 
 if _PY3:
+    import codecs
+
     def _escape_bytes(val):
         """
         If val is pure ascii, returns it as a str(), otherwise escapes
@@ -1053,18 +1062,21 @@ if _PY3:
            want to return escaped bytes for any byte, even if they match
            a utf-8 string.
         """
-        # source: http://goo.gl/bGsnwC
-        import codecs
-        encoded_bytes, _ = codecs.escape_encode(val)
-        return encoded_bytes.decode('ascii')
+        if val:
+            # source: http://goo.gl/bGsnwC
+            encoded_bytes, _ = codecs.escape_encode(val)
+            return encoded_bytes.decode('ascii')
+        else:
+            # empty bytes crashes codecs.escape_encode (#1087)
+            return ''
 else:
     def _escape_bytes(val):
         """
-        In py2 bytes and str are the same, so return it unchanged if it
+        In py2 bytes and str are the same type, so return it unchanged if it
         is a full ascii string, otherwise escape it into its binary form.
         """
         try:
-            return val.encode('ascii')
+            return val.decode('ascii')
         except UnicodeDecodeError:
             return val.encode('string-escape')
 
@@ -1093,7 +1105,7 @@ def _idval(val, argname, idx, idfn):
         # convertible to ascii, return it as an str() object instead
         try:
             return str(val)
-        except UnicodeDecodeError:
+        except UnicodeError:
             # fallthrough
             pass
     return str(argname)+str(idx)
@@ -1181,6 +1193,28 @@ def raises(expected_exception, *args, **kwargs):
 
         >>> with raises(ZeroDivisionError):
         ...    1/0
+
+    .. note::
+
+       When using ``pytest.raises`` as a context manager, it's worthwhile to
+       note that normal context manager rules apply and that the exception
+       raised *must* be the final line in the scope of the context manager.
+       Lines of code after that, within the scope of the context manager will
+       not be executed. For example::
+
+           >>> with raises(OSError) as err:
+                   assert 1 == 1  # this will execute as expected
+                   raise OSError(errno.EEXISTS, 'directory exists')
+                   assert err.errno == errno.EEXISTS  # this will not execute
+
+       Instead, the following approach must be taken (note the difference in
+       scope)::
+
+           >>> with raises(OSError) as err:
+                   assert 1 == 1  # this will execute as expected
+                   raise OSError(errno.EEXISTS, 'directory exists')
+
+               assert err.errno == errno.EEXISTS  # this will now execute
 
     Or you can specify a callable by passing a to-be-called lambda::
 

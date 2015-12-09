@@ -108,7 +108,7 @@ directory with the above conftest.py::
 
     $ py.test
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 0 items
     
@@ -131,19 +131,22 @@ line option to control skipping of ``slow`` marked tests::
         parser.addoption("--runslow", action="store_true",
             help="run slow tests")
 
-    def pytest_runtest_setup(item):
-        if 'slow' in item.keywords and not item.config.getoption("--runslow"):
-            pytest.skip("need --runslow option to run")
-
 We can now write a test module like this::
 
     # content of test_module.py
 
     import pytest
-    slow = pytest.mark.slow
+
+
+    slow = pytest.mark.skipif(
+        not pytest.config.getoption("--runslow"),
+        reason="need --runslow option to run"
+    )
+
 
     def test_func_fast():
         pass
+
 
     @slow
     def test_func_slow():
@@ -153,7 +156,7 @@ and when running it will see a skipped "slow" test::
 
     $ py.test -rs    # "-rs" means report details on the little 's'
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -167,7 +170,7 @@ Or run it including the ``slow`` marked test::
 
     $ py.test --runslow
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -259,7 +262,7 @@ which will add the string to the test header accordingly::
 
     $ py.test
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
     project deps: mylib-1.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 0 items
@@ -283,7 +286,7 @@ which will add info only when run with "--v"::
 
     $ py.test -v
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.4
+    platform linux -- Python 3.4.3, pytest-2.8.2, py-1.4.30, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.4
     cachedir: .cache
     info1: did you know that ...
     did you?
@@ -296,7 +299,7 @@ and nothing when run plainly::
 
     $ py.test
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 0 items
     
@@ -329,7 +332,7 @@ Now we can profile which test functions execute the slowest::
 
     $ py.test --durations=3
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 3 items
     
@@ -391,7 +394,7 @@ If we run this::
 
     $ py.test -rx
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
@@ -462,7 +465,7 @@ We can run this::
 
     $ py.test
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 7 items
     
@@ -566,7 +569,7 @@ and run them::
 
     $ py.test test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -657,7 +660,7 @@ and run it::
 
     $ py.test -s test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 3 items
     
