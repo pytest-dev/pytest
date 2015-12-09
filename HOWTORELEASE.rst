@@ -88,3 +88,5 @@ Note: this assumes you have already registered on pypi.
 13. **after the release** Bump the version number in ``_pytest/__init__.py``,
     to the next Minor release version (i.e. if you released ``pytest-2.8.0``,
     set it to ``pytest-2.9.0.dev1``).
+
+14. merge the actual release into the features branch and do a pull request against it
