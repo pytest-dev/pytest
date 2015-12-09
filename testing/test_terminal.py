@@ -542,6 +542,8 @@ def test_pass_output_reporting(testdir):
         def test_pass_output():
             print("Four score and seven years ago...")
     """)
+    result = testdir.runpytest()
+    assert 'Four score and seven years ago...' not in result.stdout.str()
     result = testdir.runpytest('-rP')
     result.stdout.fnmatch_lines([
         "Four score and seven years ago...",
