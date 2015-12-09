@@ -42,7 +42,7 @@ def deprecated_call(func, *args, **kwargs):
         categories.append(category)
         old_warn_explicit(message, category, *args, **kwargs)
 
-    def warn(message, category=None, **kwargs):
+    def warn(message, category=None, *args, **kwargs):
         if isinstance(message, Warning):
             categories.append(message.__class__)
         else:
