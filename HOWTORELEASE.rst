@@ -8,9 +8,11 @@ Note: this assumes you have already registered on pypi.
 
 #. Bump version numbers in ``_pytest/__init__.py`` (setup.py reads it)
 
-#. Check and finalize CHANGELOG.
+#. Check and finalize ``CHANGELOG``.
 
-#. Write ``doc/en/announce/release-VERSION.txt`` (copy from the previous version).
+#. Write ``doc/en/announce/release-VERSION.txt`` (use the one from a
+   previous version as a template).
+
    Use this command line to obtain the list of contributors for the release::
 
       git log 1.2.2..HEAD --format='%aN' | sort -u # lists the names of authors involved
@@ -23,32 +25,34 @@ Note: this assumes you have already registered on pypi.
       git diff
 
 
+#. Push changes to GitHub and open a Pull Request. Proceed
+   when other pytest developers give it a ``+1``.
+
 #. Build the docs, you need a virtualenv with py and sphinx
    installed::
 
       cd doc/en
       make html
 
-#. Push changes to GitHub and open a Pull Request. Proceed
-   when other pytest developers give it a ``+1``.
 
-#. Upload the docs using doc/en/Makefile::
+#. Upload the docs::
 
       cd doc/en
       make install  # or "installall" if you have LaTeX installed for PDF
 
-    This requires ssh-login permission on pytest.org because it uses
-    rsync.
-    Note that the ``install`` target of ``doc/en/Makefile`` defines where the
-    rsync goes to, typically to the "latest" section of pytest.org.
+   This requires ssh-login permission on ``pytest.org`` because it uses
+   ``rsync``.
 
-    If you are making the first version of a minor release (e.g. ``1.2.0``),
-    you also need to manually create a symlink for "latest"::
+   .. note:: the ``install`` target of ``doc/en/Makefile`` defines where the
+     rsync goes to, typically to the ``latest`` section of ``pytest.org``.
+
+     If you are making the first version of a minor release (e.g. ``1.2.0``),
+     you also need to manually create a symlink for "latest"::
 
        ssh pytest-dev@pytest.org
        ln -s 1.2 latest
 
-    Browse to pytest.org to verify.
+     Browse to http://pytest.org/latest/ to verify.
 
 #. Tag the release::
 
@@ -64,9 +68,9 @@ Note: this assumes you have already registered on pypi.
 
 #. Send release announcement to mailing lists:
 
-    - pytest-dev
-    - testing-in-python
-    - python-announce-list@python.org
+   * pytest-dev
+   * testing-in-python
+   * python-announce-list@python.org
 
 #. Merge ``release-1.2.3`` into ``master``.
 
