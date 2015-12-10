@@ -60,7 +60,7 @@ and customizable testing framework for Python.   Note, however, that
 thus likely not something for Python beginners.
 
 A second "magic" issue was the assert statement debugging feature.
-Nowadays, ``pytest`` explicitely rewrites assert statements in test modules
+Nowadays, ``pytest`` explicitly rewrites assert statements in test modules
 in order to provide more useful :ref:`assert feedback <assertfeedback>`.
 This completely avoids previous issues of confusing assertion-reporting.
 It also means, that you can use Python's ``-O`` optimization without losing
@@ -76,7 +76,7 @@ be the same, confusing the reinterpreter and obfuscating the initial
 error (this is also explained at the command line if it happens).
 
 You can also turn off all assertion interaction using the
-``--assertmode=off`` option.
+``--assert=plain`` option.
 
 .. _`py namespaces`: index.html
 .. _`py/__init__.py`: http://bitbucket.org/hpk42/py-trunk/src/trunk/py/__init__.py
@@ -141,10 +141,10 @@ However, with pytest-2.3 you can use the :ref:`@pytest.fixture` decorator
 and specify ``params`` so that all tests depending on the factory-created
 resource will run multiple times with different parameters.
 
-You can also use the `pytest_generate_tests`_ hook to
-implement the `parametrization scheme of your choice`_.
+You can also use the ``pytest_generate_tests`` hook to
+implement the `parametrization scheme of your choice`_. See also
+:ref:`paramexamples` for more examples.
 
-.. _`pytest_generate_tests`: test/funcargs.html#parametrizing-tests
 .. _`parametrization scheme of your choice`: http://tetamap.wordpress.com/2009/05/13/parametrizing-python-tests-generalized/
 
 pytest interaction with other packages

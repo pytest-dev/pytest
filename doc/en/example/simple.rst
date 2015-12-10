@@ -108,11 +108,11 @@ directory with the above conftest.py::
 
     $ py.test
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 0 items
     
-    =======  in 0.12 seconds ========
+    ======= no tests ran in 0.12 seconds ========
 
 .. _`excontrolskip`:
 
@@ -131,19 +131,22 @@ line option to control skipping of ``slow`` marked tests::
         parser.addoption("--runslow", action="store_true",
             help="run slow tests")
 
-    def pytest_runtest_setup(item):
-        if 'slow' in item.keywords and not item.config.getoption("--runslow"):
-            pytest.skip("need --runslow option to run")
-
 We can now write a test module like this::
 
     # content of test_module.py
 
     import pytest
-    slow = pytest.mark.slow
+
+
+    slow = pytest.mark.skipif(
+        not pytest.config.getoption("--runslow"),
+        reason="need --runslow option to run"
+    )
+
 
     def test_func_fast():
         pass
+
 
     @slow
     def test_func_slow():
@@ -153,13 +156,13 @@ and when running it will see a skipped "slow" test::
 
     $ py.test -rs    # "-rs" means report details on the little 's'
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
     test_module.py .s
     ======= short test summary info ========
-    SKIP [1] $REGENDOC_TMPDIR/conftest.py:9: need --runslow option to run
+    SKIP [1] test_module.py:14: need --runslow option to run
     
     ======= 1 passed, 1 skipped in 0.12 seconds ========
 
@@ -167,7 +170,7 @@ Or run it including the ``slow`` marked test::
 
     $ py.test --runslow
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -259,12 +262,12 @@ which will add the string to the test header accordingly::
 
     $ py.test
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     project deps: mylib-1.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 0 items
     
-    =======  in 0.12 seconds ========
+    ======= no tests ran in 0.12 seconds ========
 
 .. regendoc:wipe
 
@@ -283,24 +286,24 @@ which will add info only when run with "--v"::
 
     $ py.test -v
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.4
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.4
     cachedir: .cache
     info1: did you know that ...
     did you?
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 0 items
     
-    =======  in 0.12 seconds ========
+    ======= no tests ran in 0.12 seconds ========
 
 and nothing when run plainly::
 
     $ py.test
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 0 items
     
-    =======  in 0.12 seconds ========
+    ======= no tests ran in 0.12 seconds ========
 
 profiling test duration
 --------------------------
@@ -310,7 +313,7 @@ profiling test duration
 .. versionadded: 2.2
 
 If you have a slow running large test suite you might want to find
-out which tests are the slowest. Let's make an artifical test suite::
+out which tests are the slowest. Let's make an artificial test suite::
 
     # content of test_some_are_slow.py
 
@@ -329,7 +332,7 @@ Now we can profile which test functions execute the slowest::
 
     $ py.test --durations=3
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 3 items
     
@@ -338,7 +341,7 @@ Now we can profile which test functions execute the slowest::
     ======= slowest 3 test durations ========
     0.20s call     test_some_are_slow.py::test_funcslow2
     0.10s call     test_some_are_slow.py::test_funcslow1
-    0.00s setup    test_some_are_slow.py::test_funcslow2
+    0.00s teardown test_some_are_slow.py::test_funcslow2
     ======= 3 passed in 0.12 seconds ========
 
 incremental testing - test steps
@@ -391,7 +394,7 @@ If we run this::
 
     $ py.test -rx
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
@@ -424,7 +427,7 @@ by placing fixture functions in a ``conftest.py`` file in that directory
 You can use all types of fixtures including :ref:`autouse fixtures
 <autouse fixtures>` which are the equivalent of xUnit's setup/teardown
 concept.  It's however recommended to have explicit fixture references in your
-tests or test classes rather than relying on implicitely executing
+tests or test classes rather than relying on implicitly executing
 setup/teardown functions, especially if they are far away from the actual tests.
 
 Here is a an example for making a ``db`` fixture available in a directory::
@@ -462,7 +465,7 @@ We can run this::
 
     $ py.test
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 7 items
     
@@ -476,7 +479,7 @@ We can run this::
     file $REGENDOC_TMPDIR/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
             fixture 'db' not found
-            available fixtures: tmpdir, pytestconfig, record_xml_property, monkeypatch, recwarn, tmpdir_factory, capsys, capfd, cache
+            available fixtures: tmpdir, record_xml_property, cache, capsys, monkeypatch, recwarn, pytestconfig, tmpdir_factory, capfd
             use 'py.test --fixtures [testpath]' for help on them.
     
     $REGENDOC_TMPDIR/b/test_error.py:1
@@ -566,7 +569,7 @@ and run them::
 
     $ py.test test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -657,7 +660,7 @@ and run it::
 
     $ py.test -s test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 3 items
     

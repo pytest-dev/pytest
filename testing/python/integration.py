@@ -283,6 +283,35 @@ class TestNoselikeTestAttribute:
         assert len(call.items) == 1
         assert call.items[0].cls.__name__ == "TC"
 
+    def test_class_with_nasty_getattr(self, testdir):
+        """Make sure we handle classes with a custom nasty __getattr__ right.
+
+        With a custom __getattr__ which e.g. returns a function (like with a
+        RPC wrapper), we shouldn't assume this meant "__test__ = True".
+        """
+        # https://github.com/pytest-dev/pytest/issues/1204
+        testdir.makepyfile("""
+            class MetaModel(type):
+
+                def __getattr__(cls, key):
+                    return lambda: None
+
+
+            BaseModel = MetaModel('Model', (), {})
+
+
+            class Model(BaseModel):
+
+                __metaclass__ = MetaModel
+
+                def test_blah(self):
+                    pass
+        """)
+        reprec = testdir.inline_run()
+        assert not reprec.getfailedcollections()
+        call = reprec.getcalls("pytest_collection_modifyitems")[0]
+        assert not call.items
+
 
 @pytest.mark.issue351
 class TestParameterize:

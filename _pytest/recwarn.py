@@ -29,26 +29,47 @@ def pytest_namespace():
 
 
 def deprecated_call(func=None, *args, **kwargs):
-    """Assert that ``func(*args, **kwargs)`` triggers a DeprecationWarning.
+    """ assert that calling ``func(*args, **kwargs)`` triggers a
+    ``DeprecationWarning`` or ``PendingDeprecationWarning``.
 
     This function can be used as a context manager::
 
         >>> with deprecated_call():
         ...    myobject.deprecated_method()
+
+    Note: we cannot use WarningsRecorder here because it is still subject
+    to the mechanism that prevents warnings of the same type from being
+    triggered twice for the same module. See #1190.
     """
     if not func:
         return WarningsChecker(expected_warning=DeprecationWarning)
 
-    wrec = WarningsRecorder()
-    with wrec:
-        warnings.simplefilter('always')  # ensure all warnings are triggered
-        ret = func(*args, **kwargs)
+    categories = []
 
-    depwarnings = (DeprecationWarning, PendingDeprecationWarning)
-    if not any(r.category in depwarnings for r in wrec):
+    def warn_explicit(message, category, *args, **kwargs):
+        categories.append(category)
+        old_warn_explicit(message, category, *args, **kwargs)
+
+    def warn(message, category=None, **kwargs):
+        if isinstance(message, Warning):
+            categories.append(message.__class__)
+        else:
+            categories.append(category)
+        old_warn(message, category, *args, **kwargs)
+
+    old_warn = warnings.warn
+    old_warn_explicit = warnings.warn_explicit
+    warnings.warn_explicit = warn_explicit
+    warnings.warn = warn
+    try:
+        ret = func(*args, **kwargs)
+    finally:
+        warnings.warn_explicit = old_warn_explicit
+        warnings.warn = old_warn
+    deprecation_categories = (DeprecationWarning, PendingDeprecationWarning)
+    if not any(issubclass(c, deprecation_categories) for c in categories):
         __tracebackhide__ = True
         raise AssertionError("%r did not produce DeprecationWarning" % (func,))
-
     return ret
 
 

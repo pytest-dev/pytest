@@ -20,12 +20,14 @@ Full pytest documentation
    talks
 
 .. only:: html
+
    .. toctree::
 
       funcarg_compare
       announce/index
 
 .. only:: html
+
    .. toctree::
       :hidden:
 

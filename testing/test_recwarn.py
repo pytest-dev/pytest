@@ -63,33 +63,30 @@ class TestWarningsRecorderChecker(object):
                     with rec:
                         pass  # can't enter twice
 
-#
-# ============ test pytest.deprecated_call() ==============
-#
-
-def dep(i):
-    if i == 0:
-        py.std.warnings.warn("is deprecated", DeprecationWarning)
-    return 42
-
-reg = {}
-def dep_explicit(i):
-    if i == 0:
-        py.std.warnings.warn_explicit("dep_explicit", category=DeprecationWarning,
-                                      filename="hello", lineno=3)
 
 class TestDeprecatedCall(object):
+    """test pytest.deprecated_call()"""
+
+    def dep(self, i):
+        if i == 0:
+            py.std.warnings.warn("is deprecated", DeprecationWarning)
+        return 42
+
+    def dep_explicit(self, i):
+        if i == 0:
+            py.std.warnings.warn_explicit("dep_explicit", category=DeprecationWarning,
+                                          filename="hello", lineno=3)
 
     def test_deprecated_call_raises(self):
-        excinfo = pytest.raises(AssertionError,
-                                "pytest.deprecated_call(dep, 3)")
+        with pytest.raises(AssertionError) as excinfo:
+            pytest.deprecated_call(self.dep, 3)
         assert str(excinfo).find("did not produce") != -1
 
     def test_deprecated_call(self):
-        pytest.deprecated_call(dep, 0)
+        pytest.deprecated_call(self.dep, 0)
 
     def test_deprecated_call_ret(self):
-        ret = pytest.deprecated_call(dep, 0)
+        ret = pytest.deprecated_call(self.dep, 0)
         assert ret == 42
 
     def test_deprecated_call_preserves(self):
@@ -105,34 +102,57 @@ class TestDeprecatedCall(object):
         assert warn_explicit is py.std.warnings.warn_explicit
 
     def test_deprecated_explicit_call_raises(self):
-        pytest.raises(AssertionError,
-                      "pytest.deprecated_call(dep_explicit, 3)")
+        with pytest.raises(AssertionError):
+            pytest.deprecated_call(self.dep_explicit, 3)
 
     def test_deprecated_explicit_call(self):
-        pytest.deprecated_call(dep_explicit, 0)
-        pytest.deprecated_call(dep_explicit, 0)
+        pytest.deprecated_call(self.dep_explicit, 0)
+        pytest.deprecated_call(self.dep_explicit, 0)
 
     def test_deprecated_call_as_context_manager_no_warning(self):
         with pytest.raises(pytest.fail.Exception) as ex:
             with pytest.deprecated_call():
-                dep(1)
+                self.dep(1)
         assert str(ex.value) == "DID NOT WARN"
 
     def test_deprecated_call_as_context_manager(self):
         with pytest.deprecated_call():
-            dep(0)
+            self.dep(0)
 
     def test_deprecated_call_pending(self):
-        f = lambda: py.std.warnings.warn(PendingDeprecationWarning("hi"))
+        def f():
+            py.std.warnings.warn(PendingDeprecationWarning("hi"))
         pytest.deprecated_call(f)
 
     def test_deprecated_call_specificity(self):
         other_warnings = [Warning, UserWarning, SyntaxWarning, RuntimeWarning,
                           FutureWarning, ImportWarning, UnicodeWarning]
         for warning in other_warnings:
-            f = lambda: py.std.warnings.warn(warning("hi"))
+            def f():
+                py.std.warnings.warn(warning("hi"))
             with pytest.raises(AssertionError):
                 pytest.deprecated_call(f)
+
+    def test_deprecated_function_already_called(self, testdir):
+        """deprecated_call should be able to catch a call to a deprecated
+        function even if that function has already been called in the same
+        module. See #1190.
+        """
+        testdir.makepyfile("""
+            import warnings
+            import pytest
+
+            def deprecated_function():
+                warnings.warn("deprecated", DeprecationWarning)
+
+            def test_one():
+                deprecated_function()
+
+            def test_two():
+                pytest.deprecated_call(deprecated_function)
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines('*=== 2 passed in *===')
 
 
 class TestWarns(object):

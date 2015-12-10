@@ -1,6 +1,45 @@
 Changing standard (Python) test discovery
 ===============================================
 
+Ignore paths during test collection
+-----------------------------------
+
+You can easily ignore certain test directories and modules during collection
+by passing the ``--ignore=path`` option on the cli. ``pytest`` allows multiple
+``--ignore`` options. Example::
+
+    tests/
+    ├── example
+    │   ├── test_example_01.py
+    │   ├── test_example_02.py
+    │   └── test_example_03.py
+    ├── foobar
+    │   ├── test_foobar_01.py
+    │   ├── test_foobar_02.py
+    │   └── test_foobar_03.py
+    └── hello
+        └── world
+            ├── test_world_01.py
+            ├── test_world_02.py
+            └── test_world_03.py
+
+Now if you invoke ``pytest`` with ``--ignore=tests/foobar/test_foobar_03.py --ignore=tests/hello/``,
+you will see that ``pytest`` only collects test-modules, which do not match the patterns specified::
+
+    ========= test session starts ==========
+    platform darwin -- Python 2.7.10, pytest-2.8.2, py-1.4.30, pluggy-0.3.1
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 5 items
+
+    tests/example/test_example_01.py .
+    tests/example/test_example_02.py .
+    tests/example/test_example_03.py .
+    tests/foobar/test_foobar_01.py .
+    tests/foobar/test_foobar_02.py .
+
+    ======= 5 passed in 0.02 seconds =======
+
+
 Changing directory recursion
 -----------------------------------------------------
 
@@ -43,7 +82,7 @@ then the test collection looks like this::
 
     $ py.test --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: setup.cfg
     collected 2 items
     <Module 'check_myapp.py'>
@@ -52,7 +91,7 @@ then the test collection looks like this::
           <Function 'simple_check'>
           <Function 'complex_check'>
     
-    =======  in 0.12 seconds ========
+    ======= no tests ran in 0.12 seconds ========
 
 .. note::
 
@@ -89,7 +128,7 @@ You can always peek at the collection tree without running tests like this::
 
     . $ py.test --collect-only pythoncollection.py
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 3 items
     <Module 'CWD/pythoncollection.py'>
@@ -99,7 +138,7 @@ You can always peek at the collection tree without running tests like this::
           <Function 'test_method'>
           <Function 'test_anothermethod'>
     
-    =======  in 0.12 seconds ========
+    ======= no tests ran in 0.12 seconds ========
 
 customizing test collection to find all .py files
 ---------------------------------------------------------
@@ -136,18 +175,18 @@ And then if you have a module file like this::
 and a setup.py dummy file like this::
 
     # content of setup.py
-    0/0  # will raise exeption if imported
+    0/0  # will raise exception if imported
 
 then a pytest run on python2 will find the one test when run with a python2
 interpreters and will leave out the setup.py file::
 
     $ py.test --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.1, py-1.4.30, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.4, py-1.4.30, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 0 items
     
-    =======  in 0.12 seconds ========
+    ======= no tests ran in 0.12 seconds ========
 
 If you run with a Python3 interpreter the moduled added through the conftest.py file will not be considered for test collection.
 

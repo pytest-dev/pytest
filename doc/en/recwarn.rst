@@ -41,6 +41,10 @@ additional information::
 Alternatively, you can examine raised warnings in detail using the
 :ref:`recwarn <recwarn>` fixture (see below).
 
+.. note::
+    ``DeprecationWarning`` and ``PendingDeprecationWarning`` are treated
+    differently; see :ref:`ensuring_function_triggers`.
+
 .. _recwarn:
 
 Recording warnings
@@ -87,6 +91,9 @@ Each recorded warning has the attributes ``message``, ``category``,
 class of the warning. The ``message`` is the warning itself; calling
 ``str(message)`` will return the actual message of the warning.
 
+.. note::
+    ``DeprecationWarning`` and ``PendingDeprecationWarning`` are treated
+    differently; see :ref:`ensuring_function_triggers`.
 
 .. _ensuring_function_triggers:
 
@@ -94,16 +101,17 @@ Ensuring a function triggers a deprecation warning
 -------------------------------------------------------
 
 You can also call a global helper for checking
-that a certain function call triggers a ``DeprecationWarning``::
+that a certain function call triggers a ``DeprecationWarning`` or
+``PendingDeprecationWarning``::
 
     import pytest
 
     def test_global():
         pytest.deprecated_call(myfunction, 17)
 
-By default, deprecation warnings will not be caught when using ``pytest.warns``
-or ``recwarn``, since the default Python warnings filters hide
-DeprecationWarnings. If you wish to record them in your own code, use the
+By default, ``DeprecationWarning`` and ``PendingDeprecationWarning`` will not be
+caught when using ``pytest.warns`` or ``recwarn`` because default Python warnings filters hide
+them. If you wish to record them in your own code, use the
 command ``warnings.simplefilter('always')``::
 
     import warnings

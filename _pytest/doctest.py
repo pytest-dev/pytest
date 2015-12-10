@@ -5,6 +5,7 @@ import pytest, py
 from _pytest.python import FixtureRequest
 from py._code.code import TerminalRepr, ReprFileLocation
 
+
 def pytest_addoption(parser):
     parser.addini('doctest_optionflags', 'option flags for doctests',
         type="args", default=["ELLIPSIS"])
@@ -22,6 +23,7 @@ def pytest_addoption(parser):
         help="ignore doctest ImportErrors",
         dest="doctest_ignore_import_errors")
 
+
 def pytest_collect_file(path, parent):
     config = parent.config
     if path.ext == ".py":
@@ -31,20 +33,33 @@ def pytest_collect_file(path, parent):
         path.check(fnmatch=config.getvalue("doctestglob")):
         return DoctestTextfile(path, parent)
 
+
 class ReprFailDoctest(TerminalRepr):
+
     def __init__(self, reprlocation, lines):
         self.reprlocation = reprlocation
         self.lines = lines
+
     def toterminal(self, tw):
         for line in self.lines:
             tw.line(line)
         self.reprlocation.toterminal(tw)
 
+
 class DoctestItem(pytest.Item):
+
     def __init__(self, name, parent, runner=None, dtest=None):
         super(DoctestItem, self).__init__(name, parent)
         self.runner = runner
         self.dtest = dtest
+        self.obj = None
+        self.fixture_request = None
+
+    def setup(self):
+        if self.dtest is not None:
+            self.fixture_request = _setup_fixtures(self)
+            globs = dict(getfixture=self.fixture_request.getfuncargvalue)
+            self.dtest.globs.update(globs)
 
     def runtest(self):
         _check_all_skipped(self.dtest)
@@ -94,6 +109,7 @@ class DoctestItem(pytest.Item):
     def reportinfo(self):
         return self.fspath, None, "[doctest] %s" % self.name
 
+
 def _get_flag_lookup():
     import doctest
     return dict(DONT_ACCEPT_TRUE_FOR_1=doctest.DONT_ACCEPT_TRUE_FOR_1,
@@ -104,6 +120,7 @@ def _get_flag_lookup():
                 COMPARISON_FLAGS=doctest.COMPARISON_FLAGS,
                 ALLOW_UNICODE=_get_allow_unicode_flag())
 
+
 def get_optionflags(parent):
     optionflags_str = parent.config.getini("doctest_optionflags")
     flag_lookup_table = _get_flag_lookup()
@@ -113,7 +130,7 @@ def get_optionflags(parent):
     return flag_acc
 
 
-class DoctestTextfile(DoctestItem, pytest.File):
+class DoctestTextfile(DoctestItem, pytest.Module):
 
     def runtest(self):
         import doctest
@@ -148,7 +165,7 @@ def _check_all_skipped(test):
         pytest.skip('all tests skipped by +SKIP option')
 
 
-class DoctestModule(pytest.File):
+class DoctestModule(pytest.Module):
     def collect(self):
         import doctest
         if self.fspath.basename == "conftest.py":
@@ -161,23 +178,19 @@ class DoctestModule(pytest.File):
                     pytest.skip('unable to import module %r' % self.fspath)
                 else:
                     raise
-        # satisfy `FixtureRequest` constructor...
-        fixture_request = _setup_fixtures(self)
-        doctest_globals = dict(getfixture=fixture_request.getfuncargvalue)
         # uses internal doctest module parsing mechanism
         finder = doctest.DocTestFinder()
         optionflags = get_optionflags(self)
         runner = doctest.DebugRunner(verbose=0, optionflags=optionflags,
                                      checker=_get_unicode_checker())
-        for test in finder.find(module, module.__name__,
-                                extraglobs=doctest_globals):
+        for test in finder.find(module, module.__name__):
             if test.examples:  # skip empty doctests
                 yield DoctestItem(test.name, self, runner, test)
 
 
 def _setup_fixtures(doctest_item):
     """
-    Used by DoctestTextfile and DoctestModule to setup fixture information.
+    Used by DoctestTextfile and DoctestItem to setup fixture information.
     """
     def func():
         pass
