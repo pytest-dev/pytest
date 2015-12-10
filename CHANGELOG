@@ -14,8 +14,7 @@
 * New `-rp` and `-rP` reporting options give the summary and full output
   of passing tests, respectively. Thanks to David Vierra for the PR.
 
-2.8.2.dev
----------
+
 2.8.5.dev0
 ----------
 
@@ -73,8 +72,6 @@
 - use pytest-runner for setuptools integration 
 - minor fixes for interaction with OS X El Capitan
   system integrity protection (thanks Florian)
-
-
 
 
 2.8.2
