@@ -3,8 +3,20 @@ How to release pytest
 
 Note: this assumes you have already registered on pypi.
 
-#. Create a branch for the release (for example: ``release-1.2.3``). All commits
-   should be made in this branch.
+#. Create a branch for the release named ``release-VERSION``:
+
+   * If you will release a micro version (``1.2.3``), create the branch from ``master``::
+
+        git checkout -b release-1.2.3 master
+
+
+   * If you will release a minor version (``1.3.0``), create the branch from ``features``
+     and make sure it is up to date with the latest ``master``::
+
+        git checkout -b release-1.3.0 features
+        git merge master
+
+   All commits for the release should be made in this branch.
 
 #. Bump version numbers in ``_pytest/__init__.py`` (setup.py reads it)
 
@@ -76,15 +88,13 @@ Note: this assumes you have already registered on pypi.
 
 #. At this point the release is done. Congratulations!
 
-#. Bump the version number in ``_pytest/__init__.py``,
-   to the next release version:
+#. Update version numbers in ``_pytest/__init__.py`` and ``CHANGELOG`` in the main branches:
 
-   * If you released a micro version (``1.2.3`` from ``master``), set it to the next
-     micro version (``1.2.4.dev0``).
-   * If you released a minor version (``1.3.0`` from ``features``), set it
-     to the next micro version (``1.3.1.dev0``).
+   * If you released a micro version (``1.2.3``):
+        - ``master``: update to to the next micro version (``1.2.4.dev0``).
+        - ``features``: merge ``master`` into ``features``, and open a PR to ensure CI passes.
 
-    Create a new entry in ``CHANGELOG`` for the next micro version.
+   * If you released a minor version (``1.3.0``):
+        - ``master``: update to the next micro version (``1.3.1.dev0``).
+        - ``features``: merge with ``master`` so you get ``1.3.1.dev0`` into your ``CHANGELOG``, and add a new entry for the next minor version (``1.4.0.dev0``).
 
-#. Take this opportunity to merge the ``master`` branch into the next-version
-   ``release`` branch, opening a Pull Request against it.
