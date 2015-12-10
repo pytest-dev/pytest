@@ -1092,3 +1092,4 @@ def test_class_injection_does_not_break_collection(testdir):
     ''')
     result = testdir.runpytest()
     assert "RuntimeError: dictionary changed size during iteration" not in result.stdout.str()
+    result.stdout.fnmatch_lines(['*== 1 passed in *'])
