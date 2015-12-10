@@ -16,7 +16,7 @@ reporting by calling `well specified hooks`_ of the following plugins:
 
 * :ref:`builtin plugins`: loaded from pytest's internal ``_pytest`` directory.
 
-* :ref:`external plugins <plugins_index>`: modules discovered through
+* :ref:`external plugins <extplugins>`: modules discovered through
   `setuptools entry points`_
 
 * `conftest.py plugins`_: modules auto-discovered in test directories
@@ -110,7 +110,7 @@ you can copy from:
 
 * a custom collection example plugin: :ref:`yaml plugin`
 * around 20 doc:`builtin plugins` which provide pytest's own functionality
-* many :ref:`external plugins <plugins_index>` providing additional features
+* many `external plugins <http://plugincompat.herokuapp.com>`_ providing additional features
 
 All of these plugins implement the documented `well specified hooks`_
 to extend and add functionality.
@@ -203,13 +203,13 @@ pytest comes with some facilities that you can enable for testing your
 plugin.  Given that you have an installed plugin you can enable the
 :py:class:`testdir <_pytest.pytester.Testdir>` fixture via specifying a
 command line option to include the pytester plugin (``-p pytester``) or
-by putting ``pytest_plugins = pytester`` into your test or
-``conftest.py`` file.  You then will have a ``testdir`` fixure which you
+by putting ``pytest_plugins = "pytester"`` into your test or
+``conftest.py`` file.  You then will have a ``testdir`` fixture which you
 can use like this::
 
     # content of test_myplugin.py
 
-    pytest_plugins = pytester  # to get testdir fixture
+    pytest_plugins = "pytester"  # to get testdir fixture
 
     def test_myplugin(testdir):
         testdir.makepyfile("""
@@ -332,17 +332,17 @@ after others, i.e.  the position in the ``N``-sized list of functions:
 .. code-block:: python
 
     # Plugin 1
-    @pytest.hookimpl_spec(tryfirst=True)
+    @pytest.hookimpl(tryfirst=True)
     def pytest_collection_modifyitems(items):
         # will execute as early as possible
 
     # Plugin 2
-    @pytest.hookimpl_spec(trylast=True)
+    @pytest.hookimpl(trylast=True)
     def pytest_collection_modifyitems(items):
         # will execute as late as possible
 
     # Plugin 3
-    @pytest.hookimpl_spec(hookwrapper=True)
+    @pytest.hookimpl(hookwrapper=True)
     def pytest_collection_modifyitems(items):
         # will execute even before the tryfirst one above!
         outcome = yield
@@ -386,7 +386,7 @@ are expected.
 
 For an example, see `newhooks.py`_ from :ref:`xdist`.
 
-.. _`newhooks.py`: https://bitbucket.org/pytest-dev/pytest-xdist/src/52082f70e7dd04b00361091b8af906c60fd6700f/xdist/newhooks.py?at=default
+.. _`newhooks.py`: https://github.com/pytest-dev/pytest-xdist/blob/974bd566c599dc6a9ea291838c6f226197208b46/xdist/newhooks.py
 
 
 Optionally using hooks from 3rd party plugins

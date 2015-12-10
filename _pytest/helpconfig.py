@@ -80,13 +80,23 @@ def showhelp(config):
         line = "  %-24s %s" %(spec, help)
         tw.line(line[:tw.fullwidth])
 
-    tw.line() ; tw.line()
-    #tw.sep("=")
+    tw.line()
+    tw.line("environment variables:")
+    vars = [
+        ("PYTEST_ADDOPTS", "extra command line options"),
+        ("PYTEST_PLUGINS", "comma-separated plugins to load during startup"),
+        ("PYTEST_DEBUG", "set to enable debug tracing of pytest's internals")
+    ]
+    for name, help in vars:
+        tw.line("  %-24s %s" % (name, help))
+    tw.line()
+    tw.line()
+
     tw.line("to see available markers type: py.test --markers")
     tw.line("to see available fixtures type: py.test --fixtures")
     tw.line("(shown according to specified file_or_dir or current dir "
             "if not specified)")
-    tw.line(str(reporter.stats))
+
     for warningreport in reporter.stats.get('warnings', []):
         tw.line("warning : " + warningreport.message, red=True)
     return

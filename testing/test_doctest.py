@@ -371,38 +371,6 @@ class TestDoctests:
                                     "--junit-xml=junit.xml")
         reprec.assertoutcome(failed=1)
 
-    def test_doctest_module_session_fixture(self, testdir):
-        """Test that session fixtures are initialized for doctest modules (#768)
-        """
-        # session fixture which changes some global data, which will
-        # be accessed by doctests in a module
-        testdir.makeconftest("""
-            import pytest
-            import sys
-
-            @pytest.yield_fixture(autouse=True, scope='session')
-            def myfixture():
-                assert not hasattr(sys, 'pytest_session_data')
-                sys.pytest_session_data = 1
-                yield
-                del sys.pytest_session_data
-        """)
-        testdir.makepyfile(foo="""
-            import sys
-
-            def foo():
-              '''
-              >>> assert sys.pytest_session_data == 1
-              '''
-
-            def bar():
-              '''
-              >>> assert sys.pytest_session_data == 1
-              '''
-        """)
-        result = testdir.runpytest("--doctest-modules")
-        result.stdout.fnmatch_lines('*2 passed*')
-
     @pytest.mark.parametrize('config_mode', ['ini', 'comment'])
     def test_allow_unicode(self, testdir, config_mode):
         """Test that doctests which output unicode work in all python versions
@@ -446,7 +414,7 @@ class TestDoctests:
         reprec.assertoutcome(passed=passed, failed=int(not passed))
 
 
-class TestDocTestSkips:
+class TestDoctestSkips:
     """
     If all examples in a doctest are skipped due to the SKIP option, then
     the tests should be SKIPPED rather than PASSED. (#957)
@@ -493,3 +461,122 @@ class TestDocTestSkips:
         """)
         reprec = testdir.inline_run("--doctest-modules")
         reprec.assertoutcome(skipped=1)
+
+
+class TestDoctestAutoUseFixtures:
+
+    SCOPES = ['module', 'session', 'class', 'function']
+
+    def test_doctest_module_session_fixture(self, testdir):
+        """Test that session fixtures are initialized for doctest modules (#768)
+        """
+        # session fixture which changes some global data, which will
+        # be accessed by doctests in a module
+        testdir.makeconftest("""
+            import pytest
+            import sys
+
+            @pytest.yield_fixture(autouse=True, scope='session')
+            def myfixture():
+                assert not hasattr(sys, 'pytest_session_data')
+                sys.pytest_session_data = 1
+                yield
+                del sys.pytest_session_data
+        """)
+        testdir.makepyfile(foo="""
+            import sys
+
+            def foo():
+              '''
+              >>> assert sys.pytest_session_data == 1
+              '''
+
+            def bar():
+              '''
+              >>> assert sys.pytest_session_data == 1
+              '''
+        """)
+        result = testdir.runpytest("--doctest-modules")
+        result.stdout.fnmatch_lines('*2 passed*')
+
+    @pytest.mark.parametrize('scope', SCOPES)
+    @pytest.mark.parametrize('enable_doctest', [True, False])
+    def test_fixture_scopes(self, testdir, scope, enable_doctest):
+        """Test that auto-use fixtures work properly with doctest modules.
+        See #1057 and #1100.
+        """
+        testdir.makeconftest('''
+            import pytest
+
+            @pytest.fixture(autouse=True, scope="{scope}")
+            def auto(request):
+                return 99
+        '''.format(scope=scope))
+        testdir.makepyfile(test_1='''
+            def test_foo():
+                """
+                >>> getfixture('auto') + 1
+                100
+                """
+            def test_bar():
+                assert 1
+        ''')
+        params = ('--doctest-modules',) if enable_doctest else ()
+        passes = 3 if enable_doctest else 2
+        result = testdir.runpytest(*params)
+        result.stdout.fnmatch_lines(['*=== %d passed in *' % passes])
+
+    @pytest.mark.parametrize('scope', SCOPES)
+    @pytest.mark.parametrize('autouse', [True, False])
+    @pytest.mark.parametrize('use_fixture_in_doctest', [True, False])
+    def test_fixture_module_doctest_scopes(self, testdir, scope, autouse,
+                                           use_fixture_in_doctest):
+        """Test that auto-use fixtures work properly with doctest files.
+        See #1057 and #1100.
+        """
+        testdir.makeconftest('''
+            import pytest
+
+            @pytest.fixture(autouse={autouse}, scope="{scope}")
+            def auto(request):
+                return 99
+        '''.format(scope=scope, autouse=autouse))
+        if use_fixture_in_doctest:
+            testdir.maketxtfile(test_doc="""
+                >>> getfixture('auto')
+                99
+            """)
+        else:
+            testdir.maketxtfile(test_doc="""
+                >>> 1 + 1
+                2
+            """)
+        result = testdir.runpytest('--doctest-modules')
+        assert 'FAILURES' not in str(result.stdout.str())
+        result.stdout.fnmatch_lines(['*=== 1 passed in *'])
+
+    @pytest.mark.parametrize('scope', SCOPES)
+    def test_auto_use_request_attributes(self, testdir, scope):
+        """Check that all attributes of a request in an autouse fixture
+        behave as expected when requested for a doctest item.
+        """
+        testdir.makeconftest('''
+            import pytest
+
+            @pytest.fixture(autouse=True, scope="{scope}")
+            def auto(request):
+                if "{scope}" == 'module':
+                    assert request.module is None
+                if "{scope}" == 'class':
+                    assert request.cls is None
+                if "{scope}" == 'function':
+                    assert request.function is None
+                return 99
+        '''.format(scope=scope))
+        testdir.maketxtfile(test_doc="""
+            >>> 1 + 1
+            2
+        """)
+        result = testdir.runpytest('--doctest-modules')
+        assert 'FAILURES' not in str(result.stdout.str())
+        result.stdout.fnmatch_lines(['*=== 1 passed in *'])
