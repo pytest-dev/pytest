@@ -3,7 +3,7 @@
 
 - fix #1243: fixed injection to class breaking collection step, by replacing
   generated interation with list traversal, added test to verify in python/collect.py
-  Thanks Ronny Pfannschmidt and Nicoddemus for the PR
+  PR by Alexei Kozlenok, Thanks Ronny Pfannschmidt and Nicoddemus for the review and help.
 
 - fix #1074: precompute junitxml chunks instead of storing the whole tree in objects
   Thanks Bruno Oliveira for the report and Ronny Pfannschmidt for the PR
