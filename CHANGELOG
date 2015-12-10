@@ -1,4 +1,4 @@
-2.8.5.dev0
+2.8.5
 ----------
 
 - fix #1074: precompute junitxml chunks instead of storing the whole tree in objects

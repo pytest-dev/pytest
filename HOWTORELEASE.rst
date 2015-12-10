@@ -3,34 +3,17 @@ How to release pytest
 
 Note: this assumes you have already registered on pypi.
 
+1. Create a branch for the release (for example: ``release-5.9.8``). All commits
+   should be made in this branch.
+
 1. Bump version numbers in _pytest/__init__.py (setup.py reads it)
 
-2. Check and finalize CHANGELOG
+2. Check and finalize CHANGELOG.
 
 3. Write doc/en/announce/release-VERSION.txt and include
    it in doc/en/announce/index.txt::
 
-        git log 2.8.2..HEAD --format='%aN' | sort -u # lists the names of authors involved
-
-4. Use devpi for uploading a release tarball to a staging area::
-
-     devpi use https://devpi.net/USER/dev
-     devpi upload --formats sdist,bdist_wheel
-
-5. Run from multiple machines::
-
-     devpi use https://devpi.net/USER/dev
-     devpi test pytest==VERSION
-
-6. Check that tests pass for relevant combinations with::
-
-       devpi list pytest
-
-   or look at failures with "devpi list -f pytest".
-   There will be some failed environments like e.g. the py33-trial 
-   or py27-pexpect tox environments on Win32 platforms
-   which is ok (tox does not support skipping on
-   per-platform basis yet).
+        git log 5.9.7..HEAD --format='%aN' | sort -u # lists the names of authors involved
 
 7. Regenerate the docs examples using tox, and check for regressions::
 
