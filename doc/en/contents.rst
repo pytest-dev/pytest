@@ -16,7 +16,6 @@ Full pytest documentation
    plugins
    cache
    contributing
-   plugins_index/index
    talks
 
 .. only:: html
