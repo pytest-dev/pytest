@@ -14,10 +14,9 @@ Installing a third party plugin can be easily done with ``pip``::
     pip uninstall pytest-NAME
 
 If a plugin is installed, ``pytest`` automatically finds and integrates it,
-there is no need to activate it.  We have a :doc:`page listing
-all 3rd party plugins and their status against the latest py.test version
-<plugins_index/index>` and here is a little annotated list
-for some popular plugins:
+there is no need to activate it.
+
+Here is a little annotated list for some popular plugins:
 
 .. _`django`: https://www.djangoproject.com/
 
@@ -28,7 +27,7 @@ for some popular plugins:
   for `twisted <http://twistedmatrix.com>`_ apps, starting a reactor and
   processing deferreds from test functions.
 
-* `pytest-capturelog <http://pypi.python.org/pypi/pytest-capturelog>`_:
+* `pytest-catchlog <http://pypi.python.org/pypi/pytest-catchlog>`_:
   to capture and assert about messages from the logging module
 
 * `pytest-cov <http://pypi.python.org/pypi/pytest-cov>`_:
@@ -50,15 +49,14 @@ for some popular plugins:
 * `pytest-timeout <http://pypi.python.org/pypi/pytest-timeout>`_:
   to timeout tests based on function marks or global definitions.
 
-* `pytest-cache <http://pypi.python.org/pypi/pytest-cache>`_:
-  to interactively re-run failing tests and help other plugins to
-  store test run information across invocations.
-
 * `pytest-pep8 <http://pypi.python.org/pypi/pytest-pep8>`_:
   a ``--pep8`` option to enable PEP8 compliance checking.
 
+* `pytest-flakes <https://pypi.python.org/pypi/pytest-flakes>`_:
+  check source code with pyflakes.
+
 * `oejskit <http://pypi.python.org/pypi/oejskit>`_:
-  a plugin to run javascript unittests in life browsers
+  a plugin to run javascript unittests in life browsers.
 
 To see a complete list of all plugins with their latest testing
 status against different py.test and Python versions, please visit

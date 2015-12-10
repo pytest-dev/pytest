@@ -16,7 +16,7 @@ reporting by calling `well specified hooks`_ of the following plugins:
 
 * :ref:`builtin plugins`: loaded from pytest's internal ``_pytest`` directory.
 
-* :ref:`external plugins <plugins_index>`: modules discovered through
+* :ref:`external plugins <extplugins>`: modules discovered through
   `setuptools entry points`_
 
 * `conftest.py plugins`_: modules auto-discovered in test directories
@@ -110,7 +110,7 @@ you can copy from:
 
 * a custom collection example plugin: :ref:`yaml plugin`
 * around 20 doc:`builtin plugins` which provide pytest's own functionality
-* many :ref:`external plugins <plugins_index>` providing additional features
+* many `external plugins <http://plugincompat.herokuapp.com>`_ providing additional features
 
 All of these plugins implement the documented `well specified hooks`_
 to extend and add functionality.
