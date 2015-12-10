@@ -67,9 +67,10 @@ class TestWarningsRecorderChecker(object):
 class TestDeprecatedCall(object):
     """test pytest.deprecated_call()"""
 
-    def dep(self, i):
+    def dep(self, i, j=None):
         if i == 0:
-            py.std.warnings.warn("is deprecated", DeprecationWarning)
+            py.std.warnings.warn("is deprecated", DeprecationWarning,
+                                 stacklevel=1)
         return 42
 
     def dep_explicit(self, i):
@@ -79,11 +80,11 @@ class TestDeprecatedCall(object):
 
     def test_deprecated_call_raises(self):
         with pytest.raises(AssertionError) as excinfo:
-            pytest.deprecated_call(self.dep, 3)
+            pytest.deprecated_call(self.dep, 3, 5)
         assert str(excinfo).find("did not produce") != -1
 
     def test_deprecated_call(self):
-        pytest.deprecated_call(self.dep, 0)
+        pytest.deprecated_call(self.dep, 0, 5)
 
     def test_deprecated_call_ret(self):
         ret = pytest.deprecated_call(self.dep, 0)
