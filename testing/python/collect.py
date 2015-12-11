@@ -1076,3 +1076,26 @@ def test_dont_collect_non_function_callable(testdir):
         'WC2 *',
         '*1 passed, 1 pytest-warnings in *',
     ])
+
+
+def test_class_injection_does_not_break_collection(testdir):
+    """Tests whether injection during collection time will terminate testing.
+
+    In this case the error should not occur if the TestClass itself
+    is modified during collection time, and the original method list
+    is still used for collection.
+    """
+    testdir.makeconftest("""
+        from test_inject import TestClass
+        def pytest_generate_tests(metafunc):
+            TestClass.changed_var = {}
+    """)
+    testdir.makepyfile(test_inject='''
+         class TestClass(object):
+            def test_injection(self):
+                """Test being parametrized."""
+                pass
+    ''')
+    result = testdir.runpytest()
+    assert "RuntimeError: dictionary changed size during iteration" not in result.stdout.str()
+    result.stdout.fnmatch_lines(['*1 passed*'])
