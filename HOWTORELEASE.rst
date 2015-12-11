@@ -80,11 +80,11 @@ Note: this assumes you have already registered on pypi.
 
 #. Send release announcement to mailing lists:
 
-   * pytest-dev
-   * testing-in-python
+   * pytest-dev@python.org
+   * testing-in-python@lists.idyll.org
    * python-announce-list@python.org
 
-#. Merge ``release-1.2.3`` into ``master``.
+#. Merge your release branch into ``master``.
 
 #. At this point the release is done. Congratulations!
 
