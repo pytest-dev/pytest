@@ -33,6 +33,7 @@ Note: this assumes you have already registered on pypi.
 
 #. Regenerate the docs examples using tox, and check for regressions::
 
+      pip install regendoc
       tox -e regen
       git diff
 
