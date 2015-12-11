@@ -57,15 +57,15 @@ Note: this assumes you have already registered on pypi.
    ``rsync``.
 
    .. note:: the ``install`` target of ``doc/en/Makefile`` defines where the
-     rsync goes to, typically to the ``latest`` section of ``pytest.org``.
+        rsync goes to, typically to the ``latest`` section of ``pytest.org``.
 
-     If you are making the first version of a minor release (e.g. ``1.2.0``),
-     you also need to manually create a symlink for "latest"::
+        If you are making the first version of a minor release (e.g. ``1.3.0``),
+        you also need to manually create a symlink for "latest"::
 
-       ssh pytest-dev@pytest.org
-       ln -s 1.2 latest
+            ssh pytest-dev@pytest.org
+            ln -s 1.3 latest
 
-     Browse to http://pytest.org/latest/ to verify.
+        Browse to http://pytest.org/latest/ to verify.
 
 #. Tag the release::
 
