@@ -1,5 +1,5 @@
-2.8.5.dev0
-----------
+2.8.5
+-----
 
 - fix #1243: fixed issue where class attributes injected during collection could break pytest.
   PR by Alexei Kozlenok, thanks Ronny Pfannschmidt and Bruno Oliveira for the review and help.
