@@ -41,8 +41,7 @@ Note: this assumes you have already registered on pypi.
 8. Build the docs, you need a virtualenv with py and sphinx
    installed::
 
-      cd doc/en
-      python plugins_index/plugins_index.py
+      cd doc/en      
       make html
 
    Commit any changes before tagging the release.

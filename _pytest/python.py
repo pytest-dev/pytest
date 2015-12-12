@@ -451,7 +451,7 @@ class PyCollector(PyobjMixin, pytest.Collector):
         seen = {}
         l = []
         for dic in dicts:
-            for name, obj in dic.items():
+            for name, obj in list(dic.items()):
                 if name in seen:
                     continue
                 seen[name] = True
