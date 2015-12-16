@@ -61,16 +61,16 @@ a lot of I/O this can lead to considerable speed ups.
 Running tests in a Python subprocess
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-To instantiate a Python-2.4 subprocess and send tests to it, you may type::
+To instantiate a Python-2.7 subprocess and send tests to it, you may type::
 
-    py.test -d --tx popen//python=python2.4
+    py.test -d --tx popen//python=python2.7
 
-This will start a subprocess which is run with the "python2.4"
+This will start a subprocess which is run with the "python2.7"
 Python interpreter, found in your system binary lookup path.
 
 If you prefix the --tx option value like this::
 
-    py.test -d --tx 3*popen//python=python2.4
+    py.test -d --tx 3*popen//python=python2.7
 
 then three subprocesses would be created and the tests
 will be distributed to three subprocesses and run simultanously.
@@ -170,7 +170,7 @@ For example, you could make running with three subprocesses your default::
 You can also add default environments like this::
 
     [pytest]
-    addopts = --tx ssh=myhost//python=python2.5 --tx ssh=myhost//python=python2.6
+    addopts = --tx ssh=myhost//python=python2.7 --tx ssh=myhost//python=python2.6
 
 and then just type::
 

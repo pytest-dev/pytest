@@ -89,9 +89,7 @@ between test modules so it's no longer advertised as the primary method.
 Skip all test functions of a class or module
 ---------------------------------------------
 
-As with all function :ref:`marking <mark>` you can skip test functions at the
-`whole class- or module level`_.  If your code targets python2.6 or above you
-use the skipif decorator (and any other marker) on classes::
+You can use the ``skipif`` decorator (and any other marker) on classes::
 
     @pytest.mark.skipif(sys.platform == 'win32',
                         reason="does not run on windows")
@@ -102,19 +100,6 @@ use the skipif decorator (and any other marker) on classes::
 
 If the condition is true, this marker will produce a skip result for
 each of the test methods.
-
-If your code targets python2.5 where class-decorators are not available,
-you can set the ``pytestmark`` attribute of a class::
-
-    class TestPosixCalls:
-        pytestmark = pytest.mark.skipif(sys.platform == 'win32',
-                                        reason="does not run on windows")
-
-        def test_function(self):
-            "will not be setup or run under 'win32' platform"
-
-As with the class-decorator, the ``pytestmark`` special name tells
-``pytest`` to apply it to each test function in the class.
 
 If you want to skip all test functions of a module, you must use
 the ``pytestmark`` name on the global level:

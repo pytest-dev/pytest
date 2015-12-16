@@ -12,8 +12,7 @@ Calling pytest through ``python -m pytest``
 
 .. versionadded:: 2.0
 
-If you use Python-2.5 or later you can invoke testing through the
-Python interpreter from the command line::
+You can invoke testing through the Python interpreter from the command line::
 
     python -m pytest [...]
 

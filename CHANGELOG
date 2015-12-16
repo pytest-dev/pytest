@@ -14,6 +14,10 @@
 * New `-rp` and `-rP` reporting options give the summary and full output
   of passing tests, respectively. Thanks to David Vierra for the PR.
 
+* fix #1226: Removed code and documentation for Python 2.5 or lower versions,
+  including removal of the obsolete ``_pytest.assertion.oldinterpret`` module.
+  Thanks Bruno Oliveira for the PR.
+
 
 2.8.6.dev1
 ----------

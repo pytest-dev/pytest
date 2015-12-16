@@ -66,9 +66,8 @@ This completely avoids previous issues of confusing assertion-reporting.
 It also means, that you can use Python's ``-O`` optimization without losing
 assertions in test modules.
 
-``pytest`` contains a second, mostly obsolete, assert debugging technique,
-invoked via ``--assert=reinterpret``, activated by default on
-Python-2.5: When an ``assert`` statement fails, ``pytest`` re-interprets
+``pytest`` contains a second, mostly obsolete, assert debugging technique
+invoked via ``--assert=reinterpret``: When an ``assert`` statement fails, ``pytest`` re-interprets
 the expression part to show intermediate values.  This technique suffers
 from a caveat that the rewriting does not: If your expression has side
 effects (better to avoid them anyway!) the intermediate values may not

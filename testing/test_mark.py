@@ -316,7 +316,6 @@ class TestFunctional:
         assert 'hello' in keywords
         assert 'world' in keywords
 
-    @pytest.mark.skipif("sys.version_info < (2,6)")
     def test_mark_per_class_decorator(self, testdir):
         item = testdir.getitem("""
             import pytest
@@ -328,7 +327,6 @@ class TestFunctional:
         keywords = item.keywords
         assert 'hello' in keywords
 
-    @pytest.mark.skipif("sys.version_info < (2,6)")
     def test_mark_per_class_decorator_plus_existing_dec(self, testdir):
         item = testdir.getitem("""
             import pytest

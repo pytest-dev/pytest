@@ -234,8 +234,8 @@ For an example on how to add and work with markers from a plugin, see
 Marking whole classes or modules
 ----------------------------------------------------
 
-If you are programming with Python 2.6 or later you may use ``pytest.mark``
-decorators with classes to apply markers to all of its test methods::
+You may use ``pytest.mark`` decorators with classes to apply markers to all of
+its test methods::
 
     # content of test_mark_classlevel.py
     import pytest

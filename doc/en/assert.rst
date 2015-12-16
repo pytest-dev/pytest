@@ -243,10 +243,9 @@ recording the intermediate values. Which technique is used depends on the
 location of the assert, ``pytest`` configuration, and Python version being used
 to run ``pytest``.
 
-By default, if the Python version is greater than or equal to 2.6, ``pytest``
-rewrites assert statements in test modules. Rewritten assert statements put
-introspection information into the assertion failure message. ``pytest`` only
-rewrites test modules directly discovered by its test collection process, so
+By default, ``pytest`` rewrites assert statements in test modules.
+Rewritten assert statements put introspection information into the assertion failure message.
+``pytest`` only rewrites test modules directly discovered by its test collection process, so
 asserts in supporting modules which are not themselves test modules will not be
 rewritten.
 
