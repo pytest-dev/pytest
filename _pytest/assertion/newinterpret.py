@@ -1,6 +1,5 @@
 """
 Find intermediate evalutation results in assert statements through builtin AST.
-This should replace oldinterpret.py eventually.
 """
 
 import sys

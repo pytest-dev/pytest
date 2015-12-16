@@ -46,7 +46,4 @@ class AssertionError(BuiltinAssertionError):
 if sys.version_info > (3, 0):
     AssertionError.__module__ = "builtins"
 
-if sys.version_info >= (2, 6) or sys.platform.startswith("java"):
-    from _pytest.assertion.newinterpret import interpret as reinterpret
-else:
-    from _pytest.assertion.oldinterpret import interpret as reinterpret
+from _pytest.assertion.newinterpret import interpret as reinterpret
