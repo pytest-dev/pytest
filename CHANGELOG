@@ -1,6 +1,7 @@
 2.8.6.dev1
 ----------
 
+- fix #1259: allow for double nodeids in junitxml
 
 2.8.5
 -----

@@ -18,6 +18,7 @@ def runandparse(testdir, *args):
 
 def assert_attr(node, **kwargs):
     __tracebackhide__ = True
+
     def nodeval(node, name):
         anode = node.getAttributeNode(name)
         if anode is not None:
@@ -667,10 +668,12 @@ def test_runs_twice(testdir):
             pass
     ''')
 
-    result = testdir.runpytest(f, f, '--junitxml', testdir.tmpdir.join("test.xml"))
-    assert 'INTERNALERROR' not in str(result.stdout)
+    result = testdir.runpytest(
+        f, f, '--junitxml', testdir.tmpdir.join("test.xml"))
+    assert 'INTERNALERROR' not in result.stdout.str()
 
 
+@pytest.mark.xfail(reason='hangs', run=False)
 def test_runs_twice_xdist(testdir):
     pytest.importorskip('xdist')
     f = testdir.makepyfile('''
@@ -678,7 +681,41 @@ def test_runs_twice_xdist(testdir):
             pass
     ''')
 
-    result = testdir.runpytest(f,
+    result = testdir.runpytest(
+        f,
         '--dist', 'each', '--tx', '2*popen',
         '--junitxml', testdir.tmpdir.join("test.xml"))
-    assert 'INTERNALERROR' not in str(result.stdout)
+    assert 'INTERNALERROR' not in result.stdout.str()
+
+
+def test_fancy_items_regression(testdir):
+    ' issue 1259'
+    testdir.makeconftest("""
+        import pytest
+        class FunItem(pytest.Item):
+            def runtest(self):
+                pass
+        class NoFunItem(pytest.Item):
+            def runtest(self):
+                pass
+
+        class FunCollector(pytest.File):
+            def collect(self):
+                return [
+                    FunItem('a', self),
+                    NoFunItem('a', self),
+                ]
+
+        def pytest_collect_file(path, parent):
+            return FunCollector(path, parent)
+    """)
+
+    testdir.makepyfile('''
+        def test_pass():
+            pass
+    ''')
+
+    result = testdir.runpytest(
+        '--junitxml', testdir.tmpdir.join("test.xml"))
+
+    assert 'INTERNALERROR' not in result.stdout.str()

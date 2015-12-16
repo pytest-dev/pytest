@@ -71,7 +71,6 @@ class _NodeReporter(object):
         self.testcase = None
         self.attrs = {}
 
-
     def append(self, node):
         self.xml.add_stats(type(node).__name__)
         self.nodes.append(node)
@@ -82,7 +81,6 @@ class _NodeReporter(object):
             self.property_insert_order.append(name)
         self.properties[name] = bin_xml_escape(value)
 
-
     def make_properties_node(self):
         """Return a Junit node containing custom properties, if any.
         """
@@ -92,7 +90,6 @@ class _NodeReporter(object):
                 for name in self.property_insert_order
             ])
         return ''
-
 
     def record_testreport(self, testreport):
         assert not self.testcase
@@ -182,7 +179,6 @@ class _NodeReporter(object):
                               message=skipreason))
         self._write_captured_output(report)
 
-
     def finalize(self):
         data = self.to_xml().unicode(indent=0)
         self.__dict__.clear()
@@ -262,6 +258,14 @@ class LogXML(object):
         self.node_reporters = {}  # nodeid -> _NodeReporter
         self.node_reporters_ordered = []
 
+    def finalize(self, report):
+        nodeid = getattr(report, 'nodeid', report)
+        # local hack to handle xdist report order
+        slavenode = getattr(report, 'node', None)
+        reporter = self.node_reporters.pop((nodeid, slavenode))
+        if reporter is not None:
+            reporter.finalize()
+
     def node_reporter(self, report):
         nodeid = getattr(report, 'nodeid', report)
         # local hack to handle xdist report order
@@ -270,7 +274,7 @@ class LogXML(object):
         key = nodeid, slavenode
 
         if key in self.node_reporters:
-            #TODO: breasks for --dist=each
+            # TODO: breasks for --dist=each
             return self.node_reporters[key]
         reporter = _NodeReporter(nodeid, self)
         self.node_reporters[key] = reporter
@@ -324,7 +328,7 @@ class LogXML(object):
             reporter.append_skipped(report)
         self.update_testcase_duration(report)
         if report.when == "teardown":
-            self.node_reporter(report).finalize()
+            self.finalize(report)
 
     def update_testcase_duration(self, report):
         """accumulates total duration for nodeid from given report and updates
