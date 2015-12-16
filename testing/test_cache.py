@@ -129,7 +129,6 @@ def test_cache_show(testdir):
 
 
 class TestLastFailed:
-    @pytest.mark.skipif("sys.version_info < (2,6)")
     def test_lastfailed_usecase(self, testdir, monkeypatch):
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", 1)
         p = testdir.makepyfile("""
@@ -197,7 +196,6 @@ class TestLastFailed:
             "test_a.py*",
         ])
 
-    @pytest.mark.skipif("sys.version_info < (2,6)")
     def test_lastfailed_difference_invocations(self, testdir, monkeypatch):
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", 1)
         testdir.makepyfile(test_a="""
@@ -233,7 +231,6 @@ class TestLastFailed:
             "*1 failed*1 desel*",
         ])
 
-    @pytest.mark.skipif("sys.version_info < (2,6)")
     def test_lastfailed_usecase_splice(self, testdir, monkeypatch):
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", 1)
         testdir.makepyfile("""

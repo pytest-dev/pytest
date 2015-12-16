@@ -79,7 +79,6 @@ def test_is():
         assert s.startswith("assert 1 is 2")
 
 
-@pytest.mark.skipif("sys.version_info < (2,6)")
 def test_attrib():
     class Foo(object):
         b = 1
@@ -91,7 +90,6 @@ def test_attrib():
         s = str(e)
         assert s.startswith("assert 1 == 2")
 
-@pytest.mark.skipif("sys.version_info < (2,6)")
 def test_attrib_inst():
     class Foo(object):
         b = 1
@@ -256,7 +254,6 @@ class TestView:
         assert codelines == ["4 + 5", "getitem('', 'join')",
             "setattr('x', 'y', 3)", "12 - 1"]
 
-@pytest.mark.skipif("sys.version_info < (2,6)")
 def test_assert_customizable_reprcompare(monkeypatch):
     monkeypatch.setattr(util, '_reprcompare', lambda *args: 'hello')
     try:
@@ -306,7 +303,6 @@ def test_assert_raise_alias(testdir):
     ])
 
 
-@pytest.mark.skipif("sys.version_info < (2,5)")
 def test_assert_raise_subclass():
     class SomeEx(AssertionError):
         def __init__(self, *args):
@@ -334,18 +330,3 @@ def test_assert_raises_in_nonzero_of_object_pytest_issue10():
         e = exvalue()
         s = str(e)
         assert "<MY42 object> < 0" in s
-
-@pytest.mark.skipif("sys.version_info >= (2,6)")
-def test_oldinterpret_importation():
-    # we had a cyclic import there
-    # requires pytest on sys.path
-    res = py.std.subprocess.call([
-        py.std.sys.executable, '-c', str(py.code.Source("""
-        try:
-            from _pytest.assertion.newinterpret import interpret
-        except ImportError:
-            from _pytest.assertion.oldinterpret import interpret
-        """))
-    ])
-
-    assert res == 0

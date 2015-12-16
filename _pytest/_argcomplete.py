@@ -88,9 +88,6 @@ class FastFilesCompleter:
         return completion
 
 if os.environ.get('_ARGCOMPLETE'):
-    # argcomplete 0.5.6 is not compatible with python 2.5.6: print/with/format
-    if sys.version_info[:2] < (2, 6):
-        sys.exit(1)
     try:
         import argcomplete.completers
     except ImportError:
