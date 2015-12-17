@@ -706,6 +706,7 @@ def test_fancy_items_regression(testdir):
                 return [
                     FunItem('a', self),
                     NoFunItem('a', self),
+                    NoFunItem('b', self),
                 ]
 
         def pytest_collect_file(path, parent):
@@ -731,8 +732,10 @@ def test_fancy_items_regression(testdir):
     assert items == [
         u'conftest a conftest.py',
         u'conftest a conftest.py',
+        u'conftest b conftest.py',
         u'test_fancy_items_regression a test_fancy_items_regression.py',
         u'test_fancy_items_regression a test_fancy_items_regression.py',
+        u'test_fancy_items_regression b test_fancy_items_regression.py',
         u'test_fancy_items_regression test_pass'
         u' test_fancy_items_regression.py',
     ]
