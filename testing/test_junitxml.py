@@ -668,9 +668,10 @@ def test_runs_twice(testdir):
             pass
     ''')
 
-    result = testdir.runpytest(
-        f, f, '--junitxml', testdir.tmpdir.join("test.xml"))
+    result, dom = runandparse(testdir, f, f)
     assert 'INTERNALERROR' not in result.stdout.str()
+    first, second = [x['classname'] for x in dom.find_by_tag("testcase")]
+    assert first == second
 
 
 @pytest.mark.xfail(reason='hangs', run=False)
@@ -681,15 +682,16 @@ def test_runs_twice_xdist(testdir):
             pass
     ''')
 
-    result = testdir.runpytest(
-        f,
-        '--dist', 'each', '--tx', '2*popen',
-        '--junitxml', testdir.tmpdir.join("test.xml"))
+    result, dom = runandparse(
+        testdir, f,
+        '--dist', 'each', '--tx', '2*popen',)
     assert 'INTERNALERROR' not in result.stdout.str()
+    first, second = [x['classname'] for x in dom.find_by_tag("testcase")]
+    assert first == second
 
 
 def test_fancy_items_regression(testdir):
-    ' issue 1259'
+    # issue 1259
     testdir.makeconftest("""
         import pytest
         class FunItem(pytest.Item):
@@ -707,7 +709,8 @@ def test_fancy_items_regression(testdir):
                 ]
 
         def pytest_collect_file(path, parent):
-            return FunCollector(path, parent)
+            if path.check(ext='.py'):
+                return FunCollector(path, parent)
     """)
 
     testdir.makepyfile('''
@@ -715,7 +718,21 @@ def test_fancy_items_regression(testdir):
             pass
     ''')
 
-    result = testdir.runpytest(
-        '--junitxml', testdir.tmpdir.join("test.xml"))
+    result, dom = runandparse(testdir)
 
     assert 'INTERNALERROR' not in result.stdout.str()
+
+    items = sorted(
+        '%(classname)s %(name)s %(file)s' % x
+
+        for x in dom.find_by_tag("testcase"))
+    import pprint
+    pprint.pprint(items)
+    assert items == [
+        u'conftest a conftest.py',
+        u'conftest a conftest.py',
+        u'test_fancy_items_regression a test_fancy_items_regression.py',
+        u'test_fancy_items_regression a test_fancy_items_regression.py',
+        u'test_fancy_items_regression test_pass'
+        u' test_fancy_items_regression.py',
+    ]
