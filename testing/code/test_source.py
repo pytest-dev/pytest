@@ -506,6 +506,8 @@ def test_oneline_and_comment():
     source = getstatement(0, "raise ValueError\n#hello")
     assert str(source) == "raise ValueError"
 
+@pytest.mark.xfail(hasattr(sys, "pypy_version_info"),
+                   reason='does not work on pypy')
 def test_comments():
     source = '''def test():
     "comment 1"
