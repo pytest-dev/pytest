@@ -308,6 +308,14 @@ class FDCapture:
     """ Capture IO to/from a given os-level filedescriptor. """
 
     def __init__(self, targetfd, tmpfile=None):
+        # ensure readline is imported so that it attaches to the correct
+        # stdio handles on Windows
+        if targetfd in (0, 1, 2):
+            try:
+                import readline
+            except ImportError:
+                pass
+
         self.targetfd = targetfd
         try:
             self.targetfd_save = os.dup(self.targetfd)
