@@ -308,14 +308,7 @@ class FDCapture:
     """ Capture IO to/from a given os-level filedescriptor. """
 
     def __init__(self, targetfd, tmpfile=None):
-        # ensure readline is imported so that it attaches to the correct
-        # stdio handles on Windows
-        if targetfd in (0, 1, 2):
-            try:
-                import readline
-            except ImportError:
-                pass
-
+        readline_workaround()
         self.targetfd = targetfd
         try:
             self.targetfd_save = os.dup(self.targetfd)
@@ -449,4 +442,29 @@ class DontReadFromInput:
         return False
 
     def close(self):
+        pass
+
+
+def readline_workaround():
+    """
+    Ensure readline is imported so that it attaches to the correct stdio
+    handles on Windows.
+
+    Pdb uses readline support where available--when not running from the Python
+    prompt, the readline module is not imported until running the pdb REPL.  If
+    running py.test with the --pdb option this means the readline module is not
+    imported until after I/O capture has been started.
+
+    This is a problem for pyreadline, which is often used to implement readline
+    support on Windows, as it does not attach to the correct handles for stdout
+    and/or stdin if they have been redirected by the FDCapture mechanism.  This
+    workaround ensures that readline is imported before I/O capture is setup so
+    that it can attach to the actual stdin/out for the console.
+
+    See https://github.com/pytest-dev/pytest/pull/1281
+    """
+
+    try:
+        import readline  # noqa
+    except ImportError:
         pass
