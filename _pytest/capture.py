@@ -308,7 +308,7 @@ class NoCapture:
 class FDCapture:
     """ Capture IO to/from a given os-level filedescriptor. """
 
-    def __init__(self, targetfd, tmpfile=None):        
+    def __init__(self, targetfd, tmpfile=None):
         self.targetfd = targetfd
         try:
             self.targetfd_save = os.dup(self.targetfd)
