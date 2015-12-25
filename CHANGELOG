@@ -5,6 +5,10 @@
   this was a regression failing plugins combinations
   like pytest-pep8 + pytest-flakes
 
+- Workaround for exception that occurs in pyreadline when using
+  ``--pdb`` with standard I/O capture enabled.
+  Thanks Erik M. Bray for the PR.
+
 2.8.5
 -----
 

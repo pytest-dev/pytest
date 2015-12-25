@@ -31,6 +31,7 @@ def pytest_addoption(parser):
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_load_initial_conftests(early_config, parser, args):
+    _readline_workaround()
     ns = early_config.known_args_namespace
     pluginmanager = early_config.pluginmanager
     capman = CaptureManager(ns.capture)
@@ -441,4 +442,31 @@ class DontReadFromInput:
         return False
 
     def close(self):
+        pass
+
+
+def _readline_workaround():
+    """
+    Ensure readline is imported so that it attaches to the correct stdio
+    handles on Windows.
+
+    Pdb uses readline support where available--when not running from the Python
+    prompt, the readline module is not imported until running the pdb REPL.  If
+    running py.test with the --pdb option this means the readline module is not
+    imported until after I/O capture has been started.
+
+    This is a problem for pyreadline, which is often used to implement readline
+    support on Windows, as it does not attach to the correct handles for stdout
+    and/or stdin if they have been redirected by the FDCapture mechanism.  This
+    workaround ensures that readline is imported before I/O capture is setup so
+    that it can attach to the actual stdin/out for the console.
+
+    See https://github.com/pytest-dev/pytest/pull/1281
+    """
+
+    if not sys.platform.startswith('win32'):
+        return
+    try:
+        import readline  # noqa
+    except ImportError:
         pass
