@@ -31,6 +31,7 @@ def pytest_addoption(parser):
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_load_initial_conftests(early_config, parser, args):
+    _readline_workaround()
     ns = early_config.known_args_namespace
     pluginmanager = early_config.pluginmanager
     capman = CaptureManager(ns.capture)
@@ -307,8 +308,7 @@ class NoCapture:
 class FDCapture:
     """ Capture IO to/from a given os-level filedescriptor. """
 
-    def __init__(self, targetfd, tmpfile=None):
-        readline_workaround()
+    def __init__(self, targetfd, tmpfile=None):        
         self.targetfd = targetfd
         try:
             self.targetfd_save = os.dup(self.targetfd)
@@ -445,7 +445,7 @@ class DontReadFromInput:
         pass
 
 
-def readline_workaround():
+def _readline_workaround():
     """
     Ensure readline is imported so that it attaches to the correct stdio
     handles on Windows.
@@ -464,6 +464,8 @@ def readline_workaround():
     See https://github.com/pytest-dev/pytest/pull/1281
     """
 
+    if not sys.platform.startswith('win32'):
+        return
     try:
         import readline  # noqa
     except ImportError:
