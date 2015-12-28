@@ -89,7 +89,7 @@ Please use the `GitHub issue tracker <https://github.com/pytest-dev/pytest/issue
 Changelog
 ---------
 
-Consult the `Changelog <http://pytest.org/latest/changelog.html>`_ page for fixes and enhancements for each version.
+Consult the `Changelog <http://pytest.org/latest/changelog.html>`_ page for fixes and enhancements of each version.
 
 
 License
