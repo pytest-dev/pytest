@@ -9,6 +9,10 @@
   ``--pdb`` with standard I/O capture enabled.
   Thanks Erik M. Bray for the PR.
 
+- fix #900: Better error message in case the target of a ``monkeypatch`` call
+  raises an ``ImportError``.
+
+
 2.8.5
 -----
 
