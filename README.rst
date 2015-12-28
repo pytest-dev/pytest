@@ -83,7 +83,7 @@ For full documentation, including installation, tutorials and PDF documents, ple
 Bugs/Requests
 -------------
 
-Please use the `GitHub issue tracker <https://github.com/pytest-dev/pytest/issues>`_ to submit bugs or feature requests.
+Please use the `GitHub issue tracker <https://github.com/pytest-dev/pytest/issues>`_ to submit bugs or request features.
 
 
 Changelog
