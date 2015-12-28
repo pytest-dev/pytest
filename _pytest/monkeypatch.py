@@ -1,7 +1,13 @@
 """ monkeypatching and mocking functionality.  """
 
 import os, sys
+import re
+
 from py.builtin import _basestring
+
+
+RE_IMPORT_ERROR_NAME = re.compile("^No module named (.*)$")
+
 
 def pytest_funcarg__monkeypatch(request):
     """The returned ``monkeypatch`` funcarg provides these
@@ -34,14 +40,28 @@ def derive_importpath(import_path, raising):
                         (import_path,))
     rest = []
     target = import_path
+    target_parts = set(target.split("."))
     while target:
         try:
             obj = __import__(target, None, None, "__doc__")
-        except ImportError:
+        except ImportError as ex:
+            if hasattr(ex, 'name'):
+                # Python >= 3.3
+                failed_name = ex.name
+            else:
+                match = RE_IMPORT_ERROR_NAME.match(ex.args[0])
+                assert match
+                failed_name = match.group(1)
+
             if "." not in target:
                 __tracebackhide__ = True
                 pytest.fail("could not import any sub part: %s" %
                             import_path)
+            elif failed_name != target \
+                    and not any(p == failed_name for p in target_parts):
+                # target is importable but causes ImportError itself
+                __tracebackhide__ = True
+                pytest.fail("import error in %s: %s" % (target, ex.args[0]))
             target, name = target.rsplit(".", 1)
             rest.append(name)
         else:

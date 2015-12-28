@@ -1,4 +1,6 @@
 import os, sys
+import textwrap
+
 import pytest
 from _pytest.monkeypatch import monkeypatch as MonkeyPatch
 
@@ -245,6 +247,21 @@ def test_issue185_time_breaks(testdir):
         *1 passed*
     """)
 
+def test_importerror(testdir):
+    p = testdir.mkpydir("package")
+    p.join("a.py").write(textwrap.dedent("""\
+        import doesnotexist
+
+        x = 1
+    """))
+    testdir.tmpdir.join("test_importerror.py").write(textwrap.dedent("""\
+        def test_importerror(monkeypatch):
+            monkeypatch.setattr('package.a.x', 2)
+    """))
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines("""
+        *import error in package.a.x: No module named {0}doesnotexist{0}*
+    """.format("'" if sys.version_info > (3, 0) else ""))
 
 
 class SampleNew(object):
