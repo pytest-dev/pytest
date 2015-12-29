@@ -10,6 +10,10 @@ New Features
 * New `-rp` and `-rP` reporting options give the summary and full output
   of passing tests, respectively. Thanks to David Vierra for the PR.
 
+* New ``ALLOW_BYTES`` doctest option strips ``b`` prefixes from byte strings
+  in doctest output (similar to ``ALLOW_UNICODE``).
+  Thanks Jason R. Coombs for the request and Bruno Oliveira for the PR (#1287).
+
 
 Changes
 -------
