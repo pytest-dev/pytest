@@ -8,7 +8,10 @@ can change the pattern by issuing::
 
     py.test --doctest-glob='*.rst'
 
-on the command line.  You can also trigger running of doctests
+on the command line. Since version ``2.9``, ``--doctest-glob``
+can be given multiple times in the command-line.
+
+You can also trigger running of doctests
 from docstrings in all python modules (including regular
 python test modules)::
 

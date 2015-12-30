@@ -15,7 +15,7 @@ def pytest_addoption(parser):
         help="run doctests in all .py modules",
         dest="doctestmodules")
     group.addoption("--doctest-glob",
-        action="store", default="test*.txt", metavar="pat",
+        action="append", default=[], metavar="pat",
         help="doctests file matching pattern, default: test*.txt",
         dest="doctestglob")
     group.addoption("--doctest-ignore-import-errors",
@@ -29,9 +29,18 @@ def pytest_collect_file(path, parent):
     if path.ext == ".py":
         if config.option.doctestmodules:
             return DoctestModule(path, parent)
-    elif (path.ext in ('.txt', '.rst') and parent.session.isinitpath(path)) or \
-        path.check(fnmatch=config.getvalue("doctestglob")):
+    elif _is_doctest(config, path, parent):
         return DoctestTextfile(path, parent)
+
+
+def _is_doctest(config, path, parent):
+    if path.ext in ('.txt', '.rst') and parent.session.isinitpath(path):
+        return True
+    globs = config.getoption("doctestglob") or ['test*.txt']
+    for glob in globs:
+        if path.check(fnmatch=glob):
+            return True
+    return False
 
 
 class ReprFailDoctest(TerminalRepr):

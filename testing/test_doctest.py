@@ -87,13 +87,43 @@ class TestDoctests:
         reprec.assertoutcome(failed=1)
 
     def test_new_pattern(self, testdir):
-        p = testdir.maketxtfile(xdoc ="""
+        p = testdir.maketxtfile(xdoc="""
             >>> x = 1
             >>> x == 1
             False
         """)
         reprec = testdir.inline_run(p, "--doctest-glob=x*.txt")
         reprec.assertoutcome(failed=1)
+
+    def test_multiple_patterns(self, testdir):
+        """Test support for multiple --doctest-glob arguments (#1255).
+        """
+        testdir.maketxtfile(xdoc="""
+            >>> 1
+            1
+        """)
+        testdir.makefile('.foo', test="""
+            >>> 1
+            1
+        """)
+        testdir.maketxtfile(test_normal="""
+            >>> 1
+            1
+        """)
+        expected = set(['xdoc.txt', 'test.foo', 'test_normal.txt'])
+        assert set(x.basename for x in testdir.tmpdir.listdir()) == expected
+        args = ["--doctest-glob=xdoc*.txt", "--doctest-glob=*.foo"]
+        result = testdir.runpytest(*args)
+        result.stdout.fnmatch_lines([
+            '*test.foo *',
+            '*xdoc.txt *',
+            '*2 passed*',
+        ])
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            '*test_normal.txt *',
+            '*1 passed*',
+        ])
 
     def test_doctest_unexpected_exception(self, testdir):
         testdir.maketxtfile("""
