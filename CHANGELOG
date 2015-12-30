@@ -12,6 +12,9 @@
 - fix #900: Better error message in case the target of a ``monkeypatch`` call
   raises an ``ImportError``.
 
+- fix #1292: monkeypatch calls (setattr, setenv, etc.) are now O(1).
+  Thanks David R. MacIver for the report and Bruno Oliveira for the PR.
+
 
 2.8.5
 -----
