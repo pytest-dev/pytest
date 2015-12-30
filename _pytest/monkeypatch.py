@@ -126,7 +126,7 @@ class monkeypatch:
         # avoid class descriptors like staticmethod/classmethod
         if inspect.isclass(target):
             oldval = target.__dict__.get(name, notset)
-        self._setattr.insert(0, (target, name, oldval))
+        self._setattr.append((target, name, oldval))
         setattr(target, name, value)
 
     def delattr(self, target, name=notset, raising=True):
@@ -152,13 +152,12 @@ class monkeypatch:
             if raising:
                 raise AttributeError(name)
         else:
-            self._setattr.insert(0, (target, name,
-                                     getattr(target, name, notset)))
+            self._setattr.append((target, name, getattr(target, name, notset)))
             delattr(target, name)
 
     def setitem(self, dic, name, value):
         """ Set dictionary entry ``name`` to value. """
-        self._setitem.insert(0, (dic, name, dic.get(name, notset)))
+        self._setitem.append((dic, name, dic.get(name, notset)))
         dic[name] = value
 
     def delitem(self, dic, name, raising=True):
@@ -171,7 +170,7 @@ class monkeypatch:
             if raising:
                 raise KeyError(name)
         else:
-            self._setitem.insert(0, (dic, name, dic.get(name, notset)))
+            self._setitem.append((dic, name, dic.get(name, notset)))
             del dic[name]
 
     def setenv(self, name, value, prepend=None):
@@ -223,13 +222,13 @@ class monkeypatch:
         calling `undo()` will undo all of the changes made in
         both functions.
         """
-        for obj, name, value in self._setattr:
+        for obj, name, value in reversed(self._setattr):
             if value is not notset:
                 setattr(obj, name, value)
             else:
                 delattr(obj, name)
         self._setattr[:] = []
-        for dictionary, name, value in self._setitem:
+        for dictionary, name, value in reversed(self._setitem):
             if value is notset:
                 try:
                     del dictionary[name]
