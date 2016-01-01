@@ -401,6 +401,9 @@ class TestDoctests:
                                     "--junit-xml=junit.xml")
         reprec.assertoutcome(failed=1)
 
+
+class TestLiterals:
+
     @pytest.mark.parametrize('config_mode', ['ini', 'comment'])
     def test_allow_unicode(self, testdir, config_mode):
         """Test that doctests which output unicode work in all python versions
@@ -430,6 +433,35 @@ class TestDoctests:
         reprec = testdir.inline_run("--doctest-modules")
         reprec.assertoutcome(passed=2)
 
+    @pytest.mark.parametrize('config_mode', ['ini', 'comment'])
+    def test_allow_bytes(self, testdir, config_mode):
+        """Test that doctests which output bytes work in all python versions
+        tested by pytest when the ALLOW_BYTES option is used (either in
+        the ini file or by an inline comment)(#1287).
+        """
+        if config_mode == 'ini':
+            testdir.makeini('''
+            [pytest]
+            doctest_optionflags = ALLOW_BYTES
+            ''')
+            comment = ''
+        else:
+            comment = '#doctest: +ALLOW_BYTES'
+
+        testdir.maketxtfile(test_doc="""
+            >>> b'foo'  {comment}
+            'foo'
+        """.format(comment=comment))
+        testdir.makepyfile(foo="""
+            def foo():
+              '''
+              >>> b'foo'  {comment}
+              'foo'
+              '''
+        """.format(comment=comment))
+        reprec = testdir.inline_run("--doctest-modules")
+        reprec.assertoutcome(passed=2)
+
     def test_unicode_string(self, testdir):
         """Test that doctests which output unicode fail in Python 2 when
         the ALLOW_UNICODE option is not used. The same test should pass
@@ -441,6 +473,19 @@ class TestDoctests:
         """)
         reprec = testdir.inline_run()
         passed = int(sys.version_info[0] >= 3)
+        reprec.assertoutcome(passed=passed, failed=int(not passed))
+
+    def test_bytes_literal(self, testdir):
+        """Test that doctests which output bytes fail in Python 3 when
+        the ALLOW_BYTES option is not used. The same test should pass
+        in Python 2 (#1287).
+        """
+        testdir.maketxtfile(test_doc="""
+            >>> b'foo'
+            'foo'
+        """)
+        reprec = testdir.inline_run()
+        passed = int(sys.version_info[0] == 2)
         reprec.assertoutcome(passed=passed, failed=int(not passed))
 
 

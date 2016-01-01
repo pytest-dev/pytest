@@ -88,7 +88,7 @@ class DoctestItem(pytest.Item):
                 lineno = test.lineno + example.lineno + 1
             message = excinfo.type.__name__
             reprlocation = ReprFileLocation(filename, lineno, message)
-            checker = _get_unicode_checker()
+            checker = _get_checker()
             REPORT_UDIFF = doctest.REPORT_UDIFF
             filelines = py.path.local(filename).readlines(cr=0)
             lines = []
@@ -127,7 +127,9 @@ def _get_flag_lookup():
                 ELLIPSIS=doctest.ELLIPSIS,
                 IGNORE_EXCEPTION_DETAIL=doctest.IGNORE_EXCEPTION_DETAIL,
                 COMPARISON_FLAGS=doctest.COMPARISON_FLAGS,
-                ALLOW_UNICODE=_get_allow_unicode_flag())
+                ALLOW_UNICODE=_get_allow_unicode_flag(),
+                ALLOW_BYTES=_get_allow_bytes_flag(),
+                )
 
 
 def get_optionflags(parent):
@@ -156,7 +158,7 @@ class DoctestTextfile(DoctestItem, pytest.Module):
 
         optionflags = get_optionflags(self)
         runner = doctest.DebugRunner(verbose=0, optionflags=optionflags,
-                                     checker=_get_unicode_checker())
+                                     checker=_get_checker())
 
         parser = doctest.DocTestParser()
         test = parser.get_doctest(text, globs, name, filename, 0)
@@ -191,7 +193,7 @@ class DoctestModule(pytest.Module):
         finder = doctest.DocTestFinder()
         optionflags = get_optionflags(self)
         runner = doctest.DebugRunner(verbose=0, optionflags=optionflags,
-                                     checker=_get_unicode_checker())
+                                     checker=_get_checker())
         for test in finder.find(module, module.__name__):
             if test.examples:  # skip empty doctests
                 yield DoctestItem(test.name, self, runner, test)
@@ -213,28 +215,32 @@ def _setup_fixtures(doctest_item):
     return fixture_request
 
 
-def _get_unicode_checker():
+def _get_checker():
     """
     Returns a doctest.OutputChecker subclass that takes in account the
-    ALLOW_UNICODE option to ignore u'' prefixes in strings. Useful
-    when the same doctest should run in Python 2 and Python 3.
+    ALLOW_UNICODE option to ignore u'' prefixes in strings and ALLOW_BYTES
+    to strip b'' prefixes.
+    Useful when the same doctest should run in Python 2 and Python 3.
 
     An inner class is used to avoid importing "doctest" at the module
     level.
     """
-    if hasattr(_get_unicode_checker, 'UnicodeOutputChecker'):
-        return _get_unicode_checker.UnicodeOutputChecker()
+    if hasattr(_get_checker, 'LiteralsOutputChecker'):
+        return _get_checker.LiteralsOutputChecker()
 
     import doctest
     import re
 
-    class UnicodeOutputChecker(doctest.OutputChecker):
+    class LiteralsOutputChecker(doctest.OutputChecker):
         """
         Copied from doctest_nose_plugin.py from the nltk project:
             https://github.com/nltk/nltk
+
+        Further extended to also support byte literals.
         """
 
-        _literal_re = re.compile(r"(\W|^)[uU]([rR]?[\'\"])", re.UNICODE)
+        _unicode_literal_re = re.compile(r"(\W|^)[uU]([rR]?[\'\"])", re.UNICODE)
+        _bytes_literal_re = re.compile(r"(\W|^)[bB]([rR]?[\'\"])", re.UNICODE)
 
         def check_output(self, want, got, optionflags):
             res = doctest.OutputChecker.check_output(self, want, got,
@@ -242,23 +248,27 @@ def _get_unicode_checker():
             if res:
                 return True
 
-            if not (optionflags & _get_allow_unicode_flag()):
+            allow_unicode = optionflags & _get_allow_unicode_flag()
+            allow_bytes = optionflags & _get_allow_bytes_flag()
+            if not allow_unicode and not allow_bytes:
                 return False
 
             else:  # pragma: no cover
-                # the code below will end up executed only in Python 2 in
-                # our tests, and our coverage check runs in Python 3 only
-                def remove_u_prefixes(txt):
-                    return re.sub(self._literal_re, r'\1\2', txt)
+                def remove_prefixes(regex, txt):
+                    return re.sub(regex, r'\1\2', txt)
 
-                want = remove_u_prefixes(want)
-                got = remove_u_prefixes(got)
+                if allow_unicode:
+                    want = remove_prefixes(self._unicode_literal_re, want)
+                    got = remove_prefixes(self._unicode_literal_re, got)
+                if allow_bytes:
+                    want = remove_prefixes(self._bytes_literal_re, want)
+                    got = remove_prefixes(self._bytes_literal_re, got)
                 res = doctest.OutputChecker.check_output(self, want, got,
                                                          optionflags)
                 return res
 
-    _get_unicode_checker.UnicodeOutputChecker = UnicodeOutputChecker
-    return _get_unicode_checker.UnicodeOutputChecker()
+    _get_checker.LiteralsOutputChecker = LiteralsOutputChecker
+    return _get_checker.LiteralsOutputChecker()
 
 
 def _get_allow_unicode_flag():
@@ -267,3 +277,11 @@ def _get_allow_unicode_flag():
     """
     import doctest
     return doctest.register_optionflag('ALLOW_UNICODE')
+
+
+def _get_allow_bytes_flag():
+    """
+    Registers and returns the ALLOW_BYTES flag.
+    """
+    import doctest
+    return doctest.register_optionflag('ALLOW_BYTES')

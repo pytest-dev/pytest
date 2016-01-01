@@ -13,6 +13,10 @@ New Features
 * New `-rp` and `-rP` reporting options give the summary and full output
   of passing tests, respectively. Thanks to David Vierra for the PR.
 
+* New ``ALLOW_BYTES`` doctest option strips ``b`` prefixes from byte strings
+  in doctest output (similar to ``ALLOW_UNICODE``).
+  Thanks Jason R. Coombs for the request and Bruno Oliveira for the PR (#1287).
+
 
 Changes
 -------
@@ -20,17 +24,17 @@ Changes
 * `pytest_enter_pdb` now optionally receives the pytest config object.
   Thanks Bruno Oliveira for the PR.
 
+* fix #1226: Removed code and documentation for Python 2.5 or lower versions,
+  including removal of the obsolete ``_pytest.assertion.oldinterpret`` module.
+  Thanks Bruno Oliveira for the PR.
 
-Bug Fixes/Adjustments
----------------------
+
+Bug Fixes
+---------
 
 * fix issue #680: the -s and -c options should now work under xdist;
   `Config.fromdictargs` now represents its input much more faithfully.
   Thanks to Buck Evan for the complete PR.
-
-* fix #1226: Removed code and documentation for Python 2.5 or lower versions,
-  including removal of the obsolete ``_pytest.assertion.oldinterpret`` module.
-  Thanks Bruno Oliveira for the PR.
 
 
 2.8.6.dev1

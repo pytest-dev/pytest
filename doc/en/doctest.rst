@@ -70,19 +70,32 @@ when executing text doctest files.
 The standard ``doctest`` module provides some setting flags to configure the
 strictness of doctest tests. In py.test You can enable those flags those flags
 using the configuration file. To make pytest ignore trailing whitespaces and
-ignore lengthy exception stack traces you can just write::
+ignore lengthy exception stack traces you can just write:
 
-    # content of pytest.ini
+.. code-block:: ini
+
     [pytest]
     doctest_optionflags= NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL
 
+py.test also introduces new options to allow doctests to run in Python 2 and
+Python 3 unchanged:
 
-py.test also introduces a new ``ALLOW_UNICODE`` option flag: when enabled, the
-``u`` prefix is stripped from unicode strings in expected doctest output. This
-allows doctests which use unicode to run in Python 2 and 3 unchanged.
+* ``ALLOW_UNICODE``: when enabled, the ``u`` prefix is stripped from unicode
+  strings in expected doctest output.
 
-As with any other option flag, this flag can be enabled in ``pytest.ini`` using
-the ``doctest_optionflags`` ini option or by an inline comment in the doc test
+* ``ALLOW_BYTES``: when enabled, the ``b`` prefix is stripped from byte strings
+  in expected doctest output.
+
+As with any other option flag, these flags can be enabled in ``pytest.ini`` using
+the ``doctest_optionflags`` ini option:
+
+.. code-block:: ini
+
+    [pytest]
+    doctest_optionflags = ALLOW_UNICODE ALLOW_BYTES
+
+
+Alternatively, it can be enabled by an inline comment in the doc test
 itself::
 
     # content of example.rst
