@@ -95,5 +95,5 @@ Consult the `Changelog <http://pytest.org/latest/changelog.html>`_ page for fixe
 License
 -------
 
-Copyright Holger Krekel and others, 2004-2015.
+Copyright Holger Krekel and others, 2004-2016.
 Licensed under the MIT license.
