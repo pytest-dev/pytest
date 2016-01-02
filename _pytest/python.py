@@ -263,7 +263,7 @@ def pytest_namespace():
         'raises' : raises,
         'collect': {
         'Module': Module, 'Class': Class, 'Instance': Instance,
-        'Function': Function, 'Generator': Generator,
+        'Function': Function, 'Generator': Function,
         '_fillfuncargs': fillfixtures}
     }
 
@@ -323,10 +323,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
                 "cannot collect %r because it is not a function."
                 % name, )
         elif getattr(obj, "__test__", True):
-            if is_generator(obj):
-                res = Generator(name, parent=collector)
-            else:
-                res = list(collector._genfunctions(name, obj))
+            res = list(collector._genfunctions(name, obj))
             outcome.force_result(res)
 
 def is_generator(func):
@@ -749,44 +746,6 @@ class FunctionMixin(PyobjMixin):
         if style == "auto":
             style = "long"
         return self._repr_failure_py(excinfo, style=style)
-
-
-class Generator(FunctionMixin, PyCollector):
-    def collect(self):
-        # test generators are seen as collectors but they also
-        # invoke setup/teardown on popular request
-        # (induced by the common "test_*" naming shared with normal tests)
-        self.session._setupstate.prepare(self)
-        # see FunctionMixin.setup and test_setupstate_is_preserved_134
-        self._preservedparent = self.parent.obj
-        l = []
-        seen = {}
-        for i, x in enumerate(self.obj()):
-            name, call, args = self.getcallargs(x)
-            if not callable(call):
-                raise TypeError("%r yielded non callable test %r" %(self.obj, call,))
-            if name is None:
-                name = "[%d]" % i
-            else:
-                name = "['%s']" % name
-            if name in seen:
-                raise ValueError("%r generated tests with non-unique name %r" %(self, name))
-            seen[name] = True
-            l.append(self.Function(name, self, args=args, callobj=call))
-        return l
-
-    def getcallargs(self, obj):
-        if not isinstance(obj, (tuple, list)):
-            obj = (obj,)
-        # explict naming
-        if isinstance(obj[0], py.builtin._basestring):
-            name = obj[0]
-            obj = obj[1:]
-        else:
-            name = None
-        call, args = obj[0], obj[1:]
-        return name, call, args
-
 
 def hasinit(obj):
     init = getattr(obj, '__init__', None)
