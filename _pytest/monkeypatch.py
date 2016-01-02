@@ -1,7 +1,13 @@
 """ monkeypatching and mocking functionality.  """
 
 import os, sys
+import re
+
 from py.builtin import _basestring
+
+
+RE_IMPORT_ERROR_NAME = re.compile("^No module named (.*)$")
+
 
 def pytest_funcarg__monkeypatch(request):
     """The returned ``monkeypatch`` funcarg provides these
@@ -34,14 +40,28 @@ def derive_importpath(import_path, raising):
                         (import_path,))
     rest = []
     target = import_path
+    target_parts = set(target.split("."))
     while target:
         try:
             obj = __import__(target, None, None, "__doc__")
-        except ImportError:
+        except ImportError as ex:
+            if hasattr(ex, 'name'):
+                # Python >= 3.3
+                failed_name = ex.name
+            else:
+                match = RE_IMPORT_ERROR_NAME.match(ex.args[0])
+                assert match
+                failed_name = match.group(1)
+
             if "." not in target:
                 __tracebackhide__ = True
                 pytest.fail("could not import any sub part: %s" %
                             import_path)
+            elif failed_name != target \
+                    and not any(p == failed_name for p in target_parts):
+                # target is importable but causes ImportError itself
+                __tracebackhide__ = True
+                pytest.fail("import error in %s: %s" % (target, ex.args[0]))
             target, name = target.rsplit(".", 1)
             rest.append(name)
         else:
@@ -106,7 +126,7 @@ class monkeypatch:
         # avoid class descriptors like staticmethod/classmethod
         if inspect.isclass(target):
             oldval = target.__dict__.get(name, notset)
-        self._setattr.insert(0, (target, name, oldval))
+        self._setattr.append((target, name, oldval))
         setattr(target, name, value)
 
     def delattr(self, target, name=notset, raising=True):
@@ -132,13 +152,12 @@ class monkeypatch:
             if raising:
                 raise AttributeError(name)
         else:
-            self._setattr.insert(0, (target, name,
-                                     getattr(target, name, notset)))
+            self._setattr.append((target, name, getattr(target, name, notset)))
             delattr(target, name)
 
     def setitem(self, dic, name, value):
         """ Set dictionary entry ``name`` to value. """
-        self._setitem.insert(0, (dic, name, dic.get(name, notset)))
+        self._setitem.append((dic, name, dic.get(name, notset)))
         dic[name] = value
 
     def delitem(self, dic, name, raising=True):
@@ -151,7 +170,7 @@ class monkeypatch:
             if raising:
                 raise KeyError(name)
         else:
-            self._setitem.insert(0, (dic, name, dic.get(name, notset)))
+            self._setitem.append((dic, name, dic.get(name, notset)))
             del dic[name]
 
     def setenv(self, name, value, prepend=None):
@@ -203,13 +222,13 @@ class monkeypatch:
         calling `undo()` will undo all of the changes made in
         both functions.
         """
-        for obj, name, value in self._setattr:
+        for obj, name, value in reversed(self._setattr):
             if value is not notset:
                 setattr(obj, name, value)
             else:
                 delattr(obj, name)
         self._setattr[:] = []
-        for dictionary, name, value in self._setitem:
+        for dictionary, name, value in reversed(self._setitem):
             if value is notset:
                 try:
                     del dictionary[name]

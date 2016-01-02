@@ -333,7 +333,7 @@ The result of this test will be successful::
 Parametrizing test methods through per-class configuration
 --------------------------------------------------------------
 
-.. _`unittest parametrizer`: http://code.google.com/p/unittest-ext/source/browse/trunk/params.py
+.. _`unittest parametrizer`: https://github.com/testing-cabal/unittest-ext/blob/master/params.py
 
 
 Here is an example ``pytest_generate_function`` function implementing a

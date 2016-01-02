@@ -120,7 +120,7 @@ in a managed class/module/function scope.
 
 .. _`Convention over Configuration`: http://en.wikipedia.org/wiki/Convention_over_Configuration
 
-Can I yield multiple values from a fixture function function?
+Can I yield multiple values from a fixture function?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 There are two conceptual reasons why yielding from a factory function

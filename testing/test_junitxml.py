@@ -18,6 +18,7 @@ def runandparse(testdir, *args):
 
 def assert_attr(node, **kwargs):
     __tracebackhide__ = True
+
     def nodeval(node, name):
         anode = node.getAttributeNode(name)
         if anode is not None:
@@ -667,10 +668,13 @@ def test_runs_twice(testdir):
             pass
     ''')
 
-    result = testdir.runpytest(f, f, '--junitxml', testdir.tmpdir.join("test.xml"))
-    assert 'INTERNALERROR' not in str(result.stdout)
+    result, dom = runandparse(testdir, f, f)
+    assert 'INTERNALERROR' not in result.stdout.str()
+    first, second = [x['classname'] for x in dom.find_by_tag("testcase")]
+    assert first == second
 
 
+@pytest.mark.xfail(reason='hangs', run=False)
 def test_runs_twice_xdist(testdir):
     pytest.importorskip('xdist')
     f = testdir.makepyfile('''
@@ -678,7 +682,60 @@ def test_runs_twice_xdist(testdir):
             pass
     ''')
 
-    result = testdir.runpytest(f,
-        '--dist', 'each', '--tx', '2*popen',
-        '--junitxml', testdir.tmpdir.join("test.xml"))
-    assert 'INTERNALERROR' not in str(result.stdout)
+    result, dom = runandparse(
+        testdir, f,
+        '--dist', 'each', '--tx', '2*popen',)
+    assert 'INTERNALERROR' not in result.stdout.str()
+    first, second = [x['classname'] for x in dom.find_by_tag("testcase")]
+    assert first == second
+
+
+def test_fancy_items_regression(testdir):
+    # issue 1259
+    testdir.makeconftest("""
+        import pytest
+        class FunItem(pytest.Item):
+            def runtest(self):
+                pass
+        class NoFunItem(pytest.Item):
+            def runtest(self):
+                pass
+
+        class FunCollector(pytest.File):
+            def collect(self):
+                return [
+                    FunItem('a', self),
+                    NoFunItem('a', self),
+                    NoFunItem('b', self),
+                ]
+
+        def pytest_collect_file(path, parent):
+            if path.check(ext='.py'):
+                return FunCollector(path, parent)
+    """)
+
+    testdir.makepyfile('''
+        def test_pass():
+            pass
+    ''')
+
+    result, dom = runandparse(testdir)
+
+    assert 'INTERNALERROR' not in result.stdout.str()
+
+    items = sorted(
+        '%(classname)s %(name)s %(file)s' % x
+
+        for x in dom.find_by_tag("testcase"))
+    import pprint
+    pprint.pprint(items)
+    assert items == [
+        u'conftest a conftest.py',
+        u'conftest a conftest.py',
+        u'conftest b conftest.py',
+        u'test_fancy_items_regression a test_fancy_items_regression.py',
+        u'test_fancy_items_regression a test_fancy_items_regression.py',
+        u'test_fancy_items_regression b test_fancy_items_regression.py',
+        u'test_fancy_items_regression test_pass'
+        u' test_fancy_items_regression.py',
+    ]
