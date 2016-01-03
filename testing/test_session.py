@@ -58,15 +58,6 @@ class SessionTests:
             print(out)
             pytest.fail("incorrect raises() output")
 
-    def test_generator_yields_None(self, testdir):
-        reprec = testdir.inline_runsource("""
-            def test_1():
-                yield None
-        """)
-        failures = reprec.getfailedcollections()
-        out = failures[0].longrepr.reprcrash.message
-        i = out.find('TypeError')
-        assert i != -1
 
     def test_syntax_error_module(self, testdir):
         reprec = testdir.inline_runsource("this is really not python")
