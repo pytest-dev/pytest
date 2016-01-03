@@ -273,17 +273,35 @@ def pytestconfig(request):
     return request.config
 
 
+def _run_generator_item(item):
+    if callable(item):
+        item()
+    if isinstance(item, tuple):
+        if callable(item[0]):
+            item[0](*item[1:])
+        elif callable(item[1]):
+            item[1](*item[2:])
+
+
+def _run_generator(gen):
+    # this doesnt do extended reporting anymore
+     for item in gen:
+        _run_generator_item(item)
+
+
 @pytest.hookimpl(trylast=True)
 def pytest_pyfunc_call(pyfuncitem):
     testfunction = pyfuncitem.obj
-    if pyfuncitem._isyieldedfunction():
-        testfunction(*pyfuncitem._args)
-    else:
-        funcargs = pyfuncitem.funcargs
-        testargs = {}
-        for arg in pyfuncitem._fixtureinfo.argnames:
-            testargs[arg] = funcargs[arg]
-        testfunction(**testargs)
+
+    funcargs = pyfuncitem.funcargs
+    testargs = {}
+    for arg in pyfuncitem._fixtureinfo.argnames:
+        testargs[arg] = funcargs[arg]
+    result = testfunction(**testargs)
+    if is_generator(testfunction):
+       _run_generator(result)
+
+
     return True
 
 def pytest_collect_file(path, parent):

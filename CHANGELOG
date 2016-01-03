@@ -28,6 +28,13 @@ Changes
   including removal of the obsolete ``_pytest.assertion.oldinterpret`` module.
   Thanks Bruno Oliveira for the PR.
 
+Breaking changes
+----------------
+
+* fix issue #16: yield tests are no longer separate test items
+  and the test stops at the first failed item,
+  running all items will be provided by a upcoming subtest feature
+
 
 Bug Fixes
 ---------
