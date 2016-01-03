@@ -263,7 +263,7 @@ def pytest_namespace():
         'raises' : raises,
         'collect': {
         'Module': Module, 'Class': Class, 'Instance': Instance,
-        'Function': Function, 'Generator': Generator,
+        'Function': Function, 'Generator': Function,
         '_fillfuncargs': fillfixtures}
     }
 
@@ -273,17 +273,35 @@ def pytestconfig(request):
     return request.config
 
 
+def _run_generator_item(item):
+    if callable(item):
+        item()
+    if isinstance(item, tuple):
+        if callable(item[0]):
+            item[0](*item[1:])
+        elif callable(item[1]):
+            item[1](*item[2:])
+
+
+def _run_generator(gen):
+    # this doesnt do extended reporting anymore
+     for item in gen:
+        _run_generator_item(item)
+
+
 @pytest.hookimpl(trylast=True)
 def pytest_pyfunc_call(pyfuncitem):
     testfunction = pyfuncitem.obj
-    if pyfuncitem._isyieldedfunction():
-        testfunction(*pyfuncitem._args)
-    else:
-        funcargs = pyfuncitem.funcargs
-        testargs = {}
-        for arg in pyfuncitem._fixtureinfo.argnames:
-            testargs[arg] = funcargs[arg]
-        testfunction(**testargs)
+
+    funcargs = pyfuncitem.funcargs
+    testargs = {}
+    for arg in pyfuncitem._fixtureinfo.argnames:
+        testargs[arg] = funcargs[arg]
+    result = testfunction(**testargs)
+    if is_generator(testfunction):
+       _run_generator(result)
+
+
     return True
 
 def pytest_collect_file(path, parent):
@@ -323,10 +341,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
                 "cannot collect %r because it is not a function."
                 % name, )
         elif getattr(obj, "__test__", True):
-            if is_generator(obj):
-                res = Generator(name, parent=collector)
-            else:
-                res = list(collector._genfunctions(name, obj))
+            res = list(collector._genfunctions(name, obj))
             outcome.force_result(res)
 
 def is_generator(func):
@@ -749,44 +764,6 @@ class FunctionMixin(PyobjMixin):
         if style == "auto":
             style = "long"
         return self._repr_failure_py(excinfo, style=style)
-
-
-class Generator(FunctionMixin, PyCollector):
-    def collect(self):
-        # test generators are seen as collectors but they also
-        # invoke setup/teardown on popular request
-        # (induced by the common "test_*" naming shared with normal tests)
-        self.session._setupstate.prepare(self)
-        # see FunctionMixin.setup and test_setupstate_is_preserved_134
-        self._preservedparent = self.parent.obj
-        l = []
-        seen = {}
-        for i, x in enumerate(self.obj()):
-            name, call, args = self.getcallargs(x)
-            if not callable(call):
-                raise TypeError("%r yielded non callable test %r" %(self.obj, call,))
-            if name is None:
-                name = "[%d]" % i
-            else:
-                name = "['%s']" % name
-            if name in seen:
-                raise ValueError("%r generated tests with non-unique name %r" %(self, name))
-            seen[name] = True
-            l.append(self.Function(name, self, args=args, callobj=call))
-        return l
-
-    def getcallargs(self, obj):
-        if not isinstance(obj, (tuple, list)):
-            obj = (obj,)
-        # explict naming
-        if isinstance(obj[0], py.builtin._basestring):
-            name = obj[0]
-            obj = obj[1:]
-        else:
-            name = None
-        call, args = obj[0], obj[1:]
-        return name, call, args
-
 
 def hasinit(obj):
     init = getattr(obj, '__init__', None)

@@ -141,27 +141,6 @@ def test_method_setup_failure_no_teardown(testdir):
     """)
     reprec.assertoutcome(failed=1, passed=1)
 
-def test_method_generator_setup(testdir):
-    reprec = testdir.inline_runsource("""
-        class TestSetupTeardownOnInstance:
-            def setup_class(cls):
-                cls.classsetup = True
-
-            def setup_method(self, method):
-                self.methsetup = method
-
-            def test_generate(self):
-                assert self.classsetup
-                assert self.methsetup == self.test_generate
-                yield self.generated, 5
-                yield self.generated, 2
-
-            def generated(self, value):
-                assert self.classsetup
-                assert self.methsetup == self.test_generate
-                assert value == 5
-    """)
-    reprec.assertoutcome(passed=1, failed=1)
 
 def test_func_generator_setup(testdir):
     reprec = testdir.inline_runsource("""
