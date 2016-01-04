@@ -739,6 +739,23 @@ def test_terminal_summary(testdir):
         world
     """)
 
+
+def test_terminal_summary_warnings_are_displayed(testdir):
+    """Test that warnings emitted during pytest_terminal_summary are displayed.
+    (#1305).
+    """
+    testdir.makeconftest("""
+        def pytest_terminal_summary(terminalreporter):
+            config = terminalreporter.config
+            config.warn('C1', 'internal warning')
+    """)
+    result = testdir.runpytest('-rw')
+    result.stdout.fnmatch_lines([
+        '*C1*internal warning',
+        '*== 1 pytest-warnings in *',
+    ])
+
+
 @pytest.mark.parametrize("exp_color, exp_line, stats_arg", [
     # The method under test only cares about the length of each
     # dict value, not the actual contents, so tuples of anything
