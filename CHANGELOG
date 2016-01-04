@@ -15,6 +15,10 @@
 - fix #1292: monkeypatch calls (setattr, setenv, etc.) are now O(1).
   Thanks David R. MacIver for the report and Bruno Oliveira for the PR.
 
+- fix #1305: pytest warnings emitted during ``pytest_terminal_summary`` are now
+  properly displayed.
+  Thanks Ionel Maries Cristian for the report and Bruno Oliveira for the PR.
+
 
 2.8.5
 -----
