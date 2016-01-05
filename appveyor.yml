@@ -8,7 +8,7 @@ build: false  # Not a C# project, build stuff at the test step instead.
 
 test_script:
   - 'set TESTENVS=
-          flakes,
+          linting,
           py26,
           py27,
           py33,

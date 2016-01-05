@@ -9,7 +9,7 @@ env:
   matrix:
     - TESTENV=coveralls
     - TESTENV=doctesting
-    - TESTENV=flakes
+    - TESTENV=linting
     - TESTENV=py26
     - TESTENV=py27
     - TESTENV=py27-cxfreeze
