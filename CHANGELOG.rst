@@ -1,40 +1,49 @@
 2.9.0.dev
 =========
 
-New Features
-------------
+**New Features**
 
-* New `pytest.mark.skip` mark, which unconditional skips marked tests.
-  Thanks Michael Aquilina for the complete PR.
+* New ``pytest.mark.skip`` mark, which unconditional skips marked tests.
+  Thanks `@MichaelAquilina`_ for the complete PR (`#1040`_).
 
 * ``--doctest-glob`` may now be passed multiple times in the command-line.
-  Thanks Joshua Bronson and Bruno Oliveira for the PR.
+  Thanks `@jab`_ and `@nicoddemus`_ for the PR.
 
-* New `-rp` and `-rP` reporting options give the summary and full output
-  of passing tests, respectively. Thanks to David Vierra for the PR.
+* New ``-rp`` and ``-rP`` reporting options give the summary and full output
+  of passing tests, respectively. Thanks to `@codewarrior0`_ for the PR.
 
 * New ``ALLOW_BYTES`` doctest option strips ``b`` prefixes from byte strings
   in doctest output (similar to ``ALLOW_UNICODE``).
-  Thanks Jason R. Coombs for the request and Bruno Oliveira for the PR (#1287).
+  Thanks `@jaraco`_ for the request and `@nicoddemus`_ for the PR (`#1287`_).
 
 
-Changes
--------
+**Changes**
 
-* `pytest_enter_pdb` now optionally receives the pytest config object.
-  Thanks Bruno Oliveira for the PR.
+* ``pytest_enter_pdb`` now optionally receives the pytest config object.
+  Thanks `@nicoddemus`_ for the PR.
 
-* fix #1226: Removed code and documentation for Python 2.5 or lower versions,
+* Removed code and documentation for Python 2.5 or lower versions,
   including removal of the obsolete ``_pytest.assertion.oldinterpret`` module.
-  Thanks Bruno Oliveira for the PR.
+  Thanks `@nicoddemus`_ for the PR (`#1226`_).
 
 
-Bug Fixes
----------
+**Bug Fixes**
 
-* fix issue #680: the -s and -c options should now work under xdist;
-  `Config.fromdictargs` now represents its input much more faithfully.
-  Thanks to Buck Evan for the complete PR.
+* The ``-s`` and ``-c`` options should now work under ``xdist``;
+  ``Config.fromdictargs`` now represents its input much more faithfully.
+  Thanks to `@bukzor`_ for the complete PR (`#680`_).
+
+
+.. _#1040: https://github.com/pytest-dev/pytest/pull/1040
+.. _#680: https://github.com/pytest-dev/pytest/issues/680
+.. _#1287: https://github.com/pytest-dev/pytest/pull/1287
+.. _#1226: https://github.com/pytest-dev/pytest/pull/1226
+.. _@MichaelAquilina: https://github.com/MichaelAquilina
+.. _@bukzor: https://github.com/bukzor
+.. _@nicoddemus: https://github.com/nicoddemus
+.. _@jab: https://github.com/jab
+.. _@codewarrior0: https://github.com/codewarrior0
+.. _@jaraco: https://github.com/jaraco
 
 
 2.8.6.dev1
@@ -543,7 +552,7 @@ Bug Fixes
   it from the "decorator" case.  Thanks Tom Viner.
 
 - "python_classes" and "python_functions" options now support glob-patterns
- for test discovery, as discussed in issue600. Thanks Ldiary Translations.
+  for test discovery, as discussed in issue600. Thanks Ldiary Translations.
 
 - allow to override parametrized fixtures with non-parametrized ones and vice versa (bubenkoff).
 
@@ -1757,8 +1766,7 @@ v1.3.3
 v1.3.2
 ==============================================
 
-New features
-++++++++++++++++++
+**New features**
 
 - fix issue103:  introduce py.test.raises as context manager, examples::
 
@@ -1793,8 +1801,7 @@ New features
 - introduce '--junitprefix=STR' option to prepend a prefix
   to all reports in the junitxml file.
 
-Bug fixes / Maintenance
-++++++++++++++++++++++++++
+**Bug fixes**
 
 - make tests and the ``pytest_recwarn`` plugin in particular fully compatible
   to Python2.7 (if you use the ``recwarn`` funcarg warnings will be enabled so that
@@ -1832,8 +1839,7 @@ Bug fixes / Maintenance
 v1.3.1
 =============================================
 
-New features
-++++++++++++++++++
+**New features**
 
 - issue91: introduce new py.test.xfail(reason) helper
   to imperatively mark a test as expected to fail. Can
@@ -1871,8 +1877,7 @@ New features
   course requires that your application and tests are properly teared
   down and don't have global state.
 
-Fixes / Maintenance
-++++++++++++++++++++++
+**Bug Fixes**
 
 - improved traceback presentation:
   - improved and unified reporting for "--tb=short" option
@@ -2108,7 +2113,7 @@ v1.1.0
 - try harder to have deprecation warnings for py.compat.* accesses
   report a correct location
 
-v1.0.2
+v1.0.3
 =============================================
 
 * adjust and improve docs
