@@ -365,15 +365,14 @@ class TerminalReporter:
             EXIT_OK, EXIT_TESTSFAILED, EXIT_INTERRUPTED, EXIT_USAGEERROR,
             EXIT_NOTESTSCOLLECTED)
         if exitstatus in summary_exit_codes:
+            self.config.hook.pytest_terminal_summary(terminalreporter=self)
             self.summary_errors()
             self.summary_failures()
             self.summary_warnings()
             self.summary_passes()
-            self.config.hook.pytest_terminal_summary(terminalreporter=self)
         if exitstatus == EXIT_INTERRUPTED:
             self._report_keyboardinterrupt()
             del self._keyboardinterrupt_memo
-
         self.summary_deselected()
         self.summary_stats()
 

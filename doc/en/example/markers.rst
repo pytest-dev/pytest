@@ -436,7 +436,7 @@ marking platform specific tests with pytest
 .. regendoc:wipe
 
 Consider you have a test suite which marks tests for particular platforms,
-namely ``pytest.mark.osx``, ``pytest.mark.win32`` etc. and you
+namely ``pytest.mark.darwin``, ``pytest.mark.win32`` etc. and you
 also have tests that run on all platforms and have no specific
 marker.  If you now want to have a way to only run the tests
 for your particular platform, you could use the following plugin::
@@ -446,7 +446,7 @@ for your particular platform, you could use the following plugin::
     import sys
     import pytest
 
-    ALL = set("osx linux2 win32".split())
+    ALL = set("darwin linux2 win32".split())
 
     def pytest_runtest_setup(item):
         if isinstance(item, item.Function):
@@ -462,7 +462,7 @@ Let's do a little test file to show how this looks like::
 
     import pytest
 
-    @pytest.mark.osx
+    @pytest.mark.darwin
     def test_if_apple_is_evil():
         pass
 
