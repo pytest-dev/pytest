@@ -2,6 +2,7 @@
 support for presenting detailed information in failing assertions.
 """
 import py
+import os
 import sys
 from _pytest.monkeypatch import monkeypatch
 from _pytest.assertion import util
@@ -86,6 +87,12 @@ def pytest_collection(session):
         hook.set_session(session)
 
 
+def _running_on_ci():
+    """Check if we're currently running on a CI system."""
+    env_vars = ['CI', 'BUILD_NUMBER']
+    return any(var in os.environ for var in env_vars)
+
+
 def pytest_runtest_setup(item):
     """Setup the pytest_assertrepr_compare hook
 
@@ -99,7 +106,8 @@ def pytest_runtest_setup(item):
 
         This uses the first result from the hook and then ensures the
         following:
-        * Overly verbose explanations are dropped unles -vv was used.
+        * Overly verbose explanations are dropped unless -vv was used or
+          running on a CI.
         * Embedded newlines are escaped to help util.format_explanation()
           later.
         * If the rewrite mode is used embedded %-characters are replaced
@@ -113,7 +121,8 @@ def pytest_runtest_setup(item):
         for new_expl in hook_result:
             if new_expl:
                 if (sum(len(p) for p in new_expl[1:]) > 80*8
-                        and item.config.option.verbose < 2):
+                        and item.config.option.verbose < 2
+                        and not _running_on_ci()):
                     show_max = 10
                     truncated_lines = len(new_expl) - show_max
                     new_expl[show_max:] = [py.builtin._totext(
