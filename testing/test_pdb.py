@@ -75,6 +75,22 @@ class TestPDB:
         if child.isalive():
             child.wait()
 
+    def test_pdb_interaction_capture(self, testdir):
+        p1 = testdir.makepyfile("""
+            def test_1():
+                print("getrekt")
+                assert False
+        """)
+        child = testdir.spawn_pytest("--pdb %s" % p1)
+        child.expect("getrekt")
+        child.expect("(Pdb)")
+        child.sendeof()
+        rest = child.read().decode("utf8")
+        assert "1 failed" in rest
+        assert "getrekt" not in rest
+        if child.isalive():
+            child.wait()
+
     def test_pdb_interaction_exception(self, testdir):
         p1 = testdir.makepyfile("""
             import pytest
