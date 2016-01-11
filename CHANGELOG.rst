@@ -26,6 +26,10 @@
   including removal of the obsolete ``_pytest.assertion.oldinterpret`` module.
   Thanks `@nicoddemus`_ for the PR (`#1226`_).
 
+* Comparisons now always show up in full when ``CI`` or ``BUILD_NUMBER`` is
+  found in the environment, even when -vv isn't used.
+  Thanks `@The-Compiler`_ for the PR.
+
 
 **Bug Fixes**
 
@@ -44,6 +48,7 @@
 .. _@jab: https://github.com/jab
 .. _@codewarrior0: https://github.com/codewarrior0
 .. _@jaraco: https://github.com/jaraco
+.. _@The-Compiler: https://github.com/The-Compiler
 
 
 2.8.6.dev1

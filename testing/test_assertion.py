@@ -405,7 +405,7 @@ def test_sequence_comparison_uses_repr(testdir):
     ])
 
 
-def test_assert_compare_truncate_longmessage(testdir):
+def test_assert_compare_truncate_longmessage(monkeypatch, testdir):
     testdir.makepyfile(r"""
         def test_long():
             a = list(range(200))
@@ -414,6 +414,7 @@ def test_assert_compare_truncate_longmessage(testdir):
             b = '\n'.join(map(str, b))
             assert a == b
     """)
+    monkeypatch.delenv('CI', raising=False)
 
     result = testdir.runpytest()
     # without -vv, truncate the message showing a few diff lines only
@@ -427,6 +428,12 @@ def test_assert_compare_truncate_longmessage(testdir):
 
 
     result = testdir.runpytest('-vv')
+    result.stdout.fnmatch_lines([
+        "*- 197",
+    ])
+
+    monkeypatch.setenv('CI', '1')
+    result = testdir.runpytest()
     result.stdout.fnmatch_lines([
         "*- 197",
     ])
