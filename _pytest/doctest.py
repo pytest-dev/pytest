@@ -81,15 +81,15 @@ class DoctestItem(pytest.Item):
             reprlocation = ReprFileLocation(filename, lineno, message)
             checker = _get_unicode_checker()
             REPORT_UDIFF = doctest.REPORT_UDIFF
-            filelines = py.path.local(filename).readlines(cr=0)
-            lines = []
             if lineno is not None:
-                i = max(test.lineno, max(0, lineno - 10)) # XXX?
-                for line in filelines[i:lineno]:
-                    lines.append("%03d %s" % (i+1, line))
-                    i += 1
+                lines = doctestfailure.test.docstring.splitlines(False)
+                # add line numbers to the left of the error message
+                lines = ["%03d %s" % (i + test.lineno + 1, x)
+                         for (i, x) in enumerate(lines)]
+                # trim docstring error lines to 10
+                lines = lines[example.lineno - 9:example.lineno + 1]
             else:
-                lines.append('EXAMPLE LOCATION UNKNOWN, not showing all tests of that example')
+                lines = ['EXAMPLE LOCATION UNKNOWN, not showing all tests of that example']
                 indent = '>>>'
                 for line in example.source.splitlines():
                     lines.append('??? %s %s' % (indent, line))

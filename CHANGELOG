@@ -23,6 +23,9 @@
   properly displayed.
   Thanks Ionel Maries Cristian for the report and Bruno Oliveira for the PR.
 
+- fix #628: fixed internal UnicodeDecodeError when doctests contain unicode.
+  Thanks Jason R. Coombs for the report and Bruno Oliveira for the PR.
+
 
 2.8.5
 -----
