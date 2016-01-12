@@ -485,11 +485,19 @@ Session related reporting hooks:
 .. autofunction:: pytest_itemcollected
 .. autofunction:: pytest_collectreport
 .. autofunction:: pytest_deselected
+.. autofunction:: pytest_report_header
+.. autofunction:: pytest_report_teststatus
+.. autofunction:: pytest_terminal_summary
 
 And here is the central hook for reporting about
 test execution:
 
 .. autofunction:: pytest_runtest_logreport
+
+You can also use this hook to customize assertion representation for some
+types:
+
+.. autofunction:: pytest_assertrepr_compare
 
 
 Debugging/Interaction hooks
