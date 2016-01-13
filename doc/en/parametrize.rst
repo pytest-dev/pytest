@@ -41,15 +41,15 @@ to an expected output::
 
     # content of test_expectation.py
     import pytest
-    @pytest.mark.parametrize("input,expected", [
+    @pytest.mark.parametrize("test_input,expected", [
         ("3+5", 8),
         ("2+4", 6),
         ("6*9", 42),
     ])
-    def test_eval(input, expected):
-        assert eval(input) == expected
+    def test_eval(test_input, expected):
+        assert eval(test_input) == expected
 
-Here, the ``@parametrize`` decorator defines three different ``(input,expected)``
+Here, the ``@parametrize`` decorator defines three different ``(test_input,expected)``
 tuples so that the ``test_eval`` function will run three times using
 them in turn::
 
@@ -64,15 +64,15 @@ them in turn::
     ======= FAILURES ========
     _______ test_eval[6*9-42] ________
     
-    input = '6*9', expected = 42
+    test_input = '6*9', expected = 42
     
-        @pytest.mark.parametrize("input,expected", [
+        @pytest.mark.parametrize("test_input,expected", [
             ("3+5", 8),
             ("2+4", 6),
             ("6*9", 42),
         ])
-        def test_eval(input, expected):
-    >       assert eval(input) == expected
+        def test_eval(test_input, expected):
+    >       assert eval(test_input) == expected
     E       assert 54 == 42
     E        +  where 54 = eval('6*9')
     
@@ -91,13 +91,13 @@ for example with the builtin ``mark.xfail``::
 
     # content of test_expectation.py
     import pytest
-    @pytest.mark.parametrize("input,expected", [
+    @pytest.mark.parametrize("test_input,expected", [
         ("3+5", 8),
         ("2+4", 6),
         pytest.mark.xfail(("6*9", 42)),
     ])
-    def test_eval(input, expected):
-        assert eval(input) == expected
+    def test_eval(test_input, expected):
+        assert eval(test_input) == expected
 
 Let's run this::
 
