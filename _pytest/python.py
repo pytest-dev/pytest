@@ -416,8 +416,8 @@ class PyCollector(PyobjMixin, pytest.Collector):
 
     def istestfunction(self, obj, name):
         return (
-            (self.funcnamefilter(name) or self.isnosetest(obj))
-            and safe_getattr(obj, "__call__", False) and getfixturemarker(obj) is None
+            (self.funcnamefilter(name) or self.isnosetest(obj)) and
+            safe_getattr(obj, "__call__", False) and getfixturemarker(obj) is None
         )
 
     def istestclass(self, obj, name):
@@ -1765,8 +1765,10 @@ class FixtureLookupError(LookupError):
         stack.extend(map(lambda x: x.func, self.fixturestack))
         msg = self.msg
         if msg is not None:
-            stack = stack[:-1] # the last fixture raise an error, let's present
-                               # it at the requesting side
+            # the last fixture raise an error, let's present
+            # it at the requesting side
+            stack = stack[:-1]
+                               
         for function in stack:
             fspath, lineno = getfslineno(function)
             try:

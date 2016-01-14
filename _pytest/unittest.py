@@ -24,9 +24,10 @@ def pytest_pycollect_makeitem(collector, name, obj):
 
 
 class UnitTestCase(pytest.Class):
-    nofuncargs = True  # marker for fixturemanger.getfixtureinfo()
-                       # to declare that our children do not support funcargs
-                       #
+    # marker for fixturemanger.getfixtureinfo()
+    # to declare that our children do not support funcargs
+    nofuncargs = True
+                                              
     def setup(self):
         cls = self.obj
         if getattr(cls, '__unittest_skip__', False):

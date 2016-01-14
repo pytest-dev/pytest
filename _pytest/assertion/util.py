@@ -140,8 +140,8 @@ def assertrepr_compare(config, op, left, right):
 
     summary = u('%s %s %s') % (ecu(left_repr), op, ecu(right_repr))
 
-    issequence = lambda x: (isinstance(x, (list, tuple, Sequence))
-                            and not isinstance(x, basestring))
+    issequence = lambda x: (isinstance(x, (list, tuple, Sequence)) and
+                            not isinstance(x, basestring))
     istext = lambda x: isinstance(x, basestring)
     isdict = lambda x: isinstance(x, dict)
     isset = lambda x: isinstance(x, (set, frozenset))
@@ -263,8 +263,7 @@ def _compare_eq_sequence(left, right, verbose=False):
         explanation += [
             u('Right contains more items, first extra item: %s') %
             py.io.saferepr(right[len(left)],)]
-    return explanation  # + _diff_text(pprint.pformat(left),
-                        #              pprint.pformat(right))
+    return explanation
 
 
 def _compare_eq_set(left, right, verbose=False):

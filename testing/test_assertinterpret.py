@@ -203,7 +203,7 @@ class TestView:
         cls.View = pytest.importorskip("_pytest.assertion.oldinterpret").View
 
     def test_class_dispatch(self):
-        ### Use a custom class hierarchy with existing instances
+        # Use a custom class hierarchy with existing instances
 
         class Picklable(self.View):
             pass
