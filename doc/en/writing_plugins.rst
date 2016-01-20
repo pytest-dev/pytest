@@ -95,7 +95,7 @@ Here is how you might run it::
     python package directory (i.e. one containing an ``__init__.py``) then
     "import conftest" can be ambiguous because there might be other
     ``conftest.py`` files as well on your PYTHONPATH or ``sys.path``.
-    It is thus good practise for projects to either put ``conftest.py``
+    It is thus good practice for projects to either put ``conftest.py``
     under a package scope or to never import anything from a
     conftest.py file.
 

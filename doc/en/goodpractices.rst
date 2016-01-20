@@ -1,5 +1,5 @@
 .. highlightlang:: python
-.. _`goodpractises`:
+.. _`goodpractices`:
 
 Good Integration Practices
 =================================================

@@ -193,7 +193,7 @@ Where to go next
 Here are a few suggestions where to go next:
 
 * :ref:`cmdline` for command line invocation examples
-* :ref:`good practises <goodpractises>` for virtualenv, test layout, genscript support
+* :ref:`good practices <goodpractices>` for virtualenv, test layout, genscript support
 * :ref:`fixtures` for providing a functional baseline to your tests
 * :ref:`apiref` for documentation and examples on using ``pytest``
 * :ref:`plugins` managing and writing plugins
