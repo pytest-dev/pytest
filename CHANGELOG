@@ -26,6 +26,9 @@
 - fix #628: fixed internal UnicodeDecodeError when doctests contain unicode.
   Thanks Jason R. Coombs for the report and Bruno Oliveira for the PR.
 
+- fix #1334: Add captured stdout to jUnit XML report on setup error.
+  Thanks Georgy Dyuldin for the PR.
+
 
 2.8.5
 -----
