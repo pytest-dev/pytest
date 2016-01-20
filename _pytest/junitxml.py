@@ -163,6 +163,7 @@ class _NodeReporter(object):
     def append_error(self, report):
         self._add_simple(
             Junit.error, "test setup failure", report.longrepr)
+        self._write_captured_output(report)
 
     def append_skipped(self, report):
         if hasattr(report, "wasxfail"):
