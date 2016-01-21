@@ -1,5 +1,5 @@
-2.8.6.dev1
-----------
+2.8.6
+-----
 
 - fix #1259: allow for double nodeids in junitxml,
   this was a regression failing plugins combinations
