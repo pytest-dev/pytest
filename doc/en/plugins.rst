@@ -56,7 +56,7 @@ Here is a little annotated list for some popular plugins:
   check source code with pyflakes.
 
 * `oejskit <http://pypi.python.org/pypi/oejskit>`_:
-  a plugin to run javascript unittests in life browsers.
+  a plugin to run javascript unittests in live browsers.
 
 To see a complete list of all plugins with their latest testing
 status against different py.test and Python versions, please visit

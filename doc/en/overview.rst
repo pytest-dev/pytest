@@ -7,7 +7,7 @@ Getting started basics
 
    getting-started
    usage
-   goodpractises
+   goodpractices
    projects
    faq
 

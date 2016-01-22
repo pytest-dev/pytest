@@ -1,3 +1,4 @@
+# encoding: utf-8
 import sys
 from _pytest.doctest import DoctestItem, DoctestModule, DoctestTextfile
 import py
@@ -138,6 +139,46 @@ class TestDoctests:
             "*>>> 0 / i*",
             "*UNEXPECTED*ZeroDivision*",
         ])
+
+    def test_docstring_context_around_error(self, testdir):
+        """Test that we show some context before the actual line of a failing
+        doctest.
+        """
+        testdir.makepyfile('''
+            def foo():
+                """
+                text-line-1
+                text-line-2
+                text-line-3
+                text-line-4
+                text-line-5
+                text-line-6
+                text-line-7
+                text-line-8
+                text-line-9
+                text-line-10
+                text-line-11
+                >>> 1 + 1
+                3
+
+                text-line-after
+                """
+        ''')
+        result = testdir.runpytest('--doctest-modules')
+        result.stdout.fnmatch_lines([
+            '*docstring_context_around_error*',
+            '005*text-line-3',
+            '006*text-line-4',
+            '013*text-line-11',
+            '014*>>> 1 + 1',
+            'Expected:',
+            '    3',
+            'Got:',
+            '    2',
+        ])
+        # lines below should be trimmed out
+        assert 'text-line-2' not in result.stdout.str()
+        assert 'text-line-after' not in result.stdout.str()
 
     def test_doctest_linedata_missing(self, testdir):
         testdir.tmpdir.join('hello.py').write(py.code.Source("""
@@ -368,6 +409,23 @@ class TestDoctests:
         """)
         reprec = testdir.inline_run(p, "--doctest-glob=x*.txt")
         reprec.assertoutcome(failed=1, passed=0)
+
+    def test_contains_unicode(self, testdir):
+        """Fix internal error with docstrings containing non-ascii characters.
+        """
+        testdir.makepyfile(u'''
+            # encoding: utf-8
+            def foo():
+                """
+                >>> name = 'с' # not letter 'c' but instead Cyrillic 's'.
+                'anything'
+                """
+        ''')
+        result = testdir.runpytest('--doctest-modules')
+        result.stdout.fnmatch_lines([
+            'Got nothing',
+            '* 1 failed in*',
+        ])
 
     def test_ignore_import_errors_on_doctest(self, testdir):
         p = testdir.makepyfile("""

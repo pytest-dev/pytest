@@ -1,4 +1,4 @@
-.. image:: doc/en/img/pytest1.png
+.. image:: http://pytest.org/latest/_static/pytest1.png
    :target: http://pytest.org
    :align: center
    :alt: pytest
@@ -60,7 +60,7 @@ Features
 - Detailed info on failing `assert statements <http://pytest.org/latest/assert.html>`_ (no need to remember ``self.assert*`` names);
 
 - `Auto-discovery
-  <http://pytest.org/latest/goodpractises.html#python-test-discovery>`_
+  <http://pytest.org/latest/goodpractices.html#python-test-discovery>`_
   of test modules and functions;
 
 - `Modular fixtures <http://pytest.org/latest/fixture.html>`_  for

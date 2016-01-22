@@ -419,6 +419,35 @@ class TestPython:
         systemout = pnode.find_first_by_tag("system-err")
         assert "hello-stderr" in systemout.toxml()
 
+    def test_setup_error_captures_stdout(self, testdir):
+        testdir.makepyfile("""
+            def pytest_funcarg__arg(request):
+                print('hello-stdout')
+                raise ValueError()
+            def test_function(arg):
+                pass
+        """)
+        result, dom = runandparse(testdir)
+        node = dom.find_first_by_tag("testsuite")
+        pnode = node.find_first_by_tag("testcase")
+        systemout = pnode.find_first_by_tag("system-out")
+        assert "hello-stdout" in systemout.toxml()
+
+    def test_setup_error_captures_stderr(self, testdir):
+        testdir.makepyfile("""
+            import sys
+            def pytest_funcarg__arg(request):
+                sys.stderr.write('hello-stderr')
+                raise ValueError()
+            def test_function(arg):
+                pass
+        """)
+        result, dom = runandparse(testdir)
+        node = dom.find_first_by_tag("testsuite")
+        pnode = node.find_first_by_tag("testcase")
+        systemout = pnode.find_first_by_tag("system-err")
+        assert "hello-stderr" in systemout.toxml()
+
 
 def test_mangle_testnames():
     from _pytest.junitxml import mangle_testnames
