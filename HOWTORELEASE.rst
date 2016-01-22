@@ -27,10 +27,6 @@ Note: this assumes you have already registered on pypi.
        devpi list pytest
 
    or look at failures with "devpi list -f pytest".
-   There will be some failed environments like e.g. the py33-trial 
-   or py27-pexpect tox environments on Win32 platforms
-   which is ok (tox does not support skipping on
-   per-platform basis yet).
 
 7. Regenerate the docs examples using tox, and check for regressions::
 

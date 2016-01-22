@@ -51,8 +51,12 @@
 .. _@The-Compiler: https://github.com/The-Compiler
 
 
-2.8.6.dev1
-==========
+2.8.7.dev1
+----------
+
+
+2.8.6
+-----
 
 - fix #1259: allow for double nodeids in junitxml,
   this was a regression failing plugins combinations
@@ -68,9 +72,19 @@
 - fix #1292: monkeypatch calls (setattr, setenv, etc.) are now O(1).
   Thanks David R. MacIver for the report and Bruno Oliveira for the PR.
 
+- fix #1223: captured stdout and stderr are now properly displayed before 
+  entering pdb when ``--pdb`` is used instead of being thrown away.
+  Thanks Cal Leeming for the PR.
+
 - fix #1305: pytest warnings emitted during ``pytest_terminal_summary`` are now
   properly displayed.
   Thanks Ionel Maries Cristian for the report and Bruno Oliveira for the PR.
+
+- fix #628: fixed internal UnicodeDecodeError when doctests contain unicode.
+  Thanks Jason R. Coombs for the report and Bruno Oliveira for the PR.
+
+- fix #1334: Add captured stdout to jUnit XML report on setup error.
+  Thanks Georgy Dyuldin for the PR.
 
 
 2.8.5

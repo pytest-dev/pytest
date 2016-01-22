@@ -95,7 +95,7 @@ Here is how you might run it::
     python package directory (i.e. one containing an ``__init__.py``) then
     "import conftest" can be ambiguous because there might be other
     ``conftest.py`` files as well on your PYTHONPATH or ``sys.path``.
-    It is thus good practise for projects to either put ``conftest.py``
+    It is thus good practice for projects to either put ``conftest.py``
     under a package scope or to never import anything from a
     conftest.py file.
 
@@ -485,11 +485,19 @@ Session related reporting hooks:
 .. autofunction:: pytest_itemcollected
 .. autofunction:: pytest_collectreport
 .. autofunction:: pytest_deselected
+.. autofunction:: pytest_report_header
+.. autofunction:: pytest_report_teststatus
+.. autofunction:: pytest_terminal_summary
 
 And here is the central hook for reporting about
 test execution:
 
 .. autofunction:: pytest_runtest_logreport
+
+You can also use this hook to customize assertion representation for some
+types:
+
+.. autofunction:: pytest_assertrepr_compare
 
 
 Debugging/Interaction hooks

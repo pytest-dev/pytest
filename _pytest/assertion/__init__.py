@@ -120,9 +120,9 @@ def pytest_runtest_setup(item):
             config=item.config, op=op, left=left, right=right)
         for new_expl in hook_result:
             if new_expl:
-                if (sum(len(p) for p in new_expl[1:]) > 80*8
-                        and item.config.option.verbose < 2
-                        and not _running_on_ci()):
+                if (sum(len(p) for p in new_expl[1:]) > 80*8 and
+                        item.config.option.verbose < 2 and
+                        not _running_on_ci()):
                     show_max = 10
                     truncated_lines = len(new_expl) - show_max
                     new_expl[show_max:] = [py.builtin._totext(
