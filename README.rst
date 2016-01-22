@@ -1,4 +1,4 @@
-.. image:: doc/en/img/pytest1.png
+.. image:: http://pytest.org/latest/_static/pytest1.png
    :target: http://pytest.org
    :align: center
    :alt: pytest
