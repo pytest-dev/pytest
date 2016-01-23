@@ -31,50 +31,47 @@ def pytest_funcarg__monkeypatch(request):
     return mpatch
 
 
+def resolve(name):
+    # simplified from zope.dottedname
+    parts = name.split('.')
+
+    used = parts.pop(0)
+    found = __import__(used)
+    for part in parts:
+        used += '.' + part
+        try:
+            found = getattr(found, part)
+        except AttributeError:
+            try:
+                __import__(used)
+            except ImportError as ex:
+                expected = ex.message.split()[-1]
+                if expected == used:
+                    raise
+                else:
+                    raise ImportError(
+                        'import error in %s: %s' % (used, ex)
+                    )
+            try:
+                found = getattr(found, part)
+            except AttributeError:
+                raise AttributeError(
+                    '%r object at %s has no attribute %r' %(
+                        type(found).__name__, used, part
+                    )
+                )
+    return found
+
+
 def derive_importpath(import_path, raising):
-    import pytest
     if not isinstance(import_path, _basestring) or "." not in import_path:
         raise TypeError("must be absolute import path string, not %r" %
                         (import_path,))
-    rest = []
-    target = import_path
-    target_parts = set(target.split("."))
-    while target:
-        try:
-            obj = __import__(target, None, None, "__doc__")
-        except ImportError as ex:
-            if hasattr(ex, 'name'):
-                # Python >= 3.3
-                failed_name = ex.name
-            else:
-                match = RE_IMPORT_ERROR_NAME.match(ex.args[0])
-                assert match
-                failed_name = match.group(1)
-
-            if "." not in target:
-                __tracebackhide__ = True
-                pytest.fail("could not import any sub part: %s" %
-                            import_path)
-            elif failed_name != target \
-                    and not any(p == failed_name for p in target_parts):
-                # target is importable but causes ImportError itself
-                __tracebackhide__ = True
-                pytest.fail("import error in %s: %s" % (target, ex.args[0]))
-            target, name = target.rsplit(".", 1)
-            rest.append(name)
-        else:
-            assert rest
-            try:
-                while len(rest) > 1:
-                    attr = rest.pop()
-                    obj = getattr(obj, attr)
-                attr = rest[0]
-                if raising:
-                    getattr(obj, attr)
-            except AttributeError:
-                __tracebackhide__ = True
-                pytest.fail("object %r has no attribute %r" % (obj, attr))
-            return attr, obj
+    module, attr = import_path.rsplit('.', 1)
+    target = resolve(module)
+    if raising:
+        getattr(target, attr)
+    return attr, target
 
 
 class Notset:
