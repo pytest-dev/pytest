@@ -2,7 +2,6 @@
 
 import os, sys
 import re
-import pytest
 
 from py.builtin import _basestring
 
