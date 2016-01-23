@@ -5,7 +5,6 @@ import re
 
 from py.builtin import _basestring
 
-
 RE_IMPORT_ERROR_NAME = re.compile("^No module named (.*)$")
 
 
@@ -30,7 +29,6 @@ def pytest_funcarg__monkeypatch(request):
     mpatch = monkeypatch()
     request.addfinalizer(mpatch.undo)
     return mpatch
-
 
 
 def derive_importpath(import_path, raising):
@@ -79,15 +77,17 @@ def derive_importpath(import_path, raising):
             return attr, obj
 
 
-
 class Notset:
     def __repr__(self):
         return "<notset>"
 
+
 notset = Notset()
+
 
 class monkeypatch:
     """ Object keeping a record of setattr/item/env/syspath changes. """
+
     def __init__(self):
         self._setattr = []
         self._setitem = []
@@ -114,14 +114,14 @@ class monkeypatch:
         if value is notset:
             if not isinstance(target, _basestring):
                 raise TypeError("use setattr(target, name, value) or "
-                   "setattr(target, value) with target being a dotted "
-                   "import string")
+                                "setattr(target, value) with target being a dotted "
+                                "import string")
             value = name
             name, target = derive_importpath(target, raising)
 
         oldval = getattr(target, name, notset)
         if raising and oldval is notset:
-            raise AttributeError("%r has no attribute %r" %(target, name))
+            raise AttributeError("%r has no attribute %r" % (target, name))
 
         # avoid class descriptors like staticmethod/classmethod
         if inspect.isclass(target):
@@ -233,7 +233,7 @@ class monkeypatch:
                 try:
                     del dictionary[name]
                 except KeyError:
-                    pass # was already deleted, so we have the desired state
+                    pass  # was already deleted, so we have the desired state
             else:
                 dictionary[name] = value
         self._setitem[:] = []
