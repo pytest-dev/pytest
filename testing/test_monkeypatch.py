@@ -62,11 +62,11 @@ class TestSetattrWithImportPath:
         pytest.raises(TypeError, lambda: monkeypatch.setattr(None, None))
 
     def test_unknown_import(self, monkeypatch):
-        pytest.raises(pytest.fail.Exception,
+        pytest.raises(ImportError,
                       lambda: monkeypatch.setattr("unkn123.classx", None))
 
     def test_unknown_attr(self, monkeypatch):
-        pytest.raises(pytest.fail.Exception,
+        pytest.raises(AttributeError,
                       lambda: monkeypatch.setattr("os.path.qweqwe", None))
 
     def test_unknown_attr_non_raising(self, monkeypatch):
@@ -283,7 +283,7 @@ def test_importerror(testdir):
     """))
     result = testdir.runpytest()
     result.stdout.fnmatch_lines("""
-        *import error in package.a.x: No module named {0}doesnotexist{0}*
+        *import error in package.a: No module named {0}doesnotexist{0}*
     """.format("'" if sys.version_info > (3, 0) else ""))
 
 

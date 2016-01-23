@@ -2,6 +2,7 @@
 
 import os, sys
 import re
+import pytest
 
 from py.builtin import _basestring
 
@@ -52,15 +53,20 @@ def resolve(name):
                     raise ImportError(
                         'import error in %s: %s' % (used, ex)
                     )
-            try:
-                found = getattr(found, part)
-            except AttributeError:
-                raise AttributeError(
-                    '%r object at %s has no attribute %r' %(
-                        type(found).__name__, used, part
-                    )
-                )
+            found = annotated_getattr(found, part, used)
     return found
+
+
+def annotated_getattr(obj, name, ann):
+    try:
+        obj = getattr(obj, name)
+    except AttributeError:
+        raise AttributeError(
+                '%r object at %s has no attribute %r' % (
+                    type(obj).__name__, ann, name
+                )
+        )
+    return obj
 
 
 def derive_importpath(import_path, raising):
@@ -70,7 +76,7 @@ def derive_importpath(import_path, raising):
     module, attr = import_path.rsplit('.', 1)
     target = resolve(module)
     if raising:
-        getattr(target, attr)
+        annotated_getattr(target, attr, ann=module)
     return attr, target
 
 
