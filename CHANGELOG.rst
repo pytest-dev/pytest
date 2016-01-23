@@ -73,6 +73,7 @@
 2.8.7.dev1
 ----------
 
+- fix #1338: use predictable object resolution for monkeypatch'
 
 2.8.6
 -----
