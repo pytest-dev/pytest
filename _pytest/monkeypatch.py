@@ -45,7 +45,8 @@ def resolve(name):
             try:
                 __import__(used)
             except ImportError as ex:
-                expected = ex.message.split()[-1]
+                # str is used for py2 vs py3
+                expected = str(ex).split()[-1]
                 if expected == used:
                     raise
                 else:
