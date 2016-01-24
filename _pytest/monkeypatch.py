@@ -42,18 +42,23 @@ def resolve(name):
         try:
             found = getattr(found, part)
         except AttributeError:
-            try:
-                __import__(used)
-            except ImportError as ex:
-                # str is used for py2 vs py3
-                expected = str(ex).split()[-1]
-                if expected == used:
-                    raise
-                else:
-                    raise ImportError(
-                        'import error in %s: %s' % (used, ex)
-                    )
-            found = annotated_getattr(found, part, used)
+            pass
+        else:
+            continue
+        # we use explicit un-nesting of the handling block in order
+        # to avoid nested exceptions on python 3
+        try:
+            __import__(used)
+        except ImportError as ex:
+            # str is used for py2 vs py3
+            expected = str(ex).split()[-1]
+            if expected == used:
+                raise
+            else:
+                raise ImportError(
+                    'import error in %s: %s' % (used, ex)
+                )
+        found = annotated_getattr(found, part, used)
     return found
 
 
