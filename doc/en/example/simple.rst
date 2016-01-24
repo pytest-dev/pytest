@@ -108,7 +108,7 @@ directory with the above conftest.py::
 
     $ py.test
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.5, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 0 items
     
@@ -156,7 +156,7 @@ and when running it will see a skipped "slow" test::
 
     $ py.test -rs    # "-rs" means report details on the little 's'
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.5, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -170,7 +170,7 @@ Or run it including the ``slow`` marked test::
 
     $ py.test --runslow
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.5, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -262,7 +262,7 @@ which will add the string to the test header accordingly::
 
     $ py.test
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.5, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1
     project deps: mylib-1.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 0 items
@@ -286,7 +286,7 @@ which will add info only when run with "--v"::
 
     $ py.test -v
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.5, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.4
+    platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.4
     cachedir: .cache
     info1: did you know that ...
     did you?
@@ -299,7 +299,7 @@ and nothing when run plainly::
 
     $ py.test
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.5, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 0 items
     
@@ -332,7 +332,7 @@ Now we can profile which test functions execute the slowest::
 
     $ py.test --durations=3
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.5, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 3 items
     
@@ -394,11 +394,14 @@ If we run this::
 
     $ py.test -rx
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.5, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
     test_step.py .Fx.
+    ======= short test summary info ========
+    XFAIL test_step.py::TestUserHandling::()::test_deletion
+      reason: previous test failed (test_modification)
     
     ======= FAILURES ========
     _______ TestUserHandling.test_modification ________
@@ -410,9 +413,6 @@ If we run this::
     E       assert 0
     
     test_step.py:9: AssertionError
-    ======= short test summary info ========
-    XFAIL test_step.py::TestUserHandling::()::test_deletion
-      reason: previous test failed (test_modification)
     ======= 1 failed, 2 passed, 1 xfailed in 0.12 seconds ========
 
 We'll see that ``test_deletion`` was not executed because ``test_modification``
@@ -465,7 +465,7 @@ We can run this::
 
     $ py.test
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.5, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 7 items
     
@@ -479,7 +479,7 @@ We can run this::
     file $REGENDOC_TMPDIR/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
             fixture 'db' not found
-            available fixtures: capsys, capfd, pytestconfig, tmpdir_factory, monkeypatch, record_xml_property, cache, tmpdir, recwarn
+            available fixtures: record_xml_property, pytestconfig, cache, capsys, recwarn, monkeypatch, tmpdir, capfd, tmpdir_factory
             use 'py.test --fixtures [testpath]' for help on them.
     
     $REGENDOC_TMPDIR/b/test_error.py:1
@@ -569,7 +569,7 @@ and run them::
 
     $ py.test test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.5, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -660,7 +660,7 @@ and run it::
 
     $ py.test -s test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.5, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 3 items
     
