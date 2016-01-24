@@ -1,5 +1,8 @@
-pytest-2.8.6
+pytest-2.8.7
 ============
+
+This is a hotfix release to solve a regression
+in the builtin monkeypatch plugin that got introduced in 2.8.6.
 
 pytest is a mature Python testing tool with more than a 1100 tests
 against itself, passing on many different interpreters and platforms.
