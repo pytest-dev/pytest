@@ -3,7 +3,6 @@ from __future__ import absolute_import
 
 import traceback
 
-import py
 import pytest
 from _pytest._code.code import TerminalRepr, ReprFileLocation, ExceptionInfo
 from _pytest.python import FixtureRequest
