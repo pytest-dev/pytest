@@ -1,6 +1,7 @@
-
-import py
 import sys
+
+import _pytest._code
+
 
 def runpdb_and_get_report(testdir, source):
     p = testdir.makepyfile(source)
@@ -27,7 +28,7 @@ class TestPDB:
         """)
         assert rep.failed
         assert len(pdblist) == 1
-        tb = py.code.Traceback(pdblist[0][0])
+        tb = _pytest._code.Traceback(pdblist[0][0])
         assert tb[-1].name == "test_func"
 
     def test_pdb_on_xfail(self, testdir, pdblist):

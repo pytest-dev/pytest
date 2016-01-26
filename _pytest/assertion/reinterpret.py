@@ -3,6 +3,8 @@ Find intermediate evalutation results in assert statements through builtin AST.
 """
 import ast
 import sys
+
+import _pytest._code
 import py
 from _pytest.assertion import util
 u = py.builtin._totext
@@ -26,7 +28,7 @@ class AssertionError(util.BuiltinAssertionError):
                     "<[broken __repr__] %s at %0xd>"
                     % (toprint.__class__, id(toprint)))
         else:
-            f = py.code.Frame(sys._getframe(1))
+            f = _pytest._code.Frame(sys._getframe(1))
             try:
                 source = f.code.fullsource
                 if source is not None:
@@ -102,7 +104,7 @@ def reinterpret(source, frame, should_fail=False):
 
 def run(offending_line, frame=None):
     if frame is None:
-        frame = py.code.Frame(sys._getframe(1))
+        frame = _pytest._code.Frame(sys._getframe(1))
     return reinterpret(offending_line, frame)
 
 def getfailure(e):

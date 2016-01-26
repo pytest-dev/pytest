@@ -2,8 +2,10 @@
 import sys
 import textwrap
 
-import py, pytest
 import _pytest.assertion as plugin
+import _pytest._code
+import py
+import pytest
 from _pytest.assertion import reinterpret
 from _pytest.assertion import util
 
@@ -22,7 +24,7 @@ def mock_config():
 
 
 def interpret(expr):
-    return reinterpret.reinterpret(expr, py.code.Frame(sys._getframe(1)))
+    return reinterpret.reinterpret(expr, _pytest._code.Frame(sys._getframe(1)))
 
 class TestBinReprIntegration:
 

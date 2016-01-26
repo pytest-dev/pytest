@@ -1,5 +1,8 @@
 import sys
-import py, pytest
+
+import _pytest._code
+import py
+import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED, EXIT_USAGEERROR
 
 
@@ -197,7 +200,7 @@ class TestGeneralUsage:
     def test_chdir(self, testdir):
         testdir.tmpdir.join("py").mksymlinkto(py._pydir)
         p = testdir.tmpdir.join("main.py")
-        p.write(py.code.Source("""
+        p.write(_pytest._code.Source("""
             import sys, os
             sys.path.insert(0, '')
             import py

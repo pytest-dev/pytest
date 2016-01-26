@@ -4,6 +4,7 @@ serialization via the pickle module.
 """
 import py
 import pytest
+import _pytest._code
 
 pythonlist = ['python2.6', 'python2.7', 'python3.3']
 @pytest.fixture(params=pythonlist)
@@ -23,7 +24,7 @@ class Python:
         self.picklefile = picklefile
     def dumps(self, obj):
         dumpfile = self.picklefile.dirpath("dump.py")
-        dumpfile.write(py.code.Source("""
+        dumpfile.write(_pytest._code.Source("""
             import pickle
             f = open(%r, 'wb')
             s = pickle.dump(%r, f, protocol=2)
@@ -33,7 +34,7 @@ class Python:
 
     def load_and_is_true(self, expression):
         loadfile = self.picklefile.dirpath("load.py")
-        loadfile.write(py.code.Source("""
+        loadfile.write(_pytest._code.Source("""
             import pickle
             f = open(%r, 'rb')
             obj = pickle.load(f)

@@ -81,12 +81,9 @@ and if you need to have access to the actual exception info you may use::
             f()
         assert 'maximum recursion' in str(excinfo.value)
 
-``excinfo`` is a `py.code.ExceptionInfo`_ instance, which is a wrapper around
+``excinfo`` is a ``ExceptionInfo`` instance, which is a wrapper around
 the actual exception raised.  The main attributes of interest are
 ``.type``, ``.value`` and ``.traceback``.
-
-.. _py.code.ExceptionInfo:
-    http://pylib.readthedocs.org/en/latest/code.html#py-code-exceptioninfo
 
 If you want to write test code that works on Python 2.4 as well,
 you may also use two other ways to test for an expected exception::

@@ -19,6 +19,21 @@
 
 **Changes**
 
+* **Important**: `py.code <http://pylib.readthedocs.org/en/latest/code.html>`_ has been
+  merged into the ``pytest`` repository as ``pytest._code``. This decision 
+  was made because ``py.code`` had very few uses outside ``pytest`` and the 
+  fact that it was in a different repository made it difficult to fix bugs on 
+  its code in a timely manner. The team hopes with this to be able to better
+  refactor out and improve that code.
+  This change shouldn't affect users, but it is useful to let users aware
+  if they encounter any strange behavior.
+  
+  Keep in mind that the code for ``pytest._code`` is **private** and 
+  **experimental**, so you definitely should not import it explicitly!
+
+  Please note that the original ``py.code`` is still available in 
+  `pylib <http://pylib.readthedocs.org>`_.
+
 * ``pytest_enter_pdb`` now optionally receives the pytest config object.
   Thanks `@nicoddemus`_ for the PR.
 

@@ -260,6 +260,7 @@ def test_testcase_custom_exception_info(testdir, type):
     testdir.makepyfile("""
         from unittest import TestCase
         import py, pytest
+        import _pytest._code
         class MyTestCase(TestCase):
             def run(self, result):
                 excinfo = pytest.raises(ZeroDivisionError, lambda: 0/0)
@@ -269,7 +270,7 @@ def test_testcase_custom_exception_info(testdir, type):
                 def t(*args):
                     mp.undo()
                     raise TypeError()
-                mp.setattr(py.code, 'ExceptionInfo', t)
+                mp.setattr(_pytest._code, 'ExceptionInfo', t)
                 try:
                     excinfo = excinfo._excinfo
                     result.add%(type)s(self, excinfo)

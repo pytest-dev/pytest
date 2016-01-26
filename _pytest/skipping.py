@@ -291,9 +291,8 @@ def cached_eval(config, expr, d):
     try:
         return config._evalcache[expr]
     except KeyError:
-        #import sys
-        #print >>sys.stderr, ("cache-miss: %r" % expr)
-        exprcode = py.code.compile(expr, mode="eval")
+        import _pytest._code
+        exprcode = _pytest._code.compile(expr, mode="eval")
         config._evalcache[expr] = x = eval(exprcode, d)
         return x
 

@@ -8,6 +8,7 @@ import warnings
 import py
 # DON't import pytest here because it causes import cycle troubles
 import sys, os
+import _pytest._code
 import _pytest.hookspec  # the extension point definitions
 from _pytest._pluggy import PluginManager, HookimplMarker, HookspecMarker
 
@@ -158,7 +159,7 @@ class PytestPluginManager(PluginManager):
         Use :py:meth:`pluggy.PluginManager.add_hookspecs` instead.
         """
         warning = dict(code="I2",
-                       fslocation=py.code.getfslineno(sys._getframe(1)),
+                       fslocation=_pytest._code.getfslineno(sys._getframe(1)),
                        nodeid=None,
                        message="use pluginmanager.add_hookspecs instead of "
                                "deprecated addhooks() method.")
@@ -195,7 +196,7 @@ class PytestPluginManager(PluginManager):
     def _verify_hook(self, hook, hookmethod):
         super(PytestPluginManager, self)._verify_hook(hook, hookmethod)
         if "__multicall__" in hookmethod.argnames:
-            fslineno = py.code.getfslineno(hookmethod.function)
+            fslineno = _pytest._code.getfslineno(hookmethod.function)
             warning = dict(code="I1",
                            fslocation=fslineno,
                            nodeid=None,

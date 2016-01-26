@@ -1,7 +1,8 @@
 "PYTEST_DONT_REWRITE"
-import pytest, py
-
+import py
+import pytest
 from _pytest.assertion import util
+
 
 def exvalue():
     return py.std.sys.exc_info()[1]

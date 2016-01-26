@@ -1,5 +1,8 @@
 from textwrap import dedent
-import py, pytest
+
+import _pytest._code
+import py
+import pytest
 from _pytest.config import PytestPluginManager
 from _pytest.main import EXIT_NOTESTSCOLLECTED, EXIT_USAGEERROR
 
@@ -156,7 +159,7 @@ def test_setinitial_conftest_subdirs(testdir, name):
 def test_conftest_confcutdir(testdir):
     testdir.makeconftest("assert 0")
     x = testdir.mkdir("x")
-    x.join("conftest.py").write(py.code.Source("""
+    x.join("conftest.py").write(_pytest._code.Source("""
         def pytest_addoption(parser):
             parser.addoption("--xyz", action="store_true")
     """))
@@ -174,7 +177,7 @@ def test_no_conftest(testdir):
 
 def test_conftest_existing_resultlog(testdir):
     x = testdir.mkdir("tests")
-    x.join("conftest.py").write(py.code.Source("""
+    x.join("conftest.py").write(_pytest._code.Source("""
         def pytest_addoption(parser):
             parser.addoption("--xyz", action="store_true")
     """))
@@ -184,7 +187,7 @@ def test_conftest_existing_resultlog(testdir):
 
 def test_conftest_existing_junitxml(testdir):
     x = testdir.mkdir("tests")
-    x.join("conftest.py").write(py.code.Source("""
+    x.join("conftest.py").write(_pytest._code.Source("""
         def pytest_addoption(parser):
             parser.addoption("--xyz", action="store_true")
     """))
@@ -361,18 +364,18 @@ def test_search_conftest_up_to_inifile(testdir, confcutdir, passed, error):
     root = testdir.tmpdir
     src = root.join('src').ensure(dir=1)
     src.join('pytest.ini').write('[pytest]')
-    src.join('conftest.py').write(py.code.Source("""
+    src.join('conftest.py').write(_pytest._code.Source("""
         import pytest
         @pytest.fixture
         def fix1(): pass
     """))
-    src.join('test_foo.py').write(py.code.Source("""
+    src.join('test_foo.py').write(_pytest._code.Source("""
         def test_1(fix1):
             pass
         def test_2(out_of_reach):
             pass
     """))
-    root.join('conftest.py').write(py.code.Source("""
+    root.join('conftest.py').write(_pytest._code.Source("""
         import pytest
         @pytest.fixture
         def out_of_reach(): pass
