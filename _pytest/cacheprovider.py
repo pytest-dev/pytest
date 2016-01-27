@@ -155,11 +155,11 @@ class LFPlugin:
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group.addoption(
-        '--lf', action='store_true', dest="lf",
+        '--lf', '--last-failed', action='store_true', dest="lf",
         help="rerun only the tests that failed "
              "at the last run (or all if none failed)")
     group.addoption(
-        '--ff', action='store_true', dest="failedfirst",
+        '--ff', '--failed-first', action='store_true', dest="failedfirst",
         help="run all tests but run the last failures first.  "
              "This may re-order tests and thus lead to "
              "repeated fixture setup/teardown")
