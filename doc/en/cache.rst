@@ -17,8 +17,8 @@ Usage
 The plugin provides two command line options to rerun failures from the
 last ``py.test`` invocation:
 
-* ``--lf`` (last failures) - to only re-run the failures.
-* ``--ff`` (failures first) - to run the failures first and then the rest of
+* ``--lf``, ``--last-failed`` - to only re-run the failures.
+* ``--ff``, ``--failed-first`` - to run the failures first and then the rest of
   the tests.
 
 For cleanup (usually not needed), a ``--cache-clear`` option allows to remove

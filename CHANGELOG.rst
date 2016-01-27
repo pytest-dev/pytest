@@ -45,6 +45,10 @@
   found in the environment, even when -vv isn't used.
   Thanks `@The-Compiler`_ for the PR.
 
+* ``--lf`` and ``--ff`` now support long names: ``--last-failed`` and
+  ``--failed-first`` respectively.
+  Thanks `@MichaelAquilina`_ for the PR.
+
 
 **Bug Fixes**
 
