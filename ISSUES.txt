@@ -18,6 +18,7 @@ Unlike mock, "args.path" acts on the parsed auto-spec'ed ``os.path.abspath``
 so it's independent from if the client side called "os.path.abspath(path=...)"
 or "os.path.abspath('positional')".
 
+
 refine parametrize API
 -------------------------------------------------------------
 tags: critical feature 
