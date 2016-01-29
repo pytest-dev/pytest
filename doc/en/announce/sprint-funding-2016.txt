@@ -27,13 +27,14 @@ in 2016.  Here is a short list of preliminary topics:
   fixtures (so you can make a choice of which fixtures come
   before others)
 
-- fixing bugs and issues from the tracker (endless source :)
+- fixing bugs and issues from the tracker, really an endless source :)
 
 The sprint is going to take place for several days with a break
-day in between in the black forest town Freiburg in Germany.
+day in between in the black forest town Freiburg in Germany
+which also means we are going to do some hiking likely.
 
-Here are some participants who said they could likely come,
-given some funding::
+Here are preliminary participants who said they are likely to come,
+given some expenses funding::
 
     Andreas Pelme, Sweden
     Brianna Laughner, Australia
@@ -46,15 +47,16 @@ given some funding::
 
 Other contributors and newcomers are invited to join as well but please
 send a mail to the pytest-dev mailing list if you intend to do so
-somewhat soon.  If you are working for a company and using pytest heavily
-you are welcome to join and we also encourage your company to provide
-some funding for the sprint.  They may see it, and rightfully so, as a
-very cheap training which brings you together with the experts in the
-field :)
+somewhat soon, also how much funding you need if so.  And if you are
+working for a company and using pytest heavily you are welcome to join
+and we encourage your company to provide some funding for the
+sprint.  They may see it, and rightfully so, as a very cheap and deep
+training which brings you together with the experts in the field :)
 
-The money we need to the travels and accommodation is estimated to
-be around 6000 Euro currently.  If you are a company and paying is easier
-for you to process via an invoice, Holger's company http://merlinux.eu can
-invoice you for the sprint and will channel the funds to the
-participants.
+The money we need for travels and accommodation is estimated to
+sum up around 6000 Euro currently.  If you are a company and paying is easier
+for you to process after an invoice, Holger's company http://merlinux.eu
+can invoice you for the sprint and will channel the funds to the
+sprint budget.  If we get excess money we'll use it for funding
+future sprints.
 
