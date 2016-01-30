@@ -39,7 +39,7 @@ given some expenses funding::
     Andreas Pelme, Sweden
     Brianna Laughner, Australia
     Bruno Oliveira, Brazil
-    Florian Bruhin, Switzerland
+    Floris Bruhin, Switzerland
     Florian Bruynooghe, UK
     Holger Krekel, Germany
     Omar Kohl, Germany
