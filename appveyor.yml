@@ -17,12 +17,12 @@ install:
   - echo PyPy installed
   - pypy --version
 
-  - C:\Python35\python -m pip install tox
+  - C:\Python35\python -m pip install detox
 
 build: false  # Not a C# project, build stuff at the test step instead.
 
 test_script:
-  - C:\Python35\python -m tox  
+  - C:\Python35\scripts\detox
   # coveralls is not in tox's envlist, plus for PRs the secure variable
   # is not defined so we have to check for it
   - if defined COVERALLS_REPO_TOKEN C:\Python35\python -m tox -e coveralls
