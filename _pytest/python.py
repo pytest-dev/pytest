@@ -1773,7 +1773,7 @@ class FixtureLookupError(LookupError):
             fspath, lineno = getfslineno(function)
             try:
                 lines, _ = inspect.getsourcelines(get_real_func(function))
-            except IOError:
+            except (IOError, IndexError):
                 error_msg = "file %s, line %s: source code not available"
                 addline(error_msg % (fspath, lineno+1))
             else:
