@@ -70,3 +70,9 @@ class TestRaises:
     def test_tuple(self):
         with pytest.raises((KeyError, ValueError)):
             raise KeyError('oops')
+
+    def test_no_raise_message(self):
+        try:
+            pytest.raises(ValueError, int, '0')
+        except pytest.raises.Exception as e:
+            assert e.msg == "DID NOT RAISE {0}".format(repr(ValueError))

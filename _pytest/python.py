@@ -1311,7 +1311,7 @@ def raises(expected_exception, *args, **kwargs):
             func(*args[1:], **kwargs)
         except expected_exception:
             return _pytest._code.ExceptionInfo()
-    pytest.fail("DID NOT RAISE")
+    pytest.fail("DID NOT RAISE {0}".format(expected_exception))
 
 class RaisesContext(object):
     def __init__(self, expected_exception):
@@ -1770,7 +1770,6 @@ class FixtureLookupError(LookupError):
             # the last fixture raise an error, let's present
             # it at the requesting side
             stack = stack[:-1]
-                               
         for function in stack:
             fspath, lineno = getfslineno(function)
             try:
