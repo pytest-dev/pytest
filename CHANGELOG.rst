@@ -49,6 +49,7 @@
   ``--failed-first`` respectively.
   Thanks `@MichaelAquilina`_ for the PR.
 
+* Added expected exceptions to pytest.raises fail message
 
 **Bug Fixes**
 
