@@ -20,18 +20,18 @@
 **Changes**
 
 * **Important**: `py.code <http://pylib.readthedocs.org/en/latest/code.html>`_ has been
-  merged into the ``pytest`` repository as ``pytest._code``. This decision 
-  was made because ``py.code`` had very few uses outside ``pytest`` and the 
-  fact that it was in a different repository made it difficult to fix bugs on 
+  merged into the ``pytest`` repository as ``pytest._code``. This decision
+  was made because ``py.code`` had very few uses outside ``pytest`` and the
+  fact that it was in a different repository made it difficult to fix bugs on
   its code in a timely manner. The team hopes with this to be able to better
   refactor out and improve that code.
   This change shouldn't affect users, but it is useful to let users aware
   if they encounter any strange behavior.
-  
-  Keep in mind that the code for ``pytest._code`` is **private** and 
+
+  Keep in mind that the code for ``pytest._code`` is **private** and
   **experimental**, so you definitely should not import it explicitly!
 
-  Please note that the original ``py.code`` is still available in 
+  Please note that the original ``py.code`` is still available in
   `pylib <http://pylib.readthedocs.org>`_.
 
 * ``pytest_enter_pdb`` now optionally receives the pytest config object.
@@ -48,6 +48,8 @@
 * ``--lf`` and ``--ff`` now support long names: ``--last-failed`` and
   ``--failed-first`` respectively.
   Thanks `@MichaelAquilina`_ for the PR.
+
+* Added expected exceptions to pytest.raises fail message
 
 
 **Bug Fixes**
@@ -92,7 +94,7 @@
 - fix #1292: monkeypatch calls (setattr, setenv, etc.) are now O(1).
   Thanks David R. MacIver for the report and Bruno Oliveira for the PR.
 
-- fix #1223: captured stdout and stderr are now properly displayed before 
+- fix #1223: captured stdout and stderr are now properly displayed before
   entering pdb when ``--pdb`` is used instead of being thrown away.
   Thanks Cal Leeming for the PR.
 
@@ -167,8 +169,8 @@
   Thanks Gabriel Reis for the PR.
 
 - add more talks to the documentation
-- extend documentation on the --ignore cli option 
-- use pytest-runner for setuptools integration 
+- extend documentation on the --ignore cli option
+- use pytest-runner for setuptools integration
 - minor fixes for interaction with OS X El Capitan
   system integrity protection (thanks Florian)
 
