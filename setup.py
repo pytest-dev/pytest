@@ -28,7 +28,7 @@ def get_version():
     raise ValueError("could not read version")
 
 
-def has_environment_marker_support():
+def assert_environment_marker_support():
     """
     Tests that setuptools has support for PEP-426 environment marker support.
 
@@ -43,21 +43,17 @@ def has_environment_marker_support():
     try:
         return pkg_resources.parse_version(setuptools.__version__) >= pkg_resources.parse_version('0.7.2')
     except Exception as exc:
-        sys.stderr.write("Could not test setuptool's version: %s\n" % exc)
-        return False
+        raise SystemExit("setuptools does not yet support markers: %s\n" % exc)
 
 
 def main():
     install_requires = ['py>=1.4.29']  # pluggy is vendored in _pytest.vendored_packages
-    extras_require = {}
-    if has_environment_marker_support():
-        extras_require[':python_version=="2.6" or python_version=="3.0" or python_version=="3.1"'] = ['argparse']
-        extras_require[':sys_platform=="win32"'] = ['colorama']
-    else:
-        if sys.version_info < (2, 7) or (3,) <= sys.version_info < (3, 2):
-            install_requires.append('argparse')
-        if sys.platform == 'win32':
-            install_requires.append('colorama')
+    assert_environment_marker_support()
+
+    extras_require = {
+        ':python_version=="2.6" or python_version=="3.0" or python_version=="3.1"': ['argparse'],
+        ':sys_platform=="win32"': ['colorama'],
+    }
 
     setup(
         name='pytest',
