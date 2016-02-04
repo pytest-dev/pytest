@@ -12,15 +12,16 @@ classifiers = ['Development Status :: 6 - Mature',
                'Topic :: Software Development :: Testing',
                'Topic :: Software Development :: Libraries',
                'Topic :: Utilities'] + [
-              ('Programming Language :: Python :: %s' % x) for x in
+                  ('Programming Language :: Python :: %s' % x) for x in
                   '2 2.6 2.7 3 3.2 3.3 3.4 3.5'.split()]
 
 with open('README.rst') as fd:
     long_description = fd.read()
 
+
 def get_version():
     p = os.path.join(os.path.dirname(
-                     os.path.abspath(__file__)), "_pytest", "__init__.py")
+        os.path.abspath(__file__)), "_pytest", "__init__.py")
     with open(p) as f:
         for line in f.readlines():
             if "__version__" in line:
@@ -47,14 +48,8 @@ def assert_environment_marker_support():
 
 
 def main():
-    install_requires = ['py>=1.4.29']  # pluggy is vendored in _pytest.vendored_packages
+
     assert_environment_marker_support()
-
-    extras_require = {
-        ':python_version=="2.6" or python_version=="3.0" or python_version=="3.1"': ['argparse'],
-        ':sys_platform=="win32"': ['colorama'],
-    }
-
     setup(
         name='pytest',
         description='pytest: simple powerful testing with Python',
@@ -70,9 +65,12 @@ def main():
         },
         classifiers=classifiers,
         cmdclass={'test': PyTest},
-        # the following should be enabled for release
-        install_requires=install_requires,
-        extras_require=extras_require,
+        install_requires=['py>=1.4.29'],
+        extras_require={
+            ':python_version=="2.6" or python_version=="3.0" or python_version=="3.1"': ['argparse'],
+            ':sys_platform=="win32"': ['colorama'],
+        },
+        # pluggy is vendored in _pytest.vendored_packages
         packages=['_pytest', '_pytest.assertion', '_pytest._code', '_pytest.vendored_packages'],
         py_modules=['pytest'],
         zip_safe=False,
@@ -81,10 +79,13 @@ def main():
 
 class PyTest(Command):
     user_options = []
+
     def initialize_options(self):
         pass
+
     def finalize_options(self):
         pass
+
     def run(self):
         import subprocess
         PPATH = [x for x in os.environ.get('PYTHONPATH', '').split(':') if x]
