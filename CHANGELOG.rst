@@ -71,9 +71,11 @@
 .. _@The-Compiler: https://github.com/The-Compiler
 
 
-2.8.7.dev1
-----------
 
+2.8.7
+-----
+
+- fix #1338: use predictable object resolution for monkeypatch
 
 2.8.6
 -----

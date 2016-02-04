@@ -5,7 +5,6 @@ import re
 
 from py.builtin import _basestring
 
-
 RE_IMPORT_ERROR_NAME = re.compile("^No module named (.*)$")
 
 
@@ -32,62 +31,71 @@ def pytest_funcarg__monkeypatch(request):
     return mpatch
 
 
+def resolve(name):
+    # simplified from zope.dottedname
+    parts = name.split('.')
+
+    used = parts.pop(0)
+    found = __import__(used)
+    for part in parts:
+        used += '.' + part
+        try:
+            found = getattr(found, part)
+        except AttributeError:
+            pass
+        else:
+            continue
+        # we use explicit un-nesting of the handling block in order
+        # to avoid nested exceptions on python 3
+        try:
+            __import__(used)
+        except ImportError as ex:
+            # str is used for py2 vs py3
+            expected = str(ex).split()[-1]
+            if expected == used:
+                raise
+            else:
+                raise ImportError(
+                    'import error in %s: %s' % (used, ex)
+                )
+        found = annotated_getattr(found, part, used)
+    return found
+
+
+def annotated_getattr(obj, name, ann):
+    try:
+        obj = getattr(obj, name)
+    except AttributeError:
+        raise AttributeError(
+                '%r object at %s has no attribute %r' % (
+                    type(obj).__name__, ann, name
+                )
+        )
+    return obj
+
 
 def derive_importpath(import_path, raising):
-    import pytest
     if not isinstance(import_path, _basestring) or "." not in import_path:
         raise TypeError("must be absolute import path string, not %r" %
                         (import_path,))
-    rest = []
-    target = import_path
-    target_parts = set(target.split("."))
-    while target:
-        try:
-            obj = __import__(target, None, None, "__doc__")
-        except ImportError as ex:
-            if hasattr(ex, 'name'):
-                # Python >= 3.3
-                failed_name = ex.name
-            else:
-                match = RE_IMPORT_ERROR_NAME.match(ex.args[0])
-                assert match
-                failed_name = match.group(1)
-
-            if "." not in target:
-                __tracebackhide__ = True
-                pytest.fail("could not import any sub part: %s" %
-                            import_path)
-            elif failed_name != target \
-                    and not any(p == failed_name for p in target_parts):
-                # target is importable but causes ImportError itself
-                __tracebackhide__ = True
-                pytest.fail("import error in %s: %s" % (target, ex.args[0]))
-            target, name = target.rsplit(".", 1)
-            rest.append(name)
-        else:
-            assert rest
-            try:
-                while len(rest) > 1:
-                    attr = rest.pop()
-                    obj = getattr(obj, attr)
-                attr = rest[0]
-                if raising:
-                    getattr(obj, attr)
-            except AttributeError:
-                __tracebackhide__ = True
-                pytest.fail("object %r has no attribute %r" % (obj, attr))
-            return attr, obj
-
+    module, attr = import_path.rsplit('.', 1)
+    target = resolve(module)
+    if raising:
+        annotated_getattr(target, attr, ann=module)
+    return attr, target
 
 
 class Notset:
     def __repr__(self):
         return "<notset>"
 
+
 notset = Notset()
+
 
 class monkeypatch:
     """ Object keeping a record of setattr/item/env/syspath changes. """
+
     def __init__(self):
         self._setattr = []
         self._setitem = []
@@ -114,14 +122,14 @@ class monkeypatch:
         if value is notset:
             if not isinstance(target, _basestring):
                 raise TypeError("use setattr(target, name, value) or "
-                   "setattr(target, value) with target being a dotted "
-                   "import string")
+                                "setattr(target, value) with target being a dotted "
+                                "import string")
             value = name
             name, target = derive_importpath(target, raising)
 
         oldval = getattr(target, name, notset)
         if raising and oldval is notset:
-            raise AttributeError("%r has no attribute %r" %(target, name))
+            raise AttributeError("%r has no attribute %r" % (target, name))
 
         # avoid class descriptors like staticmethod/classmethod
         if inspect.isclass(target):
@@ -233,7 +241,7 @@ class monkeypatch:
                 try:
                     del dictionary[name]
                 except KeyError:
-                    pass # was already deleted, so we have the desired state
+                    pass  # was already deleted, so we have the desired state
             else:
                 dictionary[name] = value
         self._setitem[:] = []
