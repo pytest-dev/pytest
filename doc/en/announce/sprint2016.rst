@@ -67,7 +67,7 @@ The earlier we book the better.
 Money / funding
 ---------------
 
-The Indiegogo campaign asks for 10.000 Euro which should cover
+The Indiegogo campaign asks for 11000 USD which should cover
 the costs for flights and accomodation, renting a sprint place
 and maybe a bit of food as well.
 
