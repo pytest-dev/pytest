@@ -387,7 +387,6 @@ class TestFunction:
         rec = testdir.inline_run()
         rec.assertoutcome(passed=2)
 
-
     def test_parametrize_with_non_hashable_values_indirect(self, testdir):
         """Test parametrization with non-hashable values with indirect parametrization."""
         testdir.makepyfile("""
@@ -415,7 +414,6 @@ class TestFunction:
         rec = testdir.inline_run()
         rec.assertoutcome(passed=2)
 
-
     def test_parametrize_overrides_fixture(self, testdir):
         """Test parametrization when parameter overrides existing fixture with same name."""
         testdir.makepyfile("""
@@ -442,7 +440,6 @@ class TestFunction:
         """)
         rec = testdir.inline_run()
         rec.assertoutcome(passed=3)
-
 
     def test_parametrize_overrides_parametrized_fixture(self, testdir):
         """Test parametrization when parameter overrides existing parametrized fixture with same name."""
@@ -529,6 +526,32 @@ class TestFunction:
         assert colitems[1].name == 'test1[b-c]'
         assert colitems[2].name == 'test2[a-c]'
         assert colitems[3].name == 'test2[b-c]'
+
+    def test_parametrize_with_marked_class(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            class A(object): pass
+
+            @pytest.mark.parametrize('a', [pytest.mark.xfail(A)])
+            def test_function(a):
+                assert False
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(skipped=1)
+
+    def test_parametrize_with_marked_function(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            def func(): pass
+
+            @pytest.mark.parametrize('a', [pytest.mark.xfail(func)])
+            def test_function(a):
+                assert False
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(skipped=1)
 
 
 class TestSorting:

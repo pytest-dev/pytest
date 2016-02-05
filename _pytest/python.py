@@ -9,7 +9,7 @@ import sys
 import py
 import pytest
 from _pytest._code.code import TerminalRepr
-from _pytest.mark import MarkDecorator, MarkerError
+from _pytest.mark import MarkDecorator, MarkerError, MarkInfo
 
 try:
     import enum
@@ -982,6 +982,28 @@ class Metafunc(FuncargnamesCompatAttr):
                 newmarks[newmark.markname] = newmark
                 argval = argval.args[-1]
             unwrapped_argvalues.append(argval)
+
+            if inspect.isclass(argval):
+                pytestmark = getattr(argval, 'pytestmark', None)
+
+                if pytestmark:
+                    if not isinstance(pytestmark, list):
+                        pytestmark = [pytestmark]
+
+                    for mark in pytestmark:
+                        newkeywords.setdefault(i, {}).setdefault(mark.markname,
+                                                                 mark)
+
+            if inspect.isfunction(argval):
+                for attr_name in dir(argval):
+                    if attr_name.startswith('_'):
+                        continue
+
+                    attr = getattr(argval, attr_name)
+                    if isinstance(attr, MarkInfo):
+                        newkeywords.setdefault(i, {}).setdefault(attr.name,
+                                                                 attr)
+
         argvalues = unwrapped_argvalues
 
         if not isinstance(argnames, (tuple, list)):
