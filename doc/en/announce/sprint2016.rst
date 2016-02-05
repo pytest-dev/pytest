@@ -1,0 +1,78 @@
+
+python testing sprint June 20th-26th 2016
+======================================================
+
+.. image:: ../img/freiburg2.jpg
+   :width: 400
+
+The pytest core group is heading towards the biggest sprint
+in its history, to take place in the black forest town Freiburg
+in Germany.  As of February 2016 we have started a `funding
+campaign on Indiegogo to cover expenses`_ The page
+also mentionds some preliminary topics.
+
+Participants
+--------------
+
+Here are preliminary participants who said they are likely to come,
+given some expenses funding::
+
+    Andreas Pelme, Sweden
+    Brianna Laughner, Australia
+    Bruno Oliveira, Brazil
+    Floris Bruhin, Switzerland
+    Florian Bruynooghe, UK
+    Holger Krekel, Germany
+    Omar Kohl, Germany
+    Raphael Pierzina, US/UK
+    Tom Viner , UK
+
+    <your name here?>
+
+Other contributors and experienced newcomers are invited to join as well
+but please send a mail to the pytest-dev mailing list if you intend to
+do so somewhat soon, also how much funding you need if so.  And if you
+are working for a company and using pytest heavily you are welcome to
+join and we encourage your company to provide some funding for the
+sprint.  They may see it, and rightfully so, as a very cheap and deep
+training which brings you together with the experts in the field :)
+
+
+Sprint organisation, schedule
+-------------------------------
+
+tentative schedule:
+
+- 19/20th arrival in Freiburg
+- 20th social get together, initial hacking
+- 21/22th full sprint days
+- 23rd break day, hiking
+- 24/25th full sprint days
+- 26th departure
+
+We might adjust according to weather to make sure that if
+we do some hiking or excursion we'll have good weather.
+Freiburg is one of the sunniest places in Germany so
+it shouldn't be too much of a constraint.
+
+
+Accomodation
+----------------
+
+We'll see to arrange for renting a flat with multiple
+beds/rooms.  Hotels are usually below 100 per night.
+The earlier we book the better.
+
+Money / funding
+---------------
+
+The Indiegogo campaign asks for 10.000 Euro which should cover
+the costs for flights and accomodation, renting a sprint place
+and maybe a bit of food as well.
+
+If your organisation wants to support the sprint but prefers
+to give money according to an invoice, get in contact with
+holger at http://merlinux.eu who can invoice your.
+
+If we have excess money we'll use for further sprint/travel
+funding for pytest/tox contributors.
