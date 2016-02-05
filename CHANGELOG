@@ -1,6 +1,9 @@
 2.8.8.dev1
 ----------
 
+- fix #1290: support Python 3.5's @ operator in assertion rewriting.
+  Thanks Shinkenjoe for report with test case and Tom Viner for the PR.
+
 2.8.7
 -----
 
