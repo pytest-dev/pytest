@@ -8,8 +8,9 @@ python testing sprint June 20th-26th 2016
 The pytest core group is heading towards the biggest sprint
 in its history, to take place in the black forest town Freiburg
 in Germany.  As of February 2016 we have started a `funding
-campaign on Indiegogo to cover expenses`_ The page
-also mentionds some preliminary topics.
+campaign on Indiegogo to cover expenses
+<http://igg.me/at/pytest-sprint/x/4034848>`_ The page also mentions
+some preliminary topics.
 
 Participants
 --------------
@@ -72,7 +73,8 @@ and maybe a bit of food as well.
 
 If your organisation wants to support the sprint but prefers
 to give money according to an invoice, get in contact with
-holger at http://merlinux.eu who can invoice your.
+holger at http://merlinux.eu who can invoice your organisation
+properly.
 
 If we have excess money we'll use for further sprint/travel
 funding for pytest/tox contributors.
