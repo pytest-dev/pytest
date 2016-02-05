@@ -19,14 +19,14 @@ Here are preliminary participants who said they are likely to come,
 given some expenses funding::
 
     Andreas Pelme, Sweden
-    Brianna Laughner, Australia
+    Brianna Laugher, Australia
     Bruno Oliveira, Brazil
     Floris Bruhin, Switzerland
     Florian Bruynooghe, UK
     Holger Krekel, Germany
     Omar Kohl, Germany
     Raphael Pierzina, US/UK
-    Tom Viner , UK
+    Tom Viner, UK
 
     <your name here?>
 
