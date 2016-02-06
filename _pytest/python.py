@@ -596,7 +596,7 @@ def transfer_markers(funcobj, cls, mod):
             if not _marked(funcobj, pytestmark):
                 funcobj = pytestmark(funcobj)
 
-        setattr(cls or mod, funcobj.func_name, funcobj)
+        setattr(cls or mod, funcobj.__name__, funcobj)
 
     return funcobj
 
@@ -1001,7 +1001,7 @@ class Metafunc(FuncargnamesCompatAttr):
                                                                  mark)
 
             if inspect.isfunction(argval):
-                for attr_name in argval.func_dict or {}:
+                for attr_name in argval.__dict__ or {}:
 
                     attr = getattr(argval, attr_name)
                     if isinstance(attr, MarkInfo):

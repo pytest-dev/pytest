@@ -262,9 +262,9 @@ class MarkDecorator:
                     methods_dict = dict(orig_func.__dict__)
                     methods_dict.pop('__weakref__', None)
                     methods_dict.pop('__dict__', None)
-                    func = types.ClassType(orig_func.__name__,
-                                           orig_func.__bases__,
-                                           methods_dict)
+                    func = type(orig_func.__name__,
+                                orig_func.__bases__,
+                                methods_dict)
 
                     if hasattr(func, 'pytestmark'):
                         mark_list = func.pytestmark
