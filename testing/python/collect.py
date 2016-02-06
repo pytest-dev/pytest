@@ -533,25 +533,25 @@ class TestFunction:
 
             class A(object): pass
 
-            @pytest.mark.parametrize('a', [pytest.mark.xfail(A)])
+            @pytest.mark.parametrize('a', [pytest.mark.xfail(A), A])
             def test_function(a):
                 assert False
         """)
         reprec = testdir.inline_run()
-        reprec.assertoutcome(skipped=1)
+        reprec.assertoutcome(skipped=1, failed=1)
 
     def test_parametrize_with_marked_function(self, testdir):
         testdir.makepyfile("""
             import pytest
 
-            def func(): pass
+            def a(): pass
 
-            @pytest.mark.parametrize('a', [pytest.mark.xfail(func)])
+            @pytest.mark.parametrize('a', [pytest.mark.xfail(a), a])
             def test_function(a):
                 assert False
         """)
         reprec = testdir.inline_run()
-        reprec.assertoutcome(skipped=1)
+        reprec.assertoutcome(skipped=1, failed=1)
 
 
 class TestSorting:

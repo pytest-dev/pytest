@@ -1,5 +1,6 @@
 """ generic mechanism for marking and selecting python functions. """
 import inspect
+import types
 
 
 class MarkerError(Exception):
@@ -253,10 +254,14 @@ class MarkDecorator:
         """ if passed a single callable argument: decorate it with mark info.
             otherwise add *args/**kwargs in-place to mark information. """
         if args and not kwargs:
-            func = args[0]
-            is_class = inspect.isclass(func)
-            if len(args) == 1 and (istestfunc(func) or is_class):
+            orig_func = args[0]
+            is_class = inspect.isclass(orig_func)
+            if len(args) == 1 and (istestfunc(orig_func) or is_class):
                 if is_class:
+                    func = types.ClassType(orig_func.__name__,
+                                           orig_func.__bases__,
+                                           dict(orig_func.__dict__))
+
                     if hasattr(func, 'pytestmark'):
                         mark_list = func.pytestmark
                         if not isinstance(mark_list, list):
@@ -268,6 +273,12 @@ class MarkDecorator:
                     else:
                         func.pytestmark = [self]
                 else:
+                    func = types.FunctionType(orig_func.func_code,
+                                              orig_func.func_globals,
+                                              orig_func.func_name,
+                                              orig_func.func_defaults,
+                                              orig_func.func_closure)
+
                     holder = getattr(func, self.name, None)
                     if holder is None:
                         holder = MarkInfo(
