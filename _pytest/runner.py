@@ -5,7 +5,8 @@ from time import time
 
 import py
 import pytest
-from py._code.code import TerminalRepr
+from _pytest._code.code import TerminalRepr, ExceptionInfo
+
 
 def pytest_namespace():
     return {
@@ -151,7 +152,7 @@ class CallInfo:
             self.stop = time()
             raise
         except:
-            self.excinfo = py.code.ExceptionInfo()
+            self.excinfo = ExceptionInfo()
         self.stop = time()
 
     def __repr__(self):
@@ -177,9 +178,13 @@ class BaseReport(object):
         self.__dict__.update(kw)
 
     def toterminal(self, out):
-        longrepr = self.longrepr
         if hasattr(self, 'node'):
             out.line(getslaveinfoline(self.node))
+
+        longrepr = self.longrepr
+        if longrepr is None:
+            return
+
         if hasattr(longrepr, 'toterminal'):
             longrepr.toterminal(out)
         else:
@@ -211,7 +216,7 @@ def pytest_runtest_makereport(item, call):
         outcome = "passed"
         longrepr = None
     else:
-        if not isinstance(excinfo, py.code.ExceptionInfo):
+        if not isinstance(excinfo, ExceptionInfo):
             outcome = "failed"
             longrepr = excinfo
         elif excinfo.errisinstance(pytest.skip.Exception):

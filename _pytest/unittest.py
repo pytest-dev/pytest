@@ -1,13 +1,12 @@
 """ discovery and running of std-library "unittest" style tests. """
 from __future__ import absolute_import
-import traceback
+
 import sys
+import traceback
 
 import pytest
-import py
-
-
 # for transfering markers
+import _pytest._code
 from _pytest.python import transfer_markers
 from _pytest.skipping import MarkEvaluator
 
@@ -101,7 +100,7 @@ class TestCaseFunction(pytest.Function):
         # unwrap potential exception info (see twisted trial support below)
         rawexcinfo = getattr(rawexcinfo, '_rawexcinfo', rawexcinfo)
         try:
-            excinfo = py.code.ExceptionInfo(rawexcinfo)
+            excinfo = _pytest._code.ExceptionInfo(rawexcinfo)
         except TypeError:
             try:
                 try:
@@ -117,7 +116,7 @@ class TestCaseFunction(pytest.Function):
             except KeyboardInterrupt:
                 raise
             except pytest.fail.Exception:
-                excinfo = py.code.ExceptionInfo()
+                excinfo = _pytest._code.ExceptionInfo()
         self.__dict__.setdefault('_excinfo', []).append(excinfo)
 
     def addError(self, testcase, rawexcinfo):

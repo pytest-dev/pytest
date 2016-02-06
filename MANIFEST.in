@@ -1,4 +1,4 @@
-include CHANGELOG
+include CHANGELOG.rst
 include LICENSE
 include AUTHORS
 

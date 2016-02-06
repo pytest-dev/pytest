@@ -126,7 +126,7 @@ Specifying test exec environments in a conftest.py
 Instead of specifying command line options, you can
 put options values in a ``conftest.py`` file like this::
 
-    option_tx = ['ssh=myhost//python=python2.5', 'popen//python=python2.5']
+    option_tx = ['ssh=myhost//python=python2.7', 'popen//python=python2.7']
     option_dist = True
 
 Any commandline ``--tx`` specifications  will add to the list of
@@ -163,7 +163,7 @@ command line options
 
     (default) no: run tests inprocess, don't distribute.
 ``--tx=xspec``
-    add a test execution environment. some examples: --tx popen//python=python2.5 --tx socket=192.168.1.102:8888 --tx ssh=user@codespeak.net//chdir=testcache
+    add a test execution environment. some examples: --tx popen//python=python2.7 --tx socket=192.168.1.102:8888 --tx ssh=user@codespeak.net//chdir=testcache
 ``-d``
     load-balance tests.  shortcut for '--dist=load'
 ``--rsyncdir=dir1``

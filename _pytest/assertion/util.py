@@ -1,6 +1,7 @@
 """Utilities for assertion debugging"""
 import pprint
 
+import _pytest._code
 import py
 try:
     from collections import Sequence
@@ -179,7 +180,7 @@ def assertrepr_compare(config, op, left, right):
         explanation = [
             u('(pytest_assertion plugin: representation of details failed.  '
               'Probably an object has a faulty __repr__.)'),
-            u(py.code.ExceptionInfo())]
+            u(_pytest._code.ExceptionInfo())]
 
     if not explanation:
         return None
