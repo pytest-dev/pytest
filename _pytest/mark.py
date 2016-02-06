@@ -277,12 +277,12 @@ class MarkDecorator:
                     else:
                         func.pytestmark = [self]
                 else:
-                    func = types.FunctionType(orig_func.func_code,
-                                              orig_func.func_globals,
-                                              orig_func.func_name,
-                                              orig_func.func_defaults,
-                                              orig_func.func_closure)
-                    func.func_dict = copy(orig_func.func_dict)
+                    func = types.FunctionType(orig_func.__code__,
+                                              orig_func.__globals__,
+                                              orig_func.__name__,
+                                              orig_func.__defaults__,
+                                              orig_func.__closure__)
+                    func.__dict__ = copy(orig_func.__dict__)
 
                     holder = getattr(func, self.name, None)
                     if holder is None:
