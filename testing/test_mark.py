@@ -25,14 +25,14 @@ class TestMark:
         mark = Mark()
         def f():
             pass
-        mark.hello(f)
+        f = mark.hello(f)
         assert f.hello
 
     def test_pytest_mark_keywords(self):
         mark = Mark()
         def f():
             pass
-        mark.world(x=3, y=4)(f)
+        f = mark.world(x=3, y=4)(f)
         assert f.world
         assert f.world.kwargs['x'] == 3
         assert f.world.kwargs['y'] == 4
@@ -42,12 +42,12 @@ class TestMark:
         def f():
             pass
         mark.world
-        mark.world(x=3)(f)
+        f = mark.world(x=3)(f)
         assert f.world.kwargs['x'] == 3
-        mark.world(y=4)(f)
+        f = mark.world(y=4)(f)
         assert f.world.kwargs['x'] == 3
         assert f.world.kwargs['y'] == 4
-        mark.world(y=1)(f)
+        f = mark.world(y=1)(f)
         assert f.world.kwargs['y'] == 1
         assert len(f.world.args) == 0
 
@@ -55,9 +55,9 @@ class TestMark:
         mark = Mark()
         def f():
             pass
-        mark.world("hello")(f)
+        f = mark.world("hello")(f)
         assert f.world.args[0] == "hello"
-        mark.world("world")(f)
+        f = mark.world("world")(f)
 
     def test_pytest_mark_positional_func_and_keyword(self):
         mark = Mark()
@@ -66,21 +66,21 @@ class TestMark:
         m = mark.world(f, omega="hello")
         def g():
             pass
-        assert m(g) == g
-        assert g.world.args[0] is f
-        assert g.world.kwargs["omega"] == "hello"
+        assert m(g) != g
+        assert m(g).world.args[0] is f
+        assert m(g).world.kwargs["omega"] == "hello"
 
     def test_pytest_mark_reuse(self):
         mark = Mark()
         def f():
             pass
         w = mark.some
-        w("hello", reason="123")(f)
+        f = w("hello", reason="123")(f)
         assert f.some.args[0] == "hello"
         assert f.some.kwargs['reason'] == "123"
         def g():
             pass
-        w("world", reason2="456")(g)
+        g = w("world", reason2="456")(g)
         assert g.some.args[0] == "world"
         assert 'reason' not in g.some.kwargs
         assert g.some.kwargs['reason2'] == "456"

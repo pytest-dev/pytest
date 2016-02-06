@@ -1,6 +1,7 @@
 """ generic mechanism for marking and selecting python functions. """
 import inspect
 import types
+from copy import copy
 
 
 class MarkerError(Exception):
@@ -258,9 +259,12 @@ class MarkDecorator:
             is_class = inspect.isclass(orig_func)
             if len(args) == 1 and (istestfunc(orig_func) or is_class):
                 if is_class:
+                    methods_dict = dict(orig_func.__dict__)
+                    methods_dict.pop('__weakref__', None)
+                    methods_dict.pop('__dict__', None)
                     func = types.ClassType(orig_func.__name__,
                                            orig_func.__bases__,
-                                           dict(orig_func.__dict__))
+                                           methods_dict)
 
                     if hasattr(func, 'pytestmark'):
                         mark_list = func.pytestmark
@@ -278,6 +282,7 @@ class MarkDecorator:
                                               orig_func.func_name,
                                               orig_func.func_defaults,
                                               orig_func.func_closure)
+                    func.func_dict = copy(orig_func.func_dict)
 
                     holder = getattr(func, self.name, None)
                     if holder is None:
@@ -287,6 +292,7 @@ class MarkDecorator:
                         setattr(func, self.name, holder)
                     else:
                         holder.add(self.args, self.kwargs)
+
                 return func
         kw = self.kwargs.copy()
         kw.update(kwargs)
