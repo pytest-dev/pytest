@@ -453,6 +453,11 @@ binop_map = {
     ast.In: "in",
     ast.NotIn: "not in"
 }
+# Python 3.5+ compatibility
+try:
+    binop_map[ast.MatMult] = "@"
+except AttributeError:
+    pass
 
 # Python 3.4+ compatibility
 if hasattr(ast, "NameConstant"):

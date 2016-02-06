@@ -280,6 +280,19 @@ class TestAssertionRewrite:
             assert False or 4 % 2
         assert getmsg(f) == "assert (False or (4 % 2))"
 
+    @pytest.mark.skipif("sys.version_info < (3,5)")
+    def test_at_operator_issue1290(self, testdir):
+        testdir.makepyfile("""
+            class Matrix:
+                def __init__(self, num):
+                    self.num = num
+                def __matmul__(self, other):
+                    return self.num * other.num
+
+            def test_multmat_operator():
+                assert Matrix(2) @ Matrix(3) == 6""")
+        testdir.runpytest().assert_outcomes(passed=1)
+
     def test_call(self):
         def g(a=42, *args, **kwargs):
             return False

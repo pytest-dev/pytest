@@ -57,11 +57,15 @@
   ``Config.fromdictargs`` now represents its input much more faithfully.
   Thanks to `@bukzor`_ for the complete PR (`#680`_).
 
+* Fix (`#1290`_): support Python 3.5's `@` operator in assertion rewriting.
+  Thanks `@Shinkenjoe`_ for report with test case and `@tomviner`_ for the PR.
+
 
 .. _#1040: https://github.com/pytest-dev/pytest/pull/1040
 .. _#680: https://github.com/pytest-dev/pytest/issues/680
 .. _#1287: https://github.com/pytest-dev/pytest/pull/1287
 .. _#1226: https://github.com/pytest-dev/pytest/pull/1226
+.. _#1290: https://github.com/pytest-dev/pytest/pull/1290
 .. _@MichaelAquilina: https://github.com/MichaelAquilina
 .. _@bukzor: https://github.com/bukzor
 .. _@nicoddemus: https://github.com/nicoddemus
@@ -69,7 +73,8 @@
 .. _@codewarrior0: https://github.com/codewarrior0
 .. _@jaraco: https://github.com/jaraco
 .. _@The-Compiler: https://github.com/The-Compiler
-
+.. _@Shinkenjoe: https://github.com/Shinkenjoe
+.. _@tomviner: https://github.com/tomviner
 
 
 2.8.7
