@@ -5,12 +5,15 @@ import traceback
 
 import py
 import pytest
+from _pytest.mark import MarkInfo
+
 
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group.addoption('--runxfail',
            action="store_true", dest="runxfail", default=False,
            help="run tests even if they are marked xfail")
+
 
 def pytest_configure(config):
     if config.option.runxfail:
@@ -38,17 +41,21 @@ def pytest_configure(config):
         "See http://pytest.org/latest/skipping.html"
     )
 
+
 def pytest_namespace():
     return dict(xfail=xfail)
 
+
 class XFailed(pytest.fail.Exception):
     """ raised from an explicit call to pytest.xfail() """
+
 
 def xfail(reason=""):
     """ xfail an executing test or setup functions with the given reason."""
     __tracebackhide__ = True
     raise XFailed(reason)
 xfail.Exception = XFailed
+
 
 class MarkEvaluator:
     def __init__(self, item, name):
@@ -147,10 +154,25 @@ class MarkEvaluator:
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_runtest_setup(item):
-    evalskip = MarkEvaluator(item, 'skipif')
-    if evalskip.istrue():
-        item._evalskip = evalskip
-        pytest.skip(evalskip.getexplanation())
+    # Check if skip or skipif are specified as pytest marks
+
+    skipif_info = item.keywords.get('skipif')
+    if isinstance(skipif_info, MarkInfo):
+        eval_skipif = MarkEvaluator(item, 'skipif')
+        if eval_skipif.istrue():
+            item._evalskip = eval_skipif
+            pytest.skip(eval_skipif.getexplanation())
+
+    skip_info = item.keywords.get('skip')
+    if isinstance(skip_info, MarkInfo):
+        item._evalskip = True
+        if 'reason' in skip_info.kwargs:
+            pytest.skip(skip_info.kwargs['reason'])
+        elif skip_info.args:
+            pytest.skip(skip_info.args[0])
+        else:
+            pytest.skip("unconditional skip")
+
     item._evalxfail = MarkEvaluator(item, 'xfail')
     check_xfail_no_run(item)
 
@@ -230,6 +252,9 @@ def pytest_terminal_summary(terminalreporter):
             show_skipped(terminalreporter, lines)
         elif char == "E":
             show_simple(terminalreporter, lines, 'error', "ERROR %s")
+        elif char == 'p':
+            show_simple(terminalreporter, lines, 'passed', "PASSED %s")
+
     if lines:
         tr._tw.sep("=", "short test summary info")
         for line in lines:
@@ -266,9 +291,8 @@ def cached_eval(config, expr, d):
     try:
         return config._evalcache[expr]
     except KeyError:
-        #import sys
-        #print >>sys.stderr, ("cache-miss: %r" % expr)
-        exprcode = py.code.compile(expr, mode="eval")
+        import _pytest._code
+        exprcode = _pytest._code.compile(expr, mode="eval")
         config._evalcache[expr] = x = eval(exprcode, d)
         return x
 

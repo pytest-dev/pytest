@@ -10,7 +10,7 @@ env:
     # coveralls is not listed in tox's envlist, but should run in travis
     - TESTENV=coveralls
     # note: please use "tox --listenvs" to populate the build matrix below
-    - TESTENV=flakes
+    - TESTENV=linting
     - TESTENV=py26
     - TESTENV=py27
     - TESTENV=py33

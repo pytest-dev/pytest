@@ -1,9 +1,13 @@
 """ core implementation of testing process: init, session, runtest loop. """
+import imp
+import os
 import re
+import sys
 
+import _pytest
+import _pytest._code
 import py
-import pytest, _pytest
-import os, sys, imp
+import pytest
 try:
     from collections import MutableMapping as MappingMixin
 except ImportError:
@@ -91,11 +95,11 @@ def wrap_session(config, doit):
         except pytest.UsageError:
             raise
         except KeyboardInterrupt:
-            excinfo = py.code.ExceptionInfo()
+            excinfo = _pytest._code.ExceptionInfo()
             config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
             session.exitstatus = EXIT_INTERRUPTED
         except:
-            excinfo = py.code.ExceptionInfo()
+            excinfo = _pytest._code.ExceptionInfo()
             config.notify_exception(excinfo, config.option)
             session.exitstatus = EXIT_INTERNALERROR
             if excinfo.errisinstance(SystemExit):

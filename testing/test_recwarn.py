@@ -110,6 +110,16 @@ class TestDeprecatedCall(object):
         pytest.deprecated_call(self.dep_explicit, 0)
         pytest.deprecated_call(self.dep_explicit, 0)
 
+    def test_deprecated_call_as_context_manager_no_warning(self):
+        with pytest.raises(pytest.fail.Exception) as ex:
+            with pytest.deprecated_call():
+                self.dep(1)
+        assert str(ex.value) == "DID NOT WARN"
+
+    def test_deprecated_call_as_context_manager(self):
+        with pytest.deprecated_call():
+            self.dep(0)
+
     def test_deprecated_call_pending(self):
         def f():
             py.std.warnings.warn(PendingDeprecationWarning("hi"))

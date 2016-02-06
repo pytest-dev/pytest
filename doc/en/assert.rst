@@ -81,12 +81,9 @@ and if you need to have access to the actual exception info you may use::
             f()
         assert 'maximum recursion' in str(excinfo.value)
 
-``excinfo`` is a `py.code.ExceptionInfo`_ instance, which is a wrapper around
+``excinfo`` is a ``ExceptionInfo`` instance, which is a wrapper around
 the actual exception raised.  The main attributes of interest are
 ``.type``, ``.value`` and ``.traceback``.
-
-.. _py.code.ExceptionInfo:
-    http://pylib.readthedocs.org/en/latest/code.html#py-code-exceptioninfo
 
 If you want to write test code that works on Python 2.4 as well,
 you may also use two other ways to test for an expected exception::
@@ -243,10 +240,9 @@ recording the intermediate values. Which technique is used depends on the
 location of the assert, ``pytest`` configuration, and Python version being used
 to run ``pytest``.
 
-By default, if the Python version is greater than or equal to 2.6, ``pytest``
-rewrites assert statements in test modules. Rewritten assert statements put
-introspection information into the assertion failure message. ``pytest`` only
-rewrites test modules directly discovered by its test collection process, so
+By default, ``pytest`` rewrites assert statements in test modules.
+Rewritten assert statements put introspection information into the assertion failure message.
+``pytest`` only rewrites test modules directly discovered by its test collection process, so
 asserts in supporting modules which are not themselves test modules will not be
 rewritten.
 

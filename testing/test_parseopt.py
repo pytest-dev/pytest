@@ -171,7 +171,6 @@ class TestParser:
         assert option.this == 42
         assert option.no is False
 
-    @pytest.mark.skipif("sys.version_info < (2,5)")
     def test_drop_short_helper(self):
         parser = py.std.argparse.ArgumentParser(formatter_class=parseopt.DropShorterLongHelpFormatter)
         parser.add_argument('-t', '--twoword', '--duo', '--two-word', '--two',
@@ -213,20 +212,17 @@ class TestParser:
         assert args.abc_def is False
         assert args.klm_hij is True
 
-    @pytest.mark.skipif("sys.version_info < (2,5)")
     def test_drop_short_2(self, parser):
         parser.addoption('--func-arg', '--doit', action='store_true')
         args = parser.parse(['--doit'])
         assert args.func_arg is True
 
-    @pytest.mark.skipif("sys.version_info < (2,5)")
     def test_drop_short_3(self, parser):
         parser.addoption('--func-arg', '--funcarg', '--doit', action='store_true')
         args = parser.parse(['abcd'])
         assert args.func_arg is False
         assert args.file_or_dir == ['abcd']
 
-    @pytest.mark.skipif("sys.version_info < (2,5)")
     def test_drop_short_help0(self, parser, capsys):
         parser.addoption('--func-args', '--doit', help = 'foo',
                          action='store_true')
@@ -235,7 +231,6 @@ class TestParser:
         assert '--func-args, --doit  foo' in  help
 
     # testing would be more helpful with all help generated
-    @pytest.mark.skipif("sys.version_info < (2,5)")
     def test_drop_short_help1(self, parser, capsys):
         group = parser.getgroup("general")
         group.addoption('--doit', '--func-args', action='store_true', help='foo')
@@ -246,7 +241,6 @@ class TestParser:
         assert '-doit, --func-args  foo' in  help
 
 
-@pytest.mark.skipif("sys.version_info < (2,6)")
 def test_argcomplete(testdir, monkeypatch):
     if not py.path.local.sysfind('bash'):
         pytest.skip("bash not available")

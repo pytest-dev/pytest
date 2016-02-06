@@ -69,11 +69,8 @@ class FilesCompleter(object):
                 completion += [f + '/' for f in anticomp]
         return completion
 
-# the following barfs with a syntax error on py2.5
-# @pytest.mark.skipif("sys.version_info < (2,6)")
 class TestArgComplete:
     @pytest.mark.skipif("sys.platform in ('win32', 'darwin')")
-    @pytest.mark.skipif("sys.version_info < (2,6)")
     def test_compare_with_compgen(self):
         from _pytest._argcomplete import FastFilesCompleter
         ffc = FastFilesCompleter()
@@ -82,7 +79,6 @@ class TestArgComplete:
             assert equal_with_bash(x, ffc, fc, out=py.std.sys.stdout)
 
     @pytest.mark.skipif("sys.platform in ('win32', 'darwin')")
-    @pytest.mark.skipif("sys.version_info < (2,6)")
     def test_remove_dir_prefix(self):
         """this is not compatible with compgen but it is with bash itself:
         ls /usr/<TAB>

@@ -10,6 +10,7 @@ if sys.platform.startswith("java"):
     # XXX should be xfail
     pytest.skip("assert rewrite does currently not work on jython")
 
+import _pytest._code
 from _pytest.assertion import util
 from _pytest.assertion.rewrite import rewrite_asserts, PYTEST_TAG
 from _pytest.main import EXIT_NOTESTSCOLLECTED
@@ -17,7 +18,7 @@ from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 def setup_module(mod):
     mod._old_reprcompare = util._reprcompare
-    py.code._reprcompare = None
+    _pytest._code._reprcompare = None
 
 def teardown_module(mod):
     util._reprcompare = mod._old_reprcompare
@@ -31,7 +32,7 @@ def rewrite(src):
 
 def getmsg(f, extra_ns=None, must_pass=False):
     """Rewrite the assertions in f, run it, and get the failure message."""
-    src = '\n'.join(py.code.Code(f).source().lines)
+    src = '\n'.join(_pytest._code.Code(f).source().lines)
     mod = rewrite(src)
     code = compile(mod, "<test>", "exec")
     ns = {}
@@ -682,7 +683,7 @@ class TestAssertionRewriteHookDetails(object):
         """Implement optional PEP302 api (#808).
         """
         path = testdir.mkpydir("foo")
-        path.join("test_foo.py").write(py.code.Source("""
+        path.join("test_foo.py").write(_pytest._code.Source("""
             class Test:
                 def test_foo(self):
                     import pkgutil

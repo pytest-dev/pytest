@@ -1,5 +1,6 @@
 import py, pytest
 
+import _pytest._code
 from _pytest.config import getcfg, get_common_ancestor, determine_setup
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 
@@ -7,7 +8,7 @@ class TestParseIni:
     def test_getcfg_and_config(self, testdir, tmpdir):
         sub = tmpdir.mkdir("sub")
         sub.chdir()
-        tmpdir.join("setup.cfg").write(py.code.Source("""
+        tmpdir.join("setup.cfg").write(_pytest._code.Source("""
             [pytest]
             name = value
         """))
@@ -21,7 +22,7 @@ class TestParseIni:
 
     def test_append_parse_args(self, testdir, tmpdir, monkeypatch):
         monkeypatch.setenv('PYTEST_ADDOPTS', '--color no -rs --tb="short"')
-        tmpdir.join("setup.cfg").write(py.code.Source("""
+        tmpdir.join("setup.cfg").write(_pytest._code.Source("""
             [pytest]
             addopts = --verbose
         """))
@@ -263,6 +264,69 @@ class TestConfigAPI:
         l = config.getini("xy")
         assert len(l) == 2
         assert l == ["456", "123"]
+
+
+class TestConfigFromdictargs:
+    def test_basic_behavior(self):
+        from _pytest.config import Config
+        option_dict = {
+            'verbose': 444,
+            'foo': 'bar',
+            'capture': 'no',
+        }
+        args = ['a', 'b']
+
+        config = Config.fromdictargs(option_dict, args)
+        with pytest.raises(AssertionError):
+            config.parse(['should refuse to parse again'])
+        assert config.option.verbose == 444
+        assert config.option.foo == 'bar'
+        assert config.option.capture == 'no'
+        assert config.args == args
+
+    def test_origargs(self):
+        """Show that fromdictargs can handle args in their "orig" format"""
+        from _pytest.config import Config
+        option_dict = {}
+        args = ['-vvvv', '-s', 'a', 'b']
+
+        config = Config.fromdictargs(option_dict, args)
+        assert config.args == ['a', 'b']
+        assert config._origargs == args
+        assert config.option.verbose == 4
+        assert config.option.capture == 'no'
+
+    def test_inifilename(self, tmpdir):
+        tmpdir.join("foo/bar.ini").ensure().write(_pytest._code.Source("""
+            [pytest]
+            name = value
+        """))
+
+        from _pytest.config import Config
+        inifile = '../../foo/bar.ini'
+        option_dict = {
+            'inifilename': inifile,
+            'capture': 'no',
+        }
+
+        cwd = tmpdir.join('a/b')
+        cwd.join('pytest.ini').ensure().write(_pytest._code.Source("""
+            [pytest]
+            name = wrong-value
+            should_not_be_set = true
+        """))
+        with cwd.ensure(dir=True).as_cwd():
+            config = Config.fromdictargs(option_dict, ())
+
+        assert config.args == [str(cwd)]
+        assert config.option.inifilename == inifile
+        assert config.option.capture == 'no'
+
+        # this indicates this is the file used for getting configuration values
+        assert config.inifile == inifile
+        assert config.inicfg.get('name') == 'value'
+        assert config.inicfg.get('should_not_be_set') is None
+
 
 def test_options_on_small_file_do_not_blow_up(testdir):
     def runfiletest(opts):
