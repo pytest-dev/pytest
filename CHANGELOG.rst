@@ -15,7 +15,9 @@
 * New ``ALLOW_BYTES`` doctest option strips ``b`` prefixes from byte strings
   in doctest output (similar to ``ALLOW_UNICODE``).
   Thanks `@jaraco`_ for the request and `@nicoddemus`_ for the PR (`#1287`_).
-
+* give a hint on KeyboardInterrupt to use the --fulltrace option to show the errors,
+  this fixes `#1366`_.
+  Thanks to `@hpk42`_ for the report and `@RonnyPfannschmidt`_ for the PR.
 
 **Changes**
 
@@ -60,7 +62,7 @@
 * Fix (`#1290`_): support Python 3.5's `@` operator in assertion rewriting.
   Thanks `@Shinkenjoe`_ for report with test case and `@tomviner`_ for the PR.
 
-
+.. _#1366: https://github.com/pytest-dev/pytest/issues/1366
 .. _#1040: https://github.com/pytest-dev/pytest/pull/1040
 .. _#680: https://github.com/pytest-dev/pytest/issues/680
 .. _#1287: https://github.com/pytest-dev/pytest/pull/1287
@@ -68,6 +70,7 @@
 .. _#1290: https://github.com/pytest-dev/pytest/pull/1290
 .. _@MichaelAquilina: https://github.com/MichaelAquilina
 .. _@bukzor: https://github.com/bukzor
+.. _@hpk42: https://github.com/hpk42
 .. _@nicoddemus: https://github.com/nicoddemus
 .. _@jab: https://github.com/jab
 .. _@codewarrior0: https://github.com/codewarrior0
@@ -75,7 +78,7 @@
 .. _@The-Compiler: https://github.com/The-Compiler
 .. _@Shinkenjoe: https://github.com/Shinkenjoe
 .. _@tomviner: https://github.com/tomviner
-
+.. _@RonnyPfannschmidt: https://github.com/RonnyPfannschmidt
 
 2.8.7
 -----

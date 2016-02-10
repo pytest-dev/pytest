@@ -391,6 +391,7 @@ class TerminalReporter:
             if self.config.option.fulltrace:
                 excrepr.toterminal(self._tw)
             else:
+                self._tw.line("to show a full traceback on KeyboardInterrupt use --fulltrace", yellow=True)
                 excrepr.reprcrash.toterminal(self._tw)
 
     def _locationline(self, nodeid, fspath, lineno, domain):
