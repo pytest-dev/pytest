@@ -1,23 +1,8 @@
-Installation and Getting Started
-===================================
-
-**Pythons**: Python 2.6,2.7,3.3,3.4,3.5, Jython, PyPy-2.3
-
-**Platforms**: Unix/Posix and Windows
-
-**PyPI package name**: `pytest <http://pypi.python.org/pypi/pytest>`_
-
-**dependencies**: `py <http://pypi.python.org/pypi/py>`_,
-`colorama (Windows) <http://pypi.python.org/pypi/colorama>`_,
-`argparse (py26) <http://pypi.python.org/pypi/argparse>`_.
-
-**documentation as PDF**: `download latest <http://pytest.org/latest/pytest.pdf>`_
-
 .. _`getstarted`:
 .. _installation:
 
 Installation
-----------------------------------------
+============
 
 Installation options::
 
@@ -33,8 +18,8 @@ If you get an error checkout :ref:`installation issues`.
 
 .. _`simpletest`:
 
-Our first test run
-----------------------------------------------------------
+Getting started
+===============
 
 Let's create a first test file with a simple test function::
 
@@ -235,3 +220,18 @@ py.test not found on Windows despite installation?
  :ref:`examples` for more complex examples
 
 .. include:: links.inc
+
+|
+.. topic:: About the ``pytest`` Python package
+
+    **PyPI package name**: `pytest <http://pypi.python.org/pypi/pytest>`_
+
+    **dependencies**: `py <http://pypi.python.org/pypi/py>`_,
+    `colorama (Windows) <http://pypi.python.org/pypi/colorama>`_,
+    `argparse (py26) <http://pypi.python.org/pypi/argparse>`_.
+
+    **Pythons**: Python 2.6,2.7,3.3,3.4,3.5, Jython, PyPy-2.3
+
+    **Platforms**: Unix/Posix and Windows
+
+    **documentation as PDF**: `download latest <http://pytest.org/latest/pytest.pdf>`_
