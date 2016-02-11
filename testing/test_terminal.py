@@ -188,6 +188,10 @@ class TestTerminal:
             result.stdout.fnmatch_lines([
                 "*raise KeyboardInterrupt   # simulating the user*",
             ])
+        else:
+            result.stdout.fnmatch_lines([
+                "to show a full traceback on KeyboardInterrupt use --fulltrace"
+            ])
         result.stdout.fnmatch_lines(['*KeyboardInterrupt*'])
 
     def test_keyboard_in_sessionstart(self, testdir):
