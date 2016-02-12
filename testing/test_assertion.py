@@ -242,6 +242,9 @@ class TestAssert_reprcompare:
         expl = callequal(A(), '1')
         assert expl
 
+    def test_format_nonascii_explanation(self):
+        assert util.format_explanation('λ')
+
     def test_mojibake(self):
         # issue 429
         left = 'e'
