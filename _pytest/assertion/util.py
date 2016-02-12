@@ -18,6 +18,15 @@ u = py.builtin._totext
 _reprcompare = None
 
 
+# the re-encoding is needed for python2 repr
+# with non-ascii characters (see issue 877 and 1379)
+def ecu(s):
+    try:
+        return u(s, 'utf-8', 'replace')
+    except TypeError:
+        return s
+
+
 def format_explanation(explanation):
     """This formats an explanation
 
@@ -28,6 +37,7 @@ def format_explanation(explanation):
     for when one explanation needs to span multiple lines, e.g. when
     displaying diffs.
     """
+    explanation = ecu(explanation)
     explanation = _collapse_false(explanation)
     lines = _split_explanation(explanation)
     result = _format_lines(lines)
@@ -130,14 +140,6 @@ def assertrepr_compare(config, op, left, right):
     width = 80 - 15 - len(op) - 2  # 15 chars indentation, 1 space around op
     left_repr = py.io.saferepr(left, maxsize=int(width/2))
     right_repr = py.io.saferepr(right, maxsize=width-len(left_repr))
-
-    # the re-encoding is needed for python2 repr
-    # with non-ascii characters (see issue 877)
-    def ecu(s):
-        try:
-            return u(s, 'utf-8', 'replace')
-        except TypeError:
-            return s
 
     summary = u('%s %s %s') % (ecu(left_repr), op, ecu(right_repr))
 

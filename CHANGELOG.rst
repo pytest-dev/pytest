@@ -62,12 +62,17 @@
 * Fix (`#1290`_): support Python 3.5's `@` operator in assertion rewriting.
   Thanks `@Shinkenjoe`_ for report with test case and `@tomviner`_ for the PR.
 
+* Fix formatting utf-8 explanation messages (`#1379`_).
+  Thanks `@biern`_ for the PR.
+
+.. _#1379: https://github.com/pytest-dev/pytest/issues/1379
 .. _#1366: https://github.com/pytest-dev/pytest/issues/1366
 .. _#1040: https://github.com/pytest-dev/pytest/pull/1040
 .. _#680: https://github.com/pytest-dev/pytest/issues/680
 .. _#1287: https://github.com/pytest-dev/pytest/pull/1287
 .. _#1226: https://github.com/pytest-dev/pytest/pull/1226
 .. _#1290: https://github.com/pytest-dev/pytest/pull/1290
+.. _@biern: https://github.com/biern
 .. _@MichaelAquilina: https://github.com/MichaelAquilina
 .. _@bukzor: https://github.com/bukzor
 .. _@hpk42: https://github.com/hpk42
