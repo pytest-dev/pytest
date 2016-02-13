@@ -2,12 +2,13 @@
 import sys
 import textwrap
 
-import py, pytest
 import _pytest.assertion as plugin
+import _pytest._code
+import py
+import pytest
 from _pytest.assertion import reinterpret
 from _pytest.assertion import util
 
-needsnewassert = pytest.mark.skipif("sys.version_info < (2,6)")
 PY3 = sys.version_info >= (3, 0)
 
 
@@ -23,10 +24,9 @@ def mock_config():
 
 
 def interpret(expr):
-    return reinterpret.reinterpret(expr, py.code.Frame(sys._getframe(1)))
+    return reinterpret.reinterpret(expr, _pytest._code.Frame(sys._getframe(1)))
 
 class TestBinReprIntegration:
-    pytestmark = needsnewassert
 
     def test_pytest_assertrepr_compare_called(self, testdir):
         testdir.makeconftest("""
@@ -242,6 +242,9 @@ class TestAssert_reprcompare:
         expl = callequal(A(), '1')
         assert expl
 
+    def test_format_nonascii_explanation(self):
+        assert util.format_explanation('λ')
+
     def test_mojibake(self):
         # issue 429
         left = 'e'
@@ -361,7 +364,6 @@ def test_python25_compile_issue257(testdir):
             *1 failed*
     """)
 
-@needsnewassert
 def test_rewritten(testdir):
     testdir.makepyfile("""
         def test_rewritten():
@@ -374,7 +376,6 @@ def test_reprcompare_notin(mock_config):
         mock_config, 'not in', 'foo', 'aaafoobbb')[1:]
     assert detail == ["'foo' is contained here:", '  aaafoobbb', '?    +++']
 
-@needsnewassert
 def test_pytest_assertrepr_compare_integration(testdir):
     testdir.makepyfile("""
         def test_hello():
@@ -391,7 +392,6 @@ def test_pytest_assertrepr_compare_integration(testdir):
         "*E*50*",
     ])
 
-@needsnewassert
 def test_sequence_comparison_uses_repr(testdir):
     testdir.makepyfile("""
         def test_hello():
@@ -410,8 +410,7 @@ def test_sequence_comparison_uses_repr(testdir):
     ])
 
 
-@pytest.mark.xfail("sys.version_info < (2,6)")
-def test_assert_compare_truncate_longmessage(testdir):
+def test_assert_compare_truncate_longmessage(monkeypatch, testdir):
     testdir.makepyfile(r"""
         def test_long():
             a = list(range(200))
@@ -420,6 +419,7 @@ def test_assert_compare_truncate_longmessage(testdir):
             b = '\n'.join(map(str, b))
             assert a == b
     """)
+    monkeypatch.delenv('CI', raising=False)
 
     result = testdir.runpytest()
     # without -vv, truncate the message showing a few diff lines only
@@ -437,8 +437,13 @@ def test_assert_compare_truncate_longmessage(testdir):
         "*- 197",
     ])
 
+    monkeypatch.setenv('CI', '1')
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        "*- 197",
+    ])
 
-@needsnewassert
+
 def test_assertrepr_loaded_per_dir(testdir):
     testdir.makepyfile(test_base=['def test_base(): assert 1 == 2'])
     a = testdir.mkdir('a')
@@ -547,7 +552,7 @@ def test_traceback_failure(testdir):
         "*test_traceback_failure.py:4: AssertionError"
     ])
 
-@pytest.mark.skipif("sys.version_info < (2,5) or '__pypy__' in sys.builtin_module_names or sys.platform.startswith('java')" )
+@pytest.mark.skipif("'__pypy__' in sys.builtin_module_names or sys.platform.startswith('java')" )
 def test_warn_missing(testdir):
     testdir.makepyfile("")
     result = testdir.run(sys.executable, "-OO", "-m", "pytest", "-h")

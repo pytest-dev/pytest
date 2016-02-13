@@ -1,4 +1,5 @@
 from pytest import raises
+import _pytest._code
 import py
 
 def otherfunc(a,b):
@@ -159,7 +160,7 @@ def test_dynamic_compile_shows_nicely():
     src = 'def foo():\n assert 1 == 0\n'
     name = 'abc-123'
     module = py.std.imp.new_module(name)
-    code = py.code.compile(src, name, 'exec')
+    code = _pytest._code.compile(src, name, 'exec')
     py.builtin.exec_(code, module.__dict__)
     py.std.sys.modules[name] = module
     module.foo()

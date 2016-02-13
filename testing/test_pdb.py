@@ -1,6 +1,7 @@
-
-import py
 import sys
+
+import _pytest._code
+
 
 def runpdb_and_get_report(testdir, source):
     p = testdir.makepyfile(source)
@@ -27,7 +28,7 @@ class TestPDB:
         """)
         assert rep.failed
         assert len(pdblist) == 1
-        tb = py.code.Traceback(pdblist[0][0])
+        tb = _pytest._code.Traceback(pdblist[0][0])
         assert tb[-1].name == "test_func"
 
     def test_pdb_on_xfail(self, testdir, pdblist):
@@ -291,8 +292,12 @@ class TestPDB:
 
     def test_enter_pdb_hook_is_called(self, testdir):
         testdir.makeconftest("""
-            def pytest_enter_pdb():
+            def pytest_enter_pdb(config):
+                assert config.testing_verification == 'configured'
                 print 'enter_pdb_hook'
+
+            def pytest_configure(config):
+                config.testing_verification = 'configured'
         """)
         p1 = testdir.makepyfile("""
             import pytest

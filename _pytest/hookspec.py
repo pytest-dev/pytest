@@ -289,7 +289,10 @@ def pytest_exception_interact(node, call, report):
     that is not an internal exception like ``skip.Exception``.
     """
 
-def pytest_enter_pdb():
+def pytest_enter_pdb(config):
     """ called upon pdb.set_trace(), can be used by plugins to take special
     action just before the python debugger enters in interactive mode.
+
+    :arg config: pytest config object
+    :type config: _pytest.config.Config
     """

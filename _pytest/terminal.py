@@ -22,7 +22,8 @@ def pytest_addoption(parser):
     group._addoption('-r',
          action="store", dest="reportchars", default=None, metavar="chars",
          help="show extra test summary info as specified by chars (f)ailed, "
-              "(E)error, (s)skipped, (x)failed, (X)passed (w)pytest-warnings (a)all.")
+              "(E)error, (s)skipped, (x)failed, (X)passed (w)pytest-warnings "
+              "(p)passed, (P)passed with output, (a)all except pP.")
     group._addoption('-l', '--showlocals',
          action="store_true", dest="showlocals", default=False,
          help="show locals in tracebacks (disabled by default).")
@@ -368,6 +369,7 @@ class TerminalReporter:
             self.summary_errors()
             self.summary_failures()
             self.summary_warnings()
+            self.summary_passes()
         if exitstatus == EXIT_INTERRUPTED:
             self._report_keyboardinterrupt()
             del self._keyboardinterrupt_memo
@@ -389,6 +391,7 @@ class TerminalReporter:
             if self.config.option.fulltrace:
                 excrepr.toterminal(self._tw)
             else:
+                self._tw.line("to show a full traceback on KeyboardInterrupt use --fulltrace", yellow=True)
                 excrepr.reprcrash.toterminal(self._tw)
 
     def _locationline(self, nodeid, fspath, lineno, domain):
@@ -445,6 +448,18 @@ class TerminalReporter:
             for w in warnings:
                 self._tw.line("W%s %s %s" % (w.code,
                               w.fslocation, w.message))
+
+    def summary_passes(self):
+        if self.config.option.tbstyle != "no":
+            if self.hasopt("P"):
+                reports = self.getreports('passed')
+                if not reports:
+                    return
+                self.write_sep("=", "PASSES")
+                for rep in reports:
+                    msg = self._getfailureheadline(rep)
+                    self.write_sep("_", msg)
+                    self._outrep_summary(rep)
 
     def summary_failures(self):
         if self.config.option.tbstyle != "no":

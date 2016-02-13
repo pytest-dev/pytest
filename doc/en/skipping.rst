@@ -29,8 +29,18 @@ corresponding to the "short" letters shown in the test progress::
 Marking a test function to be skipped
 -------------------------------------------
 
+.. versionadded:: 2.9
+
+The simplest way to skip a test function is to mark it with the `skip` decorator
+which may be passed an optional `reason`:
+
+    @pytest.mark.skip(reason="no way of currently testing this")
+    def test_the_unknown():
+        ...
+
 .. versionadded:: 2.0, 2.4
 
+If you wish to skip something conditionally then you can use `skipif` instead.
 Here is an example of marking a test function to be skipped
 when run on a Python3.3 interpreter::
 
@@ -79,9 +89,7 @@ between test modules so it's no longer advertised as the primary method.
 Skip all test functions of a class or module
 ---------------------------------------------
 
-As with all function :ref:`marking <mark>` you can skip test functions at the
-`whole class- or module level`_.  If your code targets python2.6 or above you
-use the skipif decorator (and any other marker) on classes::
+You can use the ``skipif`` decorator (and any other marker) on classes::
 
     @pytest.mark.skipif(sys.platform == 'win32',
                         reason="does not run on windows")
@@ -92,19 +100,6 @@ use the skipif decorator (and any other marker) on classes::
 
 If the condition is true, this marker will produce a skip result for
 each of the test methods.
-
-If your code targets python2.5 where class-decorators are not available,
-you can set the ``pytestmark`` attribute of a class::
-
-    class TestPosixCalls:
-        pytestmark = pytest.mark.skipif(sys.platform == 'win32',
-                                        reason="does not run on windows")
-
-        def test_function(self):
-            "will not be setup or run under 'win32' platform"
-
-As with the class-decorator, the ``pytestmark`` special name tells
-``pytest`` to apply it to each test function in the class.
 
 If you want to skip all test functions of a module, you must use
 the ``pytestmark`` name on the global level:
@@ -168,12 +163,12 @@ Running it with the report-on-xfail option gives this output::
     platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR/example, inifile: 
     collected 7 items
-    
+
     xfail_demo.py xxxxxxx
     ======= short test summary info ========
     XFAIL xfail_demo.py::test_hello
     XFAIL xfail_demo.py::test_hello2
-      reason: [NOTRUN] 
+      reason: [NOTRUN]
     XFAIL xfail_demo.py::test_hello3
       condition: hasattr(os, 'sep')
     XFAIL xfail_demo.py::test_hello4
@@ -183,7 +178,7 @@ Running it with the report-on-xfail option gives this output::
     XFAIL xfail_demo.py::test_hello6
       reason: reason
     XFAIL xfail_demo.py::test_hello7
-    
+
     ======= 7 xfailed in 0.12 seconds ========
 
 .. _`skip/xfail with parametrize`:

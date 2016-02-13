@@ -1,7 +1,7 @@
 # encoding: utf-8
 import sys
+import _pytest._code
 from _pytest.doctest import DoctestItem, DoctestModule, DoctestTextfile
-import py
 import pytest
 
 class TestDoctests:
@@ -88,13 +88,43 @@ class TestDoctests:
         reprec.assertoutcome(failed=1)
 
     def test_new_pattern(self, testdir):
-        p = testdir.maketxtfile(xdoc ="""
+        p = testdir.maketxtfile(xdoc="""
             >>> x = 1
             >>> x == 1
             False
         """)
         reprec = testdir.inline_run(p, "--doctest-glob=x*.txt")
         reprec.assertoutcome(failed=1)
+
+    def test_multiple_patterns(self, testdir):
+        """Test support for multiple --doctest-glob arguments (#1255).
+        """
+        testdir.maketxtfile(xdoc="""
+            >>> 1
+            1
+        """)
+        testdir.makefile('.foo', test="""
+            >>> 1
+            1
+        """)
+        testdir.maketxtfile(test_normal="""
+            >>> 1
+            1
+        """)
+        expected = set(['xdoc.txt', 'test.foo', 'test_normal.txt'])
+        assert set(x.basename for x in testdir.tmpdir.listdir()) == expected
+        args = ["--doctest-glob=xdoc*.txt", "--doctest-glob=*.foo"]
+        result = testdir.runpytest(*args)
+        result.stdout.fnmatch_lines([
+            '*test.foo *',
+            '*xdoc.txt *',
+            '*2 passed*',
+        ])
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            '*test_normal.txt *',
+            '*1 passed*',
+        ])
 
     def test_doctest_unexpected_exception(self, testdir):
         testdir.maketxtfile("""
@@ -151,7 +181,7 @@ class TestDoctests:
         assert 'text-line-after' not in result.stdout.str()
 
     def test_doctest_linedata_missing(self, testdir):
-        testdir.tmpdir.join('hello.py').write(py.code.Source("""
+        testdir.tmpdir.join('hello.py').write(_pytest._code.Source("""
             class Fun(object):
                 @property
                 def test(self):
@@ -171,7 +201,7 @@ class TestDoctests:
 
 
     def test_doctest_unex_importerror(self, testdir):
-        testdir.tmpdir.join("hello.py").write(py.code.Source("""
+        testdir.tmpdir.join("hello.py").write(_pytest._code.Source("""
             import asdalsdkjaslkdjasd
         """))
         testdir.maketxtfile("""
@@ -199,7 +229,7 @@ class TestDoctests:
 
     def test_doctestmodule_external_and_issue116(self, testdir):
         p = testdir.mkpydir("hello")
-        p.join("__init__.py").write(py.code.Source("""
+        p.join("__init__.py").write(_pytest._code.Source("""
             def somefunc():
                 '''
                     >>> i = 0
@@ -429,6 +459,9 @@ class TestDoctests:
                                     "--junit-xml=junit.xml")
         reprec.assertoutcome(failed=1)
 
+
+class TestLiterals:
+
     @pytest.mark.parametrize('config_mode', ['ini', 'comment'])
     def test_allow_unicode(self, testdir, config_mode):
         """Test that doctests which output unicode work in all python versions
@@ -458,6 +491,35 @@ class TestDoctests:
         reprec = testdir.inline_run("--doctest-modules")
         reprec.assertoutcome(passed=2)
 
+    @pytest.mark.parametrize('config_mode', ['ini', 'comment'])
+    def test_allow_bytes(self, testdir, config_mode):
+        """Test that doctests which output bytes work in all python versions
+        tested by pytest when the ALLOW_BYTES option is used (either in
+        the ini file or by an inline comment)(#1287).
+        """
+        if config_mode == 'ini':
+            testdir.makeini('''
+            [pytest]
+            doctest_optionflags = ALLOW_BYTES
+            ''')
+            comment = ''
+        else:
+            comment = '#doctest: +ALLOW_BYTES'
+
+        testdir.maketxtfile(test_doc="""
+            >>> b'foo'  {comment}
+            'foo'
+        """.format(comment=comment))
+        testdir.makepyfile(foo="""
+            def foo():
+              '''
+              >>> b'foo'  {comment}
+              'foo'
+              '''
+        """.format(comment=comment))
+        reprec = testdir.inline_run("--doctest-modules")
+        reprec.assertoutcome(passed=2)
+
     def test_unicode_string(self, testdir):
         """Test that doctests which output unicode fail in Python 2 when
         the ALLOW_UNICODE option is not used. The same test should pass
@@ -469,6 +531,19 @@ class TestDoctests:
         """)
         reprec = testdir.inline_run()
         passed = int(sys.version_info[0] >= 3)
+        reprec.assertoutcome(passed=passed, failed=int(not passed))
+
+    def test_bytes_literal(self, testdir):
+        """Test that doctests which output bytes fail in Python 3 when
+        the ALLOW_BYTES option is not used. The same test should pass
+        in Python 2 (#1287).
+        """
+        testdir.maketxtfile(test_doc="""
+            >>> b'foo'
+            'foo'
+        """)
+        reprec = testdir.inline_run()
+        passed = int(sys.version_info[0] == 2)
         reprec.assertoutcome(passed=passed, failed=int(not passed))
 
 

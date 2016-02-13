@@ -179,10 +179,10 @@ but here is a simple overview:
    You need to have Python 2.7 and 3.5 available in your system.  Now
    running tests is as simple as issuing this command::
 
-    $ python runtox.py -e py27,py35,flakes
+    $ python runtox.py -e linting,py27,py35
 
    This command will run tests via the "tox" tool against Python 2.7 and 3.5
-   and also perform "flakes" coding-style checks.  ``runtox.py`` is
+   and also perform "lint" coding-style checks.  ``runtox.py`` is
    a thin wrapper around ``tox`` which installs from a development package
    index where newer (not yet released to pypi) versions of dependencies
    (especially ``py``) might be present.

@@ -1,6 +1,7 @@
 import pytest
-from _pytest import runner
 from _pytest import python
+from _pytest import runner
+
 
 class TestOEJSKITSpecials:
     def test_funcarg_non_pycollectobj(self, testdir): # rough jstests usage

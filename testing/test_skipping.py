@@ -4,6 +4,7 @@ import sys
 from _pytest.skipping import MarkEvaluator, folded_skips, pytest_runtest_setup
 from _pytest.runner import runtestprotocol
 
+
 class TestEvaluator:
     def test_no_marker(self, testdir):
         item = testdir.getitem("def test_func(): pass")
@@ -381,6 +382,90 @@ class TestXFailwithSetupTeardown:
             "*1 xfail*",
         ])
 
+
+class TestSkip:
+    def test_skip_class(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.skip
+            class TestSomething(object):
+                def test_foo(self):
+                    pass
+                def test_bar(self):
+                    pass
+
+            def test_baz():
+                pass
+        """)
+        rec = testdir.inline_run()
+        rec.assertoutcome(skipped=2, passed=1)
+
+    def test_skips_on_false_string(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.skip('False')
+            def test_foo():
+                pass
+        """)
+        rec = testdir.inline_run()
+        rec.assertoutcome(skipped=1)
+
+    def test_arg_as_reason(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.skip('testing stuff')
+            def test_bar():
+                pass
+        """)
+        result = testdir.runpytest('-rs')
+        result.stdout.fnmatch_lines([
+            "*testing stuff*",
+            "*1 skipped*",
+        ])
+
+    def test_skip_no_reason(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.skip
+            def test_foo():
+                pass
+        """)
+        result = testdir.runpytest('-rs')
+        result.stdout.fnmatch_lines([
+            "*unconditional skip*",
+            "*1 skipped*",
+        ])
+
+    def test_skip_with_reason(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.skip(reason="for lolz")
+            def test_bar():
+                pass
+        """)
+        result = testdir.runpytest('-rs')
+        result.stdout.fnmatch_lines([
+            "*for lolz*",
+            "*1 skipped*",
+        ])
+
+    def test_only_skips_marked_test(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.skip
+            def test_foo():
+                pass
+            @pytest.mark.skip(reason="nothing in particular")
+            def test_bar():
+                pass
+            def test_baz():
+                assert True
+        """)
+        result = testdir.runpytest('-rs')
+        result.stdout.fnmatch_lines([
+            "*nothing in particular*",
+            "*1 passed*2 skipped*",
+        ])
 
 class TestSkipif:
     def test_skipif_conditional(self, testdir):

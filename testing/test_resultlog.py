@@ -1,8 +1,12 @@
-import py, pytest
 import os
+
+import _pytest._code
+import py
+import pytest
+from _pytest.main import Node, Item, FSCollector
 from _pytest.resultlog import generic_path, ResultLog, \
         pytest_configure, pytest_unconfigure
-from _pytest.main import Node, Item, FSCollector
+
 
 def test_generic_path(testdir):
     from _pytest.main import Session
@@ -140,7 +144,7 @@ class TestWithFunctionIntegration:
         try:
             raise ValueError
         except ValueError:
-            excinfo = py.code.ExceptionInfo()
+            excinfo = _pytest._code.ExceptionInfo()
         reslog = ResultLog(None, py.io.TextIO())
         reslog.pytest_internalerror(excinfo.getrepr(style=style))
         entry = reslog.logfile.getvalue()

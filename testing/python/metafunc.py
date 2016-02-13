@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import re
 
-import pytest, py
+import _pytest._code
+import py
+import pytest
 from _pytest import python as funcargs
 
 class TestMetafunc:
@@ -838,11 +840,11 @@ class TestMetafuncFunctional:
     def test_generate_tests_only_done_in_subdir(self, testdir):
         sub1 = testdir.mkpydir("sub1")
         sub2 = testdir.mkpydir("sub2")
-        sub1.join("conftest.py").write(py.code.Source("""
+        sub1.join("conftest.py").write(_pytest._code.Source("""
             def pytest_generate_tests(metafunc):
                 assert metafunc.function.__name__ == "test_1"
         """))
-        sub2.join("conftest.py").write(py.code.Source("""
+        sub2.join("conftest.py").write(_pytest._code.Source("""
             def pytest_generate_tests(metafunc):
                 assert metafunc.function.__name__ == "test_2"
         """))

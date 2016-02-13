@@ -38,10 +38,11 @@ class TestRaises:
         testdir.makepyfile("""
             from __future__ import with_statement
             import py, pytest
+            import _pytest._code
 
             def test_simple():
                 with pytest.raises(ZeroDivisionError) as excinfo:
-                    assert isinstance(excinfo, py.code.ExceptionInfo)
+                    assert isinstance(excinfo, _pytest._code.ExceptionInfo)
                     1/0
                 print (excinfo)
                 assert excinfo.type == ZeroDivisionError
@@ -69,3 +70,9 @@ class TestRaises:
     def test_tuple(self):
         with pytest.raises((KeyError, ValueError)):
             raise KeyError('oops')
+
+    def test_no_raise_message(self):
+        try:
+            pytest.raises(ValueError, int, '0')
+        except pytest.raises.Exception as e:
+            assert e.msg == "DID NOT RAISE {0}".format(repr(ValueError))
