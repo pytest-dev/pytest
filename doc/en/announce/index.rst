@@ -6,6 +6,7 @@ Release announcements
    :maxdepth: 2
 
 
+   sprint2016
    release-2.8.6
    release-2.8.5
    release-2.8.4
