@@ -38,9 +38,11 @@ Participants
 Here are preliminary participants who said they are likely to come,
 given some expenses funding::
 
+    Anatoly Bubenkoff, Netherlands
     Andreas Pelme, Sweden
     Brianna Laugher, Australia
     Bruno Oliveira, Brazil
+    Dave Hunt, UK
     Florian Bruhin, Switzerland
     Floris Bruynooghe, UK
     Holger Krekel, Germany
