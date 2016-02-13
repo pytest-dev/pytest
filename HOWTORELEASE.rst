@@ -3,6 +3,10 @@ How to release pytest
 
 Note: this assumes you have already registered on pypi.
 
+0. create the branch release-VERSION
+   use features as base for minor/major releases
+   and master as base for bugfix releases
+
 1. Bump version numbers in _pytest/__init__.py (setup.py reads it)
 
 2. Check and finalize CHANGELOG
@@ -84,4 +88,5 @@ Note: this assumes you have already registered on pypi.
     to the next Minor release version (i.e. if you released ``pytest-2.8.0``,
     set it to ``pytest-2.9.0.dev1``).
 
-14. merge the actual release into the features branch and do a pull request against it
+14. merge the actual release into the master branch and do a pull request against it
+15. merge from master to features
