@@ -1,4 +1,3 @@
-
 python testing sprint June 20th-26th 2016
 ======================================================
 
@@ -10,7 +9,28 @@ in its history, to take place in the black forest town Freiburg
 in Germany.  As of February 2016 we have started a `funding
 campaign on Indiegogo to cover expenses
 <http://igg.me/at/pytest-sprint/x/4034848>`_ The page also mentions
-some preliminary topics.
+some preliminary topics:
+
+- improving pytest-xdist test scheduling to take into account
+  fixture setups and explicit user hints.
+
+- provide info on fixture dependencies during --collect-only
+
+- tying pytest-xdist to tox so that you can do "py.test -e py34"
+  to run tests in a particular tox-managed virtualenv.  Also
+  look into making pytest-xdist use tox environments on
+  remote ssh-sides so that remote dependency management becomes
+  easier.
+
+- refactoring the fixture system so more people understand it :)
+
+- integrating PyUnit setup methods as autouse fixtures.
+  possibly adding ways to influence ordering of same-scoped
+  fixtures (so you can make a choice of which fixtures come
+  before others)
+
+- fixing bugs and issues from the tracker, really an endless source :)
+
 
 Participants
 --------------
