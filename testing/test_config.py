@@ -231,6 +231,21 @@ class TestConfigAPI:
         l = config.getini("a2")
         assert l == []
 
+    @pytest.mark.parametrize('str_val, bool_val',
+                             [('True', True), ('no', False), ('no-ini', True)])
+    def test_addini_bool(self, testdir, str_val, bool_val):
+        testdir.makeconftest("""
+            def pytest_addoption(parser):
+                parser.addini("strip", "", type="bool", default=True)
+        """)
+        if str_val != 'no-ini':
+            testdir.makeini("""
+                [pytest]
+                strip=%s
+            """ % str_val)
+        config = testdir.parseconfig()
+        assert config.getini("strip") is bool_val
+
     def test_addinivalue_line_existing(self, testdir):
         testdir.makeconftest("""
             def pytest_addoption(parser):

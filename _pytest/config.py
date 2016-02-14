@@ -502,13 +502,14 @@ class Parser:
         """ register an ini-file option.
 
         :name: name of the ini-variable
-        :type: type of the variable, can be ``pathlist``, ``args`` or ``linelist``.
+        :type: type of the variable, can be ``pathlist``, ``args``, ``linelist``
+               or ``bool``.
         :default: default value if no ini-file option exists but is queried.
 
         The value of ini-variables can be retrieved via a call to
         :py:func:`config.getini(name) <_pytest.config.Config.getini>`.
         """
-        assert type in (None, "pathlist", "args", "linelist")
+        assert type in (None, "pathlist", "args", "linelist", "bool")
         self._inidict[name] = (help, type, default)
         self._ininames.append(name)
 
@@ -1011,6 +1012,8 @@ class Config(object):
             return shlex.split(value)
         elif type == "linelist":
             return [t for t in map(lambda x: x.strip(), value.split("\n")) if t]
+        elif type == "bool":
+            return bool(_strtobool(value.strip()))
         else:
             assert type is None
             return value
@@ -1164,3 +1167,21 @@ def create_terminal_writer(config, *args, **kwargs):
     if config.option.color == 'no':
         tw.hasmarkup = False
     return tw
+
+
+def _strtobool(val):
+    """Convert a string representation of truth to true (1) or false (0).
+
+    True values are 'y', 'yes', 't', 'true', 'on', and '1'; false values
+    are 'n', 'no', 'f', 'false', 'off', and '0'.  Raises ValueError if
+    'val' is anything else.
+
+    .. note:: copied from distutils.util
+    """
+    val = val.lower()
+    if val in ('y', 'yes', 't', 'true', 'on', '1'):
+        return 1
+    elif val in ('n', 'no', 'f', 'false', 'off', '0'):
+        return 0
+    else:
+        raise ValueError("invalid truth value %r" % (val,))
