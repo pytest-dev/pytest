@@ -32,11 +32,16 @@ Marking a test function to be skipped
 .. versionadded:: 2.9
 
 The simplest way to skip a test function is to mark it with the `skip` decorator
-which may be passed an optional `reason`:
+which may be passed an optional ``reason``:
+
+.. code-block:: python
 
     @pytest.mark.skip(reason="no way of currently testing this")
     def test_the_unknown():
         ...
+
+``skipif``
+~~~~~~~~~~
 
 .. versionadded:: 2.0, 2.4
 
@@ -120,7 +125,7 @@ Mark a test function as expected to fail
 -------------------------------------------------------
 
 You can use the ``xfail`` marker to indicate that you
-expect the test to fail::
+expect a test to fail::
 
     @pytest.mark.xfail
     def test_function():
@@ -128,14 +133,36 @@ expect the test to fail::
 
 This test will be run but no traceback will be reported
 when it fails. Instead terminal reporting will list it in the
-"expected to fail" or "unexpectedly passing" sections.
+"expected to fail" (``XFAIL``) or "unexpectedly passing" (``XPASS``) sections.
 
-By specifying on the commandline::
+``strict`` parameter
+~~~~~~~~~~~~~~~~~~~~
 
-    pytest --runxfail
+.. versionadded:: 2.9
 
-you can force the running and reporting of an ``xfail`` marked test
-as if it weren't marked at all.
+Both ``XFAIL`` and ``XPASS`` don't fail the test suite, unless the ``strict`` keyword-only
+parameter is passed as ``True``:
+
+.. code-block:: python
+
+    @pytest.mark.xfail(strict=True)
+    def test_function():
+        ...
+
+
+This will make ``XPASS`` ("unexpectedly passing") results from this test to fail the test suite.
+
+You can change the default value of the ``strict`` parameter using the
+``xfail_strict`` ini option:
+
+.. code-block:: ini
+
+    [pytest]
+    xfail_strict=true
+
+
+``reason`` parameter
+~~~~~~~~~~~~~~~~~~~~
 
 As with skipif_ you can also mark your expectation of a failure
 on a particular platform::
@@ -145,14 +172,51 @@ on a particular platform::
     def test_function():
         ...
 
+
+``raises`` parameter
+~~~~~~~~~~~~~~~~~~~~
+
 If you want to be more specific as to why the test is failing, you can specify
-a single exception, or a list of exceptions, in the ``raises`` argument. Then
-the test will be reported as a regular failure if it fails with an
+a single exception, or a list of exceptions, in the ``raises`` argument.
+
+.. code-block:: python
+
+    @pytest.mark.xfail(raises=RuntimeError)
+    def test_function():
+        ...
+
+Then the test will be reported as a regular failure if it fails with an
 exception not mentioned in ``raises``.
 
-You can furthermore prevent the running of an "xfail" test or
-specify a reason such as a bug ID or similar.  Here is
-a simple test file with the several usages:
+``run`` parameter
+~~~~~~~~~~~~~~~~~
+
+If a test should be marked as xfail and reported as such but should not be
+even executed, use the ``run`` parameter as ``False``:
+
+.. code-block:: python
+
+    @pytest.mark.xfail(run=False)
+    def test_function():
+        ...
+
+This is specially useful for marking crashing tests for later inspection.
+
+
+Ignoring xfail marks
+~~~~~~~~~~~~~~~~~~~~
+
+By specifying on the commandline::
+
+    pytest --runxfail
+
+you can force the running and reporting of an ``xfail`` marked test
+as if it weren't marked at all.
+
+Examples
+~~~~~~~~
+
+Here is a simple test file with the several usages:
 
 .. literalinclude:: example/xfail_demo.py
 
@@ -181,6 +245,19 @@ Running it with the report-on-xfail option gives this output::
 
     ======= 7 xfailed in 0.12 seconds ========
 
+
+xfail signature summary
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Here's the signature of the ``xfail`` marker, using Python 3 keyword-only
+arguments syntax:
+
+.. code-block:: python
+
+    def xfail(condition=None, *, reason=None, raises=None, run=True, strict=False):
+
+
+
 .. _`skip/xfail with parametrize`:
 
 Skip/xfail with parametrize
@@ -189,19 +266,19 @@ Skip/xfail with parametrize
 It is possible to apply markers like skip and xfail to individual
 test instances when using parametrize::
 
-     import pytest
+    import pytest
 
-     @pytest.mark.parametrize(("n", "expected"), [
-         (1, 2),
-	 pytest.mark.xfail((1, 0)),
-	 pytest.mark.xfail(reason="some bug")((1, 3)),
-         (2, 3),
-         (3, 4),
-         (4, 5),
-         pytest.mark.skipif("sys.version_info >= (3,0)")((10, 11)),
-     ])
-     def test_increment(n, expected):
-	 assert n + 1 == expected
+    @pytest.mark.parametrize(("n", "expected"), [
+        (1, 2),
+    pytest.mark.xfail((1, 0)),
+	pytest.mark.xfail(reason="some bug")((1, 3)),
+        (2, 3),
+        (3, 4),
+        (4, 5),
+        pytest.mark.skipif("sys.version_info >= (3,0)")((10, 11)),
+    ])
+    def test_increment(n, expected):
+        assert n + 1 == expected
 
 
 Imperative xfail from within a test or setup function
