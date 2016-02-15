@@ -12,9 +12,15 @@
 * New ``-rp`` and ``-rP`` reporting options give the summary and full output
   of passing tests, respectively. Thanks to `@codewarrior0`_ for the PR.
 
+* ``pytest.mark.xfail`` now has a ``strict`` option which makes ``XPASS``ing
+  tests to fail the test suite, defaulting to ``False``. There's also a
+  ``xfail_strict`` ini option that can be used to configure it project-wise.
+  Thanks `@rabbbit`_ for the request and `@nicoddemus`_ for the PR (`#1355`_).
+
 * New ``ALLOW_BYTES`` doctest option strips ``b`` prefixes from byte strings
   in doctest output (similar to ``ALLOW_UNICODE``).
   Thanks `@jaraco`_ for the request and `@nicoddemus`_ for the PR (`#1287`_).
+
 * give a hint on KeyboardInterrupt to use the --fulltrace option to show the errors,
   this fixes `#1366`_.
   Thanks to `@hpk42`_ for the report and `@RonnyPfannschmidt`_ for the PR.
@@ -72,6 +78,7 @@
 .. _#1287: https://github.com/pytest-dev/pytest/pull/1287
 .. _#1226: https://github.com/pytest-dev/pytest/pull/1226
 .. _#1290: https://github.com/pytest-dev/pytest/pull/1290
+.. _#1355: https://github.com/pytest-dev/pytest/pull/1355
 .. _@biern: https://github.com/biern
 .. _@MichaelAquilina: https://github.com/MichaelAquilina
 .. _@bukzor: https://github.com/bukzor
@@ -84,6 +91,7 @@
 .. _@Shinkenjoe: https://github.com/Shinkenjoe
 .. _@tomviner: https://github.com/tomviner
 .. _@RonnyPfannschmidt: https://github.com/RonnyPfannschmidt
+.. _@rabbbit: https://github.com/rabbbit
 
 2.8.7
 -----
