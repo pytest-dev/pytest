@@ -127,13 +127,15 @@ class TestEvaluator:
 
 
 class TestXFail:
-    def test_xfail_simple(self, testdir):
+
+    @pytest.mark.parametrize('strict', [True, False])
+    def test_xfail_simple(self, testdir, strict):
         item = testdir.getitem("""
             import pytest
-            @pytest.mark.xfail
+            @pytest.mark.xfail(strict=%s)
             def test_func():
                 assert 0
-        """)
+        """ % strict)
         reports = runtestprotocol(item, log=False)
         assert len(reports) == 3
         callreport = reports[1]
@@ -349,6 +351,23 @@ class TestXFail:
         result.stdout.fnmatch_lines([
             matchline,
         ])
+
+    def test_strict_sanity(self, testdir):
+        """sanity check for xfail(strict=True): a failing test should behave
+        exactly like a normal xfail.
+        """
+        p = testdir.makepyfile("""
+            import pytest
+            @pytest.mark.xfail(reason='unsupported feature', strict=True)
+            def test_foo():
+                assert 0
+        """)
+        result = testdir.runpytest(p, '-rxX')
+        result.stdout.fnmatch_lines([
+            '*XFAIL*',
+            '*unsupported feature*',
+        ])
+        assert result.ret == 0
 
     @pytest.mark.parametrize('strict', [True, False])
     def test_strict_xfail(self, testdir, strict):

@@ -186,26 +186,32 @@ def pytest_runtest_setup(item):
 @pytest.mark.hookwrapper
 def pytest_pyfunc_call(pyfuncitem):
     check_xfail_no_run(pyfuncitem)
-    yield
-    evalxfail = pyfuncitem._evalxfail
-    if evalxfail.istrue() and _is_strict_xfail(evalxfail, pyfuncitem.config):
-        del pyfuncitem._evalxfail
-        explanation = evalxfail.getexplanation()
-        pytest.fail('[XPASS(strict)] ' + explanation,
-                    pytrace=False)
-
-
-def _is_strict_xfail(evalxfail, config):
-    default = config.getini('xfail_strict')
-    return evalxfail.get('strict', default)
+    outcome = yield
+    passed = outcome.excinfo is None
+    if passed:
+        check_strict_xfail(pyfuncitem)
 
 
 def check_xfail_no_run(item):
+    """check xfail(run=False)"""
     if not item.config.option.runxfail:
         evalxfail = item._evalxfail
         if evalxfail.istrue():
             if not evalxfail.get('run', True):
                 pytest.xfail("[NOTRUN] " + evalxfail.getexplanation())
+
+
+def check_strict_xfail(pyfuncitem):
+    """check xfail(strict=True) for the given PASSING test"""
+    evalxfail = pyfuncitem._evalxfail
+    if evalxfail.istrue():
+        strict_default = pyfuncitem.config.getini('xfail_strict')
+        is_strict_xfail = evalxfail.get('strict', strict_default)
+        if is_strict_xfail:
+            del pyfuncitem._evalxfail
+            explanation = evalxfail.getexplanation()
+            pytest.fail('[XPASS(strict)] ' + explanation, pytrace=False)
+
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
