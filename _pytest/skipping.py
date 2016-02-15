@@ -14,6 +14,12 @@ def pytest_addoption(parser):
            action="store_true", dest="runxfail", default=False,
            help="run tests even if they are marked xfail")
 
+    parser.addini("xfail_strict", "default for the strict parameter of xfail "
+                                  "markers when not given explicitly (default: "
+                                  "False)",
+                                  default=False,
+                                  type="bool")
+
 
 def pytest_configure(config):
     if config.option.runxfail:
@@ -178,6 +184,18 @@ def pytest_runtest_setup(item):
 
 def pytest_pyfunc_call(pyfuncitem):
     check_xfail_no_run(pyfuncitem)
+    evalxfail = pyfuncitem._evalxfail
+    if evalxfail.istrue() and _is_strict_xfail(evalxfail, pyfuncitem.config):
+        del pyfuncitem._evalxfail
+        explanation = evalxfail.getexplanation()
+        pytest.fail('[XPASS(strict)] ' + explanation,
+                    pytrace=False)
+
+
+def _is_strict_xfail(evalxfail, config):
+    default = config.getini('xfail_strict')
+    return evalxfail.get('strict', default)
+
 
 def check_xfail_no_run(item):
     if not item.config.option.runxfail:

@@ -350,6 +350,58 @@ class TestXFail:
             matchline,
         ])
 
+    @pytest.mark.parametrize('strict', [True, False])
+    def test_strict_xfail(self, testdir, strict):
+        p = testdir.makepyfile("""
+            import pytest
+
+            @pytest.mark.xfail(reason='unsupported feature', strict=%s)
+            def test_foo():
+                pass
+        """ % strict)
+        result = testdir.runpytest(p, '-rxX')
+        if strict:
+            result.stdout.fnmatch_lines([
+                '*test_foo*',
+                '*XPASS(strict)*unsupported feature*',
+            ])
+        else:
+            result.stdout.fnmatch_lines([
+                '*test_strict_xfail*',
+                'XPASS test_strict_xfail.py::test_foo unsupported feature',
+            ])
+        assert result.ret == (1 if strict else 0)
+
+    @pytest.mark.parametrize('strict', [True, False])
+    def test_strict_xfail_condition(self, testdir, strict):
+        p = testdir.makepyfile("""
+            import pytest
+
+            @pytest.mark.xfail(False, reason='unsupported feature', strict=%s)
+            def test_foo():
+                pass
+        """ % strict)
+        result = testdir.runpytest(p, '-rxX')
+        result.stdout.fnmatch_lines('*1 passed*')
+        assert result.ret == 0
+
+    @pytest.mark.parametrize('strict_val', ['true', 'false'])
+    def test_strict_xfail_default_from_file(self, testdir, strict_val):
+        testdir.makeini('''
+            [pytest]
+            xfail_strict = %s
+        ''' % strict_val)
+        p = testdir.makepyfile("""
+            import pytest
+            @pytest.mark.xfail(reason='unsupported feature')
+            def test_foo():
+                pass
+        """)
+        result = testdir.runpytest(p, '-rxX')
+        strict = strict_val == 'true'
+        result.stdout.fnmatch_lines('*1 failed*' if strict else '*1 xpassed*')
+        assert result.ret == (1 if strict else 0)
+
 
 class TestXFailwithSetupTeardown:
     def test_failing_setup_issue9(self, testdir):
