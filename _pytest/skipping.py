@@ -182,8 +182,11 @@ def pytest_runtest_setup(item):
     item._evalxfail = MarkEvaluator(item, 'xfail')
     check_xfail_no_run(item)
 
+
+@pytest.mark.hookwrapper
 def pytest_pyfunc_call(pyfuncitem):
     check_xfail_no_run(pyfuncitem)
+    yield
     evalxfail = pyfuncitem._evalxfail
     if evalxfail.istrue() and _is_strict_xfail(evalxfail, pyfuncitem.config):
         del pyfuncitem._evalxfail

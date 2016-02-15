@@ -357,7 +357,7 @@ class TestXFail:
 
             @pytest.mark.xfail(reason='unsupported feature', strict=%s)
             def test_foo():
-                pass
+                with open('foo_executed', 'w'): pass  # make sure test executes
         """ % strict)
         result = testdir.runpytest(p, '-rxX')
         if strict:
@@ -371,6 +371,7 @@ class TestXFail:
                 'XPASS test_strict_xfail.py::test_foo unsupported feature',
             ])
         assert result.ret == (1 if strict else 0)
+        assert testdir.tmpdir.join('foo_executed').isfile()
 
     @pytest.mark.parametrize('strict', [True, False])
     def test_strict_xfail_condition(self, testdir, strict):
