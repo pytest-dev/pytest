@@ -31,7 +31,7 @@ Marking a test function to be skipped
 
 .. versionadded:: 2.9
 
-The simplest way to skip a test function is to mark it with the `skip` decorator
+The simplest way to skip a test function is to mark it with the ``skip`` decorator
 which may be passed an optional ``reason``:
 
 .. code-block:: python
@@ -45,7 +45,7 @@ which may be passed an optional ``reason``:
 
 .. versionadded:: 2.0, 2.4
 
-If you wish to skip something conditionally then you can use `skipif` instead.
+If you wish to skip something conditionally then you can use ``skipif`` instead.
 Here is an example of marking a test function to be skipped
 when run on a Python3.3 interpreter::
 

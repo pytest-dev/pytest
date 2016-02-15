@@ -109,7 +109,7 @@ If you want to write a plugin, there are many real-life examples
 you can copy from:
 
 * a custom collection example plugin: :ref:`yaml plugin`
-* around 20 doc:`builtin plugins` which provide pytest's own functionality
+* around 20 :ref:`builtin plugins` which provide pytest's own functionality
 * many `external plugins <http://plugincompat.herokuapp.com>`_ providing additional features
 
 All of these plugins implement the documented `well specified hooks`_
