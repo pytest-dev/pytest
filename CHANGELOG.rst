@@ -12,7 +12,7 @@
 * New ``-rp`` and ``-rP`` reporting options give the summary and full output
   of passing tests, respectively. Thanks to `@codewarrior0`_ for the PR.
 
-* ``pytest.mark.xfail`` now has a ``strict`` option which makes ``XPASS``ing
+* ``pytest.mark.xfail`` now has a ``strict`` option which makes ``XPASS``
   tests to fail the test suite, defaulting to ``False``. There's also a
   ``xfail_strict`` ini option that can be used to configure it project-wise.
   Thanks `@rabbbit`_ for the request and `@nicoddemus`_ for the PR (`#1355`_).
