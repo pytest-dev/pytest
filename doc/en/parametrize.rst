@@ -142,7 +142,7 @@ Sometimes you may want to implement your own parametrization scheme
 or implement some dynamism for determining the parameters or scope
 of a fixture.   For this, you can use the ``pytest_generate_tests`` hook
 which is called when collecting a test function.  Through the passed in
-`metafunc` object you can inspect the requesting test context and, most
+``metafunc`` object you can inspect the requesting test context and, most
 importantly, you can call ``metafunc.parametrize()`` to cause
 parametrization.
 

@@ -65,7 +65,7 @@
   ``Config.fromdictargs`` now represents its input much more faithfully.
   Thanks to `@bukzor`_ for the complete PR (`#680`_).
 
-* Fix (`#1290`_): support Python 3.5's `@` operator in assertion rewriting.
+* Fix (`#1290`_): support Python 3.5's ``@`` operator in assertion rewriting.
   Thanks `@Shinkenjoe`_ for report with test case and `@tomviner`_ for the PR.
 
 * Fix formatting utf-8 explanation messages (`#1379`_).
@@ -321,10 +321,10 @@
 - fix issue768: docstrings found in python modules were not setting up session
   fixtures. Thanks Jason R. Coombs for reporting and Bruno Oliveira for the PR.
 
-- added `tmpdir_factory`, a session-scoped fixture that can be used to create
+- added ``tmpdir_factory``, a session-scoped fixture that can be used to create
   directories under the base temporary directory. Previously this object was
-  installed as a `_tmpdirhandler` attribute of the `config` object, but now it
-  is part of the official API and using `config._tmpdirhandler` is
+  installed as a ``_tmpdirhandler`` attribute of the ``config`` object, but now it
+  is part of the official API and using ``config._tmpdirhandler`` is
   deprecated.
   Thanks Bruno Oliveira for the PR.
 
@@ -353,7 +353,7 @@
   or no tests were run at all (related to issue500).
   Thanks Eric Siegerman.
 
-- New `testpaths` ini option: list of directories to search for tests
+- New ``testpaths`` ini option: list of directories to search for tests
   when executing pytest from the root directory. This can be used
   to speed up test collection when a project has well specified directories
   for tests, being usually more practical than configuring norecursedirs for
@@ -449,20 +449,20 @@
 - issue951: add new record_xml_property fixture, that supports logging
   additional information on xml output. Thanks David Diaz for the PR.
 
-- issue949: paths after normal options (for example `-s`, `-v`, etc) are now
-  properly used to discover `rootdir` and `ini` files.
+- issue949: paths after normal options (for example ``-s``, ``-v``, etc) are now
+  properly used to discover ``rootdir`` and ``ini`` files.
   Thanks Peter Lauri for the report and Bruno Oliveira for the PR.
 
 2.7.3 (compared to 2.7.2)
 =============================
 
-- Allow 'dev', 'rc', or other non-integer version strings in `importorskip`.
+- Allow 'dev', 'rc', or other non-integer version strings in ``importorskip``.
   Thanks to Eric Hunsberger for the PR.
 
 - fix issue856: consider --color parameter in all outputs (for example
   --fixtures). Thanks Barney Gale for the report and Bruno Oliveira for the PR.
 
-- fix issue855: passing str objects as `plugins` argument to pytest.main
+- fix issue855: passing str objects as ``plugins`` argument to pytest.main
   is now interpreted as a module name to be imported and registered as a
   plugin, instead of silently having no effect.
   Thanks xmo-odoo for the report and Bruno Oliveira for the PR.
@@ -2097,7 +2097,7 @@ v1.1.1
 - new funcarg: "pytestconfig" is the pytest config object for access
   to command line args and can now be easily used in a test.
 
-- install 'py.test' and `py.which` with a ``-$VERSION`` suffix to
+- install ``py.test`` and ``py.which`` with a ``-$VERSION`` suffix to
   disambiguate between Python3, python2.X, Jython and PyPy installed versions.
 
 - new "pytestconfig" funcarg allows access to test config object

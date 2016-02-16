@@ -262,7 +262,7 @@ than speed.
 config.cache API
 ------------------
 
-The `config.cache`` object allows other plugins,
+The ``config.cache`` object allows other plugins,
 including ``conftest.py`` files,
 to safely and flexibly store and retrieve values across
 test runs because the ``config`` object is available
