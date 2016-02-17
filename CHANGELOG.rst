@@ -17,6 +17,9 @@
   ``xfail_strict`` ini option that can be used to configure it project-wise.
   Thanks `@rabbbit`_ for the request and `@nicoddemus`_ for the PR (`#1355`_).
 
+* ``Parser.addini`` now supports options of type ``bool``. Thanks
+  `@nicoddemus`_ for the PR.
+
 * New ``ALLOW_BYTES`` doctest option strips ``b`` prefixes from byte strings
   in doctest output (similar to ``ALLOW_UNICODE``).
   Thanks `@jaraco`_ for the request and `@nicoddemus`_ for the PR (`#1287`_).

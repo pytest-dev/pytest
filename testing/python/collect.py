@@ -497,6 +497,7 @@ class TestFunction:
                 return True
         config.pluginmanager.register(MyPlugin1())
         config.pluginmanager.register(MyPlugin2())
+        config.hook.pytest_runtest_setup(item=item)
         config.hook.pytest_pyfunc_call(pyfuncitem=item)
 
     def test_multiple_parametrize(self, testdir):
