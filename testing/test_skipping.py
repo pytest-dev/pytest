@@ -154,7 +154,7 @@ class TestCustomMarkEvaluator:
                 return evaluation_globals
 
             def istrue(self):
-                result = super(FixtureMarkEvaluator, self).istrue()
+                result = _pytest.skipping.MarkEvaluator.istrue(self)
                 if self.holder:
                     try:
                         # We're evaluating against a dictionary which changes
