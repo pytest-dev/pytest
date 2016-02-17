@@ -126,6 +126,85 @@ class TestEvaluator:
         assert expl == "condition: config._hackxyz"
 
 
+class TestCustomMarkEvaluator:
+    def test_custom_skipiffixture(self, testdir):
+        testdir.makeconftest('''
+        import pytest
+        import _pytest.skipping
+
+        class FixtureMarkEvaluator(_pytest.skipping.MarkEvaluator):
+            def _getglobals(self):
+                evaluation_globals = super(FixtureMarkEvaluator, self)._getglobals()
+                for fixture_name in self.holder.kwargs.get('fixtures', ()):
+                    # Looking up fixture results will add some finalizers which, once/if tests are skipped
+                    # by this marker, it will make pytest fail because of the added finalizer.
+                    # We have 2 options, run the finalizer ourselves, or, just restore the previously
+                    # existing finalizers ignoring any actions those added finalizers would do(for our
+                    # current needs, we can ignore the finalizers)
+
+                    # Store the finalizers before getting the fixture value and restore it afterwards
+                    original_finalizers = self.item._request.session._setupstate._finalizers.copy()
+
+                    # Inject the fixture value into the globals that should be passed on to evaluate the marker
+                    try:
+                        evaluation_globals[fixture_name] = self.item._request.getfuncargvalue(fixture_name)
+                    finally:
+                        # Restore previous finalizers state
+                        self.item._request.session._setupstate._finalizers = original_finalizers
+                return evaluation_globals
+
+            def istrue(self):
+                result = super(FixtureMarkEvaluator, self).istrue()
+                if self.holder:
+                    try:
+                        # We're evaluating against a dictionary which changes
+                        # Remove the evaluated expr from the cache since the cache is
+                        # not aware of the arguments used to get the result
+                        self.item.config._evalcache.pop(self.expr)
+                    except KeyError:
+                        pass
+                return result
+
+        @pytest.hookimpl(tryfirst=True)
+        def pytest_runtest_setup(item):
+            eval_fixture_skipif = FixtureMarkEvaluator(item, 'skipiffixture')
+            if eval_fixture_skipif.istrue():
+                item._evalskip = eval_fixture_skipif
+                pytest.skip(eval_fixture_skipif.getexplanation())
+
+        HAS_LDAP = False
+
+        @pytest.fixture(scope='function', params=('internal', 'ldap', 'ad'))
+        def auth_config(request):
+            if HAS_LDAP is False and request.param == 'ldap':
+                pytest.skip('ldap3 lib not installed')
+            return {'auth_config': request.param}
+        ''')
+
+        testdir.makepyfile('''
+        import pytest
+
+        @pytest.mark.skipiffixture("auth_config['auth_config'] != 'internal'",
+                                   fixtures=('auth_config',),
+                                   reason='Only test internal')
+        def test_custom_skipiffixture(auth_config):
+            assert auth_config['auth_config'] == 'internal'
+        ''')
+        result = testdir.runpytest('-vsra')
+        result.stdout.fnmatch_lines([
+            'test_custom_skipiffixture.py::test_custom_skipiffixture[internal] PASSED',
+            'test_custom_skipiffixture.py::test_custom_skipiffixture[ldap] SKIPPED',
+            'test_custom_skipiffixture.py::test_custom_skipiffixture[ad] SKIPPED',
+        ])
+        # The fnmatch_lines below need to be separate because they both share the same start
+        result.stdout.fnmatch_lines([
+            'SKIP * Only test internal',
+        ])
+        result.stdout.fnmatch_lines([
+            'SKIP * ldap3 lib not installed'
+        ])
+
+
 class TestXFail:
     def test_xfail_simple(self, testdir):
         item = testdir.getitem("""
