@@ -9,46 +9,18 @@ so do not hesitate!
    :depth: 2
 
 
-.. _submitplugin:
+.. _submitfeedback:
 
-Submit a plugin, co-develop pytest
-----------------------------------
+Feature requests and feedback
+-----------------------------
 
-Pytest development of the core, some plugins and support code happens
-in repositories living under:
+Do you like pytest?  Share some love on Twitter or in your blog posts!
 
-- `the pytest-dev github organisation <https://github.com/pytest-dev>`_
+We'd also like to hear about your propositions and suggestions.  Feel free to
+`submit them as issues <https://github.com/pytest-dev/pytest/issues>`__ and:
 
-- `the pytest-dev bitbucket team <https://bitbucket.org/pytest-dev>`_
-
-All pytest-dev Contributors team members have write access to all contained
-repositories.  pytest core and plugins are generally developed
-using `pull requests`_ to respective repositories.
-
-You can submit your plugin by subscribing to the `pytest-dev mail list
-<https://mail.python.org/mailman/listinfo/pytest-dev>`_ and writing a
-mail pointing to your existing pytest plugin repository which must have
-the following:
-
-- PyPI presence with a ``setup.py`` that contains a license, ``pytest-``
-  prefixed, version number, authors, short and long description.
-
-- a ``tox.ini`` for running tests using `tox <http://tox.testrun.org>`_.
-
-- a ``README.txt`` describing how to use the plugin and on which
-  platforms it runs.
-
-- a ``LICENSE.txt`` file or equivalent containing the licensing
-  information, with matching info in ``setup.py``.
-
-- an issue tracker unless you rather want to use the core ``pytest``
-  issue tracker.
-
-If no contributor strongly objects and two agree, the repo will be
-transferred to the ``pytest-dev`` organisation and you'll become a
-member of the ``pytest-dev Contributors`` team, with commit rights
-to all projects. We recommend that each plugin has at least three
-people who have the right to release to pypi.
+* Explain in detail how they should work.
+* Keep the scope as narrow as possible.  This will make it easier to implement.
 
 
 .. _reportbugs:
@@ -56,7 +28,7 @@ people who have the right to release to pypi.
 Report bugs
 -----------
 
-Report bugs for pytest at https://github.com/pytest-dev/pytest/issues
+Report bugs for pytest in the `issue tracker <https://github.com/pytest-dev/pytest/issues>`_.
 
 If you are reporting a bug, please include:
 
@@ -70,22 +42,6 @@ If you can write a demonstration test that currently fails but should pass (xfai
 that is a very useful commit to make as well, even if you can't find how
 to fix the bug yet.
 
-.. _submitfeedback:
-
-Submit feedback for developers
-------------------------------
-
-Do you like pytest?  Share some love on Twitter or in your blog posts!
-
-We'd also like to hear about your propositions and suggestions.  Feel free to
-`submit them as issues <https://github.com/pytest-dev/pytest/issues>`__ and:
-
-* Set the "kind" to "enhancement" or "proposal" so that we can quickly find
-  about them.
-* Explain in detail how they should work.
-* Keep the scope as narrow as possible.  This will make it easier to implement.
-* If you have required skills and/or knowledge, we are very happy for
-  :ref:`pull requests <pull-requests>`.
 
 .. _fixbugs:
 
@@ -125,11 +81,88 @@ You can also edit documentation files directly in the Github web interface
 without needing to make a fork and local copy. This can be convenient for
 small fixes.
 
+
+.. _submitplugin:
+
+Submitting Plugins to pytest-dev
+--------------------------------
+
+Pytest development of the core, some plugins and support code happens
+in repositories living under the ``pytest-dev`` organisations:
+
+- `pytest-dev on GitHub <https://github.com/pytest-dev>`_
+
+- `pytest-dev on Bitbucket <https://bitbucket.org/pytest-dev>`_
+
+All pytest-dev Contributors team members have write access to all contained
+repositories.  pytest core and plugins are generally developed
+using `pull requests`_ to respective repositories.
+
+The objectives of the ``pytest-dev`` organisation are:
+
+* Having a central location for popular pytest plugins
+* Sharing some of the maintenance responsibility (in case a maintainer no longer whishes to maintain a plugin)
+
+You can submit your plugin by subscribing to the `pytest-dev mail list
+<https://mail.python.org/mailman/listinfo/pytest-dev>`_ and writing a
+mail pointing to your existing pytest plugin repository which must have
+the following:
+
+- PyPI presence with a ``setup.py`` that contains a license, ``pytest-``
+  prefixed, version number, authors, short and long description.
+
+- a ``tox.ini`` for running tests using `tox <http://tox.testrun.org>`_.
+
+- a ``README.txt`` describing how to use the plugin and on which
+  platforms it runs.
+
+- a ``LICENSE.txt`` file or equivalent containing the licensing
+  information, with matching info in ``setup.py``.
+
+- an issue tracker unless you rather want to use the core ``pytest``
+  issue tracker.
+
+If no contributor strongly objects and two agree, the repository can then be
+transferred to the ``pytest-dev`` organisation.
+
+Here's a rundown of how a repository transfer usually proceeds
+(using a repository named ``joedoe/pytest-xyz`` as an example):
+
+* One of the ``pytest-dev`` administrators creates:
+
+  - ``pytest-xyz-admin`` team, with full administration rights to
+    ``pytest-dev/pytest-xyz``.
+  - ``pytest-xyz-developers`` team, with write access to
+    ``pytest-dev/pytest-xyz``.
+
+* ``joedoe`` is invited to the ``pytest-xyz-admin`` team;
+
+* After accepting the invitation, ``joedoe`` transfers the repository from its
+  original location to ``pytest-dev/pytest-xyz`` (A nice feature is that GitHub handles URL redirection from
+  the old to the new location automatically).
+
+* ``joedoe`` is free to add any other collaborators to the
+  ``pytest-xyz-developers`` team as desired.
+
+The ``pytest-dev/Contributors`` team has write access to all projects, and
+every project administrator is in it. We recommend that each plugin has at least three
+people who have the right to release to PyPI.
+
+Repository owners can be assured that no ``pytest-dev`` administrator will ever make
+releases of your repository or take ownership in anyway, except in rare cases
+where someone becomes unresponsive after months. As stated, the
+objective is to share maintenance and avoid "plugin-abandon".
+
+
 .. _`pull requests`:
 .. _pull-requests:
 
 Preparing Pull Requests on GitHub
 ---------------------------------
+
+There's an excellent tutorial on how Pull Requests work in the
+`GitHub Help Center <https://help.github.com/articles/using-pull-requests/>`_
+
 
 .. note::
   What is a "pull request"?  It informs project's core developers about the
