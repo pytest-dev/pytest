@@ -28,6 +28,14 @@
   this fixes `#1366`_.
   Thanks to `@hpk42`_ for the report and `@RonnyPfannschmidt`_ for the PR.
 
+*
+
+*
+
+*
+
+*
+
 **Changes**
 
 * **Important**: `py.code <http://pylib.readthedocs.org/en/latest/code.html>`_ has been
@@ -62,6 +70,14 @@
 
 * Added expected exceptions to pytest.raises fail message
 
+*
+
+*
+
+*
+
+*
+
 **Bug Fixes**
 
 * The ``-s`` and ``-c`` options should now work under ``xdist``;
@@ -73,6 +89,14 @@
 
 * Fix formatting utf-8 explanation messages (`#1379`_).
   Thanks `@biern`_ for the PR.
+
+*
+
+*
+
+*
+
+*
 
 .. _#1379: https://github.com/pytest-dev/pytest/issues/1379
 .. _#1366: https://github.com/pytest-dev/pytest/issues/1366
