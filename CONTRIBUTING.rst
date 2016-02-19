@@ -17,7 +17,7 @@ Feature requests and feedback
 Do you like pytest?  Share some love on Twitter or in your blog posts!
 
 We'd also like to hear about your propositions and suggestions.  Feel free to
-`submit them as issues <https://github.com/pytest-dev/pytest/issues>`__ and:
+`submit them as issues <https://github.com/pytest-dev/pytest/issues>`_ and:
 
 * Explain in detail how they should work.
 * Keep the scope as narrow as possible.  This will make it easier to implement.
@@ -109,7 +109,7 @@ mail pointing to your existing pytest plugin repository which must have
 the following:
 
 - PyPI presence with a ``setup.py`` that contains a license, ``pytest-``
-  prefixed, version number, authors, short and long description.
+  prefixed name, version number, authors, short and long description.
 
 - a ``tox.ini`` for running tests using `tox <http://tox.testrun.org>`_.
 
@@ -119,14 +119,13 @@ the following:
 - a ``LICENSE.txt`` file or equivalent containing the licensing
   information, with matching info in ``setup.py``.
 
-- an issue tracker unless you rather want to use the core ``pytest``
-  issue tracker.
+- an issue tracker for bug reports and enhancement requests.
 
 If no contributor strongly objects and two agree, the repository can then be
 transferred to the ``pytest-dev`` organisation.
 
 Here's a rundown of how a repository transfer usually proceeds
-(using a repository named ``joedoe/pytest-xyz`` as an example):
+(using a repository named ``joedoe/pytest-xyz`` as example):
 
 * One of the ``pytest-dev`` administrators creates:
 
@@ -142,16 +141,16 @@ Here's a rundown of how a repository transfer usually proceeds
   the old to the new location automatically).
 
 * ``joedoe`` is free to add any other collaborators to the
-  ``pytest-xyz-developers`` team as desired.
+  ``pytest-xyz-admin`` or ``pytest-xyz-developers`` team as desired.
 
 The ``pytest-dev/Contributors`` team has write access to all projects, and
 every project administrator is in it. We recommend that each plugin has at least three
 people who have the right to release to PyPI.
 
 Repository owners can be assured that no ``pytest-dev`` administrator will ever make
-releases of your repository or take ownership in anyway, except in rare cases
-where someone becomes unresponsive after months. As stated, the
-objective is to share maintenance and avoid "plugin-abandon".
+releases of your repository or take ownership in any way, except in rare cases
+where someone becomes unresponsive after months of contact attempts.
+As stated, the objective is to share maintenance and avoid "plugin-abandon".
 
 
 .. _`pull requests`:
