@@ -72,7 +72,9 @@
 
 *
 
-*
+* Collection only displays progress ("collecting X items") when in a terminal.
+  This avoids cluttering the output when using ``--color=yes`` to obtain
+  colors in CI integrations systems (`#1397`_).
 
 *
 
@@ -106,6 +108,7 @@
 .. _#1226: https://github.com/pytest-dev/pytest/pull/1226
 .. _#1290: https://github.com/pytest-dev/pytest/pull/1290
 .. _#1355: https://github.com/pytest-dev/pytest/pull/1355
+.. _#1397: https://github.com/pytest-dev/pytest/issues/1397
 .. _@biern: https://github.com/biern
 .. _@MichaelAquilina: https://github.com/MichaelAquilina
 .. _@bukzor: https://github.com/bukzor

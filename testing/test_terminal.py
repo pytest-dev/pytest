@@ -561,11 +561,36 @@ def test_color_yes(testdir):
     assert 'test session starts' in result.stdout.str()
     assert '\x1b[1m' in result.stdout.str()
 
+
 def test_color_no(testdir):
     testdir.makepyfile("def test_this(): assert 1")
     result = testdir.runpytest('--color=no')
     assert 'test session starts' in result.stdout.str()
     assert '\x1b[1m' not in result.stdout.str()
+
+
+@pytest.mark.parametrize('verbose', [True, False])
+def test_color_yes_collection_on_non_atty(testdir, verbose):
+    """skip collect progress report when working on non-terminals.
+    #1397
+    """
+    testdir.makepyfile("""
+        import pytest
+        @pytest.mark.parametrize('i', range(10))
+        def test_this(i):
+            assert 1
+    """)
+    args = ['--color=yes']
+    if verbose:
+        args.append('-vv')
+    result = testdir.runpytest(*args)
+    assert 'test session starts' in result.stdout.str()
+    assert '\x1b[1m' in result.stdout.str()
+    assert 'collecting 10 items' not in result.stdout.str()
+    if verbose:
+        assert 'collecting ...' in result.stdout.str()
+    assert 'collected 10 items' in result.stdout.str()
+
 
 def test_getreportopt():
     class config:

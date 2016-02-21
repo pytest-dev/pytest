@@ -112,6 +112,7 @@ class TerminalReporter:
         self.currentfspath = None
         self.reportchars = getreportopt(config)
         self.hasmarkup = self._tw.hasmarkup
+        self.isatty = file.isatty()
 
     def hasopt(self, char):
         char = {'xfailed': 'x', 'skipped': 's'}.get(char, char)
@@ -234,7 +235,7 @@ class TerminalReporter:
                 self.currentfspath = -2
 
     def pytest_collection(self):
-        if not self.hasmarkup and self.config.option.verbose >= 1:
+        if not self.isatty and self.config.option.verbose >= 1:
             self.write("collecting ... ", bold=True)
 
     def pytest_collectreport(self, report):
@@ -244,7 +245,7 @@ class TerminalReporter:
             self.stats.setdefault("skipped", []).append(report)
         items = [x for x in report.result if isinstance(x, pytest.Item)]
         self._numcollected += len(items)
-        if self.hasmarkup:
+        if self.isatty:
             #self.write_fspath_result(report.nodeid, 'E')
             self.report_collect()
 
@@ -263,7 +264,7 @@ class TerminalReporter:
             line += " / %d errors" % errors
         if skipped:
             line += " / %d skipped" % skipped
-        if self.hasmarkup:
+        if self.isatty:
             if final:
                 line += " \n"
             self.rewrite(line, bold=True)
