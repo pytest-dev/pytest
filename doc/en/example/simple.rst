@@ -748,4 +748,4 @@ over to ``pytest`` instead. For example::
 This makes it convenient to execute your tests from within your frozen
 application, using standard ``py.test`` command-line options::
 
-    ./app_main --pytest --verbose --tb=long --junit-xml=results.xml test-suite/
+    ./app_main --pytest --verbose --tb=long --junitxml=results.xml test-suite/
