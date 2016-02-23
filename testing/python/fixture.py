@@ -1025,7 +1025,7 @@ class TestFixtureUsages:
                 def test_two(self):
                     assert self.hello == "world"
                     assert len(l) == 1
-            pytest.mark.usefixtures("myfix")(TestClass)
+            TestClass = pytest.mark.usefixtures("myfix")(TestClass)
         """)
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)

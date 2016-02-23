@@ -9,7 +9,7 @@ import sys
 import py
 import pytest
 from _pytest._code.code import TerminalRepr
-from _pytest.mark import MarkDecorator, MarkerError
+from _pytest.mark import MarkDecorator, MarkerError, MarkInfo
 
 try:
     import enum
@@ -474,7 +474,7 @@ class PyCollector(PyobjMixin, pytest.Collector):
         module = self.getparent(Module).obj
         clscol = self.getparent(Class)
         cls = clscol and clscol.obj or None
-        transfer_markers(funcobj, cls, module)
+        funcobj = transfer_markers(funcobj, cls, module)
         fm = self.session._fixturemanager
         fixtureinfo = fm.getfixtureinfo(self, funcobj, cls)
         metafunc = Metafunc(funcobj, fixtureinfo, self.config,
@@ -587,13 +587,19 @@ def transfer_markers(funcobj, cls, mod):
             pytestmark = holder.pytestmark
         except AttributeError:
             continue
+
         if isinstance(pytestmark, list):
             for mark in pytestmark:
                 if not _marked(funcobj, mark):
-                    mark(funcobj)
+                    funcobj = mark(funcobj)
         else:
             if not _marked(funcobj, pytestmark):
-                pytestmark(funcobj)
+                funcobj = pytestmark(funcobj)
+
+        setattr(cls or mod, funcobj.__name__, funcobj)
+
+    return funcobj
+
 
 class Module(pytest.File, PyCollector):
     """ Collector for test classes and functions. """
@@ -982,6 +988,26 @@ class Metafunc(FuncargnamesCompatAttr):
                 newmarks[newmark.markname] = newmark
                 argval = argval.args[-1]
             unwrapped_argvalues.append(argval)
+
+            if inspect.isclass(argval):
+                pytestmark = getattr(argval, 'pytestmark', None)
+
+                if pytestmark:
+                    if not isinstance(pytestmark, list):
+                        pytestmark = [pytestmark]
+
+                    for mark in pytestmark:
+                        newkeywords.setdefault(i, {}).setdefault(mark.markname,
+                                                                 mark)
+
+            if inspect.isfunction(argval):
+                for attr_name in argval.__dict__ or {}:
+
+                    attr = getattr(argval, attr_name)
+                    if isinstance(attr, MarkInfo):
+                        newkeywords.setdefault(i, {}).setdefault(attr.name,
+                                                                 attr)
+
         argvalues = unwrapped_argvalues
 
         if not isinstance(argnames, (tuple, list)):
