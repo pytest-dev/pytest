@@ -6,6 +6,7 @@ import traceback
 import py
 import pytest
 from _pytest.mark import MarkInfo
+from _pytest.runner import Skipped
 
 
 def pytest_addoption(parser):
@@ -88,6 +89,8 @@ class MarkEvaluator:
     def istrue(self):
         try:
             return self._istrue()
+        except Skipped:
+            raise
         except Exception:
             self.exc = sys.exc_info()
             if isinstance(self.exc[1], SyntaxError):
