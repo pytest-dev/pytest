@@ -13,8 +13,13 @@ Full pytest documentation
    overview
    apiref
    example/index
-   plugins
+   monkeypatch
+   tmpdir
+   capture
+   recwarn
    cache
+   plugins
+
    contributing
    talks
 
