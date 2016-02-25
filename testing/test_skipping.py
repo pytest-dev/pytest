@@ -551,14 +551,17 @@ class TestSkipif:
                           pytest_runtest_setup(item))
         assert x.value.msg == "condition: hasattr(os, 'sep')"
 
-
-    def test_skipif_reporting(self, testdir):
+    @pytest.mark.parametrize('params', [
+        '"hasattr(sys, \'platform\')"',
+        'True, reason="invalid platform"',
+    ])
+    def test_skipif_reporting(self, testdir, params):
         p = testdir.makepyfile(test_foo="""
             import pytest
-            @pytest.mark.skipif("hasattr(sys, 'platform')")
+            @pytest.mark.skipif(%(params)s)
             def test_that():
                 assert 0
-        """)
+        """ % dict(params=params))
         result = testdir.runpytest(p, '-s', '-rs')
         result.stdout.fnmatch_lines([
             "*SKIP*1*test_foo.py*platform*",
