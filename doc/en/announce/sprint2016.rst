@@ -39,13 +39,16 @@ Here are preliminary participants who said they are likely to come,
 given some expenses funding::
 
     Anatoly Bubenkoff, Netherlands
-    Andreas Pelme, Sweden
+    Andreas Pelme, Personalkollen, Sweden
+    Anthony Wang, Splunk, US
     Brianna Laugher, Australia
     Bruno Oliveira, Brazil
+    Danielle Jenkins, Splunk, US
     Dave Hunt, UK
     Florian Bruhin, Switzerland
     Floris Bruynooghe, UK
-    Holger Krekel, Germany
+    Holger Krekel, merlinux, Germany
+    Oliver Bestwalter, Avira, Germany
     Omar Kohl, Germany
     Raphael Pierzina, US/UK
     Tom Viner, UK
