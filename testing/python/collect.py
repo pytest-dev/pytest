@@ -531,6 +531,84 @@ class TestFunction:
         assert colitems[2].name == 'test2[a-c]'
         assert colitems[3].name == 'test2[b-c]'
 
+    def test_parametrize_skipif(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            m = pytest.mark.skipif('True')
+
+            @pytest.mark.parametrize('x', [0, 1, m(2)])
+            def test_skip_if(x):
+                assert x < 2
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines('* 2 passed, 1 skipped in *')
+
+    def test_parametrize_skip(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            m = pytest.mark.skip('')
+
+            @pytest.mark.parametrize('x', [0, 1, m(2)])
+            def test_skip(x):
+                assert x < 2
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines('* 2 passed, 1 skipped in *')
+
+    def test_parametrize_skipif_no_skip(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            m = pytest.mark.skipif('False')
+
+            @pytest.mark.parametrize('x', [0, 1, m(2)])
+            def test_skipif_no_skip(x):
+                assert x < 2
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines('* 1 failed, 2 passed in *')
+
+    def test_parametrize_xfail(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            m = pytest.mark.xfail('True')
+
+            @pytest.mark.parametrize('x', [0, 1, m(2)])
+            def test_xfail(x):
+                assert x < 2
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines('* 2 passed, 1 xfailed in *')
+
+    def test_parametrize_passed(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            m = pytest.mark.xfail('True')
+
+            @pytest.mark.parametrize('x', [0, 1, m(2)])
+            def test_xfail(x):
+                pass
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines('* 2 passed, 1 xpassed in *')
+
+    def test_parametrize_xfail_passed(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            m = pytest.mark.xfail('False')
+
+            @pytest.mark.parametrize('x', [0, 1, m(2)])
+            def test_passed(x):
+                pass
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines('* 3 passed in *')
+
 
 class TestSorting:
     def test_check_equality(self, testdir):

@@ -5,7 +5,7 @@ import traceback
 
 import py
 import pytest
-from _pytest.mark import MarkInfo
+from _pytest.mark import MarkInfo, MarkDecorator
 
 
 def pytest_addoption(parser):
@@ -163,14 +163,14 @@ def pytest_runtest_setup(item):
     # Check if skip or skipif are specified as pytest marks
 
     skipif_info = item.keywords.get('skipif')
-    if isinstance(skipif_info, MarkInfo):
+    if isinstance(skipif_info, (MarkInfo, MarkDecorator)):
         eval_skipif = MarkEvaluator(item, 'skipif')
         if eval_skipif.istrue():
             item._evalskip = eval_skipif
             pytest.skip(eval_skipif.getexplanation())
 
     skip_info = item.keywords.get('skip')
-    if isinstance(skip_info, MarkInfo):
+    if isinstance(skip_info, (MarkInfo, MarkDecorator)):
         item._evalskip = True
         if 'reason' in skip_info.kwargs:
             pytest.skip(skip_info.kwargs['reason'])
