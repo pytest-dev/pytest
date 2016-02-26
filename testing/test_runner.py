@@ -568,47 +568,30 @@ def test_makereport_getsource(testdir):
     result.stdout.fnmatch_lines(['*else: assert False*'])
 
 
-def test_makereport_getsource_dynamic_code(testdir):
+def test_makereport_getsource_dynamic_code(testdir, monkeypatch):
     """Test that exception in dynamically generated code doesn't break getting the source line."""
-    sub = testdir.mkdir("sub")
-    sub.join("__init__.py").write("")
-    sub.join("fixtures.py").write(py.std.textwrap.dedent(
-    """
-import sys
-import pytest
-import inspect
+    import inspect
+    original_findsource = inspect.findsource
+    def findsource(obj, *args, **kwargs):
+        # Can be triggered by dynamically created functions
+        if obj.__name__ == 'foo':
+            raise IndexError()
+        return original_findsource(obj, *args, **kwargs)
+    monkeypatch.setattr(inspect, 'findsource', findsource)
 
-def get_caller_module(depth=2):
-    frame = sys._getframe(depth)
-    module = inspect.getmodule(frame)
-    if module is None:
-        return get_caller_module(depth=depth)
-    return module
+    testdir.makepyfile("""
+        import pytest
 
-def inject():
-    context = {}
-    exec('''
-import pytest
+        @pytest.fixture
+        def foo(missing):
+            pass
 
-@pytest.fixture
-def foo(request):
-    request.getfuncargvalue('sone')
-''', context)
-    module = get_caller_module()
-    foo = context['foo']
-    module.foo = foo
-
-inject()
-    """))
-    sub.join("conftest.py").write("""from fixtures import foo""")
-    sub.join("test_dynamic.py").write(py.std.textwrap.dedent(
-        """
-def test_foo(foo):
-    pass
-        """))
+        def test_fix(foo):
+            assert False
+    """)
     result = testdir.runpytest('-vv')
     assert 'INTERNALERROR' not in result.stdout.str()
-    result.stdout.fnmatch_lines(['*else: assert False*'])
+    result.stdout.fnmatch_lines(["*test_fix*", "*fixture*'missing'*not found*"])
 
 
 def test_store_except_info_on_eror():

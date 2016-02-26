@@ -30,7 +30,9 @@
 
 *
 
-*
+* catch IndexError exceptions when getting exception source location. This fixes
+  pytest internal error for dynamically generated code (fixtures and tests)
+  where source lines are fake by intention
 
 *
 
@@ -525,10 +527,6 @@
   is that now pytest uses a subdirectory in the $TEMP directory for all
   directories created by this fixture (defaults to $TEMP/pytest-$USER).
   Thanks Bruno Oliveira for the PR.
-
-- catch IndexError exceptions when getting exception source location. This fixes
-  pytest internal error for dynamically generated code (fixtures and tests)
-  where source lines are fake by intention
 
 2.7.2 (compared to 2.7.1)
 =============================
