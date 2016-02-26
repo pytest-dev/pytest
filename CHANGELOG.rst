@@ -30,7 +30,9 @@
 
 *
 
-*
+* catch IndexError exceptions when getting exception source location. This fixes
+  pytest internal error for dynamically generated code (fixtures and tests)
+  where source lines are fake by intention
 
 *
 
