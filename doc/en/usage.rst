@@ -66,10 +66,13 @@ Examples for modifying traceback printing::
     py.test --showlocals # show local variables in tracebacks
     py.test -l           # show local variables (shortcut)
 
-    py.test --tb=long    # the default informative traceback formatting
-    py.test --tb=native  # the Python standard library formatting
-    py.test --tb=short   # a shorter traceback format
+    py.test --tb=auto    # (default) 'long' tracebacks for the first and last
+                         # entry, but 'short' style for the other entries
+    py.test --tb=long    # exhaustive, informative traceback formatting
+    py.test --tb=short   # shorter traceback format
     py.test --tb=line    # only one line per failure
+    py.test --tb=native  # Python standard library formatting
+    py.test --tb=no      # no traceback at all
 
 Dropping to PDB_ (Python Debugger) on failures
 -----------------------------------------------
