@@ -94,13 +94,17 @@
 * Fix formatting utf-8 explanation messages (`#1379`_).
   Thanks `@biern`_ for the PR.
 
-*
+* Fix `traceback style docs`_ to describe all of the available options
+  (auto/long/short/line/native/no), with `auto` being the default since v2.6.
+  Thanks `@hackebrot`_ for the PR.
 
 *
 
 *
 
 *
+
+.. _`traceback style docs`: https://pytest.org/latest/usage.html#modifying-python-traceback-printing
 
 .. _#1379: https://github.com/pytest-dev/pytest/issues/1379
 .. _#1366: https://github.com/pytest-dev/pytest/issues/1366
@@ -124,6 +128,7 @@
 .. _@tomviner: https://github.com/tomviner
 .. _@RonnyPfannschmidt: https://github.com/RonnyPfannschmidt
 .. _@rabbbit: https://github.com/rabbbit
+.. _@hackebrot: https://github.com/hackebrot
 
 2.8.7
 -----
