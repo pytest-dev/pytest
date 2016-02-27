@@ -50,7 +50,7 @@ given some expenses funding::
     Holger Krekel, merlinux, Germany
     Oliver Bestwalter, Avira, Germany
     Omar Kohl, Germany
-    Raphael Pierzina, US/UK
+    Raphael Pierzina, FanDuel, UK
     Tom Viner, UK
 
     <your name here?>
