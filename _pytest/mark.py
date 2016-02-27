@@ -169,7 +169,7 @@ class MarkGenerator:
     """ Factory for :class:`MarkDecorator` objects - exposed as
     a ``pytest.mark`` singleton instance.  Example::
 
-         import py
+         import pytest
          @pytest.mark.slowtest
          def test_function():
             pass
