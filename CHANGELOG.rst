@@ -98,7 +98,8 @@
   (auto/long/short/line/native/no), with `auto` being the default since v2.6.
   Thanks `@hackebrot`_ for the PR.
 
-*
+* Fix (`#1422`_): junit record_xml_property doesn't allow multiple records
+  with same name.
 
 *
 
@@ -106,6 +107,7 @@
 
 .. _`traceback style docs`: https://pytest.org/latest/usage.html#modifying-python-traceback-printing
 
+.. _#1422: https://github.com/pytest-dev/pytest/issues/1422
 .. _#1379: https://github.com/pytest-dev/pytest/issues/1379
 .. _#1366: https://github.com/pytest-dev/pytest/issues/1366
 .. _#1040: https://github.com/pytest-dev/pytest/pull/1040
