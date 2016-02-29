@@ -254,6 +254,7 @@ class LogXML(object):
         ], 0)
         self.node_reporters = {}  # nodeid -> _NodeReporter
         self.node_reporters_ordered = []
+        self.global_properties = []
 
     def finalize(self, report):
         nodeid = getattr(report, 'nodeid', report)
@@ -273,9 +274,12 @@ class LogXML(object):
         if key in self.node_reporters:
             # TODO: breasks for --dist=each
             return self.node_reporters[key]
+
         reporter = _NodeReporter(nodeid, self)
+
         self.node_reporters[key] = reporter
         self.node_reporters_ordered.append(reporter)
+
         return reporter
 
     def add_stats(self, key):
@@ -361,7 +365,9 @@ class LogXML(object):
         numtests = self.stats['passed'] + self.stats['failure']
 
         logfile.write('<?xml version="1.0" encoding="utf-8"?>')
+
         logfile.write(Junit.testsuite(
+            self._get_global_properties_node(),
             [x.to_xml() for x in self.node_reporters_ordered],
             name="pytest",
             errors=self.stats['error'],
@@ -374,3 +380,18 @@ class LogXML(object):
     def pytest_terminal_summary(self, terminalreporter):
         terminalreporter.write_sep("-",
                                    "generated xml file: %s" % (self.logfile))
+
+    def add_global_property(self, name, value):
+        self.global_properties.append((str(name), bin_xml_escape(value)))
+
+    def _get_global_properties_node(self):
+        """Return a Junit node containing custom properties, if any.
+        """
+        if self.global_properties:
+            return Junit.properties(
+                    [
+                        Junit.property(name=name, value=value)
+                        for name, value in self.global_properties
+                    ]
+            )
+        return ''

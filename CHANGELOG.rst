@@ -11,7 +11,9 @@
   for a fixture (to solve the funcarg-shadowing-fixture problem).
   Thanks `@novas0x2a`_ for the complete PR (`#1444`_).
 
-*
+* New Add ability to add global properties in the final xunit output file.
+  Thanks `@tareqalayan`_ for the complete PR `#1446`_).
+
 
 *
 
