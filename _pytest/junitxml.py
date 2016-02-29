@@ -65,8 +65,7 @@ class _NodeReporter(object):
         self.xml = xml
         self.add_stats = self.xml.add_stats
         self.duration = 0
-        self.properties = {}
-        self.property_insert_order = []
+        self.properties = []
         self.nodes = []
         self.testcase = None
         self.attrs = {}
@@ -76,18 +75,15 @@ class _NodeReporter(object):
         self.nodes.append(node)
 
     def add_property(self, name, value):
-        name = str(name)
-        if name not in self.property_insert_order:
-            self.property_insert_order.append(name)
-        self.properties[name] = bin_xml_escape(value)
+        self.properties.append((str(name), bin_xml_escape(value)))
 
     def make_properties_node(self):
         """Return a Junit node containing custom properties, if any.
         """
         if self.properties:
             return Junit.properties([
-                Junit.property(name=name, value=self.properties[name])
-                for name in self.property_insert_order
+                Junit.property(name=name, value=value)
+                for name, value in self.properties
             ])
         return ''
 
