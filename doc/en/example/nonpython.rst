@@ -27,7 +27,7 @@ now execute the test specification::
 
     nonpython $ py.test test_simple.yml
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.4.0, pytest-2.9.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile: 
     collected 2 items
     
@@ -59,7 +59,7 @@ consulted when reporting in ``verbose`` mode::
 
     nonpython $ py.test -v
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.4
+    platform linux -- Python 3.4.0, pytest-2.9.0, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.4
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile: 
     collecting ... collected 2 items
@@ -81,7 +81,7 @@ interesting to just look at the collection tree::
 
     nonpython $ py.test --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.4.0, pytest-2.9.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile: 
     collected 2 items
     <YamlFile 'test_simple.yml'>
