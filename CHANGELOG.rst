@@ -3,7 +3,7 @@
 
 **New Features**
 
-* New ``pytest.mark.skip`` mark, which unconditional skips marked tests.
+* New ``pytest.mark.skip`` mark, which unconditionally skips marked tests.
   Thanks `@MichaelAquilina`_ for the complete PR (`#1040`_).
 
 * ``--doctest-glob`` may now be passed multiple times in the command-line.
