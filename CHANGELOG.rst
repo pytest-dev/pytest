@@ -15,6 +15,10 @@
   tests.
   Thanks `@kalekundert`_ for the complete PR (`#1441`_).
 
+* New Add ability to add global properties in the final xunit output file.
+  Thanks `@tareqalayan`_ for the complete PR `#1454`_).
+
+
 *
 
 **Changes**
@@ -28,10 +32,13 @@
 .. _@milliams: https://github.com/milliams
 .. _@novas0x2a: https://github.com/novas0x2a
 .. _@kalekundert: https://github.com/kalekundert
+.. _@tareqalayan: https://github.com/tareqalayan
 
 .. _#1428: https://github.com/pytest-dev/pytest/pull/1428
 .. _#1444: https://github.com/pytest-dev/pytest/pull/1444
 .. _#1441: https://github.com/pytest-dev/pytest/pull/1441
+.. _#1454: https://github.com/pytest-dev/pytest/pull/1454
+
 
 2.9.1.dev1
 ==========
