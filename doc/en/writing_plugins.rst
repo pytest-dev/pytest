@@ -550,7 +550,7 @@ Reference of objects involved in hooks
 .. autoclass:: _pytest.runner.TestReport()
     :members:
 
-.. autoclass:: _pytest.core.CallOutcome()
+.. autoclass:: _pytest.vendored_packages.pluggy._CallOutcome()
     :members:
 
 .. autofunction:: _pytest.config.get_plugin_manager()

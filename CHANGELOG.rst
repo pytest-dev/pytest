@@ -1,9 +1,9 @@
-2.9.0.dev
-=========
+2.9.0
+=====
 
 **New Features**
 
-* New ``pytest.mark.skip`` mark, which unconditional skips marked tests.
+* New ``pytest.mark.skip`` mark, which unconditionally skips marked tests.
   Thanks `@MichaelAquilina`_ for the complete PR (`#1040`_).
 
 * ``--doctest-glob`` may now be passed multiple times in the command-line.
@@ -28,15 +28,9 @@
   this fixes `#1366`_.
   Thanks to `@hpk42`_ for the report and `@RonnyPfannschmidt`_ for the PR.
 
-*
-
 * catch IndexError exceptions when getting exception source location. This fixes
   pytest internal error for dynamically generated code (fixtures and tests)
   where source lines are fake by intention
-
-*
-
-*
 
 **Changes**
 
@@ -72,15 +66,9 @@
 
 * Added expected exceptions to pytest.raises fail message
 
-*
-
 * Collection only displays progress ("collecting X items") when in a terminal.
   This avoids cluttering the output when using ``--color=yes`` to obtain
   colors in CI integrations systems (`#1397`_).
-
-*
-
-*
 
 **Bug Fixes**
 
@@ -100,10 +88,6 @@
 
 * Fix (`#1422`_): junit record_xml_property doesn't allow multiple records
   with same name.
-
-*
-
-*
 
 .. _`traceback style docs`: https://pytest.org/latest/usage.html#modifying-python-traceback-printing
 

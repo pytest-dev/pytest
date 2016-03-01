@@ -13,7 +13,7 @@ get on the terminal - we are working on that):
 
     assertion $ py.test failure_demo.py
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.4.0, pytest-2.9.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR/assertion, inifile: 
     collected 42 items
     
@@ -28,7 +28,7 @@ get on the terminal - we are working on that):
     >       assert param1 * 2 < param2
     E       assert (3 * 2) < 6
     
-    failure_demo.py:15: AssertionError
+    failure_demo.py:16: AssertionError
     _______ TestFailing.test_simple ________
     
     self = <failure_demo.TestFailing object at 0xdeadbeef>
@@ -44,7 +44,7 @@ get on the terminal - we are working on that):
     E        +  where 42 = <function TestFailing.test_simple.<locals>.f at 0xdeadbeef>()
     E        +  and   43 = <function TestFailing.test_simple.<locals>.g at 0xdeadbeef>()
     
-    failure_demo.py:28: AssertionError
+    failure_demo.py:29: AssertionError
     _______ TestFailing.test_simple_multiline ________
     
     self = <failure_demo.TestFailing object at 0xdeadbeef>
@@ -54,7 +54,7 @@ get on the terminal - we are working on that):
                       42,
     >                 6*9)
     
-    failure_demo.py:33: 
+    failure_demo.py:34: 
     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
     
     a = 42, b = 54
@@ -64,7 +64,7 @@ get on the terminal - we are working on that):
                     b)
     E       assert 42 == 54
     
-    failure_demo.py:11: AssertionError
+    failure_demo.py:12: AssertionError
     _______ TestFailing.test_not ________
     
     self = <failure_demo.TestFailing object at 0xdeadbeef>
@@ -76,7 +76,7 @@ get on the terminal - we are working on that):
     E       assert not 42
     E        +  where 42 = <function TestFailing.test_not.<locals>.f at 0xdeadbeef>()
     
-    failure_demo.py:38: AssertionError
+    failure_demo.py:39: AssertionError
     _______ TestSpecialisedExplanations.test_eq_text ________
     
     self = <failure_demo.TestSpecialisedExplanations object at 0xdeadbeef>
@@ -87,7 +87,7 @@ get on the terminal - we are working on that):
     E         - spam
     E         + eggs
     
-    failure_demo.py:42: AssertionError
+    failure_demo.py:43: AssertionError
     _______ TestSpecialisedExplanations.test_eq_similar_text ________
     
     self = <failure_demo.TestSpecialisedExplanations object at 0xdeadbeef>
@@ -100,7 +100,7 @@ get on the terminal - we are working on that):
     E         + foo 2 bar
     E         ?     ^
     
-    failure_demo.py:45: AssertionError
+    failure_demo.py:46: AssertionError
     _______ TestSpecialisedExplanations.test_eq_multiline_text ________
     
     self = <failure_demo.TestSpecialisedExplanations object at 0xdeadbeef>
@@ -113,7 +113,7 @@ get on the terminal - we are working on that):
     E         + eggs
     E           bar
     
-    failure_demo.py:48: AssertionError
+    failure_demo.py:49: AssertionError
     _______ TestSpecialisedExplanations.test_eq_long_text ________
     
     self = <failure_demo.TestSpecialisedExplanations object at 0xdeadbeef>
@@ -130,7 +130,7 @@ get on the terminal - we are working on that):
     E         + 1111111111b222222222
     E         ?           ^
     
-    failure_demo.py:53: AssertionError
+    failure_demo.py:54: AssertionError
     _______ TestSpecialisedExplanations.test_eq_long_text_multiline ________
     
     self = <failure_demo.TestSpecialisedExplanations object at 0xdeadbeef>
@@ -154,7 +154,7 @@ get on the terminal - we are working on that):
     E           2
     E           2
     
-    failure_demo.py:58: AssertionError
+    failure_demo.py:59: AssertionError
     _______ TestSpecialisedExplanations.test_eq_list ________
     
     self = <failure_demo.TestSpecialisedExplanations object at 0xdeadbeef>
@@ -165,7 +165,7 @@ get on the terminal - we are working on that):
     E         At index 2 diff: 2 != 3
     E         Use -v to get the full diff
     
-    failure_demo.py:61: AssertionError
+    failure_demo.py:62: AssertionError
     _______ TestSpecialisedExplanations.test_eq_list_long ________
     
     self = <failure_demo.TestSpecialisedExplanations object at 0xdeadbeef>
@@ -178,7 +178,7 @@ get on the terminal - we are working on that):
     E         At index 100 diff: 1 != 2
     E         Use -v to get the full diff
     
-    failure_demo.py:66: AssertionError
+    failure_demo.py:67: AssertionError
     _______ TestSpecialisedExplanations.test_eq_dict ________
     
     self = <failure_demo.TestSpecialisedExplanations object at 0xdeadbeef>
@@ -195,7 +195,7 @@ get on the terminal - we are working on that):
     E         {'d': 0}
     E         Use -v to get the full diff
     
-    failure_demo.py:69: AssertionError
+    failure_demo.py:70: AssertionError
     _______ TestSpecialisedExplanations.test_eq_set ________
     
     self = <failure_demo.TestSpecialisedExplanations object at 0xdeadbeef>
@@ -212,7 +212,7 @@ get on the terminal - we are working on that):
     E         21
     E         Use -v to get the full diff
     
-    failure_demo.py:72: AssertionError
+    failure_demo.py:73: AssertionError
     _______ TestSpecialisedExplanations.test_eq_longer_list ________
     
     self = <failure_demo.TestSpecialisedExplanations object at 0xdeadbeef>
@@ -223,7 +223,7 @@ get on the terminal - we are working on that):
     E         Right contains more items, first extra item: 3
     E         Use -v to get the full diff
     
-    failure_demo.py:75: AssertionError
+    failure_demo.py:76: AssertionError
     _______ TestSpecialisedExplanations.test_in_list ________
     
     self = <failure_demo.TestSpecialisedExplanations object at 0xdeadbeef>
@@ -232,7 +232,7 @@ get on the terminal - we are working on that):
     >       assert 1 in [0, 2, 3, 4, 5]
     E       assert 1 in [0, 2, 3, 4, 5]
     
-    failure_demo.py:78: AssertionError
+    failure_demo.py:79: AssertionError
     _______ TestSpecialisedExplanations.test_not_in_text_multiline ________
     
     self = <failure_demo.TestSpecialisedExplanations object at 0xdeadbeef>
@@ -250,7 +250,7 @@ get on the terminal - we are working on that):
     E           and a
     E           tail
     
-    failure_demo.py:82: AssertionError
+    failure_demo.py:83: AssertionError
     _______ TestSpecialisedExplanations.test_not_in_text_single ________
     
     self = <failure_demo.TestSpecialisedExplanations object at 0xdeadbeef>
@@ -263,7 +263,7 @@ get on the terminal - we are working on that):
     E           single foo line
     E         ?        +++
     
-    failure_demo.py:86: AssertionError
+    failure_demo.py:87: AssertionError
     _______ TestSpecialisedExplanations.test_not_in_text_single_long ________
     
     self = <failure_demo.TestSpecialisedExplanations object at 0xdeadbeef>
@@ -276,7 +276,7 @@ get on the terminal - we are working on that):
     E           head head foo tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail 
     E         ?           +++
     
-    failure_demo.py:90: AssertionError
+    failure_demo.py:91: AssertionError
     ______ TestSpecialisedExplanations.test_not_in_text_single_long_term _______
     
     self = <failure_demo.TestSpecialisedExplanations object at 0xdeadbeef>
@@ -289,7 +289,7 @@ get on the terminal - we are working on that):
     E           head head fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffftail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail 
     E         ?           ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     
-    failure_demo.py:94: AssertionError
+    failure_demo.py:95: AssertionError
     _______ test_attribute ________
     
         def test_attribute():
@@ -300,7 +300,7 @@ get on the terminal - we are working on that):
     E       assert 1 == 2
     E        +  where 1 = <failure_demo.test_attribute.<locals>.Foo object at 0xdeadbeef>.b
     
-    failure_demo.py:101: AssertionError
+    failure_demo.py:102: AssertionError
     _______ test_attribute_instance ________
     
         def test_attribute_instance():
@@ -311,7 +311,7 @@ get on the terminal - we are working on that):
     E        +  where 1 = <failure_demo.test_attribute_instance.<locals>.Foo object at 0xdeadbeef>.b
     E        +    where <failure_demo.test_attribute_instance.<locals>.Foo object at 0xdeadbeef> = <class 'failure_demo.test_attribute_instance.<locals>.Foo'>()
     
-    failure_demo.py:107: AssertionError
+    failure_demo.py:108: AssertionError
     _______ test_attribute_failure ________
     
         def test_attribute_failure():
@@ -322,7 +322,7 @@ get on the terminal - we are working on that):
             i = Foo()
     >       assert i.b == 2
     
-    failure_demo.py:116: 
+    failure_demo.py:117: 
     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
     
     self = <failure_demo.test_attribute_failure.<locals>.Foo object at 0xdeadbeef>
@@ -331,7 +331,7 @@ get on the terminal - we are working on that):
     >       raise Exception('Failed to get attrib')
     E       Exception: Failed to get attrib
     
-    failure_demo.py:113: Exception
+    failure_demo.py:114: Exception
     _______ test_attribute_multiple ________
     
         def test_attribute_multiple():
@@ -346,7 +346,7 @@ get on the terminal - we are working on that):
     E        +  and   2 = <failure_demo.test_attribute_multiple.<locals>.Bar object at 0xdeadbeef>.b
     E        +    where <failure_demo.test_attribute_multiple.<locals>.Bar object at 0xdeadbeef> = <class 'failure_demo.test_attribute_multiple.<locals>.Bar'>()
     
-    failure_demo.py:124: AssertionError
+    failure_demo.py:125: AssertionError
     _______ TestRaises.test_raises ________
     
     self = <failure_demo.TestRaises object at 0xdeadbeef>
@@ -355,22 +355,22 @@ get on the terminal - we are working on that):
             s = 'qwe'
     >       raises(TypeError, "int(s)")
     
-    failure_demo.py:133: 
+    failure_demo.py:134: 
     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
     
     >   int(s)
     E   ValueError: invalid literal for int() with base 10: 'qwe'
     
-    <0-codegen $PYTHON_PREFIX/lib/python3.4/site-packages/_pytest/python.py:1300>:1: ValueError
+    <0-codegen $PYTHON_PREFIX/lib/python3.4/site-packages/_pytest/python.py:1302>:1: ValueError
     _______ TestRaises.test_raises_doesnt ________
     
     self = <failure_demo.TestRaises object at 0xdeadbeef>
     
         def test_raises_doesnt(self):
     >       raises(IOError, "int('3')")
-    E       Failed: DID NOT RAISE
+    E       Failed: DID NOT RAISE <class 'OSError'>
     
-    failure_demo.py:136: Failed
+    failure_demo.py:137: Failed
     _______ TestRaises.test_raise ________
     
     self = <failure_demo.TestRaises object at 0xdeadbeef>
@@ -379,7 +379,7 @@ get on the terminal - we are working on that):
     >       raise ValueError("demo error")
     E       ValueError: demo error
     
-    failure_demo.py:139: ValueError
+    failure_demo.py:140: ValueError
     _______ TestRaises.test_tupleerror ________
     
     self = <failure_demo.TestRaises object at 0xdeadbeef>
@@ -388,7 +388,7 @@ get on the terminal - we are working on that):
     >       a,b = [1]
     E       ValueError: need more than 1 value to unpack
     
-    failure_demo.py:142: ValueError
+    failure_demo.py:143: ValueError
     ______ TestRaises.test_reinterpret_fails_with_print_for_the_fun_of_it ______
     
     self = <failure_demo.TestRaises object at 0xdeadbeef>
@@ -399,7 +399,7 @@ get on the terminal - we are working on that):
     >       a,b = l.pop()
     E       TypeError: 'int' object is not iterable
     
-    failure_demo.py:147: TypeError
+    failure_demo.py:148: TypeError
     --------------------------- Captured stdout call ---------------------------
     l is [1, 2, 3]
     _______ TestRaises.test_some_error ________
@@ -410,26 +410,26 @@ get on the terminal - we are working on that):
     >       if namenotexi:
     E       NameError: name 'namenotexi' is not defined
     
-    failure_demo.py:150: NameError
+    failure_demo.py:151: NameError
     _______ test_dynamic_compile_shows_nicely ________
     
         def test_dynamic_compile_shows_nicely():
             src = 'def foo():\n assert 1 == 0\n'
             name = 'abc-123'
             module = py.std.imp.new_module(name)
-            code = py.code.compile(src, name, 'exec')
+            code = _pytest._code.compile(src, name, 'exec')
             py.builtin.exec_(code, module.__dict__)
             py.std.sys.modules[name] = module
     >       module.foo()
     
-    failure_demo.py:165: 
+    failure_demo.py:166: 
     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
     
         def foo():
     >    assert 1 == 0
     E    assert 1 == 0
     
-    <2-codegen 'abc-123' $REGENDOC_TMPDIR/assertion/failure_demo.py:162>:2: AssertionError
+    <2-codegen 'abc-123' $REGENDOC_TMPDIR/assertion/failure_demo.py:163>:2: AssertionError
     _______ TestMoreErrors.test_complex_error ________
     
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -441,9 +441,9 @@ get on the terminal - we are working on that):
                 return 43
     >       somefunc(f(), g())
     
-    failure_demo.py:175: 
+    failure_demo.py:176: 
     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-    failure_demo.py:8: in somefunc
+    failure_demo.py:9: in somefunc
         otherfunc(x,y)
     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
     
@@ -453,7 +453,7 @@ get on the terminal - we are working on that):
     >       assert a==b
     E       assert 44 == 43
     
-    failure_demo.py:5: AssertionError
+    failure_demo.py:6: AssertionError
     _______ TestMoreErrors.test_z1_unpack_error ________
     
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -463,7 +463,7 @@ get on the terminal - we are working on that):
     >       a,b  = l
     E       ValueError: need more than 0 values to unpack
     
-    failure_demo.py:179: ValueError
+    failure_demo.py:180: ValueError
     _______ TestMoreErrors.test_z2_type_error ________
     
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -473,7 +473,7 @@ get on the terminal - we are working on that):
     >       a,b  = l
     E       TypeError: 'int' object is not iterable
     
-    failure_demo.py:183: TypeError
+    failure_demo.py:184: TypeError
     _______ TestMoreErrors.test_startswith ________
     
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -485,7 +485,7 @@ get on the terminal - we are working on that):
     E       assert <built-in method startswith of str object at 0xdeadbeef>('456')
     E        +  where <built-in method startswith of str object at 0xdeadbeef> = '123'.startswith
     
-    failure_demo.py:188: AssertionError
+    failure_demo.py:189: AssertionError
     _______ TestMoreErrors.test_startswith_nested ________
     
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -501,7 +501,7 @@ get on the terminal - we are working on that):
     E        +    where '123' = <function TestMoreErrors.test_startswith_nested.<locals>.f at 0xdeadbeef>()
     E        +  and   '456' = <function TestMoreErrors.test_startswith_nested.<locals>.g at 0xdeadbeef>()
     
-    failure_demo.py:195: AssertionError
+    failure_demo.py:196: AssertionError
     _______ TestMoreErrors.test_global_func ________
     
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -511,7 +511,7 @@ get on the terminal - we are working on that):
     E       assert isinstance(43, float)
     E        +  where 43 = globf(42)
     
-    failure_demo.py:198: AssertionError
+    failure_demo.py:199: AssertionError
     _______ TestMoreErrors.test_instance ________
     
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -522,7 +522,7 @@ get on the terminal - we are working on that):
     E       assert 42 != 42
     E        +  where 42 = <failure_demo.TestMoreErrors object at 0xdeadbeef>.x
     
-    failure_demo.py:202: AssertionError
+    failure_demo.py:203: AssertionError
     _______ TestMoreErrors.test_compare ________
     
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -532,7 +532,7 @@ get on the terminal - we are working on that):
     E       assert 11 < 5
     E        +  where 11 = globf(10)
     
-    failure_demo.py:205: AssertionError
+    failure_demo.py:206: AssertionError
     _______ TestMoreErrors.test_try_finally ________
     
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -543,7 +543,7 @@ get on the terminal - we are working on that):
     >           assert x == 0
     E           assert 1 == 0
     
-    failure_demo.py:210: AssertionError
+    failure_demo.py:211: AssertionError
     _______ TestCustomAssertMsg.test_single_line ________
     
     self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef>
@@ -557,7 +557,7 @@ get on the terminal - we are working on that):
     E       assert 1 == 2
     E        +  where 1 = <class 'failure_demo.TestCustomAssertMsg.test_single_line.<locals>.A'>.a
     
-    failure_demo.py:221: AssertionError
+    failure_demo.py:222: AssertionError
     _______ TestCustomAssertMsg.test_multiline ________
     
     self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef>
@@ -574,7 +574,7 @@ get on the terminal - we are working on that):
     E       assert 1 == 2
     E        +  where 1 = <class 'failure_demo.TestCustomAssertMsg.test_multiline.<locals>.A'>.a
     
-    failure_demo.py:227: AssertionError
+    failure_demo.py:228: AssertionError
     _______ TestCustomAssertMsg.test_custom_repr ________
     
     self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef>
@@ -594,5 +594,5 @@ get on the terminal - we are working on that):
     E       assert 1 == 2
     E        +  where 1 = This is JSON\n{\n  'foo': 'bar'\n}.a
     
-    failure_demo.py:237: AssertionError
+    failure_demo.py:238: AssertionError
     ======= 42 failed in 0.12 seconds ========

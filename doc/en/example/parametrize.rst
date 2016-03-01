@@ -130,7 +130,7 @@ objects, they are still using the default pytest representation::
 
     $ py.test test_time.py --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.4.0, pytest-2.9.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 6 items
     <Module 'test_time.py'>
@@ -181,7 +181,7 @@ this is a fully self-contained example which you can run with::
 
     $ py.test test_scenarios.py
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.4.0, pytest-2.9.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
@@ -194,7 +194,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
 
     $ py.test --collect-only test_scenarios.py
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.4.0, pytest-2.9.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     <Module 'test_scenarios.py'>
@@ -259,7 +259,7 @@ Let's first see how it looks like at collection time::
 
     $ py.test test_backends.py --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.4.0, pytest-2.9.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     <Module 'test_backends.py'>
@@ -320,7 +320,7 @@ The result of this test will be successful::
 
     $ py.test test_indirect_list.py --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.4.0, pytest-2.9.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     <Module 'test_indirect_list.py'>
@@ -397,8 +397,11 @@ is to be run with different sets of arguments for its three arguments:
 Running it results in some skips if we don't have all the python interpreters installed and otherwise runs all combinations (5 interpreters times 5 interpreters times 3 objects to serialize/deserialize)::
 
    . $ py.test -rs -q multipython.py
-   ...........................
-   27 passed in 0.12 seconds
+   ssssssssssss...ssssssssssss
+   ======= short test summary info ========
+   SKIP [12] $REGENDOC_TMPDIR/CWD/multipython.py:23: 'python2.6' not found
+   SKIP [12] $REGENDOC_TMPDIR/CWD/multipython.py:23: 'python3.3' not found
+   3 passed, 24 skipped in 0.12 seconds
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------
@@ -445,7 +448,7 @@ If you run this with reporting for skips enabled::
 
     $ py.test -rs test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.4.0, pytest-2.9.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     

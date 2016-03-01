@@ -224,15 +224,15 @@ Running it with the report-on-xfail option gives this output::
 
     example $ py.test -rx xfail_demo.py
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.7, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.4.0, pytest-2.9.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR/example, inifile: 
     collected 7 items
-
+    
     xfail_demo.py xxxxxxx
     ======= short test summary info ========
     XFAIL xfail_demo.py::test_hello
     XFAIL xfail_demo.py::test_hello2
-      reason: [NOTRUN]
+      reason: [NOTRUN] 
     XFAIL xfail_demo.py::test_hello3
       condition: hasattr(os, 'sep')
     XFAIL xfail_demo.py::test_hello4
@@ -242,9 +242,8 @@ Running it with the report-on-xfail option gives this output::
     XFAIL xfail_demo.py::test_hello6
       reason: reason
     XFAIL xfail_demo.py::test_hello7
-
+    
     ======= 7 xfailed in 0.12 seconds ========
-
 
 xfail signature summary
 ~~~~~~~~~~~~~~~~~~~~~~~
