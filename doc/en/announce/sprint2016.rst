@@ -46,7 +46,7 @@ given some expenses funding::
     Danielle Jenkins, Splunk, US
     Dave Hunt, UK
     Florian Bruhin, Switzerland
-    Floris Bruynooghe, UK
+    Floris Bruynooghe, Cobe.io, UK
     Holger Krekel, merlinux, Germany
     Oliver Bestwalter, Avira, Germany
     Omar Kohl, Germany
