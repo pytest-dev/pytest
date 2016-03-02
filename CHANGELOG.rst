@@ -23,25 +23,25 @@
 * New ``-rp`` and ``-rP`` reporting options give the summary and full output
   of passing tests, respectively. Thanks to `@codewarrior0`_ for the PR.
 
-* ``pytest.mark.xfail`` now has a ``strict`` option which makes ``XPASS``
-  tests to fail the test suite, defaulting to ``False``. There's also a
+* ``pytest.mark.xfail`` now has a ``strict`` option, which makes ``XPASS``
+  tests to fail the test suite (defaulting to ``False``). There's also a
   ``xfail_strict`` ini option that can be used to configure it project-wise.
   Thanks `@rabbbit`_ for the request and `@nicoddemus`_ for the PR (`#1355`_).
 
-* ``Parser.addini`` now supports options of type ``bool``. Thanks
-  `@nicoddemus`_ for the PR.
+* ``Parser.addini`` now supports options of type ``bool``. 
+  Thanks `@nicoddemus`_ for the PR.
 
-* New ``ALLOW_BYTES`` doctest option strips ``b`` prefixes from byte strings
+* New ``ALLOW_BYTES`` doctest option. This strips ``b`` prefixes from byte strings
   in doctest output (similar to ``ALLOW_UNICODE``).
   Thanks `@jaraco`_ for the request and `@nicoddemus`_ for the PR (`#1287`_).
 
-* give a hint on KeyboardInterrupt to use the --fulltrace option to show the errors,
-  this fixes `#1366`_.
+* Give a hint on ``KeyboardInterrupt`` to use the ``--fulltrace`` option to show the errors.
+  Fixes `#1366`_.
   Thanks to `@hpk42`_ for the report and `@RonnyPfannschmidt`_ for the PR.
 
-* catch IndexError exceptions when getting exception source location. This fixes
-  pytest internal error for dynamically generated code (fixtures and tests)
-  where source lines are fake by intention
+* Catch ``IndexError`` exceptions when getting exception source location. 
+  Fixes a pytest internal error for dynamically generated code (fixtures and tests)
+  where source lines are fake by intention.
 
 **Changes**
 
@@ -68,14 +68,14 @@
   Thanks `@nicoddemus`_ for the PR (`#1226`_).
 
 * Comparisons now always show up in full when ``CI`` or ``BUILD_NUMBER`` is
-  found in the environment, even when -vv isn't used.
+  found in the environment, even when ``-vv`` isn't used.
   Thanks `@The-Compiler`_ for the PR.
 
 * ``--lf`` and ``--ff`` now support long names: ``--last-failed`` and
   ``--failed-first`` respectively.
   Thanks `@MichaelAquilina`_ for the PR.
 
-* Added expected exceptions to pytest.raises fail message
+* Added expected exceptions to ``pytest.raises`` fail message.
 
 * Collection only displays progress ("collecting X items") when in a terminal.
   This avoids cluttering the output when using ``--color=yes`` to obtain
