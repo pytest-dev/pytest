@@ -128,12 +128,12 @@
 .. _@hackebrot: https://github.com/hackebrot
 
 2.8.7
------
+=====
 
 - fix #1338: use predictable object resolution for monkeypatch
 
 2.8.6
------
+=====
 
 - fix #1259: allow for double nodeids in junitxml,
   this was a regression failing plugins combinations
@@ -298,7 +298,7 @@
 - fix issue 1029: transform errors when writing cache values into pytest-warnings
 
 2.8.0
-=============================
+=====
 
 - new ``--lf`` and ``-ff`` options to run only the last failing tests or
   "failing tests first" from the last run.  This functionality is provided
@@ -663,7 +663,7 @@
   via postmortem debugging (almarklein).
 
 2.6.4
-==========
+=====
 
 - Improve assertion failure reporting on iterables, by using ndiff and
   pprint.
@@ -692,7 +692,7 @@
 - fix issue614: fixed pastebin support.
 
 2.6.3
-===========
+=====
 
 - fix issue575: xunit-xml was reporting collection errors as failures
   instead of errors, thanks Oleg Sinyavskiy.
@@ -719,7 +719,7 @@
   Floris Bruynooghe.
 
 2.6.2
-===========
+=====
 
 - Added function pytest.freeze_includes(), which makes it easy to embed
   pytest into executables using tools like cx_freeze.
@@ -748,7 +748,7 @@
   to them.
 
 2.6.1
-===================================
+=====
 
 - No longer show line numbers in the --verbose output, the output is now
   purely the nodeid.  The line number is still shown in failure reports.
@@ -780,7 +780,7 @@
   Thanks Bruno Oliveira.
 
 2.6
-===================================
+===
 
 - Cache exceptions from fixtures according to their scope (issue 467).
 
@@ -885,7 +885,7 @@
 
 
 2.5.2
-===================================
+=====
 
 - fix issue409 -- better interoperate with cx_freeze by not
   trying to import from collections.abc which causes problems
@@ -913,7 +913,7 @@
 
 
 2.5.1
-===================================
+=====
 
 - merge new documentation styling PR from Tobias Bieniek.
 
@@ -934,7 +934,7 @@
 
 
 2.5.0
-===================================
+=====
 
 - dropped python2.5 from automated release testing of pytest itself
   which means it's probably going to break soon (but still works
@@ -1069,8 +1069,8 @@
 
 - fix verbose reporting for @mock'd test functions
 
-v2.4.2
-===================================
+2.4.2
+=====
 
 - on Windows require colorama and a newer py lib so that py.io.TerminalWriter()
   now uses colorama instead of its own ctypes hacks. (fixes issue365)
@@ -1100,8 +1100,8 @@ v2.4.2
 - add pluginmanager.do_configure(config) as a link to
   config.do_configure() for plugin-compatibility
 
-v2.4.1
-===================================
+2.4.1
+=====
 
 - When using parser.addoption() unicode arguments to the
   "type" keyword should also be converted to the respective types.
@@ -1116,8 +1116,8 @@ v2.4.1
 
 - merge doc typo fixes, thanks Andy Dirnberger
 
-v2.4
-===================================
+2.4
+===
 
 known incompatibilities:
 
@@ -1285,8 +1285,8 @@ Bug fixes:
   ".section(title)" and ".line(msg)" methods to print extra
   information at the end of a test run.
 
-v2.3.5
-===================================
+2.3.5
+=====
 
 - fix issue169: respect --tb=style with setup/teardown errors as well.
 
@@ -1350,8 +1350,8 @@ v2.3.5
 
 - fix issue266 - accept unicode in MarkEvaluator expressions
 
-v2.3.4
-===================================
+2.3.4
+=====
 
 - yielded test functions will now have autouse-fixtures active but
   cannot accept fixtures as funcargs - it's anyway recommended to
@@ -1370,8 +1370,8 @@ v2.3.4
   need to write as -k "TestClass and test_method" to match a certain
   method in a certain test class.
 
-v2.3.3
-===================================
+2.3.3
+=====
 
 - fix issue214 - parse modules that contain special objects like e. g.
   flask's request object which blows up on getattr access if no request
@@ -1402,8 +1402,8 @@ v2.3.3
 - fix issue127 - improve documentation for pytest_addoption() and
   add a ``config.getoption(name)`` helper function for consistency.
 
-v2.3.2
-===================================
+2.3.2
+=====
 
 - fix issue208 and fix issue29 use new py version to avoid long pauses
   when printing tracebacks in long modules
@@ -1435,8 +1435,8 @@ v2.3.2
   - add tox.ini to pytest distribution so that ignore-dirs and others config
     bits are properly distributed for maintainers who run pytest-own tests
 
-v2.3.1
-===================================
+2.3.1
+=====
 
 - fix issue202 - fix regression: using "self" from fixture functions now
   works as expected (it's the same "self" instance that a test method
@@ -1448,8 +1448,8 @@ v2.3.1
 - link to web pages from --markers output which provides help for
   pytest.mark.* usage.
 
-v2.3.0
-===================================
+2.3.0
+=====
 
 - fix issue202 - better automatic names for parametrized test functions
 - fix issue139 - introduce @pytest.fixture which allows direct scoping
@@ -1527,8 +1527,8 @@ v2.3.0
 
   - py.test -vv will show all of assert comparisations instead of truncating
 
-v2.2.4
-===================================
+2.2.4
+=====
 
 - fix error message for rewritten assertions involving the % operator
 - fix issue 126: correctly match all invalid xml characters for junitxml
@@ -1544,13 +1544,13 @@ v2.2.4
 - fix issue #144: better mangle test ids to junitxml classnames
 - upgrade distribute_setup.py to 0.6.27
 
-v2.2.3
-========================================
+2.2.3
+=====
 
 - fix uploaded package to only include neccesary files
 
-v2.2.2
-========================================
+2.2.2
+=====
 
 - fix issue101: wrong args to unittest.TestCase test function now
   produce better output
@@ -1569,8 +1569,8 @@ v2.2.2
 - allow adding of attributes to test reports such that it also works
   with distributed testing (no upgrade of pytest-xdist needed)
 
-v2.2.1
-========================================
+2.2.1
+=====
 
 - fix issue99 (in pytest and py) internallerrors with resultlog now
   produce better output - fixed by normalizing pytest_internalerror
@@ -1586,8 +1586,8 @@ v2.2.1
 - fix collection crash due to unknown-source collected items, thanks
   to Ralf Schmitt (fixed by depending on a more recent pylib)
 
-v2.2.0
-========================================
+2.2.0
+=====
 
 - fix issue90: introduce eager tearing down of test items so that
   teardown function are called earlier.
@@ -1621,8 +1621,8 @@ v2.2.0
 - simplify junitxml output code by relying on py.xml
 - add support for skip properties on unittest classes and functions
 
-v2.1.3
-========================================
+2.1.3
+=====
 
 - fix issue79: assertion rewriting failed on some comparisons in boolops
 - correctly handle zero length arguments (a la pytest '')
@@ -1630,8 +1630,8 @@ v2.1.3
 - fix issue75 / skipping test failure on jython
 - fix issue77 / Allow assertrepr_compare hook to apply to a subset of tests
 
-v2.1.2
-========================================
+2.1.2
+=====
 
 - fix assertion rewriting on files with windows newlines on some Python versions
 - refine test discovery by package/module name (--pyargs), thanks Florian Mayer
@@ -1640,8 +1640,8 @@ v2.1.2
 - fix issue66: use different assertion rewriting caches when the -O option is passed
 - don't try assertion rewriting on Jython, use reinterp
 
-v2.1.1
-==============================================
+2.1.1
+=====
 
 - fix issue64 / pytest.set_trace now works within pytest_generate_tests hooks
 - fix issue60 / fix error conditions involving the creation of __pycache__
@@ -1653,8 +1653,8 @@ v2.1.1
 - fix issue61: assertion rewriting on boolean operations with 3 or more operands
 - you can now build a man page with "cd doc ; make man"
 
-v2.1.0
-==============================================
+2.1.0
+=====
 
 - fix issue53 call nosestyle setup functions with correct ordering
 - fix issue58 and issue59: new assertion code fixes
@@ -1673,8 +1673,8 @@ v2.1.0
 - report KeyboardInterrupt even if interrupted during session startup
 - fix issue 35 - provide PDF doc version and download link from index page
 
-v2.0.3
-==============================================
+2.0.3
+=====
 
 - fix issue38: nicer tracebacks on calls to hooks, particularly early
   configure/sessionstart ones
@@ -1693,8 +1693,8 @@ v2.0.3
 
 - fix issue37: avoid invalid characters in junitxml's output
 
-v2.0.2
-==============================================
+2.0.2
+=====
 
 - tackle issue32 - speed up test runs of very quick test functions
   by reducing the relative overhead
@@ -1745,8 +1745,8 @@ v2.0.2
 
 - avoid std unittest assertion helper code in tracebacks (thanks Ronny)
 
-v2.0.1
-==============================================
+2.0.1
+=====
 
 - refine and unify initial capturing so that it works nicely
   even if the logging module is used on an early-loaded conftest.py
@@ -1794,8 +1794,8 @@ v2.0.1
   parametraization remains the "pytest_generate_tests"
   mechanism, see the docs.
 
-v2.0.0
-==============================================
+2.0.0
+=====
 
 - pytest-2.0 is now its own package and depends on pylib-2.0
 - new ability: python -m pytest / python -m pytest.main ability
@@ -1839,8 +1839,8 @@ v2.0.0
 - add ability to use "class" level for cached_setup helper
 - fix strangeness: mark.* objects are now immutable, create new instances
 
-v1.3.4
-==============================================
+1.3.4
+=====
 
 - fix issue111: improve install documentation for windows
 - fix issue119: fix custom collectability of __init__.py as a module
@@ -1848,8 +1848,8 @@ v1.3.4
 - fix issue115: unify internal exception passthrough/catching/GeneratorExit
 - fix issue118: new --tb=native for presenting cpython-standard exceptions
 
-v1.3.3
-==============================================
+1.3.3
+=====
 
 - fix issue113: assertion representation problem with triple-quoted strings
   (and possibly other cases)
@@ -1863,8 +1863,8 @@ v1.3.3
   (thanks Armin Ronacher for reporting)
 - remove trailing whitespace in all py/text distribution files
 
-v1.3.2
-==============================================
+1.3.2
+=====
 
 **New features**
 
@@ -1936,8 +1936,8 @@ v1.3.2
 - fix homedir detection on Windows
 - ship distribute_setup.py version 0.6.13
 
-v1.3.1
-=============================================
+1.3.1
+=====
 
 **New features**
 
@@ -2006,8 +2006,8 @@ v1.3.1
   (and internally be more careful when presenting unexpected byte sequences)
 
 
-v1.3.0
-=============================================
+1.3.0
+=====
 
 - deprecate --report option in favour of a new shorter and easier to
   remember -r option: it takes a string argument consisting of any
@@ -2071,8 +2071,8 @@ v1.3.0
 - added links to the new capturelog and coverage plugins
 
 
-v1.2.0
-=============================================
+1.2.0
+=====
 
 - refined usage and options for "py.cleanup"::
 
@@ -2110,8 +2110,8 @@ v1.2.0
 
 - fix plugin links
 
-v1.1.1
-=============================================
+1.1.1
+=====
 
 - moved dist/looponfailing from py.test core into a new
   separately released pytest-xdist plugin.
@@ -2194,8 +2194,8 @@ v1.1.1
 - fix docs, fix internal bin/ script generation
 
 
-v1.1.0
-=============================================
+1.1.0
+=====
 
 - introduce automatic plugin registration via 'pytest11'
   entrypoints via setuptools' pkg_resources.iter_entry_points
@@ -2213,8 +2213,8 @@ v1.1.0
 - try harder to have deprecation warnings for py.compat.* accesses
   report a correct location
 
-v1.0.3
-=============================================
+1.0.3
+=====
 
 * adjust and improve docs
 
@@ -2298,16 +2298,16 @@ v1.0.3
 
 * simplified internal localpath implementation
 
-v1.0.2
-===========================================
+1.0.2
+=====
 
 * fixing packaging issues, triggered by fedora redhat packaging,
   also added doc, examples and contrib dirs to the tarball.
 
 * added a documentation link to the new django plugin.
 
-v1.0.1
-===========================================
+1.0.1
+=====
 
 * added a 'pytest_nose' plugin which handles nose.SkipTest,
   nose-style function/method/generator setup/teardown and
@@ -2340,14 +2340,14 @@ v1.0.1
 * simplified multicall mechanism and plugin architecture,
   renamed some internal methods and argnames
 
-v1.0.0
-===========================================
+1.0.0
+=====
 
 * more terse reporting try to show filesystem path relatively to current dir
 * improve xfail output a bit
 
-v1.0.0b9
-===========================================
+1.0.0b9
+=======
 
 * cleanly handle and report final teardown of test setup
 
@@ -2380,8 +2380,8 @@ v1.0.0b9
 * item.repr_failure(excinfo) instead of item.repr_failure(excinfo, outerr)
 
 
-v1.0.0b8
-===========================================
+1.0.0b8
+=======
 
 * pytest_unittest-plugin is now enabled by default
 
@@ -2409,8 +2409,8 @@ v1.0.0b8
 * tweaked doctest output for docstrings in py modules,
   thanks Radomir.
 
-v1.0.0b7
-===========================================
+1.0.0b7
+=======
 
 * renamed py.test.xfail back to py.test.mark.xfail to avoid
   two ways to decorate for xfail
@@ -2434,8 +2434,8 @@ v1.0.0b7
 
 * make __name__ == "__channelexec__" for remote_exec code
 
-v1.0.0b3
-===========================================
+1.0.0b3
+=======
 
 * plugin classes are removed: one now defines
   hooks directly in conftest.py or global pytest_*.py
@@ -2451,8 +2451,8 @@ v1.0.0b3
   well with function arguments.
 
 
-v1.0.0b1
-===========================================
+1.0.0b1
+=======
 
 * introduced new "funcarg" setup method,
   see doc/test/funcarg.txt
@@ -2475,8 +2475,8 @@ v1.0.0b1
 
 XXX lots of things missing here XXX
 
-v0.9.2
-===========================================
+0.9.2
+=====
 
 * refined installation and metadata, created new setup.py,
   now based on setuptools/ez_setup (thanks to Ralf Schmitt
@@ -2508,8 +2508,8 @@ v0.9.2
 
 * there now is a py.__version__ attribute
 
-v0.9.1
-===========================================
+0.9.1
+=====
 
 This is a fairly complete list of v0.9.1, which can
 serve as a reference for developers.
