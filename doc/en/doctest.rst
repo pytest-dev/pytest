@@ -115,8 +115,8 @@ place the objects you want to appear in the doctest namespace::
     # content of conftest.py
     import numpy
     @pytest.fixture(autouse=True)
-        def add_np(doctest_namespace):
-            doctest_namespace['np'] = numpy
+    def add_np(doctest_namespace):
+        doctest_namespace['np'] = numpy
 
 which can then be used in your doctests directly::
 
