@@ -3,7 +3,8 @@
 
 **New Features**
 
-*
+* New ``doctest_namespace`` fixture for injecting names into the
+  namespace in which your doctests run.
 
 * 
 

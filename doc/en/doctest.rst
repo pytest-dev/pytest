@@ -102,4 +102,29 @@ itself::
     >>> get_unicode_greeting()  # doctest: +ALLOW_UNICODE
     'Hello'
 
+The 'doctest_namespace' fixture
+-------------------------------
 
+The ``doctest_namespace`` fixture can be used to inject items into the
+namespace in which your doctests run. It is intended to be used within
+your own fixtures to provide the tests that use them with context.
+
+``doctest_namespace`` is a standard ``dict`` object into which you
+place the objects you want to appear in the doctest namespace::
+
+    # content of conftest.py
+    import numpy
+    @pytest.fixture(autouse=True)
+        def add_np(doctest_namespace):
+            doctest_namespace['np'] = numpy
+
+which can then be used in your doctests directly::
+
+    # content of numpy.py
+    def arange():
+        """
+        >>> a = np.arange(10)
+        >>> len(a)
+        10
+        """
+        pass
