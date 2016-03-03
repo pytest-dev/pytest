@@ -5,10 +5,14 @@
 
 *
 
-* Fix (`#469`_): junit parses report.nodeid incorrectly, when params contain
-  ``::``.
+* Fix (`#469`_): junit parses report.nodeid incorrectly, when params IDs
+  contain ``::``. Thanks `@tomviner`_ for the PR (`#1431`_).
 
 *
+
+.. _#469: https://github.com/pytest-dev/pytest/issues/469
+.. _#1431: https://github.com/pytest-dev/pytest/pull/1431
+
 
 2.9.0
 =====
@@ -103,7 +107,6 @@
 
 .. _`traceback style docs`: https://pytest.org/latest/usage.html#modifying-python-traceback-printing
 
-.. _#469: https://github.com/pytest-dev/pytest/issues/469
 .. _#1422: https://github.com/pytest-dev/pytest/issues/1422
 .. _#1379: https://github.com/pytest-dev/pytest/issues/1379
 .. _#1366: https://github.com/pytest-dev/pytest/issues/1366
