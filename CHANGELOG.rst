@@ -5,6 +5,7 @@
 
 * New ``doctest_namespace`` fixture for injecting names into the
   namespace in which your doctests run.
+  Thanks `@milliams`_ for the complete PR (`#1428`_).
 
 * 
 
@@ -27,6 +28,11 @@
 *
 
 *
+
+
+.. _@milliams: https://github.com/milliams
+
+.. _#1428: https://github.com/pytest-dev/pytest/pull/1428
 
 
 2.9.0
