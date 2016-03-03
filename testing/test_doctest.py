@@ -713,3 +713,53 @@ class TestDoctestAutoUseFixtures:
         result = testdir.runpytest('--doctest-modules')
         assert 'FAILURES' not in str(result.stdout.str())
         result.stdout.fnmatch_lines(['*=== 1 passed in *'])
+
+
+class TestDoctestNamespaceFixture:
+
+    SCOPES = ['module', 'session', 'class', 'function']
+
+    @pytest.mark.parametrize('scope', SCOPES)
+    def test_namespace_doctestfile(self, testdir, scope):
+        """
+        Check that inserting something into the namespace works in a
+        simple text file doctest
+        """
+        testdir.makeconftest("""
+            import pytest
+            import contextlib
+
+            @pytest.fixture(autouse=True, scope="{scope}")
+            def add_contextlib(doctest_namespace):
+                doctest_namespace['cl'] = contextlib
+        """.format(scope=scope))
+        p = testdir.maketxtfile("""
+            >>> print(cl.__name__)
+            contextlib
+        """)
+        reprec = testdir.inline_run(p)
+        reprec.assertoutcome(passed=1)
+
+    @pytest.mark.parametrize('scope', SCOPES)
+    def test_namespace_pyfile(self, testdir, scope):
+        """
+        Check that inserting something into the namespace works in a
+        simple Python file docstring doctest
+        """
+        testdir.makeconftest("""
+            import pytest
+            import contextlib
+
+            @pytest.fixture(autouse=True, scope="{scope}")
+            def add_contextlib(doctest_namespace):
+                doctest_namespace['cl'] = contextlib
+        """.format(scope=scope))
+        p = testdir.makepyfile("""
+            def foo():
+                '''
+                >>> print(cl.__name__)
+                contextlib
+                '''
+        """)
+        reprec = testdir.inline_run(p, "--doctest-modules")
+        reprec.assertoutcome(passed=1)
