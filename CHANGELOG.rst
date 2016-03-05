@@ -10,8 +10,19 @@
 
 *
 
+* Fix (`#578 <https://github.com/pytest-dev/pytest/issues/578>`_): SyntaxErrors
+  containing non-ascii lines at the point of failure generated an internal
+  py.test error.
+  Thanks `@asottile`_ for the report and `@nicoddemus`_ for the PR.
+
+*
+
+*
+
 .. _#469: https://github.com/pytest-dev/pytest/issues/469
 .. _#1431: https://github.com/pytest-dev/pytest/pull/1431
+
+.. _@asottile: https://github.com/asottile
 
 
 2.9.0
