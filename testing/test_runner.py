@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import with_statement
 
 import _pytest._code
@@ -437,6 +438,24 @@ def test_pytest_fail_notrace(testdir):
         "hello",
     ])
     assert 'def teardown_function' not in result.stdout.str()
+
+
+def test_pytest_fail_notrace_unicode(testdir):
+    """Fix pytest.fail with pytrace=False with non-ascii characters (#1178).
+    """
+    testdir.makepyfile(u"""
+        # coding: utf-8
+        import pytest
+
+        def test_hello():
+            pytest.fail(u'oh oh: ☺', pytrace=False)
+    """)
+    result = testdir.runpytest()
+    if sys.version_info[0] >= 3:
+        result.stdout.fnmatch_lines(['*test_hello*', "oh oh: ☺"])
+    else:
+        result.stdout.fnmatch_lines(['*test_hello*', "oh oh: *"])
+    assert 'def test_hello' not in result.stdout.str()
 
 
 def test_pytest_no_tests_collected_exit_status(testdir):

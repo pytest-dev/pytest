@@ -5,6 +5,10 @@
 
 *
 
+* Fix (`#1178 <https://github.com/pytest-dev/pytest/issues/1178>`_):
+  ``pytest.fail`` with non-ascii characters raises an internal pytest error.
+  Thanks `@nicoddemus`_ for the PR.
+
 * Fix (`#469`_): junit parses report.nodeid incorrectly, when params IDs
   contain ``::``. Thanks `@tomviner`_ for the PR (`#1431`_).
 
