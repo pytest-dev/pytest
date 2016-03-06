@@ -392,6 +392,20 @@ class TestGeneralUsage:
         monkeypatch.setitem(sys.modules, 'myplugin', mod)
         assert pytest.main(args=[str(tmpdir)], plugins=['myplugin']) == 0
 
+    def test_parameterized_with_bytes_regex(self, testdir):
+        p = testdir.makepyfile("""
+            import re
+            import pytest
+            @pytest.mark.parametrize('r', [re.compile(b'foo')])
+            def test_stuff(r):
+                pass
+        """
+        )
+        res = testdir.runpytest(p)
+        res.stdout.fnmatch_lines([
+            '*1 passed*'
+        ])
+
 
 class TestInvocationVariants:
     def test_earlyinit(self, testdir):

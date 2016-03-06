@@ -170,6 +170,11 @@ class TestMetafunc:
         result = idmaker((py.builtin._totext("a"), "b"), [({}, b'\xc3\xb4')])
         assert result == ['a0-\\xc3\\xb4']
 
+    def test_idmaker_with_bytes_regex(self):
+        from _pytest.python import idmaker
+        result = idmaker(("a"), [(re.compile(b'foo'), 1.0)])
+        assert result == ["foo"]
+
     def test_idmaker_native_strings(self):
         from _pytest.python import idmaker
         totext = py.builtin._totext
