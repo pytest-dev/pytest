@@ -740,7 +740,7 @@ class FunctionMixin(PyobjMixin):
     def _repr_failure_py(self, excinfo, style="long"):
         if excinfo.errisinstance(pytest.fail.Exception):
             if not excinfo.value.pytrace:
-                return str(excinfo.value)
+                return py._builtin._totext(excinfo.value)
         return super(FunctionMixin, self)._repr_failure_py(excinfo,
             style=style)
 
