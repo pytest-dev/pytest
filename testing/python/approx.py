@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 import pytest
 import doctest
 
@@ -13,7 +15,7 @@ class MyDocTestRunner(doctest.DocTestRunner):
 
 class TestApprox:
 
-    def test_approx(self):
+    def test_approx_doctests(self):
         parser = doctest.DocTestParser()
         test = parser.get_doctest(
                 pytest.approx.__doc__,
@@ -24,4 +26,7 @@ class TestApprox:
         runner = MyDocTestRunner()
         runner.run(test)
 
+    def test_repr_string(self):
+        print(pytest.approx(1.0))
+        assert repr(pytest.approx(1.0)) == '1.0 ± 1.0e-06'
 

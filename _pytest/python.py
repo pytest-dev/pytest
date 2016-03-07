@@ -1349,8 +1349,8 @@ class approx:
         >>> 0.1 + 0.2 == 0.3
         False
 
-    This problem is commonly encountered when writing tests, e.g. to make sure
-    that a floating-point function returns the expected values.  The best way
+    This problem is commonly encountered when writing tests, e.g. when making
+    sure that a floating-point function returns the expected values.  One way
     to deal with this problem is to assert that two floating point numbers are
     equal to within some appropriate margin::
    
@@ -1399,6 +1399,8 @@ class approx:
 
         >>> 0.1 + 0.2 == approx(0.3, abs=1e-100)
         False
+        >>> 0.1 + 0.2 == approx(0.3, rel=1e-6, abs=1e-100)
+        True
     """
 
     def __init__(self, expected, rel=None, abs=None):
@@ -1408,24 +1410,24 @@ class approx:
 
     def __repr__(self):
         from collections import Iterable
-        plus_minus = lambda x: '{}\u00B1{}'.format(x, self._margin(x))
+        plus_minus = lambda x: '{} \u00B1 {:.1e}'.format(x, self._get_margin(x))
 
         if isinstance(self.expected, Iterable):
             return str([plus_minus(x) for x in self.expected])
         else:
-            plus_minus(self.expected)
+            return plus_minus(self.expected)
 
     def __eq__(self, actual):
         from collections import Iterable
         expected = self.expected
-        almost_eq = lambda a, x: abs(x - a) < self._margin(x)
+        almost_eq = lambda a, x: abs(x - a) < self._get_margin(x)
 
         if isinstance(actual, Iterable) and isinstance(expected, Iterable):
             return all(almost_eq(a, x) for a, x in zip(actual, expected))
         else:
             return almost_eq(actual, expected)
 
-    def _margin(self, x):
+    def _get_margin(self, x):
         margin = self.max_absolute_error or 1e-100
 
         if self.max_relative_error is None:
@@ -1433,7 +1435,6 @@ class approx:
                 return margin
 
         return max(margin, x * (self.max_relative_error or 1e-6))
-
 
 
 #
