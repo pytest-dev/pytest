@@ -1418,7 +1418,7 @@ class approx(object):
     def __repr__(self):
         from collections import Iterable
         utf_8 = lambda s: s.encode('utf-8') if sys.version_info.major == 2 else s
-        plus_minus = lambda x: utf_8(u'{} \u00b1 {:.1e}'.format(x, self._get_margin(x)))
+        plus_minus = lambda x: utf_8(u'{0} \u00b1 {1:.1e}'.format(x, self._get_margin(x)))
 
         if isinstance(self.expected, Iterable):
             return ', '.join([plus_minus(x) for x in self.expected])
