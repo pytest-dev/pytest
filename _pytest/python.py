@@ -1205,7 +1205,8 @@ def getlocation(function, curdir):
 # builtin pytest.raises helper
 
 def raises(expected_exception, *args, **kwargs):
-    """ assert that a code block/function call raises ``expected_exception``
+    """
+    Assert that a code block/function call raises ``expected_exception``
     and raise a failure exception otherwise.
 
     This helper produces a ``ExceptionInfo()`` object (see below).
@@ -1341,7 +1342,8 @@ class RaisesContext(object):
 # builtin pytest.approx helper
 
 class approx(object):
-    """ assert that two numbers (or two sets of numbers) are equal to each
+    """
+    Assert that two numbers (or two sets of numbers) are equal to each
     other within some margin.
 
     Due to the intricacies of floating-point arithmetic, numbers that we would
@@ -1351,8 +1353,8 @@ class approx(object):
         False
 
     This problem is commonly encountered when writing tests, e.g. when making
-    sure that a floating-point function returns the expected values.  One way
-    to deal with this problem is to assert that two floating point numbers are
+    sure that floating-point values are what you expect them to be.  One way to
+    deal with this problem is to assert that two floating-point numbers are
     equal to within some appropriate margin::
    
         >>> abs((0.1 + 0.2) - 0.3) < 1e-6
@@ -1362,7 +1364,7 @@ class approx(object):
     understand.  Furthermore, absolute comparisons like the one above are
     usually discouraged in favor of relative comparisons, which can't even be
     easily written on one line.  The ``approx`` class provides a way to make
-    floating point comparisons that solves both these problems::
+    floating-point comparisons that solves both these problems::
 
         >>> from pytest import approx
         >>> 0.1 + 0.2 == approx(0.3)
@@ -1375,12 +1377,13 @@ class approx(object):
         True
 
     By default, ``approx`` considers two numbers to be equal if the relative
-    error between them is less than one part in a million (e.g. 1e-6).
+    error between them is less than one part in a million (e.g. ``1e-6``).
     Relative error is defined as ``abs(x - a) / x`` where ``x`` is the value
     you're expecting and ``a`` is the value you're comparing to.  This
     definition breaks down when the numbers being compared get very close to
     zero, so ``approx`` will also consider two numbers to be equal if the
-    absolute difference between them is less than 1e-12.
+    absolute difference between them is less than one part in a trillion (e.g. 
+    ``1e-12``).
 
     Both the relative and absolute error thresholds can be changed by passing
     arguments to the ``approx`` constructor::
@@ -1396,7 +1399,8 @@ class approx(object):
     consider the relative error between the two values at all.  In other words,
     two numbers that are within the default relative error threshold of 1e-6
     will still be considered unequal if they exceed the specified absolute
-    error threshold::
+    error threshold.  If you specify both ``abs`` and ``rel``, the numbers will 
+    be considered equal if either threshold is met::
 
         >>> 1 + 1e-8 == approx(1)
         True
