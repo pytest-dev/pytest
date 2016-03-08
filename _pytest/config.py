@@ -383,8 +383,8 @@ class PytestPluginManager(PluginManager):
             importspec = modname
         try:
             __import__(importspec)
-        except ImportError:
-            raise
+        except ImportError as e:
+            raise ImportError('Error importing plugin "%s": %s' % (modname, e))
         except Exception as e:
             import pytest
             if not hasattr(pytest, 'skip') or not isinstance(e, pytest.skip.Exception):

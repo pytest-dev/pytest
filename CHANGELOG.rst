@@ -5,13 +5,17 @@
 
 *
 
+*
+
+* Improve error message when a plugin fails to load.
+  Thanks `@nicoddemus`_ for the PR.
+
 * Fix (`#1178 <https://github.com/pytest-dev/pytest/issues/1178>`_):
   ``pytest.fail`` with non-ascii characters raises an internal pytest error.
   Thanks `@nicoddemus`_ for the PR.
 
 * Fix (`#469`_): junit parses report.nodeid incorrectly, when params IDs
   contain ``::``. Thanks `@tomviner`_ for the PR (`#1431`_).
-
 
 * Fix (`#578 <https://github.com/pytest-dev/pytest/issues/578>`_): SyntaxErrors
   containing non-ascii lines at the point of failure generated an internal
@@ -20,6 +24,8 @@
 
 * Fix (`#1437`_): When passing in a bytestring regex pattern to parameterize
   attempt to decode it as utf-8 ignoring errors.
+
+*
 
 *
 
