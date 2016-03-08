@@ -1,4 +1,5 @@
 """ Python test discovery, setup and run of test functions. """
+
 import fnmatch
 import functools
 import inspect
@@ -1379,7 +1380,7 @@ class approx(object):
     you're expecting and ``a`` is the value you're comparing to.  This
     definition breaks down when the numbers being compared get very close to
     zero, so ``approx`` will also consider two numbers to be equal if the
-    absolute difference between them is less than 1e-100.
+    absolute difference between them is less than 1e-12.
 
     Both the relative and absolute error thresholds can be changed by passing
     arguments to the ``approx`` constructor::
@@ -1393,13 +1394,15 @@ class approx(object):
 
     Note that if you specify ``abs`` but not ``rel``, the comparison will not
     consider the relative error between the two values at all.  In other words,
-    two number that are within the default relative error threshold of 1e-6
+    two numbers that are within the default relative error threshold of 1e-6
     will still be considered unequal if they exceed the specified absolute
     error threshold::
 
-        >>> 0.1 + 0.2 == approx(0.3, abs=1e-100)
+        >>> 1 + 1e-8 == approx(1)
+        True
+        >>> 1 + 1e-8 == approx(1, abs=1e-12)
         False
-        >>> 0.1 + 0.2 == approx(0.3, rel=1e-6, abs=1e-100)
+        >>> 1 + 1e-8 == approx(1, rel=1e-6, abs=1e-12)
         True
     """
 
@@ -1429,7 +1432,7 @@ class approx(object):
             return almost_eq(actual, expected)
 
     def _get_margin(self, x):
-        margin = self.max_absolute_error or 1e-100
+        margin = self.max_absolute_error or 1e-12
 
         if self.max_relative_error is None:
             if self.max_absolute_error is not None:
