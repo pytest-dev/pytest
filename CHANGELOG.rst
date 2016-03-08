@@ -7,7 +7,8 @@
   namespace in which your doctests run.
   Thanks `@milliams`_ for the complete PR (`#1428`_).
 
-* 
+* New ``approx()`` function for easily comparing floating-point numbers in 
+  tests.
 
 *
 
