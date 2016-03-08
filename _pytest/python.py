@@ -1382,7 +1382,7 @@ class approx(object):
     you're expecting and ``a`` is the value you're comparing to.  This
     definition breaks down when the numbers being compared get very close to
     zero, so ``approx`` will also consider two numbers to be equal if the
-    absolute difference between them is less than one part in a trillion (e.g. 
+    absolute difference between them is less than one part in a trillion (e.g.
     ``1e-12``).
 
     Both the relative and absolute error thresholds can be changed by passing
@@ -1399,7 +1399,7 @@ class approx(object):
     consider the relative error between the two values at all.  In other words,
     two numbers that are within the default relative error threshold of 1e-6
     will still be considered unequal if they exceed the specified absolute
-    error threshold.  If you specify both ``abs`` and ``rel``, the numbers will 
+    error threshold.  If you specify both ``abs`` and ``rel``, the numbers will
     be considered equal if either threshold is met::
 
         >>> 1 + 1e-8 == approx(1)
