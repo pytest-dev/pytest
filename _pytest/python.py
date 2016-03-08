@@ -1339,7 +1339,7 @@ class RaisesContext(object):
 
 # builtin pytest.approx helper
 
-class approx:
+class approx(object):
     """ assert that two numbers (or two sets of numbers) are equal to each
     other within some margin.
 
@@ -1410,10 +1410,11 @@ class approx:
 
     def __repr__(self):
         from collections import Iterable
-        plus_minus = lambda x: '{} \u00B1 {:.1e}'.format(x, self._get_margin(x))
+        utf_8 = lambda s: s.encode('utf-8') if sys.version_info.major == 2 else s
+        plus_minus = lambda x: utf_8(u'{} \u00b1 {:.1e}'.format(x, self._get_margin(x)))
 
         if isinstance(self.expected, Iterable):
-            return str([plus_minus(x) for x in self.expected])
+            return ', '.join([plus_minus(x) for x in self.expected])
         else:
             return plus_minus(self.expected)
 
