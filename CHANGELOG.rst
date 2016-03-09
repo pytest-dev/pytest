@@ -7,7 +7,11 @@
   namespace in which your doctests run.
   Thanks `@milliams`_ for the complete PR (`#1428`_).
 
-* 
+* New ``name`` argument to ``pytest.fixture`` mark, which allows a custom name
+  for a fixture (to solve the funcarg-shadowing-fixture problem).
+  Thanks `@novas0x2a`_ for the complete PR (`#1444`_).
+
+*
 
 *
 
@@ -21,8 +25,10 @@
 *
 
 .. _@milliams: https://github.com/milliams
+.. _@novas0x2a: https://github.com/novas0x2a
 
 .. _#1428: https://github.com/pytest-dev/pytest/pull/1428
+.. _#1444: https://github.com/pytest-dev/pytest/pull/1444
 
 
 2.9.1.dev1
