@@ -178,13 +178,17 @@ def test_default_markers(testdir):
         "*trylast*last*",
     ])
 
+
 def test_importplugin_issue375(testdir, pytestpm):
+    """Don't hide import errors when importing plugins and provide
+    an easy to debug message.
+    """
     testdir.syspathinsert(testdir.tmpdir)
     testdir.makepyfile(qwe="import aaaa")
     with pytest.raises(ImportError) as excinfo:
         pytestpm.import_plugin("qwe")
-    assert "qwe" not in str(excinfo.value)
-    assert "aaaa" in str(excinfo.value)
+    expected = '.*Error importing plugin "qwe": No module named \'?aaaa\'?'
+    assert py.std.re.match(expected, str(excinfo.value))
 
 
 class TestPytestPluginManager:
