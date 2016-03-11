@@ -150,7 +150,7 @@ class LFPlugin:
         if config.getvalue("cacheshow") or hasattr(config, "slaveinput"):
             return
         prev_failed = config.cache.get("cache/lastfailed", None) is not None
-        if (session.items and prev_failed) or self.lastfailed:
+        if (session.testscollected and prev_failed) or self.lastfailed:
             config.cache.set("cache/lastfailed", self.lastfailed)
 
 
