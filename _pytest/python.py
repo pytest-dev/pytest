@@ -6,6 +6,7 @@ import inspect
 import re
 import types
 import sys
+import math
 
 import py
 import pytest
@@ -1412,37 +1413,120 @@ class approx(object):
 
     def __init__(self, expected, rel=None, abs=None):
         self.expected = expected
-        self.max_relative_error = rel
-        self.max_absolute_error = abs
+        self.abs = abs
+        self.rel = rel
 
     def __repr__(self):
-        from collections import Iterable
-        utf_8 = lambda s: s.encode('utf-8') if sys.version_info[0] == 2 else s
-        plus_minus = lambda x: utf_8(u'{0} \u00b1 {1:.1e}'.format(x, self._get_margin(x)))
-
-        if isinstance(self.expected, Iterable):
-            return ', '.join([plus_minus(x) for x in self.expected])
-        else:
-            return plus_minus(self.expected)
+        return ', '.join(repr(x) for x in self.expected)
 
     def __eq__(self, actual):
         from collections import Iterable
-        expected = self.expected
-        almost_eq = lambda a, x: abs(x - a) < self._get_margin(x)
+        if not isinstance(actual, Iterable): actual = [actual]
+        if len(actual) != len(self.expected): return False
+        return all(a == x for a, x in zip(actual, self.expected))
 
-        if isinstance(actual, Iterable) and isinstance(expected, Iterable):
-            return all(almost_eq(a, x) for a, x in zip(actual, expected))
+    @property
+    def expected(self):
+        from collections import Iterable
+        approx_non_iter = lambda x: ApproxNonIterable(x, self.rel, self.abs)
+        if isinstance(self._expected, Iterable):
+            return [approx_non_iter(x) for x in self._expected]
         else:
-            return almost_eq(actual, expected)
+            return [approx_non_iter(self._expected)]
 
-    def _get_margin(self, x):
-        margin = self.max_absolute_error or 1e-12
+    @expected.setter
+    def expected(self, expected):
+        self._expected = expected
+        
 
-        if self.max_relative_error is None:
-            if self.max_absolute_error is not None:
-                return margin
 
-        return max(margin, x * (self.max_relative_error or 1e-6))
+class ApproxNonIterable(object):
+    """
+    Perform approximate comparisons for single numbers only.
+
+    This class contains most of the 
+    """
+
+    def __init__(self, expected, rel=None, abs=None):
+        self.expected = expected
+        self.abs = abs
+        self.rel = rel
+
+    def __repr__(self):
+        # Infinities aren't compared using tolerances, so don't show a 
+        # tolerance.
+        if math.isinf(self.expected):
+            return str(self.expected)
+
+        # If a sensible tolerance can't be calculated, self.tolerance will 
+        # raise a ValueError.  In this case, display '???'.
+        try:
+            vetted_tolerance = '{:.1e}'.format(self.tolerance)
+        except ValueError:
+            vetted_tolerance = '???'
+
+        repr = u'{0} \u00b1 {1}'.format(self.expected, vetted_tolerance)
+
+        # In python2, __repr__() must return a string (i.e. not a unicode 
+        # object).  In python3, __repr__() must return a unicode object 
+        # (although now strings are unicode objects and bytes are what 
+        # strings were).
+        if sys.version_info[0] == 2:
+            return repr.encode('utf-8')
+        else:
+            return repr
+
+    def __eq__(self, actual):
+        # Short-circuit exact equality.
+        if actual == self.expected:
+            return True
+
+        # Infinity shouldn't be approximately equal to anything but itself, but 
+        # if there's a relative tolerance, it will be infinite and infinity 
+        # will seem approximately equal to everything.  The equal-to-itself 
+        # case would have been short circuited above, so here we can just 
+        # return false if the expected value is infinite.  The abs() call is 
+        # for compatibility with complex numbers.
+        if math.isinf(abs(self.expected)):
+            return False
+
+        # Return true if the two numbers are within the tolerance.
+        return abs(self.expected - actual) <= self.tolerance
+
+    @property
+    def tolerance(self):
+        set_default = lambda x, default: x if x is not None else default
+
+        # Figure out what the absolute tolerance should be.  ``self.abs`` is 
+        # either None or a value specified by the user.
+        absolute_tolerance = set_default(self.abs, 1e-12)
+
+        if absolute_tolerance < 0:
+            raise ValueError("absolute tolerance can't be negative: {}".format(absolute_tolerance))
+        if math.isnan(absolute_tolerance):
+            raise ValueError("absolute tolerance can't be NaN.")
+        
+        # If the user specified an absolute tolerance but not a relative one, 
+        # just return the absolute tolerance.
+        if self.rel is None:
+            if self.abs is not None:
+                return absolute_tolerance
+
+        # Figure out what the absolute tolerance should be.  ``self.rel`` is 
+        # either None or a value specified by the user.  This is done after 
+        # we've made sure the user didn't ask for an absolute tolerance only, 
+        # because we don't want to raise errors about the relative tolerance if 
+        # it isn't even being used.
+        relative_tolerance = set_default(self.rel, 1e-6) * abs(self.expected)
+
+        if relative_tolerance < 0:
+            raise ValueError("relative tolerance can't be negative: {}".format(absolute_tolerance))
+        if math.isnan(relative_tolerance):
+            raise ValueError("relative tolerance can't be NaN.")
+        
+        # Return the larger of the relative and absolute tolerances.
+        return max(relative_tolerance, absolute_tolerance)
+
 
 
 #
