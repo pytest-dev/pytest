@@ -31,7 +31,9 @@ class TestApprox:
 
     def test_operator_overloading(self):
         assert 1 == approx(1, rel=1e-6, abs=1e-12)
+        assert not (1 != approx(1, rel=1e-6, abs=1e-12))
         assert 10 != approx(1, rel=1e-6, abs=1e-12)
+        assert not (10 == approx(1, rel=1e-6, abs=1e-12))
 
     def test_exactly_equal(self):
         examples = [
@@ -41,7 +43,8 @@ class TestApprox:
                 (12345, 12345.0),
                 (0.0, -0.0),
                 (345678, 345678),
-                (Decimal(1.0001), Decimal(1.0001)),
+                (Decimal('1.0001'), Decimal('1.0001')),
+                (Fraction(1, 3), Fraction(-1, -3)),
         ]
         for a, x in examples:
             assert a == approx(x)
@@ -258,8 +261,8 @@ class TestApprox:
                 (Decimal('-1.000001'), Decimal('-1.0')),
         ]
         for a, x in within_1e6:
-            assert a == approx(x, rel=Decimal(5e-6), abs=0)
-            assert a != approx(x, rel=Decimal(5e-7), abs=0)
+            assert a == approx(x, rel=Decimal('5e-6'), abs=0)
+            assert a != approx(x, rel=Decimal('5e-7'), abs=0)
 
     def test_fraction(self):
         within_1e6 = [

@@ -1470,6 +1470,9 @@ class approx(object):
         if len(actual) != len(self.expected): return False
         return all(a == x for a, x in zip(actual, self.expected))
 
+    def __ne__(self, actual):
+        return not (actual == self)
+
     @property
     def expected(self):
         # Regardless of whether the user-specified expected value is a number
@@ -1545,6 +1548,9 @@ class ApproxNonIterable(object):
 
         # Return true if the two numbers are within the tolerance.
         return abs(self.expected - actual) <= self.tolerance
+
+    def __ne__(self, actual):
+        return not (actual == self)
 
     @property
     def tolerance(self):
