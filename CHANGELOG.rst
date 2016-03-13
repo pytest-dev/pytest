@@ -9,6 +9,7 @@
 
 * New ``approx()`` function for easily comparing floating-point numbers in 
   tests.
+  Thanks `@kalekundert`_ for the complete PR (`#1441`_).
 
 *
 
@@ -22,8 +23,10 @@
 *
 
 .. _@milliams: https://github.com/milliams
+.. _@kalekundert: https://github.com/kalekundert
 
 .. _#1428: https://github.com/pytest-dev/pytest/pull/1428
+.. _#1441: https://github.com/pytest-dev/pytest/pull/1441
 
 
 2.9.1.dev1
