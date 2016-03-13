@@ -718,7 +718,7 @@ class Session(FSCollector):
             if rep.passed:
                 has_matched = False
                 for x in rep.result:
-                    if x.name == name:
+                    if x.name == name or x.name.split("[")[0] == name:
                         resultnodes.extend(self.matchnodes([x], nextnames))
                         has_matched = True
                 # XXX accept IDs that don't have "()" for class instances
