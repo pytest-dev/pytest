@@ -116,12 +116,13 @@ def safe_getattr(object, name, default):
 
 class FixtureFunctionMarker:
     def __init__(self, scope, params,
-                 autouse=False, yieldctx=False, ids=None):
+                 autouse=False, yieldctx=False, ids=None, name=None):
         self.scope = scope
         self.params = params
         self.autouse = autouse
         self.yieldctx = yieldctx
         self.ids = ids
+        self.name = name
 
     def __call__(self, function):
         if isclass(function):
@@ -131,7 +132,7 @@ class FixtureFunctionMarker:
         return function
 
 
-def fixture(scope="function", params=None, autouse=False, ids=None):
+def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
     """ (return a) decorator to mark a fixture factory function.
 
     This decorator can be used (with or or without parameters) to define
@@ -157,14 +158,21 @@ def fixture(scope="function", params=None, autouse=False, ids=None):
        so that they are part of the test id. If no ids are provided
        they will be generated automatically from the params.
 
+    :arg name: the name of the fixture. This defaults to the name of the
+               decorated function. If a fixture is used in the same module in
+               which it is defined, the function name of the fixture will be
+               shadowed by the function arg that requests the fixture; one way
+               to resolve this is to name the decorated function
+               ``fixture_<fixturename>`` and then use
+               ``@pytest.fixture(name='<fixturename>')``.
     """
     if callable(scope) and params is None and autouse == False:
         # direct decoration
         return FixtureFunctionMarker(
-                "function", params, autouse)(scope)
+                "function", params, autouse, name=name)(scope)
     if params is not None and not isinstance(params, (list, tuple)):
         params = list(params)
-    return FixtureFunctionMarker(scope, params, autouse, ids=ids)
+    return FixtureFunctionMarker(scope, params, autouse, ids=ids, name=name)
 
 def yield_fixture(scope="function", params=None, autouse=False, ids=None):
     """ (return a) decorator to mark a yield-fixture factory function
@@ -2242,6 +2250,8 @@ class FixtureManager:
                 # fixture attribute
                 continue
             else:
+                if marker.name:
+                    name = marker.name
                 assert not name.startswith(self._argprefix)
             fixturedef = FixtureDef(self, nodeid, name, obj,
                                     marker.scope, marker.params,
