@@ -36,7 +36,6 @@
 
 .. _@asottile: https://github.com/asottile
 
-
 2.9.0
 =====
 
@@ -70,6 +69,8 @@
 * Catch ``IndexError`` exceptions when getting exception source location. 
   Fixes a pytest internal error for dynamically generated code (fixtures and tests)
   where source lines are fake by intention.
+
+* Add ability to add global properties in the final xunit output file.
 
 **Changes**
 
