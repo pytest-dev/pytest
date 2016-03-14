@@ -1417,8 +1417,8 @@ class approx(object):
 
     If you're thinking about using ``approx``, then you might want to know how
     it compares to other good ways of comparing floating-point numbers.  All of
-    these algorithms are based on relative and absolute tolerances, but they do
-    have meaningful differences:
+    these algorithms are based on relative and absolute tolerances and should
+    agree for the most part, but they do have meaningful differences:
 
     - ``math.isclose(a, b, rel_tol=1e-9, abs_tol=0.0)``:  True if the relative
       tolerance is met w.r.t. either ``a`` or ``b`` or if the absolute
@@ -1449,7 +1449,7 @@ class approx(object):
       __ https://docs.python.org/3/library/unittest.html#unittest.TestCase.assertAlmostEqual
 
     - ``a == pytest.approx(b, rel=1e-6, abs=1e-12)``: True if the relative
-      tolerance is met w.r.t. ``b`` or the if the absolute tolerance is met.
+      tolerance is met w.r.t. ``b`` or if the absolute tolerance is met.
       Because the relative tolerance is only calculated w.r.t. ``b``, this test
       is asymmetric and you can think of ``b`` as the reference value.  In the
       special case that you explicitly specify an absolute tolerance but not a
