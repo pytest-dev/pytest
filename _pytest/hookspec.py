@@ -81,7 +81,7 @@ def pytest_cmdline_main(config):
     """ called for performing the main command line action. The default
     implementation will invoke the configure hooks and runtest_mainloop. """
 
-def pytest_load_initial_conftests(args, early_config, parser):
+def pytest_load_initial_conftests(early_config, parser, args):
     """ implements the loading of initial conftest files ahead
     of command line option parsing. """
 
