@@ -1466,8 +1466,10 @@ class approx(object):
 
     def __eq__(self, actual):
         from collections import Iterable
-        if not isinstance(actual, Iterable): actual = [actual]
-        if len(actual) != len(self.expected): return False
+        if not isinstance(actual, Iterable):
+            actual = [actual]
+        if len(actual) != len(self.expected):
+            return False
         return all(a == x for a, x in zip(actual, self.expected))
 
     def __ne__(self, actual):
@@ -1521,16 +1523,16 @@ class ApproxNonIterable(object):
         except ValueError:
             vetted_tolerance = '???'
 
-        repr = u'{0} \u00b1 {1}'.format(self.expected, vetted_tolerance)
+        plus_minus = u'{0} \u00b1 {1}'.format(self.expected, vetted_tolerance)
 
         # In python2, __repr__() must return a string (i.e. not a unicode
         # object).  In python3, __repr__() must return a unicode object
         # (although now strings are unicode objects and bytes are what
         # strings were).
         if sys.version_info[0] == 2:
-            return repr.encode('utf-8')
+            return plus_minus.encode('utf-8')
         else:
-            return repr
+            return plus_minus
 
     def __eq__(self, actual):
         # Short-circuit exact equality.
@@ -1571,11 +1573,11 @@ class ApproxNonIterable(object):
             if self.abs is not None:
                 return absolute_tolerance
 
-        # Figure out what the absolute tolerance should be.  ``self.rel`` is
+        # Figure out what the relative tolerance should be.  ``self.rel`` is
         # either None or a value specified by the user.  This is done after
         # we've made sure the user didn't ask for an absolute tolerance only,
         # because we don't want to raise errors about the relative tolerance if
-        # it isn't even being used.
+        # we aren't even going to use it.
         relative_tolerance = set_default(self.rel, 1e-6) * abs(self.expected)
 
         if relative_tolerance < 0:
