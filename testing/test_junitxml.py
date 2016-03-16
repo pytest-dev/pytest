@@ -783,3 +783,38 @@ def test_fancy_items_regression(testdir):
         u'test_fancy_items_regression test_pass'
         u' test_fancy_items_regression.py',
     ]
+
+
+def test_global_properties(testdir):
+    path = testdir.tmpdir.join("test_global_properties.xml")
+    log = LogXML(str(path), None)
+    from _pytest.runner import BaseReport
+
+    class Report(BaseReport):
+        sections = []
+        nodeid = "test_node_id"
+
+    log.pytest_sessionstart()
+    log.add_global_property('foo', 1)
+    log.add_global_property('bar', 2)
+    log.pytest_sessionfinish()
+
+    dom = minidom.parse(str(path))
+
+    properties = dom.getElementsByTagName('properties')
+
+    assert (properties.length == 1), "There must be one <properties> node"
+
+    property_list = dom.getElementsByTagName('property')
+
+    assert (property_list.length == 2), "There most be only 2 property nodes"
+
+    expected = {'foo': '1', 'bar': '2'}
+    actual = {}
+
+    for p in property_list:
+        k = str(p.getAttribute('name'))
+        v = str(p.getAttribute('value'))
+        actual[k] = v
+
+    assert actual == expected
