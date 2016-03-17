@@ -4,7 +4,7 @@ Talks and Tutorials
 
 .. sidebar:: Next Open Trainings
 
-   `professional testing with pytest and tox <http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_, 24-26th November 2014, Freiburg, Germany
+   `professional testing with pytest and tox <http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_, 27-29th June 2016, Freiburg, Germany
 
 .. _`funcargs`: funcargs.html
 
@@ -13,6 +13,9 @@ Talks and blog postings
 
 .. _`tutorial1 repository`: http://bitbucket.org/pytest-dev/pytest-tutorial1/
 .. _`pycon 2010 tutorial PDF`: http://bitbucket.org/pytest-dev/pytest-tutorial1/raw/tip/pytest-basic.pdf
+
+- `pytest - Rapid Simple Testing, Florian Bruhin, Swiss Python Summit 2016
+  <https://www.youtube.com/watch?v=rCBHkQ_LVIs>`_.
 
 - `Improve your testing with Pytest and Mock, Gabe Hollombe, PyCon SG 2015
   <https://www.youtube.com/watch?v=RcN26hznmk4>`_.
