@@ -5,7 +5,9 @@
 
 *
 
-*
+* Fix (`#1351 <https://github.com/pytest-dev/pytest/issues/1351>`_):
+  explicitly passed parametrize ids do not get escaped to ascii.
+  Thanks `@ceridwen`_ for the PR.
 
 * Improve error message when a plugin fails to load.
   Thanks `@nicoddemus`_ for the PR.
