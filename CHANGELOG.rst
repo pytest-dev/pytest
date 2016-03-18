@@ -1,11 +1,7 @@
-2.9.1.dev1
-==========
+2.9.1
+=====
 
 **Bug Fixes**
-
-*
-
-*
 
 * Improve error message when a plugin fails to load.
   Thanks `@nicoddemus`_ for the PR.
@@ -26,8 +22,6 @@
   attempt to decode it as utf-8 ignoring errors.
 
 * Fix (`#649`_): parametrized test nodes cannot be specified to run on the command line.
-
-*
 
 
 .. _#1437: https://github.com/pytest-dev/pytest/issues/1437
