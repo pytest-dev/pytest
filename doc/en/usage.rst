@@ -193,6 +193,53 @@ This will add an extra property ``example_key="1"`` to the generated
     Also please note that using this feature will break any schema verification.
     This might be a problem when used with some CI servers.
 
+LogXML: add_global_property
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 2.10
+
+If you want to add a properties node in the testsuite level, which may contains properties that are relevant
+to all testcases you can use ``LogXML.add_global_properties``
+
+.. code-block:: python
+
+    import pytest
+
+    @pytest.fixture(scope="session")
+    def log_global_env_facts(f):
+
+        if pytest.config.pluginmanager.hasplugin('junitxml'):
+            my_junit = getattr(pytest.config, '_xml', None)
+
+        my_junit.add_global_property('ARCH', 'PPC')
+        my_junit.add_global_property('STORAGE_TYPE', 'CEPH')
+
+    @pytest.mark.usefixtures(log_global_env_facts)
+    def start_and_prepare_env():
+        pass
+
+    class TestMe:
+        def test_foo(self):
+            assert True
+
+This will add a property node below the testsuite node to the generated xml:
+
+.. code-block:: xml
+
+    <testsuite errors="0" failures="0" name="pytest" skips="0" tests="1" time="0.006">
+      <properties>
+        <property name="ARCH" value="PPC"/>
+        <property name="STORAGE_TYPE" value="CEPH"/>
+      </properties>
+      <testcase classname="test_me.TestMe" file="test_me.py" line="16" name="test_foo" time="0.000243663787842"/>
+    </testsuite>
+
+.. warning::
+
+    This is an experimental feature, and its interface might be replaced
+    by something more powerful and general in future versions. The
+    functionality per-se will be kept.
+
 Creating resultlog format files
 ----------------------------------------------------
 

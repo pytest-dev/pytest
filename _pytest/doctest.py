@@ -71,6 +71,8 @@ class DoctestItem(pytest.Item):
         if self.dtest is not None:
             self.fixture_request = _setup_fixtures(self)
             globs = dict(getfixture=self.fixture_request.getfuncargvalue)
+            for name, value in self.fixture_request.getfuncargvalue('doctest_namespace').items():
+                globs[name] = value
             self.dtest.globs.update(globs)
 
     def runtest(self):
@@ -158,6 +160,9 @@ class DoctestTextfile(DoctestItem, pytest.Module):
         globs = dict(getfixture=fixture_request.getfuncargvalue)
         if '__name__' not in globs:
             globs['__name__'] = '__main__'
+
+        for name, value in fixture_request.getfuncargvalue('doctest_namespace').items():
+            globs[name] = value
 
         optionflags = get_optionflags(self)
         runner = doctest.DebugRunner(verbose=0, optionflags=optionflags,
@@ -288,3 +293,11 @@ def _get_allow_bytes_flag():
     """
     import doctest
     return doctest.register_optionflag('ALLOW_BYTES')
+
+
+@pytest.fixture(scope='session')
+def doctest_namespace():
+    """
+    Inject names into the doctest namespace.
+    """
+    return dict()

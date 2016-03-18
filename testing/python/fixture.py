@@ -2691,3 +2691,14 @@ class TestContextManagerFixtureFuncs:
             *def arg1*
         """)
 
+    def test_custom_name(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture(name='meow')
+            def arg1():
+                return 'mew'
+            def test_1(meow):
+                print(meow)
+        """)
+        result = testdir.runpytest("-s")
+        result.stdout.fnmatch_lines("*mew*")
