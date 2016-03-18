@@ -751,7 +751,7 @@ class FunctionMixin(PyobjMixin):
     def _repr_failure_py(self, excinfo, style="long"):
         if excinfo.errisinstance(pytest.fail.Exception):
             if not excinfo.value.pytrace:
-                return str(excinfo.value)
+                return py._builtin._totext(excinfo.value)
         return super(FunctionMixin, self)._repr_failure_py(excinfo,
             style=style)
 
@@ -1126,7 +1126,7 @@ def _idval(val, argname, idx, idfn):
     elif isinstance(val, (float, int, str, bool, NoneType)):
         return str(val)
     elif isinstance(val, REGEX_TYPE):
-        return val.pattern
+        return _escape_bytes(val.pattern) if isinstance(val.pattern, bytes) else val.pattern
     elif enum is not None and isinstance(val, enum.Enum):
         return str(val)
     elif isclass(val) and hasattr(val, '__name__'):

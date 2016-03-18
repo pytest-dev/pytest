@@ -93,6 +93,17 @@ def test_unicode_handling():
     if sys.version_info[0] < 3:
         unicode(excinfo)
 
+
+@pytest.mark.skipif(sys.version_info[0] >= 3, reason='python 2 only issue')
+def test_unicode_handling_syntax_error():
+    value = py.builtin._totext('\xc4\x85\xc4\x87\n', 'utf-8').encode('utf8')
+    def f():
+        raise SyntaxError('invalid syntax', (None, 1, 3, value))
+    excinfo = pytest.raises(Exception, f)
+    str(excinfo)
+    if sys.version_info[0] < 3:
+        unicode(excinfo)
+
 def test_code_getargs():
     def f1(x):
         pass

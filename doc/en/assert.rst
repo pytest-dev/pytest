@@ -26,7 +26,7 @@ you will see the return value of the function call::
 
     $ py.test test_assert1.py
     ======= test session starts ========
-    platform linux -- Python 3.4.0, pytest-2.9.0, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.4.0, pytest-2.9.1, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
@@ -143,7 +143,7 @@ if you run this module::
 
     $ py.test test_assert2.py
     ======= test session starts ========
-    platform linux -- Python 3.4.0, pytest-2.9.0, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.4.0, pytest-2.9.1, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     

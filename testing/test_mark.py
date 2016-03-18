@@ -269,6 +269,22 @@ def test_keyword_option_parametrize(spec, testdir):
     assert len(passed) == len(passed_result)
     assert list(passed) == list(passed_result)
 
+
+def test_parametrized_collected_from_command_line(testdir):
+    """Parametrized test not collected if test named specified
+       in command line issue#649.
+    """
+    py_file = testdir.makepyfile("""
+        import pytest
+        @pytest.mark.parametrize("arg", [None, 1.3, "2-3"])
+        def test_func(arg):
+            pass
+    """)
+    file_name = os.path.basename(py_file.strpath)
+    rec = testdir.inline_run(file_name + "::" + "test_func")
+    rec.assertoutcome(passed=3)
+
+
 class TestFunctional:
 
     def test_mark_per_function(self, testdir):
