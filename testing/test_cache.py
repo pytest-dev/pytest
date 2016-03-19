@@ -46,12 +46,12 @@ class TestNewAPI:
     def test_cache_failure_warns(self, testdir):
         testdir.tmpdir.ensure_dir('.cache').chmod(0)
         testdir.makepyfile("""
-            def test_pass():
-                pass
+            def test_error():
+                raise Exception
 
         """)
         result = testdir.runpytest('-rw')
-        assert result.ret == 0
+        assert result.ret == 1
         result.stdout.fnmatch_lines([
             "*could not create cache path*",
             "*1 pytest-warnings*",
@@ -266,7 +266,7 @@ class TestLastFailed:
         """)
         config = testdir.parseconfigure()
         lastfailed = config.cache.get("cache/lastfailed", -1)
-        assert not lastfailed
+        assert lastfailed == -1
 
     def test_non_serializable_parametrize(self, testdir):
         """Test that failed parametrized tests with unmarshable parameters
@@ -305,7 +305,7 @@ class TestLastFailed:
             return lastfailed
 
         lastfailed = rlf(fail_import=0, fail_run=0)
-        assert not lastfailed
+        assert lastfailed == -1
 
         lastfailed = rlf(fail_import=1, fail_run=0)
         assert list(lastfailed) == ['test_maybe.py']
@@ -347,7 +347,7 @@ class TestLastFailed:
             return result, lastfailed
 
         result, lastfailed = rlf(fail_import=0, fail_run=0)
-        assert not lastfailed
+        assert lastfailed == -1
         result.stdout.fnmatch_lines([
             '*3 passed*',
         ])
@@ -370,3 +370,17 @@ class TestLastFailed:
         result.stdout.fnmatch_lines([
             '*2 passed*',
         ])
+
+    def test_lastfailed_creates_cache_when_needed(self, testdir):
+        # Issue #1342
+        testdir.makepyfile(test_empty='')
+        testdir.runpytest('-q', '--lf')
+        assert not os.path.exists('.cache')
+
+        testdir.makepyfile(test_successful='def test_success():\n    assert True')
+        testdir.runpytest('-q', '--lf')
+        assert not os.path.exists('.cache')
+
+        testdir.makepyfile(test_errored='def test_error():\n    assert False')
+        testdir.runpytest('-q', '--lf')
+        assert os.path.exists('.cache')

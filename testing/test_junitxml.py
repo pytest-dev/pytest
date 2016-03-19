@@ -449,11 +449,12 @@ class TestPython:
         assert "hello-stderr" in systemout.toxml()
 
 
-def test_mangle_testnames():
-    from _pytest.junitxml import mangle_testnames
-    names = ["a/pything.py", "Class", "()", "method"]
-    newnames = mangle_testnames(names)
-    assert newnames == ["a.pything", "Class", "method"]
+def test_mangle_test_address():
+    from _pytest.junitxml import mangle_test_address
+    address = '::'.join(
+        ["a/my.py.thing.py", "Class", "()", "method", "[a-1-::]"])
+    newnames = mangle_test_address(address)
+    assert newnames == ["a.my.py.thing", "Class", "method", "[a-1-::]"]
 
 
 def test_dont_configure_on_slaves(tmpdir):
@@ -617,6 +618,36 @@ def test_escaped_parametrized_names_xml(testdir):
     assert result.ret == 0
     node = dom.find_first_by_tag("testcase")
     node.assert_attr(name="test_func[#x00]")
+
+
+def test_double_colon_split_function_issue469(testdir):
+    testdir.makepyfile("""
+        import pytest
+        @pytest.mark.parametrize('param', ["double::colon"])
+        def test_func(param):
+            pass
+    """)
+    result, dom = runandparse(testdir)
+    assert result.ret == 0
+    node = dom.find_first_by_tag("testcase")
+    node.assert_attr(classname="test_double_colon_split_function_issue469")
+    node.assert_attr(name='test_func[double::colon]')
+
+
+def test_double_colon_split_method_issue469(testdir):
+    testdir.makepyfile("""
+        import pytest
+        class TestClass:
+            @pytest.mark.parametrize('param', ["double::colon"])
+            def test_func(self, param):
+                pass
+    """)
+    result, dom = runandparse(testdir)
+    assert result.ret == 0
+    node = dom.find_first_by_tag("testcase")
+    node.assert_attr(
+        classname="test_double_colon_split_method_issue469.TestClass")
+    node.assert_attr(name='test_func[double::colon]')
 
 
 def test_unicode_issue368(testdir):
