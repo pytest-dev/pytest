@@ -1017,8 +1017,7 @@ class Metafunc(FuncargnamesCompatAttr):
         if ids and len(ids) != len(argvalues):
             raise ValueError('%d tests specified with %d ids' %(
                              len(argvalues), len(ids)))
-        if not ids:
-            ids = idmaker(argnames, argvalues, idfn)
+        ids = idmaker(argnames, argvalues, idfn, ids)
         newcalls = []
         for callspec in self._calls or [CallSpec2(self)]:
             for param_index, valset in enumerate(argvalues):
@@ -1130,13 +1129,16 @@ def _idval(val, argname, idx, idfn):
             pass
     return str(argname)+str(idx)
 
-def _idvalset(idx, valset, argnames, idfn):
-    this_id = [_idval(val, argname, idx, idfn)
-               for val, argname in zip(valset, argnames)]
-    return "-".join(this_id)
+def _idvalset(idx, valset, argnames, idfn, ids):
+    if ids is None or ids[idx] is None:
+        this_id = [_idval(val, argname, idx, idfn)
+                   for val, argname in zip(valset, argnames)]
+        return "-".join(this_id)
+    else:
+        return ids[idx]
 
-def idmaker(argnames, argvalues, idfn=None):
-    ids = [_idvalset(valindex, valset, argnames, idfn)
+def idmaker(argnames, argvalues, idfn=None, ids=None):
+    ids = [_idvalset(valindex, valset, argnames, idfn, ids)
            for valindex, valset in enumerate(argvalues)]
     if len(set(ids)) < len(ids):
         # user may have provided a bad idfn which means the ids are not unique
