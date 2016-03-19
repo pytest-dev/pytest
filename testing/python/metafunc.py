@@ -258,6 +258,13 @@ class TestMetafunc:
                           "three-b2",
                          ]
 
+    def test_idmaker_with_ids(self):
+        from _pytest.python import idmaker
+        result = idmaker(("a", "b"), [(1, 2),
+                                      (3, 4)],
+                         ids=["a", None])
+        assert result == ["a", "3-4"]
+
     def test_addcall_and_parametrize(self):
         def func(x, y): pass
         metafunc = self.Metafunc(func)
