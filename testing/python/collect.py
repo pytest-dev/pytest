@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sys
 from textwrap import dedent
 
@@ -1181,3 +1182,19 @@ def test_class_injection_does_not_break_collection(testdir):
     result = testdir.runpytest()
     assert "RuntimeError: dictionary changed size during iteration" not in result.stdout.str()
     result.stdout.fnmatch_lines(['*1 passed*'])
+
+
+def test_syntax_error_with_non_ascii_chars(testdir):
+    """Fix decoding issue while formatting SyntaxErrors during collection (#578)
+    """
+    testdir.makepyfile(u"""
+    # -*- coding: UTF-8 -*-
+
+    ☃
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        '*ERROR collecting*',
+        '*SyntaxError*',
+        '*1 error in*',
+    ])

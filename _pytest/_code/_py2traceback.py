@@ -47,7 +47,9 @@ def format_exception_only(etype, value):
         filename = filename or "<string>"
         lines.append('  File "%s", line %d\n' % (filename, lineno))
         if badline is not None:
-            lines.append('    %s\n' % badline.strip())
+            if isinstance(badline, bytes):  # python 2 only
+                badline = badline.decode('utf-8', 'replace')
+            lines.append(u'    %s\n' % badline.strip())
             if offset is not None:
                 caretspace = badline.rstrip('\n')[:offset].lstrip()
                 # non-space whitespace (likes tabs) must be kept for alignment

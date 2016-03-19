@@ -435,7 +435,10 @@ class OutcomeException(Exception):
 
     def __repr__(self):
         if self.msg:
-            return str(self.msg)
+            val = self.msg
+            if isinstance(val, bytes):
+                val = py._builtin._totext(val, errors='replace')
+            return val
         return "<%s instance>" %(self.__class__.__name__,)
     __str__ = __repr__
 
