@@ -491,9 +491,12 @@ def importorskip(modname, minversion=None):
     """
     __tracebackhide__ = True
     compile(modname, '', 'eval') # to catch syntaxerrors
+    should_skip = False
     try:
         __import__(modname)
     except ImportError:
+        should_skip = True
+    if should_skip:
         skip("could not import %r" %(modname,))
     mod = sys.modules[modname]
     if minversion is None:
