@@ -796,6 +796,24 @@ class TestMetafuncFunctional:
             *test_function*1.3-b1*
         """)
 
+    def test_parametrize_with_None_in_ids(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            def pytest_generate_tests(metafunc):
+                metafunc.parametrize(("a", "b"), [(1,1), (1,1) , (1,2)],
+                                     ids=["basic", None, "advanced"])
+
+            def test_function(a, b):
+                assert a == b
+        """)
+        result = testdir.runpytest("-v")
+        assert result.ret == 1
+        result.stdout.fnmatch_lines_random([
+            "*test_function*basic*PASSED",
+            "*test_function*1-1*PASSED",
+            "*test_function*advanced*FAILED",
+        ])
+
     @pytest.mark.parametrize(("scope", "length"),
                              [("module", 2), ("function", 4)])
     def test_parametrize_scope_overrides(self, testdir, scope, length):
