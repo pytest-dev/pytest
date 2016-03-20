@@ -16,7 +16,7 @@ command line options
     display py lib version and import information.
 ``-p name``
     early-load given plugin (multi-allowed).
-``--traceconfig``
+``--trace-config``
     trace considerations of conftest.py files.
 ``--nomagic``
     don't reinterpret asserts, no traceback cutting.
