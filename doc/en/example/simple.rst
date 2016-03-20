@@ -201,7 +201,7 @@ Example::
 
 The ``__tracebackhide__`` setting influences ``pytest`` showing
 of tracebacks: the ``checkconfig`` function will not be shown
-unless the ``--fulltrace`` command line option is specified.
+unless the ``--full-trace`` command line option is specified.
 Let's run our little function::
 
     $ py.test -q test_checkconfig.py
