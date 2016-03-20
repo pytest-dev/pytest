@@ -956,7 +956,8 @@ class Metafunc(FuncargnamesCompatAttr):
 
         :arg ids: list of string ids, or a callable.
             If strings, each is corresponding to the argvalues so that they are
-            part of the test id.
+            part of the test id. If None is given as id of specific test, the
+            automatically generated id for that argument will be used.
             If callable, it should take one argument (a single argvalue) and return
             a string or return None. If None, the automatically generated id for that
             argument will be used.
