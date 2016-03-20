@@ -23,7 +23,8 @@
 
 **Changes**
 
-*
+* parametrize ids can accept None as specific test id. The
+  automatically generated id for that argument will be used.
 
 *
 
@@ -45,7 +46,7 @@
 
 **Bug Fixes**
 
-*
+* When receiving identical test ids in parametrize we generate unique test ids.
 
 *
 
