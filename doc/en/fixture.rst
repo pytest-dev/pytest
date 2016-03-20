@@ -36,9 +36,9 @@ style <unittest.TestCase>` or :ref:`nose based <nosestyle>` projects.
 
 .. note::
 
-    pytest-2.4 introduced an additional experimental
-    :ref:`yield fixture mechanism <yieldfixture>` for easier context manager
-    integration and more linear writing of teardown code.
+    pytest-2.4 introduced an additional :ref:`yield fixture mechanism
+    <yieldfixture>` for easier context manager integration and more linear
+    writing of teardown code.
 
 .. _`funcargs`:
 .. _`funcarg mechanism`:
