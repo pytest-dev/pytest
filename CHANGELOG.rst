@@ -9,7 +9,8 @@
 
 *
 
-*
+* Minor improvements and fixes to the documentation.
+  Thanks `@omarkohl`_ for the PR.
 
 
 2.9.1
@@ -163,6 +164,7 @@
 .. _@RonnyPfannschmidt: https://github.com/RonnyPfannschmidt
 .. _@rabbbit: https://github.com/rabbbit
 .. _@hackebrot: https://github.com/hackebrot
+.. _@omarkohl: https://github.com/omarkohl
 
 2.8.7
 =====
