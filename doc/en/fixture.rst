@@ -283,6 +283,14 @@ module itself does not need to change or know about these details
 of fixture setup.
 
 
+Finalization/teardown with yield fixtures
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Another alternative to the *request.addfinalizer()* method is to use *yield
+fixtures*. All the code after the *yield* statement serves as the teardown
+code. See the :ref:`yield fixture documentation <yieldfixture>`.
+
+
 .. _`request-context`:
 
 Fixtures can introspect the requesting test context
