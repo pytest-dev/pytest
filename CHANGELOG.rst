@@ -26,7 +26,8 @@
 * parametrize ids can accept None as specific test id. The
   automatically generated id for that argument will be used.
 
-*
+* improved idmaker name selection in case of duplicate ids in
+  parametrize.
 
 *
 
