@@ -46,6 +46,8 @@ del _legal_chars
 del _legal_ranges
 del _legal_xml_re
 
+_py_ext_re = re.compile(r"\.py$")
+
 
 def bin_xml_escape(arg):
     def repl(matchobj):
@@ -89,7 +91,7 @@ class _NodeReporter(object):
 
     def record_testreport(self, testreport):
         assert not self.testcase
-        names = mangle_testnames(testreport.nodeid.split("::"))
+        names = mangle_test_address(testreport.nodeid)
         classnames = names[:-1]
         if self.xml.prefix:
             classnames.insert(0, self.xml.prefix)
@@ -235,9 +237,18 @@ def pytest_unconfigure(config):
         config.pluginmanager.unregister(xml)
 
 
-def mangle_testnames(names):
-    names = [x.replace(".py", "") for x in names if x != '()']
+def mangle_test_address(address):
+    path, possible_open_bracket, params = address.partition('[')
+    names = path.split("::")
+    try:
+        names.remove('()')
+    except ValueError:
+        pass
+    # convert file path to dotted path
     names[0] = names[0].replace("/", '.')
+    names[0] = _py_ext_re.sub("", names[0])
+    # put any params back
+    names[-1] += possible_open_bracket + params
     return names
 
 

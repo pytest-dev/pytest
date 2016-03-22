@@ -170,6 +170,11 @@ class TestMetafunc:
         result = idmaker((py.builtin._totext("a"), "b"), [({}, b'\xc3\xb4')])
         assert result == ['a0-\\xc3\\xb4']
 
+    def test_idmaker_with_bytes_regex(self):
+        from _pytest.python import idmaker
+        result = idmaker(("a"), [(re.compile(b'foo'), 1.0)])
+        assert result == ["foo"]
+
     def test_idmaker_native_strings(self):
         from _pytest.python import idmaker
         totext = py.builtin._totext
@@ -252,6 +257,20 @@ class TestMetafunc:
                           "20-b1",
                           "three-b2",
                          ]
+
+    def test_idmaker_with_ids(self):
+        from _pytest.python import idmaker
+        result = idmaker(("a", "b"), [(1, 2),
+                                      (3, 4)],
+                         ids=["a", None])
+        assert result == ["a", "3-4"]
+
+    def test_idmaker_with_ids_unique_names(self):
+        from _pytest.python import idmaker
+        result = idmaker(("a", "b"), [(1, 2),
+                                      (3, 4)],
+                         ids=["a", "a"])
+        assert result == ["0a", "1a"]
 
     def test_addcall_and_parametrize(self):
         def func(x, y): pass
@@ -783,6 +802,41 @@ class TestMetafuncFunctional:
             *test_function*1-b0*
             *test_function*1.3-b1*
         """)
+
+    def test_parametrize_with_None_in_ids(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            def pytest_generate_tests(metafunc):
+                metafunc.parametrize(("a", "b"), [(1,1), (1,1), (1,2)],
+                                     ids=["basic", None, "advanced"])
+
+            def test_function(a, b):
+                assert a == b
+        """)
+        result = testdir.runpytest("-v")
+        assert result.ret == 1
+        result.stdout.fnmatch_lines_random([
+            "*test_function*basic*PASSED",
+            "*test_function*1-1*PASSED",
+            "*test_function*advanced*FAILED",
+        ])
+
+    def test_parametrize_with_identical_ids_get_unique_names(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            def pytest_generate_tests(metafunc):
+                metafunc.parametrize(("a", "b"), [(1,1), (1,2)],
+                                     ids=["a", "a"])
+
+            def test_function(a, b):
+                assert a == b
+        """)
+        result = testdir.runpytest("-v")
+        assert result.ret == 1
+        result.stdout.fnmatch_lines_random([
+            "*test_function*0a*PASSED",
+            "*test_function*1a*FAILED"
+        ])
 
     @pytest.mark.parametrize(("scope", "length"),
                              [("module", 2), ("function", 4)])
