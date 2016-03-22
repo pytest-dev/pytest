@@ -7,7 +7,9 @@
 
 *
 
-*
+* Fix ``pytest.mark.skip`` mark when used in strict mode.
+  Thanks `@pquentin`_ for the PR and `@RonnyPfannschmidt`_ for
+  showing how to fix the bug.
 
 * Minor improvements and fixes to the documentation.
   Thanks `@omarkohl`_ for the PR.
@@ -165,6 +167,7 @@
 .. _@rabbbit: https://github.com/rabbbit
 .. _@hackebrot: https://github.com/hackebrot
 .. _@omarkohl: https://github.com/omarkohl
+.. _@pquentin: https://github.com/pquentin
 
 2.8.7
 =====
