@@ -43,13 +43,13 @@ def pytest_configure(config):
         "http://pytest.org/latest/skipping.html"
     )
     config.addinivalue_line("markers",
-        "xfail(condition, reason=None, run=True, raises=None): mark the the test function "
-        "as an expected failure if eval(condition) has a True value. "
-        "Optionally specify a reason for better reporting and run=False if "
-        "you don't even want to execute the test function. If only specific "
-        "exception(s) are expected, you can list them in raises, and if the test fails "
-        "in other ways, it will be reported as a true failure. "
-        "See http://pytest.org/latest/skipping.html"
+        "xfail(condition, reason=None, run=True, raises=None, strict=False): "
+        "mark the the test function as an expected failure if eval(condition) "
+        "has a True value. Optionally specify a reason for better reporting "
+        "and run=False if you don't even want to execute the test function. "
+        "If only specific exception(s) are expected, you can list them in "
+        "raises, and if the test fails in other ways, it will be reported as "
+        "a true failure. See http://pytest.org/latest/skipping.html"
     )
 
 

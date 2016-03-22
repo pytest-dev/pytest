@@ -825,7 +825,7 @@ def test_default_markers(testdir):
     result = testdir.runpytest("--markers")
     result.stdout.fnmatch_lines([
         "*skipif(*condition)*skip*",
-        "*xfail(*condition, reason=None, run=True, raises=None)*expected failure*",
+        "*xfail(*condition, reason=None, run=True, raises=None, strict=False)*expected failure*",
     ])
 
 def test_xfail_test_setup_exception(testdir):
