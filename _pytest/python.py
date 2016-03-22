@@ -1025,9 +1025,12 @@ class Metafunc(FuncargnamesCompatAttr):
         if callable(ids):
             idfn = ids
             ids = None
-        if ids and len(ids) != len(argvalues):
-            raise ValueError('%d tests specified with %d ids' %(
-                             len(argvalues), len(ids)))
+        if ids:
+            if len(ids) != len(argvalues):
+                raise ValueError('%d tests specified with %d ids' %(
+                    len(argvalues), len(ids)))
+            else:
+                ids = [_escape_strings(i) for i in ids]
         if not ids:
             ids = idmaker(argnames, argvalues, idfn)
         newcalls = []
@@ -1078,38 +1081,55 @@ class Metafunc(FuncargnamesCompatAttr):
         self._calls.append(cs)
 
 
+
 if _PY3:
     import codecs
 
-    def _escape_bytes(val):
-        """
-        If val is pure ascii, returns it as a str(), otherwise escapes
-        into a sequence of escaped bytes:
+    def _escape_strings(val):
+        """If val is pure ascii, returns it as a str().  Otherwise, escapes
+        bytes objects into a sequence of escaped bytes:
+
         b'\xc3\xb4\xc5\xd6' -> u'\\xc3\\xb4\\xc5\\xd6'
+
+        and escapes unicode objects into a sequence of escaped unicode
+        ids, e.g.:
+
+        '4\\nV\\U00043efa\\x0eMXWB\\x1e\\u3028\\u15fd\\xcd\\U0007d944'
 
         note:
            the obvious "v.decode('unicode-escape')" will return
-           valid utf-8 unicode if it finds them in the string, but we
+           valid utf-8 unicode if it finds them in bytes, but we
            want to return escaped bytes for any byte, even if they match
            a utf-8 string.
+
         """
-        if val:
-            # source: http://goo.gl/bGsnwC
-            encoded_bytes, _ = codecs.escape_encode(val)
-            return encoded_bytes.decode('ascii')
+        if isinstance(val, bytes):
+            if val:
+                # source: http://goo.gl/bGsnwC
+                encoded_bytes, _ = codecs.escape_encode(val)
+                return encoded_bytes.decode('ascii')
+            else:
+                # empty bytes crashes codecs.escape_encode (#1087)
+                return ''
         else:
-            # empty bytes crashes codecs.escape_encode (#1087)
-            return ''
+            return val.encode('unicode_escape').decode('ascii')
 else:
-    def _escape_bytes(val):
+    def _escape_strings(val):
+        """In py2 bytes and str are the same type, so return if it's a bytes
+        object, return it unchanged if it is a full ascii string,
+        otherwise escape it into its binary form.
+
+        If it's a unicode string, change the unicode characters into
+        unicode escapes.
+
         """
-        In py2 bytes and str are the same type, so return it unchanged if it
-        is a full ascii string, otherwise escape it into its binary form.
-        """
-        try:
-            return val.decode('ascii')
-        except UnicodeDecodeError:
-            return val.encode('string-escape')
+        if isinstance(val, bytes):
+            try:
+                return val.decode('ascii')
+            except UnicodeDecodeError:
+                return val.encode('string-escape')
+        else:
+            return val.encode('unicode-escape')
 
 
 def _idval(val, argname, idx, idfn):
@@ -1117,28 +1137,20 @@ def _idval(val, argname, idx, idfn):
         try:
             s = idfn(val)
             if s:
-                return s
+                return _escape_strings(s)
         except Exception:
             pass
 
-    if isinstance(val, bytes):
-        return _escape_bytes(val)
+    if isinstance(val, bytes) or (_PY2 and isinstance(val, unicode)):
+        return _escape_strings(val)
     elif isinstance(val, (float, int, str, bool, NoneType)):
         return str(val)
     elif isinstance(val, REGEX_TYPE):
-        return val.pattern
+        return _escape_strings(val.pattern)
     elif enum is not None and isinstance(val, enum.Enum):
         return str(val)
     elif isclass(val) and hasattr(val, '__name__'):
         return val.__name__
-    elif _PY2 and isinstance(val, unicode):
-        # special case for python 2: if a unicode string is
-        # convertible to ascii, return it as an str() object instead
-        try:
-            return str(val)
-        except UnicodeError:
-            # fallthrough
-            pass
     return str(argname)+str(idx)
 
 def _idvalset(idx, valset, argnames, idfn):
