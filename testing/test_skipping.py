@@ -539,6 +539,19 @@ class TestSkip:
             "*1 passed*2 skipped*",
         ])
 
+    def test_strict_and_skip(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.skip
+            def test_hello():
+                pass
+        """)
+        result = testdir.runpytest("-rs --strict")
+        result.stdout.fnmatch_lines([
+            "*unconditional skip*",
+            "*1 skipped*",
+        ])
+
 class TestSkipif:
     def test_skipif_conditional(self, testdir):
         item = testdir.getitem("""

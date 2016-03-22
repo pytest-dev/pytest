@@ -31,6 +31,11 @@ def pytest_configure(config):
         setattr(pytest, "xfail", nop)
 
     config.addinivalue_line("markers",
+        "skip(reason=None): skip the given test function with an optional reason. "
+        "Example: skip(reason=\"no way of currently testing this\") skips the "
+        "test."
+    )
+    config.addinivalue_line("markers",
         "skipif(condition): skip the given test function if eval(condition) "
         "results in a True value.  Evaluation happens within the "
         "module global context. Example: skipif('sys.platform == \"win32\"') "
