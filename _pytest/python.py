@@ -1153,9 +1153,9 @@ def _idvalset(idx, valset, argnames, idfn, ids):
 def idmaker(argnames, argvalues, idfn=None, ids=None):
     ids = [_idvalset(valindex, valset, argnames, idfn, ids)
            for valindex, valset in enumerate(argvalues)]
-    duplicates = [testid for testid in ids if ids.count(testid) > 1]
-    if duplicates:
+    if len(set(ids)) != len(ids):
         # The ids are not unique
+        duplicates = [testid for testid in ids if ids.count(testid) > 1]
         counters = collections.defaultdict(lambda: 0)
         for index, testid in enumerate(ids):
             if testid in duplicates:
