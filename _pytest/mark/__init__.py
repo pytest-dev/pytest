@@ -165,6 +165,12 @@ def pytest_configure(config):
         pytest.mark._config = config
 
 
+def _parsed_markers(config):
+    for line in config.getini("markers"):
+        beginning = line.split(":", 1)
+        yield beginning[0].split("(", 1)[0]
+
+
 class MarkGenerator:
     """ Factory for :class:`MarkDecorator` objects - exposed as
     a ``pytest.mark`` singleton instance.  Example::
@@ -177,6 +183,9 @@ class MarkGenerator:
     will set a 'slowtest' :class:`MarkInfo` object
     on the ``test_function`` object. """
 
+    def __init__(self):
+        self.__known_markers = set()
+
     def __getattr__(self, name):
         if name[0] == "_":
             raise AttributeError("Marker name must NOT start with underscore")
@@ -185,17 +194,12 @@ class MarkGenerator:
         return MarkDecorator(name)
 
     def _check(self, name):
-        try:
-            if name in self._markers:
-                return
-        except AttributeError:
-            pass
-        self._markers = l = set()
-        for line in self._config.getini("markers"):
-            beginning = line.split(":", 1)
-            x = beginning[0].split("(", 1)[0]
-            l.add(x)
-        if name not in self._markers:
+        if name in self.__known_markers:
+            return
+
+        self.__known_markers.update(_parsed_markers(self._config))
+
+        if name not in self.__known_markers:
             raise AttributeError("%r not a registered marker" % (name,))
 
 def istestfunc(func):
