@@ -498,6 +498,7 @@ def importorskip(modname, minversion=None):
     try:
         __import__(modname)
     except ImportError:
+        # Do not raise chained exception here(#1485)
         should_skip = True
     if should_skip:
         skip("could not import %r" %(modname,))
