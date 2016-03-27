@@ -40,11 +40,13 @@
 
 * Fix (`#649`_): parametrized test nodes cannot be specified to run on the command line.
 
+* Fix (`#138`_): better reporting for python 3.3+ chained exceptions
 
 .. _#1437: https://github.com/pytest-dev/pytest/issues/1437
 .. _#469: https://github.com/pytest-dev/pytest/issues/469
 .. _#1431: https://github.com/pytest-dev/pytest/pull/1431
 .. _#649: https://github.com/pytest-dev/pytest/issues/649
+.. _#138: https://github.com/pytest-dev/pytest/issues/138
 
 .. _@asottile: https://github.com/asottile
 

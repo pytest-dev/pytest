@@ -594,12 +594,36 @@ class FormattedExcinfo(object):
                 break
         return ReprTraceback(entries, extraline, style=self.style)
 
-    def repr_excinfo(self, excinfo):
-        reprtraceback = self.repr_traceback(excinfo)
-        reprcrash = excinfo._getreprcrash()
-        return ReprExceptionInfo(reprtraceback, reprcrash)
 
-class TerminalRepr:
+    def repr_excinfo(self, excinfo):
+        if sys.version_info[0] < 3:
+            reprtraceback = self.repr_traceback(excinfo)
+            reprcrash = excinfo._getreprcrash()
+
+            return ReprExceptionInfo(reprtraceback, reprcrash)
+        else:
+            repr_chain = []
+            e = excinfo.value
+            descr = None
+            while e is not None:
+                reprtraceback = self.repr_traceback(excinfo)
+                reprcrash = excinfo._getreprcrash()
+                repr_chain += [(reprtraceback, reprcrash, descr)]
+                if e.__cause__ is not None:
+                    e = e.__cause__
+                    excinfo = ExceptionInfo((type(e), e, e.__traceback__))
+                    descr = 'The above exception was the direct cause of the following exception:'
+                elif e.__context__ is not None:
+                    e = e.__context__
+                    excinfo = ExceptionInfo((type(e), e, e.__traceback__))
+                    descr = 'During handling of the above exception, another exception occurred:'
+                else:
+                    e = None
+            repr_chain.reverse()
+            return ExceptionChainRepr(repr_chain)
+
+
+class TerminalRepr(object):
     def __str__(self):
         s = self.__unicode__()
         if sys.version_info[0] < 3:
@@ -618,20 +642,46 @@ class TerminalRepr:
         return "<%s instance at %0x>" %(self.__class__, id(self))
 
 
-class ReprExceptionInfo(TerminalRepr):
-    def __init__(self, reprtraceback, reprcrash):
-        self.reprtraceback = reprtraceback
-        self.reprcrash = reprcrash
+class ExceptionRepr(TerminalRepr):
+    def __init__(self):
         self.sections = []
 
     def addsection(self, name, content, sep="-"):
         self.sections.append((name, content, sep))
 
     def toterminal(self, tw):
-        self.reprtraceback.toterminal(tw)
         for name, content, sep in self.sections:
             tw.sep(sep, name)
             tw.line(content)
+
+
+class ExceptionChainRepr(ExceptionRepr):
+    def __init__(self, chain):
+        super(ExceptionChainRepr, self).__init__()
+        self.chain = chain
+        # reprcrash and reprtraceback of the outermost (the newest) exception
+        # in the chain
+        self.reprtraceback = chain[-1][0]
+        self.reprcrash = chain[-1][1]
+
+    def toterminal(self, tw):
+        for element in self.chain:
+            element[0].toterminal(tw)
+            if element[2] is not None:
+                tw.line("")
+                tw.line(element[2], yellow=True)
+        super(ExceptionChainRepr, self).toterminal(tw)
+
+
+class ReprExceptionInfo(ExceptionRepr):
+    def __init__(self, reprtraceback, reprcrash):
+        super(ReprExceptionInfo, self).__init__()
+        self.reprtraceback = reprtraceback
+        self.reprcrash = reprcrash
+
+    def toterminal(self, tw):
+        self.reprtraceback.toterminal(tw)
+        super(ReprExceptionInfo, self).toterminal(tw)
 
 class ReprTraceback(TerminalRepr):
     entrysep = "_ "
