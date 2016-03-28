@@ -2,30 +2,34 @@ import json
 import py
 import textwrap
 
-issues_url = "http://bitbucket.org/api/1.0/repositories/pytest-dev/pytest/issues"
+issues_url = "https://api.github.com/repos/pytest-dev/pytest/issues"
 
 import requests
 
+
 def get_issues():
-    chunksize = 50
-    start = 0
     issues = []
+    url = issues_url
     while 1:
-        post_data = {"accountname": "pytest-dev",
-                     "repo_slug": "pytest",
-                     "start": start,
-                     "limit": chunksize}
-        print ("getting from", start)
-        r = requests.get(issues_url, params=post_data)
+        get_data = {"state": "all"}
+        r = requests.get(url, params=get_data)
         data = r.json()
-        issues.extend(data["issues"])
-        if start + chunksize >= data["count"]:
+        if r.status_code == 403:
+            # API request limit exceeded
+            print(data['message'])
+            exit(1)
+        issues.extend(data)
+
+        # Look for next page
+        links = requests.utils.parse_header_links(r.headers['Link'])
+        another_page = False
+        for link in links:
+            if link['rel'] == 'next':
+                url = link['url']
+                another_page = True
+        if not another_page:
             return issues
-        start += chunksize
 
-kind2num = "bug enhancement task proposal".split()
-
-status2num = "new open resolved duplicate invalid wontfix".split()
 
 def main(args):
     cachefile = py.path.local(args.cache)
@@ -35,33 +39,38 @@ def main(args):
     else:
         issues = json.loads(cachefile.read())
 
-    open_issues = [x for x in issues
-                    if x["status"] in ("new", "open")]
+    open_issues = [x for x in issues if x["state"] == "open"]
 
-    def kind_and_id(x):
-        kind = x["metadata"]["kind"]
-        return kind2num.index(kind), len(issues)-int(x["local_id"])
-    open_issues.sort(key=kind_and_id)
+    open_issues.sort(key=lambda x: x["number"])
     report(open_issues)
+
+
+def _get_kind(issue):
+    labels = [l['name'] for l in issue['labels']]
+    for key in ('bug', 'enhancement', 'proposal'):
+        if key in labels:
+            return key
+    return 'issue'
+
 
 def report(issues):
     for issue in issues:
-        metadata = issue["metadata"]
-        priority = issue["priority"]
         title = issue["title"]
-        content = issue["content"]
-        kind = metadata["kind"]
-        status = issue["status"]
-        id = issue["local_id"]
-        link = "https://bitbucket.org/pytest-dev/pytest/issue/%s/" % id
+        body = issue["body"]
+        kind = _get_kind(issue)
+        status = issue["state"]
+        number = issue["number"]
+        link = "https://github.com/pytest-dev/pytest/issues/%s/" % number
         print("----")
         print(status, kind, link)
         print(title)
         #print()
-        #lines = content.split("\n")
+        #lines = body.split("\n")
         #print ("\n".join(lines[:3]))
-        #if len(lines) > 3 or len(content) > 240:
+        #if len(lines) > 3 or len(body) > 240:
         #    print ("...")
+    print("\n\nFound %s open issues" % len(issues))
+
 
 if __name__ == "__main__":
     import argparse
@@ -72,3 +81,4 @@ if __name__ == "__main__":
                         help="cache file")
     args = parser.parse_args()
     main(args)
+
