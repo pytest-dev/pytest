@@ -670,6 +670,11 @@ class TestDurations:
             "*call*test_1*",
         ])
 
+    def test_with_not(self, testdir):
+        testdir.makepyfile(self.source)
+        result = testdir.runpytest("-k not 1")
+        assert result.ret == 0
+
 
 class TestDurationWithFixture:
     source = """
