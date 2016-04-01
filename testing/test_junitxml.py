@@ -617,7 +617,7 @@ def test_escaped_parametrized_names_xml(testdir):
     result, dom = runandparse(testdir)
     assert result.ret == 0
     node = dom.find_first_by_tag("testcase")
-    node.assert_attr(name="test_func[#x00]")
+    node.assert_attr(name="test_func[\\x00]")
 
 
 def test_double_colon_split_function_issue469(testdir):
