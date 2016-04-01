@@ -1138,9 +1138,9 @@ def _idval(val, argname, idx, idfn):
         except Exception:
             pass
 
-    if isinstance(val, bytes) or (_PY2 and isinstance(val, unicode)):
+    if isinstance(val, (bytes, str)) or (_PY2 and isinstance(val, unicode)):
         return _escape_strings(val)
-    elif isinstance(val, (float, int, str, bool, NoneType)):
+    elif isinstance(val, (float, int, bool, NoneType)):
         return str(val)
     elif isinstance(val, REGEX_TYPE):
         return _escape_strings(val.pattern)
