@@ -18,6 +18,10 @@
 * New Add ability to add global properties in the final xunit output file.
   Thanks `@tareqalayan`_ for the complete PR `#1454`_).
 
+* New ``ExceptionInfo.match()`` method to match a regular expression on the
+  string representation of an exception. Closes proposal `#372`_.
+  Thanks `@omarkohl`_ for the complete PR (`#1502`_) and `@nicoddemus`_ for the
+  implementation tips.
 
 *
 
@@ -38,6 +42,7 @@
 .. _@kalekundert: https://github.com/kalekundert
 .. _@tareqalayan: https://github.com/tareqalayan
 .. _@palaviv: https://github.com/palaviv
+.. _@omarkohl: https://github.com/omarkohl
 
 .. _#1428: https://github.com/pytest-dev/pytest/pull/1428
 .. _#1444: https://github.com/pytest-dev/pytest/pull/1444
@@ -45,6 +50,8 @@
 .. _#1454: https://github.com/pytest-dev/pytest/pull/1454
 .. _#1468: https://github.com/pytest-dev/pytest/pull/1468
 .. _#1474: https://github.com/pytest-dev/pytest/pull/1474
+.. _#1502: https://github.com/pytest-dev/pytest/pull/1502
+.. _#372: https://github.com/pytest-dev/pytest/issues/372
 
 
 2.9.2.dev1

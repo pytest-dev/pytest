@@ -323,6 +323,25 @@ def test_codepath_Queue_example():
     assert path.basename.lower() == "queue.py"
     assert path.check()
 
+def test_match_succeeds():
+    with pytest.raises(ZeroDivisionError) as excinfo:
+        0 / 0
+    excinfo.match(r'.*zero.*')
+
+def test_match_raises_error(testdir):
+    testdir.makepyfile("""
+        import pytest
+        def test_division_zero():
+            with pytest.raises(ZeroDivisionError) as excinfo:
+                0 / 0
+            excinfo.match(r'[123]+')
+    """)
+    result = testdir.runpytest()
+    assert result.ret != 0
+    result.stdout.fnmatch_lines([
+        "*AssertionError*Pattern*[123]*not found*",
+    ])
+
 class TestFormattedExcinfo:
     def pytest_funcarg__importasmod(self, request):
         def importasmod(source):
