@@ -7,6 +7,7 @@ import re
 import types
 import sys
 import math
+import collections
 
 import py
 import pytest
@@ -1161,9 +1162,14 @@ def _idvalset(idx, valset, argnames, idfn, ids):
 def idmaker(argnames, argvalues, idfn=None, ids=None):
     ids = [_idvalset(valindex, valset, argnames, idfn, ids)
            for valindex, valset in enumerate(argvalues)]
-    if len(set(ids)) < len(ids):
-        # user may have provided a bad idfn which means the ids are not unique
-        ids = [str(i) + testid for i, testid in enumerate(ids)]
+    if len(set(ids)) != len(ids):
+        # The ids are not unique
+        duplicates = [testid for testid in ids if ids.count(testid) > 1]
+        counters = collections.defaultdict(lambda: 0)
+        for index, testid in enumerate(ids):
+            if testid in duplicates:
+                ids[index] = testid + str(counters[testid])
+                counters[testid] += 1
     return ids
 
 def showfixtures(config):

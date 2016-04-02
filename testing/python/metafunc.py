@@ -254,9 +254,9 @@ class TestMetafunc:
                                       (20, KeyError()),
                                       ("three", [1, 2, 3]),
         ], idfn=ids)
-        assert result == ["0a-a",
-                          "1a-a",
-                          "2a-a",
+        assert result == ["a-a0",
+                          "a-a1",
+                          "a-a2",
                          ]
 
     @pytest.mark.issue351
@@ -283,10 +283,9 @@ class TestMetafunc:
 
     def test_idmaker_with_ids_unique_names(self):
         from _pytest.python import idmaker
-        result = idmaker(("a", "b"), [(1, 2),
-                                      (3, 4)],
-                         ids=["a", "a"])
-        assert result == ["0a", "1a"]
+        result = idmaker(("a"), [1,2,3,4,5],
+                         ids=["a", "a", "b", "c", "b"])
+        assert result == ["a0", "a1", "b0", "c", "b1"]
 
     def test_addcall_and_parametrize(self):
         def func(x, y): pass
@@ -850,8 +849,8 @@ class TestMetafuncFunctional:
         result = testdir.runpytest("-v")
         assert result.ret == 1
         result.stdout.fnmatch_lines_random([
-            "*test_function*0a*PASSED",
-            "*test_function*1a*FAILED"
+            "*test_function*a0*PASSED",
+            "*test_function*a1*FAILED"
         ])
 
     @pytest.mark.parametrize(("scope", "length"),

@@ -29,8 +29,11 @@
 
 * parametrize ids can accept None as specific test id. The
   automatically generated id for that argument will be used.
+  Thanks `@palaviv`_ for the complete PR (`#1468`_).
 
-*
+* improved idmaker name selection in case of duplicate ids in
+  parametrize.
+  Thanks `@palaviv`_ for the complete PR (`#1474`_).
 
 *
 
@@ -39,12 +42,15 @@
 .. _@kalekundert: https://github.com/kalekundert
 .. _@tareqalayan: https://github.com/tareqalayan
 .. _@ceridwen: https://github.com/ceridwen
+.. _@palaviv: https://github.com/palaviv
 
 .. _#1428: https://github.com/pytest-dev/pytest/pull/1428
 .. _#1444: https://github.com/pytest-dev/pytest/pull/1444
 .. _#1441: https://github.com/pytest-dev/pytest/pull/1441
 .. _#1454: https://github.com/pytest-dev/pytest/pull/1454
 .. _#1351: https://github.com/pytest-dev/pytest/issues/1351
+.. _#1468: https://github.com/pytest-dev/pytest/pull/1468
+.. _#1474: https://github.com/pytest-dev/pytest/pull/1474
 
 2.9.2.dev1
 ==========
