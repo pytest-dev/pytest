@@ -23,7 +23,7 @@
 
 **Changes**
 
-* Fix (`#1351 <https://github.com/pytest-dev/pytest/issues/1351>`_):
+* Fix (`#1351`_):
   explicitly passed parametrize ids do not get escaped to ascii.
   Thanks `@ceridwen`_ for the PR.
 
@@ -38,12 +38,13 @@
 .. _@novas0x2a: https://github.com/novas0x2a
 .. _@kalekundert: https://github.com/kalekundert
 .. _@tareqalayan: https://github.com/tareqalayan
+.. _@ceridwen: https://github.com/ceridwen
 
 .. _#1428: https://github.com/pytest-dev/pytest/pull/1428
 .. _#1444: https://github.com/pytest-dev/pytest/pull/1444
 .. _#1441: https://github.com/pytest-dev/pytest/pull/1441
 .. _#1454: https://github.com/pytest-dev/pytest/pull/1454
-
+.. _#1351: https://github.com/pytest-dev/pytest/issues/1351
 
 2.9.2.dev1
 ==========
