@@ -7,3 +7,9 @@ src/*.c
 
 # Ignore cython_setup.py build dir
 build/
+
+# Ignore cmake files
+Makefile
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
