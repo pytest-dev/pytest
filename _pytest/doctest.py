@@ -29,7 +29,7 @@ def pytest_addoption(parser):
 
 def pytest_collect_file(path, parent):
     config = parent.config
-    if path.ext == ".py":
+    if path.ext == ".py" or path.ext == ".so":
         if config.option.doctestmodules:
             return DoctestModule(path, parent)
     elif _is_doctest(config, path, parent):
@@ -185,6 +185,7 @@ def _check_all_skipped(test):
 
 
 class DoctestModule(pytest.Module):
+
     def collect(self):
         import doctest
         if self.fspath.basename == "conftest.py":
