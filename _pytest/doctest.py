@@ -196,6 +196,10 @@ class DoctestModule(pytest.Module):
             except ImportError:
                 if self.config.getvalue('doctest_ignore_import_errors'):
                     pytest.skip('unable to import module %r' % self.fspath)
+                elif self.fspath.ext == '.so':
+                    msg = ''.join(['unable to import module %r ',
+                                   '(probably not a Python extension module)'])
+                    pytest.skip(msg % self.fspath)
                 else:
                     raise
         # uses internal doctest module parsing mechanism
