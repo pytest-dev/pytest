@@ -610,7 +610,7 @@ def test_logxml_makedir(testdir):
 def test_escaped_parametrized_names_xml(testdir):
     testdir.makepyfile("""
         import pytest
-        @pytest.mark.parametrize('char', ["\\x00"])
+        @pytest.mark.parametrize('char', [u"\\x00"])
         def test_func(char):
             assert char
     """)

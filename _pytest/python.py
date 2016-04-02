@@ -1122,7 +1122,7 @@ else:
         """
         if isinstance(val, bytes):
             try:
-                return val.decode('ascii')
+                return val.encode('ascii')
             except UnicodeDecodeError:
                 return val.encode('string-escape')
         else:

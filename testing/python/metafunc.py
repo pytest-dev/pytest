@@ -1,10 +1,17 @@
 # -*- coding: utf-8 -*-
 import re
+import sys
 
 import _pytest._code
 import py
 import pytest
 from _pytest import python as funcargs
+
+import hypothesis
+from hypothesis import strategies
+
+PY3 = sys.version_info >= (3, 0)
+
 
 class TestMetafunc:
     def Metafunc(self, func):
@@ -120,6 +127,16 @@ class TestMetafunc:
         assert metafunc._calls[1].id == "x0-b"
         assert metafunc._calls[2].id == "x1-a"
         assert metafunc._calls[3].id == "x1-b"
+
+    @hypothesis.given(strategies.text() | strategies.binary())
+    def test_idval_hypothesis(self, value):
+        from _pytest.python import _idval
+        escaped = _idval(value, 'a', 6, None)
+        assert isinstance(escaped, str)
+        if PY3:
+            escaped.encode('ascii')
+        else:
+            escaped.decode('ascii')
 
     def test_unicode_idval(self):
         """This tests that Unicode strings outside the ASCII character set get
