@@ -27,6 +27,10 @@
 
 **Changes**
 
+* Fix (`#1351`_):
+  explicitly passed parametrize ids do not get escaped to ascii.
+  Thanks `@ceridwen`_ for the PR.
+
 * parametrize ids can accept None as specific test id. The
   automatically generated id for that argument will be used.
   Thanks `@palaviv`_ for the complete PR (`#1468`_).
@@ -41,6 +45,7 @@
 .. _@novas0x2a: https://github.com/novas0x2a
 .. _@kalekundert: https://github.com/kalekundert
 .. _@tareqalayan: https://github.com/tareqalayan
+.. _@ceridwen: https://github.com/ceridwen
 .. _@palaviv: https://github.com/palaviv
 .. _@omarkohl: https://github.com/omarkohl
 
@@ -48,11 +53,11 @@
 .. _#1444: https://github.com/pytest-dev/pytest/pull/1444
 .. _#1441: https://github.com/pytest-dev/pytest/pull/1441
 .. _#1454: https://github.com/pytest-dev/pytest/pull/1454
+.. _#1351: https://github.com/pytest-dev/pytest/issues/1351
 .. _#1468: https://github.com/pytest-dev/pytest/pull/1468
 .. _#1474: https://github.com/pytest-dev/pytest/pull/1474
 .. _#1502: https://github.com/pytest-dev/pytest/pull/1502
 .. _#372: https://github.com/pytest-dev/pytest/issues/372
-
 
 2.9.2.dev1
 ==========

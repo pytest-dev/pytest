@@ -1,10 +1,17 @@
 # -*- coding: utf-8 -*-
 import re
+import sys
 
 import _pytest._code
 import py
 import pytest
 from _pytest import python as funcargs
+
+import hypothesis
+from hypothesis import strategies
+
+PY3 = sys.version_info >= (3, 0)
+
 
 class TestMetafunc:
     def Metafunc(self, func):
@@ -121,20 +128,29 @@ class TestMetafunc:
         assert metafunc._calls[2].id == "x1-a"
         assert metafunc._calls[3].id == "x1-b"
 
-    @pytest.mark.skipif('sys.version_info[0] >= 3')
-    def test_unicode_idval_python2(self):
-        """unittest for the expected behavior to obtain ids for parametrized
-        unicode values in Python 2: if convertible to ascii, they should appear
-        as ascii values, otherwise fallback to hide the value behind the name
-        of the parametrized variable name. #1086
+    @hypothesis.given(strategies.text() | strategies.binary())
+    def test_idval_hypothesis(self, value):
+        from _pytest.python import _idval
+        escaped = _idval(value, 'a', 6, None)
+        assert isinstance(escaped, str)
+        if PY3:
+            escaped.encode('ascii')
+        else:
+            escaped.decode('ascii')
+
+    def test_unicode_idval(self):
+        """This tests that Unicode strings outside the ASCII character set get
+        escaped, using byte escapes if they're in that range or unicode
+        escapes if they're not.
+
         """
         from _pytest.python import _idval
         values = [
             (u'', ''),
             (u'ascii', 'ascii'),
-            (u'ação', 'a6'),
-            (u'josé@blah.com', 'a6'),
-            (u'δοκ.ιμή@παράδειγμα.δοκιμή', 'a6'),
+            (u'ação', 'a\\xe7\\xe3o'),
+            (u'josé@blah.com', 'jos\\xe9@blah.com'),
+            (u'δοκ.ιμή@παράδειγμα.δοκιμή', '\\u03b4\\u03bf\\u03ba.\\u03b9\\u03bc\\u03ae@\\u03c0\\u03b1\\u03c1\\u03ac\\u03b4\\u03b5\\u03b9\\u03b3\\u03bc\\u03b1.\\u03b4\\u03bf\\u03ba\\u03b9\\u03bc\\u03ae'),
         ]
         for val, expected in values:
             assert _idval(val, 'a', 6, None) == expected
