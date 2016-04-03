@@ -110,6 +110,24 @@ exceptions your own code is deliberately raising, whereas using
 like documenting unfixed bugs (where the test describes what "should" happen)
 or bugs in dependencies.
 
+If you want to test that a regular expression matches on the string
+representation of an exception (like the ``TestCase.assertRaisesRegexp`` method
+from ``unittest``) you can use the ``ExceptionInfo.match`` method::
+
+    import pytest
+
+    def myfunc():
+        raise ValueError("Exception 123 raised")
+
+    def test_match():
+        with pytest.raises(ValueError) as excinfo:
+            myfunc()
+        excinfo.match(r'.* 123 .*')
+
+The regexp parameter of the ``match`` method is matched with the ``re.search``
+function. So in the above example ``excinfo.match('123')`` would have worked as
+well.
+
 
 .. _`assertwarns`:
 

@@ -1,5 +1,6 @@
 import sys
 from inspect import CO_VARARGS, CO_VARKEYWORDS
+import re
 
 import py
 
@@ -426,6 +427,19 @@ class ExceptionInfo(object):
         entry = self.traceback[-1]
         loc = ReprFileLocation(entry.path, entry.lineno + 1, self.exconly())
         return unicode(loc)
+
+    def match(self, regexp):
+        """
+        Match the regular expression 'regexp' on the string representation of
+        the exception. If it matches then True is returned (so that it is
+        possible to write 'assert excinfo.match()'). If it doesn't match an
+        AssertionError is raised.
+        """
+        __tracebackhide__ = True
+        if not re.search(regexp, str(self.value)):
+            assert 0, "Pattern '{0!s}' not found in '{1!s}'".format(
+                regexp, self.value)
+        return True
 
 
 class FormattedExcinfo(object):
