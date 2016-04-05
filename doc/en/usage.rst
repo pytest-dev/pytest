@@ -158,7 +158,7 @@ To get a list of the slowest 10 test durations::
 Creating JUnitXML format files
 ----------------------------------------------------
 
-To create result files which can be read by Hudson_ or other Continuous
+To create result files which can be read by Jenkins_ or other Continuous
 integration servers, use this invocation::
 
     py.test --junitxml=path
