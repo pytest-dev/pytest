@@ -3,7 +3,7 @@
 import _pytest
 import py
 import pytest
-from _pytest._code.code import FormattedExcinfo, ReprExceptionInfo
+from _pytest._code.code import ExceptionInfo, FormattedExcinfo, ReprExceptionInfo
 
 queue = py.builtin._tryimport('queue', 'Queue')
 
@@ -909,3 +909,19 @@ raise ValueError()
         assert tw.lines[14] == "E       ValueError"
         assert tw.lines[15] == ""
         assert tw.lines[16].endswith("mod.py:9: ValueError")
+
+
+@pytest.mark.parametrize("style", ["short", "long"])
+@pytest.mark.parametrize("encoding", [None, "utf8", "utf16"])
+def test_repr_traceback_with_unicode(style, encoding):
+    msg = u'☹'
+    if encoding is not None:
+        msg = msg.encode(encoding)
+    try:
+        raise RuntimeError(msg)
+    except RuntimeError:
+        e_info = ExceptionInfo()
+    formatter = FormattedExcinfo(style=style)
+    repr_traceback = formatter.repr_traceback(e_info)
+    assert repr_traceback is not None
+
