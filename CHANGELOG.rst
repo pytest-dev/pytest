@@ -7,12 +7,21 @@
 
 *
 
+* Fix maximum recursion depth detection when raised error class is not aware
+  of unicode/encoded bytes.
+  Thanks `@prusse-martin`_ for the PR (`#1506`_).
+
 * Fix ``pytest.mark.skip`` mark when used in strict mode.
   Thanks `@pquentin`_ for the PR and `@RonnyPfannschmidt`_ for
   showing how to fix the bug.
 
 * Minor improvements and fixes to the documentation.
   Thanks `@omarkohl`_ for the PR.
+
+
+.. _#1506: https://github.com/pytest-dev/pytest/pull/1506
+
+.. _@prusse-martin: https://github.com/prusse-martin
 
 
 2.9.1

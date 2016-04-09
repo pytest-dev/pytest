@@ -579,9 +579,8 @@ class FormattedExcinfo(object):
         if self.tbfilter:
             traceback = traceback.filter()
         recursionindex = None
-        if excinfo.errisinstance(RuntimeError):
-            if "maximum recursion depth exceeded" in str(excinfo.value):
-                recursionindex = traceback.recursionindex()
+        if is_recursion_error(excinfo):
+            recursionindex = traceback.recursionindex()
         last = traceback[-1]
         entries = []
         extraline = None
@@ -793,3 +792,14 @@ def getrawcode(obj, trycall=True):
                     return x
         return obj
 
+if sys.version_info[:2] >= (3, 5):  # RecursionError introduced in 3.5
+    def is_recursion_error(excinfo):
+        return excinfo.errisinstance(RecursionError)  # noqa
+else:
+    def is_recursion_error(excinfo):
+        if not excinfo.errisinstance(RuntimeError):
+            return False
+        try:
+            return "maximum recursion depth exceeded" in str(excinfo.value)
+        except UnicodeError:
+            return False
