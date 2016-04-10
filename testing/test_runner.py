@@ -365,18 +365,6 @@ class TestSessionReports:
         assert res[0].name == "test_func1"
         assert res[1].name == "TestClass"
 
-    def test_skip_at_module_scope(self, testdir):
-        col = testdir.getmodulecol("""
-            import pytest
-            pytest.skip("hello")
-            def test_func():
-                pass
-        """)
-        rep = main.collect_one_node(col)
-        assert not rep.failed
-        assert not rep.passed
-        assert rep.skipped
-
 
 reporttypes = [
     runner.BaseReport,

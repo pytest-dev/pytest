@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from xml.dom import minidom
-from _pytest.main import EXIT_NOTESTSCOLLECTED
 import py
 import sys
 import os
@@ -157,6 +156,47 @@ class TestPython:
             name="test_skip")
         snode = tnode.find_first_by_tag("skipped")
         snode.assert_attr(type="pytest.skip", message="hello23", )
+
+    def test_mark_skip_contains_name_reason(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.skip(reason="hello24")
+            def test_skip():
+                assert True
+        """)
+        result, dom = runandparse(testdir)
+        assert result.ret == 0
+        node = dom.find_first_by_tag("testsuite")
+        node.assert_attr(skips=1)
+        tnode = node.find_first_by_tag("testcase")
+        tnode.assert_attr(
+            file="test_mark_skip_contains_name_reason.py",
+            line="1",
+            classname="test_mark_skip_contains_name_reason",
+            name="test_skip")
+        snode = tnode.find_first_by_tag("skipped")
+        snode.assert_attr(type="pytest.skip", message="hello24", )
+
+    def test_mark_skipif_contains_name_reason(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            GLOBAL_CONDITION = True
+            @pytest.mark.skipif(GLOBAL_CONDITION, reason="hello25")
+            def test_skip():
+                assert True
+        """)
+        result, dom = runandparse(testdir)
+        assert result.ret == 0
+        node = dom.find_first_by_tag("testsuite")
+        node.assert_attr(skips=1)
+        tnode = node.find_first_by_tag("testcase")
+        tnode.assert_attr(
+            file="test_mark_skipif_contains_name_reason.py",
+            line="2",
+            classname="test_mark_skipif_contains_name_reason",
+            name="test_skip")
+        snode = tnode.find_first_by_tag("skipped")
+        snode.assert_attr(type="pytest.skip", message="hello25", )
 
     def test_classname_instance(self, testdir):
         testdir.makepyfile("""
@@ -350,23 +390,6 @@ class TestPython:
         fnode = tnode.find_first_by_tag("error")
         fnode.assert_attr(message="collection failure")
         assert "SyntaxError" in fnode.toxml()
-
-    def test_collect_skipped(self, testdir):
-        testdir.makepyfile("import pytest; pytest.skip('xyz')")
-        result, dom = runandparse(testdir)
-        assert result.ret == EXIT_NOTESTSCOLLECTED
-        node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(skips=1, tests=1)
-        tnode = node.find_first_by_tag("testcase")
-        tnode.assert_attr(
-            file="test_collect_skipped.py",
-            name="test_collect_skipped")
-
-        # pytest doesn't give us a line here.
-        assert tnode["line"] is None
-
-        fnode = tnode.find_first_by_tag("skipped")
-        fnode.assert_attr(message="collection skipped")
 
     def test_unicode(self, testdir):
         value = 'hx\xc4\x85\xc4\x87\n'
