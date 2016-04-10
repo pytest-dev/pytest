@@ -23,7 +23,8 @@
   Thanks `@omarkohl`_ for the complete PR (`#1502`_) and `@nicoddemus`_ for the
   implementation tips.
 
-*
+* New ``pytest.logs()``` context manager. Backport of stdlib assertLogs in
+  unittest library.
 
 **Changes**
 
