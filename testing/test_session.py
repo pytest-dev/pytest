@@ -42,7 +42,7 @@ class SessionTests:
         reprec = testdir.inline_run(tfile)
         l = reprec.getfailedcollections()
         assert len(l) == 1
-        out = l[0].longrepr.reprcrash.message
+        out = str(l[0].longrepr)
         assert out.find('does_not_work') != -1
 
     def test_raises_output(self, testdir):
