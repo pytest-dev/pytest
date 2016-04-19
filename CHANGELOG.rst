@@ -1,3 +1,24 @@
+3.0.0.dev1
+==========
+
+**Changes**
+
+*
+
+*
+
+*
+
+* Fix (`#607`_): pytest.skip() is no longer allowed at module level to
+  prevent misleading use as test function decorator. When used at a module
+  level an error will be raised during collection.
+  Thanks `@omarkohl`_ for the complete PR (`#1519`_).
+
+*
+
+.. _#607: https://github.com/pytest-dev/pytest/issues/607
+.. _#1519: https://github.com/pytest-dev/pytest/pull/1519
+
 2.10.0.dev1
 ===========
 
