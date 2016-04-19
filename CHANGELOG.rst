@@ -3,7 +3,9 @@
 
 **Bug Fixes**
 
-*
+* Fix Xfail does not work with condition keyword argument.
+  Thanks `@astraw38`_ for reporting the issue (`#1496`_) and `@tomviner`_
+  for PR the (`#1524`_).
 
 *
 
@@ -20,8 +22,11 @@
 
 
 .. _#1506: https://github.com/pytest-dev/pytest/pull/1506
+.. _#1496: https://github.com/pytest-dev/pytest/issue/1496
+.. _#1524: https://github.com/pytest-dev/pytest/issue/1524
 
 .. _@prusse-martin: https://github.com/prusse-martin
+.. _@astraw38: https://github.com/astraw38
 
 
 2.9.1
