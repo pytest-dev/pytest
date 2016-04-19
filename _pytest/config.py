@@ -104,7 +104,10 @@ def _prepareconfig(args=None, plugins=None):
     elif not isinstance(args, (tuple, list)):
         if not isinstance(args, str):
             raise ValueError("not a string or argument list: %r" % (args,))
-        args = shlex.split(args)
+        if sys.platform == "win32":
+            args = shlex.split(args, posix=False)
+        else:
+            args = shlex.split(args)
     config = get_config()
     pluginmanager = config.pluginmanager
     try:
