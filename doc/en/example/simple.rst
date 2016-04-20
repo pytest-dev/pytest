@@ -216,6 +216,28 @@ Let's run our little function::
     test_checkconfig.py:8: Failed
     1 failed in 0.12 seconds
 
+If you only want to hide certain exceptions, you can set ``__tracebackhide__``
+to a callable which gets the ``ExceptionInfo`` object. You can for example use
+this to make sure unexpected exception types aren't hidden::
+
+    import operator
+    import pytest
+
+    class ConfigException(Exception):
+        pass
+
+    def checkconfig(x):
+        __tracebackhide__ = operator.methodcaller('errisinstance', ConfigException)
+        if not hasattr(x, "config"):
+            raise ConfigException("not configured: %s" %(x,))
+
+    def test_something():
+        checkconfig(42)
+
+This will avoid hiding the exception traceback on unrelated exceptions (i.e.
+bugs in assertion helpers).
+
+
 Detect if running from within a pytest run
 --------------------------------------------------------------
 

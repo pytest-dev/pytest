@@ -23,6 +23,10 @@
   Thanks `@omarkohl`_ for the complete PR (`#1502`_) and `@nicoddemus`_ for the
   implementation tips.
 
+* ``__tracebackhide__`` can now also be set to a callable which then can decide
+  whether to filter the traceback based on the ``ExceptionInfo`` object passed
+  to it.
+
 *
 
 **Changes**

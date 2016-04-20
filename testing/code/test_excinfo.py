@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import operator
 import _pytest
 import py
 import pytest
@@ -143,6 +144,39 @@ class TestTraceback_f_g_h:
         traceback = self.excinfo.traceback
         ntraceback = traceback.filter()
         assert len(ntraceback) == len(traceback) - 1
+
+    @pytest.mark.parametrize('tracebackhide, matching', [
+        (lambda info: True, True),
+        (lambda info: False, False),
+        (operator.methodcaller('errisinstance', ValueError), True),
+        (operator.methodcaller('errisinstance', IndexError), False),
+    ])
+    def test_traceback_filter_selective(self, tracebackhide, matching):
+        def f():
+            #
+            raise ValueError
+            #
+        def g():
+            #
+            __tracebackhide__ = tracebackhide
+            f()
+            #
+        def h():
+            #
+            g()
+            #
+
+        excinfo = pytest.raises(ValueError, h)
+        traceback = excinfo.traceback
+        ntraceback = traceback.filter()
+        print('old: {0!r}'.format(traceback))
+        print('new: {0!r}'.format(ntraceback))
+
+        if matching:
+            assert len(ntraceback) == len(traceback) - 2
+        else:
+            # -1 because of the __tracebackhide__ in pytest.raises
+            assert len(ntraceback) == len(traceback) - 1
 
     def test_traceback_recursion_index(self):
         def f(n):
@@ -442,7 +476,7 @@ raise ValueError()
             f_globals = {}
 
         class FakeTracebackEntry(_pytest._code.Traceback.Entry):
-            def __init__(self, tb):
+            def __init__(self, tb, excinfo=None):
                 self.lineno = 5+3
 
             @property
