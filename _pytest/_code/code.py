@@ -235,7 +235,7 @@ class TracebackEntry(object):
             except KeyError:
                 return False
 
-        if callable(tbh):
+        if py.builtin.callable(tbh):
             return tbh(self._excinfo)
         else:
             return tbh
