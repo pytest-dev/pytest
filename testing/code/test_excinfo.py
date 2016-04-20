@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import operator
 import _pytest
 import py
 import pytest
@@ -145,10 +146,10 @@ class TestTraceback_f_g_h:
         assert len(ntraceback) == len(traceback) - 1
 
     @pytest.mark.parametrize('tracebackhide, matching', [
-        (ValueError, True),
-        (IndexError, False),
-        ([ValueError, IndexError], True),
-        ((ValueError, IndexError), True),
+        (lambda info: True, True),
+        (lambda info: False, False),
+        (operator.methodcaller('errisinstance', ValueError), True),
+        (operator.methodcaller('errisinstance', IndexError), False),
     ])
     def test_traceback_filter_selective(self, tracebackhide, matching):
         def f():
@@ -475,7 +476,7 @@ raise ValueError()
             f_globals = {}
 
         class FakeTracebackEntry(_pytest._code.Traceback.Entry):
-            def __init__(self, tb, exctype=None):
+            def __init__(self, tb, excinfo=None):
                 self.lineno = 5+3
 
             @property
