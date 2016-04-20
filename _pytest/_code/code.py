@@ -140,7 +140,8 @@ class TracebackEntry(object):
     _repr_style = None
     exprinfo = None
 
-    def __init__(self, rawentry):
+    def __init__(self, rawentry, exctype=None):
+        self._exctype = exctype
         self._rawentry = rawentry
         self.lineno = rawentry.tb_lineno - 1
 
@@ -217,19 +218,36 @@ class TracebackEntry(object):
 
     source = property(getsource)
 
+    def _is_exception_type(self, obj):
+        return isinstance(obj, type) and issubclass(obj, Exception)
+
     def ishidden(self):
         """ return True if the current frame has a var __tracebackhide__
             resolving to True
 
+            If __tracebackhide__ is set to an exception type, or a list/tuple,
+            the traceback is only hidden if the exception which happened is of
+            the given type(s).
+
             mostly for internal use
         """
         try:
-            return self.frame.f_locals['__tracebackhide__']
+            tbh = self.frame.f_locals['__tracebackhide__']
         except KeyError:
             try:
-                return self.frame.f_globals['__tracebackhide__']
+                tbh = self.frame.f_globals['__tracebackhide__']
             except KeyError:
                 return False
+
+        if self._is_exception_type(tbh):
+            assert self._exctype is not None
+            return issubclass(self._exctype, tbh)
+        elif (isinstance(tbh, (list, tuple)) and
+              all(self._is_exception_type(e) for e in tbh)):
+            assert self._exctype is not None
+            return issubclass(self._exctype, tuple(tbh))
+        else:
+            return tbh
 
     def __str__(self):
         try:
@@ -254,12 +272,13 @@ class Traceback(list):
         access to Traceback entries.
     """
     Entry = TracebackEntry
-    def __init__(self, tb):
-        """ initialize from given python traceback object. """
+    def __init__(self, tb, exctype=None):
+        """ initialize from given python traceback object and exc type. """
+        self._exctype = exctype
         if hasattr(tb, 'tb_next'):
             def f(cur):
                 while cur is not None:
-                    yield self.Entry(cur)
+                    yield self.Entry(cur, exctype=exctype)
                     cur = cur.tb_next
             list.__init__(self, f(tb))
         else:
@@ -283,7 +302,7 @@ class Traceback(list):
                  not codepath.relto(excludepath)) and
                 (lineno is None or x.lineno == lineno) and
                 (firstlineno is None or x.frame.code.firstlineno == firstlineno)):
-                return Traceback(x._rawentry)
+                return Traceback(x._rawentry, self._exctype)
         return self
 
     def __getitem__(self, key):
@@ -302,7 +321,7 @@ class Traceback(list):
             by default this removes all the TracebackItems which are hidden
             (see ishidden() above)
         """
-        return Traceback(filter(fn, self))
+        return Traceback(filter(fn, self), self._exctype)
 
     def getcrashentry(self):
         """ return last non-hidden traceback entry that lead
@@ -366,7 +385,7 @@ class ExceptionInfo(object):
         #: the exception type name
         self.typename = self.type.__name__
         #: the exception traceback (_pytest._code.Traceback instance)
-        self.traceback = _pytest._code.Traceback(self.tb)
+        self.traceback = _pytest._code.Traceback(self.tb, exctype=self.type)
 
     def __repr__(self):
         return "<ExceptionInfo %s tblen=%d>" % (self.typename, len(self.traceback))

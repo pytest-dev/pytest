@@ -23,6 +23,9 @@
   Thanks `@omarkohl`_ for the complete PR (`#1502`_) and `@nicoddemus`_ for the
   implementation tips.
 
+* ``__tracebackhide__`` can now also be set to an exception type (or a list of
+  exception types) to only filter exceptions of that type.
+
 *
 
 **Changes**
