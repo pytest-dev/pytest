@@ -79,7 +79,7 @@ class TestParseIni:
         """)
         result = testdir.inline_run("--confcutdir=.")
         assert result.ret == 0
-
+        
 class TestConfigCmdlineParsing:
     def test_parsing_again_fails(self, testdir):
         config = testdir.parseconfig()
@@ -100,6 +100,16 @@ class TestConfigCmdlineParsing:
         """)
         config = testdir.parseconfig("-c", "custom.cfg")
         assert config.getini("custom") == "1"
+
+    def test_absolute_win32_path(self, testdir):
+        temp_cfg_file = testdir.makefile(".cfg", custom="""
+            [pytest]
+            addopts = --version
+        """)
+        from os.path import normpath
+        temp_cfg_file = normpath(str(temp_cfg_file))
+        ret = pytest.main("-c " + temp_cfg_file)
+        assert ret == _pytest.main.EXIT_OK
 
 class TestConfigAPI:
     def test_config_trace(self, testdir):
