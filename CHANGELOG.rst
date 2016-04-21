@@ -20,7 +20,7 @@
 * Minor improvements and fixes to the documentation.
   Thanks `@omarkohl`_ for the PR.
 
-
+.. _#510: https://github.com/pytest-dev/pytest/issues/510
 .. _#1506: https://github.com/pytest-dev/pytest/pull/1506
 
 .. _@prusse-martin: https://github.com/prusse-martin
