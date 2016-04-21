@@ -990,6 +990,13 @@ class Metafunc(FuncargnamesCompatAttr):
                 argvalues = [(val,) for val in argvalues]
         if not argvalues:
             argvalues = [(_notexists,) * len(argnames)]
+            # we passed a empty list to parameterize, skip that test
+            #
+            newmark = pytest.mark.skip(
+                reason='argument listing for %r was empty' % argnames)
+            newmarks = newkeywords.setdefault(0, {})
+            newmarks[newmark.markname] = newmark
+
 
         if scope is None:
             scope = "function"
