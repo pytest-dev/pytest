@@ -39,6 +39,7 @@ Here are preliminary participants who said they are likely to come,
 given some expenses funding::
 
     Anatoly Bubenkoff, Netherlands
+    Ana Ribeiro, Brazil
     Andreas Pelme, Personalkollen, Sweden
     Anthony Wang, Splunk, US
     Brianna Laugher, Australia
