@@ -52,6 +52,7 @@ given some expenses funding::
     Oliver Bestwalter, Avira, Germany
     Omar Kohl, Germany
     Raphael Pierzina, FanDuel, UK
+    Ronny Pfannschmidt, Germany 
     Tom Viner, UK
 
     <your name here?>
