@@ -114,7 +114,7 @@ class MarkInfo(object):
             yield MarkInfo(self.name, args, kwargs)
 
 
-class MarkGenerator:
+class MarkGenerator(object):
     """ Factory for :class:`MarkDecorator` objects - exposed as
     a ``pytest.mark`` singleton instance.  Example::
 
