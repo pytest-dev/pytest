@@ -1,9 +1,40 @@
 import inspect
+from operator import attrgetter
+
+
+def alias(name):
+    return property(fget=attrgetter(name), doc='alias for self.' + name)
 
 
 def istestfunc(func):
     return hasattr(func, "__call__") and \
         getattr(func, "__name__", "<lambda>") != "<lambda>"
+
+
+def apply_mark(mark, obj):
+    # unwrap MarkDecorator
+    mark = getattr(mark, 'mark', mark)
+    if not isinstance(mark, Mark):
+        raise TypeError('%r is not a marker' % (mark, ))
+    is_class = inspect.isclass(obj)
+    if is_class:
+        if hasattr(obj, 'pytestmark'):
+            mark_list = obj.pytestmark
+            if not isinstance(mark_list, list):
+                mark_list = [mark_list]
+            # always work on a copy to avoid updating pytestmark
+            # from a superclass by accident
+            mark_list = mark_list + [mark]
+            obj.pytestmark = mark_list
+        else:
+            obj.pytestmark = [mark]
+    else:
+        holder = getattr(obj, mark.name, None)
+        if holder is None:
+            holder = MarkInfo(mark)
+            setattr(obj, mark.name, holder)
+        else:
+            holder.add(mark)
 
 
 class MarkDecorator(object):
@@ -41,18 +72,15 @@ class MarkDecorator(object):
     """
 
     def __init__(self, name, args=None, kwargs=None):
-        self.name = name
-        self.args = args or ()
-        self.kwargs = kwargs or {}
+        self.mark = Mark(name, args or (), kwargs or {})
 
-    @property
-    def markname(self):
-        return self.name  # for backward-compat (2.4.1 had this attr)
+    name = markname = alias('mark.name')
+    args = alias('mark.args')
+    kwargs = alias('mark.kwargs')
 
     def __repr__(self):
-        d = self.__dict__.copy()
-        name = d.pop('name')
-        return "<MarkDecorator %r %r>" % (name, d)
+
+        return repr(self.mark).replace('Mark', 'MarkDecorator')
 
     def __call__(self, *args, **kwargs):
         """ if passed a single callable argument: decorate it with mark info.
@@ -61,25 +89,9 @@ class MarkDecorator(object):
             func = args[0]
             is_class = inspect.isclass(func)
             if len(args) == 1 and (istestfunc(func) or is_class):
-                if is_class:
-                    if hasattr(func, 'pytestmark'):
-                        mark_list = func.pytestmark
-                        if not isinstance(mark_list, list):
-                            mark_list = [mark_list]
-                        # always work on a copy to avoid updating pytestmark
-                        # from a superclass by accident
-                        mark_list = mark_list + [self]
-                        func.pytestmark = mark_list
-                    else:
-                        func.pytestmark = [self]
-                else:
-                    holder = getattr(func, self.name, None)
-                    if holder is None:
-                        holder = MarkInfo(self.name, self.args, self.kwargs)
-                        setattr(func, self.name, holder)
-                    else:
-                        holder.add(self.args, self.kwargs)
+                apply_mark(mark=self.mark, obj=func)
                 return func
+
         kw = self.kwargs.copy()
         kw.update(kwargs)
         args = self.args + args
@@ -88,30 +100,44 @@ class MarkDecorator(object):
 
 class MarkInfo(object):
     """ Marking object created by :class:`MarkDecorator` instances. """
+    name = markname = alias('mark.name')
+    args = alias('mark.args')
+    kwargs = alias('mark.kwargs')
 
-    def __init__(self, name, args, kwargs):
+    def __init__(self, mark):
+        self.mark = mark
         #: name of attribute
-        self.name = name
-        #: positional argument list, empty if none specified
-        self.args = args
-        #: keyword argument dictionary, empty if nothing specified
-        self.kwargs = kwargs.copy()
-        self._arglist = [(args, kwargs.copy())]
+        self._mark_list = [mark]
 
     def __repr__(self):
         return "<MarkInfo %r args=%r kwargs=%r>" % (self.name, self.args,
                                                     self.kwargs)
 
-    def add(self, args, kwargs):
+    def add(self, mark):
         """ add a MarkInfo with the given args and kwargs. """
-        self._arglist.append((args, kwargs))
-        self.args += args
-        self.kwargs.update(kwargs)
+        self._mark_list.append(mark)
+        self.mark += mark
 
     def __iter__(self):
         """ yield MarkInfo objects each relating to a marking-call. """
-        for args, kwargs in self._arglist:
-            yield MarkInfo(self.name, args, kwargs)
+        return iter(self._mark_list)
+
+
+class Mark(object):
+    def __init__(self, name, args, kwargs):
+        self.name = name
+        self.args = args
+        self.kwargs = kwargs
+
+    def __add__(self, other):
+        assert isinstance(other, Mark)
+        assert other.name == self.name
+        return Mark(self.name, self.args + other.args,
+                    dict(self.kwargs, **other.kwargs))
+
+    def __repr__(self):
+        return "<Mark %r args=%r kwargs=%r>" % (self.name, self.args,
+                                                self.kwargs)
 
 
 class MarkGenerator(object):

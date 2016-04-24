@@ -3,10 +3,12 @@ import os
 import py, pytest
 from _pytest.mark import MarkGenerator as Mark
 
+
 class TestMark:
     def test_markinfo_repr(self):
         from _pytest.mark import MarkInfo
-        m = MarkInfo("hello", (1,2), {})
+        from _pytest.mark.model import Mark
+        m = MarkInfo(Mark("hello", (1, 2), {}))
         repr(m)
 
     def test_pytest_exists_in_namespace_all(self):
@@ -23,15 +25,19 @@ class TestMark:
 
     def test_pytest_mark_bare(self):
         mark = Mark()
+
         def f():
             pass
+
         mark.hello(f)
         assert f.hello
 
     def test_pytest_mark_keywords(self):
         mark = Mark()
+
         def f():
             pass
+
         mark.world(x=3, y=4)(f)
         assert f.world
         assert f.world.kwargs['x'] == 3
@@ -39,8 +45,10 @@ class TestMark:
 
     def test_apply_multiple_and_merge(self):
         mark = Mark()
+
         def f():
             pass
+
         mark.world
         mark.world(x=3)(f)
         assert f.world.kwargs['x'] == 3
@@ -53,33 +61,43 @@ class TestMark:
 
     def test_pytest_mark_positional(self):
         mark = Mark()
+
         def f():
             pass
+
         mark.world("hello")(f)
         assert f.world.args[0] == "hello"
         mark.world("world")(f)
 
     def test_pytest_mark_positional_func_and_keyword(self):
         mark = Mark()
+
         def f():
             raise Exception
+
         m = mark.world(f, omega="hello")
+
         def g():
             pass
+
         assert m(g) == g
         assert g.world.args[0] is f
         assert g.world.kwargs["omega"] == "hello"
 
     def test_pytest_mark_reuse(self):
         mark = Mark()
+
         def f():
             pass
+
         w = mark.some
         w("hello", reason="123")(f)
         assert f.some.args[0] == "hello"
         assert f.some.kwargs['reason'] == "123"
+
         def g():
             pass
+
         w("world", reason2="456")(g)
         assert g.some.args[0] == "world"
         assert 'reason' not in g.some.kwargs
@@ -120,6 +138,7 @@ def test_ini_markers(testdir):
     rec = testdir.inline_run()
     rec.assertoutcome(passed=1)
 
+
 def test_markers_option(testdir):
     testdir.makeini("""
         [pytest]
@@ -132,6 +151,7 @@ def test_markers_option(testdir):
         "*a1*this is a webtest*",
         "*a1some*another marker",
     ])
+
 
 def test_markers_option_with_plugin_in_current_dir(testdir):
     testdir.makeconftest('pytest_plugins = "flip_flop"')
@@ -166,6 +186,7 @@ def test_mark_on_pseudo_function(testdir):
     reprec = testdir.inline_run()
     reprec.assertoutcome(passed=1)
 
+
 def test_strict_prohibits_unregistered_markers(testdir):
     testdir.makepyfile("""
         import pytest
@@ -175,15 +196,15 @@ def test_strict_prohibits_unregistered_markers(testdir):
     """)
     result = testdir.runpytest("--strict")
     assert result.ret != 0
-    result.stdout.fnmatch_lines([
-        "*unregisteredmark*not*registered*",
-    ])
+    result.stdout.fnmatch_lines(["*unregisteredmark*not*registered*", ])
+
 
 @pytest.mark.parametrize("spec", [
-        ("xyz", ("test_one",)),
-        ("xyz and xyz2", ()),
-        ("xyz2", ("test_two",)),
-        ("xyz or xyz2", ("test_one", "test_two"),)
+    ("xyz",
+     ("test_one", )), ("xyz and xyz2",
+                       ()), ("xyz2",
+                             ("test_two", )), ("xyz or xyz2",
+                                               ("test_one", "test_two"), )
 ])
 def test_mark_option(spec, testdir):
     testdir.makepyfile("""
@@ -202,9 +223,10 @@ def test_mark_option(spec, testdir):
     assert len(passed) == len(passed_result)
     assert list(passed) == list(passed_result)
 
+
 @pytest.mark.parametrize("spec", [
-        ("interface", ("test_interface",)),
-        ("not interface", ("test_nointer",)),
+    ("interface", ("test_interface", )),
+    ("not interface", ("test_nointer", )),
 ])
 def test_mark_option_custom(spec, testdir):
     testdir.makeconftest("""
@@ -227,11 +249,12 @@ def test_mark_option_custom(spec, testdir):
     assert len(passed) == len(passed_result)
     assert list(passed) == list(passed_result)
 
+
 @pytest.mark.parametrize("spec", [
-        ("interface", ("test_interface",)),
-        ("not interface", ("test_nointer", "test_pass")),
-        ("pass", ("test_pass",)),
-        ("not pass", ("test_interface", "test_nointer")),
+    ("interface", ("test_interface", )),
+    ("not interface", ("test_nointer", "test_pass")),
+    ("pass", ("test_pass", )),
+    ("not pass", ("test_interface", "test_nointer")),
 ])
 def test_keyword_option_custom(spec, testdir):
     testdir.makepyfile("""
@@ -251,9 +274,10 @@ def test_keyword_option_custom(spec, testdir):
 
 
 @pytest.mark.parametrize("spec", [
-        ("None", ("test_func[None]",)),
-        ("1.3", ("test_func[1.3]",)),
-        ("2-3", ("test_func[2-3]",))
+    ("None",
+     ("test_func[None]", )), ("1.3",
+                              ("test_func[1.3]", )), ("2-3",
+                                                      ("test_func[2-3]", ))
 ])
 def test_keyword_option_parametrize(spec, testdir):
     testdir.makepyfile("""
@@ -285,8 +309,8 @@ def test_parametrized_collected_from_command_line(testdir):
     rec.assertoutcome(passed=3)
 
 
-class TestFunctional:
 
+class TestFunctional:
     def test_mark_per_function(self, testdir):
         p = testdir.makepyfile("""
             import pytest
@@ -378,7 +402,7 @@ class TestFunctional:
         # test the new __iter__ interface
         l = list(marker)
         assert len(l) == 3
-        assert l[0].args == ("pos0",)
+        assert l[0].args == ("pos0", )
         assert l[1].args == ()
         assert l[2].args == ("pos1", )
 
@@ -398,7 +422,7 @@ class TestFunctional:
         """)
         items, rec = testdir.inline_genitems(p)
         for item in items:
-            print (item, item.keywords)
+            print(item, item.keywords)
             assert 'a' in item.keywords
 
     def test_mark_decorator_subclass_does_not_propagate_to_base(self, testdir):
@@ -416,7 +440,7 @@ class TestFunctional:
                 def test_bar(self): pass
         """)
         items, rec = testdir.inline_genitems(p)
-        self.assert_markers(items, test_foo=('a', 'b'), test_bar=('a',))
+        self.assert_markers(items, test_foo=('a', 'b'), test_bar=('a', ))
 
     def test_mark_decorator_baseclasses_merged(self, testdir):
         p = testdir.makepyfile("""
@@ -437,7 +461,8 @@ class TestFunctional:
                 def test_bar(self): pass
         """)
         items, rec = testdir.inline_genitems(p)
-        self.assert_markers(items, test_foo=('a', 'b', 'c'),
+        self.assert_markers(items,
+                            test_foo=('a', 'b', 'c'),
                             test_bar=('a', 'b', 'd'))
 
     def test_mark_with_wrong_marker(self, testdir):
@@ -466,9 +491,7 @@ class TestFunctional:
                 pass
         """)
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines([
-            "keyword: *hello*"
-        ])
+        result.stdout.fnmatch_lines(["keyword: *hello*"])
 
     def test_merging_markers_two_functions(self, testdir):
         p = testdir.makepyfile("""
@@ -484,8 +507,8 @@ class TestFunctional:
         marker = keywords['hello']
         l = list(marker)
         assert len(l) == 2
-        assert l[0].args == ("pos0",)
-        assert l[1].args == ("pos1",)
+        assert l[0].args == ("pos0", )
+        assert l[1].args == ("pos1", )
 
     def test_no_marker_match_on_unmarked_names(self, testdir):
         p = testdir.makepyfile("""
@@ -559,7 +582,8 @@ class TestFunctional:
         items = dict((x.name, x) for x in items)
         for name, expected_markers in expected.items():
             markers = items[name].keywords._markers
-            marker_names = set([name for (name, v) in markers.items()
+            marker_names = set([name
+                                for (name, v) in markers.items()
                                 if isinstance(v, MarkInfo)])
             assert marker_names == set(expected_markers)
 
@@ -573,6 +597,7 @@ class TestKeywordSelection:
                 def test_method_one(self):
                     assert 42 == 43
         """)
+
         def check(keyword, name):
             reprec = testdir.inline_run("-s", "-k", keyword, file_test)
             passed, skipped, failed = reprec.listoutcomes()
@@ -586,7 +611,8 @@ class TestKeywordSelection:
 
     @pytest.mark.parametrize("keyword", [
         'xxx', 'xxx and test_2', 'TestClass', 'xxx and not test_1',
-        'TestClass and test_2', 'xxx and TestClass and test_2'])
+        'TestClass and test_2', 'xxx and TestClass and test_2'
+    ])
     def test_select_extra_keywords(self, testdir, keyword):
         p = testdir.makepyfile(test_select="""
             def test_1():
@@ -659,6 +685,7 @@ class TestKeywordSelection:
         p = testdir.makepyfile("""
             def test_one(): assert 1
         """)
+
         def assert_test_is_not_selected(keyword):
             reprec = testdir.inline_run("-k", keyword, p)
             passed, skipped, failed = reprec.countoutcomes()
@@ -669,4 +696,3 @@ class TestKeywordSelection:
 
         assert_test_is_not_selected("__")
         assert_test_is_not_selected("()")
-
