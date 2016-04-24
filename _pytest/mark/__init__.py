@@ -3,7 +3,6 @@ import inspect
 
 
 class MarkerError(Exception):
-
     """Error in use of a pytest marker/attribute."""
 
 
@@ -12,6 +11,7 @@ def pytest_namespace():
 
 
 def pytest_addoption(parser):
+    # yapf: disable
     group = parser.getgroup("general")
     group._addoption(
         '-k',
@@ -40,7 +40,7 @@ def pytest_addoption(parser):
     )
 
     parser.addini("markers", "markers for test functions", 'linelist')
-
+    # yapf: enable
 
 def pytest_cmdline_main(config):
     import _pytest.config
@@ -54,6 +54,8 @@ def pytest_cmdline_main(config):
             tw.line()
         config._ensure_unconfigure()
         return 0
+
+
 pytest_cmdline_main.tryfirst = True
 
 
@@ -94,6 +96,7 @@ def pytest_collection_modifyitems(items, config):
 class MarkMapping:
     """Provides a local mapping for markers where item access
     resolves to True if the marker is present. """
+
     def __init__(self, keywords):
         mymarks = set()
         for key, value in keywords.items():
@@ -109,6 +112,7 @@ class KeywordMapping:
     """Provides a local mapping for keywords.
     Given a list of names, map any substring of one of these names to True.
     """
+
     def __init__(self, names):
         self._names = names
 
@@ -200,11 +204,13 @@ class MarkGenerator:
         self.__known_markers.update(_parsed_markers(self._config))
 
         if name not in self.__known_markers:
-            raise AttributeError("%r not a registered marker" % (name,))
+            raise AttributeError("%r not a registered marker" % (name, ))
+
 
 def istestfunc(func):
     return hasattr(func, "__call__") and \
         getattr(func, "__name__", "<lambda>") != "<lambda>"
+
 
 class MarkDecorator:
     """ A decorator for test functions and test classes.  When applied
@@ -239,6 +245,7 @@ class MarkDecorator:
     additional keyword or positional arguments.
 
     """
+
     def __init__(self, name, args=None, kwargs=None):
         self.name = name
         self.args = args or ()
@@ -246,7 +253,7 @@ class MarkDecorator:
 
     @property
     def markname(self):
-        return self.name # for backward-compat (2.4.1 had this attr)
+        return self.name  # for backward-compat (2.4.1 had this attr)
 
     def __repr__(self):
         d = self.__dict__.copy()
@@ -274,9 +281,7 @@ class MarkDecorator:
                 else:
                     holder = getattr(func, self.name, None)
                     if holder is None:
-                        holder = MarkInfo(
-                            self.name, self.args, self.kwargs
-                        )
+                        holder = MarkInfo(self.name, self.args, self.kwargs)
                         setattr(func, self.name, holder)
                     else:
                         holder.add(self.args, self.kwargs)
@@ -289,6 +294,7 @@ class MarkDecorator:
 
 class MarkInfo:
     """ Marking object created by :class:`MarkDecorator` instances. """
+
     def __init__(self, name, args, kwargs):
         #: name of attribute
         self.name = name
@@ -299,9 +305,8 @@ class MarkInfo:
         self._arglist = [(args, kwargs.copy())]
 
     def __repr__(self):
-        return "<MarkInfo %r args=%r kwargs=%r>" % (
-            self.name, self.args, self.kwargs
-        )
+        return "<MarkInfo %r args=%r kwargs=%r>" % (self.name, self.args,
+                                                    self.kwargs)
 
     def add(self, args, kwargs):
         """ add a MarkInfo with the given args and kwargs. """
