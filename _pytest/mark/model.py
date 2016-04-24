@@ -6,7 +6,7 @@ def istestfunc(func):
         getattr(func, "__name__", "<lambda>") != "<lambda>"
 
 
-class MarkDecorator:
+class MarkDecorator(object):
     """ A decorator for test functions and test classes.  When applied
     it will create :class:`MarkInfo` objects which may be
     :ref:`retrieved by hooks as item keywords <excontrolskip>`.
@@ -86,7 +86,7 @@ class MarkDecorator:
         return self.__class__(self.name, args=args, kwargs=kw)
 
 
-class MarkInfo:
+class MarkInfo(object):
     """ Marking object created by :class:`MarkDecorator` instances. """
 
     def __init__(self, name, args, kwargs):
