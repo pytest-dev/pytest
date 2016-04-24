@@ -28,6 +28,7 @@ class MarkEvaluator:
 
     def __bool__(self):
         return bool(self.holder)
+
     __nonzero__ = __bool__
 
     def wasvalid(self):
@@ -45,14 +46,13 @@ class MarkEvaluator:
         except Exception:
             self.exc = sys.exc_info()
             if isinstance(self.exc[1], SyntaxError):
-                msg = [" " * (self.exc[1].offset + 4) + "^",]
+                msg = [" " * (self.exc[1].offset + 4) + "^", ]
                 msg.append("SyntaxError: invalid syntax")
             else:
                 msg = traceback.format_exception_only(*self.exc[:2])
             pytest.fail("Error evaluating %r expression\n"
                         "    %s\n"
-                        "%s"
-                        %(self.name, self.expr, "\n".join(msg)),
+                        "%s" % (self.name, self.expr, "\n".join(msg)),
                         pytrace=False)
 
     def _getglobals(self):
