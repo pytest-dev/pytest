@@ -57,11 +57,7 @@ class MarkEvaluator:
 
     def _getglobals(self):
         d = {'os': os, 'sys': sys, 'config': self.item.config}
-        func = self.item.obj
-        try:
-            d.update(func.__globals__)
-        except AttributeError:
-            d.update(func.func_globals)
+        d.update(self.item.obj.__globals__)
         return d
 
     def _istrue(self):
