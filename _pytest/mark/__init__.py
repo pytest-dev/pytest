@@ -1,5 +1,5 @@
 """ generic mechanism for marking and selecting python functions. """
-from .model import MarkInfo, MarkDecorator
+from .model import MarkInfo, MarkDecorator, MarkGenerator
 
 
 class MarkerError(Exception):
@@ -173,35 +173,3 @@ def _parsed_markers(config):
     for line in config.getini("markers"):
         beginning = line.split(":", 1)
         yield beginning[0].split("(", 1)[0]
-
-
-class MarkGenerator:
-    """ Factory for :class:`MarkDecorator` objects - exposed as
-    a ``pytest.mark`` singleton instance.  Example::
-
-         import pytest
-         @pytest.mark.slowtest
-         def test_function():
-            pass
-
-    will set a 'slowtest' :class:`MarkInfo` object
-    on the ``test_function`` object. """
-
-    def __init__(self):
-        self.__known_markers = set()
-
-    def __getattr__(self, name):
-        if name[0] == "_":
-            raise AttributeError("Marker name must NOT start with underscore")
-        if hasattr(self, '_config'):
-            self._check(name)
-        return MarkDecorator(name)
-
-    def _check(self, name):
-        if name in self.__known_markers:
-            return
-
-        self.__known_markers.update(_parsed_markers(self._config))
-
-        if name not in self.__known_markers:
-            raise AttributeError("%r not a registered marker" % (name, ))
