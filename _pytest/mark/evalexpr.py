@@ -72,19 +72,18 @@ class MarkEvaluator:
             if self.holder.args:
                 self.result = False
                 # "holder" might be a MarkInfo or a MarkDecorator; only
-                # MarkInfo keeps track of all parameters it received in an
-                # _arglist attribute
-                if hasattr(self.holder, '_arglist'):
-                    arglist = self.holder._arglist
-                else:
-                    arglist = [(self.holder.args, self.holder.kwargs)]
-                for args, kwargs in arglist:
-                    for expr in args:
+                # MarkInfo keeps track of all parameters it received
+                try:
+                    marklist = list(self.holder)
+                except:
+                    marklist = [self.holder.mark]
+                for mark in marklist:
+                    for expr in mark.args:
                         self.expr = expr
                         if isinstance(expr, py.builtin._basestring):
                             result = cached_eval(self.item.config, expr, d)
                         else:
-                            if "reason" not in kwargs:
+                            if "reason" not in mark.kwargs:
                                 # XXX better be checked at collection time
                                 msg = "you need to specify reason=STRING " \
                                       "when using booleans as conditions."
@@ -92,7 +91,7 @@ class MarkEvaluator:
                             result = bool(expr)
                         if result:
                             self.result = True
-                            self.reason = kwargs.get('reason', None)
+                            self.reason = mark.kwargs.get('reason', None)
                             self.expr = expr
                             return self.result
             else:
