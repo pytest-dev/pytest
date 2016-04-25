@@ -27,7 +27,8 @@
   whether to filter the traceback based on the ``ExceptionInfo`` object passed
   to it.
 
-*
+* New ``pytest_make_parametrize_id`` hook.
+  Thanks `@palaviv`_ for the PR.
 
 **Changes**
 

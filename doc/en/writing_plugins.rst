@@ -470,6 +470,7 @@ you can use the following hook:
 
 .. autofunction:: pytest_pycollect_makeitem
 .. autofunction:: pytest_generate_tests
+.. autofunction:: pytest_make_parametrize_id
 
 After collection is complete, you can modify the order of
 items, delete or otherwise amend the test items:
