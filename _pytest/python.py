@@ -342,6 +342,9 @@ def pytest_pycollect_makeitem(collector, name, obj):
                 res = list(collector._genfunctions(name, obj))
             outcome.force_result(res)
 
+def pytest_make_parametrize_id(val):
+    return None
+
 def is_generator(func):
     try:
         return _pytest._code.getrawcode(func).co_flags & 32 # generator function
@@ -1030,7 +1033,7 @@ class Metafunc(FuncargnamesCompatAttr):
         if ids and len(ids) != len(argvalues):
             raise ValueError('%d tests specified with %d ids' %(
                              len(argvalues), len(ids)))
-        ids = idmaker(argnames, argvalues, idfn, ids)
+        ids = idmaker(argnames, argvalues, idfn, ids, self.config)
         newcalls = []
         for callspec in self._calls or [CallSpec2(self)]:
             for param_index, valset in enumerate(argvalues):
@@ -1130,7 +1133,7 @@ else:
             return val.encode('unicode-escape')
 
 
-def _idval(val, argname, idx, idfn):
+def _idval(val, argname, idx, idfn, config):
     if idfn:
         try:
             s = idfn(val)
@@ -1138,6 +1141,11 @@ def _idval(val, argname, idx, idfn):
                 return _escape_strings(s)
         except Exception:
             pass
+
+    if config:
+        hook_id = config.hook.pytest_make_parametrize_id(val=val)
+        if hook_id:
+            return hook_id
 
     if isinstance(val, (bytes, str)) or (_PY2 and isinstance(val, unicode)):
         return _escape_strings(val)
@@ -1151,16 +1159,16 @@ def _idval(val, argname, idx, idfn):
         return val.__name__
     return str(argname)+str(idx)
 
-def _idvalset(idx, valset, argnames, idfn, ids):
+def _idvalset(idx, valset, argnames, idfn, ids, config):
     if ids is None or ids[idx] is None:
-        this_id = [_idval(val, argname, idx, idfn)
+        this_id = [_idval(val, argname, idx, idfn, config)
                    for val, argname in zip(valset, argnames)]
         return "-".join(this_id)
     else:
         return _escape_strings(ids[idx])
 
-def idmaker(argnames, argvalues, idfn=None, ids=None):
-    ids = [_idvalset(valindex, valset, argnames, idfn, ids)
+def idmaker(argnames, argvalues, idfn=None, ids=None, config=None):
+    ids = [_idvalset(valindex, valset, argnames, idfn, ids, config)
            for valindex, valset in enumerate(argvalues)]
     if len(set(ids)) != len(ids):
         # The ids are not unique

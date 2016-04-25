@@ -133,6 +133,12 @@ def pytest_deselected(items):
 def pytest_make_collect_report(collector):
     """ perform ``collector.collect()`` and return a CollectReport. """
 
+@hookspec(firstresult=True)
+def pytest_make_parametrize_id(val):
+    """Return a user-friendly string representation of the given ``val`` that will be used
+    by @pytest.mark.parametrize calls. Return None if the hook doesn't know about ``val``.
+    """
+
 # -------------------------------------------------------------------------
 # Python test function related hooks
 # -------------------------------------------------------------------------
