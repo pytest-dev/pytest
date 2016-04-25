@@ -1133,7 +1133,7 @@ else:
             return val.encode('unicode-escape')
 
 
-def _idval(val, argname, idx, idfn, config):
+def _idval(val, argname, idx, idfn, config=None):
     if idfn:
         try:
             s = idfn(val)
@@ -1159,7 +1159,7 @@ def _idval(val, argname, idx, idfn, config):
         return val.__name__
     return str(argname)+str(idx)
 
-def _idvalset(idx, valset, argnames, idfn, ids, config):
+def _idvalset(idx, valset, argnames, idfn, ids, config=None):
     if ids is None or ids[idx] is None:
         this_id = [_idval(val, argname, idx, idfn, config)
                    for val, argname in zip(valset, argnames)]
