@@ -1159,7 +1159,7 @@ class TestMarkersWithParametrization:
 
     def test_pytest_make_parametrize_id(self, testdir):
         testdir.makeconftest("""
-            def pytest_make_parametrize_id(val):
+            def pytest_make_parametrize_id(config, val):
                 return str(val * 2)
         """)
         testdir.makepyfile("""

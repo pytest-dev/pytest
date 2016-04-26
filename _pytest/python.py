@@ -342,7 +342,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
                 res = list(collector._genfunctions(name, obj))
             outcome.force_result(res)
 
-def pytest_make_parametrize_id(val):
+def pytest_make_parametrize_id(config, val):
     return None
 
 def is_generator(func):
@@ -1143,7 +1143,7 @@ def _idval(val, argname, idx, idfn, config=None):
             pass
 
     if config:
-        hook_id = config.hook.pytest_make_parametrize_id(val=val)
+        hook_id = config.hook.pytest_make_parametrize_id(config=config, val=val)
         if hook_id:
             return hook_id
 
