@@ -5,14 +5,16 @@ from textwrap import dedent
 import _pytest._code
 import py
 import pytest
-from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import (
+    Collector,
+    EXIT_NOTESTSCOLLECTED
+)
 
 
 class TestModule:
     def test_failing_import(self, testdir):
         modcol = testdir.getmodulecol("import alksdjalskdjalkjals")
-        pytest.raises(ImportError, modcol.collect)
-        pytest.raises(ImportError, modcol.collect)
+        pytest.raises(Collector.CollectError, modcol.collect)
 
     def test_import_duplicate(self, testdir):
         a = testdir.mkdir("a")
@@ -59,6 +61,16 @@ class TestModule:
     def test_module_considers_pluginmanager_at_import(self, testdir):
         modcol = testdir.getmodulecol("pytest_plugins='xasdlkj',")
         pytest.raises(ImportError, lambda: modcol.obj)
+
+    def test_invalid_test_module_name(self, testdir):
+        a = testdir.mkdir('a')
+        a.ensure('test_one.part1.py')
+        result = testdir.runpytest("-rw")
+        result.stdout.fnmatch_lines([
+            "ImportError while importing test module*test_one.part1*",
+            "Make sure your test modules/packages have valid Python names.",
+        ])
+
 
 class TestClass:
     def test_class_with_init_warning(self, testdir):

@@ -43,7 +43,9 @@
   parametrize.
   Thanks `@palaviv`_ for the complete PR (`#1474`_).
 
-*
+* Fix `#1426`_ Make ImportError during collection more explicit by reminding
+  the user to check the name of the test module/package(s).
+  Thanks `@omarkohl`_ for the complete PR (`#1520`_).
 
 .. _@milliams: https://github.com/milliams
 .. _@novas0x2a: https://github.com/novas0x2a
@@ -53,6 +55,7 @@
 .. _@palaviv: https://github.com/palaviv
 .. _@omarkohl: https://github.com/omarkohl
 
+.. _#1426: https://github.com/pytest-dev/pytest/issues/1426
 .. _#1428: https://github.com/pytest-dev/pytest/pull/1428
 .. _#1444: https://github.com/pytest-dev/pytest/pull/1444
 .. _#1441: https://github.com/pytest-dev/pytest/pull/1441
@@ -61,6 +64,7 @@
 .. _#1468: https://github.com/pytest-dev/pytest/pull/1468
 .. _#1474: https://github.com/pytest-dev/pytest/pull/1474
 .. _#1502: https://github.com/pytest-dev/pytest/pull/1502
+.. _#1520: https://github.com/pytest-dev/pytest/pull/1520
 .. _#372: https://github.com/pytest-dev/pytest/issues/372
 
 2.9.2.dev1

@@ -276,8 +276,8 @@ class TestCollectonly:
         assert result.ret == 1
         result.stdout.fnmatch_lines(_pytest._code.Source("""
             *ERROR*
-            *import Errlk*
             *ImportError*
+            *No module named *Errlk*
             *1 error*
         """).strip())
 
@@ -665,8 +665,8 @@ class TestGenericReporting:
         testdir.makepyfile("import xyz\n")
         result = testdir.runpytest(*option.args)
         result.stdout.fnmatch_lines([
-            "?   import xyz",
-            "E   ImportError: No module named *xyz*",
+            "ImportError while importing*",
+            "'No module named *xyz*",
             "*1 error*",
         ])
 

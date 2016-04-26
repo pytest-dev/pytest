@@ -176,7 +176,8 @@ class TestPrunetraceback:
         assert "__import__" not in result.stdout.str(), "too long traceback"
         result.stdout.fnmatch_lines([
             "*ERROR collecting*",
-            "*mport*not_exists*"
+            "ImportError while importing test module*",
+            "'No module named *not_exists*",
         ])
 
     def test_custom_repr_failure(self, testdir):

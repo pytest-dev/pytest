@@ -636,6 +636,14 @@ class Module(pytest.File, PyCollector):
                 "unique basename for your test file modules"
                  % e.args
             )
+        except ImportError:
+            exc_class, exc, _ = sys.exc_info()
+            raise self.CollectError(
+                "ImportError while importing test module '%s'.\n"
+                "Original error message:\n'%s'\n"
+                "Make sure your test modules/packages have valid Python names."
+                % (self.fspath, exc or exc_class)
+            )
         #print "imported test module", mod
         self.config.pluginmanager.consider_module(mod)
         return mod
