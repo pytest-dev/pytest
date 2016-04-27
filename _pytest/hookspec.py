@@ -156,6 +156,12 @@ def pytest_pyfunc_call(pyfuncitem):
 def pytest_generate_tests(metafunc):
     """ generate (multiple) parametrized calls to a test function."""
 
+@hookspec(firstresult=True)
+def pytest_make_parametrize_id(config, val):
+    """Return a user-friendly string representation of the given ``val`` that will be used
+    by @pytest.mark.parametrize calls. Return None if the hook doesn't know about ``val``.
+    """
+
 # -------------------------------------------------------------------------
 # generic runtest related hooks
 # -------------------------------------------------------------------------
