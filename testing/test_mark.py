@@ -563,6 +563,29 @@ class TestFunctional:
                                 if isinstance(v, MarkInfo)])
             assert marker_names == set(expected_markers)
 
+    @pytest.mark.xfail
+    @pytest.mark.issue1540
+    def test_mark_from_parameters(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            pytestmark = pytest.mark.skipif(True, reason='skip all')
+
+            # skipifs inside fixture params
+            params = [pytest.mark.skipif(False, reason='dont skip')('parameter')]
+
+
+            @pytest.fixture(params=params)
+            def parameter(request):
+                return request.param
+
+
+            def test_1(parameter):
+                assert True
+        """)
+
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(skipped=1)
 
 class TestKeywordSelection:
     def test_select_simple(self, testdir):
@@ -669,4 +692,3 @@ class TestKeywordSelection:
 
         assert_test_is_not_selected("__")
         assert_test_is_not_selected("()")
-
