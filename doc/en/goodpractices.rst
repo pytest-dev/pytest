@@ -241,38 +241,4 @@ using the ``--pytest-args`` or ``-a`` command-line option. For example::
 is equivalent to running ``py.test --durations=5``.
 
 
-.. _standalone:
-.. _`genscript method`:
-
-(deprecated) Create a pytest standalone script
------------------------------------------------
-
-.. deprecated:: 2.8
-
-.. note::
-
-    ``genscript`` has been deprecated because:
-
-    * It cannot support plugins, rendering its usefulness extremely limited;
-    * Tooling has become much better since ``genscript`` was introduced;
-    * It is possible to build a zipped ``pytest`` application without the
-      shortcomings above.
-
-    There's no planned version in which this command will be removed
-    at the moment of this writing, but its use is discouraged for new
-    applications.
-
-If you are a maintainer or application developer and want people
-who don't deal with python much to easily run tests you may generate
-a standalone ``pytest`` script::
-
-    py.test --genscript=runtests.py
-
-This generates a ``runtests.py`` script which is a fully functional basic
-``pytest`` script, running unchanged under Python2 and Python3.
-You can tell people to download the script and then e.g.  run it like this::
-
-    python runtests.py
-
-
 .. include:: links.inc

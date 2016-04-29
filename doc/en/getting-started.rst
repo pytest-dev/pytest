@@ -50,19 +50,19 @@ That's it. You can execute the test function now::
     $ py.test
     ======= test session starts ========
     platform linux -- Python 3.4.0, pytest-2.9.1, py-1.4.31, pluggy-0.3.1
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 items
-    
+
     test_sample.py F
-    
+
     ======= FAILURES ========
     _______ test_answer ________
-    
+
         def test_answer():
     >       assert func(3) == 5
     E       assert 4 == 5
     E        +  where 4 = func(3)
-    
+
     test_sample.py:5: AssertionError
     ======= 1 failed in 0.12 seconds ========
 
@@ -131,14 +131,14 @@ run the module by passing its filename::
     .F
     ======= FAILURES ========
     _______ TestClass.test_two ________
-    
+
     self = <test_class.TestClass object at 0xdeadbeef>
-    
+
         def test_two(self):
             x = "hello"
     >       assert hasattr(x, 'check')
     E       assert hasattr('hello', 'check')
-    
+
     test_class.py:8: AssertionError
     1 failed, 1 passed in 0.12 seconds
 
@@ -167,14 +167,14 @@ before performing the test function call.  Let's just run it::
     F
     ======= FAILURES ========
     _______ test_needsfiles ________
-    
+
     tmpdir = local('PYTEST_TMPDIR/test_needsfiles0')
-    
+
         def test_needsfiles(tmpdir):
             print (tmpdir)
     >       assert 0
     E       assert 0
-    
+
     test_tmpdir.py:3: AssertionError
     --------------------------- Captured stdout call ---------------------------
     PYTEST_TMPDIR/test_needsfiles0
@@ -193,7 +193,7 @@ Where to go next
 Here are a few suggestions where to go next:
 
 * :ref:`cmdline` for command line invocation examples
-* :ref:`good practices <goodpractices>` for virtualenv, test layout, genscript support
+* :ref:`good practices <goodpractices>` for virtualenv, test layout
 * :ref:`fixtures` for providing a functional baseline to your tests
 * :ref:`apiref` for documentation and examples on using ``pytest``
 * :ref:`plugins` managing and writing plugins
@@ -228,9 +228,8 @@ py.test not found on Windows despite installation?
 .. _`Jython does not create command line launchers`: http://bugs.jython.org/issue1491
 
 - **Jython2.5.1 on Windows XP**: `Jython does not create command line launchers`_
-  so ``py.test`` will not work correctly.  You may install py.test on
-  CPython and type ``py.test --genscript=mytest`` and then use
-  ``jython mytest`` to run your tests with Jython using ``pytest``.
+  so ``py.test`` will not work correctly.
+  you can invoke ``jython -m pytest`` instead.
 
  :ref:`examples` for more complex examples
 
