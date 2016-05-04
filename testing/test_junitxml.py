@@ -100,7 +100,7 @@ class TestPython:
         result, dom = runandparse(testdir)
         assert result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(name="pytest", errors=0, failures=1, skips=3, tests=2)
+        node.assert_attr(name="pytest", errors=0, failures=1, skips=3, tests=5)
 
     def test_timing_function(self, testdir):
         testdir.makepyfile("""
@@ -304,7 +304,7 @@ class TestPython:
         result, dom = runandparse(testdir)
         assert not result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(skips=1, tests=0)
+        node.assert_attr(skips=1, tests=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
             file="test_xfailure_function.py",
@@ -325,7 +325,7 @@ class TestPython:
         result, dom = runandparse(testdir)
         # assert result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(skips=1, tests=0)
+        node.assert_attr(skips=1, tests=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
             file="test_xfailure_xpass.py",
@@ -356,7 +356,7 @@ class TestPython:
         result, dom = runandparse(testdir)
         assert result.ret == EXIT_NOTESTSCOLLECTED
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(skips=1, tests=0)
+        node.assert_attr(skips=1, tests=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
             file="test_collect_skipped.py",
