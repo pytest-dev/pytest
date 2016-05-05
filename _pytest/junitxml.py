@@ -369,7 +369,7 @@ class LogXML(object):
         suite_stop_time = time.time()
         suite_time_delta = suite_stop_time - self.suite_start_time
 
-        numtests = self.stats['passed'] + self.stats['failure']
+        numtests = self.stats['passed'] + self.stats['failure'] + self.stats['skipped']
 
         logfile.write('<?xml version="1.0" encoding="utf-8"?>')
         logfile.write(Junit.testsuite(
