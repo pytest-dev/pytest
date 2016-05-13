@@ -194,7 +194,7 @@ the plugin manager like this:
     plugin = config.pluginmanager.getplugin("name_of_plugin")
 
 If you want to look at the names of existing plugins, use
-the ``--traceconfig`` option.
+the ``--trace-config`` option.
 
 Testing plugins
 ---------------
