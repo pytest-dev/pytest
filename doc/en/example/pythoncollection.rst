@@ -177,16 +177,27 @@ and a setup.py dummy file like this::
     # content of setup.py
     0/0  # will raise exception if imported
 
-then a pytest run on python2 will find the one test when run with a python2
-interpreters and will leave out the setup.py file::
+then a pytest run on Python2 will find the one test and will leave out the
+setup.py file::
 
     $ py.test --collect-only
-    ======= test session starts ========
-    platform linux -- Python 3.4.0, pytest-2.9.1, py-1.4.31, pluggy-0.3.1
+    ====== test session starts ======
+    platform linux2 -- Python 2.7.10, pytest-2.9.1, py-1.4.31, pluggy-0.3.1
+    rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
+    collected 1 items
+    <Module 'pkg/module_py2.py'>
+      <Function 'test_only_on_python2'>
+
+    ====== no tests ran in 0.04 seconds ======
+
+If you run with a Python3 interpreter both the one test and the setup.py file
+will be left out::
+
+    $ py.test --collect-only
+    ====== test session starts ======
+    platform linux -- Python 3.4.3+, pytest-2.9.1, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 0 items
-    
-    ======= no tests ran in 0.12 seconds ========
 
-If you run with a Python3 interpreter the moduled added through the conftest.py file will not be considered for test collection.
+    ====== no tests ran in 0.03 seconds ======
 

@@ -56,7 +56,7 @@ Several test run options::
 
 Import 'pkg' and use its filesystem location to find and run tests::
 
-    py.test --pyargs pkg # run all tests found below directory of pypkg
+    py.test --pyargs pkg # run all tests found below directory of pkg
 
 Modifying Python traceback printing
 ----------------------------------------------
