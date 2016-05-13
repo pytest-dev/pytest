@@ -31,6 +31,11 @@ def pytest_configure(config):
         setattr(pytest, "xfail", nop)
 
     config.addinivalue_line("markers",
+        "skip(reason=None): skip the given test function with an optional reason. "
+        "Example: skip(reason=\"no way of currently testing this\") skips the "
+        "test."
+    )
+    config.addinivalue_line("markers",
         "skipif(condition): skip the given test function if eval(condition) "
         "results in a True value.  Evaluation happens within the "
         "module global context. Example: skipif('sys.platform == \"win32\"') "
@@ -38,13 +43,13 @@ def pytest_configure(config):
         "http://pytest.org/latest/skipping.html"
     )
     config.addinivalue_line("markers",
-        "xfail(condition, reason=None, run=True, raises=None): mark the the test function "
-        "as an expected failure if eval(condition) has a True value. "
-        "Optionally specify a reason for better reporting and run=False if "
-        "you don't even want to execute the test function. If only specific "
-        "exception(s) are expected, you can list them in raises, and if the test fails "
-        "in other ways, it will be reported as a true failure. "
-        "See http://pytest.org/latest/skipping.html"
+        "xfail(condition, reason=None, run=True, raises=None, strict=False): "
+        "mark the the test function as an expected failure if eval(condition) "
+        "has a True value. Optionally specify a reason for better reporting "
+        "and run=False if you don't even want to execute the test function. "
+        "If only specific exception(s) are expected, you can list them in "
+        "raises, and if the test fails in other ways, it will be reported as "
+        "a true failure. See http://pytest.org/latest/skipping.html"
     )
 
 

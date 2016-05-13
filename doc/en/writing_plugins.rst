@@ -158,13 +158,22 @@ it in your setuptools-invocation:
                 'name_of_plugin = myproject.pluginmodule',
             ]
         },
+
+        # custom PyPI classifier for pytest plugins
+        classifiers=[
+            "Framework :: Pytest",
+        ],
     )
 
 If a package is installed this way, ``pytest`` will load
 ``myproject.pluginmodule`` as a plugin which can define
 `well specified hooks`_.
 
+.. note::
 
+    Make sure to include ``Framework :: Pytest`` in your list of
+    `PyPI classifiers <http://python-packaging-user-guide.readthedocs.org/en/latest/distributing/#classifiers>`_
+    to make it easy for users to find your plugin.
 
 
 Requiring/Loading plugins in a test module or conftest file
