@@ -58,7 +58,7 @@ pytest_cmdline_main.tryfirst = True
 
 
 def pytest_collection_modifyitems(items, config):
-    keywordexpr = config.option.keyword
+    keywordexpr = config.option.keyword.lstrip()
     matchexpr = config.option.markexpr
     if not keywordexpr and not matchexpr:
         return
