@@ -563,7 +563,7 @@ class TestFunctional:
                                 if isinstance(v, MarkInfo)])
             assert marker_names == set(expected_markers)
 
-    @pytest.mark.xfail(reason='callspec2.setmulti missuses keywords')
+    @pytest.mark.xfail(reason='callspec2.setmulti misuses keywords')
     @pytest.mark.issue1540
     def test_mark_from_parameters(self, testdir):
         testdir.makepyfile("""
