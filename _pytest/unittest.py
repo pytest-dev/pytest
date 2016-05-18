@@ -50,6 +50,8 @@ class UnitTestCase(pytest.Class):
         foundsomething = False
         for name in loader.getTestCaseNames(self.obj):
             x = getattr(self.obj, name)
+            if not getattr(x, '__test__', True):
+                continue
             funcobj = getattr(x, 'im_func', x)
             transfer_markers(funcobj, cls, module)
             yield TestCaseFunction(name, parent=self)

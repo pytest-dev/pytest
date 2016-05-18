@@ -5,6 +5,9 @@
 
 *
 
+* Support nose-style ``__test__`` attribute on methods of classes.
+  If set to False, the test will not be collected.
+
 * Fix win32 path issue when puttinging custom config file with absolute path 
   in ``pytest.main("-c your_absolute_path")``.
 
