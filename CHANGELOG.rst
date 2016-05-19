@@ -3,6 +3,10 @@
 
 **New Features**
 
+* Support nose-style ``__test__`` attribute on methods of classes,
+  including unittest-style Classes. If set to False, the test will not be
+  collected.
+
 * New ``doctest_namespace`` fixture for injecting names into the
   namespace in which your doctests run.
   Thanks `@milliams`_ for the complete PR (`#1428`_).
