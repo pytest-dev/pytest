@@ -46,7 +46,7 @@ Unsupported idioms / known issues
   (e.g. ``tests/test_mode.py`` and ``other/tests/test_mode.py``)
   by extending sys.path/import semantics.   pytest does not do that
   but there is discussion in `issue268 <https://github.com/pytest-dev/pytest/issues/268>`_ for adding some support.  Note that
-  `nose2 choose to avoid this sys.path/import hackery <https://nose2.readthedocs.org/en/latest/differences.html#test-discovery-and-loading>`_.
+  `nose2 choose to avoid this sys.path/import hackery <https://nose2.readthedocs.io/en/latest/differences.html#test-discovery-and-loading>`_.
 
 - nose-style doctests are not collected and executed correctly,
   also doctest fixtures don't work.

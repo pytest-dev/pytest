@@ -725,7 +725,7 @@ Integrating pytest runner and cx_freeze
 -----------------------------------------------------------
 
 If you freeze your application using a tool like
-`cx_freeze <http://cx-freeze.readthedocs.org>`_ in order to distribute it
+`cx_freeze <https://cx-freeze.readthedocs.io>`_ in order to distribute it
 to your end-users, it is a good idea to also package your test runner and run
 your tests using the frozen application.
 
