@@ -52,6 +52,11 @@
   the user to check the name of the test module/package(s).
   Thanks `@omarkohl`_ for the complete PR (`#1520`_).
 
+* Add ``build/`` and ``dist/`` to the default ``--norecursedirs`` list. Thanks
+  `@mikofski`_ for the report and `@tomviner`_ for the PR (`#1544`_).
+
+*
+
 .. _@milliams: https://github.com/milliams
 .. _@novas0x2a: https://github.com/novas0x2a
 .. _@kalekundert: https://github.com/kalekundert
@@ -59,6 +64,7 @@
 .. _@ceridwen: https://github.com/ceridwen
 .. _@palaviv: https://github.com/palaviv
 .. _@omarkohl: https://github.com/omarkohl
+.. _@mikofski: https://github.com/mikofski
 
 .. _#1426: https://github.com/pytest-dev/pytest/issues/1426
 .. _#1428: https://github.com/pytest-dev/pytest/pull/1428
@@ -71,6 +77,7 @@
 .. _#1502: https://github.com/pytest-dev/pytest/pull/1502
 .. _#1520: https://github.com/pytest-dev/pytest/pull/1520
 .. _#372: https://github.com/pytest-dev/pytest/issues/372
+.. _#1544: https://github.com/pytest-dev/pytest/issues/1544
 
 2.9.2.dev1
 ==========

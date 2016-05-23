@@ -88,6 +88,8 @@ class TestCollector:
 class TestCollectFS:
     def test_ignored_certain_directories(self, testdir):
         tmpdir = testdir.tmpdir
+        tmpdir.ensure("build", 'test_notfound.py')
+        tmpdir.ensure("dist", 'test_notfound.py')
         tmpdir.ensure("_darcs", 'test_notfound.py')
         tmpdir.ensure("CVS", 'test_notfound.py')
         tmpdir.ensure("{arch}", 'test_notfound.py')
