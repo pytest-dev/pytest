@@ -36,9 +36,9 @@ style <unittest.TestCase>` or :ref:`nose based <nosestyle>` projects.
 
 .. note::
 
-    pytest-2.4 introduced an additional experimental
-    :ref:`yield fixture mechanism <yieldfixture>` for easier context manager
-    integration and more linear writing of teardown code.
+    pytest-2.4 introduced an additional :ref:`yield fixture mechanism
+    <yieldfixture>` for easier context manager integration and more linear
+    writing of teardown code.
 
 .. _`funcargs`:
 .. _`funcarg mechanism`:
@@ -281,6 +281,14 @@ function with ``scope='function'`` then fixture setup and cleanup would
 occur around each single test.  In either case the test
 module itself does not need to change or know about these details
 of fixture setup.
+
+
+Finalization/teardown with yield fixtures
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Another alternative to the *request.addfinalizer()* method is to use *yield
+fixtures*. All the code after the *yield* statement serves as the teardown
+code. See the :ref:`yield fixture documentation <yieldfixture>`.
 
 
 .. _`request-context`:
@@ -577,55 +585,85 @@ to show the setup/teardown flow::
     @pytest.fixture(scope="module", params=["mod1", "mod2"])
     def modarg(request):
         param = request.param
-        print ("create", param)
+        print ("  SETUP modarg %s" % param)
         def fin():
-            print ("fin %s" % param)
+            print ("  TEARDOWN modarg %s" % param)
+        request.addfinalizer(fin)
         return param
 
     @pytest.fixture(scope="function", params=[1,2])
     def otherarg(request):
-        return request.param
+        param = request.param
+        print ("  SETUP otherarg %s" % param)
+        def fin():
+            print ("  TEARDOWN otherarg %s" % param)
+        request.addfinalizer(fin)
+        return param
 
     def test_0(otherarg):
-        print ("  test0", otherarg)
+        print ("  RUN test0 with otherarg %s" % otherarg)
     def test_1(modarg):
-        print ("  test1", modarg)
+        print ("  RUN test1 with modarg %s" % modarg)
     def test_2(otherarg, modarg):
-        print ("  test2", otherarg, modarg)
+        print ("  RUN test2 with otherarg %s and modarg %s" % (otherarg, modarg))
+
 
 Let's run the tests in verbose mode and with looking at the print-output::
 
     $ py.test -v -s test_module.py
-    ======= test session starts ========
-    platform linux -- Python 3.4.0, pytest-2.9.1, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.4
+    ====== test session starts ======
+    platform linux -- Python 3.4.3+, pytest-2.9.1, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
-    collecting ... collected 8 items
-    
-    test_module.py::test_0[1]   test0 1
-    PASSED
-    test_module.py::test_0[2]   test0 2
-    PASSED
-    test_module.py::test_1[mod1] create mod1
-      test1 mod1
-    PASSED
-    test_module.py::test_2[1-mod1]   test2 1 mod1
-    PASSED
-    test_module.py::test_2[2-mod1]   test2 2 mod1
-    PASSED
-    test_module.py::test_1[mod2] create mod2
-      test1 mod2
-    PASSED
-    test_module.py::test_2[1-mod2]   test2 1 mod2
-    PASSED
-    test_module.py::test_2[2-mod2]   test2 2 mod2
-    PASSED
-    
-    ======= 8 passed in 0.12 seconds ========
+    collected 8 items
 
-You can see that the parametrized module-scoped ``modarg`` resource caused
-an ordering of test execution that lead to the fewest possible "active" resources. The finalizer for the ``mod1`` parametrized resource was executed
-before the ``mod2`` resource was setup.
+    test_module.py::test_0[1]   SETUP otherarg 1
+      RUN test0 with otherarg 1
+    PASSED  TEARDOWN otherarg 1
+
+    test_module.py::test_0[2]   SETUP otherarg 2
+      RUN test0 with otherarg 2
+    PASSED  TEARDOWN otherarg 2
+
+    test_module.py::test_1[mod1]   SETUP modarg mod1
+      RUN test1 with modarg mod1
+    PASSED
+    test_module.py::test_2[1-mod1]   SETUP otherarg 1
+      RUN test2 with otherarg 1 and modarg mod1
+    PASSED  TEARDOWN otherarg 1
+
+    test_module.py::test_2[2-mod1]   SETUP otherarg 2
+      RUN test2 with otherarg 2 and modarg mod1
+    PASSED  TEARDOWN otherarg 2
+
+    test_module.py::test_1[mod2]   TEARDOWN modarg mod1
+      SETUP modarg mod2
+      RUN test1 with modarg mod2
+    PASSED
+    test_module.py::test_2[1-mod2]   SETUP otherarg 1
+      RUN test2 with otherarg 1 and modarg mod2
+    PASSED  TEARDOWN otherarg 1
+
+    test_module.py::test_2[2-mod2]   SETUP otherarg 2
+      RUN test2 with otherarg 2 and modarg mod2
+    PASSED  TEARDOWN otherarg 2
+      TEARDOWN modarg mod2
+
+
+    ====== 8 passed in 0.01 seconds ======
+
+
+You can see that the parametrized module-scoped ``modarg`` resource caused an
+ordering of test execution that lead to the fewest possible "active" resources.
+The finalizer for the ``mod1`` parametrized resource was executed before the
+``mod2`` resource was setup.
+
+In particular notice that test_0 is completely independent and finishes first.
+Then test_1 is executed with ``mod1``, then test_2 with ``mod1``, then test_1
+with ``mod2`` and finally test_2 with ``mod2``.
+
+The ``otherarg`` parametrized resource (having function scope) was set up before
+and teared down after every test that used it.
 
 
 .. _`usefixtures`:

@@ -22,7 +22,7 @@ command line options
     (deprecated, use -r)
 ``--tb=style``
     traceback print mode (long/short/line/no).
-``--fulltrace``
+``--full-trace``
     don't cut any tracebacks (default is to cut).
 ``--fixtures``
     show available function arguments, sorted by plugin

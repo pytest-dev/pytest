@@ -153,7 +153,9 @@ against your source code checkout, helping to detect packaging
 glitches.
 
 Continuous integration services such as Jenkins_ can make use of the
-``--junitxml=PATH`` option to create a JUnitXML file and generate reports.
+``--junitxml=PATH`` option to create a JUnitXML file and generate reports (e.g.
+by publishing the results in a nice format with the `Jenkins xUnit Plugin
+<https://wiki.jenkins-ci.org/display/JENKINS/xUnit+Plugin>`_).
 
 
 Integrating with setuptools / ``python setup.py test`` / ``pytest-runner``

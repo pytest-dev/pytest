@@ -23,7 +23,7 @@ reporting by calling `well specified hooks`_ of the following plugins:
 
 In principle, each hook call is a ``1:N`` Python function call where ``N`` is the
 number of registered implementation functions for a given specification.
-All specifications and implementations following the ``pytest_`` prefix
+All specifications and implementations follow the ``pytest_`` prefix
 naming convention, making them easy to distinguish and find.
 
 .. _`pluginorder`:
@@ -158,13 +158,22 @@ it in your setuptools-invocation:
                 'name_of_plugin = myproject.pluginmodule',
             ]
         },
+
+        # custom PyPI classifier for pytest plugins
+        classifiers=[
+            "Framework :: Pytest",
+        ],
     )
 
 If a package is installed this way, ``pytest`` will load
 ``myproject.pluginmodule`` as a plugin which can define
 `well specified hooks`_.
 
+.. note::
 
+    Make sure to include ``Framework :: Pytest`` in your list of
+    `PyPI classifiers <https://python-packaging-user-guide.readthedocs.io/en/latest/distributing/#classifiers>`_
+    to make it easy for users to find your plugin.
 
 
 Requiring/Loading plugins in a test module or conftest file
@@ -194,7 +203,7 @@ the plugin manager like this:
     plugin = config.pluginmanager.getplugin("name_of_plugin")
 
 If you want to look at the names of existing plugins, use
-the ``--traceconfig`` option.
+the ``--trace-config`` option.
 
 Testing plugins
 ---------------

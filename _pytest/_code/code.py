@@ -305,11 +305,11 @@ class Traceback(list):
     def filter(self, fn=lambda x: not x.ishidden()):
         """ return a Traceback instance with certain items removed
 
-            fn is a function that gets a single argument, a TracebackItem
+            fn is a function that gets a single argument, a TracebackEntry
             instance, and should return True when the item should be added
             to the Traceback, False when not
 
-            by default this removes all the TracebackItems which are hidden
+            by default this removes all the TracebackEntries which are hidden
             (see ishidden() above)
         """
         return Traceback(filter(fn, self), self._excinfo)
@@ -325,7 +325,7 @@ class Traceback(list):
         return self[-1]
 
     def recursionindex(self):
-        """ return the index of the frame/TracebackItem where recursion
+        """ return the index of the frame/TracebackEntry where recursion
             originates if appropriate, None if no recursion occurred
         """
         cache = {}
@@ -603,9 +603,8 @@ class FormattedExcinfo(object):
         if self.tbfilter:
             traceback = traceback.filter()
         recursionindex = None
-        if excinfo.errisinstance(RuntimeError):
-            if "maximum recursion depth exceeded" in str(excinfo.value):
-                recursionindex = traceback.recursionindex()
+        if is_recursion_error(excinfo):
+            recursionindex = traceback.recursionindex()
         last = traceback[-1]
         entries = []
         extraline = None
@@ -867,3 +866,14 @@ def getrawcode(obj, trycall=True):
                     return x
         return obj
 
+if sys.version_info[:2] >= (3, 5):  # RecursionError introduced in 3.5
+    def is_recursion_error(excinfo):
+        return excinfo.errisinstance(RecursionError)  # noqa
+else:
+    def is_recursion_error(excinfo):
+        if not excinfo.errisinstance(RuntimeError):
+            return False
+        try:
+            return "maximum recursion depth exceeded" in str(excinfo.value)
+        except UnicodeError:
+            return False

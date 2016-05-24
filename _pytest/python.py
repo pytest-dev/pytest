@@ -1746,7 +1746,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         self._pyfuncitem = pyfuncitem
         #: fixture for which this request is being performed
         self.fixturename = None
-        #: Scope string, one of "function", "cls", "module", "session"
+        #: Scope string, one of "function", "class", "module", "session"
         self.scope = "function"
         self._funcargs  = {}
         self._fixturedefs = {}

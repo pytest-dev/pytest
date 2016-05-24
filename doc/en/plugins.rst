@@ -90,7 +90,7 @@ Finding out which plugins are active
 If you want to find out which plugins are active in your
 environment you can type::
 
-    py.test --traceconfig
+    py.test --trace-config
 
 and will get an extended test header which shows activated plugins
 and their names. It will also print local plugins aka

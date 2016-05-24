@@ -37,7 +37,7 @@ def has_environment_marker_support():
 
     References:
 
-    * https://wheel.readthedocs.org/en/latest/index.html#defining-conditional-dependencies
+    * https://wheel.readthedocs.io/en/latest/index.html#defining-conditional-dependencies
     * https://www.python.org/dev/peps/pep-0426/#environment-markers
     """
     try:

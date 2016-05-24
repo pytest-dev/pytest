@@ -201,7 +201,7 @@ Example::
 
 The ``__tracebackhide__`` setting influences ``pytest`` showing
 of tracebacks: the ``checkconfig`` function will not be shown
-unless the ``--fulltrace`` command line option is specified.
+unless the ``--full-trace`` command line option is specified.
 Let's run our little function::
 
     $ py.test -q test_checkconfig.py
@@ -725,7 +725,7 @@ Integrating pytest runner and cx_freeze
 -----------------------------------------------------------
 
 If you freeze your application using a tool like
-`cx_freeze <http://cx-freeze.readthedocs.org>`_ in order to distribute it
+`cx_freeze <https://cx-freeze.readthedocs.io>`_ in order to distribute it
 to your end-users, it is a good idea to also package your test runner and run
 your tests using the frozen application.
 
