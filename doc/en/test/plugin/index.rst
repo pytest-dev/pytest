@@ -36,8 +36,6 @@ junitxml_ logging of test results in JUnit-XML format, for use with Hudson
 
 resultlog_ non-xml machine-readable logging of test results.
 
-genscript_ generate standalone test script to be distributed along with an application.
-
 
 testing domains and conventions codecheckers
 ============================================
