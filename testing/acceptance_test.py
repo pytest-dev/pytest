@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sys
 
 import _pytest._code
@@ -557,6 +558,67 @@ class TestInvocationVariants:
             "*not*found*test_hello*",
         ])
 
+    def test_cmdline_python_namespace_package(self, testdir, monkeypatch):
+        monkeypatch.delenv('PYTHONDONTWRITEBYTECODE', False)
+
+        search_path = []
+        for dirname in "hello", "world":
+            d = testdir.mkdir(dirname)
+            search_path.append(d)
+            ns = d.mkdir("ns_pkg")
+            ns.join("__init__.py").write(
+                "__import__('pkg_resources').declare_namespace(__name__)")
+            lib = ns.mkdir(dirname)
+            lib.ensure("__init__.py")
+            lib.join("test_{0}.py".format(dirname)). \
+                write("def test_{0}(): pass\n"
+                      "def test_other():pass".format(dirname))
+
+        # The structure of the test directory is now:
+        # .
+        # ├── hello
+        # │   └── ns_pkg
+        # │       ├── __init__.py
+        # │       └── hello
+        # │           ├── __init__.py
+        # │           └── test_hello.py
+        # └── world
+        #     └── ns_pkg
+        #         ├── __init__.py
+        #         └── world
+        #             ├── __init__.py
+        #             └── test_world.py
+
+        def join_pythonpath(*dirs):
+            cur = py.std.os.environ.get('PYTHONPATH')
+            if cur:
+                dirs = dir + (cur,)
+            return ':'.join(str(p) for p in dirs)
+        monkeypatch.setenv('PYTHONPATH', join_pythonpath(*search_path))
+        for p in search_path:
+            monkeypatch.syspath_prepend(p)
+
+        # mixed module and filenames:
+        result = testdir.runpytest("--pyargs", "ns_pkg.hello", "world/ns_pkg")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "*4 passed*"
+        ])
+
+        # specify tests within a module
+        result = testdir.runpytest("--pyargs", "ns_pkg.world.test_world::test_other")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "*1 passed*"
+        ])
+
+        # namespace package
+        result = testdir.runpytest("--pyargs", "ns_pkg")
+        assert result.ret
+        result.stderr.fnmatch_lines([
+            "ERROR:*Cannot*uniquely*resolve*package*directory:*ns_pkg",
+        ])
+
     def test_cmdline_python_package_not_exists(self, testdir):
         result = testdir.runpytest("--pyargs", "tpkgwhatv")
         assert result.ret
@@ -697,4 +759,3 @@ class TestDurationWithFixture:
             * setup *test_1*
             * call *test_1*
         """)
-
