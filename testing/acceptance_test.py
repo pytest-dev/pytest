@@ -592,7 +592,7 @@ class TestInvocationVariants:
         def join_pythonpath(*dirs):
             cur = py.std.os.environ.get('PYTHONPATH')
             if cur:
-                dirs = dir + (cur,)
+                dirs += (cur,)
             return ':'.join(str(p) for p in dirs)
         monkeypatch.setenv('PYTHONPATH', join_pythonpath(*search_path))
         for p in search_path:
