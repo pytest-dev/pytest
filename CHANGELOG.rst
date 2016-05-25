@@ -5,6 +5,10 @@
 
 *
 
+* Ensure that a module within a namespace package can be found when it
+  is specified on the command line together with the``--pyargs``
+  option.
+
 * Fix win32 path issue when puttinging custom config file with absolute path 
   in ``pytest.main("-c your_absolute_path")``.
 
