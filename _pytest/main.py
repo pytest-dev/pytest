@@ -665,6 +665,9 @@ class Session(FSCollector):
         if type_[2] != imp.PKG_DIRECTORY:
             return [pathname]
         else:
+            init_file = os.path.join(pathname, '__init__.py')
+            if os.path.getsize(init_file) == 0:
+                return [pathname]
             return [pathname] + self._locate_module(
                 modulename,
                 searchpath[searchpath.index(os.path.dirname(pathname)) + 1:])
