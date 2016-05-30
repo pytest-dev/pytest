@@ -3,9 +3,10 @@
 
 **Bug Fixes**
 
-*
+* fix `#510`_: skip tests where one parameterize dimension was empty
+  thanks Alex Stapleton for the Report and `@RonnyPfannschmidt`_ for the PR
 
-* Fix win32 path issue when puttinging custom config file with absolute path 
+* Fix win32 path issue when puttinging custom config file with absolute path
   in ``pytest.main("-c your_absolute_path")``.
 
 * Fix maximum recursion depth detection when raised error class is not aware
@@ -19,7 +20,7 @@
 * Minor improvements and fixes to the documentation.
   Thanks `@omarkohl`_ for the PR.
 
-
+.. _#510: https://github.com/pytest-dev/pytest/issues/510
 .. _#1506: https://github.com/pytest-dev/pytest/pull/1506
 
 .. _@prusse-martin: https://github.com/prusse-martin
@@ -78,7 +79,7 @@
   ``xfail_strict`` ini option that can be used to configure it project-wise.
   Thanks `@rabbbit`_ for the request and `@nicoddemus`_ for the PR (`#1355`_).
 
-* ``Parser.addini`` now supports options of type ``bool``. 
+* ``Parser.addini`` now supports options of type ``bool``.
   Thanks `@nicoddemus`_ for the PR.
 
 * New ``ALLOW_BYTES`` doctest option. This strips ``b`` prefixes from byte strings
@@ -89,25 +90,25 @@
   Fixes `#1366`_.
   Thanks to `@hpk42`_ for the report and `@RonnyPfannschmidt`_ for the PR.
 
-* Catch ``IndexError`` exceptions when getting exception source location. 
+* Catch ``IndexError`` exceptions when getting exception source location.
   Fixes a pytest internal error for dynamically generated code (fixtures and tests)
   where source lines are fake by intention.
 
 **Changes**
 
 * **Important**: `py.code <https://pylib.readthedocs.io/en/latest/code.html>`_ has been
-  merged into the ``pytest`` repository as ``pytest._code``. This decision 
-  was made because ``py.code`` had very few uses outside ``pytest`` and the 
-  fact that it was in a different repository made it difficult to fix bugs on 
+  merged into the ``pytest`` repository as ``pytest._code``. This decision
+  was made because ``py.code`` had very few uses outside ``pytest`` and the
+  fact that it was in a different repository made it difficult to fix bugs on
   its code in a timely manner. The team hopes with this to be able to better
   refactor out and improve that code.
   This change shouldn't affect users, but it is useful to let users aware
   if they encounter any strange behavior.
-  
-  Keep in mind that the code for ``pytest._code`` is **private** and 
+
+  Keep in mind that the code for ``pytest._code`` is **private** and
   **experimental**, so you definitely should not import it explicitly!
 
-  Please note that the original ``py.code`` is still available in 
+  Please note that the original ``py.code`` is still available in
   `pylib <https://pylib.readthedocs.io>`_.
 
 * ``pytest_enter_pdb`` now optionally receives the pytest config object.
@@ -201,7 +202,7 @@
 - fix #1292: monkeypatch calls (setattr, setenv, etc.) are now O(1).
   Thanks David R. MacIver for the report and Bruno Oliveira for the PR.
 
-- fix #1223: captured stdout and stderr are now properly displayed before 
+- fix #1223: captured stdout and stderr are now properly displayed before
   entering pdb when ``--pdb`` is used instead of being thrown away.
   Thanks Cal Leeming for the PR.
 
@@ -276,8 +277,8 @@
   Thanks Gabriel Reis for the PR.
 
 - add more talks to the documentation
-- extend documentation on the --ignore cli option 
-- use pytest-runner for setuptools integration 
+- extend documentation on the --ignore cli option
+- use pytest-runner for setuptools integration
 - minor fixes for interaction with OS X El Capitan
   system integrity protection (thanks Florian)
 
