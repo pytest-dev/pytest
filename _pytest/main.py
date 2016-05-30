@@ -654,6 +654,13 @@ class Session(FSCollector):
         In case of a presumptive namespace package return all of its possible
         locations.
 
+        Note: The only reliable way to determine whether a package is a
+        namespace package, i.e., whether its ``__path__`` has more than one
+        element, is to import it.  This method does not do that and hence we
+        are talking of a *presumptive* namespace package.  The ``_parsearg``
+        method is aware of this and, quite conservatively, tends to raise an
+        exception in case of doubt.
+
         """
         try:
             fd, pathname, type_ = imp.find_module(modulename, searchpath)
@@ -666,6 +673,10 @@ class Session(FSCollector):
             return [pathname]
         else:
             init_file = os.path.join(pathname, '__init__.py')
+            # The following check is a little heuristic do determine whether a
+            # package is a namespace package.  If its '__init__.py' is empty
+            # then it should be treated as a regular package (see #1568 for
+            # further discussion):
             if os.path.getsize(init_file) == 0:
                 return [pathname]
             return [pathname] + self._locate_module(

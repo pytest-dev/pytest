@@ -559,7 +559,10 @@ class TestInvocationVariants:
         ])
 
     def test_cmdline_python_namespace_package(self, testdir, monkeypatch):
-        monkeypatch.delenv('PYTHONDONTWRITEBYTECODE', False)
+        """
+        test --pyargs option with namespace packages (#1567)
+        """
+        monkeypatch.delenv('PYTHONDONTWRITEBYTECODE', raising=False)
 
         search_path = []
         for dirname in "hello", "world":
@@ -599,16 +602,21 @@ class TestInvocationVariants:
             monkeypatch.syspath_prepend(p)
 
         # mixed module and filenames:
-        result = testdir.runpytest("--pyargs", "ns_pkg.hello", "world/ns_pkg")
+        result = testdir.runpytest("--pyargs", "-v", "ns_pkg.hello", "world/ns_pkg")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
+            "*test_hello.py::test_hello*PASSED",
+            "*test_hello.py::test_other*PASSED",
+            "*test_world.py::test_world*PASSED",
+            "*test_world.py::test_other*PASSED",
             "*4 passed*"
         ])
 
         # specify tests within a module
-        result = testdir.runpytest("--pyargs", "ns_pkg.world.test_world::test_other")
+        result = testdir.runpytest("--pyargs", "-v", "ns_pkg.world.test_world::test_other")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
+            "*test_world.py::test_other*PASSED",
             "*1 passed*"
         ])
 
