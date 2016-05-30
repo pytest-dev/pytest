@@ -992,8 +992,8 @@ class Metafunc(FuncargnamesCompatAttr):
             #
             fs, lineno = getfslineno(self.function)
             newmark = pytest.mark.skip(
-                reason="got empty parameter set, function %s at %s:%d" % (
-                    self.function.__name__, fs, lineno))
+                reason="got empty parameter set %r, function %s at %s:%d" % (
+                    argnames, self.function.__name__, fs, lineno))
             newmarks = newkeywords.setdefault(0, {})
             newmarks[newmark.markname] = newmark
 
