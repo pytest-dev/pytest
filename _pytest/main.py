@@ -648,8 +648,48 @@ class Session(FSCollector):
         ihook.pytest_collect_directory(path=path, parent=self)
         return True
 
+    def _locate_module(self, modulename, searchpath):
+        """Find the locations of a module or package in the filesytem.
+
+        In case of a presumptive namespace package return all of its possible
+        locations.
+
+        Note: The only reliable way to determine whether a package is a
+        namespace package, i.e., whether its ``__path__`` has more than one
+        element, is to import it.  This method does not do that and hence we
+        are talking of a *presumptive* namespace package.  The ``_parsearg``
+        method is aware of this and, quite conservatively, tends to raise an
+        exception in case of doubt.
+
+        """
+        try:
+            fd, pathname, type_ = imp.find_module(modulename, searchpath)
+        except ImportError:
+            return []
+        else:
+            if fd is not None:
+                fd.close()
+        if type_[2] != imp.PKG_DIRECTORY:
+            return [pathname]
+        else:
+            init_file = os.path.join(pathname, '__init__.py')
+            # The following check is a little heuristic do determine whether a
+            # package is a namespace package.  If its '__init__.py' is empty
+            # then it should be treated as a regular package (see #1568 for
+            # further discussion):
+            if os.path.getsize(init_file) == 0:
+                return [pathname]
+            return [pathname] + self._locate_module(
+                modulename,
+                searchpath[searchpath.index(os.path.dirname(pathname)) + 1:])
+
     def _tryconvertpyarg(self, x):
-        mod = None
+        """Convert a dotted module name to a list of file-system locations.
+
+        Always return a list. If the module cannot be found, the list contains
+        just the given argument.
+
+        """
         path = [os.path.abspath('.')] + sys.path
         for name in x.split('.'):
             # ignore anything that's not a proper name here
@@ -658,27 +698,20 @@ class Session(FSCollector):
             # but it's supposed to be considered a filesystem path
             # not a package
             if name_re.match(name) is None:
-                return x
-            try:
-                fd, mod, type_ = imp.find_module(name, path)
-            except ImportError:
-                return x
-            else:
-                if fd is not None:
-                    fd.close()
-
-            if type_[2] != imp.PKG_DIRECTORY:
-                path = [os.path.dirname(mod)]
-            else:
-                path = [mod]
-        return mod
+                return [x]
+            path = self._locate_module(name, path)
+            if len(path) == 0:
+                return [x]
+        return path
 
     def _parsearg(self, arg):
         """ return (fspath, names) tuple after checking the file exists. """
-        arg = str(arg)
-        if self.config.option.pyargs:
-            arg = self._tryconvertpyarg(arg)
         parts = str(arg).split("::")
+        if self.config.option.pyargs:
+            paths = self._tryconvertpyarg(parts[0])
+            if len(paths) != 1:
+                raise pytest.UsageError("Cannot uniquely resolve package directory: " + arg)
+            parts[0] = paths[0]
         relpath = parts[0].replace("/", os.sep)
         path = self.config.invocation_dir.join(relpath, abs=True)
         if not path.check():
