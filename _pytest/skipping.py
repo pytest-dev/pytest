@@ -120,7 +120,7 @@ class MarkEvaluator:
             return self.result
         if self.holder:
             d = self._getglobals()
-            if self.holder.args:
+            if self.holder.args or 'condition' in self.holder.kwargs:
                 self.result = False
                 # "holder" might be a MarkInfo or a MarkDecorator; only
                 # MarkInfo keeps track of all parameters it received in an
@@ -130,6 +130,8 @@ class MarkEvaluator:
                 else:
                     arglist = [(self.holder.args, self.holder.kwargs)]
                 for args, kwargs in arglist:
+                    if 'condition' in kwargs:
+                        args = (kwargs['condition'],)
                     for expr in args:
                         self.expr = expr
                         if isinstance(expr, py.builtin._basestring):
