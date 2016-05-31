@@ -405,6 +405,19 @@ class TestXFail:
         result.stdout.fnmatch_lines('*1 passed*')
         assert result.ret == 0
 
+    @pytest.mark.parametrize('strict', [True, False])
+    def test_xfail_condition_keyword(self, testdir, strict):
+        p = testdir.makepyfile("""
+            import pytest
+
+            @pytest.mark.xfail(condition=False, reason='unsupported feature', strict=%s)
+            def test_foo():
+                pass
+        """ % strict)
+        result = testdir.runpytest(p, '-rxX')
+        result.stdout.fnmatch_lines('*1 passed*')
+        assert result.ret == 0
+
     @pytest.mark.parametrize('strict_val', ['true', 'false'])
     def test_strict_xfail_default_from_file(self, testdir, strict_val):
         testdir.makeini('''
