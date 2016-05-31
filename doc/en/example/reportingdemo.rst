@@ -13,7 +13,7 @@ get on the terminal - we are working on that):
 
     assertion $ py.test failure_demo.py
     ======= test session starts ========
-    platform linux -- Python 3.4.0, pytest-2.9.1, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR/assertion, inifile: 
     collected 42 items
     
@@ -202,7 +202,7 @@ get on the terminal - we are working on that):
     
         def test_eq_set(self):
     >       assert set([0, 10, 11, 12]) == set([0, 20, 21])
-    E       assert set([0, 10, 11, 12]) == set([0, 20, 21])
+    E       assert {0, 10, 11, 12} == {0, 20, 21}
     E         Extra items in the left set:
     E         10
     E         11
@@ -361,7 +361,7 @@ get on the terminal - we are working on that):
     >   int(s)
     E   ValueError: invalid literal for int() with base 10: 'qwe'
     
-    <0-codegen $PYTHON_PREFIX/lib/python3.4/site-packages/_pytest/python.py:1302>:1: ValueError
+    <0-codegen $PYTHON_PREFIX/lib/python3.5/site-packages/_pytest/python.py:1309>:1: ValueError
     _______ TestRaises.test_raises_doesnt ________
     
     self = <failure_demo.TestRaises object at 0xdeadbeef>
@@ -386,7 +386,7 @@ get on the terminal - we are working on that):
     
         def test_tupleerror(self):
     >       a,b = [1]
-    E       ValueError: need more than 1 value to unpack
+    E       ValueError: not enough values to unpack (expected 2, got 1)
     
     failure_demo.py:143: ValueError
     ______ TestRaises.test_reinterpret_fails_with_print_for_the_fun_of_it ______
@@ -461,7 +461,7 @@ get on the terminal - we are working on that):
         def test_z1_unpack_error(self):
             l = []
     >       a,b  = l
-    E       ValueError: need more than 0 values to unpack
+    E       ValueError: not enough values to unpack (expected 2, got 0)
     
     failure_demo.py:180: ValueError
     _______ TestMoreErrors.test_z2_type_error ________

@@ -82,7 +82,7 @@ then the test collection looks like this::
 
     $ py.test --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.4.0, pytest-2.9.1, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: setup.cfg
     collected 2 items
     <Module 'check_myapp.py'>
@@ -128,7 +128,7 @@ You can always peek at the collection tree without running tests like this::
 
     . $ py.test --collect-only pythoncollection.py
     ======= test session starts ========
-    platform linux -- Python 3.4.0, pytest-2.9.1, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 3 items
     <Module 'CWD/pythoncollection.py'>
@@ -180,7 +180,7 @@ and a setup.py dummy file like this::
 then a pytest run on Python2 will find the one test and will leave out the
 setup.py file::
 
-    $ py.test --collect-only
+    #$ py.test --collect-only
     ====== test session starts ======
     platform linux2 -- Python 2.7.10, pytest-2.9.1, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
@@ -194,10 +194,9 @@ If you run with a Python3 interpreter both the one test and the setup.py file
 will be left out::
 
     $ py.test --collect-only
-    ====== test session starts ======
-    platform linux -- Python 3.4.3+, pytest-2.9.1, py-1.4.31, pluggy-0.3.1
+    ======= test session starts ========
+    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 0 items
-
-    ====== no tests ran in 0.03 seconds ======
-
+    
+    ======= no tests ran in 0.12 seconds ========
