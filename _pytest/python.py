@@ -1168,12 +1168,12 @@ def _showfixtures_main(config, session):
         assert fixturedefs is not None
         if not fixturedefs:
             continue
-        fixturedef = fixturedefs[-1]
-        loc = getlocation(fixturedef.func, curdir)
-        available.append((len(fixturedef.baseid),
-                          fixturedef.func.__module__,
-                          curdir.bestrelpath(loc),
-                          fixturedef.argname, fixturedef))
+        for fixturedef in fixturedefs:
+            loc = getlocation(fixturedef.func, curdir)
+            available.append((len(fixturedef.baseid),
+                              fixturedef.func.__module__,
+                              curdir.bestrelpath(loc),
+                              fixturedef.argname, fixturedef))
 
     available.sort()
     currentmodule = None

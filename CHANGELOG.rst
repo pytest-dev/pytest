@@ -24,6 +24,10 @@
 * Minor improvements and fixes to the documentation.
   Thanks `@omarkohl`_ for the PR.
 
+* Fix ``--fixtures`` to show all fixture definitions as opposed to just
+  one per fixture name.
+  Thanks to `@hackebrot`_ for the PR.
+
 .. _#510: https://github.com/pytest-dev/pytest/issues/510
 .. _#1506: https://github.com/pytest-dev/pytest/pull/1506
 .. _#1496: https://github.com/pytest-dev/pytest/issue/1496
