@@ -211,7 +211,7 @@ but here is a simple overview:
    You need to have Python 2.7 and 3.5 available in your system.  Now
    running tests is as simple as issuing this command::
 
-    $ python runtox.py -e linting,py27,py35
+    $ python3 runtox.py -e linting,py27,py35
 
    This command will run tests via the "tox" tool against Python 2.7 and 3.5
    and also perform "lint" coding-style checks.  ``runtox.py`` is
@@ -226,11 +226,11 @@ but here is a simple overview:
    To run tests on py27 and pass options to pytest (e.g. enter pdb on failure)
    to pytest you can do::
 
-    $ python runtox.py -e py27 -- --pdb
+    $ python3 runtox.py -e py27 -- --pdb
 
    or to only run tests in a particular test module on py35::
 
-    $ python runtox.py -e py35 -- testing/test_config.py
+    $ python3 runtox.py -e py35 -- testing/test_config.py
 
 #. Commit and push once your tests pass and you are happy with your change(s)::
 
