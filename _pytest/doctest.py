@@ -144,20 +144,18 @@ def get_optionflags(parent):
     return flag_acc
 
 
-class DoctestTextfile(DoctestItem, pytest.Module):
+class DoctestTextfile(pytest.Module):
+    obj = None
 
-    def runtest(self):
+    def collect(self):
         import doctest
-        fixture_request = _setup_fixtures(self)
 
         # inspired by doctest.testfile; ideally we would use it directly,
         # but it doesn't support passing a custom checker
         text = self.fspath.read()
         filename = str(self.fspath)
         name = self.fspath.basename
-        globs = dict(getfixture=fixture_request.getfuncargvalue)
-        if '__name__' not in globs:
-            globs['__name__'] = '__main__'
+        globs = {'__name__': '__main__'}
 
         optionflags = get_optionflags(self)
         runner = doctest.DebugRunner(verbose=0, optionflags=optionflags,
@@ -165,8 +163,8 @@ class DoctestTextfile(DoctestItem, pytest.Module):
 
         parser = doctest.DocTestParser()
         test = parser.get_doctest(text, globs, name, filename, 0)
-        _check_all_skipped(test)
-        runner.run(test)
+        if test.examples:
+            yield DoctestItem(test.name, self, runner, test)
 
 
 def _check_all_skipped(test):
