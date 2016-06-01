@@ -3,11 +3,17 @@
 
 **Bug Fixes**
 
-*
+* Text documents without any doctests no longer appear as "skipped".
+  Thanks `@graingert`_ for reporting and providing a full PR (`#1580`_).
 
 *
 
 *
+
+.. _#1580: https://github.com/pytest-dev/pytest/issues/1580
+
+.. _@graingert: https://github.com/graingert
+
 
 2.9.2
 =====
