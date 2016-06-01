@@ -75,7 +75,7 @@ marked ``smtp`` fixture function.  Running the test looks like this::
 
     $ py.test test_smtpsimple.py
     ======= test session starts ========
-    platform linux -- Python 3.4.0, pytest-2.9.1, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
@@ -193,7 +193,7 @@ inspect what is going on and can now run the tests::
 
     $ py.test test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.4.0, pytest-2.9.1, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -488,7 +488,7 @@ Running the above tests results in the following test IDs being used::
 
    $ py.test --collect-only
    ======= test session starts ========
-   platform linux -- Python 3.4.0, pytest-2.9.1, py-1.4.31, pluggy-0.3.1
+   platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
    rootdir: $REGENDOC_TMPDIR, inifile: 
    collected 10 items
    <Module 'test_anothersmtp.py'>
@@ -539,7 +539,7 @@ Here we declare an ``app`` fixture which receives the previously defined
 
     $ py.test -v test_appsetup.py
     ======= test session starts ========
-    platform linux -- Python 3.4.0, pytest-2.9.1, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.4
+    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 2 items
@@ -611,31 +611,31 @@ to show the setup/teardown flow::
 Let's run the tests in verbose mode and with looking at the print-output::
 
     $ py.test -v -s test_module.py
-    ====== test session starts ======
-    platform linux -- Python 3.4.3+, pytest-2.9.1, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3
+    ======= test session starts ========
+    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
-    collected 8 items
-
+    collecting ... collected 8 items
+    
     test_module.py::test_0[1]   SETUP otherarg 1
       RUN test0 with otherarg 1
     PASSED  TEARDOWN otherarg 1
-
+    
     test_module.py::test_0[2]   SETUP otherarg 2
       RUN test0 with otherarg 2
     PASSED  TEARDOWN otherarg 2
-
+    
     test_module.py::test_1[mod1]   SETUP modarg mod1
       RUN test1 with modarg mod1
     PASSED
     test_module.py::test_2[1-mod1]   SETUP otherarg 1
       RUN test2 with otherarg 1 and modarg mod1
     PASSED  TEARDOWN otherarg 1
-
+    
     test_module.py::test_2[2-mod1]   SETUP otherarg 2
       RUN test2 with otherarg 2 and modarg mod1
     PASSED  TEARDOWN otherarg 2
-
+    
     test_module.py::test_1[mod2]   TEARDOWN modarg mod1
       SETUP modarg mod2
       RUN test1 with modarg mod2
@@ -643,15 +643,14 @@ Let's run the tests in verbose mode and with looking at the print-output::
     test_module.py::test_2[1-mod2]   SETUP otherarg 1
       RUN test2 with otherarg 1 and modarg mod2
     PASSED  TEARDOWN otherarg 1
-
+    
     test_module.py::test_2[2-mod2]   SETUP otherarg 2
       RUN test2 with otherarg 2 and modarg mod2
     PASSED  TEARDOWN otherarg 2
       TEARDOWN modarg mod2
-
-
-    ====== 8 passed in 0.01 seconds ======
-
+    
+    
+    ======= 8 passed in 0.12 seconds ========
 
 You can see that the parametrized module-scoped ``modarg`` resource caused an
 ordering of test execution that lead to the fewest possible "active" resources.

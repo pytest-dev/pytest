@@ -296,7 +296,7 @@ hookwrapper: executing around other hooks
 
 .. currentmodule:: _pytest.core
 
-.. versionadded:: 2.7 (experimental)
+.. versionadded:: 2.7
 
 pytest plugins can implement hook wrappers which wrap the execution
 of other hook implementations.  A hook wrapper is a generator function

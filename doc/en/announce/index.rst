@@ -7,6 +7,8 @@ Release announcements
 
 
    sprint2016
+   release-2.9.1
+   release-2.9.1
    release-2.9.0
    release-2.8.7
    release-2.8.6
@@ -45,4 +47,3 @@ Release announcements
    release-2.0.2
    release-2.0.1
    release-2.0.0
-

@@ -894,8 +894,6 @@ class CallSpec2(object):
             getattr(self, valtype_for_arg)[arg] = val
             self.indices[arg] = param_index
             self._arg2scopenum[arg] = scopenum
-            if val is _notexists:
-                self._emptyparamspecified = True
         self._idlist.append(id)
         self.keywords.update(keywords)
 
@@ -1014,6 +1012,15 @@ class Metafunc(FuncargnamesCompatAttr):
                 argvalues = [(val,) for val in argvalues]
         if not argvalues:
             argvalues = [(_notexists,) * len(argnames)]
+            # we passed a empty list to parameterize, skip that test
+            #
+            fs, lineno = getfslineno(self.function)
+            newmark = pytest.mark.skip(
+                reason="got empty parameter set %r, function %s at %s:%d" % (
+                    argnames, self.function.__name__, fs, lineno))
+            newmarks = newkeywords.setdefault(0, {})
+            newmarks[newmark.markname] = newmark
+
 
         if scope is None:
             scope = "function"
@@ -1206,12 +1213,12 @@ def _showfixtures_main(config, session):
         assert fixturedefs is not None
         if not fixturedefs:
             continue
-        fixturedef = fixturedefs[-1]
-        loc = getlocation(fixturedef.func, curdir)
-        available.append((len(fixturedef.baseid),
-                          fixturedef.func.__module__,
-                          curdir.bestrelpath(loc),
-                          fixturedef.argname, fixturedef))
+        for fixturedef in fixturedefs:
+            loc = getlocation(fixturedef.func, curdir)
+            available.append((len(fixturedef.baseid),
+                              fixturedef.func.__module__,
+                              curdir.bestrelpath(loc),
+                              fixturedef.argname, fixturedef))
 
     available.sort()
     currentmodule = None
@@ -1703,15 +1710,6 @@ class Function(FunctionMixin, pytest.Item, FuncargnamesCompatAttr):
         self.ihook.pytest_pyfunc_call(pyfuncitem=self)
 
     def setup(self):
-        # check if parametrization happend with an empty list
-        try:
-            self.callspec._emptyparamspecified
-        except AttributeError:
-            pass
-        else:
-            fs, lineno = self._getfslineno()
-            pytest.skip("got empty parameter set, function %s at %s:%d" %(
-                self.function.__name__, fs, lineno))
         super(Function, self).setup()
         fillfixtures(self)
 

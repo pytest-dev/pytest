@@ -16,6 +16,7 @@ include/
 *.class
 *.orig
 *~
+.hypothesis/
 
 .eggs/
 

@@ -2564,6 +2564,38 @@ class TestShowFixtures:
                 Fixture B
         """)
 
+    def test_show_fixtures_with_same_name(self, testdir):
+        testdir.makeconftest('''
+            import pytest
+            @pytest.fixture
+            def arg1():
+                """Hello World in conftest.py"""
+                return "Hello World"
+        ''')
+        testdir.makepyfile('''
+            def test_foo(arg1):
+                assert arg1 == "Hello World"
+        ''')
+        testdir.makepyfile('''
+            import pytest
+            @pytest.fixture
+            def arg1():
+                """Hi from test module"""
+                return "Hi"
+            def test_bar(arg1):
+                assert arg1 == "Hi"
+        ''')
+        result = testdir.runpytest("--fixtures")
+        result.stdout.fnmatch_lines('''
+            * fixtures defined from conftest *
+            arg1
+                Hello World in conftest.py
+
+            * fixtures defined from test_show_fixtures_with_same_name *
+            arg1
+                Hi from test module
+        ''')
+
 
 class TestContextManagerFixtureFuncs:
     def test_simple(self, testdir):
