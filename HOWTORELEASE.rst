@@ -41,7 +41,7 @@ Note: this assumes you have already registered on pypi.
 8. Build the docs, you need a virtualenv with py and sphinx
    installed::
 
-      cd doc/en      
+      cd doc/en
       make html
 
    Commit any changes before tagging the release.
@@ -71,7 +71,7 @@ Note: this assumes you have already registered on pypi.
 
 11. Publish to pypi::
 
-      devpi push pytest-VERSION pypi:NAME
+      devpi push pytest==VERSION pypi:NAME
 
     where NAME is the name of pypi.python.org as configured in your ``~/.pypirc``
     file `for devpi <http://doc.devpi.net/latest/quickstart-releaseprocess.html?highlight=pypirc#devpi-push-releasing-to-an-external-index>`_.

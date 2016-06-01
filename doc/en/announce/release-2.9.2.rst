@@ -1,4 +1,4 @@
-pytest-2.9.1
+pytest-2.9.2
 ============
 
 pytest is a mature Python testing tool with more than a 1100 tests
