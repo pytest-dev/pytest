@@ -273,13 +273,13 @@ which will add the string to the test header accordingly::
 
 You can also return a list of strings which will be considered as several
 lines of information.  You can of course also make the amount of reporting
-information on e.g. the value of ``config.option.verbose`` so that
+information on e.g. the value of ``config.getoption('verbose')`` so that
 you present more information appropriately::
 
     # content of conftest.py
 
     def pytest_report_header(config):
-        if config.option.verbose > 0:
+        if config.getoption('verbose') > 0:
             return ["info1: did you know that ...", "did you?"]
 
 which will add info only when run with "--v"::
