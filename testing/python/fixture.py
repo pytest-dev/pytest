@@ -2597,11 +2597,13 @@ class TestShowFixtures:
         ''')
 
 
+@pytest.mark.parametrize('flavor', ['fixture', 'yield_fixture'])
 class TestContextManagerFixtureFuncs:
-    def test_simple(self, testdir):
+
+    def test_simple(self, testdir, flavor):
         testdir.makepyfile("""
             import pytest
-            @pytest.yield_fixture
+            @pytest.{flavor}
             def arg1():
                 print ("setup")
                 yield 1
@@ -2611,7 +2613,7 @@ class TestContextManagerFixtureFuncs:
             def test_2(arg1):
                 print ("test2 %s" % arg1)
                 assert 0
-        """)
+        """.format(flavor=flavor))
         result = testdir.runpytest("-s")
         result.stdout.fnmatch_lines("""
             *setup*
@@ -2622,10 +2624,10 @@ class TestContextManagerFixtureFuncs:
             *teardown*
         """)
 
-    def test_scoped(self, testdir):
+    def test_scoped(self, testdir, flavor):
         testdir.makepyfile("""
             import pytest
-            @pytest.yield_fixture(scope="module")
+            @pytest.{flavor}(scope="module")
             def arg1():
                 print ("setup")
                 yield 1
@@ -2634,7 +2636,7 @@ class TestContextManagerFixtureFuncs:
                 print ("test1 %s" % arg1)
             def test_2(arg1):
                 print ("test2 %s" % arg1)
-        """)
+        """.format(flavor=flavor))
         result = testdir.runpytest("-s")
         result.stdout.fnmatch_lines("""
             *setup*
@@ -2643,94 +2645,63 @@ class TestContextManagerFixtureFuncs:
             *teardown*
         """)
 
-    def test_setup_exception(self, testdir):
+    def test_setup_exception(self, testdir, flavor):
         testdir.makepyfile("""
             import pytest
-            @pytest.yield_fixture(scope="module")
+            @pytest.{flavor}(scope="module")
             def arg1():
                 pytest.fail("setup")
                 yield 1
             def test_1(arg1):
                 pass
-        """)
+        """.format(flavor=flavor))
         result = testdir.runpytest("-s")
         result.stdout.fnmatch_lines("""
             *pytest.fail*setup*
             *1 error*
         """)
 
-    def test_teardown_exception(self, testdir):
+    def test_teardown_exception(self, testdir, flavor):
         testdir.makepyfile("""
             import pytest
-            @pytest.yield_fixture(scope="module")
+            @pytest.{flavor}(scope="module")
             def arg1():
                 yield 1
                 pytest.fail("teardown")
             def test_1(arg1):
                 pass
-        """)
+        """.format(flavor=flavor))
         result = testdir.runpytest("-s")
         result.stdout.fnmatch_lines("""
             *pytest.fail*teardown*
             *1 passed*1 error*
         """)
 
-    def test_yields_more_than_one(self, testdir):
+    def test_yields_more_than_one(self, testdir, flavor):
         testdir.makepyfile("""
             import pytest
-            @pytest.yield_fixture(scope="module")
+            @pytest.{flavor}(scope="module")
             def arg1():
                 yield 1
                 yield 2
             def test_1(arg1):
                 pass
-        """)
+        """.format(flavor=flavor))
         result = testdir.runpytest("-s")
         result.stdout.fnmatch_lines("""
             *fixture function*
             *test_yields*:2*
         """)
 
-
-    def test_no_yield(self, testdir):
-        testdir.makepyfile("""
-            import pytest
-            @pytest.yield_fixture(scope="module")
-            def arg1():
-                return 1
-            def test_1(arg1):
-                pass
-        """)
-        result = testdir.runpytest("-s")
-        result.stdout.fnmatch_lines("""
-            *yield_fixture*requires*yield*
-            *yield_fixture*
-            *def arg1*
-        """)
-
-    def test_yield_not_allowed_in_non_yield(self, testdir):
-        testdir.makepyfile("""
-            import pytest
-            @pytest.fixture(scope="module")
-            def arg1():
-                yield 1
-            def test_1(arg1):
-                pass
-        """)
-        result = testdir.runpytest("-s")
-        result.stdout.fnmatch_lines("""
-            *fixture*cannot use*yield*
-            *def arg1*
-        """)
-
-    def test_custom_name(self, testdir):
-        testdir.makepyfile("""
-            import pytest
-            @pytest.fixture(name='meow')
-            def arg1():
-                return 'mew'
-            def test_1(meow):
-                print(meow)
-        """)
-        result = testdir.runpytest("-s")
-        result.stdout.fnmatch_lines("*mew*")
+# TODO: yield_fixture should work as well (this is bugged right now)
+def test_custom_name(testdir):
+    testdir.makepyfile("""
+        import pytest
+        @pytest.fixture(name='meow')
+        def arg1():
+            return 'mew'
+        def test_1(meow):
+            print(meow)
+    """)
+    result = testdir.runpytest("-s")
+    result.stdout.fnmatch_lines("*mew*")

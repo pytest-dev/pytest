@@ -2326,6 +2326,7 @@ def fail_fixturefunc(fixturefunc, msg):
                 pytrace=False)
 
 def call_fixture_func(fixturefunc, request, kwargs, yieldctx):
+    yieldctx = is_generator(fixturefunc)
     if yieldctx:
         if not is_generator(fixturefunc):
             fail_fixturefunc(fixturefunc,
