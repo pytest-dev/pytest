@@ -14,13 +14,16 @@ class TestDoctests:
             >>> i-1
             4
         """)
+
         for x in (testdir.tmpdir, checkfile):
             #print "checking that %s returns custom items" % (x,)
             items, reprec = testdir.inline_genitems(x)
             assert len(items) == 1
-            assert isinstance(items[0], DoctestTextfile)
+            assert isinstance(items[0], DoctestItem)
+            assert isinstance(items[0].parent, DoctestTextfile)
+        # Empty file has no items.
         items, reprec = testdir.inline_genitems(w)
-        assert len(items) == 1
+        assert len(items) == 0
 
     def test_collect_module_empty(self, testdir):
         path = testdir.makepyfile(whatever="#")
@@ -594,6 +597,11 @@ class TestDoctestSkips:
         """)
         reprec = testdir.inline_run("--doctest-modules")
         reprec.assertoutcome(skipped=1)
+
+    def test_vacuous_all_skipped(self, testdir, makedoctest):
+        makedoctest('')
+        reprec = testdir.inline_run("--doctest-modules")
+        reprec.assertoutcome(passed=0, skipped=0)
 
 
 class TestDoctestAutoUseFixtures:
