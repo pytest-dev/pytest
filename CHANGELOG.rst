@@ -10,6 +10,10 @@
 
 *
 
+* Fix exception visualization in case the current working directory (CWD) gets
+  deleted during testing. Fixes (`#1235`). Thanks `@bukzor` for reporting. PR by
+  `@marscher`. Thanks `@nicoddemus` for his help.
+
 .. _#1580: https://github.com/pytest-dev/pytest/issues/1580
 
 .. _@graingert: https://github.com/graingert

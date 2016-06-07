@@ -403,7 +403,13 @@ class Node(object):
             else:
                 style = "long"
 
-        return excinfo.getrepr(funcargs=True,
+        try:
+            os.getcwd()
+            abspath = False
+        except OSError:
+            abspath = True
+
+        return excinfo.getrepr(funcargs=True, abspath=abspath,
                                showlocals=self.config.option.showlocals,
                                style=style, tbfilter=tbfilter)
 
