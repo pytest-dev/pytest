@@ -3,7 +3,14 @@
 Fixture functions using "yield" / context manager integration
 ---------------------------------------------------------------
 
+.. deprecated:: 2.10
+
 .. versionadded:: 2.4
+
+.. important::
+    Since pytest-2.10, fixtures using the normal ``fixture`` decorator can use a ``yield``
+    statement to provide fixture values and execute teardown code, exactly like ``yield_fixture``
+    described in this session.
 
 .. regendoc:wipe
 

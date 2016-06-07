@@ -4,8 +4,8 @@ import pytest
 @pytest.fixture("session")
 def setup(request):
     setup = CostlySetup()
-    request.addfinalizer(setup.finalize)
-    return setup
+    yield setup
+    setup.finalize()
 
 class CostlySetup:
     def __init__(self):
