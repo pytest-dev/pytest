@@ -175,7 +175,7 @@ def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
         params = list(params)
     return FixtureFunctionMarker(scope, params, autouse, ids=ids, name=name)
 
-def yield_fixture(scope="function", params=None, autouse=False, ids=None):
+def yield_fixture(scope="function", params=None, autouse=False, ids=None, name=None):
     """ (return a) decorator to mark a yield-fixture factory function
     (EXPERIMENTAL).
 
@@ -184,12 +184,12 @@ def yield_fixture(scope="function", params=None, autouse=False, ids=None):
     statement to provide a fixture.  See
     http://pytest.org/en/latest/yieldfixture.html for more info.
     """
-    if callable(scope) and params is None and autouse == False:
+    if callable(scope) and params is None and not autouse:
         # direct decoration
         return FixtureFunctionMarker(
-                "function", params, autouse, yieldctx=True)(scope)
+                "function", params, autouse, name=name, yieldctx=True, ids=ids)(scope)
     else:
-        return FixtureFunctionMarker(scope, params, autouse,
+        return FixtureFunctionMarker(scope, params, autouse, name=name,
                                      yieldctx=True, ids=ids)
 
 defaultfuncargprefixmarker = fixture()
