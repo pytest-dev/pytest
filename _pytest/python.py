@@ -2326,29 +2326,20 @@ def fail_fixturefunc(fixturefunc, msg):
 def call_fixture_func(fixturefunc, request, kwargs):
     yieldctx = is_generator(fixturefunc)
     if yieldctx:
-        if not is_generator(fixturefunc):
-            fail_fixturefunc(fixturefunc,
-                msg="yield_fixture requires yield statement in function")
-        iter = fixturefunc(**kwargs)
-        next = getattr(iter, "__next__", None)
-        if next is None:
-            next = getattr(iter, "next")
-        res = next()
+        it = fixturefunc(**kwargs)
+        res = next(it)
+
         def teardown():
             try:
-                next()
+                next(it)
             except StopIteration:
                 pass
             else:
                 fail_fixturefunc(fixturefunc,
                     "yield_fixture function has more than one 'yield'")
+
         request.addfinalizer(teardown)
     else:
-        if is_generator(fixturefunc):
-            fail_fixturefunc(fixturefunc,
-                msg="pytest.fixture functions cannot use ``yield``. "
-                    "Instead write and return an inner function/generator "
-                    "and let the consumer call and iterate over it.")
         res = fixturefunc(**kwargs)
     return res
 
