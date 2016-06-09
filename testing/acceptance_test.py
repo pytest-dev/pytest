@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 import sys
 
 import _pytest._code
@@ -513,22 +514,12 @@ class TestInvocationVariants:
         path = testdir.mkpydir("tpkg")
         path.join("test_hello.py").write('raise ImportError')
 
-        result = testdir.runpytest("--pyargs", "tpkg.test_hello")
+        result = testdir.runpytest_subprocess("--pyargs", "tpkg.test_hello")
         assert result.ret != 0
 
-        # Depending on whether the process running the test is the
-        # same as the process parsing the command-line arguments, the
-        # type of failure can be different:
-        if result.stderr.str() == '':
-            # Different processes
-            result.stdout.fnmatch_lines([
-                "collected*0*items*/*1*errors"
-            ])
-        else:
-            # Same process
-            result.stderr.fnmatch_lines([
-                "ERROR:*file*or*package*not*found:*tpkg.test_hello"
-            ])
+        result.stdout.fnmatch_lines([
+            "collected*0*items*/*1*errors"
+        ])
 
     def test_cmdline_python_package(self, testdir, monkeypatch):
         monkeypatch.delenv('PYTHONDONTWRITEBYTECODE', False)
@@ -549,7 +540,7 @@ class TestInvocationVariants:
         def join_pythonpath(what):
             cur = py.std.os.environ.get('PYTHONPATH')
             if cur:
-                return str(what) + ':' + cur
+                return str(what) + os.pathsep + cur
             return what
         empty_package = testdir.mkpydir("empty_package")
         monkeypatch.setenv('PYTHONPATH', join_pythonpath(empty_package))
@@ -560,11 +551,10 @@ class TestInvocationVariants:
         ])
 
         monkeypatch.setenv('PYTHONPATH', join_pythonpath(testdir))
-        path.join('test_hello.py').remove()
-        result = testdir.runpytest("--pyargs", "tpkg.test_hello")
+        result = testdir.runpytest("--pyargs", "tpkg.test_missing")
         assert result.ret != 0
         result.stderr.fnmatch_lines([
-            "*not*found*test_hello*",
+            "*not*found*test_missing*",
         ])
 
     def test_cmdline_python_namespace_package(self, testdir, monkeypatch):
@@ -605,7 +595,7 @@ class TestInvocationVariants:
             cur = py.std.os.environ.get('PYTHONPATH')
             if cur:
                 dirs += (cur,)
-            return ':'.join(str(p) for p in dirs)
+            return os.pathsep.join(str(p) for p in dirs)
         monkeypatch.setenv('PYTHONPATH', join_pythonpath(*search_path))
         for p in search_path:
             monkeypatch.syspath_prepend(p)

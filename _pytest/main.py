@@ -664,9 +664,12 @@ class Session(FSCollector):
             return x
         if loader is None:
             return x
+        # This method is sometimes invoked when AssertionRewritingHook, which
+        # does not define a get_filename method, is already in place:
         try:
             path = loader.get_filename()
-        except:
+        except AttributeError:
+            # Retrieve path from AssertionRewritingHook:
             path = loader.modules[x][0].co_filename
         if loader.is_package(x):
             path = os.path.dirname(path)
