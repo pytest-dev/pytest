@@ -6,7 +6,8 @@
 * Text documents without any doctests no longer appear as "skipped".
   Thanks `@graingert`_ for reporting and providing a full PR (`#1580`_).
 
-*
+* Fix internal error issue when ``method`` argument is missing for 
+  ``teardown_method()``. Fixes (`#1605`_).
 
 *
 
@@ -15,6 +16,7 @@
   `@marscher`. Thanks `@nicoddemus` for his help.
 
 .. _#1580: https://github.com/pytest-dev/pytest/issues/1580
+.. _#1605: https://github.com/pytest-dev/pytest/issues/1605
 
 .. _@graingert: https://github.com/graingert
 

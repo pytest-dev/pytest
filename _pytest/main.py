@@ -392,7 +392,10 @@ class Node(object):
         if self.config.option.fulltrace:
             style="long"
         else:
+            tb = _pytest._code.Traceback([excinfo.traceback[-1]])
             self._prunetraceback(excinfo)
+            if len(excinfo.traceback) == 0:
+                excinfo.traceback = tb
             tbfilter = False  # prunetraceback already does it
             if style == "auto":
                 style = "long"
