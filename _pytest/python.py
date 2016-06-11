@@ -209,6 +209,13 @@ def pytest_addoption(parser):
     group.addoption('--fixtures', '--funcargs',
                action="store_true", dest="showfixtures", default=False,
                help="show available fixtures, sorted by plugin appearance")
+    group.addoption(
+        '--fixtures-per-test',
+        action="store_true",
+        dest="show_fixtures_per_test",
+        default=False,
+        help="show fixtures per test",
+    )
     parser.addini("usefixtures", type="args", default=[],
         help="list of default fixtures to be used with this project")
     parser.addini("python_files", type="args",
@@ -229,6 +236,9 @@ def pytest_addoption(parser):
 def pytest_cmdline_main(config):
     if config.option.showfixtures:
         showfixtures(config)
+        return 0
+    if config.option.show_fixtures_per_test:
+        show_fixtures_per_test(config)
         return 0
 
 
@@ -1194,6 +1204,67 @@ def idmaker(argnames, argvalues, idfn=None, ids=None, config=None):
                 ids[index] = testid + str(counters[testid])
                 counters[testid] += 1
     return ids
+
+
+def show_fixtures_per_test(config):
+    from _pytest.main import wrap_session
+    return wrap_session(config, _show_fixtures_per_test)
+
+
+def _show_fixtures_per_test(config, session):
+    import _pytest.config
+    session.perform_collect()
+    curdir = py.path.local()
+    tw = _pytest.config.create_terminal_writer(config)
+    verbose = config.getvalue("verbose")
+
+    def get_best_rel(func):
+        loc = getlocation(func, curdir)
+        return curdir.bestrelpath(loc)
+
+    def write_fixture(fixture_def):
+        argname = fixture_def.argname
+
+        if verbose <= 0 and argname.startswith("_"):
+            return
+        if verbose > 0:
+            bestrel = get_best_rel(fixture_def.func)
+            funcargspec = "{} -- {}".format(argname, bestrel)
+        else:
+            funcargspec = argname
+        tw.line(funcargspec, green=True)
+
+        INDENT = '    {}'
+        fixture_doc = fixture_def.func.__doc__
+
+        if fixture_doc:
+            for line in fixture_doc.strip().split('\n'):
+                tw.line(INDENT.format(line.strip()))
+        else:
+            tw.line(INDENT.format('no docstring available'), red=True)
+
+    def write_item(item):
+        name2fixturedefs = item._fixtureinfo.name2fixturedefs
+
+        if not name2fixturedefs:
+            # The given test item does not use any fixtures
+            return
+        bestrel = get_best_rel(item.function)
+
+        tw.line()
+        tw.sep('-', 'fixtures used by {}'.format(item.name))
+        tw.sep('-', 'from {}'.format(bestrel))
+        for argname, fixture_defs in sorted(name2fixturedefs.items()):
+            assert fixture_defs is not None
+            if not fixture_defs:
+                continue
+            # The last fixture def item in the list is expected
+            # to be the one used by the test item
+            write_fixture(fixture_defs[-1])
+
+    for item in session.items:
+        write_item(item)
+
 
 def showfixtures(config):
     from _pytest.main import wrap_session
