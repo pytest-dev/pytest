@@ -1229,12 +1229,12 @@ def _show_fixtures_per_test(config, session):
             return
         if verbose > 0:
             bestrel = get_best_rel(fixture_def.func)
-            funcargspec = "{} -- {}".format(argname, bestrel)
+            funcargspec = "{0} -- {1}".format(argname, bestrel)
         else:
             funcargspec = argname
         tw.line(funcargspec, green=True)
 
-        INDENT = '    {}'
+        INDENT = '    {0}'
         fixture_doc = fixture_def.func.__doc__
 
         if fixture_doc:
@@ -1252,8 +1252,8 @@ def _show_fixtures_per_test(config, session):
         bestrel = get_best_rel(item.function)
 
         tw.line()
-        tw.sep('-', 'fixtures used by {}'.format(item.name))
-        tw.sep('-', 'from {}'.format(bestrel))
+        tw.sep('-', 'fixtures used by {0}'.format(item.name))
+        tw.sep('-', 'from {0}'.format(bestrel))
         for argname, fixture_defs in sorted(name2fixturedefs.items()):
             assert fixture_defs is not None
             if not fixture_defs:
