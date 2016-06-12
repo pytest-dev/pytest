@@ -228,6 +228,39 @@ class BaseFunctionalTests:
         assert reps[5].nodeid.endswith("test_func")
         assert reps[5].failed
 
+    def test_exact_teardown_issue1206(self, testdir):
+        rec = testdir.inline_runsource("""
+            import pytest
+
+            class TestClass:
+                def teardown_method(self):
+                    pass
+
+                def test_method(self):
+                    assert True
+        """)
+        reps = rec.getreports("pytest_runtest_logreport")
+        print (reps)
+        assert len(reps) == 3
+        #
+        assert reps[0].nodeid.endswith("test_method")
+        assert reps[0].passed
+        assert reps[0].when == 'setup'
+        #
+        assert reps[1].nodeid.endswith("test_method")
+        assert reps[1].passed
+        assert reps[1].when == 'call'
+        #
+        assert reps[2].nodeid.endswith("test_method")
+        assert reps[2].failed
+        assert reps[2].when == "teardown"
+        assert reps[2].longrepr.reprcrash.message in (
+                # python3 error
+                'TypeError: teardown_method() takes 1 positional argument but 2 were given',
+                # python2 error
+                'TypeError: teardown_method() takes exactly 1 argument (2 given)'
+                )
+
     def test_failure_in_setup_function_ignores_custom_repr(self, testdir):
         testdir.makepyfile(conftest="""
             import pytest
