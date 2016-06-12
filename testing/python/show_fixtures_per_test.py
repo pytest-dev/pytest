@@ -25,7 +25,7 @@ def test_fixtures_in_module(testdir):
 
     result.stdout.fnmatch_lines([
         '*fixtures used by test_arg1*',
-        '*from test_fixtures_in_module.py:9*',
+        '*(test_fixtures_in_module.py:9)*',
         'arg1',
         '    arg1 docstring',
     ])
@@ -58,11 +58,11 @@ def test_fixtures_in_conftest(testdir):
 
     result.stdout.fnmatch_lines([
         '*fixtures used by test_arg2*',
-        '*from test_fixtures_in_conftest.py:2*',
+        '*(test_fixtures_in_conftest.py:2)*',
         'arg2',
         '    arg2 docstring',
         '*fixtures used by test_arg3*',
-        '*from test_fixtures_in_conftest.py:4*',
+        '*(test_fixtures_in_conftest.py:4)*',
         'arg1',
         '    arg1 docstring',
         'arg2',
@@ -96,7 +96,7 @@ def test_should_show_fixtures_used_by_test(testdir):
 
     result.stdout.fnmatch_lines([
         '*fixtures used by test_args*',
-        '*from test_should_show_fixtures_used_by_test.py:6*',
+        '*(test_should_show_fixtures_used_by_test.py:6)*',
         'arg1',
         '    arg1 from testmodule',
         'arg2',
@@ -127,7 +127,7 @@ def test_verbose_include_private_fixtures_and_loc(testdir):
 
     result.stdout.fnmatch_lines([
         '*fixtures used by test_args*',
-        '*from test_verbose_include_private_fixtures_and_loc.py:6*',
+        '*(test_verbose_include_private_fixtures_and_loc.py:6)*',
         '_arg1 -- conftest.py:3',
         '    _arg1 from conftest',
         'arg2 -- conftest.py:6',

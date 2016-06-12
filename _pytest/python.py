@@ -1253,7 +1253,7 @@ def _show_fixtures_per_test(config, session):
 
         tw.line()
         tw.sep('-', 'fixtures used by {0}'.format(item.name))
-        tw.sep('-', 'from {0}'.format(bestrel))
+        tw.sep('-', '({0})'.format(bestrel))
         for argname, fixture_defs in sorted(name2fixturedefs.items()):
             assert fixture_defs is not None
             if not fixture_defs:
