@@ -34,6 +34,11 @@
 * New ``pytest_make_parametrize_id`` hook.
   Thanks `@palaviv`_ for the PR.
 
+* New cli flag ``--fixtures-per-test`` that shows which fixtures are being used
+  for each selected test item. Features doc strings of fixtures by default.
+  Can also show where fixtures are defined if combined with ``-v``.
+  Thanks `@hackebrot`_ for the PR.
+
 **Changes**
 
 * Fixtures marked with ``@pytest.fixture`` can now use ``yield`` statements exactly like
