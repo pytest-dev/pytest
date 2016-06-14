@@ -116,12 +116,10 @@ def safe_getattr(object, name, default):
 
 
 class FixtureFunctionMarker:
-    def __init__(self, scope, params,
-                 autouse=False, yieldctx=False, ids=None, name=None):
+    def __init__(self, scope, params, autouse=False, ids=None, name=None):
         self.scope = scope
         self.params = params
         self.autouse = autouse
-        self.yieldctx = yieldctx
         self.ids = ids
         self.name = name
 
@@ -166,6 +164,10 @@ def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
                to resolve this is to name the decorated function
                ``fixture_<fixturename>`` and then use
                ``@pytest.fixture(name='<fixturename>')``.
+
+    Fixtures can optionally provide their values to test functions using a ``yield`` statement,
+    instead of ``return``. In this case, the code block after the ``yield`` statement is executed
+    as teardown code regardless of the test outcome. A fixture function must yield exactly once.
     """
     if callable(scope) and params is None and autouse == False:
         # direct decoration
@@ -175,22 +177,19 @@ def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
         params = list(params)
     return FixtureFunctionMarker(scope, params, autouse, ids=ids, name=name)
 
-def yield_fixture(scope="function", params=None, autouse=False, ids=None):
-    """ (return a) decorator to mark a yield-fixture factory function
-    (EXPERIMENTAL).
 
-    This takes the same arguments as :py:func:`pytest.fixture` but
-    expects a fixture function to use a ``yield`` instead of a ``return``
-    statement to provide a fixture.  See
-    http://pytest.org/en/latest/yieldfixture.html for more info.
+def yield_fixture(scope="function", params=None, autouse=False, ids=None, name=None):
+    """ (return a) decorator to mark a yield-fixture factory function.
+
+    .. deprecated:: 1.10
+        Use :py:func:`pytest.fixture` directly instead.
     """
-    if callable(scope) and params is None and autouse == False:
+    if callable(scope) and params is None and not autouse:
         # direct decoration
         return FixtureFunctionMarker(
-                "function", params, autouse, yieldctx=True)(scope)
+                "function", params, autouse, ids=ids, name=name)(scope)
     else:
-        return FixtureFunctionMarker(scope, params, autouse,
-                                     yieldctx=True, ids=ids)
+        return FixtureFunctionMarker(scope, params, autouse, ids=ids, name=name)
 
 defaultfuncargprefixmarker = fixture()
 
@@ -2287,7 +2286,6 @@ class FixtureManager:
                 assert not name.startswith(self._argprefix)
             fixturedef = FixtureDef(self, nodeid, name, obj,
                                     marker.scope, marker.params,
-                                    yieldctx=marker.yieldctx,
                                     unittest=unittest, ids=marker.ids)
             faclist = self._arg2fixturedefs.setdefault(name, [])
             if fixturedef.has_location:
@@ -2325,38 +2323,30 @@ def fail_fixturefunc(fixturefunc, msg):
     pytest.fail(msg + ":\n\n" + str(source.indent()) + "\n" + location,
                 pytrace=False)
 
-def call_fixture_func(fixturefunc, request, kwargs, yieldctx):
+def call_fixture_func(fixturefunc, request, kwargs):
+    yieldctx = is_generator(fixturefunc)
     if yieldctx:
-        if not is_generator(fixturefunc):
-            fail_fixturefunc(fixturefunc,
-                msg="yield_fixture requires yield statement in function")
-        iter = fixturefunc(**kwargs)
-        next = getattr(iter, "__next__", None)
-        if next is None:
-            next = getattr(iter, "next")
-        res = next()
+        it = fixturefunc(**kwargs)
+        res = next(it)
+
         def teardown():
             try:
-                next()
+                next(it)
             except StopIteration:
                 pass
             else:
                 fail_fixturefunc(fixturefunc,
                     "yield_fixture function has more than one 'yield'")
+
         request.addfinalizer(teardown)
     else:
-        if is_generator(fixturefunc):
-            fail_fixturefunc(fixturefunc,
-                msg="pytest.fixture functions cannot use ``yield``. "
-                    "Instead write and return an inner function/generator "
-                    "and let the consumer call and iterate over it.")
         res = fixturefunc(**kwargs)
     return res
 
 class FixtureDef:
     """ A container for a factory definition. """
     def __init__(self, fixturemanager, baseid, argname, func, scope, params,
-                 yieldctx, unittest=False, ids=None):
+                 unittest=False, ids=None):
         self._fixturemanager = fixturemanager
         self.baseid = baseid or ''
         self.has_location = baseid is not None
@@ -2367,7 +2357,6 @@ class FixtureDef:
         self.params = params
         startindex = unittest and 1 or None
         self.argnames = getfuncargnames(func, startindex=startindex)
-        self.yieldctx = yieldctx
         self.unittest = unittest
         self.ids = ids
         self._finalizer = []
@@ -2428,8 +2417,7 @@ class FixtureDef:
                     fixturefunc = fixturefunc.__get__(request.instance)
 
         try:
-            result = call_fixture_func(fixturefunc, request, kwargs,
-                                       self.yieldctx)
+            result = call_fixture_func(fixturefunc, request, kwargs)
         except Exception:
             self.cached_result = (None, my_cache_key, sys.exc_info())
             raise

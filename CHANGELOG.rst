@@ -36,6 +36,12 @@
 
 **Changes**
 
+* Fixtures marked with ``@pytest.fixture`` can now use ``yield`` statements exactly like
+  those marked with the ``@pytest.yield_fixture`` decorator. This change renders
+  ``@pytest.yield_fixture`` deprecated and makes ``@pytest.fixture`` with ``yield`` statements
+  the preferred way to write teardown code (`#1461`_).
+  Thanks `@csaftoiu`_ for bringing this to attention and `@nicoddemus`_ for the PR.
+
 * Fix (`#1351`_):
   explicitly passed parametrize ids do not get escaped to ascii.
   Thanks `@ceridwen`_ for the PR.
@@ -58,6 +64,7 @@
 *
 
 .. _@milliams: https://github.com/milliams
+.. _@csaftoiu: https://github.com/csaftoiu
 .. _@novas0x2a: https://github.com/novas0x2a
 .. _@kalekundert: https://github.com/kalekundert
 .. _@tareqalayan: https://github.com/tareqalayan
@@ -72,6 +79,7 @@
 .. _#1441: https://github.com/pytest-dev/pytest/pull/1441
 .. _#1454: https://github.com/pytest-dev/pytest/pull/1454
 .. _#1351: https://github.com/pytest-dev/pytest/issues/1351
+.. _#1461: https://github.com/pytest-dev/pytest/pull/1461
 .. _#1468: https://github.com/pytest-dev/pytest/pull/1468
 .. _#1474: https://github.com/pytest-dev/pytest/pull/1474
 .. _#1502: https://github.com/pytest-dev/pytest/pull/1502
