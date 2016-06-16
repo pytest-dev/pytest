@@ -80,7 +80,7 @@ class TestRaises:
             with pytest.raises(ValueError):
                 pass
         except pytest.raises.Exception as e:
-            e.msg == "DID NOT RAISE {0}".format(repr(ValueError))
+            assert e.msg == "DID NOT RAISE {0}".format(repr(ValueError))
 
     def test_costum_raise_message(self):
         message = "TEST_MESSAGE"
@@ -92,4 +92,4 @@ class TestRaises:
             with pytest.raises(ValueError, message=message):
                 pass
         except pytest.raises.Exception as e:
-            e.msg == message
+            assert e.msg == message

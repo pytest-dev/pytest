@@ -66,8 +66,8 @@
 * Add ``build/`` and ``dist/`` to the default ``--norecursedirs`` list. Thanks
   `@mikofski`_ for the report and `@tomviner`_ for the PR (`#1544`_).
 
-* pytest.raises accepts a custom message to raise when no exception accord.
-  Thanks `@palaviv`_ for the PR.
+* pytest.raises accepts a custom message to raise when no exception occurred.
+  Thanks `@palaviv`_ for the complete PR (`#1616`_).
 
 .. _@milliams: https://github.com/milliams
 .. _@csaftoiu: https://github.com/csaftoiu
@@ -92,6 +92,7 @@
 .. _#1520: https://github.com/pytest-dev/pytest/pull/1520
 .. _#372: https://github.com/pytest-dev/pytest/issues/372
 .. _#1544: https://github.com/pytest-dev/pytest/issues/1544
+.. _#1616: https://github.com/pytest-dev/pytest/pull/1616
 
 
 **Bug Fixes**
