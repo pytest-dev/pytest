@@ -1412,8 +1412,13 @@ def raises(expected_exception, *args, **kwargs):
     elif not isclass(expected_exception):
         raise TypeError(msg % type(expected_exception))
 
+    if "message" in kwargs:
+        message = kwargs.pop("message")
+    else:
+        message = "DID NOT RAISE {0}".format(expected_exception)
+
     if not args:
-        return RaisesContext(expected_exception)
+        return RaisesContext(expected_exception, message)
     elif isinstance(args[0], str):
         code, = args
         assert isinstance(code, str)
@@ -1434,11 +1439,12 @@ def raises(expected_exception, *args, **kwargs):
             func(*args[1:], **kwargs)
         except expected_exception:
             return _pytest._code.ExceptionInfo()
-    pytest.fail("DID NOT RAISE {0}".format(expected_exception))
+    pytest.fail(message)
 
 class RaisesContext(object):
-    def __init__(self, expected_exception):
+    def __init__(self, expected_exception, message):
         self.expected_exception = expected_exception
+        self.message = message
         self.excinfo = None
 
     def __enter__(self):
@@ -1448,7 +1454,7 @@ class RaisesContext(object):
     def __exit__(self, *tp):
         __tracebackhide__ = True
         if tp[0] is None:
-            pytest.fail("DID NOT RAISE")
+            pytest.fail(self.message)
         if sys.version_info < (2, 7):
             # py26: on __exit__() exc_value often does not contain the
             # exception value.
