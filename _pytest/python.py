@@ -1412,12 +1412,11 @@ def raises(expected_exception, *args, **kwargs):
     elif not isclass(expected_exception):
         raise TypeError(msg % type(expected_exception))
 
-    if "message" in kwargs:
-        message = kwargs.pop("message")
-    else:
-        message = "DID NOT RAISE {0}".format(expected_exception)
+    message = "DID NOT RAISE {0}".format(expected_exception)
 
     if not args:
+        if "message" in kwargs:
+            message = kwargs.pop("message")
         return RaisesContext(expected_exception, message)
     elif isinstance(args[0], str):
         code, = args
