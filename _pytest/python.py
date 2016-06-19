@@ -1337,6 +1337,14 @@ def raises(expected_exception, *args, **kwargs):
         >>> with raises(ZeroDivisionError):
         ...    1/0
 
+    In the context manager form you may use the keyword argument
+    ``message`` to specify a custom failure message::
+
+        >>> with raises(ZeroDivisionError, message="Expecting ZeroDivisionError"):
+        ...    pass
+        ... Failed: Expecting ZeroDivisionError
+
+
     .. note::
 
        When using ``pytest.raises`` as a context manager, it's worthwhile to

@@ -66,7 +66,8 @@
 * Add ``build/`` and ``dist/`` to the default ``--norecursedirs`` list. Thanks
   `@mikofski`_ for the report and `@tomviner`_ for the PR (`#1544`_).
 
-* pytest.raises accepts a custom message to raise when no exception occurred.
+* pytest.raises in the context manager form accepts a custom
+  message to raise when no exception occurred.
   Thanks `@palaviv`_ for the complete PR (`#1616`_).
 
 .. _@milliams: https://github.com/milliams
