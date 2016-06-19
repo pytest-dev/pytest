@@ -1,7 +1,5 @@
 """ core implementation of testing process: init, session, runtest loop. """
-import imp
 import os
-import re
 import sys
 
 import _pytest
@@ -24,8 +22,6 @@ EXIT_INTERRUPTED = 2
 EXIT_INTERNALERROR = 3
 EXIT_USAGEERROR = 4
 EXIT_NOTESTSCOLLECTED = 5
-
-name_re = re.compile("^[a-zA-Z_]\w*$")
 
 def pytest_addoption(parser):
     parser.addini("norecursedirs", "directory patterns to avoid for recursion",
@@ -649,36 +645,32 @@ class Session(FSCollector):
         return True
 
     def _tryconvertpyarg(self, x):
-        mod = None
-        path = [os.path.abspath('.')] + sys.path
-        for name in x.split('.'):
-            # ignore anything that's not a proper name here
-            # else something like --pyargs will mess up '.'
-            # since imp.find_module will actually sometimes work for it
-            # but it's supposed to be considered a filesystem path
-            # not a package
-            if name_re.match(name) is None:
-                return x
-            try:
-                fd, mod, type_ = imp.find_module(name, path)
-            except ImportError:
-                return x
-            else:
-                if fd is not None:
-                    fd.close()
+        """Convert a dotted module name to path.
 
-            if type_[2] != imp.PKG_DIRECTORY:
-                path = [os.path.dirname(mod)]
-            else:
-                path = [mod]
-        return mod
+        """
+        import pkgutil
+        try:
+            loader = pkgutil.find_loader(x)
+        except ImportError:
+            return x
+        if loader is None:
+            return x
+        # This method is sometimes invoked when AssertionRewritingHook, which
+        # does not define a get_filename method, is already in place:
+        try:
+            path = loader.get_filename()
+        except AttributeError:
+            # Retrieve path from AssertionRewritingHook:
+            path = loader.modules[x][0].co_filename
+        if loader.is_package(x):
+            path = os.path.dirname(path)
+        return path
 
     def _parsearg(self, arg):
         """ return (fspath, names) tuple after checking the file exists. """
-        arg = str(arg)
-        if self.config.option.pyargs:
-            arg = self._tryconvertpyarg(arg)
         parts = str(arg).split("::")
+        if self.config.option.pyargs:
+            parts[0] = self._tryconvertpyarg(parts[0])
         relpath = parts[0].replace("/", os.sep)
         path = self.config.invocation_dir.join(relpath, abs=True)
         if not path.check():

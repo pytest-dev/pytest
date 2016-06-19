@@ -9,16 +9,22 @@
 * Fix internal error issue when ``method`` argument is missing for 
   ``teardown_method()``. Fixes (`#1605`_).
 
-*
-
 * Fix exception visualization in case the current working directory (CWD) gets
   deleted during testing. Fixes (`#1235`). Thanks `@bukzor` for reporting. PR by
   `@marscher`. Thanks `@nicoddemus` for his help.
 
-.. _#1580: https://github.com/pytest-dev/pytest/issues/1580
+* Ensure that a module within a namespace package can be found when it
+  is specified on the command line together with the ``--pyargs``
+  option.  Thanks to `@taschini`_ for the PR (`#1597`_).
+
+*
+
+.. _#1580: https://github.com/pytest-dev/pytest/pull/1580
 .. _#1605: https://github.com/pytest-dev/pytest/issues/1605
+.. _#1597: https://github.com/pytest-dev/pytest/pull/1597
 
 .. _@graingert: https://github.com/graingert
+.. _@taschini: https://github.com/taschini
 
 
 2.9.2
