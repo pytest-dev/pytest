@@ -1337,6 +1337,8 @@ def raises(expected_exception, *args, **kwargs):
         >>> with raises(ZeroDivisionError):
         ...    1/0
 
+    .. versionchanged:: 2.10
+
     In the context manager form you may use the keyword argument
     ``message`` to specify a custom failure message::
 
