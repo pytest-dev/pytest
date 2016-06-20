@@ -36,11 +36,15 @@ If you get an error checkout :ref:`installation issues`.
 Audiences
 ---------
 
+
 User
 ~~~~
 
 This section covers the basics to get you running and writing automated tests
 in pytest.
+
+:ref:`user`
+
 
 Advanced User
 ~~~~~~~~~~~~~
@@ -49,13 +53,31 @@ This section dives deeper into pytest features such as fixtures and
 parametrization, how to extend pytest through hooks and gives advice on
 different styles of testing.
 
+:ref:`advanceduser`
+
+
 Plugin Author
 ~~~~~~~~~~~~~
 
 This section guides you in creating plugins to customize and extend pytest.
+
+:ref:`pluginauthor`
+
 
 Contributor
 ~~~~~~~~~~~
 
 If you are interested in contributing to pytest, this section will point you in
 the right direction.
+
+:ref:`contributor`
+
+
+
+References
+----------
+
+* Command-line options
+* Pytest namespace
+* Hooks
+* Built-in fixtures
