@@ -4,6 +4,8 @@ support for presenting detailed information in failing assertions.
 import py
 import os
 import sys
+
+from _pytest.config import hookimpl
 from _pytest.monkeypatch import monkeypatch
 from _pytest.assertion import util
 
@@ -42,9 +44,13 @@ class AssertionState:
         self.trace = config.trace.root.get("assertion")
 
 
-def pytest_configure(config):
-    mode = config.getvalue("assertmode")
-    if config.getvalue("noassert") or config.getvalue("nomagic"):
+@hookimpl(tryfirst=True)
+def pytest_load_initial_conftests(early_config, parser, args):
+    ns, ns_unknown_args = parser.parse_known_and_unknown_args(args)
+    mode = ns.assertmode
+    no_assert = ns.noassert
+    no_magic = ns.nomagic
+    if no_assert or no_magic:
         mode = "plain"
     if mode == "rewrite":
         try:
@@ -57,25 +63,30 @@ def pytest_configure(config):
             if (sys.platform.startswith('java') or
                     sys.version_info[:3] == (2, 6, 0)):
                 mode = "reinterp"
+
+    early_config._assertstate = AssertionState(early_config, mode)
+    warn_about_missing_assertion(mode, early_config.pluginmanager)
+
     if mode != "plain":
         _load_modules(mode)
         m = monkeypatch()
-        config._cleanup.append(m.undo)
+        early_config._cleanup.append(m.undo)
         m.setattr(py.builtin.builtins, 'AssertionError',
                   reinterpret.AssertionError)  # noqa
+
     hook = None
     if mode == "rewrite":
         hook = rewrite.AssertionRewritingHook()  # noqa
+        hook.set_config(early_config)
         sys.meta_path.insert(0, hook)
-    warn_about_missing_assertion(mode)
-    config._assertstate = AssertionState(config, mode)
-    config._assertstate.hook = hook
-    config._assertstate.trace("configured with mode set to %r" % (mode,))
+
+    early_config._assertstate.hook = hook
+    early_config._assertstate.trace("configured with mode set to %r" % (mode,))
     def undo():
-        hook = config._assertstate.hook
+        hook = early_config._assertstate.hook
         if hook is not None and hook in sys.meta_path:
             sys.meta_path.remove(hook)
-    config.add_cleanup(undo)
+    early_config.add_cleanup(undo)
 
 
 def pytest_collection(session):
@@ -154,7 +165,8 @@ def _load_modules(mode):
         from _pytest.assertion import rewrite  # noqa
 
 
-def warn_about_missing_assertion(mode):
+def warn_about_missing_assertion(mode, pluginmanager):
+    print('got here')
     try:
         assert False
     except AssertionError:
@@ -166,10 +178,18 @@ def warn_about_missing_assertion(mode):
         else:
             specifically = "failing tests may report as passing"
 
-        sys.stderr.write("WARNING: " + specifically +
-                         " because assert statements are not executed "
-                         "by the underlying Python interpreter "
-                         "(are you using python -O?)\n")
+        # temporarily disable capture so we can print our warning
+        capman = pluginmanager.getplugin('capturemanager')
+        try:
+            out, err = capman.suspendcapture()
+            sys.stderr.write("WARNING: " + specifically +
+                             " because assert statements are not executed "
+                             "by the underlying Python interpreter "
+                             "(are you using python -O?)\n")
+        finally:
+            capman.resumecapture()
+            sys.stdout.write(out)
+            sys.stderr.write(err)
 
 
 # Expose this plugin's implementation for the pytest_assertrepr_compare hook
