@@ -4,6 +4,7 @@ per-test stdout/stderr capturing mechanism.
 """
 from __future__ import with_statement
 
+import contextlib
 import sys
 import os
 from tempfile import TemporaryFile
@@ -146,8 +147,8 @@ class CaptureManager:
     def pytest_internalerror(self, excinfo):
         self.reset_capturings()
 
-    def suspendcapture_item(self, item, when):
-        out, err = self.suspendcapture()
+    def suspendcapture_item(self, item, when, in_=False):
+        out, err = self.suspendcapture(in_=in_)
         item.add_report_section(when, "stdout", out)
         item.add_report_section(when, "stderr", err)
 
@@ -162,7 +163,7 @@ def capsys(request):
     """
     if "capfd" in request._funcargs:
         raise request.raiseerror(error_capsysfderror)
-    request.node._capfuncarg = c = CaptureFixture(SysCapture)
+    request.node._capfuncarg = c = CaptureFixture(SysCapture, request)
     return c
 
 @pytest.fixture
@@ -175,17 +176,18 @@ def capfd(request):
         request.raiseerror(error_capsysfderror)
     if not hasattr(os, 'dup'):
         pytest.skip("capfd funcarg needs os.dup")
-    request.node._capfuncarg = c = CaptureFixture(FDCapture)
+    request.node._capfuncarg = c = CaptureFixture(FDCapture, request)
     return c
 
 
 class CaptureFixture:
-    def __init__(self, captureclass):
+    def __init__(self, captureclass, request):
         self.captureclass = captureclass
+        self.request = request
 
     def _start(self):
         self._capture = MultiCapture(out=True, err=True, in_=False,
-                                       Capture=self.captureclass)
+                                     Capture=self.captureclass)
         self._capture.start_capturing()
 
     def close(self):
@@ -199,6 +201,15 @@ class CaptureFixture:
             return self._capture.readouterr()
         except AttributeError:
             return self._outerr
+
+    @contextlib.contextmanager
+    def disabled(self):
+        capmanager = self.request.config.pluginmanager.getplugin('capturemanager')
+        capmanager.suspendcapture_item(self.request.node, "call", in_=True)
+        try:
+            yield
+        finally:
+            capmanager.resumecapture()
 
 
 def safe_text_dupfile(f, mode, default_encoding="UTF8"):

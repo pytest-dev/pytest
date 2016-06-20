@@ -115,4 +115,19 @@ same interface but allows to also capture output from
 libraries or subprocesses that directly write to operating
 system level output streams (FD1 and FD2).
 
+
+.. versionadded:: 2.10
+
+To temporarily disable capture within a test, both ``capsys``
+and ``capfd`` have a ``disabled()`` method that can be used
+as a context manager, disabling capture inside the ``with`` block:
+
+.. code-block:: python
+
+    def test_disabling_capturing(capsys):
+        print('this output is captured')
+        with capsys.disabled():
+            print('output not captured, going directly to sys.stdout')
+        print('this output is also captured')
+
 .. include:: links.inc
