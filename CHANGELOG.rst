@@ -6,7 +6,7 @@
 * Text documents without any doctests no longer appear as "skipped".
   Thanks `@graingert`_ for reporting and providing a full PR (`#1580`_).
 
-* Fix internal error issue when ``method`` argument is missing for 
+* Fix internal error issue when ``method`` argument is missing for
   ``teardown_method()``. Fixes (`#1605`_).
 
 * Fix exception visualization in case the current working directory (CWD) gets
@@ -17,14 +17,21 @@
   is specified on the command line together with the ``--pyargs``
   option.  Thanks to `@taschini`_ for the PR (`#1597`_).
 
-*
+* Raise helpful failure message, when requesting parametrized fixture at runtime,
+  e.g. with ``request.getfuncargvalue``. BACKWARD INCOMPAT: Previously these params
+  were simply never defined. So a fixture decorated like ``@pytest.fixture(params=[0, 1, 2])``
+  only ran once. Now a failure is raised. Fixes (`#460`_). Thanks to
+  `@nikratio`_ for bug report, `@RedBeardCode`_ and `@tomviner`_ for PR.
 
 .. _#1580: https://github.com/pytest-dev/pytest/pull/1580
 .. _#1605: https://github.com/pytest-dev/pytest/issues/1605
 .. _#1597: https://github.com/pytest-dev/pytest/pull/1597
+.. _#460: https://github.com/pytest-dev/pytest/pull/460
 
 .. _@graingert: https://github.com/graingert
 .. _@taschini: https://github.com/taschini
+.. _@nikratio: https://github.com/nikratio
+.. _@RedBeardCode: https://github.com/RedBeardCode
 
 
 2.9.2
