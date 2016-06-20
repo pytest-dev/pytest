@@ -74,8 +74,19 @@
   message to raise when no exception occurred.
   Thanks `@palaviv`_ for the complete PR (`#1616`_).
 
+* ``conftest.py`` files now benefit from assertion rewriting; previously it
+  was only available for test modules. Thanks `@flub`_, `@sober7`_ and
+  `@nicoddemus`_ for the PR (`#1619`_).
+
+*
+
+*
+
+*
+
 .. _@milliams: https://github.com/milliams
 .. _@csaftoiu: https://github.com/csaftoiu
+.. _@flub: https://github.com/flub
 .. _@novas0x2a: https://github.com/novas0x2a
 .. _@kalekundert: https://github.com/kalekundert
 .. _@tareqalayan: https://github.com/tareqalayan
@@ -83,6 +94,7 @@
 .. _@palaviv: https://github.com/palaviv
 .. _@omarkohl: https://github.com/omarkohl
 .. _@mikofski: https://github.com/mikofski
+.. _@sober7: https://github.com/sober7
 
 .. _#1426: https://github.com/pytest-dev/pytest/issues/1426
 .. _#1428: https://github.com/pytest-dev/pytest/pull/1428
@@ -95,6 +107,7 @@
 .. _#1474: https://github.com/pytest-dev/pytest/pull/1474
 .. _#1502: https://github.com/pytest-dev/pytest/pull/1502
 .. _#1520: https://github.com/pytest-dev/pytest/pull/1520
+.. _#1619: https://github.com/pytest-dev/pytest/issues/1619
 .. _#372: https://github.com/pytest-dev/pytest/issues/372
 .. _#1544: https://github.com/pytest-dev/pytest/issues/1544
 .. _#1616: https://github.com/pytest-dev/pytest/pull/1616
