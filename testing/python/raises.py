@@ -87,7 +87,7 @@ class TestRaises:
         else:
             assert False, "Expected pytest.raises.Exception"
 
-    def test_costum_raise_message(self):
+    def test_custom_raise_message(self):
         message = "TEST_MESSAGE"
         try:
             with pytest.raises(ValueError, message=message):
