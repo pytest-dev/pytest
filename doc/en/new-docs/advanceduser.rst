@@ -36,6 +36,7 @@ Integrating testing into development:
 Different styles of testing:
 
 * Mock
+* Number and numpy testing
 * GUI testing
 * Web browser testing
 * Running unittest/nose tests
