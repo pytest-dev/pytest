@@ -48,6 +48,8 @@ def pytest_addoption(parser):
                help="run pytest in strict mode, warnings become errors.")
     group._addoption("-c", metavar="file", type=str, dest="inifilename",
                help="load configuration from `file` instead of trying to locate one of the implicit configuration files.")
+    group.addoption('--setuponly', '--setup-only', action="store_true",
+               help="only setup fixtures, don't execute the tests.")
 
     group = parser.getgroup("collect", "collection")
     group.addoption('--collectonly', '--collect-only', action="store_true",

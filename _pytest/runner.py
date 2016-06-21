@@ -73,7 +73,17 @@ def runtestprotocol(item, log=True, nextitem=None):
     rep = call_and_report(item, "setup", log)
     reports = [rep]
     if rep.passed:
-        reports.append(call_and_report(item, "call", log))
+        if item.config.option.setuponly:
+            tw = item.config.get_terminal_writer()
+            tw.line()
+            tw.write(' ' * 8)
+            tw.write('{} '.format(item._nodeid))
+            used_fixtures = sorted(item._fixtureinfo.name2fixturedefs.keys())
+            if used_fixtures:
+                tw.write('fixtures: ')
+                tw.write(', '.join(used_fixtures))
+        else:
+            reports.append(call_and_report(item, "call", log))
     reports.append(call_and_report(item, "teardown", log,
         nextitem=nextitem))
     # after all teardown hooks have been called
