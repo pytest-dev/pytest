@@ -59,7 +59,7 @@ Here is a little annotated list for some popular plugins:
   a plugin to run javascript unittests in live browsers.
 
 To see a complete list of all plugins with their latest testing
-status against different py.test and Python versions, please visit
+status against different pytest and Python versions, please visit
 `plugincompat <http://plugincompat.herokuapp.com/>`_.
 
 You may also discover more plugins through a `pytest- pypi.python.org search`_.
@@ -90,7 +90,7 @@ Finding out which plugins are active
 If you want to find out which plugins are active in your
 environment you can type::
 
-    py.test --trace-config
+    pytest --trace-config
 
 and will get an extended test header which shows activated plugins
 and their names. It will also print local plugins aka
@@ -103,7 +103,7 @@ Deactivating / unregistering a plugin by name
 
 You can prevent plugins from loading or unregister them::
 
-    py.test -p no:NAME
+    pytest -p no:NAME
 
 This means that any subsequent try to activate/load the named
 plugin will not work.

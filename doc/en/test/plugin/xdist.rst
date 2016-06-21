@@ -36,7 +36,7 @@ Speed up test runs by sending tests to multiple CPUs
 
 To send tests to multiple CPUs, type::
 
-    py.test -n NUM
+    pytest -n NUM
 
 Especially for longer running tests or tests requiring
 a lot of IO this can lead to considerable speed ups.
@@ -47,7 +47,7 @@ Running tests in a Python subprocess
 
 To instantiate a python2.4 sub process and send tests to it, you may type::
 
-    py.test -d --tx popen//python=python2.4
+    pytest -d --tx popen//python=python2.4
 
 This will start a subprocess which is run with the "python2.4"
 Python interpreter, found in your system binary lookup path.
@@ -68,7 +68,7 @@ tests that you can successfully run locally. And you
 have a ssh-reachable machine ``myhost``.  Then
 you can ad-hoc distribute your tests by typing::
 
-    py.test -d --tx ssh=myhostpopen --rsyncdir mypkg mypkg
+    pytest -d --tx ssh=myhostpopen --rsyncdir mypkg mypkg
 
 This will synchronize your ``mypkg`` package directory
 to an remote ssh account and then locally collect tests
@@ -97,7 +97,7 @@ It will tell you that it starts listening on the default
 port.  You can now on your home machine specify this
 new socket host with something like this::
 
-    py.test -d --tx socket=192.168.1.102:8888 --rsyncdir mypkg mypkg
+    pytest -d --tx socket=192.168.1.102:8888 --rsyncdir mypkg mypkg
 
 
 .. _`atonce`:
@@ -107,7 +107,7 @@ Running tests on many platforms at once
 
 The basic command to run tests on multiple platforms is::
 
-    py.test --dist=each --tx=spec1 --tx=spec2
+    pytest --dist=each --tx=spec1 --tx=spec2
 
 If you specify a windows host, an OSX host and a Linux
 environment this command will send each tests to all

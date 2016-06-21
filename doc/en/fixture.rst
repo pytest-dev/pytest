@@ -68,7 +68,7 @@ Here, the ``test_ehlo`` needs the ``smtp`` fixture value.  pytest
 will discover and call the :py:func:`@pytest.fixture <_pytest.python.fixture>`
 marked ``smtp`` fixture function.  Running the test looks like this::
 
-    $ py.test test_smtpsimple.py
+    $ pytest test_smtpsimple.py
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -113,7 +113,7 @@ with a list of available function arguments.
 
     You can always issue::
 
-        py.test --fixtures test_simplefactory.py
+        pytest --fixtures test_simplefactory.py
 
     to see available fixtures.
 
@@ -186,7 +186,7 @@ function (in or below the directory where ``conftest.py`` is located)::
 We deliberately insert failing ``assert 0`` statements in order to
 inspect what is going on and can now run the tests::
 
-    $ py.test test_module.py
+    $ pytest test_module.py
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -262,7 +262,7 @@ the fixture in the module has finished execution, regardless of the exception st
 
 Let's execute it::
 
-    $ py.test -s -q --tb=no
+    $ pytest -s -q --tb=no
     FFteardown smtp
     
     2 failed in 0.12 seconds
@@ -350,7 +350,7 @@ We use the ``request.module`` attribute to optionally obtain an
 ``smtpserver`` attribute from the test module.  If we just execute
 again, nothing much has changed::
 
-    $ py.test -s -q --tb=no
+    $ pytest -s -q --tb=no
     FFfinalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
     
     2 failed in 0.12 seconds
@@ -367,7 +367,7 @@ server URL in its module namespace::
 
 Running it::
 
-    $ py.test -qq --tb=short test_anothersmtp.py
+    $ pytest -qq --tb=short test_anothersmtp.py
     F
     ======= FAILURES ========
     _______ test_showhelo ________
@@ -414,7 +414,7 @@ for each of which the fixture function will execute and can access
 a value via ``request.param``.  No test function code needs to change.
 So let's just do another run::
 
-    $ py.test -q test_module.py
+    $ pytest -q test_module.py
     FFFF
     ======= FAILURES ========
     _______ test_ehlo[smtp.gmail.com] ________
@@ -514,7 +514,7 @@ return ``None`` then pytest's auto-generated ID will be used.
 
 Running the above tests results in the following test IDs being used::
 
-   $ py.test --collect-only
+   $ pytest --collect-only
    ======= test session starts ========
    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
    rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -565,7 +565,7 @@ and instantiate an object ``app`` where we stick the already defined
 Here we declare an ``app`` fixture which receives the previously defined
 ``smtp`` fixture and instantiates an ``App`` object with it.  Let's run it::
 
-    $ py.test -v test_appsetup.py
+    $ pytest -v test_appsetup.py
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
@@ -634,7 +634,7 @@ to show the setup/teardown flow::
 
 Let's run the tests in verbose mode and with looking at the print-output::
 
-    $ py.test -v -s test_module.py
+    $ pytest -v -s test_module.py
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
@@ -736,7 +736,7 @@ will be required for the execution of each test method, just as if
 you specified a "cleandir" function argument to each of them.  Let's run it
 to verify our fixture is activated and the tests pass::
 
-    $ py.test -q
+    $ pytest -q
     ..
     2 passed in 0.12 seconds
 
@@ -817,7 +817,7 @@ class-level ``usefixtures`` decorator.
 
 If we run it, we get two passing tests::
 
-    $ py.test -q
+    $ pytest -q
     ..
     2 passed in 0.12 seconds
 

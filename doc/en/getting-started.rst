@@ -26,7 +26,7 @@ Installation options::
 
 To check your installation has installed the correct version::
 
-    $ py.test --version
+    $ pytest --version
     This is pytest version 2.9.2, imported from $PYTHON_PREFIX/lib/python3.5/site-packages/pytest.py
 
 If you get an error checkout :ref:`installation issues`.
@@ -47,7 +47,7 @@ Let's create a first test file with a simple test function::
 
 That's it. You can execute the test function now::
 
-    $ py.test
+    $ pytest
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -102,7 +102,7 @@ use the ``raises`` helper::
 
 Running it with, this time in "quiet" reporting mode::
 
-    $ py.test -q test_sysexit.py
+    $ pytest -q test_sysexit.py
     .
     1 passed in 0.12 seconds
 
@@ -127,7 +127,7 @@ The two tests are found because of the standard :ref:`test discovery`.
 There is no need to subclass anything.  We can simply
 run the module by passing its filename::
 
-    $ py.test -q test_class.py
+    $ pytest -q test_class.py
     .F
     ======= FAILURES ========
     _______ TestClass.test_two ________
@@ -163,7 +163,7 @@ We list the name ``tmpdir`` in the test function signature and
 ``pytest`` will lookup and call a fixture factory to create the resource
 before performing the test function call.  Let's just run it::
 
-    $ py.test -q test_tmpdir.py
+    $ pytest -q test_tmpdir.py
     F
     ======= FAILURES ========
     _______ test_needsfiles ________
@@ -185,7 +185,7 @@ was created.  More info at :ref:`tmpdir handling`.
 
 You can find out what kind of builtin :ref:`fixtures` exist by typing::
 
-    py.test --fixtures   # shows builtin and custom fixtures
+    pytest --fixtures   # shows builtin and custom fixtures
 
 Where to go next
 -------------------------------------
@@ -213,12 +213,12 @@ easy_install or pip not found?
 Install `setuptools`_ to get ``easy_install`` which allows to install
 ``.egg`` binary format packages in addition to source-based ones.
 
-py.test not found on Windows despite installation?
+pytest not found on Windows despite installation?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. _`Python for Windows`: http://www.imladris.com/Scripts/PythonForWindows.html
 
-- **Windows**: If "easy_install" or "py.test" are not found
+- **Windows**: If "easy_install" or "pytest" are not found
   you need to add the Python script path to your ``PATH``, see here:
   `Python for Windows`_.  You may alternatively use an `ActivePython install`_
   which does this for you automatically.
@@ -228,8 +228,8 @@ py.test not found on Windows despite installation?
 .. _`Jython does not create command line launchers`: http://bugs.jython.org/issue1491
 
 - **Jython2.5.1 on Windows XP**: `Jython does not create command line launchers`_
-  so ``py.test`` will not work correctly.  You may install py.test on
-  CPython and type ``py.test --genscript=mytest`` and then use
+  so ``pytest`` will not work correctly.  You may install pytest on
+  CPython and type ``pytest --genscript=mytest`` and then use
   ``jython mytest`` to run your tests with Jython using ``pytest``.
 
  :ref:`examples` for more complex examples

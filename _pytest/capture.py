@@ -463,7 +463,7 @@ def _readline_workaround():
 
     Pdb uses readline support where available--when not running from the Python
     prompt, the readline module is not imported until running the pdb REPL.  If
-    running py.test with the --pdb option this means the readline module is not
+    running pytest with the --pdb option this means the readline module is not
     imported until after I/O capture has been started.
 
     This is a problem for pyreadline, which is often used to implement readline

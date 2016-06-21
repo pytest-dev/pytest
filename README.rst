@@ -33,7 +33,7 @@ An example of a simple test:
 
 To execute it::
 
-    $ py.test
+    $ pytest
     ======= test session starts ========
     platform linux -- Python 3.4.3, pytest-2.8.5, py-1.4.31, pluggy-0.3.1    
     collected 1 items
@@ -51,7 +51,7 @@ To execute it::
     test_sample.py:5: AssertionError
     ======= 1 failed in 0.12 seconds ========
 
-Due to ``py.test``'s detailed assertion introspection, only plain ``assert`` statements are used. See `getting-started <http://pytest.org/latest/getting-started.html#our-first-test-run>`_ for more examples.
+Due to ``pytest``'s detailed assertion introspection, only plain ``assert`` statements are used. See `getting-started <http://pytest.org/latest/getting-started.html#our-first-test-run>`_ for more examples.
         
 
 Features

@@ -36,9 +36,9 @@ There are two ways in which ``pytest`` can perform capturing:
 
 You can influence output capturing mechanisms from the command line::
 
-    py.test -s            # disable all capturing
-    py.test --capture=sys # replace sys.stdout/stderr with in-mem files
-    py.test --capture=fd  # also point filedescriptors 1 and 2 to temp file
+    pytest -s            # disable all capturing
+    pytest --capture=sys # replace sys.stdout/stderr with in-mem files
+    pytest --capture=fd  # also point filedescriptors 1 and 2 to temp file
 
 .. _printdebugging:
 
@@ -62,7 +62,7 @@ is that you can use print statements for debugging::
 and running this module will show you precisely the output
 of the failing function and hide the other one::
 
-    $ py.test
+    $ pytest
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 

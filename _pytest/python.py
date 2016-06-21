@@ -2173,7 +2173,7 @@ class FixtureLookupError(LookupError):
                     available.append(name)
             msg = "fixture %r not found" % (self.argname,)
             msg += "\n available fixtures: %s" %(", ".join(available),)
-            msg += "\n use 'py.test --fixtures [testpath]' for help on them."
+            msg += "\n use 'pytest --fixtures [testpath]' for help on them."
 
         return FixtureLookupErrorRepr(fspath, lineno, tblines, msg, self.argname)
 

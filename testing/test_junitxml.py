@@ -362,7 +362,7 @@ class TestPython:
             file="test_collect_skipped.py",
             name="test_collect_skipped")
 
-        # py.test doesn't give us a line here.
+        # pytest doesn't give us a line here.
         assert tnode["line"] is None
 
         fnode = tnode.find_first_by_tag("skipped")

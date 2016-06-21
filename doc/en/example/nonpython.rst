@@ -25,7 +25,7 @@ You can create a simple example file:
 and if you installed `PyYAML`_ or a compatible YAML-parser you can
 now execute the test specification::
 
-    nonpython $ py.test test_simple.yml
+    nonpython $ pytest test_simple.yml
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile: 
@@ -57,7 +57,7 @@ your own domain specific testing language this way.
 ``reportinfo()`` is used for representing the test location and is also
 consulted when reporting in ``verbose`` mode::
 
-    nonpython $ py.test -v
+    nonpython $ pytest -v
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
@@ -79,7 +79,7 @@ consulted when reporting in ``verbose`` mode::
 While developing your custom test collection and execution it's also
 interesting to just look at the collection tree::
 
-    nonpython $ py.test --collect-only
+    nonpython $ pytest --collect-only
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile: 

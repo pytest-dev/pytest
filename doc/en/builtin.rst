@@ -77,7 +77,7 @@ Builtin fixtures/function arguments
 You can ask for available builtin or project-custom
 :ref:`fixtures <fixtures>` by typing::
 
-    $ py.test -q --fixtures
+    $ pytest -q --fixtures
     cache
         Return a cache object that can persist state between testing sessions.
         

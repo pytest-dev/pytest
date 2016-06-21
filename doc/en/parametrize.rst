@@ -53,7 +53,7 @@ Here, the ``@parametrize`` decorator defines three different ``(test_input,expec
 tuples so that the ``test_eval`` function will run three times using
 them in turn::
 
-    $ py.test
+    $ pytest
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -101,7 +101,7 @@ for example with the builtin ``mark.xfail``::
 
 Let's run this::
 
-    $ py.test
+    $ pytest
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -171,13 +171,13 @@ command line option and the parametrization of our test function::
 
 If we now pass two stringinput values, our test will run twice::
 
-    $ py.test -q --stringinput="hello" --stringinput="world" test_strings.py
+    $ pytest -q --stringinput="hello" --stringinput="world" test_strings.py
     ..
     2 passed in 0.12 seconds
 
 Let's also run with a stringinput that will lead to a failing test::
 
-    $ py.test -q --stringinput="!" test_strings.py
+    $ pytest -q --stringinput="!" test_strings.py
     F
     ======= FAILURES ========
     _______ test_valid_string[!] ________
@@ -198,7 +198,7 @@ If you don't specify a stringinput it will be skipped because
 ``metafunc.parametrize()`` will be called with an empty parameter
 list::
 
-    $ py.test -q -rs test_strings.py
+    $ pytest -q -rs test_strings.py
     s
     ======= short test summary info ========
     SKIP [1] test_strings.py:1: got empty parameter set ['stringinput'], function test_valid_string at $REGENDOC_TMPDIR/test_strings.py:1

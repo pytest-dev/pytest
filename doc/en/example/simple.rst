@@ -37,7 +37,7 @@ provide the ``cmdopt`` through a :ref:`fixture function <fixture function>`::
 
 Let's run this without supplying our new option::
 
-    $ py.test -q test_sample.py
+    $ pytest -q test_sample.py
     F
     ======= FAILURES ========
     _______ test_answer ________
@@ -59,7 +59,7 @@ Let's run this without supplying our new option::
 
 And now with supplying a command line option::
 
-    $ py.test -q --cmdopt=type2
+    $ pytest -q --cmdopt=type2
     F
     ======= FAILURES ========
     _______ test_answer ________
@@ -106,7 +106,7 @@ you will now always perform test runs using a number
 of subprocesses close to your CPU. Running in an empty
 directory with the above conftest.py::
 
-    $ py.test
+    $ pytest
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -154,7 +154,7 @@ We can now write a test module like this::
 
 and when running it will see a skipped "slow" test::
 
-    $ py.test -rs    # "-rs" means report details on the little 's'
+    $ pytest -rs    # "-rs" means report details on the little 's'
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -168,7 +168,7 @@ and when running it will see a skipped "slow" test::
 
 Or run it including the ``slow`` marked test::
 
-    $ py.test --runslow
+    $ pytest --runslow
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -204,7 +204,7 @@ of tracebacks: the ``checkconfig`` function will not be shown
 unless the ``--full-trace`` command line option is specified.
 Let's run our little function::
 
-    $ py.test -q test_checkconfig.py
+    $ pytest -q test_checkconfig.py
     F
     ======= FAILURES ========
     _______ test_something ________
@@ -282,7 +282,7 @@ It's easy to present extra information in a ``pytest`` run::
 
 which will add the string to the test header accordingly::
 
-    $ py.test
+    $ pytest
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     project deps: mylib-1.1
@@ -306,7 +306,7 @@ you present more information appropriately::
 
 which will add info only when run with "--v"::
 
-    $ py.test -v
+    $ pytest -v
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
@@ -319,7 +319,7 @@ which will add info only when run with "--v"::
 
 and nothing when run plainly::
 
-    $ py.test
+    $ pytest
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -352,7 +352,7 @@ out which tests are the slowest. Let's make an artificial test suite::
 
 Now we can profile which test functions execute the slowest::
 
-    $ py.test --durations=3
+    $ pytest --durations=3
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -414,7 +414,7 @@ tests in a class.  Here is a test module example::
 
 If we run this::
 
-    $ py.test -rx
+    $ pytest -rx
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -485,7 +485,7 @@ the ``db`` fixture::
 
 We can run this::
 
-    $ py.test
+    $ pytest
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -502,7 +502,7 @@ We can run this::
       def test_root(db):  # no db here, will error out
             fixture 'db' not found
             available fixtures: tmpdir_factory, cache, tmpdir, pytestconfig, recwarn, monkeypatch, capfd, record_xml_property, capsys
-            use 'py.test --fixtures [testpath]' for help on them.
+            use 'pytest --fixtures [testpath]' for help on them.
     
     $REGENDOC_TMPDIR/b/test_error.py:1
     ======= FAILURES ========
@@ -589,7 +589,7 @@ if you then have failing tests::
 
 and run them::
 
-    $ py.test test_module.py
+    $ pytest test_module.py
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -679,7 +679,7 @@ if you then have failing tests::
 
 and run it::
 
-    $ py.test -s test_module.py
+    $ pytest -s test_module.py
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -767,6 +767,6 @@ over to ``pytest`` instead. For example::
         ...
 
 This makes it convenient to execute your tests from within your frozen
-application, using standard ``py.test`` command-line options::
+application, using standard ``pytest`` command-line options::
 
     ./app_main --pytest --verbose --tb=long --junitxml=results.xml test-suite/

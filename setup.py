@@ -91,6 +91,7 @@ def cmdline_entrypoints(versioninfo, platform, basename):
         else: # cpython
             points = {'py.test-%s.%s' % versioninfo[:2] : target}
         points['py.test'] = target
+    points['pytest'] = target
     return points
 
 
