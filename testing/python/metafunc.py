@@ -720,14 +720,14 @@ class TestMetafuncFunctional:
             "*4 failed*",
         ])
 
-    def test_parametrize_and_inner_getfuncargvalue(self, testdir):
+    def test_parametrize_and_inner_getfixturevalue(self, testdir):
         p = testdir.makepyfile("""
             def pytest_generate_tests(metafunc):
                 metafunc.parametrize("arg1", [1], indirect=True)
                 metafunc.parametrize("arg2", [10], indirect=True)
 
             def pytest_funcarg__arg1(request):
-                x = request.getfuncargvalue("arg2")
+                x = request.getfixturevalue("arg2")
                 return x + request.param
 
             def pytest_funcarg__arg2(request):

@@ -8,7 +8,7 @@ def standalone(request):
 
 class Standalone:
     def __init__(self, request):
-        self.testdir = request.getfuncargvalue("testdir")
+        self.testdir = request.getfixturevalue("testdir")
         script = "mypytest"
         result = self.testdir.runpytest("--genscript=%s" % script)
         assert result.ret == 0
