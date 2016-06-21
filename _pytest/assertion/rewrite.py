@@ -87,7 +87,7 @@ class AssertionRewritingHook(object):
 
         fn_pypath = py.path.local(fn)
         if not self._should_rewrite(fn_pypath, state):
-            return
+            return None
 
         # The requested module looks like a test file, so rewrite it. This is
         # the most magical part of the process: load the source, rewrite the
