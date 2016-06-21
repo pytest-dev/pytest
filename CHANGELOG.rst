@@ -74,6 +74,9 @@
   message to raise when no exception occurred.
   Thanks `@palaviv`_ for the complete PR (`#1616`_).
 
+* split up the fixture system into a own module.
+  Thanks to `@ronnypfannschmidt`_ for the PR (`#1630`_)
+
 .. _@milliams: https://github.com/milliams
 .. _@csaftoiu: https://github.com/csaftoiu
 .. _@novas0x2a: https://github.com/novas0x2a
@@ -98,7 +101,7 @@
 .. _#372: https://github.com/pytest-dev/pytest/issues/372
 .. _#1544: https://github.com/pytest-dev/pytest/issues/1544
 .. _#1616: https://github.com/pytest-dev/pytest/pull/1616
-
+.. _#1630: https://github.com/pytest-dev/pytest/pull/1630
 
 **Bug Fixes**
 
