@@ -6,7 +6,7 @@ By default all files matching the ``test*.txt`` pattern will
 be run through the python standard ``doctest`` module.  You
 can change the pattern by issuing::
 
-    py.test --doctest-glob='*.rst'
+    pytest --doctest-glob='*.rst'
 
 on the command line. Since version ``2.9``, ``--doctest-glob``
 can be given multiple times in the command-line.
@@ -15,7 +15,7 @@ You can also trigger running of doctests
 from docstrings in all python modules (including regular
 python test modules)::
 
-    py.test --doctest-modules
+    pytest --doctest-modules
 
 You can make these changes permanent in your project by
 putting them into a pytest.ini file like this:
@@ -45,9 +45,9 @@ and another like this::
         """
         return 42
 
-then you can just invoke ``py.test`` without command line options::
+then you can just invoke ``pytest`` without command line options::
 
-    $ py.test
+    $ pytest
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
@@ -68,7 +68,7 @@ Also, :ref:`usefixtures` and :ref:`autouse` fixtures are supported
 when executing text doctest files.
 
 The standard ``doctest`` module provides some setting flags to configure the
-strictness of doctest tests. In py.test You can enable those flags those flags
+strictness of doctest tests. In pytest You can enable those flags those flags
 using the configuration file. To make pytest ignore trailing whitespaces and
 ignore lengthy exception stack traces you can just write:
 
@@ -77,7 +77,7 @@ ignore lengthy exception stack traces you can just write:
     [pytest]
     doctest_optionflags= NORMALIZE_WHITESPACE IGNORE_EXCEPTION_DETAIL
 
-py.test also introduces new options to allow doctests to run in Python 2 and
+pytest also introduces new options to allow doctests to run in Python 2 and
 Python 3 unchanged:
 
 * ``ALLOW_UNICODE``: when enabled, the ``u`` prefix is stripped from unicode

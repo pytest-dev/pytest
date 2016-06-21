@@ -14,4 +14,3 @@
 
     Marking functions as ``yield_fixture`` is still supported, but deprecated and should not
     be used in new code.
-

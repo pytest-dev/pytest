@@ -27,7 +27,7 @@ and more.  Here is an example test usage::
 Running this would result in a passed test except for the last
 ``assert 0`` line which we use to look at values::
 
-    $ py.test test_tmpdir.py
+    $ pytest test_tmpdir.py
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -100,7 +100,7 @@ than 3 temporary directories will be removed.
 
 You can override the default temporary directory setting like this::
 
-    py.test --basetemp=mydir
+    pytest --basetemp=mydir
 
 When distributing tests on the local machine, ``pytest`` takes care to
 configure a basetemp directory for the sub processes such that all temporary

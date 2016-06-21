@@ -21,8 +21,8 @@ def test_help(testdir):
         *-v*verbose*
         *setup.cfg*
         *minversion*
-        *to see*markers*py.test --markers*
-        *to see*fixtures*py.test --fixtures*
+        *to see*markers*pytest --markers*
+        *to see*fixtures*pytest --fixtures*
     """)
 
 def test_hookvalidation_unknown(testdir):

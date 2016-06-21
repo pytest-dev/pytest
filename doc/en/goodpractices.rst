@@ -72,17 +72,17 @@ Important notes relating to both schemes:
 
 - With inlined tests you might put ``__init__.py`` into test
   directories and make them installable as part of your application.
-  Using the ``py.test --pyargs mypkg`` invocation pytest will
+  Using the ``pytest --pyargs mypkg`` invocation pytest will
   discover where mypkg is installed and collect tests from there.
   With the "external" test you can still distribute tests but they
   will not be installed or become importable.
 
 Typically you can run tests by pointing to test directories or modules::
 
-    py.test tests/test_app.py       # for external test dirs
-    py.test mypkg/test/test_app.py  # for inlined test dirs
-    py.test mypkg                   # run tests in all below test directories
-    py.test                         # run all tests below current dir
+    pytest tests/test_app.py       # for external test dirs
+    pytest mypkg/test/test_app.py  # for inlined test dirs
+    pytest mypkg                   # run tests in all below test directories
+    pytest                         # run all tests below current dir
     ...
 
 Because of the above ``editable install`` mode you can change your
@@ -193,7 +193,7 @@ If you now type::
 this will execute your tests using ``pytest-runner``. As this is a
 standalone version of ``pytest`` no prior installation whatsoever is
 required for calling the test command. You can also pass additional
-arguments to py.test such as your test directory or other
+arguments to pytest such as your test directory or other
 options using ``--addopts``.
 
 
@@ -211,7 +211,7 @@ your own setuptools Test command for invoking pytest.
 
 
     class PyTest(TestCommand):
-        user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
+        user_options = [('pytest-args=', 'a', "Arguments to pass to pytest")]
 
         def initialize_options(self):
             TestCommand.initialize_options(self)
@@ -240,7 +240,7 @@ using the ``--pytest-args`` or ``-a`` command-line option. For example::
 
     python setup.py test -a "--durations=5"
 
-is equivalent to running ``py.test --durations=5``.
+is equivalent to running ``pytest --durations=5``.
 
 
 .. _standalone:
@@ -268,7 +268,7 @@ If you are a maintainer or application developer and want people
 who don't deal with python much to easily run tests you may generate
 a standalone ``pytest`` script::
 
-    py.test --genscript=runtests.py
+    pytest --genscript=runtests.py
 
 This generates a ``runtests.py`` script which is a fully functional basic
 ``pytest`` script, running unchanged under Python2 and Python3.

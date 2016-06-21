@@ -99,7 +99,7 @@ def pytest_namespace():
 
 def freeze_includes():
     """
-    Returns a list of module names used by py.test that should be
+    Returns a list of module names used by pytest that should be
     included by cx_freeze.
     """
     result = list(_iter_all_modules(py))

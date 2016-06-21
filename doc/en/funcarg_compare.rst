@@ -172,17 +172,17 @@ to do this with parametrization as ``pytest_runtest_setup()`` is called
 during test execution and parametrization happens at collection time.
 
 It follows that pytest_configure/session/runtest_setup are often not
-appropriate for implementing common fixture needs.  Therefore, 
+appropriate for implementing common fixture needs.  Therefore,
 pytest-2.3 introduces :ref:`autouse fixtures` which fully
-integrate with the generic :ref:`fixture mechanism <fixture>` 
+integrate with the generic :ref:`fixture mechanism <fixture>`
 and obsolete many prior uses of pytest hooks.
 
 funcargs/fixture discovery now happens at collection time
 ---------------------------------------------------------------------
 
-pytest-2.3 takes care to discover fixture/funcarg factories
-at collection time.  This is more efficient especially for large test suites. 
-Moreover, a call to "py.test --collect-only" should be able to in the future
+Since pytest-2.3, discovery of fixture/funcarg factories are taken care of
+at collection time.  This is more efficient especially for large test suites.
+Moreover, a call to "pytest --collect-only" should be able to in the future
 show a lot of setup-information and thus presents a nice method to get an
 overview of fixture management in your project.
 

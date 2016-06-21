@@ -18,11 +18,11 @@ For global activation of all argcomplete enabled python applications run::
 
 For permanent (but not global) ``pytest`` activation, use::
 
-        register-python-argcomplete py.test >> ~/.bashrc
+        register-python-argcomplete pytest >> ~/.bashrc
 
 For one-time activation of argcomplete for ``pytest`` only, use::
 
-        eval "$(register-python-argcomplete py.test)"
+        eval "$(register-python-argcomplete pytest)"
 
 
 

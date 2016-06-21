@@ -11,7 +11,7 @@ get on the terminal - we are working on that):
 
 .. code-block:: python
 
-    assertion $ py.test failure_demo.py
+    assertion $ pytest failure_demo.py
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR/assertion, inifile: 

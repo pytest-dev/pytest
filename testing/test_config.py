@@ -18,7 +18,7 @@ class TestParseIni:
         assert config.inicfg['name'] == 'value'
 
     def test_getcfg_empty_path(self, tmpdir):
-        getcfg([''], ['setup.cfg']) #happens on py.test ""
+        getcfg([''], ['setup.cfg']) #happens on pytest ""
 
     def test_append_parse_args(self, testdir, tmpdir, monkeypatch):
         monkeypatch.setenv('PYTEST_ADDOPTS', '--color no -rs --tb="short"')

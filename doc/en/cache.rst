@@ -15,7 +15,7 @@ Usage
 ---------
 
 The plugin provides two command line options to rerun failures from the
-last ``py.test`` invocation:
+last ``pytest`` invocation:
 
 * ``--lf``, ``--last-failed`` - to only re-run the failures.
 * ``--ff``, ``--failed-first`` - to run the failures first and then the rest of
@@ -25,7 +25,7 @@ For cleanup (usually not needed), a ``--cache-clear`` option allows to remove
 all cross-session cache contents ahead of a test run.
 
 Other plugins may access the `config.cache`_ object to set/get 
-**json encodable** values between ``py.test`` invocations.
+**json encodable** values between ``pytest`` invocations.
 
 .. note::
 
@@ -49,7 +49,7 @@ First, let's create 50 test invocation of which only 2 fail::
 
 If you run this for the first time you will see two failures::
 
-    $ py.test -q
+    $ pytest -q
     .................F.......F........................
     ======= FAILURES ========
     _______ test_num[17] ________
@@ -78,7 +78,7 @@ If you run this for the first time you will see two failures::
 
 If you then run it with ``--lf``::
 
-    $ py.test --lf
+    $ pytest --lf
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     run-last-failure: rerun last 2 failures
@@ -119,7 +119,7 @@ Now, if you run with the ``--ff`` option, all tests will be run but the first
 previous failures will be executed first (as can be seen from the series
 of ``FF`` and dots)::
 
-    $ py.test --ff
+    $ pytest --ff
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     run-last-failure: rerun last 2 failures first
@@ -163,7 +163,7 @@ The new config.cache object
 Plugins or conftest.py support code can get a cached value using the
 pytest ``config`` object.  Here is a basic example plugin which
 implements a :ref:`fixture` which re-uses previously created state
-across py.test invocations::
+across pytest invocations::
 
     # content of test_caching.py
     import pytest
@@ -184,7 +184,7 @@ across py.test invocations::
 If you run this command once, it will take a while because
 of the sleep::
 
-    $ py.test -q
+    $ pytest -q
     F
     ======= FAILURES ========
     _______ test_function ________
@@ -201,7 +201,7 @@ of the sleep::
 If you run it a second time the value will be retrieved from
 the cache and this will be quick::
 
-    $ py.test -q
+    $ pytest -q
     F
     ======= FAILURES ========
     _______ test_function ________
@@ -224,7 +224,7 @@ Inspecting Cache content
 You can always peek at the content of the cache using the
 ``--cache-clear`` command line option::
 
-    $ py.test --cache-clear
+    $ pytest --cache-clear
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -250,7 +250,7 @@ Clearing Cache content
 You can instruct pytest to clear all cache files and values
 by adding the ``--cache-clear`` option like this::
 
-    py.test --cache-clear
+    pytest --cache-clear
 
 This is recommended for invocations from Continous Integration
 servers where isolation and correctness is more important

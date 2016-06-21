@@ -24,7 +24,7 @@ Usage
 
 After installation you can simply type::
 
-    py.test --figleaf [...]
+    pytest --figleaf [...]
 
 to enable figleaf coverage in your test run.  A default ".figleaf" data file
 and "html" directory will be created.  You can use command line options

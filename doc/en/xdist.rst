@@ -52,7 +52,7 @@ Speed up test runs by sending tests to multiple CPUs
 
 To send tests to multiple CPUs, type::
 
-    py.test -n NUM
+    pytest -n NUM
 
 Especially for longer running tests or tests requiring
 a lot of I/O this can lead to considerable speed ups.
@@ -63,14 +63,14 @@ Running tests in a Python subprocess
 
 To instantiate a Python-2.7 subprocess and send tests to it, you may type::
 
-    py.test -d --tx popen//python=python2.7
+    pytest -d --tx popen//python=python2.7
 
 This will start a subprocess which is run with the "python2.7"
 Python interpreter, found in your system binary lookup path.
 
 If you prefix the --tx option value like this::
 
-    py.test -d --tx 3*popen//python=python2.7
+    pytest -d --tx 3*popen//python=python2.7
 
 then three subprocesses would be created and the tests
 will be distributed to three subprocesses and run simultanously.
@@ -84,7 +84,7 @@ Running tests in looponfailing mode
 For refactoring a project with a medium or large test suite
 you can use the looponfailing mode. Simply add the ``--f`` option::
 
-    py.test -f
+    pytest -f
    
 and ``pytest`` will run your tests. Assuming you have failures it will then
 wait for file changes and re-run the failing test set.  File changes are detected by looking at ``looponfailingroots`` root directories and all of their contents (recursively).  If the default for this value does not work for you you
@@ -104,7 +104,7 @@ tests that you can successfully run locally. And you also
 have a ssh-reachable machine ``myhost``.  Then
 you can ad-hoc distribute your tests by typing::
 
-    py.test -d --tx ssh=myhostpopen --rsyncdir mypkg mypkg
+    pytest -d --tx ssh=myhostpopen --rsyncdir mypkg mypkg
 
 This will synchronize your ``mypkg`` package directory
 with a remote ssh account and then collect and run your
@@ -135,7 +135,7 @@ It will tell you that it starts listening on the default
 port.  You can now on your home machine specify this
 new socket host with something like this::
 
-    py.test -d --tx socket=192.168.1.102:8888 --rsyncdir mypkg mypkg
+    pytest -d --tx socket=192.168.1.102:8888 --rsyncdir mypkg mypkg
 
 
 .. _`atonce`:
@@ -145,7 +145,7 @@ Running tests on many platforms at once
 
 The basic command to run tests on multiple platforms is::
 
-    py.test --dist=each --tx=spec1 --tx=spec2
+    pytest --dist=each --tx=spec1 --tx=spec2
 
 If you specify a windows host, an OSX host and a Linux
 environment this command will send each tests to all
@@ -174,7 +174,7 @@ You can also add default environments like this::
 
 and then just type::
 
-    py.test --dist=each
+    pytest --dist=each
 
 to run tests in each of the environments.
 
