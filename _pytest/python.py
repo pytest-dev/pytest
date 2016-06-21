@@ -1987,7 +1987,7 @@ class FixtureManager:
                 # fixture attribute
                 continue
             else:
-                assert not name.startswith(self._argprefix)
+                assert not name.startswith(self._argprefix), name
             fixturedef = FixtureDef(self, nodeid, name, obj,
                                     marker.scope, marker.params,
                                     yieldctx=marker.yieldctx,
