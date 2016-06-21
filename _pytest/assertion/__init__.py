@@ -76,8 +76,7 @@ def pytest_load_initial_conftests(early_config, parser, args):
 
     hook = None
     if mode == "rewrite":
-        hook = rewrite.AssertionRewritingHook()  # noqa
-        hook.set_config(early_config)
+        hook = rewrite.AssertionRewritingHook(early_config)  # noqa
         sys.meta_path.insert(0, hook)
 
     early_config._assertstate.hook = hook

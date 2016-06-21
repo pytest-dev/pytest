@@ -44,17 +44,15 @@ else:
 class AssertionRewritingHook(object):
     """PEP302 Import hook which rewrites asserts."""
 
-    def __init__(self):
+    def __init__(self, config):
+        self.config = config
+        self.fnpats = config.getini("python_files")
         self.session = None
         self.modules = {}
         self._register_with_pkg_resources()
 
     def set_session(self, session):
         self.session = session
-
-    def set_config(self, config):
-        self.config = config
-        self.fnpats = config.getini("python_files")
 
     def find_module(self, name, path=None):
         state = self.config._assertstate
