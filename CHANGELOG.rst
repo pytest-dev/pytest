@@ -74,6 +74,10 @@
   message to raise when no exception occurred.
   Thanks `@palaviv`_ for the complete PR (`#1616`_).
 
+* Fix `#1421`_: Exit tests if a collection error occurs and add
+  ``--continue-on-collection-errors`` option to restore previous behaviour.
+  Thanks `@olegpidsadnyi`_ and `@omarkohl`_ for the complete PR (`#1628`_).
+
 .. _@milliams: https://github.com/milliams
 .. _@csaftoiu: https://github.com/csaftoiu
 .. _@novas0x2a: https://github.com/novas0x2a
@@ -83,7 +87,9 @@
 .. _@palaviv: https://github.com/palaviv
 .. _@omarkohl: https://github.com/omarkohl
 .. _@mikofski: https://github.com/mikofski
+.. _@olegpidsadnyi: https://github.com/olegpidsadnyi
 
+.. _#1421: https://github.com/pytest-dev/pytest/issues/1421
 .. _#1426: https://github.com/pytest-dev/pytest/issues/1426
 .. _#1428: https://github.com/pytest-dev/pytest/pull/1428
 .. _#1444: https://github.com/pytest-dev/pytest/pull/1444
@@ -98,6 +104,7 @@
 .. _#372: https://github.com/pytest-dev/pytest/issues/372
 .. _#1544: https://github.com/pytest-dev/pytest/issues/1544
 .. _#1616: https://github.com/pytest-dev/pytest/pull/1616
+.. _#1628: https://github.com/pytest-dev/pytest/pull/1628
 
 
 **Bug Fixes**

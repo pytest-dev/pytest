@@ -231,6 +231,6 @@ def test_failure_issue380(testdir):
             pass
     """)
     result = testdir.runpytest("--resultlog=log")
-    assert result.ret == 1
+    assert result.ret == 2
 
 
