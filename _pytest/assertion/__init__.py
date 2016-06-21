@@ -165,7 +165,6 @@ def _load_modules(mode):
 
 
 def warn_about_missing_assertion(mode, pluginmanager):
-    print('got here')
     try:
         assert False
     except AssertionError:
