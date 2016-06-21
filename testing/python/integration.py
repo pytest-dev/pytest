@@ -1,5 +1,4 @@
 import pytest
-from _pytest import python
 from _pytest import runner
 
 
@@ -58,6 +57,7 @@ class TestOEJSKITSpecials:
 
 
 def test_wrapped_getfslineno():
+    from _pytest.utils import getfslineno
     def func():
         pass
     def wrap(f):
@@ -67,13 +67,13 @@ def test_wrapped_getfslineno():
     @wrap
     def wrapped_func(x, y, z):
         pass
-    fs, lineno = python.getfslineno(wrapped_func)
-    fs2, lineno2 = python.getfslineno(wrap)
+    fs, lineno = getfslineno(wrapped_func)
+    fs2, lineno2 = getfslineno(wrap)
     assert lineno > lineno2, "getfslineno does not unwrap correctly"
 
 class TestMockDecoration:
     def test_wrapped_getfuncargnames(self):
-        from _pytest.python import getfuncargnames
+        from _pytest.utils import getfuncargnames
         def wrap(f):
             def func():
                 pass
@@ -86,7 +86,7 @@ class TestMockDecoration:
         assert l == ("x",)
 
     def test_wrapped_getfuncargnames_patching(self):
-        from _pytest.python import getfuncargnames
+        from _pytest.utils import getfuncargnames
         def wrap(f):
             def func():
                 pass

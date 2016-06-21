@@ -6,7 +6,7 @@ import _pytest._code
 import py
 import pytest
 from _pytest import python as funcargs
-
+from _pytest.utils import _format_args, getfuncargnames
 import hypothesis
 from hypothesis import strategies
 
@@ -22,7 +22,7 @@ class TestMetafunc:
             name2fixturedefs = None
             def __init__(self, names):
                 self.names_closure = names
-        names = funcargs.getfuncargnames(func)
+        names = getfuncargnames(func)
         fixtureinfo = FixtureInfo(names)
         return funcargs.Metafunc(func, fixtureinfo, None)
 
@@ -558,16 +558,16 @@ class TestMetafunc:
 
     def test_format_args(self):
         def function1(): pass
-        assert funcargs._format_args(function1) == '()'
+        assert _format_args(function1) == '()'
 
         def function2(arg1): pass
-        assert funcargs._format_args(function2) == "(arg1)"
+        assert _format_args(function2) == "(arg1)"
 
         def function3(arg1, arg2="qwe"): pass
-        assert funcargs._format_args(function3) == "(arg1, arg2='qwe')"
+        assert _format_args(function3) == "(arg1, arg2='qwe')"
 
         def function4(arg1, *args, **kwargs): pass
-        assert funcargs._format_args(function4) == "(arg1, *args, **kwargs)"
+        assert _format_args(function4) == "(arg1, *args, **kwargs)"
 
 
 class TestMetafuncFunctional:

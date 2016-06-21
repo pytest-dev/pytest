@@ -5,7 +5,7 @@ import traceback
 
 import pytest
 from _pytest._code.code import TerminalRepr, ReprFileLocation, ExceptionInfo
-from _pytest.python import FixtureRequest
+from _pytest.fixtures import FixtureRequest
 
 
 
