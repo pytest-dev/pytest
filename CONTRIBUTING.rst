@@ -127,27 +127,18 @@ transferred to the ``pytest-dev`` organisation.
 Here's a rundown of how a repository transfer usually proceeds
 (using a repository named ``joedoe/pytest-xyz`` as example):
 
-* One of the ``pytest-dev`` administrators creates:
-
-  - ``pytest-xyz-admin`` team, with full administration rights to
-    ``pytest-dev/pytest-xyz``.
-  - ``pytest-xyz-developers`` team, with write access to
-    ``pytest-dev/pytest-xyz``.
-
-* ``joedoe`` is invited to the ``pytest-xyz-admin`` team;
-
-* After accepting the invitation, ``joedoe`` transfers the repository from its
-  original location to ``pytest-dev/pytest-xyz`` (A nice feature is that GitHub handles URL redirection from
-  the old to the new location automatically).
-
-* ``joedoe`` is free to add any other collaborators to the
-  ``pytest-xyz-admin`` or ``pytest-xyz-developers`` team as desired.
+* ``joedoe`` transfers repository ownership to ``pytest-dev`` administrator ``calvin``.
+* ``calvin`` creates ``pytest-xyz-admin`` and ``pytest-xyz-developers`` teams, inviting ``joedoe`` to both as **maintainer**.
+* ``calvin`` transfers repository to ``pytest-dev`` and configures team access:
+  
+  - ``pytest-xyz-admin`` **admin** access;
+  - ``pytest-xyz-developers`` **write** access;
 
 The ``pytest-dev/Contributors`` team has write access to all projects, and
 every project administrator is in it. We recommend that each plugin has at least three
 people who have the right to release to PyPI.
 
-Repository owners can be assured that no ``pytest-dev`` administrator will ever make
+Repository owners can rest assured that no ``pytest-dev`` administrator will ever make
 releases of your repository or take ownership in any way, except in rare cases
 where someone becomes unresponsive after months of contact attempts.
 As stated, the objective is to share maintenance and avoid "plugin-abandon".
