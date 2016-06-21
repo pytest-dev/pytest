@@ -44,20 +44,18 @@ else:
 class AssertionRewritingHook(object):
     """PEP302 Import hook which rewrites asserts."""
 
-    def __init__(self):
+    def __init__(self, config):
+        self.config = config
+        self.fnpats = config.getini("python_files")
         self.session = None
         self.modules = {}
         self._register_with_pkg_resources()
 
     def set_session(self, session):
-        self.fnpats = session.config.getini("python_files")
         self.session = session
 
     def find_module(self, name, path=None):
-        if self.session is None:
-            return None
-        sess = self.session
-        state = sess.config._assertstate
+        state = self.config._assertstate
         state.trace("find_module called for: %s" % name)
         names = name.rsplit(".", 1)
         lastname = names[-1]
@@ -86,24 +84,11 @@ class AssertionRewritingHook(object):
                 return None
         else:
             fn = os.path.join(pth, name.rpartition(".")[2] + ".py")
+
         fn_pypath = py.path.local(fn)
-        # Is this a test file?
-        if not sess.isinitpath(fn):
-            # We have to be very careful here because imports in this code can
-            # trigger a cycle.
-            self.session = None
-            try:
-                for pat in self.fnpats:
-                    if fn_pypath.fnmatch(pat):
-                        state.trace("matched test file %r" % (fn,))
-                        break
-                else:
-                    return None
-            finally:
-                self.session = sess
-        else:
-            state.trace("matched test file (was specified on cmdline): %r" %
-                        (fn,))
+        if not self._should_rewrite(fn_pypath, state):
+            return None
+
         # The requested module looks like a test file, so rewrite it. This is
         # the most magical part of the process: load the source, rewrite the
         # asserts, and load the rewritten source. We also cache the rewritten
@@ -150,6 +135,32 @@ class AssertionRewritingHook(object):
             state.trace("found cached rewritten pyc for %r" % (fn,))
         self.modules[name] = co, pyc
         return self
+
+    def _should_rewrite(self, fn_pypath, state):
+        # always rewrite conftest files
+        fn = str(fn_pypath)
+        if fn_pypath.basename == 'conftest.py':
+            state.trace("rewriting conftest file: %r" % (fn,))
+            return True
+        elif self.session is not None:
+            if self.session.isinitpath(fn):
+                state.trace("matched test file (was specified on cmdline): %r" %
+                            (fn,))
+                return True
+            else:
+                # modules not passed explicitly on the command line are only
+                # rewritten if they match the naming convention for test files
+                session = self.session  # avoid a cycle here
+                self.session = None
+                try:
+                    for pat in self.fnpats:
+                        if fn_pypath.fnmatch(pat):
+                            state.trace("matched test file %r" % (fn,))
+                            return True
+                finally:
+                    self.session = session
+                    del session
+        return False
 
     def load_module(self, name):
         # If there is an existing module object named 'fullname' in
