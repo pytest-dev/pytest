@@ -5,6 +5,7 @@
 
 * Support nose-style ``__test__`` attribute on methods of classes,
   including unittest-style Classes. If set to False, the test will not be
+*
   collected.
 
 * New ``doctest_namespace`` fixture for injecting names into the
@@ -94,6 +95,11 @@
 
 *
 
+.. _#1580: https://github.com/pytest-dev/pytest/issues/1580
+
+.. _@graingert: https://github.com/graingert
+
+
 .. _@milliams: https://github.com/milliams
 .. _@csaftoiu: https://github.com/csaftoiu
 .. _@flub: https://github.com/flub
@@ -133,6 +139,13 @@
 **Bug Fixes**
 
 * When receiving identical test ids in parametrize we generate unique test ids.
+
+
+2.9.3
+=====
+
+* Text documents without any doctests no longer appear as "skipped".
+  Thanks `@graingert`_ for reporting and providing a full PR (`#1580`_).
 
 2.9.2
 =====
