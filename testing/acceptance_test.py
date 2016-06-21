@@ -120,7 +120,7 @@ class TestGeneralUsage:
             "ImportError while importing test module*",
             "'No module named *does_not_work*",
         ])
-        assert result.ret == 1
+        assert result.ret == 2
 
     def test_not_collectable_arguments(self, testdir):
         p1 = testdir.makepyfile("")
@@ -665,11 +665,13 @@ class TestDurations:
         testdir.makepyfile(self.source)
         testdir.makepyfile(test_collecterror="""xyz""")
         result = testdir.runpytest("--durations=2", "-k test_1")
-        assert result.ret != 0
+        assert result.ret == 2
         result.stdout.fnmatch_lines([
-            "*durations*",
-            "*call*test_1*",
+            "*Interrupted: 1 errors during collection*",
         ])
+        # Collection errors abort test execution, therefore no duration is
+        # output
+        assert "duration" not in result.stdout.str()
 
     def test_with_not(self, testdir):
         testdir.makepyfile(self.source)

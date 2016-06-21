@@ -273,7 +273,7 @@ class TestCollectonly:
     def test_collectonly_error(self, testdir):
         p = testdir.makepyfile("import Errlkjqweqwe")
         result = testdir.runpytest("--collect-only", p)
-        assert result.ret == 1
+        assert result.ret == 2
         result.stdout.fnmatch_lines(_pytest._code.Source("""
             *ERROR*
             *ImportError*

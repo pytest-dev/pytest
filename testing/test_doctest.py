@@ -199,8 +199,20 @@ class TestDoctests:
             "*1 failed*",
         ])
 
+    def test_doctest_unex_importerror_only_txt(self, testdir):
+        testdir.maketxtfile("""
+            >>> import asdalsdkjaslkdjasd
+            >>>
+        """)
+        result = testdir.runpytest()
+        # doctest is never executed because of error during hello.py collection
+        result.stdout.fnmatch_lines([
+            "*>>> import asdals*",
+            "*UNEXPECTED*ImportError*",
+            "ImportError: No module named *asdal*",
+        ])
 
-    def test_doctest_unex_importerror(self, testdir):
+    def test_doctest_unex_importerror_with_module(self, testdir):
         testdir.tmpdir.join("hello.py").write(_pytest._code.Source("""
             import asdalsdkjaslkdjasd
         """))
@@ -209,10 +221,11 @@ class TestDoctests:
             >>>
         """)
         result = testdir.runpytest("--doctest-modules")
+        # doctest is never executed because of error during hello.py collection
         result.stdout.fnmatch_lines([
-            "*>>> import hello",
-            "*UNEXPECTED*ImportError*",
-            "*import asdals*",
+            "*ERROR collecting hello.py*",
+            "*ImportError: No module named *asdals*",
+            "*Interrupted: 1 errors during collection*",
         ])
 
     def test_doctestmodule(self, testdir):
