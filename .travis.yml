@@ -27,7 +27,12 @@ env:
     - TESTENV=doctesting
     - TESTENV=py27-cxfreeze
 
-script: tox --recreate -e $TESTENV
+script: tox -e $TESTENV
+
+cache:
+  directories:
+    - .tox/$TOXENV
+    - $HOME/.cache/pip
 
 notifications:
   irc:
