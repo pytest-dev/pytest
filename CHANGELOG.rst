@@ -43,6 +43,10 @@
   Can also show where fixtures are defined if combined with ``-v``.
   Thanks `@hackebrot`_ for the PR.
 
+* Introduce pytest command as recommended entry point. Closes proposal
+  `#1629`_. Thanks `@obestwalter`_ and `@davehunt`_ for the complete PR
+  (`#1633`_)
+
 **Changes**
 
 * Fixtures marked with ``@pytest.fixture`` can now use ``yield`` statements exactly like
@@ -83,6 +87,8 @@
 .. _@palaviv: https://github.com/palaviv
 .. _@omarkohl: https://github.com/omarkohl
 .. _@mikofski: https://github.com/mikofski
+.. _@obestwalter: https://github.com/obestwalter
+.. _@davehunt: https://github.com/davehunt
 
 .. _#1426: https://github.com/pytest-dev/pytest/issues/1426
 .. _#1428: https://github.com/pytest-dev/pytest/pull/1428
@@ -98,6 +104,8 @@
 .. _#372: https://github.com/pytest-dev/pytest/issues/372
 .. _#1544: https://github.com/pytest-dev/pytest/issues/1544
 .. _#1616: https://github.com/pytest-dev/pytest/pull/1616
+.. _#1629: https://github.com/pytest-dev/pytest/issues/1629
+.. _#1633: https://github.com/pytest-dev/pytest/pull/1633
 
 
 **Bug Fixes**
