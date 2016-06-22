@@ -33,6 +33,9 @@ cache:
   directories:
     - .tox/$TOXENV
     - $HOME/.cache/pip
+-before_cache:
+  - rm -f .tox/$TOXENV/dist .tox/$TOXENV/log
+  - find .tox/$TOXENV ( -name '*.pyc' -or '*.pyo' ) -delete
 
 notifications:
   irc:
