@@ -152,7 +152,9 @@ class TestCollectPluginHookRelay:
         wascalled = []
         class Plugin:
             def pytest_collect_file(self, path, parent):
-                wascalled.append(path)
+                if not path.basename.startswith("."):
+                    # Ignore hidden files, e.g. .testmondata.
+                    wascalled.append(path)
         testdir.makefile(".abc", "xyz")
         pytest.main([testdir.tmpdir], plugins=[Plugin()])
         assert len(wascalled) == 1

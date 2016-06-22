@@ -7,7 +7,7 @@ Release announcements
 
 
    sprint2016
-   release-2.9.1
+   release-2.9.2
    release-2.9.1
    release-2.9.0
    release-2.8.7

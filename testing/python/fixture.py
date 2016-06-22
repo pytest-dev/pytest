@@ -2704,3 +2704,108 @@ class TestContextManagerFixtureFuncs:
         """.format(flavor=flavor))
         result = testdir.runpytest("-s")
         result.stdout.fnmatch_lines("*mew*")
+class TestParameterizedSubRequest:
+    def test_call_from_fixture(self, testdir):
+        testfile = testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture(params=[0, 1, 2])
+            def fix_with_param(request):
+                return request.param
+
+            @pytest.fixture
+            def get_named_fixture(request):
+                return request.getfuncargvalue('fix_with_param')
+
+            def test_foo(request, get_named_fixture):
+                pass
+            """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines("""
+            E*Failed: The requested fixture has no parameter defined for the current test.
+            E*
+            E*Requested fixture 'fix_with_param' defined in:
+            E*{0}:4
+            E*Requested here:
+            E*{1}:9
+            *1 error*
+            """.format(testfile.basename, testfile.basename))
+
+    def test_call_from_test(self, testdir):
+        testfile = testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture(params=[0, 1, 2])
+            def fix_with_param(request):
+                return request.param
+
+            def test_foo(request):
+                request.getfuncargvalue('fix_with_param')
+            """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines("""
+            E*Failed: The requested fixture has no parameter defined for the current test.
+            E*
+            E*Requested fixture 'fix_with_param' defined in:
+            E*{0}:4
+            E*Requested here:
+            E*{1}:8
+            *1 failed*
+            """.format(testfile.basename, testfile.basename))
+
+    def test_external_fixture(self, testdir):
+        conffile = testdir.makeconftest("""
+            import pytest
+
+            @pytest.fixture(params=[0, 1, 2])
+            def fix_with_param(request):
+                return request.param
+            """)
+
+        testfile = testdir.makepyfile("""
+            def test_foo(request):
+                request.getfuncargvalue('fix_with_param')
+            """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines("""
+            E*Failed: The requested fixture has no parameter defined for the current test.
+            E*
+            E*Requested fixture 'fix_with_param' defined in:
+            E*{0}:4
+            E*Requested here:
+            E*{1}:2
+            *1 failed*
+            """.format(conffile.basename, testfile.basename))
+
+    def test_non_relative_path(self, testdir):
+        tests_dir = testdir.mkdir('tests')
+        fixdir = testdir.mkdir('fixtures')
+        fixfile = fixdir.join("fix.py")
+        fixfile.write(_pytest._code.Source("""
+            import pytest
+
+            @pytest.fixture(params=[0, 1, 2])
+            def fix_with_param(request):
+                return request.param
+            """))
+
+        testfile = tests_dir.join("test_foos.py")
+        testfile.write(_pytest._code.Source("""
+            from fix import fix_with_param
+
+            def test_foo(request):
+                request.getfuncargvalue('fix_with_param')
+            """))
+
+        tests_dir.chdir()
+        testdir.syspathinsert(fixdir)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines("""
+            E*Failed: The requested fixture has no parameter defined for the current test.
+            E*
+            E*Requested fixture 'fix_with_param' defined in:
+            E*{0}:5
+            E*Requested here:
+            E*{1}:5
+            *1 failed*
+            """.format(fixfile.strpath, testfile.basename))

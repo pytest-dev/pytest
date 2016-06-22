@@ -123,15 +123,18 @@ def getexecutable(name, cache={}):
     except KeyError:
         executable = py.path.local.sysfind(name)
         if executable:
+            import subprocess
+            popen = subprocess.Popen([str(executable), "--version"],
+                universal_newlines=True, stderr=subprocess.PIPE)
+            out, err = popen.communicate()
             if name == "jython":
-                import subprocess
-                popen = subprocess.Popen([str(executable), "--version"],
-                    universal_newlines=True, stderr=subprocess.PIPE)
-                out, err = popen.communicate()
                 if not err or "2.5" not in err:
                     executable = None
                 if "2.5.2" in err:
                     executable = None # http://bugs.jython.org/issue1790
+            elif popen.returncode != 0:
+                # Handle pyenv's 127.
+                executable = None
         cache[name] = executable
         return executable
 

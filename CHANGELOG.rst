@@ -82,15 +82,40 @@
   was only available for test modules. Thanks `@flub`_, `@sober7`_ and
   `@nicoddemus`_ for the PR (`#1619`_).
 
-*
+* Text documents without any doctests no longer appear as "skipped".
+  Thanks `@graingert`_ for reporting and providing a full PR (`#1580`_).
 
-*
+* Fix internal error issue when ``method`` argument is missing for
+  ``teardown_method()``. Fixes (`#1605`_).
+
+* Fix exception visualization in case the current working directory (CWD) gets
+  deleted during testing. Fixes (`#1235`). Thanks `@bukzor`_ for reporting. PR by
+  `@marscher`. Thanks `@nicoddemus`_ for his help.
+
+* Ensure that a module within a namespace package can be found when it
+  is specified on the command line together with the ``--pyargs``
+  option.  Thanks to `@taschini`_ for the PR (`#1597`_).
+
+* Raise helpful failure message, when requesting parametrized fixture at runtime,
+  e.g. with ``request.getfuncargvalue``. BACKWARD INCOMPAT: Previously these params
+  were simply never defined. So a fixture decorated like ``@pytest.fixture(params=[0, 1, 2])``
+  only ran once. Now a failure is raised. Fixes (`#460`_). Thanks to
+  `@nikratio`_ for bug report, `@RedBeardCode`_ and `@tomviner`_ for PR.
+
+.. _#1580: https://github.com/pytest-dev/pytest/pull/1580
+.. _#1605: https://github.com/pytest-dev/pytest/issues/1605
+.. _#1597: https://github.com/pytest-dev/pytest/pull/1597
+.. _#460: https://github.com/pytest-dev/pytest/pull/460
+
+.. _@graingert: https://github.com/graingert
+.. _@taschini: https://github.com/taschini
+.. _@nikratio: https://github.com/nikratio
+.. _@RedBeardCode: https://github.com/RedBeardCode
 
 * Fix `#1421`_: Exit tests if a collection error occurs and add
   ``--continue-on-collection-errors`` option to restore previous behaviour.
   Thanks `@olegpidsadnyi`_ and `@omarkohl`_ for the complete PR (`#1628`_).
 
-*
 
 *
 
@@ -294,7 +319,7 @@
   Thanks `@biern`_ for the PR.
 
 * Fix `traceback style docs`_ to describe all of the available options
-  (auto/long/short/line/native/no), with `auto` being the default since v2.6.
+  (auto/long/short/line/native/no), with ``auto`` being the default since v2.6.
   Thanks `@hackebrot`_ for the PR.
 
 * Fix (`#1422`_): junit record_xml_property doesn't allow multiple records
