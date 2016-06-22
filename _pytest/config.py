@@ -686,6 +686,10 @@ class OptionGroup:
         results in help showing '--two-words' only, but --twowords gets
         accepted **and** the automatic destination is in args.twowords
         """
+        conflict = set(optnames).intersection(
+            name for opt in self.options for name in opt.names())
+        if conflict:
+            raise ValueError("option names %s already added" % conflict)
         option = Argument(*optnames, **attrs)
         self._addoption_instance(option, shortupper=False)
 
