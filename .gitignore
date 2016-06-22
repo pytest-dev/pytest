@@ -1,0 +1,6 @@
+/.cache/
+/.tox/
+/bin/
+/include/
+/lib/
+/pip-selfcheck.json
