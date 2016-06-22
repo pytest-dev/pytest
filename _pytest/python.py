@@ -2525,7 +2525,12 @@ class FixtureDef:
         return result
 
     def _log_fixture_stack(self, what):
-        tw = self._fixturemanager.config.get_terminal_writer()
+        config = self._fixturemanager.config
+        capman = config.pluginmanager.getplugin('capturemanager')
+        if capman:
+            capman.suspendcapture()
+
+        tw = config.get_terminal_writer()
         tw.line()
         tw.write(' ' * 2 * self.scopenum)
         tw.write('{step} {scope} {fixture}'.format(
@@ -2534,6 +2539,9 @@ class FixtureDef:
             fixture=self.argname))
         if hasattr(self, 'cached_param'):
             tw.write('[{}]'.format(self.cached_param))
+
+        if capman:
+            capman.resumecapture()
 
     def __repr__(self):
         return ("<FixtureDef name=%r scope=%r baseid=%r >" %
