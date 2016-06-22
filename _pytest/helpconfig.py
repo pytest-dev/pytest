@@ -92,8 +92,8 @@ def showhelp(config):
     tw.line()
     tw.line()
 
-    tw.line("to see available markers type: py.test --markers")
-    tw.line("to see available fixtures type: py.test --fixtures")
+    tw.line("to see available markers type: pytest --markers")
+    tw.line("to see available fixtures type: pytest --fixtures")
     tw.line("(shown according to specified file_or_dir or current dir "
             "if not specified)")
 

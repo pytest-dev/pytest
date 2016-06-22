@@ -14,13 +14,16 @@ class TestDoctests:
             >>> i-1
             4
         """)
+
         for x in (testdir.tmpdir, checkfile):
             #print "checking that %s returns custom items" % (x,)
             items, reprec = testdir.inline_genitems(x)
             assert len(items) == 1
-            assert isinstance(items[0], DoctestTextfile)
+            assert isinstance(items[0], DoctestItem)
+            assert isinstance(items[0].parent, DoctestTextfile)
+        # Empty file has no items.
         items, reprec = testdir.inline_genitems(w)
-        assert len(items) == 1
+        assert len(items) == 0
 
     def test_collect_module_empty(self, testdir):
         path = testdir.makepyfile(whatever="#")
@@ -199,8 +202,20 @@ class TestDoctests:
             "*1 failed*",
         ])
 
+    def test_doctest_unex_importerror_only_txt(self, testdir):
+        testdir.maketxtfile("""
+            >>> import asdalsdkjaslkdjasd
+            >>>
+        """)
+        result = testdir.runpytest()
+        # doctest is never executed because of error during hello.py collection
+        result.stdout.fnmatch_lines([
+            "*>>> import asdals*",
+            "*UNEXPECTED*ImportError*",
+            "ImportError: No module named *asdal*",
+        ])
 
-    def test_doctest_unex_importerror(self, testdir):
+    def test_doctest_unex_importerror_with_module(self, testdir):
         testdir.tmpdir.join("hello.py").write(_pytest._code.Source("""
             import asdalsdkjaslkdjasd
         """))
@@ -209,10 +224,11 @@ class TestDoctests:
             >>>
         """)
         result = testdir.runpytest("--doctest-modules")
+        # doctest is never executed because of error during hello.py collection
         result.stdout.fnmatch_lines([
-            "*>>> import hello",
-            "*UNEXPECTED*ImportError*",
-            "*import asdals*",
+            "*ERROR collecting hello.py*",
+            "*ImportError: No module named *asdals*",
+            "*Interrupted: 1 errors during collection*",
         ])
 
     def test_doctestmodule(self, testdir):
@@ -594,6 +610,11 @@ class TestDoctestSkips:
         """)
         reprec = testdir.inline_run("--doctest-modules")
         reprec.assertoutcome(skipped=1)
+
+    def test_vacuous_all_skipped(self, testdir, makedoctest):
+        makedoctest('')
+        reprec = testdir.inline_run("--doctest-modules")
+        reprec.assertoutcome(passed=0, skipped=0)
 
 
 class TestDoctestAutoUseFixtures:

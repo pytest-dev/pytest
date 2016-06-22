@@ -59,7 +59,7 @@ will be called ahead of running any tests::
 
 If you run this without output capturing::
 
-    $ py.test -q -s test_module.py
+    $ pytest -q -s test_module.py
     callattr_ahead_of_alltests called
     callme called!
     callme other called

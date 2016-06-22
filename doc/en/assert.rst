@@ -24,7 +24,7 @@ following::
 to assert that your function returns a certain value. If this assertion fails
 you will see the return value of the function call::
 
-    $ py.test test_assert1.py
+    $ pytest test_assert1.py
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -168,7 +168,7 @@ when it encounters comparisons.  For example::
 
 if you run this module::
 
-    $ py.test test_assert2.py
+    $ pytest test_assert2.py
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -237,7 +237,7 @@ now, given this test module::
 you can run the test module and get the custom output defined in
 the conftest file::
 
-   $ py.test -q test_foocompare.py
+   $ pytest -q test_foocompare.py
    F
    ======= FAILURES ========
    _______ test_compare ________

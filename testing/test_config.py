@@ -18,7 +18,7 @@ class TestParseIni:
         assert config.inicfg['name'] == 'value'
 
     def test_getcfg_empty_path(self, tmpdir):
-        getcfg([''], ['setup.cfg']) #happens on py.test ""
+        getcfg([''], ['setup.cfg']) #happens on pytest ""
 
     def test_append_parse_args(self, testdir, tmpdir, monkeypatch):
         monkeypatch.setenv('PYTEST_ADDOPTS', '--color no -rs --tb="short"')
@@ -485,9 +485,14 @@ def test_load_initial_conftest_last_ordering(testdir):
     pm.register(m)
     hc = pm.hook.pytest_load_initial_conftests
     l = hc._nonwrappers + hc._wrappers
-    assert l[-1].function.__module__ == "_pytest.capture"
-    assert l[-2].function == m.pytest_load_initial_conftests
-    assert l[-3].function.__module__ == "_pytest.config"
+    expected = [
+        "_pytest.config",
+        'test_config',
+        '_pytest.assertion',
+        '_pytest.capture',
+    ]
+    assert [x.function.__module__ for x in l] == expected
+
 
 class TestWarning:
     def test_warn_config(self, testdir):

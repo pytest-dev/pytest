@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+import os
 import sys
 
 import _pytest._code
@@ -120,7 +122,7 @@ class TestGeneralUsage:
             "ImportError while importing test module*",
             "'No module named *does_not_work*",
         ])
-        assert result.ret == 1
+        assert result.ret == 2
 
     def test_not_collectable_arguments(self, testdir):
         p1 = testdir.makepyfile("")
@@ -513,12 +515,11 @@ class TestInvocationVariants:
         path = testdir.mkpydir("tpkg")
         path.join("test_hello.py").write('raise ImportError')
 
-        result = testdir.runpytest("--pyargs", "tpkg.test_hello")
+        result = testdir.runpytest_subprocess("--pyargs", "tpkg.test_hello")
         assert result.ret != 0
-        # FIXME: It would be more natural to match NOT
-        # "ERROR*file*or*package*not*found*".
+
         result.stdout.fnmatch_lines([
-            "*collected 0 items*"
+            "collected*0*items*/*1*errors"
         ])
 
     def test_cmdline_python_package(self, testdir, monkeypatch):
@@ -540,7 +541,7 @@ class TestInvocationVariants:
         def join_pythonpath(what):
             cur = py.std.os.environ.get('PYTHONPATH')
             if cur:
-                return str(what) + ':' + cur
+                return str(what) + os.pathsep + cur
             return what
         empty_package = testdir.mkpydir("empty_package")
         monkeypatch.setenv('PYTHONPATH', join_pythonpath(empty_package))
@@ -551,11 +552,72 @@ class TestInvocationVariants:
         ])
 
         monkeypatch.setenv('PYTHONPATH', join_pythonpath(testdir))
-        path.join('test_hello.py').remove()
-        result = testdir.runpytest("--pyargs", "tpkg.test_hello")
+        result = testdir.runpytest("--pyargs", "tpkg.test_missing")
         assert result.ret != 0
         result.stderr.fnmatch_lines([
-            "*not*found*test_hello*",
+            "*not*found*test_missing*",
+        ])
+
+    def test_cmdline_python_namespace_package(self, testdir, monkeypatch):
+        """
+        test --pyargs option with namespace packages (#1567)
+        """
+        monkeypatch.delenv('PYTHONDONTWRITEBYTECODE', raising=False)
+
+        search_path = []
+        for dirname in "hello", "world":
+            d = testdir.mkdir(dirname)
+            search_path.append(d)
+            ns = d.mkdir("ns_pkg")
+            ns.join("__init__.py").write(
+                "__import__('pkg_resources').declare_namespace(__name__)")
+            lib = ns.mkdir(dirname)
+            lib.ensure("__init__.py")
+            lib.join("test_{0}.py".format(dirname)). \
+                write("def test_{0}(): pass\n"
+                      "def test_other():pass".format(dirname))
+
+        # The structure of the test directory is now:
+        # .
+        # ├── hello
+        # │   └── ns_pkg
+        # │       ├── __init__.py
+        # │       └── hello
+        # │           ├── __init__.py
+        # │           └── test_hello.py
+        # └── world
+        #     └── ns_pkg
+        #         ├── __init__.py
+        #         └── world
+        #             ├── __init__.py
+        #             └── test_world.py
+
+        def join_pythonpath(*dirs):
+            cur = py.std.os.environ.get('PYTHONPATH')
+            if cur:
+                dirs += (cur,)
+            return os.pathsep.join(str(p) for p in dirs)
+        monkeypatch.setenv('PYTHONPATH', join_pythonpath(*search_path))
+        for p in search_path:
+            monkeypatch.syspath_prepend(p)
+
+        # mixed module and filenames:
+        result = testdir.runpytest("--pyargs", "-v", "ns_pkg.hello", "world/ns_pkg")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "*test_hello.py::test_hello*PASSED",
+            "*test_hello.py::test_other*PASSED",
+            "*test_world.py::test_world*PASSED",
+            "*test_world.py::test_other*PASSED",
+            "*4 passed*"
+        ])
+
+        # specify tests within a module
+        result = testdir.runpytest("--pyargs", "-v", "ns_pkg.world.test_world::test_other")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "*test_world.py::test_other*PASSED",
+            "*1 passed*"
         ])
 
     def test_cmdline_python_package_not_exists(self, testdir):
@@ -665,11 +727,13 @@ class TestDurations:
         testdir.makepyfile(self.source)
         testdir.makepyfile(test_collecterror="""xyz""")
         result = testdir.runpytest("--durations=2", "-k test_1")
-        assert result.ret != 0
+        assert result.ret == 2
         result.stdout.fnmatch_lines([
-            "*durations*",
-            "*call*test_1*",
+            "*Interrupted: 1 errors during collection*",
         ])
+        # Collection errors abort test execution, therefore no duration is
+        # output
+        assert "duration" not in result.stdout.str()
 
     def test_with_not(self, testdir):
         testdir.makepyfile(self.source)
@@ -698,4 +762,3 @@ class TestDurationWithFixture:
             * setup *test_1*
             * call *test_1*
         """)
-

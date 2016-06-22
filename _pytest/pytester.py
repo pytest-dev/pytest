@@ -123,15 +123,18 @@ def getexecutable(name, cache={}):
     except KeyError:
         executable = py.path.local.sysfind(name)
         if executable:
+            import subprocess
+            popen = subprocess.Popen([str(executable), "--version"],
+                universal_newlines=True, stderr=subprocess.PIPE)
+            out, err = popen.communicate()
             if name == "jython":
-                import subprocess
-                popen = subprocess.Popen([str(executable), "--version"],
-                    universal_newlines=True, stderr=subprocess.PIPE)
-                out, err = popen.communicate()
                 if not err or "2.5" not in err:
                     executable = None
                 if "2.5.2" in err:
                     executable = None # http://bugs.jython.org/issue1790
+            elif popen.returncode != 0:
+                # Handle pyenv's 127.
+                executable = None
         cache[name] = executable
         return executable
 
@@ -374,10 +377,10 @@ class RunResult:
 
 
 class Testdir:
-    """Temporary test directory with tools to test/run py.test itself.
+    """Temporary test directory with tools to test/run pytest itself.
 
     This is based on the ``tmpdir`` fixture but provides a number of
-    methods which aid with testing py.test itself.  Unless
+    methods which aid with testing pytest itself.  Unless
     :py:meth:`chdir` is used all methods will use :py:attr:`tmpdir` as
     current working directory.
 
@@ -588,7 +591,7 @@ class Testdir:
         """Return the collection node of a file.
 
         This is like :py:meth:`getnode` but uses
-        :py:meth:`parseconfigure` to create the (configured) py.test
+        :py:meth:`parseconfigure` to create the (configured) pytest
         Config instance.
 
         :param path: A :py:class:`py.path.local` instance of the file.
@@ -656,7 +659,7 @@ class Testdir:
         :py:class:`HookRecorder` instance.
 
         This runs the :py:func:`pytest.main` function to run all of
-        py.test inside the test process itself like
+        pytest inside the test process itself like
         :py:meth:`inline_run`.  However the return value is a tuple of
         the collection items and a :py:class:`HookRecorder` instance.
 
@@ -669,7 +672,7 @@ class Testdir:
         """Run ``pytest.main()`` in-process, returning a HookRecorder.
 
         This runs the :py:func:`pytest.main` function to run all of
-        py.test inside the test process itself.  This means it can
+        pytest inside the test process itself.  This means it can
         return a :py:class:`HookRecorder` instance which gives more
         detailed results from then run then can be done by matching
         stdout/stderr from :py:meth:`runpytest`.
@@ -755,9 +758,9 @@ class Testdir:
         return args
 
     def parseconfig(self, *args):
-        """Return a new py.test Config instance from given commandline args.
+        """Return a new pytest Config instance from given commandline args.
 
-        This invokes the py.test bootstrapping code in _pytest.config
+        This invokes the pytest bootstrapping code in _pytest.config
         to create a new :py:class:`_pytest.core.PluginManager` and
         call the pytest_cmdline_parse hook to create new
         :py:class:`_pytest.config.Config` instance.
@@ -777,7 +780,7 @@ class Testdir:
         return config
 
     def parseconfigure(self, *args):
-        """Return a new py.test configured Config instance.
+        """Return a new pytest configured Config instance.
 
         This returns a new :py:class:`_pytest.config.Config` instance
         like :py:meth:`parseconfig`, but also calls the
@@ -792,7 +795,7 @@ class Testdir:
     def getitem(self,  source, funcname="test_func"):
         """Return the test item for a test function.
 
-        This writes the source to a python file and runs py.test's
+        This writes the source to a python file and runs pytest's
         collection on the resulting module, returning the test item
         for the requested function name.
 
@@ -812,7 +815,7 @@ class Testdir:
     def getitems(self,  source):
         """Return all test items collected from the module.
 
-        This writes the source to a python file and runs py.test's
+        This writes the source to a python file and runs pytest's
         collection on the resulting module, returning all test items
         contained within.
 
@@ -824,7 +827,7 @@ class Testdir:
         """Return the module collection node for ``source``.
 
         This writes ``source`` to a file using :py:meth:`makepyfile`
-        and then runs the py.test collection on it, returning the
+        and then runs the pytest collection on it, returning the
         collection node for the test module.
 
         :param source: The source code of the module to collect.
@@ -924,7 +927,7 @@ class Testdir:
 
     def _getpytestargs(self):
         # we cannot use "(sys.executable,script)"
-        # because on windows the script is e.g. a py.test.exe
+        # because on windows the script is e.g. a pytest.exe
         return (sys.executable, _pytest_fullpath,) # noqa
 
     def runpython(self, script):
@@ -939,7 +942,7 @@ class Testdir:
         return self.run(sys.executable, "-c", command)
 
     def runpytest_subprocess(self, *args, **kwargs):
-        """Run py.test as a subprocess with given arguments.
+        """Run pytest as a subprocess with given arguments.
 
         Any plugins added to the :py:attr:`plugins` list will added
         using the ``-p`` command line option.  Addtionally
@@ -967,9 +970,9 @@ class Testdir:
         return self.run(*args)
 
     def spawn_pytest(self, string, expect_timeout=10.0):
-        """Run py.test using pexpect.
+        """Run pytest using pexpect.
 
-        This makes sure to use the right py.test and sets up the
+        This makes sure to use the right pytest and sets up the
         temporary directory locations.
 
         The pexpect child is returned.

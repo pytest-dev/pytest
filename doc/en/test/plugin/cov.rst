@@ -53,7 +53,7 @@ subprocesses.
 
 Running centralised testing::
 
-    py.test --cov myproj tests/
+    pytest --cov myproj tests/
 
 Shows a terminal report::
 
@@ -76,7 +76,7 @@ file system.  Each slave will have it's subprocesses measured.
 
 Running distributed testing with dist mode set to load::
 
-    py.test --cov myproj -n 2 tests/
+    pytest --cov myproj -n 2 tests/
 
 Shows a terminal report::
 
@@ -92,7 +92,7 @@ Shows a terminal report::
 
 Again but spread over different hosts and different directories::
 
-    py.test --cov myproj --dist load
+    pytest --cov myproj --dist load
             --tx ssh=memedough@host1//chdir=testenv1
             --tx ssh=memedough@host2//chdir=/tmp/testenv2//python=/tmp/env1/bin/python
             --rsyncdir myproj --rsyncdir tests --rsync examples
@@ -119,7 +119,7 @@ environments.
 
 Running distributed testing with dist mode set to each::
 
-    py.test --cov myproj --dist each
+    pytest --cov myproj --dist each
             --tx popen//chdir=/tmp/testenv3//python=/usr/local/python27/bin/python
             --tx ssh=memedough@host2//chdir=/tmp/testenv4//python=/tmp/env2/bin/python
             --rsyncdir myproj --rsyncdir tests --rsync examples
@@ -149,7 +149,7 @@ annotated source code.
 
 The terminal report without line numbers (default)::
 
-    py.test --cov-report term --cov myproj tests/
+    pytest --cov-report term --cov myproj tests/
 
     -------------------- coverage: platform linux2, python 2.6.4-final-0 ---------------------
     Name                 Stmts   Miss  Cover
@@ -163,7 +163,7 @@ The terminal report without line numbers (default)::
 
 The terminal report with line numbers::
 
-    py.test --cov-report term-missing --cov myproj tests/
+    pytest --cov-report term-missing --cov myproj tests/
 
     -------------------- coverage: platform linux2, python 2.6.4-final-0 ---------------------
     Name                 Stmts   Miss  Cover   Missing
@@ -178,7 +178,7 @@ The terminal report with line numbers::
 The remaining three reports output to files without showing anything on the terminal (useful for
 when the output is going to a continuous integration server)::
 
-    py.test --cov-report html --cov-report xml --cov-report annotate --cov myproj tests/
+    pytest --cov-report html --cov-report xml --cov-report annotate --cov myproj tests/
 
 
 Coverage Data File

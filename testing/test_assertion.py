@@ -428,7 +428,7 @@ def test_assert_compare_truncate_longmessage(monkeypatch, testdir):
         "*- 3",
         "*- 5",
         "*- 7",
-        "*truncated (191 more lines)*use*-vv*",
+        "*truncated (193 more lines)*use*-vv*",
     ])
 
 
@@ -626,3 +626,17 @@ def test_set_with_unsortable_elements():
         + repr(3)
     """).strip()
     assert '\n'.join(expl) == dedent
+
+def test_diff_newline_at_end(monkeypatch, testdir):
+    testdir.makepyfile(r"""
+        def test_diff():
+            assert 'asdf' == 'asdf\n'
+    """)
+
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(r"""
+        *assert 'asdf' == 'asdf\n'
+        *  - asdf
+        *  + asdf
+        *  ?     +
+    """)

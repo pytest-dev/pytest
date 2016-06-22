@@ -2031,6 +2031,25 @@ class FixtureRequest(FuncargnamesCompatAttr):
         except (AttributeError, ValueError):
             param = NOTSET
             param_index = 0
+            if fixturedef.params is not None:
+                frame = inspect.stack()[3]
+                frameinfo = inspect.getframeinfo(frame[0])
+                source_path = frameinfo.filename
+                source_lineno = frameinfo.lineno
+                source_path = py.path.local(source_path)
+                if source_path.relto(funcitem.config.rootdir):
+                    source_path = source_path.relto(funcitem.config.rootdir)
+                msg = (
+                    "The requested fixture has no parameter defined for the "
+                    "current test.\n\nRequested fixture '{0}' defined in:\n{1}"
+                    "\n\nRequested here:\n{2}:{3}".format(
+                        fixturedef.argname,
+                        getlocation(fixturedef.func, funcitem.config.rootdir),
+                        source_path,
+                        source_lineno,
+                    )
+                )
+                pytest.fail(msg)
         else:
             # indices might not be set if old-style metafunc.addcall() was used
             param_index = funcitem.callspec.indices.get(argname, 0)
@@ -2173,7 +2192,7 @@ class FixtureLookupError(LookupError):
                     available.append(name)
             msg = "fixture %r not found" % (self.argname,)
             msg += "\n available fixtures: %s" %(", ".join(available),)
-            msg += "\n use 'py.test --fixtures [testpath]' for help on them."
+            msg += "\n use 'pytest --fixtures [testpath]' for help on them."
 
         return FixtureLookupErrorRepr(fspath, lineno, tblines, msg, self.argname)
 
@@ -2369,7 +2388,7 @@ class FixtureManager:
             else:
                 if marker.name:
                     name = marker.name
-                assert not name.startswith(self._argprefix)
+                assert not name.startswith(self._argprefix), name
             fixturedef = FixtureDef(self, nodeid, name, obj,
                                     marker.scope, marker.params,
                                     unittest=unittest, ids=marker.ids)

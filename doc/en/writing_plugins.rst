@@ -87,8 +87,8 @@ sub directory but not for other directories::
 
 Here is how you might run it::
 
-     py.test test_flat.py   # will not show "setting up"
-     py.test a/test_sub.py  # will show "setting up"
+     pytest test_flat.py   # will not show "setting up"
+     pytest a/test_sub.py  # will show "setting up"
 
 .. Note::
     If you have ``conftest.py`` files which do not reside in a

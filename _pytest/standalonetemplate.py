@@ -17,7 +17,7 @@
 #
 # If you're wondering how this is created: you can create it yourself if you
 # have a complete pytest installation by using this command on the command-
-# line: ``py.test --genscript=runtests.py``.
+# line: ``pytest --genscript=runtests.py``.
 
 sources = """
 @SOURCES@"""

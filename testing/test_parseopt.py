@@ -246,8 +246,8 @@ def test_argcomplete(testdir, monkeypatch):
         pytest.skip("bash not available")
     script = str(testdir.tmpdir.join("test_argcomplete"))
     pytest_bin = sys.argv[0]
-    if "py.test" not in os.path.basename(pytest_bin):
-        pytest.skip("need to be run with py.test executable, not %s" %(pytest_bin,))
+    if "pytest" not in os.path.basename(pytest_bin):
+        pytest.skip("need to be run with pytest executable, not %s" %(pytest_bin,))
 
     with open(str(script), 'w') as fp:
         # redirect output from argcomplete to stdin and stderr is not trivial
@@ -262,8 +262,8 @@ def test_argcomplete(testdir, monkeypatch):
     monkeypatch.setenv('COMP_WORDBREAKS', ' \\t\\n"\\\'><=;|&(:')
 
     arg = '--fu'
-    monkeypatch.setenv('COMP_LINE', "py.test " + arg)
-    monkeypatch.setenv('COMP_POINT', str(len("py.test " + arg)))
+    monkeypatch.setenv('COMP_LINE', "pytest " + arg)
+    monkeypatch.setenv('COMP_POINT', str(len("pytest " + arg)))
     result = testdir.run('bash', str(script), arg)
     if result.ret == 255:
         # argcomplete not found
@@ -280,8 +280,7 @@ def test_argcomplete(testdir, monkeypatch):
         return
     os.mkdir('test_argcomplete.d')
     arg = 'test_argc'
-    monkeypatch.setenv('COMP_LINE', "py.test " + arg)
-    monkeypatch.setenv('COMP_POINT', str(len('py.test ' + arg)))
+    monkeypatch.setenv('COMP_LINE', "pytest " + arg)
+    monkeypatch.setenv('COMP_POINT', str(len('pytest ' + arg)))
     result = testdir.run('bash', str(script), arg)
     result.stdout.fnmatch_lines(["test_argcomplete", "test_argcomplete.d/"])
-

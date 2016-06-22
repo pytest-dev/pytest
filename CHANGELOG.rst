@@ -43,6 +43,10 @@
   Can also show where fixtures are defined if combined with ``-v``.
   Thanks `@hackebrot`_ for the PR.
 
+* Introduce pytest command as recommended entry point. Closes proposal
+  `#1629`_. Thanks `@obestwalter`_ and `@davehunt`_ for the complete PR
+  (`#1633`_)
+
 * New cli flags:
   ``--setup-plan`` performs normal collection and reports the potential setup
     and teardown, does not execute any fixtures and tests
@@ -81,8 +85,58 @@
   message to raise when no exception occurred.
   Thanks `@palaviv`_ for the complete PR (`#1616`_).
 
+* ``conftest.py`` files now benefit from assertion rewriting; previously it
+  was only available for test modules. Thanks `@flub`_, `@sober7`_ and
+  `@nicoddemus`_ for the PR (`#1619`_).
+
+* Text documents without any doctests no longer appear as "skipped".
+  Thanks `@graingert`_ for reporting and providing a full PR (`#1580`_).
+
+* Fix internal error issue when ``method`` argument is missing for
+  ``teardown_method()``. Fixes (`#1605`_).
+
+* Fix exception visualization in case the current working directory (CWD) gets
+  deleted during testing. Fixes (`#1235`). Thanks `@bukzor`_ for reporting. PR by
+  `@marscher`. Thanks `@nicoddemus`_ for his help.
+
+* Ensure that a module within a namespace package can be found when it
+  is specified on the command line together with the ``--pyargs``
+  option.  Thanks to `@taschini`_ for the PR (`#1597`_).
+
+* Raise helpful failure message, when requesting parametrized fixture at runtime,
+  e.g. with ``request.getfuncargvalue``. BACKWARD INCOMPAT: Previously these params
+  were simply never defined. So a fixture decorated like ``@pytest.fixture(params=[0, 1, 2])``
+  only ran once. Now a failure is raised. Fixes (`#460`_). Thanks to
+  `@nikratio`_ for bug report, `@RedBeardCode`_ and `@tomviner`_ for PR.
+
+* Create correct diff for strings ending with newlines. Fixes (`#1553`_).
+  Thanks `@Vogtinator`_ for reporting. Thanks to `@RedBeardCode`_ and
+  `@tomviner`_ for PR.
+
+*
+
+.. _#1580: https://github.com/pytest-dev/pytest/pull/1580
+.. _#1605: https://github.com/pytest-dev/pytest/issues/1605
+.. _#1597: https://github.com/pytest-dev/pytest/pull/1597
+.. _#460: https://github.com/pytest-dev/pytest/pull/460
+.. _#1553: https://github.com/pytest-dev/pytest/issues/1553
+
+.. _@graingert: https://github.com/graingert
+.. _@taschini: https://github.com/taschini
+.. _@nikratio: https://github.com/nikratio
+.. _@RedBeardCode: https://github.com/RedBeardCode
+.. _@Vogtinator: https://github.com/Vogtinator
+
+* Fix `#1421`_: Exit tests if a collection error occurs and add
+  ``--continue-on-collection-errors`` option to restore previous behaviour.
+  Thanks `@olegpidsadnyi`_ and `@omarkohl`_ for the complete PR (`#1628`_).
+
+
+*
+
 .. _@milliams: https://github.com/milliams
 .. _@csaftoiu: https://github.com/csaftoiu
+.. _@flub: https://github.com/flub
 .. _@novas0x2a: https://github.com/novas0x2a
 .. _@kalekundert: https://github.com/kalekundert
 .. _@tareqalayan: https://github.com/tareqalayan
@@ -90,7 +144,12 @@
 .. _@palaviv: https://github.com/palaviv
 .. _@omarkohl: https://github.com/omarkohl
 .. _@mikofski: https://github.com/mikofski
+.. _@sober7: https://github.com/sober7
+.. _@olegpidsadnyi: https://github.com/olegpidsadnyi
+.. _@obestwalter: https://github.com/obestwalter
+.. _@davehunt: https://github.com/davehunt
 
+.. _#1421: https://github.com/pytest-dev/pytest/issues/1421
 .. _#1426: https://github.com/pytest-dev/pytest/issues/1426
 .. _#1428: https://github.com/pytest-dev/pytest/pull/1428
 .. _#1444: https://github.com/pytest-dev/pytest/pull/1444
@@ -102,9 +161,13 @@
 .. _#1474: https://github.com/pytest-dev/pytest/pull/1474
 .. _#1502: https://github.com/pytest-dev/pytest/pull/1502
 .. _#1520: https://github.com/pytest-dev/pytest/pull/1520
+.. _#1619: https://github.com/pytest-dev/pytest/issues/1619
 .. _#372: https://github.com/pytest-dev/pytest/issues/372
 .. _#1544: https://github.com/pytest-dev/pytest/issues/1544
 .. _#1616: https://github.com/pytest-dev/pytest/pull/1616
+.. _#1628: https://github.com/pytest-dev/pytest/pull/1628
+.. _#1629: https://github.com/pytest-dev/pytest/issues/1629
+.. _#1633: https://github.com/pytest-dev/pytest/pull/1633
 
 
 **Bug Fixes**
@@ -271,7 +334,7 @@
   Thanks `@biern`_ for the PR.
 
 * Fix `traceback style docs`_ to describe all of the available options
-  (auto/long/short/line/native/no), with `auto` being the default since v2.6.
+  (auto/long/short/line/native/no), with ``auto`` being the default since v2.6.
   Thanks `@hackebrot`_ for the PR.
 
 * Fix (`#1422`_): junit record_xml_property doesn't allow multiple records

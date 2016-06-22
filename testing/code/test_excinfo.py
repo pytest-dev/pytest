@@ -1066,3 +1066,15 @@ def test_repr_traceback_with_unicode(style, encoding):
     formatter = FormattedExcinfo(style=style)
     repr_traceback = formatter.repr_traceback(e_info)
     assert repr_traceback is not None
+
+
+def test_cwd_deleted(testdir):
+    testdir.makepyfile("""
+        def test(tmpdir):
+            tmpdir.chdir()
+            tmpdir.remove()
+            assert False
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(['* 1 failed in *'])
+    assert 'INTERNALERROR' not in result.stdout.str() + result.stderr.str()

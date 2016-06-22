@@ -34,7 +34,7 @@ def pytest_addoption(parser):
     .. note::
 
         This function should be implemented only in plugins or ``conftest.py``
-        files situated at the tests root directory due to how py.test
+        files situated at the tests root directory due to how pytest
         :ref:`discovers plugins during startup <pluginorder>`.
 
     :arg parser: To add command line options, call
