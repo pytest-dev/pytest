@@ -43,6 +43,13 @@
   Can also show where fixtures are defined if combined with ``-v``.
   Thanks `@hackebrot`_ for the PR.
 
+* New cli flags:
+  ``--setup-plan`` performs normal collection and reports the potential setup
+    and teardown, does not execute any fixtures and tests
+  ``--setup-only`` performs normal collection, executes setup and teardown of
+    fixtures and reports them. Thanks `@d6e`_, `@kvas-it`_, `@sallner`_
+    and `@omarkohl`_.
+
 **Changes**
 
 * Fixtures marked with ``@pytest.fixture`` can now use ``yield`` statements exactly like
