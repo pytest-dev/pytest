@@ -3,4 +3,18 @@
 Most useful command-line options
 ================================
 
-TODO
+Direct argument to select tests
+
+-s
+
+-k
+syntax
+
+-v
+
+--collect-only
+
+-x
+
+--lf
+--ff
