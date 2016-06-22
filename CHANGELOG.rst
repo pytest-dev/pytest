@@ -47,12 +47,11 @@
   `#1629`_. Thanks `@obestwalter`_ and `@davehunt`_ for the complete PR
   (`#1633`_)
 
-* New cli flags:
-  ``--setup-plan`` performs normal collection and reports the potential setup
-    and teardown, does not execute any fixtures and tests
+* New cli flags: (1) ``--setup-plan`` performs normal collection and reports
+  the potential setup and teardown, does not execute any fixtures and tests (2)
   ``--setup-only`` performs normal collection, executes setup and teardown of
-    fixtures and reports them. Thanks `@d6e`_, `@kvas-it`_, `@sallner`_
-    and `@omarkohl`_.
+  fixtures and reports them. Thanks `@d6e`_, `@kvas-it`_, `@sallner`_
+  and `@omarkohl`_ for the PR.
 
 **Changes**
 
@@ -148,6 +147,9 @@
 .. _@olegpidsadnyi: https://github.com/olegpidsadnyi
 .. _@obestwalter: https://github.com/obestwalter
 .. _@davehunt: https://github.com/davehunt
+.. _@sallner: https://github.com/sallner
+.. _@d6e: https://github.com/d6e
+.. _@kvas-it: https://github.com/kvas-it
 
 .. _#1421: https://github.com/pytest-dev/pytest/issues/1421
 .. _#1426: https://github.com/pytest-dev/pytest/issues/1426
