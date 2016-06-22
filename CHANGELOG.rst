@@ -10,8 +10,8 @@
   ``teardown_method()``. Fixes (`#1605`_).
 
 * Fix exception visualization in case the current working directory (CWD) gets
-  deleted during testing. Fixes (`#1235`). Thanks `@bukzor` for reporting. PR by
-  `@marscher`. Thanks `@nicoddemus` for his help.
+  deleted during testing. Fixes (`#1235`). Thanks `@bukzor`_ for reporting. PR by
+  `@marscher`. Thanks `@nicoddemus`_ for his help.
 
 * Ensure that a module within a namespace package can be found when it
   is specified on the command line together with the ``--pyargs``
@@ -192,7 +192,7 @@
   Thanks `@biern`_ for the PR.
 
 * Fix `traceback style docs`_ to describe all of the available options
-  (auto/long/short/line/native/no), with `auto` being the default since v2.6.
+  (auto/long/short/line/native/no), with ``auto`` being the default since v2.6.
   Thanks `@hackebrot`_ for the PR.
 
 * Fix (`#1422`_): junit record_xml_property doesn't allow multiple records
