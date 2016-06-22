@@ -67,6 +67,41 @@ define the markers which you then consistently apply throughout your test
 suite.
 
 
+Skip all test functions of a class or module
+---------------------------------------------
+
+You can use the ``skipif`` decorator (and any other marker) on classes::
+
+    @pytest.mark.skipif(sys.platform == 'win32',
+                        reason="does not run on windows")
+    class TestPosixCalls:
+
+        def test_function(self):
+            "will not be setup or run under 'win32' platform"
+
+If the condition is true, this marker will produce a skip result for each of
+the test methods.
+
+If you want to skip all test functions of a module, you must use the
+``pytestmark`` name on the global level:
+
+.. code-block:: python
+
+    # test_module.py
+    pytestmark = pytest.mark.skipif(...)
+
+
+TODO Link to scoped marking (reference) pytestmark. (possibly page named: magic
+variables)
+
+
+Multiple skipif decorators
+--------------------------
+
+If multiple "skipif" decorators are applied to a test function, it will be
+skipped if any of the skip conditions is true.
+
+
 Unconditional skip
 ------------------
 
