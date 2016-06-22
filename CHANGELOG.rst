@@ -102,15 +102,23 @@
   only ran once. Now a failure is raised. Fixes (`#460`_). Thanks to
   `@nikratio`_ for bug report, `@RedBeardCode`_ and `@tomviner`_ for PR.
 
+* Create correct diff for strings ending with newlines. Fixes (`#1553`_).
+  Thanks `@Vogtinator`_ for reporting. Thanks to `@RedBeardCode`_ and
+  `@tomviner`_ for PR.
+
+*
+
 .. _#1580: https://github.com/pytest-dev/pytest/pull/1580
 .. _#1605: https://github.com/pytest-dev/pytest/issues/1605
 .. _#1597: https://github.com/pytest-dev/pytest/pull/1597
 .. _#460: https://github.com/pytest-dev/pytest/pull/460
+.. _#1553: https://github.com/pytest-dev/pytest/issues/1553
 
 .. _@graingert: https://github.com/graingert
 .. _@taschini: https://github.com/taschini
 .. _@nikratio: https://github.com/nikratio
 .. _@RedBeardCode: https://github.com/RedBeardCode
+.. _@Vogtinator: https://github.com/Vogtinator
 
 * Fix `#1421`_: Exit tests if a collection error occurs and add
   ``--continue-on-collection-errors`` option to restore previous behaviour.
