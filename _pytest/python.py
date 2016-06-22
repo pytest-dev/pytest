@@ -2541,10 +2541,10 @@ class FixtureDef:
         if what == 'SETUP':
             deps = sorted(arg for arg in self.argnames if arg != 'request')
             if deps:
-                tw.write(' (fixtures used: {})'.format(', '.join(deps)))
+                tw.write(' (fixtures used: {0})'.format(', '.join(deps)))
 
         if hasattr(self, 'cached_param'):
-            tw.write('[{}]'.format(self.cached_param))
+            tw.write('[{0}]'.format(self.cached_param))
 
         if capman:
             capman.resumecapture()
