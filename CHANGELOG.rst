@@ -143,6 +143,9 @@ time or change existing behaviors in order to make them less surprising/more use
 
 **Changes**
 
+* Plugins now benefit from assertion rewriting.  Thanks
+  `@sober7`_, `@nicoddemus`_ and `@flub`_ for the PR.
+
 * Fixtures marked with ``@pytest.fixture`` can now use ``yield`` statements exactly like
   those marked with the ``@pytest.yield_fixture`` decorator. This change renders
   ``@pytest.yield_fixture`` deprecated and makes ``@pytest.fixture`` with ``yield`` statements

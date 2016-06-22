@@ -373,10 +373,14 @@ def test_preparse_ordering_with_setuptools(testdir, monkeypatch):
     pkg_resources = pytest.importorskip("pkg_resources")
     def my_iter(name):
         assert name == "pytest11"
+        class Dist:
+            project_name = 'spam'
+            version = '1.0'
+            def _get_metadata(self, name):
+                return ['foo.txt,sha256=abc,123']
         class EntryPoint:
             name = "mytestplugin"
-            class dist:
-                pass
+            dist = Dist()
             def load(self):
                 class PseudoPlugin:
                     x = 42
@@ -412,8 +416,14 @@ def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch):
     pkg_resources = pytest.importorskip("pkg_resources")
     def my_iter(name):
         assert name == "pytest11"
+        class Dist:
+            project_name = 'spam'
+            version = '1.0'
+            def _get_metadata(self, name):
+                return ['foo.txt,sha256=abc,123']
         class EntryPoint:
             name = "mytestplugin"
+            dist = Dist()
             def load(self):
                 assert 0, "should not arrive here"
         return iter([EntryPoint()])
@@ -505,7 +515,6 @@ def test_load_initial_conftest_last_ordering(testdir):
     expected = [
         "_pytest.config",
         'test_config',
-        '_pytest.assertion',
         '_pytest.capture',
     ]
     assert [x.function.__module__ for x in l] == expected

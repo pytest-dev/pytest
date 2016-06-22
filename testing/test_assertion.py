@@ -26,6 +26,116 @@ def mock_config():
 def interpret(expr):
     return reinterpret.reinterpret(expr, _pytest._code.Frame(sys._getframe(1)))
 
+
+class TestImportHookInstallation:
+
+    @pytest.mark.parametrize('initial_conftest', [True, False])
+    @pytest.mark.parametrize('mode', ['plain', 'rewrite', 'reinterp'])
+    def test_conftest_assertion_rewrite(self, testdir, initial_conftest, mode):
+        """Test that conftest files are using assertion rewrite on import.
+        (#1619)
+        """
+        testdir.tmpdir.join('foo/tests').ensure(dir=1)
+        conftest_path = 'conftest.py' if initial_conftest else 'foo/conftest.py'
+        contents = {
+            conftest_path: """
+                import pytest
+                @pytest.fixture
+                def check_first():
+                    def check(values, value):
+                        assert values.pop(0) == value
+                    return check
+            """,
+            'foo/tests/test_foo.py': """
+                def test(check_first):
+                    check_first([10, 30], 30)
+            """
+        }
+        testdir.makepyfile(**contents)
+        result = testdir.runpytest_subprocess('--assert=%s' % mode)
+        if mode == 'plain':
+            expected = 'E       AssertionError'
+        elif mode == 'rewrite':
+            expected = '*assert 10 == 30*'
+        elif mode == 'reinterp':
+            expected = '*AssertionError:*was re-run*'
+        else:
+            assert 0
+        result.stdout.fnmatch_lines([expected])
+
+    @pytest.mark.parametrize('mode', ['plain', 'rewrite', 'reinterp'])
+    def test_installed_plugin_rewrite(self, testdir, mode):
+        # Make sure the hook is installed early enough so that plugins
+        # installed via setuptools are re-written.
+        ham = testdir.tmpdir.join('hampkg').ensure(dir=1)
+        ham.join('__init__.py').write("""
+import pytest
+
+@pytest.fixture
+def check_first2():
+    def check(values, value):
+        assert values.pop(0) == value
+    return check
+        """)
+        testdir.makepyfile(
+            spamplugin="""
+            import pytest
+            from hampkg import check_first2
+
+            @pytest.fixture
+            def check_first():
+                def check(values, value):
+                    assert values.pop(0) == value
+                return check
+            """,
+            mainwrapper="""
+            import pytest, pkg_resources
+
+            class DummyDistInfo:
+                project_name = 'spam'
+                version = '1.0'
+
+                def _get_metadata(self, name):
+                    return ['spamplugin.py,sha256=abc,123',
+                            'hampkg/__init__.py,sha256=abc,123']
+
+            class DummyEntryPoint:
+                name = 'spam'
+                module_name = 'spam.py'
+                attrs = ()
+                extras = None
+                dist = DummyDistInfo()
+
+                def load(self, require=True, *args, **kwargs):
+                    import spamplugin
+                    return spamplugin
+
+            def iter_entry_points(name):
+                yield DummyEntryPoint()
+
+            pkg_resources.iter_entry_points = iter_entry_points
+            pytest.main()
+            """,
+            test_foo="""
+            def test(check_first):
+                check_first([10, 30], 30)
+
+            def test2(check_first2):
+                check_first([10, 30], 30)
+            """,
+        )
+        result = testdir.run(sys.executable, 'mainwrapper.py', '-s', '--assert=%s' % mode)
+        if mode == 'plain':
+            expected = 'E       AssertionError'
+        elif mode == 'rewrite':
+            expected = '*assert 10 == 30*'
+        elif mode == 'reinterp':
+            expected = '*AssertionError:*was re-run*'
+        else:
+            assert 0
+        result.stdout.fnmatch_lines([expected])
+
+
 class TestBinReprIntegration:
 
     def test_pytest_assertrepr_compare_called(self, testdir):
