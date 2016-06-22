@@ -48,7 +48,7 @@ to fix the bug yet.
 Fix bugs
 --------
 
-Look through the GitHub issues for bugs.  Here is sample filter you can use:
+Look through the GitHub issues for bugs.  Here is a filter you can use:
 https://github.com/pytest-dev/pytest/labels/bug
 
 :ref:`Talk <contact>` to developers to find out how you can fix specific bugs.
@@ -60,8 +60,7 @@ Don't forget to check the issue trackers of your favourite plugins, too!
 Implement features
 ------------------
 
-Look through the GitHub issues for enhancements.  Here is sample filter you
-can use:
+Look through the GitHub issues for enhancements.  Here is a filter you can use:
 https://github.com/pytest-dev/pytest/labels/enhancement
 
 :ref:`Talk <contact>` to developers to find out how you can implement specific
@@ -70,16 +69,15 @@ features.
 Write documentation
 -------------------
 
-pytest could always use more documentation.  What exactly is needed?
+Pytest could always use more documentation.  What exactly is needed?
 
 * More complementary documentation.  Have you perhaps found something unclear?
 * Documentation translations.  We currently have only English.
 * Docstrings.  There can never be too many of them.
 * Blog posts, articles and such -- they're all very appreciated.
 
-You can also edit documentation files directly in the Github web interface
-without needing to make a fork and local copy. This can be convenient for
-small fixes.
+You can also edit documentation files directly in the GitHub web interface,
+without using a local copy.  This can be convenient for small fixes.
 
 
 .. _submitplugin:
@@ -95,13 +93,14 @@ in repositories living under the ``pytest-dev`` organisations:
 - `pytest-dev on Bitbucket <https://bitbucket.org/pytest-dev>`_
 
 All pytest-dev Contributors team members have write access to all contained
-repositories.  pytest core and plugins are generally developed
+repositories.  Pytest core and plugins are generally developed
 using `pull requests`_ to respective repositories.
 
 The objectives of the ``pytest-dev`` organisation are:
 
 * Having a central location for popular pytest plugins
-* Sharing some of the maintenance responsibility (in case a maintainer no longer whishes to maintain a plugin)
+* Sharing some of the maintenance responsibility (in case a maintainer no
+  longer wishes to maintain a plugin)
 
 You can submit your plugin by subscribing to the `pytest-dev mail list
 <https://mail.python.org/mailman/listinfo/pytest-dev>`_ and writing a
@@ -159,15 +158,11 @@ As stated, the objective is to share maintenance and avoid "plugin-abandon".
 Preparing Pull Requests on GitHub
 ---------------------------------
 
-There's an excellent tutorial on how Pull Requests work in the
-`GitHub Help Center <https://help.github.com/articles/using-pull-requests/>`_
-
-
 .. note::
   What is a "pull request"?  It informs project's core developers about the
   changes you want to review and merge.  Pull requests are stored on
   `GitHub servers <https://github.com/pytest-dev/pytest/pulls>`_.
-  Once you send pull request, we can discuss it's potential modifications and
+  Once you send a pull request, we can discuss its potential modifications and
   even add more commits to it later on.
 
 There's an excellent tutorial on how Pull Requests work in the
@@ -216,19 +211,19 @@ but here is a simple overview:
    This command will run tests via the "tox" tool against Python 2.7 and 3.5
    and also perform "lint" coding-style checks.  ``runtox.py`` is
    a thin wrapper around ``tox`` which installs from a development package
-   index where newer (not yet released to pypi) versions of dependencies
+   index where newer (not yet released to PyPI) versions of dependencies
    (especially ``py``) might be present.
 
 #. You can now edit your local working copy.
 
    You can now make the changes you want and run the tests again as necessary.
 
-   To run tests on py27 and pass options to pytest (e.g. enter pdb on failure)
-   to pytest you can do::
+   To run tests on Python 2.7 and pass options to pytest (e.g. enter pdb on
+   failure) to pytest you can do::
 
     $ python3 runtox.py -e py27 -- --pdb
 
-   or to only run tests in a particular test module on py35::
+   Or to only run tests in a particular test module on Python 3.5::
 
     $ python3 runtox.py -e py35 -- testing/test_config.py
 
@@ -237,9 +232,9 @@ but here is a simple overview:
     $ git commit -a -m "<commit message>"
     $ git push -u
 
-   Make sure you add a CHANGELOG message, and add yourself to AUTHORS. If you
-   are unsure about either of these steps, submit your pull request and we'll
-   help you fix it up.
+   Make sure you add a message to ``CHANGELOG.rst`` and add yourself to
+   ``AUTHORS``.  If you are unsure about either of these steps, submit your
+   pull request and we'll help you fix it up.
 
 #. Finally, submit a pull request through the GitHub website using this data::
 
@@ -248,6 +243,6 @@ but here is a simple overview:
 
     base-fork: pytest-dev/pytest
     base: master          # if it's a bugfix
-    base: feature         # if it's a feature
+    base: features        # if it's a feature
 
 
