@@ -157,3 +157,25 @@ def test_show_fixtures_with_parameter_ids(testdir, mode):
         'SETUP    S arg_same?spam?',
         'SETUP    S arg_same?ham?',
     ])
+
+
+def test_dynamic_fixture_request(testdir):
+    p = testdir.makepyfile('''
+        import pytest
+        @pytest.fixture()
+        def dynamically_requested_fixture():
+            pass
+        @pytest.fixture()
+        def dependent_fixture(request):
+            request.getfuncargvalue('dynamically_requested_fixture')
+        def test_dyn(dependent_fixture):
+            pass
+    ''')
+
+    result = testdir.runpytest('--setup-only', p)
+    assert result.ret == 0
+
+    result.stdout.fnmatch_lines([
+        '*SETUP    F dynamically_requested_fixture',
+        '*TEARDOWN F dynamically_requested_fixture'
+    ])
