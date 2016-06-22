@@ -225,9 +225,10 @@ def _diff_text(left, right, verbose=False):
                                   'characters in diff, use -v to show') % i]
                 left = left[:-i]
                 right = right[:-i]
+    keepends = True
     explanation += [line.strip('\n')
-                    for line in ndiff(left.splitlines(),
-                                      right.splitlines())]
+                    for line in ndiff(left.splitlines(keepends),
+                                      right.splitlines(keepends))]
     return explanation
 
 
