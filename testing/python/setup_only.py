@@ -1,4 +1,12 @@
-def test_show_only_active_fixtures(testdir):
+import pytest
+
+
+@pytest.fixture(params=['--setup-only', '--setup-plan'], scope='module')
+def mode(request):
+    return request.param
+
+
+def test_show_only_active_fixtures(testdir, mode):
     p = testdir.makepyfile('''
         import pytest
         @pytest.fixture
@@ -11,7 +19,7 @@ def test_show_only_active_fixtures(testdir):
             pass
     ''')
 
-    result = testdir.runpytest("--setup-only", p)
+    result = testdir.runpytest(mode, p)
     assert result.ret == 0
 
     result.stdout.fnmatch_lines([
@@ -22,7 +30,7 @@ def test_show_only_active_fixtures(testdir):
     assert "_arg0" not in result.stdout.str()
 
 
-def test_show_different_scopes(testdir):
+def test_show_different_scopes(testdir, mode):
     p = testdir.makepyfile('''
         import pytest
         @pytest.fixture
@@ -35,7 +43,7 @@ def test_show_different_scopes(testdir):
             pass
     ''')
 
-    result = testdir.runpytest("--setup-only", p)
+    result = testdir.runpytest(mode, p)
     assert result.ret == 0
 
     result.stdout.fnmatch_lines([
@@ -47,7 +55,7 @@ def test_show_different_scopes(testdir):
     ])
 
 
-def test_show_nested_fixtures(testdir):
+def test_show_nested_fixtures(testdir, mode):
     testdir.makeconftest('''
         import pytest
         @pytest.fixture(scope='session')
@@ -63,7 +71,7 @@ def test_show_nested_fixtures(testdir):
             pass
     ''')
 
-    result = testdir.runpytest("--setup-only", p)
+    result = testdir.runpytest(mode, p)
     assert result.ret == 0
 
     result.stdout.fnmatch_lines([
@@ -75,7 +83,7 @@ def test_show_nested_fixtures(testdir):
     ])
 
 
-def test_show_fixtures_with_autouse(testdir):
+def test_show_fixtures_with_autouse(testdir, mode):
     p = testdir.makepyfile('''
         import pytest
         @pytest.fixture
@@ -88,7 +96,7 @@ def test_show_fixtures_with_autouse(testdir):
             pass
     ''')
 
-    result = testdir.runpytest("--setup-only", p)
+    result = testdir.runpytest(mode, p)
     assert result.ret == 0
 
     result.stdout.fnmatch_lines([
@@ -98,7 +106,7 @@ def test_show_fixtures_with_autouse(testdir):
     ])
 
 
-def test_show_fixtures_with_parameters(testdir):
+def test_show_fixtures_with_parameters(testdir, mode):
     testdir.makeconftest('''
         import pytest
         @pytest.fixture(scope='session', params=['foo', 'bar'])
@@ -114,7 +122,7 @@ def test_show_fixtures_with_parameters(testdir):
             pass
     ''')
 
-    result = testdir.runpytest("--setup-only", p)
+    result = testdir.runpytest(mode, p)
     assert result.ret == 0
 
     result.stdout.fnmatch_lines([
@@ -125,7 +133,7 @@ def test_show_fixtures_with_parameters(testdir):
     ])
 
 
-def test_show_fixtures_with_parameter_ids(testdir):
+def test_show_fixtures_with_parameter_ids(testdir, mode):
     testdir.makeconftest('''
         import pytest
         @pytest.fixture(
@@ -142,7 +150,7 @@ def test_show_fixtures_with_parameter_ids(testdir):
             pass
     ''')
 
-    result = testdir.runpytest("--setup-only", p)
+    result = testdir.runpytest(mode, p)
     assert result.ret == 0
 
     result.stdout.fnmatch_lines([

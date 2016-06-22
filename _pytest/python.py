@@ -2459,7 +2459,8 @@ class FixtureDef:
             # even if finalization fails, we invalidate
             # the cached fixture value
             if hasattr(self, "cached_result"):
-                if self._fixturemanager.config.option.setuponly:
+                config = self._fixturemanager.config
+                if config.option.setuponly or config.option.setupplan:
                     self._log_fixture_stack('TEARDOWN')
                     if hasattr(self, "cached_param"):
                         del self.cached_param
@@ -2507,10 +2508,14 @@ class FixtureDef:
                     fixturefunc = fixturefunc.__get__(request.instance)
 
         try:
-            result = call_fixture_func(fixturefunc, request, kwargs)
-            # We want to access the params of ids if they exist also in during
-            # the finish() method.
-            if self._fixturemanager.config.option.setuponly:
+            config = request.config
+            if config.option.setupplan:
+                result = None
+            else:
+                result = call_fixture_func(fixturefunc, request, kwargs)
+            if config.option.setuponly or config.option.setupplan:
+                # We want to access the params of ids if they exist also in during
+                # the finish() method.
                 if hasattr(request, 'param'):
                     if self.ids:
                         ind = self.params.index(request.param)

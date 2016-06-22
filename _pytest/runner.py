@@ -73,7 +73,7 @@ def runtestprotocol(item, log=True, nextitem=None):
     rep = call_and_report(item, "setup", log)
     reports = [rep]
     if rep.passed:
-        if item.config.option.setuponly:
+        if item.config.option.setuponly or item.config.option.setupplan:
             show_test_item(item)
         else:
             reports.append(call_and_report(item, "call", log))
