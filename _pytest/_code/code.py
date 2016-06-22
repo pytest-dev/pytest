@@ -3,7 +3,6 @@ from inspect import CO_VARARGS, CO_VARKEYWORDS
 import re
 
 import py
-
 builtin_repr = repr
 
 reprlib = py.builtin._tryimport('repr', 'reprlib')
@@ -36,12 +35,16 @@ class Code(object):
     def path(self):
         """ return a path object pointing to source code (note that it
         might not point to an actually existing file). """
-        p = py.path.local(self.raw.co_filename)
-        # maybe don't try this checking
-        if not p.check():
+        try:
+            p = py.path.local(self.raw.co_filename)
+            # maybe don't try this checking
+            if not p.check():
+                raise OSError("py.path check failed.")
+        except OSError:
             # XXX maybe try harder like the weird logic
             # in the standard lib [linecache.updatecache] does?
             p = self.raw.co_filename
+
         return p
 
     @property

@@ -8,15 +8,10 @@ import _pytest._pluggy as pluggy
 import _pytest._code
 import py
 import pytest
-from _pytest import runner
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.terminal import TerminalReporter, repr_pythonversion, getreportopt
 from _pytest.terminal import build_summary_stats_line, _plugin_nameversions
 
-
-def basic_run_report(item):
-    runner.call_and_report(item, "setup", log=False)
-    return runner.call_and_report(item, "call", log=False)
 
 DistInfo = collections.namedtuple('DistInfo', ['project_name', 'version'])
 

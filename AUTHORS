@@ -5,6 +5,7 @@ Contributors include::
 
 Abdeali JK
 Abhijeet Kasurde
+Alexei Kozlenok
 Anatoly Bubenkoff
 Andreas Zeidler
 Andy Freeland
@@ -12,14 +13,17 @@ Anthon van der Neut
 Armin Rigo
 Aron Curzon
 Aviv Palivoda
+Ben Webb
 Benjamin Peterson
 Bob Ippolito
 Brian Dorsey
 Brian Okken
 Brianna Laugher
 Bruno Oliveira
+Cal Leeming
 Carl Friedrich Bolz
 Charles Cloud
+Charnjit SiNGH (CCSJ)
 Chris Lamb
 Christian Theunert
 Christian Tismer
@@ -28,20 +32,24 @@ Daniel Grana
 Daniel Hahler
 Daniel Nuri
 Dave Hunt
+David Díaz-Barquero
 David Mohr
 David Vierra
 Edison Gustavo Muenz
 Eduardo Schettino
-Endre Galaczi
 Elizaveta Shashkova
+Endre Galaczi
+Eric Hunsberger
 Eric Hunsberger
 Eric Siegerman
 Erik M. Bray
+Feng Ma
 Florian Bruhin
 Floris Bruynooghe
 Gabriel Reis
 Georgy Dyuldin
 Graham Horler
+Greg Price
 Grig Gheorghiu
 Guido Wesdorp
 Harald Armin Massa
@@ -65,6 +73,7 @@ Mark Abramowitz
 Markus Unterwaditzer
 Martijn Faassen
 Martin Prusse
+Martin K. Scherer
 Matt Bachmann
 Matt Williams
 Michael Aquilina
@@ -84,18 +93,16 @@ Raphael Pierzina
 Roman Bolshakov
 Ronny Pfannschmidt
 Ross Lawley
+Russel Winder
 Ryan Wooden
 Samuele Pedroni
 Stephan Obermann
 Tareq Alayan
+Simon Gomizelj
+Stefano Taschini
+Stefan Farmbauer
+Thomas Grainger
 Tom Viner
 Trevor Bekolay
 Wouter van Ackooy
-David Díaz-Barquero
-Eric Hunsberger
-Simon Gomizelj
-Russel Winder
-Ben Webb
-Alexei Kozlenok
-Cal Leeming
-Feng Ma
+Bernard Pratz
