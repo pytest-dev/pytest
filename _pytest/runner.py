@@ -74,14 +74,7 @@ def runtestprotocol(item, log=True, nextitem=None):
     reports = [rep]
     if rep.passed:
         if item.config.option.setuponly:
-            tw = item.config.get_terminal_writer()
-            tw.line()
-            tw.write(' ' * 8)
-            tw.write('{} '.format(item._nodeid))
-            used_fixtures = sorted(item._fixtureinfo.name2fixturedefs.keys())
-            if used_fixtures:
-                tw.write('fixtures: ')
-                tw.write(', '.join(used_fixtures))
+            show_test_item(item)
         else:
             reports.append(call_and_report(item, "call", log))
     reports.append(call_and_report(item, "teardown", log,
@@ -92,6 +85,17 @@ def runtestprotocol(item, log=True, nextitem=None):
         item._request = False
         item.funcargs = None
     return reports
+
+def show_test_item(item):
+    """Show test function, parameters and the fixtures of the test item."""
+    tw = item.config.get_terminal_writer()
+    tw.line()
+    tw.write(' ' * 8)
+    tw.write('{} '.format(item._nodeid))
+    used_fixtures = sorted(item._fixtureinfo.name2fixturedefs.keys())
+    if used_fixtures:
+        tw.write('fixtures: ')
+        tw.write(', '.join(used_fixtures))
 
 def pytest_runtest_setup(item):
     item.session._setupstate.prepare(item)
