@@ -206,6 +206,8 @@ This is specially useful for marking crashing tests for later inspection.
 Ignoring xfail marks
 ~~~~~~~~~~~~~~~~~~~~
 
+TODO advanced xfail
+
 By specifying on the commandline::
 
     pytest --runxfail
@@ -215,6 +217,8 @@ as if it weren't marked at all.
 
 Examples
 ~~~~~~~~
+
+TODO move somewhere or delete
 
 Here is a simple test file with the several usages:
 
@@ -248,6 +252,8 @@ Running it with the report-on-xfail option gives this output::
 xfail signature summary
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+TODO advanced xfail
+
 Here's the signature of the ``xfail`` marker, using Python 3 keyword-only
 arguments syntax:
 
@@ -261,6 +267,8 @@ arguments syntax:
 
 Skip/xfail with parametrize
 ---------------------------
+
+TODO advanced xfail
 
 It is possible to apply markers like skip and xfail to individual
 test instances when using parametrize::
@@ -283,6 +291,8 @@ test instances when using parametrize::
 Imperative xfail from within a test or setup function
 ------------------------------------------------------
 
+TODO advanced xfail
+
 If you cannot declare xfail- of skipif conditions at import
 time you can also imperatively produce an according outcome
 imperatively, in test or setup code::
@@ -296,6 +306,8 @@ imperatively, in test or setup code::
 
 Skipping on a missing import dependency
 --------------------------------------------------
+
+TODO advanced skipping
 
 You can use the following import helper at module level
 or within a test or test setup function::
@@ -316,6 +328,8 @@ module's ``__version__`` attribute.
 
 specifying conditions as strings versus booleans
 ----------------------------------------------------------
+
+TODO dont mention this because only backward compatiblity
 
 Prior to pytest-2.4 the only way to specify skipif/xfail conditions was
 to use strings::

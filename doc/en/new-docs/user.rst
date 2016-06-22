@@ -12,7 +12,7 @@ Writing tests
 * :ref:`Asserting about exceptions with pytest.raises <pytestraises>`
 * :ref:`Using pytest.mark to group tests <pytestmarkbasic>`
 * :ref:`Skip and skipif marks <skippingbasic>`
-* :ref:`xfail mark <xfail>`
+* :ref:`xfail mark <xfailbasic>`
 * :ref:`parametrize basics <parametrizebasic>`
 * :ref:`Fixture basics <fixturebasic>`
 * :ref:`Fixture finalizers <fixturefinalizer>`
