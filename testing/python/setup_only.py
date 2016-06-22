@@ -16,7 +16,7 @@ def test_show_only_active_fixtures(testdir):
 
     result.stdout.fnmatch_lines([
         '*SETUP    F arg1*',
-        '*test_arg1 fixtures: arg1',
+        '*test_arg1 (fixtures used: arg1)',
         '*TEARDOWN F arg1*',
     ])
     assert "_arg0" not in result.stdout.str()
@@ -41,7 +41,7 @@ def test_show_different_scopes(testdir):
     result.stdout.fnmatch_lines([
         'SETUP    S arg_session*',
         '*SETUP    F arg_function*',
-        '*test_arg1 fixtures: arg_function, arg_session',
+        '*test_arg1 (fixtures used: arg_function, arg_session)',
         '*TEARDOWN F arg_function*',
         'TEARDOWN S arg_session*',
     ])
@@ -68,8 +68,8 @@ def test_show_nested_fixtures(testdir):
 
     result.stdout.fnmatch_lines([
         'SETUP    S arg_same*',
-        '*SETUP    F arg_same*',
-        '*test_arg1 fixtures: arg_same',
+        '*SETUP    F arg_same (fixtures used: arg_same)*',
+        '*test_arg1 (fixtures used: arg_same)',
         '*TEARDOWN F arg_same*',
         'TEARDOWN S arg_same*',
     ])
@@ -94,7 +94,7 @@ def test_show_fixtures_with_autouse(testdir):
     result.stdout.fnmatch_lines([
         'SETUP    S arg_session*',
         '*SETUP    F arg_function*',
-        '*test_arg1 fixtures: arg_function, arg_session',
+        '*test_arg1 (fixtures used: arg_function, arg_session)',
     ])
 
 

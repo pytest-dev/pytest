@@ -91,10 +91,10 @@ def show_test_item(item):
     tw = item.config.get_terminal_writer()
     tw.line()
     tw.write(' ' * 8)
-    tw.write('{}'.format(item._nodeid))
+    tw.write('{0}'.format(item._nodeid))
     used_fixtures = sorted(item._fixtureinfo.name2fixturedefs.keys())
     if used_fixtures:
-        tw.write(' (fixtures used: {})'.format(', '.join(used_fixtures)))
+        tw.write(' (fixtures used: {0})'.format(', '.join(used_fixtures)))
 
 def pytest_runtest_setup(item):
     item.session._setupstate.prepare(item)
