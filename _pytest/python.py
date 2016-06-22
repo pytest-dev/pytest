@@ -2537,6 +2537,12 @@ class FixtureDef:
             step=what.ljust(8),  # align the output to TEARDOWN
             scope=self.scope[0].upper(),
             fixture=self.argname))
+
+        if what == 'SETUP':
+            deps = sorted(arg for arg in self.argnames if arg != 'request')
+            if deps:
+                tw.write(' (fixtures used: {})'.format(', '.join(deps)))
+
         if hasattr(self, 'cached_param'):
             tw.write('[{}]'.format(self.cached_param))
 
