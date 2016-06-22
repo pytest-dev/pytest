@@ -2460,12 +2460,8 @@ class FixtureDef:
             # the cached fixture value
             if hasattr(self, "cached_result"):
                 if self._fixturemanager.config.option.setuponly:
-                    tw = self._fixturemanager.config.get_terminal_writer()
-                    tw.line()
-                    tw.write(' ' * 2 * self.scopenum)
-                    tw.write('TEARDOWN {} {}'.format(self.scope[0].upper(), self.argname))
+                    self._log_fixture_stack('TEARDOWN')
                     if hasattr(self, "cached_param"):
-                        tw.write('[{}]'.format(self.cached_param))
                         del self.cached_param
                 del self.cached_result
 
@@ -2512,18 +2508,32 @@ class FixtureDef:
 
         try:
             result = call_fixture_func(fixturefunc, request, kwargs)
-            tw = request.config.get_terminal_writer()
-            tw.line()
-            tw.write(' ' * 2 * self.scopenum)
-            tw.write('SETUP    {} {}'.format(self.scope[0].upper(), fixturefunc.__name__))
-            if hasattr(request, 'param'):
-                tw.write('[{}]'.format(request.param))
-                self.cached_param = request.param
+            # We want to access the params of ids if they exist also in during
+            # the finish() method.
+            if self._fixturemanager.config.option.setuponly:
+                if hasattr(request, 'param'):
+                    if self.ids:
+                        ind = self.params.index(request.param)
+                        self.cached_param = self.ids[ind]
+                    else:
+                        self.cached_param = request.param
+                self._log_fixture_stack('SETUP')
         except Exception:
             self.cached_result = (None, my_cache_key, sys.exc_info())
             raise
         self.cached_result = (result, my_cache_key, None)
         return result
+
+    def _log_fixture_stack(self, what):
+        tw = self._fixturemanager.config.get_terminal_writer()
+        tw.line()
+        tw.write(' ' * 2 * self.scopenum)
+        tw.write('{step} {scope} {fixture}'.format(
+            step=what.ljust(8),  # align the output to TEARDOWN
+            scope=self.scope[0].upper(),
+            fixture=self.argname))
+        if hasattr(self, 'cached_param'):
+            tw.write('[{}]'.format(self.cached_param))
 
     def __repr__(self):
         return ("<FixtureDef name=%r scope=%r baseid=%r >" %
