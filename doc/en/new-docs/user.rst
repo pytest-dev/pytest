@@ -11,7 +11,7 @@ Writing tests
 * :ref:`Test directory structure <testdirectory>`
 * :ref:`Asserting about exceptions with pytest.raises <pytestraises>`
 * :ref:`Using pytest.mark to group tests <pytestmarkbasic>`
-* :ref:`Skip and skipif marks <skipping>`
+* :ref:`Skip and skipif marks <skippingbasic>`
 * :ref:`xfail mark <xfail>`
 * :ref:`parametrize basics <parametrizebasic>`
 * :ref:`Fixture basics <fixturebasic>`
