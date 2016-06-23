@@ -2552,7 +2552,7 @@ class FixtureDef:
         config = self._fixturemanager.config
         capman = config.pluginmanager.getplugin('capturemanager')
         if capman:
-            capman.suspendcapture()
+            out, err = capman.suspendcapture()
 
         tw = config.get_terminal_writer()
         tw.line()
@@ -2572,6 +2572,8 @@ class FixtureDef:
 
         if capman:
             capman.resumecapture()
+            sys.stdout.write(out)
+            sys.stderr.write(err)
 
     def __repr__(self):
         return ("<FixtureDef name=%r scope=%r baseid=%r >" %

@@ -179,3 +179,24 @@ def test_dynamic_fixture_request(testdir):
         '*SETUP    F dynamically_requested_fixture',
         '*TEARDOWN F dynamically_requested_fixture'
     ])
+
+
+def test_capturing(testdir):
+    p = testdir.makepyfile('''
+        import pytest, sys
+        @pytest.fixture()
+        def one():
+            sys.stdout.write('this should be captured')
+            sys.stderr.write('this should also be captured')
+        @pytest.fixture()
+        def two(one):
+            assert 0
+        def test_capturing(two):
+            pass
+    ''')
+
+    result = testdir.runpytest('--setup-only', p)
+    result.stdout.fnmatch_lines([
+        'this should be captured',
+        'this should also be captured'
+    ])
