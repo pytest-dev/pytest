@@ -2,9 +2,9 @@ sudo: false
 language: python
 python:
     - '3.5'
-# command to install dependencies
-install: "pip install -U tox"
-# # command to run tests
+install:
+  - travis_retry pip install -U pip
+  - travis_retry pip install -U tox
 env:
   matrix:
     # coveralls is not listed in tox's envlist, but should run in travis
@@ -31,11 +31,9 @@ script: tox -e $TESTENV
 
 cache:
   directories:
-    - .tox/$TOXENV
     - $HOME/.cache/pip
 -before_cache:
-  - rm -f .tox/$TOXENV/dist .tox/$TOXENV/log
-  - find .tox/$TOXENV ( -name '*.pyc' -or '*.pyo' ) -delete
+  - rm -f $HOME/.cache/pip/log/debug.log
 
 notifications:
   irc:
