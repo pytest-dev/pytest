@@ -2480,7 +2480,7 @@ class FixtureDef:
             if hasattr(self, "cached_result"):
                 config = self._fixturemanager.config
                 if config.option.setuponly or config.option.setupplan:
-                    self._log_fixture_stack('TEARDOWN')
+                    self._show_fixture_action('TEARDOWN')
                     if hasattr(self, "cached_param"):
                         del self.cached_param
                 del self.cached_result
@@ -2533,22 +2533,24 @@ class FixtureDef:
             else:
                 result = call_fixture_func(fixturefunc, request, kwargs)
             if config.option.setuponly or config.option.setupplan:
-                # We want to access the params of ids if they exist also in during
-                # the finish() method.
                 if hasattr(request, 'param'):
+                    # Save the fixture parameter so ._show_fixture_action() can
+                    # display it now and during the teardown (in .finish()).
                     if self.ids:
-                        ind = self.params.index(request.param)
-                        self.cached_param = self.ids[ind]
+                        if callable(self.ids):
+                            self.cached_param = self.ids(request.param)
+                        else:
+                            self.cached_param = self.ids[request.param_index]
                     else:
                         self.cached_param = request.param
-                self._log_fixture_stack('SETUP')
+                self._show_fixture_action('SETUP')
         except Exception:
             self.cached_result = (None, my_cache_key, sys.exc_info())
             raise
         self.cached_result = (result, my_cache_key, None)
         return result
 
-    def _log_fixture_stack(self, what):
+    def _show_fixture_action(self, what):
         config = self._fixturemanager.config
         capman = config.pluginmanager.getplugin('capturemanager')
         if capman:

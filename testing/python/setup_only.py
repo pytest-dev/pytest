@@ -159,6 +159,25 @@ def test_show_fixtures_with_parameter_ids(testdir, mode):
     ])
 
 
+def test_show_fixtures_with_parameter_ids_function(testdir, mode):
+    p = testdir.makepyfile('''
+        import pytest
+        @pytest.fixture(params=['foo', 'bar'], ids=lambda p: p.upper())
+        def foobar():
+            pass
+        def test_foobar(foobar):
+            pass
+    ''')
+
+    result = testdir.runpytest(mode, p)
+    assert result.ret == 0
+
+    result.stdout.fnmatch_lines([
+        '*SETUP    F foobar?FOO?',
+        '*SETUP    F foobar?BAR?',
+    ])
+
+
 def test_dynamic_fixture_request(testdir):
     p = testdir.makepyfile('''
         import pytest
