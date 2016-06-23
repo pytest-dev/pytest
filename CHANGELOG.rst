@@ -127,6 +127,11 @@
 
 *
 
+* ``OptionGroup.addoption()`` now checks if option names were already
+  added before, to make it easier to track down issues like `#1618`_.
+  Before, you only got exceptions later from ``argparse`` library,
+  giving no clue about the actual reason for double-added options.
+
 .. _@milliams: https://github.com/milliams
 .. _@csaftoiu: https://github.com/csaftoiu
 .. _@flub: https://github.com/flub
@@ -161,6 +166,7 @@
 .. _#1628: https://github.com/pytest-dev/pytest/pull/1628
 .. _#1629: https://github.com/pytest-dev/pytest/issues/1629
 .. _#1633: https://github.com/pytest-dev/pytest/pull/1633
+.. _#1618: https://github.com/pytest-dev/pytest/issues/1618
 
 
 **Bug Fixes**
