@@ -163,9 +163,9 @@ class AssertionRewritingHook(object):
                     self.session = session
                     del session
         else:
-            for marked in self._must_rewrite:
-                if marked.startswith(name):
-                    return True
+            toplevel_name = name.split('.', 1)[0]
+            if toplevel_name in self._must_rewrite:
+                return True
         return False
 
     def mark_rewrite(self, *names):
