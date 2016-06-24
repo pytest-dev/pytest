@@ -31,14 +31,16 @@
   deprecated but still present. Thanks to `@RedBeardCode`_ and `@tomviner`_
   for PR (`#1626`_).
 
-*
+* Add stderr write for pytest.exit(msg) calls previously the message was never shown
 
+*
 .. _#1580: https://github.com/pytest-dev/pytest/pull/1580
 .. _#1605: https://github.com/pytest-dev/pytest/issues/1605
 .. _#1597: https://github.com/pytest-dev/pytest/pull/1597
 .. _#460: https://github.com/pytest-dev/pytest/pull/460
 .. _#1553: https://github.com/pytest-dev/pytest/issues/1553
 .. _#1626: https://github.com/pytest-dev/pytest/pull/1626
+.. _#1210: https://github.com/pytest-dev/pytest/issues/1210
 
 .. _@graingert: https://github.com/graingert
 .. _@taschini: https://github.com/taschini
