@@ -457,6 +457,18 @@ def test_pytest_fail():
         s = excinfo.exconly(tryshort=True)
         assert s.startswith("Failed")
 
+def test_pytest_exit_msg(testdir):
+    testdir.makeconftest("""
+    import pytest
+
+    def pytest_configure(config):
+        pytest.exit('oh noes')
+    """)
+    result = testdir.runpytest()
+    result.stderr.fnmatch_lines([
+        "Exit: oh noes",
+    ])
+
 def test_pytest_fail_notrace(testdir):
     testdir.makepyfile("""
         import pytest
