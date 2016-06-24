@@ -31,20 +31,26 @@
   deprecated but still present. Thanks to `@RedBeardCode`_ and `@tomviner`_
   for PR (`#1626`_).
 
-*
+* Add stderr write for pytest.exit(msg) calls. Previously the message was never shown.
+  Thanks `@BeyondEvil`_ for reporting `#1210`_. Thanks to `@JonathonSonesen`_ and
+  `@tomviner`_ for PR.
 
+*
 .. _#1580: https://github.com/pytest-dev/pytest/pull/1580
 .. _#1605: https://github.com/pytest-dev/pytest/issues/1605
 .. _#1597: https://github.com/pytest-dev/pytest/pull/1597
 .. _#460: https://github.com/pytest-dev/pytest/pull/460
 .. _#1553: https://github.com/pytest-dev/pytest/issues/1553
 .. _#1626: https://github.com/pytest-dev/pytest/pull/1626
+.. _#1210: https://github.com/pytest-dev/pytest/issues/1210
 
 .. _@graingert: https://github.com/graingert
 .. _@taschini: https://github.com/taschini
 .. _@nikratio: https://github.com/nikratio
 .. _@RedBeardCode: https://github.com/RedBeardCode
 .. _@Vogtinator: https://github.com/Vogtinator
+.. _@BeyondEvil: https://github.com/BeyondEvil
+.. _@JonathonSonesen: https://github.com/JonathonSonesen
 
 
 2.9.2
