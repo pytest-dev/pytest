@@ -31,6 +31,13 @@
   deprecated but still present. Thanks to `@RedBeardCode`_ and `@tomviner`_
   for PR (`#1626`_).
 
+* Always include full assertion explanation. The previous behaviour was hiding
+  sub-expressions that happened to be False, assuming this was redundant information.
+  Thanks `@bagerard`_ for reporting (`#1503`_). Thanks to `@davehunt`_ and
+  `@tomviner`_ for PR.
+
+*
+
 *
 
 .. _#1580: https://github.com/pytest-dev/pytest/pull/1580
@@ -39,12 +46,15 @@
 .. _#460: https://github.com/pytest-dev/pytest/pull/460
 .. _#1553: https://github.com/pytest-dev/pytest/issues/1553
 .. _#1626: https://github.com/pytest-dev/pytest/pull/1626
+.. _#1503: https://github.com/pytest-dev/pytest/issues/1503
 
 .. _@graingert: https://github.com/graingert
 .. _@taschini: https://github.com/taschini
 .. _@nikratio: https://github.com/nikratio
 .. _@RedBeardCode: https://github.com/RedBeardCode
 .. _@Vogtinator: https://github.com/Vogtinator
+.. _@bagerard: https://github.com/bagerard
+.. _@davehunt: https://github.com/davehunt
 
 
 2.9.2
