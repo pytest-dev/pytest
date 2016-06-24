@@ -13,7 +13,7 @@ def runpdb_and_get_report(testdir, source):
 
 class TestPDB:
     def pytest_funcarg__pdblist(self, request):
-        monkeypatch = request.getfuncargvalue("monkeypatch")
+        monkeypatch = request.getfixturevalue("monkeypatch")
         pdblist = []
         def mypdb(*args):
             pdblist.append(args)
