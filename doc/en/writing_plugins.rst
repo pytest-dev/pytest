@@ -498,6 +498,8 @@ Session related reporting hooks:
 .. autofunction:: pytest_report_header
 .. autofunction:: pytest_report_teststatus
 .. autofunction:: pytest_terminal_summary
+.. autofunction:: pytest_fixture_setup
+.. autofunction:: pytest_fixture_post_finalizer
 
 And here is the central hook for reporting about
 test execution:
@@ -551,6 +553,10 @@ Reference of objects involved in hooks
     :show-inheritance:
 
 .. autoclass:: _pytest.python.Function()
+    :members:
+    :show-inheritance:
+
+.. autoclass:: _pytest.python.FixtureDef()
     :members:
     :show-inheritance:
 
