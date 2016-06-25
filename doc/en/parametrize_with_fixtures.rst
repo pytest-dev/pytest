@@ -127,11 +127,6 @@ parameters of a fixture.
         """
         return request.param
 
-.. note:: 
-    
-    How should the scoping work in that case? Ideally it uses invocation scope
-    and relies on its params
-
 The same helper can be used in combination with ``pytest.mark.parametrize``.
 
 .. code-block:: python
