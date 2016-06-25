@@ -202,7 +202,7 @@ def istestfunc(func):
     return hasattr(func, "__call__") and \
         getattr(func, "__name__", "<lambda>") != "<lambda>"
 
-class MarkDecorator:
+class MarkDecorator(object):
     """ A decorator for test functions and test classes.  When applied
     it will create :class:`MarkInfo` objects which may be
     :ref:`retrieved by hooks as item keywords <excontrolskip>`.
@@ -236,18 +236,28 @@ class MarkDecorator:
 
     """
     def __init__(self, name, args=None, kwargs=None):
-        self.name = name
-        self.args = args or ()
-        self.kwargs = kwargs or {}
+
+        self._mark = Mark(name, args or (), kwargs or {})
+
+    @property
+    def name(self):
+        return self._mark.name
+
+    @property
+    def args(self):
+        return self._mark.args
+
+    @property
+    def kwargs(self):
+        return self._mark.kwargs
 
     @property
     def markname(self):
         return self.name # for backward-compat (2.4.1 had this attr)
 
     def __repr__(self):
-        d = self.__dict__.copy()
-        name = d.pop('name')
-        return "<MarkDecorator %r %r>" % (name, d)
+        return "<MarkDecorator %r %r>" % (
+            self.name, { 'args': self.args, 'kwargs': self.kwargs})
 
     def __call__(self, *args, **kwargs):
         """ if passed a single callable argument: decorate it with mark info.
@@ -281,6 +291,18 @@ class MarkDecorator:
         kw.update(kwargs)
         args = self.args + args
         return self.__class__(self.name, args=args, kwargs=kw)
+
+
+
+class Mark(object):
+    """ Marking object created by :class:`MarkDecorator` instances. """
+    def __init__(self, name, args, kwargs):
+        #: name of attribute
+        self.name = name
+        #: positional argument list, empty if none specified
+        self.args = args
+        #: keyword argument dictionary, empty if nothing specified
+        self.kwargs = kwargs.copy()
 
 
 class MarkInfo:
