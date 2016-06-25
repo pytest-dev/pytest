@@ -88,7 +88,13 @@ fixtures from existing ones.
         fixtures=['default_context', 'extra_context'],
     )
 
-The new fixture ``context`` inherits the scope from the used fixtures.
+The new fixture ``context`` inherits the scope from the used fixtures and yield
+the following values.
+
+- ``{}``
+- ``{'author': 'alice'}``
+- ``{'project_slug': 'helloworld'}``
+- ``{'author': 'bob', 'project_slug': 'foobar'}``
 
 Alternative approach
 --------------------
