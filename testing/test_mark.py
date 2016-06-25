@@ -418,6 +418,32 @@ class TestFunctional:
         items, rec = testdir.inline_genitems(p)
         self.assert_markers(items, test_foo=('a', 'b'), test_bar=('a',))
 
+
+    @pytest.mark.issue568
+    @pytest.mark.xfail(reason="markers smear, needs fixing")
+    def test_mark_decorator_subclass_does_not_propagate_to_base2(self, testdir):
+        p = testdir.makepyfile("""
+            import pytest
+
+            class TestBase:
+                def test_foo(self):
+                    pass
+
+            @pytest.mark.b
+            class TestSub(TestBase):
+                pass
+
+
+            class TestOtherSub(TestBase):
+                pass
+
+        """)
+        items, rec = testdir.inline_genitems(p)
+        base_item, sub_item, sub_item_other = items
+        assert not hasattr(base_item.obj, 'b')
+        assert not hasattr(sub_item_other.obj, 'b')
+
+
     def test_mark_decorator_baseclasses_merged(self, testdir):
         p = testdir.makepyfile("""
             import pytest
