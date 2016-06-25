@@ -4,7 +4,7 @@ Advanced User
 =============
 
 * :ref:`Plugin recommendations <pluginrecommendations>`
-* :ref:`conftest.py <conftest>`
+* :ref:`conftest.py <conftestnew>`
 * :ref:`.ini config <iniconfig>`
 * :ref:`Adding extra functionality to marks <marksextrafunctionality>`
 * :ref:`Advanced parametrize <parametrizeadvanced>`
@@ -20,7 +20,7 @@ More on fixtures
 Test suite speed/performance
 ----------------------------
 
-* :ref:`Running tests in parallel (pytest-xdist) <xdist>`
+* :ref:`Running tests in parallel (pytest-xdist) <xdistnew>`
 * :ref:`Profiling slow tests <profiling>`
 
 

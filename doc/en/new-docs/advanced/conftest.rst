@@ -1,5 +1,5 @@
 .. _index:
-.. _`conftest`:
+.. _`conftestnew`:
 
 conftest.py
 ===========

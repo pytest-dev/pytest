@@ -1,7 +1,7 @@
 Pytest Documentation
 ====================
 
-What is Pytest?
+What is pytest?
 ---------------
 
 Pytest is a mature testing framework for Python that is developed by a thriving
@@ -77,7 +77,8 @@ the right direction.
 References
 ----------
 
-* Command-line options
-* Pytest namespace
-* Hooks
-* Built-in fixtures
+* :ref:`Command-line options <refcommandline>`
+* :ref:`pytest.* namespace <refnamespace>`
+* :ref:`Hooks <refhooks>`
+* :ref:`Built-in fixtures <reffixtures>`
+* :ref:`Magic variables <refvariables>`

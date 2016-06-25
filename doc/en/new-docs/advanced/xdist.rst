@@ -1,5 +1,5 @@
 .. _index:
-.. _`xdist`:
+.. _`xdistnew`:
 
 Running tests in parallel (pytest-xdist)
 ========================================
