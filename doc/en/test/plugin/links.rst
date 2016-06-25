@@ -2,10 +2,8 @@
 .. _`pytest_recwarn.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.3.4/py/_plugin/pytest_recwarn.py
 .. _`unittest`: unittest.html
 .. _`pytest_monkeypatch.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.3.4/py/_plugin/pytest_monkeypatch.py
-.. _`pytest_genscript.py`: http://bitbucket.org/hpk42/py-trunk/raw/1.3.4/py/_plugin/pytest_genscript.py
 .. _`pastebin`: pastebin.html
 .. _`skipping`: skipping.html
-.. _`genscript`: genscript.html
 .. _`plugins`: index.html
 .. _`mark`: mark.html
 .. _`tmpdir`: tmpdir.html

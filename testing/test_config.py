@@ -365,7 +365,7 @@ def test_options_on_small_file_do_not_blow_up(testdir):
     """)
 
     for opts in ([], ['-l'], ['-s'], ['--tb=no'], ['--tb=short'],
-                 ['--tb=long'], ['--fulltrace'], ['--nomagic'],
+                 ['--tb=long'], ['--fulltrace'],
                  ['--traceconfig'], ['-v'], ['-v', '-v']):
         runfiletest(opts + [path])
 

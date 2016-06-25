@@ -287,3 +287,6 @@ For further information, Benjamin Peterson wrote up `Behind the scenes of pytest
 .. versionchanged:: 2.1
    Introduce the ``--assert`` option. Deprecate ``--no-assert`` and
    ``--nomagic``.
+
+.. versionchanged:: 3.0
+   Removes the ``--no-assert`` and``--nomagic`` options.
