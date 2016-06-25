@@ -640,3 +640,11 @@ def test_diff_newline_at_end(monkeypatch, testdir):
         *  + asdf
         *  ?     +
     """)
+
+def test_assert_tuple_warning(testdir):
+    testdir.makepyfile("""
+        def test_tuple():
+            assert(False, 'you shall not pass')
+    """)
+    result = testdir.runpytest('-rw')
+    result.stdout.fnmatch_lines('WR1*:2 assertion is always true*')
