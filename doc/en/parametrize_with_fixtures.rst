@@ -56,3 +56,21 @@ This is how a functional test could look like:
         assert result.exception is None
         assert result.project.isdir()
 
+
+Issues
+------
+
+* By using ``request.getfuncargvalue()`` we rely on actual fixture function
+  execution to know what fixtures are involved, due to it's dynamic nature
+* More importantly, ``request.getfuncargvalue()`` cannot be combined with
+  parametrized fixtures, such as ``extra_context``
+* This is very inconvenient if you wish to extend an existing test suite by
+  certain parameters for fixtures that are already used by tests
+
+pytest version 3.0 and higher reports an error if you try to run above code::
+
+    Failed: The requested fixture has no parameter defined for the current
+    test.
+
+    Requested fixture 'extra_context'
+
