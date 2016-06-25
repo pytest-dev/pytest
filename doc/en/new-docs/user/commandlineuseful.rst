@@ -8,11 +8,15 @@ Direct argument to select tests
 -s, --capture=no
 ----------------
 
-Normally stdout is only showed for failing tests. ``-s`` shows stdout calls, for example the print statement of all the tests.
+Normally stdout and stderr are captured and only shown for failing tests.
+The ``-s`` option can be used to disable capturing, showing stdcalls
+for print statements, logging calls, etc.
 
-An example of how that works can be the following one:
-If the following piece of code, saved in a file named ``test_documentation.py`` is run with no parameter (if you run in the terminal, ``py.test test_documentation.py``).::
+Consider the following code and pytest execution:
 
+.. code-block:: python
+
+  # file test_documentation.py
   def test_fail():
       print "this test is going to fail"
       assert False
@@ -22,66 +26,76 @@ If the following piece of code, saved in a file named ``test_documentation.py`` 
       print "this test is going to pass"
       assert True
 
-What will be printed will in the terminal be the following::
 
-  test_documentation.py .F
+::
 
-  =================================== FAILURES ===================================
-  __________________________________ test_fail ___________________________________
+    $ pytest
+    test_documentation.py .F
 
-      def test_fail():
-          print "this test is going to fail"
-  >       assert False
-  E       assert False
-
-  test_documentation.py:7: AssertionError
-  ----------------------------- Captured stdout call -----------------------------
-  this test is going to fail
-  ====================== 1 failed, 1 passed in 0.02 seconds ======================
-
-But if it is run with the parameter (``py.test test_documentation.py -s``), the result showed will be the following one::
-
-  ====================================================== test session starts ======================================================
-  test_documentation.py this test is going to fail
-  F this test is going to pass
-  .
-
-  =========================================================== FAILURES ============================================================
-  ___________________________________________________________ test_fail ___________________________________________________________
+    =================================== FAILURES ===================================
+    __________________________________ test_fail ___________________________________
 
       def test_fail():
           print "this test is going to fail"
-  >       assert False
-  E       assert False
+    >       assert False
+    E       assert False
 
-  test_documentation.py:7: AssertionError
-  ============================================== 1 failed, 1 passed in 0.02 seconds ===============================================
+    test_documentation.py:7: AssertionError
+    ----------------------------- Captured stdout call -----------------------------
+    this test is going to fail
+    ====================== 1 failed, 1 passed in 0.02 seconds ======================
 
-The biggest difference in the both statements is the part entitled "Tests session starts", where it prints the statements "this test is going to pass" (so the test that passed), and the "this test is going to fail".
+You can see that no ``print`` statement is displayed, except for the failing test.
+
+Now with the ``-s`` option::
+
+    $ pytest -s
+    ====================================================== test session starts ======================================================
+    test_documentation.py this test is going to fail
+    F this test is going to pass
+    .
+
+    =========================================================== FAILURES ============================================================
+    ___________________________________________________________ test_fail ___________________________________________________________
+
+      def test_fail():
+          print "this test is going to fail"
+    >       assert False
+    E       assert False
+
+    test_documentation.py:7: AssertionError
+    ============================================== 1 failed, 1 passed in 0.02 seconds ===============================================
+
+You can see that no output is captured, and ``print`` statements are displayed normally.
 
 -k EXPRESSION
 -------------
 
-EXPRESSION is a key word to select a subset of tests to be run.
+EXPRESSION is a keyword to select a subset of tests to be run.
 
-An example of this using the same file as above could be the following one:
-if this file is run without the parameter (if you run in the terminal, ``py.test test_documentation.py``), both tests on the file would be run. If you run that with the parameter (typing, for example ``py.test test_documentation.py -k pass``), it would filter only the tests names that contains the expression ``pass``, so it would run only the test_pass().
+Using the same file from the previous exception as an example, you can use::
+
+    $ pytest -k pass
+
+
+To filter only test names that contains ``pass``, so only ``test_pass()`` is executed.
+
 
 -v, --verbose
 -------------
 
-It shows more details of the tests, for example the test names.
+Enables verbose mode, displaying full test names instead of only ``.`` in the
+terminal::
 
-For example, if the same test sets of the other examples is run with that argument, the results are going to be the following ones::
-
-    ================================================================================ test session starts ================================================================================
+    $ pytest -v
+    =========================== test session starts ================================
     collected 2 items
 
     test_documentation.py::test_pass PASSED
     test_documentation.py::test_fail FAILED
 
-    ===================================================================================== FAILURES ======================================================================================
-    _____________________________________________________________________________________ test_fail _____________________________________________________________________________________
+    ================================= FAILURES =====================================
+    ________________________________ test_fail _____________________________________
 
     def test_fail():
         print "this test is going to fail"
@@ -91,29 +105,34 @@ For example, if the same test sets of the other examples is run with that argume
     test_documentation.py:7: AssertionError
     ------------------------------------------------------------------------------- Captured stdout call --------------------------------------------------------------------------------
     this test is going to fail
-    ======================================================================== 1 failed, 1 passed in 0.03 seconds =========================================================================
+    ====================== 1 failed, 1 passed in 0.03 seconds ======================
 
-So it collects before run.
+
 
 --collect-only
 --------------
 
-Shows a list of the tests without running them. It can be useful in combination with ``-k``.
+Shows a list of the tests without running them
 
-for example, in the test file above, if it was run with the collect-only argument, it would display as a result something like the bellow file:
+for example, in the test file above, if it was run with the collect-only argument, it would display as a result something like the bellow file::
 
-  collected 2 items
-  <Module 'test_documentation.py'>
-    <Function 'test_fail'>
-    <Function 'test_pass'>
-  =========================================================================== no tests ran in 0.00 seconds ======================
+    $ pytest --collect-only
+      collected 2 items
+      <Module 'test_documentation.py'>
+        <Function 'test_fail'>
+        <Function 'test_pass'>
+    ====================== no tests ran in 0.00 seconds ======================
+
+Note that ``--collect-only`` can be used with ``-k`` to see which tests are selected
+by the expression.
 
 -x, --exitfirst
 ---------------
 
 Exit instantly after the first failure.
 
-For example, in the test file above, if it is run with the --exitfirst argument, it would run only the ``test_fail``, and not the ``test_pass``, because it would exit after having the first failure.
+Using the previous file as an example, running with ``--exitfirst`` will only
+execute up to ``test_fail``, and not the ``test_pass``, because it would exit after having the first failure.
 
 --lf, --last-failed
 -------------------
@@ -127,4 +146,3 @@ For example, in the test file above, if it is run first without any arguments, a
 
 Shows a list with all command options.
 
-See also command line options reference [TO-DO]
