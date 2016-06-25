@@ -63,7 +63,7 @@ class UsageError(Exception):
 _preinit = []
 
 default_plugins = (
-     "mark main terminal runner python pdb unittest capture skipping "
+     "mark main terminal runner python debugging unittest capture skipping "
      "tmpdir monkeypatch recwarn pastebin helpconfig nose assertion genscript "
      "junitxml resultlog doctest cacheprovider").split()
 

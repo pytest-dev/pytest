@@ -36,6 +36,8 @@
   Thanks `@bagerard`_ for reporting (`#1503`_). Thanks to `@davehunt`_ and
   `@tomviner`_ for PR.
 
+* Renamed the pytest ``pdb`` module (plugin) into ``debugging``. 
+
 *
 
 *
