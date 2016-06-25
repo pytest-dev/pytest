@@ -209,7 +209,7 @@ class TestXFail:
             def test_this_false():
                 assert 1
         """)
-        result = testdir.runpytest(p, '--report=xfailed', )
+        result = testdir.runpytest(p, '-rx', )
         result.stdout.fnmatch_lines([
             "*test_one*test_this*",
             "*NOTRUN*noway",
@@ -227,7 +227,7 @@ class TestXFail:
             def setup_module(mod):
                 raise ValueError(42)
         """)
-        result = testdir.runpytest(p, '--report=xfailed', )
+        result = testdir.runpytest(p, '-rx', )
         result.stdout.fnmatch_lines([
             "*test_one*test_this*",
             "*NOTRUN*hello",
@@ -688,7 +688,7 @@ def test_skipped_reasons_functional(testdir):
                 pytest.skip('test')
         """
     )
-    result = testdir.runpytest('--report=skipped')
+    result = testdir.runpytest('-rs')
     result.stdout.fnmatch_lines([
         "*SKIP*2*conftest.py:3: test",
     ])

@@ -138,7 +138,6 @@ in the `pytest repository <https://github.com/pytest-dev/pytest>`_.
     _pytest.capture
     _pytest.config
     _pytest.doctest
-    _pytest.genscript
     _pytest.helpconfig
     _pytest.junitxml
     _pytest.mark

@@ -16,8 +16,22 @@
 
 *
 
+**Incompatible changes**
+
+* Removing the following deprecated commandline options
+
+  * genscript
+  * no-assert
+  * nomagic
+  * report
+
+  Thanks to `@RedBeardCode`_ for the PR(`#1664`_)
+
+
 .. _#607: https://github.com/pytest-dev/pytest/issues/607
 .. _#1519: https://github.com/pytest-dev/pytest/pull/1519
+.. _#1664: https://github.com/pytest-dev/pytest/pull/1664
+
 
 2.10.0.dev1
 ===========
@@ -146,7 +160,6 @@
 * Add proposal to docs for a new feature that enables users to combine multiple
   fixtures into one. Thanks to `@hpk42`_ and `@hackebrot`_.
 
-*
 
 .. _#1580: https://github.com/pytest-dev/pytest/pull/1580
 .. _#1605: https://github.com/pytest-dev/pytest/issues/1605
