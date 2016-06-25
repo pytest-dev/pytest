@@ -13,9 +13,13 @@ cookiecutter template. We want to test default values but also data that
 emulates user input.
 
 - use default values
+
 - emulate user input
+
   - specify 'author'
+
   - specify 'project_slug'
+
   - specify 'author' and 'project_slug'
 
 This is how a functional test could look like:
@@ -92,8 +96,11 @@ The new fixture ``context`` inherits the scope from the used fixtures and yield
 the following values.
 
 - ``{}``
+
 - ``{'author': 'alice'}``
+
 - ``{'project_slug': 'helloworld'}``
+
 - ``{'author': 'bob', 'project_slug': 'foobar'}``
 
 Alternative approach
