@@ -182,7 +182,7 @@ class MarkGenerator:
             raise AttributeError("Marker name must NOT start with underscore")
         if hasattr(self, '_config'):
             self._check(name)
-        return MarkDecorator(name)
+        return MarkDecorator(Mark(name, (), {}))
 
     def _check(self, name):
         try:
@@ -235,9 +235,9 @@ class MarkDecorator(object):
     additional keyword or positional arguments.
 
     """
-    def __init__(self, name, args=None, kwargs=None):
+    def __init__(self, mark):
 
-        self._mark = Mark(name, args or (), kwargs or {})
+        self._mark = mark
 
     @property
     def name(self):
@@ -285,10 +285,7 @@ class MarkDecorator(object):
                     else:
                         holder.add(self._mark)
                 return func
-        kw = self.kwargs.copy()
-        kw.update(kwargs)
-        args = self.args + args
-        return self.__class__(self.name, args=args, kwargs=kw)
+        return self.__class__(self._mark.new_with(args, kwargs))
 
 
 
@@ -301,6 +298,11 @@ class Mark(object):
         self.args = args
         #: keyword argument dictionary, empty if nothing specified
         self.kwargs = kwargs.copy()
+
+    def new_with(self, args, kwargs):
+        kw = self.kwargs.copy()
+        kw.update(kwargs)
+        return Mark(self.name, self.args + args, kw)
 
 
 class MarkInfo:
