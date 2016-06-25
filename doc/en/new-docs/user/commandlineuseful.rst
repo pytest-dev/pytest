@@ -65,14 +65,39 @@ The biggest difference in the both statements is the part entitled "Tests sessio
 EXPRESSION is a key word to select a subset of tests to be run.
 
 An example of this using the same file as above could be the following one:
-if this file is run without the parameter (if you run in the terminal, ``py.test test_documentation.py``), both tests on the file would be run. If you run that with the parameter (typing, for example ``py.test test_documentation.py -k pass``), it would filter only the tests names that contains the expression 'pass', so it would run only the test_pass().
+if this file is run without the parameter (if you run in the terminal, ``py.test test_documentation.py``), both tests on the file would be run. If you run that with the parameter (typing, for example ``py.test test_documentation.py -k pass``), it would filter only the tests names that contains the expression ``pass``, so it would run only the test_pass().
 
 -v, --verbose
 -------------
+
 It shows more details of the tests, for example the test names.
+
+For example, if the same test sets of the other examples is run with that argument, the results are going to be the following ones::
+
+    ================================================================================ test session starts ================================================================================
+    collected 2 items
+
+    test_documentation.py::test_pass PASSED
+    test_documentation.py::test_fail FAILED
+
+    ===================================================================================== FAILURES ======================================================================================
+    _____________________________________________________________________________________ test_fail _____________________________________________________________________________________
+
+    def test_fail():
+        print "this test is going to fail"
+    >       assert False
+    E       assert False
+
+    test_documentation.py:7: AssertionError
+    ------------------------------------------------------------------------------- Captured stdout call --------------------------------------------------------------------------------
+    this test is going to fail
+    ======================================================================== 1 failed, 1 passed in 0.03 seconds =========================================================================
+
+So it collects before run.
 
 --collect-only
 --------------
+
 Shows a list of the tests without running them. It can be useful in combination with ``-k``.
 
 for example, in the test file above, if it was run with the collect-only argument, it would display as a result something like the bellow file:
@@ -85,18 +110,21 @@ for example, in the test file above, if it was run with the collect-only argumen
 
 -x, --exitfirst
 ---------------
+
 Exit instantly after the first failure.
 
 For example, in the test file above, if it is run with the --exitfirst argument, it would run only the ``test_fail``, and not the ``test_pass``, because it would exit after having the first failure.
 
 --lf, --last-failed
 -------------------
+
 Runs only the set of tests that failed at the last run, or all tests if none failed.
 
 For example, in the test file above, if it is run first without any arguments, and after with the --last-failed argument, only the set of tests that failed would run, in this example, only the ``test_fail()`` would be executed.
 
 -h, --help
 ----------
+
 Shows a list with all command options.
 
 See also command line options reference [TO-DO]
