@@ -63,7 +63,7 @@ class UsageError(Exception):
 _preinit = []
 
 default_plugins = (
-     "mark main terminal runner python pdb unittest capture skipping "
+     "mark main terminal runner python debugging unittest capture skipping "
      "tmpdir monkeypatch recwarn pastebin helpconfig nose assertion genscript "
      "junitxml resultlog doctest cacheprovider setuponly setupplan").split()
 
@@ -655,20 +655,17 @@ class Argument:
                 self._long_opts.append(opt)
 
     def __repr__(self):
-        retval = 'Argument('
+        args = []
         if self._short_opts:
-            retval += '_short_opts: ' + repr(self._short_opts) + ', '
+            args += ['_short_opts: ' + repr(self._short_opts)]
         if self._long_opts:
-            retval += '_long_opts: ' + repr(self._long_opts) + ', '
-        retval += 'dest: ' + repr(self.dest) + ', '
+            args += ['_long_opts: ' + repr(self._long_opts)]
+        args += ['dest: ' + repr(self.dest)]
         if hasattr(self, 'type'):
-            retval += 'type: ' + repr(self.type) + ', '
+            args += ['type: ' + repr(self.type)]
         if hasattr(self, 'default'):
-            retval += 'default: ' + repr(self.default) + ', '
-        if retval[-2:] == ', ':  # always long enough to test ("Argument(" )
-            retval = retval[:-2]
-        retval += ')'
-        return retval
+            args += ['default: ' + repr(self.default)]
+        return 'Argument({0})'.format(', '.join(args))
 
 
 class OptionGroup:
@@ -927,10 +924,7 @@ class Config(object):
             args[:] = self.getini("addopts") + args
         self._checkversion()
         self.pluginmanager.consider_preparse(args)
-        try:
-            self.pluginmanager.load_setuptools_entrypoints("pytest11")
-        except ImportError as e:
-            self.warn("I2", "could not load setuptools entry import: %s" % (e,))
+        self.pluginmanager.load_setuptools_entrypoints("pytest11")
         self.pluginmanager.consider_env()
         self.known_args_namespace = ns = self._parser.parse_known_args(args, namespace=self.option.copy())
         if self.known_args_namespace.confcutdir is None and self.inifile:

@@ -384,7 +384,7 @@ class TestFormattedExcinfo:
     def pytest_funcarg__importasmod(self, request):
         def importasmod(source):
             source = _pytest._code.Source(source)
-            tmpdir = request.getfuncargvalue("tmpdir")
+            tmpdir = request.getfixturevalue("tmpdir")
             modpath = tmpdir.join("mod.py")
             tmpdir.ensure("__init__.py")
             modpath.write(source)

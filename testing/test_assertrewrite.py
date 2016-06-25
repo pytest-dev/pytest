@@ -213,10 +213,12 @@ class TestAssertionRewrite:
             return False
         def f():
             assert x() and x()
-        assert getmsg(f, {"x" : x}) == "assert (x())"
+        assert getmsg(f, {"x" : x}) == """assert (False)
+ +  where False = x()"""
         def f():
             assert False or x()
-        assert getmsg(f, {"x" : x}) == "assert (False or x())"
+        assert getmsg(f, {"x" : x}) == """assert (False or False)
+ +  where False = x()"""
         def f():
             assert 1 in {} and 2 in {}
         assert getmsg(f) == "assert (1 in {})"
@@ -299,27 +301,34 @@ class TestAssertionRewrite:
         ns = {"g" : g}
         def f():
             assert g()
-        assert getmsg(f, ns) == """assert g()"""
+        assert getmsg(f, ns) == """assert False
+ +  where False = g()"""
         def f():
             assert g(1)
-        assert getmsg(f, ns) == """assert g(1)"""
+        assert getmsg(f, ns) == """assert False
+ +  where False = g(1)"""
         def f():
             assert g(1, 2)
-        assert getmsg(f, ns) == """assert g(1, 2)"""
+        assert getmsg(f, ns) == """assert False
+ +  where False = g(1, 2)"""
         def f():
             assert g(1, g=42)
-        assert getmsg(f, ns) == """assert g(1, g=42)"""
+        assert getmsg(f, ns) == """assert False
+ +  where False = g(1, g=42)"""
         def f():
             assert g(1, 3, g=23)
-        assert getmsg(f, ns) == """assert g(1, 3, g=23)"""
+        assert getmsg(f, ns) == """assert False
+ +  where False = g(1, 3, g=23)"""
         def f():
             seq = [1, 2, 3]
             assert g(*seq)
-        assert getmsg(f, ns) == """assert g(*[1, 2, 3])"""
+        assert getmsg(f, ns) == """assert False
+ +  where False = g(*[1, 2, 3])"""
         def f():
             x = "a"
             assert g(**{x : 2})
-        assert getmsg(f, ns) == """assert g(**{'a': 2})"""
+        assert getmsg(f, ns) == """assert False
+ +  where False = g(**{'a': 2})"""
 
     def test_attribute(self):
         class X(object):
@@ -332,7 +341,8 @@ class TestAssertionRewrite:
         def f():
             x.a = False  # noqa
             assert x.a   # noqa
-        assert getmsg(f, ns) == """assert x.a"""
+        assert getmsg(f, ns) == """assert False
+ +  where False = x.a"""
 
     def test_comparisons(self):
         def f():
@@ -744,7 +754,3 @@ def test_issue731(testdir):
     """)
     result = testdir.runpytest()
     assert 'unbalanced braces' not in result.stdout.str()
-
-
-def test_collapse_false_unbalanced_braces():
-    util._collapse_false('some text{ False\n{False = some more text\n}')
