@@ -3,10 +3,10 @@
 Plugin Author
 =============
 
-* Get started with the Cookiecutter template
-* Introduction to hooks
-* Registering a plugin with pytest (setup.py)
-* Recommended practice for publishing (moving to pytest-dev)
-* Adding a command-line option
-* Testing plugins
-* Using the pytest cache
+* :ref:`Get started with the Cookiecutter template <cookiecutter>`
+* :ref:`Introduction to hooks <hooksintro>`
+* :ref:`Registering a plugin with pytest (setup.py) <registerplugin>`
+* :ref:`Recommended practice for publishing (moving to pytest-dev) <publishplugin>`
+* :ref:`Adding a command-line option <addcommandlineoption>`
+* :ref:`Testing plugins <testingplugins>`
+* :ref:`Using the pytest cache <pytestcache>`
