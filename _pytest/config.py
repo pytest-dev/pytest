@@ -655,20 +655,17 @@ class Argument:
                 self._long_opts.append(opt)
 
     def __repr__(self):
-        retval = 'Argument('
+        args = []
         if self._short_opts:
-            retval += '_short_opts: ' + repr(self._short_opts) + ', '
+            args += ['_short_opts: ' + repr(self._short_opts)]
         if self._long_opts:
-            retval += '_long_opts: ' + repr(self._long_opts) + ', '
-        retval += 'dest: ' + repr(self.dest) + ', '
+            args += ['_long_opts: ' + repr(self._long_opts)]
+        args += ['dest: ' + repr(self.dest)]
         if hasattr(self, 'type'):
-            retval += 'type: ' + repr(self.type) + ', '
+            args += ['type: ' + repr(self.type)]
         if hasattr(self, 'default'):
-            retval += 'default: ' + repr(self.default) + ', '
-        if retval[-2:] == ', ':  # always long enough to test ("Argument(" )
-            retval = retval[:-2]
-        retval += ')'
-        return retval
+            args += ['default: ' + repr(self.default)]
+        return 'Argument({0})'.format(', '.join(args))
 
 
 class OptionGroup:
