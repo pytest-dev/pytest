@@ -47,6 +47,11 @@
   `#1629`_. Thanks `@obestwalter`_ and `@davehunt`_ for the complete PR
   (`#1633`_)
 
+* Remove all py.test-X* entry points. The versioned, suffixed entry points
+  were never documented and a leftover from a pre-virtualenv era. They were
+  also broken for wheels, so removing these entry points also removes a
+  potential source of confusion.
+
 **Changes**
 
 * Fixtures marked with ``@pytest.fixture`` can now use ``yield`` statements exactly like
