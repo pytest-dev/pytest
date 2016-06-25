@@ -3,46 +3,50 @@
 Advanced User
 =============
 
-* Plugin recommendations
-* conftest.py
-* .ini config
-* Adding extra functionality to marks
-* Advanced parametrize
+* :ref:`Plugin recommendations <pluginrecommendations>`
+* :ref:`conftest.py <conftest>`
+* :ref:`.ini config <iniconfig>`
+* :ref:`Adding extra functionality to marks <marksextrafunctionality>`
+* :ref:`Advanced parametrize <parametrizeadvanced>`
 
 
-More on fixtures:
+More on fixtures
+----------------
 
-* Defining fixture scope
-* Parametrized fixtures
-
-
-Test suite speed:
-
-* Running tests in parallel
-* Profiling slow tests
+* :ref:`Defining fixture scope <fixturescope>`
+* :ref:`Parametrized fixtures <parametrizedfixtures>`
 
 
-Integrating testing into development:
+Test suite speed/performance
+----------------------------
 
-* Testing against multiple Python interpreters with Tox
-* Continuous integration (CI) systems
-* Test coverage
-* Debugging
-* Python warnings
-* Logging
-* Flaky tests
+* :ref:`Running tests in parallel (pytest-xdist) <xdist>`
+* :ref:`Profiling slow tests <profiling>`
 
 
-Different styles of testing:
+Integrating testing into development
+------------------------------------
 
-* Mock
-* Number and numpy testing
-* GUI testing
-* Web browser testing
-* Running unittest/nose tests
-* Migrating from unittest to pytest
-* Migrating from nose to pytest
-* Running non-Python tests
-* Running doctests
-* Behaviour-driven development (BDD) style tests
-* Property-based testing (such as Hypothesis)
+* :ref:`Testing against multiple Python interpreters with Tox <tox>`
+* :ref:`Continuous integration (CI) systems <continuousintegration>`
+* :ref:`Test coverage <coverage>`
+* :ref:`Debugging <debugging>`
+* :ref:`Python warnings <warnings>`
+* :ref:`Logging <logging>`
+* :ref:`Flaky tests <flaky>`
+
+
+Different styles of testing
+---------------------------
+
+* :ref:`Mock <mock>`
+* :ref:`Number and numpy testing <number>`
+* :ref:`GUI testing <gui>`
+* :ref:`Web browser testing <browser>`
+* :ref:`Running unittest/nose tests <runningunittestnose>`
+* :ref:`Migrating from unittest to pytest <migratingunittest>`
+* :ref:`Migrating from nose to pytest <migratingnose>`
+* :ref:`Running non-Python tests <nonpython>`
+* :ref:`Running doctests <doctests>`
+* :ref:`Behaviour-driven development (BDD) style tests <bdd>`
+* :ref:`Property-based testing (such as Hypothesis) <propertybased>`
