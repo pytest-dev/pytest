@@ -280,12 +280,10 @@ class MarkDecorator(object):
                 else:
                     holder = getattr(func, self.name, None)
                     if holder is None:
-                        holder = MarkInfo(
-                            self.name, self.args, self.kwargs
-                        )
+                        holder = MarkInfo(self._mark)
                         setattr(func, self.name, holder)
                     else:
-                        holder.add(self.args, self.kwargs)
+                        holder.add(self._mark)
                 return func
         kw = self.kwargs.copy()
         kw.update(kwargs)
@@ -307,27 +305,37 @@ class Mark(object):
 
 class MarkInfo:
     """ Marking object created by :class:`MarkDecorator` instances. """
-    def __init__(self, name, args, kwargs):
-        #: name of attribute
-        self.name = name
-        #: positional argument list, empty if none specified
-        self.args = args
-        #: keyword argument dictionary, empty if nothing specified
-        self.kwargs = kwargs.copy()
-        self._arglist = [(args, kwargs.copy())]
+    def __init__(self, mark):
+        self._marks = [mark]
+
+    @property
+    def name(self):
+        return self._marks[0].name
+
+    @property
+    def args(self):
+        ret = ()
+        for mark in self._marks:
+            ret += mark.args
+        return ret
+
+    @property
+    def kwargs(self):
+        ret = {}
+        for mark in self._marks:
+            ret.update(mark.kwargs)
+        return ret
 
     def __repr__(self):
         return "<MarkInfo %r args=%r kwargs=%r>" % (
             self.name, self.args, self.kwargs
         )
 
-    def add(self, args, kwargs):
+    def add(self, mark):
         """ add a MarkInfo with the given args and kwargs. """
-        self._arglist.append((args, kwargs))
-        self.args += args
-        self.kwargs.update(kwargs)
+        self._marks.append(mark)
 
     def __iter__(self):
         """ yield MarkInfo objects each relating to a marking-call. """
-        for args, kwargs in self._arglist:
-            yield MarkInfo(self.name, args, kwargs)
+        for mark in self._marks:
+            yield MarkInfo(mark)
