@@ -1,6 +1,7 @@
 """Rewrite assertion AST to produce nice error messages"""
 
 import ast
+import _ast
 import errno
 import itertools
 import imp
@@ -753,6 +754,8 @@ class AssertionRewriter(ast.NodeVisitor):
         self.statements = save
         self.on_failure = fail_save
         expl_template = self.helper("format_boolop", expl_list, ast.Num(is_or))
+        #if isinstance(boolop, (_ast.Compare, _ast.BoolOp)):
+        #    expl_template = "({0})".format(expl_template)
         expl = self.pop_format_context(expl_template)
         return ast.Name(res_var, ast.Load()), self.explanation_param(expl)
 
@@ -855,6 +858,8 @@ class AssertionRewriter(ast.NodeVisitor):
     def visit_Compare(self, comp):
         self.push_format_context()
         left_res, left_expl = self.visit(comp.left)
+        if isinstance(comp.left, (_ast.Compare, _ast.BoolOp)):
+            left_expl = "({0})".format(left_expl)
         res_variables = [self.variable() for i in range(len(comp.ops))]
         load_names = [ast.Name(v, ast.Load()) for v in res_variables]
         store_names = [ast.Name(v, ast.Store()) for v in res_variables]
@@ -864,6 +869,8 @@ class AssertionRewriter(ast.NodeVisitor):
         results = [left_res]
         for i, op, next_operand in it:
             next_res, next_expl = self.visit(next_operand)
+            if isinstance(next_operand, (_ast.Compare, _ast.BoolOp)):
+                next_expl = "({0})".format(next_expl)
             results.append(next_res)
             sym = binop_map[op.__class__]
             syms.append(ast.Str(sym))

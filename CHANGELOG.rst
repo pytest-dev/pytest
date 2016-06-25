@@ -38,6 +38,10 @@
 
 * Renamed the pytest ``pdb`` module (plugin) into ``debugging``. 
 
+* Improve of the test output for logical expression with brackets.
+  Fixes(`#925`_). Thanks `@DRMacIver`_ for reporting. Thanks to `@RedBeardCode`_
+  for PR.
+
 *
 
 * ImportErrors in plugins now are a fatal error instead of issuing a
@@ -50,7 +54,11 @@
 .. _#1553: https://github.com/pytest-dev/pytest/issues/1553
 .. _#1626: https://github.com/pytest-dev/pytest/pull/1626
 .. _#1503: https://github.com/pytest-dev/pytest/issues/1503
+<<<<<<< HEAD
 .. _#1479: https://github.com/pytest-dev/pytest/issues/1479
+=======
+.. _#925: https://github.com/pytest-dev/pytest/issues/925
+>>>>>>> Improve of the test output for logical expression with brackets.
 
 .. _@graingert: https://github.com/graingert
 .. _@taschini: https://github.com/taschini
@@ -59,6 +67,7 @@
 .. _@Vogtinator: https://github.com/Vogtinator
 .. _@bagerard: https://github.com/bagerard
 .. _@davehunt: https://github.com/davehunt
+.. _@DRMacIver: https://github.com/DRMacIver
 
 
 2.9.2

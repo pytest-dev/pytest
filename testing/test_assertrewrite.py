@@ -720,3 +720,30 @@ def test_issue731(testdir):
     """)
     result = testdir.runpytest()
     assert 'unbalanced braces' not in result.stdout.str()
+
+
+class TestIssue925():
+    def test_simple_case(self, testdir):
+        testdir.makepyfile("""
+        def test_ternary_display():
+            assert (False == False) == False
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines('*E*assert (False == False) == False')
+
+    def test_long_case(self, testdir):
+        testdir.makepyfile("""
+        def test_ternary_display():
+             assert False == (False == True) == True
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines('*E*assert (False == True) == True')
+
+    def test_many_brackets(self, testdir):
+        testdir.makepyfile("""
+            def test_ternary_display():
+                 assert True == ((False == True) == True)
+            """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines('*E*assert True == ((False == True) == True)')
+
