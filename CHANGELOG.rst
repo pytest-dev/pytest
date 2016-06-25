@@ -53,6 +53,12 @@
   fixtures and reports them. Thanks `@d6e`_, `@kvas-it`_, `@sallner`_
   and `@omarkohl`_ for the PR.
 
+* Added two new hooks: ``pytest_fixture_setup`` which executes the fixture
+  setup and ``pytest_fixture_post_finalizer`` which is called after the fixture's
+  finalizer and has access to the fixture's result cache.
+  Thanks `@d6e`_, `@sallner`_
+
+
 **Changes**
 
 * Fixtures marked with ``@pytest.fixture`` can now use ``yield`` statements exactly like
