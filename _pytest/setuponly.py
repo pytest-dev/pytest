@@ -1,6 +1,11 @@
 import pytest
 import sys
 
+def pytest_addoption(parser):
+    group = parser.getgroup("debugconfig")
+    group.addoption('--setuponly', '--setup-only', action="store_true",
+               help="only setup fixtures, don't execute the tests.")
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_fixture_setup(fixturedef, request):
     yield

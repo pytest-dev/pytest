@@ -44,11 +44,6 @@ def pytest_addoption(parser):
                help="run pytest in strict mode, warnings become errors.")
     group._addoption("-c", metavar="file", type=str, dest="inifilename",
                help="load configuration from `file` instead of trying to locate one of the implicit configuration files.")
-    group.addoption('--setuponly', '--setup-only', action="store_true",
-               help="only setup fixtures, don't execute the tests.")
-    group.addoption('--setupplan', '--setup-plan', action="store_true",
-               help="show what fixtures and tests would be executed but don't"
-                    " execute anything.")
     group._addoption("--continue-on-collection-errors", action="store_true",
                default=False, dest="continue_on_collection_errors",
                help="Force test execution even if collection errors occur.")
