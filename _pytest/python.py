@@ -2475,25 +2475,18 @@ class FixtureDef:
                 func = self._finalizer.pop()
                 func()
         finally:
+            ihook = self._fixturemanager.session.ihook
+            ihook.pytest_fixture_post_finalizer(fixturedef=self)
             # even if finalization fails, we invalidate
             # the cached fixture value
             if hasattr(self, "cached_result"):
-                config = self._fixturemanager.config
-                if config.option.setuponly or config.option.setupplan:
-                    self._show_fixture_action('TEARDOWN')
-                    if hasattr(self, "cached_param"):
-                        del self.cached_param
                 del self.cached_result
 
     def execute(self, request):
         # get required arguments and register our own finish()
         # with their finalization
-        kwargs = {}
         for argname in self.argnames:
             fixturedef = request._get_active_fixturedef(argname)
-            result, arg_cache_key, exc = fixturedef.cached_result
-            request._check_scope(argname, request.scope, fixturedef.scope)
-            kwargs[argname] = result
             if argname != "request":
                 fixturedef.addfinalizer(self.finish)
 
@@ -2511,75 +2504,43 @@ class FixtureDef:
             self.finish()
             assert not hasattr(self, "cached_result")
 
-        fixturefunc = self.func
-
-        if self.unittest:
-            if request.instance is not None:
-                # bind the unbound method to the TestCase instance
-                fixturefunc = self.func.__get__(request.instance)
-        else:
-            # the fixture function needs to be bound to the actual
-            # request.instance so that code working with "self" behaves
-            # as expected.
-            if request.instance is not None:
-                fixturefunc = getimfunc(self.func)
-                if fixturefunc != self.func:
-                    fixturefunc = fixturefunc.__get__(request.instance)
-
-        try:
-            config = request.config
-            if config.option.setupplan:
-                result = None
-            else:
-                result = call_fixture_func(fixturefunc, request, kwargs)
-            if config.option.setuponly or config.option.setupplan:
-                if hasattr(request, 'param'):
-                    # Save the fixture parameter so ._show_fixture_action() can
-                    # display it now and during the teardown (in .finish()).
-                    if self.ids:
-                        if callable(self.ids):
-                            self.cached_param = self.ids(request.param)
-                        else:
-                            self.cached_param = self.ids[request.param_index]
-                    else:
-                        self.cached_param = request.param
-                self._show_fixture_action('SETUP')
-        except Exception:
-            self.cached_result = (None, my_cache_key, sys.exc_info())
-            raise
-        self.cached_result = (result, my_cache_key, None)
-        return result
-
-    def _show_fixture_action(self, what):
-        config = self._fixturemanager.config
-        capman = config.pluginmanager.getplugin('capturemanager')
-        if capman:
-            out, err = capman.suspendcapture()
-
-        tw = config.get_terminal_writer()
-        tw.line()
-        tw.write(' ' * 2 * self.scopenum)
-        tw.write('{step} {scope} {fixture}'.format(
-            step=what.ljust(8),  # align the output to TEARDOWN
-            scope=self.scope[0].upper(),
-            fixture=self.argname))
-
-        if what == 'SETUP':
-            deps = sorted(arg for arg in self.argnames if arg != 'request')
-            if deps:
-                tw.write(' (fixtures used: {0})'.format(', '.join(deps)))
-
-        if hasattr(self, 'cached_param'):
-            tw.write('[{0}]'.format(self.cached_param))
-
-        if capman:
-            capman.resumecapture()
-            sys.stdout.write(out)
-            sys.stderr.write(err)
+        ihook = self._fixturemanager.session.ihook
+        ihook.pytest_fixture_setup(fixturedef=self, request=request)
 
     def __repr__(self):
         return ("<FixtureDef name=%r scope=%r baseid=%r >" %
                 (self.argname, self.scope, self.baseid))
+
+def pytest_fixture_setup(fixturedef, request):
+    """ Execution of fixture setup. """
+    kwargs = {}
+    for argname in fixturedef.argnames:
+        fixdef = request._get_active_fixturedef(argname)
+        result, arg_cache_key, exc = fixdef.cached_result
+        request._check_scope(argname, request.scope, fixdef.scope)
+        kwargs[argname] = result
+
+    fixturefunc = fixturedef.func
+    if fixturedef.unittest:
+        if request.instance is not None:
+            # bind the unbound method to the TestCase instance
+            fixturefunc = fixturedef.func.__get__(request.instance)
+    else:
+        # the fixture function needs to be bound to the actual
+        # request.instance so that code working with "fixturedef" behaves
+        # as expected.
+        if request.instance is not None:
+            fixturefunc = getimfunc(fixturedef.func)
+            if fixturefunc != fixturedef.func:
+                fixturefunc = fixturefunc.__get__(request.instance)
+    my_cache_key = request.param_index
+    try:
+        result = call_fixture_func(fixturefunc, request, kwargs)
+    except Exception:
+        fixturedef.cached_result = (None, my_cache_key, sys.exc_info())
+        raise
+    fixturedef.cached_result = (result, my_cache_key, None)
+    return result
 
 def num_mock_patch_args(function):
     """ return number of arguments used up by mock arguments (if any) """

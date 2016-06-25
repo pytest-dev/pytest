@@ -219,6 +219,19 @@ def pytest_runtest_logreport(report):
     the respective phase of executing a test. """
 
 # -------------------------------------------------------------------------
+# Fixture related hooks
+# -------------------------------------------------------------------------
+
+@hookspec(firstresult=True)
+def pytest_fixture_setup(fixturedef, request):
+    """ performs fixture setup execution. """
+
+def pytest_fixture_post_finalizer(fixturedef):
+    """ called after fixture teardown, but before the cache is cleared so
+    the fixture result cache ``fixturedef.cached_result`` can
+    still be accessed."""
+
+# -------------------------------------------------------------------------
 # test session related hooks
 # -------------------------------------------------------------------------
 
