@@ -3,7 +3,7 @@
 
 **Changes**
 
-*
+* fix (`#1618`_): properly consider explicitly blocked plugins
 
 *
 
@@ -31,6 +31,7 @@
 .. _#607: https://github.com/pytest-dev/pytest/issues/607
 .. _#1519: https://github.com/pytest-dev/pytest/pull/1519
 .. _#1664: https://github.com/pytest-dev/pytest/pull/1664
+.. _#1618: https://github.com/pytest-dev/pytest/pull/1618
 
 
 2.10.0.dev1
