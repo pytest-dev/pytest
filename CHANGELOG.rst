@@ -79,6 +79,10 @@
   finalizer and has access to the fixture's result cache.
   Thanks `@d6e`_, `@sallner`_
 
+* Issue a warning for asserts whose test is a tuple literal. Such asserts will
+  never fail because tuples are always truthy and are usually a mistake
+  (see `#1562`_). Thanks `@kvas-it`_, for the PR.
+
 * New cli flag ``--override-ini`` or ``-o`` that overrides values from the ini file.
   Example '-o xfail_strict=True'. A complete ini-options can be viewed
   by py.test --help. Thanks `@blueyed`_ and `@fengxx`_ for the PR
@@ -207,6 +211,7 @@
 .. _#1619: https://github.com/pytest-dev/pytest/issues/1619
 .. _#372: https://github.com/pytest-dev/pytest/issues/372
 .. _#1544: https://github.com/pytest-dev/pytest/issues/1544
+.. _#1562: https://github.com/pytest-dev/pytest/issues/1562
 .. _#1616: https://github.com/pytest-dev/pytest/pull/1616
 .. _#1628: https://github.com/pytest-dev/pytest/pull/1628
 .. _#1629: https://github.com/pytest-dev/pytest/issues/1629
