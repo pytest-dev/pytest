@@ -1003,14 +1003,16 @@ class Config(object):
             description, type, default = self._parser._inidict[name]
         except KeyError:
             raise ValueError("unknown configuration value: %r" %(name,))
-        try:
-            value = self.inicfg[name]
-        except KeyError:
-            if default is not None:
-                return default
-            if type is None:
-                return ''
-            return []
+        value = self._get_override_ini_value(name)
+        if value is None:
+            try:
+                value = self.inicfg[name]
+            except KeyError:
+                if default is not None:
+                    return default
+                if type is None:
+                    return ''
+                return []
         if type == "pathlist":
             dp = py.path.local(self.inicfg.config.path).dirpath()
             l = []
@@ -1040,6 +1042,20 @@ class Config(object):
                 relroot = modpath.join(relroot, abs=True)
             l.append(relroot)
         return l
+
+    def _get_override_ini_value(self, name):
+        value = None
+        # override_ini is a list of list, to support both -o foo1=bar1 foo2=bar2 and
+        # and -o foo1=bar1 -o foo2=bar2 options
+        # always use the last item if multiple value set for same ini-name,
+        # e.g. -o foo=bar1 -o foo=bar2 will set foo to bar2
+        if self.getoption("override_ini", None):
+            for ini_config_list in self.option.override_ini:
+                for ini_config in ini_config_list:
+                    (key, user_ini_value) = ini_config.split("=", 1)
+                    if key == name:
+                        value = user_ini_value
+        return value
 
     def getoption(self, name, default=notset, skip=False):
         """ return command line option value.
