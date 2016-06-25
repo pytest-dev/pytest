@@ -583,3 +583,92 @@ class TestRootdir:
         inifile = tmpdir.ensure("pytest.ini")
         rootdir, inifile, inicfg = determine_setup(inifile, [tmpdir])
         assert rootdir == tmpdir
+
+class TestOverrideIniArgs:
+    """ test --override-ini """
+    @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
+    def test_override_ini_names(self, testdir, name):
+        testdir.tmpdir.join(name).write(py.std.textwrap.dedent("""
+            [pytest]
+            custom = 1.0
+        """))
+        testdir.makeconftest("""
+            def pytest_addoption(parser):
+                parser.addini("custom", "")
+        """)
+        testdir.makepyfile("""
+            def test_pass(pytestconfig):
+                ini_val = pytestconfig.getini("custom")
+                print('\\ncustom_option:%s\\n' % ini_val)
+        """)
+
+        result = testdir.runpytest("--override-ini", "custom=2.0", "-s")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "custom_option:2.0"
+        ])
+
+        result = testdir.runpytest("--override-ini", "custom=2.0",
+                                   "--override-ini=custom=3.0", "-s")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "custom_option:3.0"
+        ])
+
+
+    def test_override_ini_pathlist(self, testdir):
+        testdir.makeconftest("""
+                def pytest_addoption(parser):
+                    parser.addini("paths", "my new ini value", type="pathlist")
+        """)
+        testdir.makeini("""
+                [pytest]
+                paths=blah.py
+        """)
+        testdir.makepyfile("""
+                import py.path
+                def test_pathlist(pytestconfig):
+                    config_paths = pytestconfig.getini("paths")
+                    print(config_paths)
+                    for cpf in config_paths:
+                        print('\\nuser_path:%s' % cpf.basename)
+        """)
+        result = testdir.runpytest("--override-ini", 'paths=foo/bar1.py foo/bar2.py', "-s")
+        result.stdout.fnmatch_lines([
+            "user_path:bar1.py",
+            "user_path:bar2.py"
+        ])
+
+    def test_override_multiple_and_default(self, testdir):
+        testdir.makeconftest("""
+                def pytest_addoption(parser):
+                    parser.addini("custom_option_1", "", default="o1")
+                    parser.addini("custom_option_2", "", default="o2")
+                    parser.addini("custom_option_3", "", default=False, type="bool")
+                    parser.addini("custom_option_4", "", default=True, type="bool")
+
+        """)
+        testdir.makeini("""
+                [pytest]
+                custom_option_1=custom_option_1
+                custom_option_2=custom_option_2
+        """)
+        testdir.makepyfile("""
+                def test_multiple_options(pytestconfig):
+                    prefix="custom_option"
+                    for x in range(1,5):
+                        ini_value=pytestconfig.getini("%s_%d" % (prefix, x))
+                        print('\\nini%d:%s' % (x, ini_value))
+        """)
+        result = testdir.runpytest("--override-ini",
+                                   'custom_option_1=fulldir=/tmp/user1',
+                                   'custom_option_2=url=/tmp/user2?a=b&d=e',
+                                   "-o", 'custom_option_3=True',
+                                   "-o", 'custom_option_4=no',
+                                   "-s")
+        result.stdout.fnmatch_lines([
+            "ini1:fulldir=/tmp/user1",
+            "ini2:url=/tmp/user2?a=b&d=e",
+            "ini3:True",
+            "ini4:False"
+        ])

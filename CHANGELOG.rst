@@ -79,6 +79,10 @@
   finalizer and has access to the fixture's result cache.
   Thanks `@d6e`_, `@sallner`_
 
+* New cli flag ``--override-ini`` or ``-o`` that overrides values from the ini file.
+  Example '-o xfail_strict=True'. A complete ini-options can be viewed
+  by py.test --help. Thanks `@blueyed`_ and `@fengxx`_ for the PR
+
 
 **Changes**
 
@@ -155,6 +159,8 @@
 .. _@nikratio: https://github.com/nikratio
 .. _@RedBeardCode: https://github.com/RedBeardCode
 .. _@Vogtinator: https://github.com/Vogtinator
+.. _@blueyed: https://github.com/blueyed
+.. _@fengxx: https://github.com/fengxx
 
 * Fix `#1421`_: Exit tests if a collection error occurs and add
   ``--continue-on-collection-errors`` option to restore previous behaviour.
