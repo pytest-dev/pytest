@@ -8,6 +8,7 @@ import types
 import sys
 import math
 import collections
+import warnings
 
 import py
 import pytest
@@ -1855,7 +1856,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         fixturedefs = self._arg2fixturedefs.get(argname, None)
         if fixturedefs is None:
             # we arrive here because of a  a dynamic call to
-            # getfuncargvalue(argname) usage which was naturally
+            # getfixturevalue(argname) usage which was naturally
             # not known at parsing/collection time
             fixturedefs = self._fixturemanager.getfixturedefs(
                             argname, self._pyfuncitem.parent.nodeid)
@@ -1950,7 +1951,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         fixturenames = getattr(item, "fixturenames", self.fixturenames)
         for argname in fixturenames:
             if argname not in item.funcargs:
-                item.funcargs[argname] = self.getfuncargvalue(argname)
+                item.funcargs[argname] = self.getfixturevalue(argname)
 
     def cached_setup(self, setup, teardown=None, scope="module", extrakey=None):
         """ (deprecated) Return a testing resource managed by ``setup`` &
@@ -1984,16 +1985,22 @@ class FixtureRequest(FuncargnamesCompatAttr):
                 self._addfinalizer(finalizer, scope=scope)
         return val
 
-    def getfuncargvalue(self, argname):
-        """ Dynamically retrieve a named fixture function argument.
+    def getfixturevalue(self, argname):
+        """ Dynamically run a named fixture function.
 
-        As of pytest-2.3, it is easier and usually better to access other
-        fixture values by stating it as an input argument in the fixture
-        function.  If you only can decide about using another fixture at test
+        Declaring fixtures via function argument is recommended where possible.
+        But if you can only decide whether to use another fixture at test
         setup time, you may use this function to retrieve it inside a fixture
-        function body.
+        or test function body.
         """
         return self._get_active_fixturedef(argname).cached_result[0]
+
+    def getfuncargvalue(self, argname):
+        """ Deprecated, use getfixturevalue. """
+        warnings.warn(
+            "use of getfuncargvalue is deprecated, use getfixturevalue",
+            DeprecationWarning)
+        return self.getfixturevalue(argname)
 
     def _get_active_fixturedef(self, argname):
         try:
@@ -2010,7 +2017,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
                 raise
         # remove indent to prevent the python3 exception
         # from leaking into the call
-        result = self._getfuncargvalue(fixturedef)
+        result = self._getfixturevalue(fixturedef)
         self._funcargs[argname] = result
         self._fixturedefs[argname] = fixturedef
         return fixturedef
@@ -2026,7 +2033,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
             l.append(fixturedef)
             current = current._parent_request
 
-    def _getfuncargvalue(self, fixturedef):
+    def _getfixturevalue(self, fixturedef):
         # prepare a subrequest object before calling fixture function
         # (latter managed by fixturedef)
         argname = fixturedef.argname

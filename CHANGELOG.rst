@@ -146,13 +146,30 @@
 * Add proposal to docs for a new feature that enables users to combine multiple
   fixtures into one. Thanks to `@hpk42`_ and `@hackebrot`_.
 
+* Rename ``getfuncargvalue`` to ``getfixturevalue``. ``getfuncargvalue`` is
+  deprecated but still present. Thanks to `@RedBeardCode`_ and `@tomviner`_
+  for PR (`#1626`_).
+
+* Always include full assertion explanation. The previous behaviour was hiding
+  sub-expressions that happened to be False, assuming this was redundant information.
+  Thanks `@bagerard`_ for reporting (`#1503`_). Thanks to `@davehunt`_ and
+  `@tomviner`_ for PR.
+
+* Renamed the pytest ``pdb`` module (plugin) into ``debugging``. 
+
 *
+
+* ImportErrors in plugins now are a fatal error instead of issuing a
+  pytest warning (`#1479`_). Thanks to `@The-Compiler`_ for the PR.
 
 .. _#1580: https://github.com/pytest-dev/pytest/pull/1580
 .. _#1605: https://github.com/pytest-dev/pytest/issues/1605
 .. _#1597: https://github.com/pytest-dev/pytest/pull/1597
 .. _#460: https://github.com/pytest-dev/pytest/pull/460
 .. _#1553: https://github.com/pytest-dev/pytest/issues/1553
+.. _#1626: https://github.com/pytest-dev/pytest/pull/1626
+.. _#1503: https://github.com/pytest-dev/pytest/issues/1503
+.. _#1479: https://github.com/pytest-dev/pytest/issues/1479
 
 .. _@graingert: https://github.com/graingert
 .. _@taschini: https://github.com/taschini
@@ -165,6 +182,9 @@
 * Fix `#1421`_: Exit tests if a collection error occurs and add
   ``--continue-on-collection-errors`` option to restore previous behaviour.
   Thanks `@olegpidsadnyi`_ and `@omarkohl`_ for the complete PR (`#1628`_).
+
+.. _@bagerard: https://github.com/bagerard
+.. _@davehunt: https://github.com/davehunt
 
 
 *
