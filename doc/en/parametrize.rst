@@ -81,7 +81,7 @@ them in turn::
 
 As designed in this example, only one pair of input/output values fails
 the simple test function.  And as usual with test function arguments,
-you can see the ``input`` and ``output`` values in the traceback.
+you can see the ``test_input`` and ``expected`` values in the traceback.
 
 Note that you could also use the parametrize marker on a class or a module
 (see :ref:`mark`) which would invoke several functions with the argument sets.
