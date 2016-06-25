@@ -71,7 +71,7 @@ Issues
 * This is very inconvenient if you wish to extend an existing test suite by
   certain parameters for fixtures that are already used by tests
 
-pytest version 3.0 and higher reports an error if you try to run above code::
+pytest version 3.0 reports an error if you try to run above code::
 
     Failed: The requested fixture has no parameter defined for the current
     test.
