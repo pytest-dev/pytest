@@ -48,9 +48,9 @@
   (`#1633`_)
 
 * Remove all py.test-X* entry points. The versioned, suffixed entry points
-  were never documented and a leftover from a pre-virtualenv era. They were
-  also broken for wheels, so removing these entry points also removes a
-  potential source of confusion.
+  were never documented and a leftover from a pre-virtualenv era. These entry
+  points also created broken entry points in wheels, so removing them also
+  removes a source of confusion for users.
 
 **Changes**
 
