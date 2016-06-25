@@ -38,7 +38,18 @@
 
 *
 
-*
+**Incompatible changes**
+
+* Removing the following deprecated commandline options
+
+  * genscript
+  * no-assert
+  * nomagic
+  * report
+
+  Thanks to `@RedBeardCode`_ for the PR(`#1664`_)
+
+
 
 .. _#1580: https://github.com/pytest-dev/pytest/pull/1580
 .. _#1605: https://github.com/pytest-dev/pytest/issues/1605
@@ -47,6 +58,7 @@
 .. _#1553: https://github.com/pytest-dev/pytest/issues/1553
 .. _#1626: https://github.com/pytest-dev/pytest/pull/1626
 .. _#1503: https://github.com/pytest-dev/pytest/issues/1503
+.. _#1664: https://github.com/pytest-dev/pytest/pull/1664
 
 .. _@graingert: https://github.com/graingert
 .. _@taschini: https://github.com/taschini

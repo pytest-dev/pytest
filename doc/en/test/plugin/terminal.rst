@@ -18,8 +18,6 @@ command line options
     show extra test summary info as specified by chars (f)ailed, (s)skipped, (x)failed, (X)passed.
 ``-l, --showlocals``
     show locals in tracebacks (disabled by default).
-``--report=opts``
-    (deprecated, use -r)
 ``--tb=style``
     traceback print mode (long/short/line/no).
 ``--full-trace``

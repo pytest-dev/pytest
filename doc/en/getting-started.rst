@@ -193,7 +193,7 @@ Where to go next
 Here are a few suggestions where to go next:
 
 * :ref:`cmdline` for command line invocation examples
-* :ref:`good practices <goodpractices>` for virtualenv, test layout, genscript support
+* :ref:`good practices <goodpractices>` for virtualenv, test layout
 * :ref:`fixtures` for providing a functional baseline to your tests
 * :ref:`apiref` for documentation and examples on using ``pytest``
 * :ref:`plugins` managing and writing plugins
@@ -226,11 +226,6 @@ py.test not found on Windows despite installation?
 .. _`ActivePython install`: http://www.activestate.com/activepython/downloads
 
 .. _`Jython does not create command line launchers`: http://bugs.jython.org/issue1491
-
-- **Jython2.5.1 on Windows XP**: `Jython does not create command line launchers`_
-  so ``py.test`` will not work correctly.  You may install py.test on
-  CPython and type ``py.test --genscript=mytest`` and then use
-  ``jython mytest`` to run your tests with Jython using ``pytest``.
 
  :ref:`examples` for more complex examples
 
