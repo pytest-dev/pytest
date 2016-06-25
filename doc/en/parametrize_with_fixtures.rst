@@ -90,3 +90,51 @@ fixtures from existing ones.
 
 The new fixture ``context`` inherits the scope from the used fixtures.
 
+Alternative approach
+--------------------
+
+A new helper function named ``fixture_request`` tells pytest to yield all
+parameters of a fixture.
+
+.. code-block:: python
+
+    @pytest.fixture(params=[
+        pytest.fixture_request('default_context'),
+        pytest.fixture_request('extra_context'),
+    ])
+    def context(request):
+        """Returns all values for ``default_context``, one-by-one before it
+        does the same for ``extra_context``.
+
+        request.param:
+            - {}
+            - {'author': 'alice'}
+            - {'project_slug': 'helloworld'}
+            - {'author': 'bob', 'project_slug': 'foobar'}
+        """
+        return request.param
+
+.. note:: 
+    
+    How should the scoping work in that case? Ideally it uses invocation scope
+    and relies on its params
+
+The same helper can be used in combination with ``pytest.mark.parametrize``.
+
+.. code-block:: python
+
+
+    @pytest.mark.parametrize(
+        'context, expected_response_code',
+        [
+            (pytest.fixture_request('default_context'), 0),
+            (pytest.fixture_request('extra_context'), 0),
+        ],
+    )
+    def test_generate_project(cookies, context, exit_code):
+        """Call the cookiecutter API to generate a new project from a
+        template.
+        """
+        result = cookies.bake(extra_context=context)
+
+        assert result.exit_code == exit_code
