@@ -74,3 +74,19 @@ pytest version 3.0 and higher reports an error if you try to run above code::
 
     Requested fixture 'extra_context'
 
+
+Proposed solution
+-----------------
+
+A new function that can be used in modules can be used to dynamically define
+fixtures from existing ones.
+
+.. code-block:: python
+
+    pytest.define_combined_fixture(
+        name='context',
+        fixtures=['default_context', 'extra_context'],
+    )
+
+The new fixture ``context`` inherits the scope from the used fixtures.
+
