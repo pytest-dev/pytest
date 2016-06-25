@@ -106,6 +106,9 @@
   Thanks `@Vogtinator`_ for reporting. Thanks to `@RedBeardCode`_ and
   `@tomviner`_ for PR.
 
+* Add proposal to docs for a new feature that enables users to combine multiple
+  fixtures into one. Thanks to `@hpk42`_ and `@hackebrot`_.
+
 *
 
 .. _#1580: https://github.com/pytest-dev/pytest/pull/1580
