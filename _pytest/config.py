@@ -11,6 +11,7 @@ import py
 import sys, os
 import _pytest._code
 import _pytest.hookspec  # the extension point definitions
+import _pytest.assertion
 from _pytest._pluggy import PluginManager, HookimplMarker, HookspecMarker
 
 hookimpl = HookimplMarker("pytest")
@@ -153,6 +154,9 @@ class PytestPluginManager(PluginManager):
                 pass
             self.trace.root.setwriter(err.write)
             self.enable_tracing()
+
+        # Config._consider_importhook will set a real object if required.
+        self.rewrite_hook = _pytest.assertion.DummyRewriteHook()
 
     def addhooks(self, module_or_class):
         """
@@ -362,7 +366,9 @@ class PytestPluginManager(PluginManager):
         self._import_plugin_specs(os.environ.get("PYTEST_PLUGINS"))
 
     def consider_module(self, mod):
-        self._import_plugin_specs(getattr(mod, "pytest_plugins", None))
+        plugins = getattr(mod, 'pytest_plugins', [])
+        self.rewrite_hook.mark_rewrite(*plugins)
+        self._import_plugin_specs(plugins)
 
     def _import_plugin_specs(self, spec):
         if spec:
@@ -926,15 +932,13 @@ class Config(object):
         and find all the installed plugins to mark them for re-writing
         by the importhook.
         """
-        import _pytest.assertion
         ns, unknown_args = self._parser.parse_known_and_unknown_args(args)
         mode = ns.assertmode
-        if ns.noassert or ns.nomagic:
-            mode = "plain"
         self._warn_about_missing_assertion(mode)
         if mode != 'plain':
             hook = _pytest.assertion.install_importhook(self, mode)
             if hook:
+                self.pluginmanager.rewrite_hook = hook
                 for entrypoint in pkg_resources.iter_entry_points('pytest11'):
                     for entry in entrypoint.dist._get_metadata('RECORD'):
                         fn = entry.split(',')[0]

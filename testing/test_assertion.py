@@ -64,21 +64,52 @@ class TestImportHookInstallation:
         result.stdout.fnmatch_lines([expected])
 
     @pytest.mark.parametrize('mode', ['plain', 'rewrite', 'reinterp'])
+    def test_pytest_plugins_rewrite(self, testdir, mode):
+        contents = {
+            'conftest.py': """
+                pytest_plugins = ['ham']
+            """,
+            'ham.py': """
+                import pytest
+                @pytest.fixture
+                def check_first():
+                    def check(values, value):
+                        assert values.pop(0) == value
+                    return check
+            """,
+            'test_foo.py': """
+                def test_foo(check_first):
+                    check_first([10, 30], 30)
+            """,
+        }
+        testdir.makepyfile(**contents)
+        result = testdir.runpytest_subprocess('--assert=%s' % mode)
+        if mode == 'plain':
+            expected = 'E       AssertionError'
+        elif mode == 'rewrite':
+            expected = '*assert 10 == 30*'
+        elif mode == 'reinterp':
+            expected = '*AssertionError:*was re-run*'
+        else:
+            assert 0
+        result.stdout.fnmatch_lines([expected])
+
+    @pytest.mark.parametrize('mode', ['plain', 'rewrite', 'reinterp'])
     def test_installed_plugin_rewrite(self, testdir, mode):
         # Make sure the hook is installed early enough so that plugins
         # installed via setuptools are re-written.
-        ham = testdir.tmpdir.join('hampkg').ensure(dir=1)
-        ham.join('__init__.py').write("""
-import pytest
+        testdir.tmpdir.join('hampkg').ensure(dir=1)
+        contents = {
+            'hampkg/__init__.py': """
+                import pytest
 
-@pytest.fixture
-def check_first2():
-    def check(values, value):
-        assert values.pop(0) == value
-    return check
-        """)
-        testdir.makepyfile(
-            spamplugin="""
+                @pytest.fixture
+                def check_first2():
+                    def check(values, value):
+                        assert values.pop(0) == value
+                    return check
+            """,
+            'spamplugin.py': """
             import pytest
             from hampkg import check_first2
 
@@ -88,7 +119,7 @@ def check_first2():
                     assert values.pop(0) == value
                 return check
             """,
-            mainwrapper="""
+            'mainwrapper.py': """
             import pytest, pkg_resources
 
             class DummyDistInfo:
@@ -116,14 +147,15 @@ def check_first2():
             pkg_resources.iter_entry_points = iter_entry_points
             pytest.main()
             """,
-            test_foo="""
+            'test_foo.py': """
             def test(check_first):
                 check_first([10, 30], 30)
 
             def test2(check_first2):
                 check_first([10, 30], 30)
             """,
-        )
+        }
+        testdir.makepyfile(**contents)
         result = testdir.run(sys.executable, 'mainwrapper.py', '-s', '--assert=%s' % mode)
         if mode == 'plain':
             expected = 'E       AssertionError'
@@ -134,6 +166,47 @@ def check_first2():
         else:
             assert 0
         result.stdout.fnmatch_lines([expected])
+
+    def test_rewrite_ast(self, testdir):
+        testdir.tmpdir.join('pkg').ensure(dir=1)
+        contents = {
+            'pkg/__init__.py': """
+                import pytest
+                pytest.register_assert_rewrite('pkg.helper')
+            """,
+            'pkg/helper.py': """
+                def tool():
+                    a, b = 2, 3
+                    assert a == b
+            """,
+            'pkg/plugin.py': """
+                import pytest, pkg.helper
+                @pytest.fixture
+                def tool():
+                    return pkg.helper.tool
+            """,
+            'pkg/other.py': """
+                l = [3, 2]
+                def tool():
+                    assert l.pop() == 3
+            """,
+            'conftest.py': """
+                pytest_plugins = ['pkg.plugin']
+            """,
+            'test_pkg.py': """
+                import pkg.other
+                def test_tool(tool):
+                    tool()
+                def test_other():
+                    pkg.other.tool()
+            """,
+        }
+        testdir.makepyfile(**contents)
+        result = testdir.runpytest_subprocess('--assert=rewrite')
+        result.stdout.fnmatch_lines(['>*assert a == b*',
+                                     'E*assert 2 == 3*',
+                                     '>*assert l.pop() == 3*',
+                                     'E*AssertionError*re-run*'])
 
 
 class TestBinReprIntegration:

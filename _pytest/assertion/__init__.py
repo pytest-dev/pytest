@@ -7,6 +7,7 @@ import sys
 
 from _pytest.monkeypatch import monkeypatch
 from _pytest.assertion import util
+from _pytest.assertion import rewrite
 
 
 def pytest_addoption(parser):
@@ -24,6 +25,34 @@ def pytest_addoption(parser):
                             'rewrite' (the default) rewrites assert
                             statements in test modules on import to
                             provide assert expression information. """)
+
+
+def pytest_namespace():
+    return {'register_assert_rewrite': register_assert_rewrite}
+
+
+def register_assert_rewrite(*names):
+    """Register a module name to be rewritten on import.
+
+    This function will make sure that the module will get it's assert
+    statements rewritten when it is imported.  Thus you should make
+    sure to call this before the module is actually imported, usually
+    in your __init__.py if you are a plugin using a package.
+    """
+    for hook in sys.meta_path:
+        if isinstance(hook, rewrite.AssertionRewritingHook):
+            importhook = hook
+            break
+    else:
+        importhook = DummyRewriteHook()
+    importhook.mark_rewrite(*names)
+
+
+class DummyRewriteHook(object):
+    """A no-op import hook for when rewriting is disabled."""
+
+    def mark_rewrite(self, *names):
+        pass
 
 
 class AssertionState:
