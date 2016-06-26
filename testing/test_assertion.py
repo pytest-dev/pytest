@@ -648,3 +648,13 @@ def test_assert_tuple_warning(testdir):
     """)
     result = testdir.runpytest('-rw')
     result.stdout.fnmatch_lines('WR1*:2 assertion is always true*')
+
+def test_assert_indirect_tuple_no_warning(testdir):
+    testdir.makepyfile("""
+        def test_tuple():
+            tpl = ('foo', 'bar')
+            assert tpl
+    """)
+    result = testdir.runpytest('-rw')
+    output = '\n'.join(result.stdout.lines)
+    assert 'WR1' not in output
