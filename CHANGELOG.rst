@@ -83,6 +83,10 @@
   Example '-o xfail_strict=True'. A complete ini-options can be viewed
   by py.test --help. Thanks `@blueyed`_ and `@fengxx`_ for the PR
 
+* Remove all py.test-X* entry points. The versioned, suffixed entry points
+  were never documented and a leftover from a pre-virtualenv era. These entry
+  points also created broken entry points in wheels, so removing them also
+  removes a source of confusion for users.
 
 **Changes**
 

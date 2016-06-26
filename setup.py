@@ -69,7 +69,8 @@ def main():
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='Holger Krekel, Bruno Oliveira, Ronny Pfannschmidt, Floris Bruynooghe, Brianna Laugher, Florian Bruhin and others',
         author_email='holger at merlinux.eu',
-        entry_points=make_entry_points(),
+        entry_points={'console_scripts':
+                          ['pytest=pytest:main', 'py.test=pytest:main']},
         classifiers=classifiers,
         cmdclass={'test': PyTest},
         # the following should be enabled for release
@@ -79,29 +80,6 @@ def main():
         py_modules=['pytest'],
         zip_safe=False,
     )
-
-
-def cmdline_entrypoints(versioninfo, platform, basename):
-    target = 'pytest:main'
-    if platform.startswith('java'):
-        points = {'py.test-jython': target}
-    else:
-        if basename.startswith('pypy'):
-            points = {'py.test-%s' % basename: target}
-        else: # cpython
-            points = {'py.test-%s.%s' % versioninfo[:2] : target}
-        points['py.test'] = target
-    points['pytest'] = target
-    return points
-
-
-def make_entry_points():
-    basename = os.path.basename(sys.executable)
-    points = cmdline_entrypoints(sys.version_info, sys.platform, basename)
-    keys = list(points.keys())
-    keys.sort()
-    l = ['%s = %s' % (x, points[x]) for x in keys]
-    return {'console_scripts': l}
 
 
 class PyTest(Command):
