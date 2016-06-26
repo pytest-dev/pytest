@@ -20,10 +20,10 @@
 
 * Removing the following deprecated commandline options
 
-  * genscript
-  * no-assert
-  * nomagic
-  * report
+  * ``--genscript``
+  * ``--no-assert``
+  * ``--nomagic``
+  * ``--report``
 
   Thanks to `@RedBeardCode`_ for the PR(`#1664`_)
 
