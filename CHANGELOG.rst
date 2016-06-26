@@ -97,6 +97,11 @@
   Example '-o xfail_strict=True'. A complete ini-options can be viewed
   by py.test --help. Thanks `@blueyed`_ and `@fengxx`_ for the PR
 
+* Remove all py.test-X* entry points. The versioned, suffixed entry points
+  were never documented and a leftover from a pre-virtualenv era. These entry
+  points also created broken entry points in wheels, so removing them also
+  removes a source of confusion for users (`#1632`_).
+  Thanks `@obestwalter`_ for the PR.
 
 **Changes**
 
@@ -161,6 +166,7 @@
   fixtures into one. Thanks to `@hpk42`_ and `@hackebrot`_.
 
 
+.. _#1632: https://github.com/pytest-dev/pytest/issues/1632
 .. _#1580: https://github.com/pytest-dev/pytest/pull/1580
 .. _#1605: https://github.com/pytest-dev/pytest/issues/1605
 .. _#1597: https://github.com/pytest-dev/pytest/pull/1597
@@ -174,6 +180,7 @@
 .. _@Vogtinator: https://github.com/Vogtinator
 .. _@blueyed: https://github.com/blueyed
 .. _@fengxx: https://github.com/fengxx
+.. _@obestwalter: https://github.com/obestwalter
 
 * Fix `#1421`_: Exit tests if a collection error occurs and add
   ``--continue-on-collection-errors`` option to restore previous behaviour.
