@@ -613,7 +613,7 @@ def test_getreportopt():
     assert getreportopt(config) == "sfxw"
 
     config.option.reportchars = "sfxw"
-    config.option.disablepytestwarnings = False 
+    config.option.disablepytestwarnings = False
     assert getreportopt(config) == "sfxw"
 
 
