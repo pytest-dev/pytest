@@ -125,7 +125,7 @@ class AssertionRewritingHook(object):
         co = _read_pyc(fn_pypath, pyc, state.trace)
         if co is None:
             state.trace("rewriting %r" % (fn,))
-            source_stat, co = _rewrite_test(state, fn_pypath)
+            source_stat, co = _rewrite_test(self.config, fn_pypath)
             if co is None:
                 # Probably a SyntaxError in the test.
                 return None
@@ -252,8 +252,9 @@ N = "\n".encode("utf-8")
 cookie_re = re.compile(r"^[ \t\f]*#.*coding[:=][ \t]*[-\w.]+")
 BOM_UTF8 = '\xef\xbb\xbf'
 
-def _rewrite_test(state, fn):
+def _rewrite_test(config, fn):
     """Try to read and rewrite *fn* and return the code object."""
+    state = config._assertstate
     try:
         stat = fn.stat()
         source = fn.read("rb")
@@ -298,7 +299,7 @@ def _rewrite_test(state, fn):
         # Let this pop up again in the real import.
         state.trace("failed to parse: %r" % (fn,))
         return None, None
-    rewrite_asserts(tree)
+    rewrite_asserts(tree, fn, config)
     try:
         co = compile(tree, fn.strpath, "exec")
     except SyntaxError:
@@ -354,9 +355,9 @@ def _read_pyc(source, pyc, trace=lambda x: None):
         return co
 
 
-def rewrite_asserts(mod):
+def rewrite_asserts(mod, module_path=None, config=None):
     """Rewrite the assert statements in mod."""
-    AssertionRewriter().run(mod)
+    AssertionRewriter(module_path, config).run(mod)
 
 
 def _saferepr(obj):
@@ -543,6 +544,11 @@ class AssertionRewriter(ast.NodeVisitor):
 
     """
 
+    def __init__(self, module_path, config):
+        super(AssertionRewriter, self).__init__()
+        self.module_path = module_path
+        self.config = config
+
     def run(self, mod):
         """Find all assert statements in *mod* and rewrite them."""
         if not mod.body:
@@ -683,6 +689,10 @@ class AssertionRewriter(ast.NodeVisitor):
         the expression is false.
 
         """
+        if isinstance(assert_.test, ast.Tuple) and self.config is not None:
+            fslocation = (self.module_path, assert_.lineno)
+            self.config.warn('R1', 'assertion is always true, perhaps '
+                              'remove parentheses?', fslocation=fslocation)
         self.statements = []
         self.variables = []
         self.variable_counter = itertools.count()
