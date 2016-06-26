@@ -26,7 +26,7 @@ def pytest_addoption(parser):
               "(p)passed, (P)passed with output, (a)all except pP. "
               "The pytest warnings are displayed at all times except when "
               "--disable-pytest-warnings is set")
-    group._addoption('--disable-pytest-warnings', default=False, 
+    group._addoption('--disable-pytest-warnings', default=False,
                      dest='disablepytestwarnings', action='store_true',
                      help='disable warnings summary, overrides -r w flag')
     group._addoption('-l', '--showlocals',
