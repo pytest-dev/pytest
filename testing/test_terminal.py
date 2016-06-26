@@ -591,6 +591,7 @@ def test_getreportopt():
     class config:
         class option:
             reportchars = ""
+            disablepytestwarnings = True
     config.option.report = "xfailed"
     assert getreportopt(config) == "x"
 
@@ -601,11 +602,20 @@ def test_getreportopt():
     assert getreportopt(config) == "sx"
 
     config.option.report = "skipped"
-    config.option.reportchars = "sf"
+    config.option.reportchars = "sfw"
     assert getreportopt(config) == "sf"
 
-    config.option.reportchars = "sfx"
+    config.option.reportchars = "sfxw"
     assert getreportopt(config) == "sfx"
+
+    config.option.reportchars = "sfx"
+    config.option.disablepytestwarnings = False
+    assert getreportopt(config) == "sfxw"
+
+    config.option.reportchars = "sfxw"
+    config.option.disablepytestwarnings = False
+    assert getreportopt(config) == "sfxw"
+
 
 def test_terminalreporter_reportopt_addopts(testdir):
     testdir.makeini("[pytest]\naddopts=-rs")

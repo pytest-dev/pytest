@@ -536,7 +536,7 @@ class TestWarning:
         """)
         result = testdir.runpytest()
         assert result.parseoutcomes()["pytest-warnings"] > 0
-        assert "hello" not in result.stdout.str()
+        assert "hello" in result.stdout.str()
 
         result = testdir.runpytest("-rw")
         result.stdout.fnmatch_lines("""
