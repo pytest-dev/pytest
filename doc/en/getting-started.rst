@@ -193,45 +193,9 @@ Where to go next
 Here are a few suggestions where to go next:
 
 * :ref:`cmdline` for command line invocation examples
-* :ref:`good practices <goodpractices>` for virtualenv, test layout, genscript support
+* :ref:`good practices <goodpractices>` for virtualenv, test layout
 * :ref:`fixtures` for providing a functional baseline to your tests
 * :ref:`apiref` for documentation and examples on using ``pytest``
 * :ref:`plugins` managing and writing plugins
-
-.. _`installation issues`:
-
-Known Installation issues
-------------------------------
-
-easy_install or pip not found?
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-.. _`install pip`: http://www.pip-installer.org/en/latest/index.html
-
-`Install pip`_ for a state of the art python package installer.
-
-Install `setuptools`_ to get ``easy_install`` which allows to install
-``.egg`` binary format packages in addition to source-based ones.
-
-pytest not found on Windows despite installation?
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-.. _`Python for Windows`: http://www.imladris.com/Scripts/PythonForWindows.html
-
-- **Windows**: If "easy_install" or "pytest" are not found
-  you need to add the Python script path to your ``PATH``, see here:
-  `Python for Windows`_.  You may alternatively use an `ActivePython install`_
-  which does this for you automatically.
-
-.. _`ActivePython install`: http://www.activestate.com/activepython/downloads
-
-.. _`Jython does not create command line launchers`: http://bugs.jython.org/issue1491
-
-- **Jython2.5.1 on Windows XP**: `Jython does not create command line launchers`_
-  so ``pytest`` will not work correctly.  You may install pytest on
-  CPython and type ``pytest --genscript=mytest`` and then use
-  ``jython mytest`` to run your tests with Jython using ``pytest``.
-
- :ref:`examples` for more complex examples
 
 .. include:: links.inc

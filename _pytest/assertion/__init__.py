@@ -25,15 +25,6 @@ def pytest_addoption(parser):
                             'rewrite' (the default) rewrites assert
                             statements in test modules on import to
                             provide assert expression information. """)
-    group.addoption('--no-assert',
-                    action="store_true",
-                    default=False,
-                    dest="noassert",
-                    help="DEPRECATED equivalent to --assert=plain")
-    group.addoption('--nomagic', '--no-magic',
-                    action="store_true",
-                    default=False,
-                    help="DEPRECATED equivalent to --assert=plain")
 
 
 class AssertionState:
@@ -48,10 +39,6 @@ class AssertionState:
 def pytest_load_initial_conftests(early_config, parser, args):
     ns, ns_unknown_args = parser.parse_known_and_unknown_args(args)
     mode = ns.assertmode
-    no_assert = ns.noassert
-    no_magic = ns.nomagic
-    if no_assert or no_magic:
-        mode = "plain"
     if mode == "rewrite":
         try:
             import ast  # noqa
