@@ -53,6 +53,7 @@
 .. _#1553: https://github.com/pytest-dev/pytest/issues/1553
 .. _#1626: https://github.com/pytest-dev/pytest/pull/1626
 .. _#1503: https://github.com/pytest-dev/pytest/issues/1503
+.. _#1668: https://github.com/pytest-dev/pytest/issues/1668
 
 .. _@graingert: https://github.com/graingert
 .. _@taschini: https://github.com/taschini
