@@ -54,11 +54,8 @@
 .. _#1553: https://github.com/pytest-dev/pytest/issues/1553
 .. _#1626: https://github.com/pytest-dev/pytest/pull/1626
 .. _#1503: https://github.com/pytest-dev/pytest/issues/1503
-<<<<<<< HEAD
 .. _#1479: https://github.com/pytest-dev/pytest/issues/1479
-=======
 .. _#925: https://github.com/pytest-dev/pytest/issues/925
->>>>>>> Improve of the test output for logical expression with brackets.
 
 .. _@graingert: https://github.com/graingert
 .. _@taschini: https://github.com/taschini
