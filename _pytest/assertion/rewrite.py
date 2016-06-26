@@ -754,8 +754,6 @@ class AssertionRewriter(ast.NodeVisitor):
         self.statements = save
         self.on_failure = fail_save
         expl_template = self.helper("format_boolop", expl_list, ast.Num(is_or))
-        #if isinstance(boolop, (_ast.Compare, _ast.BoolOp)):
-        #    expl_template = "({0})".format(expl_template)
         expl = self.pop_format_context(expl_template)
         return ast.Name(res_var, ast.Load()), self.explanation_param(expl)
 
