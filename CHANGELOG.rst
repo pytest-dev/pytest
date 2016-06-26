@@ -184,7 +184,6 @@
 .. _@Vogtinator: https://github.com/Vogtinator
 .. _@blueyed: https://github.com/blueyed
 .. _@fengxx: https://github.com/fengxx
-.. _@obestwalter: https://github.com/obestwalter
 
 * Fix `#1421`_: Exit tests if a collection error occurs and add
   ``--continue-on-collection-errors`` option to restore previous behaviour.
