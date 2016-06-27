@@ -30,7 +30,7 @@ You can also turn warnings into actual errors::
 Changes
 =======
 
-0.1 - Unreleased
+0.1 - 2016-06-27
 ----------------
 
 - Initial release.
