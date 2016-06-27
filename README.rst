@@ -30,8 +30,8 @@ You can also turn warnings into actual errors::
 Changes
 =======
 
-0.1 - 2016-06-27
-----------------
+0.1.0 - 2016-06-27
+------------------
 
 - Initial release.
   [fschulze (Florian Schulze)]
