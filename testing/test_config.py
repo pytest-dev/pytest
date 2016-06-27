@@ -352,6 +352,7 @@ class TestConfigFromdictargs:
         assert config.inicfg.get('name') == 'value'
         assert config.inicfg.get('should_not_be_set') is None
 
+    @pytest.mark.issue1618
     def test_consider_plugin(self, testdir):
         pytest.importorskip('xdist')
         print testdir
