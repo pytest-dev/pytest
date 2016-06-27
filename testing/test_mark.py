@@ -420,8 +420,8 @@ class TestFunctional:
 
 
     @pytest.mark.issue568
-    @pytest.mark.xfail(reason="markers smear, needs fixing")
-    def test_mark_decorator_subclass_does_not_propagate_to_base2(self, testdir):
+    @pytest.mark.xfail(reason="markers smear on methods of base classes")
+    def test_mark_should_not_pass_to_siebling_class(self, testdir):
         p = testdir.makepyfile("""
             import pytest
 
