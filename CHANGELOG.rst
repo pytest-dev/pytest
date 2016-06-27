@@ -27,7 +27,7 @@
 
   Thanks to `@RedBeardCode`_ for the PR(`#1664`_)
 
-* removed support code for python 3 < 3.3 addresssing (`#1627`_)
+* removed support code for python 3 < 3.3 addressing (`#1627`_)
 
 .. _#607: https://github.com/pytest-dev/pytest/issues/607
 .. _#1519: https://github.com/pytest-dev/pytest/pull/1519
