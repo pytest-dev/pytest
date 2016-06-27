@@ -355,7 +355,7 @@ class TestConfigFromdictargs:
     @pytest.mark.issue1618
     def test_consider_plugin(self, testdir):
         pytest.importorskip('xdist')
-        print testdir
+        print (testdir)
         testdir.makepyfile(conftest="""
                 pytest_plugins = ['plugin']
             """,
