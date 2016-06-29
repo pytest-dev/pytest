@@ -798,6 +798,10 @@ If we run it, we get two passing tests::
 
 Here is how autouse fixtures work in other scopes:
 
+- autouse fixtures obey the ``scope=`` keyword-argument: if an autouse fixture
+  has ``scope='session'`` it will only be run once, no matter where it is
+  defined. ``scope='class'`` means it will be run once per class, etc.
+
 - if an autouse fixture is defined in a test module, all its test
   functions automatically use it.
 
