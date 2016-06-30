@@ -4,6 +4,8 @@
 **Changes**
 
 * fix (`#1618`_): properly consider explicitly blocked plugins
+  by considering pluginargs before setuptools plugin
+  (which avoids calling addopts from a plugin that was asked to be disabled)
 
 *
 
