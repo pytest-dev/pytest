@@ -13,7 +13,7 @@ classifiers = ['Development Status :: 6 - Mature',
                'Topic :: Software Development :: Libraries',
                'Topic :: Utilities'] + [
               ('Programming Language :: Python :: %s' % x) for x in
-                  '2 2.6 2.7 3 3.2 3.3 3.4 3.5'.split()]
+                  '2 2.6 2.7 3 3.3 3.4 3.5'.split()]
 
 with open('README.rst') as fd:
     long_description = fd.read()
@@ -51,10 +51,10 @@ def main():
     install_requires = ['py>=1.4.29']  # pluggy is vendored in _pytest.vendored_packages
     extras_require = {}
     if has_environment_marker_support():
-        extras_require[':python_version=="2.6" or python_version=="3.0" or python_version=="3.1"'] = ['argparse']
+        extras_require[':python_version=="2.6"'] = ['argparse']
         extras_require[':sys_platform=="win32"'] = ['colorama']
     else:
-        if sys.version_info < (2, 7) or (3,) <= sys.version_info < (3, 2):
+        if sys.version_info < (2, 7):
             install_requires.append('argparse')
         if sys.platform == 'win32':
             install_requires.append('colorama')
