@@ -5,12 +5,14 @@ def pytest_addoption(parser):
     group = parser.getgroup("debugconfig")
     group.addoption('--setuponly', '--setup-only', action="store_true",
                help="only setup fixtures, don't execute the tests.")
+    group.addoption('--setupshow', '--setup-show', action="store_true",
+               help="show setup fixtures while executing the tests.")
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_fixture_setup(fixturedef, request):
     yield
     config = request.config
-    if config.option.setuponly:
+    if config.option.setupshow:
         if hasattr(request, 'param'):
             # Save the fixture parameter so ._show_fixture_action() can
             # display it now and during the teardown (in .finish()).
@@ -26,7 +28,7 @@ def pytest_fixture_setup(fixturedef, request):
 def pytest_fixture_post_finalizer(fixturedef):
     if hasattr(fixturedef, "cached_result"):
         config = fixturedef._fixturemanager.config
-        if config.option.setuponly:
+        if config.option.setupshow:
             _show_fixture_action(fixturedef, 'TEARDOWN')
             if hasattr(fixturedef, "cached_param"):
                 del fixturedef.cached_param
@@ -57,3 +59,8 @@ def _show_fixture_action(fixturedef, msg):
         capman.resumecapture()
         sys.stdout.write(out)
         sys.stderr.write(err)
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_cmdline_main(config):
+    if config.option.setuponly:
+        config.option.setupshow = True

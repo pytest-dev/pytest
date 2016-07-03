@@ -1,7 +1,8 @@
 import pytest
 
 
-@pytest.fixture(params=['--setup-only', '--setup-plan'], scope='module')
+@pytest.fixture(params=['--setup-only', '--setup-plan', '--setup-show'],
+                scope='module')
 def mode(request):
     return request.param
 
@@ -24,7 +25,7 @@ def test_show_only_active_fixtures(testdir, mode):
 
     result.stdout.fnmatch_lines([
         '*SETUP    F arg1*',
-        '*test_arg1 (fixtures used: arg1)',
+        '*test_arg1 (fixtures used: arg1)*',
         '*TEARDOWN F arg1*',
     ])
     assert "_arg0" not in result.stdout.str()
@@ -49,7 +50,7 @@ def test_show_different_scopes(testdir, mode):
     result.stdout.fnmatch_lines([
         'SETUP    S arg_session*',
         '*SETUP    F arg_function*',
-        '*test_arg1 (fixtures used: arg_function, arg_session)',
+        '*test_arg1 (fixtures used: arg_function, arg_session)*',
         '*TEARDOWN F arg_function*',
         'TEARDOWN S arg_session*',
     ])
@@ -77,7 +78,7 @@ def test_show_nested_fixtures(testdir, mode):
     result.stdout.fnmatch_lines([
         'SETUP    S arg_same*',
         '*SETUP    F arg_same (fixtures used: arg_same)*',
-        '*test_arg1 (fixtures used: arg_same)',
+        '*test_arg1 (fixtures used: arg_same)*',
         '*TEARDOWN F arg_same*',
         'TEARDOWN S arg_same*',
     ])
@@ -102,7 +103,7 @@ def test_show_fixtures_with_autouse(testdir, mode):
     result.stdout.fnmatch_lines([
         'SETUP    S arg_session*',
         '*SETUP    F arg_function*',
-        '*test_arg1 (fixtures used: arg_function, arg_session)',
+        '*test_arg1 (fixtures used: arg_function, arg_session)*',
     ])
 
 
@@ -218,4 +219,25 @@ def test_capturing(testdir):
     result.stdout.fnmatch_lines([
         'this should be captured',
         'this should also be captured'
+    ])
+
+
+def test_show_fixtures_and_execute_test(testdir):
+    """ Verifies that setups are shown and tests are executed. """
+    p = testdir.makepyfile('''
+        import pytest
+        @pytest.fixture
+        def arg():
+            assert True
+        def test_arg(arg):
+            assert False
+    ''')
+
+    result = testdir.runpytest("--setup-show", p)
+    assert result.ret == 1
+
+    result.stdout.fnmatch_lines([
+        '*SETUP    F arg*',
+        '*test_arg (fixtures used: arg)F',
+        '*TEARDOWN F arg*',
     ])

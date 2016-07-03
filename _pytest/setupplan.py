@@ -17,3 +17,4 @@ def pytest_fixture_setup(fixturedef, request):
 def pytest_cmdline_main(config):
     if config.option.setupplan:
         config.option.setuponly = True
+        config.option.setupshow = True
