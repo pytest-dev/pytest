@@ -1,12 +1,14 @@
 import pytest
 import sys
 
+
 def pytest_addoption(parser):
     group = parser.getgroup("debugconfig")
     group.addoption('--setuponly', '--setup-only', action="store_true",
-               help="only setup fixtures, don't execute the tests.")
+                    help="only setup fixtures, don't execute the tests.")
     group.addoption('--setupshow', '--setup-show', action="store_true",
-               help="show setup fixtures while executing the tests.")
+                    help="show setup fixtures while executing the tests.")
+
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_fixture_setup(fixturedef, request):
@@ -20,10 +22,12 @@ def pytest_fixture_setup(fixturedef, request):
                 if callable(fixturedef.ids):
                     fixturedef.cached_param = fixturedef.ids(request.param)
                 else:
-                    fixturedef.cached_param = fixturedef.ids[request.param_index]
+                    fixturedef.cached_param = fixturedef.ids[
+                        request.param_index]
             else:
                 fixturedef.cached_param = request.param
         _show_fixture_action(fixturedef, 'SETUP')
+
 
 def pytest_fixture_post_finalizer(fixturedef):
     if hasattr(fixturedef, "cached_result"):
@@ -32,6 +36,7 @@ def pytest_fixture_post_finalizer(fixturedef):
             _show_fixture_action(fixturedef, 'TEARDOWN')
             if hasattr(fixturedef, "cached_param"):
                 del fixturedef.cached_param
+
 
 def _show_fixture_action(fixturedef, msg):
     config = fixturedef._fixturemanager.config
@@ -59,6 +64,7 @@ def _show_fixture_action(fixturedef, msg):
         capman.resumecapture()
         sys.stdout.write(out)
         sys.stderr.write(err)
+
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_cmdline_main(config):

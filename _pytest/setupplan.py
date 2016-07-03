@@ -1,10 +1,12 @@
 import pytest
 
+
 def pytest_addoption(parser):
     group = parser.getgroup("debugconfig")
     group.addoption('--setupplan', '--setup-plan', action="store_true",
-               help="show what fixtures and tests would be executed but don't"
-                    " execute anything.")
+                    help="show what fixtures and tests would be executed but "
+                    "don't execute anything.")
+
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_fixture_setup(fixturedef, request):
@@ -12,6 +14,7 @@ def pytest_fixture_setup(fixturedef, request):
     if request.config.option.setupplan:
         fixturedef.cached_result = (None, None, None)
         return fixturedef.cached_result
+
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_cmdline_main(config):
