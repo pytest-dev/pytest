@@ -83,18 +83,9 @@ class TestWithFunctionIntegration:
 
     def test_collection_report(self, testdir):
         ok = testdir.makepyfile(test_collection_ok="")
-        skip = testdir.makepyfile(test_collection_skip=
-            "import pytest ; pytest.skip('hello')")
         fail = testdir.makepyfile(test_collection_fail="XXX")
         lines = self.getresultlog(testdir, ok)
         assert not lines
-
-        lines = self.getresultlog(testdir, skip)
-        assert len(lines) == 2
-        assert lines[0].startswith("S ")
-        assert lines[0].endswith("test_collection_skip.py")
-        assert lines[1].startswith(" ")
-        assert lines[1].endswith("test_collection_skip.py:1: Skipped: hello")
 
         lines = self.getresultlog(testdir, fail)
         assert lines

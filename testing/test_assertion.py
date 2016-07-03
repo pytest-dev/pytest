@@ -474,16 +474,8 @@ def test_assertion_options(testdir):
     """)
     result = testdir.runpytest()
     assert "3 == 4" in result.stdout.str()
-    off_options = (("--no-assert",),
-                   ("--nomagic",),
-                   ("--no-assert", "--nomagic"),
-                   ("--assert=plain",),
-                   ("--assert=plain", "--no-assert"),
-                   ("--assert=plain", "--nomagic"),
-                   ("--assert=plain", "--no-assert", "--nomagic"))
-    for opt in off_options:
-        result = testdir.runpytest_subprocess(*opt)
-        assert "3 == 4" not in result.stdout.str()
+    result = testdir.runpytest_subprocess("--assert=plain")
+    assert "3 == 4" not in result.stdout.str()
 
 def test_old_assert_mode(testdir):
     testdir.makepyfile("""
@@ -559,7 +551,7 @@ def test_warn_missing(testdir):
     result.stderr.fnmatch_lines([
         "*WARNING*assert statements are not executed*",
     ])
-    result = testdir.run(sys.executable, "-OO", "-m", "pytest", "--no-assert")
+    result = testdir.run(sys.executable, "-OO", "-m", "pytest")
     result.stderr.fnmatch_lines([
         "*WARNING*assert statements are not executed*",
     ])
@@ -640,3 +632,21 @@ def test_diff_newline_at_end(monkeypatch, testdir):
         *  + asdf
         *  ?     +
     """)
+
+def test_assert_tuple_warning(testdir):
+    testdir.makepyfile("""
+        def test_tuple():
+            assert(False, 'you shall not pass')
+    """)
+    result = testdir.runpytest('-rw')
+    result.stdout.fnmatch_lines('WR1*:2 assertion is always true*')
+
+def test_assert_indirect_tuple_no_warning(testdir):
+    testdir.makepyfile("""
+        def test_tuple():
+            tpl = ('foo', 'bar')
+            assert tpl
+    """)
+    result = testdir.runpytest('-rw')
+    output = '\n'.join(result.stdout.lines)
+    assert 'WR1' not in output

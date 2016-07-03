@@ -223,8 +223,7 @@ class TestCollectonly:
         """)
         result = testdir.runpytest("--collect-only", "-rs")
         result.stdout.fnmatch_lines([
-            "SKIP*hello*",
-            "*1 skip*",
+            "*ERROR collecting*",
         ])
 
     def test_collectonly_failed_module(self, testdir):
@@ -591,16 +590,7 @@ def test_getreportopt():
     class config:
         class option:
             reportchars = ""
-    config.option.report = "xfailed"
-    assert getreportopt(config) == "x"
 
-    config.option.report = "xfailed,skipped"
-    assert getreportopt(config) == "xs"
-
-    config.option.report = "skipped,xfailed"
-    assert getreportopt(config) == "sx"
-
-    config.option.report = "skipped"
     config.option.reportchars = "sf"
     assert getreportopt(config) == "sf"
 

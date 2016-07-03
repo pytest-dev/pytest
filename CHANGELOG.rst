@@ -1,3 +1,40 @@
+3.0.0.dev1
+==========
+
+**Changes**
+
+*
+
+*
+
+*
+
+* Fix (`#607`_): pytest.skip() is no longer allowed at module level to
+  prevent misleading use as test function decorator. When used at a module
+  level an error will be raised during collection.
+  Thanks `@omarkohl`_ for the complete PR (`#1519`_).
+
+*
+
+**Incompatible changes**
+
+* Removing the following deprecated commandline options
+
+  * ``--genscript``
+  * ``--no-assert``
+  * ``--nomagic``
+  * ``--report``
+
+  Thanks to `@RedBeardCode`_ for the PR(`#1664`_)
+
+* removed support code for python 3 < 3.3 addressing (`#1627`_)
+
+.. _#607: https://github.com/pytest-dev/pytest/issues/607
+.. _#1519: https://github.com/pytest-dev/pytest/pull/1519
+.. _#1664: https://github.com/pytest-dev/pytest/pull/1664
+.. _#1627: https://github.com/pytest-dev/pytest/pull/1627
+
+
 2.10.0.dev1
 ===========
 
@@ -58,6 +95,19 @@
   finalizer and has access to the fixture's result cache.
   Thanks `@d6e`_, `@sallner`_
 
+* Issue a warning for asserts whose test is a tuple literal. Such asserts will
+  never fail because tuples are always truthy and are usually a mistake
+  (see `#1562`_). Thanks `@kvas-it`_, for the PR.
+
+* New cli flag ``--override-ini`` or ``-o`` that overrides values from the ini file.
+  Example '-o xfail_strict=True'. A complete ini-options can be viewed
+  by py.test --help. Thanks `@blueyed`_ and `@fengxx`_ for the PR
+
+* Remove all py.test-X* entry points. The versioned, suffixed entry points
+  were never documented and a leftover from a pre-virtualenv era. These entry
+  points also created broken entry points in wheels, so removing them also
+  removes a source of confusion for users (`#1632`_).
+  Thanks `@obestwalter`_ for the PR.
 
 **Changes**
 
@@ -118,8 +168,11 @@
   Thanks `@Vogtinator`_ for reporting. Thanks to `@RedBeardCode`_ and
   `@tomviner`_ for PR.
 
-*
+* Add proposal to docs for a new feature that enables users to combine multiple
+  fixtures into one. Thanks to `@hpk42`_ and `@hackebrot`_.
 
+
+.. _#1632: https://github.com/pytest-dev/pytest/issues/1632
 .. _#1580: https://github.com/pytest-dev/pytest/pull/1580
 .. _#1605: https://github.com/pytest-dev/pytest/issues/1605
 .. _#1597: https://github.com/pytest-dev/pytest/pull/1597
@@ -131,6 +184,8 @@
 .. _@nikratio: https://github.com/nikratio
 .. _@RedBeardCode: https://github.com/RedBeardCode
 .. _@Vogtinator: https://github.com/Vogtinator
+.. _@blueyed: https://github.com/blueyed
+.. _@fengxx: https://github.com/fengxx
 
 * Fix `#1421`_: Exit tests if a collection error occurs and add
   ``--continue-on-collection-errors`` option to restore previous behaviour.
@@ -138,6 +193,11 @@
 
 
 *
+
+* ``OptionGroup.addoption()`` now checks if option names were already
+  added before, to make it easier to track down issues like `#1618`_.
+  Before, you only got exceptions later from ``argparse`` library,
+  giving no clue about the actual reason for double-added options.
 
 .. _@milliams: https://github.com/milliams
 .. _@csaftoiu: https://github.com/csaftoiu
@@ -172,10 +232,12 @@
 .. _#1619: https://github.com/pytest-dev/pytest/issues/1619
 .. _#372: https://github.com/pytest-dev/pytest/issues/372
 .. _#1544: https://github.com/pytest-dev/pytest/issues/1544
+.. _#1562: https://github.com/pytest-dev/pytest/issues/1562
 .. _#1616: https://github.com/pytest-dev/pytest/pull/1616
 .. _#1628: https://github.com/pytest-dev/pytest/pull/1628
 .. _#1629: https://github.com/pytest-dev/pytest/issues/1629
 .. _#1633: https://github.com/pytest-dev/pytest/pull/1633
+.. _#1618: https://github.com/pytest-dev/pytest/issues/1618
 
 
 **Bug Fixes**

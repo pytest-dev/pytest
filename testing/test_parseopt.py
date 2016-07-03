@@ -77,6 +77,13 @@ class TestParser:
         assert len(group.options) == 1
         assert isinstance(group.options[0], parseopt.Argument)
 
+    def test_group_addoption_conflict(self):
+        group = parseopt.OptionGroup("hello again")
+        group.addoption("--option1", "--option-1", action="store_true")
+        with pytest.raises(ValueError) as err:
+            group.addoption("--option1", "--option-one", action="store_true")
+        assert str(set(["--option1"])) in str(err.value)
+
     def test_group_shortopt_lowercase(self, parser):
         group = parser.getgroup("hello")
         pytest.raises(ValueError, """
