@@ -52,7 +52,7 @@ comma-separated values provided in the decorator::
 
 As designed in this example, only one pair of input/output values fails
 the simple test function.  And as usual with test function arguments,
-you can see the ``input`` and ``output`` values in the traceback.
+you can see the ``test_input`` and ``expected`` values in the traceback.
 
 See also
 --------
