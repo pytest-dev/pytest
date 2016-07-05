@@ -36,8 +36,8 @@
   Thanks `@bagerard`_ for reporting (`#1503`_). Thanks to `@davehunt`_ and
   `@tomviner`_ for PR.
 
-* Whitelisted pytest warnings to show up warnings summary by default. Added a new
-  flag ``--disable-pytest-warnings`` to explicitly disable the warnings summary.
+* Now pytest warnings summary is shown up by default. Added a new flag
+  ``--disable-pytest-warnings`` to explicitly disable the warnings summary.
   This change resolves the (`#1668`_).
 
 * Renamed the pytest ``pdb`` module (plugin) into ``debugging``. 

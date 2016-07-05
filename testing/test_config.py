@@ -517,11 +517,11 @@ class TestWarning:
             def test_hello(fix):
                 pass
         """)
-        result = testdir.runpytest()
+        result = testdir.runpytest("--disable-pytest-warnings")
         assert result.parseoutcomes()["pytest-warnings"] > 0
-        assert "hello" in result.stdout.str()
+        assert "hello" not in result.stdout.str()
 
-        result = testdir.runpytest("-rw")
+        result = testdir.runpytest()
         result.stdout.fnmatch_lines("""
             ===*pytest-warning summary*===
             *WT1*test_warn_on_test_item*:5*hello*

@@ -22,7 +22,7 @@ def pytest_addoption(parser):
     group._addoption('-r',
          action="store", dest="reportchars", default='', metavar="chars",
          help="show extra test summary info as specified by chars (f)ailed, "
-              "(E)error, (s)skipped, (x)failed, (X)passed (w)pytest-warnings "
+              "(E)error, (s)skipped, (x)failed, (X)passed, "
               "(p)passed, (P)passed with output, (a)all except pP. "
               "The pytest warnings are displayed at all times except when "
               "--disable-pytest-warnings is set")
