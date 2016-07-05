@@ -14,7 +14,7 @@
   level an error will be raised during collection.
   Thanks `@omarkohl`_ for the complete PR (`#1519`_).
 
-* Fix (`1516`_): ConftestImportFailure now shows the traceback
+* Fix (`#1516`_): ConftestImportFailure now shows the traceback
 
 **Incompatible changes**
 
@@ -30,6 +30,7 @@
 * removed support code for python 3 < 3.3 addressing (`#1627`_)
 
 .. _#607: https://github.com/pytest-dev/pytest/issues/607
+.. _#1516: https://github.com/pytest-dev/pytest/issues/1516
 .. _#1519: https://github.com/pytest-dev/pytest/pull/1519
 .. _#1664: https://github.com/pytest-dev/pytest/pull/1664
 .. _#1627: https://github.com/pytest-dev/pytest/pull/1627
