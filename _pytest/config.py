@@ -25,6 +25,12 @@ class ConftestImportFailure(Exception):
         self.path = path
         self.excinfo = excinfo
 
+    def __str__(self):
+        etype, evalue, etb = self.excinfo
+        formatted = traceback.format_tb(etb)
+        # The level of the tracebacks we want to print is hand crafted :(
+        return repr(evalue) + '\n' + ''.join(formatted[2:])
+
 
 def main(args=None, plugins=None):
     """ return exit code, after performing an in-process test run.

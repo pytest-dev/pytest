@@ -14,7 +14,7 @@
   level an error will be raised during collection.
   Thanks `@omarkohl`_ for the complete PR (`#1519`_).
 
-*
+* Fix (`1516`_): ConftestImportFailure now shows the traceback
 
 **Incompatible changes**
 
