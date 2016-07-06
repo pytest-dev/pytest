@@ -5,6 +5,13 @@ environment:
     # using pytestbot account as detailed here:
     # https://www.appveyor.com/docs/build-configuration#secure-variables
 
+  matrix:
+  # create multiple jobs to execute a set of tox runs on each; this is to workaround having
+  # builds timing out in AppVeyor
+  - TOXENV: "linting,py26,py27,py33,py34,py35,pypy"
+  - TOXENV: "py27-pexpect,py27-xdist,py27-trial,py35-pexpect,py35-xdist,py35-trial"
+  - TOXENV: "py27-nobyte,doctesting,py27-cxfreeze"
+
 install:
   - echo Installed Pythons
   - dir c:\Python*

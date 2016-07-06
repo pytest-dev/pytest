@@ -32,7 +32,7 @@ class Writer:
 
 def pytest_funcarg__a(request):
     with Writer("request") as writer:
-        writer.docmethod(request.getfuncargvalue)
+        writer.docmethod(request.getfixturevalue)
         writer.docmethod(request.cached_setup)
         writer.docmethod(request.addfinalizer)
         writer.docmethod(request.applymarker)

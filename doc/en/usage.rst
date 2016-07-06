@@ -79,7 +79,7 @@ than ``--tb=long``). It also ensures that a stack trace is printed on
 **KeyboardInterrrupt** (Ctrl+C).
 This is very useful if the tests are taking too long and you interrupt them
 with Ctrl+C to find out where the tests are *hanging*. By default no output
-will be shown (because KeyboardInterrupt is catched by pytest). By using this
+will be shown (because KeyboardInterrupt is caught by pytest). By using this
 option you make sure a trace is shown.
 
 Dropping to PDB_ (Python Debugger) on failures

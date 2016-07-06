@@ -29,6 +29,9 @@ class TestParser:
         assert argument.dest == 'test'
         argument = parseopt.Argument('-t', '--test', dest='abc')
         assert argument.dest == 'abc'
+        assert str(argument) == (
+            "Argument(_short_opts: ['-t'], _long_opts: ['--test'], dest: 'abc')"
+        )
 
     def test_argument_type(self):
         argument = parseopt.Argument('-t', dest='abc', type='int')
