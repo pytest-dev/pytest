@@ -181,7 +181,7 @@
   Thanks `@bagerard`_ for reporting (`#1503`_). Thanks to `@davehunt`_ and
   `@tomviner`_ for PR.
 
-* Renamed the pytest ``pdb`` module (plugin) into ``debugging``. 
+* Renamed the pytest ``pdb`` module (plugin) into ``debugging``.
 
 * Improve of the test output for logical expression with brackets.
   Fixes(`#925`_). Thanks `@DRMacIver`_ for reporting. Thanks to `@RedBeardCode`_
@@ -211,7 +211,6 @@
 .. _@blueyed: https://github.com/blueyed
 .. _@fengxx: https://github.com/fengxx
 .. _@bagerard: https://github.com/bagerard
-.. _@davehunt: https://github.com/davehunt
 .. _@DRMacIver: https://github.com/DRMacIver
 
 * Fix `#1421`_: Exit tests if a collection error occurs and add
