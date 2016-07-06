@@ -87,8 +87,9 @@
 * New cli flags: (1) ``--setup-plan`` performs normal collection and reports
   the potential setup and teardown, does not execute any fixtures and tests (2)
   ``--setup-only`` performs normal collection, executes setup and teardown of
-  fixtures and reports them. Thanks `@d6e`_, `@kvas-it`_, `@sallner`_
-  and `@omarkohl`_ for the PR.
+  fixtures and reports them.  (3) ``--setup-show`` performs normal test
+  execution and additionally shows the setup and teardown of fixtures.
+  Thanks `@d6e`_, `@kvas-it`_, `@sallner`_ and `@omarkohl`_ for the PRs.
 
 * Added two new hooks: ``pytest_fixture_setup`` which executes the fixture
   setup and ``pytest_fixture_post_finalizer`` which is called after the fixture's
