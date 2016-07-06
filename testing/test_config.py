@@ -79,7 +79,7 @@ class TestParseIni:
         """)
         result = testdir.inline_run("--confcutdir=.")
         assert result.ret == 0
-        
+
 class TestConfigCmdlineParsing:
     def test_parsing_again_fails(self, testdir):
         config = testdir.parseconfig()
@@ -352,6 +352,25 @@ class TestConfigFromdictargs:
         assert config.inicfg.get('name') == 'value'
         assert config.inicfg.get('should_not_be_set') is None
 
+    @pytest.mark.issue1618
+    def test_consider_plugin(self, testdir):
+        pytest.importorskip('xdist')
+        print (testdir)
+        testdir.makepyfile(conftest="""
+                pytest_plugins = ['plugin']
+            """,
+            plugin="""
+                raise ImportError
+            """,
+            test_foo="""
+                def test():
+                    pass
+            """,
+        )
+        res = testdir.inline_run(
+            '-n1',
+            '-p', 'no:plugin')
+        assert res.res == 0
 
 def test_options_on_small_file_do_not_blow_up(testdir):
     def runfiletest(opts):

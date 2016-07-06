@@ -376,7 +376,7 @@ class PytestPluginManager(PluginManager):
         # basename for historic purposes but must be imported with the
         # _pytest prefix.
         assert isinstance(modname, str)
-        if self.get_plugin(modname) is not None:
+        if self.get_plugin(modname) is not None or self.is_blocked(modname):
             return
         if modname in builtin_plugins:
             importspec = "_pytest." + modname
@@ -894,9 +894,9 @@ class Config(object):
         """ constructor useable for subprocesses. """
         config = get_config()
         config.option.__dict__.update(option_dict)
-        config.parse(args, addopts=False)
         for x in config.option.plugins:
             config.pluginmanager.consider_pluginarg(x)
+        config.parse(args, addopts=False)
         return config
 
     def _processopt(self, opt):
