@@ -367,10 +367,10 @@ class TestConfigFromdictargs:
                     pass
             """,
         )
-        testdir.inline_run(
+        res = testdir.inline_run(
             '-n1',
             '-p', 'no:plugin')
-
+        assert res.res == 0
 
 def test_options_on_small_file_do_not_blow_up(testdir):
     def runfiletest(opts):
