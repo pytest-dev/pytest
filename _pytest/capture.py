@@ -161,7 +161,7 @@ def capsys(request):
     captured output available via ``capsys.readouterr()`` method calls
     which return a ``(out, err)`` tuple.
     """
-    if "capfd" in request._funcargs:
+    if "capfd" in request.fixturenames:
         raise request.raiseerror(error_capsysfderror)
     request.node._capfuncarg = c = CaptureFixture(SysCapture, request)
     return c
@@ -172,7 +172,7 @@ def capfd(request):
     captured output available via ``capfd.readouterr()`` method calls
     which return a ``(out, err)`` tuple.
     """
-    if "capsys" in request._funcargs:
+    if "capsys" in request.fixturenames:
         request.raiseerror(error_capsysfderror)
     if not hasattr(os, 'dup'):
         pytest.skip("capfd funcarg needs os.dup")

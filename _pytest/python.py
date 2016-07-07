@@ -1838,13 +1838,19 @@ class FixtureRequest(FuncargnamesCompatAttr):
         self.fixturename = None
         #: Scope string, one of "function", "class", "module", "session"
         self.scope = "function"
-        self._funcargs  = {}
-        self._fixturedefs = {}
+        # rename both attributes below because their key has changed; better an attribute error
+        # than subtle key misses; also backward incompatibility
+        self._fixture_values = {}  # (argname, scope) -> fixture value
+        self._fixture_defs = {}  # (argname, scope) -> FixtureDef
         fixtureinfo = pyfuncitem._fixtureinfo
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs.copy()
         self._arg2index = {}
-        self.fixturenames = fixtureinfo.names_closure
         self._fixturemanager = pyfuncitem.session._fixturemanager
+
+    @property
+    def fixturenames(self):
+        # backward incompatible note: now a readonly property
+        return list(self._pyfuncitem._fixtureinfo.names_closure)
 
     @property
     def node(self):
@@ -1852,20 +1858,31 @@ class FixtureRequest(FuncargnamesCompatAttr):
         return self._getscopeitem(self.scope)
 
 
-    def _getnextfixturedef(self, argname):
-        fixturedefs = self._arg2fixturedefs.get(argname, None)
+    def _getnextfixturedef(self, argname, scope):
+        def trygetfixturedefs(argname):
+            fixturedefs = self._arg2fixturedefs.get(argname, None)
+            if fixturedefs is None:
+                fixturedefs = self._arg2fixturedefs.get(argname + ':' + scope, None)
+            return fixturedefs
+
+        fixturedefs = trygetfixturedefs(argname)
         if fixturedefs is None:
             # we arrive here because of a  a dynamic call to
             # getfixturevalue(argname) usage which was naturally
             # not known at parsing/collection time
-            fixturedefs = self._fixturemanager.getfixturedefs(
-                            argname, self._pyfuncitem.parent.nodeid)
-            self._arg2fixturedefs[argname] = fixturedefs
+            parentid = self._pyfuncitem.parent.nodeid
+            fixturedefs = self._fixturemanager.getfixturedefs(argname, parentid)
+            if fixturedefs:
+                self._arg2fixturedefs[argname] = fixturedefs
+            fixturedefs_by_argname = self._fixturemanager.getfixturedefs_multiple_scopes(argname, parentid)
+            if fixturedefs_by_argname:
+                self._arg2fixturedefs.update(fixturedefs_by_argname)
+            fixturedefs = trygetfixturedefs(argname)
         # fixturedefs list is immutable so we maintain a decreasing index
-        index = self._arg2index.get(argname, 0) - 1
+        index = self._arg2index.get((argname, scope), 0) - 1
         if fixturedefs is None or (-index > len(fixturedefs)):
             raise FixtureLookupError(argname, self)
-        self._arg2index[argname] = index
+        self._arg2index[(argname, scope)] = index
         return fixturedefs[index]
 
     @property
@@ -2004,10 +2021,10 @@ class FixtureRequest(FuncargnamesCompatAttr):
 
     def _get_active_fixturedef(self, argname):
         try:
-            return self._fixturedefs[argname]
+            return self._fixture_defs[(argname, self.scope)]
         except KeyError:
             try:
-                fixturedef = self._getnextfixturedef(argname)
+                fixturedef = self._getnextfixturedef(argname, self.scope)
             except FixtureLookupError:
                 if argname == "request":
                     class PseudoFixtureDef:
@@ -2018,8 +2035,8 @@ class FixtureRequest(FuncargnamesCompatAttr):
         # remove indent to prevent the python3 exception
         # from leaking into the call
         result = self._getfixturevalue(fixturedef)
-        self._funcargs[argname] = result
-        self._fixturedefs[argname] = fixturedef
+        self._fixture_values[(argname, self.scope)] = result
+        self._fixture_defs[(argname, self.scope)] = fixturedef
         return fixturedef
 
     def _get_fixturestack(self):
@@ -2140,11 +2157,10 @@ class SubRequest(FixtureRequest):
         self._fixturedef = fixturedef
         self.addfinalizer = fixturedef.addfinalizer
         self._pyfuncitem = request._pyfuncitem
-        self._funcargs  = request._funcargs
-        self._fixturedefs = request._fixturedefs
+        self._fixture_values  = request._fixture_values
+        self._fixture_defs = request._fixture_defs
         self._arg2fixturedefs = request._arg2fixturedefs
         self._arg2index = request._arg2index
-        self.fixturenames = request.fixturenames
         self._fixturemanager = request._fixturemanager
 
     def __repr__(self):
@@ -2184,7 +2200,7 @@ class FixtureLookupError(LookupError):
             fspath, lineno = getfslineno(function)
             try:
                 lines, _ = inspect.getsourcelines(get_real_func(function))
-            except (IOError, IndexError):
+            except (IOError, IndexError, TypeError):
                 error_msg = "file %s, line %s: source code not available"
                 addline(error_msg % (fspath, lineno+1))
             else:
@@ -2198,9 +2214,9 @@ class FixtureLookupError(LookupError):
         if msg is None:
             fm = self.request._fixturemanager
             available = []
-            for name, fixturedef in fm._arg2fixturedefs.items():
-                parentid = self.request._pyfuncitem.parent.nodeid
-                faclist = list(fm._matchfactories(fixturedef, parentid))
+            parentid = self.request._pyfuncitem.parent.nodeid
+            for name, fixturedefs in fm._arg2fixturedefs.items():
+                faclist = list(fm._matchfactories(fixturedefs, parentid))
                 if faclist:
                     available.append(name)
             msg = "fixture %r not found" % (self.argname,)
@@ -2348,6 +2364,11 @@ class FixtureManager:
                 if fixturedefs:
                     arg2fixturedefs[argname] = fixturedefs
                     merge(fixturedefs[-1].argnames)
+                fixturedefs_by_argname = self.getfixturedefs_multiple_scopes(argname, parentid)
+                if fixturedefs_by_argname:
+                    arg2fixturedefs.update(fixturedefs_by_argname)
+                    for fixturedefs in fixturedefs_by_argname.values():
+                        merge(fixturedefs[-1].argnames)
         return fixturenames_closure, arg2fixturedefs
 
     def pytest_generate_tests(self, metafunc):
@@ -2366,7 +2387,7 @@ class FixtureManager:
                                              indirect=True, scope=fixturedef.scope,
                                              ids=fixturedef.ids)
             else:
-                continue # will raise FixtureLookupError at setup time
+                continue  # will raise FixtureLookupError at setup time
 
     def pytest_collection_modifyitems(self, items):
         # separate parametrized setups
@@ -2402,21 +2423,31 @@ class FixtureManager:
                 if marker.name:
                     name = marker.name
                 assert not name.startswith(self._argprefix), name
-            fixturedef = FixtureDef(self, nodeid, name, obj,
-                                    marker.scope, marker.params,
-                                    unittest=unittest, ids=marker.ids)
-            faclist = self._arg2fixturedefs.setdefault(name, [])
-            if fixturedef.has_location:
-                faclist.append(fixturedef)
+
+            def new_fixture_def(name, scope):
+                fixture_def = FixtureDef(self, nodeid, name, obj,
+                           scope, marker.params,
+                           unittest=unittest, ids=marker.ids)
+
+                faclist = self._arg2fixturedefs.setdefault(name, [])
+                if fixture_def.has_location:
+                    faclist.append(fixture_def)
+                else:
+                    # fixturedefs with no location are at the front
+                    # so this inserts the current fixturedef after the
+                    # existing fixturedefs from external plugins but
+                    # before the fixturedefs provided in conftests.
+                    i = len([f for f in faclist if not f.has_location])
+                    faclist.insert(i, fixture_def)
+                if marker.autouse:
+                    autousenames.append(name)
+
+            if marker.scope == 'invocation':
+                for new_scope in scopes:
+                    new_fixture_def(name + ':{0}'.format(new_scope), new_scope)
             else:
-                # fixturedefs with no location are at the front
-                # so this inserts the current fixturedef after the
-                # existing fixturedefs from external plugins but
-                # before the fixturedefs provided in conftests.
-                i = len([f for f in faclist if not f.has_location])
-                faclist.insert(i, fixturedef)
-            if marker.autouse:
-                autousenames.append(name)
+                new_fixture_def(name, marker.scope)
+
         if autousenames:
             self._nodeid_and_autousenames.append((nodeid or '', autousenames))
 
@@ -2432,6 +2463,18 @@ class FixtureManager:
         for fixturedef in fixturedefs:
             if nodeid.startswith(fixturedef.baseid):
                 yield fixturedef
+
+    def getfixturedefs_multiple_scopes(self, argname, nodeid):
+        prefix = argname + ':'
+        fixturedefs_by_argname = dict((k, v) for k, v in self._arg2fixturedefs.items()
+                                      if k.startswith(prefix))
+        if fixturedefs_by_argname:
+            result = {}
+            for argname, fixturedefs in fixturedefs_by_argname.items():
+                result[argname] = tuple(self._matchfactories(fixturedefs, nodeid))
+            return result
+        else:
+            return None
 
 
 def fail_fixturefunc(fixturefunc, msg):
@@ -2518,7 +2561,7 @@ class FixtureDef:
             assert not hasattr(self, "cached_result")
 
         ihook = self._fixturemanager.session.ihook
-        ihook.pytest_fixture_setup(fixturedef=self, request=request)
+        return ihook.pytest_fixture_setup(fixturedef=self, request=request)
 
     def __repr__(self):
         return ("<FixtureDef name=%r scope=%r baseid=%r >" %
