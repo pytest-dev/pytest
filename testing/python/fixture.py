@@ -93,12 +93,12 @@ class TestFillFixtures:
         sub1.join("conftest.py").write(_pytest._code.Source("""
             import pytest
             def pytest_funcarg__arg1(request):
-                pytest.raises(Exception, "request.getfuncargvalue('arg2')")
+                pytest.raises(Exception, "request.getfixturevalue('arg2')")
         """))
         sub2.join("conftest.py").write(_pytest._code.Source("""
             import pytest
             def pytest_funcarg__arg2(request):
-                pytest.raises(Exception, "request.getfuncargvalue('arg1')")
+                pytest.raises(Exception, "request.getfixturevalue('arg1')")
         """))
 
         sub1.join("test_in_sub1.py").write("def test_1(arg1): pass")
@@ -435,21 +435,23 @@ class TestRequestBasic:
         assert len(arg2fixturedefs) == 1
         assert arg2fixturedefs[0].__name__ == "pytest_funcarg__something"
 
-    def test_getfuncargvalue_recursive(self, testdir):
+    def test_getfixturevalue_recursive(self, testdir):
         testdir.makeconftest("""
             def pytest_funcarg__something(request):
                 return 1
         """)
         testdir.makepyfile("""
             def pytest_funcarg__something(request):
-                return request.getfuncargvalue("something") + 1
+                return request.getfixturevalue("something") + 1
             def test_func(something):
                 assert something == 2
         """)
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
-    def test_getfuncargvalue(self, testdir):
+    @pytest.mark.parametrize(
+        'getfixmethod', ('getfixturevalue', 'getfuncargvalue'))
+    def test_getfixturevalue(self, testdir, getfixmethod):
         item = testdir.getitem("""
             l = [2]
             def pytest_funcarg__something(request): return 1
@@ -458,14 +460,15 @@ class TestRequestBasic:
             def test_func(something): pass
         """)
         req = item._request
-        pytest.raises(FixtureLookupError, req.getfuncargvalue, "notexists")
-        val = req.getfuncargvalue("something")
+        fixture_fetcher = getattr(req, getfixmethod)
+        pytest.raises(FixtureLookupError, fixture_fetcher, "notexists")
+        val = fixture_fetcher("something")
         assert val == 1
-        val = req.getfuncargvalue("something")
+        val = fixture_fetcher("something")
         assert val == 1
-        val2 = req.getfuncargvalue("other")
+        val2 = fixture_fetcher("other")
         assert val2 == 2
-        val2 = req.getfuncargvalue("other")  # see about caching
+        val2 = fixture_fetcher("other")  # see about caching
         assert val2 == 2
         pytest._fillfuncargs(item)
         assert item.funcargs["something"] == 1
@@ -812,10 +815,10 @@ class TestRequestCachedSetup:
             "*1 passed*"
         ])
 
-    def test_request_cached_setup_getfuncargvalue(self, testdir):
+    def test_request_cached_setup_getfixturevalue(self, testdir):
         testdir.makepyfile("""
             def pytest_funcarg__arg1(request):
-                arg1 = request.getfuncargvalue("arg2")
+                arg1 = request.getfixturevalue("arg2")
                 return request.cached_setup(lambda: arg1 + 1)
             def pytest_funcarg__arg2(request):
                 return request.cached_setup(lambda: 10)
@@ -1118,7 +1121,7 @@ class TestFixtureUsages:
 
 class TestFixtureManagerParseFactories:
     def pytest_funcarg__testdir(self, request):
-        testdir = request.getfuncargvalue("testdir")
+        testdir = request.getfixturevalue("testdir")
         testdir.makeconftest("""
             def pytest_funcarg__hello(request):
                 return "conftest"
@@ -1804,9 +1807,9 @@ class TestFixtureMarker:
         reprec.assertoutcome(passed=4)
 
     @pytest.mark.parametrize("method", [
-        'request.getfuncargvalue("arg")',
+        'request.getfixturevalue("arg")',
         'request.cached_setup(lambda: None, scope="function")',
-    ], ids=["getfuncargvalue", "cached_setup"])
+    ], ids=["getfixturevalue", "cached_setup"])
     def test_scope_mismatch_various(self, testdir, method):
         testdir.makeconftest("""
             import pytest
@@ -2718,6 +2721,7 @@ class TestContextManagerFixtureFuncs:
         """.format(flavor=flavor))
         result = testdir.runpytest("-s")
         result.stdout.fnmatch_lines("*mew*")
+
 class TestParameterizedSubRequest:
     def test_call_from_fixture(self, testdir):
         testfile = testdir.makepyfile("""
@@ -2729,7 +2733,7 @@ class TestParameterizedSubRequest:
 
             @pytest.fixture
             def get_named_fixture(request):
-                return request.getfuncargvalue('fix_with_param')
+                return request.getfixturevalue('fix_with_param')
 
             def test_foo(request, get_named_fixture):
                 pass
@@ -2754,7 +2758,7 @@ class TestParameterizedSubRequest:
                 return request.param
 
             def test_foo(request):
-                request.getfuncargvalue('fix_with_param')
+                request.getfixturevalue('fix_with_param')
             """)
         result = testdir.runpytest()
         result.stdout.fnmatch_lines("""
@@ -2778,7 +2782,7 @@ class TestParameterizedSubRequest:
 
         testfile = testdir.makepyfile("""
             def test_foo(request):
-                request.getfuncargvalue('fix_with_param')
+                request.getfixturevalue('fix_with_param')
             """)
         result = testdir.runpytest()
         result.stdout.fnmatch_lines("""
@@ -2808,7 +2812,7 @@ class TestParameterizedSubRequest:
             from fix import fix_with_param
 
             def test_foo(request):
-                request.getfuncargvalue('fix_with_param')
+                request.getfixturevalue('fix_with_param')
             """))
 
         tests_dir.chdir()
@@ -2823,3 +2827,7 @@ class TestParameterizedSubRequest:
             E*{1}:5
             *1 failed*
             """.format(fixfile.strpath, testfile.basename))
+
+
+def test_getfuncargvalue_is_deprecated(request):
+    pytest.deprecated_call(request.getfuncargvalue, 'tmpdir')

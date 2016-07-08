@@ -391,6 +391,23 @@ def test_preparse_ordering_with_setuptools(testdir, monkeypatch):
     plugin = config.pluginmanager.getplugin("mytestplugin")
     assert plugin.x == 42
 
+
+def test_setuptools_importerror_issue1479(testdir, monkeypatch):
+    pkg_resources = pytest.importorskip("pkg_resources")
+    def my_iter(name):
+        assert name == "pytest11"
+        class EntryPoint:
+            name = "mytestplugin"
+            dist = None
+            def load(self):
+                raise ImportError("Don't hide me!")
+        return iter([EntryPoint()])
+
+    monkeypatch.setattr(pkg_resources, 'iter_entry_points', my_iter)
+    with pytest.raises(ImportError):
+        testdir.parseconfig()
+
+
 def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch):
     pkg_resources = pytest.importorskip("pkg_resources")
     def my_iter(name):
