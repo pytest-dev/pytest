@@ -1,42 +1,54 @@
 3.0.0.dev1
 ==========
 
-**Changes**
-
-*
-
-*
-
-*
-
-* Fix (`#607`_): pytest.skip() is no longer allowed at module level to
-  prevent misleading use as test function decorator. When used at a module
-  level an error will be raised during collection.
-  Thanks `@omarkohl`_ for the complete PR (`#1519`_).
-
-*
-
 **Incompatible changes**
 
-* Removing the following deprecated commandline options
+* Removed the following deprecated commandline options
 
   * ``--genscript``
   * ``--no-assert``
   * ``--nomagic``
   * ``--report``
 
-  Thanks to `@RedBeardCode`_ for the PR(`#1664`_)
+  Thanks to `@RedBeardCode`_ for the PR (`#1664`_)
+
+* ImportErrors in plugins now are a fatal error instead of issuing a
+  pytest warning (`#1479`_). Thanks to `@The-Compiler`_ for the PR.
 
 * removed support code for python 3 < 3.3 addressing (`#1627`_)
 
-.. _#607: https://github.com/pytest-dev/pytest/issues/607
-.. _#1519: https://github.com/pytest-dev/pytest/pull/1519
-.. _#1664: https://github.com/pytest-dev/pytest/pull/1664
-.. _#1627: https://github.com/pytest-dev/pytest/pull/1627
+* Remove all py.test-X* entry points. The versioned, suffixed entry points
+  were never documented and a leftover from a pre-virtualenv era. These entry
+  points also created broken entry points in wheels, so removing them also
+  removes a source of confusion for users (`#1632`_).
+  Thanks `@obestwalter`_ for the PR.
 
+* Fix `#607`_: pytest.skip() is no longer allowed at module level to
+  prevent misleading use as test function decorator. When used at a module
+  level an error will be raised during collection.
+  Thanks `@omarkohl`_ for the complete PR (`#1519`_).
 
-2.10.0.dev1
-===========
+* Fix `#1421`_: Exit tests if a collection error occurs and add
+  ``--continue-on-collection-errors`` option to restore previous behaviour.
+  Thanks `@olegpidsadnyi`_ and `@omarkohl`_ for the complete PR (`#1628`_).
+
+* Renamed the pytest ``pdb`` module (plugin) into ``debugging``.
+
+* Raise helpful failure message, when requesting parametrized fixture at runtime,
+  e.g. with ``request.getfuncargvalue``. Previously these params were simply
+  never defined. So a fixture decorated like ``@pytest.fixture(params=[0, 1,
+  2])`` only ran once. Now a failure is raised. Fixes `#460`_. Thanks to
+  `@nikratio`_ for bug report, `@RedBeardCode`_ and `@tomviner`_ for PR.
+
+*
+
+*
+
+*
+
+*
+
+*
 
 **New Features**
 
@@ -66,7 +78,7 @@
 
 * ``__tracebackhide__`` can now also be set to a callable which then can decide
   whether to filter the traceback based on the ``ExceptionInfo`` object passed
-  to it.
+  to it. Thanks `@The-Compiler`_ for the complete PR (`#1526`_).
 
 * New ``pytest_make_parametrize_id`` hook.
   Thanks `@palaviv`_ for the PR.
@@ -104,11 +116,15 @@
   Example '-o xfail_strict=True'. A complete ini-options can be viewed
   by py.test --help. Thanks `@blueyed`_ and `@fengxx`_ for the PR
 
-* Remove all py.test-X* entry points. The versioned, suffixed entry points
-  were never documented and a leftover from a pre-virtualenv era. These entry
-  points also created broken entry points in wheels, so removing them also
-  removes a source of confusion for users (`#1632`_).
-  Thanks `@obestwalter`_ for the PR.
+*
+
+*
+
+*
+
+*
+
+*
 
 **Changes**
 
@@ -118,7 +134,7 @@
   the preferred way to write teardown code (`#1461`_).
   Thanks `@csaftoiu`_ for bringing this to attention and `@nicoddemus`_ for the PR.
 
-* Fix (`#1351`_):
+* Fix `#1351`_:
   explicitly passed parametrize ids do not get escaped to ascii.
   Thanks `@ceridwen`_ for the PR.
 
@@ -148,26 +164,9 @@
 * Text documents without any doctests no longer appear as "skipped".
   Thanks `@graingert`_ for reporting and providing a full PR (`#1580`_).
 
-* Fix internal error issue when ``method`` argument is missing for
-  ``teardown_method()``. Fixes (`#1605`_).
-
-* Fix exception visualization in case the current working directory (CWD) gets
-  deleted during testing. Fixes (`#1235`). Thanks `@bukzor`_ for reporting. PR by
-  `@marscher`. Thanks `@nicoddemus`_ for his help.
-
 * Ensure that a module within a namespace package can be found when it
   is specified on the command line together with the ``--pyargs``
   option.  Thanks to `@taschini`_ for the PR (`#1597`_).
-
-* Raise helpful failure message, when requesting parametrized fixture at runtime,
-  e.g. with ``request.getfuncargvalue``. BACKWARD INCOMPAT: Previously these params
-  were simply never defined. So a fixture decorated like ``@pytest.fixture(params=[0, 1, 2])``
-  only ran once. Now a failure is raised. Fixes (`#460`_). Thanks to
-  `@nikratio`_ for bug report, `@RedBeardCode`_ and `@tomviner`_ for PR.
-
-* Create correct diff for strings ending with newlines. Fixes (`#1553`_).
-  Thanks `@Vogtinator`_ for reporting. Thanks to `@RedBeardCode`_ and
-  `@tomviner`_ for PR.
 
 * Add proposal to docs for a new feature that enables users to combine multiple
   fixtures into one. Thanks to `@hpk42`_ and `@hackebrot`_.
@@ -181,94 +180,115 @@
   Thanks `@bagerard`_ for reporting (`#1503`_). Thanks to `@davehunt`_ and
   `@tomviner`_ for PR.
 
-* Renamed the pytest ``pdb`` module (plugin) into ``debugging``.
-
-* Improve of the test output for logical expression with brackets.
-  Fixes(`#925`_). Thanks `@DRMacIver`_ for reporting. Thanks to `@RedBeardCode`_
-  for PR.
-
-* ImportErrors in plugins now are a fatal error instead of issuing a
-
-.. _#1632: https://github.com/pytest-dev/pytest/issues/1632
-
-  pytest warning (`#1479`_). Thanks to `@The-Compiler`_ for the PR.
-
-.. _#1580: https://github.com/pytest-dev/pytest/pull/1580
-.. _#1605: https://github.com/pytest-dev/pytest/issues/1605
-.. _#1597: https://github.com/pytest-dev/pytest/pull/1597
-.. _#460: https://github.com/pytest-dev/pytest/pull/460
-.. _#1553: https://github.com/pytest-dev/pytest/issues/1553
-.. _#1626: https://github.com/pytest-dev/pytest/pull/1626
-.. _#1503: https://github.com/pytest-dev/pytest/issues/1503
-.. _#1479: https://github.com/pytest-dev/pytest/issues/1479
-.. _#925: https://github.com/pytest-dev/pytest/issues/925
-
-.. _@graingert: https://github.com/graingert
-.. _@taschini: https://github.com/taschini
-.. _@nikratio: https://github.com/nikratio
-.. _@RedBeardCode: https://github.com/RedBeardCode
-.. _@Vogtinator: https://github.com/Vogtinator
-.. _@blueyed: https://github.com/blueyed
-.. _@fengxx: https://github.com/fengxx
-.. _@bagerard: https://github.com/bagerard
-.. _@DRMacIver: https://github.com/DRMacIver
-
-* Fix `#1421`_: Exit tests if a collection error occurs and add
-  ``--continue-on-collection-errors`` option to restore previous behaviour.
-  Thanks `@olegpidsadnyi`_ and `@omarkohl`_ for the complete PR (`#1628`_).
-
-
-*
-
 * ``OptionGroup.addoption()`` now checks if option names were already
   added before, to make it easier to track down issues like `#1618`_.
   Before, you only got exceptions later from ``argparse`` library,
   giving no clue about the actual reason for double-added options.
 
-.. _@milliams: https://github.com/milliams
-.. _@csaftoiu: https://github.com/csaftoiu
-.. _@flub: https://github.com/flub
-.. _@novas0x2a: https://github.com/novas0x2a
-.. _@kalekundert: https://github.com/kalekundert
-.. _@tareqalayan: https://github.com/tareqalayan
-.. _@ceridwen: https://github.com/ceridwen
-.. _@palaviv: https://github.com/palaviv
-.. _@omarkohl: https://github.com/omarkohl
-.. _@mikofski: https://github.com/mikofski
-.. _@sober7: https://github.com/sober7
-.. _@olegpidsadnyi: https://github.com/olegpidsadnyi
-.. _@obestwalter: https://github.com/obestwalter
-.. _@davehunt: https://github.com/davehunt
-.. _@sallner: https://github.com/sallner
-.. _@d6e: https://github.com/d6e
-.. _@kvas-it: https://github.com/kvas-it
+*
 
-.. _#1421: https://github.com/pytest-dev/pytest/issues/1421
-.. _#1426: https://github.com/pytest-dev/pytest/issues/1426
-.. _#1428: https://github.com/pytest-dev/pytest/pull/1428
-.. _#1444: https://github.com/pytest-dev/pytest/pull/1444
-.. _#1441: https://github.com/pytest-dev/pytest/pull/1441
-.. _#1454: https://github.com/pytest-dev/pytest/pull/1454
-.. _#1351: https://github.com/pytest-dev/pytest/issues/1351
-.. _#1461: https://github.com/pytest-dev/pytest/pull/1461
-.. _#1468: https://github.com/pytest-dev/pytest/pull/1468
-.. _#1474: https://github.com/pytest-dev/pytest/pull/1474
-.. _#1502: https://github.com/pytest-dev/pytest/pull/1502
-.. _#1520: https://github.com/pytest-dev/pytest/pull/1520
-.. _#1619: https://github.com/pytest-dev/pytest/issues/1619
-.. _#372: https://github.com/pytest-dev/pytest/issues/372
-.. _#1544: https://github.com/pytest-dev/pytest/issues/1544
-.. _#1562: https://github.com/pytest-dev/pytest/issues/1562
-.. _#1616: https://github.com/pytest-dev/pytest/pull/1616
-.. _#1628: https://github.com/pytest-dev/pytest/pull/1628
-.. _#1629: https://github.com/pytest-dev/pytest/issues/1629
-.. _#1633: https://github.com/pytest-dev/pytest/pull/1633
-.. _#1618: https://github.com/pytest-dev/pytest/issues/1618
+*
 
+*
+
+*
+
+*
 
 **Bug Fixes**
 
 * When receiving identical test ids in parametrize we generate unique test ids.
+
+* Fix internal error issue when ``method`` argument is missing for
+  ``teardown_method()``. Fixes `#1605`_.
+
+* Fix exception visualization in case the current working directory (CWD) gets
+  deleted during testing. Fixes `#1235`_. Thanks `@bukzor`_ for reporting. PR by
+  `@marscher`_. Thanks `@nicoddemus`_ for his help.
+
+* Improve of the test output for logical expression with brackets.
+  Fixes `#925`_. Thanks `@DRMacIver`_ for reporting. Thanks to `@RedBeardCode`_
+  for PR.
+
+* Create correct diff for strings ending with newlines. Fixes `#1553`_.
+  Thanks `@Vogtinator`_ for reporting. Thanks to `@RedBeardCode`_ and
+  `@tomviner`_ for PR.
+
+*
+
+*
+
+*
+
+*
+
+*
+
+.. _#372: https://github.com/pytest-dev/pytest/issues/372
+.. _#460: https://github.com/pytest-dev/pytest/pull/460
+.. _#607: https://github.com/pytest-dev/pytest/issues/607
+.. _#925: https://github.com/pytest-dev/pytest/issues/925
+.. _#1235: https://github.com/pytest-dev/pytest/issues/1235
+.. _#1351: https://github.com/pytest-dev/pytest/issues/1351
+.. _#1421: https://github.com/pytest-dev/pytest/issues/1421
+.. _#1426: https://github.com/pytest-dev/pytest/issues/1426
+.. _#1428: https://github.com/pytest-dev/pytest/pull/1428
+.. _#1441: https://github.com/pytest-dev/pytest/pull/1441
+.. _#1444: https://github.com/pytest-dev/pytest/pull/1444
+.. _#1454: https://github.com/pytest-dev/pytest/pull/1454
+.. _#1461: https://github.com/pytest-dev/pytest/pull/1461
+.. _#1468: https://github.com/pytest-dev/pytest/pull/1468
+.. _#1474: https://github.com/pytest-dev/pytest/pull/1474
+.. _#1479: https://github.com/pytest-dev/pytest/issues/1479
+.. _#1502: https://github.com/pytest-dev/pytest/pull/1502
+.. _#1503: https://github.com/pytest-dev/pytest/issues/1503
+.. _#1519: https://github.com/pytest-dev/pytest/pull/1519
+.. _#1520: https://github.com/pytest-dev/pytest/pull/1520
+.. _#1526: https://github.com/pytest-dev/pytest/pull/1526
+.. _#1544: https://github.com/pytest-dev/pytest/issues/1544
+.. _#1553: https://github.com/pytest-dev/pytest/issues/1553
+.. _#1562: https://github.com/pytest-dev/pytest/issues/1562
+.. _#1580: https://github.com/pytest-dev/pytest/pull/1580
+.. _#1597: https://github.com/pytest-dev/pytest/pull/1597
+.. _#1605: https://github.com/pytest-dev/pytest/issues/1605
+.. _#1616: https://github.com/pytest-dev/pytest/pull/1616
+.. _#1618: https://github.com/pytest-dev/pytest/issues/1618
+.. _#1619: https://github.com/pytest-dev/pytest/issues/1619
+.. _#1626: https://github.com/pytest-dev/pytest/pull/1626
+.. _#1627: https://github.com/pytest-dev/pytest/pull/1627
+.. _#1628: https://github.com/pytest-dev/pytest/pull/1628
+.. _#1629: https://github.com/pytest-dev/pytest/issues/1629
+.. _#1632: https://github.com/pytest-dev/pytest/issues/1632
+.. _#1633: https://github.com/pytest-dev/pytest/pull/1633
+.. _#1664: https://github.com/pytest-dev/pytest/pull/1664
+
+.. _@DRMacIver: https://github.com/DRMacIver
+.. _@RedBeardCode: https://github.com/RedBeardCode
+.. _@Vogtinator: https://github.com/Vogtinator
+.. _@bagerard: https://github.com/bagerard
+.. _@blueyed: https://github.com/blueyed
+.. _@ceridwen: https://github.com/ceridwen
+.. _@csaftoiu: https://github.com/csaftoiu
+.. _@d6e: https://github.com/d6e
+.. _@davehunt: https://github.com/davehunt
+.. _@fengxx: https://github.com/fengxx
+.. _@flub: https://github.com/flub
+.. _@graingert: https://github.com/graingert
+.. _@kalekundert: https://github.com/kalekundert
+.. _@kvas-it: https://github.com/kvas-it
+.. _@marscher: https://github.com/marscher
+.. _@mikofski: https://github.com/mikofski
+.. _@milliams: https://github.com/milliams
+.. _@nikratio: https://github.com/nikratio
+.. _@novas0x2a: https://github.com/novas0x2a
+.. _@obestwalter: https://github.com/obestwalter
+.. _@olegpidsadnyi: https://github.com/olegpidsadnyi
+.. _@omarkohl: https://github.com/omarkohl
+.. _@palaviv: https://github.com/palaviv
+.. _@sallner: https://github.com/sallner
+.. _@sober7: https://github.com/sober7
+.. _@tareqalayan: https://github.com/tareqalayan
+.. _@taschini: https://github.com/taschini
 
 2.9.2
 =====
