@@ -5,7 +5,7 @@ import sys
 import _pytest._code
 import py
 import pytest
-from _pytest import python as funcargs
+from _pytest import python, fixtures
 
 import hypothesis
 from hypothesis import strategies
@@ -22,9 +22,9 @@ class TestMetafunc:
             name2fixturedefs = None
             def __init__(self, names):
                 self.names_closure = names
-        names = funcargs.getfuncargnames(func)
+        names = fixtures.getfuncargnames(func)
         fixtureinfo = FixtureInfo(names)
-        return funcargs.Metafunc(func, fixtureinfo, None)
+        return python.Metafunc(func, fixtureinfo, None)
 
     def test_no_funcargs(self, testdir):
         def function(): pass
@@ -558,16 +558,16 @@ class TestMetafunc:
 
     def test_format_args(self):
         def function1(): pass
-        assert funcargs._format_args(function1) == '()'
+        assert fixtures._format_args(function1) == '()'
 
         def function2(arg1): pass
-        assert funcargs._format_args(function2) == "(arg1)"
+        assert fixtures._format_args(function2) == "(arg1)"
 
         def function3(arg1, arg2="qwe"): pass
-        assert funcargs._format_args(function3) == "(arg1, arg2='qwe')"
+        assert fixtures._format_args(function3) == "(arg1, arg2='qwe')"
 
         def function4(arg1, *args, **kwargs): pass
-        assert funcargs._format_args(function4) == "(arg1, *args, **kwargs)"
+        assert fixtures._format_args(function4) == "(arg1, *args, **kwargs)"
 
 
 class TestMetafuncFunctional:
