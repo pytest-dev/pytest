@@ -185,7 +185,8 @@
   Before, you only got exceptions later from ``argparse`` library,
   giving no clue about the actual reason for double-added options.
 
-*
+* Allow passing a custom debugger class (e.g. ``IPython.core.debugger:Pdb``
+  via ``--pdbcls``.
 
 *
 
