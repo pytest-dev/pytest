@@ -334,7 +334,7 @@ class TestFunction:
         reprec.assertoutcome()
 
     def test_function_equality(self, testdir, tmpdir):
-        from _pytest.python import FixtureManager
+        from _pytest.fixtures import FixtureManager
         config = testdir.parseconfigure()
         session = testdir.Session(config)
         session._fixturemanager = FixtureManager(session)

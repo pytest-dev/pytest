@@ -3,31 +3,30 @@ from textwrap import dedent
 import _pytest._code
 import pytest
 import sys
-from _pytest import python as funcargs
 from _pytest.pytester import get_public_names
-from _pytest.python import FixtureLookupError
-
+from _pytest.fixtures import FixtureLookupError
+from _pytest import fixtures
 
 def test_getfuncargnames():
     def f(): pass
-    assert not funcargs.getfuncargnames(f)
+    assert not fixtures.getfuncargnames(f)
     def g(arg): pass
-    assert funcargs.getfuncargnames(g) == ('arg',)
+    assert fixtures.getfuncargnames(g) == ('arg',)
     def h(arg1, arg2="hello"): pass
-    assert funcargs.getfuncargnames(h) == ('arg1',)
+    assert fixtures.getfuncargnames(h) == ('arg1',)
     def h(arg1, arg2, arg3="hello"): pass
-    assert funcargs.getfuncargnames(h) == ('arg1', 'arg2')
+    assert fixtures.getfuncargnames(h) == ('arg1', 'arg2')
     class A:
         def f(self, arg1, arg2="hello"):
             pass
-    assert funcargs.getfuncargnames(A().f) == ('arg1',)
+    assert fixtures.getfuncargnames(A().f) == ('arg1',)
     if sys.version_info < (3,0):
-        assert funcargs.getfuncargnames(A.f) == ('arg1',)
+        assert fixtures.getfuncargnames(A.f) == ('arg1',)
 
 class TestFillFixtures:
     def test_fillfuncargs_exposed(self):
         # used by oejskit, kept for compatibility
-        assert pytest._fillfuncargs == funcargs.fillfixtures
+        assert pytest._fillfuncargs == fixtures.fillfixtures
 
     def test_funcarg_lookupfails(self, testdir):
         testdir.makepyfile("""
@@ -54,7 +53,7 @@ class TestFillFixtures:
             def test_func(some, other):
                 pass
         """)
-        funcargs.fillfixtures(item)
+        fixtures.fillfixtures(item)
         del item.funcargs["request"]
         assert len(get_public_names(item.funcargs)) == 2
         assert item.funcargs['some'] == "test_func"
@@ -400,7 +399,7 @@ class TestRequestBasic:
             def pytest_funcarg__something(request): pass
             def test_func(something): pass
         """)
-        req = funcargs.FixtureRequest(item)
+        req = fixtures.FixtureRequest(item)
         assert req.function == item.obj
         assert req.keywords == item.keywords
         assert hasattr(req.module, 'test_func')
@@ -431,7 +430,7 @@ class TestRequestBasic:
         """)
         item1, = testdir.genitems([modcol])
         assert item1.name == "test_method"
-        arg2fixturedefs = funcargs.FixtureRequest(item1)._arg2fixturedefs
+        arg2fixturedefs = fixtures.FixtureRequest(item1)._arg2fixturedefs
         assert len(arg2fixturedefs) == 1
         assert arg2fixturedefs[0].__name__ == "pytest_funcarg__something"
 
@@ -558,7 +557,7 @@ class TestRequestBasic:
     def test_request_getmodulepath(self, testdir):
         modcol = testdir.getmodulecol("def test_somefunc(): pass")
         item, = testdir.genitems([modcol])
-        req = funcargs.FixtureRequest(item)
+        req = fixtures.FixtureRequest(item)
         assert req.fspath == modcol.fspath
 
     def test_request_fixturenames(self, testdir):
@@ -687,7 +686,7 @@ class TestRequestMarking:
                 def test_func2(self, something):
                     pass
         """)
-        req1 = funcargs.FixtureRequest(item1)
+        req1 = fixtures.FixtureRequest(item1)
         assert 'xfail' not in item1.keywords
         req1.applymarker(pytest.mark.xfail)
         assert 'xfail' in item1.keywords
@@ -769,7 +768,7 @@ class TestRequestCachedSetup:
 
     def test_request_cachedsetup_extrakey(self, testdir):
         item1 = testdir.getitem("def test_func(): pass")
-        req1 = funcargs.FixtureRequest(item1)
+        req1 = fixtures.FixtureRequest(item1)
         l = ["hello", "world"]
         def setup():
             return l.pop()
@@ -784,7 +783,7 @@ class TestRequestCachedSetup:
 
     def test_request_cachedsetup_cache_deletion(self, testdir):
         item1 = testdir.getitem("def test_func(): pass")
-        req1 = funcargs.FixtureRequest(item1)
+        req1 = fixtures.FixtureRequest(item1)
         l = []
         def setup():
             l.append("setup")
