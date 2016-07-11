@@ -421,6 +421,25 @@ class TestCaptureFixture:
             "*capsys*capfd*same*time*",
             "*2 error*"])
 
+    def test_capturing_getfixturevalue(self, testdir):
+        """Test that asking for "capfd" and "capsys" using request.getfixturevalue
+        in the same test is an error.
+        """
+        testdir.makepyfile("""
+            def test_one(capsys, request):
+                request.getfixturevalue("capfd")
+            def test_two(capfd, request):
+                request.getfixturevalue("capsys")
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*test_one*",
+            "*capsys*capfd*same*time*",
+            "*test_two*",
+            "*capsys*capfd*same*time*",
+            "*2 failed in*",
+        ])
+
     @pytest.mark.parametrize("method", ["sys", "fd"])
     def test_capture_is_represented_on_failure_issue128(self, testdir, method):
         p = testdir.makepyfile("""
