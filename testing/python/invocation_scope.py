@@ -12,7 +12,7 @@ class TestAcceptance:
         Some notes:
 
         - For each scope, define 2 fixtures of the same scope which use the "stack" fixture,
-          to ensure they get the same "stack" instance for its scope.
+          to ensure they get the same "stack" instance for that scope.
         - Creates multiple test files, which tests on each modifying and checking fixtures to
           ensure things are working properly.
         """

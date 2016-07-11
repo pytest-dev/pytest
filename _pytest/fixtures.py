@@ -1074,6 +1074,9 @@ class FixtureManager:
                 assert not name.startswith(self._argprefix), name
 
             def new_fixture_def(name, scope):
+                """
+                Creates and registers a new FixtureDef with given name and scope.
+                """
                 fixture_def = FixtureDef(self, nodeid, name, obj,
                                          scope, marker.params,
                                          unittest=unittest, ids=marker.ids)
@@ -1101,6 +1104,13 @@ class FixtureManager:
             self._nodeid_and_autousenames.append((nodeid or '', autousenames))
 
     def getfixturedefs(self, argname, nodeid):
+        """
+        Gets a list of fixtures which are applicable to the given node id.
+
+        :param str argname: name of the fixture to search for
+        :param str nodeid: full node id of the requesting test.
+        :return: list[FixtureDef]
+        """
         try:
             fixturedefs = self._arg2fixturedefs[argname]
         except KeyError:
@@ -1114,6 +1124,15 @@ class FixtureManager:
                 yield fixturedef
 
     def getfixturedefs_multiple_scopes(self, argname, nodeid):
+        """
+        Gets multiple scoped fixtures which are applicable to the given nodeid. Multiple scoped
+        fixtures are usually created by "invocation" scoped fixtures and have argnames in
+        the form: "<argname>:<scope>" (for example "tmpdir:session").
+
+        :return: dict of "argname" -> [FixtureDef].
+
+        Arguments similar to ``getfixturedefs``.
+        """
         prefix = argname + ':'
         fixturedefs_by_argname = dict((k, v) for k, v in self._arg2fixturedefs.items()
                                       if k.startswith(prefix))
