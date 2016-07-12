@@ -8,21 +8,33 @@ import pytest
 
 def pytest_addoption(parser):
     group = parser.getgroup("general")
-    group._addoption('--pdb',
-               action="store_true", dest="usepdb", default=False,
-               help="start the interactive Python debugger on errors.")
+    group._addoption(
+        '--pdb', dest="usepdb", action="store_true",
+        help="start the interactive Python debugger on errors.")
+    group._addoption(
+        '--pdbcls', dest="usepdb_cls", metavar="modulename:classname",
+        help="start a custom interactive Python debugger on errors. "
+             "For example: --pdbcls=IPython.core.debugger:Pdb")
 
 def pytest_namespace():
     return {'set_trace': pytestPDB().set_trace}
 
 def pytest_configure(config):
-    if config.getvalue("usepdb"):
+    if config.getvalue("usepdb") or config.getvalue("usepdb_cls"):
         config.pluginmanager.register(PdbInvoke(), 'pdbinvoke')
+        if config.getvalue("usepdb_cls"):
+            modname, classname = config.getvalue("usepdb_cls").split(":")
+            __import__(modname)
+            pdb_cls = getattr(sys.modules[modname], classname)
+        else:
+            pdb_cls = pdb.Pdb
+        pytestPDB._pdb_cls = pdb_cls
 
     old = (pdb.set_trace, pytestPDB._pluginmanager)
     def fin():
         pdb.set_trace, pytestPDB._pluginmanager = old
         pytestPDB._config = None
+        pytestPDB._pdb_cls = pdb.Pdb
     pdb.set_trace = pytest.set_trace
     pytestPDB._pluginmanager = config.pluginmanager
     pytestPDB._config = config
@@ -32,6 +44,7 @@ class pytestPDB:
     """ Pseudo PDB that defers to the real pdb. """
     _pluginmanager = None
     _config = None
+    _pdb_cls = pdb.Pdb
 
     def set_trace(self):
         """ invoke PDB set_trace debugging, dropping any IO capturing. """
@@ -45,7 +58,7 @@ class pytestPDB:
             tw.line()
             tw.sep(">", "PDB set_trace (IO-capturing turned off)")
             self._pluginmanager.hook.pytest_enter_pdb(config=self._config)
-        pdb.Pdb().set_trace(frame)
+        self._pdb_cls().set_trace(frame)
 
 
 class PdbInvoke:
@@ -98,7 +111,7 @@ def _find_last_non_hidden_frame(stack):
 
 
 def post_mortem(t):
-    class Pdb(pdb.Pdb):
+    class Pdb(pytestPDB._pdb_cls):
         def get_stack(self, f, t):
             stack, i = pdb.Pdb.get_stack(self, f, t)
             if f is None:
