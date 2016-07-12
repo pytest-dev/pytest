@@ -234,7 +234,8 @@ def test_setup_funcarg_setup_when_outer_scope_fails(testdir):
         import pytest
         def setup_module(mod):
             raise ValueError(42)
-        def pytest_funcarg__hello(request):
+        @pytest.fixture
+        def hello(request):
             raise ValueError("xyz43")
         def test_function1(hello):
             pass

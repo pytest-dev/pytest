@@ -3,10 +3,11 @@ import sys
 import textwrap
 
 import pytest
-from _pytest.monkeypatch import monkeypatch as MonkeyPatch
+from _pytest.monkeypatch import MonkeyPatch
 
 
-def pytest_funcarg__mp(request):
+@pytest.fixture
+def mp(request):
     cwd = os.getcwd()
     sys_path = list(sys.path)
 
@@ -205,7 +206,7 @@ def test_setenv_prepend():
 def test_monkeypatch_plugin(testdir):
     reprec = testdir.inline_runsource("""
         def test_method(monkeypatch):
-            assert monkeypatch.__class__.__name__ == "monkeypatch"
+            assert monkeypatch.__class__.__name__ == "MonkeyPatch"
     """)
     res = reprec.countoutcomes()
     assert tuple(res) == (1, 0, 0), res

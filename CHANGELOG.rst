@@ -40,7 +40,8 @@
   2])`` only ran once. Now a failure is raised. Fixes `#460`_. Thanks to
   `@nikratio`_ for bug report, `@RedBeardCode`_ and `@tomviner`_ for PR.
 
-*
+* ``_pytest.monkeypatch.monkeypatch`` class has been renamed to ``_pytest.monkeypatch.MonkeyPatch``
+  so it doesn't conflict with the ``monkeypatch`` fixture.
 
 *
 
@@ -185,9 +186,12 @@
   Before, you only got exceptions later from ``argparse`` library,
   giving no clue about the actual reason for double-added options.
 
-*
+* ``yield``-based tests are considered deprecated and will be removed in pytest-4.0.
+  Thanks `@nicoddemus`_ for the PR.
 
-*
+* Using ``pytest_funcarg__`` prefix to declare fixtures is considered deprecated and will be
+  removed in pytest-4.0 (`#1684`_).
+  Thanks `@nicoddemus`_ for the PR.
 
 *
 
@@ -261,6 +265,7 @@
 .. _#1632: https://github.com/pytest-dev/pytest/issues/1632
 .. _#1633: https://github.com/pytest-dev/pytest/pull/1633
 .. _#1664: https://github.com/pytest-dev/pytest/pull/1664
+.. _#1684: https://github.com/pytest-dev/pytest/pull/1684
 
 .. _@DRMacIver: https://github.com/DRMacIver
 .. _@RedBeardCode: https://github.com/RedBeardCode

@@ -6,7 +6,7 @@ import os
 import sys
 
 from _pytest.config import hookimpl
-from _pytest.monkeypatch import monkeypatch
+from _pytest.monkeypatch import MonkeyPatch
 from _pytest.assertion import util
 
 
@@ -56,7 +56,7 @@ def pytest_load_initial_conftests(early_config, parser, args):
 
     if mode != "plain":
         _load_modules(mode)
-        m = monkeypatch()
+        m = MonkeyPatch()
         early_config._cleanup.append(m.undo)
         m.setattr(py.builtin.builtins, 'AssertionError',
                   reinterpret.AssertionError)  # noqa

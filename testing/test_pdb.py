@@ -1,6 +1,7 @@
 import sys
 
 import _pytest._code
+import pytest
 
 
 def runpdb_and_get_report(testdir, source):
@@ -12,7 +13,9 @@ def runpdb_and_get_report(testdir, source):
 
 
 class TestPDB:
-    def pytest_funcarg__pdblist(self, request):
+
+    @pytest.fixture
+    def pdblist(self, request):
         monkeypatch = request.getfixturevalue("monkeypatch")
         pdblist = []
         def mypdb(*args):
