@@ -185,7 +185,8 @@
   Before, you only got exceptions later from ``argparse`` library,
   giving no clue about the actual reason for double-added options.
 
-*
+* ``yield``-based tests are considered deprecated and will be removed in pytest-4.0.
+  Thanks `@nicoddemus`_ for the PR.
 
 *
 

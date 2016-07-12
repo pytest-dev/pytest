@@ -589,6 +589,8 @@ class Generator(FunctionMixin, PyCollector):
                 raise ValueError("%r generated tests with non-unique name %r" %(self, name))
             seen[name] = True
             l.append(self.Function(name, self, args=args, callobj=call))
+            msg = 'yield tests are deprecated, and scheduled to be removed in pytest 4.0'
+            self.config.warn('C1', msg, fslocation=self.fspath)
         return l
 
     def getcallargs(self, obj):
@@ -609,8 +611,6 @@ def hasinit(obj):
     if init:
         if init != object.__init__:
             return True
-
-
 
 
 class CallSpec2(object):

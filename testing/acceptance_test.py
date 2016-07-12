@@ -762,3 +762,18 @@ class TestDurationWithFixture:
             * setup *test_1*
             * call *test_1*
         """)
+
+
+def test_yield_tests_deprecation(testdir):
+    testdir.makepyfile("""
+        def func1(arg, arg2):
+            assert arg == arg2
+        def test_gen():
+            yield "m1", func1, 15, 3*5
+            yield "m2", func1, 42, 6*7
+    """)
+    result = testdir.runpytest('-ra')
+    result.stdout.fnmatch_lines([
+        '*yield tests are deprecated, and scheduled to be removed in pytest 4.0*',
+        '*2 passed*',
+    ])
