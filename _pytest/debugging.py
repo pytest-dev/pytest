@@ -13,7 +13,8 @@ def pytest_addoption(parser):
         help="start the interactive Python debugger on errors.")
     group._addoption(
         '--pdbcls', dest="usepdb_cls", metavar="modulename:classname",
-        help="start a custom interactive Python debugger on errors.")
+        help="start a custom interactive Python debugger on errors. "
+             "For example: --pdbcls=IPython.core.debugger:Pdb")
 
 def pytest_namespace():
     return {'set_trace': pytestPDB().set_trace}

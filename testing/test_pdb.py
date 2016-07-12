@@ -311,3 +311,28 @@ class TestPDB:
         child.sendeof()
         if child.isalive():
             child.wait()
+
+    def test_pdb_custom_cls(self, testdir):
+        called = []
+
+        # install dummy debugger class and track which methods were called on it
+        class _CustomPdb:
+            def __init__(self, *args, **kwargs):
+                called.append("init")
+
+            def reset(self):
+                called.append("reset")
+
+            def interaction(self, *args):
+                called.append("interaction")
+
+        _pytest._CustomPdb = _CustomPdb
+
+        p1 = testdir.makepyfile("""xxx """)
+        result = testdir.runpytest_inprocess(
+            "--pdbcls=_pytest:_CustomPdb", p1)
+        result.stdout.fnmatch_lines([
+            "*NameError*xxx*",
+            "*1 error*",
+        ])
+        assert called == ["init", "reset", "interaction"]

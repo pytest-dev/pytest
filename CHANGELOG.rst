@@ -116,7 +116,8 @@
   Example '-o xfail_strict=True'. A complete ini-options can be viewed
   by py.test --help. Thanks `@blueyed`_ and `@fengxx`_ for the PR
 
-*
+* Allow passing a custom debugger class (e.g. ``IPython.core.debugger:Pdb``
+  via ``--pdbcls``).  Thanks to `@anntzer`_ for the PR.
 
 *
 
@@ -185,8 +186,7 @@
   Before, you only got exceptions later from ``argparse`` library,
   giving no clue about the actual reason for double-added options.
 
-* Allow passing a custom debugger class (e.g. ``IPython.core.debugger:Pdb``
-  via ``--pdbcls``.
+*
 
 *
 
@@ -266,6 +266,7 @@
 .. _@DRMacIver: https://github.com/DRMacIver
 .. _@RedBeardCode: https://github.com/RedBeardCode
 .. _@Vogtinator: https://github.com/Vogtinator
+.. _@anntzer: https://github.com/anntzer
 .. _@bagerard: https://github.com/bagerard
 .. _@blueyed: https://github.com/blueyed
 .. _@ceridwen: https://github.com/ceridwen
