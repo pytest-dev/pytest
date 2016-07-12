@@ -481,7 +481,8 @@ class TestFunctional:
     def test_mark_dynamically_in_funcarg(self, testdir):
         testdir.makeconftest("""
             import pytest
-            def pytest_funcarg__arg(request):
+            @pytest.fixture
+            def arg(request):
                 request.applymarker(pytest.mark.hello)
             def pytest_terminal_summary(terminalreporter):
                 l = terminalreporter.stats['passed']

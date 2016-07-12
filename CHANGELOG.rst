@@ -40,7 +40,8 @@
   2])`` only ran once. Now a failure is raised. Fixes `#460`_. Thanks to
   `@nikratio`_ for bug report, `@RedBeardCode`_ and `@tomviner`_ for PR.
 
-*
+* ``_pytest.monkeypatch.monkeypatch`` class has been renamed to ``_pytest.monkeypatch.MonkeyPatch``
+  so it doesn't conflict with the ``monkeypatch`` fixture.
 
 *
 

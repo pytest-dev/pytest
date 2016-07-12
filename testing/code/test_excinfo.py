@@ -381,7 +381,9 @@ def test_match_raises_error(testdir):
     ])
 
 class TestFormattedExcinfo:
-    def pytest_funcarg__importasmod(self, request):
+
+    @pytest.fixture
+    def importasmod(self, request):
         def importasmod(source):
             source = _pytest._code.Source(source)
             tmpdir = request.getfixturevalue("tmpdir")

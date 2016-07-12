@@ -321,7 +321,8 @@ def linecomp(request):
     return LineComp()
 
 
-def pytest_funcarg__LineMatcher(request):
+@pytest.fixture(name='LineMatcher')
+def LineMatcher_fixture(request):
     return LineMatcher
 
 

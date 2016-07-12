@@ -865,7 +865,7 @@ def yield_fixture(scope="function", params=None, autouse=False, ids=None, name=N
         return FixtureFunctionMarker(scope, params, autouse, ids=ids, name=name)
 
 defaultfuncargprefixmarker = fixture()
-funcarg_prefix_warning = 'declaring fixtures using "pytest_funcarg__" prefix is deprecated ' \
+funcarg_prefix_warning = '{name}: declaring fixtures using "pytest_funcarg__" prefix is deprecated ' \
                          'and scheduled to be removed in pytest 4.0.\n' \
                          'remove the prefix and use the @pytest.fixture decorator instead'
 
@@ -1046,8 +1046,8 @@ class FixtureManager:
                 if not callable(obj):
                     continue
                 marker = defaultfuncargprefixmarker
+                self.config.warn('C1', funcarg_prefix_warning.format(name=name))
                 name = name[len(self._argprefix):]
-                self.config.warn('C1', funcarg_prefix_warning)
             elif not isinstance(marker, FixtureFunctionMarker):
                 # magic globals  with __getattr__ might have got us a wrong
                 # fixture attribute
@@ -1055,7 +1055,9 @@ class FixtureManager:
             else:
                 if marker.name:
                     name = marker.name
-                assert not name.startswith(self._argprefix), name
+                msg = 'fixtures cannot have "pytest_funcarg__" prefix ' \
+                      'and be decorated with @pytest.fixture:\n%s' % name
+                assert not name.startswith(self._argprefix), msg
             fixturedef = FixtureDef(self, nodeid, name, obj,
                                     marker.scope, marker.params,
                                     unittest=unittest, ids=marker.ids)

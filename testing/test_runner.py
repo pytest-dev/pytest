@@ -399,13 +399,15 @@ def test_callinfo():
 @pytest.mark.xfail
 def test_runtest_in_module_ordering(testdir):
     p1 = testdir.makepyfile("""
+        import pytest
         def pytest_runtest_setup(item): # runs after class-level!
             item.function.mylist.append("module")
         class TestClass:
             def pytest_runtest_setup(self, item):
                 assert not hasattr(item.function, 'mylist')
                 item.function.mylist = ['class']
-            def pytest_funcarg__mylist(self, request):
+            @pytest.fixture
+            def mylist(self, request):
                 return request.function.mylist
             def pytest_runtest_call(self, item, __multicall__):
                 try:
