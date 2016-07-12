@@ -777,3 +777,19 @@ def test_yield_tests_deprecation(testdir):
         '*yield tests are deprecated, and scheduled to be removed in pytest 4.0*',
         '*2 passed*',
     ])
+
+
+def test_funcarg_prefix_deprecation(testdir):
+    testdir.makepyfile("""
+        def pytest_funcarg__value():
+            return 10
+
+        def test_funcarg_prefix(value):
+            assert value == 10
+    """)
+    result = testdir.runpytest('-ra')
+    result.stdout.fnmatch_lines([
+        '*declaring fixtures using "pytest_funcarg__" prefix is deprecated and scheduled to be removed in pytest 4.0*',
+        '*remove the prefix and use the @pytest.fixture decorator instead*',
+        '*1 passed*',
+    ])

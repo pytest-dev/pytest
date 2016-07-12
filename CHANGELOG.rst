@@ -188,7 +188,9 @@
 * ``yield``-based tests are considered deprecated and will be removed in pytest-4.0.
   Thanks `@nicoddemus`_ for the PR.
 
-*
+* Using ``pytest_funcarg__`` prefix to declare fixtures is considered deprecated and will be
+  removed in pytest-4.0 (`#1684`_).
+  Thanks `@nicoddemus`_ for the PR.
 
 *
 
@@ -262,6 +264,7 @@
 .. _#1632: https://github.com/pytest-dev/pytest/issues/1632
 .. _#1633: https://github.com/pytest-dev/pytest/pull/1633
 .. _#1664: https://github.com/pytest-dev/pytest/pull/1664
+.. _#1684: https://github.com/pytest-dev/pytest/pull/1684
 
 .. _@DRMacIver: https://github.com/DRMacIver
 .. _@RedBeardCode: https://github.com/RedBeardCode

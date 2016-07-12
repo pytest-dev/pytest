@@ -865,6 +865,10 @@ def yield_fixture(scope="function", params=None, autouse=False, ids=None, name=N
         return FixtureFunctionMarker(scope, params, autouse, ids=ids, name=name)
 
 defaultfuncargprefixmarker = fixture()
+funcarg_prefix_warning = 'declaring fixtures using "pytest_funcarg__" prefix is deprecated ' \
+                         'and scheduled to be removed in pytest 4.0.\n' \
+                         'remove the prefix and use the @pytest.fixture decorator instead'
+
 
 
 @fixture(scope="session")
@@ -1043,6 +1047,7 @@ class FixtureManager:
                     continue
                 marker = defaultfuncargprefixmarker
                 name = name[len(self._argprefix):]
+                self.config.warn('C1', funcarg_prefix_warning)
             elif not isinstance(marker, FixtureFunctionMarker):
                 # magic globals  with __getattr__ might have got us a wrong
                 # fixture attribute
