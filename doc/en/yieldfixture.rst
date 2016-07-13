@@ -3,12 +3,12 @@
 "yield_fixture" functions
 ---------------------------------------------------------------
 
-.. deprecated:: 2.10
+.. deprecated:: 3.0
 
 .. versionadded:: 2.4
 
 .. important::
-    Since pytest-2.10, fixtures using the normal ``fixture`` decorator can use a ``yield``
+    Since pytest-3.0, fixtures using the normal ``fixture`` decorator can use a ``yield``
     statement to provide fixture values and execute teardown code, exactly like ``yield_fixture``
     in previous versions.
 
