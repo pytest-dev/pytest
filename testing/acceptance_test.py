@@ -789,7 +789,9 @@ def test_funcarg_prefix_deprecation(testdir):
     """)
     result = testdir.runpytest('-ra')
     result.stdout.fnmatch_lines([
-        '*declaring fixtures using "pytest_funcarg__" prefix is deprecated and scheduled to be removed in pytest 4.0*',
-        '*remove the prefix and use the @pytest.fixture decorator instead*',
+        ('WC1 None pytest_funcarg__value: '
+         'declaring fixtures using "pytest_funcarg__" prefix is deprecated '
+         'and scheduled to be removed in pytest 4.0.  '
+         'Please remove the prefix and use the @pytest.fixture decorator instead.'),
         '*1 passed*',
     ])
