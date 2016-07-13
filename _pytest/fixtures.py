@@ -868,7 +868,7 @@ def yield_fixture(scope="function", params=None, autouse=False, ids=None, name=N
 defaultfuncargprefixmarker = fixture()
 funcarg_prefix_warning = (
     '{name}: declaring fixtures using "pytest_funcarg__" prefix is deprecated '
-    'and scheduled to be removed in pytest 4.0.\n'
+    'and scheduled to be removed in pytest 4.0.  '
     'Please remove the prefix and use the @pytest.fixture decorator instead.')
 
 
