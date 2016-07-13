@@ -160,6 +160,10 @@ time or change existing behaviors in order to make them less surprising/more use
   parametrize.
   Thanks `@palaviv`_ for the complete PR (`#1474`_).
 
+* Now pytest warnings summary is shown up by default. Added a new flag
+  ``--disable-pytest-warnings`` to explicitly disable the warnings summary.
+  This change resolves the (`#1668`_).
+
 * Make ImportError during collection more explicit by reminding
   the user to check the name of the test module/package(s) (`#1426`_).
   Thanks `@omarkohl`_ for the complete PR (`#1520`_).
@@ -216,6 +220,8 @@ time or change existing behaviors in order to make them less surprising/more use
 * Fix internal error issue when the ``method`` argument is missing for
   ``teardown_method()`` (`#1605`_).
 
+* Renamed the pytest ``pdb`` module (plugin) into ``debugging``.
+
 * Fix exception visualization in case the current working directory (CWD) gets
   deleted during testing (`#1235`_). Thanks `@bukzor`_ for reporting. PR by
   `@marscher`_.
@@ -268,6 +274,7 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _#1618: https://github.com/pytest-dev/pytest/issues/1618
 .. _#1619: https://github.com/pytest-dev/pytest/issues/1619
 .. _#1626: https://github.com/pytest-dev/pytest/pull/1626
+.. _#1668: https://github.com/pytest-dev/pytest/issues/1668
 .. _#1627: https://github.com/pytest-dev/pytest/pull/1627
 .. _#1628: https://github.com/pytest-dev/pytest/pull/1628
 .. _#1629: https://github.com/pytest-dev/pytest/issues/1629
