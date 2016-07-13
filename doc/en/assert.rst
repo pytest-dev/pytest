@@ -85,7 +85,7 @@ and if you need to have access to the actual exception info you may use::
 the actual exception raised.  The main attributes of interest are
 ``.type``, ``.value`` and ``.traceback``.
 
-.. versionchanged:: 2.10
+.. versionchanged:: 3.0
 
 In the context manager form you may use the keyword argument
 ``message`` to specify a custom failure message::

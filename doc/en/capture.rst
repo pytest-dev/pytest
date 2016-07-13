@@ -116,7 +116,7 @@ libraries or subprocesses that directly write to operating
 system level output streams (FD1 and FD2).
 
 
-.. versionadded:: 2.10
+.. versionadded:: 3.0
 
 To temporarily disable capture within a test, both ``capsys``
 and ``capfd`` have a ``disabled()`` method that can be used

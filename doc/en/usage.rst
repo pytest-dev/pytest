@@ -204,7 +204,7 @@ This will add an extra property ``example_key="1"`` to the generated
 LogXML: add_global_property
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. versionadded:: 2.10
+.. versionadded:: 3.0
 
 If you want to add a properties node in the testsuite level, which may contains properties that are relevant
 to all testcases you can use ``LogXML.add_global_properties``

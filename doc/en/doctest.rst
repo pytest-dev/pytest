@@ -105,7 +105,7 @@ itself::
 The 'doctest_namespace' fixture
 -------------------------------
 
-.. versionadded:: 2.10
+.. versionadded:: 3.0
 
 The ``doctest_namespace`` fixture can be used to inject items into the
 namespace in which your doctests run. It is intended to be used within
