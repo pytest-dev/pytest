@@ -3,42 +3,46 @@
 
 **Incompatible changes**
 
-* Removed the following deprecated commandline options
+A number of incompatible changes were made in this release, with the intent of removing features deprecated for a long
+time or change existing behaviors in order to make them less surprising/more useful.
 
-  * ``--genscript``
-  * ``--no-assert``
-  * ``--nomagic``
-  * ``--report``
+* The following deprecated commandline options were removed:
 
-  Thanks to `@RedBeardCode`_ for the PR (`#1664`_)
+  * ``--genscript``: no longer supported;
+  * ``--no-assert``: use ``--assert=plain`` instead;
+  * ``--nomagic``: use ``--assert=plain`` instead;
+  * ``--report``: use ``-r`` instead;
+
+  Thanks to `@RedBeardCode`_ for the PR (`#1664`_).
 
 * ImportErrors in plugins now are a fatal error instead of issuing a
   pytest warning (`#1479`_). Thanks to `@The-Compiler`_ for the PR.
 
-* removed support code for python 3 < 3.3 addressing (`#1627`_)
+* Removed support code for Python 3 versions < 3.3 (`#1627`_).
 
-* Remove all py.test-X* entry points. The versioned, suffixed entry points
+* Removed all ``py.test-X*`` entry points. The versioned, suffixed entry points
   were never documented and a leftover from a pre-virtualenv era. These entry
   points also created broken entry points in wheels, so removing them also
   removes a source of confusion for users (`#1632`_).
   Thanks `@obestwalter`_ for the PR.
 
-* Fix `#607`_: pytest.skip() is no longer allowed at module level to
-  prevent misleading use as test function decorator. When used at a module
-  level an error will be raised during collection.
+* ``pytest.skip()`` now raises an error when used to decorate a test function,
+  as opposed to its original intent (to imperatively skip a test inside a test function). Previously
+  this usage would cause the entire module to be skipped (`#607`_).
   Thanks `@omarkohl`_ for the complete PR (`#1519`_).
 
-* Fix `#1421`_: Exit tests if a collection error occurs and add
-  ``--continue-on-collection-errors`` option to restore previous behaviour.
+* Exit tests if a collection error occurs. A poll indicated most users will hit CTRL-C
+  anyway as soon as they see collection errors, so pytest might as well make that the default behavior (`#1421`_).
+  A ``--continue-on-collection-errors`` option has been added to restore the previous behaviour.
   Thanks `@olegpidsadnyi`_ and `@omarkohl`_ for the complete PR (`#1628`_).
 
-* Renamed the pytest ``pdb`` module (plugin) into ``debugging``.
+* Renamed the pytest ``pdb`` module (plugin) into ``debugging`` to avoid clashes with the builtin ``pdb`` module.
 
-* Raise helpful failure message, when requesting parametrized fixture at runtime,
-  e.g. with ``request.getfuncargvalue``. Previously these params were simply
-  never defined. So a fixture decorated like ``@pytest.fixture(params=[0, 1,
-  2])`` only ran once. Now a failure is raised. Fixes `#460`_. Thanks to
-  `@nikratio`_ for bug report, `@RedBeardCode`_ and `@tomviner`_ for PR.
+* Raise a helpful failure message when requesting a parametrized fixture at runtime,
+  e.g. with ``request.getfixturevalue``. Previously these parameters were simply
+  never defined, so a fixture decorated like ``@pytest.fixture(params=[0, 1, 2])``
+  only ran once (`#460`_).
+  Thanks to `@nikratio`_ for the bug report, `@RedBeardCode`_ and `@tomviner`_ for the PR.
 
 * ``_pytest.monkeypatch.monkeypatch`` class has been renamed to ``_pytest.monkeypatch.MonkeyPatch``
   so it doesn't conflict with the ``monkeypatch`` fixture.
@@ -54,14 +58,14 @@
 **New Features**
 
 * Support nose-style ``__test__`` attribute on methods of classes,
-  including unittest-style Classes. If set to False, the test will not be
+  including unittest-style Classes. If set to ``False``, the test will not be
   collected.
 
 * New ``doctest_namespace`` fixture for injecting names into the
-  namespace in which your doctests run.
+  namespace in which doctests run.
   Thanks `@milliams`_ for the complete PR (`#1428`_).
 
-* New ``name`` argument to ``pytest.fixture`` mark, which allows a custom name
+* New ``name`` argument to ``pytest.fixture`` decorator which allows a custom name
   for a fixture (to solve the funcarg-shadowing-fixture problem).
   Thanks `@novas0x2a`_ for the complete PR (`#1444`_).
 
@@ -69,56 +73,65 @@
   tests.
   Thanks `@kalekundert`_ for the complete PR (`#1441`_).
 
-* New Add ability to add global properties in the final xunit output file.
+* Ability to add global properties in the final xunit output file by accessing
+  the internal ``junitxml`` plugin (experimental).
   Thanks `@tareqalayan`_ for the complete PR `#1454`_).
 
 * New ``ExceptionInfo.match()`` method to match a regular expression on the
-  string representation of an exception. Closes proposal `#372`_.
-  Thanks `@omarkohl`_ for the complete PR (`#1502`_) and `@nicoddemus`_ for the
-  implementation tips.
+  string representation of an exception (`#372`_).
+  Thanks `@omarkohl`_ for the complete PR (`#1502`_).
 
 * ``__tracebackhide__`` can now also be set to a callable which then can decide
   whether to filter the traceback based on the ``ExceptionInfo`` object passed
   to it. Thanks `@The-Compiler`_ for the complete PR (`#1526`_).
 
-* New ``pytest_make_parametrize_id`` hook.
+* New ``pytest_make_parametrize_id(config, val)`` hook which can be used by plugins to provide
+  friendly strings for custom types.
   Thanks `@palaviv`_ for the PR.
 
-* ``capsys`` and ``capfd`` now have a ``disabled()`` method, which is a context manager
-  that can be used to temporarily disable capture within a test.
+* ``capsys`` and ``capfd`` now have a ``disabled()`` context-manager method, which
+  can be used to temporarily disable capture within a test.
   Thanks `@nicoddemus`_ for the PR.
 
-* New cli flag ``--fixtures-per-test`` that shows which fixtures are being used
+* New cli flag ``--fixtures-per-test``: shows which fixtures are being used
   for each selected test item. Features doc strings of fixtures by default.
   Can also show where fixtures are defined if combined with ``-v``.
   Thanks `@hackebrot`_ for the PR.
 
-* Introduce pytest command as recommended entry point. Closes proposal
+* Introduce ``pytest`` command as recommended entry point. Note that ``py.test``
+  still works and is not scheduled for removal. Closes proposal
   `#1629`_. Thanks `@obestwalter`_ and `@davehunt`_ for the complete PR
-  (`#1633`_)
+  (`#1633`_).
 
-* New cli flags: (1) ``--setup-plan`` performs normal collection and reports
-  the potential setup and teardown, does not execute any fixtures and tests (2)
-  ``--setup-only`` performs normal collection, executes setup and teardown of
-  fixtures and reports them.  (3) ``--setup-show`` performs normal test
-  execution and additionally shows the setup and teardown of fixtures.
+* New cli flags:
+
+  + ``--setup-plan``: performs normal collection and reports
+    the potential setup and teardown and does not execute any fixtures and tests;
+  + ``--setup-only``: performs normal collection, executes setup and teardown of
+    fixtures and reports them;
+  + ``--setup-show``: performs normal test execution and additionally shows
+    setup and teardown of fixtures;
+
   Thanks `@d6e`_, `@kvas-it`_, `@sallner`_ and `@omarkohl`_ for the PRs.
 
-* Added two new hooks: ``pytest_fixture_setup`` which executes the fixture
-  setup and ``pytest_fixture_post_finalizer`` which is called after the fixture's
-  finalizer and has access to the fixture's result cache.
-  Thanks `@d6e`_, `@sallner`_
+* New cli flag ``--override-ini``/``-o``: overrides values from the ini file.
+  For example: ``"-o xfail_strict=True"``'.
+  Thanks `@blueyed`_ and `@fengxx`_ for the PR.
 
-* Issue a warning for asserts whose test is a tuple literal. Such asserts will
+* New hooks:
+
+  + ``pytest_fixture_setup(fixturedef, request)``: executes fixture setup;
+  + ``pytest_fixture_post_finalizer(fixturedef)``: called after the fixture's
+    finalizer and has access to the fixture's result cache.
+
+  Thanks `@d6e`_, `@sallner`_.
+
+* Issue warnings for asserts whose test is a tuple literal. Such asserts will
   never fail because tuples are always truthy and are usually a mistake
   (see `#1562`_). Thanks `@kvas-it`_, for the PR.
 
-* New cli flag ``--override-ini`` or ``-o`` that overrides values from the ini file.
-  Example '-o xfail_strict=True'. A complete ini-options can be viewed
-  by py.test --help. Thanks `@blueyed`_ and `@fengxx`_ for the PR
-
-* Allow passing a custom debugger class (e.g. ``IPython.core.debugger:Pdb``
-  via ``--pdbcls``).  Thanks to `@anntzer`_ for the PR.
+* Allow passing a custom debugger class (e.g. ``--pdbcls=IPython.core.debugger:Pdb``).
+  Thanks to `@anntzer`_ for the PR.
 
 *
 
@@ -136,27 +149,26 @@
   the preferred way to write teardown code (`#1461`_).
   Thanks `@csaftoiu`_ for bringing this to attention and `@nicoddemus`_ for the PR.
 
-* Fix `#1351`_:
-  explicitly passed parametrize ids do not get escaped to ascii.
+* Explicitly passed parametrize ids do not get escaped to ascii (`#1351`_).
   Thanks `@ceridwen`_ for the PR.
 
-* parametrize ids can accept None as specific test id. The
+* Parametrize ids can accept ``None`` as specific test id, in which case the
   automatically generated id for that argument will be used.
   Thanks `@palaviv`_ for the complete PR (`#1468`_).
 
-* improved idmaker name selection in case of duplicate ids in
+* Improved automatic id generation selection in case of duplicate ids in
   parametrize.
   Thanks `@palaviv`_ for the complete PR (`#1474`_).
 
-* Fix `#1426`_ Make ImportError during collection more explicit by reminding
-  the user to check the name of the test module/package(s).
+* Make ImportError during collection more explicit by reminding
+  the user to check the name of the test module/package(s) (`#1426`_).
   Thanks `@omarkohl`_ for the complete PR (`#1520`_).
 
 * Add ``build/`` and ``dist/`` to the default ``--norecursedirs`` list. Thanks
   `@mikofski`_ for the report and `@tomviner`_ for the PR (`#1544`_).
 
-* pytest.raises in the context manager form accepts a custom
-  message to raise when no exception occurred.
+* ``pytest.raises`` in the context manager form accepts a custom
+  ``message`` to raise when no exception occurred.
   Thanks `@palaviv`_ for the complete PR (`#1616`_).
 
 * ``conftest.py`` files now benefit from assertion rewriting; previously it
@@ -170,17 +182,10 @@
   is specified on the command line together with the ``--pyargs``
   option.  Thanks to `@taschini`_ for the PR (`#1597`_).
 
-* Add proposal to docs for a new feature that enables users to combine multiple
-  fixtures into one. Thanks to `@hpk42`_ and `@hackebrot`_.
-
-* Rename ``getfuncargvalue`` to ``getfixturevalue``. ``getfuncargvalue`` is
-  deprecated but still present. Thanks to `@RedBeardCode`_ and `@tomviner`_
-  for PR (`#1626`_).
-
-* Always include full assertion explanation. The previous behaviour was hiding
-  sub-expressions that happened to be False, assuming this was redundant information.
+* Always include full assertion explanation during assertion rewriting. The previous behaviour was hiding
+  sub-expressions that happened to be ``False``, assuming this was redundant information.
   Thanks `@bagerard`_ for reporting (`#1503`_). Thanks to `@davehunt`_ and
-  `@tomviner`_ for PR.
+  `@tomviner`_ for the PR.
 
 * ``OptionGroup.addoption()`` now checks if option names were already
   added before, to make it easier to track down issues like `#1618`_.
@@ -194,6 +199,10 @@
   removed in pytest-4.0 (`#1684`_).
   Thanks `@nicoddemus`_ for the PR.
 
+* Rename ``getfuncargvalue`` to ``getfixturevalue``. ``getfuncargvalue`` is
+  still present but is now considered deprecated. Thanks to `@RedBeardCode`_ and `@tomviner`_
+  for the PR (`#1626`_).
+
 *
 
 *
@@ -202,22 +211,21 @@
 
 **Bug Fixes**
 
-* When receiving identical test ids in parametrize we generate unique test ids.
+* Parametrize now correctly handles duplicated test ids.
 
-* Fix internal error issue when ``method`` argument is missing for
-  ``teardown_method()``. Fixes `#1605`_.
+* Fix internal error issue when the ``method`` argument is missing for
+  ``teardown_method()`` (`#1605`_).
 
 * Fix exception visualization in case the current working directory (CWD) gets
-  deleted during testing. Fixes `#1235`_. Thanks `@bukzor`_ for reporting. PR by
-  `@marscher`_. Thanks `@nicoddemus`_ for his help.
+  deleted during testing (`#1235`_). Thanks `@bukzor`_ for reporting. PR by
+  `@marscher`_.
 
-* Improve of the test output for logical expression with brackets.
-  Fixes `#925`_. Thanks `@DRMacIver`_ for reporting. Thanks to `@RedBeardCode`_
-  for PR.
+* Improve test output for logical expression with brackets (`#925`_).
+  Thanks `@DRMacIver`_ for reporting and `@RedBeardCode`_ for the PR.
 
-* Create correct diff for strings ending with newlines. Fixes `#1553`_.
-  Thanks `@Vogtinator`_ for reporting. Thanks to `@RedBeardCode`_ and
-  `@tomviner`_ for PR.
+* Create correct diff for strings ending with newlines (`#1553`_).
+  Thanks `@Vogtinator`_ for reporting and `@RedBeardCode`_ and
+  `@tomviner`_ for the PR.
 
 *
 
