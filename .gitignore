@@ -33,3 +33,4 @@ env/
 .coverage
 .ropeproject
 .idea
+.hypothesis

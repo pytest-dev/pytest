@@ -1,10 +1,17 @@
 # -*- coding: utf-8 -*-
 import re
+import sys
 
 import _pytest._code
 import py
 import pytest
-from _pytest import python as funcargs
+from _pytest import python, fixtures
+
+import hypothesis
+from hypothesis import strategies
+
+PY3 = sys.version_info >= (3, 0)
+
 
 class TestMetafunc:
     def Metafunc(self, func):
@@ -15,9 +22,9 @@ class TestMetafunc:
             name2fixturedefs = None
             def __init__(self, names):
                 self.names_closure = names
-        names = funcargs.getfuncargnames(func)
+        names = fixtures.getfuncargnames(func)
         fixtureinfo = FixtureInfo(names)
-        return funcargs.Metafunc(func, fixtureinfo, None)
+        return python.Metafunc(func, fixtureinfo, None)
 
     def test_no_funcargs(self, testdir):
         def function(): pass
@@ -128,20 +135,29 @@ class TestMetafunc:
         assert metafunc._calls[2].id == "x1-a"
         assert metafunc._calls[3].id == "x1-b"
 
-    @pytest.mark.skipif('sys.version_info[0] >= 3')
-    def test_unicode_idval_python2(self):
-        """unittest for the expected behavior to obtain ids for parametrized
-        unicode values in Python 2: if convertible to ascii, they should appear
-        as ascii values, otherwise fallback to hide the value behind the name
-        of the parametrized variable name. #1086
+    @hypothesis.given(strategies.text() | strategies.binary())
+    def test_idval_hypothesis(self, value):
+        from _pytest.python import _idval
+        escaped = _idval(value, 'a', 6, None)
+        assert isinstance(escaped, str)
+        if PY3:
+            escaped.encode('ascii')
+        else:
+            escaped.decode('ascii')
+
+    def test_unicode_idval(self):
+        """This tests that Unicode strings outside the ASCII character set get
+        escaped, using byte escapes if they're in that range or unicode
+        escapes if they're not.
+
         """
         from _pytest.python import _idval
         values = [
             (u'', ''),
             (u'ascii', 'ascii'),
-            (u'ação', 'a6'),
-            (u'josé@blah.com', 'a6'),
-            (u'δοκ.ιμή@παράδειγμα.δοκιμή', 'a6'),
+            (u'ação', 'a\\xe7\\xe3o'),
+            (u'josé@blah.com', 'jos\\xe9@blah.com'),
+            (u'δοκ.ιμή@παράδειγμα.δοκιμή', '\\u03b4\\u03bf\\u03ba.\\u03b9\\u03bc\\u03ae@\\u03c0\\u03b1\\u03c1\\u03ac\\u03b4\\u03b5\\u03b9\\u03b3\\u03bc\\u03b1.\\u03b4\\u03bf\\u03ba\\u03b9\\u03bc\\u03ae'),
         ]
         for val, expected in values:
             assert _idval(val, 'a', 6, None) == expected
@@ -245,9 +261,9 @@ class TestMetafunc:
                                       (20, KeyError()),
                                       ("three", [1, 2, 3]),
         ], idfn=ids)
-        assert result == ["0a-a",
-                          "1a-a",
-                          "2a-a",
+        assert result == ["a-a0",
+                          "a-a1",
+                          "a-a2",
                          ]
 
     @pytest.mark.issue351
@@ -264,6 +280,19 @@ class TestMetafunc:
                           "20-b1",
                           "three-b2",
                          ]
+
+    def test_idmaker_with_ids(self):
+        from _pytest.python import idmaker
+        result = idmaker(("a", "b"), [(1, 2),
+                                      (3, 4)],
+                         ids=["a", None])
+        assert result == ["a", "3-4"]
+
+    def test_idmaker_with_ids_unique_names(self):
+        from _pytest.python import idmaker
+        result = idmaker(("a"), [1,2,3,4,5],
+                         ids=["a", "a", "b", "c", "b"])
+        assert result == ["a0", "a1", "b0", "c", "b1"]
 
     def test_addcall_and_parametrize(self):
         def func(x, y): pass
@@ -419,13 +448,13 @@ class TestMetafunc:
 
     def test_parametrize_functional(self, testdir):
         testdir.makepyfile("""
+            import pytest
             def pytest_generate_tests(metafunc):
                 metafunc.parametrize('x', [1,2], indirect=True)
                 metafunc.parametrize('y', [2])
-            def pytest_funcarg__x(request):
+            @pytest.fixture
+            def x(request):
                 return request.param * 10
-            #def pytest_funcarg__y(request):
-            #    return request.param
 
             def test_simple(x,y):
                 assert x in (10,20)
@@ -529,16 +558,16 @@ class TestMetafunc:
 
     def test_format_args(self):
         def function1(): pass
-        assert funcargs._format_args(function1) == '()'
+        assert fixtures._format_args(function1) == '()'
 
         def function2(arg1): pass
-        assert funcargs._format_args(function2) == "(arg1)"
+        assert fixtures._format_args(function2) == "(arg1)"
 
         def function3(arg1, arg2="qwe"): pass
-        assert funcargs._format_args(function3) == "(arg1, arg2='qwe')"
+        assert fixtures._format_args(function3) == "(arg1, arg2='qwe')"
 
         def function4(arg1, *args, **kwargs): pass
-        assert funcargs._format_args(function4) == "(arg1, *args, **kwargs)"
+        assert fixtures._format_args(function4) == "(arg1, *args, **kwargs)"
 
 
 class TestMetafuncFunctional:
@@ -549,7 +578,8 @@ class TestMetafuncFunctional:
             def pytest_generate_tests(metafunc):
                 metafunc.addcall(param=metafunc)
 
-            def pytest_funcarg__metafunc(request):
+            @pytest.fixture
+            def metafunc(request):
                 assert request._pyfuncitem._genid == "0"
                 return request.param
 
@@ -601,7 +631,9 @@ class TestMetafuncFunctional:
                 metafunc.addcall(param=10)
                 metafunc.addcall(param=20)
 
-            def pytest_funcarg__arg1(request):
+            import pytest
+            @pytest.fixture
+            def arg1(request):
                 return request.param
 
             def test_func1(arg1):
@@ -640,9 +672,12 @@ class TestMetafuncFunctional:
             def pytest_generate_tests(metafunc):
                 metafunc.addcall(param=(1,1), id="hello")
 
-            def pytest_funcarg__arg1(request):
+            import pytest
+            @pytest.fixture
+            def arg1(request):
                 return request.param[0]
-            def pytest_funcarg__arg2(request):
+            @pytest.fixture
+            def arg2(request):
                 return request.param[1]
 
             class TestClass:
@@ -726,11 +761,14 @@ class TestMetafuncFunctional:
                 metafunc.parametrize("arg1", [1], indirect=True)
                 metafunc.parametrize("arg2", [10], indirect=True)
 
-            def pytest_funcarg__arg1(request):
+            import pytest
+            @pytest.fixture
+            def arg1(request):
                 x = request.getfixturevalue("arg2")
                 return x + request.param
 
-            def pytest_funcarg__arg2(request):
+            @pytest.fixture
+            def arg2(request):
                 return request.param
 
             def test_func1(arg1, arg2):
@@ -748,10 +786,13 @@ class TestMetafuncFunctional:
                 assert "arg1" in metafunc.fixturenames
                 metafunc.parametrize("arg1", [1], indirect=True)
 
-            def pytest_funcarg__arg1(request):
+            import pytest
+            @pytest.fixture
+            def arg1(request):
                 return request.param
 
-            def pytest_funcarg__arg2(request, arg1):
+            @pytest.fixture
+            def arg2(request, arg1):
                 return 10 * arg1
 
             def test_func(arg2):
@@ -796,6 +837,41 @@ class TestMetafuncFunctional:
             *test_function*1.3-b1*
         """)
 
+    def test_parametrize_with_None_in_ids(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            def pytest_generate_tests(metafunc):
+                metafunc.parametrize(("a", "b"), [(1,1), (1,1), (1,2)],
+                                     ids=["basic", None, "advanced"])
+
+            def test_function(a, b):
+                assert a == b
+        """)
+        result = testdir.runpytest("-v")
+        assert result.ret == 1
+        result.stdout.fnmatch_lines_random([
+            "*test_function*basic*PASSED",
+            "*test_function*1-1*PASSED",
+            "*test_function*advanced*FAILED",
+        ])
+
+    def test_parametrize_with_identical_ids_get_unique_names(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            def pytest_generate_tests(metafunc):
+                metafunc.parametrize(("a", "b"), [(1,1), (1,2)],
+                                     ids=["a", "a"])
+
+            def test_function(a, b):
+                assert a == b
+        """)
+        result = testdir.runpytest("-v")
+        assert result.ret == 1
+        result.stdout.fnmatch_lines_random([
+            "*test_function*a0*PASSED",
+            "*test_function*a1*FAILED"
+        ])
+
     @pytest.mark.parametrize(("scope", "length"),
                              [("module", 2), ("function", 4)])
     def test_parametrize_scope_overrides(self, testdir, scope, length):
@@ -806,7 +882,8 @@ class TestMetafuncFunctional:
                 if "arg" in metafunc.funcargnames:
                     metafunc.parametrize("arg", [1,2], indirect=True,
                                          scope=%r)
-            def pytest_funcarg__arg(request):
+            @pytest.fixture
+            def arg(request):
                 l.append(request.param)
                 return request.param
             def test_hello(arg):
@@ -1099,3 +1176,21 @@ class TestMarkersWithParametrization:
         """)
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
+
+    def test_pytest_make_parametrize_id(self, testdir):
+        testdir.makeconftest("""
+            def pytest_make_parametrize_id(config, val):
+                return str(val * 2)
+        """)
+        testdir.makepyfile("""
+                import pytest
+
+                @pytest.mark.parametrize("x", range(2))
+                def test_func(x):
+                    pass
+                """)
+        result = testdir.runpytest("-v")
+        result.stdout.fnmatch_lines([
+            "*test_func*0*PASS*",
+            "*test_func*2*PASS*",
+        ])

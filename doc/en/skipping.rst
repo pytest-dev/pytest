@@ -19,7 +19,7 @@ information about skipped/xfailed tests is not shown by default to avoid
 cluttering the output.  You can use the ``-r`` option to see details
 corresponding to the "short" letters shown in the test progress::
 
-    py.test -rxs  # show extra info on skips and xfails
+    pytest -rxs  # show extra info on skips and xfails
 
 (See :ref:`how to change command line options defaults`)
 
@@ -222,7 +222,7 @@ Here is a simple test file with the several usages:
 
 Running it with the report-on-xfail option gives this output::
 
-    example $ py.test -rx xfail_demo.py
+    example $ pytest -rx xfail_demo.py
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR/example, inifile: 
@@ -368,6 +368,6 @@ The equivalent with "boolean conditions" is::
 .. note::
 
     You cannot use ``pytest.config.getvalue()`` in code
-    imported before py.test's argument parsing takes place.  For example,
+    imported before pytest's argument parsing takes place.  For example,
     ``conftest.py`` files are imported before command line parsing and thus
     ``config.getvalue()`` will not execute correctly.

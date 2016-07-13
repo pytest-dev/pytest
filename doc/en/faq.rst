@@ -81,18 +81,17 @@ You can also turn off all assertion interaction using the
 .. _`py/__init__.py`: http://bitbucket.org/hpk42/py-trunk/src/trunk/py/__init__.py
 
 
-Why a ``py.test`` instead of a ``pytest`` command?
-++++++++++++++++++++++++++++++++++++++++++++++++++
+Why can I use both ``pytest`` and ``py.test`` commands?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Some of the reasons are historic, others are practical.  ``pytest``
-used to be part of the ``py`` package which provided several developer
-utilities, all starting with ``py.<TAB>``, thus providing nice
-TAB-completion. If
-you install ``pip install pycmd`` you get these tools from a separate
-package.  These days the command line tool could be called ``pytest``
-but since many people have gotten used to the old name and there
-is another tool named "pytest" we just decided to stick with
-``py.test`` for now.
+pytest used to be part of the py package, which provided several developer
+utilities, all starting with ``py.<TAB>``, thus providing nice TAB-completion.
+If you install ``pip install pycmd`` you get these tools from a separate
+package. Once ``pytest`` became a separate package, the ``py.test`` name was
+retained due to avoid a naming conflict with another tool. This conflict was
+eventually resolved, and the ``pytest`` command was therefore introduced. In
+future versions of pytest, we may deprecate and later remove the ``py.test``
+command to avoid perpetuating the confusion.
 
 pytest fixtures, parametrized tests
 -------------------------------------------------------

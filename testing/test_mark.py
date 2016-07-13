@@ -418,6 +418,32 @@ class TestFunctional:
         items, rec = testdir.inline_genitems(p)
         self.assert_markers(items, test_foo=('a', 'b'), test_bar=('a',))
 
+
+    @pytest.mark.issue568
+    @pytest.mark.xfail(reason="markers smear on methods of base classes")
+    def test_mark_should_not_pass_to_siebling_class(self, testdir):
+        p = testdir.makepyfile("""
+            import pytest
+
+            class TestBase:
+                def test_foo(self):
+                    pass
+
+            @pytest.mark.b
+            class TestSub(TestBase):
+                pass
+
+
+            class TestOtherSub(TestBase):
+                pass
+
+        """)
+        items, rec = testdir.inline_genitems(p)
+        base_item, sub_item, sub_item_other = items
+        assert not hasattr(base_item.obj, 'b')
+        assert not hasattr(sub_item_other.obj, 'b')
+
+
     def test_mark_decorator_baseclasses_merged(self, testdir):
         p = testdir.makepyfile("""
             import pytest
@@ -455,7 +481,8 @@ class TestFunctional:
     def test_mark_dynamically_in_funcarg(self, testdir):
         testdir.makeconftest("""
             import pytest
-            def pytest_funcarg__arg(request):
+            @pytest.fixture
+            def arg(request):
                 request.applymarker(pytest.mark.hello)
             def pytest_terminal_summary(terminalreporter):
                 l = terminalreporter.stats['passed']
@@ -563,6 +590,29 @@ class TestFunctional:
                                 if isinstance(v, MarkInfo)])
             assert marker_names == set(expected_markers)
 
+    @pytest.mark.xfail(reason='callspec2.setmulti misuses keywords')
+    @pytest.mark.issue1540
+    def test_mark_from_parameters(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            pytestmark = pytest.mark.skipif(True, reason='skip all')
+
+            # skipifs inside fixture params
+            params = [pytest.mark.skipif(False, reason='dont skip')('parameter')]
+
+
+            @pytest.fixture(params=params)
+            def parameter(request):
+                return request.param
+
+
+            def test_1(parameter):
+                assert True
+        """)
+
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(skipped=1)
 
 class TestKeywordSelection:
     def test_select_simple(self, testdir):
@@ -669,4 +719,3 @@ class TestKeywordSelection:
 
         assert_test_is_not_selected("__")
         assert_test_is_not_selected("()")
-

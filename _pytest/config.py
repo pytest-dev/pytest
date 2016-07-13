@@ -63,9 +63,10 @@ class UsageError(Exception):
 _preinit = []
 
 default_plugins = (
-     "mark main terminal runner python debugging unittest capture skipping "
-     "tmpdir monkeypatch recwarn pastebin helpconfig nose assertion genscript "
-     "junitxml resultlog doctest cacheprovider").split()
+     "mark main terminal runner python fixtures debugging unittest capture skipping "
+     "tmpdir monkeypatch recwarn pastebin helpconfig nose assertion "
+     "junitxml resultlog doctest cacheprovider freeze_support "
+     "setuponly setupplan").split()
 
 builtin_plugins = set(default_plugins)
 builtin_plugins.add("pytester")
@@ -655,20 +656,17 @@ class Argument:
                 self._long_opts.append(opt)
 
     def __repr__(self):
-        retval = 'Argument('
+        args = []
         if self._short_opts:
-            retval += '_short_opts: ' + repr(self._short_opts) + ', '
+            args += ['_short_opts: ' + repr(self._short_opts)]
         if self._long_opts:
-            retval += '_long_opts: ' + repr(self._long_opts) + ', '
-        retval += 'dest: ' + repr(self.dest) + ', '
+            args += ['_long_opts: ' + repr(self._long_opts)]
+        args += ['dest: ' + repr(self.dest)]
         if hasattr(self, 'type'):
-            retval += 'type: ' + repr(self.type) + ', '
+            args += ['type: ' + repr(self.type)]
         if hasattr(self, 'default'):
-            retval += 'default: ' + repr(self.default) + ', '
-        if retval[-2:] == ', ':  # always long enough to test ("Argument(" )
-            retval = retval[:-2]
-        retval += ')'
-        return retval
+            args += ['default: ' + repr(self.default)]
+        return 'Argument({0})'.format(', '.join(args))
 
 
 class OptionGroup:
@@ -686,6 +684,10 @@ class OptionGroup:
         results in help showing '--two-words' only, but --twowords gets
         accepted **and** the automatic destination is in args.twowords
         """
+        conflict = set(optnames).intersection(
+            name for opt in self.options for name in opt.names())
+        if conflict:
+            raise ValueError("option names %s already added" % conflict)
         option = Argument(*optnames, **attrs)
         self._addoption_instance(option, shortupper=False)
 
@@ -923,10 +925,7 @@ class Config(object):
             args[:] = self.getini("addopts") + args
         self._checkversion()
         self.pluginmanager.consider_preparse(args)
-        try:
-            self.pluginmanager.load_setuptools_entrypoints("pytest11")
-        except ImportError as e:
-            self.warn("I2", "could not load setuptools entry import: %s" % (e,))
+        self.pluginmanager.load_setuptools_entrypoints("pytest11")
         self.pluginmanager.consider_env()
         self.known_args_namespace = ns = self._parser.parse_known_args(args, namespace=self.option.copy())
         if self.known_args_namespace.confcutdir is None and self.inifile:
@@ -999,14 +998,16 @@ class Config(object):
             description, type, default = self._parser._inidict[name]
         except KeyError:
             raise ValueError("unknown configuration value: %r" %(name,))
-        try:
-            value = self.inicfg[name]
-        except KeyError:
-            if default is not None:
-                return default
-            if type is None:
-                return ''
-            return []
+        value = self._get_override_ini_value(name)
+        if value is None:
+            try:
+                value = self.inicfg[name]
+            except KeyError:
+                if default is not None:
+                    return default
+                if type is None:
+                    return ''
+                return []
         if type == "pathlist":
             dp = py.path.local(self.inicfg.config.path).dirpath()
             l = []
@@ -1036,6 +1037,20 @@ class Config(object):
                 relroot = modpath.join(relroot, abs=True)
             l.append(relroot)
         return l
+
+    def _get_override_ini_value(self, name):
+        value = None
+        # override_ini is a list of list, to support both -o foo1=bar1 foo2=bar2 and
+        # and -o foo1=bar1 -o foo2=bar2 options
+        # always use the last item if multiple value set for same ini-name,
+        # e.g. -o foo=bar1 -o foo=bar2 will set foo to bar2
+        if self.getoption("override_ini", None):
+            for ini_config_list in self.option.override_ini:
+                for ini_config in ini_config_list:
+                    (key, user_ini_value) = ini_config.split("=", 1)
+                    if key == name:
+                        value = user_ini_value
+        return value
 
     def getoption(self, name, default=notset, skip=False):
         """ return command line option value.

@@ -223,8 +223,7 @@ class TestCollectonly:
         """)
         result = testdir.runpytest("--collect-only", "-rs")
         result.stdout.fnmatch_lines([
-            "SKIP*hello*",
-            "*1 skip*",
+            "*ERROR collecting*",
         ])
 
     def test_collectonly_failed_module(self, testdir):
@@ -268,11 +267,11 @@ class TestCollectonly:
     def test_collectonly_error(self, testdir):
         p = testdir.makepyfile("import Errlkjqweqwe")
         result = testdir.runpytest("--collect-only", p)
-        assert result.ret == 1
+        assert result.ret == 2
         result.stdout.fnmatch_lines(_pytest._code.Source("""
             *ERROR*
-            *import Errlk*
             *ImportError*
+            *No module named *Errlk*
             *1 error*
         """).strip())
 
@@ -592,17 +591,8 @@ def test_getreportopt():
         class option:
             reportchars = ""
             disablepytestwarnings = True
-    config.option.report = "xfailed"
-    assert getreportopt(config) == "x"
 
-    config.option.report = "xfailed,skipped"
-    assert getreportopt(config) == "xs"
-
-    config.option.report = "skipped,xfailed"
-    assert getreportopt(config) == "sx"
-
-    config.option.report = "skipped"
-    config.option.reportchars = "sfw"
+    config.option.reportchars = "sf"
     assert getreportopt(config) == "sf"
 
     config.option.reportchars = "sfxw"
@@ -620,7 +610,10 @@ def test_getreportopt():
 def test_terminalreporter_reportopt_addopts(testdir):
     testdir.makeini("[pytest]\naddopts=-rs")
     testdir.makepyfile("""
-        def pytest_funcarg__tr(request):
+        import pytest
+
+        @pytest.fixture
+        def tr(request):
             tr = request.config.pluginmanager.getplugin("terminalreporter")
             return tr
         def test_opt(tr):
@@ -634,7 +627,10 @@ def test_terminalreporter_reportopt_addopts(testdir):
 
 def test_tbstyle_short(testdir):
     p = testdir.makepyfile("""
-        def pytest_funcarg__arg(request):
+        import pytest
+
+        @pytest.fixture
+        def arg(request):
             return 42
         def test_opt(arg):
             x = 0
@@ -645,7 +641,7 @@ def test_tbstyle_short(testdir):
     assert 'arg = 42' not in s
     assert 'x = 0' not in s
     result.stdout.fnmatch_lines([
-        "*%s:5*" % p.basename,
+        "*%s:8*" % p.basename,
         "    assert x",
         "E   assert*",
     ])
@@ -670,8 +666,8 @@ class TestGenericReporting:
         testdir.makepyfile("import xyz\n")
         result = testdir.runpytest(*option.args)
         result.stdout.fnmatch_lines([
-            "?   import xyz",
-            "E   ImportError: No module named *xyz*",
+            "ImportError while importing*",
+            "'No module named *xyz*",
             "*1 error*",
         ])
 

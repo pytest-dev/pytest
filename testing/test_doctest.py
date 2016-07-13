@@ -202,8 +202,20 @@ class TestDoctests:
             "*1 failed*",
         ])
 
+    def test_doctest_unex_importerror_only_txt(self, testdir):
+        testdir.maketxtfile("""
+            >>> import asdalsdkjaslkdjasd
+            >>>
+        """)
+        result = testdir.runpytest()
+        # doctest is never executed because of error during hello.py collection
+        result.stdout.fnmatch_lines([
+            "*>>> import asdals*",
+            "*UNEXPECTED*ImportError*",
+            "ImportError: No module named *asdal*",
+        ])
 
-    def test_doctest_unex_importerror(self, testdir):
+    def test_doctest_unex_importerror_with_module(self, testdir):
         testdir.tmpdir.join("hello.py").write(_pytest._code.Source("""
             import asdalsdkjaslkdjasd
         """))
@@ -212,10 +224,11 @@ class TestDoctests:
             >>>
         """)
         result = testdir.runpytest("--doctest-modules")
+        # doctest is never executed because of error during hello.py collection
         result.stdout.fnmatch_lines([
-            "*>>> import hello",
-            "*UNEXPECTED*ImportError*",
-            "*import asdals*",
+            "*ERROR collecting hello.py*",
+            "*ImportError: No module named *asdals*",
+            "*Interrupted: 1 errors during collection*",
         ])
 
     def test_doctestmodule(self, testdir):
@@ -721,3 +734,53 @@ class TestDoctestAutoUseFixtures:
         result = testdir.runpytest('--doctest-modules')
         assert 'FAILURES' not in str(result.stdout.str())
         result.stdout.fnmatch_lines(['*=== 1 passed in *'])
+
+
+class TestDoctestNamespaceFixture:
+
+    SCOPES = ['module', 'session', 'class', 'function']
+
+    @pytest.mark.parametrize('scope', SCOPES)
+    def test_namespace_doctestfile(self, testdir, scope):
+        """
+        Check that inserting something into the namespace works in a
+        simple text file doctest
+        """
+        testdir.makeconftest("""
+            import pytest
+            import contextlib
+
+            @pytest.fixture(autouse=True, scope="{scope}")
+            def add_contextlib(doctest_namespace):
+                doctest_namespace['cl'] = contextlib
+        """.format(scope=scope))
+        p = testdir.maketxtfile("""
+            >>> print(cl.__name__)
+            contextlib
+        """)
+        reprec = testdir.inline_run(p)
+        reprec.assertoutcome(passed=1)
+
+    @pytest.mark.parametrize('scope', SCOPES)
+    def test_namespace_pyfile(self, testdir, scope):
+        """
+        Check that inserting something into the namespace works in a
+        simple Python file docstring doctest
+        """
+        testdir.makeconftest("""
+            import pytest
+            import contextlib
+
+            @pytest.fixture(autouse=True, scope="{scope}")
+            def add_contextlib(doctest_namespace):
+                doctest_namespace['cl'] = contextlib
+        """.format(scope=scope))
+        p = testdir.makepyfile("""
+            def foo():
+                '''
+                >>> print(cl.__name__)
+                contextlib
+                '''
+        """)
+        reprec = testdir.inline_run(p, "--doctest-modules")
+        reprec.assertoutcome(passed=1)

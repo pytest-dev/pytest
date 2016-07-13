@@ -14,7 +14,7 @@ Usage
 
 type::
 
-    py.test  # instead of 'nosetests'
+    pytest  # instead of 'nosetests'
 
 and you should be able to run nose style tests and at the same
 time can make full use of pytest's capabilities.
@@ -38,7 +38,7 @@ Unsupported idioms / issues
 
 If you find other issues or have suggestions please run::
 
-    py.test --pastebin=all
+    pytest --pastebin=all
 
 and send the resulting URL to a ``pytest`` contact channel,
 at best to the mailing list.

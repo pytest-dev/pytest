@@ -4,17 +4,17 @@
 
 set -e
 cd ../pytest-pep8
-py.test
+pytest
 cd ../pytest-instafail
-py.test 
+pytest 
 cd ../pytest-cache
-py.test
+pytest
 cd ../pytest-xprocess
-py.test
+pytest
 #cd ../pytest-cov
-#py.test
+#pytest
 cd ../pytest-capturelog
-py.test
+pytest
 cd ../pytest-xdist
-py.test
+pytest
 

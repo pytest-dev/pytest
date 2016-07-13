@@ -42,7 +42,7 @@ class SessionTests:
         reprec = testdir.inline_run(tfile)
         l = reprec.getfailedcollections()
         assert len(l) == 1
-        out = l[0].longrepr.reprcrash.message
+        out = str(l[0].longrepr)
         assert out.find('does_not_work') != -1
 
     def test_raises_output(self, testdir):
@@ -174,10 +174,6 @@ class TestNewSession(SessionTests):
                 class TestY(TestX):
                     pass
             """,
-            test_two="""
-                import pytest
-                pytest.skip('xxx')
-            """,
             test_three="xxxdsadsadsadsa",
             __init__=""
         )
@@ -189,11 +185,9 @@ class TestNewSession(SessionTests):
         started = reprec.getcalls("pytest_collectstart")
         finished = reprec.getreports("pytest_collectreport")
         assert len(started) == len(finished)
-        assert len(started) == 8 # XXX extra TopCollector
+        assert len(started) == 7 # XXX extra TopCollector
         colfail = [x for x in finished if x.failed]
-        colskipped = [x for x in finished if x.skipped]
         assert len(colfail) == 1
-        assert len(colskipped) == 1
 
     def test_minus_x_import_error(self, testdir):
         testdir.makepyfile(__init__="")

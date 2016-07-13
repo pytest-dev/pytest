@@ -11,9 +11,6 @@ Talks and Tutorials
 Talks and blog postings
 ---------------------------------------------
 
-.. _`tutorial1 repository`: http://bitbucket.org/pytest-dev/pytest-tutorial1/
-.. _`pycon 2010 tutorial PDF`: http://bitbucket.org/pytest-dev/pytest-tutorial1/raw/tip/pytest-basic.pdf
-
 - `pytest - Rapid Simple Testing, Florian Bruhin, Swiss Python Summit 2016
   <https://www.youtube.com/watch?v=rCBHkQ_LVIs>`_.
 
@@ -52,12 +49,14 @@ Talks and blog postings
 - `pytest introduction from Brian Okken (January 2013)
   <http://pythontesting.net/framework/pytest-introduction/>`_
 
-- `monkey patching done right`_ (blog post, consult `monkeypatch
-  plugin`_ for up-to-date API)
+- pycon australia 2012 pytest talk from Brianna Laugher (`video <http://www.youtube.com/watch?v=DTNejE9EraI>`_, `slides <http://www.slideshare.net/pfctdayelise/funcargs-other-fun-with-pytest>`_, `code <https://gist.github.com/3386951>`_)
+- `pycon 2012 US talk video from Holger Krekel <http://www.youtube.com/watch?v=9LVqBQcFmyw>`_
+
+- `monkey patching done right`_ (blog post, consult `monkeypatch plugin`_ for up-to-date API)
 
 Test parametrization:
 
-- `generating parametrized tests with funcargs`_ (uses deprecated ``addcall()`` API.
+- `generating parametrized tests with fixtures`_.
 - `test generators and cached setup`_
 - `parametrizing tests, generalized`_ (blog post)
 - `putting test-hooks into local or global plugins`_ (blog post)
@@ -78,39 +77,17 @@ Plugin specific examples:
 - `many examples in the docs for plugins`_
 
 .. _`skipping slow tests by default in pytest`: http://bruynooghe.blogspot.com/2009/12/skipping-slow-test-by-default-in-pytest.html
-.. _`many examples in the docs for plugins`: plugin/index.html
-.. _`monkeypatch plugin`: plugin/monkeypatch.html
-.. _`application setup in test functions with funcargs`: funcargs.html#appsetup
+.. _`many examples in the docs for plugins`: plugins.html
+.. _`monkeypatch plugin`: monkeypatch.html
+.. _`application setup in test functions with fixtures`: fixture.html#interdependent-fixtures
 .. _`simultaneously test your code on all platforms`: http://tetamap.wordpress.com/2009/03/23/new-simultanously-test-your-code-on-all-platforms/
 .. _`monkey patching done right`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
 .. _`putting test-hooks into local or global plugins`: http://tetamap.wordpress.com/2009/05/14/putting-test-hooks-into-local-and-global-plugins/
 .. _`parametrizing tests, generalized`: http://tetamap.wordpress.com/2009/05/13/parametrizing-python-tests-generalized/
-.. _`generating parametrized tests with funcargs`: funcargs.html#test-generators
+.. _`generating parametrized tests with fixtures`: parametrize.html#test-generators
 .. _`test generators and cached setup`: http://bruynooghe.blogspot.com/2010/06/pytest-test-generators-and-cached-setup.html
 
-Older conference talks and tutorials
-----------------------------------------
 
-- `pycon australia 2012 pytest talk from Brianna Laugher
-  <http://2012.pycon-au.org/schedule/52/view_talk?day=sunday>`_ (`video <http://www.youtube.com/watch?v=DTNejE9EraI>`_, `slides <http://www.slideshare.net/pfctdayelise/funcargs-other-fun-with-pytest>`_, `code <https://gist.github.com/3386951>`_)
-- `pycon 2012 US talk video from Holger Krekel <http://www.youtube.com/watch?v=9LVqBQcFmyw>`_
-- `pycon 2010 tutorial PDF`_ and `tutorial1 repository`_
 
-- `ep2009-rapidtesting.pdf`_ tutorial slides (July 2009):
 
-  - testing terminology
-  - basic pytest usage, file system layout
-  - test function arguments (funcargs_) and test fixtures
-  - existing plugins
-  - distributed testing
 
-- `ep2009-pytest.pdf`_ 60 minute pytest talk, highlighting unique features and a roadmap (July 2009)
-
-- `pycon2009-pytest-introduction.zip`_ slides and files, extended version of pytest basic introduction, discusses more options, also introduces old-style xUnit setup, looponfailing and other features.
-
-- `pycon2009-pytest-advanced.pdf`_ contain a slightly older version of funcargs and distributed testing, compared to the EuroPython 2009 slides.
-
-.. _`ep2009-rapidtesting.pdf`: http://codespeak.net/download/py/ep2009-rapidtesting.pdf
-.. _`ep2009-pytest.pdf`: http://codespeak.net/download/py/ep2009-pytest.pdf
-.. _`pycon2009-pytest-introduction.zip`: http://codespeak.net/download/py/pycon2009-pytest-introduction.zip
-.. _`pycon2009-pytest-advanced.pdf`: http://codespeak.net/download/py/pycon2009-pytest-advanced.pdf

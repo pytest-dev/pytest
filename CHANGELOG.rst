@@ -1,68 +1,316 @@
-2.9.3.dev
-=========
+3.0.0.dev1
+==========
 
-**Bug Fixes**
+**Incompatible changes**
 
-* Text documents without any doctests no longer appear as "skipped".
-  Thanks `@graingert`_ for reporting and providing a full PR (`#1580`_).
+A number of incompatible changes were made in this release, with the intent of removing features deprecated for a long
+time or change existing behaviors in order to make them less surprising/more useful.
 
-* Fix internal error issue when ``method`` argument is missing for
-  ``teardown_method()``. Fixes (`#1605`_).
+* The following deprecated commandline options were removed:
 
-* Fix exception visualization in case the current working directory (CWD) gets
-  deleted during testing. Fixes (`#1235`). Thanks `@bukzor`_ for reporting. PR by
-  `@marscher`. Thanks `@nicoddemus`_ for his help.
+  * ``--genscript``: no longer supported;
+  * ``--no-assert``: use ``--assert=plain`` instead;
+  * ``--nomagic``: use ``--assert=plain`` instead;
+  * ``--report``: use ``-r`` instead;
 
-* Ensure that a module within a namespace package can be found when it
-  is specified on the command line together with the ``--pyargs``
-  option.  Thanks to `@taschini`_ for the PR (`#1597`_).
+  Thanks to `@RedBeardCode`_ for the PR (`#1664`_).
 
-* Raise helpful failure message, when requesting parametrized fixture at runtime,
-  e.g. with ``request.getfuncargvalue``. BACKWARD INCOMPAT: Previously these params
-  were simply never defined. So a fixture decorated like ``@pytest.fixture(params=[0, 1, 2])``
-  only ran once. Now a failure is raised. Fixes (`#460`_). Thanks to
-  `@nikratio`_ for bug report, `@RedBeardCode`_ and `@tomviner`_ for PR.
+* ImportErrors in plugins now are a fatal error instead of issuing a
+  pytest warning (`#1479`_). Thanks to `@The-Compiler`_ for the PR.
 
-* Create correct diff for strings ending with newlines. Fixes (`#1553`_).
-  Thanks `@Vogtinator`_ for reporting. Thanks to `@RedBeardCode`_ and
-  `@tomviner`_ for PR.
+* Removed support code for Python 3 versions < 3.3 (`#1627`_).
 
-* Rename ``getfuncargvalue`` to ``getfixturevalue``. ``getfuncargvalue`` is
-  deprecated but still present. Thanks to `@RedBeardCode`_ and `@tomviner`_
-  for PR (`#1626`_).
+* Removed all ``py.test-X*`` entry points. The versioned, suffixed entry points
+  were never documented and a leftover from a pre-virtualenv era. These entry
+  points also created broken entry points in wheels, so removing them also
+  removes a source of confusion for users (`#1632`_).
+  Thanks `@obestwalter`_ for the PR.
 
-* Always include full assertion explanation. The previous behaviour was hiding
-  sub-expressions that happened to be False, assuming this was redundant information.
-  Thanks `@bagerard`_ for reporting (`#1503`_). Thanks to `@davehunt`_ and
-  `@tomviner`_ for PR.
+* ``pytest.skip()`` now raises an error when used to decorate a test function,
+  as opposed to its original intent (to imperatively skip a test inside a test function). Previously
+  this usage would cause the entire module to be skipped (`#607`_).
+  Thanks `@omarkohl`_ for the complete PR (`#1519`_).
+
+* Exit tests if a collection error occurs. A poll indicated most users will hit CTRL-C
+  anyway as soon as they see collection errors, so pytest might as well make that the default behavior (`#1421`_).
+  A ``--continue-on-collection-errors`` option has been added to restore the previous behaviour.
+  Thanks `@olegpidsadnyi`_ and `@omarkohl`_ for the complete PR (`#1628`_).
+
+* Renamed the pytest ``pdb`` module (plugin) into ``debugging`` to avoid clashes with the builtin ``pdb`` module.
+
+* Raise a helpful failure message when requesting a parametrized fixture at runtime,
+  e.g. with ``request.getfixturevalue``. Previously these parameters were simply
+  never defined, so a fixture decorated like ``@pytest.fixture(params=[0, 1, 2])``
+  only ran once (`#460`_).
+  Thanks to `@nikratio`_ for the bug report, `@RedBeardCode`_ and `@tomviner`_ for the PR.
+
+* ``_pytest.monkeypatch.monkeypatch`` class has been renamed to ``_pytest.monkeypatch.MonkeyPatch``
+  so it doesn't conflict with the ``monkeypatch`` fixture.
+
+*
+
+*
+
+*
+
+*
+
+**New Features**
+
+* Support nose-style ``__test__`` attribute on methods of classes,
+  including unittest-style Classes. If set to ``False``, the test will not be
+  collected.
+
+* New ``doctest_namespace`` fixture for injecting names into the
+  namespace in which doctests run.
+  Thanks `@milliams`_ for the complete PR (`#1428`_).
+
+* New ``name`` argument to ``pytest.fixture`` decorator which allows a custom name
+  for a fixture (to solve the funcarg-shadowing-fixture problem).
+  Thanks `@novas0x2a`_ for the complete PR (`#1444`_).
+
+* New ``approx()`` function for easily comparing floating-point numbers in
+  tests.
+  Thanks `@kalekundert`_ for the complete PR (`#1441`_).
+
+* Ability to add global properties in the final xunit output file by accessing
+  the internal ``junitxml`` plugin (experimental).
+  Thanks `@tareqalayan`_ for the complete PR `#1454`_).
+
+* New ``ExceptionInfo.match()`` method to match a regular expression on the
+  string representation of an exception (`#372`_).
+  Thanks `@omarkohl`_ for the complete PR (`#1502`_).
+
+* ``__tracebackhide__`` can now also be set to a callable which then can decide
+  whether to filter the traceback based on the ``ExceptionInfo`` object passed
+  to it. Thanks `@The-Compiler`_ for the complete PR (`#1526`_).
+
+* New ``pytest_make_parametrize_id(config, val)`` hook which can be used by plugins to provide
+  friendly strings for custom types.
+  Thanks `@palaviv`_ for the PR.
+
+* ``capsys`` and ``capfd`` now have a ``disabled()`` context-manager method, which
+  can be used to temporarily disable capture within a test.
+  Thanks `@nicoddemus`_ for the PR.
+
+* New cli flag ``--fixtures-per-test``: shows which fixtures are being used
+  for each selected test item. Features doc strings of fixtures by default.
+  Can also show where fixtures are defined if combined with ``-v``.
+  Thanks `@hackebrot`_ for the PR.
+
+* Introduce ``pytest`` command as recommended entry point. Note that ``py.test``
+  still works and is not scheduled for removal. Closes proposal
+  `#1629`_. Thanks `@obestwalter`_ and `@davehunt`_ for the complete PR
+  (`#1633`_).
+
+* New cli flags:
+
+  + ``--setup-plan``: performs normal collection and reports
+    the potential setup and teardown and does not execute any fixtures and tests;
+  + ``--setup-only``: performs normal collection, executes setup and teardown of
+    fixtures and reports them;
+  + ``--setup-show``: performs normal test execution and additionally shows
+    setup and teardown of fixtures;
+
+  Thanks `@d6e`_, `@kvas-it`_, `@sallner`_ and `@omarkohl`_ for the PRs.
+
+* New cli flag ``--override-ini``/``-o``: overrides values from the ini file.
+  For example: ``"-o xfail_strict=True"``'.
+  Thanks `@blueyed`_ and `@fengxx`_ for the PR.
+
+* New hooks:
+
+  + ``pytest_fixture_setup(fixturedef, request)``: executes fixture setup;
+  + ``pytest_fixture_post_finalizer(fixturedef)``: called after the fixture's
+    finalizer and has access to the fixture's result cache.
+
+  Thanks `@d6e`_, `@sallner`_.
+
+* Issue warnings for asserts whose test is a tuple literal. Such asserts will
+  never fail because tuples are always truthy and are usually a mistake
+  (see `#1562`_). Thanks `@kvas-it`_, for the PR.
+
+* Allow passing a custom debugger class (e.g. ``--pdbcls=IPython.core.debugger:Pdb``).
+  Thanks to `@anntzer`_ for the PR.
+
+*
+
+*
+
+*
+
+*
+
+**Changes**
+
+* Fixtures marked with ``@pytest.fixture`` can now use ``yield`` statements exactly like
+  those marked with the ``@pytest.yield_fixture`` decorator. This change renders
+  ``@pytest.yield_fixture`` deprecated and makes ``@pytest.fixture`` with ``yield`` statements
+  the preferred way to write teardown code (`#1461`_).
+  Thanks `@csaftoiu`_ for bringing this to attention and `@nicoddemus`_ for the PR.
+
+* Explicitly passed parametrize ids do not get escaped to ascii (`#1351`_).
+  Thanks `@ceridwen`_ for the PR.
+
+* Parametrize ids can accept ``None`` as specific test id, in which case the
+  automatically generated id for that argument will be used.
+  Thanks `@palaviv`_ for the complete PR (`#1468`_).
+
+* Improved automatic id generation selection in case of duplicate ids in
+  parametrize.
+  Thanks `@palaviv`_ for the complete PR (`#1474`_).
 
 * Now pytest warnings summary is shown up by default. Added a new flag
   ``--disable-pytest-warnings`` to explicitly disable the warnings summary.
   This change resolves the (`#1668`_).
 
-* Renamed the pytest ``pdb`` module (plugin) into ``debugging``. 
+* Make ImportError during collection more explicit by reminding
+  the user to check the name of the test module/package(s) (`#1426`_).
+  Thanks `@omarkohl`_ for the complete PR (`#1520`_).
+
+* Add ``build/`` and ``dist/`` to the default ``--norecursedirs`` list. Thanks
+  `@mikofski`_ for the report and `@tomviner`_ for the PR (`#1544`_).
+
+* ``pytest.raises`` in the context manager form accepts a custom
+  ``message`` to raise when no exception occurred.
+  Thanks `@palaviv`_ for the complete PR (`#1616`_).
+
+* ``conftest.py`` files now benefit from assertion rewriting; previously it
+  was only available for test modules. Thanks `@flub`_, `@sober7`_ and
+  `@nicoddemus`_ for the PR (`#1619`_).
+
+* Text documents without any doctests no longer appear as "skipped".
+  Thanks `@graingert`_ for reporting and providing a full PR (`#1580`_).
+
+* Ensure that a module within a namespace package can be found when it
+  is specified on the command line together with the ``--pyargs``
+  option.  Thanks to `@taschini`_ for the PR (`#1597`_).
+
+* Always include full assertion explanation during assertion rewriting. The previous behaviour was hiding
+  sub-expressions that happened to be ``False``, assuming this was redundant information.
+  Thanks `@bagerard`_ for reporting (`#1503`_). Thanks to `@davehunt`_ and
+  `@tomviner`_ for the PR.
+
+* ``OptionGroup.addoption()`` now checks if option names were already
+  added before, to make it easier to track down issues like `#1618`_.
+  Before, you only got exceptions later from ``argparse`` library,
+  giving no clue about the actual reason for double-added options.
+
+* ``yield``-based tests are considered deprecated and will be removed in pytest-4.0.
+  Thanks `@nicoddemus`_ for the PR.
+
+* Using ``pytest_funcarg__`` prefix to declare fixtures is considered deprecated and will be
+  removed in pytest-4.0 (`#1684`_).
+  Thanks `@nicoddemus`_ for the PR.
+
+* Rename ``getfuncargvalue`` to ``getfixturevalue``. ``getfuncargvalue`` is
+  still present but is now considered deprecated. Thanks to `@RedBeardCode`_ and `@tomviner`_
+  for the PR (`#1626`_).
 
 *
 
 *
 
-.. _#1580: https://github.com/pytest-dev/pytest/pull/1580
-.. _#1605: https://github.com/pytest-dev/pytest/issues/1605
-.. _#1597: https://github.com/pytest-dev/pytest/pull/1597
+*
+
+**Bug Fixes**
+
+* Parametrize now correctly handles duplicated test ids.
+
+* Fix internal error issue when the ``method`` argument is missing for
+  ``teardown_method()`` (`#1605`_).
+
+* Renamed the pytest ``pdb`` module (plugin) into ``debugging``.
+
+* Fix exception visualization in case the current working directory (CWD) gets
+  deleted during testing (`#1235`_). Thanks `@bukzor`_ for reporting. PR by
+  `@marscher`_.
+
+* Improve test output for logical expression with brackets (`#925`_).
+  Thanks `@DRMacIver`_ for reporting and `@RedBeardCode`_ for the PR.
+
+* Create correct diff for strings ending with newlines (`#1553`_).
+  Thanks `@Vogtinator`_ for reporting and `@RedBeardCode`_ and
+  `@tomviner`_ for the PR.
+
+*
+
+*
+
+*
+
+*
+
+*
+
+.. _#372: https://github.com/pytest-dev/pytest/issues/372
 .. _#460: https://github.com/pytest-dev/pytest/pull/460
-.. _#1553: https://github.com/pytest-dev/pytest/issues/1553
-.. _#1626: https://github.com/pytest-dev/pytest/pull/1626
+.. _#607: https://github.com/pytest-dev/pytest/issues/607
+.. _#925: https://github.com/pytest-dev/pytest/issues/925
+.. _#1235: https://github.com/pytest-dev/pytest/issues/1235
+.. _#1351: https://github.com/pytest-dev/pytest/issues/1351
+.. _#1421: https://github.com/pytest-dev/pytest/issues/1421
+.. _#1426: https://github.com/pytest-dev/pytest/issues/1426
+.. _#1428: https://github.com/pytest-dev/pytest/pull/1428
+.. _#1441: https://github.com/pytest-dev/pytest/pull/1441
+.. _#1444: https://github.com/pytest-dev/pytest/pull/1444
+.. _#1454: https://github.com/pytest-dev/pytest/pull/1454
+.. _#1461: https://github.com/pytest-dev/pytest/pull/1461
+.. _#1468: https://github.com/pytest-dev/pytest/pull/1468
+.. _#1474: https://github.com/pytest-dev/pytest/pull/1474
+.. _#1479: https://github.com/pytest-dev/pytest/issues/1479
+.. _#1502: https://github.com/pytest-dev/pytest/pull/1502
 .. _#1503: https://github.com/pytest-dev/pytest/issues/1503
+.. _#1519: https://github.com/pytest-dev/pytest/pull/1519
+.. _#1520: https://github.com/pytest-dev/pytest/pull/1520
+.. _#1526: https://github.com/pytest-dev/pytest/pull/1526
+.. _#1544: https://github.com/pytest-dev/pytest/issues/1544
+.. _#1553: https://github.com/pytest-dev/pytest/issues/1553
+.. _#1562: https://github.com/pytest-dev/pytest/issues/1562
+.. _#1580: https://github.com/pytest-dev/pytest/pull/1580
+.. _#1597: https://github.com/pytest-dev/pytest/pull/1597
+.. _#1605: https://github.com/pytest-dev/pytest/issues/1605
+.. _#1616: https://github.com/pytest-dev/pytest/pull/1616
+.. _#1618: https://github.com/pytest-dev/pytest/issues/1618
+.. _#1619: https://github.com/pytest-dev/pytest/issues/1619
+.. _#1626: https://github.com/pytest-dev/pytest/pull/1626
 .. _#1668: https://github.com/pytest-dev/pytest/issues/1668
+.. _#1627: https://github.com/pytest-dev/pytest/pull/1627
+.. _#1628: https://github.com/pytest-dev/pytest/pull/1628
+.. _#1629: https://github.com/pytest-dev/pytest/issues/1629
+.. _#1632: https://github.com/pytest-dev/pytest/issues/1632
+.. _#1633: https://github.com/pytest-dev/pytest/pull/1633
+.. _#1664: https://github.com/pytest-dev/pytest/pull/1664
+.. _#1684: https://github.com/pytest-dev/pytest/pull/1684
 
-.. _@graingert: https://github.com/graingert
-.. _@taschini: https://github.com/taschini
-.. _@nikratio: https://github.com/nikratio
+.. _@DRMacIver: https://github.com/DRMacIver
 .. _@RedBeardCode: https://github.com/RedBeardCode
 .. _@Vogtinator: https://github.com/Vogtinator
+.. _@anntzer: https://github.com/anntzer
 .. _@bagerard: https://github.com/bagerard
+.. _@blueyed: https://github.com/blueyed
+.. _@ceridwen: https://github.com/ceridwen
+.. _@csaftoiu: https://github.com/csaftoiu
+.. _@d6e: https://github.com/d6e
 .. _@davehunt: https://github.com/davehunt
-
+.. _@fengxx: https://github.com/fengxx
+.. _@flub: https://github.com/flub
+.. _@graingert: https://github.com/graingert
+.. _@kalekundert: https://github.com/kalekundert
+.. _@kvas-it: https://github.com/kvas-it
+.. _@marscher: https://github.com/marscher
+.. _@mikofski: https://github.com/mikofski
+.. _@milliams: https://github.com/milliams
+.. _@nikratio: https://github.com/nikratio
+.. _@novas0x2a: https://github.com/novas0x2a
+.. _@obestwalter: https://github.com/obestwalter
+.. _@olegpidsadnyi: https://github.com/olegpidsadnyi
+.. _@omarkohl: https://github.com/omarkohl
+.. _@palaviv: https://github.com/palaviv
+.. _@sallner: https://github.com/sallner
+.. _@sober7: https://github.com/sober7
+.. _@tareqalayan: https://github.com/tareqalayan
+.. _@taschini: https://github.com/taschini
 
 2.9.2
 =====
@@ -128,11 +376,13 @@
 
 * Fix (`#649`_): parametrized test nodes cannot be specified to run on the command line.
 
+* Fix (`#138`_): better reporting for python 3.3+ chained exceptions
 
 .. _#1437: https://github.com/pytest-dev/pytest/issues/1437
 .. _#469: https://github.com/pytest-dev/pytest/issues/469
 .. _#1431: https://github.com/pytest-dev/pytest/pull/1431
 .. _#649: https://github.com/pytest-dev/pytest/issues/649
+.. _#138: https://github.com/pytest-dev/pytest/issues/138
 
 .. _@asottile: https://github.com/asottile
 
@@ -254,7 +504,6 @@
 .. _@RonnyPfannschmidt: https://github.com/RonnyPfannschmidt
 .. _@rabbbit: https://github.com/rabbbit
 .. _@hackebrot: https://github.com/hackebrot
-.. _@omarkohl: https://github.com/omarkohl
 .. _@pquentin: https://github.com/pquentin
 
 2.8.7

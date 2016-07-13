@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from xml.dom import minidom
-from _pytest.main import EXIT_NOTESTSCOLLECTED
 import py
 import sys
 import os
@@ -120,7 +119,10 @@ class TestPython:
 
     def test_setup_error(self, testdir):
         testdir.makepyfile("""
-            def pytest_funcarg__arg(request):
+            import pytest
+
+            @pytest.fixture
+            def arg(request):
                 raise ValueError()
             def test_function(arg):
                 pass
@@ -132,7 +134,7 @@ class TestPython:
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
             file="test_setup_error.py",
-            line="2",
+            line="5",
             classname="test_setup_error",
             name="test_function")
         fnode = tnode.find_first_by_tag("error")
@@ -157,6 +159,47 @@ class TestPython:
             name="test_skip")
         snode = tnode.find_first_by_tag("skipped")
         snode.assert_attr(type="pytest.skip", message="hello23", )
+
+    def test_mark_skip_contains_name_reason(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.skip(reason="hello24")
+            def test_skip():
+                assert True
+        """)
+        result, dom = runandparse(testdir)
+        assert result.ret == 0
+        node = dom.find_first_by_tag("testsuite")
+        node.assert_attr(skips=1)
+        tnode = node.find_first_by_tag("testcase")
+        tnode.assert_attr(
+            file="test_mark_skip_contains_name_reason.py",
+            line="1",
+            classname="test_mark_skip_contains_name_reason",
+            name="test_skip")
+        snode = tnode.find_first_by_tag("skipped")
+        snode.assert_attr(type="pytest.skip", message="hello24", )
+
+    def test_mark_skipif_contains_name_reason(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            GLOBAL_CONDITION = True
+            @pytest.mark.skipif(GLOBAL_CONDITION, reason="hello25")
+            def test_skip():
+                assert True
+        """)
+        result, dom = runandparse(testdir)
+        assert result.ret == 0
+        node = dom.find_first_by_tag("testsuite")
+        node.assert_attr(skips=1)
+        tnode = node.find_first_by_tag("testcase")
+        tnode.assert_attr(
+            file="test_mark_skipif_contains_name_reason.py",
+            line="2",
+            classname="test_mark_skipif_contains_name_reason",
+            name="test_skip")
+        snode = tnode.find_first_by_tag("skipped")
+        snode.assert_attr(type="pytest.skip", message="hello25", )
 
     def test_classname_instance(self, testdir):
         testdir.makepyfile("""
@@ -351,23 +394,6 @@ class TestPython:
         fnode.assert_attr(message="collection failure")
         assert "SyntaxError" in fnode.toxml()
 
-    def test_collect_skipped(self, testdir):
-        testdir.makepyfile("import pytest; pytest.skip('xyz')")
-        result, dom = runandparse(testdir)
-        assert result.ret == EXIT_NOTESTSCOLLECTED
-        node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(skips=1, tests=1)
-        tnode = node.find_first_by_tag("testcase")
-        tnode.assert_attr(
-            file="test_collect_skipped.py",
-            name="test_collect_skipped")
-
-        # py.test doesn't give us a line here.
-        assert tnode["line"] is None
-
-        fnode = tnode.find_first_by_tag("skipped")
-        fnode.assert_attr(message="collection skipped")
-
     def test_unicode(self, testdir):
         value = 'hx\xc4\x85\xc4\x87\n'
         testdir.makepyfile("""
@@ -421,7 +447,10 @@ class TestPython:
 
     def test_setup_error_captures_stdout(self, testdir):
         testdir.makepyfile("""
-            def pytest_funcarg__arg(request):
+            import pytest
+
+            @pytest.fixture
+            def arg(request):
                 print('hello-stdout')
                 raise ValueError()
             def test_function(arg):
@@ -436,7 +465,10 @@ class TestPython:
     def test_setup_error_captures_stderr(self, testdir):
         testdir.makepyfile("""
             import sys
-            def pytest_funcarg__arg(request):
+            import pytest
+
+            @pytest.fixture
+            def arg(request):
                 sys.stderr.write('hello-stderr')
                 raise ValueError()
             def test_function(arg):
@@ -610,14 +642,14 @@ def test_logxml_makedir(testdir):
 def test_escaped_parametrized_names_xml(testdir):
     testdir.makepyfile("""
         import pytest
-        @pytest.mark.parametrize('char', ["\\x00"])
+        @pytest.mark.parametrize('char', [u"\\x00"])
         def test_func(char):
             assert char
     """)
     result, dom = runandparse(testdir)
     assert result.ret == 0
     node = dom.find_first_by_tag("testcase")
-    node.assert_attr(name="test_func[#x00]")
+    node.assert_attr(name="test_func[\\x00]")
 
 
 def test_double_colon_split_function_issue469(testdir):
@@ -814,3 +846,38 @@ def test_fancy_items_regression(testdir):
         u'test_fancy_items_regression test_pass'
         u' test_fancy_items_regression.py',
     ]
+
+
+def test_global_properties(testdir):
+    path = testdir.tmpdir.join("test_global_properties.xml")
+    log = LogXML(str(path), None)
+    from _pytest.runner import BaseReport
+
+    class Report(BaseReport):
+        sections = []
+        nodeid = "test_node_id"
+
+    log.pytest_sessionstart()
+    log.add_global_property('foo', 1)
+    log.add_global_property('bar', 2)
+    log.pytest_sessionfinish()
+
+    dom = minidom.parse(str(path))
+
+    properties = dom.getElementsByTagName('properties')
+
+    assert (properties.length == 1), "There must be one <properties> node"
+
+    property_list = dom.getElementsByTagName('property')
+
+    assert (property_list.length == 2), "There most be only 2 property nodes"
+
+    expected = {'foo': '1', 'bar': '2'}
+    actual = {}
+
+    for p in property_list:
+        k = str(p.getAttribute('name'))
+        v = str(p.getAttribute('value'))
+        actual[k] = v
+
+    assert actual == expected

@@ -5,11 +5,14 @@ import re
 
 from py.builtin import _basestring
 
+import pytest
+
 RE_IMPORT_ERROR_NAME = re.compile("^No module named (.*)$")
 
 
-def pytest_funcarg__monkeypatch(request):
-    """The returned ``monkeypatch`` funcarg provides these
+@pytest.fixture
+def monkeypatch(request):
+    """The returned ``monkeypatch`` fixture provides these
     helper methods to modify objects, dictionaries or os.environ::
 
         monkeypatch.setattr(obj, name, value, raising=True)
@@ -26,7 +29,7 @@ def pytest_funcarg__monkeypatch(request):
     parameter determines if a KeyError or AttributeError
     will be raised if the set/deletion operation has no target.
     """
-    mpatch = monkeypatch()
+    mpatch = MonkeyPatch()
     request.addfinalizer(mpatch.undo)
     return mpatch
 
@@ -93,7 +96,7 @@ class Notset:
 notset = Notset()
 
 
-class monkeypatch:
+class MonkeyPatch:
     """ Object keeping a record of setattr/item/env/syspath changes. """
 
     def __init__(self):

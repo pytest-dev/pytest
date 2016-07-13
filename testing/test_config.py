@@ -18,7 +18,7 @@ class TestParseIni:
         assert config.inicfg['name'] == 'value'
 
     def test_getcfg_empty_path(self, tmpdir):
-        getcfg([''], ['setup.cfg']) #happens on py.test ""
+        getcfg([''], ['setup.cfg']) #happens on pytest ""
 
     def test_append_parse_args(self, testdir, tmpdir, monkeypatch):
         monkeypatch.setenv('PYTEST_ADDOPTS', '--color no -rs --tb="short"')
@@ -365,7 +365,7 @@ def test_options_on_small_file_do_not_blow_up(testdir):
     """)
 
     for opts in ([], ['-l'], ['-s'], ['--tb=no'], ['--tb=short'],
-                 ['--tb=long'], ['--fulltrace'], ['--nomagic'],
+                 ['--tb=long'], ['--fulltrace'],
                  ['--traceconfig'], ['-v'], ['-v', '-v']):
         runfiletest(opts + [path])
 
@@ -390,6 +390,23 @@ def test_preparse_ordering_with_setuptools(testdir, monkeypatch):
     config = testdir.parseconfig()
     plugin = config.pluginmanager.getplugin("mytestplugin")
     assert plugin.x == 42
+
+
+def test_setuptools_importerror_issue1479(testdir, monkeypatch):
+    pkg_resources = pytest.importorskip("pkg_resources")
+    def my_iter(name):
+        assert name == "pytest11"
+        class EntryPoint:
+            name = "mytestplugin"
+            dist = None
+            def load(self):
+                raise ImportError("Don't hide me!")
+        return iter([EntryPoint()])
+
+    monkeypatch.setattr(pkg_resources, 'iter_entry_points', my_iter)
+    with pytest.raises(ImportError):
+        testdir.parseconfig()
+
 
 def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch):
     pkg_resources = pytest.importorskip("pkg_resources")
@@ -485,9 +502,14 @@ def test_load_initial_conftest_last_ordering(testdir):
     pm.register(m)
     hc = pm.hook.pytest_load_initial_conftests
     l = hc._nonwrappers + hc._wrappers
-    assert l[-1].function.__module__ == "_pytest.capture"
-    assert l[-2].function == m.pytest_load_initial_conftests
-    assert l[-3].function.__module__ == "_pytest.config"
+    expected = [
+        "_pytest.config",
+        'test_config',
+        '_pytest.assertion',
+        '_pytest.capture',
+    ]
+    assert [x.function.__module__ for x in l] == expected
+
 
 class TestWarning:
     def test_warn_config(self, testdir):
@@ -578,3 +600,92 @@ class TestRootdir:
         inifile = tmpdir.ensure("pytest.ini")
         rootdir, inifile, inicfg = determine_setup(inifile, [tmpdir])
         assert rootdir == tmpdir
+
+class TestOverrideIniArgs:
+    """ test --override-ini """
+    @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
+    def test_override_ini_names(self, testdir, name):
+        testdir.tmpdir.join(name).write(py.std.textwrap.dedent("""
+            [pytest]
+            custom = 1.0
+        """))
+        testdir.makeconftest("""
+            def pytest_addoption(parser):
+                parser.addini("custom", "")
+        """)
+        testdir.makepyfile("""
+            def test_pass(pytestconfig):
+                ini_val = pytestconfig.getini("custom")
+                print('\\ncustom_option:%s\\n' % ini_val)
+        """)
+
+        result = testdir.runpytest("--override-ini", "custom=2.0", "-s")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "custom_option:2.0"
+        ])
+
+        result = testdir.runpytest("--override-ini", "custom=2.0",
+                                   "--override-ini=custom=3.0", "-s")
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "custom_option:3.0"
+        ])
+
+
+    def test_override_ini_pathlist(self, testdir):
+        testdir.makeconftest("""
+                def pytest_addoption(parser):
+                    parser.addini("paths", "my new ini value", type="pathlist")
+        """)
+        testdir.makeini("""
+                [pytest]
+                paths=blah.py
+        """)
+        testdir.makepyfile("""
+                import py.path
+                def test_pathlist(pytestconfig):
+                    config_paths = pytestconfig.getini("paths")
+                    print(config_paths)
+                    for cpf in config_paths:
+                        print('\\nuser_path:%s' % cpf.basename)
+        """)
+        result = testdir.runpytest("--override-ini", 'paths=foo/bar1.py foo/bar2.py', "-s")
+        result.stdout.fnmatch_lines([
+            "user_path:bar1.py",
+            "user_path:bar2.py"
+        ])
+
+    def test_override_multiple_and_default(self, testdir):
+        testdir.makeconftest("""
+                def pytest_addoption(parser):
+                    parser.addini("custom_option_1", "", default="o1")
+                    parser.addini("custom_option_2", "", default="o2")
+                    parser.addini("custom_option_3", "", default=False, type="bool")
+                    parser.addini("custom_option_4", "", default=True, type="bool")
+
+        """)
+        testdir.makeini("""
+                [pytest]
+                custom_option_1=custom_option_1
+                custom_option_2=custom_option_2
+        """)
+        testdir.makepyfile("""
+                def test_multiple_options(pytestconfig):
+                    prefix="custom_option"
+                    for x in range(1,5):
+                        ini_value=pytestconfig.getini("%s_%d" % (prefix, x))
+                        print('\\nini%d:%s' % (x, ini_value))
+        """)
+        result = testdir.runpytest("--override-ini",
+                                   'custom_option_1=fulldir=/tmp/user1',
+                                   'custom_option_2=url=/tmp/user2?a=b&d=e',
+                                   "-o", 'custom_option_3=True',
+                                   "-o", 'custom_option_4=no',
+                                   "-s")
+        result.stdout.fnmatch_lines([
+            "ini1:fulldir=/tmp/user1",
+            "ini2:url=/tmp/user2?a=b&d=e",
+            "ini3:True",
+            "ini4:False"
+        ])

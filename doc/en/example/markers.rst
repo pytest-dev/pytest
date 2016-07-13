@@ -29,7 +29,7 @@ You can "mark" a test function with custom metadata like this::
 
 You can then restrict a test run to only run tests marked with ``webtest``::
 
-    $ py.test -v -m webtest
+    $ pytest -v -m webtest
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
@@ -43,7 +43,7 @@ You can then restrict a test run to only run tests marked with ``webtest``::
 
 Or the inverse, running all tests except the webtest ones::
 
-    $ py.test -v -m "not webtest"
+    $ pytest -v -m "not webtest"
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
@@ -64,7 +64,7 @@ You can provide one or more :ref:`node IDs <node-id>` as positional
 arguments to select only specified tests. This makes it easy to select
 tests based on their module, class, method, or function name::
 
-    $ py.test -v test_server.py::TestClass::test_method
+    $ pytest -v test_server.py::TestClass::test_method
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
@@ -77,7 +77,7 @@ tests based on their module, class, method, or function name::
 
 You can also select on the class::
 
-    $ py.test -v test_server.py::TestClass
+    $ pytest -v test_server.py::TestClass
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
@@ -90,7 +90,7 @@ You can also select on the class::
 
 Or select multiple nodes::
 
-  $ py.test -v test_server.py::TestClass test_server.py::test_send_http
+  $ pytest -v test_server.py::TestClass test_server.py::test_send_http
   ======= test session starts ========
   platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
   cachedir: .cache
@@ -115,8 +115,8 @@ Or select multiple nodes::
     ``module.py::function[param]``.
 
     Node IDs for failing tests are displayed in the test summary info
-    when running py.test with the ``-rf`` option.  You can also
-    construct Node IDs from the output of ``py.test --collectonly``.
+    when running pytest with the ``-rf`` option.  You can also
+    construct Node IDs from the output of ``pytest --collectonly``.
 
 Using ``-k expr`` to select tests based on their name
 -------------------------------------------------------
@@ -128,7 +128,7 @@ which implements a substring match on the test names instead of the
 exact match on markers that ``-m`` provides.  This makes it easy to
 select tests based on their names::
 
-    $ py.test -v -k http  # running with the above defined example module
+    $ pytest -v -k http  # running with the above defined example module
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
@@ -142,7 +142,7 @@ select tests based on their names::
 
 And you can also run all tests except the ones that match the keyword::
 
-    $ py.test -k "not send_http" -v
+    $ pytest -k "not send_http" -v
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
@@ -158,7 +158,7 @@ And you can also run all tests except the ones that match the keyword::
 
 Or to select "http" and "quick" tests::
 
-    $ py.test -k "http or quick" -v
+    $ pytest -k "http or quick" -v
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
@@ -198,7 +198,7 @@ Registering markers for your test suite is simple::
 
 You can ask which markers exist for your test suite - the list includes our just defined ``webtest`` markers::
 
-    $ py.test --markers
+    $ pytest --markers
     @pytest.mark.webtest: mark a test as a webtest.
     
     @pytest.mark.skip(reason=None): skip the given test function with an optional reason. Example: skip(reason="no way of currently testing this") skips the test.
@@ -225,7 +225,7 @@ For an example on how to add and work with markers from a plugin, see
 
     * there is one place in your test suite defining your markers
 
-    * asking for existing markers via ``py.test --markers`` gives good output
+    * asking for existing markers via ``pytest --markers`` gives good output
 
     * typos in function markers are treated as an error if you use
       the ``--strict`` option. Future versions of ``pytest`` are probably
@@ -350,7 +350,7 @@ A test file using this local plugin::
 and an example invocations specifying a different environment than what
 the test needs::
 
-    $ py.test -E stage2
+    $ pytest -E stage2
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -362,7 +362,7 @@ the test needs::
 
 and here is one that specifies exactly the environment needed::
 
-    $ py.test -E stage1
+    $ pytest -E stage1
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -374,7 +374,7 @@ and here is one that specifies exactly the environment needed::
 
 The ``--markers`` option always gives you a list of available markers::
 
-    $ py.test --markers
+    $ pytest --markers
     @pytest.mark.env(name): mark test to run only on named environment
     
     @pytest.mark.skip(reason=None): skip the given test function with an optional reason. Example: skip(reason="no way of currently testing this") skips the test.
@@ -427,7 +427,7 @@ test function.  From a conftest file we can read it like this::
 
 Let's run this without capturing output and see what we get::
 
-    $ py.test -q -s
+    $ pytest -q -s
     glob args=('function',) kwargs={'x': 3}
     glob args=('class',) kwargs={'x': 2}
     glob args=('module',) kwargs={'x': 1}
@@ -483,7 +483,7 @@ Let's do a little test file to show how this looks like::
 
 then you will see two test skipped and two executed tests as expected::
 
-    $ py.test -rs # this option reports skip reasons
+    $ pytest -rs # this option reports skip reasons
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -497,7 +497,7 @@ then you will see two test skipped and two executed tests as expected::
 
 Note that if you specify a platform via the marker-command line option like this::
 
-    $ py.test -m linux2
+    $ pytest -m linux2
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -549,7 +549,7 @@ We want to dynamically define two markers and can do it in a
 
 We can now use the ``-m option`` to select one set::
 
-  $ py.test -m interface --tb=short
+  $ pytest -m interface --tb=short
   ======= test session starts ========
   platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
   rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -571,7 +571,7 @@ We can now use the ``-m option`` to select one set::
 
 or to select both "event" and "interface" tests::
 
-  $ py.test -m "interface or event" --tb=short
+  $ pytest -m "interface or event" --tb=short
   ======= test session starts ========
   platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
   rootdir: $REGENDOC_TMPDIR, inifile: 

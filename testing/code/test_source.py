@@ -285,13 +285,14 @@ class TestSourceParsingAndCompiling:
         #print "block", str(block)
         assert str(stmt).strip().startswith('assert')
 
-    def test_compilefuncs_and_path_sanity(self):
+    @pytest.mark.parametrize('name', ['', None, 'my'])
+    def test_compilefuncs_and_path_sanity(self, name):
         def check(comp, name):
             co = comp(self.source, name)
             if not name:
-                expected = "codegen %s:%d>" %(mypath, mylineno+2+1)
+                expected = "codegen %s:%d>" %(mypath, mylineno+2+2)
             else:
-                expected = "codegen %r %s:%d>" % (name, mypath, mylineno+2+1)
+                expected = "codegen %r %s:%d>" % (name, mypath, mylineno+2+2)
             fn = co.co_filename
             assert fn.endswith(expected)
 
@@ -300,8 +301,7 @@ class TestSourceParsingAndCompiling:
         mypath = mycode.path
 
         for comp in _pytest._code.compile, _pytest._code.Source.compile:
-            for name in '', None, 'my':
-                yield check, comp, name
+            check(comp, name)
 
     def test_offsetless_synerr(self):
         pytest.raises(SyntaxError, _pytest._code.compile, "lambda a,a: 0", mode='eval')
@@ -385,8 +385,7 @@ def test_deindent():
     lines = deindent(source.splitlines())
     assert lines == ['', 'def f():', '    def g():', '        pass', '    ']
 
-@pytest.mark.xfail("sys.version_info[:3] < (2,7,0) or "
-    "((3,0) <= sys.version_info[:2] < (3,2))")
+@pytest.mark.xfail("sys.version_info[:3] < (2,7,0)")
 def test_source_of_class_at_eof_without_newline(tmpdir):
     # this test fails because the implicit inspect.getsource(A) below
     # does not return the "x = 1" last line.
@@ -656,4 +655,3 @@ something
 '''"""
     result = getstatement(1, source)
     assert str(result) == "'''\n'''"
-

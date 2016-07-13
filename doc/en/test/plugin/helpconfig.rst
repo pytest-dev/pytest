@@ -18,8 +18,6 @@ command line options
     early-load given plugin (multi-allowed).
 ``--trace-config``
     trace considerations of conftest.py files.
-``--nomagic``
-    don't reinterpret asserts, no traceback cutting.
 ``--debug``
     generate and show internal debugging information.
 ``--help-config``

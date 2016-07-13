@@ -36,9 +36,9 @@ There are two ways in which ``pytest`` can perform capturing:
 
 You can influence output capturing mechanisms from the command line::
 
-    py.test -s            # disable all capturing
-    py.test --capture=sys # replace sys.stdout/stderr with in-mem files
-    py.test --capture=fd  # also point filedescriptors 1 and 2 to temp file
+    pytest -s            # disable all capturing
+    pytest --capture=sys # replace sys.stdout/stderr with in-mem files
+    pytest --capture=fd  # also point filedescriptors 1 and 2 to temp file
 
 .. _printdebugging:
 
@@ -62,7 +62,7 @@ is that you can use print statements for debugging::
 and running this module will show you precisely the output
 of the failing function and hide the other one::
 
-    $ py.test
+    $ pytest
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -114,5 +114,20 @@ the ``capfd`` function argument which offers the exact
 same interface but allows to also capture output from
 libraries or subprocesses that directly write to operating
 system level output streams (FD1 and FD2).
+
+
+.. versionadded:: 3.0
+
+To temporarily disable capture within a test, both ``capsys``
+and ``capfd`` have a ``disabled()`` method that can be used
+as a context manager, disabling capture inside the ``with`` block:
+
+.. code-block:: python
+
+    def test_disabling_capturing(capsys):
+        print('this output is captured')
+        with capsys.disabled():
+            print('output not captured, going directly to sys.stdout')
+        print('this output is also captured')
 
 .. include:: links.inc

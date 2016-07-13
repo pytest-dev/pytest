@@ -480,6 +480,22 @@ class TestCaptureFixture:
         result = testdir.runpytest_subprocess(p)
         assert 'closed' not in result.stderr.str()
 
+    @pytest.mark.parametrize('fixture', ['capsys', 'capfd'])
+    def test_disabled_capture_fixture(self, testdir, fixture):
+        testdir.makepyfile("""
+            def test_disabled({fixture}):
+                print('captured before')
+                with {fixture}.disabled():
+                    print('while capture is disabled')
+                print('captured after')
+        """.format(fixture=fixture))
+        result = testdir.runpytest_subprocess()
+        result.stdout.fnmatch_lines("""
+            *while capture is disabled*
+        """)
+        assert 'captured before' not in result.stdout.str()
+        assert 'captured after' not in result.stdout.str()
+
 
 def test_setup_failure_does_not_kill_capturing(testdir):
     sub1 = testdir.mkpydir("sub1")
