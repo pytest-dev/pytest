@@ -864,19 +864,18 @@ def yield_fixture(scope="function", params=None, autouse=False, ids=None, name=N
     else:
         return FixtureFunctionMarker(scope, params, autouse, ids=ids, name=name)
 
-defaultfuncargprefixmarker = fixture()
-funcarg_prefix_warning = '{name}: declaring fixtures using "pytest_funcarg__" prefix is deprecated ' \
-                         'and scheduled to be removed in pytest 4.0.\n' \
-                         'remove the prefix and use the @pytest.fixture decorator instead'
 
+defaultfuncargprefixmarker = fixture()
+funcarg_prefix_warning = (
+    '{name}: declaring fixtures using "pytest_funcarg__" prefix is deprecated '
+    'and scheduled to be removed in pytest 4.0.\n'
+    'Please remove the prefix and use the @pytest.fixture decorator instead.')
 
 
 @fixture(scope="session")
 def pytestconfig(request):
     """ the pytest config object with access to command line opts."""
     return request.config
-
-
 
 
 class FixtureManager:
