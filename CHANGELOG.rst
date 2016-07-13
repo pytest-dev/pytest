@@ -99,8 +99,8 @@
 
 .. _#510: https://github.com/pytest-dev/pytest/issues/510
 .. _#1506: https://github.com/pytest-dev/pytest/pull/1506
-.. _#1496: https://github.com/pytest-dev/pytest/issue/1496
-.. _#1524: https://github.com/pytest-dev/pytest/issue/1524
+.. _#1496: https://github.com/pytest-dev/pytest/issues/1496
+.. _#1524: https://github.com/pytest-dev/pytest/pull/1524
 
 .. _@prusse-martin: https://github.com/prusse-martin
 .. _@astraw38: https://github.com/astraw38
