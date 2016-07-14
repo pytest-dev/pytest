@@ -5,7 +5,6 @@ import py
 import os
 import sys
 
-from _pytest.monkeypatch import monkeypatch
 from _pytest.assertion import util
 from _pytest.assertion import rewrite
 
@@ -79,7 +78,8 @@ def install_importhook(config, mode):
     config._assertstate = AssertionState(config, mode)
 
     _load_modules(mode)
-    m = monkeypatch()
+    from _pytest.monkeypatch import MonkeyPatch
+    m = MonkeyPatch()
     config._cleanup.append(m.undo)
     m.setattr(py.builtin.builtins, 'AssertionError',
               reinterpret.AssertionError)  # noqa

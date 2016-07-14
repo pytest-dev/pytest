@@ -976,10 +976,7 @@ class Config(object):
         entrypoint_name = 'pytest11'
         self._consider_importhook(args, entrypoint_name)
         self.pluginmanager.consider_preparse(args)
-        try:
-            self.pluginmanager.load_setuptools_entrypoints(entrypoint_name)
-        except ImportError as e:
-            self.warn("I2", "could not load setuptools entry import: %s" % (e,))
+        self.pluginmanager.load_setuptools_entrypoints(entrypoint_name)
         self.pluginmanager.consider_env()
         self.known_args_namespace = ns = self._parser.parse_known_args(args, namespace=self.option.copy())
         if self.known_args_namespace.confcutdir is None and self.inifile:
