@@ -202,6 +202,9 @@ time or change existing behaviors in order to make them less surprising/more use
   removed in pytest-4.0 (`#1684`_).
   Thanks `@nicoddemus`_ for the PR.
 
+* Passing a command-line string to ``pytest.main()`` is considered deprecated and scheduled
+  for removal in pytest-4.0. It is recommended to pass a list of arguments instead (`#1723`_).
+
 * Rename ``getfuncargvalue`` to ``getfixturevalue``. ``getfuncargvalue`` is
   still present but is now considered deprecated. Thanks to `@RedBeardCode`_ and `@tomviner`_
   for the PR (`#1626`_).
@@ -279,6 +282,7 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _#1633: https://github.com/pytest-dev/pytest/pull/1633
 .. _#1664: https://github.com/pytest-dev/pytest/pull/1664
 .. _#1684: https://github.com/pytest-dev/pytest/pull/1684
+.. _#1723: https://github.com/pytest-dev/pytest/pull/1723
 
 .. _@DRMacIver: https://github.com/DRMacIver
 .. _@RedBeardCode: https://github.com/RedBeardCode

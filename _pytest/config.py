@@ -98,6 +98,7 @@ def get_plugin_manager():
     return get_config().pluginmanager
 
 def _prepareconfig(args=None, plugins=None):
+    warning = None
     if args is None:
         args = sys.argv[1:]
     elif isinstance(args, py.path.local):
@@ -106,6 +107,10 @@ def _prepareconfig(args=None, plugins=None):
         if not isinstance(args, str):
             raise ValueError("not a string or argument list: %r" % (args,))
         args = shlex.split(args, posix=sys.platform != "win32")
+        # we want to remove this way of passing arguments to pytest.main()
+        # in pytest-4.0
+        warning = ('passing a string to pytest.main() is deprecated, '
+                   'pass a list of arguments instead.')
     config = get_config()
     pluginmanager = config.pluginmanager
     try:
@@ -115,6 +120,8 @@ def _prepareconfig(args=None, plugins=None):
                     pluginmanager.consider_pluginarg(plugin)
                 else:
                     pluginmanager.register(plugin)
+        if warning:
+            config.warn('C1', warning)
         return pluginmanager.hook.pytest_cmdline_parse(
                 pluginmanager=pluginmanager, args=args)
     except BaseException:

@@ -795,3 +795,17 @@ def test_funcarg_prefix_deprecation(testdir):
          'Please remove the prefix and use the @pytest.fixture decorator instead.'),
         '*1 passed*',
     ])
+
+
+def test_str_args_deprecated(tmpdir, testdir):
+    """Deprecate passing strings to pytest.main(). Scheduled for removal in pytest-4.0."""
+    warnings = []
+
+    class Collect:
+        def pytest_logwarning(self, message):
+            warnings.append(message)
+
+    ret = pytest.main("%s -x" % tmpdir, plugins=[Collect()])
+    testdir.delete_loaded_modules()
+    assert warnings == ['passing a string to pytest.main() is deprecated, pass a list of arguments instead.']
+    assert ret == EXIT_NOTESTSCOLLECTED
