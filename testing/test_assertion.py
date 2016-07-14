@@ -3,10 +3,8 @@ import sys
 import textwrap
 
 import _pytest.assertion as plugin
-import _pytest._code
 import py
 import pytest
-from _pytest.assertion import reinterpret
 from _pytest.assertion import util
 
 PY3 = sys.version_info >= (3, 0)
@@ -23,14 +21,10 @@ def mock_config():
     return Config()
 
 
-def interpret(expr):
-    return reinterpret.reinterpret(expr, _pytest._code.Frame(sys._getframe(1)))
-
-
 class TestImportHookInstallation:
 
     @pytest.mark.parametrize('initial_conftest', [True, False])
-    @pytest.mark.parametrize('mode', ['plain', 'rewrite', 'reinterp'])
+    @pytest.mark.parametrize('mode', ['plain', 'rewrite'])
     def test_conftest_assertion_rewrite(self, testdir, initial_conftest, mode):
         """Test that conftest files are using assertion rewrite on import.
         (#1619)
@@ -57,13 +51,11 @@ class TestImportHookInstallation:
             expected = 'E       AssertionError'
         elif mode == 'rewrite':
             expected = '*assert 10 == 30*'
-        elif mode == 'reinterp':
-            expected = '*AssertionError:*was re-run*'
         else:
             assert 0
         result.stdout.fnmatch_lines([expected])
 
-    @pytest.mark.parametrize('mode', ['plain', 'rewrite', 'reinterp'])
+    @pytest.mark.parametrize('mode', ['plain', 'rewrite'])
     def test_pytest_plugins_rewrite(self, testdir, mode):
         contents = {
             'conftest.py': """
@@ -88,13 +80,11 @@ class TestImportHookInstallation:
             expected = 'E       AssertionError'
         elif mode == 'rewrite':
             expected = '*assert 10 == 30*'
-        elif mode == 'reinterp':
-            expected = '*AssertionError:*was re-run*'
         else:
             assert 0
         result.stdout.fnmatch_lines([expected])
 
-    @pytest.mark.parametrize('mode', ['plain', 'rewrite', 'reinterp'])
+    @pytest.mark.parametrize('mode', ['plain', 'rewrite'])
     def test_installed_plugin_rewrite(self, testdir, mode):
         # Make sure the hook is installed early enough so that plugins
         # installed via setuptools are re-written.
@@ -161,8 +151,6 @@ class TestImportHookInstallation:
             expected = 'E       AssertionError'
         elif mode == 'rewrite':
             expected = '*assert 10 == 30*'
-        elif mode == 'reinterp':
-            expected = '*AssertionError:*was re-run*'
         else:
             assert 0
         result.stdout.fnmatch_lines([expected])
@@ -206,7 +194,7 @@ class TestImportHookInstallation:
         result.stdout.fnmatch_lines(['>*assert a == b*',
                                      'E*assert 2 == 3*',
                                      '>*assert l.pop() == 3*',
-                                     'E*AssertionError*re-run*'])
+                                     'E*AssertionError'])
 
 
 class TestBinReprIntegration:
@@ -662,14 +650,6 @@ def test_assertion_options(testdir):
     assert "3 == 4" in result.stdout.str()
     result = testdir.runpytest_subprocess("--assert=plain")
     assert "3 == 4" not in result.stdout.str()
-
-def test_old_assert_mode(testdir):
-    testdir.makepyfile("""
-        def test_in_old_mode():
-            assert "@py_builtins" not in globals()
-    """)
-    result = testdir.runpytest_subprocess("--assert=reinterp")
-    assert result.ret == 0
 
 def test_triple_quoted_string_issue113(testdir):
     testdir.makepyfile("""
