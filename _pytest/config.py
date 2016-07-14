@@ -5,11 +5,13 @@ import traceback
 import types
 import warnings
 
+import pkg_resources
 import py
 # DON't import pytest here because it causes import cycle troubles
 import sys, os
 import _pytest._code
 import _pytest.hookspec  # the extension point definitions
+import _pytest.assertion
 from _pytest._pluggy import PluginManager, HookimplMarker, HookspecMarker
 
 hookimpl = HookimplMarker("pytest")
@@ -159,6 +161,9 @@ class PytestPluginManager(PluginManager):
                 pass
             self.trace.root.setwriter(err.write)
             self.enable_tracing()
+
+        # Config._consider_importhook will set a real object if required.
+        self.rewrite_hook = _pytest.assertion.DummyRewriteHook()
 
     def addhooks(self, module_or_class):
         """
@@ -368,7 +373,9 @@ class PytestPluginManager(PluginManager):
         self._import_plugin_specs(os.environ.get("PYTEST_PLUGINS"))
 
     def consider_module(self, mod):
-        self._import_plugin_specs(getattr(mod, "pytest_plugins", None))
+        plugins = getattr(mod, 'pytest_plugins', [])
+        self.rewrite_hook.mark_rewrite(*plugins)
+        self._import_plugin_specs(plugins)
 
     def _import_plugin_specs(self, spec):
         if spec:
@@ -925,14 +932,58 @@ class Config(object):
         self._parser.addini('addopts', 'extra command line options', 'args')
         self._parser.addini('minversion', 'minimally required pytest version')
 
+    def _consider_importhook(self, args, entrypoint_name):
+        """Install the PEP 302 import hook if using assertion re-writing.
+
+        Needs to parse the --assert=<mode> option from the commandline
+        and find all the installed plugins to mark them for re-writing
+        by the importhook.
+        """
+        ns, unknown_args = self._parser.parse_known_and_unknown_args(args)
+        mode = ns.assertmode
+        self._warn_about_missing_assertion(mode)
+        if mode != 'plain':
+            hook = _pytest.assertion.install_importhook(self, mode)
+            if hook:
+                self.pluginmanager.rewrite_hook = hook
+                for entrypoint in pkg_resources.iter_entry_points('pytest11'):
+                    for entry in entrypoint.dist._get_metadata('RECORD'):
+                        fn = entry.split(',')[0]
+                        is_simple_module = os.sep not in fn and fn.endswith('.py')
+                        is_package = fn.count(os.sep) == 1 and fn.endswith('__init__.py')
+                        if is_simple_module:
+                            module_name, ext = os.path.splitext(fn)
+                            hook.mark_rewrite(module_name)
+                        elif is_package:
+                            package_name = os.path.dirname(fn)
+                            hook.mark_rewrite(package_name)
+
+    def _warn_about_missing_assertion(self, mode):
+        try:
+            assert False
+        except AssertionError:
+            pass
+        else:
+            if mode == "rewrite":
+                specifically = ("assertions not in test modules or plugins"
+                                "will be ignored")
+            else:
+                specifically = "failing tests may report as passing"
+            sys.stderr.write("WARNING: " + specifically +
+                             " because assert statements are not executed "
+                             "by the underlying Python interpreter "
+                             "(are you using python -O?)\n")
+
     def _preparse(self, args, addopts=True):
         self._initini(args)
         if addopts:
             args[:] = shlex.split(os.environ.get('PYTEST_ADDOPTS', '')) + args
             args[:] = self.getini("addopts") + args
         self._checkversion()
+        entrypoint_name = 'pytest11'
+        self._consider_importhook(args, entrypoint_name)
         self.pluginmanager.consider_preparse(args)
-        self.pluginmanager.load_setuptools_entrypoints("pytest11")
+        self.pluginmanager.load_setuptools_entrypoints(entrypoint_name)
         self.pluginmanager.consider_env()
         self.known_args_namespace = ns = self._parser.parse_known_args(args, namespace=self.option.copy())
         if self.known_args_namespace.confcutdir is None and self.inifile:

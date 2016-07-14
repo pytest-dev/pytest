@@ -5,9 +5,8 @@ import py
 import os
 import sys
 
-from _pytest.config import hookimpl
-from _pytest.monkeypatch import MonkeyPatch
 from _pytest.assertion import util
+from _pytest.assertion import rewrite
 
 
 def pytest_addoption(parser):
@@ -27,6 +26,34 @@ def pytest_addoption(parser):
                             provide assert expression information. """)
 
 
+def pytest_namespace():
+    return {'register_assert_rewrite': register_assert_rewrite}
+
+
+def register_assert_rewrite(*names):
+    """Register a module name to be rewritten on import.
+
+    This function will make sure that the module will get it's assert
+    statements rewritten when it is imported.  Thus you should make
+    sure to call this before the module is actually imported, usually
+    in your __init__.py if you are a plugin using a package.
+    """
+    for hook in sys.meta_path:
+        if isinstance(hook, rewrite.AssertionRewritingHook):
+            importhook = hook
+            break
+    else:
+        importhook = DummyRewriteHook()
+    importhook.mark_rewrite(*names)
+
+
+class DummyRewriteHook(object):
+    """A no-op import hook for when rewriting is disabled."""
+
+    def mark_rewrite(self, *names):
+        pass
+
+
 class AssertionState:
     """State for the assertion plugin."""
 
@@ -35,10 +62,7 @@ class AssertionState:
         self.trace = config.trace.root.get("assertion")
 
 
-@hookimpl(tryfirst=True)
-def pytest_load_initial_conftests(early_config, parser, args):
-    ns, ns_unknown_args = parser.parse_known_and_unknown_args(args)
-    mode = ns.assertmode
+def install_importhook(config, mode):
     if mode == "rewrite":
         try:
             import ast  # noqa
@@ -51,37 +75,38 @@ def pytest_load_initial_conftests(early_config, parser, args):
                     sys.version_info[:3] == (2, 6, 0)):
                 mode = "reinterp"
 
-    early_config._assertstate = AssertionState(early_config, mode)
-    warn_about_missing_assertion(mode, early_config.pluginmanager)
+    config._assertstate = AssertionState(config, mode)
 
-    if mode != "plain":
-        _load_modules(mode)
-        m = MonkeyPatch()
-        early_config._cleanup.append(m.undo)
-        m.setattr(py.builtin.builtins, 'AssertionError',
-                  reinterpret.AssertionError)  # noqa
+    _load_modules(mode)
+    from _pytest.monkeypatch import MonkeyPatch
+    m = MonkeyPatch()
+    config._cleanup.append(m.undo)
+    m.setattr(py.builtin.builtins, 'AssertionError',
+              reinterpret.AssertionError)  # noqa
 
     hook = None
     if mode == "rewrite":
-        hook = rewrite.AssertionRewritingHook(early_config)  # noqa
+        hook = rewrite.AssertionRewritingHook(config)  # noqa
         sys.meta_path.insert(0, hook)
 
-    early_config._assertstate.hook = hook
-    early_config._assertstate.trace("configured with mode set to %r" % (mode,))
+    config._assertstate.hook = hook
+    config._assertstate.trace("configured with mode set to %r" % (mode,))
     def undo():
-        hook = early_config._assertstate.hook
+        hook = config._assertstate.hook
         if hook is not None and hook in sys.meta_path:
             sys.meta_path.remove(hook)
-    early_config.add_cleanup(undo)
+    config.add_cleanup(undo)
+    return hook
 
 
 def pytest_collection(session):
     # this hook is only called when test modules are collected
     # so for example not in the master process of pytest-xdist
     # (which does not collect test modules)
-    hook = session.config._assertstate.hook
-    if hook is not None:
-        hook.set_session(session)
+    assertstate = getattr(session.config, '_assertstate', None)
+    if assertstate:
+        if assertstate.hook is not None:
+            assertstate.hook.set_session(session)
 
 
 def _running_on_ci():
@@ -138,9 +163,10 @@ def pytest_runtest_teardown(item):
 
 
 def pytest_sessionfinish(session):
-    hook = session.config._assertstate.hook
-    if hook is not None:
-        hook.session = None
+    assertstate = getattr(session.config, '_assertstate', None)
+    if assertstate:
+        if assertstate.hook is not None:
+            assertstate.hook.set_session(None)
 
 
 def _load_modules(mode):
@@ -149,32 +175,6 @@ def _load_modules(mode):
     from _pytest.assertion import reinterpret  # noqa
     if mode == "rewrite":
         from _pytest.assertion import rewrite  # noqa
-
-
-def warn_about_missing_assertion(mode, pluginmanager):
-    try:
-        assert False
-    except AssertionError:
-        pass
-    else:
-        if mode == "rewrite":
-            specifically = ("assertions which are not in test modules "
-                            "will be ignored")
-        else:
-            specifically = "failing tests may report as passing"
-
-        # temporarily disable capture so we can print our warning
-        capman = pluginmanager.getplugin('capturemanager')
-        try:
-            out, err = capman.suspendcapture()
-            sys.stderr.write("WARNING: " + specifically +
-                             " because assert statements are not executed "
-                             "by the underlying Python interpreter "
-                             "(are you using python -O?)\n")
-        finally:
-            capman.resumecapture()
-            sys.stdout.write(out)
-            sys.stderr.write(err)
 
 
 # Expose this plugin's implementation for the pytest_assertrepr_compare hook

@@ -51,6 +51,7 @@ class AssertionRewritingHook(object):
         self.session = None
         self.modules = {}
         self._register_with_pkg_resources()
+        self._must_rewrite = set()
 
     def set_session(self, session):
         self.session = session
@@ -87,7 +88,7 @@ class AssertionRewritingHook(object):
             fn = os.path.join(pth, name.rpartition(".")[2] + ".py")
 
         fn_pypath = py.path.local(fn)
-        if not self._should_rewrite(fn_pypath, state):
+        if not self._should_rewrite(name, fn_pypath, state):
             return None
 
         # The requested module looks like a test file, so rewrite it. This is
@@ -137,7 +138,7 @@ class AssertionRewritingHook(object):
         self.modules[name] = co, pyc
         return self
 
-    def _should_rewrite(self, fn_pypath, state):
+    def _should_rewrite(self, name, fn_pypath, state):
         # always rewrite conftest files
         fn = str(fn_pypath)
         if fn_pypath.basename == 'conftest.py':
@@ -161,7 +162,28 @@ class AssertionRewritingHook(object):
                 finally:
                     self.session = session
                     del session
+        else:
+            for marked in self._must_rewrite:
+                if marked.startswith(name):
+                    return True
         return False
+
+    def mark_rewrite(self, *names):
+        """Mark import names as needing to be re-written.
+
+        The named module or package as well as any nested modules will
+        be re-written on import.
+        """
+        already_imported = set(names).intersection(set(sys.modules))
+        if already_imported:
+            self._warn_already_imported(already_imported)
+        self._must_rewrite.update(names)
+
+    def _warn_already_imported(self, names):
+        self.config.warn(
+            'P1',
+            'Modules are already imported so can not be re-written: %s' %
+            ','.join(names))
 
     def load_module(self, name):
         # If there is an existing module object named 'fullname' in
