@@ -19,6 +19,7 @@ Full pytest documentation
    recwarn
    cache
    plugins
+   nose
 
    contributing
    talks
