@@ -365,18 +365,6 @@ class TestSessionReports:
         assert res[0].name == "test_func1"
         assert res[1].name == "TestClass"
 
-    def test_skip_at_module_scope(self, testdir):
-        col = testdir.getmodulecol("""
-            import pytest
-            pytest.skip("hello")
-            def test_func():
-                pass
-        """)
-        rep = main.collect_one_node(col)
-        assert not rep.failed
-        assert not rep.passed
-        assert rep.skipped
-
 
 reporttypes = [
     runner.BaseReport,
@@ -411,13 +399,15 @@ def test_callinfo():
 @pytest.mark.xfail
 def test_runtest_in_module_ordering(testdir):
     p1 = testdir.makepyfile("""
+        import pytest
         def pytest_runtest_setup(item): # runs after class-level!
             item.function.mylist.append("module")
         class TestClass:
             def pytest_runtest_setup(self, item):
                 assert not hasattr(item.function, 'mylist')
                 item.function.mylist = ['class']
-            def pytest_funcarg__mylist(self, request):
+            @pytest.fixture
+            def mylist(self, request):
                 return request.function.mylist
             def pytest_runtest_call(self, item, __multicall__):
                 try:

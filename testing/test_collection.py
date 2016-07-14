@@ -88,6 +88,8 @@ class TestCollector:
 class TestCollectFS:
     def test_ignored_certain_directories(self, testdir):
         tmpdir = testdir.tmpdir
+        tmpdir.ensure("build", 'test_notfound.py')
+        tmpdir.ensure("dist", 'test_notfound.py')
         tmpdir.ensure("_darcs", 'test_notfound.py')
         tmpdir.ensure("CVS", 'test_notfound.py')
         tmpdir.ensure("{arch}", 'test_notfound.py')
@@ -178,7 +180,8 @@ class TestPrunetraceback:
         assert "__import__" not in result.stdout.str(), "too long traceback"
         result.stdout.fnmatch_lines([
             "*ERROR collecting*",
-            "*mport*not_exists*"
+            "ImportError while importing test module*",
+            "'No module named *not_exists*",
         ])
 
     def test_custom_repr_failure(self, testdir):
@@ -641,3 +644,114 @@ class TestNodekeywords:
         """)
         reprec = testdir.inline_run("-k repr")
         reprec.assertoutcome(passed=1, failed=0)
+
+
+COLLECTION_ERROR_PY_FILES = dict(
+    test_01_failure="""
+        def test_1():
+            assert False
+        """,
+    test_02_import_error="""
+        import asdfasdfasdf
+        def test_2():
+            assert True
+        """,
+    test_03_import_error="""
+        import asdfasdfasdf
+        def test_3():
+            assert True
+    """,
+    test_04_success="""
+        def test_4():
+            assert True
+    """,
+)
+
+def test_exit_on_collection_error(testdir):
+    """Verify that all collection errors are collected and no tests executed"""
+    testdir.makepyfile(**COLLECTION_ERROR_PY_FILES)
+
+    res = testdir.runpytest()
+    assert res.ret == 2
+
+    res.stdout.fnmatch_lines([
+        "collected 2 items / 2 errors",
+        "*ERROR collecting test_02_import_error.py*",
+        "*No module named *asdfa*",
+        "*ERROR collecting test_03_import_error.py*",
+        "*No module named *asdfa*",
+    ])
+
+
+def test_exit_on_collection_with_maxfail_smaller_than_n_errors(testdir):
+    """
+    Verify collection is aborted once maxfail errors are encountered ignoring
+    further modules which would cause more collection errors.
+    """
+    testdir.makepyfile(**COLLECTION_ERROR_PY_FILES)
+
+    res = testdir.runpytest("--maxfail=1")
+    assert res.ret == 2
+
+    res.stdout.fnmatch_lines([
+        "*ERROR collecting test_02_import_error.py*",
+        "*No module named *asdfa*",
+        "*Interrupted: stopping after 1 failures*",
+    ])
+
+    assert 'test_03' not in res.stdout.str()
+
+
+def test_exit_on_collection_with_maxfail_bigger_than_n_errors(testdir):
+    """
+    Verify the test run aborts due to collection errors even if maxfail count of
+    errors was not reached.
+    """
+    testdir.makepyfile(**COLLECTION_ERROR_PY_FILES)
+
+    res = testdir.runpytest("--maxfail=4")
+    assert res.ret == 2
+
+    res.stdout.fnmatch_lines([
+        "collected 2 items / 2 errors",
+        "*ERROR collecting test_02_import_error.py*",
+        "*No module named *asdfa*",
+        "*ERROR collecting test_03_import_error.py*",
+        "*No module named *asdfa*",
+    ])
+
+
+def test_continue_on_collection_errors(testdir):
+    """
+    Verify tests are executed even when collection errors occur when the
+    --continue-on-collection-errors flag is set
+    """
+    testdir.makepyfile(**COLLECTION_ERROR_PY_FILES)
+
+    res = testdir.runpytest("--continue-on-collection-errors")
+    assert res.ret == 1
+
+    res.stdout.fnmatch_lines([
+        "collected 2 items / 2 errors",
+        "*1 failed, 1 passed, 2 error*",
+    ])
+
+
+def test_continue_on_collection_errors_maxfail(testdir):
+    """
+    Verify tests are executed even when collection errors occur and that maxfail
+    is honoured (including the collection error count).
+    4 tests: 2 collection errors + 1 failure + 1 success
+    test_4 is never executed because the test run is with --maxfail=3 which
+    means it is interrupted after the 2 collection errors + 1 failure.
+    """
+    testdir.makepyfile(**COLLECTION_ERROR_PY_FILES)
+
+    res = testdir.runpytest("--continue-on-collection-errors", "--maxfail=3")
+    assert res.ret == 2
+
+    res.stdout.fnmatch_lines([
+        "collected 2 items / 2 errors",
+        "*Interrupted: stopping after 3 failures*",
+        "*1 failed, 2 error*",
+    ])

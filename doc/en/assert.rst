@@ -24,7 +24,7 @@ following::
 to assert that your function returns a certain value. If this assertion fails
 you will see the return value of the function call::
 
-    $ py.test test_assert1.py
+    $ pytest test_assert1.py
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -85,6 +85,15 @@ and if you need to have access to the actual exception info you may use::
 the actual exception raised.  The main attributes of interest are
 ``.type``, ``.value`` and ``.traceback``.
 
+.. versionchanged:: 3.0
+
+In the context manager form you may use the keyword argument
+``message`` to specify a custom failure message::
+
+     >>> with raises(ZeroDivisionError, message="Expecting ZeroDivisionError"):
+     ...    pass
+     ... Failed: Expecting ZeroDivisionError
+
 If you want to write test code that works on Python 2.4 as well,
 you may also use two other ways to test for an expected exception::
 
@@ -109,6 +118,24 @@ exceptions your own code is deliberately raising, whereas using
 ``@pytest.mark.xfail`` with a check function is probably better for something
 like documenting unfixed bugs (where the test describes what "should" happen)
 or bugs in dependencies.
+
+If you want to test that a regular expression matches on the string
+representation of an exception (like the ``TestCase.assertRaisesRegexp`` method
+from ``unittest``) you can use the ``ExceptionInfo.match`` method::
+
+    import pytest
+
+    def myfunc():
+        raise ValueError("Exception 123 raised")
+
+    def test_match():
+        with pytest.raises(ValueError) as excinfo:
+            myfunc()
+        excinfo.match(r'.* 123 .*')
+
+The regexp parameter of the ``match`` method is matched with the ``re.search``
+function. So in the above example ``excinfo.match('123')`` would have worked as
+well.
 
 
 .. _`assertwarns`:
@@ -141,7 +168,7 @@ when it encounters comparisons.  For example::
 
 if you run this module::
 
-    $ py.test test_assert2.py
+    $ pytest test_assert2.py
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -210,7 +237,7 @@ now, given this test module::
 you can run the test module and get the custom output defined in
 the conftest file::
 
-   $ py.test -q test_foocompare.py
+   $ pytest -q test_foocompare.py
    F
    ======= FAILURES ========
    _______ test_compare ________
@@ -287,3 +314,6 @@ For further information, Benjamin Peterson wrote up `Behind the scenes of pytest
 .. versionchanged:: 2.1
    Introduce the ``--assert`` option. Deprecate ``--no-assert`` and
    ``--nomagic``.
+
+.. versionchanged:: 3.0
+   Removes the ``--no-assert`` and``--nomagic`` options.

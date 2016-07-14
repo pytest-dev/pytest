@@ -13,7 +13,7 @@ Usage
 After :ref:`installation` type::
 
     python setup.py develop  # make sure tests can import our package
-    py.test  # instead of 'nosetests'
+    pytest  # instead of 'nosetests'
 
 and you should be able to run your nose style tests and
 make use of pytest's capabilities.

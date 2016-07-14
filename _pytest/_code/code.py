@@ -1,5 +1,6 @@
 import sys
 from inspect import CO_VARARGS, CO_VARKEYWORDS
+import re
 
 import py
 builtin_repr = repr
@@ -142,7 +143,8 @@ class TracebackEntry(object):
     _repr_style = None
     exprinfo = None
 
-    def __init__(self, rawentry):
+    def __init__(self, rawentry, excinfo=None):
+        self._excinfo = excinfo
         self._rawentry = rawentry
         self.lineno = rawentry.tb_lineno - 1
 
@@ -223,15 +225,23 @@ class TracebackEntry(object):
         """ return True if the current frame has a var __tracebackhide__
             resolving to True
 
+            If __tracebackhide__ is a callable, it gets called with the
+            ExceptionInfo instance and can decide whether to hide the traceback.
+
             mostly for internal use
         """
         try:
-            return self.frame.f_locals['__tracebackhide__']
+            tbh = self.frame.f_locals['__tracebackhide__']
         except KeyError:
             try:
-                return self.frame.f_globals['__tracebackhide__']
+                tbh = self.frame.f_globals['__tracebackhide__']
             except KeyError:
                 return False
+
+        if py.builtin.callable(tbh):
+            return tbh(self._excinfo)
+        else:
+            return tbh
 
     def __str__(self):
         try:
@@ -256,12 +266,13 @@ class Traceback(list):
         access to Traceback entries.
     """
     Entry = TracebackEntry
-    def __init__(self, tb):
-        """ initialize from given python traceback object. """
+    def __init__(self, tb, excinfo=None):
+        """ initialize from given python traceback object and ExceptionInfo """
+        self._excinfo = excinfo
         if hasattr(tb, 'tb_next'):
             def f(cur):
                 while cur is not None:
-                    yield self.Entry(cur)
+                    yield self.Entry(cur, excinfo=excinfo)
                     cur = cur.tb_next
             list.__init__(self, f(tb))
         else:
@@ -285,7 +296,7 @@ class Traceback(list):
                  not codepath.relto(excludepath)) and
                 (lineno is None or x.lineno == lineno) and
                 (firstlineno is None or x.frame.code.firstlineno == firstlineno)):
-                return Traceback(x._rawentry)
+                return Traceback(x._rawentry, self._excinfo)
         return self
 
     def __getitem__(self, key):
@@ -304,7 +315,7 @@ class Traceback(list):
             by default this removes all the TracebackEntries which are hidden
             (see ishidden() above)
         """
-        return Traceback(filter(fn, self))
+        return Traceback(filter(fn, self), self._excinfo)
 
     def getcrashentry(self):
         """ return last non-hidden traceback entry that lead
@@ -368,7 +379,7 @@ class ExceptionInfo(object):
         #: the exception type name
         self.typename = self.type.__name__
         #: the exception traceback (_pytest._code.Traceback instance)
-        self.traceback = _pytest._code.Traceback(self.tb)
+        self.traceback = _pytest._code.Traceback(self.tb, excinfo=self)
 
     def __repr__(self):
         return "<ExceptionInfo %s tblen=%d>" % (self.typename, len(self.traceback))
@@ -429,6 +440,19 @@ class ExceptionInfo(object):
         entry = self.traceback[-1]
         loc = ReprFileLocation(entry.path, entry.lineno + 1, self.exconly())
         return unicode(loc)
+
+    def match(self, regexp):
+        """
+        Match the regular expression 'regexp' on the string representation of
+        the exception. If it matches then True is returned (so that it is
+        possible to write 'assert excinfo.match()'). If it doesn't match an
+        AssertionError is raised.
+        """
+        __tracebackhide__ = True
+        if not re.search(regexp, str(self.value)):
+            assert 0, "Pattern '{0!s}' not found in '{1!s}'".format(
+                regexp, self.value)
+        return True
 
 
 class FormattedExcinfo(object):
@@ -596,12 +620,36 @@ class FormattedExcinfo(object):
                 break
         return ReprTraceback(entries, extraline, style=self.style)
 
-    def repr_excinfo(self, excinfo):
-        reprtraceback = self.repr_traceback(excinfo)
-        reprcrash = excinfo._getreprcrash()
-        return ReprExceptionInfo(reprtraceback, reprcrash)
 
-class TerminalRepr:
+    def repr_excinfo(self, excinfo):
+        if sys.version_info[0] < 3:
+            reprtraceback = self.repr_traceback(excinfo)
+            reprcrash = excinfo._getreprcrash()
+
+            return ReprExceptionInfo(reprtraceback, reprcrash)
+        else:
+            repr_chain = []
+            e = excinfo.value
+            descr = None
+            while e is not None:
+                reprtraceback = self.repr_traceback(excinfo)
+                reprcrash = excinfo._getreprcrash()
+                repr_chain += [(reprtraceback, reprcrash, descr)]
+                if e.__cause__ is not None:
+                    e = e.__cause__
+                    excinfo = ExceptionInfo((type(e), e, e.__traceback__))
+                    descr = 'The above exception was the direct cause of the following exception:'
+                elif e.__context__ is not None:
+                    e = e.__context__
+                    excinfo = ExceptionInfo((type(e), e, e.__traceback__))
+                    descr = 'During handling of the above exception, another exception occurred:'
+                else:
+                    e = None
+            repr_chain.reverse()
+            return ExceptionChainRepr(repr_chain)
+
+
+class TerminalRepr(object):
     def __str__(self):
         s = self.__unicode__()
         if sys.version_info[0] < 3:
@@ -620,20 +668,46 @@ class TerminalRepr:
         return "<%s instance at %0x>" %(self.__class__, id(self))
 
 
-class ReprExceptionInfo(TerminalRepr):
-    def __init__(self, reprtraceback, reprcrash):
-        self.reprtraceback = reprtraceback
-        self.reprcrash = reprcrash
+class ExceptionRepr(TerminalRepr):
+    def __init__(self):
         self.sections = []
 
     def addsection(self, name, content, sep="-"):
         self.sections.append((name, content, sep))
 
     def toterminal(self, tw):
-        self.reprtraceback.toterminal(tw)
         for name, content, sep in self.sections:
             tw.sep(sep, name)
             tw.line(content)
+
+
+class ExceptionChainRepr(ExceptionRepr):
+    def __init__(self, chain):
+        super(ExceptionChainRepr, self).__init__()
+        self.chain = chain
+        # reprcrash and reprtraceback of the outermost (the newest) exception
+        # in the chain
+        self.reprtraceback = chain[-1][0]
+        self.reprcrash = chain[-1][1]
+
+    def toterminal(self, tw):
+        for element in self.chain:
+            element[0].toterminal(tw)
+            if element[2] is not None:
+                tw.line("")
+                tw.line(element[2], yellow=True)
+        super(ExceptionChainRepr, self).toterminal(tw)
+
+
+class ReprExceptionInfo(ExceptionRepr):
+    def __init__(self, reprtraceback, reprcrash):
+        super(ReprExceptionInfo, self).__init__()
+        self.reprtraceback = reprtraceback
+        self.reprcrash = reprcrash
+
+    def toterminal(self, tw):
+        self.reprtraceback.toterminal(tw)
+        super(ReprExceptionInfo, self).toterminal(tw)
 
 class ReprTraceback(TerminalRepr):
     entrysep = "_ "

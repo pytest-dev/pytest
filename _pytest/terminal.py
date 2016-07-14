@@ -20,16 +20,18 @@ def pytest_addoption(parser):
     group._addoption('-q', '--quiet', action="count",
                dest="quiet", default=0, help="decrease verbosity."),
     group._addoption('-r',
-         action="store", dest="reportchars", default=None, metavar="chars",
+         action="store", dest="reportchars", default='', metavar="chars",
          help="show extra test summary info as specified by chars (f)ailed, "
-              "(E)error, (s)skipped, (x)failed, (X)passed (w)pytest-warnings "
-              "(p)passed, (P)passed with output, (a)all except pP.")
+              "(E)error, (s)skipped, (x)failed, (X)passed, "
+              "(p)passed, (P)passed with output, (a)all except pP. "
+              "The pytest warnings are displayed at all times except when "
+              "--disable-pytest-warnings is set")
+    group._addoption('--disable-pytest-warnings', default=False,
+                     dest='disablepytestwarnings', action='store_true',
+                     help='disable warnings summary, overrides -r w flag')
     group._addoption('-l', '--showlocals',
          action="store_true", dest="showlocals", default=False,
          help="show locals in tracebacks (disabled by default).")
-    group._addoption('--report',
-         action="store", dest="report", default=None, metavar="opts",
-         help="(deprecated, use -r)")
     group._addoption('--tb', metavar="style",
                action="store", dest="tbstyle", default='auto',
                choices=['auto', 'long', 'short', 'no', 'line', 'native'],
@@ -54,18 +56,11 @@ def pytest_configure(config):
 
 def getreportopt(config):
     reportopts = ""
-    optvalue = config.option.report
-    if optvalue:
-        py.builtin.print_("DEPRECATED: use -r instead of --report option.",
-            file=sys.stderr)
-        if optvalue:
-            for setting in optvalue.split(","):
-                setting = setting.strip()
-                if setting == "skipped":
-                    reportopts += "s"
-                elif setting == "xfailed":
-                    reportopts += "x"
     reportchars = config.option.reportchars
+    if not config.option.disablepytestwarnings and 'w' not in reportchars:
+        reportchars += 'w'
+    elif config.option.disablepytestwarnings and 'w' in reportchars:
+        reportchars = reportchars.replace('w', '')
     if reportchars:
         for char in reportchars:
             if char not in reportopts and char != 'a':

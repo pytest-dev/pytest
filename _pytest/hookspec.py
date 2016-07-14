@@ -34,7 +34,7 @@ def pytest_addoption(parser):
     .. note::
 
         This function should be implemented only in plugins or ``conftest.py``
-        files situated at the tests root directory due to how py.test
+        files situated at the tests root directory due to how pytest
         :ref:`discovers plugins during startup <pluginorder>`.
 
     :arg parser: To add command line options, call
@@ -156,6 +156,12 @@ def pytest_pyfunc_call(pyfuncitem):
 def pytest_generate_tests(metafunc):
     """ generate (multiple) parametrized calls to a test function."""
 
+@hookspec(firstresult=True)
+def pytest_make_parametrize_id(config, val):
+    """Return a user-friendly string representation of the given ``val`` that will be used
+    by @pytest.mark.parametrize calls. Return None if the hook doesn't know about ``val``.
+    """
+
 # -------------------------------------------------------------------------
 # generic runtest related hooks
 # -------------------------------------------------------------------------
@@ -211,6 +217,19 @@ def pytest_runtest_makereport(item, call):
 def pytest_runtest_logreport(report):
     """ process a test setup/call/teardown report relating to
     the respective phase of executing a test. """
+
+# -------------------------------------------------------------------------
+# Fixture related hooks
+# -------------------------------------------------------------------------
+
+@hookspec(firstresult=True)
+def pytest_fixture_setup(fixturedef, request):
+    """ performs fixture setup execution. """
+
+def pytest_fixture_post_finalizer(fixturedef):
+    """ called after fixture teardown, but before the cache is cleared so
+    the fixture result cache ``fixturedef.cached_result`` can
+    still be accessed."""
 
 # -------------------------------------------------------------------------
 # test session related hooks

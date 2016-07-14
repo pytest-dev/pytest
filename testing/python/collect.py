@@ -5,14 +5,16 @@ from textwrap import dedent
 import _pytest._code
 import py
 import pytest
-from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import (
+    Collector,
+    EXIT_NOTESTSCOLLECTED
+)
 
 
 class TestModule:
     def test_failing_import(self, testdir):
         modcol = testdir.getmodulecol("import alksdjalskdjalkjals")
-        pytest.raises(ImportError, modcol.collect)
-        pytest.raises(ImportError, modcol.collect)
+        pytest.raises(Collector.CollectError, modcol.collect)
 
     def test_import_duplicate(self, testdir):
         a = testdir.mkdir("a")
@@ -59,6 +61,16 @@ class TestModule:
     def test_module_considers_pluginmanager_at_import(self, testdir):
         modcol = testdir.getmodulecol("pytest_plugins='xasdlkj',")
         pytest.raises(ImportError, lambda: modcol.obj)
+
+    def test_invalid_test_module_name(self, testdir):
+        a = testdir.mkdir('a')
+        a.ensure('test_one.part1.py')
+        result = testdir.runpytest("-rw")
+        result.stdout.fnmatch_lines([
+            "ImportError while importing test module*test_one.part1*",
+            "Make sure your test modules/packages have valid Python names.",
+        ])
+
 
 class TestClass:
     def test_class_with_init_warning(self, testdir):
@@ -322,7 +334,7 @@ class TestFunction:
         reprec.assertoutcome()
 
     def test_function_equality(self, testdir, tmpdir):
-        from _pytest.python import FixtureManager
+        from _pytest.fixtures import FixtureManager
         config = testdir.parseconfigure()
         session = testdir.Session(config)
         session._fixturemanager = FixtureManager(session)
@@ -783,21 +795,24 @@ class TestTracebackCutting:
 
     def test_traceback_argsetup(self, testdir):
         testdir.makeconftest("""
-            def pytest_funcarg__hello(request):
+            import pytest
+
+            @pytest.fixture
+            def hello(request):
                 raise ValueError("xyz")
         """)
         p = testdir.makepyfile("def test(hello): pass")
         result = testdir.runpytest(p)
         assert result.ret != 0
         out = result.stdout.str()
-        assert out.find("xyz") != -1
-        assert out.find("conftest.py:2: ValueError") != -1
+        assert "xyz" in out
+        assert "conftest.py:5: ValueError" in out
         numentries = out.count("_ _ _") # separator for traceback entries
         assert numentries == 0
 
         result = testdir.runpytest("--fulltrace", p)
         out = result.stdout.str()
-        assert out.find("conftest.py:2: ValueError") != -1
+        assert "conftest.py:5: ValueError" in out
         numentries = out.count("_ _ _ _") # separator for traceback entries
         assert numentries > 3
 

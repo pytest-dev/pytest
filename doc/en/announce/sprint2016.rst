@@ -39,6 +39,8 @@ Over 20 participants took part from 4 continents, including employees
 from Splunk, Personalkollen, Cobe.io, FanDuel and Dolby. Some newcomers
 mixed with developers who have worked on pytest since its beginning, and
 of course everyone in between.
+    Ana Ribeiro, Brazil
+    Ronny Pfannschmidt, Germany 
 
 
 Sprint organisation, schedule

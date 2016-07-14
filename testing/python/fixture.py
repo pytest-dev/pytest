@@ -3,35 +3,37 @@ from textwrap import dedent
 import _pytest._code
 import pytest
 import sys
-from _pytest import python as funcargs
 from _pytest.pytester import get_public_names
-from _pytest.python import FixtureLookupError
-
+from _pytest.fixtures import FixtureLookupError
+from _pytest import fixtures
 
 def test_getfuncargnames():
     def f(): pass
-    assert not funcargs.getfuncargnames(f)
+    assert not fixtures.getfuncargnames(f)
     def g(arg): pass
-    assert funcargs.getfuncargnames(g) == ('arg',)
+    assert fixtures.getfuncargnames(g) == ('arg',)
     def h(arg1, arg2="hello"): pass
-    assert funcargs.getfuncargnames(h) == ('arg1',)
+    assert fixtures.getfuncargnames(h) == ('arg1',)
     def h(arg1, arg2, arg3="hello"): pass
-    assert funcargs.getfuncargnames(h) == ('arg1', 'arg2')
+    assert fixtures.getfuncargnames(h) == ('arg1', 'arg2')
     class A:
         def f(self, arg1, arg2="hello"):
             pass
-    assert funcargs.getfuncargnames(A().f) == ('arg1',)
+    assert fixtures.getfuncargnames(A().f) == ('arg1',)
     if sys.version_info < (3,0):
-        assert funcargs.getfuncargnames(A.f) == ('arg1',)
+        assert fixtures.getfuncargnames(A.f) == ('arg1',)
 
 class TestFillFixtures:
     def test_fillfuncargs_exposed(self):
         # used by oejskit, kept for compatibility
-        assert pytest._fillfuncargs == funcargs.fillfixtures
+        assert pytest._fillfuncargs == fixtures.fillfixtures
 
     def test_funcarg_lookupfails(self, testdir):
         testdir.makepyfile("""
-            def pytest_funcarg__xyzsomething(request):
+            import pytest
+
+            @pytest.fixture
+            def xyzsomething(request):
                 return 42
 
             def test_func(some):
@@ -47,14 +49,18 @@ class TestFillFixtures:
 
     def test_funcarg_basic(self, testdir):
         item = testdir.getitem("""
-            def pytest_funcarg__some(request):
+            import pytest
+
+            @pytest.fixture
+            def some(request):
                 return request.function.__name__
-            def pytest_funcarg__other(request):
+            @pytest.fixture
+            def other(request):
                 return 42
             def test_func(some, other):
                 pass
         """)
-        funcargs.fillfixtures(item)
+        fixtures.fillfixtures(item)
         del item.funcargs["request"]
         assert len(get_public_names(item.funcargs)) == 2
         assert item.funcargs['some'] == "test_func"
@@ -62,7 +68,10 @@ class TestFillFixtures:
 
     def test_funcarg_lookup_modulelevel(self, testdir):
         testdir.makepyfile("""
-            def pytest_funcarg__something(request):
+            import pytest
+
+            @pytest.fixture
+            def something(request):
                 return request.function.__name__
 
             class TestClass:
@@ -76,9 +85,13 @@ class TestFillFixtures:
 
     def test_funcarg_lookup_classlevel(self, testdir):
         p = testdir.makepyfile("""
+            import pytest
             class TestClass:
-                def pytest_funcarg__something(self, request):
+
+                @pytest.fixture
+                def something(self, request):
                     return request.instance
+
                 def test_method(self, something):
                     assert something is self
         """)
@@ -92,12 +105,14 @@ class TestFillFixtures:
         sub2 = testdir.mkpydir("sub2")
         sub1.join("conftest.py").write(_pytest._code.Source("""
             import pytest
-            def pytest_funcarg__arg1(request):
+            @pytest.fixture
+            def arg1(request):
                 pytest.raises(Exception, "request.getfixturevalue('arg2')")
         """))
         sub2.join("conftest.py").write(_pytest._code.Source("""
             import pytest
-            def pytest_funcarg__arg2(request):
+            @pytest.fixture
+            def arg2(request):
                 pytest.raises(Exception, "request.getfixturevalue('arg1')")
         """))
 
@@ -397,10 +412,13 @@ class TestFillFixtures:
 class TestRequestBasic:
     def test_request_attributes(self, testdir):
         item = testdir.getitem("""
-            def pytest_funcarg__something(request): pass
+            import pytest
+
+            @pytest.fixture
+            def something(request): pass
             def test_func(something): pass
         """)
-        req = funcargs.FixtureRequest(item)
+        req = fixtures.FixtureRequest(item)
         assert req.function == item.obj
         assert req.keywords == item.keywords
         assert hasattr(req.module, 'test_func')
@@ -411,8 +429,11 @@ class TestRequestBasic:
 
     def test_request_attributes_method(self, testdir):
         item, = testdir.getitems("""
+            import pytest
             class TestB:
-                def pytest_funcarg__something(self, request):
+
+                @pytest.fixture
+                def something(self, request):
                     return 1
                 def test_func(self, something):
                     pass
@@ -421,9 +442,11 @@ class TestRequestBasic:
         assert req.cls.__name__ == "TestB"
         assert req.instance.__class__ == req.cls
 
-    def XXXtest_request_contains_funcarg_arg2fixturedefs(self, testdir):
+    def test_request_contains_funcarg_arg2fixturedefs(self, testdir):
         modcol = testdir.getmodulecol("""
-            def pytest_funcarg__something(request):
+            import pytest
+            @pytest.fixture
+            def something(request):
                 pass
             class TestClass:
                 def test_method(self, something):
@@ -431,17 +454,23 @@ class TestRequestBasic:
         """)
         item1, = testdir.genitems([modcol])
         assert item1.name == "test_method"
-        arg2fixturedefs = funcargs.FixtureRequest(item1)._arg2fixturedefs
+        arg2fixturedefs = fixtures.FixtureRequest(item1)._arg2fixturedefs
         assert len(arg2fixturedefs) == 1
-        assert arg2fixturedefs[0].__name__ == "pytest_funcarg__something"
+        assert arg2fixturedefs['something'][0].argname == "something"
 
     def test_getfixturevalue_recursive(self, testdir):
         testdir.makeconftest("""
-            def pytest_funcarg__something(request):
+            import pytest
+
+            @pytest.fixture
+            def something(request):
                 return 1
         """)
         testdir.makepyfile("""
-            def pytest_funcarg__something(request):
+            import pytest
+
+            @pytest.fixture
+            def something(request):
                 return request.getfixturevalue("something") + 1
             def test_func(something):
                 assert something == 2
@@ -453,9 +482,12 @@ class TestRequestBasic:
         'getfixmethod', ('getfixturevalue', 'getfuncargvalue'))
     def test_getfixturevalue(self, testdir, getfixmethod):
         item = testdir.getitem("""
+            import pytest
             l = [2]
-            def pytest_funcarg__something(request): return 1
-            def pytest_funcarg__other(request):
+            @pytest.fixture
+            def something(request): return 1
+            @pytest.fixture
+            def other(request):
                 return l.pop()
             def test_func(something): pass
         """)
@@ -478,8 +510,10 @@ class TestRequestBasic:
 
     def test_request_addfinalizer(self, testdir):
         item = testdir.getitem("""
+            import pytest
             teardownlist = []
-            def pytest_funcarg__something(request):
+            @pytest.fixture
+            def something(request):
                 request.addfinalizer(lambda: teardownlist.append(1))
             def test_func(something): pass
         """)
@@ -504,7 +538,8 @@ class TestRequestBasic:
         result = testdir.runpytest_subprocess()
         assert result.ret != 0
         result.stdout.fnmatch_lines([
-            "*AssertionError:*pytest_funcarg__marked_with_prefix_and_decorator*"
+            "*AssertionError: fixtures cannot have*@pytest.fixture*",
+            "*pytest_funcarg__marked_with_prefix_and_decorator*"
         ])
 
     def test_request_addfinalizer_failing_setup(self, testdir):
@@ -542,8 +577,10 @@ class TestRequestBasic:
 
     def test_request_addfinalizer_partial_setup_failure(self, testdir):
         p = testdir.makepyfile("""
+            import pytest
             l = []
-            def pytest_funcarg__something(request):
+            @pytest.fixture
+            def something(request):
                 request.addfinalizer(lambda: l.append(None))
             def test_func(something, missingarg):
                 pass
@@ -558,7 +595,7 @@ class TestRequestBasic:
     def test_request_getmodulepath(self, testdir):
         modcol = testdir.getmodulecol("def test_somefunc(): pass")
         item, = testdir.genitems([modcol])
-        req = funcargs.FixtureRequest(item)
+        req = fixtures.FixtureRequest(item)
         assert req.fspath == modcol.fspath
 
     def test_request_fixturenames(self, testdir):
@@ -584,9 +621,11 @@ class TestRequestBasic:
 
     def test_funcargnames_compatattr(self, testdir):
         testdir.makepyfile("""
+            import pytest
             def pytest_generate_tests(metafunc):
                 assert metafunc.funcargnames == metafunc.fixturenames
-            def pytest_funcarg__fn(request):
+            @pytest.fixture
+            def fn(request):
                 assert request._pyfuncitem.funcargnames == \
                        request._pyfuncitem.fixturenames
                 return request.funcargnames, request.fixturenames
@@ -631,7 +670,9 @@ class TestRequestBasic:
         # this tests that normalization of nodeids takes place
         b = testdir.mkdir("tests").mkdir("unit")
         b.join("conftest.py").write(_pytest._code.Source("""
-            def pytest_funcarg__arg1():
+            import pytest
+            @pytest.fixture
+            def arg1():
                 pass
         """))
         p = b.join("test_module.py")
@@ -679,7 +720,10 @@ class TestRequestBasic:
 class TestRequestMarking:
     def test_applymarker(self, testdir):
         item1,item2 = testdir.getitems("""
-            def pytest_funcarg__something(request):
+            import pytest
+
+            @pytest.fixture
+            def something(request):
                 pass
             class TestClass:
                 def test_func1(self, something):
@@ -687,7 +731,7 @@ class TestRequestMarking:
                 def test_func2(self, something):
                     pass
         """)
-        req1 = funcargs.FixtureRequest(item1)
+        req1 = fixtures.FixtureRequest(item1)
         assert 'xfail' not in item1.keywords
         req1.applymarker(pytest.mark.xfail)
         assert 'xfail' in item1.keywords
@@ -738,7 +782,10 @@ class TestRequestCachedSetup:
         reprec = testdir.inline_runsource("""
             mysetup = ["hello",].pop
 
-            def pytest_funcarg__something(request):
+            import pytest
+
+            @pytest.fixture
+            def something(request):
                 return request.cached_setup(mysetup, scope="module")
 
             def test_func1(something):
@@ -753,7 +800,9 @@ class TestRequestCachedSetup:
         reprec = testdir.inline_runsource("""
             mysetup = ["hello", "hello2", "hello3"].pop
 
-            def pytest_funcarg__something(request):
+            import pytest
+            @pytest.fixture
+            def something(request):
                 return request.cached_setup(mysetup, scope="class")
             def test_func1(something):
                 assert something == "hello3"
@@ -769,7 +818,7 @@ class TestRequestCachedSetup:
 
     def test_request_cachedsetup_extrakey(self, testdir):
         item1 = testdir.getitem("def test_func(): pass")
-        req1 = funcargs.FixtureRequest(item1)
+        req1 = fixtures.FixtureRequest(item1)
         l = ["hello", "world"]
         def setup():
             return l.pop()
@@ -784,7 +833,7 @@ class TestRequestCachedSetup:
 
     def test_request_cachedsetup_cache_deletion(self, testdir):
         item1 = testdir.getitem("def test_func(): pass")
-        req1 = funcargs.FixtureRequest(item1)
+        req1 = fixtures.FixtureRequest(item1)
         l = []
         def setup():
             l.append("setup")
@@ -803,9 +852,13 @@ class TestRequestCachedSetup:
 
     def test_request_cached_setup_two_args(self, testdir):
         testdir.makepyfile("""
-            def pytest_funcarg__arg1(request):
+            import pytest
+
+            @pytest.fixture
+            def arg1(request):
                 return request.cached_setup(lambda: 42)
-            def pytest_funcarg__arg2(request):
+            @pytest.fixture
+            def arg2(request):
                 return request.cached_setup(lambda: 17)
             def test_two_different_setups(arg1, arg2):
                 assert arg1 != arg2
@@ -817,10 +870,14 @@ class TestRequestCachedSetup:
 
     def test_request_cached_setup_getfixturevalue(self, testdir):
         testdir.makepyfile("""
-            def pytest_funcarg__arg1(request):
+            import pytest
+
+            @pytest.fixture
+            def arg1(request):
                 arg1 = request.getfixturevalue("arg2")
                 return request.cached_setup(lambda: arg1 + 1)
-            def pytest_funcarg__arg2(request):
+            @pytest.fixture
+            def arg2(request):
                 return request.cached_setup(lambda: 10)
             def test_two_funcarg(arg1):
                 assert arg1 == 11
@@ -832,8 +889,10 @@ class TestRequestCachedSetup:
 
     def test_request_cached_setup_functional(self, testdir):
         testdir.makepyfile(test_0="""
+            import pytest
             l = []
-            def pytest_funcarg__something(request):
+            @pytest.fixture
+            def something(request):
                 val = request.cached_setup(fsetup, fteardown)
                 return val
             def fsetup(mycache=[1]):
@@ -859,7 +918,10 @@ class TestRequestCachedSetup:
 
     def test_issue117_sessionscopeteardown(self, testdir):
         testdir.makepyfile("""
-            def pytest_funcarg__app(request):
+            import pytest
+
+            @pytest.fixture
+            def app(request):
                 app = request.cached_setup(
                     scope='session',
                     setup=lambda: 0,
@@ -1120,16 +1182,23 @@ class TestFixtureUsages:
 
 
 class TestFixtureManagerParseFactories:
-    def pytest_funcarg__testdir(self, request):
+
+    @pytest.fixture
+    def testdir(self, request):
         testdir = request.getfixturevalue("testdir")
         testdir.makeconftest("""
-            def pytest_funcarg__hello(request):
+            import pytest
+
+            @pytest.fixture
+            def hello(request):
                 return "conftest"
 
-            def pytest_funcarg__fm(request):
+            @pytest.fixture
+            def fm(request):
                 return request._fixturemanager
 
-            def pytest_funcarg__item(request):
+            @pytest.fixture
+            def item(request):
                 return request._pyfuncitem
         """)
         return testdir
@@ -1155,17 +1224,21 @@ class TestFixtureManagerParseFactories:
                     faclist = fm.getfixturedefs(name, item.nodeid)
                     assert len(faclist) == 1
                     fac = faclist[0]
-                    assert fac.func.__name__ == "pytest_funcarg__" + name
+                    assert fac.func.__name__ == name
         """)
         reprec = testdir.inline_run("-s")
         reprec.assertoutcome(passed=1)
 
     def test_parsefactories_conftest_and_module_and_class(self, testdir):
         testdir.makepyfile("""
-            def pytest_funcarg__hello(request):
+            import pytest
+
+            @pytest.fixture
+            def hello(request):
                 return "module"
             class TestClass:
-                def pytest_funcarg__hello(self, request):
+                @pytest.fixture
+                def hello(self, request):
                     return "class"
                 def test_hello(self, item, fm):
                     faclist = fm.getfixturedefs("hello", item.nodeid)
@@ -1213,7 +1286,9 @@ class TestFixtureManagerParseFactories:
 
 
 class TestAutouseDiscovery:
-    def pytest_funcarg__testdir(self, testdir):
+
+    @pytest.fixture
+    def testdir(self, testdir):
         testdir.makeconftest("""
             import pytest
             @pytest.fixture(autouse=True)
@@ -1227,10 +1302,12 @@ class TestAutouseDiscovery:
             def perfunction2(arg1):
                 pass
 
-            def pytest_funcarg__fm(request):
+            @pytest.fixture
+            def fm(request):
                 return request._fixturemanager
 
-            def pytest_funcarg__item(request):
+            @pytest.fixture
+            def item(request):
                 return request._pyfuncitem
         """)
         return testdir
@@ -1509,7 +1586,8 @@ class TestAutouseManagement:
                 def test_2(self):
                     pass
         """)
-        reprec = testdir.inline_run("-v","-s")
+        confcut = "--confcutdir={0}".format(testdir.tmpdir)
+        reprec = testdir.inline_run("-v","-s", confcut)
         reprec.assertoutcome(passed=8)
         config = reprec.getcalls("pytest_unconfigure")[0].config
         l = config.pluginmanager._getconftestmodules(p)[0].l
@@ -1774,17 +1852,19 @@ class TestFixtureMarker:
     def test_scope_module_and_finalizer(self, testdir):
         testdir.makeconftest("""
             import pytest
-            finalized = []
-            created = []
+            finalized_list = []
+            created_list = []
             @pytest.fixture(scope="module")
             def arg(request):
-                created.append(1)
+                created_list.append(1)
                 assert request.scope == "module"
-                request.addfinalizer(lambda: finalized.append(1))
-            def pytest_funcarg__created(request):
-                return len(created)
-            def pytest_funcarg__finalized(request):
-                return len(finalized)
+                request.addfinalizer(lambda: finalized_list.append(1))
+            @pytest.fixture
+            def created(request):
+                return len(created_list)
+            @pytest.fixture
+            def finalized(request):
+                return len(finalized_list)
         """)
         testdir.makepyfile(
             test_mod1="""
@@ -2614,11 +2694,13 @@ class TestShowFixtures:
         ''')
 
 
+@pytest.mark.parametrize('flavor', ['fixture', 'yield_fixture'])
 class TestContextManagerFixtureFuncs:
-    def test_simple(self, testdir):
+
+    def test_simple(self, testdir, flavor):
         testdir.makepyfile("""
             import pytest
-            @pytest.yield_fixture
+            @pytest.{flavor}
             def arg1():
                 print ("setup")
                 yield 1
@@ -2628,7 +2710,7 @@ class TestContextManagerFixtureFuncs:
             def test_2(arg1):
                 print ("test2 %s" % arg1)
                 assert 0
-        """)
+        """.format(flavor=flavor))
         result = testdir.runpytest("-s")
         result.stdout.fnmatch_lines("""
             *setup*
@@ -2639,10 +2721,10 @@ class TestContextManagerFixtureFuncs:
             *teardown*
         """)
 
-    def test_scoped(self, testdir):
+    def test_scoped(self, testdir, flavor):
         testdir.makepyfile("""
             import pytest
-            @pytest.yield_fixture(scope="module")
+            @pytest.{flavor}(scope="module")
             def arg1():
                 print ("setup")
                 yield 1
@@ -2651,7 +2733,7 @@ class TestContextManagerFixtureFuncs:
                 print ("test1 %s" % arg1)
             def test_2(arg1):
                 print ("test2 %s" % arg1)
-        """)
+        """.format(flavor=flavor))
         result = testdir.runpytest("-s")
         result.stdout.fnmatch_lines("""
             *setup*
@@ -2660,86 +2742,65 @@ class TestContextManagerFixtureFuncs:
             *teardown*
         """)
 
-    def test_setup_exception(self, testdir):
+    def test_setup_exception(self, testdir, flavor):
         testdir.makepyfile("""
             import pytest
-            @pytest.yield_fixture(scope="module")
+            @pytest.{flavor}(scope="module")
             def arg1():
                 pytest.fail("setup")
                 yield 1
             def test_1(arg1):
                 pass
-        """)
+        """.format(flavor=flavor))
         result = testdir.runpytest("-s")
         result.stdout.fnmatch_lines("""
             *pytest.fail*setup*
             *1 error*
         """)
 
-    def test_teardown_exception(self, testdir):
+    def test_teardown_exception(self, testdir, flavor):
         testdir.makepyfile("""
             import pytest
-            @pytest.yield_fixture(scope="module")
+            @pytest.{flavor}(scope="module")
             def arg1():
                 yield 1
                 pytest.fail("teardown")
             def test_1(arg1):
                 pass
-        """)
+        """.format(flavor=flavor))
         result = testdir.runpytest("-s")
         result.stdout.fnmatch_lines("""
             *pytest.fail*teardown*
             *1 passed*1 error*
         """)
 
-    def test_yields_more_than_one(self, testdir):
+    def test_yields_more_than_one(self, testdir, flavor):
         testdir.makepyfile("""
             import pytest
-            @pytest.yield_fixture(scope="module")
+            @pytest.{flavor}(scope="module")
             def arg1():
                 yield 1
                 yield 2
             def test_1(arg1):
                 pass
-        """)
+        """.format(flavor=flavor))
         result = testdir.runpytest("-s")
         result.stdout.fnmatch_lines("""
             *fixture function*
             *test_yields*:2*
         """)
 
-
-    def test_no_yield(self, testdir):
+    def test_custom_name(self, testdir, flavor):
         testdir.makepyfile("""
             import pytest
-            @pytest.yield_fixture(scope="module")
+            @pytest.{flavor}(name='meow')
             def arg1():
-                return 1
-            def test_1(arg1):
-                pass
-        """)
+                return 'mew'
+            def test_1(meow):
+                print(meow)
+        """.format(flavor=flavor))
         result = testdir.runpytest("-s")
-        result.stdout.fnmatch_lines("""
-            *yield_fixture*requires*yield*
-            *yield_fixture*
-            *def arg1*
-        """)
-
-    def test_yield_not_allowed_in_non_yield(self, testdir):
-        testdir.makepyfile("""
-            import pytest
-            @pytest.fixture(scope="module")
-            def arg1():
-                yield 1
-            def test_1(arg1):
-                pass
-        """)
-        result = testdir.runpytest("-s")
-        result.stdout.fnmatch_lines("""
-            *fixture*cannot use*yield*
-            *def arg1*
-        """)
-
+        result.stdout.fnmatch_lines("*mew*")
 
 class TestParameterizedSubRequest:
     def test_call_from_fixture(self, testdir):

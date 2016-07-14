@@ -35,6 +35,11 @@ Examples at :ref:`assertraises`.
 
 .. autofunction:: deprecated_call
 
+Comparing floating point numbers
+--------------------------------
+
+.. autoclass:: approx
+
 Raising a specific test outcome
 --------------------------------------
 
@@ -48,7 +53,7 @@ you can rather use declarative marks, see :ref:`skipping`.
 .. autofunction:: _pytest.skipping.xfail
 .. autofunction:: _pytest.runner.exit
 
-fixtures and requests
+Fixtures and requests
 -----------------------------------------------------
 
 To mark a fixture function:
@@ -72,7 +77,7 @@ Builtin fixtures/function arguments
 You can ask for available builtin or project-custom
 :ref:`fixtures <fixtures>` by typing::
 
-    $ py.test -q --fixtures
+    $ pytest -q --fixtures
     cache
         Return a cache object that can persist state between testing sessions.
         

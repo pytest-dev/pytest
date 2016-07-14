@@ -15,7 +15,9 @@ class TestOEJSKITSpecials:
                     return self.fspath, 3, "xyz"
         """)
         modcol = testdir.getmodulecol("""
-            def pytest_funcarg__arg1(request):
+            import pytest
+            @pytest.fixture
+            def arg1(request):
                 return 42
             class MyClass:
                 pass
@@ -43,7 +45,8 @@ class TestOEJSKITSpecials:
             @pytest.fixture(autouse=True)
             def hello():
                 pass
-            def pytest_funcarg__arg1(request):
+            @pytest.fixture
+            def arg1(request):
                 return 42
             class MyClass:
                 pass
@@ -73,7 +76,7 @@ def test_wrapped_getfslineno():
 
 class TestMockDecoration:
     def test_wrapped_getfuncargnames(self):
-        from _pytest.python import getfuncargnames
+        from _pytest.compat import getfuncargnames
         def wrap(f):
             def func():
                 pass
@@ -86,7 +89,7 @@ class TestMockDecoration:
         assert l == ("x",)
 
     def test_wrapped_getfuncargnames_patching(self):
-        from _pytest.python import getfuncargnames
+        from _pytest.compat import getfuncargnames
         def wrap(f):
             def func():
                 pass
@@ -234,7 +237,7 @@ class TestReRunTests:
         """)
 
 def test_pytestconfig_is_session_scoped():
-    from _pytest.python import pytestconfig
+    from _pytest.fixtures import pytestconfig
     assert pytestconfig._pytestfixturefunction.scope == "session"
 
 

@@ -26,7 +26,7 @@ Usage
 
 To get full test coverage reports for a particular package type::
 
-    py.test --cover-report=report
+    pytest --cover-report=report
 
 command line options
 --------------------

@@ -119,9 +119,10 @@ class TestGeneralUsage:
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
             #XXX on jython this fails:  ">   import import_fails",
-            "E   ImportError: No module named *does_not_work*",
+            "ImportError while importing test module*",
+            "'No module named *does_not_work*",
         ])
-        assert result.ret == 1
+        assert result.ret == 2
 
     def test_not_collectable_arguments(self, testdir):
         p1 = testdir.makepyfile("")
@@ -726,11 +727,13 @@ class TestDurations:
         testdir.makepyfile(self.source)
         testdir.makepyfile(test_collecterror="""xyz""")
         result = testdir.runpytest("--durations=2", "-k test_1")
-        assert result.ret != 0
+        assert result.ret == 2
         result.stdout.fnmatch_lines([
-            "*durations*",
-            "*call*test_1*",
+            "*Interrupted: 1 errors during collection*",
         ])
+        # Collection errors abort test execution, therefore no duration is
+        # output
+        assert "duration" not in result.stdout.str()
 
     def test_with_not(self, testdir):
         testdir.makepyfile(self.source)
@@ -759,3 +762,36 @@ class TestDurationWithFixture:
             * setup *test_1*
             * call *test_1*
         """)
+
+
+def test_yield_tests_deprecation(testdir):
+    testdir.makepyfile("""
+        def func1(arg, arg2):
+            assert arg == arg2
+        def test_gen():
+            yield "m1", func1, 15, 3*5
+            yield "m2", func1, 42, 6*7
+    """)
+    result = testdir.runpytest('-ra')
+    result.stdout.fnmatch_lines([
+        '*yield tests are deprecated, and scheduled to be removed in pytest 4.0*',
+        '*2 passed*',
+    ])
+
+
+def test_funcarg_prefix_deprecation(testdir):
+    testdir.makepyfile("""
+        def pytest_funcarg__value():
+            return 10
+
+        def test_funcarg_prefix(value):
+            assert value == 10
+    """)
+    result = testdir.runpytest('-ra')
+    result.stdout.fnmatch_lines([
+        ('WC1 None pytest_funcarg__value: '
+         'declaring fixtures using "pytest_funcarg__" prefix is deprecated '
+         'and scheduled to be removed in pytest 4.0.  '
+         'Please remove the prefix and use the @pytest.fixture decorator instead.'),
+        '*1 passed*',
+    ])

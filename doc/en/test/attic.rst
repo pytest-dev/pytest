@@ -21,7 +21,7 @@ but note that project specific settings will be considered
 first.  There is a flag that helps you debugging your
 conftest.py configurations::
 
-    py.test --trace-config
+    pytest --trace-config
 
 
 customizing the collecting and running process

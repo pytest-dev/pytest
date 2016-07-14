@@ -80,7 +80,7 @@ that match ``*_check``.  For example, if we have::
 
 then the test collection looks like this::
 
-    $ py.test --collect-only
+    $ pytest --collect-only
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: setup.cfg
@@ -107,7 +107,7 @@ interpreting arguments as python package names, deriving
 their file system path and then running the test. For
 example if you have unittest2 installed you can type::
 
-    py.test --pyargs unittest2.test.test_skipping -q
+    pytest --pyargs unittest2.test.test_skipping -q
 
 which would run the respective test module.  Like with
 other options, through an ini-file and the :confval:`addopts` option you
@@ -117,7 +117,7 @@ can make this change more permanently::
     [pytest]
     addopts = --pyargs
 
-Now a simple invocation of ``py.test NAME`` will check
+Now a simple invocation of ``pytest NAME`` will check
 if NAME exists as an importable package/module and otherwise
 treat it as a filesystem path.
 
@@ -126,7 +126,7 @@ Finding out what is collected
 
 You can always peek at the collection tree without running tests like this::
 
-    . $ py.test --collect-only pythoncollection.py
+    . $ pytest --collect-only pythoncollection.py
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
@@ -180,7 +180,7 @@ and a setup.py dummy file like this::
 then a pytest run on Python2 will find the one test and will leave out the
 setup.py file::
 
-    #$ py.test --collect-only
+    #$ pytest --collect-only
     ====== test session starts ======
     platform linux2 -- Python 2.7.10, pytest-2.9.1, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
@@ -193,7 +193,7 @@ setup.py file::
 If you run with a Python3 interpreter both the one test and the setup.py file
 will be left out::
 
-    $ py.test --collect-only
+    $ pytest --collect-only
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini

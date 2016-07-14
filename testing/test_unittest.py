@@ -265,8 +265,8 @@ def test_testcase_custom_exception_info(testdir, type):
             def run(self, result):
                 excinfo = pytest.raises(ZeroDivisionError, lambda: 0/0)
                 # we fake an incompatible exception info
-                from _pytest.monkeypatch import monkeypatch
-                mp = monkeypatch()
+                from _pytest.monkeypatch import MonkeyPatch
+                mp = MonkeyPatch()
                 def t(*args):
                     mp.undo()
                     raise TypeError()
@@ -735,3 +735,17 @@ def test_unittest_skip_issue1169(testdir):
         *SKIP*[1]*skipping due to reasons*
         *1 skipped*
     """)
+
+def test_class_method_containing_test_issue1558(testdir):
+    testdir.makepyfile(test_foo="""
+        import unittest
+
+        class MyTestCase(unittest.TestCase):
+            def test_should_run(self):
+                pass
+            def test_should_not_run(self):
+                pass
+            test_should_not_run.__test__ = False
+    """)
+    reprec = testdir.inline_run()
+    reprec.assertoutcome(passed=1)

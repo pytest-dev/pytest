@@ -704,6 +704,40 @@ class TestAssertionRewriteHookDetails(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines('*1 passed*')
 
+    @pytest.mark.parametrize('initial_conftest', [True, False])
+    @pytest.mark.parametrize('mode', ['plain', 'rewrite', 'reinterp'])
+    def test_conftest_assertion_rewrite(self, testdir, initial_conftest, mode):
+        """Test that conftest files are using assertion rewrite on import.
+        (#1619)
+        """
+        testdir.tmpdir.join('foo/tests').ensure(dir=1)
+        conftest_path = 'conftest.py' if initial_conftest else 'foo/conftest.py'
+        contents = {
+            conftest_path: """
+                import pytest
+                @pytest.fixture
+                def check_first():
+                    def check(values, value):
+                        assert values.pop(0) == value
+                    return check
+            """,
+            'foo/tests/test_foo.py': """
+                def test(check_first):
+                    check_first([10, 30], 30)
+            """
+        }
+        testdir.makepyfile(**contents)
+        result = testdir.runpytest_subprocess('--assert=%s' % mode)
+        if mode == 'plain':
+            expected = 'E       AssertionError'
+        elif mode == 'rewrite':
+            expected = '*assert 10 == 30*'
+        elif mode == 'reinterp':
+            expected = '*AssertionError:*was re-run*'
+        else:
+            assert 0
+        result.stdout.fnmatch_lines([expected])
+
 
 def test_issue731(testdir):
     testdir.makepyfile("""

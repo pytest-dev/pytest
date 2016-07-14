@@ -6,7 +6,7 @@ pytest: helps you write better programs
 
 **a mature full-featured Python testing tool**
 
- - runs on Posix/Windows, Python 2.6-3.5, PyPy and (possibly still) Jython-2.5.1
+ - runs on Posix/Windows, Python 2.6, 2.7 and 3.3-3.5, PyPy and (possibly still) Jython-2.5.1
  - free and open source software, distributed under the terms of the :ref:`MIT license <license>`
  - **well tested** with more than a thousand tests against itself
  - **strict backward compatibility policy** for safe pytest upgrades
@@ -57,5 +57,3 @@ pytest: helps you write better programs
 
 
 .. _`easy`: http://bruynooghe.blogspot.com/2009/12/skipping-slow-test-by-default-in-pytest.html
-
-

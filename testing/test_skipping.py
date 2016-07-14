@@ -209,7 +209,7 @@ class TestXFail:
             def test_this_false():
                 assert 1
         """)
-        result = testdir.runpytest(p, '--report=xfailed', )
+        result = testdir.runpytest(p, '-rx', )
         result.stdout.fnmatch_lines([
             "*test_one*test_this*",
             "*NOTRUN*noway",
@@ -227,7 +227,7 @@ class TestXFail:
             def setup_module(mod):
                 raise ValueError(42)
         """)
-        result = testdir.runpytest(p, '--report=xfailed', )
+        result = testdir.runpytest(p, '-rx', )
         result.stdout.fnmatch_lines([
             "*test_one*test_this*",
             "*NOTRUN*hello",
@@ -309,7 +309,8 @@ class TestXFail:
     def test_dynamic_xfail_no_run(self, testdir):
         p = testdir.makepyfile("""
             import pytest
-            def pytest_funcarg__arg(request):
+            @pytest.fixture
+            def arg(request):
                 request.applymarker(pytest.mark.xfail(run=False))
             def test_this(arg):
                 assert 0
@@ -323,7 +324,8 @@ class TestXFail:
     def test_dynamic_xfail_set_during_funcarg_setup(self, testdir):
         p = testdir.makepyfile("""
             import pytest
-            def pytest_funcarg__arg(request):
+            @pytest.fixture
+            def arg(request):
                 request.applymarker(pytest.mark.xfail)
             def test_this2(arg):
                 assert 0
@@ -682,19 +684,15 @@ def test_skipped_reasons_functional(testdir):
                 def test_method(self):
                     doskip()
        """,
-       test_two = """
-            from conftest import doskip
-            doskip()
-       """,
        conftest = """
             import pytest
             def doskip():
                 pytest.skip('test')
         """
     )
-    result = testdir.runpytest('--report=skipped')
+    result = testdir.runpytest('-rs')
     result.stdout.fnmatch_lines([
-        "*SKIP*3*conftest.py:3: test",
+        "*SKIP*2*conftest.py:3: test",
     ])
     assert result.ret == 0
 
@@ -941,3 +939,19 @@ def test_xfail_item(testdir):
     assert not failed
     xfailed = [r for r in skipped if hasattr(r, 'wasxfail')]
     assert xfailed
+
+
+def test_module_level_skip_error(testdir):
+    """
+    Verify that using pytest.skip at module level causes a collection error
+    """
+    testdir.makepyfile("""
+        import pytest
+        @pytest.skip
+        def test_func():
+            assert True
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        "*Using @pytest.skip outside a test * is not allowed*"
+    )

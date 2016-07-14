@@ -21,7 +21,7 @@ Usage
 
 After :ref:`installation` type::
 
-    py.test 
+    pytest
 
 and you should be able to run your unittest-style tests if they
 are contained in ``test_*`` modules.  If that works for you then
@@ -86,7 +86,7 @@ the pytest fixture function ``db_class`` is called once per class.
 Due to the deliberately failing assert statements, we can take a look at
 the ``self.db`` values in the traceback::
 
-    $ py.test test_unittest_db.py
+    $ pytest test_unittest_db.py
     ======= test session starts ========
     platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -161,7 +161,7 @@ on the class like in the previous example.
 
 Running this test module ...::
 
-    $ py.test -q test_unittest_cleandir.py
+    $ pytest -q test_unittest_cleandir.py
     .
     1 passed in 0.12 seconds
 

@@ -7,7 +7,7 @@ Command line options and configuration file settings
 You can get help on command line options and values in INI-style
 configurations files by using the general help option::
 
-    py.test -h   # prints options _and_ config file settings
+    pytest -h   # prints options _and_ config file settings
 
 This will display command line and configuration file settings
 which were registered by installed plugins.
@@ -62,7 +62,7 @@ per-testrun information.
 
 Example::
 
-    py.test path/to/testdir path/other/
+    pytest path/to/testdir path/other/
 
 will determine the common ancestor as ``path`` and then
 check for ini-files as follows::
@@ -126,9 +126,9 @@ Builtin configuration file options
         [pytest]
         addopts = --maxfail=2 -rf  # exit after 2 failures, report fail info
 
-   issuing ``py.test test_hello.py`` actually means::
+   issuing ``pytest test_hello.py`` actually means::
 
-        py.test --maxfail=2 -rf test_hello.py
+        pytest --maxfail=2 -rf test_hello.py
 
    Default is to add no options.
 
@@ -144,7 +144,7 @@ Builtin configuration file options
         [seq]   matches any character in seq
         [!seq]  matches any char not in seq
 
-   Default patterns are ``'.*', 'CVS', '_darcs', '{arch}', '*.egg'``.
+   Default patterns are ``'.*', 'build', 'dist', 'CVS', '_darcs', '{arch}', '*.egg'``.
    Setting a ``norecursedirs`` replaces the default.  Here is an example of
    how to avoid certain directories:
 
@@ -218,7 +218,7 @@ Builtin configuration file options
 .. confval:: doctest_optionflags
 
    One or more doctest flag names from the standard ``doctest`` module.
-   :doc:`See how py.test handles doctests <doctest>`.
+   :doc:`See how pytest handles doctests <doctest>`.
 
 .. confval:: confcutdir
 

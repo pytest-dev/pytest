@@ -87,8 +87,8 @@ sub directory but not for other directories::
 
 Here is how you might run it::
 
-     py.test test_flat.py   # will not show "setting up"
-     py.test a/test_sub.py  # will show "setting up"
+     pytest test_flat.py   # will not show "setting up"
+     pytest a/test_sub.py  # will show "setting up"
 
 .. Note::
     If you have ``conftest.py`` files which do not reside in a
@@ -479,6 +479,7 @@ you can use the following hook:
 
 .. autofunction:: pytest_pycollect_makeitem
 .. autofunction:: pytest_generate_tests
+.. autofunction:: pytest_make_parametrize_id
 
 After collection is complete, you can modify the order of
 items, delete or otherwise amend the test items:
@@ -497,6 +498,8 @@ Session related reporting hooks:
 .. autofunction:: pytest_report_header
 .. autofunction:: pytest_report_teststatus
 .. autofunction:: pytest_terminal_summary
+.. autofunction:: pytest_fixture_setup
+.. autofunction:: pytest_fixture_post_finalizer
 
 And here is the central hook for reporting about
 test execution:
@@ -550,6 +553,10 @@ Reference of objects involved in hooks
     :show-inheritance:
 
 .. autoclass:: _pytest.python.Function()
+    :members:
+    :show-inheritance:
+
+.. autoclass:: _pytest.python.FixtureDef()
     :members:
     :show-inheritance:
 
