@@ -203,6 +203,7 @@ def test_conftest_import_order(testdir, monkeypatch):
     def impct(p):
         return p
     conftest = PytestPluginManager()
+    conftest._confcutdir = testdir.tmpdir
     monkeypatch.setattr(conftest, '_importconftest', impct)
     assert conftest._getconftestmodules(sub) == [ct1, ct2]
 
