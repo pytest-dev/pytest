@@ -233,7 +233,11 @@ time or change existing behaviors in order to make them less surprising/more use
   Thanks `@Vogtinator`_ for reporting and `@RedBeardCode`_ and
   `@tomviner`_ for the PR.
 
-*
+* Added confcutdir in testing/test_conftest.py::test_conftest_import_order and
+  testing/python/fixture.py::TestAutouseManagement::()::
+  test_class_function_parametrization_finalization to avoid problems with
+  abandoned conftest.py files in /tmp dir (`#1536`_).
+  Thanks to  `@palaviv`_ for reporting and `@RedBeardCode`_ for the PR.
 
 *
 
