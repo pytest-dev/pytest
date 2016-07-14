@@ -807,5 +807,7 @@ def test_str_args_deprecated(tmpdir, testdir):
 
     ret = pytest.main("%s -x" % tmpdir, plugins=[Collect()])
     testdir.delete_loaded_modules()
-    assert warnings == ['passing a string to pytest.main() is deprecated, pass a list of arguments instead.']
+    msg = ('passing a string to pytest.main() is deprecated, '
+           'pass a list of arguments instead.')
+    assert msg in warnings
     assert ret == EXIT_NOTESTSCOLLECTED
