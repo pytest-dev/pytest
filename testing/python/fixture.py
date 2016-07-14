@@ -1586,7 +1586,8 @@ class TestAutouseManagement:
                 def test_2(self):
                     pass
         """)
-        reprec = testdir.inline_run("-v","-s")
+        confcut = "--confcutdir={0}".format(testdir.tmpdir)
+        reprec = testdir.inline_run("-v","-s", confcut)
         reprec.assertoutcome(passed=8)
         config = reprec.getcalls("pytest_unconfigure")[0].config
         l = config.pluginmanager._getconftestmodules(p)[0].l
