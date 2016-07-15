@@ -25,10 +25,6 @@ cutdir2 = py.path.local(_pytest.__file__).dirpath()
 cutdir1 = py.path.local(pluggy.__file__.rstrip("oc"))
 
 
-def _has_positional_arg(func):
-    return func.__code__.co_argcount
-
-
 def filter_traceback(entry):
     # entry.path might sometimes return a str object when the entry
     # points to dynamically generated code
@@ -439,34 +435,51 @@ class Module(pytest.File, PyCollector):
                 "decorator) is not allowed. Use @pytest.mark.skip or "
                 "@pytest.mark.skipif instead."
             )
-        #print "imported test module", mod
         self.config.pluginmanager.consider_module(mod)
         return mod
 
     def setup(self):
-        setup_module = xunitsetup(self.obj, "setUpModule")
+        setup_module = _get_xunit_setup_teardown(self.obj, "setUpModule")
         if setup_module is None:
-            setup_module = xunitsetup(self.obj, "setup_module")
+            setup_module = _get_xunit_setup_teardown(self.obj, "setup_module")
         if setup_module is not None:
-            #XXX: nose compat hack, move to nose plugin
-            # if it takes a positional arg, its probably a pytest style one
-            # so we pass the current module object
-            if _has_positional_arg(setup_module):
-                setup_module(self.obj)
-            else:
-                setup_module()
-        fin = getattr(self.obj, 'tearDownModule', None)
-        if fin is None:
-            fin = getattr(self.obj, 'teardown_module', None)
-        if fin is not None:
-            #XXX: nose compat hack, move to nose plugin
-            # if it takes a positional arg, it's probably a pytest style one
-            # so we pass the current module object
-            if _has_positional_arg(fin):
-                finalizer = lambda: fin(self.obj)
-            else:
-                finalizer = fin
-            self.addfinalizer(finalizer)
+            setup_module()
+
+        teardown_module = _get_xunit_setup_teardown(self.obj, 'tearDownModule')
+        if teardown_module is None:
+            teardown_module = _get_xunit_setup_teardown(self.obj, 'teardown_module')
+        if teardown_module is not None:
+            self.addfinalizer(teardown_module)
+
+
+def _get_xunit_setup_teardown(holder, attr_name, param_obj=None):
+    """
+    Return a callable to perform xunit-style setup or teardown if
+    the function exists in the ``holder`` object.
+    The ``param_obj`` parameter is the parameter which will be passed to the function
+    when the callable is called without arguments, defaults to the ``holder`` object.
+    Return ``None`` if a suitable callable is not found.
+    """
+    param_obj = param_obj if param_obj is not None else holder
+    result = _get_xunit_func(holder, attr_name)
+    if result is not None:
+        arg_count = result.__code__.co_argcount
+        if inspect.ismethod(result):
+            arg_count -= 1
+        if arg_count:
+            return lambda: result(param_obj)
+        else:
+            return result
+
+
+def _get_xunit_func(obj, name):
+    """Return the attribute from the given object to be used as a setup/teardown
+    xunit-style function, but only if not marked as a fixture to
+    avoid calling it twice.
+    """
+    meth = getattr(obj, name, None)
+    if fixtures.getfixturemarker(meth) is None:
+        return meth
 
 
 class Class(PyCollector):
@@ -479,7 +492,7 @@ class Class(PyCollector):
         return [self._getcustomclass("Instance")(name="()", parent=self)]
 
     def setup(self):
-        setup_class = xunitsetup(self.obj, 'setup_class')
+        setup_class = _get_xunit_func(self.obj, 'setup_class')
         if setup_class is not None:
             setup_class = getattr(setup_class, 'im_func', setup_class)
             setup_class = getattr(setup_class, '__func__', setup_class)
@@ -523,12 +536,12 @@ class FunctionMixin(PyobjMixin):
         else:
             setup_name = 'setup_function'
             teardown_name = 'teardown_function'
-        setup_func_or_method = xunitsetup(obj, setup_name)
+        setup_func_or_method = _get_xunit_setup_teardown(obj, setup_name, param_obj=self.obj)
         if setup_func_or_method is not None:
-            setup_func_or_method(self.obj)
-        fin = getattr(obj, teardown_name, None)
-        if fin is not None:
-            self.addfinalizer(lambda: fin(self.obj))
+            setup_func_or_method()
+        teardown_func_or_method = _get_xunit_setup_teardown(obj, teardown_name, param_obj=self.obj)
+        if teardown_func_or_method is not None:
+            self.addfinalizer(teardown_func_or_method)
 
     def _prunetraceback(self, excinfo):
         if hasattr(self, '_obj') and not self.config.option.fulltrace:
@@ -1494,11 +1507,3 @@ class Function(FunctionMixin, pytest.Item, fixtures.FuncargnamesCompatAttr):
         fixtures.fillfixtures(self)
 
 
-
-
-
-
-def xunitsetup(obj, name):
-    meth = getattr(obj, name, None)
-    if fixtures.getfixturemarker(meth) is None:
-        return meth
