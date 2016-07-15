@@ -1,6 +1,8 @@
 #
 # test correct setup/teardowns at
 # module, class, and instance level
+import pytest
+
 
 def test_module_and_function_setup(testdir):
     reprec = testdir.inline_runsource("""
@@ -251,3 +253,53 @@ def test_setup_funcarg_setup_when_outer_scope_fails(testdir):
         "*2 error*"
     ])
     assert "xyz43" not in result.stdout.str()
+
+
+@pytest.mark.parametrize('arg', ['', 'arg'])
+def test_setup_teardown_function_level_with_optional_argument(testdir, monkeypatch, arg):
+    """parameter to setup/teardown xunit-style functions parameter is now optional (#1728)."""
+    import sys
+    trace_setups_teardowns = []
+    monkeypatch.setattr(sys, 'trace_setups_teardowns', trace_setups_teardowns, raising=False)
+    p = testdir.makepyfile("""
+        import pytest
+        import sys
+
+        trace = sys.trace_setups_teardowns.append
+
+        def setup_module({arg}): trace('setup_module')
+        def teardown_module({arg}): trace('teardown_module')
+
+        def setup_function({arg}): trace('setup_function')
+        def teardown_function({arg}): trace('teardown_function')
+
+        def test_function_1(): pass
+        def test_function_2(): pass
+
+        class Test:
+            def setup_method(self, {arg}): trace('setup_method')
+            def teardown_method(self, {arg}): trace('teardown_method')
+
+            def test_method_1(self): pass
+            def test_method_2(self): pass
+    """.format(arg=arg))
+    result = testdir.inline_run(p)
+    result.assertoutcome(passed=4)
+
+    expected = [
+        'setup_module',
+
+        'setup_function',
+        'teardown_function',
+        'setup_function',
+        'teardown_function',
+
+        'setup_method',
+        'teardown_method',
+
+        'setup_method',
+        'teardown_method',
+
+        'teardown_module',
+    ]
+    assert trace_setups_teardowns == expected

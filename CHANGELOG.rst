@@ -163,6 +163,10 @@ time or change existing behaviors in order to make them less surprising/more use
   automatically generated id for that argument will be used.
   Thanks `@palaviv`_ for the complete PR (`#1468`_).
 
+* The parameter to xunit-style setup/teardown methods (``setup_method``,
+  ``setup_module``, etc.) is now optional and may be omitted.
+  Thanks `@okken`_ for bringing this to attention and `@nicoddemus`_ for the PR.
+
 * Improved automatic id generation selection in case of duplicate ids in
   parametrize.
   Thanks `@palaviv`_ for the complete PR (`#1474`_).
@@ -312,6 +316,7 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _@nikratio: https://github.com/nikratio
 .. _@novas0x2a: https://github.com/novas0x2a
 .. _@obestwalter: https://github.com/obestwalter
+.. _@okken: https://github.com/okken
 .. _@olegpidsadnyi: https://github.com/olegpidsadnyi
 .. _@omarkohl: https://github.com/omarkohl
 .. _@palaviv: https://github.com/palaviv
