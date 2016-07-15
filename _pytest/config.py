@@ -941,10 +941,12 @@ class Config(object):
         """
         ns, unknown_args = self._parser.parse_known_and_unknown_args(args)
         mode = ns.assertmode
-        self._warn_about_missing_assertion(mode)
-        if mode != 'plain':
-            hook = _pytest.assertion.install_importhook(self, mode)
-            if hook:
+        if mode == 'rewrite':
+            try:
+                hook = _pytest.assertion.install_importhook(self)
+            except SystemError:
+                mode = 'plain'
+            else:
                 self.pluginmanager.rewrite_hook = hook
                 for entrypoint in pkg_resources.iter_entry_points('pytest11'):
                     for entry in entrypoint.dist._get_metadata('RECORD'):
@@ -957,6 +959,7 @@ class Config(object):
                         elif is_package:
                             package_name = os.path.dirname(fn)
                             hook.mark_rewrite(package_name)
+        self._warn_about_missing_assertion(mode)
 
     def _warn_about_missing_assertion(self, mode):
         try:
@@ -964,15 +967,16 @@ class Config(object):
         except AssertionError:
             pass
         else:
-            if mode == "rewrite":
-                specifically = ("assertions not in test modules or plugins"
-                                "will be ignored")
+            if mode == 'plain':
+                sys.stderr.write("WARNING: ASSERTIONS ARE NOT EXECUTED"
+                                 " and FAILING TESTS WILL PASS.  Are you"
+                                 " using python -O?")
             else:
-                specifically = "failing tests may report as passing"
-            sys.stderr.write("WARNING: " + specifically +
-                             " because assert statements are not executed "
-                             "by the underlying Python interpreter "
-                             "(are you using python -O?)\n")
+                sys.stderr.write("WARNING: assertions not in test modules or"
+                                 " plugins will be ignored"
+                                 " because assert statements are not executed "
+                                 "by the underlying Python interpreter "
+                                 "(are you using python -O?)\n")
 
     def _preparse(self, args, addopts=True):
         self._initini(args)

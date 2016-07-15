@@ -66,24 +66,6 @@ def test_code_from_func():
     assert co.path
 
 
-
-def test_builtin_patch_unpatch(monkeypatch):
-    cpy_builtin = py.builtin.builtins
-    comp = cpy_builtin.compile
-    def mycompile(*args, **kwargs):
-        return comp(*args, **kwargs)
-    class Sub(AssertionError):
-        pass
-    monkeypatch.setattr(cpy_builtin, 'AssertionError', Sub)
-    monkeypatch.setattr(cpy_builtin, 'compile', mycompile)
-    _pytest._code.patch_builtins()
-    assert cpy_builtin.AssertionError != Sub
-    assert cpy_builtin.compile != mycompile
-    _pytest._code.unpatch_builtins()
-    assert cpy_builtin.AssertionError is Sub
-    assert cpy_builtin.compile == mycompile
-
-
 def test_unicode_handling():
     value = py.builtin._totext('\xc4\x85\xc4\x87\n', 'utf-8').encode('utf8')
     def f():

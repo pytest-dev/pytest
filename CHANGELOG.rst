@@ -6,6 +6,10 @@
 A number of incompatible changes were made in this release, with the intent of removing features deprecated for a long
 time or change existing behaviors in order to make them less surprising/more useful.
 
+* Reinterpretation mode has now been removed.  Only plain and rewrite
+  mode are available, consequently the ``--assert=reinterp`` option is
+  no longer available.  Thanks `@flub`_ for the PR.
+
 * The following deprecated commandline options were removed:
 
   * ``--genscript``: no longer supported;

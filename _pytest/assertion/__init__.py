@@ -14,16 +14,14 @@ def pytest_addoption(parser):
     group.addoption('--assert',
                     action="store",
                     dest="assertmode",
-                    choices=("rewrite", "reinterp", "plain",),
+                    choices=("rewrite", "plain",),
                     default="rewrite",
                     metavar="MODE",
-                    help="""control assertion debugging tools.  'plain'
-                            performs no assertion debugging.  'reinterp'
-                            reinterprets assert statements after they failed
-                            to provide assertion expression information.
-                            'rewrite' (the default) rewrites assert
-                            statements in test modules on import to
-                            provide assert expression information. """)
+                    help="""Control assertion debugging tools.  'plain'
+                            performs no assertion debugging.  'rewrite'
+                            (the default) rewrites assert statements in
+                            test modules on import to provide assert
+                            expression information.""")
 
 
 def pytest_namespace():
@@ -60,37 +58,21 @@ class AssertionState:
     def __init__(self, config, mode):
         self.mode = mode
         self.trace = config.trace.root.get("assertion")
+        self.hook = None
 
 
-def install_importhook(config, mode):
-    if mode == "rewrite":
-        try:
-            import ast  # noqa
-        except ImportError:
-            mode = "reinterp"
-        else:
-            # Both Jython and CPython 2.6.0 have AST bugs that make the
-            # assertion rewriting hook malfunction.
-            if (sys.platform.startswith('java') or
-                    sys.version_info[:3] == (2, 6, 0)):
-                mode = "reinterp"
+def install_importhook(config):
+    """Try to install the rewrite hook, raise SystemError if it fails."""
+    # Both Jython and CPython 2.6.0 have AST bugs that make the
+    # assertion rewriting hook malfunction.
+    if (sys.platform.startswith('java') or
+            sys.version_info[:3] == (2, 6, 0)):
+        raise SystemError('rewrite not supported')
 
-    config._assertstate = AssertionState(config, mode)
-
-    _load_modules(mode)
-    from _pytest.monkeypatch import MonkeyPatch
-    m = MonkeyPatch()
-    config._cleanup.append(m.undo)
-    m.setattr(py.builtin.builtins, 'AssertionError',
-              reinterpret.AssertionError)  # noqa
-
-    hook = None
-    if mode == "rewrite":
-        hook = rewrite.AssertionRewritingHook(config)  # noqa
-        sys.meta_path.insert(0, hook)
-
-    config._assertstate.hook = hook
-    config._assertstate.trace("configured with mode set to %r" % (mode,))
+    config._assertstate = AssertionState(config, 'rewrite')
+    config._assertstate.hook = hook = rewrite.AssertionRewritingHook(config)
+    sys.meta_path.insert(0, hook)
+    config._assertstate.trace('installed rewrite import hook')
     def undo():
         hook = config._assertstate.hook
         if hook is not None and hook in sys.meta_path:
@@ -167,14 +149,6 @@ def pytest_sessionfinish(session):
     if assertstate:
         if assertstate.hook is not None:
             assertstate.hook.set_session(None)
-
-
-def _load_modules(mode):
-    """Lazily import assertion related code."""
-    global rewrite, reinterpret
-    from _pytest.assertion import reinterpret  # noqa
-    if mode == "rewrite":
-        from _pytest.assertion import rewrite  # noqa
 
 
 # Expose this plugin's implementation for the pytest_assertrepr_compare hook
