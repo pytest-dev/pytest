@@ -282,7 +282,7 @@ class PytestPluginManager(PluginManager):
         try:
             return self._path2confmods[path]
         except KeyError:
-            if path.isfile():
+            if os.path.isfile(path.__str__()):
                 clist = self._getconftestmodules(path.dirpath())
             else:
                 # XXX these days we may rather want to use config.rootdir
@@ -293,7 +293,7 @@ class PytestPluginManager(PluginManager):
                     if self._confcutdir and self._confcutdir.relto(parent):
                         continue
                     conftestpath = parent.join("conftest.py")
-                    if conftestpath.isfile():
+                    if os.path.isfile(conftestpath.__str__()):
                         mod = self._importconftest(conftestpath)
                         clist.append(mod)
 
@@ -1108,7 +1108,7 @@ def get_common_ancestor(args):
                     common_ancestor = shared
     if common_ancestor is None:
         common_ancestor = py.path.local()
-    elif not common_ancestor.isdir():
+    elif not os.path.isdir(common_ancestor.__str__()):
         common_ancestor = common_ancestor.dirpath()
     return common_ancestor
 
@@ -1127,7 +1127,7 @@ def determine_setup(inifile, args):
             [ancestor], ["pytest.ini", "tox.ini", "setup.cfg"])
         if rootdir is None:
             for rootdir in ancestor.parts(reverse=True):
-                if rootdir.join("setup.py").exists():
+                if os.path.isfile(rootdir.join("setup.py").__str__()):
                     break
             else:
                 rootdir = ancestor
