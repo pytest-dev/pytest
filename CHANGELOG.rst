@@ -220,6 +220,10 @@ time or change existing behaviors in order to make them less surprising/more use
   still present but is now considered deprecated. Thanks to `@RedBeardCode`_ and `@tomviner`_
   for the PR (`#1626`_).
 
+* ``optparse`` type usage now triggers DeprecationWarnings (`#1740`_).
+
+* ``optparse`` backward compatibility supports float/complex types (`#457`_).
+
 *
 
 *
@@ -256,6 +260,8 @@ time or change existing behaviors in order to make them less surprising/more use
 
 .. _#372: https://github.com/pytest-dev/pytest/issues/372
 .. _#460: https://github.com/pytest-dev/pytest/pull/460
+.. _#457: https://github.com/pytest-dev/pytest/issues/457
+.. _#1740: https://github.com/pytest-dev/pytest/issues/1740
 .. _#607: https://github.com/pytest-dev/pytest/issues/607
 .. _#925: https://github.com/pytest-dev/pytest/issues/925
 .. _#1235: https://github.com/pytest-dev/pytest/issues/1235

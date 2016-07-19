@@ -552,13 +552,18 @@ class ArgumentError(Exception):
 
 
 class Argument:
-    """class that mimics the necessary behaviour of optparse.Option """
+    """class that mimics the necessary behaviour of optparse.Option
+
+    its currently a least effort implementation
+    and ignoring choices and integer prefixes
+    https://docs.python.org/3/library/optparse.html#optparse-standard-option-types
+    """
     _typ_map = {
         'int': int,
         'string': str,
-        }
-    # enable after some grace period for plugin writers
-    TYPE_WARN = False
+        'float': float,
+        'complex': complex,
+    }
 
     def __init__(self, *names, **attrs):
         """store parms in private vars for use in add_argument"""
@@ -566,17 +571,12 @@ class Argument:
         self._short_opts = []
         self._long_opts = []
         self.dest = attrs.get('dest')
-        if self.TYPE_WARN:
-            try:
-                help = attrs['help']
-                if '%default' in help:
-                    warnings.warn(
-                        'pytest now uses argparse. "%default" should be'
-                        ' changed to "%(default)s" ',
-                        FutureWarning,
-                        stacklevel=3)
-            except KeyError:
-                pass
+        if '%default' in (attrs.get('help') or ''):
+            warnings.warn(
+                'pytest now uses argparse. "%default" should be'
+                ' changed to "%(default)s" ',
+                DeprecationWarning,
+                stacklevel=3)
         try:
             typ = attrs['type']
         except KeyError:
@@ -585,25 +585,23 @@ class Argument:
             # this might raise a keyerror as well, don't want to catch that
             if isinstance(typ, py.builtin._basestring):
                 if typ == 'choice':
-                    if self.TYPE_WARN:
-                        warnings.warn(
-                            'type argument to addoption() is a string %r.'
-                            ' For parsearg this is optional and when supplied '
-                            ' should be a type.'
-                            ' (options: %s)' % (typ, names),
-                            FutureWarning,
-                            stacklevel=3)
+                    warnings.warn(
+                        'type argument to addoption() is a string %r.'
+                        ' For parsearg this is optional and when supplied '
+                        ' should be a type.'
+                        ' (options: %s)' % (typ, names),
+                        DeprecationWarning,
+                        stacklevel=3)
                     # argparse expects a type here take it from
                     # the type of the first element
                     attrs['type'] = type(attrs['choices'][0])
                 else:
-                    if self.TYPE_WARN:
-                        warnings.warn(
-                            'type argument to addoption() is a string %r.'
-                            ' For parsearg this should be a type.'
-                            ' (options: %s)' % (typ, names),
-                            FutureWarning,
-                            stacklevel=3)
+                    warnings.warn(
+                        'type argument to addoption() is a string %r.'
+                        ' For parsearg this should be a type.'
+                        ' (options: %s)' % (typ, names),
+                        DeprecationWarning,
+                        stacklevel=3)
                     attrs['type'] = Argument._typ_map[typ]
                 # used in test_parseopt -> test_parse_defaultgetter
                 self.type = attrs['type']
