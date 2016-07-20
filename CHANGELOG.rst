@@ -51,6 +51,9 @@ time or change existing behaviors in order to make them less surprising/more use
 * ``_pytest.monkeypatch.monkeypatch`` class has been renamed to ``_pytest.monkeypatch.MonkeyPatch``
   so it doesn't conflict with the ``monkeypatch`` fixture.
 
+* ``--exitfirst / -x`` can now be overridden by a following ``--maxfail=N``
+  and is just a synonym for ``--maxfail=1``.
+
 *
 
 *

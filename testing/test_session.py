@@ -197,6 +197,14 @@ class TestNewSession(SessionTests):
         colfail = [x for x in finished if x.failed]
         assert len(colfail) == 1
 
+    def test_minus_x_overriden_by_maxfail(self, testdir):
+        testdir.makepyfile(__init__="")
+        testdir.makepyfile(test_one="xxxx", test_two="yyyy", test_third="zzz")
+        reprec = testdir.inline_run("-x", "--maxfail=2", testdir.tmpdir)
+        finished = reprec.getreports("pytest_collectreport")
+        colfail = [x for x in finished if x.failed]
+        assert len(colfail) == 2
+
 
 def test_plugin_specify(testdir):
     pytest.raises(ImportError, """
