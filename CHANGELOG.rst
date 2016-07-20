@@ -116,10 +116,11 @@
   Example '-o xfail_strict=True'. A complete ini-options can be viewed
   by py.test --help. Thanks `@blueyed`_ and `@fengxx`_ for the PR
 
-* New scope for fixtures: ``"invocation"``. This fixtures may be requested by fixtures from
-  any scope, when they assume the same scope as the fixture requesting it. An ``invocation``-scoped
-  fixture can be requested from different scopes in the same test session,
-  in which case each scope will have its own copy. This feature is considered experimental.
+* Experimentally introduce new ``"invocation"`` fixture scope. At invocation scope a
+  fixture function is cached in the same way as the fixture or test function that requests it.
+  You can now use the builtin ``monkeypatch`` fixture from ``session``-scoped fixtures
+  where previously you would get an error that you can not use a ``function``-scoped fixture from a
+  ``session``-scoped one.*
   Thanks `@nicoddemus`_ for the PR.
 
 *

@@ -1074,9 +1074,7 @@ class FixtureManager:
                 assert not name.startswith(self._argprefix), name
 
             def new_fixture_def(name, scope):
-                """
-                Creates and registers a new FixtureDef with given name and scope.
-                """
+                """Create and registers a new FixtureDef with given name and scope."""
                 fixture_def = FixtureDef(self, nodeid, name, obj,
                                          scope, marker.params,
                                          unittest=unittest, ids=marker.ids)
@@ -1126,7 +1124,7 @@ class FixtureManager:
     def getfixturedefs_multiple_scopes(self, argname, nodeid):
         """
         Gets multiple scoped fixtures which are applicable to the given nodeid. Multiple scoped
-        fixtures are usually created by "invocation" scoped fixtures and have argnames in
+        fixtures are created by "invocation" scoped fixtures and have argnames in
         the form: "<argname>:<scope>" (for example "tmpdir:session").
 
         :return: dict of "argname" -> [FixtureDef].

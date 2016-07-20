@@ -37,6 +37,11 @@ value and can manage processes which will live for the duration of the scope.
 
     @pytest.fixture(scope='invocation')
     def process_manager():
+        """
+        Return a ProcessManager instance which can be used to start
+        long-lived processes and ensures they are terminated at the
+        appropriate scope.
+        """
         m = ProcessManager()
         yield m
         m.shutdown_all()
