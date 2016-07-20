@@ -79,7 +79,7 @@ than ``--tb=long``). It also ensures that a stack trace is printed on
 **KeyboardInterrrupt** (Ctrl+C).
 This is very useful if the tests are taking too long and you interrupt them
 with Ctrl+C to find out where the tests are *hanging*. By default no output
-will be shown (because KeyboardInterrupt is catched by pytest). By using this
+will be shown (because KeyboardInterrupt is caught by pytest). By using this
 option you make sure a trace is shown.
 
 Dropping to PDB_ (Python Debugger) on failures
@@ -204,7 +204,7 @@ This will add an extra property ``example_key="1"`` to the generated
 LogXML: add_global_property
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. versionadded:: 2.10
+.. versionadded:: 3.0
 
 If you want to add a properties node in the testsuite level, which may contains properties that are relevant
 to all testcases you can use ``LogXML.add_global_properties``

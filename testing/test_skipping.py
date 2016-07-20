@@ -309,7 +309,8 @@ class TestXFail:
     def test_dynamic_xfail_no_run(self, testdir):
         p = testdir.makepyfile("""
             import pytest
-            def pytest_funcarg__arg(request):
+            @pytest.fixture
+            def arg(request):
                 request.applymarker(pytest.mark.xfail(run=False))
             def test_this(arg):
                 assert 0
@@ -323,7 +324,8 @@ class TestXFail:
     def test_dynamic_xfail_set_during_funcarg_setup(self, testdir):
         p = testdir.makepyfile("""
             import pytest
-            def pytest_funcarg__arg(request):
+            @pytest.fixture
+            def arg(request):
                 request.applymarker(pytest.mark.xfail)
             def test_this2(arg):
                 assert 0

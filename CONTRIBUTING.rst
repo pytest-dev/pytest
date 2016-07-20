@@ -120,6 +120,8 @@ the following:
 
 - an issue tracker for bug reports and enhancement requests.
 
+- a `changelog <http://keepachangelog.com/>`_
+
 If no contributor strongly objects and two agree, the repository can then be
 transferred to the ``pytest-dev`` organisation.
 

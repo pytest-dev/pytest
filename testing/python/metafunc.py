@@ -5,7 +5,7 @@ import sys
 import _pytest._code
 import py
 import pytest
-from _pytest import python as funcargs
+from _pytest import python, fixtures
 
 import hypothesis
 from hypothesis import strategies
@@ -22,9 +22,9 @@ class TestMetafunc:
             name2fixturedefs = None
             def __init__(self, names):
                 self.names_closure = names
-        names = funcargs.getfuncargnames(func)
+        names = fixtures.getfuncargnames(func)
         fixtureinfo = FixtureInfo(names)
-        return funcargs.Metafunc(func, fixtureinfo, None)
+        return python.Metafunc(func, fixtureinfo, None)
 
     def test_no_funcargs(self, testdir):
         def function(): pass
@@ -448,13 +448,13 @@ class TestMetafunc:
 
     def test_parametrize_functional(self, testdir):
         testdir.makepyfile("""
+            import pytest
             def pytest_generate_tests(metafunc):
                 metafunc.parametrize('x', [1,2], indirect=True)
                 metafunc.parametrize('y', [2])
-            def pytest_funcarg__x(request):
+            @pytest.fixture
+            def x(request):
                 return request.param * 10
-            #def pytest_funcarg__y(request):
-            #    return request.param
 
             def test_simple(x,y):
                 assert x in (10,20)
@@ -558,16 +558,16 @@ class TestMetafunc:
 
     def test_format_args(self):
         def function1(): pass
-        assert funcargs._format_args(function1) == '()'
+        assert fixtures._format_args(function1) == '()'
 
         def function2(arg1): pass
-        assert funcargs._format_args(function2) == "(arg1)"
+        assert fixtures._format_args(function2) == "(arg1)"
 
         def function3(arg1, arg2="qwe"): pass
-        assert funcargs._format_args(function3) == "(arg1, arg2='qwe')"
+        assert fixtures._format_args(function3) == "(arg1, arg2='qwe')"
 
         def function4(arg1, *args, **kwargs): pass
-        assert funcargs._format_args(function4) == "(arg1, *args, **kwargs)"
+        assert fixtures._format_args(function4) == "(arg1, *args, **kwargs)"
 
 
 class TestMetafuncFunctional:
@@ -578,7 +578,8 @@ class TestMetafuncFunctional:
             def pytest_generate_tests(metafunc):
                 metafunc.addcall(param=metafunc)
 
-            def pytest_funcarg__metafunc(request):
+            @pytest.fixture
+            def metafunc(request):
                 assert request._pyfuncitem._genid == "0"
                 return request.param
 
@@ -630,7 +631,9 @@ class TestMetafuncFunctional:
                 metafunc.addcall(param=10)
                 metafunc.addcall(param=20)
 
-            def pytest_funcarg__arg1(request):
+            import pytest
+            @pytest.fixture
+            def arg1(request):
                 return request.param
 
             def test_func1(arg1):
@@ -669,9 +672,12 @@ class TestMetafuncFunctional:
             def pytest_generate_tests(metafunc):
                 metafunc.addcall(param=(1,1), id="hello")
 
-            def pytest_funcarg__arg1(request):
+            import pytest
+            @pytest.fixture
+            def arg1(request):
                 return request.param[0]
-            def pytest_funcarg__arg2(request):
+            @pytest.fixture
+            def arg2(request):
                 return request.param[1]
 
             class TestClass:
@@ -749,17 +755,20 @@ class TestMetafuncFunctional:
             "*4 failed*",
         ])
 
-    def test_parametrize_and_inner_getfuncargvalue(self, testdir):
+    def test_parametrize_and_inner_getfixturevalue(self, testdir):
         p = testdir.makepyfile("""
             def pytest_generate_tests(metafunc):
                 metafunc.parametrize("arg1", [1], indirect=True)
                 metafunc.parametrize("arg2", [10], indirect=True)
 
-            def pytest_funcarg__arg1(request):
-                x = request.getfuncargvalue("arg2")
+            import pytest
+            @pytest.fixture
+            def arg1(request):
+                x = request.getfixturevalue("arg2")
                 return x + request.param
 
-            def pytest_funcarg__arg2(request):
+            @pytest.fixture
+            def arg2(request):
                 return request.param
 
             def test_func1(arg1, arg2):
@@ -777,10 +786,13 @@ class TestMetafuncFunctional:
                 assert "arg1" in metafunc.fixturenames
                 metafunc.parametrize("arg1", [1], indirect=True)
 
-            def pytest_funcarg__arg1(request):
+            import pytest
+            @pytest.fixture
+            def arg1(request):
                 return request.param
 
-            def pytest_funcarg__arg2(request, arg1):
+            @pytest.fixture
+            def arg2(request, arg1):
                 return 10 * arg1
 
             def test_func(arg2):
@@ -870,7 +882,8 @@ class TestMetafuncFunctional:
                 if "arg" in metafunc.funcargnames:
                     metafunc.parametrize("arg", [1,2], indirect=True,
                                          scope=%r)
-            def pytest_funcarg__arg(request):
+            @pytest.fixture
+            def arg(request):
                 l.append(request.param)
                 return request.param
             def test_hello(arg):

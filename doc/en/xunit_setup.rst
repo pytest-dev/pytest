@@ -7,21 +7,20 @@ classic xunit-style setup
 
 This section describes a classic and popular way how you can implement
 fixtures (setup and teardown test state) on a per-module/class/function basis.  
-pytest started supporting these methods around 2005 and subsequently
-nose and the standard library introduced them (under slightly different
-names).  While these setup/teardown methods are and will remain fully
-supported you may also use pytest's more powerful :ref:`fixture mechanism
-<fixture>` which leverages the concept of dependency injection, allowing
-for a more modular and more scalable approach for managing test state, 
-especially for larger projects and for functional testing.  You can
-mix both fixture mechanisms in the same file but unittest-based
-test methods cannot receive fixture arguments.
+
 
 .. note::
 
-    As of pytest-2.4, teardownX functions are not called if 
-    setupX existed and failed/was skipped.  This harmonizes
-    behaviour across all major python testing tools.
+    While these setup/teardown methods are simple and familiar to those
+    coming from a ``unittest`` or nose ``background``, you may also consider
+    using pytest's more powerful :ref:`fixture mechanism
+    <fixture>` which leverages the concept of dependency injection, allowing
+    for a more modular and more scalable approach for managing test state,
+    especially for larger projects and for functional testing.  You can
+    mix both fixture mechanisms in the same file but
+    test methods of ``unittest.TestCase`` subclasses
+    cannot receive fixture arguments.
+
 
 Module level setup/teardown
 --------------------------------------
@@ -37,6 +36,8 @@ which will usually be called once for all the functions::
         """ teardown any state that was previously setup with a setup_module
         method.
         """
+
+As of pytest-3.0, the ``module`` parameter is optional.
 
 Class level setup/teardown
 ----------------------------------
@@ -71,6 +72,8 @@ Similarly, the following methods are called around each method invocation::
         call.
         """
 
+As of pytest-3.0, the ``method`` parameter is optional.
+
 If you would rather define test functions directly at module level
 you can also use the following functions to implement fixtures::
 
@@ -84,7 +87,13 @@ you can also use the following functions to implement fixtures::
         call.
         """
 
-Note that it is possible for setup/teardown pairs to be invoked multiple times
-per testing process.
+As of pytest-3.0, the ``function`` parameter is optional.
+
+Remarks:
+
+* It is possible for setup/teardown pairs to be invoked multiple times
+  per testing process.
+* teardown functions are not called if the corresponding setup function existed
+  and failed/was skipped.
 
 .. _`unittest.py module`: http://docs.python.org/library/unittest.html

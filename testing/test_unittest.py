@@ -265,8 +265,8 @@ def test_testcase_custom_exception_info(testdir, type):
             def run(self, result):
                 excinfo = pytest.raises(ZeroDivisionError, lambda: 0/0)
                 # we fake an incompatible exception info
-                from _pytest.monkeypatch import monkeypatch
-                mp = monkeypatch()
+                from _pytest.monkeypatch import MonkeyPatch
+                mp = MonkeyPatch()
                 def t(*args):
                     mp.undo()
                     raise TypeError()

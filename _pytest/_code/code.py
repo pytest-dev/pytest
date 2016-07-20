@@ -179,18 +179,6 @@ class TracebackEntry(object):
         return self.frame.f_locals
     locals = property(getlocals, None, None, "locals of underlaying frame")
 
-    def reinterpret(self):
-        """Reinterpret the failing statement and returns a detailed information
-           about what operations are performed."""
-        from _pytest.assertion.reinterpret import reinterpret
-        if self.exprinfo is None:
-            source = py.builtin._totext(self.statement).strip()
-            x = reinterpret(source, self.frame, should_fail=True)
-            if not py.builtin._istext(x):
-                raise TypeError("interpret returned non-string %r" % (x,))
-            self.exprinfo = x
-        return self.exprinfo
-
     def getfirstlinesource(self):
         # on Jython this firstlineno can be -1 apparently
         return max(self.frame.code.firstlineno, 0)
@@ -829,29 +817,6 @@ class ReprFuncArgs(TerminalRepr):
                 tw.line(linesofar)
             tw.line("")
 
-
-
-oldbuiltins = {}
-
-def patch_builtins(assertion=True, compile=True):
-    """ put compile and AssertionError builtins to Python's builtins. """
-    if assertion:
-        from _pytest.assertion import reinterpret
-        l = oldbuiltins.setdefault('AssertionError', [])
-        l.append(py.builtin.builtins.AssertionError)
-        py.builtin.builtins.AssertionError = reinterpret.AssertionError
-    if compile:
-        import _pytest._code
-        l = oldbuiltins.setdefault('compile', [])
-        l.append(py.builtin.builtins.compile)
-        py.builtin.builtins.compile = _pytest._code.compile
-
-def unpatch_builtins(assertion=True, compile=True):
-    """ remove compile and AssertionError builtins from Python builtins. """
-    if assertion:
-        py.builtin.builtins.AssertionError = oldbuiltins['AssertionError'].pop()
-    if compile:
-        py.builtin.builtins.compile = oldbuiltins['compile'].pop()
 
 def getrawcode(obj, trycall=True):
     """ return code object for given function. """

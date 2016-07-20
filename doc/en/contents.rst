@@ -20,6 +20,7 @@ Full pytest documentation
    cache
    plugins
 
+   backwards-compatibility
    contributing
    talks
 

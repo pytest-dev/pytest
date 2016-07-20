@@ -3,7 +3,7 @@ import re
 
 import pytest
 import py
-from _pytest.monkeypatch import monkeypatch
+from _pytest.monkeypatch import MonkeyPatch
 
 
 class TempdirFactory:
@@ -92,7 +92,7 @@ def pytest_configure(config):
     available at pytest_configure time, but ideally should be moved entirely
     to the tmpdir_factory session fixture.
     """
-    mp = monkeypatch()
+    mp = MonkeyPatch()
     t = TempdirFactory(config)
     config._cleanup.extend([mp.undo, t.finish])
     mp.setattr(config, '_tmpdirhandler', t, raising=False)

@@ -1,6 +1,7 @@
 """Rewrite assertion AST to produce nice error messages"""
 
 import ast
+import _ast
 import errno
 import itertools
 import imp
@@ -50,6 +51,7 @@ class AssertionRewritingHook(object):
         self.session = None
         self.modules = {}
         self._register_with_pkg_resources()
+        self._must_rewrite = set()
 
     def set_session(self, session):
         self.session = session
@@ -86,7 +88,7 @@ class AssertionRewritingHook(object):
             fn = os.path.join(pth, name.rpartition(".")[2] + ".py")
 
         fn_pypath = py.path.local(fn)
-        if not self._should_rewrite(fn_pypath, state):
+        if not self._should_rewrite(name, fn_pypath, state):
             return None
 
         # The requested module looks like a test file, so rewrite it. This is
@@ -136,7 +138,7 @@ class AssertionRewritingHook(object):
         self.modules[name] = co, pyc
         return self
 
-    def _should_rewrite(self, fn_pypath, state):
+    def _should_rewrite(self, name, fn_pypath, state):
         # always rewrite conftest files
         fn = str(fn_pypath)
         if fn_pypath.basename == 'conftest.py':
@@ -160,7 +162,28 @@ class AssertionRewritingHook(object):
                 finally:
                     self.session = session
                     del session
+        else:
+            for marked in self._must_rewrite:
+                if marked.startswith(name):
+                    return True
         return False
+
+    def mark_rewrite(self, *names):
+        """Mark import names as needing to be re-written.
+
+        The named module or package as well as any nested modules will
+        be re-written on import.
+        """
+        already_imported = set(names).intersection(set(sys.modules))
+        if already_imported:
+            self._warn_already_imported(already_imported)
+        self._must_rewrite.update(names)
+
+    def _warn_already_imported(self, names):
+        self.config.warn(
+            'P1',
+            'Modules are already imported so can not be re-written: %s' %
+            ','.join(names))
 
     def load_module(self, name):
         # If there is an existing module object named 'fullname' in
@@ -876,6 +899,8 @@ class AssertionRewriter(ast.NodeVisitor):
     def visit_Compare(self, comp):
         self.push_format_context()
         left_res, left_expl = self.visit(comp.left)
+        if isinstance(comp.left, (_ast.Compare, _ast.BoolOp)):
+            left_expl = "({0})".format(left_expl)
         res_variables = [self.variable() for i in range(len(comp.ops))]
         load_names = [ast.Name(v, ast.Load()) for v in res_variables]
         store_names = [ast.Name(v, ast.Store()) for v in res_variables]
@@ -885,6 +910,8 @@ class AssertionRewriter(ast.NodeVisitor):
         results = [left_res]
         for i, op, next_operand in it:
             next_res, next_expl = self.visit(next_operand)
+            if isinstance(next_operand, (_ast.Compare, _ast.BoolOp)):
+                next_expl = "({0})".format(next_expl)
             results.append(next_res)
             sym = binop_map[op.__class__]
             syms.append(ast.Str(sym))

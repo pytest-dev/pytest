@@ -334,7 +334,7 @@ class TestFunction:
         reprec.assertoutcome()
 
     def test_function_equality(self, testdir, tmpdir):
-        from _pytest.python import FixtureManager
+        from _pytest.fixtures import FixtureManager
         config = testdir.parseconfigure()
         session = testdir.Session(config)
         session._fixturemanager = FixtureManager(session)
@@ -795,21 +795,24 @@ class TestTracebackCutting:
 
     def test_traceback_argsetup(self, testdir):
         testdir.makeconftest("""
-            def pytest_funcarg__hello(request):
+            import pytest
+
+            @pytest.fixture
+            def hello(request):
                 raise ValueError("xyz")
         """)
         p = testdir.makepyfile("def test(hello): pass")
         result = testdir.runpytest(p)
         assert result.ret != 0
         out = result.stdout.str()
-        assert out.find("xyz") != -1
-        assert out.find("conftest.py:2: ValueError") != -1
+        assert "xyz" in out
+        assert "conftest.py:5: ValueError" in out
         numentries = out.count("_ _ _") # separator for traceback entries
         assert numentries == 0
 
         result = testdir.runpytest("--fulltrace", p)
         out = result.stdout.str()
-        assert out.find("conftest.py:2: ValueError") != -1
+        assert "conftest.py:5: ValueError" in out
         numentries = out.count("_ _ _ _") # separator for traceback entries
         assert numentries > 3
 

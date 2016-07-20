@@ -5,7 +5,7 @@ import traceback
 
 import pytest
 from _pytest._code.code import TerminalRepr, ReprFileLocation, ExceptionInfo
-from _pytest.python import FixtureRequest
+from _pytest.fixtures import FixtureRequest
 
 
 
@@ -70,7 +70,7 @@ class DoctestItem(pytest.Item):
     def setup(self):
         if self.dtest is not None:
             self.fixture_request = _setup_fixtures(self)
-            globs = dict(getfixture=self.fixture_request.getfuncargvalue)
+            globs = dict(getfixture=self.fixture_request.getfixturevalue)
             for name, value in self.fixture_request.getfuncargvalue('doctest_namespace').items():
                 globs[name] = value
             self.dtest.globs.update(globs)

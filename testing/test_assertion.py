@@ -3,10 +3,8 @@ import sys
 import textwrap
 
 import _pytest.assertion as plugin
-import _pytest._code
 import py
 import pytest
-from _pytest.assertion import reinterpret
 from _pytest.assertion import util
 
 PY3 = sys.version_info >= (3, 0)
@@ -23,24 +21,200 @@ def mock_config():
     return Config()
 
 
-def interpret(expr):
-    return reinterpret.reinterpret(expr, _pytest._code.Frame(sys._getframe(1)))
+class TestImportHookInstallation:
+
+    @pytest.mark.parametrize('initial_conftest', [True, False])
+    @pytest.mark.parametrize('mode', ['plain', 'rewrite'])
+    def test_conftest_assertion_rewrite(self, testdir, initial_conftest, mode):
+        """Test that conftest files are using assertion rewrite on import.
+        (#1619)
+        """
+        testdir.tmpdir.join('foo/tests').ensure(dir=1)
+        conftest_path = 'conftest.py' if initial_conftest else 'foo/conftest.py'
+        contents = {
+            conftest_path: """
+                import pytest
+                @pytest.fixture
+                def check_first():
+                    def check(values, value):
+                        assert values.pop(0) == value
+                    return check
+            """,
+            'foo/tests/test_foo.py': """
+                def test(check_first):
+                    check_first([10, 30], 30)
+            """
+        }
+        testdir.makepyfile(**contents)
+        result = testdir.runpytest_subprocess('--assert=%s' % mode)
+        if mode == 'plain':
+            expected = 'E       AssertionError'
+        elif mode == 'rewrite':
+            expected = '*assert 10 == 30*'
+        else:
+            assert 0
+        result.stdout.fnmatch_lines([expected])
+
+    @pytest.mark.parametrize('mode', ['plain', 'rewrite'])
+    def test_pytest_plugins_rewrite(self, testdir, mode):
+        contents = {
+            'conftest.py': """
+                pytest_plugins = ['ham']
+            """,
+            'ham.py': """
+                import pytest
+                @pytest.fixture
+                def check_first():
+                    def check(values, value):
+                        assert values.pop(0) == value
+                    return check
+            """,
+            'test_foo.py': """
+                def test_foo(check_first):
+                    check_first([10, 30], 30)
+            """,
+        }
+        testdir.makepyfile(**contents)
+        result = testdir.runpytest_subprocess('--assert=%s' % mode)
+        if mode == 'plain':
+            expected = 'E       AssertionError'
+        elif mode == 'rewrite':
+            expected = '*assert 10 == 30*'
+        else:
+            assert 0
+        result.stdout.fnmatch_lines([expected])
+
+    @pytest.mark.parametrize('mode', ['plain', 'rewrite'])
+    def test_installed_plugin_rewrite(self, testdir, mode):
+        # Make sure the hook is installed early enough so that plugins
+        # installed via setuptools are re-written.
+        testdir.tmpdir.join('hampkg').ensure(dir=1)
+        contents = {
+            'hampkg/__init__.py': """
+                import pytest
+
+                @pytest.fixture
+                def check_first2():
+                    def check(values, value):
+                        assert values.pop(0) == value
+                    return check
+            """,
+            'spamplugin.py': """
+            import pytest
+            from hampkg import check_first2
+
+            @pytest.fixture
+            def check_first():
+                def check(values, value):
+                    assert values.pop(0) == value
+                return check
+            """,
+            'mainwrapper.py': """
+            import pytest, pkg_resources
+
+            class DummyDistInfo:
+                project_name = 'spam'
+                version = '1.0'
+
+                def _get_metadata(self, name):
+                    return ['spamplugin.py,sha256=abc,123',
+                            'hampkg/__init__.py,sha256=abc,123']
+
+            class DummyEntryPoint:
+                name = 'spam'
+                module_name = 'spam.py'
+                attrs = ()
+                extras = None
+                dist = DummyDistInfo()
+
+                def load(self, require=True, *args, **kwargs):
+                    import spamplugin
+                    return spamplugin
+
+            def iter_entry_points(name):
+                yield DummyEntryPoint()
+
+            pkg_resources.iter_entry_points = iter_entry_points
+            pytest.main()
+            """,
+            'test_foo.py': """
+            def test(check_first):
+                check_first([10, 30], 30)
+
+            def test2(check_first2):
+                check_first([10, 30], 30)
+            """,
+        }
+        testdir.makepyfile(**contents)
+        result = testdir.run(sys.executable, 'mainwrapper.py', '-s', '--assert=%s' % mode)
+        if mode == 'plain':
+            expected = 'E       AssertionError'
+        elif mode == 'rewrite':
+            expected = '*assert 10 == 30*'
+        else:
+            assert 0
+        result.stdout.fnmatch_lines([expected])
+
+    def test_rewrite_ast(self, testdir):
+        testdir.tmpdir.join('pkg').ensure(dir=1)
+        contents = {
+            'pkg/__init__.py': """
+                import pytest
+                pytest.register_assert_rewrite('pkg.helper')
+            """,
+            'pkg/helper.py': """
+                def tool():
+                    a, b = 2, 3
+                    assert a == b
+            """,
+            'pkg/plugin.py': """
+                import pytest, pkg.helper
+                @pytest.fixture
+                def tool():
+                    return pkg.helper.tool
+            """,
+            'pkg/other.py': """
+                l = [3, 2]
+                def tool():
+                    assert l.pop() == 3
+            """,
+            'conftest.py': """
+                pytest_plugins = ['pkg.plugin']
+            """,
+            'test_pkg.py': """
+                import pkg.other
+                def test_tool(tool):
+                    tool()
+                def test_other():
+                    pkg.other.tool()
+            """,
+        }
+        testdir.makepyfile(**contents)
+        result = testdir.runpytest_subprocess('--assert=rewrite')
+        result.stdout.fnmatch_lines(['>*assert a == b*',
+                                     'E*assert 2 == 3*',
+                                     '>*assert l.pop() == 3*',
+                                     'E*AssertionError'])
+
 
 class TestBinReprIntegration:
 
     def test_pytest_assertrepr_compare_called(self, testdir):
         testdir.makeconftest("""
+            import pytest
             l = []
             def pytest_assertrepr_compare(op, left, right):
                 l.append((op, left, right))
-            def pytest_funcarg__l(request):
+
+            @pytest.fixture
+            def list(request):
                 return l
         """)
         testdir.makepyfile("""
             def test_hello():
                 assert 0 == 1
-            def test_check(l):
-                assert l == [("==", 0, 1)]
+            def test_check(list):
+                assert list == [("==", 0, 1)]
         """)
         result = testdir.runpytest("-v")
         result.stdout.fnmatch_lines([
@@ -476,14 +650,6 @@ def test_assertion_options(testdir):
     assert "3 == 4" in result.stdout.str()
     result = testdir.runpytest_subprocess("--assert=plain")
     assert "3 == 4" not in result.stdout.str()
-
-def test_old_assert_mode(testdir):
-    testdir.makepyfile("""
-        def test_in_old_mode():
-            assert "@py_builtins" not in globals()
-    """)
-    result = testdir.runpytest_subprocess("--assert=reinterp")
-    assert result.ret == 0
 
 def test_triple_quoted_string_issue113(testdir):
     testdir.makepyfile("""

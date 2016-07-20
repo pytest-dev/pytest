@@ -119,7 +119,10 @@ class TestPython:
 
     def test_setup_error(self, testdir):
         testdir.makepyfile("""
-            def pytest_funcarg__arg(request):
+            import pytest
+
+            @pytest.fixture
+            def arg(request):
                 raise ValueError()
             def test_function(arg):
                 pass
@@ -131,7 +134,7 @@ class TestPython:
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
             file="test_setup_error.py",
-            line="2",
+            line="5",
             classname="test_setup_error",
             name="test_function")
         fnode = tnode.find_first_by_tag("error")
@@ -444,7 +447,10 @@ class TestPython:
 
     def test_setup_error_captures_stdout(self, testdir):
         testdir.makepyfile("""
-            def pytest_funcarg__arg(request):
+            import pytest
+
+            @pytest.fixture
+            def arg(request):
                 print('hello-stdout')
                 raise ValueError()
             def test_function(arg):
@@ -459,7 +465,10 @@ class TestPython:
     def test_setup_error_captures_stderr(self, testdir):
         testdir.makepyfile("""
             import sys
-            def pytest_funcarg__arg(request):
+            import pytest
+
+            @pytest.fixture
+            def arg(request):
                 sys.stderr.write('hello-stderr')
                 raise ValueError()
             def test_function(arg):
