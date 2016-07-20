@@ -34,8 +34,8 @@ def pytest_addoption(parser):
     #            "**/test_*.py", "**/*_test.py"]
     #)
     group = parser.getgroup("general", "running and selection options")
-    group._addoption('-x', '--exitfirst', action="store_true", default=False,
-               dest="exitfirst",
+    group._addoption('-x', '--exitfirst', action="store_const",
+               dest="maxfail", const=1,
                help="exit instantly on first error or failed test."),
     group._addoption('--maxfail', metavar="num",
                action="store", type=int, dest="maxfail", default=0,
@@ -74,10 +74,10 @@ def pytest_namespace():
     collect = dict(Item=Item, Collector=Collector, File=File, Session=Session)
     return dict(collect=collect)
 
+
 def pytest_configure(config):
     pytest.config = config # compatibiltiy
-    if config.option.exitfirst:
-        config.option.maxfail = 1
+
 
 def wrap_session(config, doit):
     """Skeleton command line program"""
