@@ -229,11 +229,12 @@ class BaseFunctionalTests:
         assert reps[5].failed
 
     def test_exact_teardown_issue1206(self, testdir):
+        """issue shadowing error with wrong number of arguments on teardown_method."""
         rec = testdir.inline_runsource("""
             import pytest
 
             class TestClass:
-                def teardown_method(self):
+                def teardown_method(self, x, y, z):
                     pass
 
                 def test_method(self):
@@ -256,9 +257,9 @@ class BaseFunctionalTests:
         assert reps[2].when == "teardown"
         assert reps[2].longrepr.reprcrash.message in (
                 # python3 error
-                'TypeError: teardown_method() takes 1 positional argument but 2 were given',
+                "TypeError: teardown_method() missing 2 required positional arguments: 'y' and 'z'",
                 # python2 error
-                'TypeError: teardown_method() takes exactly 1 argument (2 given)'
+                'TypeError: teardown_method() takes exactly 4 arguments (2 given)'
                 )
 
     def test_failure_in_setup_function_ignores_custom_repr(self, testdir):
@@ -399,13 +400,15 @@ def test_callinfo():
 @pytest.mark.xfail
 def test_runtest_in_module_ordering(testdir):
     p1 = testdir.makepyfile("""
+        import pytest
         def pytest_runtest_setup(item): # runs after class-level!
             item.function.mylist.append("module")
         class TestClass:
             def pytest_runtest_setup(self, item):
                 assert not hasattr(item.function, 'mylist')
                 item.function.mylist = ['class']
-            def pytest_funcarg__mylist(self, request):
+            @pytest.fixture
+            def mylist(self, request):
                 return request.function.mylist
             def pytest_runtest_call(self, item, __multicall__):
                 try:

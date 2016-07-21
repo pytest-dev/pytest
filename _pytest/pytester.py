@@ -16,6 +16,7 @@ from _pytest._code import Source
 import py
 import pytest
 from _pytest.main import Session, EXIT_OK
+from _pytest.assertion.rewrite import AssertionRewritingHook
 
 
 def pytest_addoption(parser):
@@ -321,7 +322,8 @@ def linecomp(request):
     return LineComp()
 
 
-def pytest_funcarg__LineMatcher(request):
+@pytest.fixture(name='LineMatcher')
+def LineMatcher_fixture(request):
     return LineMatcher
 
 
@@ -684,8 +686,17 @@ class Testdir:
            ``pytest.main()`` instance should use.
 
         :return: A :py:class:`HookRecorder` instance.
-
         """
+        # When running py.test inline any plugins active in the main
+        # test process are already imported.  So this disables the
+        # warning which will trigger to say they can no longer be
+        # re-written, which is fine as they are already re-written.
+        orig_warn = AssertionRewritingHook._warn_already_imported
+        def revert():
+            AssertionRewritingHook._warn_already_imported = orig_warn
+        self.request.addfinalizer(revert)
+        AssertionRewritingHook._warn_already_imported = lambda *a: None
+
         rec = []
         class Collect:
             def pytest_configure(x, config):

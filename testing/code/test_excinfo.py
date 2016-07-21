@@ -274,18 +274,6 @@ class TestTraceback_f_g_h:
         assert entry.lineno == co.firstlineno + 2
         assert entry.frame.code.name == 'g'
 
-def hello(x):
-    x + 5
-
-def test_tbentry_reinterpret():
-    try:
-        hello("hello")
-    except TypeError:
-        excinfo = _pytest._code.ExceptionInfo()
-    tbentry = excinfo.traceback[-1]
-    msg = tbentry.reinterpret()
-    assert msg.startswith("TypeError: ('hello' + 5)")
-
 def test_excinfo_exconly():
     excinfo = pytest.raises(ValueError, h)
     assert excinfo.exconly().startswith('ValueError')
@@ -381,7 +369,9 @@ def test_match_raises_error(testdir):
     ])
 
 class TestFormattedExcinfo:
-    def pytest_funcarg__importasmod(self, request):
+
+    @pytest.fixture
+    def importasmod(self, request):
         def importasmod(source):
             source = _pytest._code.Source(source)
             tmpdir = request.getfixturevalue("tmpdir")
@@ -429,7 +419,7 @@ class TestFormattedExcinfo:
         assert lines == [
             '    def f():',
             '>       assert 0',
-            'E       assert 0'
+            'E       AssertionError'
         ]
 
 
@@ -768,23 +758,6 @@ raise ValueError()
             assert reprtb.extraline == "!!! Recursion detected (same locals & position)"
             assert str(reprtb)
 
-    def test_tb_entry_AssertionError(self, importasmod):
-        # probably this test is a bit redundant
-        # as py/magic/testing/test_assertion.py
-        # already tests correctness of
-        # assertion-reinterpretation  logic
-        mod = importasmod("""
-            def somefunc():
-                x = 1
-                assert x == 2
-        """)
-        excinfo = pytest.raises(AssertionError, mod.somefunc)
-
-        p = FormattedExcinfo()
-        reprentry = p.repr_traceback_entry(excinfo.traceback[-1], excinfo)
-        lines = reprentry.lines
-        assert lines[-1] == "E       assert 1 == 2"
-
     def test_reprexcinfo_getrepr(self, importasmod):
         mod = importasmod("""
             def f(x):
@@ -932,21 +905,6 @@ raise ValueError()
         repr = excinfo.getrepr(**reproptions)
         repr.toterminal(tw)
         assert tw.stringio.getvalue()
-
-
-    def test_native_style(self):
-        excinfo = self.excinfo_from_exec("""
-            assert 0
-        """)
-        repr = excinfo.getrepr(style='native')
-        assert "assert 0" in str(repr.reprcrash)
-        s = str(repr)
-        assert s.startswith('Traceback (most recent call last):\n  File')
-        assert s.endswith('\nAssertionError: assert 0')
-        assert 'exec (source.compile())' in s
-        # python 2.4 fails to get the source line for the assert
-        if py.std.sys.version_info >= (2, 5):
-            assert s.count('assert 0') == 2
 
     def test_traceback_repr_style(self, importasmod):
         mod = importasmod("""

@@ -176,6 +176,63 @@ If a package is installed this way, ``pytest`` will load
     to make it easy for users to find your plugin.
 
 
+Assertion Rewriting
+-------------------
+
+One of the main features of ``pytest`` is the use of plain assert
+statements and the detailed introspection of expressions upon
+assertion failures.  This is provided by "assertion rewriting" which
+modifies the parsed AST before it gets compiled to bytecode.  This is
+done via a :pep:`302` import hook which gets installed early on when
+``pytest`` starts up and will perform this re-writing when modules get
+imported.  However since we do not want to test different bytecode
+then you will run in production this hook only re-writes test modules
+themselves as well as any modules which are part of plugins.  Any
+other imported module will not be re-written and normal assertion
+behaviour will happen.
+
+If you have assertion helpers in other modules where you would need
+assertion rewriting to be enabled you need to ask ``pytest``
+explicitly to re-write this module before it gets imported.
+
+.. autofunction:: pytest.register_assert_rewrite
+
+This is especially important when you write a pytest plugin which is
+created using a package.  The import hook only treats ``conftest.py``
+files and any modules which are listed in the ``pytest11`` entrypoint
+as plugins.  As an example consider the following package::
+
+   pytest_foo/__init__.py
+   pytest_foo/plugin.py
+   pytest_foo/helper.py
+
+With the following typical ``setup.py`` extract:
+
+.. code-block:: python
+
+   setup(
+      ...
+      entry_points={'pytest11': ['foo = pytest_foo.plugin']},
+      ...
+   )
+
+In this case only ``pytest_foo/plugin.py`` will be re-written.  If the
+helper module also contains assert statements which need to be
+re-written it needs to be marked as such, before it gets imported.
+This is easiest by marking it for re-writing inside the
+``__init__.py`` module, which will always be imported first when a
+module inside a package is imported.  This way ``plugin.py`` can still
+import ``helper.py`` normally.  The contents of
+``pytest_foo/__init__.py`` will then need to look like this:
+
+.. code-block:: python
+
+   import pytest
+
+   pytest.register_assert_rewrite('pytest_foo.helper')
+
+
+
 Requiring/Loading plugins in a test module or conftest file
 -----------------------------------------------------------
 
@@ -189,6 +246,16 @@ will be loaded as well.  You can also use dotted path like this::
     pytest_plugins = "myapp.testsupport.myplugin"
 
 which will import the specified module as a ``pytest`` plugin.
+
+Plugins imported like this will automatically be marked to require
+assertion rewriting using the :func:`pytest.register_assert_rewrite`
+mechanism.  However for this to have any effect the module must not be
+imported already, it it was already imported at the time the
+``pytest_plugins`` statement is processed a warning will result and
+assertions inside the plugin will not be re-written.  To fix this you
+can either call :func:`pytest.register_assert_rewrite` yourself before
+the module is imported, or you can arrange the code to delay the
+importing until after the plugin is registered.
 
 
 Accessing another plugin by name

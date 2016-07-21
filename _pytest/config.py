@@ -5,11 +5,13 @@ import traceback
 import types
 import warnings
 
+import pkg_resources
 import py
 # DON't import pytest here because it causes import cycle troubles
 import sys, os
 import _pytest._code
 import _pytest.hookspec  # the extension point definitions
+import _pytest.assertion
 from _pytest._pluggy import PluginManager, HookimplMarker, HookspecMarker
 
 hookimpl = HookimplMarker("pytest")
@@ -24,6 +26,12 @@ class ConftestImportFailure(Exception):
         Exception.__init__(self, path, excinfo)
         self.path = path
         self.excinfo = excinfo
+
+    def __str__(self):
+        etype, evalue, etb = self.excinfo
+        formatted = traceback.format_tb(etb)
+        # The level of the tracebacks we want to print is hand crafted :(
+        return repr(evalue) + '\n' + ''.join(formatted[2:])
 
 
 def main(args=None, plugins=None):
@@ -98,6 +106,7 @@ def get_plugin_manager():
     return get_config().pluginmanager
 
 def _prepareconfig(args=None, plugins=None):
+    warning = None
     if args is None:
         args = sys.argv[1:]
     elif isinstance(args, py.path.local):
@@ -106,6 +115,10 @@ def _prepareconfig(args=None, plugins=None):
         if not isinstance(args, str):
             raise ValueError("not a string or argument list: %r" % (args,))
         args = shlex.split(args, posix=sys.platform != "win32")
+        # we want to remove this way of passing arguments to pytest.main()
+        # in pytest-4.0
+        warning = ('passing a string to pytest.main() is deprecated, '
+                   'pass a list of arguments instead.')
     config = get_config()
     pluginmanager = config.pluginmanager
     try:
@@ -115,6 +128,8 @@ def _prepareconfig(args=None, plugins=None):
                     pluginmanager.consider_pluginarg(plugin)
                 else:
                     pluginmanager.register(plugin)
+        if warning:
+            config.warn('C1', warning)
         return pluginmanager.hook.pytest_cmdline_parse(
                 pluginmanager=pluginmanager, args=args)
     except BaseException:
@@ -152,6 +167,9 @@ class PytestPluginManager(PluginManager):
                 pass
             self.trace.root.setwriter(err.write)
             self.enable_tracing()
+
+        # Config._consider_importhook will set a real object if required.
+        self.rewrite_hook = _pytest.assertion.DummyRewriteHook()
 
     def addhooks(self, module_or_class):
         """
@@ -361,7 +379,9 @@ class PytestPluginManager(PluginManager):
         self._import_plugin_specs(os.environ.get("PYTEST_PLUGINS"))
 
     def consider_module(self, mod):
-        self._import_plugin_specs(getattr(mod, "pytest_plugins", None))
+        plugins = getattr(mod, 'pytest_plugins', [])
+        self.rewrite_hook.mark_rewrite(*plugins)
+        self._import_plugin_specs(plugins)
 
     def _import_plugin_specs(self, spec):
         if spec:
@@ -538,13 +558,18 @@ class ArgumentError(Exception):
 
 
 class Argument:
-    """class that mimics the necessary behaviour of optparse.Option """
+    """class that mimics the necessary behaviour of optparse.Option
+
+    its currently a least effort implementation
+    and ignoring choices and integer prefixes
+    https://docs.python.org/3/library/optparse.html#optparse-standard-option-types
+    """
     _typ_map = {
         'int': int,
         'string': str,
-        }
-    # enable after some grace period for plugin writers
-    TYPE_WARN = False
+        'float': float,
+        'complex': complex,
+    }
 
     def __init__(self, *names, **attrs):
         """store parms in private vars for use in add_argument"""
@@ -552,17 +577,12 @@ class Argument:
         self._short_opts = []
         self._long_opts = []
         self.dest = attrs.get('dest')
-        if self.TYPE_WARN:
-            try:
-                help = attrs['help']
-                if '%default' in help:
-                    warnings.warn(
-                        'pytest now uses argparse. "%default" should be'
-                        ' changed to "%(default)s" ',
-                        FutureWarning,
-                        stacklevel=3)
-            except KeyError:
-                pass
+        if '%default' in (attrs.get('help') or ''):
+            warnings.warn(
+                'pytest now uses argparse. "%default" should be'
+                ' changed to "%(default)s" ',
+                DeprecationWarning,
+                stacklevel=3)
         try:
             typ = attrs['type']
         except KeyError:
@@ -571,25 +591,23 @@ class Argument:
             # this might raise a keyerror as well, don't want to catch that
             if isinstance(typ, py.builtin._basestring):
                 if typ == 'choice':
-                    if self.TYPE_WARN:
-                        warnings.warn(
-                            'type argument to addoption() is a string %r.'
-                            ' For parsearg this is optional and when supplied '
-                            ' should be a type.'
-                            ' (options: %s)' % (typ, names),
-                            FutureWarning,
-                            stacklevel=3)
+                    warnings.warn(
+                        'type argument to addoption() is a string %r.'
+                        ' For parsearg this is optional and when supplied '
+                        ' should be a type.'
+                        ' (options: %s)' % (typ, names),
+                        DeprecationWarning,
+                        stacklevel=3)
                     # argparse expects a type here take it from
                     # the type of the first element
                     attrs['type'] = type(attrs['choices'][0])
                 else:
-                    if self.TYPE_WARN:
-                        warnings.warn(
-                            'type argument to addoption() is a string %r.'
-                            ' For parsearg this should be a type.'
-                            ' (options: %s)' % (typ, names),
-                            FutureWarning,
-                            stacklevel=3)
+                    warnings.warn(
+                        'type argument to addoption() is a string %r.'
+                        ' For parsearg this should be a type.'
+                        ' (options: %s)' % (typ, names),
+                        DeprecationWarning,
+                        stacklevel=3)
                     attrs['type'] = Argument._typ_map[typ]
                 # used in test_parseopt -> test_parse_defaultgetter
                 self.type = attrs['type']
@@ -918,14 +936,62 @@ class Config(object):
         self._parser.addini('addopts', 'extra command line options', 'args')
         self._parser.addini('minversion', 'minimally required pytest version')
 
+    def _consider_importhook(self, args, entrypoint_name):
+        """Install the PEP 302 import hook if using assertion re-writing.
+
+        Needs to parse the --assert=<mode> option from the commandline
+        and find all the installed plugins to mark them for re-writing
+        by the importhook.
+        """
+        ns, unknown_args = self._parser.parse_known_and_unknown_args(args)
+        mode = ns.assertmode
+        if mode == 'rewrite':
+            try:
+                hook = _pytest.assertion.install_importhook(self)
+            except SystemError:
+                mode = 'plain'
+            else:
+                self.pluginmanager.rewrite_hook = hook
+                for entrypoint in pkg_resources.iter_entry_points('pytest11'):
+                    for entry in entrypoint.dist._get_metadata('RECORD'):
+                        fn = entry.split(',')[0]
+                        is_simple_module = os.sep not in fn and fn.endswith('.py')
+                        is_package = fn.count(os.sep) == 1 and fn.endswith('__init__.py')
+                        if is_simple_module:
+                            module_name, ext = os.path.splitext(fn)
+                            hook.mark_rewrite(module_name)
+                        elif is_package:
+                            package_name = os.path.dirname(fn)
+                            hook.mark_rewrite(package_name)
+        self._warn_about_missing_assertion(mode)
+
+    def _warn_about_missing_assertion(self, mode):
+        try:
+            assert False
+        except AssertionError:
+            pass
+        else:
+            if mode == 'plain':
+                sys.stderr.write("WARNING: ASSERTIONS ARE NOT EXECUTED"
+                                 " and FAILING TESTS WILL PASS.  Are you"
+                                 " using python -O?")
+            else:
+                sys.stderr.write("WARNING: assertions not in test modules or"
+                                 " plugins will be ignored"
+                                 " because assert statements are not executed "
+                                 "by the underlying Python interpreter "
+                                 "(are you using python -O?)\n")
+
     def _preparse(self, args, addopts=True):
         self._initini(args)
         if addopts:
             args[:] = shlex.split(os.environ.get('PYTEST_ADDOPTS', '')) + args
             args[:] = self.getini("addopts") + args
         self._checkversion()
+        entrypoint_name = 'pytest11'
+        self._consider_importhook(args, entrypoint_name)
         self.pluginmanager.consider_preparse(args)
-        self.pluginmanager.load_setuptools_entrypoints("pytest11")
+        self.pluginmanager.load_setuptools_entrypoints(entrypoint_name)
         self.pluginmanager.consider_env()
         self.known_args_namespace = ns = self._parser.parse_known_args(args, namespace=self.option.copy())
         if self.known_args_namespace.confcutdir is None and self.inifile:

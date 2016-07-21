@@ -15,7 +15,9 @@ class TestOEJSKITSpecials:
                     return self.fspath, 3, "xyz"
         """)
         modcol = testdir.getmodulecol("""
-            def pytest_funcarg__arg1(request):
+            import pytest
+            @pytest.fixture
+            def arg1(request):
                 return 42
             class MyClass:
                 pass
@@ -43,7 +45,8 @@ class TestOEJSKITSpecials:
             @pytest.fixture(autouse=True)
             def hello():
                 pass
-            def pytest_funcarg__arg1(request):
+            @pytest.fixture
+            def arg1(request):
                 return 42
             class MyClass:
                 pass
