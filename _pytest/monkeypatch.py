@@ -10,7 +10,7 @@ import pytest
 RE_IMPORT_ERROR_NAME = re.compile("^No module named (.*)$")
 
 
-@pytest.fixture
+@pytest.fixture(scope='invocation')
 def monkeypatch(request):
     """The returned ``monkeypatch`` fixture provides these
     helper methods to modify objects, dictionaries or os.environ::
@@ -25,9 +25,11 @@ def monkeypatch(request):
         monkeypatch.chdir(path)
 
     All modifications will be undone after the requesting
-    test function has finished. The ``raising``
+    test function or fixture has finished. The ``raising``
     parameter determines if a KeyError or AttributeError
     will be raised if the set/deletion operation has no target.
+
+    This fixture is ``invocation``-scoped.
     """
     mpatch = MonkeyPatch()
     request.addfinalizer(mpatch.undo)
@@ -97,7 +99,8 @@ notset = Notset()
 
 
 class MonkeyPatch:
-    """ Object keeping a record of setattr/item/env/syspath changes. """
+    """ Object returned by the ``monkeypatch`` fixture keeping a record of setattr/item/env/syspath changes.
+    """
 
     def __init__(self):
         self._setattr = []

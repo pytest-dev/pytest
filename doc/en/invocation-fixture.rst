@@ -9,9 +9,6 @@ Invocation-scoped fixtures
     This feature is experimental, so if decided that it brings too much problems
     or considered too complicated it might be removed in pytest ``3.1``.
 
-    ``tmpdir`` and ``monkeypatch`` might become ``invocation`` scoped
-    fixtures in the future if decided to keep invocation-scoped fixtures.
-
 Fixtures can be defined with ``invocation`` scope, meaning that the fixture
 can be requested by fixtures from any scope, but when they do they assume
 the same scope as the fixture requesting it.
