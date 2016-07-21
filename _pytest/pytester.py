@@ -1049,6 +1049,7 @@ class LineMatcher:
 
     def __init__(self,  lines):
         self.lines = lines
+        self._log_output = []
 
     def str(self):
         """Return the entire original text."""
@@ -1072,10 +1073,11 @@ class LineMatcher:
         for line in lines2:
             for x in self.lines:
                 if line == x or fnmatch(x, line):
-                    print_("matched: ", repr(line))
+                    self._log("matched: ", repr(line))
                     break
             else:
-                raise ValueError("line %r not found in output" % line)
+                self._log("line %r not found in output" % line)
+                raise ValueError(self._log_text)
 
     def get_lines_after(self, fnline):
         """Return all lines following the given line in the text.
@@ -1087,6 +1089,13 @@ class LineMatcher:
                 return self.lines[i+1:]
         raise ValueError("line %r not found in output" % fnline)
 
+    def _log(self, *args):
+        self._log_output.append(' '.join((str(x) for x in args)))
+
+    @property
+    def _log_text(self):
+        return '\n'.join(self._log_output)
+
     def fnmatch_lines(self, lines2):
         """Search the text for matching lines.
 
@@ -1096,8 +1105,6 @@ class LineMatcher:
         stdout.
 
         """
-        def show(arg1, arg2):
-            py.builtin.print_(arg1, arg2, file=sys.stderr)
         lines2 = self._getlines(lines2)
         lines1 = self.lines[:]
         nextline = None
@@ -1108,17 +1115,18 @@ class LineMatcher:
             while lines1:
                 nextline = lines1.pop(0)
                 if line == nextline:
-                    show("exact match:", repr(line))
+                    self._log("exact match:", repr(line))
                     break
                 elif fnmatch(nextline, line):
-                    show("fnmatch:", repr(line))
-                    show("   with:", repr(nextline))
+                    self._log("fnmatch:", repr(line))
+                    self._log("   with:", repr(nextline))
                     break
                 else:
                     if not nomatchprinted:
-                        show("nomatch:", repr(line))
+                        self._log("nomatch:", repr(line))
                         nomatchprinted = True
-                    show("    and:", repr(nextline))
+                    self._log("    and:", repr(nextline))
                 extralines.append(nextline)
             else:
-                pytest.fail("remains unmatched: %r, see stderr" % (line,))
+                self._log("remains unmatched: %r" % (line,))
+                pytest.fail(self._log_text)
