@@ -60,8 +60,6 @@ time or change existing behaviors in order to make them less surprising/more use
 
 *
 
-*
-
 **New Features**
 
 * Support nose-style ``__test__`` attribute on methods of classes,
@@ -251,6 +249,10 @@ time or change existing behaviors in order to make them less surprising/more use
   Thanks `@Vogtinator`_ for reporting and `@RedBeardCode`_ and
   `@tomviner`_ for the PR.
 
+* ``ConftestImportFailure`` now shows the traceback making it easier to
+  identify bugs in ``conftest.py`` files (`#1516`_). Thanks `@txomon`_ for
+  the PR.
+
 *
 
 *
@@ -281,6 +283,7 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _#1479: https://github.com/pytest-dev/pytest/issues/1479
 .. _#1502: https://github.com/pytest-dev/pytest/pull/1502
 .. _#1503: https://github.com/pytest-dev/pytest/issues/1503
+.. _#1516: https://github.com/pytest-dev/pytest/pull/1516
 .. _#1519: https://github.com/pytest-dev/pytest/pull/1519
 .. _#1520: https://github.com/pytest-dev/pytest/pull/1520
 .. _#1526: https://github.com/pytest-dev/pytest/pull/1526
@@ -333,6 +336,7 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _@sober7: https://github.com/sober7
 .. _@tareqalayan: https://github.com/tareqalayan
 .. _@taschini: https://github.com/taschini
+.. _@txomon: https://github.com/txomon
 
 2.9.2
 =====

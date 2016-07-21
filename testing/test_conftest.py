@@ -408,3 +408,16 @@ def test_issue1073_conftest_special_objects(testdir):
     """)
     res = testdir.runpytest()
     assert res.ret == 0
+
+
+def test_conftest_exception_handling(testdir):
+    testdir.makeconftest('''
+        raise ValueError()
+    ''')
+    testdir.makepyfile("""
+        def test_some():
+            pass
+    """)
+    res = testdir.runpytest()
+    assert res.ret == 4
+    assert 'raise ValueError()' in [line.strip() for line in res.errlines]
