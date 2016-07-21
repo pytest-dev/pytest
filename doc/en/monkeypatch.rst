@@ -6,13 +6,16 @@ Monkeypatching/mocking modules and environments
 
 Sometimes tests need to invoke functionality which depends
 on global settings or which invokes code which cannot be easily
-tested such as network access.  The ``monkeypatch`` function argument
+tested such as network access.  The ``monkeypatch`` fixture
 helps you to safely set/delete an attribute, dictionary item or
 environment variable or to modify ``sys.path`` for importing.
 See the `monkeypatch blog post`_ for some introduction material
 and a discussion of its motivation.
 
 .. _`monkeypatch blog post`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
+
+As of pytest-3.0, the ``monkeypatch`` fixture is :ref:`invocation-scoped <invocation_scoped_fixture>`
+meaning it can be requested from fixtures of any scope.
 
 Simple example: monkeypatching functions
 ---------------------------------------------------
@@ -53,27 +56,31 @@ This autouse fixture will be executed for each test function and it
 will delete the method ``request.session.Session.request`` 
 so that any attempts within tests to create http requests will fail.
 
-example: setting an attribute on some class
-------------------------------------------------------
+example: setting an environment variable for the test session
+-------------------------------------------------------------
 
-If you need to patch out ``os.getcwd()`` to return an artificial
-value::
+If you would like for an environment variable to be
+configured for the entire test session, you can add this to your
+top-level ``conftest.py`` file:
 
-    def test_some_interaction(monkeypatch):
-        monkeypatch.setattr("os.getcwd", lambda: "/")
+.. code-block:: python
 
-which is equivalent to the long form::
+    # content of conftest.py
+    @pytest.fixture(scope='session', autouse=True)
+    def enable_debugging(monkeypatch):
+        monkeypatch.setenv("DEBUGGING_VERBOSITY", "4")
 
-    def test_some_interaction(monkeypatch):
-        import os
-        monkeypatch.setattr(os, "getcwd", lambda: "/")
-    
+This auto-use fixture will set the ``DEBUGGING_VERBOSITY`` environment variable for
+the entire test session.
+
+Note that the ability to use a ``monkeypatch`` fixture from a ``session``-scoped
+fixture was added in pytest-3.0.
 
 
-Method reference of the monkeypatch function argument
------------------------------------------------------
+Method reference of the monkeypatch fixture
+-------------------------------------------
 
-.. autoclass:: monkeypatch
+.. autoclass:: MonkeyPatch
     :members: setattr, replace, delattr, setitem, delitem, setenv, delenv, syspath_prepend, chdir, undo
 
 ``monkeypatch.setattr/delattr/delitem/delenv()`` all

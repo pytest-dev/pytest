@@ -603,7 +603,7 @@ first execute with one instance and then finalizers are called
 before the next fixture instance is created.  Among other things,
 this eases testing of applications which create and use global state.
 
-The following example uses two parametrized funcargs, one of which is
+The following example uses two parametrized fixture, one of which is
 scoped on a per-module basis, and all the functions perform ``print`` calls
 to show the setup/teardown flow::
 
@@ -862,6 +862,14 @@ and then e.g. have a TestClass using it by declaring the need::
 All test methods in this TestClass will use the transaction fixture while
 other test classes or functions in the module will not use it unless
 they also add a ``transact`` reference.
+
+invocation-scoped fixtures
+--------------------------
+
+pytest 3.0 introduced a new advanced scope for fixtures: ``"invocation"``. Fixtures marked with
+this scope can be requested from any other scope, providing a version of the fixture for that scope.
+
+See more in :ref:`invocation_scoped_fixture`.
 
 Shifting (visibility of) fixture functions
 ----------------------------------------------------
