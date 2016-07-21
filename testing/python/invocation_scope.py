@@ -1,4 +1,80 @@
 
+def test_invocation_request(testdir):
+    """
+    Simple test case with session and module scopes requesting an
+    invocation-scoped fixture.
+    """
+    testdir.makeconftest("""
+        import pytest
+
+        @pytest.fixture(scope='invocation')
+        def my_name(request):
+            if request.scope == 'function':
+                return request.function.__name__
+            elif request.scope == 'module':
+                return request.module.__name__
+            elif request.scope == 'session':
+                return '<session>'
+
+        @pytest.fixture(scope='session')
+        def session_name(my_name):
+            return my_name
+
+        @pytest.fixture(scope='module')
+        def module_name(my_name):
+            return my_name
+    """)
+    testdir.makepyfile(test_module_foo="""
+        def test_foo(my_name, module_name, session_name):
+            assert my_name == 'test_foo'
+            assert module_name == 'test_module_foo'
+            assert session_name == '<session>'
+    """)
+    testdir.makepyfile(test_module_bar="""
+        def test_bar(my_name, module_name, session_name):
+            assert my_name == 'test_bar'
+            assert module_name == 'test_module_bar'
+            assert session_name == '<session>'
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(['*2 passed*'])
+
+
+def test_override_invocation_scoped(testdir):
+    """Test that it's possible to override invocation-scoped fixtures."""
+    testdir.makeconftest("""
+        import pytest
+
+        @pytest.fixture(scope='invocation')
+        def magic_value(request):
+            if request.scope == 'function':
+                return 1
+            elif request.scope == 'module':
+                return 100
+
+        @pytest.fixture(scope='module')
+        def module_magic_value(magic_value):
+            return magic_value * 2
+    """)
+    testdir.makepyfile(test_module_override="""
+        import pytest
+
+        @pytest.fixture(scope='module')
+        def magic_value():
+            return 42
+
+        def test_override(magic_value, module_magic_value):
+            assert magic_value == 42
+            assert module_magic_value == 42 * 2
+    """)
+    testdir.makepyfile(test_normal="""
+        def test_normal(magic_value, module_magic_value):
+            assert magic_value == 1
+            assert module_magic_value == 200
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(['*2 passed*'])
+
 
 class TestAcceptance:
     """
