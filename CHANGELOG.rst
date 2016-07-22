@@ -156,6 +156,9 @@ time or change existing behaviors in order to make them less surprising/more use
 
 **Changes**
 
+* Exceptions raised during import of ``conftest.py`` modules now
+  cause pytest to write the corresponding traceback to stderr.
+
 * Plugins now benefit from assertion rewriting.  Thanks
   `@sober7`_, `@nicoddemus`_ and `@flub`_ for the PR.
 
