@@ -186,8 +186,8 @@ class _NodeReporter(object):
 
 @pytest.fixture
 def record_xml_property(request):
-    """Fixture that adds extra xml properties to the tag for the calling test.
-    The fixture is callable with (name, value), with value being automatically
+    """Add extra xml properties to the tag for the calling test.
+    The fixture is callable with ``(name, value)``, with value being automatically
     xml-encoded.
     """
     request.node.warn(

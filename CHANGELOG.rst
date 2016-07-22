@@ -36,11 +36,13 @@
   Thanks `@bagerard`_ for reporting (`#1503`_). Thanks to `@davehunt`_ and
   `@tomviner`_ for PR.
 
-* Renamed the pytest ``pdb`` module (plugin) into ``debugging``. 
+* Renamed the pytest ``pdb`` module (plugin) into ``debugging``.
 
 * Improve of the test output for logical expression with brackets.
   Fixes(`#925`_). Thanks `@DRMacIver`_ for reporting. Thanks to `@RedBeardCode`_
   for PR.
+
+* Updated docstrings with a more uniform style.
 
 *
 
