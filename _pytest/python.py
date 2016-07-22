@@ -271,7 +271,7 @@ def pytest_namespace():
 
 @fixture(scope="session")
 def pytestconfig(request):
-    """ the pytest config object with access to command line opts."""
+    """ The pytest config object with access to command line opts."""
     return request.config
 
 

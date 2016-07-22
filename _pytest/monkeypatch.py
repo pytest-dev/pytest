@@ -9,7 +9,7 @@ RE_IMPORT_ERROR_NAME = re.compile("^No module named (.*)$")
 
 
 def pytest_funcarg__monkeypatch(request):
-    """The returned ``monkeypatch`` funcarg provides these
+    """Return a ``monkeypatch`` funcarg providing the following
     helper methods to modify objects, dictionaries or os.environ::
 
         monkeypatch.setattr(obj, name, value, raising=True)
@@ -220,10 +220,10 @@ class monkeypatch:
         """ Undo previous changes.  This call consumes the
         undo stack. Calling it a second time has no effect unless
         you do more monkeypatching after the undo call.
-        
+
         There is generally no need to call `undo()`, since it is
         called automatically during tear-down.
-        
+
         Note that the same `monkeypatch` fixture is used across a
         single test function invocation. If `monkeypatch` is used both by
         the test function itself and one of the test fixtures,
