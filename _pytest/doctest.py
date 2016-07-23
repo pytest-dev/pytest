@@ -295,7 +295,18 @@ def _get_allow_bytes_flag():
     return doctest.register_optionflag('ALLOW_BYTES')
 
 
+def _get_report_choices_keys():
+    """
+    Returns the report choices keys. Separate function (see just below) because this is used to declare options and
+    we can't import the doctest module at that time.
+    """
+    return ('udiff', 'cdiff', 'ndiff', 'only_first_failure', 'none', )
+
 def _get_report_choices():
+    """
+    See `_get_report_choices_keys` to understand why this strange implementation. Be careful with order, the values
+    order should be the same as the returned keys above.
+    """
     import doctest
     return dict(
         zip(
@@ -303,9 +314,6 @@ def _get_report_choices():
             (doctest.REPORT_UDIFF, doctest.REPORT_CDIFF, doctest.REPORT_NDIFF, doctest.REPORT_ONLY_FIRST_FAILURE, 0, )
         )
     )
-
-def _get_report_choices_keys():
-    return ('udiff', 'cdiff', 'ndiff', 'only_first_failure', 'none', )
 
 @pytest.fixture(scope='session')
 def doctest_namespace():
