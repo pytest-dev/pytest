@@ -51,6 +51,10 @@
 * ImportErrors in plugins now are a fatal error instead of issuing a
   pytest warning (`#1479`_). Thanks to `@The-Compiler`_ for the PR.
 
+* Fixed collection of classes with custom ``__new__`` method.
+  Fixes `#1579`_. Thanks to `@Stranger6667`_ for the PR.
+
+.. _#1579: https://github.com/pytest-dev/pytest/issues/1579
 .. _#1580: https://github.com/pytest-dev/pytest/pull/1580
 .. _#1605: https://github.com/pytest-dev/pytest/issues/1605
 .. _#1597: https://github.com/pytest-dev/pytest/pull/1597
@@ -72,6 +76,7 @@
 .. _@DRMacIver: https://github.com/DRMacIver
 .. _@BeyondEvil: https://github.com/BeyondEvil
 .. _@JonathonSonesen: https://github.com/JonathonSonesen
+.. _@Stranger6667: https://github.com/Stranger6667
 
 
 2.9.2

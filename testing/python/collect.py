@@ -109,6 +109,18 @@ class TestClass:
         colitems = modcol.collect()
         assert len(colitems) == 0
 
+    def test_issue1579_namedtuple(self, testdir):
+        testdir.makepyfile("""
+            import collections
+
+            TestCase = collections.namedtuple('TestCase', ['a'])
+        """)
+        result = testdir.runpytest('-rw')
+        result.stdout.fnmatch_lines(
+            "*cannot collect test class 'TestCase' "
+            "because it has a __new__ constructor*"
+        )
+
 
 class TestGenerator:
     def test_generative_functions(self, testdir):
