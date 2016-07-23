@@ -17,6 +17,9 @@ def pytest_addoption(parser):
         action="store_true", default=False,
         help="run doctests in all .py modules",
         dest="doctestmodules")
+    group.addoption("--doctest-report",
+        type=str, default="UDIFF", choices=_get_report_choices().keys(),
+        dest="doctestreport")
     group.addoption("--doctest-glob",
         action="append", default=[], metavar="pat",
         help="doctests file matching pattern, default: test*.txt",
@@ -94,7 +97,7 @@ class DoctestItem(pytest.Item):
             message = excinfo.type.__name__
             reprlocation = ReprFileLocation(filename, lineno, message)
             checker = _get_checker()
-            REPORT_UDIFF = doctest.REPORT_UDIFF
+            REPORT_UDIFF = _get_report_choices().get(self.config.getoption("doctestreport"))
             if lineno is not None:
                 lines = doctestfailure.test.docstring.splitlines(False)
                 # add line numbers to the left of the error message
@@ -289,6 +292,17 @@ def _get_allow_bytes_flag():
     """
     import doctest
     return doctest.register_optionflag('ALLOW_BYTES')
+
+
+def _get_report_choices():
+    import doctest
+    return dict(
+        UDIFF=doctest.REPORT_UDIFF,
+        CDIFF=doctest.REPORT_CDIFF,
+        NDIFF=doctest.REPORT_NDIFF,
+        ONLY_FIRST_FAILURE=doctest.REPORT_ONLY_FIRST_FAILURE,
+        NONE=0,
+    )
 
 
 @pytest.fixture(scope='session')
