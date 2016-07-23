@@ -4,7 +4,8 @@
 **Bug Fixes**
 
 * Add an 'E' to the first line of error messages from FixtureLookupErrorRepr.
-  Fixes (`#717`_). Thanks `@blueyed`_ for reporting and `@eolo999`_ for the PR.
+  Fixes (`#717`_). Thanks `@blueyed`_ for reporting, `@eolo999`_ for the PR
+  and `@tomviner`_ for his guidance during EuroPython2016 sprint.
 
 * Text documents without any doctests no longer appear as "skipped".
   Thanks `@graingert`_ for reporting and providing a full PR (`#1580`_).
