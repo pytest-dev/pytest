@@ -111,7 +111,7 @@ class DoctestItem(pytest.Item):
             message = excinfo.type.__name__
             reprlocation = ReprFileLocation(filename, lineno, message)
             checker = _get_checker()
-            REPORT_UDIFF = _get_report_choice(self.config.getoption("doctestreport"))
+            report_choice = _get_report_choice(self.config.getoption("doctestreport"))
             if lineno is not None:
                 lines = doctestfailure.test.docstring.splitlines(False)
                 # add line numbers to the left of the error message
@@ -127,7 +127,7 @@ class DoctestItem(pytest.Item):
                     indent = '...'
             if excinfo.errisinstance(doctest.DocTestFailure):
                 lines += checker.output_difference(example,
-                        doctestfailure.got, REPORT_UDIFF).split("\n")
+                        doctestfailure.got, report_choice).split("\n")
             else:
                 inner_excinfo = ExceptionInfo(excinfo.value.exc_info)
                 lines += ["UNEXPECTED EXCEPTION: %s" %
