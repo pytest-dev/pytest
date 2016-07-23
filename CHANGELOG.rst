@@ -53,6 +53,7 @@
 * ImportErrors in plugins now are a fatal error instead of issuing a
   pytest warning (`#1479`_). Thanks to `@The-Compiler`_ for the PR.
 
+.. _#717: https://github.com/pytest-dev/pytest/issues/717
 .. _#1580: https://github.com/pytest-dev/pytest/pull/1580
 .. _#1605: https://github.com/pytest-dev/pytest/issues/1605
 .. _#1597: https://github.com/pytest-dev/pytest/pull/1597
@@ -63,6 +64,8 @@
 .. _#1479: https://github.com/pytest-dev/pytest/issues/1479
 .. _#925: https://github.com/pytest-dev/pytest/issues/925
 
+.. _@eolo999: https://github.com/eolo999
+.. _@blueyed: https://github.com/blueyed
 .. _@graingert: https://github.com/graingert
 .. _@taschini: https://github.com/taschini
 .. _@nikratio: https://github.com/nikratio
