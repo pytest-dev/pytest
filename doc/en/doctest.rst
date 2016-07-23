@@ -135,6 +135,8 @@ which can then be used in your doctests directly::
 Output format
 -------------
 
+.. versionadded:: 3.0
+
 You can change the diff output format on failure for your doctests
 by using one of standard doctest modules format in options
 (see :data:`python:doctest.REPORT_UDIFF`, :data:`python:doctest.REPORT_CDIFF`,
