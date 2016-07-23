@@ -804,7 +804,8 @@ class TestDoctestReportingOption:
             """)
         return testdir.runpytest("--doctest-modules", "--doctest-report", format)
 
-    def test_doctest_report_udiff(self, testdir, format='udiff'):
+    @pytest.mark.parametrize('format', ['udiff', 'UDIFF', 'uDiFf'])
+    def test_doctest_report_udiff(self, testdir, format):
         result = self._run_doctest_report(testdir, format)
         result.stdout.fnmatch_lines([
             '     0  1  4',
@@ -854,10 +855,6 @@ class TestDoctestReportingOption:
                 '    1  2  5',
                 '    2  3  6',
             ])
-
-    def test_doctest_report_case_insensitive(self, testdir):
-        for format in 'udiff', 'UDIFF', 'uDiFf':
-            self.test_doctest_report_udiff(testdir, format)
 
     def test_doctest_report_invalid(self, testdir):
         result = self._run_doctest_report(testdir, 'obviously_invalid_format')
