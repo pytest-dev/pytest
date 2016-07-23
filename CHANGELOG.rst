@@ -70,6 +70,9 @@ time or change existing behaviors in order to make them less surprising/more use
   namespace in which doctests run.
   Thanks `@milliams`_ for the complete PR (`#1428`_).
 
+* New ``--doctest-report`` option available to change the output format of diffs
+  when running (failing) doctests. Implements `#1749`_.
+
 * New ``name`` argument to ``pytest.fixture`` decorator which allows a custom name
   for a fixture (to solve the funcarg-shadowing-fixture problem).
   Thanks `@novas0x2a`_ for the complete PR (`#1444`_).

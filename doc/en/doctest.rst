@@ -16,7 +16,6 @@ from docstrings in all python modules (including regular
 python test modules)::
 
     pytest --doctest-modules
-
 You can make these changes permanent in your project by
 putting them into a pytest.ini file like this:
 
@@ -102,6 +101,7 @@ itself::
     >>> get_unicode_greeting()  # doctest: +ALLOW_UNICODE
     'Hello'
 
+
 The 'doctest_namespace' fixture
 -------------------------------
 
@@ -130,3 +130,20 @@ which can then be used in your doctests directly::
         10
         """
         pass
+
+
+Output format
+-------------
+
+You can change the diff output format on failure for your doctests
+by using one of standard doctest modules format in options
+(see :data:`python:doctest.REPORT_UDIFF`, :data:`python:doctest.REPORT_CDIFF`,
+:data:`python:doctest.REPORT_NDIFF`, :data:`python:doctest.REPORT_ONLY_FIRST_FAILURE`)::
+
+    pytest --doctest-modules --doctest-report none
+    pytest --doctest-modules --doctest-report udiff
+    pytest --doctest-modules --doctest-report cdiff
+    pytest --doctest-modules --doctest-report ndiff
+    pytest --doctest-modules --doctest-report only_first_failure
+
+

@@ -18,7 +18,9 @@ def pytest_addoption(parser):
         help="run doctests in all .py modules",
         dest="doctestmodules")
     group.addoption("--doctest-report",
-        type=str, default="UDIFF", choices=_get_report_choices().keys(),
+        type=str.lower, default="udiff",
+        help="choose another output format for diffs on doctest failure",
+        choices=sorted(_get_report_choices().keys()),
         dest="doctestreport")
     group.addoption("--doctest-glob",
         action="append", default=[], metavar="pat",
@@ -62,7 +64,6 @@ class ReprFailDoctest(TerminalRepr):
 
 
 class DoctestItem(pytest.Item):
-
     def __init__(self, name, parent, runner=None, dtest=None):
         super(DoctestItem, self).__init__(name, parent)
         self.runner = runner
@@ -297,11 +298,11 @@ def _get_allow_bytes_flag():
 def _get_report_choices():
     import doctest
     return dict(
-        UDIFF=doctest.REPORT_UDIFF,
-        CDIFF=doctest.REPORT_CDIFF,
-        NDIFF=doctest.REPORT_NDIFF,
-        ONLY_FIRST_FAILURE=doctest.REPORT_ONLY_FIRST_FAILURE,
-        NONE=0,
+        udiff=doctest.REPORT_UDIFF,
+        cdiff=doctest.REPORT_CDIFF,
+        ndiff=doctest.REPORT_NDIFF,
+        only_first_failure=doctest.REPORT_ONLY_FIRST_FAILURE,
+        none=0,
     )
 
 
