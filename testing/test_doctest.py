@@ -840,21 +840,21 @@ class TestDoctestReportingOption:
             '      2  3  6',
         ])
 
-    def test_doctest_report_none_or_only_first_failure(self, testdir):
-        for format in 'none', 'only_first_failure':
-            result = self._run_doctest_report(testdir, format)
-            result.stdout.fnmatch_lines([
-                'Expected:',
-                '       a  b',
-                '    0  1  4',
-                '    1  2  4',
-                '    2  3  6',
-                'Got:',
-                '       a  b',
-                '    0  1  4',
-                '    1  2  5',
-                '    2  3  6',
-            ])
+    @pytest.mark.parametrize('format', ['none', 'only_first_failure'])
+    def test_doctest_report_none_or_only_first_failure(self, testdir, format):
+        result = self._run_doctest_report(testdir, format)
+        result.stdout.fnmatch_lines([
+            'Expected:',
+            '       a  b',
+            '    0  1  4',
+            '    1  2  4',
+            '    2  3  6',
+            'Got:',
+            '       a  b',
+            '    0  1  4',
+            '    1  2  5',
+            '    2  3  6',
+        ])
 
     def test_doctest_report_invalid(self, testdir):
         result = self._run_doctest_report(testdir, 'obviously_invalid_format')
