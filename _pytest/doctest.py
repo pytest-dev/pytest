@@ -4,7 +4,7 @@ from __future__ import absolute_import
 import traceback
 
 import pytest
-from _pytest._code.code import TerminalRepr, ReprFileLocation, ExceptionInfo
+from _pytest._code.code import ExceptionInfo, ReprFileLocation, TerminalRepr
 from _pytest.fixtures import FixtureRequest
 
 
@@ -20,7 +20,7 @@ def pytest_addoption(parser):
     group.addoption("--doctest-report",
         type=str.lower, default="udiff",
         help="choose another output format for diffs on doctest failure",
-        choices=sorted(_get_report_choices().keys()),
+        choices=sorted(_get_report_choices_keys()),
         dest="doctestreport")
     group.addoption("--doctest-glob",
         action="append", default=[], metavar="pat",
@@ -298,13 +298,14 @@ def _get_allow_bytes_flag():
 def _get_report_choices():
     import doctest
     return dict(
-        udiff=doctest.REPORT_UDIFF,
-        cdiff=doctest.REPORT_CDIFF,
-        ndiff=doctest.REPORT_NDIFF,
-        only_first_failure=doctest.REPORT_ONLY_FIRST_FAILURE,
-        none=0,
+        zip(
+            _get_report_choices_keys(),
+            (doctest.REPORT_UDIFF, doctest.REPORT_CDIFF, doctest.REPORT_NDIFF, doctest.REPORT_ONLY_FIRST_FAILURE, 0, )
+        )
     )
 
+def _get_report_choices_keys():
+    return ('udiff', 'cdiff', 'ndiff', 'only_first_failure', 'none', )
 
 @pytest.fixture(scope='session')
 def doctest_namespace():
