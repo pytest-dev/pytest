@@ -1835,8 +1835,13 @@ class FixtureLookupErrorRepr(TerminalRepr):
         #tw.line("FixtureLookupError: %s" %(self.argname), red=True)
         for tbline in self.tblines:
             tw.line(tbline.rstrip())
-        for line in self.errorstring.split("\n"):
-            tw.line("        " + line.strip(), red=True)
+        lines = self.errorstring.split("\n")
+        for line in lines:
+            if line == lines[0]:
+                prefix = 'E       '
+            else:
+                prefix = '        '
+            tw.line(prefix + line.strip(), red=True)
         tw.line()
         tw.line("%s:%d" % (self.filename, self.firstlineno+1))
 
