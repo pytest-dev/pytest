@@ -801,7 +801,13 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         valtypes = {}
         for arg in argnames:
             if arg not in self.fixturenames:
-                raise ValueError("%r uses no fixture %r" %(self.function, arg))
+                if isinstance(indirect, (tuple, list)):
+                    name = 'fixture' if arg in indirect else 'argument'
+                else:
+                    name = 'fixture' if indirect is True else 'argument'
+                raise ValueError(
+                    "%r uses no %s %r" % (
+                            self.function, name, arg))
 
         if indirect is True:
             valtypes = dict.fromkeys(argnames, "params")
@@ -811,7 +817,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             valtypes = dict.fromkeys(argnames, "funcargs")
             for arg in indirect:
                 if arg not in argnames:
-                    raise ValueError("indirect given to %r: fixture %r doesn't exist" %(
+                    raise ValueError("indirect given to %r: fixture %r doesn't exist" % (
                                      self.function, arg))
                 valtypes[arg] = "params"
         idfn = None
