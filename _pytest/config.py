@@ -115,10 +115,8 @@ def _prepareconfig(args=None, plugins=None):
         if not isinstance(args, str):
             raise ValueError("not a string or argument list: %r" % (args,))
         args = shlex.split(args, posix=sys.platform != "win32")
-        # we want to remove this way of passing arguments to pytest.main()
-        # in pytest-4.0
-        warning = ('passing a string to pytest.main() is deprecated, '
-                   'pass a list of arguments instead.')
+        from _pytest import deprecated
+        warning = deprecated.MAIN_STR_ARGS
     config = get_config()
     pluginmanager = config.pluginmanager
     try:

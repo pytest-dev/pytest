@@ -450,8 +450,9 @@ class FixtureRequest(FuncargnamesCompatAttr):
 
     def getfuncargvalue(self, argname):
         """ Deprecated, use getfixturevalue. """
+        from _pytest import deprecated
         warnings.warn(
-            "use of getfuncargvalue is deprecated, use getfixturevalue",
+            deprecated.GETFUNCARGVALUE,
             DeprecationWarning)
         return self.getfixturevalue(argname)
 
@@ -880,10 +881,6 @@ def yield_fixture(scope="function", params=None, autouse=False, ids=None, name=N
 
 
 defaultfuncargprefixmarker = fixture()
-funcarg_prefix_warning = (
-    '{name}: declaring fixtures using "pytest_funcarg__" prefix is deprecated '
-    'and scheduled to be removed in pytest 4.0.  '
-    'Please remove the prefix and use the @pytest.fixture decorator instead.')
 
 
 @fixture(scope="session")
@@ -1066,7 +1063,8 @@ class FixtureManager:
                 if not callable(obj):
                     continue
                 marker = defaultfuncargprefixmarker
-                self.config.warn('C1', funcarg_prefix_warning.format(name=name))
+                from _pytest import deprecated
+                self.config.warn('C1', deprecated.FUNCARG_PREFIX.format(name=name))
                 name = name[len(self._argprefix):]
             elif not isinstance(marker, FixtureFunctionMarker):
                 # magic globals  with __getattr__ might have got us a wrong
