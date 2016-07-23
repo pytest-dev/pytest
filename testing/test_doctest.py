@@ -475,85 +475,6 @@ class TestDoctests:
                                     "--junit-xml=junit.xml")
         reprec.assertoutcome(failed=1)
 
-    def _run_doctest_report(self, testdir, format):
-        testdir.makepyfile("""
-            def foo():
-                '''
-                >>> foo()
-                   a  b
-                0  1  4
-                1  2  4
-                2  3  6
-                '''
-                print('   a  b\\n'
-                      '0  1  4\\n'
-                      '1  2  5\\n'
-                      '2  3  6')
-            """)
-        return testdir.runpytest("--doctest-modules", "--doctest-report", format)
-
-    def test_doctest_report_udiff(self, testdir, format='udiff'):
-        result = self._run_doctest_report(testdir, format)
-        result.stdout.fnmatch_lines([
-            '     0  1  4',
-            '    -1  2  4',
-            '    +1  2  5',
-            '     2  3  6',
-        ])
-
-    def test_doctest_report_cdiff(self, testdir):
-        result = self._run_doctest_report(testdir, 'cdiff')
-        result.stdout.fnmatch_lines([
-            '         a  b',
-            '      0  1  4',
-            '    ! 1  2  4',
-            '      2  3  6',
-            '    --- 1,4 ----',
-            '         a  b',
-            '      0  1  4',
-            '    ! 1  2  5',
-            '      2  3  6',
-        ])
-
-    def test_doctest_report_ndiff(self, testdir):
-        result = self._run_doctest_report(testdir, 'ndiff')
-        result.stdout.fnmatch_lines([
-            '         a  b',
-            '      0  1  4',
-            '    - 1  2  4',
-            '    ?       ^',
-            '    + 1  2  5',
-            '    ?       ^',
-            '      2  3  6',
-        ])
-
-    def test_doctest_report_none_or_only_first_failure(self, testdir):
-        for format in 'none', 'only_first_failure':
-            result = self._run_doctest_report(testdir, format)
-            result.stdout.fnmatch_lines([
-                'Expected:',
-                '       a  b',
-                '    0  1  4',
-                '    1  2  4',
-                '    2  3  6',
-                'Got:',
-                '       a  b',
-                '    0  1  4',
-                '    1  2  5',
-                '    2  3  6',
-            ])
-
-    def test_doctest_report_case_insensitive(self, testdir):
-        for format in 'udiff', 'UDIFF', 'uDiFf':
-            self.test_doctest_report_udiff(testdir, format)
-
-    def test_doctest_report_invalid(self, testdir):
-        result = self._run_doctest_report(testdir, 'obviously_invalid_format')
-        result.stderr.fnmatch_lines([
-            "*error: argument --doctest-report: invalid choice: 'obviously_invalid_format' (choose from*"
-        ])
-
-
 
 class TestLiterals:
 
@@ -863,3 +784,84 @@ class TestDoctestNamespaceFixture:
         """)
         reprec = testdir.inline_run(p, "--doctest-modules")
         reprec.assertoutcome(passed=1)
+
+
+class TestDoctestReportingOption:
+    def _run_doctest_report(self, testdir, format):
+        testdir.makepyfile("""
+            def foo():
+                '''
+                >>> foo()
+                   a  b
+                0  1  4
+                1  2  4
+                2  3  6
+                '''
+                print('   a  b\\n'
+                      '0  1  4\\n'
+                      '1  2  5\\n'
+                      '2  3  6')
+            """)
+        return testdir.runpytest("--doctest-modules", "--doctest-report", format)
+
+    def test_doctest_report_udiff(self, testdir, format='udiff'):
+        result = self._run_doctest_report(testdir, format)
+        result.stdout.fnmatch_lines([
+            '     0  1  4',
+            '    -1  2  4',
+            '    +1  2  5',
+            '     2  3  6',
+        ])
+
+    def test_doctest_report_cdiff(self, testdir):
+        result = self._run_doctest_report(testdir, 'cdiff')
+        result.stdout.fnmatch_lines([
+            '         a  b',
+            '      0  1  4',
+            '    ! 1  2  4',
+            '      2  3  6',
+            '    --- 1,4 ----',
+            '         a  b',
+            '      0  1  4',
+            '    ! 1  2  5',
+            '      2  3  6',
+        ])
+
+    def test_doctest_report_ndiff(self, testdir):
+        result = self._run_doctest_report(testdir, 'ndiff')
+        result.stdout.fnmatch_lines([
+            '         a  b',
+            '      0  1  4',
+            '    - 1  2  4',
+            '    ?       ^',
+            '    + 1  2  5',
+            '    ?       ^',
+            '      2  3  6',
+        ])
+
+    def test_doctest_report_none_or_only_first_failure(self, testdir):
+        for format in 'none', 'only_first_failure':
+            result = self._run_doctest_report(testdir, format)
+            result.stdout.fnmatch_lines([
+                'Expected:',
+                '       a  b',
+                '    0  1  4',
+                '    1  2  4',
+                '    2  3  6',
+                'Got:',
+                '       a  b',
+                '    0  1  4',
+                '    1  2  5',
+                '    2  3  6',
+            ])
+
+    def test_doctest_report_case_insensitive(self, testdir):
+        for format in 'udiff', 'UDIFF', 'uDiFf':
+            self.test_doctest_report_udiff(testdir, format)
+
+    def test_doctest_report_invalid(self, testdir):
+        result = self._run_doctest_report(testdir, 'obviously_invalid_format')
+        result.stderr.fnmatch_lines([
+            "*error: argument --doctest-report: invalid choice: 'obviously_invalid_format' (choose from*"
+        ])
+
