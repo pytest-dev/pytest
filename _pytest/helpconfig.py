@@ -20,10 +20,10 @@ def pytest_addoption(parser):
     group.addoption('--debug',
                action="store_true", dest="debug", default=False,
                help="store internal tracing debug information in 'pytestdebug.log'.")
-    # support for "--overwrite-ini ININAME=INIVALUE" to override values from the ini file
-    # Example '-o xfail_strict=True'.
-    group._addoption('-o', '--override-ini', nargs='*', dest="override_ini", action="append",
-               help="overrides ini values which do not have a separate command-line flag")
+    group._addoption(
+        '-o', '--override-ini', nargs='*', dest="override_ini",
+        action="append",
+        help="override config option, e.g. `-o xfail_strict=True`.")
 
 
 @pytest.hookimpl(hookwrapper=True)

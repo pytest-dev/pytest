@@ -123,7 +123,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
   Thanks `@d6e`_, `@kvas-it`_, `@sallner`_ and `@omarkohl`_ for the PRs.
 
-* New cli flag ``--override-ini``/``-o``: overrides values from the ini file.
+* New CLI flag ``--override-ini``/``-o``: overrides values from the ini file.
   For example: ``"-o xfail_strict=True"``'.
   Thanks `@blueyed`_ and `@fengxx`_ for the PR.
 
