@@ -71,7 +71,8 @@ time or change existing behaviors in order to make them less surprising/more use
   Thanks `@milliams`_ for the complete PR (`#1428`_).
 
 * New ``--doctest-report`` option available to change the output format of diffs
-  when running (failing) doctests.
+  when running (failing) doctests (implements `#1749`_).
+  Thanks `@hartym`_ for the PR.
 
 * New ``name`` argument to ``pytest.fixture`` decorator which allows a custom name
   for a fixture (to solve the funcarg-shadowing-fixture problem).
@@ -317,6 +318,7 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _#1664: https://github.com/pytest-dev/pytest/pull/1664
 .. _#1684: https://github.com/pytest-dev/pytest/pull/1684
 .. _#1723: https://github.com/pytest-dev/pytest/pull/1723
+.. _#1749: https://github.com/pytest-dev/pytest/issues/1749
 
 .. _@DRMacIver: https://github.com/DRMacIver
 .. _@RedBeardCode: https://github.com/RedBeardCode
@@ -331,6 +333,7 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _@fengxx: https://github.com/fengxx
 .. _@flub: https://github.com/flub
 .. _@graingert: https://github.com/graingert
+.. _@hartym: https://github.com/hartym
 .. _@kalekundert: https://github.com/kalekundert
 .. _@kvas-it: https://github.com/kvas-it
 .. _@marscher: https://github.com/marscher
