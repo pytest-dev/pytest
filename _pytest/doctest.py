@@ -8,6 +8,19 @@ from _pytest._code.code import ExceptionInfo, ReprFileLocation, TerminalRepr
 from _pytest.fixtures import FixtureRequest
 
 
+DOCTEST_REPORT_CHOICE_NONE = 'none'
+DOCTEST_REPORT_CHOICE_CDIFF = 'cdiff'
+DOCTEST_REPORT_CHOICE_NDIFF = 'ndiff'
+DOCTEST_REPORT_CHOICE_UDIFF = 'udiff'
+DOCTEST_REPORT_CHOICE_ONLY_FIRST_FAILURE = 'only_first_failure'
+
+DOCTEST_REPORT_CHOICES = (
+    DOCTEST_REPORT_CHOICE_NONE,
+    DOCTEST_REPORT_CHOICE_CDIFF,
+    DOCTEST_REPORT_CHOICE_NDIFF,
+    DOCTEST_REPORT_CHOICE_UDIFF,
+    DOCTEST_REPORT_CHOICE_ONLY_FIRST_FAILURE,
+)
 
 def pytest_addoption(parser):
     parser.addini('doctest_optionflags', 'option flags for doctests',
@@ -20,7 +33,7 @@ def pytest_addoption(parser):
     group.addoption("--doctest-report",
         type=str.lower, default="udiff",
         help="choose another output format for diffs on doctest failure",
-        choices=sorted(_get_report_choices_keys()),
+        choices=DOCTEST_REPORT_CHOICES,
         dest="doctestreport")
     group.addoption("--doctest-glob",
         action="append", default=[], metavar="pat",
@@ -98,7 +111,7 @@ class DoctestItem(pytest.Item):
             message = excinfo.type.__name__
             reprlocation = ReprFileLocation(filename, lineno, message)
             checker = _get_checker()
-            REPORT_UDIFF = _get_report_choices().get(self.config.getoption("doctestreport"))
+            REPORT_UDIFF = _get_report_choice(self.config.getoption("doctestreport"))
             if lineno is not None:
                 lines = doctestfailure.test.docstring.splitlines(False)
                 # add line numbers to the left of the error message
@@ -295,25 +308,20 @@ def _get_allow_bytes_flag():
     return doctest.register_optionflag('ALLOW_BYTES')
 
 
-def _get_report_choices_keys():
+def _get_report_choice(key):
     """
-    Returns the report choices keys. Separate function (see just below) because this is used to declare options and
-    we can't import the doctest module at that time.
-    """
-    return ('udiff', 'cdiff', 'ndiff', 'only_first_failure', 'none', )
-
-def _get_report_choices():
-    """
-    See `_get_report_choices_keys` to understand why this strange implementation. Be careful with order, the values
-    order should be the same as the returned keys above.
+    This function returns the actual `doctest` module flag value, we want to do it as late as possible to avoid
+    importing `doctest` and all its dependencies when parsing options, as it adds overhead and breaks tests.
     """
     import doctest
-    return dict(
-        zip(
-            _get_report_choices_keys(),
-            (doctest.REPORT_UDIFF, doctest.REPORT_CDIFF, doctest.REPORT_NDIFF, doctest.REPORT_ONLY_FIRST_FAILURE, 0, )
-        )
-    )
+
+    return {
+        DOCTEST_REPORT_CHOICE_UDIFF: doctest.REPORT_UDIFF,
+        DOCTEST_REPORT_CHOICE_CDIFF: doctest.REPORT_CDIFF,
+        DOCTEST_REPORT_CHOICE_NDIFF: doctest.REPORT_NDIFF,
+        DOCTEST_REPORT_CHOICE_ONLY_FIRST_FAILURE: doctest.REPORT_ONLY_FIRST_FAILURE,
+        DOCTEST_REPORT_CHOICE_NONE: 0,
+    }[key]
 
 @pytest.fixture(scope='session')
 def doctest_namespace():
