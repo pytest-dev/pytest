@@ -4,10 +4,23 @@ from __future__ import absolute_import
 import traceback
 
 import pytest
-from _pytest._code.code import TerminalRepr, ReprFileLocation, ExceptionInfo
+from _pytest._code.code import ExceptionInfo, ReprFileLocation, TerminalRepr
 from _pytest.fixtures import FixtureRequest
 
 
+DOCTEST_REPORT_CHOICE_NONE = 'none'
+DOCTEST_REPORT_CHOICE_CDIFF = 'cdiff'
+DOCTEST_REPORT_CHOICE_NDIFF = 'ndiff'
+DOCTEST_REPORT_CHOICE_UDIFF = 'udiff'
+DOCTEST_REPORT_CHOICE_ONLY_FIRST_FAILURE = 'only_first_failure'
+
+DOCTEST_REPORT_CHOICES = (
+    DOCTEST_REPORT_CHOICE_NONE,
+    DOCTEST_REPORT_CHOICE_CDIFF,
+    DOCTEST_REPORT_CHOICE_NDIFF,
+    DOCTEST_REPORT_CHOICE_UDIFF,
+    DOCTEST_REPORT_CHOICE_ONLY_FIRST_FAILURE,
+)
 
 def pytest_addoption(parser):
     parser.addini('doctest_optionflags', 'option flags for doctests',
@@ -17,6 +30,11 @@ def pytest_addoption(parser):
         action="store_true", default=False,
         help="run doctests in all .py modules",
         dest="doctestmodules")
+    group.addoption("--doctest-report",
+        type=str.lower, default="udiff",
+        help="choose another output format for diffs on doctest failure",
+        choices=DOCTEST_REPORT_CHOICES,
+        dest="doctestreport")
     group.addoption("--doctest-glob",
         action="append", default=[], metavar="pat",
         help="doctests file matching pattern, default: test*.txt",
@@ -59,7 +77,6 @@ class ReprFailDoctest(TerminalRepr):
 
 
 class DoctestItem(pytest.Item):
-
     def __init__(self, name, parent, runner=None, dtest=None):
         super(DoctestItem, self).__init__(name, parent)
         self.runner = runner
@@ -94,7 +111,7 @@ class DoctestItem(pytest.Item):
             message = excinfo.type.__name__
             reprlocation = ReprFileLocation(filename, lineno, message)
             checker = _get_checker()
-            REPORT_UDIFF = doctest.REPORT_UDIFF
+            report_choice = _get_report_choice(self.config.getoption("doctestreport"))
             if lineno is not None:
                 lines = doctestfailure.test.docstring.splitlines(False)
                 # add line numbers to the left of the error message
@@ -110,7 +127,7 @@ class DoctestItem(pytest.Item):
                     indent = '...'
             if excinfo.errisinstance(doctest.DocTestFailure):
                 lines += checker.output_difference(example,
-                        doctestfailure.got, REPORT_UDIFF).split("\n")
+                        doctestfailure.got, report_choice).split("\n")
             else:
                 inner_excinfo = ExceptionInfo(excinfo.value.exc_info)
                 lines += ["UNEXPECTED EXCEPTION: %s" %
@@ -290,6 +307,21 @@ def _get_allow_bytes_flag():
     import doctest
     return doctest.register_optionflag('ALLOW_BYTES')
 
+
+def _get_report_choice(key):
+    """
+    This function returns the actual `doctest` module flag value, we want to do it as late as possible to avoid
+    importing `doctest` and all its dependencies when parsing options, as it adds overhead and breaks tests.
+    """
+    import doctest
+
+    return {
+        DOCTEST_REPORT_CHOICE_UDIFF: doctest.REPORT_UDIFF,
+        DOCTEST_REPORT_CHOICE_CDIFF: doctest.REPORT_CDIFF,
+        DOCTEST_REPORT_CHOICE_NDIFF: doctest.REPORT_NDIFF,
+        DOCTEST_REPORT_CHOICE_ONLY_FIRST_FAILURE: doctest.REPORT_ONLY_FIRST_FAILURE,
+        DOCTEST_REPORT_CHOICE_NONE: 0,
+    }[key]
 
 @pytest.fixture(scope='session')
 def doctest_namespace():
