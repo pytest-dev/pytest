@@ -149,7 +149,6 @@ time or change existing behaviors in order to make them less surprising/more use
 * Allow passing a custom debugger class (e.g. ``--pdbcls=IPython.core.debugger:Pdb``).
   Thanks to `@anntzer`_ for the PR.
 
-
 *
 
 *
@@ -237,6 +236,9 @@ time or change existing behaviors in order to make them less surprising/more use
 
 * ``optparse`` backward compatibility supports float/complex types (`#457`_).
 
+* Better message in case of not using parametrized variable (see `#1539`_).
+  Thanks to `@tramwaj29`_ for the PR.
+
 *
 
 *
@@ -318,6 +320,7 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _#1664: https://github.com/pytest-dev/pytest/pull/1664
 .. _#1684: https://github.com/pytest-dev/pytest/pull/1684
 .. _#1723: https://github.com/pytest-dev/pytest/pull/1723
+.. _#1539: https://github.com/pytest-dev/pytest/issues/1539
 .. _#1749: https://github.com/pytest-dev/pytest/issues/1749
 
 .. _@DRMacIver: https://github.com/DRMacIver
@@ -351,6 +354,7 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _@tareqalayan: https://github.com/tareqalayan
 .. _@taschini: https://github.com/taschini
 .. _@txomon: https://github.com/txomon
+.. _@tramwaj29: https://github.com/tramwaj29
 
 2.9.2
 =====

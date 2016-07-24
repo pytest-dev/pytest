@@ -394,7 +394,7 @@ class TestMetafunc:
         """)
         result = testdir.runpytest("--collect-only")
         result.stdout.fnmatch_lines([
-            "*uses no fixture 'y'*",
+            "*uses no argument 'y'*",
         ])
 
     @pytest.mark.issue714
@@ -418,7 +418,41 @@ class TestMetafunc:
         ])
 
     @pytest.mark.issue714
+    def test_parametrize_indirect_uses_no_fixture_error_indirect_string(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture(scope='function')
+            def x(request):
+                return request.param * 3
+
+            @pytest.mark.parametrize('x, y', [('a', 'b')], indirect='y')
+            def test_simple(x):
+                assert len(x) == 3
+        """)
+        result = testdir.runpytest("--collect-only")
+        result.stdout.fnmatch_lines([
+            "*uses no fixture 'y'*",
+        ])
+
+    @pytest.mark.issue714
     def test_parametrize_indirect_uses_no_fixture_error_indirect_list(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture(scope='function')
+            def x(request):
+                return request.param * 3
+
+            @pytest.mark.parametrize('x, y', [('a', 'b')], indirect=['y'])
+            def test_simple(x):
+                assert len(x) == 3
+        """)
+        result = testdir.runpytest("--collect-only")
+        result.stdout.fnmatch_lines([
+            "*uses no fixture 'y'*",
+        ])
+
+    @pytest.mark.issue714
+    def test_parametrize_argument_not_in_indirect_list(self, testdir):
         testdir.makepyfile("""
             import pytest
             @pytest.fixture(scope='function')
@@ -431,7 +465,7 @@ class TestMetafunc:
         """)
         result = testdir.runpytest("--collect-only")
         result.stdout.fnmatch_lines([
-            "*uses no fixture 'y'*",
+            "*uses no argument 'y'*",
         ])
 
     def test_addcalls_and_parametrize_indirect(self):
