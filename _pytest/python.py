@@ -804,7 +804,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
                 if isinstance(indirect, (tuple, list)):
                     name = 'fixture' if arg in indirect else 'argument'
                 else:
-                    name = 'fixture' if indirect is True else 'argument'
+                    name = 'fixture' if indirect else 'argument'
                 raise ValueError(
                     "%r uses no %s %r" % (
                             self.function, name, arg))

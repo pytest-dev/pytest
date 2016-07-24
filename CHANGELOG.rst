@@ -145,9 +145,7 @@ time or change existing behaviors in order to make them less surprising/more use
 * Allow passing a custom debugger class (e.g. ``--pdbcls=IPython.core.debugger:Pdb``).
   Thanks to `@anntzer`_ for the PR.
 
-
-* Better message in case of not using parametrized variable (see `#1539`_).
-  Thanks to `@tramwaj29`_ for the PR.
+*
 
 *
 
@@ -233,6 +231,9 @@ time or change existing behaviors in order to make them less surprising/more use
 * ``optparse`` type usage now triggers DeprecationWarnings (`#1740`_).
 
 * ``optparse`` backward compatibility supports float/complex types (`#457`_).
+
+* Better message in case of not using parametrized variable (see `#1539`_).
+  Thanks to `@tramwaj29`_ for the PR.
 
 *
 
