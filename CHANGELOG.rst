@@ -44,7 +44,9 @@
 
 * Updated docstrings with a more uniform style.
 
-*
+* Add stderr write for ``pytest.exit(msg)`` during startup. Previously the message was never shown.
+  Thanks `@BeyondEvil`_ for reporting `#1210`_. Thanks to `@JonathonSonesen`_ and
+  `@tomviner`_ for PR.
 
 * ImportErrors in plugins now are a fatal error instead of issuing a
   pytest warning (`#1479`_). Thanks to `@The-Compiler`_ for the PR.
@@ -58,6 +60,7 @@
 .. _#1503: https://github.com/pytest-dev/pytest/issues/1503
 .. _#1479: https://github.com/pytest-dev/pytest/issues/1479
 .. _#925: https://github.com/pytest-dev/pytest/issues/925
+.. _#1210: https://github.com/pytest-dev/pytest/issues/1210
 
 .. _@graingert: https://github.com/graingert
 .. _@taschini: https://github.com/taschini
@@ -67,6 +70,8 @@
 .. _@bagerard: https://github.com/bagerard
 .. _@davehunt: https://github.com/davehunt
 .. _@DRMacIver: https://github.com/DRMacIver
+.. _@BeyondEvil: https://github.com/BeyondEvil
+.. _@JonathonSonesen: https://github.com/JonathonSonesen
 
 
 2.9.2
