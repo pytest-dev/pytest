@@ -2180,7 +2180,7 @@ class TestFixtureMarker:
                 return {}
         """)
         b = testdir.mkdir("subdir")
-        b.join("test_overriden_fixture_finalizer.py").write(dedent("""
+        b.join("test_overridden_fixture_finalizer.py").write(dedent("""
             import pytest
             @pytest.fixture
             def browser(browser):
