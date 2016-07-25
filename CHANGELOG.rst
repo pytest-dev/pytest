@@ -58,6 +58,18 @@
 * Fixed collection of classes with custom ``__new__`` method.
   Fixes `#1579`_. Thanks to `@Stranger6667`_ for the PR.
 
+* Fixed scope overriding inside metafunc.parametrize (`#634`_).
+  Thanks to `@Stranger6667`_ for the PR.
+
+*
+
+*
+
+*
+
+*
+
+.. _#634: https://github.com/pytest-dev/pytest/issues/634
 .. _#717: https://github.com/pytest-dev/pytest/issues/717
 .. _#1579: https://github.com/pytest-dev/pytest/issues/1579
 .. _#1580: https://github.com/pytest-dev/pytest/pull/1580

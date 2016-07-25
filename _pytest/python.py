@@ -1005,9 +1005,15 @@ class Metafunc(FuncargnamesCompatAttr):
             newmarks = newkeywords.setdefault(0, {})
             newmarks[newmark.markname] = newmark
 
-
         if scope is None:
-            scope = "function"
+            if self._arg2fixturedefs:
+                # Takes the most narrow scope from used fixtures
+                fixtures_scopes = [fixturedef[0].scope for fixturedef in self._arg2fixturedefs.values()]
+                for scope in reversed(scopes):
+                    if scope in fixtures_scopes:
+                        break
+            else:
+                scope = 'function'
         scopenum = scopes.index(scope)
         valtypes = {}
         for arg in argnames:
