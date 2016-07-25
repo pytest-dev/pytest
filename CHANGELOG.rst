@@ -120,9 +120,10 @@ time or change existing behaviors in order to make them less surprising/more use
     fixtures and reports them;
   + ``--setup-show``: performs normal test execution and additionally shows
     setup and teardown of fixtures;
-  + ``--keep-duplicates``: default behavior is now to ignore duplicate paths, you can  
-    retain the old behavior and running multiple times the tests  
-    using the ``--keep-duplicates`` cli argument `#1609`_;
+  + ``--keep-duplicates``: py.test now ignores duplicated paths given in the command
+    line. To retain the previous behavior where the same test could be run multiple
+    times by specifying it in the command-line multiple times, pass the ``--keep-duplicates``
+    argument (`#1609`_);
 
   Thanks `@d6e`_, `@kvas-it`_, `@sallner`_, `@ioggstream`_ and `@omarkohl`_ for the PRs.
 

@@ -162,14 +162,10 @@ def pytest_ignore_collect(path, config):
         return True
 
     # Skip duplicate paths.
-    #  TODO: is this called when specifying direct filenames
-    #        from command lines, eg.
-    #        py.test test_a.py test_b.py
     keepduplicates = config.getoption("keepduplicates")
     duplicate_paths = config.pluginmanager._duplicatepaths
     if not keepduplicates:
         if path in duplicate_paths:
-            #  TODO should we log this?
             return True
         else:
             duplicate_paths.add(path)
