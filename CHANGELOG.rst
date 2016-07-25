@@ -3,6 +3,10 @@
 
 **Bug Fixes**
 
+* Add an 'E' to the first line of error messages from FixtureLookupErrorRepr.
+  Fixes `#717`_. Thanks `@blueyed`_ for reporting, `@eolo999`_ for the PR
+  and `@tomviner`_ for his guidance during EuroPython2016 sprint.
+
 * Text documents without any doctests no longer appear as "skipped".
   Thanks `@graingert`_ for reporting and providing a full PR (`#1580`_).
 
@@ -54,6 +58,7 @@
 * Fixed collection of classes with custom ``__new__`` method.
   Fixes `#1579`_. Thanks to `@Stranger6667`_ for the PR.
 
+.. _#717: https://github.com/pytest-dev/pytest/issues/717
 .. _#1579: https://github.com/pytest-dev/pytest/issues/1579
 .. _#1580: https://github.com/pytest-dev/pytest/pull/1580
 .. _#1605: https://github.com/pytest-dev/pytest/issues/1605
@@ -66,6 +71,8 @@
 .. _#925: https://github.com/pytest-dev/pytest/issues/925
 .. _#1210: https://github.com/pytest-dev/pytest/issues/1210
 
+.. _@eolo999: https://github.com/eolo999
+.. _@blueyed: https://github.com/blueyed
 .. _@graingert: https://github.com/graingert
 .. _@taschini: https://github.com/taschini
 .. _@nikratio: https://github.com/nikratio

@@ -376,7 +376,7 @@ class TestGeneralUsage:
         res = testdir.runpytest(p)
         res.stdout.fnmatch_lines([
             "*source code not available*",
-            "*fixture 'invalid_fixture' not found",
+            "E*fixture 'invalid_fixture' not found",
         ])
 
     def test_plugins_given_as_strings(self, tmpdir, monkeypatch):
