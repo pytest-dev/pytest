@@ -416,9 +416,9 @@ class TestCaptureFixture:
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
             "*ERROR*setup*test_one*",
-            "*capsys*capfd*same*time*",
+            "E*capsys*capfd*same*time*",
             "*ERROR*setup*test_two*",
-            "*capsys*capfd*same*time*",
+            "E*capsys*capfd*same*time*",
             "*2 error*"])
 
     def test_capturing_getfixturevalue(self, testdir):

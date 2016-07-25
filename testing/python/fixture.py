@@ -351,6 +351,38 @@ class TestFillFixtures:
         result = testdir.runpytest(testfile)
         result.stdout.fnmatch_lines(["*3 passed*"])
 
+    def test_override_autouse_fixture_with_parametrized_fixture_conftest_conftest(self, testdir):
+        """Test override of the autouse fixture with parametrized one on the conftest level.
+        This test covers the issue explained in issue 1601
+        """
+        testdir.makeconftest("""
+            import pytest
+
+            @pytest.fixture(autouse=True)
+            def spam():
+                return 'spam'
+        """)
+        subdir = testdir.mkpydir('subdir')
+        subdir.join("conftest.py").write(_pytest._code.Source("""
+            import pytest
+
+            @pytest.fixture(params=[1, 2, 3])
+            def spam(request):
+                return request.param
+        """))
+        testfile = subdir.join("test_spam.py")
+        testfile.write(_pytest._code.Source("""
+            params = {'spam': 1}
+
+            def test_spam(spam):
+                assert spam == params['spam']
+                params['spam'] += 1
+        """))
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*3 passed*"])
+        result = testdir.runpytest(testfile)
+        result.stdout.fnmatch_lines(["*3 passed*"])
+
     def test_autouse_fixture_plugin(self, testdir):
         # A fixture from a plugin has no baseid set, which screwed up
         # the autouse fixture handling.

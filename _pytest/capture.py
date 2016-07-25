@@ -157,7 +157,7 @@ error_capsysfderror = "cannot use capsys and capfd at the same time"
 
 @pytest.fixture
 def capsys(request):
-    """enables capturing of writes to sys.stdout/sys.stderr and makes
+    """Enable capturing of writes to sys.stdout/sys.stderr and make
     captured output available via ``capsys.readouterr()`` method calls
     which return a ``(out, err)`` tuple.
     """
@@ -168,7 +168,7 @@ def capsys(request):
 
 @pytest.fixture
 def capfd(request):
-    """enables capturing of writes to file descriptors 1 and 2 and makes
+    """Enable capturing of writes to file descriptors 1 and 2 and make
     captured output available via ``capfd.readouterr()`` method calls
     which return a ``(out, err)`` tuple.
     """

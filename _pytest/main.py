@@ -98,6 +98,10 @@ def wrap_session(config, doit):
             raise
         except KeyboardInterrupt:
             excinfo = _pytest._code.ExceptionInfo()
+            if initstate < 2 and isinstance(
+                    excinfo.value, pytest.exit.Exception):
+                sys.stderr.write('{0}: {1}\n'.format(
+                    excinfo.typename, excinfo.value.msg))
             config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
             session.exitstatus = EXIT_INTERRUPTED
         except:

@@ -108,7 +108,7 @@ def tmpdir_factory(request):
 
 @pytest.fixture
 def tmpdir(request, tmpdir_factory):
-    """return a temporary directory path object
+    """Return a temporary directory path object
     which is unique to each test function invocation,
     created as a sub directory of the base temporary
     directory.  The returned object is a `py.path.local`_

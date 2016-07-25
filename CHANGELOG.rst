@@ -229,6 +229,12 @@ time or change existing behaviors in order to make them less surprising/more use
   removed in pytest-4.0 (`#1684`_).
   Thanks `@nicoddemus`_ for the PR.
 
+* Raise helpful failure message, when requesting parametrized fixture at runtime,
+  e.g. with ``request.getfuncargvalue``. BACKWARD INCOMPAT: Previously these params
+  were simply never defined. So a fixture decorated like ``@pytest.fixture(params=[0, 1, 2])``
+  only ran once. Now a failure is raised. Fixes (`#460`_). Thanks to
+  `@nikratio`_ for bug report, `@RedBeardCode`_ and `@tomviner`_ for the PR.
+
 * Passing a command-line string to ``pytest.main()`` is considered deprecated and scheduled
   for removal in pytest-4.0. It is recommended to pass a list of arguments instead (`#1723`_).
 
@@ -238,12 +244,19 @@ time or change existing behaviors in order to make them less surprising/more use
 
 * ``optparse`` type usage now triggers DeprecationWarnings (`#1740`_).
 
+
 * ``optparse`` backward compatibility supports float/complex types (`#457`_).
+
+* Renamed the pytest ``pdb`` module (plugin) into ``debugging``.
 
 * Better message in case of not using parametrized variable (see `#1539`_).
   Thanks to `@tramwaj29`_ for the PR.
 
-*
+* Updated docstrings with a more uniform style.
+
+* Add stderr write for ``pytest.exit(msg)`` during startup. Previously the message was never shown.
+  Thanks `@BeyondEvil`_ for reporting `#1210`_. Thanks to `@JonathonSonesen`_ and
+  `@tomviner`_ for PR.
 
 *
 
@@ -271,7 +284,18 @@ time or change existing behaviors in order to make them less surprising/more use
   identify bugs in ``conftest.py`` files (`#1516`_). Thanks `@txomon`_ for
   the PR.
 
-*
+* Add an 'E' to the first line of error messages from FixtureLookupErrorRepr.
+  Fixes `#717`_. Thanks `@blueyed`_ for reporting, `@eolo999`_ for the PR
+  and `@tomviner`_ for his guidance during EuroPython2016 sprint.
+
+* Text documents without any doctests no longer appear as "skipped".
+  Thanks `@graingert`_ for reporting and providing a full PR (`#1580`_).
+
+* Fixed collection of classes with custom ``__new__`` method.
+  Fixes `#1579`_. Thanks to `@Stranger6667`_ for the PR.
+
+* Fixed scope overriding inside metafunc.parametrize (`#634`_).
+  Thanks to `@Stranger6667`_ for the PR.
 
 *
 
@@ -281,12 +305,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 *
 
-.. _#372: https://github.com/pytest-dev/pytest/issues/372
-.. _#460: https://github.com/pytest-dev/pytest/pull/460
-.. _#457: https://github.com/pytest-dev/pytest/issues/457
-.. _#1740: https://github.com/pytest-dev/pytest/issues/1740
-.. _#607: https://github.com/pytest-dev/pytest/issues/607
-.. _#925: https://github.com/pytest-dev/pytest/issues/925
+.. _#1210: https://github.com/pytest-dev/pytest/issues/1210
 .. _#1235: https://github.com/pytest-dev/pytest/issues/1235
 .. _#1351: https://github.com/pytest-dev/pytest/issues/1351
 .. _#1421: https://github.com/pytest-dev/pytest/issues/1421
@@ -305,9 +324,11 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _#1519: https://github.com/pytest-dev/pytest/pull/1519
 .. _#1520: https://github.com/pytest-dev/pytest/pull/1520
 .. _#1526: https://github.com/pytest-dev/pytest/pull/1526
+.. _#1539: https://github.com/pytest-dev/pytest/issues/1539
 .. _#1544: https://github.com/pytest-dev/pytest/issues/1544
 .. _#1553: https://github.com/pytest-dev/pytest/issues/1553
 .. _#1562: https://github.com/pytest-dev/pytest/issues/1562
+.. _#1579: https://github.com/pytest-dev/pytest/issues/1579
 .. _#1580: https://github.com/pytest-dev/pytest/pull/1580
 .. _#1597: https://github.com/pytest-dev/pytest/pull/1597
 .. _#1605: https://github.com/pytest-dev/pytest/issues/1605
@@ -315,32 +336,40 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _#1618: https://github.com/pytest-dev/pytest/issues/1618
 .. _#1619: https://github.com/pytest-dev/pytest/issues/1619
 .. _#1626: https://github.com/pytest-dev/pytest/pull/1626
-.. _#1668: https://github.com/pytest-dev/pytest/issues/1668
 .. _#1627: https://github.com/pytest-dev/pytest/pull/1627
 .. _#1628: https://github.com/pytest-dev/pytest/pull/1628
 .. _#1629: https://github.com/pytest-dev/pytest/issues/1629
 .. _#1632: https://github.com/pytest-dev/pytest/issues/1632
 .. _#1633: https://github.com/pytest-dev/pytest/pull/1633
 .. _#1664: https://github.com/pytest-dev/pytest/pull/1664
+.. _#1668: https://github.com/pytest-dev/pytest/issues/1668
 .. _#1684: https://github.com/pytest-dev/pytest/pull/1684
 .. _#1723: https://github.com/pytest-dev/pytest/pull/1723
-.. _#1539: https://github.com/pytest-dev/pytest/issues/1539
+.. _#1740: https://github.com/pytest-dev/pytest/issues/1740
 .. _#1749: https://github.com/pytest-dev/pytest/issues/1749
+.. _#372: https://github.com/pytest-dev/pytest/issues/372
+.. _#457: https://github.com/pytest-dev/pytest/issues/457
+.. _#460: https://github.com/pytest-dev/pytest/pull/460
+.. _#607: https://github.com/pytest-dev/pytest/issues/607
+.. _#634: https://github.com/pytest-dev/pytest/issues/634
+.. _#717: https://github.com/pytest-dev/pytest/issues/717
+.. _#925: https://github.com/pytest-dev/pytest/issues/925
 
-.. _@DRMacIver: https://github.com/DRMacIver
-.. _@RedBeardCode: https://github.com/RedBeardCode
-.. _@Vogtinator: https://github.com/Vogtinator
 .. _@anntzer: https://github.com/anntzer
 .. _@bagerard: https://github.com/bagerard
+.. _@BeyondEvil: https://github.com/BeyondEvil
 .. _@blueyed: https://github.com/blueyed
 .. _@ceridwen: https://github.com/ceridwen
 .. _@csaftoiu: https://github.com/csaftoiu
 .. _@d6e: https://github.com/d6e
 .. _@davehunt: https://github.com/davehunt
+.. _@DRMacIver: https://github.com/DRMacIver
+.. _@eolo999: https://github.com/eolo999
 .. _@fengxx: https://github.com/fengxx
 .. _@flub: https://github.com/flub
 .. _@graingert: https://github.com/graingert
 .. _@hartym: https://github.com/hartym
+.. _@JonathonSonesen: https://github.com/JonathonSonesen
 .. _@kalekundert: https://github.com/kalekundert
 .. _@kvas-it: https://github.com/kvas-it
 .. _@marscher: https://github.com/marscher
@@ -353,12 +382,16 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _@olegpidsadnyi: https://github.com/olegpidsadnyi
 .. _@omarkohl: https://github.com/omarkohl
 .. _@palaviv: https://github.com/palaviv
+.. _@RedBeardCode: https://github.com/RedBeardCode
 .. _@sallner: https://github.com/sallner
 .. _@sober7: https://github.com/sober7
+.. _@Stranger6667: https://github.com/Stranger6667
 .. _@tareqalayan: https://github.com/tareqalayan
 .. _@taschini: https://github.com/taschini
-.. _@txomon: https://github.com/txomon
 .. _@tramwaj29: https://github.com/tramwaj29
+.. _@txomon: https://github.com/txomon
+.. _@Vogtinator: https://github.com/Vogtinator
+
 
 2.9.2
 =====
@@ -392,8 +425,8 @@ time or change existing behaviors in order to make them less surprising/more use
 
 .. _#510: https://github.com/pytest-dev/pytest/issues/510
 .. _#1506: https://github.com/pytest-dev/pytest/pull/1506
-.. _#1496: https://github.com/pytest-dev/pytest/issue/1496
-.. _#1524: https://github.com/pytest-dev/pytest/issue/1524
+.. _#1496: https://github.com/pytest-dev/pytest/issues/1496
+.. _#1524: https://github.com/pytest-dev/pytest/pull/1524
 
 .. _@prusse-martin: https://github.com/prusse-martin
 .. _@astraw38: https://github.com/astraw38

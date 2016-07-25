@@ -226,10 +226,10 @@ class MonkeyPatch:
         """ Undo previous changes.  This call consumes the
         undo stack. Calling it a second time has no effect unless
         you do more monkeypatching after the undo call.
-        
+
         There is generally no need to call `undo()`, since it is
         called automatically during tear-down.
-        
+
         Note that the same `monkeypatch` fixture is used across a
         single test function invocation. If `monkeypatch` is used both by
         the test function itself and one of the test fixtures,

@@ -24,7 +24,7 @@ Supported nose Idioms
 * setup and teardown at module/class/method level
 * SkipTest exceptions and markers
 * setup/teardown decorators
-* yield-based tests and their setup
+* ``yield``-based tests and their setup
 * ``__test__`` attribute on modules/classes/functions
 * general usage of nose utilities
 
@@ -51,5 +51,12 @@ Unsupported idioms / known issues
 - nose-style doctests are not collected and executed correctly,
   also doctest fixtures don't work.
 
-- no nose-configuration is recognized
+- no nose-configuration is recognized.
+
+- ``yield``-based methods don't support ``setup`` properly because
+  the ``setup`` method is always called in the same class instance.
+  There are no plans to fix this currently because ``yield``-tests
+  are deprecated in pytest 3.0, with ``pytest.mark.parametrize``
+  being the recommended alternative.
+
 
