@@ -155,6 +155,7 @@ class PytestPluginManager(PluginManager):
         self._conftestpath2mod = {}
         self._confcutdir = None
         self._noconftest = False
+        self._duplicatepaths = set()
 
         self.add_hookspecs(_pytest.hookspec)
         self.register(self)
