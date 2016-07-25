@@ -21,7 +21,7 @@
   e.g. with ``request.getfuncargvalue``. BACKWARD INCOMPAT: Previously these params
   were simply never defined. So a fixture decorated like ``@pytest.fixture(params=[0, 1, 2])``
   only ran once. Now a failure is raised. Fixes (`#460`_). Thanks to
-  `@nikratio`_ for bug report, `@RedBeardCode`_ and `@tomviner`_ for PR.
+  `@nikratio`_ for bug report, `@RedBeardCode`_ and `@tomviner`_ for the PR.
 
 * Create correct diff for strings ending with newlines. Fixes (`#1553`_).
   Thanks `@Vogtinator`_ for reporting. Thanks to `@RedBeardCode`_ and
