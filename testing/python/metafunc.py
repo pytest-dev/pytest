@@ -973,7 +973,7 @@ class TestMetafuncFunctional:
         """))
         sub1.join("test_in_sub1.py").write("def test_1(): pass")
         sub2.join("test_in_sub2.py").write("def test_2(): pass")
-        result = testdir.runpytest("-v", "-s", sub1, sub2, sub1)
+        result = testdir.runpytest("--keep-duplicates", "-v", "-s", sub1, sub2, sub1)
         result.assert_outcomes(passed=3)
 
     def test_generate_same_function_names_issue403(self, testdir):

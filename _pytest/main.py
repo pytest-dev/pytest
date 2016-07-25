@@ -63,6 +63,9 @@ def pytest_addoption(parser):
     group.addoption('--noconftest', action="store_true",
         dest="noconftest", default=False,
         help="Don't load any conftest.py files.")
+    group.addoption('--keepduplicates', '--keep-duplicates', action="store_true",
+        dest="keepduplicates", default=False,
+        help="Skip duplicate tests.")
 
     group = parser.getgroup("debugconfig",
         "test session debugging and configuration")
@@ -154,7 +157,25 @@ def pytest_ignore_collect(path, config):
     excludeopt = config.getoption("ignore")
     if excludeopt:
         ignore_paths.extend([py.path.local(x) for x in excludeopt])
-    return path in ignore_paths
+
+    if path in ignore_paths:
+        return True
+
+    # Skip duplicate paths.
+    #  TODO: is this called when specifying direct filenames
+    #        from command lines, eg.
+    #        py.test test_a.py test_b.py
+    keepduplicates = config.getoption("keepduplicates")
+    duplicate_paths = config.pluginmanager._duplicatepaths
+    if not keepduplicates:
+        if path in duplicate_paths:
+            #  TODO should we log this?
+            return True
+        else:
+            duplicate_paths.add(path)
+
+    return False
+
 
 class FSHookProxy:
     def __init__(self, fspath, pm, remove_mods):

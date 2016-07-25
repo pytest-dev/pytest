@@ -1213,3 +1213,40 @@ def test_syntax_error_with_non_ascii_chars(testdir):
         '*SyntaxError*',
         '*1 error in*',
     ])
+
+
+def test_skip_duplicates_by_default(testdir):
+    """Test for issue https://github.com/pytest-dev/pytest/issues/1609 (#1609)
+
+    Ignore duplicate directories.
+    """
+    a = testdir.mkdir("a")
+    fh = a.join("test_a.py")
+    fh.write(_pytest._code.Source("""
+        import pytest
+        def test_real():
+            pass
+    """))
+    result = testdir.runpytest(a.strpath, a.strpath)
+    result.stdout.fnmatch_lines([
+        '*collected 1 item*',
+    ])
+
+
+
+def test_keep_duplicates(testdir):
+    """Test for issue https://github.com/pytest-dev/pytest/issues/1609 (#1609)
+
+    Use --keep-duplicates to collect tests from duplicate directories.
+    """
+    a = testdir.mkdir("a")
+    fh = a.join("test_a.py")
+    fh.write(_pytest._code.Source("""
+        import pytest
+        def test_real():
+            pass
+    """))
+    result = testdir.runpytest("--keep-duplicates", a.strpath, a.strpath)
+    result.stdout.fnmatch_lines([
+        '*collected 2 item*',
+    ])

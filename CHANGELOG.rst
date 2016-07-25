@@ -120,8 +120,11 @@ time or change existing behaviors in order to make them less surprising/more use
     fixtures and reports them;
   + ``--setup-show``: performs normal test execution and additionally shows
     setup and teardown of fixtures;
+  + ``--keep-duplicates``: default behavior is now to ignore duplicate paths, you can  
+    retain the old behavior and running multiple times the tests  
+    using the ``--keep-duplicates`` cli argument `#1609`_;
 
-  Thanks `@d6e`_, `@kvas-it`_, `@sallner`_ and `@omarkohl`_ for the PRs.
+  Thanks `@d6e`_, `@kvas-it`_, `@sallner`_, `@ioggstream`_ and `@omarkohl`_ for the PRs.
 
 * New CLI flag ``--override-ini``/``-o``: overrides values from the ini file.
   For example: ``"-o xfail_strict=True"``'.
@@ -524,6 +527,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 .. _`traceback style docs`: https://pytest.org/latest/usage.html#modifying-python-traceback-printing
 
+.. _#1609: https://github.com/pytest-dev/pytest/issues/1609
 .. _#1422: https://github.com/pytest-dev/pytest/issues/1422
 .. _#1379: https://github.com/pytest-dev/pytest/issues/1379
 .. _#1366: https://github.com/pytest-dev/pytest/issues/1366
@@ -549,6 +553,7 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _@rabbbit: https://github.com/rabbbit
 .. _@hackebrot: https://github.com/hackebrot
 .. _@pquentin: https://github.com/pquentin
+.. _@ioggstream: https://github.com/ioggstream
 
 2.8.7
 =====
