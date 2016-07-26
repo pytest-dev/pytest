@@ -930,6 +930,43 @@ class TestMetafuncFunctional:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=5)
 
+    def test_parametrize_issue634(self, testdir):
+        testdir.makepyfile('''
+            import pytest
+
+            @pytest.fixture(scope='module')
+            def foo(request):
+                print('preparing foo-%d' % request.param)
+                return 'foo-%d' % request.param
+
+
+            def test_one(foo):
+                pass
+
+
+            def test_two(foo):
+                pass
+
+
+            test_two.test_with = (2, 3)
+
+
+            def pytest_generate_tests(metafunc):
+                params = (1, 2, 3, 4)
+                if not 'foo' in metafunc.fixturenames:
+                    return
+
+                test_with = getattr(metafunc.function, 'test_with', None)
+                if test_with:
+                    params = test_with
+                metafunc.parametrize('foo', params, indirect=True)
+
+        ''')
+        result = testdir.runpytest("-s")
+        output = result.stdout.str()
+        assert output.count('preparing foo-2') == 1
+        assert output.count('preparing foo-3') == 1
+
     def test_parametrize_issue323(self, testdir):
         testdir.makepyfile("""
             import pytest

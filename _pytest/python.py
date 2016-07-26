@@ -489,6 +489,10 @@ class Class(PyCollector):
             self.warn("C1", "cannot collect test class %r because it has a "
                 "__init__ constructor" % self.obj.__name__)
             return []
+        elif hasnew(self.obj):
+            self.warn("C1", "cannot collect test class %r because it has a "
+                            "__new__ constructor" % self.obj.__name__)
+            return []
         return [self._getcustomclass("Instance")(name="()", parent=self)]
 
     def setup(self):
@@ -506,8 +510,7 @@ class Class(PyCollector):
 
 class Instance(PyCollector):
     def _getobj(self):
-        obj = self.parent.obj()
-        return obj
+        return self.parent.obj()
 
     def collect(self):
         self.session._fixturemanager.parsefactories(self)
@@ -622,8 +625,13 @@ class Generator(FunctionMixin, PyCollector):
 def hasinit(obj):
     init = getattr(obj, '__init__', None)
     if init:
-        if init != object.__init__:
-            return True
+        return init != object.__init__
+
+
+def hasnew(obj):
+    new = getattr(obj, '__new__', None)
+    if new:
+        return new != object.__new__
 
 
 class CallSpec2(object):
@@ -763,7 +771,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             It will also override any fixture-function defined scope, allowing
             to set a dynamic scope using test context or configuration.
         """
-
+        from _pytest.fixtures import scopes
         # individual parametrized argument sets can be wrapped in a series
         # of markers in which case we unwrap the values and apply the mark
         # at Function init
@@ -794,10 +802,16 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             newmarks = newkeywords.setdefault(0, {})
             newmarks[newmark.markname] = newmark
 
-
         if scope is None:
-            scope = "function"
-        scopenum = fixtures.scopes.index(scope)
+            if self._arg2fixturedefs:
+                # Takes the most narrow scope from used fixtures
+                fixtures_scopes = [fixturedef[0].scope for fixturedef in self._arg2fixturedefs.values()]
+                for scope in reversed(scopes):
+                    if scope in fixtures_scopes:
+                        break
+            else:
+                scope = 'function'
+        scopenum = scopes.index(scope)
         valtypes = {}
         for arg in argnames:
             if arg not in self.fixturenames:
