@@ -65,7 +65,7 @@ def pytest_addoption(parser):
         help="Don't load any conftest.py files.")
     group.addoption('--keepduplicates', '--keep-duplicates', action="store_true",
         dest="keepduplicates", default=False,
-        help="Skip duplicate tests.")
+        help="Keep duplicate tests.")
 
     group = parser.getgroup("debugconfig",
         "test session debugging and configuration")
