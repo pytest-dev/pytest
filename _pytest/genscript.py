@@ -100,7 +100,8 @@ def pytest_namespace():
 def freeze_includes():
     """
     Returns a list of module names used by py.test that should be
-    included by cx_freeze.
+    included by cx_freeze/pyinstaller to generate a standalone
+    pytest executable.
     """
     result = list(_iter_all_modules(py))
     result += list(_iter_all_modules(_pytest))

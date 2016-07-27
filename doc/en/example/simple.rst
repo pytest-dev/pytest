@@ -699,36 +699,33 @@ and run it::
 You'll see that the fixture finalizers could use the precise reporting
 information.
 
-Integrating pytest runner and cx_freeze
------------------------------------------------------------
+Integrating pytest runner and PyInstaller
+-----------------------------------------
 
 If you freeze your application using a tool like
-`cx_freeze <https://cx-freeze.readthedocs.io>`_ in order to distribute it
-to your end-users, it is a good idea to also package your test runner and run
-your tests using the frozen application.
+`PyInstaller <https://pyinstaller.readthedocs.io>`_
+in order to distribute it to your end-users, it is a good idea to also package
+your test runner and run your tests using the frozen application. This way packaging
+errors such as dependencies not being included into the executable can be detected early
+while also allowing you to send test files to users so they can run them in their
+machines, which can be invaluable to obtain more information about a hard to reproduce bug.
 
-This way packaging errors such as dependencies not being
-included into the executable can be detected early while also allowing you to
-send test files to users so they can run them in their machines, which can be
-invaluable to obtain more information about a hard to reproduce bug.
-
-Unfortunately ``cx_freeze`` can't discover them
+Unfortunately ``PyInstaller`` can't discover them
 automatically because of ``pytest``'s use of dynamic module loading, so you
-must declare them explicitly by using ``pytest.freeze_includes()``::
+must declare them explicitly by using ``pytest.freeze_includes()`` and an
+auxiliary script:
 
-    # contents of setup.py
-    from cx_Freeze import setup, Executable
+.. code-block:: python
+
+    # contents of create_executable.py
     import pytest
+    import subprocess
 
-    setup(
-        name="app_main",
-        executables=[Executable("app_main.py")],
-        options={"build_exe":
-            {
-            'includes': pytest.freeze_includes()}
-            },
-        # ... other options
-    )
+    hidden = []
+    for x in pytest.freeze_includes():
+        hidden.extend(['--hidden-import', x])
+    args = ['pyinstaller'] + hidden + ['runtests_script.py']
+    subprocess.check_call(' '.join(args), shell=True)
 
 If you don't want to ship a different executable just in order to run your tests,
 you can make your program check for a certain flag and pass control
