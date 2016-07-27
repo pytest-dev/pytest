@@ -61,13 +61,6 @@
 * Fixed scope overriding inside metafunc.parametrize (`#634`_).
   Thanks to `@Stranger6667`_ for the PR.
 
-*
-
-*
-
-*
-
-*
 
 .. _#1210: https://github.com/pytest-dev/pytest/issues/1210
 .. _#1479: https://github.com/pytest-dev/pytest/issues/1479
