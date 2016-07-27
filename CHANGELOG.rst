@@ -69,33 +69,33 @@
 
 *
 
-.. _#634: https://github.com/pytest-dev/pytest/issues/634
-.. _#717: https://github.com/pytest-dev/pytest/issues/717
+.. _#1210: https://github.com/pytest-dev/pytest/issues/1210
+.. _#1479: https://github.com/pytest-dev/pytest/issues/1479
+.. _#1503: https://github.com/pytest-dev/pytest/issues/1503
+.. _#1553: https://github.com/pytest-dev/pytest/issues/1553
 .. _#1579: https://github.com/pytest-dev/pytest/issues/1579
 .. _#1580: https://github.com/pytest-dev/pytest/pull/1580
-.. _#1605: https://github.com/pytest-dev/pytest/issues/1605
 .. _#1597: https://github.com/pytest-dev/pytest/pull/1597
-.. _#460: https://github.com/pytest-dev/pytest/pull/460
-.. _#1553: https://github.com/pytest-dev/pytest/issues/1553
+.. _#1605: https://github.com/pytest-dev/pytest/issues/1605
 .. _#1626: https://github.com/pytest-dev/pytest/pull/1626
-.. _#1503: https://github.com/pytest-dev/pytest/issues/1503
-.. _#1479: https://github.com/pytest-dev/pytest/issues/1479
+.. _#460: https://github.com/pytest-dev/pytest/pull/460
+.. _#634: https://github.com/pytest-dev/pytest/issues/634
+.. _#717: https://github.com/pytest-dev/pytest/issues/717
 .. _#925: https://github.com/pytest-dev/pytest/issues/925
-.. _#1210: https://github.com/pytest-dev/pytest/issues/1210
 
-.. _@eolo999: https://github.com/eolo999
-.. _@blueyed: https://github.com/blueyed
-.. _@graingert: https://github.com/graingert
-.. _@taschini: https://github.com/taschini
-.. _@nikratio: https://github.com/nikratio
-.. _@RedBeardCode: https://github.com/RedBeardCode
-.. _@Vogtinator: https://github.com/Vogtinator
 .. _@bagerard: https://github.com/bagerard
+.. _@BeyondEvil: https://github.com/BeyondEvil
+.. _@blueyed: https://github.com/blueyed
 .. _@davehunt: https://github.com/davehunt
 .. _@DRMacIver: https://github.com/DRMacIver
-.. _@BeyondEvil: https://github.com/BeyondEvil
+.. _@eolo999: https://github.com/eolo999
+.. _@graingert: https://github.com/graingert
 .. _@JonathonSonesen: https://github.com/JonathonSonesen
+.. _@nikratio: https://github.com/nikratio
+.. _@RedBeardCode: https://github.com/RedBeardCode
 .. _@Stranger6667: https://github.com/Stranger6667
+.. _@taschini: https://github.com/taschini
+.. _@Vogtinator: https://github.com/Vogtinator
 
 
 2.9.2
