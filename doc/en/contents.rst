@@ -3,7 +3,7 @@
 Full pytest documentation
 ===========================
 
-`Download latest version as PDF <pytest.pdf>`_
+`Download latest version as PDF <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
 
 .. `Download latest version as EPUB <http://media.readthedocs.org/epub/pytest/latest/pytest.epub>`_
 

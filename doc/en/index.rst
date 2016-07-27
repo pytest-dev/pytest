@@ -10,7 +10,7 @@ pytest: helps you write better programs
  - free and open source software, distributed under the terms of the :ref:`MIT license <license>`
  - **well tested** with more than a thousand tests against itself
  - **strict backward compatibility policy** for safe pytest upgrades
- - :ref:`comprehensive online <toc>` and `PDF documentation <pytest.pdf>`_
+ - :ref:`comprehensive online <toc>` and `PDF documentation <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
  - many :ref:`third party plugins <extplugins>` and :ref:`builtin helpers <pytest helpers>`,
  - used in :ref:`many small and large projects and organisations <projects>`
  - comes with many :ref:`tested examples <examples>`
