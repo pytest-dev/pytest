@@ -588,6 +588,7 @@ class Generator(FunctionMixin, PyCollector):
         # test generators are seen as collectors but they also
         # invoke setup/teardown on popular request
         # (induced by the common "test_*" naming shared with normal tests)
+        from _pytest import deprecated
         self.session._setupstate.prepare(self)
         # see FunctionMixin.setup and test_setupstate_is_preserved_134
         self._preservedparent = self.parent.obj
@@ -605,8 +606,7 @@ class Generator(FunctionMixin, PyCollector):
                 raise ValueError("%r generated tests with non-unique name %r" %(self, name))
             seen[name] = True
             l.append(self.Function(name, self, args=args, callobj=call))
-            msg = 'yield tests are deprecated, and scheduled to be removed in pytest 4.0'
-            self.config.warn('C1', msg, fslocation=self.fspath)
+            self.config.warn('C1', deprecated.YIELD_TESTS, fslocation=self.fspath)
         return l
 
     def getcallargs(self, obj):

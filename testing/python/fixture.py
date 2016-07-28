@@ -2941,5 +2941,4 @@ class TestParameterizedSubRequest:
             """.format(fixfile.strpath, testfile.basename))
 
 
-def test_getfuncargvalue_is_deprecated(request):
-    pytest.deprecated_call(request.getfuncargvalue, 'tmpdir')
+
