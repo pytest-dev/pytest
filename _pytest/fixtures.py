@@ -874,7 +874,7 @@ def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
 def yield_fixture(scope="function", params=None, autouse=False, ids=None, name=None):
     """ (return a) decorator to mark a yield-fixture factory function.
 
-    .. deprecated:: 1.10
+    .. deprecated:: 3.0
         Use :py:func:`pytest.fixture` directly instead.
     """
     if callable(scope) and params is None and not autouse:
