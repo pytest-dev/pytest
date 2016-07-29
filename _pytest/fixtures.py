@@ -836,7 +836,7 @@ def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
     function will be injected.
 
     :arg scope: the scope for which this fixture is shared, one of
-                "function" (default), "class", "module", "session".
+                "function" (default), "class", "module", "session" or "invocation".
 
     :arg params: an optional list of parameters which will cause multiple
                 invocations of the fixture function and all of the tests
