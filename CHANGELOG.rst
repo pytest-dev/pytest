@@ -1,6 +1,8 @@
 2.9.3.dev
 =========
 
+* Highlight path of the file location in the error report.
+
 **Bug Fixes**
 
 * Add an 'E' to the first line of error messages from FixtureLookupErrorRepr.
