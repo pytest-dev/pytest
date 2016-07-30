@@ -723,7 +723,8 @@ class ReprFileLocation(TerminalRepr):
         i = msg.find("\n")
         if i != -1:
             msg = msg[:i]
-        tw.line("%s:%s: %s" %(self.path, self.lineno, msg))
+        tw.write(self.path, bold=True, red=True)
+        tw.line(":%s: %s" % (self.lineno, msg))
 
 class ReprLocals(TerminalRepr):
     def __init__(self, lines):
