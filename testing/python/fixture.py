@@ -417,6 +417,7 @@ class TestFillFixtures:
             "*1 error*",
         ])
         assert "INTERNAL" not in result.stdout.str()
+        assert 'monkeypatch:session' not in result.stdout.str()
 
     def test_fixture_excinfo_leak(self, testdir):
         # on python2 sys.excinfo would leak into fixture executions

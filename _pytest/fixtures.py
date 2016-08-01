@@ -615,6 +615,16 @@ def scopemismatch(currentscope, newscope):
     return scopes.index(newscope) > scopes.index(currentscope)
 
 
+def strip_invocation_scope_suffix(name):
+    """Remove the invocation-scope suffix from the given name.
+
+    Invocation scope fixtures have their scope in the name of the fixture.
+    For example, "monkeypatch:session". This function strips the suffix
+    returning the user-frienldy name of the fixture.
+    """
+    return name.split(':')[0]
+
+
 class FixtureLookupError(LookupError):
     """ could not return a requested Fixture (missing or invalid). """
     def __init__(self, argname, request, msg=None):
@@ -654,7 +664,8 @@ class FixtureLookupError(LookupError):
             parentid = self.request._pyfuncitem.parent.nodeid
             for name, fixturedefs in fm._arg2fixturedefs.items():
                 faclist = list(fm._matchfactories(fixturedefs, parentid))
-                if faclist:
+                name = strip_invocation_scope_suffix(name)
+                if faclist and name not in available:
                     available.append(name)
             msg = "fixture %r not found" % (self.argname,)
             msg += "\n available fixtures: %s" %(", ".join(available),)
