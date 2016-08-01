@@ -1014,16 +1014,26 @@ def _showfixtures_main(config, session):
     fm = session._fixturemanager
 
     available = []
+    seen = set()
+
     for argname, fixturedefs in fm._arg2fixturedefs.items():
         assert fixturedefs is not None
         if not fixturedefs:
             continue
         for fixturedef in fixturedefs:
             loc = getlocation(fixturedef.func, curdir)
+            fixture_argname = fixturedef.argname
+            # invocation-scoped fixtures have argname in the form
+            # "<name>:<scope>" (for example: "monkeypatch:session").
+            if ':' in fixture_argname:
+                fixture_argname = fixture_argname.split(':')[0]
+            if (fixture_argname, loc) in seen:
+                continue
+            seen.add((fixture_argname, loc))
             available.append((len(fixturedef.baseid),
                               fixturedef.func.__module__,
                               curdir.bestrelpath(loc),
-                              fixturedef.argname, fixturedef))
+                              fixture_argname, fixturedef))
 
     available.sort()
     currentmodule = None
