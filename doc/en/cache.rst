@@ -80,7 +80,7 @@ If you then run it with ``--lf``::
 
     $ pytest --lf
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     run-last-failure: rerun last 2 failures
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 50 items
@@ -121,7 +121,7 @@ of ``FF`` and dots)::
 
     $ pytest --ff
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     run-last-failure: rerun last 2 failures first
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 50 items
@@ -226,23 +226,16 @@ You can always peek at the content of the cache using the
 
     $ py.test --cache-show
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
-    collected 1 items
+    cachedir: $REGENDOC_TMPDIR/.cache
+    ------------------------------- cache values -------------------------------
+    cache/lastfailed contains:
+      {'test_caching.py::test_function': True}
+    example/value contains:
+      42
     
-    test_caching.py F
-    
-    ======= FAILURES ========
-    _______ test_function ________
-    
-    mydata = 42
-    
-        def test_function(mydata):
-    >       assert mydata == 23
-    E       assert 42 == 23
-    
-    test_caching.py:14: AssertionError
-    ======= 1 failed in 0.12 seconds ========
+    ======= no tests ran in 0.12 seconds ========
 
 Clearing Cache content
 -------------------------------

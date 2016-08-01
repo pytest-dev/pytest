@@ -13,7 +13,7 @@ get on the terminal - we are working on that):
 
     assertion $ pytest failure_demo.py
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR/assertion, inifile: 
     collected 42 items
     
@@ -361,7 +361,7 @@ get on the terminal - we are working on that):
     >   int(s)
     E   ValueError: invalid literal for int() with base 10: 'qwe'
     
-    <0-codegen $PYTHON_PREFIX/lib/python3.5/site-packages/_pytest/python.py:1309>:1: ValueError
+    <0-codegen $PYTHON_PREFIX/lib/python3.5/site-packages/_pytest/python.py:1167>:1: ValueError
     _______ TestRaises.test_raises_doesnt ________
     
     self = <failure_demo.TestRaises object at 0xdeadbeef>
@@ -427,7 +427,7 @@ get on the terminal - we are working on that):
     
         def foo():
     >    assert 1 == 0
-    E    assert 1 == 0
+    E    AssertionError
     
     <2-codegen 'abc-123' $REGENDOC_TMPDIR/assertion/failure_demo.py:163>:2: AssertionError
     _______ TestMoreErrors.test_complex_error ________
@@ -482,8 +482,9 @@ get on the terminal - we are working on that):
             s = "123"
             g = "456"
     >       assert s.startswith(g)
-    E       assert <built-in method startswith of str object at 0xdeadbeef>('456')
-    E        +  where <built-in method startswith of str object at 0xdeadbeef> = '123'.startswith
+    E       assert False
+    E        +  where False = <built-in method startswith of str object at 0xdeadbeef>('456')
+    E        +    where <built-in method startswith of str object at 0xdeadbeef> = '123'.startswith
     
     failure_demo.py:189: AssertionError
     _______ TestMoreErrors.test_startswith_nested ________
@@ -496,10 +497,11 @@ get on the terminal - we are working on that):
             def g():
                 return "456"
     >       assert f().startswith(g())
-    E       assert <built-in method startswith of str object at 0xdeadbeef>('456')
-    E        +  where <built-in method startswith of str object at 0xdeadbeef> = '123'.startswith
-    E        +    where '123' = <function TestMoreErrors.test_startswith_nested.<locals>.f at 0xdeadbeef>()
-    E        +  and   '456' = <function TestMoreErrors.test_startswith_nested.<locals>.g at 0xdeadbeef>()
+    E       assert False
+    E        +  where False = <built-in method startswith of str object at 0xdeadbeef>('456')
+    E        +    where <built-in method startswith of str object at 0xdeadbeef> = '123'.startswith
+    E        +      where '123' = <function TestMoreErrors.test_startswith_nested.<locals>.f at 0xdeadbeef>()
+    E        +    and   '456' = <function TestMoreErrors.test_startswith_nested.<locals>.g at 0xdeadbeef>()
     
     failure_demo.py:196: AssertionError
     _______ TestMoreErrors.test_global_func ________
@@ -508,8 +510,9 @@ get on the terminal - we are working on that):
     
         def test_global_func(self):
     >       assert isinstance(globf(42), float)
-    E       assert isinstance(43, float)
-    E        +  where 43 = globf(42)
+    E       assert False
+    E        +  where False = isinstance(43, float)
+    E        +    where 43 = globf(42)
     
     failure_demo.py:199: AssertionError
     _______ TestMoreErrors.test_instance ________

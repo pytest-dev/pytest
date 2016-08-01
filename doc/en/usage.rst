@@ -326,5 +326,7 @@ hook was invoked::
     $ python myinvoke.py
     *** test run reporting finishing
     
+    ======= pytest-warning summary ========
+    WC1 None passing a string to pytest.main() is deprecated, pass a list of arguments instead.
 
 .. include:: links.inc

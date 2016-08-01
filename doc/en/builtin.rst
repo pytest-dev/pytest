@@ -89,19 +89,23 @@ You can ask for available builtin or project-custom
         
         Values can be any object handled by the json stdlib module.
     capsys
-        enables capturing of writes to sys.stdout/sys.stderr and makes
+        Enable capturing of writes to sys.stdout/sys.stderr and make
         captured output available via ``capsys.readouterr()`` method calls
         which return a ``(out, err)`` tuple.
     capfd
-        enables capturing of writes to file descriptors 1 and 2 and makes
+        Enable capturing of writes to file descriptors 1 and 2 and make
         captured output available via ``capfd.readouterr()`` method calls
         which return a ``(out, err)`` tuple.
+    doctest_namespace
+        Inject names into the doctest namespace.
+    pytestconfig
+        the pytest config object with access to command line opts.
     record_xml_property
-        Fixture that adds extra xml properties to the tag for the calling test.
-        The fixture is callable with (name, value), with value being automatically
+        Add extra xml properties to the tag for the calling test.
+        The fixture is callable with ``(name, value)``, with value being automatically
         xml-encoded.
-    monkeypatch
-        The returned ``monkeypatch`` funcarg provides these
+    monkeypatch:class
+        The returned ``monkeypatch`` fixture provides these
         helper methods to modify objects, dictionaries or os.environ::
         
         monkeypatch.setattr(obj, name, value, raising=True)
@@ -114,11 +118,68 @@ You can ask for available builtin or project-custom
         monkeypatch.chdir(path)
         
         All modifications will be undone after the requesting
-        test function has finished. The ``raising``
+        test function or fixture has finished. The ``raising``
         parameter determines if a KeyError or AttributeError
         will be raised if the set/deletion operation has no target.
-    pytestconfig
-        the pytest config object with access to command line opts.
+        
+        This fixture is ``invocation``-scoped.
+    monkeypatch:function
+        The returned ``monkeypatch`` fixture provides these
+        helper methods to modify objects, dictionaries or os.environ::
+        
+        monkeypatch.setattr(obj, name, value, raising=True)
+        monkeypatch.delattr(obj, name, raising=True)
+        monkeypatch.setitem(mapping, name, value)
+        monkeypatch.delitem(obj, name, raising=True)
+        monkeypatch.setenv(name, value, prepend=False)
+        monkeypatch.delenv(name, value, raising=True)
+        monkeypatch.syspath_prepend(path)
+        monkeypatch.chdir(path)
+        
+        All modifications will be undone after the requesting
+        test function or fixture has finished. The ``raising``
+        parameter determines if a KeyError or AttributeError
+        will be raised if the set/deletion operation has no target.
+        
+        This fixture is ``invocation``-scoped.
+    monkeypatch:module
+        The returned ``monkeypatch`` fixture provides these
+        helper methods to modify objects, dictionaries or os.environ::
+        
+        monkeypatch.setattr(obj, name, value, raising=True)
+        monkeypatch.delattr(obj, name, raising=True)
+        monkeypatch.setitem(mapping, name, value)
+        monkeypatch.delitem(obj, name, raising=True)
+        monkeypatch.setenv(name, value, prepend=False)
+        monkeypatch.delenv(name, value, raising=True)
+        monkeypatch.syspath_prepend(path)
+        monkeypatch.chdir(path)
+        
+        All modifications will be undone after the requesting
+        test function or fixture has finished. The ``raising``
+        parameter determines if a KeyError or AttributeError
+        will be raised if the set/deletion operation has no target.
+        
+        This fixture is ``invocation``-scoped.
+    monkeypatch:session
+        The returned ``monkeypatch`` fixture provides these
+        helper methods to modify objects, dictionaries or os.environ::
+        
+        monkeypatch.setattr(obj, name, value, raising=True)
+        monkeypatch.delattr(obj, name, raising=True)
+        monkeypatch.setitem(mapping, name, value)
+        monkeypatch.delitem(obj, name, raising=True)
+        monkeypatch.setenv(name, value, prepend=False)
+        monkeypatch.delenv(name, value, raising=True)
+        monkeypatch.syspath_prepend(path)
+        monkeypatch.chdir(path)
+        
+        All modifications will be undone after the requesting
+        test function or fixture has finished. The ``raising``
+        parameter determines if a KeyError or AttributeError
+        will be raised if the set/deletion operation has no target.
+        
+        This fixture is ``invocation``-scoped.
     recwarn
         Return a WarningsRecorder instance that provides these methods:
         
@@ -130,7 +191,7 @@ You can ask for available builtin or project-custom
     tmpdir_factory
         Return a TempdirFactory instance for the test session.
     tmpdir
-        return a temporary directory path object
+        Return a temporary directory path object
         which is unique to each test function invocation,
         created as a sub directory of the base temporary
         directory.  The returned object is a `py.path.local`_

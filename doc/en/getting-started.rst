@@ -27,7 +27,7 @@ Installation options::
 To check your installation has installed the correct version::
 
     $ pytest --version
-    This is pytest version 2.9.2, imported from $PYTHON_PREFIX/lib/python3.5/site-packages/pytest.py
+    This is pytest version 3.0.0, imported from $PYTHON_PREFIX/lib/python3.5/site-packages/pytest.py
 
 If you get an error checkout :ref:`installation issues`.
 
@@ -49,7 +49,7 @@ That's it. You can execute the test function now::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
@@ -137,7 +137,8 @@ run the module by passing its filename::
         def test_two(self):
             x = "hello"
     >       assert hasattr(x, 'check')
-    E       assert hasattr('hello', 'check')
+    E       assert False
+    E        +  where False = hasattr('hello', 'check')
     
     test_class.py:8: AssertionError
     1 failed, 1 passed in 0.12 seconds

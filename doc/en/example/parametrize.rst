@@ -130,7 +130,7 @@ objects, they are still using the default pytest representation::
 
     $ pytest test_time.py --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 6 items
     <Module 'test_time.py'>
@@ -181,7 +181,7 @@ this is a fully self-contained example which you can run with::
 
     $ pytest test_scenarios.py
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
@@ -194,7 +194,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
 
     $ pytest --collect-only test_scenarios.py
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     <Module 'test_scenarios.py'>
@@ -259,7 +259,7 @@ Let's first see how it looks like at collection time::
 
     $ pytest test_backends.py --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     <Module 'test_backends.py'>
@@ -320,7 +320,7 @@ The result of this test will be successful::
 
     $ pytest test_indirect_list.py --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     <Module 'test_indirect_list.py'>
@@ -369,7 +369,7 @@ argument sets to use for each test function.  Let's run it::
     $ pytest -q
     F..
     ======= FAILURES ========
-    _______ TestClass.test_equals[1-2] ________
+    _______ TestClass.test_equals[2-1] ________
     
     self = <test_parametrize.TestClass object at 0xdeadbeef>, a = 1, b = 2
     
@@ -397,8 +397,11 @@ is to be run with different sets of arguments for its three arguments:
 Running it results in some skips if we don't have all the python interpreters installed and otherwise runs all combinations (5 interpreters times 5 interpreters times 3 objects to serialize/deserialize)::
 
    . $ pytest -rs -q multipython.py
-   ...........................
-   27 passed in 0.12 seconds
+   ssssssssssss...ssssssssssss
+   ======= short test summary info ========
+   SKIP [12] $REGENDOC_TMPDIR/CWD/multipython.py:23: 'python2.6' not found
+   SKIP [12] $REGENDOC_TMPDIR/CWD/multipython.py:23: 'python3.3' not found
+   3 passed, 24 skipped in 0.12 seconds
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------
@@ -445,7 +448,7 @@ If you run this with reporting for skips enabled::
 
     $ pytest -rs test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
