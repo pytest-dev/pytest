@@ -2725,6 +2725,13 @@ class TestShowFixtures:
                 Hi from test module
         ''')
 
+    def test_show_invocation_fixtures(self, testdir):
+        """py.test --fixtures should display invocation-scoped fixtures once.
+        """
+        result = testdir.runpytest("--fixtures")
+        result.stdout.fnmatch_lines('''monkeypatch''')
+        assert 'monkeypatch:session' not in result.stdout.str()
+
 
 @pytest.mark.parametrize('flavor', ['fixture', 'yield_fixture'])
 class TestContextManagerFixtureFuncs:
