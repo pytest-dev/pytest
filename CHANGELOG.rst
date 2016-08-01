@@ -166,6 +166,9 @@ time or change existing behaviors in order to make them less surprising/more use
 * Plugins now benefit from assertion rewriting.  Thanks
   `@sober7`_, `@nicoddemus`_ and `@flub`_ for the PR.
 
+* Highlight path of the file location in the error report to make it easier to copy/paste.
+  Thanks `@suzaku`_ for the PR (`#1778`_).
+
 * Fixtures marked with ``@pytest.fixture`` can now use ``yield`` statements exactly like
   those marked with the ``@pytest.yield_fixture`` decorator. This change renders
   ``@pytest.yield_fixture`` deprecated and makes ``@pytest.fixture`` with ``yield`` statements
@@ -347,6 +350,7 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _#1723: https://github.com/pytest-dev/pytest/pull/1723
 .. _#1740: https://github.com/pytest-dev/pytest/issues/1740
 .. _#1749: https://github.com/pytest-dev/pytest/issues/1749
+.. _#1778: https://github.com/pytest-dev/pytest/pull/1778
 .. _#372: https://github.com/pytest-dev/pytest/issues/372
 .. _#457: https://github.com/pytest-dev/pytest/issues/457
 .. _#460: https://github.com/pytest-dev/pytest/pull/460
@@ -385,6 +389,7 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _@RedBeardCode: https://github.com/RedBeardCode
 .. _@sallner: https://github.com/sallner
 .. _@sober7: https://github.com/sober7
+.. _@suzaku: https://github.com/suzaku
 .. _@Stranger6667: https://github.com/Stranger6667
 .. _@tareqalayan: https://github.com/tareqalayan
 .. _@taschini: https://github.com/taschini

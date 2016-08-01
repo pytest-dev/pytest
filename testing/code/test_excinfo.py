@@ -26,14 +26,23 @@ import pytest
 pytest_version_info = tuple(map(int, pytest.__version__.split(".")[:3]))
 
 class TWMock:
+    WRITE = object()
+
     def __init__(self):
         self.lines = []
+        self.is_writing = False
     def sep(self, sep, line=None):
         self.lines.append((sep, line))
+    def write(self, msg, **kw):
+        self.lines.append((TWMock.WRITE, msg))
     def line(self, line, **kw):
         self.lines.append(line)
     def markup(self, text, **kw):
         return text
+    def get_write_msg(self, idx):
+        flag, msg = self.lines[idx]
+        assert flag == TWMock.WRITE
+        return msg
 
     fullwidth = 80
 
@@ -803,14 +812,18 @@ raise ValueError()
         assert tw.lines[0] == "    def f():"
         assert tw.lines[1] == ">       g(3)"
         assert tw.lines[2] == ""
-        assert tw.lines[3].endswith("mod.py:5: ")
-        assert tw.lines[4] == ("_ ", None)
-        assert tw.lines[5] == ""
-        assert tw.lines[6] == "    def g(x):"
-        assert tw.lines[7] == ">       raise ValueError(x)"
-        assert tw.lines[8] == "E       ValueError: 3"
-        assert tw.lines[9] == ""
-        assert tw.lines[10].endswith("mod.py:3: ValueError")
+        line = tw.get_write_msg(3)
+        assert line.endswith("mod.py")
+        assert tw.lines[4] == (":5: ")
+        assert tw.lines[5] == ("_ ", None)
+        assert tw.lines[6] == ""
+        assert tw.lines[7] == "    def g(x):"
+        assert tw.lines[8] == ">       raise ValueError(x)"
+        assert tw.lines[9] == "E       ValueError: 3"
+        assert tw.lines[10] == ""
+        line = tw.get_write_msg(11)
+        assert line.endswith("mod.py")
+        assert tw.lines[12] == ":3: ValueError"
 
     def test_toterminal_long_missing_source(self, importasmod, tmpdir):
         mod = importasmod("""
@@ -829,13 +842,17 @@ raise ValueError()
         tw.lines.pop(0)
         assert tw.lines[0] == ">   ???"
         assert tw.lines[1] == ""
-        assert tw.lines[2].endswith("mod.py:5: ")
-        assert tw.lines[3] == ("_ ", None)
-        assert tw.lines[4] == ""
-        assert tw.lines[5] == ">   ???"
-        assert tw.lines[6] == "E   ValueError: 3"
-        assert tw.lines[7] == ""
-        assert tw.lines[8].endswith("mod.py:3: ValueError")
+        line = tw.get_write_msg(2)
+        assert line.endswith("mod.py")
+        assert tw.lines[3] == ":5: "
+        assert tw.lines[4] == ("_ ", None)
+        assert tw.lines[5] == ""
+        assert tw.lines[6] == ">   ???"
+        assert tw.lines[7] == "E   ValueError: 3"
+        assert tw.lines[8] == ""
+        line = tw.get_write_msg(9)
+        assert line.endswith("mod.py")
+        assert tw.lines[10] == ":3: ValueError"
 
     def test_toterminal_long_incomplete_source(self, importasmod, tmpdir):
         mod = importasmod("""
@@ -854,13 +871,17 @@ raise ValueError()
         tw.lines.pop(0)
         assert tw.lines[0] == ">   ???"
         assert tw.lines[1] == ""
-        assert tw.lines[2].endswith("mod.py:5: ")
-        assert tw.lines[3] == ("_ ", None)
-        assert tw.lines[4] == ""
-        assert tw.lines[5] == ">   ???"
-        assert tw.lines[6] == "E   ValueError: 3"
-        assert tw.lines[7] == ""
-        assert tw.lines[8].endswith("mod.py:3: ValueError")
+        line = tw.get_write_msg(2)
+        assert line.endswith("mod.py")
+        assert tw.lines[3] == ":5: "
+        assert tw.lines[4] == ("_ ", None)
+        assert tw.lines[5] == ""
+        assert tw.lines[6] == ">   ???"
+        assert tw.lines[7] == "E   ValueError: 3"
+        assert tw.lines[8] == ""
+        line = tw.get_write_msg(9)
+        assert line.endswith("mod.py")
+        assert tw.lines[10] == ":3: ValueError"
 
     def test_toterminal_long_filenames(self, importasmod):
         mod = importasmod("""
@@ -874,15 +895,18 @@ raise ValueError()
         try:
             repr = excinfo.getrepr(abspath=False)
             repr.toterminal(tw)
-            line = tw.lines[-1]
             x = py.path.local().bestrelpath(path)
             if len(x) < len(str(path)):
-                assert line == "mod.py:3: ValueError"
+                msg = tw.get_write_msg(-2)
+                assert msg == "mod.py"
+                assert tw.lines[-1] == ":3: ValueError"
 
             repr = excinfo.getrepr(abspath=True)
             repr.toterminal(tw)
+            msg = tw.get_write_msg(-2)
+            assert msg == path
             line = tw.lines[-1]
-            assert line == "%s:3: ValueError" %(path,)
+            assert line == ":3: ValueError"
         finally:
             old.chdir()
 
@@ -929,19 +953,25 @@ raise ValueError()
         assert tw.lines[1] == "    def f():"
         assert tw.lines[2] == ">       g()"
         assert tw.lines[3] == ""
-        assert tw.lines[4].endswith("mod.py:3: ")
-        assert tw.lines[5] == ("_ ", None)
-        assert tw.lines[6].endswith("in g")
-        assert tw.lines[7] == "    h()"
-        assert tw.lines[8].endswith("in h")
-        assert tw.lines[9] == "    i()"
-        assert tw.lines[10] == ("_ ", None)
-        assert tw.lines[11] == ""
-        assert tw.lines[12] == "    def i():"
-        assert tw.lines[13] == ">       raise ValueError()"
-        assert tw.lines[14] == "E       ValueError"
-        assert tw.lines[15] == ""
-        assert tw.lines[16].endswith("mod.py:9: ValueError")
+        msg = tw.get_write_msg(4)
+        assert msg.endswith("mod.py")
+        assert tw.lines[5] == ":3: "
+        assert tw.lines[6] == ("_ ", None)
+        tw.get_write_msg(7)
+        assert tw.lines[8].endswith("in g")
+        assert tw.lines[9] == "    h()"
+        tw.get_write_msg(10)
+        assert tw.lines[11].endswith("in h")
+        assert tw.lines[12] == "    i()"
+        assert tw.lines[13] == ("_ ", None)
+        assert tw.lines[14] == ""
+        assert tw.lines[15] == "    def i():"
+        assert tw.lines[16] == ">       raise ValueError()"
+        assert tw.lines[17] == "E       ValueError"
+        assert tw.lines[18] == ""
+        msg = tw.get_write_msg(19)
+        msg.endswith("mod.py")
+        assert tw.lines[20] == ":9: ValueError"
 
     @pytest.mark.skipif("sys.version_info[0] < 3")
     def test_exc_chain_repr(self, importasmod):
@@ -971,44 +1001,54 @@ raise ValueError()
         assert tw.lines[2]  == "        try:"
         assert tw.lines[3]  == ">           g()"
         assert tw.lines[4]  == ""
-        assert tw.lines[5].endswith("mod.py:6: ")
-        assert tw.lines[6]  == ("_ ", None)
-        assert tw.lines[7]  == ""
-        assert tw.lines[8]  == "    def g():"
-        assert tw.lines[9]  == ">       raise ValueError()"
-        assert tw.lines[10] == "E       ValueError"
-        assert tw.lines[11] == ""
-        assert tw.lines[12].endswith("mod.py:12: ValueError")
-        assert tw.lines[13] == ""
-        assert tw.lines[14] == "The above exception was the direct cause of the following exception:"
+        line = tw.get_write_msg(5)
+        assert line.endswith('mod.py')
+        assert tw.lines[6]  == ':6: '
+        assert tw.lines[7]  == ("_ ", None)
+        assert tw.lines[8]  == ""
+        assert tw.lines[9]  == "    def g():"
+        assert tw.lines[10]  == ">       raise ValueError()"
+        assert tw.lines[11] == "E       ValueError"
+        assert tw.lines[12] == ""
+        line = tw.get_write_msg(13)
+        assert line.endswith('mod.py')
+        assert tw.lines[14] == ':12: ValueError'
         assert tw.lines[15] == ""
-        assert tw.lines[16] == "    def f():"
-        assert tw.lines[17] == "        try:"
-        assert tw.lines[18] == "            g()"
-        assert tw.lines[19] == "        except Exception as e:"
-        assert tw.lines[20] == ">           raise Err() from e"
-        assert tw.lines[21] == "E           test_exc_chain_repr0.mod.Err"
-        assert tw.lines[22] == ""
-        assert tw.lines[23].endswith("mod.py:8: Err")
+        assert tw.lines[16] == "The above exception was the direct cause of the following exception:"
+        assert tw.lines[17] == ""
+        assert tw.lines[18] == "    def f():"
+        assert tw.lines[19] == "        try:"
+        assert tw.lines[20] == "            g()"
+        assert tw.lines[21] == "        except Exception as e:"
+        assert tw.lines[22] == ">           raise Err() from e"
+        assert tw.lines[23] == "E           test_exc_chain_repr0.mod.Err"
         assert tw.lines[24] == ""
-        assert tw.lines[25] == "During handling of the above exception, another exception occurred:"
-        assert tw.lines[26] == ""
-        assert tw.lines[27] == "    def f():"
-        assert tw.lines[28] == "        try:"
-        assert tw.lines[29] == "            g()"
-        assert tw.lines[30] == "        except Exception as e:"
-        assert tw.lines[31] == "            raise Err() from e"
-        assert tw.lines[32] == "        finally:"
-        assert tw.lines[33] == ">           h()"
-        assert tw.lines[34] == ""
-        assert tw.lines[35].endswith("mod.py:10: ")
-        assert tw.lines[36] == ('_ ', None)
+        line = tw.get_write_msg(25)
+        assert line.endswith('mod.py')
+        assert tw.lines[26] == ":8: Err"
+        assert tw.lines[27] == ""
+        assert tw.lines[28] == "During handling of the above exception, another exception occurred:"
+        assert tw.lines[29] == ""
+        assert tw.lines[30] == "    def f():"
+        assert tw.lines[31] == "        try:"
+        assert tw.lines[32] == "            g()"
+        assert tw.lines[33] == "        except Exception as e:"
+        assert tw.lines[34] == "            raise Err() from e"
+        assert tw.lines[35] == "        finally:"
+        assert tw.lines[36] == ">           h()"
         assert tw.lines[37] == ""
-        assert tw.lines[38] == "    def h():"
-        assert tw.lines[39] == ">       raise AttributeError()"
-        assert tw.lines[40] == "E       AttributeError"
+        line = tw.get_write_msg(38)
+        assert line.endswith('mod.py')
+        assert tw.lines[39] == ":10: "
+        assert tw.lines[40] == ('_ ', None)
         assert tw.lines[41] == ""
-        assert tw.lines[42].endswith("mod.py:15: AttributeError")
+        assert tw.lines[42] == "    def h():"
+        assert tw.lines[43] == ">       raise AttributeError()"
+        assert tw.lines[44] == "E       AttributeError"
+        assert tw.lines[45] == ""
+        line = tw.get_write_msg(46)
+        assert line.endswith('mod.py')
+        assert tw.lines[47] == ":15: AttributeError"
 
 
 @pytest.mark.parametrize("style", ["short", "long"])
