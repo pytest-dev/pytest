@@ -1001,44 +1001,54 @@ raise ValueError()
         assert tw.lines[2]  == "        try:"
         assert tw.lines[3]  == ">           g()"
         assert tw.lines[4]  == ""
-        assert tw.lines[5].endswith("mod.py:6: ")
-        assert tw.lines[6]  == ("_ ", None)
-        assert tw.lines[7]  == ""
-        assert tw.lines[8]  == "    def g():"
-        assert tw.lines[9]  == ">       raise ValueError()"
-        assert tw.lines[10] == "E       ValueError"
-        assert tw.lines[11] == ""
-        assert tw.lines[12].endswith("mod.py:12: ValueError")
-        assert tw.lines[13] == ""
-        assert tw.lines[14] == "The above exception was the direct cause of the following exception:"
+        line = tw.get_write_msg(5)
+        assert line.endswith('mod.py')
+        assert tw.lines[6]  == ':6: '
+        assert tw.lines[7]  == ("_ ", None)
+        assert tw.lines[8]  == ""
+        assert tw.lines[9]  == "    def g():"
+        assert tw.lines[10]  == ">       raise ValueError()"
+        assert tw.lines[11] == "E       ValueError"
+        assert tw.lines[12] == ""
+        line = tw.get_write_msg(13)
+        assert line.endswith('mod.py')
+        assert tw.lines[14] == ':12: ValueError'
         assert tw.lines[15] == ""
-        assert tw.lines[16] == "    def f():"
-        assert tw.lines[17] == "        try:"
-        assert tw.lines[18] == "            g()"
-        assert tw.lines[19] == "        except Exception as e:"
-        assert tw.lines[20] == ">           raise Err() from e"
-        assert tw.lines[21] == "E           test_exc_chain_repr0.mod.Err"
-        assert tw.lines[22] == ""
-        assert tw.lines[23].endswith("mod.py:8: Err")
+        assert tw.lines[16] == "The above exception was the direct cause of the following exception:"
+        assert tw.lines[17] == ""
+        assert tw.lines[18] == "    def f():"
+        assert tw.lines[19] == "        try:"
+        assert tw.lines[20] == "            g()"
+        assert tw.lines[21] == "        except Exception as e:"
+        assert tw.lines[22] == ">           raise Err() from e"
+        assert tw.lines[23] == "E           test_exc_chain_repr0.mod.Err"
         assert tw.lines[24] == ""
-        assert tw.lines[25] == "During handling of the above exception, another exception occurred:"
-        assert tw.lines[26] == ""
-        assert tw.lines[27] == "    def f():"
-        assert tw.lines[28] == "        try:"
-        assert tw.lines[29] == "            g()"
-        assert tw.lines[30] == "        except Exception as e:"
-        assert tw.lines[31] == "            raise Err() from e"
-        assert tw.lines[32] == "        finally:"
-        assert tw.lines[33] == ">           h()"
-        assert tw.lines[34] == ""
-        assert tw.lines[35].endswith("mod.py:10: ")
-        assert tw.lines[36] == ('_ ', None)
+        line = tw.get_write_msg(25)
+        assert line.endswith('mod.py')
+        assert tw.lines[26] == ":8: Err"
+        assert tw.lines[27] == ""
+        assert tw.lines[28] == "During handling of the above exception, another exception occurred:"
+        assert tw.lines[29] == ""
+        assert tw.lines[30] == "    def f():"
+        assert tw.lines[31] == "        try:"
+        assert tw.lines[32] == "            g()"
+        assert tw.lines[33] == "        except Exception as e:"
+        assert tw.lines[34] == "            raise Err() from e"
+        assert tw.lines[35] == "        finally:"
+        assert tw.lines[36] == ">           h()"
         assert tw.lines[37] == ""
-        assert tw.lines[38] == "    def h():"
-        assert tw.lines[39] == ">       raise AttributeError()"
-        assert tw.lines[40] == "E       AttributeError"
+        line = tw.get_write_msg(38)
+        assert line.endswith('mod.py')
+        assert tw.lines[39] == ":10: "
+        assert tw.lines[40] == ('_ ', None)
         assert tw.lines[41] == ""
-        assert tw.lines[42].endswith("mod.py:15: AttributeError")
+        assert tw.lines[42] == "    def h():"
+        assert tw.lines[43] == ">       raise AttributeError()"
+        assert tw.lines[44] == "E       AttributeError"
+        assert tw.lines[45] == ""
+        line = tw.get_write_msg(46)
+        assert line.endswith('mod.py')
+        assert tw.lines[47] == ":15: AttributeError"
 
 
 @pytest.mark.parametrize("style", ["short", "long"])
