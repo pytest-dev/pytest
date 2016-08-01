@@ -10,7 +10,7 @@ class YamlFile(pytest.File):
     def collect(self):
         import yaml # we need a yaml parser, e.g. PyYAML
         raw = yaml.safe_load(self.fspath.open())
-        for name, spec in raw.items():
+        for name, spec in sorted(raw.items()):
             yield YamlItem(name, self, spec)
 
 class YamlItem(pytest.Item):
@@ -19,7 +19,7 @@ class YamlItem(pytest.Item):
         self.spec = spec
 
     def runtest(self):
-        for name, value in self.spec.items():
+        for name, value in sorted(self.spec.items()):
             # some custom test execution (dumb example follows)
             if name != value:
                 raise YamlException(self, name, value)
