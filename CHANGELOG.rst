@@ -259,7 +259,10 @@ time or change existing behaviors in order to make them less surprising/more use
 
 * Add stderr write for ``pytest.exit(msg)`` during startup. Previously the message was never shown.
   Thanks `@BeyondEvil`_ for reporting `#1210`_. Thanks to `@JonathonSonesen`_ and
-  `@tomviner`_ for PR.
+  `@tomviner`_ for the PR.
+
+* fix `#1372`_ no longer display the incorrect test deselection reason,
+  thanks `@ronnypfannschmidt`_ for the PR.
 
 *
 
@@ -311,6 +314,7 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _#1210: https://github.com/pytest-dev/pytest/issues/1210
 .. _#1235: https://github.com/pytest-dev/pytest/issues/1235
 .. _#1351: https://github.com/pytest-dev/pytest/issues/1351
+.. _#1372: https://github.com/pytest-dev/pytest/issues/1372
 .. _#1421: https://github.com/pytest-dev/pytest/issues/1421
 .. _#1426: https://github.com/pytest-dev/pytest/issues/1426
 .. _#1428: https://github.com/pytest-dev/pytest/pull/1428
