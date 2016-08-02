@@ -104,64 +104,7 @@ You can ask for available builtin or project-custom
         Add extra xml properties to the tag for the calling test.
         The fixture is callable with ``(name, value)``, with value being automatically
         xml-encoded.
-    monkeypatch:class
-        The returned ``monkeypatch`` fixture provides these
-        helper methods to modify objects, dictionaries or os.environ::
-        
-        monkeypatch.setattr(obj, name, value, raising=True)
-        monkeypatch.delattr(obj, name, raising=True)
-        monkeypatch.setitem(mapping, name, value)
-        monkeypatch.delitem(obj, name, raising=True)
-        monkeypatch.setenv(name, value, prepend=False)
-        monkeypatch.delenv(name, value, raising=True)
-        monkeypatch.syspath_prepend(path)
-        monkeypatch.chdir(path)
-        
-        All modifications will be undone after the requesting
-        test function or fixture has finished. The ``raising``
-        parameter determines if a KeyError or AttributeError
-        will be raised if the set/deletion operation has no target.
-        
-        This fixture is ``invocation``-scoped.
-    monkeypatch:function
-        The returned ``monkeypatch`` fixture provides these
-        helper methods to modify objects, dictionaries or os.environ::
-        
-        monkeypatch.setattr(obj, name, value, raising=True)
-        monkeypatch.delattr(obj, name, raising=True)
-        monkeypatch.setitem(mapping, name, value)
-        monkeypatch.delitem(obj, name, raising=True)
-        monkeypatch.setenv(name, value, prepend=False)
-        monkeypatch.delenv(name, value, raising=True)
-        monkeypatch.syspath_prepend(path)
-        monkeypatch.chdir(path)
-        
-        All modifications will be undone after the requesting
-        test function or fixture has finished. The ``raising``
-        parameter determines if a KeyError or AttributeError
-        will be raised if the set/deletion operation has no target.
-        
-        This fixture is ``invocation``-scoped.
-    monkeypatch:module
-        The returned ``monkeypatch`` fixture provides these
-        helper methods to modify objects, dictionaries or os.environ::
-        
-        monkeypatch.setattr(obj, name, value, raising=True)
-        monkeypatch.delattr(obj, name, raising=True)
-        monkeypatch.setitem(mapping, name, value)
-        monkeypatch.delitem(obj, name, raising=True)
-        monkeypatch.setenv(name, value, prepend=False)
-        monkeypatch.delenv(name, value, raising=True)
-        monkeypatch.syspath_prepend(path)
-        monkeypatch.chdir(path)
-        
-        All modifications will be undone after the requesting
-        test function or fixture has finished. The ``raising``
-        parameter determines if a KeyError or AttributeError
-        will be raised if the set/deletion operation has no target.
-        
-        This fixture is ``invocation``-scoped.
-    monkeypatch:session
+    monkeypatch
         The returned ``monkeypatch`` fixture provides these
         helper methods to modify objects, dictionaries or os.environ::
         

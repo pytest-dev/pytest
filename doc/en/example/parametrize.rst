@@ -399,8 +399,8 @@ Running it results in some skips if we don't have all the python interpreters in
    . $ pytest -rs -q multipython.py
    ssssssssssss...ssssssssssss
    ======= short test summary info ========
-   SKIP [12] $REGENDOC_TMPDIR/CWD/multipython.py:23: 'python2.6' not found
    SKIP [12] $REGENDOC_TMPDIR/CWD/multipython.py:23: 'python3.3' not found
+   SKIP [12] $REGENDOC_TMPDIR/CWD/multipython.py:23: 'python2.6' not found
    3 passed, 24 skipped in 0.12 seconds
 
 Indirect parametrization of optional implementations/imports
