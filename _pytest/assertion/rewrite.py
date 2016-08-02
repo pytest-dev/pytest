@@ -11,6 +11,7 @@ import re
 import struct
 import sys
 import types
+from fnmatch import fnmatch
 
 import py
 from _pytest.assertion import util
@@ -144,28 +145,29 @@ class AssertionRewritingHook(object):
         if fn_pypath.basename == 'conftest.py':
             state.trace("rewriting conftest file: %r" % (fn,))
             return True
-        elif self.session is not None:
+
+        if self.session is not None:
             if self.session.isinitpath(fn):
                 state.trace("matched test file (was specified on cmdline): %r" %
                             (fn,))
                 return True
-            else:
-                # modules not passed explicitly on the command line are only
-                # rewritten if they match the naming convention for test files
-                session = self.session  # avoid a cycle here
-                self.session = None
-                try:
-                    for pat in self.fnpats:
-                        if fn_pypath.fnmatch(pat):
-                            state.trace("matched test file %r" % (fn,))
-                            return True
-                finally:
-                    self.session = session
-                    del session
-        else:
-            for marked in self._must_rewrite:
-                if marked.startswith(name):
-                    return True
+
+        # modules not passed explicitly on the command line are only
+        # rewritten if they match the naming convention for test files
+        for pat in self.fnpats:
+            # use fnmatch instead of fn_pypath.fnmatch because the
+            # latter might trigger an import to fnmatch.fnmatch
+            # internally, which would cause this method to be
+            # called recursively
+            if fnmatch(fn_pypath.basename, pat):
+                state.trace("matched test file %r" % (fn,))
+                return True
+
+        for marked in self._must_rewrite:
+            if name.startswith(marked):
+                state.trace("matched marked file %r (from %r)" % (name, marked))
+                return True
+
         return False
 
     def mark_rewrite(self, *names):
