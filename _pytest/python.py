@@ -1006,6 +1006,7 @@ def showfixtures(config):
 
 def _showfixtures_main(config, session):
     import _pytest.config
+    from _pytest.fixtures import strip_invocation_scope_suffix
     session.perform_collect()
     curdir = py.path.local()
     tw = _pytest.config.create_terminal_writer(config)
@@ -1022,11 +1023,9 @@ def _showfixtures_main(config, session):
             continue
         for fixturedef in fixturedefs:
             loc = getlocation(fixturedef.func, curdir)
-            fixture_argname = fixturedef.argname
             # invocation-scoped fixtures have argname in the form
             # "<name>:<scope>" (for example: "monkeypatch:session").
-            if ':' in fixture_argname:
-                fixture_argname = fixture_argname.split(':')[0]
+            fixture_argname = strip_invocation_scope_suffix(fixturedef.argname)
             if (fixture_argname, loc) in seen:
                 continue
             seen.add((fixture_argname, loc))
