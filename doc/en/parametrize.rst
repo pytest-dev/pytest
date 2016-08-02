@@ -55,7 +55,7 @@ them in turn::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 3 items
     
@@ -103,7 +103,7 @@ Let's run this::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 3 items
     
@@ -186,8 +186,9 @@ Let's also run with a stringinput that will lead to a failing test::
     
         def test_valid_string(stringinput):
     >       assert stringinput.isalpha()
-    E       assert <built-in method isalpha of str object at 0xdeadbeef>()
-    E        +  where <built-in method isalpha of str object at 0xdeadbeef> = '!'.isalpha
+    E       assert False
+    E        +  where False = <built-in method isalpha of str object at 0xdeadbeef>()
+    E        +    where <built-in method isalpha of str object at 0xdeadbeef> = '!'.isalpha
     
     test_strings.py:3: AssertionError
     1 failed in 0.12 seconds

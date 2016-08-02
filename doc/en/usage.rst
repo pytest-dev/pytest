@@ -318,7 +318,7 @@ You can specify additional plugins to ``pytest.main``::
         def pytest_sessionfinish(self):
             print("*** test run reporting finishing")
 
-    pytest.main("-qq", plugins=[MyPlugin()])
+    pytest.main(["-qq"], plugins=[MyPlugin()])
 
 Running it will show that ``MyPlugin`` was added and its
 hook was invoked::

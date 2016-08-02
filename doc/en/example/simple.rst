@@ -108,7 +108,7 @@ directory with the above conftest.py::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 0 items
     
@@ -156,7 +156,7 @@ and when running it will see a skipped "slow" test::
 
     $ pytest -rs    # "-rs" means report details on the little 's'
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -170,7 +170,7 @@ Or run it including the ``slow`` marked test::
 
     $ pytest --runslow
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -284,7 +284,7 @@ which will add the string to the test header accordingly::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     project deps: mylib-1.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 0 items
@@ -308,7 +308,7 @@ which will add info only when run with "--v"::
 
     $ pytest -v
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     info1: did you know that ...
     did you?
@@ -321,7 +321,7 @@ and nothing when run plainly::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 0 items
     
@@ -354,7 +354,7 @@ Now we can profile which test functions execute the slowest::
 
     $ pytest --durations=3
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 3 items
     
@@ -363,7 +363,7 @@ Now we can profile which test functions execute the slowest::
     ======= slowest 3 test durations ========
     0.20s call     test_some_are_slow.py::test_funcslow2
     0.10s call     test_some_are_slow.py::test_funcslow1
-    0.00s teardown test_some_are_slow.py::test_funcslow2
+    0.00s setup    test_some_are_slow.py::test_funcfast
     ======= 3 passed in 0.12 seconds ========
 
 incremental testing - test steps
@@ -416,7 +416,7 @@ If we run this::
 
     $ pytest -rx
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
@@ -487,7 +487,7 @@ We can run this::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 7 items
     
@@ -500,8 +500,8 @@ We can run this::
     _______ ERROR at setup of test_root ________
     file $REGENDOC_TMPDIR/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
-            fixture 'db' not found
-            available fixtures: tmpdir_factory, cache, tmpdir, pytestconfig, recwarn, monkeypatch, capfd, record_xml_property, capsys
+    E       fixture 'db' not found
+            available fixtures: monkeypatch, capfd, recwarn, pytestconfig, tmpdir_factory, tmpdir, cache, capsys, record_xml_property, doctest_namespace
             use 'pytest --fixtures [testpath]' for help on them.
     
     $REGENDOC_TMPDIR/b/test_error.py:1
@@ -591,7 +591,7 @@ and run them::
 
     $ pytest test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -681,7 +681,7 @@ and run it::
 
     $ pytest -s test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.5.1, pytest-2.9.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 3 items
     
