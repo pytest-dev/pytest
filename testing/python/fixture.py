@@ -404,6 +404,21 @@ class TestFillFixtures:
         assert result.ret == 0
 
     def test_funcarg_lookup_error(self, testdir):
+        testdir.makeconftest("""
+            import pytest
+
+            @pytest.fixture
+            def a_fixture(): pass
+
+            @pytest.fixture
+            def b_fixture(): pass
+
+            @pytest.fixture
+            def c_fixture(): pass
+
+            @pytest.fixture
+            def d_fixture(): pass
+        """)
         testdir.makepyfile("""
             def test_lookup_error(unknown):
                 pass
@@ -413,10 +428,12 @@ class TestFillFixtures:
             "*ERROR*test_lookup_error*",
             "*def test_lookup_error(unknown):*",
             "*fixture*unknown*not found*",
-            "*available fixtures*",
+            # check if fixtures appear sorted
+            "*available fixtures:*a_fixture,*b_fixture,*c_fixture,*d_fixture*monkeypatch,*",
             "*1 error*",
         ])
         assert "INTERNAL" not in result.stdout.str()
+        # invocation-scoped fixture should appear with their friendly name only
         assert 'monkeypatch:session' not in result.stdout.str()
 
     def test_fixture_excinfo_leak(self, testdir):
