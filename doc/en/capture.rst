@@ -97,7 +97,7 @@ that performs some output related checks:
         out, err = capsys.readouterr()
         assert out == "hello\n"
         assert err == "world\n"
-        print "next"
+        print ("next")
         out, err = capsys.readouterr()
         assert out == "next\n"
 
