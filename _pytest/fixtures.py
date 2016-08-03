@@ -668,7 +668,7 @@ class FixtureLookupError(LookupError):
                 if faclist and name not in available:
                     available.append(name)
             msg = "fixture %r not found" % (self.argname,)
-            msg += "\n available fixtures: %s" %(", ".join(available),)
+            msg += "\n available fixtures: %s" %(", ".join(sorted(available)),)
             msg += "\n use 'pytest --fixtures [testpath]' for help on them."
 
         return FixtureLookupErrorRepr(fspath, lineno, tblines, msg, self.argname)

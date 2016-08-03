@@ -178,6 +178,10 @@ time or change existing behaviors in order to make them less surprising/more use
 * Explicitly passed parametrize ids do not get escaped to ascii (`#1351`_).
   Thanks `@ceridwen`_ for the PR.
 
+* Fixtures are now sorted in the error message displayed when an unknown
+  fixture is declared in a test function.
+  Thanks `@nicoddemus`_ for the PR.
+
 * Parametrize ids can accept ``None`` as specific test id, in which case the
   automatically generated id for that argument will be used.
   Thanks `@palaviv`_ for the complete PR (`#1468`_).
