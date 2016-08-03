@@ -246,7 +246,8 @@ the conftest file::
            f1 = Foo(1)
            f2 = Foo(2)
    >       assert f1 == f2
-   E       AssertionError
+   E       assert Comparing Foo instances:
+   E            vals: 1 != 2
    
    test_foocompare.py:11: AssertionError
    1 failed in 0.12 seconds

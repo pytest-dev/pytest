@@ -110,6 +110,7 @@ If you then run it with ``--lf``::
     E          Failed: bad luck
     
     test_50.py:6: Failed
+    ======= 48 tests deselected ========
     ======= 2 failed, 48 deselected in 0.12 seconds ========
 
 You have run only the two failing test from the last run, while 48 tests have

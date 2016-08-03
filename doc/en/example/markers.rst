@@ -38,7 +38,7 @@ You can then restrict a test run to only run tests marked with ``webtest``::
     
     test_server.py::test_send_http PASSED
     
-    ======= 3 tests deselected by "-m 'webtest'" ========
+    ======= 3 tests deselected ========
     ======= 1 passed, 3 deselected in 0.12 seconds ========
 
 Or the inverse, running all tests except the webtest ones::
@@ -54,7 +54,7 @@ Or the inverse, running all tests except the webtest ones::
     test_server.py::test_another PASSED
     test_server.py::TestClass::test_method PASSED
     
-    ======= 1 tests deselected by "-m 'not webtest'" ========
+    ======= 1 tests deselected ========
     ======= 3 passed, 1 deselected in 0.12 seconds ========
 
 Selecting tests based on their node ID
@@ -137,7 +137,7 @@ select tests based on their names::
     
     test_server.py::test_send_http PASSED
     
-    ======= 3 tests deselected by '-khttp' ========
+    ======= 3 tests deselected ========
     ======= 1 passed, 3 deselected in 0.12 seconds ========
 
 And you can also run all tests except the ones that match the keyword::
@@ -153,7 +153,7 @@ And you can also run all tests except the ones that match the keyword::
     test_server.py::test_another PASSED
     test_server.py::TestClass::test_method PASSED
     
-    ======= 1 tests deselected by '-knot send_http' ========
+    ======= 1 tests deselected ========
     ======= 3 passed, 1 deselected in 0.12 seconds ========
 
 Or to select "http" and "quick" tests::
@@ -168,7 +168,7 @@ Or to select "http" and "quick" tests::
     test_server.py::test_send_http PASSED
     test_server.py::test_something_quick PASSED
     
-    ======= 2 tests deselected by '-khttp or quick' ========
+    ======= 2 tests deselected ========
     ======= 2 passed, 2 deselected in 0.12 seconds ========
 
 .. note::
@@ -505,7 +505,7 @@ Note that if you specify a platform via the marker-command line option like this
     
     test_plat.py s
     
-    ======= 3 tests deselected by "-m 'linux2'" ========
+    ======= 3 tests deselected ========
     ======= 1 skipped, 3 deselected in 0.12 seconds ========
 
 then the unmarked-tests will not be run.  It is thus a way to restrict the run to the specific tests.
@@ -566,7 +566,7 @@ We can now use the ``-m option`` to select one set::
   test_module.py:6: in test_interface_complex
       assert 0
   E   assert 0
-  ======= 2 tests deselected by "-m 'interface'" ========
+  ======= 2 tests deselected ========
   ======= 2 failed, 2 deselected in 0.12 seconds ========
 
 or to select both "event" and "interface" tests::
@@ -592,5 +592,5 @@ or to select both "event" and "interface" tests::
   test_module.py:9: in test_event_simple
       assert 0
   E   assert 0
-  ======= 1 tests deselected by "-m 'interface or event'" ========
+  ======= 1 tests deselected ========
   ======= 3 failed, 1 deselected in 0.12 seconds ========
