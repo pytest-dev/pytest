@@ -31,10 +31,11 @@ def pytest_namespace():
 def register_assert_rewrite(*names):
     """Register a module name to be rewritten on import.
 
-    This function will make sure that the module will get it's assert
-    statements rewritten when it is imported.  Thus you should make
-    sure to call this before the module is actually imported, usually
-    in your __init__.py if you are a plugin using a package.
+    This function will make sure that this module or all modules inside
+    the package will get their assert statements rewritten.
+    Thus you should make sure to call this before the module is
+    actually imported, usually in your __init__.py if you are a plugin
+    using a package.
     """
     for hook in sys.meta_path:
         if isinstance(hook, rewrite.AssertionRewritingHook):

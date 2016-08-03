@@ -533,6 +533,16 @@ def test_rewritten():
         hook.mark_rewrite('_pytest')
         assert '_pytest' in warnings[0][1]
 
+    def test_rewrite_module_imported_from_conftest(self, testdir):
+        testdir.makeconftest('''
+            import test_rewrite_module_imported
+        ''')
+        testdir.makepyfile(test_rewrite_module_imported='''
+            def test_rewritten():
+                assert "@py_builtins" in globals()
+        ''')
+        assert testdir.runpytest_subprocess().ret == 0
+
 
 class TestAssertionRewriteHookDetails(object):
     def test_loader_is_package_false_for_module(self, testdir):
