@@ -357,11 +357,13 @@ class PyCollector(PyobjMixin, pytest.Collector):
             fixtures.add_funcarg_pseudo_fixture_def(self, metafunc, fm)
 
             for callspec in metafunc._calls:
-                subname = "%s[%s]" %(name, callspec.id)
+                subname = "%s[%s]" % (name, callspec.id)
                 yield Function(name=subname, parent=self,
                                callspec=callspec, callobj=funcobj,
                                fixtureinfo=fixtureinfo,
-                               keywords={callspec.id:True})
+                               keywords={callspec.id:True},
+                               originalname=name,
+                               )
 
 
 def _marked(func, mark):
@@ -1471,7 +1473,7 @@ class Function(FunctionMixin, pytest.Item, fixtures.FuncargnamesCompatAttr):
     _genid = None
     def __init__(self, name, parent, args=None, config=None,
                  callspec=None, callobj=NOTSET, keywords=None, session=None,
-                 fixtureinfo=None):
+                 fixtureinfo=None, originalname=None):
         super(Function, self).__init__(name, parent, config=config,
                                        session=session)
         self._args = args
@@ -1492,6 +1494,12 @@ class Function(FunctionMixin, pytest.Item, fixtures.FuncargnamesCompatAttr):
         self._fixtureinfo = fixtureinfo
         self.fixturenames = fixtureinfo.names_closure
         self._initrequest()
+
+        #: original function name, without any decorations (for example
+        #: parametrization adds a ``"[...]"`` suffix to function names).
+        #:
+        #: .. versionadded:: 3.0
+        self.originalname = originalname
 
     def _initrequest(self):
         self.funcargs = {}
