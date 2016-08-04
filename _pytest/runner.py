@@ -306,8 +306,10 @@ class TestReport(BaseReport):
         #: one of 'setup', 'call', 'teardown' to indicate runtest phase.
         self.when = when
 
-        #: list of (secname, data) extra information which needs to
-        #: marshallable
+        #: list of pairs ``(str, str)`` of extra information which needs to
+        #: marshallable. Used by pytest to add captured text
+        #: from ``stdout`` and ``stderr``, but may be used by other plugins
+        #: to add arbitrary information to reports.
         self.sections = list(sections)
 
         #: time it took to run just the test
