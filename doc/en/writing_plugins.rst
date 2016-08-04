@@ -632,6 +632,7 @@ Reference of objects involved in hooks
 
 .. autoclass:: _pytest.runner.TestReport()
     :members:
+    :inherited-members:
 
 .. autoclass:: _pytest.vendored_packages.pluggy._CallOutcome()
     :members:

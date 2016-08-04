@@ -211,6 +211,20 @@ class BaseReport(object):
             if name.startswith(prefix):
                 yield prefix, content
 
+    @property
+    def longreprtext(self):
+        """
+        Read-only property that returns the full string representation
+        of ``longrepr``.
+
+        .. versionadded:: 3.0
+        """
+        tw = py.io.TerminalWriter(stringio=True)
+        tw.hasmarkup = False
+        self.toterminal(tw)
+        exc = tw.stringio.getvalue()
+        return exc.strip()
+
     passed = property(lambda x: x.outcome == "passed")
     failed = property(lambda x: x.outcome == "failed")
     skipped = property(lambda x: x.outcome == "skipped")

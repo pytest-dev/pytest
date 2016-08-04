@@ -668,3 +668,29 @@ def test_store_except_info_on_eror():
     assert sys.last_type is IndexError
     assert sys.last_value.args[0] == 'TEST'
     assert sys.last_traceback
+
+
+class TestReportContents:
+    """
+    Test ``longreprtext`` property of TestReport objects.
+    """
+
+    def test_pass(self, testdir):
+        reports = testdir.runitem("""
+            def test_func():
+                pass
+        """)
+        rep = reports[1]
+        assert rep.longreprtext == ''
+
+    def test_failure(self, testdir):
+        reports = testdir.runitem("""
+            def test_func():
+                x = 1
+                assert x == 4
+        """)
+        rep = reports[1]
+        assert 'assert 1 == 4' in rep.longreprtext
+
+    def getrunner(self):
+        return lambda item: runner.runtestprotocol(item, log=False)
