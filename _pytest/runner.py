@@ -225,6 +225,22 @@ class BaseReport(object):
         exc = tw.stringio.getvalue()
         return exc.strip()
 
+    @property
+    def capstdout(self):
+        """Return captured text from stdout, if capturing is enabled
+
+        .. versionadded:: 3.0
+        """
+        return ''.join(content for (prefix, content) in self.get_sections('Captured stdout'))
+
+    @property
+    def capstderr(self):
+        """Return captured text from stderr, if capturing is enabled
+
+        .. versionadded:: 3.0
+        """
+        return ''.join(content for (prefix, content) in self.get_sections('Captured stderr'))
+
     passed = property(lambda x: x.outcome == "passed")
     failed = property(lambda x: x.outcome == "failed")
     skipped = property(lambda x: x.outcome == "skipped")

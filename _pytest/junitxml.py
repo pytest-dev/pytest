@@ -118,13 +118,10 @@ class _NodeReporter(object):
 
     def _write_captured_output(self, report):
         for capname in ('out', 'err'):
-            allcontent = ""
-            for name, content in report.get_sections("Captured std%s" %
-                                                     capname):
-                allcontent += content
-            if allcontent:
+            content = getattr(report, 'capstd' + capname)
+            if content:
                 tag = getattr(Junit, 'system-' + capname)
-                self.append(tag(bin_xml_escape(allcontent)))
+                self.append(tag(bin_xml_escape(content)))
 
     def append_pass(self, report):
         self.add_stats('passed')

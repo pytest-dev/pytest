@@ -672,10 +672,13 @@ def test_store_except_info_on_eror():
 
 class TestReportContents:
     """
-    Test ``longreprtext`` property of TestReport objects.
+    Test user-level API of ``TestReport`` objects.
     """
 
-    def test_pass(self, testdir):
+    def getrunner(self):
+        return lambda item: runner.runtestprotocol(item, log=False)
+
+    def test_longreprtext_pass(self, testdir):
         reports = testdir.runitem("""
             def test_func():
                 pass
@@ -683,7 +686,7 @@ class TestReportContents:
         rep = reports[1]
         assert rep.longreprtext == ''
 
-    def test_failure(self, testdir):
+    def test_longreprtext_failure(self, testdir):
         reports = testdir.runitem("""
             def test_func():
                 x = 1
@@ -692,5 +695,41 @@ class TestReportContents:
         rep = reports[1]
         assert 'assert 1 == 4' in rep.longreprtext
 
-    def getrunner(self):
-        return lambda item: runner.runtestprotocol(item, log=False)
+    def test_captured_text(self, testdir):
+        reports = testdir.runitem("""
+            import pytest
+            import sys
+
+            @pytest.fixture
+            def fix():
+                sys.stdout.write('setup: stdout\\n')
+                sys.stderr.write('setup: stderr\\n')
+                yield
+                sys.stdout.write('teardown: stdout\\n')
+                sys.stderr.write('teardown: stderr\\n')
+                assert 0
+
+            def test_func(fix):
+                sys.stdout.write('call: stdout\\n')
+                sys.stderr.write('call: stderr\\n')
+                assert 0
+        """)
+        setup, call, teardown = reports
+        assert setup.capstdout == 'setup: stdout\n'
+        assert call.capstdout == 'setup: stdout\ncall: stdout\n'
+        assert teardown.capstdout == 'setup: stdout\ncall: stdout\nteardown: stdout\n'
+
+        assert setup.capstderr == 'setup: stderr\n'
+        assert call.capstderr == 'setup: stderr\ncall: stderr\n'
+        assert teardown.capstderr == 'setup: stderr\ncall: stderr\nteardown: stderr\n'
+
+    def test_no_captured_text(self, testdir):
+        reports = testdir.runitem("""
+            def test_func():
+                pass
+        """)
+        rep = reports[1]
+        assert rep.capstdout == ''
+        assert rep.capstderr == ''
+
+
