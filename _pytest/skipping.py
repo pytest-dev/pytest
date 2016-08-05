@@ -230,7 +230,8 @@ def pytest_runtest_makereport(item, call):
     if hasattr(item, '_unexpectedsuccess') and rep.when == "call":
         # we need to translate into how pytest encodes xpass
         rep.wasxfail = "reason: " + repr(item._unexpectedsuccess)
-        rep.outcome = "failed"
+        # TODO: Do we need to check for strict xfail here as well?
+        rep.outcome = "passed"
     elif item.config.option.runxfail:
         pass   # don't interefere
     elif call.excinfo and call.excinfo.errisinstance(pytest.xfail.Exception):
@@ -245,7 +246,12 @@ def pytest_runtest_makereport(item, call):
                 rep.outcome = "skipped"
                 rep.wasxfail = evalxfail.getexplanation()
         elif call.when == "call":
-            rep.outcome = "failed"  # xpass outcome
+            strict_default = item.config.getini('xfail_strict')
+            is_strict_xfail = evalxfail.get('strict', strict_default)
+            if is_strict_xfail:
+                rep.outcome = "failed"
+            else:
+                rep.outcome = "passed"
             rep.wasxfail = evalxfail.getexplanation()
     elif evalskip is not None and rep.skipped and type(rep.longrepr) is tuple:
         # skipped by mark.skipif; change the location of the failure
@@ -260,7 +266,7 @@ def pytest_report_teststatus(report):
     if hasattr(report, "wasxfail"):
         if report.skipped:
             return "xfailed", "x", "xfail"
-        elif report.failed:
+        elif report.passed:
             return "xpassed", "X", ("XPASS", {'yellow': True})
 
 # called by the terminalreporter instance/plugin
