@@ -1,5 +1,5 @@
-.. image:: http://pytest.org/latest/_static/pytest1.png
-   :target: http://pytest.org
+.. image:: http://docs.pytest.org/en/latest/_static/pytest1.png
+   :target: http://docs.pytest.org
    :align: center
    :alt: pytest
 
@@ -51,33 +51,34 @@ To execute it::
     test_sample.py:5: AssertionError
     ======= 1 failed in 0.12 seconds ========
 
-Due to ``pytest``'s detailed assertion introspection, only plain ``assert`` statements are used. See `getting-started <http://pytest.org/latest/getting-started.html#our-first-test-run>`_ for more examples.
+
+Due to ``py.test``'s detailed assertion introspection, only plain ``assert`` statements are used. See `getting-started <http://docs.pytest.org/en/latest/getting-started.html#our-first-test-run>`_ for more examples.
 
 
 Features
 --------
 
-- Detailed info on failing `assert statements <http://pytest.org/latest/assert.html>`_ (no need to remember ``self.assert*`` names);
+- Detailed info on failing `assert statements <http://docs.pytest.org/en/latest/assert.html>`_ (no need to remember ``self.assert*`` names);
 
 - `Auto-discovery
-  <http://pytest.org/latest/goodpractices.html#python-test-discovery>`_
+  <http://docs.pytest.org/en/latest/goodpractices.html#python-test-discovery>`_
   of test modules and functions;
 
-- `Modular fixtures <http://pytest.org/latest/fixture.html>`_  for
+- `Modular fixtures <http://docs.pytest.org/en/latest/fixture.html>`_  for
   managing small or parametrized long-lived test resources;
 
-- Can run `unittest <http://pytest.org/latest/unittest.html>`_ (or trial),
-  `nose <http://pytest.org/latest/nose.html>`_ test suites out of the box;
+- Can run `unittest <http://docs.pytest.org/en/latest/unittest.html>`_ (or trial),
+  `nose <http://docs.pytest.org/en/latest/nose.html>`_ test suites out of the box;
 
 - Python2.6+, Python3.3+, PyPy-2.3, Jython-2.5 (untested);
 
-- Rich plugin architecture, with over 150+ `external plugins <http://pytest.org/latest/plugins.html#installing-external-plugins-searching>`_ and thriving community;
+- Rich plugin architecture, with over 150+ `external plugins <http://docs.pytest.org/en/latest/plugins.html#installing-external-plugins-searching>`_ and thriving community;
 
 
 Documentation
 -------------
 
-For full documentation, including installation, tutorials and PDF documents, please see http://pytest.org.
+For full documentation, including installation, tutorials and PDF documents, please see http://docs.pytest.org.
 
 
 Bugs/Requests
@@ -89,7 +90,7 @@ Please use the `GitHub issue tracker <https://github.com/pytest-dev/pytest/issue
 Changelog
 ---------
 
-Consult the `Changelog <http://pytest.org/latest/changelog.html>`_ page for fixes and enhancements of each version.
+Consult the `Changelog <http://docs.pytest.org/en/latest/changelog.html>`_ page for fixes and enhancements of each version.
 
 
 License

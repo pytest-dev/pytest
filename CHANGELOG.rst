@@ -254,6 +254,15 @@ time or change existing behaviors in order to make them less surprising/more use
 
 * ``optparse`` backward compatibility supports float/complex types (`#457`_).
 
+* Refined logic for determining the ``rootdir``, considering only valid
+  paths which fixes a number of issues: `#1594`_, `#1435`_ and `#1471`_.
+  Thanks to `@blueyed`_ and `@davehunt`_ for the PR.
+
+* Always include full assertion explanation. The previous behaviour was hiding
+  sub-expressions that happened to be False, assuming this was redundant information.
+  Thanks `@bagerard`_ for reporting (`#1503`_). Thanks to `@davehunt`_ and
+  `@tomviner`_ for PR.
+
 * Renamed the pytest ``pdb`` module (plugin) into ``debugging``.
 
 * Better message in case of not using parametrized variable (see `#1539`_).
@@ -322,11 +331,13 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _#1421: https://github.com/pytest-dev/pytest/issues/1421
 .. _#1426: https://github.com/pytest-dev/pytest/issues/1426
 .. _#1428: https://github.com/pytest-dev/pytest/pull/1428
+.. _#1435: https://github.com/pytest-dev/pytest/issues/1435
 .. _#1441: https://github.com/pytest-dev/pytest/pull/1441
 .. _#1444: https://github.com/pytest-dev/pytest/pull/1444
 .. _#1454: https://github.com/pytest-dev/pytest/pull/1454
 .. _#1461: https://github.com/pytest-dev/pytest/pull/1461
 .. _#1468: https://github.com/pytest-dev/pytest/pull/1468
+.. _#1471: https://github.com/pytest-dev/pytest/issues/1471
 .. _#1474: https://github.com/pytest-dev/pytest/pull/1474
 .. _#1479: https://github.com/pytest-dev/pytest/issues/1479
 .. _#1502: https://github.com/pytest-dev/pytest/pull/1502
@@ -341,6 +352,7 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _#1562: https://github.com/pytest-dev/pytest/issues/1562
 .. _#1579: https://github.com/pytest-dev/pytest/issues/1579
 .. _#1580: https://github.com/pytest-dev/pytest/pull/1580
+.. _#1594: https://github.com/pytest-dev/pytest/issues/1594
 .. _#1597: https://github.com/pytest-dev/pytest/pull/1597
 .. _#1605: https://github.com/pytest-dev/pytest/issues/1605
 .. _#1616: https://github.com/pytest-dev/pytest/pull/1616
@@ -366,6 +378,7 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _#634: https://github.com/pytest-dev/pytest/issues/634
 .. _#717: https://github.com/pytest-dev/pytest/issues/717
 .. _#925: https://github.com/pytest-dev/pytest/issues/925
+
 
 .. _@anntzer: https://github.com/anntzer
 .. _@bagerard: https://github.com/bagerard
@@ -397,8 +410,8 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _@RedBeardCode: https://github.com/RedBeardCode
 .. _@sallner: https://github.com/sallner
 .. _@sober7: https://github.com/sober7
-.. _@suzaku: https://github.com/suzaku
 .. _@Stranger6667: https://github.com/Stranger6667
+.. _@suzaku: https://github.com/suzaku
 .. _@tareqalayan: https://github.com/tareqalayan
 .. _@taschini: https://github.com/taschini
 .. _@tramwaj29: https://github.com/tramwaj29
