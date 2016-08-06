@@ -11,7 +11,7 @@ Installation and Getting Started
 `colorama (Windows) <http://pypi.python.org/pypi/colorama>`_,
 `argparse (py26) <http://pypi.python.org/pypi/argparse>`_.
 
-**documentation as PDF**: `download latest <http://pytest.org/latest/pytest.pdf>`_
+**documentation as PDF**: `download latest <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
 
 .. _`getstarted`:
 .. _installation:
