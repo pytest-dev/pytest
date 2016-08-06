@@ -35,6 +35,10 @@
   deprecated but still present. Thanks to `@RedBeardCode`_ and `@tomviner`_
   for PR (`#1626`_).
 
+* Refined logic for determining the ``rootdir``, considering only valid
+  paths which fixes a number of issues: `#1594`_, `#1435`_ and `#1471`_.
+  Thanks to `@blueyed`_ and `@davehunt`_ for the PR.
+
 * Always include full assertion explanation. The previous behaviour was hiding
   sub-expressions that happened to be False, assuming this was redundant information.
   Thanks `@bagerard`_ for reporting (`#1503`_). Thanks to `@davehunt`_ and
@@ -70,11 +74,14 @@
 *
 
 .. _#1210: https://github.com/pytest-dev/pytest/issues/1210
+.. _#1435: https://github.com/pytest-dev/pytest/issues/1435
+.. _#1471: https://github.com/pytest-dev/pytest/issues/1471
 .. _#1479: https://github.com/pytest-dev/pytest/issues/1479
 .. _#1503: https://github.com/pytest-dev/pytest/issues/1503
 .. _#1553: https://github.com/pytest-dev/pytest/issues/1553
 .. _#1579: https://github.com/pytest-dev/pytest/issues/1579
 .. _#1580: https://github.com/pytest-dev/pytest/pull/1580
+.. _#1594: https://github.com/pytest-dev/pytest/issues/1594
 .. _#1597: https://github.com/pytest-dev/pytest/pull/1597
 .. _#1605: https://github.com/pytest-dev/pytest/issues/1605
 .. _#1626: https://github.com/pytest-dev/pytest/pull/1626
