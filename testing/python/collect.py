@@ -634,6 +634,15 @@ class TestFunction:
         result = testdir.runpytest()
         result.stdout.fnmatch_lines('* 3 passed in *')
 
+    def test_function_original_name(self, testdir):
+        items = testdir.getitems("""
+            import pytest
+            @pytest.mark.parametrize('arg', [1,2])
+            def test_func(arg):
+                pass
+        """)
+        assert [x.originalname for x in items] == ['test_func', 'test_func']
+
 
 class TestSorting:
     def test_check_equality(self, testdir):

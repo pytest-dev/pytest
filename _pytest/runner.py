@@ -211,6 +211,36 @@ class BaseReport(object):
             if name.startswith(prefix):
                 yield prefix, content
 
+    @property
+    def longreprtext(self):
+        """
+        Read-only property that returns the full string representation
+        of ``longrepr``.
+
+        .. versionadded:: 3.0
+        """
+        tw = py.io.TerminalWriter(stringio=True)
+        tw.hasmarkup = False
+        self.toterminal(tw)
+        exc = tw.stringio.getvalue()
+        return exc.strip()
+
+    @property
+    def capstdout(self):
+        """Return captured text from stdout, if capturing is enabled
+
+        .. versionadded:: 3.0
+        """
+        return ''.join(content for (prefix, content) in self.get_sections('Captured stdout'))
+
+    @property
+    def capstderr(self):
+        """Return captured text from stderr, if capturing is enabled
+
+        .. versionadded:: 3.0
+        """
+        return ''.join(content for (prefix, content) in self.get_sections('Captured stderr'))
+
     passed = property(lambda x: x.outcome == "passed")
     failed = property(lambda x: x.outcome == "failed")
     skipped = property(lambda x: x.outcome == "skipped")
@@ -276,8 +306,10 @@ class TestReport(BaseReport):
         #: one of 'setup', 'call', 'teardown' to indicate runtest phase.
         self.when = when
 
-        #: list of (secname, data) extra information which needs to
-        #: marshallable
+        #: list of pairs ``(str, str)`` of extra information which needs to
+        #: marshallable. Used by pytest to add captured text
+        #: from ``stdout`` and ``stderr``, but may be used by other plugins
+        #: to add arbitrary information to reports.
         self.sections = list(sections)
 
         #: time it took to run just the test
