@@ -102,6 +102,27 @@ class TestPython:
         node = dom.find_first_by_tag("testsuite")
         node.assert_attr(name="pytest", errors=0, failures=1, skips=3, tests=5)
 
+    def test_summing_simple_with_errors(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture
+            def fixture():
+                raise Exception()
+            def test_pass():
+                pass
+            def test_fail():
+                assert 0
+            def test_error(fixture):
+                pass
+            @pytest.mark.xfail
+            def test_xpass():
+                assert 1
+        """)
+        result, dom = runandparse(testdir)
+        assert result.ret
+        node = dom.find_first_by_tag("testsuite")
+        node.assert_attr(name="pytest", errors=1, failures=1, skips=1, tests=4)
+
     def test_timing_function(self, testdir):
         testdir.makepyfile("""
             import time, pytest
@@ -128,7 +149,7 @@ class TestPython:
         result, dom = runandparse(testdir)
         assert result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(errors=1, tests=0)
+        node.assert_attr(errors=1, tests=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
             file="test_setup_error.py",
@@ -195,7 +216,7 @@ class TestPython:
         result, dom = runandparse(testdir)
         assert result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(errors=1, tests=0)
+        node.assert_attr(errors=1, tests=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(classname="pytest", name="internal")
         fnode = tnode.find_first_by_tag("error")
@@ -341,7 +362,7 @@ class TestPython:
         result, dom = runandparse(testdir)
         assert result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(errors=1, tests=0)
+        node.assert_attr(errors=1, tests=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
             file="test_collect_error.py",

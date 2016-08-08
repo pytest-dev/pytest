@@ -65,6 +65,8 @@
 * Fixed scope overriding inside metafunc.parametrize (`#634`_).
   Thanks to `@Stranger6667`_ for the PR.
 
+* Fixed the total tests tally in junit xml output (`#1798`_).
+
 *
 
 *
@@ -85,6 +87,7 @@
 .. _#1597: https://github.com/pytest-dev/pytest/pull/1597
 .. _#1605: https://github.com/pytest-dev/pytest/issues/1605
 .. _#1626: https://github.com/pytest-dev/pytest/pull/1626
+.. _#1798: https://github.com/pytest-dev/pytest/pull/1798
 .. _#460: https://github.com/pytest-dev/pytest/pull/460
 .. _#634: https://github.com/pytest-dev/pytest/issues/634
 .. _#717: https://github.com/pytest-dev/pytest/issues/717
