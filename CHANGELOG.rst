@@ -66,6 +66,7 @@
   Thanks to `@Stranger6667`_ for the PR.
 
 * Fixed the total tests tally in junit xml output (`#1798`_).
+  Thanks to `@cryporchild`_ for the PR.
 
 *
 
@@ -96,6 +97,7 @@
 .. _@bagerard: https://github.com/bagerard
 .. _@BeyondEvil: https://github.com/BeyondEvil
 .. _@blueyed: https://github.com/blueyed
+.. _@cryporchild: https://github.com/cryporchild
 .. _@davehunt: https://github.com/davehunt
 .. _@DRMacIver: https://github.com/DRMacIver
 .. _@eolo999: https://github.com/eolo999
