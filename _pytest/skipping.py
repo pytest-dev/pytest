@@ -251,11 +251,13 @@ def pytest_runtest_makereport(item, call):
         elif call.when == "call":
             strict_default = item.config.getini('xfail_strict')
             is_strict_xfail = evalxfail.get('strict', strict_default)
+            explanation = evalxfail.getexplanation()
             if is_strict_xfail:
                 rep.outcome = "failed"
+                rep.longrepr = "[XPASS(strict)] {0}".format(explanation)
             else:
                 rep.outcome = "passed"
-            rep.wasxfail = evalxfail.getexplanation()
+                rep.wasxfail = explanation
     elif evalskip is not None and rep.skipped and type(rep.longrepr) is tuple:
         # skipped by mark.skipif; change the location of the failure
         # to point to the item definition, otherwise it will display
