@@ -616,6 +616,7 @@ def test_unittest_expected_failure_for_passing_test_is_fail(testdir):
     result.stdout.fnmatch_lines([
         "*FAILURES*",
         "*MyTestCase*test_passing_test_is_fail*",
+        "*Unexpected success*",
         "*1 failed*",
     ])
     assert result.ret == 1
