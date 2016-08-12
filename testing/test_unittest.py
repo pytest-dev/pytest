@@ -588,23 +588,37 @@ def test_unittest_typerror_traceback(testdir):
     assert result.ret == 1
 
 @pytest.mark.skipif("sys.version_info < (2,7)")
-def test_unittest_unexpected_failure(testdir):
+def test_unittest_expected_failure_for_failing_test_is_xfail(testdir):
     testdir.makepyfile("""
         import unittest
         class MyTestCase(unittest.TestCase):
             @unittest.expectedFailure
-            def test_func1(self):
-                assert 0
-            @unittest.expectedFailure
-            def test_func2(self):
-                assert 1
+            def test_failing_test_is_xfail(self):
+                assert False
     """)
     result = testdir.runpytest("-rxX")
     result.stdout.fnmatch_lines([
-        "*XFAIL*MyTestCase*test_func1*",
-        "*XPASS*MyTestCase*test_func2*",
-        "*1 xfailed*1 xpass*",
+        "*XFAIL*MyTestCase*test_failing_test_is_xfail*",
+        "*1 xfailed*",
     ])
+    assert result.ret == 0
+
+@pytest.mark.skipif("sys.version_info < (2,7)")
+def test_unittest_expected_failure_for_passing_test_is_fail(testdir):
+    testdir.makepyfile("""
+        import unittest
+        class MyTestCase(unittest.TestCase):
+            @unittest.expectedFailure
+            def test_passing_test_is_fail(self):
+                assert True
+    """)
+    result = testdir.runpytest("-rxX")
+    result.stdout.fnmatch_lines([
+        "*FAILURES*",
+        "*MyTestCase*test_passing_test_is_fail*",
+        "*1 failed*",
+    ])
+    assert result.ret == 1
 
 
 @pytest.mark.parametrize('fix_type, stmt', [
