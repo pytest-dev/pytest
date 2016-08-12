@@ -228,10 +228,13 @@ def pytest_runtest_makereport(item, call):
     evalskip = getattr(item, '_evalskip', None)
     # unitttest special case, see setting of _unexpectedsuccess
     if hasattr(item, '_unexpectedsuccess') and rep.when == "call":
-        # we need to translate into how pytest encodes xpass
-        rep.wasxfail = "reason: " + repr(item._unexpectedsuccess)
-        # TODO: Do we need to check for strict xfail here as well?
-        rep.outcome = "passed"
+        # unittest treats an 'unexpected successes' as a failure
+        # which means pytest needs to handle it like a 'xfail(strict=True)'
+        rep.outcome = "failed"
+        if item._unexpectedsuccess:
+            rep.longrepr = "Unexpected success: {0}".format(item._unexpectedsuccess)
+        else:
+            rep.longrepr = "Unexpected success"
     elif item.config.option.runxfail:
         pass   # don't interefere
     elif call.excinfo and call.excinfo.errisinstance(pytest.xfail.Exception):
