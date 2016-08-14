@@ -787,15 +787,17 @@ def test_tbstyle_native_setup_error(testdir):
 
 def test_terminal_summary(testdir):
     testdir.makeconftest("""
-        def pytest_terminal_summary(terminalreporter):
+        def pytest_terminal_summary(terminalreporter, exitstatus):
             w = terminalreporter
             w.section("hello")
             w.line("world")
+            w.line("exitstatus: {0}".format(exitstatus))
     """)
     result = testdir.runpytest()
     result.stdout.fnmatch_lines("""
         *==== hello ====*
         world
+        exitstatus: 5
     """)
 
 

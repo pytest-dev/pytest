@@ -269,7 +269,7 @@ def pytest_report_header(config, startdir):
 def pytest_report_teststatus(report):
     """ return result-category, shortletter and verbose word for reporting."""
 
-def pytest_terminal_summary(terminalreporter):
+def pytest_terminal_summary(terminalreporter, exitstatus):
     """ add additional section in terminal summary reporting.  """
 
 
