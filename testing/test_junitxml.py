@@ -100,7 +100,7 @@ class TestPython:
         result, dom = runandparse(testdir)
         assert result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(name="pytest", errors=0, failures=1, skips=3, tests=5)
+        node.assert_attr(name="pytest", errors=0, failures=1, skips=2, tests=5)
 
     def test_timing_function(self, testdir):
         testdir.makepyfile("""
