@@ -361,7 +361,8 @@ class TerminalReporter:
             EXIT_OK, EXIT_TESTSFAILED, EXIT_INTERRUPTED, EXIT_USAGEERROR,
             EXIT_NOTESTSCOLLECTED)
         if exitstatus in summary_exit_codes:
-            self.config.hook.pytest_terminal_summary(terminalreporter=self)
+            self.config.hook.pytest_terminal_summary(terminalreporter=self,
+                                                     exitstatus=exitstatus)
             self.summary_errors()
             self.summary_failures()
             self.summary_warnings()
