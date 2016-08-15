@@ -73,7 +73,8 @@
 
 *
 
-*
+* Fixed off-by-one error with lines from ``request.node.warn``.
+  Thanks to `@blueyed`_ for the PR.
 
 *
 
