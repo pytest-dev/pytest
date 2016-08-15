@@ -69,7 +69,8 @@
 * Fixed the total tests tally in junit xml output (`#1798`_).
   Thanks to `@cryporchild`_ for the PR.
 
-*
+* ``pytest_terminal_summary`` hook now receives the ``exitstatus``
+  of the test session as argument. Thanks `@blueyed`_ for the PR (`#1809`_).
 
 *
 
@@ -91,6 +92,7 @@
 .. _#1605: https://github.com/pytest-dev/pytest/issues/1605
 .. _#1626: https://github.com/pytest-dev/pytest/pull/1626
 .. _#1798: https://github.com/pytest-dev/pytest/pull/1798
+.. _#1809: https://github.com/pytest-dev/pytest/pull/1809
 .. _#460: https://github.com/pytest-dev/pytest/pull/460
 .. _#634: https://github.com/pytest-dev/pytest/issues/634
 .. _#717: https://github.com/pytest-dev/pytest/issues/717
