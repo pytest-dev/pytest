@@ -865,13 +865,6 @@ All test methods in this TestClass will use the transaction fixture while
 other test classes or functions in the module will not use it unless
 they also add a ``transact`` reference.
 
-invocation-scoped fixtures
---------------------------
-
-pytest 3.0 introduced a new advanced scope for fixtures: ``"invocation"``. Fixtures marked with
-this scope can be requested from any other scope, providing a version of the fixture for that scope.
-
-See more in :ref:`invocation_scoped_fixture`.
 
 Shifting (visibility of) fixture functions
 ----------------------------------------------------

@@ -10,7 +10,7 @@ import pytest
 RE_IMPORT_ERROR_NAME = re.compile("^No module named (.*)$")
 
 
-@pytest.fixture(scope='invocation')
+@pytest.fixture
 def monkeypatch(request):
     """The returned ``monkeypatch`` fixture provides these
     helper methods to modify objects, dictionaries or os.environ::
@@ -28,8 +28,6 @@ def monkeypatch(request):
     test function or fixture has finished. The ``raising``
     parameter determines if a KeyError or AttributeError
     will be raised if the set/deletion operation has no target.
-
-    This fixture is ``invocation``-scoped.
     """
     mpatch = MonkeyPatch()
     request.addfinalizer(mpatch.undo)

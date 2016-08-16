@@ -143,13 +143,6 @@ time or change existing behaviors in order to make them less surprising/more use
   never fail because tuples are always truthy and are usually a mistake
   (see `#1562`_). Thanks `@kvas-it`_, for the PR.
 
-* Experimentally introduce new ``"invocation"`` fixture scope. At invocation scope a
-  fixture function is cached in the same way as the fixture or test function that requests it.
-  You can now use the builtin ``monkeypatch`` fixture from ``session``-scoped fixtures
-  where previously you would get an error that you can not use a ``function``-scoped fixture from a
-  ``session``-scoped one.*
-  Thanks `@nicoddemus`_ for the PR.
-
 * Allow passing a custom debugger class (e.g. ``--pdbcls=IPython.core.debugger:Pdb``).
   Thanks to `@anntzer`_ for the PR.
 

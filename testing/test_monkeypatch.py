@@ -331,33 +331,3 @@ def test_issue1338_name_resolving():
         monkeypatch.undo()
 
 
-def test_invocation_scoped_monkeypatch(testdir):
-    testdir.makeconftest("""
-        import pytest
-        import sys
-
-        @pytest.fixture(scope='module')
-        def stamp_sys(monkeypatch):
-            monkeypatch.setattr(sys, 'module_stamped', True, raising=False)
-    """)
-    testdir.makepyfile(test_inv_mokeypatch_1="""
-        import sys
-
-        def test_stamp_1(monkeypatch, stamp_sys):
-            assert sys.module_stamped
-            monkeypatch.setattr(sys, 'function_stamped', True, raising=False)
-            assert sys.function_stamped
-
-        def test_stamp_2(monkeypatch):
-            assert sys.module_stamped
-            assert not hasattr(sys, 'function_stamped')
-    """)
-    testdir.makepyfile(test_inv_mokeypatch_2="""
-        import sys
-
-        def test_no_stamps():
-            assert not hasattr(sys, 'module_stamped')
-            assert not hasattr(sys, 'function_stamped')
-    """)
-    result = testdir.runpytest()
-    result.stdout.fnmatch_lines(['*3 passed*'])

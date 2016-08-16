@@ -274,10 +274,8 @@ class FixtureRequest(FuncargnamesCompatAttr):
         self.fixturename = None
         #: Scope string, one of "function", "class", "module", "session"
         self.scope = "function"
-        # rename both attributes below because their key has changed; better an attribute error
-        # than subtle key misses; also backward incompatibility
-        self._fixture_values = {}  # (argname, scope) -> fixture value
-        self._fixture_defs = {}  # (argname, scope) -> FixtureDef
+        self._fixture_values = {}  # argname -> fixture value
+        self._fixture_defs = {}  # argname -> FixtureDef
         fixtureinfo = pyfuncitem._fixtureinfo
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs.copy()
         self._arg2index = {}
@@ -294,31 +292,20 @@ class FixtureRequest(FuncargnamesCompatAttr):
         return self._getscopeitem(self.scope)
 
 
-    def _getnextfixturedef(self, argname, scope):
-        def trygetfixturedefs(argname):
-            fixturedefs = self._arg2fixturedefs.get(argname, None)
-            if fixturedefs is None:
-                fixturedefs = self._arg2fixturedefs.get(argname + ':' + scope, None)
-            return fixturedefs
-
-        fixturedefs = trygetfixturedefs(argname)
+    def _getnextfixturedef(self, argname):
+        fixturedefs = self._arg2fixturedefs.get(argname, None)
         if fixturedefs is None:
             # we arrive here because of a  a dynamic call to
             # getfixturevalue(argname) usage which was naturally
             # not known at parsing/collection time
             parentid = self._pyfuncitem.parent.nodeid
             fixturedefs = self._fixturemanager.getfixturedefs(argname, parentid)
-            if fixturedefs:
-                self._arg2fixturedefs[argname] = fixturedefs
-            fixturedefs_by_argname = self._fixturemanager.getfixturedefs_multiple_scopes(argname, parentid)
-            if fixturedefs_by_argname:
-                self._arg2fixturedefs.update(fixturedefs_by_argname)
-            fixturedefs = trygetfixturedefs(argname)
+            self._arg2fixturedefs[argname] = fixturedefs
         # fixturedefs list is immutable so we maintain a decreasing index
-        index = self._arg2index.get((argname, scope), 0) - 1
+        index = self._arg2index.get(argname, 0) - 1
         if fixturedefs is None or (-index > len(fixturedefs)):
             raise FixtureLookupError(argname, self)
-        self._arg2index[(argname, scope)] = index
+        self._arg2index[argname] = index
         return fixturedefs[index]
 
     @property
@@ -458,10 +445,10 @@ class FixtureRequest(FuncargnamesCompatAttr):
 
     def _get_active_fixturedef(self, argname):
         try:
-            return self._fixture_defs[(argname, self.scope)]
+            return self._fixture_defs[argname]
         except KeyError:
             try:
-                fixturedef = self._getnextfixturedef(argname, self.scope)
+                fixturedef = self._getnextfixturedef(argname)
             except FixtureLookupError:
                 if argname == "request":
                     class PseudoFixtureDef:
@@ -472,8 +459,8 @@ class FixtureRequest(FuncargnamesCompatAttr):
         # remove indent to prevent the python3 exception
         # from leaking into the call
         result = self._getfixturevalue(fixturedef)
-        self._fixture_values[(argname, self.scope)] = result
-        self._fixture_defs[(argname, self.scope)] = fixturedef
+        self._fixture_values[argname] = result
+        self._fixture_defs[argname] = fixturedef
         return fixturedef
 
     def _get_fixturestack(self):
@@ -615,16 +602,6 @@ def scopemismatch(currentscope, newscope):
     return scopes.index(newscope) > scopes.index(currentscope)
 
 
-def strip_invocation_scope_suffix(name):
-    """Remove the invocation-scope suffix from the given name.
-
-    Invocation scope fixtures have their scope in the name of the fixture.
-    For example, "monkeypatch:session". This function strips the suffix
-    returning the user-frienldy name of the fixture.
-    """
-    return name.split(':')[0]
-
-
 class FixtureLookupError(LookupError):
     """ could not return a requested Fixture (missing or invalid). """
     def __init__(self, argname, request, msg=None):
@@ -664,7 +641,6 @@ class FixtureLookupError(LookupError):
             parentid = self.request._pyfuncitem.parent.nodeid
             for name, fixturedefs in fm._arg2fixturedefs.items():
                 faclist = list(fm._matchfactories(fixturedefs, parentid))
-                name = strip_invocation_scope_suffix(name)
                 if faclist and name not in available:
                     available.append(name)
             msg = "fixture %r not found" % (self.argname,)
@@ -847,7 +823,7 @@ def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
     function will be injected.
 
     :arg scope: the scope for which this fixture is shared, one of
-                "function" (default), "class", "module", "session" or "invocation".
+                "function" (default), "class", "module" or "session".
 
     :arg params: an optional list of parameters which will cause multiple
                 invocations of the fixture function and all of the tests
@@ -1029,11 +1005,6 @@ class FixtureManager:
                 if fixturedefs:
                     arg2fixturedefs[argname] = fixturedefs
                     merge(fixturedefs[-1].argnames)
-                fixturedefs_by_argname = self.getfixturedefs_multiple_scopes(argname, parentid)
-                if fixturedefs_by_argname:
-                    arg2fixturedefs.update(fixturedefs_by_argname)
-                    for fixturedefs in fixturedefs_by_argname.values():
-                        merge(fixturedefs[-1].argnames)
         return fixturenames_closure, arg2fixturedefs
 
     def pytest_generate_tests(self, metafunc):
@@ -1093,30 +1064,22 @@ class FixtureManager:
                       'and be decorated with @pytest.fixture:\n%s' % name
                 assert not name.startswith(self._argprefix), msg
 
-            def new_fixture_def(name, scope):
-                """Create and registers a new FixtureDef with given name and scope."""
-                fixture_def = FixtureDef(self, nodeid, name, obj,
-                                         scope, marker.params,
-                                         unittest=unittest, ids=marker.ids)
+            fixture_def = FixtureDef(self, nodeid, name, obj,
+                                     marker.scope, marker.params,
+                                     unittest=unittest, ids=marker.ids)
 
-                faclist = self._arg2fixturedefs.setdefault(name, [])
-                if fixture_def.has_location:
-                    faclist.append(fixture_def)
-                else:
-                    # fixturedefs with no location are at the front
-                    # so this inserts the current fixturedef after the
-                    # existing fixturedefs from external plugins but
-                    # before the fixturedefs provided in conftests.
-                    i = len([f for f in faclist if not f.has_location])
-                    faclist.insert(i, fixture_def)
-                if marker.autouse:
-                    autousenames.append(name)
-
-            if marker.scope == 'invocation':
-                for new_scope in scopes:
-                    new_fixture_def(name + ':{0}'.format(new_scope), new_scope)
+            faclist = self._arg2fixturedefs.setdefault(name, [])
+            if fixture_def.has_location:
+                faclist.append(fixture_def)
             else:
-                new_fixture_def(name, marker.scope)
+                # fixturedefs with no location are at the front
+                # so this inserts the current fixturedef after the
+                # existing fixturedefs from external plugins but
+                # before the fixturedefs provided in conftests.
+                i = len([f for f in faclist if not f.has_location])
+                faclist.insert(i, fixture_def)
+            if marker.autouse:
+                autousenames.append(name)
 
         if autousenames:
             self._nodeid_and_autousenames.append((nodeid or '', autousenames))
@@ -1141,23 +1104,3 @@ class FixtureManager:
             if nodeid.startswith(fixturedef.baseid):
                 yield fixturedef
 
-    def getfixturedefs_multiple_scopes(self, argname, nodeid):
-        """
-        Gets multiple scoped fixtures which are applicable to the given nodeid. Multiple scoped
-        fixtures are created by "invocation" scoped fixtures and have argnames in
-        the form: "<argname>:<scope>" (for example "tmpdir:session").
-
-        :return: dict of "argname" -> [FixtureDef].
-
-        Arguments similar to ``getfixturedefs``.
-        """
-        prefix = argname + ':'
-        fixturedefs_by_argname = dict((k, v) for k, v in self._arg2fixturedefs.items()
-                                      if k.startswith(prefix))
-        if fixturedefs_by_argname:
-            result = {}
-            for argname, fixturedefs in fixturedefs_by_argname.items():
-                result[argname] = tuple(self._matchfactories(fixturedefs, nodeid))
-            return result
-        else:
-            return None

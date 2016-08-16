@@ -433,8 +433,7 @@ class TestFillFixtures:
             "*1 error*",
         ])
         assert "INTERNAL" not in result.stdout.str()
-        # invocation-scoped fixture should appear with their friendly name only
-        assert 'monkeypatch:session' not in result.stdout.str()
+
 
     def test_fixture_excinfo_leak(self, testdir):
         # on python2 sys.excinfo would leak into fixture executions
@@ -2742,13 +2741,6 @@ class TestShowFixtures:
             arg1
                 Hi from test module
         ''')
-
-    def test_show_invocation_fixtures(self, testdir):
-        """py.test --fixtures should display invocation-scoped fixtures once.
-        """
-        result = testdir.runpytest("--fixtures")
-        result.stdout.fnmatch_lines('''monkeypatch''')
-        assert 'monkeypatch:session' not in result.stdout.str()
 
 
 @pytest.mark.parametrize('flavor', ['fixture', 'yield_fixture'])

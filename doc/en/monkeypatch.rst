@@ -14,8 +14,6 @@ and a discussion of its motivation.
 
 .. _`monkeypatch blog post`: http://tetamap.wordpress.com/2009/03/03/monkeypatching-in-unit-tests-done-right/
 
-As of pytest-3.0, the ``monkeypatch`` fixture is :ref:`invocation-scoped <invocation_scoped_fixture>`
-meaning it can be requested from fixtures of any scope.
 
 Simple example: monkeypatching functions
 ---------------------------------------------------
