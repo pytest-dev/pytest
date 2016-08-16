@@ -53,3 +53,15 @@ def test_str_args_deprecated(tmpdir, testdir):
 
 def test_getfuncargvalue_is_deprecated(request):
     pytest.deprecated_call(request.getfuncargvalue, 'tmpdir')
+
+
+def test_resultlog_is_deprecated(testdir):
+    result = testdir.runpytest('--help')
+    result.stdout.fnmatch_lines(['*DEPRECATED path for machine-readable result log*'])
+
+    testdir.makepyfile('''
+        def test():
+            pass
+    ''')
+    result = testdir.runpytest('--result-log=%s' % testdir.tmpdir.join('result.log'))
+    result.stdout.fnmatch_lines(['*--result-log is deprecated and scheduled for removal in pytest 4.0*'])
