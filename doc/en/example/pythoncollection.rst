@@ -77,9 +77,9 @@ Example::
 Changing directory recursion
 -----------------------------------------------------
 
-You can set the :confval:`norecursedirs` option in an ini-file, for example your ``setup.cfg`` in the project root directory::
+You can set the :confval:`norecursedirs` option in an ini-file, for example your ``pytest.ini`` in the project root directory::
 
-    # content of setup.cfg
+    # content of pytest.ini
     [pytest]
     norecursedirs = .svn _build tmp*
 
@@ -94,8 +94,9 @@ You can configure different naming conventions by setting
 the :confval:`python_files`, :confval:`python_classes` and
 :confval:`python_functions` configuration options.  Example::
 
-    # content of setup.cfg
-    # can also be defined in in tox.ini or pytest.ini file
+    # content of pytest.ini
+    # can also be defined in in tox.ini or setup.cfg file, although the section
+    # name in setup.cfg files should be "tool:pytest"
     [pytest]
     python_files=check_*.py
     python_classes=Check

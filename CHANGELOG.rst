@@ -225,6 +225,11 @@ time or change existing behaviors in order to make them less surprising/more use
 * ``yield``-based tests are considered deprecated and will be removed in pytest-4.0.
   Thanks `@nicoddemus`_ for the PR.
 
+* ``[pytest]`` sections in ``setup.cfg`` files should now be named ``[tool:pytest]``
+  to avoid conflicts with other distutils commands (see `#567`_). ``[pytest]`` sections in
+  ``pytest.ini`` or ``tox.ini`` files are supported and unchanged.
+  Thanks `@nicoddemus`_ for the PR.
+
 * Using ``pytest_funcarg__`` prefix to declare fixtures is considered deprecated and will be
   removed in pytest-4.0 (`#1684`_).
   Thanks `@nicoddemus`_ for the PR.
@@ -375,6 +380,7 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _#372: https://github.com/pytest-dev/pytest/issues/372
 .. _#457: https://github.com/pytest-dev/pytest/issues/457
 .. _#460: https://github.com/pytest-dev/pytest/pull/460
+.. _#567: https://github.com/pytest-dev/pytest/pull/567
 .. _#607: https://github.com/pytest-dev/pytest/issues/607
 .. _#634: https://github.com/pytest-dev/pytest/issues/634
 .. _#717: https://github.com/pytest-dev/pytest/issues/717

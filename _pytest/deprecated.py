@@ -17,6 +17,8 @@ FUNCARG_PREFIX = (
     'and scheduled to be removed in pytest 4.0.  '
     'Please remove the prefix and use the @pytest.fixture decorator instead.')
 
+SETUP_CFG_PYTEST = '[pytest] section in setup.cfg files is deprecated, use [tool:pytest] instead.'
+
 GETFUNCARGVALUE = "use of getfuncargvalue is deprecated, use getfixturevalue"
 
 RESULT_LOG = '--result-log is deprecated and scheduled for removal in pytest 4.0'

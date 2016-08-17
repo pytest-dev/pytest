@@ -90,7 +90,7 @@ and ``pytest`` will run your tests. Assuming you have failures it will then
 wait for file changes and re-run the failing test set.  File changes are detected by looking at ``looponfailingroots`` root directories and all of their contents (recursively).  If the default for this value does not work for you you
 can change it in your project by setting a configuration option::
 
-    # content of a pytest.ini, setup.cfg or tox.ini file
+    # content of a pytest.ini or tox.ini file
     [pytest]
     looponfailroots = mypkg testdir
 
@@ -181,7 +181,7 @@ to run tests in each of the environments.
 Specifying "rsync" dirs in an ini-file
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-In a ``tox.ini`` or ``setup.cfg`` file in your root project directory
+In a ``pytest.ini`` or ``tox.ini`` file in your root project directory
 you may specify directories to include or to exclude in synchronisation::
 
     [pytest]
