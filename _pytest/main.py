@@ -356,7 +356,7 @@ class Node(object):
         """
         from _pytest.mark import MarkDecorator
         if isinstance(marker, py.builtin._basestring):
-            marker = MarkDecorator(marker)
+            marker = getattr(pytest.mark, marker)
         elif not isinstance(marker, MarkDecorator):
             raise ValueError("is not a string or pytest.mark.* Marker")
         self.keywords[marker.name] = marker
