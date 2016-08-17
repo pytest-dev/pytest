@@ -1087,7 +1087,7 @@ class TestMarkersWithParametrization:
 
             @pytest.mark.parametrize(("n", "expected"), [
                 (1, 2),
-                pytest.mark.xfail("sys.version_info.major > 0", reason="some bug", strict={strict})((2, 3)),
+                pytest.mark.xfail("sys.version_info > (0, 0, 0)", reason="some bug", strict={strict})((2, 3)),
                 (3, 4),
             ])
             def test_increment(n, expected):
