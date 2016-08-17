@@ -325,16 +325,33 @@ class TestPython:
         result, dom = runandparse(testdir)
         # assert result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(skips=1, tests=1)
+        node.assert_attr(skips=0, tests=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
             file="test_xfailure_xpass.py",
             line="1",
             classname="test_xfailure_xpass",
             name="test_xpass")
-        fnode = tnode.find_first_by_tag("skipped")
-        fnode.assert_attr(message="xfail-marked test passes unexpectedly")
-        # assert "ValueError" in fnode.toxml()
+
+    def test_xfailure_xpass_strict(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.xfail(strict=True, reason="This needs to fail!")
+            def test_xpass():
+                pass
+        """)
+        result, dom = runandparse(testdir)
+        # assert result.ret
+        node = dom.find_first_by_tag("testsuite")
+        node.assert_attr(skips=0, tests=1)
+        tnode = node.find_first_by_tag("testcase")
+        tnode.assert_attr(
+            file="test_xfailure_xpass_strict.py",
+            line="1",
+            classname="test_xfailure_xpass_strict",
+            name="test_xpass")
+        fnode = tnode.find_first_by_tag("failure")
+        fnode.assert_attr(message="[XPASS(strict)] This needs to fail!")
 
     def test_collect_error(self, testdir):
         testdir.makepyfile("syntax error")
