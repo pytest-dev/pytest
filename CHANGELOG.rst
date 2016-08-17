@@ -274,8 +274,16 @@ time or change existing behaviors in order to make them less surprising/more use
   Thanks `@BeyondEvil`_ for reporting `#1210`_. Thanks to `@JonathonSonesen`_ and
   `@tomviner`_ for the PR.
 
-* fix `#1372`_ no longer display the incorrect test deselection reason,
-  thanks `@ronnypfannschmidt`_ for the PR.
+* No longer display the incorrect test deselection reason (`#1372`_).
+  Thanks `@ronnypfannschmidt`_ for the PR.
+
+* The ``--resultlog`` command line option has been deprecated: it is little used
+  and there are more modern and better alternatives (see `#830`_).
+  Thanks `@nicoddemus`_ for the PR.
+
+*
+
+*
 
 *
 
@@ -377,6 +385,7 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _#607: https://github.com/pytest-dev/pytest/issues/607
 .. _#634: https://github.com/pytest-dev/pytest/issues/634
 .. _#717: https://github.com/pytest-dev/pytest/issues/717
+.. _#830: https://github.com/pytest-dev/pytest/issues/830
 .. _#925: https://github.com/pytest-dev/pytest/issues/925
 
 

@@ -9,7 +9,7 @@ def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "resultlog plugin options")
     group.addoption('--resultlog', '--result-log', action="store",
         metavar="path", default=None,
-        help="path for machine-readable result log.")
+        help="DEPRECATED path for machine-readable result log.")
 
 def pytest_configure(config):
     resultlog = config.option.resultlog
@@ -21,6 +21,9 @@ def pytest_configure(config):
         logfile = open(resultlog, 'w', 1) # line buffered
         config._resultlog = ResultLog(config, logfile)
         config.pluginmanager.register(config._resultlog)
+
+        from _pytest.deprecated import RESULT_LOG
+        config.warn('C1', RESULT_LOG)
 
 def pytest_unconfigure(config):
     resultlog = getattr(config, '_resultlog', None)

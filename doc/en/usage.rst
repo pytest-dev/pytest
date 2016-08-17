@@ -251,6 +251,10 @@ This will add a property node below the testsuite node to the generated xml:
 Creating resultlog format files
 ----------------------------------------------------
 
+.. deprecated:: 3.0
+
+    This option is rarely used and is scheduled for removal in 4.0.
+
 To create plain-text machine-readable result files you can issue::
 
     pytest --resultlog=path

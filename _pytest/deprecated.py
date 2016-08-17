@@ -19,3 +19,4 @@ FUNCARG_PREFIX = (
 
 GETFUNCARGVALUE = "use of getfuncargvalue is deprecated, use getfixturevalue"
 
+RESULT_LOG = '--result-log is deprecated and scheduled for removal in pytest 4.0'
