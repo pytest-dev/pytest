@@ -145,7 +145,7 @@ class TestXFail:
     def test_xfail_xpassed(self, testdir):
         item = testdir.getitem("""
             import pytest
-            @pytest.mark.xfail(reason="nope")
+            @pytest.mark.xfail(reason="this is an xfail")
             def test_func():
                 assert 1
         """)
@@ -153,7 +153,7 @@ class TestXFail:
         assert len(reports) == 3
         callreport = reports[1]
         assert callreport.passed
-        assert callreport.wasxfail == "nope"
+        assert callreport.wasxfail == "this is an xfail"
 
     def test_xfail_xpassed_strict(self, testdir):
         item = testdir.getitem("""
