@@ -3,9 +3,10 @@
 
 **Bug Fixes**
 
-* Add an 'E' to the first line of error messages from FixtureLookupErrorRepr.
-  Fixes `#717`_. Thanks `@blueyed`_ for reporting, `@eolo999`_ for the PR
-  and `@tomviner`_ for his guidance during EuroPython2016 sprint.
+* Improve error message with fixture lookup errors: add an 'E' to the first
+  line and '>' to the rest. Fixes `#717`_. Thanks `@blueyed`_ for reporting and
+  a PR, `@eolo999`_ for the initial PR and `@tomviner`_ for his guidance during
+  EuroPython2016 sprint.
 
 * Text documents without any doctests no longer appear as "skipped".
   Thanks `@graingert`_ for reporting and providing a full PR (`#1580`_).
@@ -35,6 +36,10 @@
   deprecated but still present. Thanks to `@RedBeardCode`_ and `@tomviner`_
   for PR (`#1626`_).
 
+* Refined logic for determining the ``rootdir``, considering only valid
+  paths which fixes a number of issues: `#1594`_, `#1435`_ and `#1471`_.
+  Thanks to `@blueyed`_ and `@davehunt`_ for the PR.
+
 * Always include full assertion explanation. The previous behaviour was hiding
   sub-expressions that happened to be False, assuming this was redundant information.
   Thanks `@bagerard`_ for reporting (`#1503`_). Thanks to `@davehunt`_ and
@@ -61,23 +66,33 @@
 * Fixed scope overriding inside metafunc.parametrize (`#634`_).
   Thanks to `@Stranger6667`_ for the PR.
 
-*
+* Fixed the total tests tally in junit xml output (`#1798`_).
+  Thanks to `@cryporchild`_ for the PR.
+
+* ``pytest_terminal_summary`` hook now receives the ``exitstatus``
+  of the test session as argument. Thanks `@blueyed`_ for the PR (`#1809`_).
 
 *
 
-*
+* Fixed off-by-one error with lines from ``request.node.warn``.
+  Thanks to `@blueyed`_ for the PR.
 
 *
 
 .. _#1210: https://github.com/pytest-dev/pytest/issues/1210
+.. _#1435: https://github.com/pytest-dev/pytest/issues/1435
+.. _#1471: https://github.com/pytest-dev/pytest/issues/1471
 .. _#1479: https://github.com/pytest-dev/pytest/issues/1479
 .. _#1503: https://github.com/pytest-dev/pytest/issues/1503
 .. _#1553: https://github.com/pytest-dev/pytest/issues/1553
 .. _#1579: https://github.com/pytest-dev/pytest/issues/1579
 .. _#1580: https://github.com/pytest-dev/pytest/pull/1580
+.. _#1594: https://github.com/pytest-dev/pytest/issues/1594
 .. _#1597: https://github.com/pytest-dev/pytest/pull/1597
 .. _#1605: https://github.com/pytest-dev/pytest/issues/1605
 .. _#1626: https://github.com/pytest-dev/pytest/pull/1626
+.. _#1798: https://github.com/pytest-dev/pytest/pull/1798
+.. _#1809: https://github.com/pytest-dev/pytest/pull/1809
 .. _#460: https://github.com/pytest-dev/pytest/pull/460
 .. _#634: https://github.com/pytest-dev/pytest/issues/634
 .. _#717: https://github.com/pytest-dev/pytest/issues/717
@@ -86,6 +101,7 @@
 .. _@bagerard: https://github.com/bagerard
 .. _@BeyondEvil: https://github.com/BeyondEvil
 .. _@blueyed: https://github.com/blueyed
+.. _@cryporchild: https://github.com/cryporchild
 .. _@davehunt: https://github.com/davehunt
 .. _@DRMacIver: https://github.com/DRMacIver
 .. _@eolo999: https://github.com/eolo999

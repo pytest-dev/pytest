@@ -490,7 +490,8 @@ class TestSession:
 class Test_getinitialnodes:
     def test_global_file(self, testdir, tmpdir):
         x = tmpdir.ensure("x.py")
-        config = testdir.parseconfigure(x)
+        with tmpdir.as_cwd():
+            config = testdir.parseconfigure(x)
         col = testdir.getnode(config, x)
         assert isinstance(col, pytest.Module)
         assert col.name == 'x.py'
@@ -504,7 +505,8 @@ class Test_getinitialnodes:
         subdir = tmpdir.join("subdir")
         x = subdir.ensure("x.py")
         subdir.ensure("__init__.py")
-        config = testdir.parseconfigure(x)
+        with subdir.as_cwd():
+            config = testdir.parseconfigure(x)
         col = testdir.getnode(config, x)
         assert isinstance(col, pytest.Module)
         assert col.name == 'x.py'

@@ -29,25 +29,29 @@ project/testrun-specific information.
 
 Here is the algorithm which finds the rootdir from ``args``:
 
-- determine the common ancestor directory for the specified ``args``.
+- determine the common ancestor directory for the specified ``args`` that are
+  recognised as paths that exist in the file system. If no such paths are
+  found, the common ancestor directory is set to the current working directory.
 
-- look for ``pytest.ini``, ``tox.ini`` and ``setup.cfg`` files in the
-  ancestor directory and upwards.  If one is matched, it becomes the
-  ini-file and its directory becomes the rootdir.  An existing
-  ``pytest.ini`` file will always be considered a match whereas
-  ``tox.ini`` and ``setup.cfg`` will only match if they contain
-  a ``[pytest]`` section.
+- look for ``pytest.ini``, ``tox.ini`` and ``setup.cfg`` files in the ancestor
+  directory and upwards.  If one is matched, it becomes the ini-file and its
+  directory becomes the rootdir.
 
-- if no ini-file was found, look for ``setup.py`` upwards from
-  the common ancestor directory to determine the ``rootdir``.
+- if no ini-file was found, look for ``setup.py`` upwards from the common
+  ancestor directory to determine the ``rootdir``.
 
-- if no ini-file and no ``setup.py`` was found, use the already
-  determined common ancestor as root directory.  This allows to
-  work with pytest in structures that are not part of a package
-  and don't have any particular ini-file configuration.
+- if no ``setup.py`` was found, look for ``pytest.ini``, ``tox.ini`` and
+  ``setup.cfg`` in each of the specified ``args`` and upwards. If one is
+  matched, it becomes the ini-file and its directory becomes the rootdir.
 
-Note that options from multiple ini-files candidates are never merged,
-the first one wins (``pytest.ini`` always wins even if it does not
+- if no ini-file was found, use the already determined common ancestor as root
+  directory. This allows to work with pytest in structures that are not part of
+  a package and don't have any particular ini-file configuration.
+
+Note that an existing ``pytest.ini`` file will always be considered a match,
+whereas ``tox.ini`` and ``setup.cfg`` will only match if they contain a
+``[pytest]`` section. Options from multiple ini-files candidates are never
+merged - the first one wins (``pytest.ini`` always wins, even if it does not
 contain a ``[pytest]`` section).
 
 The ``config`` object will subsequently carry these attributes:

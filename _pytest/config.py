@@ -1095,6 +1095,8 @@ def get_common_ancestor(args):
         if str(arg)[0] == "-":
             continue
         p = py.path.local(arg)
+        if not p.exists():
+            continue
         if common_ancestor is None:
             common_ancestor = p
         else:
@@ -1108,21 +1110,28 @@ def get_common_ancestor(args):
                     common_ancestor = shared
     if common_ancestor is None:
         common_ancestor = py.path.local()
-    elif not common_ancestor.isdir():
+    elif common_ancestor.isfile():
         common_ancestor = common_ancestor.dirpath()
     return common_ancestor
 
 
+def get_dirs_from_args(args):
+    return [d for d in (py.path.local(x) for x in args
+                        if not str(x).startswith("-"))
+            if d.exists()]
+
+
 def determine_setup(inifile, args):
+    dirs = get_dirs_from_args(args)
     if inifile:
         iniconfig = py.iniconfig.IniConfig(inifile)
         try:
             inicfg = iniconfig["pytest"]
         except KeyError:
             inicfg = None
-        rootdir = get_common_ancestor(args)
+        rootdir = get_common_ancestor(dirs)
     else:
-        ancestor = get_common_ancestor(args)
+        ancestor = get_common_ancestor(dirs)
         rootdir, inifile, inicfg = getcfg(
             [ancestor], ["pytest.ini", "tox.ini", "setup.cfg"])
         if rootdir is None:
@@ -1130,7 +1139,13 @@ def determine_setup(inifile, args):
                 if rootdir.join("setup.py").exists():
                     break
             else:
-                rootdir = ancestor
+                rootdir, inifile, inicfg = getcfg(
+                    dirs, ["pytest.ini", "tox.ini", "setup.cfg"])
+                if rootdir is None:
+                    rootdir = get_common_ancestor([py.path.local(), ancestor])
+                    is_fs_root = os.path.splitdrive(str(rootdir))[1] == os.sep
+                    if is_fs_root:
+                        rootdir = ancestor
     return rootdir, inifile, inicfg or {}
 
 

@@ -468,7 +468,8 @@ def test_consider_args_after_options_for_rootdir_and_inifile(testdir, args):
             args[i] = d1
         elif arg == 'dir2':
             args[i] = d2
-    result = testdir.runpytest(*args)
+    with root.as_cwd():
+        result = testdir.runpytest(*args)
     result.stdout.fnmatch_lines(['*rootdir: *myroot, inifile: '])
 
 
@@ -524,13 +525,14 @@ class TestWarning:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
-    def test_warn_on_test_item_from_request(self, testdir):
+    def test_warn_on_test_item_from_request(self, testdir, request):
         testdir.makepyfile("""
             import pytest
 
             @pytest.fixture
             def fix(request):
                 request.node.warn("T1", "hello")
+
             def test_hello(fix):
                 pass
         """)
@@ -541,16 +543,20 @@ class TestWarning:
         result = testdir.runpytest("-rw")
         result.stdout.fnmatch_lines("""
             ===*pytest-warning summary*===
-            *WT1*test_warn_on_test_item*:5*hello*
+            *WT1*test_warn_on_test_item*:7 hello*
         """)
 
 class TestRootdir:
     def test_simple_noini(self, tmpdir):
         assert get_common_ancestor([tmpdir]) == tmpdir
-        assert get_common_ancestor([tmpdir.mkdir("a"), tmpdir]) == tmpdir
-        assert get_common_ancestor([tmpdir, tmpdir.join("a")]) == tmpdir
+        a = tmpdir.mkdir("a")
+        assert get_common_ancestor([a, tmpdir]) == tmpdir
+        assert get_common_ancestor([tmpdir, a]) == tmpdir
         with tmpdir.as_cwd():
             assert get_common_ancestor([]) == tmpdir
+            no_path = tmpdir.join('does-not-exist')
+            assert get_common_ancestor([no_path]) == tmpdir
+            assert get_common_ancestor([no_path.join('a')]) == tmpdir
 
     @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
     def test_with_ini(self, tmpdir, name):
@@ -595,3 +601,34 @@ class TestRootdir:
         inifile = tmpdir.ensure("pytest.ini")
         rootdir, inifile, inicfg = determine_setup(inifile, [tmpdir])
         assert rootdir == tmpdir
+
+    def test_with_arg_outside_cwd_without_inifile(self, tmpdir):
+        a = tmpdir.mkdir("a")
+        b = tmpdir.mkdir("b")
+        rootdir, inifile, inicfg = determine_setup(None, [a, b])
+        assert rootdir == tmpdir
+        assert inifile is None
+
+    def test_with_arg_outside_cwd_with_inifile(self, tmpdir):
+        a = tmpdir.mkdir("a")
+        b = tmpdir.mkdir("b")
+        inifile = a.ensure("pytest.ini")
+        rootdir, parsed_inifile, inicfg = determine_setup(None, [a, b])
+        assert rootdir == a
+        assert inifile == parsed_inifile
+
+    @pytest.mark.parametrize('dirs', ([], ['does-not-exist'],
+                                      ['a/does-not-exist']))
+    def test_with_non_dir_arg(self, dirs, tmpdir):
+        with tmpdir.ensure(dir=True).as_cwd():
+            rootdir, inifile, inicfg = determine_setup(None, dirs)
+            assert rootdir == tmpdir
+            assert inifile is None
+
+    def test_with_existing_file_in_subdir(self, tmpdir):
+        a = tmpdir.mkdir("a")
+        a.ensure("exist")
+        with tmpdir.as_cwd():
+            rootdir, inifile, inicfg = determine_setup(None, ['a/exist'])
+            assert rootdir == tmpdir
+            assert inifile is None
