@@ -115,13 +115,16 @@ class TestPython:
             def test_error(fixture):
                 pass
             @pytest.mark.xfail
+            def test_xfail():
+                assert False
+            @pytest.mark.xfail(strict=True)
             def test_xpass():
-                assert 1
+                assert True
         """)
         result, dom = runandparse(testdir)
         assert result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(name="pytest", errors=1, failures=1, skips=1, tests=4)
+        node.assert_attr(name="pytest", errors=1, failures=2, skips=1, tests=5)
 
     def test_timing_function(self, testdir):
         testdir.makepyfile("""
