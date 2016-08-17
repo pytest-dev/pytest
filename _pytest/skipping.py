@@ -220,6 +220,18 @@ def check_strict_xfail(pyfuncitem):
             pytest.fail('[XPASS(strict)] ' + explanation, pytrace=False)
 
 
+def _is_unittest_unexpected_success_a_failure():
+    """Return if the test suite should fail if a @expectedFailure unittest test PASSES.
+
+    From https://docs.python.org/3/library/unittest.html?highlight=unittest#unittest.TestResult.wasSuccessful:
+        Changed in version 3.4: Returns False if there were any
+        unexpectedSuccesses from tests marked with the expectedFailure() decorator.
+
+    TODO: this should be moved to the "compat" module.
+    """
+    return sys.version_info >= (3, 4)
+
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     outcome = yield
@@ -228,13 +240,15 @@ def pytest_runtest_makereport(item, call):
     evalskip = getattr(item, '_evalskip', None)
     # unitttest special case, see setting of _unexpectedsuccess
     if hasattr(item, '_unexpectedsuccess') and rep.when == "call":
-        # unittest treats an 'unexpected successes' as a failure
-        # which means pytest needs to handle it like a 'xfail(strict=True)'
-        rep.outcome = "failed"
         if item._unexpectedsuccess:
             rep.longrepr = "Unexpected success: {0}".format(item._unexpectedsuccess)
         else:
             rep.longrepr = "Unexpected success"
+        if _is_unittest_unexpected_success_a_failure():
+            rep.outcome = "failed"
+        else:
+            rep.outcome = "passed"
+            rep.wasxfail = rep.longrepr
     elif item.config.option.runxfail:
         pass   # don't interefere
     elif call.excinfo and call.excinfo.errisinstance(pytest.xfail.Exception):
