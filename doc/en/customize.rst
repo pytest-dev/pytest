@@ -50,7 +50,7 @@ Here is the algorithm which finds the rootdir from ``args``:
 
 Note that an existing ``pytest.ini`` file will always be considered a match,
 whereas ``tox.ini`` and ``setup.cfg`` will only match if they contain a
-``[pytest]`` section. Options from multiple ini-files candidates are never
+``[pytest]`` or ``[tool:pytest]`` section, respectively. Options from multiple ini-files candidates are never
 merged - the first one wins (``pytest.ini`` always wins, even if it does not
 contain a ``[pytest]`` section).
 
@@ -73,7 +73,7 @@ check for ini-files as follows::
 
     # first look for pytest.ini files
     path/pytest.ini
-    path/setup.cfg  # must also contain [pytest] section to match
+    path/setup.cfg  # must also contain [tool:pytest] section to match
     path/tox.ini    # must also contain [pytest] section to match
     pytest.ini
     ... # all the way down to the root
@@ -154,7 +154,7 @@ Builtin configuration file options
 
    .. code-block:: ini
 
-        # content of setup.cfg
+        # content of pytest.ini
         [pytest]
         norecursedirs = .svn _build tmp*
 

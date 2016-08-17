@@ -196,6 +196,24 @@ required for calling the test command. You can also pass additional
 arguments to pytest such as your test directory or other
 options using ``--addopts``.
 
+You can also specify other pytest-ini options in your ``setup.cfg`` file
+by putting them into a ``[tool:pytest]`` section:
+
+.. code-block:: ini
+
+    [tool:pytest]
+    addopts = --verbose
+    python_files = testing/*/*.py
+
+
+.. note::
+    Prior to 3.0, the supported section name was ``[pytest]``. Due to how
+    this may collide with some distutils commands, the recommended
+    section name for ``setup.cfg`` files is now ``[tool:pytest]``.
+
+    Note that for ``pytest.ini`` and ``tox.ini`` files the section
+    name is ``[pytest]``.
+
 
 Manual Integration
 ^^^^^^^^^^^^^^^^^^

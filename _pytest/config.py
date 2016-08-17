@@ -927,7 +927,7 @@ class Config(object):
 
     def _initini(self, args):
         ns, unknown_args = self._parser.parse_known_and_unknown_args(args, namespace=self.option.copy())
-        r = determine_setup(ns.inifilename, ns.file_or_dir + unknown_args)
+        r = determine_setup(ns.inifilename, ns.file_or_dir + unknown_args, warnfunc=self.warn)
         self.rootdir, self.inifile, self.inicfg = r
         self._parser.extra_info['rootdir'] = self.rootdir
         self._parser.extra_info['inifile'] = self.inifile
@@ -1154,7 +1154,18 @@ def exists(path, ignore=EnvironmentError):
     except ignore:
         return False
 
-def getcfg(args, inibasenames):
+def getcfg(args, warnfunc=None):
+    """
+    Search the list of arguments for a valid ini-file for pytest,
+    and return a tuple of (rootdir, inifile, cfg-dict).
+
+    note: warnfunc is an optional function used to warn
+        about ini-files that use deprecated features.
+        This parameter should be removed when pytest
+        adopts standard deprecation warnings (#1804).
+    """
+    from _pytest.deprecated import SETUP_CFG_PYTEST
+    inibasenames = ["pytest.ini", "tox.ini", "setup.cfg"]
     args = [x for x in args if not str(x).startswith("-")]
     if not args:
         args = [py.path.local()]
@@ -1166,7 +1177,11 @@ def getcfg(args, inibasenames):
                 if exists(p):
                     iniconfig = py.iniconfig.IniConfig(p)
                     if 'pytest' in iniconfig.sections:
+                        if inibasename == 'setup.cfg' and warnfunc:
+                            warnfunc('C1', SETUP_CFG_PYTEST)
                         return base, p, iniconfig['pytest']
+                    if inibasename == 'setup.cfg' and 'tool:pytest' in iniconfig.sections:
+                        return base, p, iniconfig['tool:pytest']
                     elif inibasename == "pytest.ini":
                         # allowed to be empty
                         return base, p, {}
@@ -1207,7 +1222,7 @@ def get_dirs_from_args(args):
             if d.exists()]
 
 
-def determine_setup(inifile, args):
+def determine_setup(inifile, args, warnfunc=None):
     dirs = get_dirs_from_args(args)
     if inifile:
         iniconfig = py.iniconfig.IniConfig(inifile)
@@ -1218,15 +1233,13 @@ def determine_setup(inifile, args):
         rootdir = get_common_ancestor(dirs)
     else:
         ancestor = get_common_ancestor(dirs)
-        rootdir, inifile, inicfg = getcfg(
-            [ancestor], ["pytest.ini", "tox.ini", "setup.cfg"])
+        rootdir, inifile, inicfg = getcfg([ancestor], warnfunc=warnfunc)
         if rootdir is None:
             for rootdir in ancestor.parts(reverse=True):
                 if rootdir.join("setup.py").exists():
                     break
             else:
-                rootdir, inifile, inicfg = getcfg(
-                    dirs, ["pytest.ini", "tox.ini", "setup.cfg"])
+                rootdir, inifile, inicfg = getcfg(dirs, warnfunc=warnfunc)
                 if rootdir is None:
                     rootdir = get_common_ancestor([py.path.local(), ancestor])
                     is_fs_root = os.path.splitdrive(str(rootdir))[1] == os.sep

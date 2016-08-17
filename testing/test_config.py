@@ -5,24 +5,28 @@ from _pytest.config import getcfg, get_common_ancestor, determine_setup
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 class TestParseIni:
-    def test_getcfg_and_config(self, testdir, tmpdir):
+
+    @pytest.mark.parametrize('section, filename',
+                             [('pytest', 'pytest.ini'), ('tool:pytest', 'setup.cfg')])
+    def test_getcfg_and_config(self, testdir, tmpdir, section, filename):
         sub = tmpdir.mkdir("sub")
         sub.chdir()
-        tmpdir.join("setup.cfg").write(_pytest._code.Source("""
-            [pytest]
+        tmpdir.join(filename).write(_pytest._code.Source("""
+            [{section}]
             name = value
-        """))
-        rootdir, inifile, cfg = getcfg([sub], ["setup.cfg"])
+        """.format(section=section)))
+        rootdir, inifile, cfg = getcfg([sub])
         assert cfg['name'] == "value"
         config = testdir.parseconfigure(sub)
         assert config.inicfg['name'] == 'value'
 
-    def test_getcfg_empty_path(self, tmpdir):
-        getcfg([''], ['setup.cfg']) #happens on pytest ""
+    def test_getcfg_empty_path(self):
+        """correctly handle zero length arguments (a la pytest '')"""
+        getcfg([''])
 
     def test_append_parse_args(self, testdir, tmpdir, monkeypatch):
         monkeypatch.setenv('PYTEST_ADDOPTS', '--color no -rs --tb="short"')
-        tmpdir.join("setup.cfg").write(_pytest._code.Source("""
+        tmpdir.join("pytest.ini").write(_pytest._code.Source("""
             [pytest]
             addopts = --verbose
         """))
@@ -31,10 +35,6 @@ class TestParseIni:
         assert config.option.reportchars == 's'
         assert config.option.tbstyle == 'short'
         assert config.option.verbose
-        #config = testdir.Config()
-        #args = [tmpdir,]
-        #config._preparse(args, addopts=False)
-        #assert len(args) == 1
 
     def test_tox_ini_wrong_version(self, testdir):
         testdir.makefile('.ini', tox="""
@@ -47,12 +47,16 @@ class TestParseIni:
             "*tox.ini:2*requires*9.0*actual*"
         ])
 
-    @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
-    def test_ini_names(self, testdir, name):
+    @pytest.mark.parametrize("section, name", [
+        ('tool:pytest', 'setup.cfg'),
+        ('pytest', 'tox.ini'),
+        ('pytest', 'pytest.ini')],
+    )
+    def test_ini_names(self, testdir, name, section):
         testdir.tmpdir.join(name).write(py.std.textwrap.dedent("""
-            [pytest]
+            [{section}]
             minversion = 1.0
-        """))
+        """.format(section=section)))
         config = testdir.parseconfig()
         assert config.getini("minversion") == "1.0"
 
