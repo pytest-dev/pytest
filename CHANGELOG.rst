@@ -184,6 +184,9 @@ time or change existing behaviors in order to make them less surprising/more use
   fixture is declared in a test function.
   Thanks `@nicoddemus`_ for the PR.
 
+* ``pytest_terminal_summary`` hook now receives the ``exitstatus``
+  of the test session as argument. Thanks `@blueyed`_ for the PR (`#1809`_).
+
 * Parametrize ids can accept ``None`` as specific test id, in which case the
   automatically generated id for that argument will be used.
   Thanks `@palaviv`_ for the complete PR (`#1468`_).
@@ -336,11 +339,6 @@ time or change existing behaviors in order to make them less surprising/more use
 
 * Fixed the total tests tally in junit xml output (`#1798`_).
   Thanks to `@cryporchild`_ for the PR.
-
-* ``pytest_terminal_summary`` hook now receives the ``exitstatus``
-  of the test session as argument. Thanks `@blueyed`_ for the PR (`#1809`_).
-
-*
 
 * Fixed off-by-one error with lines from ``request.node.warn``.
   Thanks to `@blueyed`_ for the PR.
