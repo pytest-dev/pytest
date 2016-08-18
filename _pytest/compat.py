@@ -212,7 +212,5 @@ def _is_unittest_unexpected_success_a_failure():
     From https://docs.python.org/3/library/unittest.html?highlight=unittest#unittest.TestResult.wasSuccessful:
         Changed in version 3.4: Returns False if there were any
         unexpectedSuccesses from tests marked with the expectedFailure() decorator.
-
-    TODO: this should be moved to the "compat" module.
     """
     return sys.version_info >= (3, 4)
