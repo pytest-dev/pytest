@@ -118,7 +118,7 @@ then the test collection looks like this::
     $ pytest --collect-only
     ======= test session starts ========
     platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
-    rootdir: $REGENDOC_TMPDIR, inifile: setup.cfg
+    rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 2 items
     <Module 'check_myapp.py'>
       <Class 'CheckMyApp'>
