@@ -370,7 +370,7 @@ class LogXML(object):
         suite_stop_time = time.time()
         suite_time_delta = suite_stop_time - self.suite_start_time
 
-        numtests = self.stats['passed'] + self.stats['failure'] + self.stats['skipped']
+        numtests = self.stats['passed'] + self.stats['failure'] + self.stats['skipped'] + self.stats['error']
 
         logfile.write('<?xml version="1.0" encoding="utf-8"?>')
 

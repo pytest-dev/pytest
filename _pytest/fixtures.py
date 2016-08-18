@@ -1,4 +1,7 @@
 import sys
+
+from py._code.code import FormattedExcinfo
+
 import py
 import pytest
 import warnings
@@ -649,6 +652,7 @@ class FixtureLookupError(LookupError):
 
         return FixtureLookupErrorRepr(fspath, lineno, tblines, msg, self.argname)
 
+
 class FixtureLookupErrorRepr(TerminalRepr):
     def __init__(self, filename, firstlineno, tblines, errorstring, argname):
         self.tblines = tblines
@@ -658,16 +662,16 @@ class FixtureLookupErrorRepr(TerminalRepr):
         self.argname = argname
 
     def toterminal(self, tw):
-        #tw.line("FixtureLookupError: %s" %(self.argname), red=True)
+        # tw.line("FixtureLookupError: %s" %(self.argname), red=True)
         for tbline in self.tblines:
             tw.line(tbline.rstrip())
         lines = self.errorstring.split("\n")
-        for line in lines:
-            if line == lines[0]:
-                prefix = 'E       '
-            else:
-                prefix = '        '
-            tw.line(prefix + line.strip(), red=True)
+        if lines:
+            tw.line('{0}       {1}'.format(FormattedExcinfo.fail_marker,
+                                           lines[0].strip()), red=True)
+            for line in lines[1:]:
+                tw.line('{0}       {1}'.format(FormattedExcinfo.flow_marker,
+                                               line.strip()), red=True)
         tw.line()
         tw.line("%s:%d" % (self.filename, self.firstlineno+1))
 

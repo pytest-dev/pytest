@@ -1538,4 +1538,3 @@ class Function(FunctionMixin, pytest.Item, fixtures.FuncargnamesCompatAttr):
     def setup(self):
         super(Function, self).setup()
         fixtures.fillfixtures(self)
-

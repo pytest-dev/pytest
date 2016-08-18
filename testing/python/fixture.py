@@ -425,11 +425,11 @@ class TestFillFixtures:
         """)
         result = testdir.runpytest()
         result.stdout.fnmatch_lines([
-            "*ERROR*test_lookup_error*",
-            "*def test_lookup_error(unknown):*",
-            "*fixture*unknown*not found*",
-            # check if fixtures appear sorted
-            "*available fixtures:*a_fixture,*b_fixture,*c_fixture,*d_fixture*monkeypatch,*",
+            "*ERROR at setup of test_lookup_error*",
+            "  def test_lookup_error(unknown):*",
+            "E       fixture 'unknown' not found",
+            ">       available fixtures:*a_fixture,*b_fixture,*c_fixture,*d_fixture*monkeypatch,*",  # sorted
+            ">       use 'py*test --fixtures *' for help on them.",
             "*1 error*",
         ])
         assert "INTERNAL" not in result.stdout.str()

@@ -3,8 +3,15 @@
 
 **Incompatible changes**
 
+<<<<<<< HEAD
 A number of incompatible changes were made in this release, with the intent of removing features deprecated for a long
 time or change existing behaviors in order to make them less surprising/more useful.
+=======
+* Improve error message with fixture lookup errors: add an 'E' to the first
+  line and '>' to the rest. Fixes `#717`_. Thanks `@blueyed`_ for reporting and
+  a PR, `@eolo999`_ for the initial PR and `@tomviner`_ for his guidance during
+  EuroPython2016 sprint.
+>>>>>>> master
 
 * Reinterpretation mode has now been removed.  Only plain and rewrite
   mode are available, consequently the ``--assert=reinterp`` option is
@@ -158,6 +165,14 @@ time or change existing behaviors in order to make them less surprising/more use
 
 * Plugins now benefit from assertion rewriting.  Thanks
   `@sober7`_, `@nicoddemus`_ and `@flub`_ for the PR.
+
+* Change ``report.outcome`` for ``xpassed`` tests to ``"passed"`` in non-strict
+  mode and ``"failed"`` in strict mode. Thanks to `@hackebrot`_ for the PR
+  (`#1795`_) and `@gprasad84`_ for report (`#1546`_).
+
+* Tests marked with ``xfail(strict=False)`` (the default) now appear in
+  JUnitXML reports as passing tests instead of skipped.
+  Thanks to `@hackebrot`_ for the PR (`#1795`_).
 
 * Highlight path of the file location in the error report to make it easier to copy/paste.
   Thanks `@suzaku`_ for the PR (`#1778`_).
@@ -322,11 +337,16 @@ time or change existing behaviors in order to make them less surprising/more use
 * Fixed scope overriding inside metafunc.parametrize (`#634`_).
   Thanks to `@Stranger6667`_ for the PR.
 
-*
+* Fixed the total tests tally in junit xml output (`#1798`_).
+  Thanks to `@cryporchild`_ for the PR.
+
+* ``pytest_terminal_summary`` hook now receives the ``exitstatus``
+  of the test session as argument. Thanks `@blueyed`_ for the PR (`#1809`_).
 
 *
 
-*
+* Fixed off-by-one error with lines from ``request.node.warn``.
+  Thanks to `@blueyed`_ for the PR.
 
 *
 
@@ -354,6 +374,7 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _#1526: https://github.com/pytest-dev/pytest/pull/1526
 .. _#1539: https://github.com/pytest-dev/pytest/issues/1539
 .. _#1544: https://github.com/pytest-dev/pytest/issues/1544
+.. _#1546: https://github.com/pytest-dev/pytest/issues/1546
 .. _#1553: https://github.com/pytest-dev/pytest/issues/1553
 .. _#1562: https://github.com/pytest-dev/pytest/issues/1562
 .. _#1579: https://github.com/pytest-dev/pytest/issues/1579
@@ -377,6 +398,9 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _#1740: https://github.com/pytest-dev/pytest/issues/1740
 .. _#1749: https://github.com/pytest-dev/pytest/issues/1749
 .. _#1778: https://github.com/pytest-dev/pytest/pull/1778
+.. _#1795: https://github.com/pytest-dev/pytest/pull/1795
+.. _#1798: https://github.com/pytest-dev/pytest/pull/1798
+.. _#1809: https://github.com/pytest-dev/pytest/pull/1809
 .. _#372: https://github.com/pytest-dev/pytest/issues/372
 .. _#457: https://github.com/pytest-dev/pytest/issues/457
 .. _#460: https://github.com/pytest-dev/pytest/pull/460
@@ -393,6 +417,7 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _@BeyondEvil: https://github.com/BeyondEvil
 .. _@blueyed: https://github.com/blueyed
 .. _@ceridwen: https://github.com/ceridwen
+.. _@cryporchild: https://github.com/cryporchild
 .. _@csaftoiu: https://github.com/csaftoiu
 .. _@d6e: https://github.com/d6e
 .. _@davehunt: https://github.com/davehunt
@@ -400,6 +425,7 @@ time or change existing behaviors in order to make them less surprising/more use
 .. _@eolo999: https://github.com/eolo999
 .. _@fengxx: https://github.com/fengxx
 .. _@flub: https://github.com/flub
+.. _@gprasad84: https://github.com/gprasad84
 .. _@graingert: https://github.com/graingert
 .. _@hartym: https://github.com/hartym
 .. _@JonathonSonesen: https://github.com/JonathonSonesen
