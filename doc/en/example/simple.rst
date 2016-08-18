@@ -501,8 +501,8 @@ We can run this::
     file $REGENDOC_TMPDIR/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
     E       fixture 'db' not found
-            available fixtures: cache, capfd, capsys, doctest_namespace, monkeypatch, pytestconfig, record_xml_property, recwarn, tmpdir, tmpdir_factory
-            use 'pytest --fixtures [testpath]' for help on them.
+    >       available fixtures: cache, capfd, capsys, doctest_namespace, monkeypatch, pytestconfig, record_xml_property, recwarn, tmpdir, tmpdir_factory
+    >       use 'pytest --fixtures [testpath]' for help on them.
     
     $REGENDOC_TMPDIR/b/test_error.py:1
     ======= FAILURES ========

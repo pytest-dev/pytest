@@ -121,8 +121,6 @@ You can ask for available builtin or project-custom
         test function or fixture has finished. The ``raising``
         parameter determines if a KeyError or AttributeError
         will be raised if the set/deletion operation has no target.
-        
-        This fixture is ``invocation``-scoped.
     recwarn
         Return a WarningsRecorder instance that provides these methods:
         
