@@ -3,15 +3,9 @@
 
 **Incompatible changes**
 
-<<<<<<< HEAD
+
 A number of incompatible changes were made in this release, with the intent of removing features deprecated for a long
 time or change existing behaviors in order to make them less surprising/more useful.
-=======
-* Improve error message with fixture lookup errors: add an 'E' to the first
-  line and '>' to the rest. Fixes `#717`_. Thanks `@blueyed`_ for reporting and
-  a PR, `@eolo999`_ for the initial PR and `@tomviner`_ for his guidance during
-  EuroPython2016 sprint.
->>>>>>> master
 
 * Reinterpretation mode has now been removed.  Only plain and rewrite
   mode are available, consequently the ``--assert=reinterp`` option is
@@ -294,7 +288,10 @@ time or change existing behaviors in order to make them less surprising/more use
   and there are more modern and better alternatives (see `#830`_).
   Thanks `@nicoddemus`_ for the PR.
 
-*
+* Improve error message with fixture lookup errors: add an 'E' to the first
+  line and '>' to the rest. Fixes `#717`_. Thanks `@blueyed`_ for reporting and
+  a PR, `@eolo999`_ for the initial PR and `@tomviner`_ for his guidance during
+  EuroPython2016 sprint.
 
 *
 
