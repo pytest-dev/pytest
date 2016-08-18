@@ -173,6 +173,7 @@ def get_real_func(obj):
         obj = obj.func
     return obj
 
+
 def getfslineno(obj):
     # xxx let decorators etc specify a sane ordering
     obj = get_real_func(obj)
@@ -182,6 +183,7 @@ def getfslineno(obj):
     assert isinstance(fslineno[1], int), obj
     return fslineno
 
+
 def getimfunc(func):
     try:
         return func.__func__
@@ -190,6 +192,7 @@ def getimfunc(func):
             return func.im_func
         except AttributeError:
             return func
+
 
 def safe_getattr(object, name, default):
     """ Like getattr but return default upon any Exception.
@@ -201,3 +204,15 @@ def safe_getattr(object, name, default):
         return getattr(object, name, default)
     except Exception:
         return default
+
+
+def _is_unittest_unexpected_success_a_failure():
+    """Return if the test suite should fail if a @expectedFailure unittest test PASSES.
+
+    From https://docs.python.org/3/library/unittest.html?highlight=unittest#unittest.TestResult.wasSuccessful:
+        Changed in version 3.4: Returns False if there were any
+        unexpectedSuccesses from tests marked with the expectedFailure() decorator.
+
+    TODO: this should be moved to the "compat" module.
+    """
+    return sys.version_info >= (3, 4)

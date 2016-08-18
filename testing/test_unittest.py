@@ -419,7 +419,7 @@ class TestTrialUnittest:
                 def test_method(self):
                     pass
         """)
-        from _pytest.skipping import _is_unittest_unexpected_success_a_failure
+        from _pytest.compat import _is_unittest_unexpected_success_a_failure
         should_fail = _is_unittest_unexpected_success_a_failure()
         result = testdir.runpytest("-rxs")
         result.stdout.fnmatch_lines_random([
@@ -629,7 +629,7 @@ def test_unittest_expected_failure_for_passing_test_is_fail(testdir, runner):
         if __name__ == '__main__':
             unittest.main()
     """)
-    from _pytest.skipping import _is_unittest_unexpected_success_a_failure
+    from _pytest.compat import _is_unittest_unexpected_success_a_failure
     should_fail = _is_unittest_unexpected_success_a_failure()
     if runner == 'pytest':
         result = testdir.runpytest("-rxX")
