@@ -224,9 +224,16 @@ def pytest_runtest_makereport(item, call):
     evalskip = getattr(item, '_evalskip', None)
     # unitttest special case, see setting of _unexpectedsuccess
     if hasattr(item, '_unexpectedsuccess') and rep.when == "call":
-        # we need to translate into how pytest encodes xpass
-        rep.wasxfail = "reason: " + repr(item._unexpectedsuccess)
-        rep.outcome = "failed"
+        from _pytest.compat import _is_unittest_unexpected_success_a_failure
+        if item._unexpectedsuccess:
+            rep.longrepr = "Unexpected success: {0}".format(item._unexpectedsuccess)
+        else:
+            rep.longrepr = "Unexpected success"
+        if _is_unittest_unexpected_success_a_failure():
+            rep.outcome = "failed"
+        else:
+            rep.outcome = "passed"
+            rep.wasxfail = rep.longrepr
     elif item.config.option.runxfail:
         pass   # don't interefere
     elif call.excinfo and call.excinfo.errisinstance(pytest.xfail.Exception):
@@ -241,8 +248,15 @@ def pytest_runtest_makereport(item, call):
                 rep.outcome = "skipped"
                 rep.wasxfail = evalxfail.getexplanation()
         elif call.when == "call":
-            rep.outcome = "failed"  # xpass outcome
-            rep.wasxfail = evalxfail.getexplanation()
+            strict_default = item.config.getini('xfail_strict')
+            is_strict_xfail = evalxfail.get('strict', strict_default)
+            explanation = evalxfail.getexplanation()
+            if is_strict_xfail:
+                rep.outcome = "failed"
+                rep.longrepr = "[XPASS(strict)] {0}".format(explanation)
+            else:
+                rep.outcome = "passed"
+                rep.wasxfail = explanation
     elif evalskip is not None and rep.skipped and type(rep.longrepr) is tuple:
         # skipped by mark.skipif; change the location of the failure
         # to point to the item definition, otherwise it will display
@@ -256,7 +270,7 @@ def pytest_report_teststatus(report):
     if hasattr(report, "wasxfail"):
         if report.skipped:
             return "xfailed", "x", "xfail"
-        elif report.failed:
+        elif report.passed:
             return "xpassed", "X", ("XPASS", {'yellow': True})
 
 # called by the terminalreporter instance/plugin

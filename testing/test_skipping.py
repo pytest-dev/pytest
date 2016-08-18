@@ -145,7 +145,20 @@ class TestXFail:
     def test_xfail_xpassed(self, testdir):
         item = testdir.getitem("""
             import pytest
-            @pytest.mark.xfail
+            @pytest.mark.xfail(reason="this is an xfail")
+            def test_func():
+                assert 1
+        """)
+        reports = runtestprotocol(item, log=False)
+        assert len(reports) == 3
+        callreport = reports[1]
+        assert callreport.passed
+        assert callreport.wasxfail == "this is an xfail"
+
+    def test_xfail_xpassed_strict(self, testdir):
+        item = testdir.getitem("""
+            import pytest
+            @pytest.mark.xfail(strict=True, reason="nope")
             def test_func():
                 assert 1
         """)
@@ -153,7 +166,8 @@ class TestXFail:
         assert len(reports) == 3
         callreport = reports[1]
         assert callreport.failed
-        assert callreport.wasxfail == ""
+        assert callreport.longrepr == "[XPASS(strict)] nope"
+        assert not hasattr(callreport, "wasxfail")
 
     def test_xfail_run_anyway(self, testdir):
         testdir.makepyfile("""

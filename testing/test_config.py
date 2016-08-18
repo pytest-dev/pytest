@@ -548,13 +548,14 @@ class TestWarning:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
-    def test_warn_on_test_item_from_request(self, testdir):
+    def test_warn_on_test_item_from_request(self, testdir, request):
         testdir.makepyfile("""
             import pytest
 
             @pytest.fixture
             def fix(request):
                 request.node.warn("T1", "hello")
+
             def test_hello(fix):
                 pass
         """)
@@ -565,7 +566,7 @@ class TestWarning:
         result = testdir.runpytest()
         result.stdout.fnmatch_lines("""
             ===*pytest-warning summary*===
-            *WT1*test_warn_on_test_item*:5*hello*
+            *WT1*test_warn_on_test_item*:7 hello*
         """)
 
 class TestRootdir:
@@ -624,6 +625,7 @@ class TestRootdir:
         inifile = tmpdir.ensure("pytest.ini")
         rootdir, inifile, inicfg = determine_setup(inifile, [tmpdir])
         assert rootdir == tmpdir
+
 
 class TestOverrideIniArgs:
     @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
