@@ -592,6 +592,7 @@ class TestRootdir:
         assert inicfg == {}
 
     def test_nothing(self, tmpdir):
+        tmpdir.chdir()
         rootdir, inifile, inicfg = determine_setup(None, [tmpdir])
         assert rootdir == tmpdir
         assert inifile is None
@@ -603,6 +604,7 @@ class TestRootdir:
         assert rootdir == tmpdir
 
     def test_with_arg_outside_cwd_without_inifile(self, tmpdir):
+        tmpdir.chdir()
         a = tmpdir.mkdir("a")
         b = tmpdir.mkdir("b")
         rootdir, inifile, inicfg = determine_setup(None, [a, b])

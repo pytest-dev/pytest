@@ -1080,22 +1080,23 @@ class TestMarkersWithParametrization:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2, skipped=1)
 
-    def test_xfail_passing_is_xpass(self, testdir):
+    @pytest.mark.parametrize('strict', [True, False])
+    def test_xfail_passing_is_xpass(self, testdir, strict):
         s = """
             import pytest
 
             @pytest.mark.parametrize(("n", "expected"), [
                 (1, 2),
-                pytest.mark.xfail("sys.version > 0", reason="some bug")((2, 3)),
+                pytest.mark.xfail("sys.version_info > (0, 0, 0)", reason="some bug", strict={strict})((2, 3)),
                 (3, 4),
             ])
             def test_increment(n, expected):
                 assert n + 1 == expected
-        """
+        """.format(strict=strict)
         testdir.makepyfile(s)
         reprec = testdir.inline_run()
-        # xpass is fail, obviously :)
-        reprec.assertoutcome(passed=2, failed=1)
+        passed, failed = (2, 1) if strict else (3, 0)
+        reprec.assertoutcome(passed=passed, failed=failed)
 
     def test_parametrize_called_in_generate_tests(self, testdir):
         s = """

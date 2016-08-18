@@ -79,6 +79,20 @@
 
 *
 
+**Changes**
+
+* Change ``report.outcome`` for ``xpassed`` tests to ``"passed"`` in non-strict
+  mode and ``"failed"`` in strict mode. Thanks to `@hackebrot`_ for the PR
+  (`#1795`_) and `@gprasad84`_ for report (`#1546`_).
+
+* Tests marked with ``xfail(strict=False)`` (the default) now appear in
+  JUnitXML reports as passing tests instead of skipped.
+  Thanks to `@hackebrot`_ for the PR (`#1795`_).
+
+.. _#1795: https://github.com/pytest-dev/pytest/pull/1795
+.. _#1546: https://github.com/pytest-dev/pytest/issues/1546
+.. _@gprasad84: https://github.com/gprasad84
+
 .. _#1210: https://github.com/pytest-dev/pytest/issues/1210
 .. _#1435: https://github.com/pytest-dev/pytest/issues/1435
 .. _#1471: https://github.com/pytest-dev/pytest/issues/1471

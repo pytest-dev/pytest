@@ -100,7 +100,7 @@ class TestPython:
         result, dom = runandparse(testdir)
         assert result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(name="pytest", errors=0, failures=1, skips=3, tests=5)
+        node.assert_attr(name="pytest", errors=0, failures=1, skips=2, tests=5)
 
     def test_summing_simple_with_errors(self, testdir):
         testdir.makepyfile("""
@@ -115,13 +115,16 @@ class TestPython:
             def test_error(fixture):
                 pass
             @pytest.mark.xfail
+            def test_xfail():
+                assert False
+            @pytest.mark.xfail(strict=True)
             def test_xpass():
-                assert 1
+                assert True
         """)
         result, dom = runandparse(testdir)
         assert result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(name="pytest", errors=1, failures=1, skips=1, tests=4)
+        node.assert_attr(name="pytest", errors=1, failures=2, skips=1, tests=5)
 
     def test_timing_function(self, testdir):
         testdir.makepyfile("""
@@ -346,16 +349,33 @@ class TestPython:
         result, dom = runandparse(testdir)
         # assert result.ret
         node = dom.find_first_by_tag("testsuite")
-        node.assert_attr(skips=1, tests=1)
+        node.assert_attr(skips=0, tests=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
             file="test_xfailure_xpass.py",
             line="1",
             classname="test_xfailure_xpass",
             name="test_xpass")
-        fnode = tnode.find_first_by_tag("skipped")
-        fnode.assert_attr(message="xfail-marked test passes unexpectedly")
-        # assert "ValueError" in fnode.toxml()
+
+    def test_xfailure_xpass_strict(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.xfail(strict=True, reason="This needs to fail!")
+            def test_xpass():
+                pass
+        """)
+        result, dom = runandparse(testdir)
+        # assert result.ret
+        node = dom.find_first_by_tag("testsuite")
+        node.assert_attr(skips=0, tests=1)
+        tnode = node.find_first_by_tag("testcase")
+        tnode.assert_attr(
+            file="test_xfailure_xpass_strict.py",
+            line="1",
+            classname="test_xfailure_xpass_strict",
+            name="test_xpass")
+        fnode = tnode.find_first_by_tag("failure")
+        fnode.assert_attr(message="[XPASS(strict)] This needs to fail!")
 
     def test_collect_error(self, testdir):
         testdir.makepyfile("syntax error")
