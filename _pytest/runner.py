@@ -492,9 +492,15 @@ class Skipped(OutcomeException):
     # in order to have Skipped exception printing shorter/nicer
     __module__ = 'builtins'
 
+    def __init__(self, msg=None, pytrace=True, allow_module_level=False):
+        OutcomeException.__init__(self, msg=msg, pytrace=pytrace)
+        self.allow_module_level = allow_module_level
+
+
 class Failed(OutcomeException):
     """ raised from an explicit call to pytest.fail() """
     __module__ = 'builtins'
+
 
 class Exit(KeyboardInterrupt):
     """ raised for immediate program exits (no tracebacks/summaries)"""
@@ -546,7 +552,7 @@ def importorskip(modname, minversion=None):
         # Do not raise chained exception here(#1485)
         should_skip = True
     if should_skip:
-        skip("could not import %r" %(modname,))
+        raise Skipped("could not import %r" %(modname,), allow_module_level=True)
     mod = sys.modules[modname]
     if minversion is None:
         return mod
@@ -555,10 +561,11 @@ def importorskip(modname, minversion=None):
         try:
             from pkg_resources import parse_version as pv
         except ImportError:
-            skip("we have a required version for %r but can not import "
-                 "no pkg_resources to parse version strings." %(modname,))
+            raise Skipped("we have a required version for %r but can not import "
+                          "no pkg_resources to parse version strings." % (modname,),
+                          allow_module_level=True)
         if verattr is None or pv(verattr) < pv(minversion):
-            skip("module %r has __version__ %r, required is: %r" %(
-                 modname, verattr, minversion))
+            raise Skipped("module %r has __version__ %r, required is: %r" %(
+                          modname, verattr, minversion), allow_module_level=True)
     return mod
 
