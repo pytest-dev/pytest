@@ -38,7 +38,8 @@
 
 * Refined logic for determining the ``rootdir``, considering only valid
   paths which fixes a number of issues: `#1594`_, `#1435`_ and `#1471`_.
-  Thanks to `@blueyed`_ and `@davehunt`_ for the PR.
+  Updated the documentation according to current behavior. Thanks to 
+  `@blueyed`_, `@davehunt`_ and `@matthiasha`_ for the PR.
 
 * Always include full assertion explanation. The previous behaviour was hiding
   sub-expressions that happened to be False, assuming this was redundant information.
