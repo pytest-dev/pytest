@@ -6,7 +6,7 @@ The pytest team is proud to announce the 3.0.0 release!
 pytest is a mature Python testing tool with more than a 1600 tests
 against itself, passing on many different interpreters and platforms.
 
-This release contains a lot of bugs and improvements, and much of
+This release contains a lot of bugs fixes and improvements, and much of
 the work done on it was possible because of the 2016 Sprint[1], which
 was funded by an indiegogo campaign which raised over US$12,000 with 
 nearly 100 backers. 
