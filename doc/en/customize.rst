@@ -52,7 +52,7 @@ If no ``args`` are given, pytest collects test below the current working
 directory and also starts determining the rootdir from there. 
 
 :warning: custom pytest plugin commandline arguments may include a path, as in
-    ``py.test --log-output ../../test.log args``. Then ``args`` is mandatory,
+    ``pytest --log-output ../../test.log args``. Then ``args`` is mandatory,
     otherwise pytest uses the folder of test.log for rootdir determination
     (see also `issue 1435 <https://github.com/pytest-dev/pytest/issues/1435>`_).
     A dot ``.`` for referencing to the current working directory is also
