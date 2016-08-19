@@ -246,12 +246,6 @@ time or change existing behaviors in order to make them less surprising/more use
   removed in pytest-4.0 (`#1684`_).
   Thanks `@nicoddemus`_ for the PR.
 
-* Raise helpful failure message, when requesting parametrized fixture at runtime,
-  e.g. with ``request.getfuncargvalue``. BACKWARD INCOMPAT: Previously these params
-  were simply never defined. So a fixture decorated like ``@pytest.fixture(params=[0, 1, 2])``
-  only ran once. Now a failure is raised. Fixes (`#460`_). Thanks to
-  `@nikratio`_ for bug report, `@RedBeardCode`_ and `@tomviner`_ for the PR.
-
 * Passing a command-line string to ``pytest.main()`` is considered deprecated and scheduled
   for removal in pytest-4.0. It is recommended to pass a list of arguments instead (`#1723`_).
 
@@ -272,8 +266,6 @@ time or change existing behaviors in order to make them less surprising/more use
   sub-expressions that happened to be False, assuming this was redundant information.
   Thanks `@bagerard`_ for reporting (`#1503`_). Thanks to `@davehunt`_ and
   `@tomviner`_ for PR.
-
-* Renamed the pytest ``pdb`` module (plugin) into ``debugging``.
 
 * Better message in case of not using parametrized variable (see `#1539`_).
   Thanks to `@tramwaj29`_ for the PR.
