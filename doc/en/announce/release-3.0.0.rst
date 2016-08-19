@@ -76,7 +76,7 @@ Thanks to all who contributed to this release, among them:
 
 
 Happy testing,
-The py.test Development Team
+The Pytest Development Team
 
 [1] http://blog.pytest.org/2016/pytest-development-sprint/
 [2] http://blog.pytest.org/2016/whats-new-in-pytest-30/
