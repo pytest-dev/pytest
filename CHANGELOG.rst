@@ -1,5 +1,5 @@
-3.0.0.dev1
-==========
+3.0.0
+=====
 
 **Incompatible changes**
 
@@ -55,11 +55,6 @@ time or change existing behaviors in order to make them less surprising/more use
 * ``--exitfirst / -x`` can now be overridden by a following ``--maxfail=N``
   and is just a synonym for ``--maxfail=1``.
 
-*
-
-*
-
-*
 
 **New Features**
 
@@ -147,13 +142,6 @@ time or change existing behaviors in order to make them less surprising/more use
 * Allow passing a custom debugger class (e.g. ``--pdbcls=IPython.core.debugger:Pdb``).
   Thanks to `@anntzer`_ for the PR.
 
-*
-
-*
-
-*
-
-*
 
 **Changes**
 
@@ -296,11 +284,6 @@ time or change existing behaviors in order to make them less surprising/more use
   a PR, `@eolo999`_ for the initial PR and `@tomviner`_ for his guidance during
   EuroPython2016 sprint.
 
-*
-
-*
-
-*
 
 **Bug Fixes**
 
@@ -343,7 +326,6 @@ time or change existing behaviors in order to make them less surprising/more use
 * Fixed off-by-one error with lines from ``request.node.warn``.
   Thanks to `@blueyed`_ for the PR.
 
-*
 
 .. _#1210: https://github.com/pytest-dev/pytest/issues/1210
 .. _#1235: https://github.com/pytest-dev/pytest/issues/1235
