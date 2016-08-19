@@ -48,6 +48,16 @@ Here is the algorithm which finds the rootdir from ``args``:
   directory. This allows to work with pytest in structures that are not part of
   a package and don't have any particular ini-file configuration.
 
+If no ``args`` are given, pytest collects test below the current working
+directory and also starts determining the rootdir from there. 
+
+:warning: custom pytest plugin commandline arguments may include a path, as in
+    ``pytest --log-output ../../test.log args``. Then ``args`` is mandatory,
+    otherwise pytest uses the folder of test.log for rootdir determination
+    (see also `issue 1435 <https://github.com/pytest-dev/pytest/issues/1435>`_).
+    A dot ``.`` for referencing to the current working directory is also
+    possible.
+
 Note that an existing ``pytest.ini`` file will always be considered a match,
 whereas ``tox.ini`` and ``setup.cfg`` will only match if they contain a
 ``[pytest]`` section. Options from multiple ini-files candidates are never
