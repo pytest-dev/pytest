@@ -431,7 +431,9 @@ class Module(pytest.File, PyCollector):
                 "Make sure your test modules/packages have valid Python names."
                 % (self.fspath, exc or exc_class)
             )
-        except _pytest.runner.Skipped:
+        except _pytest.runner.Skipped as e:
+            if e.allow_module_level:
+                raise
             raise self.CollectError(
                 "Using @pytest.skip outside a test (e.g. as a test function "
                 "decorator) is not allowed. Use @pytest.mark.skip or "

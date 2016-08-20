@@ -571,6 +571,19 @@ def test_importorskip_dev_module(monkeypatch):
         pytest.fail("spurious skip")
 
 
+def test_importorskip_module_level(testdir):
+    """importorskip must be able to skip entire modules when used at module level"""
+    testdir.makepyfile('''
+        import pytest
+        foobarbaz = pytest.importorskip("foobarbaz")
+
+        def test_foo():
+            pass
+    ''')
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(['*collected 0 items / 1 skipped*'])
+
+
 def test_pytest_cmdline_main(testdir):
     p = testdir.makepyfile("""
         import pytest
