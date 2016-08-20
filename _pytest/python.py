@@ -435,8 +435,8 @@ class Module(pytest.File, PyCollector):
             if e.allow_module_level:
                 raise
             raise self.CollectError(
-                "Using @pytest.skip outside a test (e.g. as a test function "
-                "decorator) is not allowed. Use @pytest.mark.skip or "
+                "Using @pytest.skip outside of a test (e.g. as a test "
+                "function decorator) is not allowed. Use @pytest.mark.skip or "
                 "@pytest.mark.skipif instead."
             )
         self.config.pluginmanager.consider_module(mod)

@@ -41,7 +41,7 @@ Changes 2.6.3
   dep).  Thanks Charles Cloud for analysing the issue.
 
 - fix conftest related fixture visibility issue: when running with a
-  CWD outside a test package pytest would get fixture discovery wrong.
+  CWD outside of a test package pytest would get fixture discovery wrong.
   Thanks to Wolfgang Schnerring for figuring out a reproducable example.
 
 - Introduce pytest_enter_pdb hook (needed e.g. by pytest_timeout to cancel the
