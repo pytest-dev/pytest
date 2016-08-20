@@ -562,7 +562,7 @@ def importorskip(modname, minversion=None):
             from pkg_resources import parse_version as pv
         except ImportError:
             raise Skipped("we have a required version for %r but can not import "
-                          "no pkg_resources to parse version strings." % (modname,),
+                          "pkg_resources to parse version strings." % (modname,),
                           allow_module_level=True)
         if verattr is None or pv(verattr) < pv(minversion):
             raise Skipped("module %r has __version__ %r, required is: %r" %(
