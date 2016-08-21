@@ -3,11 +3,9 @@ How to release pytest
 
 Note: this assumes you have already registered on pypi.
 
-1. Bump version numbers in ``_pytest/__init__.py`` (``setup.py`` reads it).
+1. Check and finalize ``CHANGELOG.rst``.
 
-2. Check and finalize ``CHANGELOG.rst``.
-
-3. Write ``doc/en/announce/release-VERSION.txt`` and include
+2. Write ``doc/en/announce/release-VERSION.txt`` and include
    it in ``doc/en/announce/index.txt``. Run this command to list names of authors involved::
 
         git log $(git describe --abbrev=0 --tags)..HEAD --format='%aN' | sort -u
@@ -81,5 +79,3 @@ Note: this assumes you have already registered on pypi.
         9. Push ``master`` and ``features``.
 
   c. **major release (3.0.0)**: same steps as that of a **minor release**
-
-
