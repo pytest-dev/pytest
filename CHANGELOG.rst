@@ -6,11 +6,15 @@
 
 *
 
-*
+* Fix loader error when running ``pytest`` embedded in a zipfile.
+  Thanks `@mbachry`_ for the PR.
 
 *
 
+*
 
+
+.. _@mbachry: https://github.com/mbachry
 
 .. _#1822: https://github.com/pytest-dev/pytest/issues/1822
 
