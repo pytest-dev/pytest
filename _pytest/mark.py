@@ -283,6 +283,21 @@ class MarkDecorator:
         return self.__class__(self.name, args=args, kwargs=kw)
 
 
+def extract_argvalue(maybe_marked_args):
+    # TODO: incorrect mark data, the old code wanst able to collect lists
+    # individual parametrized argument sets can be wrapped in a series
+    # of markers in which case we unwrap the values and apply the mark
+    # at Function init
+    newmarks = {}
+    argval = maybe_marked_args
+    while isinstance(argval, MarkDecorator):
+        newmark = MarkDecorator(argval.markname,
+                                argval.args[:-1], argval.kwargs)
+        newmarks[newmark.markname] = newmark
+        argval = argval.args[-1]
+    return argval, newmarks
+
+
 class MarkInfo:
     """ Marking object created by :class:`MarkDecorator` instances. """
     def __init__(self, name, args, kwargs):

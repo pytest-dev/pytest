@@ -5,10 +5,11 @@ import inspect
 import sys
 import collections
 import math
+from itertools import count
 
 import py
 import pytest
-from _pytest.mark import MarkDecorator, MarkerError
+from _pytest.mark import MarkerError
 
 
 import _pytest
@@ -776,19 +777,14 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             to set a dynamic scope using test context or configuration.
         """
         from _pytest.fixtures import scopes
-        # individual parametrized argument sets can be wrapped in a series
-        # of markers in which case we unwrap the values and apply the mark
-        # at Function init
-        newkeywords = {}
+        from _pytest.mark import extract_argvalue
+
         unwrapped_argvalues = []
-        for i, argval in enumerate(argvalues):
-            while isinstance(argval, MarkDecorator):
-                newmark = MarkDecorator(argval.markname,
-                                        argval.args[:-1], argval.kwargs)
-                newmarks = newkeywords.setdefault(i, {})
-                newmarks[newmark.markname] = newmark
-                argval = argval.args[-1]
+        newkeywords = []
+        for maybe_marked_args in argvalues:
+            argval, newmarks = extract_argvalue(maybe_marked_args)
             unwrapped_argvalues.append(argval)
+            newkeywords.append(newmarks)
         argvalues = unwrapped_argvalues
 
         if not isinstance(argnames, (tuple, list)):
@@ -803,8 +799,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             newmark = pytest.mark.skip(
                 reason="got empty parameter set %r, function %s at %s:%d" % (
                     argnames, self.function.__name__, fs, lineno))
-            newmarks = newkeywords.setdefault(0, {})
-            newmarks[newmark.markname] = newmark
+            newkeywords = [{newmark.markname: newmark}]
 
         if scope is None:
             if self._arg2fixturedefs:
@@ -848,12 +843,12 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         ids = idmaker(argnames, argvalues, idfn, ids, self.config)
         newcalls = []
         for callspec in self._calls or [CallSpec2(self)]:
-            for param_index, valset in enumerate(argvalues):
+            elements = zip(ids, argvalues, newkeywords, count())
+            for a_id, valset, keywords, param_index in elements:
                 assert len(valset) == len(argnames)
                 newcallspec = callspec.copy(self)
-                newcallspec.setmulti(valtypes, argnames, valset, ids[param_index],
-                                     newkeywords.get(param_index, {}), scopenum,
-                                     param_index)
+                newcallspec.setmulti(valtypes, argnames, valset, a_id,
+                                     keywords, scopenum, param_index)
                 newcalls.append(newcallspec)
         self._calls = newcalls
 
