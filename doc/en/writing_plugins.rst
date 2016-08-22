@@ -293,7 +293,7 @@ can use like this::
                 pass
         """)
         result = testdir.runpytest("--verbose")
-        result.fnmatch_lines("""
+        result.stdout.fnmatch_lines("""
             test_example*
         """)
 
