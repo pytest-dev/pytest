@@ -802,14 +802,8 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             newkeywords = [{newmark.markname: newmark}]
 
         if scope is None:
-            if self._arg2fixturedefs:
-                # Takes the most narrow scope from used fixtures
-                fixtures_scopes = [fixturedef[0].scope for fixturedef in self._arg2fixturedefs.values()]
-                for scope in reversed(scopes):
-                    if scope in fixtures_scopes:
-                        break
-            else:
-                scope = 'function'
+            scope = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)
+
         scopenum = scopes.index(scope)
         valtypes = {}
         for arg in argnames:
@@ -889,6 +883,30 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         self._calls.append(cs)
 
 
+def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
+    """Find the most appropriate scope for a parametrized call based on its arguments.
+
+    When there's at least one direct argument, always use "function" scope.
+
+    When a test function is parametrized and all its arguments are indirect
+    (e.g. fixtures), return the most narrow scope based on the fixtures used.
+
+    Related to issue #1832, based on code posted by @Kingdread.
+    """
+    from _pytest.fixtures import scopes
+    indirect_as_list = isinstance(indirect, (list, tuple))
+    all_arguments_are_fixtures = indirect is True or \
+                                 indirect_as_list and len(indirect) == argnames
+    if all_arguments_are_fixtures:
+        fixturedefs = arg2fixturedefs or {}
+        used_scopes = [fixturedef[0].scope for name, fixturedef in fixturedefs.items()]
+        if used_scopes:
+            # Takes the most narrow scope from used fixtures
+            for scope in reversed(scopes):
+                if scope in used_scopes:
+                    return scope
+
+    return 'function'
 
 
 def _idval(val, argname, idx, idfn, config=None):
