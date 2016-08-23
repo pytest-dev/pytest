@@ -1,5 +1,4 @@
 
-.. highlightlang:: python
 
 Basic patterns and examples
 ==========================================================
@@ -10,7 +9,9 @@ Pass different values to a test function, depending on command line options
 .. regendoc:wipe
 
 Suppose we want to write a test that depends on a command line option.
-Here is a basic pattern to achieve this::
+Here is a basic pattern to achieve this:
+
+.. code-block:: python
 
     # content of test_sample.py
     def test_answer(cmdopt):
@@ -22,7 +23,9 @@ Here is a basic pattern to achieve this::
 
 
 For this to work we need to add a command line option and
-provide the ``cmdopt`` through a :ref:`fixture function <fixture function>`::
+provide the ``cmdopt`` through a :ref:`fixture function <fixture function>`:
+
+.. code-block:: python
 
     # content of conftest.py
     import pytest
@@ -91,7 +94,9 @@ Dynamically adding command line options
 
 Through :confval:`addopts` you can statically add command line
 options for your project.  You can also dynamically modify
-the command line arguments before they get processed::
+the command line arguments before they get processed:
+
+.. code-block:: python
 
     # content of conftest.py
     import sys
@@ -101,7 +106,7 @@ the command line arguments before they get processed::
             num = max(multiprocessing.cpu_count() / 2, 1)
             args[:] = ["-n", str(num)] + args
 
-If you have the :ref:`xdist plugin <xdist>` installed
+If you have the `xdist plugin <https://pypi.python.org/pypi/pytest-xdist>`_ installed
 you will now always perform test runs using a number
 of subprocesses close to your CPU. Running in an empty
 directory with the above conftest.py::
@@ -122,7 +127,9 @@ Control skipping of tests according to command line option
 .. regendoc:wipe
 
 Here is a ``conftest.py`` file adding a ``--runslow`` command
-line option to control skipping of ``slow`` marked tests::
+line option to control skipping of ``slow`` marked tests:
+
+.. code-block:: python
 
     # content of conftest.py
 
@@ -131,10 +138,11 @@ line option to control skipping of ``slow`` marked tests::
         parser.addoption("--runslow", action="store_true",
             help="run slow tests")
 
-We can now write a test module like this::
+We can now write a test module like this:
+
+.. code-block:: python
 
     # content of test_module.py
-
     import pytest
 
 
@@ -187,7 +195,9 @@ If you have a test helper function called from a test you can
 use the ``pytest.fail`` marker to fail a test with a certain message.
 The test support function will not show up in the traceback if you
 set the ``__tracebackhide__`` option somewhere in the helper function.
-Example::
+Example:
+
+.. code-block:: python
 
     # content of test_checkconfig.py
     import pytest
@@ -218,7 +228,9 @@ Let's run our little function::
 
 If you only want to hide certain exceptions, you can set ``__tracebackhide__``
 to a callable which gets the ``ExceptionInfo`` object. You can for example use
-this to make sure unexpected exception types aren't hidden::
+this to make sure unexpected exception types aren't hidden:
+
+.. code-block:: python
 
     import operator
     import pytest
@@ -246,7 +258,9 @@ Detect if running from within a pytest run
 Usually it is a bad idea to make application code
 behave differently if called from a test.  But if you
 absolutely must find out if your application code is
-running from a test you can do something like this::
+running from a test you can do something like this:
+
+.. code-block:: python
 
     # content of conftest.py
 
@@ -257,7 +271,9 @@ running from a test you can do something like this::
     def pytest_unconfigure(config):
         del sys._called_from_test
 
-and then check for the ``sys._called_from_test`` flag::
+and then check for the ``sys._called_from_test`` flag:
+
+.. code-block:: python
 
     if hasattr(sys, '_called_from_test'):
         # called from within a test run
@@ -273,7 +289,9 @@ Adding info to test report header
 
 .. regendoc:wipe
 
-It's easy to present extra information in a ``pytest`` run::
+It's easy to present extra information in a ``pytest`` run:
+
+.. code-block:: python
 
     # content of conftest.py
 
@@ -293,10 +311,11 @@ which will add the string to the test header accordingly::
 
 .. regendoc:wipe
 
-You can also return a list of strings which will be considered as several
-lines of information.  You can of course also make the amount of reporting
-information on e.g. the value of ``config.getoption('verbose')`` so that
-you present more information appropriately::
+It is also possible to return a list of strings which will be considered as several
+lines of information. You may consider ``config.getoption('verbose')`` in order to
+display more information if applicable:
+
+.. code-block:: python
 
     # content of conftest.py
 
@@ -335,10 +354,11 @@ profiling test duration
 .. versionadded: 2.2
 
 If you have a slow running large test suite you might want to find
-out which tests are the slowest. Let's make an artificial test suite::
+out which tests are the slowest. Let's make an artificial test suite:
+
+.. code-block:: python
 
     # content of test_some_are_slow.py
-
     import time
 
     def test_funcfast():
@@ -375,7 +395,9 @@ Sometimes you may have a testing situation which consists of a series
 of test steps.  If one step fails it makes no sense to execute further
 steps as they are all expected to fail anyway and their tracebacks
 add no insight.  Here is a simple ``conftest.py`` file which introduces
-an ``incremental`` marker which is to be used on classes::
+an ``incremental`` marker which is to be used on classes:
+
+.. code-block:: python
 
     # content of conftest.py
 
@@ -394,7 +416,9 @@ an ``incremental`` marker which is to be used on classes::
                 pytest.xfail("previous test failed (%s)" %previousfailed.name)
 
 These two hook implementations work together to abort incremental-marked
-tests in a class.  Here is a test module example::
+tests in a class.  Here is a test module example:
+
+.. code-block:: python
 
     # content of test_step.py
 
@@ -452,7 +476,9 @@ concept.  It's however recommended to have explicit fixture references in your
 tests or test classes rather than relying on implicitly executing
 setup/teardown functions, especially if they are far away from the actual tests.
 
-Here is a an example for making a ``db`` fixture available in a directory::
+Here is a an example for making a ``db`` fixture available in a directory:
+
+.. code-block:: python
 
     # content of a/conftest.py
     import pytest
@@ -464,20 +490,26 @@ Here is a an example for making a ``db`` fixture available in a directory::
     def db():
         return DB()
 
-and then a test module in that directory::
+and then a test module in that directory:
+
+.. code-block:: python
 
     # content of a/test_db.py
     def test_a1(db):
         assert 0, db  # to show value
 
-another test module::
+another test module:
+
+.. code-block:: python
 
     # content of a/test_db2.py
     def test_a2(db):
         assert 0, db  # to show value
 
 and then a module in a sister directory which will not see
-the ``db`` fixture::
+the ``db`` fixture:
+
+.. code-block:: python
 
     # content of b/test_error.py
     def test_root(db):  # no db here, will error out
@@ -553,7 +585,9 @@ environment you can implement a hook that gets called when the test
 "report" object is about to be created.  Here we write out all failing
 test calls and also access a fixture (if it was used by the test) in
 case you want to query/look at it during your post processing.  In our
-case we just write some informations out to a ``failures`` file::
+case we just write some informations out to a ``failures`` file:
+
+.. code-block:: python
 
     # content of conftest.py
 
@@ -579,7 +613,9 @@ case we just write some informations out to a ``failures`` file::
                 f.write(rep.nodeid + extra + "\n")
 
 
-if you then have failing tests::
+if you then have failing tests:
+
+.. code-block:: python
 
     # content of test_module.py
     def test_fail1(tmpdir):
@@ -628,7 +664,9 @@ Making test result information available in fixtures
 .. regendoc:wipe
 
 If you want to make test result reports available in fixture finalizers
-here is a little example implemented via a local plugin::
+here is a little example implemented via a local plugin:
+
+.. code-block:: python
 
     # content of conftest.py
 
@@ -658,7 +696,9 @@ here is a little example implemented via a local plugin::
                 print ("executing test failed", request.node.nodeid)
 
 
-if you then have failing tests::
+if you then have failing tests:
+
+.. code-block:: python
 
     # content of test_module.py
 

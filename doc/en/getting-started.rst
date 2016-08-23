@@ -19,17 +19,15 @@ Installation and Getting Started
 Installation
 ----------------------------------------
 
-Installation options::
+Installation::
 
-    pip install -U pytest # or
-    easy_install -U pytest
+    pip install -U pytest
 
 To check your installation has installed the correct version::
 
     $ pytest --version
     This is pytest version 3.0.1, imported from $PYTHON_PREFIX/lib/python3.5/site-packages/pytest.py
 
-If you get an error checkout :ref:`installation issues`.
 
 .. _`simpletest`:
 
@@ -196,7 +194,6 @@ Here are a few suggestions where to go next:
 * :ref:`cmdline` for command line invocation examples
 * :ref:`good practices <goodpractices>` for virtualenv, test layout
 * :ref:`fixtures` for providing a functional baseline to your tests
-* :ref:`apiref` for documentation and examples on using ``pytest``
 * :ref:`plugins` managing and writing plugins
 
 .. include:: links.inc

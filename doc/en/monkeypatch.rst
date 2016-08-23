@@ -59,7 +59,6 @@ Method reference of the monkeypatch fixture
 -------------------------------------------
 
 .. autoclass:: MonkeyPatch
-    :members: setattr, replace, delattr, setitem, delitem, setenv, delenv, syspath_prepend, chdir, undo
 
 ``monkeypatch.setattr/delattr/delitem/delenv()`` all
 by default raise an Exception if the target does not exist.

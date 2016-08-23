@@ -1,3 +1,5 @@
+:orphan:
+
 .. _yieldfixture:
 
 "yield_fixture" functions

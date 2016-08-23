@@ -10,7 +10,7 @@ environment:
   # builds timing out in AppVeyor
   - TOXENV: "linting,py26,py27,py33,py34,py35,pypy"
   - TOXENV: "py27-pexpect,py27-xdist,py27-trial,py35-pexpect,py35-xdist,py35-trial"
-  - TOXENV: "py27-nobyte,doctesting,freeze"
+  - TOXENV: "py27-nobyte,doctesting,freeze,docs"
 
 install:
   - echo Installed Pythons

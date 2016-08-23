@@ -58,13 +58,13 @@ Fixtures and requests
 
 To mark a fixture function:
 
-.. autofunction:: _pytest.python.fixture
+.. autofunction:: _pytest.fixtures.fixture
 
 Tutorial at :ref:`fixtures`.
 
 The ``request`` object that can be used from fixture functions.
 
-.. autoclass:: _pytest.python.FixtureRequest()
+.. autoclass:: _pytest.fixtures.FixtureRequest()
     :members:
 
 

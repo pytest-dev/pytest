@@ -1,3 +1,4 @@
+.. _assertwarnings:
 
 Asserting Warnings
 =====================================================

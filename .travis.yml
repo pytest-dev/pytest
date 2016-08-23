@@ -26,6 +26,7 @@ env:
     - TESTENV=py27-nobyte
     - TESTENV=doctesting
     - TESTENV=freeze
+    - TESTENV=docs
 
 script: tox --recreate -e $TESTENV
 

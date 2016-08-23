@@ -1,59 +1,89 @@
+:orphan:
 
 .. _features:
 
 pytest: helps you write better programs
-=============================================
-
-**a mature full-featured Python testing tool**
-
- - runs on Posix/Windows, Python 2.6, 2.7 and 3.3-3.5, PyPy and (possibly still) Jython-2.5.1
- - free and open source software, distributed under the terms of the :ref:`MIT license <license>`
- - **well tested** with more than a thousand tests against itself
- - **strict backward compatibility policy** for safe pytest upgrades
- - :ref:`comprehensive online <toc>` and `PDF documentation <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
- - many :ref:`third party plugins <extplugins>` and :ref:`builtin helpers <pytest helpers>`,
- - used in :ref:`many small and large projects and organisations <projects>`
- - comes with many :ref:`tested examples <examples>`
-
-**provides easy no-boilerplate testing**
-
- - makes it :ref:`easy to get started <getstarted>`,
-   has many :ref:`usage options <usage>`
- - :ref:`assert with the assert statement`
- - helpful :ref:`traceback and failing assertion reporting <tbreportdemo>`
- - :ref:`print debugging <printdebugging>` and :ref:`the
-   capturing of standard output during test execution <captures>`
-
-**scales from simple unit to complex functional testing**
-
- - :ref:`modular parametrizeable fixtures <fixture>` (new in 2.3,
-   continuously improved)
- - :ref:`parametrized test functions <parametrized test functions>`
- - :ref:`mark`
- - :ref:`skipping` (improved in 2.4)
- - :ref:`distribute tests to multiple CPUs <xdistcpu>` through :ref:`xdist plugin <xdist>`
- - :ref:`continuously re-run failing tests <looponfailing>`
- - :doc:`cache`
- - flexible :ref:`Python test discovery`
-
-**integrates with other testing methods and tools**:
-
- - multi-paradigm: pytest can run ``nose``, ``unittest`` and
-   ``doctest`` style test suites, including running testcases made for
-   Django and trial
- - supports :ref:`good integration practices <goodpractices>`
- - supports extended :ref:`xUnit style setup <xunitsetup>`
- - supports domain-specific :ref:`non-python tests`
- - supports generating `test coverage reports
-   <https://pypi.python.org/pypi/pytest-cov>`_
- - supports :pep:`8` compliant coding styles in tests
-
-**extensive plugin and customization system**:
-
- - all collection, reporting, running aspects are delegated to hook functions
- - customizations can be per-directory, per-project or per PyPI released plugin
- - it is easy to add command line options or customize existing behaviour
- - :ref:`easy to write your own plugins <writing-plugins>`
+=======================================
 
 
-.. _`easy`: http://bruynooghe.blogspot.com/2009/12/skipping-slow-test-by-default-in-pytest.html
+The ``pytest`` framework makes it easy to write small tests, yet
+scales to support complex functional testing for applications and libraries.
+
+An example of a simple test:
+
+.. code-block:: python
+
+    # content of test_sample.py
+    def func(x):
+        return x + 1
+
+    def test_answer():
+        assert func(3) == 5
+
+
+To execute it::
+
+    $ pytest
+    ======= test session starts ========
+    collected 1 items
+
+    test_sample.py F
+
+    ======= FAILURES ========
+    _______ test_answer ________
+
+        def test_answer():
+    >       assert func(3) == 5
+    E       assert 4 == 5
+    E        +  where 4 = func(3)
+
+    test_sample.py:5: AssertionError
+    ======= 1 failed in 0.12 seconds ========
+
+
+Due to ``pytest``'s detailed assertion introspection, only plain ``assert`` statements are used.
+See :ref:`Getting Started <getstarted>` for more examples.
+
+
+Features
+--------
+
+- Detailed info on failing :ref:`assert statements <assert>` (no need to remember ``self.assert*`` names);
+
+- :ref:`Auto-discovery <test discovery>` of test modules and functions;
+
+- :ref:`Modular fixtures <fixture>` for managing small or parametrized long-lived test resources;
+
+- Can run :ref:`unittest <unittest>` (including trial) and :ref:`nose <noseintegration>` test suites out of the box;
+
+- Python2.6+, Python3.3+, PyPy-2.3, Jython-2.5 (untested);
+
+- Rich plugin architecture, with over 150+ :ref:`external plugins <extplugins>` and thriving community;
+
+
+Documentation
+-------------
+
+Please see :ref:`Contents <toc>` for full documentation, including installation, tutorials and PDF documents.
+
+
+Bugs/Requests
+-------------
+
+Please use the `GitHub issue tracker <https://github.com/pytest-dev/pytest/issues>`_ to submit bugs or request features.
+
+
+Changelog
+---------
+
+Consult the :ref:`Changelog <changelog>` page for fixes and enhancements of each version.
+
+
+License
+-------
+
+Copyright Holger Krekel and others, 2004-2016.
+
+Distributed under the terms of the `MIT`_ license, pytest is free and open source software.
+
+.. _`MIT`: https://github.com/pytest-dev/pytest/blob/master/LICENSE

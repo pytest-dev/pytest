@@ -1,5 +1,6 @@
 
 .. _`unittest.TestCase`:
+.. _`unittest`:
 
 Support for unittest.TestCase / Integration of fixtures
 =====================================================================
