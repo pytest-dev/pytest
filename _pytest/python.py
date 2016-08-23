@@ -936,7 +936,7 @@ def _idval(val, argname, idx, idfn, config=None):
     return str(argname)+str(idx)
 
 def _idvalset(idx, valset, argnames, idfn, ids, config=None):
-    if ids is None or ids[idx] is None:
+    if ids is None or (idx >= len(ids) or ids[idx] is None):
         this_id = [_idval(val, argname, idx, idfn, config)
                    for val, argname in zip(valset, argnames)]
         return "-".join(this_id)

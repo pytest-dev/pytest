@@ -8,12 +8,14 @@
   with normal parameters in the same call (`#1832`_).
   Thanks `@The-Compiler`_ for the report, `@Kingdread`_ and `@nicoddemus`_ for the PR.
 
+* Fix internal error when parametrizing tests or fixtures using an empty ``ids`` argument (`#1849`_).
+  Thanks `@OPpuolitaival`_ for the report and `@nicoddemus`_ for the PR.
+
 * Fix loader error when running ``pytest`` embedded in a zipfile.
   Thanks `@mbachry`_ for the PR.
 
 *
 
-*
 
 *
 
@@ -21,9 +23,11 @@
 
 .. _@Kingdread: https://github.com/Kingdread
 .. _@mbachry: https://github.com/mbachry
+.. _@OPpuolitaival: https://github.com/OPpuolitaival
 
 .. _#1822: https://github.com/pytest-dev/pytest/issues/1822
 .. _#1832: https://github.com/pytest-dev/pytest/issues/1832
+.. _#1849: https://github.com/pytest-dev/pytest/issues/1849
 
 
 3.0.0
