@@ -5,7 +5,6 @@ import traceback
 import types
 import warnings
 
-import pkg_resources
 import py
 # DON't import pytest here because it causes import cycle troubles
 import sys, os
@@ -942,6 +941,7 @@ class Config(object):
         and find all the installed plugins to mark them for re-writing
         by the importhook.
         """
+        import pkg_resources
         ns, unknown_args = self._parser.parse_known_and_unknown_args(args)
         mode = ns.assertmode
         if mode == 'rewrite':
