@@ -27,7 +27,7 @@ Installation options::
 To check your installation has installed the correct version::
 
     $ pytest --version
-    This is pytest version 3.0.0, imported from $PYTHON_PREFIX/lib/python3.5/site-packages/pytest.py
+    This is pytest version 3.0.1, imported from $PYTHON_PREFIX/lib/python3.5/site-packages/pytest.py
 
 If you get an error checkout :ref:`installation issues`.
 
@@ -49,7 +49,7 @@ That's it. You can execute the test function now::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.1, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
