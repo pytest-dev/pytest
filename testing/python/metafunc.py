@@ -889,6 +889,33 @@ class TestMetafuncFunctional:
             "*test_function*advanced*FAILED",
         ])
 
+    def test_fixture_parametrized_empty_ids(self, testdir):
+        """Fixtures parametrized with empty ids cause an internal error (#1849)."""
+        testdir.makepyfile('''
+            import pytest
+
+            @pytest.fixture(scope="module", ids=[], params=[])
+            def temp(request):
+               return request.param
+
+            def test_temp(temp):
+                 pass
+        ''')
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(['* 1 skipped *'])
+
+    def test_parametrized_empty_ids(self, testdir):
+        """Tests parametrized with empty ids cause an internal error (#1849)."""
+        testdir.makepyfile('''
+            import pytest
+
+            @pytest.mark.parametrize('temp', [], ids=list())
+            def test_temp(temp):
+                 pass
+        ''')
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(['* 1 skipped *'])
+
     def test_parametrize_with_identical_ids_get_unique_names(self, testdir):
         testdir.makepyfile("""
             import pytest
