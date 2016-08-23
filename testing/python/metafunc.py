@@ -930,43 +930,6 @@ class TestMetafuncFunctional:
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=5)
 
-    def test_parametrize_issue634(self, testdir):
-        testdir.makepyfile('''
-            import pytest
-
-            @pytest.fixture(scope='module')
-            def foo(request):
-                print('preparing foo-%d' % request.param)
-                return 'foo-%d' % request.param
-
-
-            def test_one(foo):
-                pass
-
-
-            def test_two(foo):
-                pass
-
-
-            test_two.test_with = (2, 3)
-
-
-            def pytest_generate_tests(metafunc):
-                params = (1, 2, 3, 4)
-                if not 'foo' in metafunc.fixturenames:
-                    return
-
-                test_with = getattr(metafunc.function, 'test_with', None)
-                if test_with:
-                    params = test_with
-                metafunc.parametrize('foo', params, indirect=True)
-
-        ''')
-        result = testdir.runpytest("-s")
-        output = result.stdout.str()
-        assert output.count('preparing foo-2') == 1
-        assert output.count('preparing foo-3') == 1
-
     def test_parametrize_issue323(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -1045,6 +1008,125 @@ class TestMetafuncFunctional:
         assert len(failures) == 1
         expectederror = "MarkerError: test_foo has '{0}', spelling should be 'parametrize'".format(attr)
         assert expectederror in failures[0].longrepr.reprcrash.message
+
+
+class TestMetafuncFunctionalAuto:
+    """
+    Tests related to automatically find out the correct scope for parametrized tests (#1832).
+    """
+
+    def test_parametrize_auto_scope(self, testdir):
+        testdir.makepyfile('''
+            import pytest
+
+            @pytest.fixture(scope='session', autouse=True)
+            def fixture():
+                return 1
+
+            @pytest.mark.parametrize('animal', ["dog", "cat"])
+            def test_1(animal):
+                assert animal in ('dog', 'cat')
+
+            @pytest.mark.parametrize('animal', ['fish'])
+            def test_2(animal):
+                assert animal == 'fish'
+
+        ''')
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(['* 3 passed *'])
+
+    def test_parametrize_auto_scope_indirect(self, testdir):
+        testdir.makepyfile('''
+            import pytest
+
+            @pytest.fixture(scope='session')
+            def echo(request):
+                return request.param
+
+            @pytest.mark.parametrize('animal, echo', [("dog", 1), ("cat", 2)], indirect=['echo'])
+            def test_1(animal, echo):
+                assert animal in ('dog', 'cat')
+                assert echo in (1, 2, 3)
+
+            @pytest.mark.parametrize('animal, echo', [('fish', 3)], indirect=['echo'])
+            def test_2(animal, echo):
+                assert animal == 'fish'
+                assert echo in (1, 2, 3)
+        ''')
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(['* 3 passed *'])
+
+    def test_parametrize_auto_scope_override_fixture(self, testdir):
+        testdir.makepyfile('''
+            import pytest
+
+            @pytest.fixture(scope='session', autouse=True)
+            def animal():
+                return 'fox'
+
+            @pytest.mark.parametrize('animal', ["dog", "cat"])
+            def test_1(animal):
+                assert animal in ('dog', 'cat')
+        ''')
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(['* 2 passed *'])
+
+    def test_parametrize_all_indirects(self, testdir):
+        testdir.makepyfile('''
+            import pytest
+
+            @pytest.fixture()
+            def animal(request):
+                return request.param
+
+            @pytest.fixture(scope='session')
+            def echo(request):
+                return request.param
+
+            @pytest.mark.parametrize('animal, echo', [("dog", 1), ("cat", 2)], indirect=True)
+            def test_1(animal, echo):
+                assert animal in ('dog', 'cat')
+                assert echo in (1, 2, 3)
+
+            @pytest.mark.parametrize('animal, echo', [("fish", 3)], indirect=True)
+            def test_2(animal, echo):
+                assert animal == 'fish'
+                assert echo in (1, 2, 3)
+        ''')
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(['* 3 passed *'])
+
+    def test_parametrize_issue634(self, testdir):
+        testdir.makepyfile('''
+            import pytest
+
+            @pytest.fixture(scope='module')
+            def foo(request):
+                print('preparing foo-%d' % request.param)
+                return 'foo-%d' % request.param
+
+            def test_one(foo):
+                pass
+
+            def test_two(foo):
+                pass
+
+            test_two.test_with = (2, 3)
+
+            def pytest_generate_tests(metafunc):
+                params = (1, 2, 3, 4)
+                if not 'foo' in metafunc.fixturenames:
+                    return
+
+                test_with = getattr(metafunc.function, 'test_with', None)
+                if test_with:
+                    params = test_with
+                metafunc.parametrize('foo', params, indirect=True)
+        ''')
+        result = testdir.runpytest("-s")
+        output = result.stdout.str()
+        assert output.count('preparing foo-2') == 1
+        assert output.count('preparing foo-3') == 1
 
 
 class TestMarkersWithParametrization:

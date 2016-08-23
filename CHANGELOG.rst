@@ -4,7 +4,9 @@
 * Fix regression when ``importorskip`` is used at module level (`#1822`_).
   Thanks `@jaraco`_ and `@The-Compiler`_ for the report and `@nicoddemus`_ for the PR.
 
-*
+* Fix parametrization scope when session fixtures are used in conjunction
+  with normal parameters in the same call (`#1832`_).
+  Thanks `@The-Compiler`_ for the report, `@Kingdread`_ and `@nicoddemus`_ for the PR.
 
 * Fix loader error when running ``pytest`` embedded in a zipfile.
   Thanks `@mbachry`_ for the PR.
@@ -13,10 +15,15 @@
 
 *
 
+*
 
+*
+
+.. _@Kingdread: https://github.com/Kingdread
 .. _@mbachry: https://github.com/mbachry
 
 .. _#1822: https://github.com/pytest-dev/pytest/issues/1822
+.. _#1832: https://github.com/pytest-dev/pytest/issues/1832
 
 
 3.0.0
