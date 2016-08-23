@@ -8,8 +8,9 @@
 
 * Fix loader error when running ``pytest`` embedded in a zipfile.
   Thanks `@mbachry`_ for the PR.
-
+ 
 * Fix pkg_resources import error in Jython projects (`#1853`).
+  Thanks `@raquel-ucl`_ for the PR.
 
 *
 
