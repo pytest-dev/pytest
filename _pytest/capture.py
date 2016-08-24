@@ -455,6 +455,13 @@ class DontReadFromInput:
     def close(self):
         pass
 
+    @property
+    def buffer(self):
+        if sys.version_info >= (3,0):
+            return self
+        else:
+            raise AttributeError('redirected stdin has no attribute buffer')
+
 
 def _readline_workaround():
     """

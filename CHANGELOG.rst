@@ -6,10 +6,12 @@
 * Improve error message when passing non-string ids to ``pytest.mark.parametrize`` (`#1857`_).
   Thanks `@okken`_ for the report and `@nicoddemus`_ for the PR.
 
-*
+* Add ``buffer`` attribute to stdin stub class ``pytest.capture.DontReadFromInput``
+  Thanks `@joguSD`_ for the PR.
 
 *
 
+.. _@joguSD: https://github.com/joguSD
 
 .. _#1857: https://github.com/pytest-dev/pytest/issues/1857
 
