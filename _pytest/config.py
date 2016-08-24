@@ -941,7 +941,6 @@ class Config(object):
         and find all the installed plugins to mark them for re-writing
         by the importhook.
         """
-        import pkg_resources
         ns, unknown_args = self._parser.parse_known_and_unknown_args(args)
         mode = ns.assertmode
         if mode == 'rewrite':
@@ -950,6 +949,7 @@ class Config(object):
             except SystemError:
                 mode = 'plain'
             else:
+                import pkg_resources
                 self.pluginmanager.rewrite_hook = hook
                 for entrypoint in pkg_resources.iter_entry_points('pytest11'):
                     for entry in entrypoint.dist._get_metadata('RECORD'):
