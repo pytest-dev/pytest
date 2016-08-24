@@ -778,6 +778,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         """
         from _pytest.fixtures import scopes
         from _pytest.mark import extract_argvalue
+        from py.io import saferepr
 
         unwrapped_argvalues = []
         newkeywords = []
@@ -831,9 +832,14 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         if callable(ids):
             idfn = ids
             ids = None
-        if ids and len(ids) != len(argvalues):
-            raise ValueError('%d tests specified with %d ids' %(
-                             len(argvalues), len(ids)))
+        if ids:
+            if len(ids) != len(argvalues):
+                raise ValueError('%d tests specified with %d ids' %(
+                                 len(argvalues), len(ids)))
+            for id_value in ids:
+                if id_value is not None and not isinstance(id_value, str):
+                    msg = 'ids must be list of strings, found: %s (type: %s)'
+                    raise ValueError(msg % (saferepr(id_value), type(id_value).__name__))
         ids = idmaker(argnames, argvalues, idfn, ids, self.config)
         newcalls = []
         for callspec in self._calls or [CallSpec2(self)]:
