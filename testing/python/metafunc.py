@@ -916,6 +916,18 @@ class TestMetafuncFunctional:
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(['* 1 skipped *'])
 
+    def test_parametrized_ids_invalid_type(self, testdir):
+        """Tests parametrized with ids as non-strings (#1857)."""
+        testdir.makepyfile('''
+            import pytest
+
+            @pytest.mark.parametrize("x, expected", [(10, 20), (40, 80)], ids=(None, 2))
+            def test_ids_numbers(x,expected):
+                assert x * 2 == expected
+        ''')
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(['*ids must be list of strings, found: 2 (type: int)*'])
+
     def test_parametrize_with_identical_ids_get_unique_names(self, testdir):
         testdir.makepyfile("""
             import pytest
