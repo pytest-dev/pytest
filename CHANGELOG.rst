@@ -1,5 +1,5 @@
-3.0.1.dev
-=========
+3.0.1
+=====
 
 * Fix regression when ``importorskip`` is used at module level (`#1822`_).
   Thanks `@jaraco`_ and `@The-Compiler`_ for the report and `@nicoddemus`_ for the PR.
@@ -14,12 +14,6 @@
 * Fix loader error when running ``pytest`` embedded in a zipfile.
   Thanks `@mbachry`_ for the PR.
 
-*
-
-
-*
-
-*
 
 .. _@Kingdread: https://github.com/Kingdread
 .. _@mbachry: https://github.com/mbachry

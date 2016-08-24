@@ -130,7 +130,7 @@ objects, they are still using the default pytest representation::
 
     $ pytest test_time.py --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.1, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 6 items
     <Module 'test_time.py'>
@@ -181,7 +181,7 @@ this is a fully self-contained example which you can run with::
 
     $ pytest test_scenarios.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.1, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
@@ -194,7 +194,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
 
     $ pytest --collect-only test_scenarios.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.1, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     <Module 'test_scenarios.py'>
@@ -259,7 +259,7 @@ Let's first see how it looks like at collection time::
 
     $ pytest test_backends.py --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.1, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     <Module 'test_backends.py'>
@@ -320,7 +320,7 @@ The result of this test will be successful::
 
     $ pytest test_indirect_list.py --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.1, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     <Module 'test_indirect_list.py'>
@@ -447,7 +447,7 @@ If you run this with reporting for skips enabled::
 
     $ pytest -rs test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.0, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.1, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
