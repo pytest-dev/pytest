@@ -46,7 +46,6 @@
 .. _#1832: https://github.com/pytest-dev/pytest/issues/1832
 .. _#1849: https://github.com/pytest-dev/pytest/issues/1849
 
->>>>>>> master
 
 3.0.0
 =====
