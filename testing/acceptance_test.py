@@ -763,3 +763,21 @@ class TestDurationWithFixture:
             * call *test_1*
         """)
 
+
+def test_zipimport_hook(testdir, tmpdir):
+    """Test package loader is being used correctly (see #1837)."""
+    zipapp = pytest.importorskip('zipapp')
+    testdir.tmpdir.join('app').ensure(dir=1)
+    testdir.makepyfile(**{
+        'app/foo.py': """
+            import pytest
+            def main():
+                pytest.main(['--pyarg', 'foo'])
+        """,
+    })
+    target = tmpdir.join('foo.zip')
+    zipapp.create_archive(str(testdir.tmpdir.join('app')), str(target), main='foo:main')
+    result = testdir.runpython(target)
+    assert result.ret == 0
+    result.stderr.fnmatch_lines(['*not found*foo*'])
+    assert 'INTERNALERROR>' not in result.stdout.str()

@@ -5,10 +5,11 @@ import inspect
 import sys
 import collections
 import math
+from itertools import count
 
 import py
 import pytest
-from _pytest.mark import MarkDecorator, MarkerError
+from _pytest.mark import MarkerError
 
 
 import _pytest
@@ -431,10 +432,12 @@ class Module(pytest.File, PyCollector):
                 "Make sure your test modules/packages have valid Python names."
                 % (self.fspath, exc or exc_class)
             )
-        except _pytest.runner.Skipped:
+        except _pytest.runner.Skipped as e:
+            if e.allow_module_level:
+                raise
             raise self.CollectError(
-                "Using @pytest.skip outside a test (e.g. as a test function "
-                "decorator) is not allowed. Use @pytest.mark.skip or "
+                "Using @pytest.skip outside of a test (e.g. as a test "
+                "function decorator) is not allowed. Use @pytest.mark.skip or "
                 "@pytest.mark.skipif instead."
             )
         self.config.pluginmanager.consider_module(mod)
@@ -774,19 +777,14 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             to set a dynamic scope using test context or configuration.
         """
         from _pytest.fixtures import scopes
-        # individual parametrized argument sets can be wrapped in a series
-        # of markers in which case we unwrap the values and apply the mark
-        # at Function init
-        newkeywords = {}
+        from _pytest.mark import extract_argvalue
+
         unwrapped_argvalues = []
-        for i, argval in enumerate(argvalues):
-            while isinstance(argval, MarkDecorator):
-                newmark = MarkDecorator(argval.markname,
-                                        argval.args[:-1], argval.kwargs)
-                newmarks = newkeywords.setdefault(i, {})
-                newmarks[newmark.markname] = newmark
-                argval = argval.args[-1]
+        newkeywords = []
+        for maybe_marked_args in argvalues:
+            argval, newmarks = extract_argvalue(maybe_marked_args)
             unwrapped_argvalues.append(argval)
+            newkeywords.append(newmarks)
         argvalues = unwrapped_argvalues
 
         if not isinstance(argnames, (tuple, list)):
@@ -801,18 +799,11 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             newmark = pytest.mark.skip(
                 reason="got empty parameter set %r, function %s at %s:%d" % (
                     argnames, self.function.__name__, fs, lineno))
-            newmarks = newkeywords.setdefault(0, {})
-            newmarks[newmark.markname] = newmark
+            newkeywords = [{newmark.markname: newmark}]
 
         if scope is None:
-            if self._arg2fixturedefs:
-                # Takes the most narrow scope from used fixtures
-                fixtures_scopes = [fixturedef[0].scope for fixturedef in self._arg2fixturedefs.values()]
-                for scope in reversed(scopes):
-                    if scope in fixtures_scopes:
-                        break
-            else:
-                scope = 'function'
+            scope = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)
+
         scopenum = scopes.index(scope)
         valtypes = {}
         for arg in argnames:
@@ -846,12 +837,12 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         ids = idmaker(argnames, argvalues, idfn, ids, self.config)
         newcalls = []
         for callspec in self._calls or [CallSpec2(self)]:
-            for param_index, valset in enumerate(argvalues):
+            elements = zip(ids, argvalues, newkeywords, count())
+            for a_id, valset, keywords, param_index in elements:
                 assert len(valset) == len(argnames)
                 newcallspec = callspec.copy(self)
-                newcallspec.setmulti(valtypes, argnames, valset, ids[param_index],
-                                     newkeywords.get(param_index, {}), scopenum,
-                                     param_index)
+                newcallspec.setmulti(valtypes, argnames, valset, a_id,
+                                     keywords, scopenum, param_index)
                 newcalls.append(newcallspec)
         self._calls = newcalls
 
@@ -892,6 +883,30 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         self._calls.append(cs)
 
 
+def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
+    """Find the most appropriate scope for a parametrized call based on its arguments.
+
+    When there's at least one direct argument, always use "function" scope.
+
+    When a test function is parametrized and all its arguments are indirect
+    (e.g. fixtures), return the most narrow scope based on the fixtures used.
+
+    Related to issue #1832, based on code posted by @Kingdread.
+    """
+    from _pytest.fixtures import scopes
+    indirect_as_list = isinstance(indirect, (list, tuple))
+    all_arguments_are_fixtures = indirect is True or \
+                                 indirect_as_list and len(indirect) == argnames
+    if all_arguments_are_fixtures:
+        fixturedefs = arg2fixturedefs or {}
+        used_scopes = [fixturedef[0].scope for name, fixturedef in fixturedefs.items()]
+        if used_scopes:
+            # Takes the most narrow scope from used fixtures
+            for scope in reversed(scopes):
+                if scope in used_scopes:
+                    return scope
+
+    return 'function'
 
 
 def _idval(val, argname, idx, idfn, config=None):
@@ -921,7 +936,7 @@ def _idval(val, argname, idx, idfn, config=None):
     return str(argname)+str(idx)
 
 def _idvalset(idx, valset, argnames, idfn, ids, config=None):
-    if ids is None or ids[idx] is None:
+    if ids is None or (idx >= len(ids) or ids[idx] is None):
         this_id = [_idval(val, argname, idx, idfn, config)
                    for val, argname in zip(valset, argnames)]
         return "-".join(this_id)

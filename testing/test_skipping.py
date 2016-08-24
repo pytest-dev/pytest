@@ -967,5 +967,5 @@ def test_module_level_skip_error(testdir):
     """)
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
-        "*Using @pytest.skip outside a test * is not allowed*"
+        "*Using @pytest.skip outside of a test * is not allowed*"
     )
