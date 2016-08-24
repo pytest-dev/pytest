@@ -10,7 +10,7 @@
 *
 
 
-3.0.1.dev
+3.0.2.dev
 =========
 
 *
@@ -20,6 +20,33 @@
 *
 
 *
+
+3.0.1
+=====
+
+* Fix regression when ``importorskip`` is used at module level (`#1822`_).
+  Thanks `@jaraco`_ and `@The-Compiler`_ for the report and `@nicoddemus`_ for the PR.
+
+* Fix parametrization scope when session fixtures are used in conjunction
+  with normal parameters in the same call (`#1832`_).
+  Thanks `@The-Compiler`_ for the report, `@Kingdread`_ and `@nicoddemus`_ for the PR.
+
+* Fix internal error when parametrizing tests or fixtures using an empty ``ids`` argument (`#1849`_).
+  Thanks `@OPpuolitaival`_ for the report and `@nicoddemus`_ for the PR.
+
+* Fix loader error when running ``pytest`` embedded in a zipfile.
+  Thanks `@mbachry`_ for the PR.
+
+
+.. _@Kingdread: https://github.com/Kingdread
+.. _@mbachry: https://github.com/mbachry
+.. _@OPpuolitaival: https://github.com/OPpuolitaival
+
+.. _#1822: https://github.com/pytest-dev/pytest/issues/1822
+.. _#1832: https://github.com/pytest-dev/pytest/issues/1832
+.. _#1849: https://github.com/pytest-dev/pytest/issues/1849
+
+>>>>>>> master
 
 3.0.0
 =====
@@ -322,10 +349,6 @@ time or change existing behaviors in order to make them less surprising/more use
 * ``ConftestImportFailure`` now shows the traceback making it easier to
   identify bugs in ``conftest.py`` files (`#1516`_). Thanks `@txomon`_ for
   the PR.
-
-* Add an 'E' to the first line of error messages from FixtureLookupErrorRepr.
-  Fixes `#717`_. Thanks `@blueyed`_ for reporting, `@eolo999`_ for the PR
-  and `@tomviner`_ for his guidance during EuroPython2016 sprint.
 
 * Text documents without any doctests no longer appear as "skipped".
   Thanks `@graingert`_ for reporting and providing a full PR (`#1580`_).
@@ -1225,7 +1248,7 @@ time or change existing behaviors in order to make them less surprising/more use
   dep).  Thanks Charles Cloud for analysing the issue.
 
 - fix conftest related fixture visibility issue: when running with a
-  CWD outside a test package pytest would get fixture discovery wrong.
+  CWD outside of a test package pytest would get fixture discovery wrong.
   Thanks to Wolfgang Schnerring for figuring out a reproducable example.
 
 - Introduce pytest_enter_pdb hook (needed e.g. by pytest_timeout to cancel the

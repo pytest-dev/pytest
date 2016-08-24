@@ -4,6 +4,7 @@ include AUTHORS
 
 include README.rst
 include CONTRIBUTING.rst
+include HOWTORELEASE.rst
 
 include tox.ini
 include setup.py
@@ -29,6 +30,3 @@ recursive-exclude * *.pyc *.pyo
 exclude appveyor/install.ps1
 exclude appveyor.yml
 exclude appveyor
-
-exclude ISSUES.txt
-exclude HOWTORELEASE.rst
