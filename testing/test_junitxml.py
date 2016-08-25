@@ -922,3 +922,28 @@ def test_global_properties(testdir):
         actual[k] = v
 
     assert actual == expected
+
+
+def test_url_property(testdir):
+    test_url = "http://www.github.com/pytest-dev"
+    path = testdir.tmpdir.join("test_url_property.xml")
+    log = LogXML(str(path), None)
+    from _pytest.runner import BaseReport
+
+    class Report(BaseReport):
+        longrepr = "FooBarBaz"
+        sections = []
+        nodeid = "something"
+        location = 'tests/filename.py', 42, 'TestClass.method'
+        url = test_url
+
+    test_report = Report()
+
+    log.pytest_sessionstart()
+    node_reporter = log._opentestcase(test_report)
+    node_reporter.append_failure(test_report)
+    log.pytest_sessionfinish()
+
+    test_case = minidom.parse(str(path)).getElementsByTagName('testcase')[0]
+
+    assert (test_case.getAttribute('url') == test_url), "The URL did not get written to the xml"

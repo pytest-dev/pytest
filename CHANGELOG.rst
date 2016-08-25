@@ -9,9 +9,12 @@
 * Add ``buffer`` attribute to stdin stub class ``pytest.capture.DontReadFromInput``
   Thanks `@joguSD`_ for the PR.
 
-*
+* Testcase reports with a url attribute will now properly write this to junitxml.
+  Thanks `@fushi`_ for the PR
+
 
 .. _@joguSD: https://github.com/joguSD
+.. _@fushi: https://github.com/fushi
 
 .. _#1857: https://github.com/pytest-dev/pytest/issues/1857
 
