@@ -337,7 +337,19 @@ class LogXML(object):
             reporter.append_skipped(report)
         self.update_testcase_duration(report)
         if report.when == "teardown":
+            self.add_report_sections(report)
             self.finalize(report)
+
+    def add_report_sections(self, report):
+        """Adds custom report sections as new xml tags"""
+        reporter = self.node_reporter(report)
+
+        for section in report.sections:
+            if 'Captured' in section[0]:
+                pass
+            else:
+                tag = getattr(Junit, section[0])
+                reporter.append(tag(section[1]))
 
     def update_testcase_duration(self, report):
         """accumulates total duration for nodeid from given report and updates
