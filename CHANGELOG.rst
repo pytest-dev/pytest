@@ -6,10 +6,12 @@
 * Improve error message when passing non-string ids to ``pytest.mark.parametrize`` (`#1857`_).
   Thanks `@okken`_ for the report and `@nicoddemus`_ for the PR.
 
-*
+* JUnit XML files will now add custom report sections as tags/content
+  Thanks `@fushi`_ for the PR.
 
 *
 
+.. _@fushi: https://github.com/fushigitgit
 
 .. _#1857: https://github.com/pytest-dev/pytest/issues/1857
 
