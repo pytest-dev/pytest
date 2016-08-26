@@ -69,5 +69,10 @@ The py.test Development Team
 .. _#1496: https://github.com/pytest-dev/pytest/issue/1496
 .. _#1524: https://github.com/pytest-dev/pytest/issue/1524
 
-.. _@prusse-martin: https://github.com/prusse-martin
 .. _@astraw38: https://github.com/astraw38
+.. _@hackebrot: https://github.com/hackebrot
+.. _@omarkohl: https://github.com/omarkohl
+.. _@pquentin: https://github.com/pquentin
+.. _@prusse-martin: https://github.com/prusse-martin
+.. _@RonnyPfannschmidt: https://github.com/RonnyPfannschmidt
+.. _@tomviner: https://github.com/tomviner

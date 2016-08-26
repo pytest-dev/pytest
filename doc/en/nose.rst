@@ -1,3 +1,5 @@
+.. _`noseintegration`:
+
 Running tests written for nose
 =======================================
 

@@ -215,6 +215,7 @@ The **metafunc** object
 
 .. currentmodule:: _pytest.python
 .. autoclass:: Metafunc
+    :members:
 
     .. automethod:: Metafunc.parametrize
     .. automethod:: Metafunc.addcall(funcargs=None,id=_notexists,param=_notexists)

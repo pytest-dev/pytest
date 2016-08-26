@@ -10,32 +10,51 @@ Full pytest documentation
 .. toctree::
    :maxdepth: 2
 
-   overview
-   apiref
-   example/index
+   getting-started
+   usage
+   assert
+   builtin
+   fixture
    monkeypatch
    tmpdir
    capture
    recwarn
+   doctest
+   mark
+   skipping
+   parametrize
    cache
-   plugins
+   unittest
    nose
+   xunit_setup
+   plugins
+   writing_plugins
+
+   example/index
+   goodpractices
+   customize
+   bash-completion
 
    backwards-compatibility
+   license
    contributing
    talks
+   projects
+   faq
+   contact
 
 .. only:: html
 
    .. toctree::
+      :maxdepth: 1
 
-      funcarg_compare
       announce/index
 
 .. only:: html
 
    .. toctree::
       :hidden:
+      :maxdepth: 1
 
       changelog
 

@@ -711,31 +711,26 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
     They help to inspect a test function and to generate tests according to
     test configuration or values specified in the class or module where a
     test function is defined.
-
-    :ivar fixturenames: set of fixture names required by the test function
-
-    :ivar function: underlying python test function
-
-    :ivar cls: class object where the test function is defined in or ``None``.
-
-    :ivar module: the module object where the test function is defined in.
-
-    :ivar config: access to the :class:`_pytest.config.Config` object for the
-        test session.
-
-    :ivar funcargnames:
-        .. deprecated:: 2.3
-            Use ``fixturenames`` instead.
     """
     def __init__(self, function, fixtureinfo, config, cls=None, module=None):
+        #: access to the :class:`_pytest.config.Config` object for the test session
         self.config = config
+
+        #: the module object where the test function is defined in.
         self.module = module
+
+        #: underlying python test function
         self.function = function
+
+        #: set of fixture names required by the test function
         self.fixturenames = fixtureinfo.names_closure
-        self._arg2fixturedefs = fixtureinfo.name2fixturedefs
+
+        #: class object where the test function is defined in or ``None``.
         self.cls = cls
+
         self._calls = []
         self._ids = py.builtin.set()
+        self._arg2fixturedefs = fixtureinfo.name2fixturedefs
 
     def parametrize(self, argnames, argvalues, indirect=False, ids=None,
         scope=None):

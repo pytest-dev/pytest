@@ -63,3 +63,5 @@ The py.test Development Team
 .. _#649: https://github.com/pytest-dev/pytest/issues/649
 
 .. _@asottile: https://github.com/asottile
+.. _@nicoddemus: https://github.com/nicoddemus
+.. _@tomviner: https://github.com/tomviner

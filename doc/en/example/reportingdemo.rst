@@ -7,11 +7,9 @@ Demo of Python failure reports with pytest
 Here is a nice run of several tens of failures
 and how ``pytest`` presents things (unfortunately
 not showing the nice colors here in the HTML that you
-get on the terminal - we are working on that):
+get on the terminal - we are working on that)::
 
-.. code-block:: python
-
-    assertion $ pytest failure_demo.py
+    $ pytest failure_demo.py
     ======= test session starts ========
     platform linux -- Python 3.5.2, pytest-3.0.1, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR/assertion, inifile: 

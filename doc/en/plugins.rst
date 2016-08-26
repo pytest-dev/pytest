@@ -37,7 +37,7 @@ Here is a little annotated list for some popular plugins:
   to distribute tests to CPUs and remote hosts, to run in boxed
   mode which allows to survive segmentation faults, to run in
   looponfailing mode, automatically re-running failing tests
-  on file changes, see also :ref:`xdist`
+  on file changes.
 
 * `pytest-instafail <http://pypi.python.org/pypi/pytest-instafail>`_:
   to report failures while the test run is happening.
@@ -144,7 +144,7 @@ in the `pytest repository <https://github.com/pytest-dev/pytest>`_.
     _pytest.monkeypatch
     _pytest.nose
     _pytest.pastebin
-    _pytest.pdb
+    _pytest.debugging
     _pytest.pytester
     _pytest.python
     _pytest.recwarn
