@@ -455,10 +455,6 @@ class Collector(Node):
             return str(exc.args[0])
         return self._repr_failure_py(excinfo, style="short")
 
-    def _memocollect(self):
-        """ internal helper method to cache results of calling collect(). """
-        return self._memoizedcall('_collected', lambda: list(self.collect()))
-
     def _prunetraceback(self, excinfo):
         if hasattr(self, 'fspath'):
             traceback = excinfo.traceback
