@@ -3,25 +3,25 @@ How to release pytest
 
 Note: this assumes you have already registered on pypi.
 
-1. Check and finalize ``CHANGELOG.rst``.
+#. Check and finalize ``CHANGELOG.rst``.
 
-2. Write ``doc/en/announce/release-VERSION.txt`` and include
+#. Write ``doc/en/announce/release-VERSION.txt`` and include
    it in ``doc/en/announce/index.txt``. Run this command to list names of authors involved::
 
         git log $(git describe --abbrev=0 --tags)..HEAD --format='%aN' | sort -u
 
-4. Regenerate the docs examples using tox::
+#. Regenerate the docs examples using tox::
 
       tox -e regen
 
-5. At this point, open a PR named ``release-X`` so others can help find regressions or provide suggestions.
+#. At this point, open a PR named ``release-X`` so others can help find regressions or provide suggestions.
 
-6. Use devpi for uploading a release tarball to a staging area::
+#. Use devpi for uploading a release tarball to a staging area::
 
      devpi use https://devpi.net/USER/dev
      devpi upload --formats sdist,bdist_wheel
 
-7. Run from multiple machines::
+#. Run from multiple machines::
 
      devpi use https://devpi.net/USER/dev
      devpi test pytest==VERSION
@@ -29,27 +29,27 @@ Note: this assumes you have already registered on pypi.
    Alternatively, you can use `devpi-cloud-tester <https://github.com/nicoddemus/devpi-cloud-tester>`_ to test
    the package on AppVeyor and Travis (follow instructions on the ``README``).
 
-8. Check that tests pass for relevant combinations with::
+#. Check that tests pass for relevant combinations with::
 
        devpi list pytest
 
    or look at failures with "devpi list -f pytest".
 
-9. Feeling confident? Publish to pypi::
+#. Feeling confident? Publish to pypi::
 
       devpi push pytest==VERSION pypi:NAME
 
    where NAME is the name of pypi.python.org as configured in your ``~/.pypirc``
    file `for devpi <http://doc.devpi.net/latest/quickstart-releaseprocess.html?highlight=pypirc#devpi-push-releasing-to-an-external-index>`_.
 
-10. Tag the release::
+#. Tag the release::
 
       git tag VERSION <hash>
       git push origin VERSION
 
     Make sure ``<hash>`` is **exactly** the git hash at the time the package was created.
 
-11. Send release announcement to mailing lists:
+#. Send release announcement to mailing lists:
 
     - pytest-dev@python.org
     - python-announce-list@python.org
@@ -57,7 +57,7 @@ Note: this assumes you have already registered on pypi.
 
     And announce the release on Twitter, making sure to add the hashtag ``#pytest``.
 
-12. **After the release**
+#. **After the release**
 
   a. **patch release (2.8.3)**:
 
