@@ -150,7 +150,12 @@ class TestCaseFunction(pytest.Function):
         pass
 
     def runtest(self):
-        self._testcase(result=self)
+        if self.config.pluginmanager.get_plugin("pdbinvoke") is None:
+            self._testcase(result=self)
+        else:
+            # disables tearDown and cleanups for post mortem debugging
+            self._testcase.debug()
+
 
     def _prunetraceback(self, excinfo):
         pytest.Function._prunetraceback(self, excinfo)
