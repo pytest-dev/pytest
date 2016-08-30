@@ -35,7 +35,6 @@ To execute it::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.4.3, pytest-2.8.5, py-1.4.31, pluggy-0.3.1
     collected 1 items
 
     test_sample.py F
@@ -52,7 +51,7 @@ To execute it::
     ======= 1 failed in 0.12 seconds ========
 
 
-Due to ``py.test``'s detailed assertion introspection, only plain ``assert`` statements are used. See `getting-started <http://docs.pytest.org/en/latest/getting-started.html#our-first-test-run>`_ for more examples.
+Due to ``pytest``'s detailed assertion introspection, only plain ``assert`` statements are used. See `getting-started <http://docs.pytest.org/en/latest/getting-started.html#our-first-test-run>`_ for more examples.
 
 
 Features
@@ -64,7 +63,7 @@ Features
   <http://docs.pytest.org/en/latest/goodpractices.html#python-test-discovery>`_
   of test modules and functions;
 
-- `Modular fixtures <http://docs.pytest.org/en/latest/fixture.html>`_  for
+- `Modular fixtures <http://docs.pytest.org/en/latest/fixture.html>`_ for
   managing small or parametrized long-lived test resources;
 
 - Can run `unittest <http://docs.pytest.org/en/latest/unittest.html>`_ (or trial),

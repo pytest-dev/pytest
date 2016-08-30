@@ -460,7 +460,7 @@ Hooks are usually declared as do-nothing functions that contain only
 documentation describing when the hook will be called and what return values
 are expected.
 
-For an example, see `newhooks.py`_ from :ref:`xdist`.
+For an example, see `newhooks.py`_ from `xdist <https://github.com/pytest-dev/pytest-xdist>`_.
 
 .. _`newhooks.py`: https://github.com/pytest-dev/pytest-xdist/blob/974bd566c599dc6a9ea291838c6f226197208b46/xdist/newhooks.py
 
@@ -623,7 +623,7 @@ Reference of objects involved in hooks
     :members:
     :show-inheritance:
 
-.. autoclass:: _pytest.python.FixtureDef()
+.. autoclass:: _pytest.fixtures.FixtureDef()
     :members:
     :show-inheritance:
 
@@ -644,7 +644,7 @@ Reference of objects involved in hooks
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: pluggy.PluginManager()
+.. autoclass:: _pytest.vendored_packages.pluggy.PluginManager()
     :members:
 
 .. currentmodule:: _pytest.pytester

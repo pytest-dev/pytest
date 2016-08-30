@@ -354,7 +354,7 @@ class ExceptionInfo(object):
             if exprinfo is None and isinstance(tup[1], AssertionError):
                 exprinfo = getattr(tup[1], 'msg', None)
                 if exprinfo is None:
-                    exprinfo = str(tup[1])
+                    exprinfo = py._builtin._totext(tup[1])
                 if exprinfo and exprinfo.startswith('assert '):
                     self._striptext = 'AssertionError: '
         self._excinfo = tup

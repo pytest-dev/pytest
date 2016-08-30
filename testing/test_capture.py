@@ -662,6 +662,28 @@ def test_dontreadfrominput():
     f.close()  # just for completeness
 
 
+@pytest.mark.skipif('sys.version_info < (3,)', reason='python2 has no buffer')
+def test_dontreadfrominput_buffer_python3():
+    from _pytest.capture import DontReadFromInput
+    f = DontReadFromInput()
+    fb = f.buffer
+    assert not fb.isatty()
+    pytest.raises(IOError, fb.read)
+    pytest.raises(IOError, fb.readlines)
+    pytest.raises(IOError, iter, fb)
+    pytest.raises(ValueError, fb.fileno)
+    f.close()  # just for completeness
+
+
+@pytest.mark.skipif('sys.version_info >= (3,)', reason='python2 has no buffer')
+def test_dontreadfrominput_buffer_python2():
+    from _pytest.capture import DontReadFromInput
+    f = DontReadFromInput()
+    with pytest.raises(AttributeError):
+        f.buffer
+    f.close()  # just for completeness
+
+
 @pytest.yield_fixture
 def tmpfile(testdir):
     f = testdir.makepyfile("").open('wb+')

@@ -54,32 +54,11 @@ This autouse fixture will be executed for each test function and it
 will delete the method ``request.session.Session.request`` 
 so that any attempts within tests to create http requests will fail.
 
-example: setting an environment variable for the test session
--------------------------------------------------------------
-
-If you would like for an environment variable to be
-configured for the entire test session, you can add this to your
-top-level ``conftest.py`` file:
-
-.. code-block:: python
-
-    # content of conftest.py
-    @pytest.fixture(scope='session', autouse=True)
-    def enable_debugging(monkeypatch):
-        monkeypatch.setenv("DEBUGGING_VERBOSITY", "4")
-
-This auto-use fixture will set the ``DEBUGGING_VERBOSITY`` environment variable for
-the entire test session.
-
-Note that the ability to use a ``monkeypatch`` fixture from a ``session``-scoped
-fixture was added in pytest-3.0.
-
 
 Method reference of the monkeypatch fixture
 -------------------------------------------
 
 .. autoclass:: MonkeyPatch
-    :members: setattr, replace, delattr, setitem, delitem, setenv, delenv, syspath_prepend, chdir, undo
 
 ``monkeypatch.setattr/delattr/delitem/delenv()`` all
 by default raise an Exception if the target does not exist.

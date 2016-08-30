@@ -16,6 +16,7 @@ from docstrings in all python modules (including regular
 python test modules)::
 
     pytest --doctest-modules
+
 You can make these changes permanent in your project by
 putting them into a pytest.ini file like this:
 

@@ -208,6 +208,7 @@ It is possible to add your own detailed explanations by implementing
 the ``pytest_assertrepr_compare`` hook.
 
 .. autofunction:: _pytest.hookspec.pytest_assertrepr_compare
+   :noindex:
 
 As an example consider adding the following hook in a conftest.py which
 provides an alternative explanation for ``Foo`` objects::

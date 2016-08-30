@@ -3,11 +3,22 @@
 
 *
 
-*
+* Improve error message when passing non-string ids to ``pytest.mark.parametrize`` (`#1857`_).
+  Thanks `@okken`_ for the report and `@nicoddemus`_ for the PR.
+
+* Add ``buffer`` attribute to stdin stub class ``pytest.capture.DontReadFromInput``
+  Thanks `@joguSD`_ for the PR.
+
+* Fix ``UnicodeEncodeError`` when string comparison with unicode has failed. (`#1864`_)
+  Thanks `@AiOO`_ for the PR
 
 *
 
-*
+.. _@joguSD: https://github.com/joguSD
+.. _@AiOO: https://github.com/AiOO
+
+.. _#1857: https://github.com/pytest-dev/pytest/issues/1857
+.. _#1864: https://github.com/pytest-dev/pytest/issues/1864
 
 
 3.0.2.dev
