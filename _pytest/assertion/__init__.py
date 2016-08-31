@@ -36,7 +36,13 @@ def register_assert_rewrite(*names):
     Thus you should make sure to call this before the module is
     actually imported, usually in your __init__.py if you are a plugin
     using a package.
+
+    :raise TypeError: if the given module names are not strings.
     """
+    for name in names:
+        if not isinstance(name, str):
+            msg = 'expected module names as *args, got {0} instead'
+            raise TypeError(msg.format(repr(names)))
     for hook in sys.meta_path:
         if isinstance(hook, rewrite.AssertionRewritingHook):
             importhook = hook

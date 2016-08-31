@@ -379,6 +379,8 @@ class PytestPluginManager(PluginManager):
 
     def consider_module(self, mod):
         plugins = getattr(mod, 'pytest_plugins', [])
+        if isinstance(plugins, str):
+            plugins = [plugins]
         self.rewrite_hook.mark_rewrite(*plugins)
         self._import_plugin_specs(plugins)
 
