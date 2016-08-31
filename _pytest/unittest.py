@@ -153,7 +153,7 @@ class TestCaseFunction(pytest.Function):
         if self.config.pluginmanager.get_plugin("pdbinvoke") is None:
             self._testcase(result=self)
         else:
-            # disables tearDown and cleanups for post mortem debugging
+            # disables tearDown and cleanups for post mortem debugging (see #1890)
             self._testcase.debug()
 
 

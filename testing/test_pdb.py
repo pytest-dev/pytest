@@ -86,7 +86,7 @@ class TestPDB:
                 def tearDown(self):
                     self.filename = None
                 def test_false(self):
-                    self.filename = 'bla' + '.txt'
+                    self.filename = 'debug' + '.me'
                     assert 0
         """)
         child = testdir.spawn_pytest("--pdb %s" % p1)
@@ -94,7 +94,7 @@ class TestPDB:
         child.sendline('p self.filename')
         child.sendeof()
         rest = child.read().decode("utf8")
-        assert 'bla.txt' in rest
+        assert 'debug.me' in rest
         if child.isalive():
             child.wait()
 
