@@ -10,7 +10,13 @@
   Thanks `@joguSD`_ for the PR.
 
 * Fix ``UnicodeEncodeError`` when string comparison with unicode has failed. (`#1864`_)
-  Thanks `@AiOO`_ for the PR
+  Thanks `@AiOO`_ for the PR.
+
+* ``pytest_plugins`` is now handled correctly if defined as a string (as opposed as
+  a sequence of strings) when modules are considered for assertion rewriting.
+  Due to this bug, much more modules were being rewritten than necessary
+  if a test suite uses ``pytest_plugins`` to load internal plugins (`#1888`_).
+  Thanks `@jaraco`_ for the report and `@nicoddemus`_ for the PR (`#1891`_).
 
 * Do not call tearDown (and cleanups) when running unittest with ``--pdb``
   enabled. This allows proper post mortem debugging for all applications
@@ -25,6 +31,8 @@
 
 .. _#1857: https://github.com/pytest-dev/pytest/issues/1857
 .. _#1864: https://github.com/pytest-dev/pytest/issues/1864
+.. _#1888: https://github.com/pytest-dev/pytest/issues/1888
+.. _#1891: https://github.com/pytest-dev/pytest/pull/1891
 .. _#1890: https://github.com/pytest-dev/pytest/issues/1890
 
 
