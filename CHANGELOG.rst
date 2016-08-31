@@ -12,13 +12,20 @@
 * Fix ``UnicodeEncodeError`` when string comparison with unicode has failed. (`#1864`_)
   Thanks `@AiOO`_ for the PR
 
+* Do not call tearDown (and cleanups) when running unittest with ``--pdb``
+  enabled. This allows proper post mortem debugging for all applications
+  which have significant logic in their tearDown method (`#1890`_). Thanks
+  `@mbyt`_ for the PR.
+
 *
 
 .. _@joguSD: https://github.com/joguSD
 .. _@AiOO: https://github.com/AiOO
+.. _@mbyt: https://github.com/mbyt
 
 .. _#1857: https://github.com/pytest-dev/pytest/issues/1857
 .. _#1864: https://github.com/pytest-dev/pytest/issues/1864
+.. _#1890: https://github.com/pytest-dev/pytest/issues/1890
 
 
 3.0.1
