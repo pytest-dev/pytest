@@ -36,7 +36,7 @@ the general ``pytest`` documentation for many more examples.
 .. note::
 
     Running tests from ``unittest.TestCase`` subclasses with ``--pdb`` will
-    disable tearDown and cleanup methods for the case that an Exception is
+    disable tearDown and cleanup methods for the case that an Exception
     occurs. This allows proper post mortem debugging for all applications
     which have significant logic in their tearDown machinery.
 
