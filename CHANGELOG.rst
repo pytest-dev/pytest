@@ -1,7 +1,5 @@
-3.0.2.dev
-=========
-
-*
+3.0.2
+=====
 
 * Improve error message when passing non-string ids to ``pytest.mark.parametrize`` (`#1857`_).
   Thanks `@okken`_ for the report and `@nicoddemus`_ for the PR.
@@ -23,8 +21,6 @@
   enabled. This allows proper post mortem debugging for all applications
   which have significant logic in their tearDown machinery (`#1890`_). Thanks
   `@mbyt`_ for the PR.
-
-*
 
 .. _@joguSD: https://github.com/joguSD
 .. _@AiOO: https://github.com/AiOO
