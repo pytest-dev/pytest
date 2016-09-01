@@ -21,16 +21,21 @@
   enabled. This allows proper post mortem debugging for all applications
   which have significant logic in their tearDown machinery (`#1890`_). Thanks
   `@mbyt`_ for the PR.
+  
+* Fix use of deprecated ``getfuncargvalue`` method in the internal doctest plugin.
+  Thanks `@ViviCoder`_ for the report (`#1898`_).
 
 .. _@joguSD: https://github.com/joguSD
 .. _@AiOO: https://github.com/AiOO
 .. _@mbyt: https://github.com/mbyt
+.. _@ViviCoder: https://github.com/ViviCoder
 
 .. _#1857: https://github.com/pytest-dev/pytest/issues/1857
 .. _#1864: https://github.com/pytest-dev/pytest/issues/1864
 .. _#1888: https://github.com/pytest-dev/pytest/issues/1888
 .. _#1891: https://github.com/pytest-dev/pytest/pull/1891
 .. _#1890: https://github.com/pytest-dev/pytest/issues/1890
+.. _#1898: https://github.com/pytest-dev/pytest/issues/1898
 
 
 3.0.1
