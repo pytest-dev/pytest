@@ -224,7 +224,7 @@ Running it with the report-on-xfail option gives this output::
 
     example $ pytest -rx xfail_demo.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.1, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR/example, inifile: 
     collected 7 items
     

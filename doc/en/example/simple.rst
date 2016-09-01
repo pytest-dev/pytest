@@ -113,7 +113,7 @@ directory with the above conftest.py::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.1, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 0 items
     
@@ -164,13 +164,13 @@ and when running it will see a skipped "slow" test::
 
     $ pytest -rs    # "-rs" means report details on the little 's'
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.1, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
     test_module.py .s
     ======= short test summary info ========
-    SKIP [1] test_module.py:14: need --runslow option to run
+    SKIP [1] test_module.py:13: need --runslow option to run
     
     ======= 1 passed, 1 skipped in 0.12 seconds ========
 
@@ -178,7 +178,7 @@ Or run it including the ``slow`` marked test::
 
     $ pytest --runslow
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.1, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -302,7 +302,7 @@ which will add the string to the test header accordingly::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.1, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
     project deps: mylib-1.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 0 items
@@ -327,7 +327,7 @@ which will add info only when run with "--v"::
 
     $ pytest -v
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.1, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     info1: did you know that ...
     did you?
@@ -340,7 +340,7 @@ and nothing when run plainly::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.1, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 0 items
     
@@ -374,7 +374,7 @@ Now we can profile which test functions execute the slowest::
 
     $ pytest --durations=3
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.1, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 3 items
     
@@ -440,7 +440,7 @@ If we run this::
 
     $ pytest -rx
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.1, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
@@ -519,7 +519,7 @@ We can run this::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.1, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 7 items
     
@@ -627,7 +627,7 @@ and run them::
 
     $ pytest test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.1, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -721,7 +721,7 @@ and run it::
 
     $ pytest -s test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.1, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 3 items
     
