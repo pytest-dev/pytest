@@ -3,7 +3,7 @@ pytest-3.0.2
 
 pytest 3.0.2 has just been released to PyPI.
 
-This release fixes some regressions reported in version 3.0.0, being a
+This release fixes some regressions and bugs reported in version 3.0.1, being a
 drop-in replacement. To upgrade::
 
   pip install --upgrade pytest
