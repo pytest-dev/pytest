@@ -18,15 +18,23 @@
   if a test suite uses ``pytest_plugins`` to load internal plugins (`#1888`_).
   Thanks `@jaraco`_ for the report and `@nicoddemus`_ for the PR (`#1891`_).
 
+* Do not call tearDown and cleanups when running tests from
+  ``unittest.TestCase`` subclasses with ``--pdb``
+  enabled. This allows proper post mortem debugging for all applications
+  which have significant logic in their tearDown machinery (`#1890`_). Thanks
+  `@mbyt`_ for the PR.
+
 *
 
 .. _@joguSD: https://github.com/joguSD
 .. _@AiOO: https://github.com/AiOO
+.. _@mbyt: https://github.com/mbyt
 
 .. _#1857: https://github.com/pytest-dev/pytest/issues/1857
 .. _#1864: https://github.com/pytest-dev/pytest/issues/1864
 .. _#1888: https://github.com/pytest-dev/pytest/issues/1888
 .. _#1891: https://github.com/pytest-dev/pytest/pull/1891
+.. _#1890: https://github.com/pytest-dev/pytest/issues/1890
 
 
 3.0.1

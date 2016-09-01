@@ -79,6 +79,25 @@ class TestPDB:
         if child.isalive():
             child.wait()
 
+    def test_pdb_unittest_postmortem(self, testdir):
+        p1 = testdir.makepyfile("""
+            import unittest
+            class Blub(unittest.TestCase):
+                def tearDown(self):
+                    self.filename = None
+                def test_false(self):
+                    self.filename = 'debug' + '.me'
+                    assert 0
+        """)
+        child = testdir.spawn_pytest("--pdb %s" % p1)
+        child.expect('(Pdb)')
+        child.sendline('p self.filename')
+        child.sendeof()
+        rest = child.read().decode("utf8")
+        assert 'debug.me' in rest
+        if child.isalive():
+            child.wait()
+
     def test_pdb_interaction_capture(self, testdir):
         p1 = testdir.makepyfile("""
             def test_1():
