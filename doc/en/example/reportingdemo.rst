@@ -9,7 +9,7 @@ and how ``pytest`` presents things (unfortunately
 not showing the nice colors here in the HTML that you
 get on the terminal - we are working on that)::
 
-    $ pytest failure_demo.py
+    assertion $ pytest failure_demo.py
     ======= test session starts ========
     platform linux -- Python 3.5.2, pytest-3.0.1, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR/assertion, inifile: 
