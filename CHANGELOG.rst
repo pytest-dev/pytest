@@ -1,7 +1,9 @@
 3.0.3.dev0
 ==========
 
-*
+* The ``ids`` argument to ``parametrize`` again accepts ``unicode`` strings
+  in Python 2 (`#1905`_).
+  Thanks `@philpep`_ for the report and `@nicoddemus`_ for the PR.
 
 *
 
@@ -10,6 +12,11 @@
 *
 
 *
+
+
+.. _@philpep: https://github.com/philpep
+
+.. _#1905: https://github.com/pytest-dev/pytest/issues/1905
 
 
 3.0.2
