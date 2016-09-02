@@ -54,8 +54,8 @@ Note: this assumes you have already registered on pypi.
 11. Send release announcement to mailing lists:
 
     - pytest-dev@python.org
-    - testing-in-python@lists.idyll.org
     - python-announce-list@python.org
+    - testing-in-python@lists.idyll.org (only for minor/major releases)
 
     And announce the release on Twitter, making sure to add the hashtag ``#pytest``.
 
