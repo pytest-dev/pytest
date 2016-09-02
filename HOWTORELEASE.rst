@@ -64,19 +64,19 @@ Note: this assumes you have already registered on pypi.
   a. **patch release (2.8.3)**:
 
         1. Checkout ``master``.
-        2. Update version number in ``_pytest/__init__.py`` to ``"2.8.4.dev"``.
-        3. Create a new section in ``CHANGELOG.rst`` titled ``2.8.4.dev`` and add a few bullet points as placeholders for new entries.
+        2. Update version number in ``_pytest/__init__.py`` to ``"2.8.4.dev0"``.
+        3. Create a new section in ``CHANGELOG.rst`` titled ``2.8.4.dev0`` and add a few bullet points as placeholders for new entries.
         4. Commit and push.
 
   b. **minor release (2.9.0)**:
 
         1. Merge ``features`` into ``master``.
         2. Checkout ``master``.
-        3. Follow the same steps for a **patch release** above, using the next patch release: ``2.9.1.dev``.
+        3. Follow the same steps for a **patch release** above, using the next patch release: ``2.9.1.dev0``.
         4. Commit ``master``.
         5. Checkout ``features`` and merge with ``master`` (should be a fast-forward at this point).
-        6. Update version number in ``_pytest/__init__.py`` to the next minor release: ``"2.10.0.dev"``.
-        7. Create a new section in ``CHANGELOG.rst`` titled ``2.10.0.dev``, above ``2.9.1.dev``, and add a few bullet points as placeholders for new entries.
+        6. Update version number in ``_pytest/__init__.py`` to the next minor release: ``"2.10.0.dev0"``.
+        7. Create a new section in ``CHANGELOG.rst`` titled ``2.10.0.dev0``, above ``2.9.1.dev0``, and add a few bullet points as placeholders for new entries.
         8. Commit ``features``.
         9. Push ``master`` and ``features``.
 

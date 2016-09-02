@@ -25,21 +25,22 @@ To execute it::
 
     $ pytest
     ======= test session starts ========
+    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
+    rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
-
+    
     test_sample.py F
-
+    
     ======= FAILURES ========
     _______ test_answer ________
-
+    
         def test_answer():
     >       assert func(3) == 5
     E       assert 4 == 5
     E        +  where 4 = func(3)
-
+    
     test_sample.py:5: AssertionError
     ======= 1 failed in 0.12 seconds ========
-
 
 Due to ``pytest``'s detailed assertion introspection, only plain ``assert`` statements are used.
 See :ref:`Getting Started <getstarted>` for more examples.

@@ -33,6 +33,13 @@ distributing tests to multiple CPUs via the ``-nNUM`` option if you
 installed the ``pytest-xdist`` plugin.  Please refer to
 the general ``pytest`` documentation for many more examples.
 
+.. note::
+
+    Running tests from ``unittest.TestCase`` subclasses with ``--pdb`` will
+    disable tearDown and cleanup methods for the case that an Exception
+    occurs. This allows proper post mortem debugging for all applications
+    which have significant logic in their tearDown machinery.
+
 Mixing pytest fixtures into unittest.TestCase style tests
 -----------------------------------------------------------
 
@@ -89,7 +96,7 @@ the ``self.db`` values in the traceback::
 
     $ pytest test_unittest_db.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.1, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     

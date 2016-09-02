@@ -84,6 +84,29 @@ class TestImportHookInstallation:
             assert 0
         result.stdout.fnmatch_lines([expected])
 
+    @pytest.mark.parametrize('mode', ['str', 'list'])
+    def test_pytest_plugins_rewrite_module_names(self, testdir, mode):
+        """Test that pluginmanager correct marks pytest_plugins variables
+        for assertion rewriting if they are defined as plain strings or
+        list of strings (#1888).
+        """
+        plugins = '"ham"' if mode == 'str' else '["ham"]'
+        contents = {
+            'conftest.py': """
+                pytest_plugins = {plugins}
+            """.format(plugins=plugins),
+            'ham.py': """
+                import pytest
+            """,
+            'test_foo.py': """
+                def test_foo(pytestconfig):
+                    assert 'ham' in pytestconfig.pluginmanager.rewrite_hook._must_rewrite
+            """,
+        }
+        testdir.makepyfile(**contents)
+        result = testdir.runpytest_subprocess('--assert=rewrite')
+        assert result.ret == 0
+
     @pytest.mark.parametrize('mode', ['plain', 'rewrite'])
     def test_installed_plugin_rewrite(self, testdir, mode):
         # Make sure the hook is installed early enough so that plugins
@@ -195,6 +218,12 @@ class TestImportHookInstallation:
                                      'E*assert 2 == 3*',
                                      '>*assert l.pop() == 3*',
                                      'E*AssertionError'])
+
+    def test_register_assert_rewrite_checks_types(self):
+        with pytest.raises(TypeError):
+            pytest.register_assert_rewrite(['pytest_tests_internal_non_existing'])
+        pytest.register_assert_rewrite('pytest_tests_internal_non_existing',
+                                       'pytest_tests_internal_non_existing2')
 
 
 class TestBinReprIntegration:
