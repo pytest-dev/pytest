@@ -5,10 +5,11 @@ Release announcements
 .. toctree::
    :maxdepth: 2
 
-
-   sprint2016
+   
+   release-3.0.2
    release-3.0.1
    release-3.0.0
+   sprint2016
    release-2.9.2
    release-2.9.1
    release-2.9.0
