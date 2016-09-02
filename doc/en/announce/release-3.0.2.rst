@@ -12,15 +12,13 @@ The changelog is available at http://doc.pytest.org/en/latest/changelog.html.
 
 Thanks to all who contributed to this release, among them:
 
-* Adam Chainz
-* Andrew Svetlov
+* Ahn Ki-Wook
 * Bruno Oliveira
-* Daniel Hahler
-* Dmitry Dygalo
 * Florian Bruhin
-* Marcin Bachry
+* Jordan Guymon
+* Raphael Pierzina
 * Ronny Pfannschmidt
-* matthiasha
+* mbyt
 
 Happy testing,
 The pytest Development Team
