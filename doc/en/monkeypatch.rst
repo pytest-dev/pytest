@@ -59,6 +59,7 @@ Method reference of the monkeypatch fixture
 -------------------------------------------
 
 .. autoclass:: MonkeyPatch
+    :members:
 
 ``monkeypatch.setattr/delattr/delitem/delenv()`` all
 by default raise an Exception if the target does not exist.
