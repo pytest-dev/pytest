@@ -26,14 +26,6 @@ class TestRaises:
         except pytest.raises.Exception:
             pass
 
-    def test_raises_flip_builtin_AssertionError(self):
-        # we replace AssertionError on python level
-        # however c code might still raise the builtin one
-        from _pytest.assertion.util import BuiltinAssertionError # noqa
-        pytest.raises(AssertionError,"""
-            raise BuiltinAssertionError
-        """)
-
     def test_raises_as_contextmanager(self, testdir):
         testdir.makepyfile("""
             from __future__ import with_statement

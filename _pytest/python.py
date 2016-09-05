@@ -1158,12 +1158,6 @@ def raises(expected_exception, *args, **kwargs):
 
     """
     __tracebackhide__ = True
-    if expected_exception is AssertionError:
-        # we want to catch a AssertionError
-        # replace our subclass with the builtin one
-        # see https://github.com/pytest-dev/pytest/issues/176
-        from _pytest.assertion.util import BuiltinAssertionError \
-            as expected_exception
     msg = ("exceptions must be old-style classes or"
            " derived from BaseException, not %s")
     if isinstance(expected_exception, tuple):
