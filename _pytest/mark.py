@@ -19,7 +19,7 @@ def pytest_addoption(parser):
         help="only run tests which match the given substring expression. "
              "An expression is a python evaluatable expression "
              "where all names are substring-matched against test names "
-             "and their parent classes. Example: -k 'test_method or test "
+             "and their parent classes. Example: -k 'test_method or test_"
              "other' matches all test functions and classes whose name "
              "contains 'test_method' or 'test_other'. "
              "Additionally keywords are matched to classes and functions "
