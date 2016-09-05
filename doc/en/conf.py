@@ -19,11 +19,8 @@
 # The short X.Y version.
 
 import os, sys
-sys.path.insert(0, os.path.dirname(__file__))
-import _getdoctarget
-
-version = _getdoctarget.get_minor_version_string()
-release = _getdoctarget.get_version_string()
+from _pytest import __version__ as version
+release = ".".join(version.split(".")[:2])
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
