@@ -89,7 +89,11 @@ time or change existing behaviors in order to make them less surprising/more use
 
 * Reinterpretation mode has now been removed.  Only plain and rewrite
   mode are available, consequently the ``--assert=reinterp`` option is
-  no longer available.  Thanks `@flub`_ for the PR.
+  no longer available.  This also means files imported from plugins or
+  ``conftest.py`` will not benefit from improved assertions by
+  default, you should use ``pytest.register_assert_rewrite()`` to
+  explicitly turn on assertion rewriting for those files.  Thanks
+  `@flub`_ for the PR.
 
 * The following deprecated commandline options were removed:
 
