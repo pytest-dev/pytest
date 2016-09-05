@@ -8,7 +8,7 @@ try:
 except ImportError:
     Sequence = list
 
-BuiltinAssertionError = py.builtin.builtins.AssertionError
+
 u = py.builtin._totext
 
 # The _reprcompare attribute on the util module is used by the new assertion
