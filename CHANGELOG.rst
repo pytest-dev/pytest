@@ -1,10 +1,25 @@
 3.0.3.dev0
 ==========
 
+* The ``ids`` argument to ``parametrize`` again accepts ``unicode`` strings
+  in Python 2 (`#1905`_).
+  Thanks `@philpep`_ for the report and `@nicoddemus`_ for the PR.
+
 * Fix ``pytest.mark.foo('foo')`` when the marker name is the same as the arg.
   Thanks `@cr3`_ for the PR.
 
+*
+
+*
+
+*
+
 .. _@cr3: https://github.com/cr3
+
+.. _@philpep: https://github.com/philpep
+
+.. _#1905: https://github.com/pytest-dev/pytest/issues/1905
+
 
 3.0.2
 =====
@@ -83,7 +98,11 @@ time or change existing behaviors in order to make them less surprising/more use
 
 * Reinterpretation mode has now been removed.  Only plain and rewrite
   mode are available, consequently the ``--assert=reinterp`` option is
-  no longer available.  Thanks `@flub`_ for the PR.
+  no longer available.  This also means files imported from plugins or
+  ``conftest.py`` will not benefit from improved assertions by
+  default, you should use ``pytest.register_assert_rewrite()`` to
+  explicitly turn on assertion rewriting for those files.  Thanks
+  `@flub`_ for the PR.
 
 * The following deprecated commandline options were removed:
 
