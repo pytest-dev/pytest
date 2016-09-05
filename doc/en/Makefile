@@ -19,10 +19,9 @@ REGENDOC_ARGS := \
 	--normalize "@/tmp/pytest-of-.*/pytest-\d+@PYTEST_TMPDIR@" \
 
 
-
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest
 
-    
+
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  html       to make standalone HTML files"
@@ -35,22 +34,6 @@ help:
 
 clean:
 	-rm -rf $(BUILDDIR)/*
-
-SITETARGET=$(shell ./_getdoctarget.py)
-
-showtarget:
-	@echo $(SITETARGET)
-
-install: html
-	 # for access talk to someone with login rights to
-	 # pytest-dev@pytest.org to add your ssh key
-	 rsync -avz _build/html/ pytest-dev@pytest.org:pytest.org/$(SITETARGET)
-
-installpdf: latexpdf
-	@scp $(BUILDDIR)/latex/pytest.pdf pytest-dev@pytest.org:pytest.org/$(SITETARGET)
-
-installall: clean install installpdf
-	@echo "done"
 
 regen:
 	PYTHONDONTWRITEBYTECODE=1 COLUMNS=76 regendoc --update *.rst */*.rst ${REGENDOC_ARGS}
