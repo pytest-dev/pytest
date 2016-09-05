@@ -210,7 +210,9 @@ class NodeKeywords(MappingMixin):
             return self.parent.keywords[key]
 
     def __setitem__(self, key, value):
-        self._markers[key] = value
+        from _pytest.mark import MarkDecorator
+        if not isinstance(self._markers.get(key), MarkDecorator):
+            self._markers[key] = value
 
     def __delitem__(self, key):
         raise ValueError("cannot delete key in keywords dict")
