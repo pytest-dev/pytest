@@ -832,7 +832,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
                 raise ValueError('%d tests specified with %d ids' %(
                                  len(argvalues), len(ids)))
             for id_value in ids:
-                if id_value is not None and not isinstance(id_value, str):
+                if id_value is not None and not isinstance(id_value, py.builtin._basestring):
                     msg = 'ids must be list of strings, found: %s (type: %s)'
                     raise ValueError(msg % (saferepr(id_value), type(id_value).__name__))
         ids = idmaker(argnames, argvalues, idfn, ids, self.config)

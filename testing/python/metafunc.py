@@ -105,6 +105,14 @@ class TestMetafunc:
         ids = [x.id for x in metafunc._calls]
         assert ids == ["basic-abc", "basic-def", "advanced-abc", "advanced-def"]
 
+    def test_parametrize_and_id_unicode(self):
+        """Allow unicode strings for "ids" parameter in Python 2 (##1905)"""
+        def func(x): pass
+        metafunc = self.Metafunc(func)
+        metafunc.parametrize("x", [1, 2], ids=[u'basic', u'advanced'])
+        ids = [x.id for x in metafunc._calls]
+        assert ids == [u"basic", u"advanced"]
+
     def test_parametrize_with_wrong_number_of_ids(self, testdir):
         def func(x, y): pass
         metafunc = self.Metafunc(func)
