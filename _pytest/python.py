@@ -770,7 +770,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             It will also override any fixture-function defined scope, allowing
             to set a dynamic scope using test context or configuration.
         """
-        from _pytest.fixtures import scopes
+        from _pytest.fixtures import scope2index
         from _pytest.mark import extract_argvalue
         from py.io import saferepr
 
@@ -799,7 +799,8 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         if scope is None:
             scope = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)
 
-        scopenum = scopes.index(scope)
+        scopenum = scope2index(
+            scope, descr='call to {0}'.format(self.parametrize))
         valtypes = {}
         for arg in argnames:
             if arg not in self.fixturenames:

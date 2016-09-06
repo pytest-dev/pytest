@@ -16,16 +16,19 @@
   in Python 3 (`#1944`_).
   Thanks `@axil`_ for the PR.
 
-*
+* Explain a bad scope value passed to ``@fixture`` declarations or
+  a ``MetaFunc.parametrize()`` call. Thanks `@tgoodlet`_ for the PR.
 
 
 .. _@philpep: https://github.com/philpep
 .. _@raquel-ucl: https://github.com/raquel-ucl
 .. _@axil: https://github.com/axil
+.. _@tgoodlet: https://github.com/tgoodlet
 
 .. _#1905: https://github.com/pytest-dev/pytest/issues/1905
 .. _#1934: https://github.com/pytest-dev/pytest/issues/1934
 .. _#1944: https://github.com/pytest-dev/pytest/issues/1944
+
 
 
 3.0.2
