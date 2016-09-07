@@ -6,8 +6,59 @@ from collections import namedtuple
 from operator import attrgetter
 from .compat import imap
 
+
 def alias(name):
     return property(attrgetter(name), doc='alias for ' + name)
+
+
+class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
+    @classmethod
+    def param(cls, *values, **kw):
+        marks = kw.pop('marks', ())
+        if isinstance(marks, MarkDecorator):
+            marks = marks,
+        else:
+            assert isinstance(marks, (tuple, list, set))
+
+        def param_extract_id(id=None):
+            return id
+
+        id = param_extract_id(**kw)
+        return cls(values, marks, id)
+
+    @classmethod
+    def extract_from(cls, parameterset, legacy_force_tuple=False):
+        """
+        :param parameterset:
+            a legacy style parameterset that may or may not be a tuple,
+            and may or may not be wrapped into a mess of mark objects
+
+        :param legacy_force_tuple:
+            enforce tuple wrapping so single argument tuple values
+            don't get decomposed and break tests
+
+        """
+
+        if isinstance(parameterset, cls):
+            return parameterset
+        if not isinstance(parameterset, MarkDecorator) and legacy_force_tuple:
+            return cls.param(parameterset)
+
+        newmarks = []
+        argval = parameterset
+        while isinstance(argval, MarkDecorator):
+            newmarks.append(MarkDecorator(Mark(
+                argval.markname, argval.args[:-1], argval.kwargs)))
+            argval = argval.args[-1]
+        assert not isinstance(argval, ParameterSet)
+        if legacy_force_tuple:
+            argval = argval,
+
+        return cls(argval, marks=newmarks, id=None)
+
+    @property
+    def deprecated_arg_dict(self):
+        return dict((mark.name, mark) for mark in self.marks)
 
 
 class MarkerError(Exception):
@@ -15,8 +66,12 @@ class MarkerError(Exception):
     """Error in use of a pytest marker/attribute."""
 
 
+
 def pytest_namespace():
-    return {'mark': MarkGenerator()}
+    return {
+        'mark': MarkGenerator(),
+        'param': ParameterSet.param,
+    }
 
 
 def pytest_addoption(parser):
@@ -212,6 +267,7 @@ def istestfunc(func):
     return hasattr(func, "__call__") and \
         getattr(func, "__name__", "<lambda>") != "<lambda>"
 
+
 class MarkDecorator(object):
     """ A decorator for test functions and test classes.  When applied
     it will create :class:`MarkInfo` objects which may be
@@ -257,8 +313,11 @@ class MarkDecorator(object):
     def markname(self):
         return self.name # for backward-compat (2.4.1 had this attr)
 
+    def __eq__(self, other):
+        return self.mark == other.mark
+
     def __repr__(self):
-        return "<MarkDecorator %r>" % self.mark
+        return "<MarkDecorator %r>" % (self.mark,)
 
     def __call__(self, *args, **kwargs):
         """ if passed a single callable argument: decorate it with mark info.
@@ -291,19 +350,7 @@ class MarkDecorator(object):
         return self.__class__(self.mark.combined_with(mark))
 
 
-def extract_argvalue(maybe_marked_args):
-    # TODO: incorrect mark data, the old code wanst able to collect lists
-    # individual parametrized argument sets can be wrapped in a series
-    # of markers in which case we unwrap the values and apply the mark
-    # at Function init
-    newmarks = {}
-    argval = maybe_marked_args
-    while isinstance(argval, MarkDecorator):
-        newmark = MarkDecorator(Mark(
-            argval.markname, argval.args[:-1], argval.kwargs))
-        newmarks[newmark.name] = newmark
-        argval = argval.args[-1]
-    return argval, newmarks
+
 
 
 class Mark(namedtuple('Mark', 'name, args, kwargs')):
