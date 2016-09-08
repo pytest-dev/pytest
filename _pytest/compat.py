@@ -145,7 +145,7 @@ if _PY3:
 else:
     STRING_TYPES = bytes, str, unicode
 
-    from itertools import imap
+    from itertools import imap  # NOQA
 
     def _escape_strings(val):
         """In py2 bytes and str are the same type, so return if it's a bytes
