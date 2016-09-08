@@ -121,11 +121,9 @@ class MarkEvaluator:
                 # "holder" might be a MarkInfo or a MarkDecorator; only
                 # MarkInfo keeps track of all parameters it received in an
                 # _arglist attribute
-                if hasattr(self.holder, '_arglist'):
-                    arglist = self.holder._arglist
-                else:
-                    arglist = [(self.holder.args, self.holder.kwargs)]
-                for args, kwargs in arglist:
+                marks = getattr(self.holder, '_marks', None) \
+                    or [self.holder.mark]
+                for _, args, kwargs in marks:
                     if 'condition' in kwargs:
                         args = (kwargs['condition'],)
                     for expr in args:
