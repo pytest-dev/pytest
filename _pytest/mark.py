@@ -2,7 +2,7 @@
 import inspect
 from collections import namedtuple
 from operator import attrgetter
-from itertools import imap
+from .compat import imap
 
 def alias(name):
     return property(attrgetter(name), doc='alias for ' + name)
