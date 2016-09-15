@@ -64,7 +64,8 @@ Important notes relating to both schemes:
 - **make sure that "mypkg" is importable**, for example by typing once::
 
      pip install -e .   # install package using setup.py in editable mode
-                        # similar to running python setup.py develop
+                        # similar to running `python setup.py develop` or 
+                        # `conda develop`
   
   This installs your package with a symlink to your development code
   instead of placing the code directly in the install directory.
