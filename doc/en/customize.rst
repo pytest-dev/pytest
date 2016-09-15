@@ -97,6 +97,15 @@ check for ini-files as follows::
 .. _`how to change command line options defaults`:
 .. _`adding default options`:
 
+Change which files are added to sys.path
+-----------------------------------------------
+To tell pytest which files you want it to run your tests against
+place both your pytest.ini file and a conftest.py file in a directory 
+above both your test folder and source folder.  By having a conftest.py
+in the root directory of your project, you can tell pytest to modify 
+your sys.path when it runs to include all submodules below the root of
+your project.
+
 How to change command line options defaults
 ------------------------------------------------
 
@@ -155,7 +164,7 @@ Builtin configuration file options
 
         *       matches everything
         ?       matches any single character
-        [seq]   matches any character in seq
+        [seq]   matches any character inbu seq
         [!seq]  matches any char not in seq
 
    Default patterns are ``'.*', 'build', 'dist', 'CVS', '_darcs', '{arch}', '*.egg'``.
