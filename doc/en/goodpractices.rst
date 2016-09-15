@@ -64,6 +64,12 @@ Important notes relating to both schemes:
 - **make sure that "mypkg" is importable**, for example by typing once::
 
      pip install -e .   # install package using setup.py in editable mode
+                        # similar to running python setup.py develop
+  
+  This installs your package with a symlink to your development code
+  instead of placing the code directly in the install directory.
+  This way you can edit the code and run tests on your edits without 
+  having to reinstall every time.
 
 - **avoid "__init__.py" files in your test directories**.
   This way your tests can run easily against an installed version
