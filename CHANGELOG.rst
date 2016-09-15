@@ -13,7 +13,7 @@
 
 *
 
-*
+* Added documentation related to issue #1937 
 
 
 .. _@philpep: https://github.com/philpep
