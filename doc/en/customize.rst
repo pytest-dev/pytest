@@ -45,7 +45,7 @@ Here is the algorithm which finds the rootdir from ``args``:
   matched, it becomes the ini-file and its directory becomes the rootdir.
 
 - if no ini-file was found, use the already determined common ancestor as root
-  directory. This allows to work with pytest in structures that are not part of
+  directory. This allows the use of pytest in structures that are not part of
   a package and don't have any particular ini-file configuration.
 
 If no ``args`` are given, pytest collects test below the current working
@@ -100,12 +100,15 @@ check for ini-files as follows::
 Change which files are added to sys.path
 -----------------------------------------------
 
-To tell pytest which files you want it to run your tests against
-place both your pytest.ini file and a conftest.py file in a directory 
-above both your test folder and source folder.  By having a conftest.py
-in the root directory of your project, you can tell pytest to modify 
-your sys.path when it runs to include all submodules below the root of
-your project.
+If you place a conftest.py file in the root directory of your project
+(as determined by pytest, see above.) pytest will run tests against 
+the code below that directory by adding it to your sys.path instead of 
+running against your installed code.
+
+You may find yourself wanting to do this if you ran `python setup.py install` 
+to set up your project, as opposed to `python setup.py develop` or any of 
+the package manager equivalents.  Installing with develop in a 
+virtual environment is recommended over using the conftest.py pattern.
 
 How to change command line options defaults
 ------------------------------------------------
