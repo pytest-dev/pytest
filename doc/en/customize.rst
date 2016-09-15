@@ -165,7 +165,7 @@ Builtin configuration file options
 
         *       matches everything
         ?       matches any single character
-        [seq]   matches any character inbu seq
+        [seq]   matches any character in seq
         [!seq]  matches any char not in seq
 
    Default patterns are ``'.*', 'build', 'dist', 'CVS', '_darcs', '{arch}', '*.egg'``.
