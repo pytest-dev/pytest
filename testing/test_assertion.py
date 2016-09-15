@@ -108,7 +108,8 @@ class TestImportHookInstallation:
         assert result.ret == 0
 
     @pytest.mark.parametrize('mode', ['plain', 'rewrite'])
-    def test_installed_plugin_rewrite(self, testdir, mode):
+    @pytest.mark.parametrize('plugin_state', ['development', 'installed'])
+    def test_installed_plugin_rewrite(self, testdir, mode, plugin_state):
         # Make sure the hook is installed early enough so that plugins
         # installed via setuptools are re-written.
         testdir.tmpdir.join('hampkg').ensure(dir=1)
@@ -135,13 +136,22 @@ class TestImportHookInstallation:
             'mainwrapper.py': """
             import pytest, pkg_resources
 
+            plugin_state = "{plugin_state}"
+
             class DummyDistInfo:
                 project_name = 'spam'
                 version = '1.0'
 
                 def _get_metadata(self, name):
-                    return ['spamplugin.py,sha256=abc,123',
-                            'hampkg/__init__.py,sha256=abc,123']
+                    # 'RECORD' meta-data only available in installed plugins
+                    if name == 'RECORD' and plugin_state == "installed":
+                        return ['spamplugin.py,sha256=abc,123',
+                                'hampkg/__init__.py,sha256=abc,123']
+                    # 'SOURCES.txt' meta-data only available for plugins in development mode
+                    elif name == 'SOURCES.txt' and plugin_state == "development":
+                        return ['spamplugin.py',
+                                'hampkg/__init__.py']
+                    return []
 
             class DummyEntryPoint:
                 name = 'spam'
@@ -159,7 +169,7 @@ class TestImportHookInstallation:
 
             pkg_resources.iter_entry_points = iter_entry_points
             pytest.main()
-            """,
+            """.format(plugin_state=plugin_state),
             'test_foo.py': """
             def test(check_first):
                 check_first([10, 30], 30)
