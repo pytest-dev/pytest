@@ -99,6 +99,7 @@ check for ini-files as follows::
 
 Change which files are added to sys.path
 -----------------------------------------------
+
 To tell pytest which files you want it to run your tests against
 place both your pytest.ini file and a conftest.py file in a directory 
 above both your test folder and source folder.  By having a conftest.py
