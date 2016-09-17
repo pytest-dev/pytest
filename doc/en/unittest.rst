@@ -38,7 +38,11 @@ the general ``pytest`` documentation for many more examples.
     Running tests from ``unittest.TestCase`` subclasses with ``--pdb`` will
     disable tearDown and cleanup methods for the case that an Exception
     occurs. This allows proper post mortem debugging for all applications
-    which have significant logic in their tearDown machinery.
+    which have significant logic in their tearDown machinery. However,
+    supporting this feature has the following side effect: If people
+    overwrite ``unittest.TestCase`` ``__call__`` or ``run``, they need to 
+    to overwrite ``debug`` in the same way  (this is also true for standard
+    unittest).
 
 Mixing pytest fixtures into unittest.TestCase style tests
 -----------------------------------------------------------
