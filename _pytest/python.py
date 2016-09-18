@@ -205,11 +205,10 @@ class PyobjContext(object):
 class PyobjMixin(PyobjContext):
     def obj():
         def fget(self):
-            try:
-                return self._obj
-            except AttributeError:
+            obj = getattr(self, '_obj', None)
+            if obj is None:
                 self._obj = obj = self._getobj()
-                return obj
+            return obj
         def fset(self, value):
             self._obj = value
         return property(fget, fset, None, "underlying python object")
