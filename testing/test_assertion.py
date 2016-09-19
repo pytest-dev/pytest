@@ -14,6 +14,7 @@ PY3 = sys.version_info >= (3, 0)
 def mock_config():
     class Config(object):
         verbose = False
+        terminal_width = 80
         def getoption(self, name):
             if name == 'verbose':
                 return self.verbose

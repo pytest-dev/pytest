@@ -104,7 +104,8 @@ except NameError:
 
 def assertrepr_compare(config, op, left, right):
     """Return specialised explanations for some operators/operands"""
-    width = 80 - 15 - len(op) - 2  # 15 chars indentation, 1 space around op
+    # 15 chars indentation, 1 space around op
+    width = config.terminal_width - 15 - len(op) - 2
     left_repr = py.io.saferepr(left, maxsize=int(width//2))
     right_repr = py.io.saferepr(right, maxsize=width-len(left_repr))
 
