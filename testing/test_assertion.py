@@ -864,3 +864,15 @@ def test_assert_with_unicode(monkeypatch, testdir):
     """)
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(['*AssertionError*'])
+
+def test_issue_1944(testdir):
+    testdir.makepyfile("""
+        def f():
+            return
+
+        assert f() == 10
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["*1 error*"])
+    assert "AttributeError: 'Module' object has no attribute '_obj'" not in result.stdout.str()
+
