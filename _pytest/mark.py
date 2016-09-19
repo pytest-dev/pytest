@@ -1,5 +1,11 @@
 """ generic mechanism for marking and selecting python functions. """
 import inspect
+from collections import namedtuple
+from operator import attrgetter
+from .compat import imap
+
+def alias(name):
+    return property(attrgetter(name), doc='alias for ' + name)
 
 
 class MarkerError(Exception):
@@ -182,7 +188,7 @@ class MarkGenerator:
             raise AttributeError("Marker name must NOT start with underscore")
         if hasattr(self, '_config'):
             self._check(name)
-        return MarkDecorator(name)
+        return MarkDecorator(Mark(name, (), {}))
 
     def _check(self, name):
         try:
@@ -235,19 +241,20 @@ class MarkDecorator:
     additional keyword or positional arguments.
 
     """
-    def __init__(self, name, args=None, kwargs=None):
-        self.name = name
-        self.args = args or ()
-        self.kwargs = kwargs or {}
+    def __init__(self, mark):
+        assert isinstance(mark, Mark), repr(mark)
+        self.mark = mark
+
+    name = alias('mark.name')
+    args = alias('mark.args')
+    kwargs = alias('mark.kwargs')
 
     @property
     def markname(self):
         return self.name # for backward-compat (2.4.1 had this attr)
 
     def __repr__(self):
-        d = self.__dict__.copy()
-        name = d.pop('name')
-        return "<MarkDecorator %r %r>" % (name, d)
+        return "<MarkDecorator %r>" % self.mark
 
     def __call__(self, *args, **kwargs):
         """ if passed a single callable argument: decorate it with mark info.
@@ -270,17 +277,14 @@ class MarkDecorator:
                 else:
                     holder = getattr(func, self.name, None)
                     if holder is None:
-                        holder = MarkInfo(
-                            self.name, self.args, self.kwargs
-                        )
+                        holder = MarkInfo(self.mark)
                         setattr(func, self.name, holder)
                     else:
-                        holder.add(self.args, self.kwargs)
+                        holder.add_mark(self.mark)
                 return func
-        kw = self.kwargs.copy()
-        kw.update(kwargs)
-        args = self.args + args
-        return self.__class__(self.name, args=args, kwargs=kw)
+
+        mark = Mark(self.name, args, kwargs)
+        return self.__class__(self.mark.combined_with(mark))
 
 
 def extract_argvalue(maybe_marked_args):
@@ -291,36 +295,41 @@ def extract_argvalue(maybe_marked_args):
     newmarks = {}
     argval = maybe_marked_args
     while isinstance(argval, MarkDecorator):
-        newmark = MarkDecorator(argval.markname,
-                                argval.args[:-1], argval.kwargs)
-        newmarks[newmark.markname] = newmark
+        newmark = MarkDecorator(Mark(
+            argval.markname, argval.args[:-1], argval.kwargs))
+        newmarks[newmark.name] = newmark
         argval = argval.args[-1]
     return argval, newmarks
 
 
-class MarkInfo:
+class Mark(namedtuple('Mark', 'name, args, kwargs')):
+
+    def combined_with(self, other):
+        assert self.name == other.name
+        return Mark(
+            self.name, self.args + other.args,
+            dict(self.kwargs, **other.kwargs))
+
+
+class MarkInfo(object):
     """ Marking object created by :class:`MarkDecorator` instances. """
-    def __init__(self, name, args, kwargs):
-        #: name of attribute
-        self.name = name
-        #: positional argument list, empty if none specified
-        self.args = args
-        #: keyword argument dictionary, empty if nothing specified
-        self.kwargs = kwargs.copy()
-        self._arglist = [(args, kwargs.copy())]
+    def __init__(self, mark):
+        assert isinstance(mark, Mark), repr(mark)
+        self.combined = mark
+        self._marks = [mark]
+
+    name = alias('combined.name')
+    args = alias('combined.args')
+    kwargs = alias('combined.kwargs')
 
     def __repr__(self):
-        return "<MarkInfo %r args=%r kwargs=%r>" % (
-            self.name, self.args, self.kwargs
-        )
+        return "<MarkInfo {0!r}>".format(self.combined)
 
-    def add(self, args, kwargs):
+    def add_mark(self, mark):
         """ add a MarkInfo with the given args and kwargs. """
-        self._arglist.append((args, kwargs))
-        self.args += args
-        self.kwargs.update(kwargs)
+        self._marks.append(mark)
+        self.combined = self.combined.combined_with(mark)
 
     def __iter__(self):
         """ yield MarkInfo objects each relating to a marking-call. """
-        for args, kwargs in self._arglist:
-            yield MarkInfo(self.name, args, kwargs)
+        return imap(MarkInfo, self._marks)
