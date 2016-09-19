@@ -4,15 +4,19 @@
 * Testcase reports with a url attribute will now properly write this to junitxml.
   Thanks `@fushi`_ for the PR
 
-*
-
-*
+* Remove common items from dict comparision output when verbosity=1. Also update
+  the truncation message to make it clearer that pytest truncates all
+  assertion messages if verbosity < 2 (`#1512`_).
+  Thanks `@mattduck`_ for the PR
 
 *
 
 *
 
 .. _@fushi: https://github.com/fushi
+.. _@mattduck: https://github.com/mattduck
+
+.. _#1512: https://github.com/pytest-dev/pytest/issues/1512
 
 
 3.0.2
