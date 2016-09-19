@@ -16,6 +16,7 @@
 
 
 .. _@philpep: https://github.com/philpep
+.. _@raquel-ucl: https://github.com/raquel-ucl
 
 .. _#1905: https://github.com/pytest-dev/pytest/issues/1905
 .. _#1934: https://github.com/pytest-dev/pytest/issues/1934
