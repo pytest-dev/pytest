@@ -1,7 +1,8 @@
 3.1.0.dev
 =========
 
-*
+* Testcase reports with a url attribute will now properly write this to junitxml.
+  Thanks `@fushi`_ for the PR
 
 *
 
@@ -10,6 +11,8 @@
 *
 
 *
+
+.. _@fushi: https://github.com/fushi
 
 
 3.0.2
@@ -35,7 +38,7 @@
   enabled. This allows proper post mortem debugging for all applications
   which have significant logic in their tearDown machinery (`#1890`_). Thanks
   `@mbyt`_ for the PR.
-  
+
 * Fix use of deprecated ``getfuncargvalue`` method in the internal doctest plugin.
   Thanks `@ViviCoder`_ for the report (`#1898`_).
 
