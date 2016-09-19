@@ -12,14 +12,19 @@
 * Fix pkg_resources import error in Jython projects (`#1853`).
   Thanks `@raquel-ucl`_ for the PR.
 
-*
+* Remove common items from dict comparision output when verbosity=1. Also update
+  the truncation message to make it clearer that pytest truncates all
+  assertion messages if verbosity < 2 (`#1512`_).
+  Thanks `@mattduck`_ for the PR
 
 
 .. _@philpep: https://github.com/philpep
 .. _@raquel-ucl: https://github.com/raquel-ucl
+.. _@mattduck: https://github.com/mattduck
 
 .. _#1905: https://github.com/pytest-dev/pytest/issues/1905
 .. _#1934: https://github.com/pytest-dev/pytest/issues/1934
+.. _#1512: https://github.com/pytest-dev/pytest/issues/1512
 
 
 3.0.2
