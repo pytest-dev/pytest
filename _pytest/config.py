@@ -837,6 +837,7 @@ class Config(object):
         self.pluginmanager = pluginmanager
         self.trace = self.pluginmanager.trace.root.get("config")
         self.hook = self.pluginmanager.hook
+        self.terminal_width = 80
         self._inicache = {}
         self._opt2dest = {}
         self._cleanup = []
