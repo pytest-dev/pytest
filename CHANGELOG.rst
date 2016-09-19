@@ -5,6 +5,10 @@
 New Features
 ------------
 
+* Add ``terminal_width`` to ``Config`` - this is detected and stored during the
+  pytest_configure stage. (`#162`_).
+  Thanks `@flub`_ for the report and `@helenst`_ for the PR.
+
 *
 
 *
@@ -31,10 +35,12 @@ Changes
 .. _@davidszotten: https://github.com/davidszotten
 .. _@fushi: https://github.com/fushi
 .. _@mattduck: https://github.com/mattduck
+.. _@helenst: https://github.com/helenst
 
 .. _#1512: https://github.com/pytest-dev/pytest/issues/1512
 .. _#1874: https://github.com/pytest-dev/pytest/pull/1874
 .. _#1952: https://github.com/pytest-dev/pytest/pull/1952
+.. _#162: https://github.com/pytest-dev/pytest/issues/162
 
 
 3.0.4.dev
