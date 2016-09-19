@@ -5,13 +5,12 @@
   in Python 2 (`#1905`_).
   Thanks `@philpep`_ for the report and `@nicoddemus`_ for the PR.
 
-*
-
 * Assertions are now being rewritten for plugins in development mode
   (``pip install -e``) (`#1934`_).
   Thanks `@nicoddemus`_ for the PR.
 
-*
+* Fix pkg_resources import error in Jython projects (`#1853`).
+  Thanks `@raquel-ucl`_ for the PR.
 
 *
 

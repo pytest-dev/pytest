@@ -5,7 +5,6 @@ import traceback
 import types
 import warnings
 
-import pkg_resources
 import py
 # DON't import pytest here because it causes import cycle troubles
 import sys, os
@@ -952,6 +951,7 @@ class Config(object):
             except SystemError:
                 mode = 'plain'
             else:
+                import pkg_resources
                 self.pluginmanager.rewrite_hook = hook
                 for entrypoint in pkg_resources.iter_entry_points('pytest11'):
                     # 'RECORD' available for plugins installed normally (pip install)
