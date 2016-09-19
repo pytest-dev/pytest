@@ -351,8 +351,16 @@ class TestAssert_reprcompare:
         for line in lines[1:]:
             assert 'b' not in line
 
-    def test_dict_omitting_verbose(self):
-        lines = callequal({'a': 0, 'b': 1}, {'a': 1, 'b': 1}, verbose=True)
+    def test_dict_omitting_with_verbosity_1(self):
+        """ Ensure differing items are visible for verbosity=1 (#1512) """
+        lines = callequal({'a': 0, 'b': 1}, {'a': 1, 'b': 1}, verbose=1)
+        assert lines[1].startswith('Omitting 1 identical item')
+        assert lines[2].startswith('Differing items')
+        assert lines[3] == "{'a': 0} != {'a': 1}"
+        assert 'Common items' not in lines
+
+    def test_dict_omitting_with_verbosity_2(self):
+        lines = callequal({'a': 0, 'b': 1}, {'a': 1, 'b': 1}, verbose=2)
         assert lines[1].startswith('Common items:')
         assert 'Omitting' not in lines[1]
         assert lines[2] == "{'b': 1}"
