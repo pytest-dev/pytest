@@ -256,8 +256,8 @@ def _compare_eq_dict(left, right, verbose=False):
     explanation = []
     common = set(left).intersection(set(right))
     same = dict((k, left[k]) for k in common if left[k] == right[k])
-    if same and not verbose:
-        explanation += [u('Omitting %s identical items, use -v to show') %
+    if same and verbose < 2:
+        explanation += [u('Omitting %s identical items, use -vv to show') %
                         len(same)]
     elif same:
         explanation += [u('Common items:')]
