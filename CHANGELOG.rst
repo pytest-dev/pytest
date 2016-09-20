@@ -12,14 +12,20 @@
 * Fix pkg_resources import error in Jython projects (`#1853`).
   Thanks `@raquel-ucl`_ for the PR.
 
+* Got rid of ``AttributeError: 'Module' object has no attribute '_obj'`` exception
+  in Python 3 (`#1944`_).
+  Thanks `@axil`_ for the PR.
+
 *
 
 
 .. _@philpep: https://github.com/philpep
 .. _@raquel-ucl: https://github.com/raquel-ucl
+.. _@axil: https://github.com/axil
 
 .. _#1905: https://github.com/pytest-dev/pytest/issues/1905
 .. _#1934: https://github.com/pytest-dev/pytest/issues/1934
+.. _#1944: https://github.com/pytest-dev/pytest/issues/1944
 
 
 3.0.2
