@@ -6,6 +6,7 @@ import _pytest.assertion as plugin
 import py
 import pytest
 from _pytest.assertion import util
+from _pytest.assertion import truncate
 
 PY3 = sys.version_info >= (3, 0)
 
@@ -572,6 +573,111 @@ class TestFormatExplanation:
         assert util.format_explanation(expl) == res
 
 
+class TestTruncateExplanation:
+
+    """ Confirm assertion output is truncated as expected """
+
+    # The number of lines in the truncation explanation message. Used
+    # to calculate that results have the expected length.
+    LINES_IN_TRUNCATION_MSG = 2  
+
+    def test_doesnt_truncate_when_input_is_empty_list(self):
+        expl = []
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=100)
+        assert result == expl
+
+    def test_doesnt_truncate_at_when_input_is_5_lines_and_LT_max_chars(self):
+        expl = ['a' * 100 for x in range(5)]
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8*80)
+        assert result == expl
+
+    def test_truncates_at_8_lines_when_given_list_of_empty_strings(self):
+        expl = ['' for x in range(50)]
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=100)
+        assert result != expl
+        assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
+        assert "Full output truncated" in result[-1]
+        assert "43 lines hidden" in result[-1]
+        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG -1]
+        assert last_line_before_trunc_msg.endswith("...")
+
+    def test_truncates_at_8_lines_when_first_8_lines_are_LT_max_chars(self):
+        expl = ['a' for x in range(100)]
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8*80)
+        assert result != expl
+        assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
+        assert "Full output truncated" in result[-1]
+        assert "93 lines hidden" in result[-1]
+        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG -1]
+        assert last_line_before_trunc_msg.endswith("...")
+
+    def test_truncates_at_8_lines_when_first_8_lines_are_EQ_max_chars(self):
+        expl = ['a' * 80 for x in range(16)]
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8*80)
+        assert result != expl
+        assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
+        assert "Full output truncated" in result[-1]
+        assert "9 lines hidden" in result[-1]
+        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG -1]
+        assert last_line_before_trunc_msg.endswith("...")
+
+    def test_truncates_at_4_lines_when_first_4_lines_are_GT_max_chars(self):
+        expl = ['a' * 250 for x in range(10)]
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=999)
+        assert result != expl
+        assert len(result) == 4 + self.LINES_IN_TRUNCATION_MSG
+        assert "Full output truncated" in result[-1]
+        assert "7 lines hidden" in result[-1]
+        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG -1]
+        assert last_line_before_trunc_msg.endswith("...")
+
+    def test_truncates_at_1_line_when_first_line_is_GT_max_chars(self):
+        expl = ['a' * 250 for x in range(1000)]
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=100)
+        assert result != expl
+        assert len(result) == 1 + self.LINES_IN_TRUNCATION_MSG
+        assert "Full output truncated" in result[-1]
+        assert "1000 lines hidden" in result[-1]
+        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG -1]
+        assert last_line_before_trunc_msg.endswith("...")
+
+    def test_full_output_truncated(self, monkeypatch, testdir):
+        """ Test against full runpytest() output. """
+
+        line_count = 7
+        line_len = 100
+        expected_truncated_lines = 2
+        testdir.makepyfile(r"""
+            def test_many_lines():
+                a = list([str(i)[0] * %d for i in range(%d)])
+                b = a[::2]
+                a = '\n'.join(map(str, a))
+                b = '\n'.join(map(str, b))
+                assert a == b
+        """ % (line_len, line_count))
+        monkeypatch.delenv('CI', raising=False)
+
+        result = testdir.runpytest()
+        # without -vv, truncate the message showing a few diff lines only
+        result.stdout.fnmatch_lines([
+            "*- 1*",
+            "*- 3*",
+            "*- 5*",
+            "*truncated (%d lines hidden)*use*-vv*" % expected_truncated_lines,
+        ])
+
+        result = testdir.runpytest('-vv')
+        result.stdout.fnmatch_lines([
+            "*- %d*" % 5,
+        ])
+
+        monkeypatch.setenv('CI', '1')
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*- %d*" % 5,
+        ])
+
+
 def test_python25_compile_issue257(testdir):
     testdir.makepyfile("""
         def test_rewritten():
@@ -628,40 +734,6 @@ def test_sequence_comparison_uses_repr(testdir):
         "*E*'x'*",
         "*E*Extra items*right*",
         "*E*'y'*",
-    ])
-
-
-def test_assert_compare_truncate_longmessage(monkeypatch, testdir):
-    testdir.makepyfile(r"""
-        def test_long():
-            a = list(range(200))
-            b = a[::2]
-            a = '\n'.join(map(str, a))
-            b = '\n'.join(map(str, b))
-            assert a == b
-    """)
-    monkeypatch.delenv('CI', raising=False)
-
-    result = testdir.runpytest()
-    # without -vv, truncate the message showing a few diff lines only
-    result.stdout.fnmatch_lines([
-        "*- 1",
-        "*- 3",
-        "*- 5",
-        "*- 7",
-        "*truncated (193 more lines)*use*-vv*",
-    ])
-
-
-    result = testdir.runpytest('-vv')
-    result.stdout.fnmatch_lines([
-        "*- 197",
-    ])
-
-    monkeypatch.setenv('CI', '1')
-    result = testdir.runpytest()
-    result.stdout.fnmatch_lines([
-        "*- 197",
     ])
 
 
@@ -883,4 +955,3 @@ def test_issue_1944(testdir):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*1 error*"])
     assert "AttributeError: 'Module' object has no attribute '_obj'" not in result.stdout.str()
-
