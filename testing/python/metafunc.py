@@ -96,6 +96,14 @@ class TestMetafunc:
         pytest.raises(ValueError, lambda: metafunc.parametrize("y", [5,6]))
         pytest.raises(ValueError, lambda: metafunc.parametrize("y", [5,6]))
 
+    def test_parametrize_bad_scope(self, testdir):
+        def func(x): pass
+        metafunc = self.Metafunc(func)
+        try:
+            metafunc.parametrize("x", [1], scope='doggy')
+        except ValueError as ve:
+            assert "has an unsupported scope value 'doggy'" in str(ve)
+
     def test_parametrize_and_id(self):
         def func(x, y): pass
         metafunc = self.Metafunc(func)

@@ -599,10 +599,27 @@ class ScopeMismatchError(Exception):
     which has a lower scope (e.g. a Session one calls a function one)
     """
 
+
 scopes = "session module class function".split()
 scopenum_function = scopes.index("function")
+
+
 def scopemismatch(currentscope, newscope):
     return scopes.index(newscope) > scopes.index(currentscope)
+
+
+def scope2index(scope, descr, where=None):
+    """Look up the index of ``scope`` and raise a descriptive value error
+    if not defined.
+    """
+    try:
+        return scopes.index(scope)
+    except ValueError:
+        raise ValueError(
+            "{0} {1}has an unsupported scope value '{2}'".format(
+                descr, 'from {0} '.format(where) if where else '',
+                scope)
+        )
 
 
 class FixtureLookupError(LookupError):
@@ -703,6 +720,7 @@ def call_fixture_func(fixturefunc, request, kwargs):
         res = fixturefunc(**kwargs)
     return res
 
+
 class FixtureDef:
     """ A container for a factory definition. """
     def __init__(self, fixturemanager, baseid, argname, func, scope, params,
@@ -713,7 +731,11 @@ class FixtureDef:
         self.func = func
         self.argname = argname
         self.scope = scope
-        self.scopenum = scopes.index(scope or "function")
+        self.scopenum = scope2index(
+            scope or "function",
+            descr='fixture {0}'.format(func.__name__),
+            where=baseid
+        )
         self.params = params
         startindex = unittest and 1 or None
         self.argnames = getfuncargnames(func, startindex=startindex)
