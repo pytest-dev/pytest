@@ -374,3 +374,22 @@ class TestPDB:
             "*1 error*",
         ])
         assert custom_pdb_calls == []
+
+    def test_pdb_custom_cls_with_settrace(self, testdir, monkeypatch):
+        testdir.makepyfile(custom_pdb="""
+            class CustomPdb:
+                def set_trace(*args, **kwargs):
+                    print 'custom set_trace>'
+         """)
+        p1 = testdir.makepyfile("""
+            import pytest
+
+            def test_foo():
+                pytest.set_trace()
+        """)
+        monkeypatch.setenv('PYTHONPATH', str(testdir.tmpdir))
+        child = testdir.spawn_pytest("--pdbcls=custom_pdb:CustomPdb %s" % str(p1))
+
+        child.expect('custom set_trace>')
+        if child.isalive():
+            child.wait()
