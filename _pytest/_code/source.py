@@ -52,8 +52,7 @@ class Source(object):
                 return str(self) == other
             return False
 
-    def __hash__(self):
-        return hash(self.lines)
+    __hash__ = None
 
     def __getitem__(self, key):
         if isinstance(key, int):

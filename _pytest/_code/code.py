@@ -29,8 +29,7 @@ class Code(object):
     def __eq__(self, other):
         return self.raw == other.raw
 
-    def __hash__(self):
-        return hash(self.raw)
+    __hash__ = None
 
     def __ne__(self, other):
         return not self == other
