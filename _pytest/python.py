@@ -1357,6 +1357,8 @@ class approx(object):
             return False
         return all(a == x for a, x in zip(actual, self.expected))
 
+    __hash__ = None
+
     def __ne__(self, actual):
         return not (actual == self)
 
@@ -1435,6 +1437,8 @@ class ApproxNonIterable(object):
 
         # Return true if the two numbers are within the tolerance.
         return abs(self.expected - actual) <= self.tolerance
+
+    __hash__ = None
 
     def __ne__(self, actual):
         return not (actual == self)
