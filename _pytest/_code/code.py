@@ -12,6 +12,7 @@ if sys.version_info[0] >= 3:
 else:
     from ._py2traceback import format_exception_only
 
+
 class Code(object):
     """ wrapper around Python code objects """
     def __init__(self, rawcode):
@@ -27,6 +28,9 @@ class Code(object):
 
     def __eq__(self, other):
         return self.raw == other.raw
+
+    def __hash__(self):
+        return hash(self.raw)
 
     def __ne__(self, other):
         return not self == other
