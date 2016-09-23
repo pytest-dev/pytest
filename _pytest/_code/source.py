@@ -60,15 +60,12 @@ class Source(object):
         else:
             if key.step not in (None, 1):
                 raise IndexError("cannot slice a Source with a step")
-            return self.__getslice__(key.start, key.stop)
+            newsource = Source()
+            newsource.lines = self.lines[key.start:key.stop]
+            return newsource
 
     def __len__(self):
         return len(self.lines)
-
-    def __getslice__(self, start, end):
-        newsource = Source()
-        newsource.lines = self.lines[start:end]
-        return newsource
 
     def strip(self):
         """ return new source object with trailing
