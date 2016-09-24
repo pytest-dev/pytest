@@ -293,6 +293,18 @@ imperatively, in test or setup code::
             # or
             pytest.skip("unsupported configuration")
 
+Note that calling ``pytest.skip`` at the module level 
+is not allowed since pytest 3.0. To skip
+all tests in a module given some runtime condition, you can
+set a ``pytestmark`` variable:
+
+.. code-block:: python
+
+    if SOME_CONDITION:
+        pytestmark = pytest.mark.skip('skipping all tests because SOME_CONDITION')            
+
+``pytestmark`` applies a mark or list of marks to all tests in a module.
+
 
 Skipping on a missing import dependency
 --------------------------------------------------
