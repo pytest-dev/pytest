@@ -12,6 +12,26 @@ def runpdb_and_get_report(testdir, source):
     return reports[1]
 
 
+@pytest.fixture
+def custom_pdb_calls():
+    called = []
+
+    # install dummy debugger class and track which methods were called on it
+    class _CustomPdb:
+        def __init__(self, *args, **kwargs):
+            called.append("init")
+
+        def reset(self):
+            called.append("reset")
+
+        def interaction(self, *args):
+            called.append("interaction")
+
+    _pytest._CustomPdb = _CustomPdb
+    return called
+
+
+
 class TestPDB:
 
     @pytest.fixture
@@ -334,22 +354,18 @@ class TestPDB:
         if child.isalive():
             child.wait()
 
-    def test_pdb_custom_cls(self, testdir):
-        called = []
+    def test_pdb_custom_cls(self, testdir, custom_pdb_calls):
+        p1 = testdir.makepyfile("""xxx """)
+        result = testdir.runpytest_inprocess(
+            "--pdb", "--pdbcls=_pytest:_CustomPdb", p1)
+        result.stdout.fnmatch_lines([
+            "*NameError*xxx*",
+            "*1 error*",
+        ])
+        assert custom_pdb_calls == ["init", "reset", "interaction"]
 
-        # install dummy debugger class and track which methods were called on it
-        class _CustomPdb:
-            def __init__(self, *args, **kwargs):
-                called.append("init")
 
-            def reset(self):
-                called.append("reset")
-
-            def interaction(self, *args):
-                called.append("interaction")
-
-        _pytest._CustomPdb = _CustomPdb
-
+    def test_pdb_custom_cls_without_pdb(self, testdir, custom_pdb_calls):
         p1 = testdir.makepyfile("""xxx """)
         result = testdir.runpytest_inprocess(
             "--pdbcls=_pytest:_CustomPdb", p1)
@@ -357,4 +373,23 @@ class TestPDB:
             "*NameError*xxx*",
             "*1 error*",
         ])
-        assert called == ["init", "reset", "interaction"]
+        assert custom_pdb_calls == []
+
+    def test_pdb_custom_cls_with_settrace(self, testdir, monkeypatch):
+        testdir.makepyfile(custom_pdb="""
+            class CustomPdb:
+                def set_trace(*args, **kwargs):
+                    print 'custom set_trace>'
+         """)
+        p1 = testdir.makepyfile("""
+            import pytest
+
+            def test_foo():
+                pytest.set_trace()
+        """)
+        monkeypatch.setenv('PYTHONPATH', str(testdir.tmpdir))
+        child = testdir.spawn_pytest("--pdbcls=custom_pdb:CustomPdb %s" % str(p1))
+
+        child.expect('custom set_trace>')
+        if child.isalive():
+            child.wait()
