@@ -1,6 +1,19 @@
 3.1.0.dev
 =========
 
+
+New Features
+------------
+
+
+*
+
+*
+
+
+Changes
+-------
+
 * Testcase reports with a url attribute will now properly write this to junitxml.
   Thanks `@fushi`_ for the PR
 
@@ -9,14 +22,20 @@
   assertion messages if verbosity < 2 (`#1512`_).
   Thanks `@mattduck`_ for the PR
 
-*
+* ``--pdbcls`` no longer implies ``--pdb``. This makes it possible to use 
+  ``addopts=--pdbcls=module.SomeClass`` on ``pytest.ini``. Thanks `@davidszotten`_ for
+  the PR (`#1952`_).
 
 *
 
+*
+
+.. _@davidszotten: https://github.com/davidszotten
 .. _@fushi: https://github.com/fushi
 .. _@mattduck: https://github.com/mattduck
 
 .. _#1512: https://github.com/pytest-dev/pytest/issues/1512
+.. _#1952: https://github.com/pytest-dev/pytest/pull/1952
 
 
 3.0.2
