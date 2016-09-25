@@ -294,14 +294,16 @@ imperatively, in test or setup code::
             pytest.skip("unsupported configuration")
 
 Note that calling ``pytest.skip`` at the module level 
-is not allowed since pytest 3.0. To skip
-all tests in a module given some runtime condition, you can
-set a ``pytestmark`` variable:
+is not allowed since pytest 3.0. If you are upgrading
+and ``pytest.skip`` was being used at the module level, you can set a
+``pytestmark`` variable:
 
 .. code-block:: python
 
-    if SOME_CONDITION:
-        pytestmark = pytest.mark.skip('skipping all tests because SOME_CONDITION')            
+    # before pytest 3.0
+    pytest.skip('skipping all tests because of reasons')
+    # after pytest 3.0
+    pytestmark = pytest.mark.skip('skipping all tests because of reasons')
 
 ``pytestmark`` applies a mark or list of marks to all tests in a module.
 
@@ -383,3 +385,27 @@ The equivalent with "boolean conditions" is::
     imported before pytest's argument parsing takes place.  For example,
     ``conftest.py`` files are imported before command line parsing and thus
     ``config.getvalue()`` will not execute correctly.
+
+
+Summary
+-------
+
+Here's a quick guide on how to skip tests in a module in different situations:
+
+1. Skip all tests in a module unconditionally:
+
+  .. code-block:: python
+
+        pytestmark = pytest.mark.skip('all tests still WIP')
+
+2. Skip all tests in a module based on some condition:
+
+  .. code-block:: python
+
+        pytestmark = pytest.mark.skipif(sys.platform == 'win32', 'tests for linux only')
+
+3. Skip all tests in a module if some import is missing:
+
+  .. code-block:: python
+
+        pexpect = pytest.importorskip('pexpect')
