@@ -19,6 +19,8 @@
 * Explain a bad scope value passed to ``@fixture`` declarations or
   a ``MetaFunc.parametrize()`` call. Thanks `@tgoodlet`_ for the PR.
 
+* Change exception raised by ``capture.DontReadFromInput.fileno()`` from ``ValueError`` 
+  to ``io.UnsupportedOperation``. Thanks `@vlad-dragos`_ for the PR.
 
 .. _@philpep: https://github.com/philpep
 .. _@raquel-ucl: https://github.com/raquel-ucl
