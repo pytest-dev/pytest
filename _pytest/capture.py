@@ -7,6 +7,7 @@ from __future__ import with_statement
 import contextlib
 import sys
 import os
+from io import UnsupportedOperation
 from tempfile import TemporaryFile
 
 import py
@@ -447,7 +448,7 @@ class DontReadFromInput:
     __iter__ = read
 
     def fileno(self):
-        raise ValueError("redirected Stdin is pseudofile, has no fileno()")
+        raise UnsupportedOperation("redirected Stdin is pseudofile, has no fileno()")
 
     def isatty(self):
         return False
