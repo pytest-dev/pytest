@@ -5,7 +5,6 @@
 New Features
 ------------
 
-
 *
 
 *
@@ -14,8 +13,8 @@ New Features
 Changes
 -------
 
-* Testcase reports with a url attribute will now properly write this to junitxml.
-  Thanks `@fushi`_ for the PR
+* Testcase reports with a ``url`` attribute will now properly write this to junitxml.
+  Thanks `@fushi`_ for the PR (`#1874`_).
 
 * Remove common items from dict comparision output when verbosity=1. Also update
   the truncation message to make it clearer that pytest truncates all
@@ -35,7 +34,42 @@ Changes
 .. _@mattduck: https://github.com/mattduck
 
 .. _#1512: https://github.com/pytest-dev/pytest/issues/1512
+.. _#1874: https://github.com/pytest-dev/pytest/pull/1874
 .. _#1952: https://github.com/pytest-dev/pytest/pull/1952
+
+
+3.0.3.dev
+=========
+
+* The ``ids`` argument to ``parametrize`` again accepts ``unicode`` strings
+  in Python 2 (`#1905`_).
+  Thanks `@philpep`_ for the report and `@nicoddemus`_ for the PR.
+
+* Assertions are now being rewritten for plugins in development mode
+  (``pip install -e``) (`#1934`_).
+  Thanks `@nicoddemus`_ for the PR.
+
+* Fix pkg_resources import error in Jython projects (`#1853`_).
+  Thanks `@raquel-ucl`_ for the PR.
+
+* Got rid of ``AttributeError: 'Module' object has no attribute '_obj'`` exception
+  in Python 3 (`#1944`_).
+  Thanks `@axil`_ for the PR.
+
+* Explain a bad scope value passed to ``@fixture`` declarations or
+  a ``MetaFunc.parametrize()`` call. Thanks `@tgoodlet`_ for the PR.
+
+
+.. _@philpep: https://github.com/philpep
+.. _@raquel-ucl: https://github.com/raquel-ucl
+.. _@axil: https://github.com/axil
+.. _@tgoodlet: https://github.com/tgoodlet
+
+.. _#1853: https://github.com/pytest-dev/pytest/issues/1853
+.. _#1905: https://github.com/pytest-dev/pytest/issues/1905
+.. _#1934: https://github.com/pytest-dev/pytest/issues/1934
+.. _#1944: https://github.com/pytest-dev/pytest/issues/1944
+
 
 
 3.0.2
@@ -126,7 +160,11 @@ time or change existing behaviors in order to make them less surprising/more use
 
 * Reinterpretation mode has now been removed.  Only plain and rewrite
   mode are available, consequently the ``--assert=reinterp`` option is
-  no longer available.  Thanks `@flub`_ for the PR.
+  no longer available.  This also means files imported from plugins or
+  ``conftest.py`` will not benefit from improved assertions by
+  default, you should use ``pytest.register_assert_rewrite()`` to
+  explicitly turn on assertion rewriting for those files.  Thanks
+  `@flub`_ for the PR.
 
 * The following deprecated commandline options were removed:
 

@@ -5,7 +5,6 @@ import traceback
 import types
 import warnings
 
-import pkg_resources
 import py
 # DON't import pytest here because it causes import cycle troubles
 import sys, os
@@ -952,18 +951,24 @@ class Config(object):
             except SystemError:
                 mode = 'plain'
             else:
+                import pkg_resources
                 self.pluginmanager.rewrite_hook = hook
                 for entrypoint in pkg_resources.iter_entry_points('pytest11'):
-                    for entry in entrypoint.dist._get_metadata('RECORD'):
-                        fn = entry.split(',')[0]
-                        is_simple_module = os.sep not in fn and fn.endswith('.py')
-                        is_package = fn.count(os.sep) == 1 and fn.endswith('__init__.py')
-                        if is_simple_module:
-                            module_name, ext = os.path.splitext(fn)
-                            hook.mark_rewrite(module_name)
-                        elif is_package:
-                            package_name = os.path.dirname(fn)
-                            hook.mark_rewrite(package_name)
+                    # 'RECORD' available for plugins installed normally (pip install)
+                    # 'SOURCES.txt' available for plugins installed in dev mode (pip install -e)
+                    # for installed plugins 'SOURCES.txt' returns an empty list, and vice-versa
+                    # so it shouldn't be an issue
+                    for metadata in ('RECORD', 'SOURCES.txt'):
+                        for entry in entrypoint.dist._get_metadata(metadata):
+                            fn = entry.split(',')[0]
+                            is_simple_module = os.sep not in fn and fn.endswith('.py')
+                            is_package = fn.count(os.sep) == 1 and fn.endswith('__init__.py')
+                            if is_simple_module:
+                                module_name, ext = os.path.splitext(fn)
+                                hook.mark_rewrite(module_name)
+                            elif is_package:
+                                package_name = os.path.dirname(fn)
+                                hook.mark_rewrite(package_name)
         self._warn_about_missing_assertion(mode)
 
     def _warn_about_missing_assertion(self, mode):

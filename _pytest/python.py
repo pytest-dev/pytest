@@ -205,11 +205,10 @@ class PyobjContext(object):
 class PyobjMixin(PyobjContext):
     def obj():
         def fget(self):
-            try:
-                return self._obj
-            except AttributeError:
+            obj = getattr(self, '_obj', None)
+            if obj is None:
                 self._obj = obj = self._getobj()
-                return obj
+            return obj
         def fset(self, value):
             self._obj = value
         return property(fget, fset, None, "underlying python object")
@@ -772,7 +771,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             It will also override any fixture-function defined scope, allowing
             to set a dynamic scope using test context or configuration.
         """
-        from _pytest.fixtures import scopes
+        from _pytest.fixtures import scope2index
         from _pytest.mark import extract_argvalue
         from py.io import saferepr
 
@@ -801,7 +800,8 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         if scope is None:
             scope = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)
 
-        scopenum = scopes.index(scope)
+        scopenum = scope2index(
+            scope, descr='call to {0}'.format(self.parametrize))
         valtypes = {}
         for arg in argnames:
             if arg not in self.fixturenames:
@@ -833,7 +833,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
                 raise ValueError('%d tests specified with %d ids' %(
                                  len(argvalues), len(ids)))
             for id_value in ids:
-                if id_value is not None and not isinstance(id_value, str):
+                if id_value is not None and not isinstance(id_value, py.builtin._basestring):
                     msg = 'ids must be list of strings, found: %s (type: %s)'
                     raise ValueError(msg % (saferepr(id_value), type(id_value).__name__))
         ids = idmaker(argnames, argvalues, idfn, ids, self.config)
@@ -1352,6 +1352,8 @@ class approx(object):
             return False
         return all(a == x for a, x in zip(actual, self.expected))
 
+    __hash__ = None
+
     def __ne__(self, actual):
         return not (actual == self)
 
@@ -1430,6 +1432,8 @@ class ApproxNonIterable(object):
 
         # Return true if the two numbers are within the tolerance.
         return abs(self.expected - actual) <= self.tolerance
+
+    __hash__ = None
 
     def __ne__(self, actual):
         return not (actual == self)

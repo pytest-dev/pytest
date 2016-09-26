@@ -1063,6 +1063,22 @@ class TestFixtureUsages:
             "*1 error*"
         ])
 
+    def test_invalid_scope(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture(scope="functions")
+            def badscope():
+                pass
+
+            def test_nothing(badscope):
+                pass
+        """)
+        result = testdir.runpytest_inprocess()
+        result.stdout.fnmatch_lines(
+            ("*ValueError: fixture badscope from test_invalid_scope.py has an unsupported"
+             " scope value 'functions'")
+        )
+
     def test_funcarg_parametrized_and_used_twice(self, testdir):
         testdir.makepyfile("""
             import pytest
