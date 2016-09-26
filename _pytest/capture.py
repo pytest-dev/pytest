@@ -448,7 +448,8 @@ class DontReadFromInput:
     __iter__ = read
 
     def fileno(self):
-        raise UnsupportedOperation("redirected Stdin is pseudofile, has no fileno()")
+        raise UnsupportedOperation("redirected stdin is pseudofile, "
+                                   "has no fileno()")
 
     def isatty(self):
         return False
