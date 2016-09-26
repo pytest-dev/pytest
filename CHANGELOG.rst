@@ -26,6 +26,7 @@
 .. _@raquel-ucl: https://github.com/raquel-ucl
 .. _@axil: https://github.com/axil
 .. _@tgoodlet: https://github.com/tgoodlet
+.. _@vlad-dragos: https://github.com/vlad-dragos
 
 .. _#1905: https://github.com/pytest-dev/pytest/issues/1905
 .. _#1934: https://github.com/pytest-dev/pytest/issues/1934
