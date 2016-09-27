@@ -185,28 +185,13 @@ You can find out what kind of builtin :ref:`fixtures` exist by typing::
 
     pytest --fixtures   # shows builtin and custom fixtures
 
-Contributing tests to an existing project
--------------------------------------------
-
-Say you want to contribute some tests to an existing repository.  
-After pulling the code into your development space using some 
-flavor of version control and (optionally) setting up a virtualenv
-you will want to run::
-
-    cd <repository>
-    pip install -e .  # Environment dependent alternatives include 
-                    # 'python setup.py develop' and 'conda develop' 
-
-in your project root.  This will set up a symlink to your code in
-site-packages, allowing you to edit your code while your tests
-run against it as if it were installed.
-
 Where to go next
 -------------------------------------
 
 Here are a few suggestions where to go next:
 
 * :ref:`cmdline` for command line invocation examples
+* :ref:`existingtestsuite` for working with pre-existing tests 
 * :ref:`good practices <goodpractices>` for virtualenv, test layout
 * :ref:`fixtures` for providing a functional baseline to your tests
 * :ref:`plugins` managing and writing plugins
