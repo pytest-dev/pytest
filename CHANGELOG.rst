@@ -14,12 +14,14 @@
 *
 
 * Added documentation related to issue (`#1937`_)
-
+  Thanks `@skylarjhdownes`_ for the PR.
 
 .. _@philpep: https://github.com/philpep
+.. _@skylarjhdownes: https://github.com/skylarjhdownes
 
 .. _#1905: https://github.com/pytest-dev/pytest/issues/1905
 .. _#1934: https://github.com/pytest-dev/pytest/issues/1934
+.. _#1937: https://github.com/pytest-dev/pytest/issues/1937
 
 
 3.0.2
