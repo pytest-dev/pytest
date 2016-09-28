@@ -31,7 +31,7 @@ You can then restrict a test run to only run tests marked with ``webtest``::
 
     $ pytest -v -m webtest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.5.2, pytest-3.0.3, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
@@ -45,7 +45,7 @@ Or the inverse, running all tests except the webtest ones::
 
     $ pytest -v -m "not webtest"
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.5.2, pytest-3.0.3, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
@@ -66,7 +66,7 @@ tests based on their module, class, method, or function name::
 
     $ pytest -v test_server.py::TestClass::test_method
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.5.2, pytest-3.0.3, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 5 items
@@ -79,7 +79,7 @@ You can also select on the class::
 
     $ pytest -v test_server.py::TestClass
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.5.2, pytest-3.0.3, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
@@ -92,7 +92,7 @@ Or select multiple nodes::
 
   $ pytest -v test_server.py::TestClass test_server.py::test_send_http
   ======= test session starts ========
-  platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
+  platform linux -- Python 3.5.2, pytest-3.0.3, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
   cachedir: .cache
   rootdir: $REGENDOC_TMPDIR, inifile: 
   collecting ... collected 8 items
@@ -130,7 +130,7 @@ select tests based on their names::
 
     $ pytest -v -k http  # running with the above defined example module
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.5.2, pytest-3.0.3, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
@@ -144,7 +144,7 @@ And you can also run all tests except the ones that match the keyword::
 
     $ pytest -k "not send_http" -v
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.5.2, pytest-3.0.3, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
@@ -160,7 +160,7 @@ Or to select "http" and "quick" tests::
 
     $ pytest -k "http or quick" -v
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.5.2, pytest-3.0.3, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
@@ -352,7 +352,7 @@ the test needs::
 
     $ pytest -E stage2
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.3, py-1.4.31, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
@@ -364,7 +364,7 @@ and here is one that specifies exactly the environment needed::
 
     $ pytest -E stage1
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.3, py-1.4.31, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
@@ -485,7 +485,7 @@ then you will see two test skipped and two executed tests as expected::
 
     $ pytest -rs # this option reports skip reasons
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.3, py-1.4.31, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
@@ -499,7 +499,7 @@ Note that if you specify a platform via the marker-command line option like this
 
     $ pytest -m linux2
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.3, py-1.4.31, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
@@ -551,7 +551,7 @@ We can now use the ``-m option`` to select one set::
 
   $ pytest -m interface --tb=short
   ======= test session starts ========
-  platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
+  platform linux -- Python 3.5.2, pytest-3.0.3, py-1.4.31, pluggy-0.4.0
   rootdir: $REGENDOC_TMPDIR, inifile: 
   collected 4 items
   
@@ -573,7 +573,7 @@ or to select both "event" and "interface" tests::
 
   $ pytest -m "interface or event" --tb=short
   ======= test session starts ========
-  platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
+  platform linux -- Python 3.5.2, pytest-3.0.3, py-1.4.31, pluggy-0.4.0
   rootdir: $REGENDOC_TMPDIR, inifile: 
   collected 4 items
   
