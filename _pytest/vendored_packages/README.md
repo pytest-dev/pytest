@@ -10,4 +10,4 @@ $ pip install -U pluggy==<version> --no-compile --target=_pytest/vendored_packag
 ```
 
 And commit the modified files. The `pluggy-<version>.dist-info` directory 
-created by `pip` should be ignored.
+created by `pip` should be added as well.

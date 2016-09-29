@@ -67,8 +67,9 @@ Pluggy currently consists of functionality for:
 import sys
 import inspect
 
-__version__ = '0.3.1'
-__all__ = ["PluginManager", "PluginValidationError",
+__version__ = '0.4.0'
+
+__all__ = ["PluginManager", "PluginValidationError", "HookCallError",
            "HookspecMarker", "HookimplMarker"]
 
 _py3 = sys.version_info > (3, 0)
@@ -308,7 +309,7 @@ class PluginManager(object):
     """ Core Pluginmanager class which manages registration
     of plugin objects and 1:N hook calling.
 
-    You can register new hooks by calling ``addhooks(module_or_class)``.
+    You can register new hooks by calling ``add_hookspec(module_or_class)``.
     You can register plugin objects (which contain hooks) by calling
     ``register(plugin)``.  The Pluginmanager is initialized with a
     prefix that is searched for in the names of the dict of registered
@@ -374,7 +375,10 @@ class PluginManager(object):
 
     def parse_hookimpl_opts(self, plugin, name):
         method = getattr(plugin, name)
-        res = getattr(method, self.project_name + "_impl", None)
+        try:
+            res = getattr(method, self.project_name + "_impl", None)
+        except Exception:
+            res = {}
         if res is not None and not isinstance(res, dict):
             # false positive
             res = None
@@ -455,6 +459,10 @@ class PluginManager(object):
         """ Return a plugin or None for the given name. """
         return self._name2plugin.get(name)
 
+    def has_plugin(self, name):
+        """ Return True if a plugin with the given name is registered. """
+        return self.get_plugin(name) is not None
+
     def get_name(self, plugin):
         """ Return name for registered plugin or None if not registered. """
         for name, val in self._name2plugin.items():
@@ -492,7 +500,8 @@ class PluginManager(object):
     def load_setuptools_entrypoints(self, entrypoint_name):
         """ Load modules from querying the specified setuptools entrypoint name.
         Return the number of loaded plugins. """
-        from pkg_resources import iter_entry_points, DistributionNotFound
+        from pkg_resources import (iter_entry_points, DistributionNotFound,
+                                   VersionConflict)
         for ep in iter_entry_points(entrypoint_name):
             # is the plugin registered or blocked?
             if self.get_plugin(ep.name) or self.is_blocked(ep.name):
@@ -501,6 +510,9 @@ class PluginManager(object):
                 plugin = ep.load()
             except DistributionNotFound:
                 continue
+            except VersionConflict as e:
+                raise PluginValidationError(
+                    "Plugin %r could not be loaded: %s!" % (ep.name, e))
             self.register(plugin, name=ep.name)
             self._plugin_distinfo.append((plugin, ep.dist))
         return len(self._plugin_distinfo)
@@ -573,7 +585,7 @@ class _MultiCall:
 
     # XXX note that the __multicall__ argument is supported only
     # for pytest compatibility reasons.  It was never officially
-    # supported there and is explicitly deprecated since 2.8
+    # supported there and is explicitely deprecated since 2.8
     # so we can remove it soon, allowing to avoid the below recursion
     # in execute() and simplify/speed up the execute loop.
 
@@ -590,7 +602,13 @@ class _MultiCall:
 
         while self.hook_impls:
             hook_impl = self.hook_impls.pop()
-            args = [all_kwargs[argname] for argname in hook_impl.argnames]
+            try:
+                args = [all_kwargs[argname] for argname in hook_impl.argnames]
+            except KeyError:
+                for argname in hook_impl.argnames:
+                    if argname not in all_kwargs:
+                        raise HookCallError(
+                            "hook call must provide argument %r" % (argname,))
             if hook_impl.hookwrapper:
                 return _wrapped_call(hook_impl.function(*args), self.execute)
             res = hook_impl.function(*args)
@@ -629,7 +647,10 @@ def varnames(func, startindex=None):
         startindex = 1
     else:
         if not inspect.isfunction(func) and not inspect.ismethod(func):
-            func = getattr(func, '__call__', func)
+            try:
+                func = getattr(func, '__call__', func)
+            except Exception:
+                return ()
         if startindex is None:
             startindex = int(inspect.ismethod(func))
 
@@ -761,6 +782,10 @@ class HookImpl:
 
 class PluginValidationError(Exception):
     """ plugin failed validation. """
+
+
+class HookCallError(Exception):
+    """ Hook was called wrongly. """
 
 
 if hasattr(inspect, 'signature'):
