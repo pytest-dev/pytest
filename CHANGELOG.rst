@@ -1,5 +1,5 @@
-3.0.3.dev0
-==========
+3.0.3
+=====
 
 * The ``ids`` argument to ``parametrize`` again accepts ``unicode`` strings
   in Python 2 (`#1905`_).
@@ -22,11 +22,6 @@
 * This version includes ``pluggy-0.4.0``, which correctly handles
   ``VersionConflict`` errors in plugins (`#704`_).
   Thanks `@nicoddemus`_ for the PR.
-
-*
-
-*
-
 
 
 .. _@philpep: https://github.com/philpep
