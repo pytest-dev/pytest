@@ -172,17 +172,6 @@ class TestCollectPluginHookRelay:
         assert "world" in wascalled
 
 class TestPrunetraceback:
-    def test_collection_error(self, testdir):
-        p = testdir.makepyfile("""
-            import not_exists
-        """)
-        result = testdir.runpytest(p)
-        assert "__import__" not in result.stdout.str(), "too long traceback"
-        result.stdout.fnmatch_lines([
-            "*ERROR collecting*",
-            "ImportError while importing test module*",
-            "'No module named *not_exists*",
-        ])
 
     def test_custom_repr_failure(self, testdir):
         p = testdir.makepyfile("""

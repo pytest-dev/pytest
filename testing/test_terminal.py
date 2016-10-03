@@ -667,7 +667,7 @@ class TestGenericReporting:
         result = testdir.runpytest(*option.args)
         result.stdout.fnmatch_lines([
             "ImportError while importing*",
-            "'No module named *xyz*",
+            "*No module named *xyz*",
             "*1 error*",
         ])
 

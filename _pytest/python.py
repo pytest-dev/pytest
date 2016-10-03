@@ -424,12 +424,15 @@ class Module(pytest.File, PyCollector):
                  % e.args
             )
         except ImportError:
-            exc_class, exc, _ = sys.exc_info()
+            import traceback
+            stream = py.io.TextIO()
+            traceback.print_exc(file=stream)
+            formatted_tb = stream.getvalue()
             raise self.CollectError(
-                "ImportError while importing test module '%s'.\n"
-                "Original error message:\n'%s'\n"
-                "Make sure your test modules/packages have valid Python names."
-                % (self.fspath, exc or exc_class)
+                "ImportError while importing test module '{fspath}'.\n"
+                "Hint: make sure your test modules/packages have valid Python names.\n"
+                "Original traceback:\n"
+                "{traceback}".format(fspath=self.fspath, traceback=formatted_tb)
             )
         except _pytest.runner.Skipped as e:
             if e.allow_module_level:

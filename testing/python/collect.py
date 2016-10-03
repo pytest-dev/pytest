@@ -68,8 +68,28 @@ class TestModule:
         result = testdir.runpytest("-rw")
         result.stdout.fnmatch_lines([
             "ImportError while importing test module*test_one.part1*",
-            "Make sure your test modules/packages have valid Python names.",
+            "Hint: make sure your test modules/packages have valid Python names.",
         ])
+
+    def test_show_full_traceback_import_error(self, testdir):
+        """Import errors when collecting modules should display the full traceback (#1976)."""
+        testdir.makepyfile(
+            foo_traceback_import_error="""
+               from bar_traceback_import_error import NOT_AVAILABLE
+           """,
+            bar_traceback_import_error="",
+        )
+        testdir.makepyfile("""
+               import foo_traceback_import_error
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "ImportError while importing test module*",
+            "Original traceback:",
+            "*from bar_traceback_import_error import NOT_AVAILABLE",
+            "*cannot import name *NOT_AVAILABLE*",
+        ])
+        assert result.ret == 2
 
 
 class TestClass:
