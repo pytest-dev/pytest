@@ -71,8 +71,8 @@ def showhelp(config):
     tw.write(config._parser.optparser.format_help())
     tw.line()
     tw.line()
-    tw.line("[pytest] ini-options in the next "
-            "pytest.ini|tox.ini|setup.cfg file:")
+    tw.line("[pytest] ini-options in the first "
+            "pytest.ini|tox.ini|setup.cfg file found:")
     tw.line()
 
     for name in config._parser._ininames:
