@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 import sys
 from textwrap import dedent
 
@@ -68,8 +69,40 @@ class TestModule:
         result = testdir.runpytest("-rw")
         result.stdout.fnmatch_lines([
             "ImportError while importing test module*test_one.part1*",
-            "Make sure your test modules/packages have valid Python names.",
+            "Hint: make sure your test modules/packages have valid Python names.",
         ])
+
+    @pytest.mark.parametrize('verbose', [0, 1, 2])
+    def test_show_traceback_import_error(self, testdir, verbose):
+        """Import errors when collecting modules should display the traceback (#1976).
+
+        With low verbosity we omit pytest and internal modules, otherwise show all traceback entries.
+        """
+        testdir.makepyfile(
+            foo_traceback_import_error="""
+               from bar_traceback_import_error import NOT_AVAILABLE
+           """,
+            bar_traceback_import_error="",
+        )
+        testdir.makepyfile("""
+               import foo_traceback_import_error
+        """)
+        args = ('-v',) * verbose
+        result = testdir.runpytest(*args)
+        result.stdout.fnmatch_lines([
+            "ImportError while importing test module*",
+            "Traceback:",
+            "*from bar_traceback_import_error import NOT_AVAILABLE",
+            "*cannot import name *NOT_AVAILABLE*",
+        ])
+        assert result.ret == 2
+
+        stdout = result.stdout.str()
+        for name in ('_pytest', os.path.join('py', '_path')):
+            if verbose == 2:
+                assert name in stdout
+            else:
+                assert name not in stdout
 
 
 class TestClass:

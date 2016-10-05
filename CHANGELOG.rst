@@ -3,11 +3,18 @@
 
 *
 
-*
+* Import errors when collecting test modules now display the full traceback (`#1976`_).
+  Thanks `@cwitty`_ for the report and `@nicoddemus`_ for the PR.
 
 *
 
 *
+
+
+.. _@cwitty: https://github.com/cwitty
+
+.. _#1976: https://github.com/pytest-dev/pytest/issues/1976
+
 
 
 3.0.3
