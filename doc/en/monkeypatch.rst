@@ -55,6 +55,14 @@ will delete the method ``request.session.Session.request``
 so that any attempts within tests to create http requests will fail.
 
 
+.. note::
+    
+    Be advised that it is not recommended to patch builtin functions such as ``open``,
+    ``compile``, etc., because it might break pytest's internals. If that's
+    unavoidable, passing ``--tb=native``, ``--assert=plain`` and ``--capture=no`` might 
+    help althought there's no guarantee.
+    
+
 Method reference of the monkeypatch fixture
 -------------------------------------------
 
