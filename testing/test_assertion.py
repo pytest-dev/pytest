@@ -579,7 +579,7 @@ class TestTruncateExplanation:
 
     # The number of lines in the truncation explanation message. Used
     # to calculate that results have the expected length.
-    LINES_IN_TRUNCATION_MSG = 2  
+    LINES_IN_TRUNCATION_MSG = 2
 
     def test_doesnt_truncate_when_input_is_empty_list(self):
         expl = []

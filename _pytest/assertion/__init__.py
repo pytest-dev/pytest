@@ -2,7 +2,6 @@
 support for presenting detailed information in failing assertions.
 """
 import py
-import os
 import sys
 
 from _pytest.assertion import util
