@@ -12,6 +12,7 @@ import _pytest._code
 import _pytest.hookspec  # the extension point definitions
 import _pytest.assertion
 from _pytest._pluggy import PluginManager, HookimplMarker, HookspecMarker
+from _pytest.compat import safe_str
 
 hookimpl = HookimplMarker("pytest")
 hookspec = HookspecMarker("pytest")
@@ -405,7 +406,7 @@ class PytestPluginManager(PluginManager):
         try:
             __import__(importspec)
         except ImportError as e:
-            new_exc = ImportError('Error importing plugin "%s": %s' % (modname, e))
+            new_exc = ImportError('Error importing plugin "%s": %s' % (modname, safe_str(e.args[0])))
             # copy over name and path attributes
             for attr in ('name', 'path'):
                 if hasattr(e, attr):
