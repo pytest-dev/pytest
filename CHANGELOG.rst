@@ -30,7 +30,7 @@
   (``pip install -e``) (`#1934`_).
   Thanks `@nicoddemus`_ for the PR.
 
-* Fix pkg_resources import error in Jython projects (`#1853`).
+* Fix pkg_resources import error in Jython projects (`#1853`_).
   Thanks `@raquel-ucl`_ for the PR.
 
 * Got rid of ``AttributeError: 'Module' object has no attribute '_obj'`` exception
@@ -50,6 +50,7 @@
 .. _@axil: https://github.com/axil
 .. _@tgoodlet: https://github.com/tgoodlet
 
+.. _#1853: https://github.com/pytest-dev/pytest/issues/1853
 .. _#1905: https://github.com/pytest-dev/pytest/issues/1905
 .. _#1934: https://github.com/pytest-dev/pytest/issues/1934
 .. _#1944: https://github.com/pytest-dev/pytest/issues/1944
