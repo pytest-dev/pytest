@@ -668,13 +668,13 @@ class TestTruncateExplanation:
 
         result = testdir.runpytest('-vv')
         result.stdout.fnmatch_lines([
-            "*- %d*" % 5,
+            "* 6*",
         ])
 
         monkeypatch.setenv('CI', '1')
         result = testdir.runpytest()
         result.stdout.fnmatch_lines([
-            "*- %d*" % 5,
+            "* 6*",
         ])
 
 
