@@ -12,6 +12,9 @@
 * When loading plugins, import errors which contain non-ascii messages are now properly handled in Python 2 (`#1998`_).
   Thanks `@nicoddemus`_ for the PR.
 
+* Fixed memory leak in the RaisesContext (pytest.raises) (`#1965`_).
+  Thanks `@MSeifert04`_ for the report the PR.
+
 * Fixed false-positives warnings from assertion rewrite hook for modules that were rewritten but
   were later marked explicitly by ``pytest.register_assert_rewrite``
   or implicitly as a plugin (`#2005`_).

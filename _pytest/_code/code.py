@@ -1,6 +1,7 @@
 import sys
 from inspect import CO_VARARGS, CO_VARKEYWORDS
 import re
+from weakref import ref
 
 import py
 builtin_repr = repr
@@ -230,7 +231,7 @@ class TracebackEntry(object):
                 return False
 
         if py.builtin.callable(tbh):
-            return tbh(self._excinfo)
+            return tbh(None if self._excinfo is None else self._excinfo())
         else:
             return tbh
 
@@ -370,7 +371,7 @@ class ExceptionInfo(object):
         #: the exception type name
         self.typename = self.type.__name__
         #: the exception traceback (_pytest._code.Traceback instance)
-        self.traceback = _pytest._code.Traceback(self.tb, excinfo=self)
+        self.traceback = _pytest._code.Traceback(self.tb, excinfo=ref(self))
 
     def __repr__(self):
         return "<ExceptionInfo %s tblen=%d>" % (self.typename, len(self.traceback))
