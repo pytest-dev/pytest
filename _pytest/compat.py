@@ -214,3 +214,17 @@ def _is_unittest_unexpected_success_a_failure():
         unexpectedSuccesses from tests marked with the expectedFailure() decorator.
     """
     return sys.version_info >= (3, 4)
+
+
+if _PY3:
+    def safe_str(v):
+        """returns v as string"""
+        return str(v)
+else:
+    def safe_str(v):
+        """returns v as string, converting to ascii if necessary"""
+        try:
+            return str(v)
+        except UnicodeError:
+            errors = 'replace'
+            return v.encode('ascii', errors)

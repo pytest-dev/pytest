@@ -1,3 +1,4 @@
+# encoding: UTF-8
 import pytest
 import py
 import os
@@ -179,15 +180,20 @@ def test_default_markers(testdir):
     ])
 
 
-def test_importplugin_issue375(testdir, pytestpm):
+def test_importplugin_error_message(testdir, pytestpm):
     """Don't hide import errors when importing plugins and provide
     an easy to debug message.
+
+    See #375 and #1998.
     """
     testdir.syspathinsert(testdir.tmpdir)
-    testdir.makepyfile(qwe="import aaaa")
+    testdir.makepyfile(qwe="""
+        # encoding: UTF-8
+        raise ImportError(u'Not possible to import: ☺')
+    """)
     with pytest.raises(ImportError) as excinfo:
         pytestpm.import_plugin("qwe")
-    expected = '.*Error importing plugin "qwe": No module named \'?aaaa\'?'
+    expected = '.*Error importing plugin "qwe": Not possible to import: .'
     assert py.std.re.match(expected, str(excinfo.value))
 
 
