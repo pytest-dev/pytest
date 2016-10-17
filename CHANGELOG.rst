@@ -13,7 +13,7 @@
   Thanks `@nicoddemus`_ for the PR.
 
 * Fixed memory leak in the RaisesContext (pytest.raises) (`#1965`_).
-  Thanks `@MSeifert04`_ for the report the PR.
+  Thanks `@MSeifert04`_ for the report and the PR.
 
 * Fixed false-positives warnings from assertion rewrite hook for modules that were rewritten but
   were later marked explicitly by ``pytest.register_assert_rewrite``
@@ -39,12 +39,14 @@
 
 .. _@adborden: https://github.com/adborden
 .. _@cwitty: https://github.com/cwitty
-.. _@okulynyak: https://github.com/okulynyak
-.. _@matclab: https://github.com/matclab
-.. _@gdyuldin: https://github.com/gdyuldin
 .. _@d_b_w: https://github.com/d_b_w
+.. _@gdyuldin: https://github.com/gdyuldin
+.. _@matclab: https://github.com/matclab
+.. _@MSeifert04: https://github.com/MSeifert04
+.. _@okulynyak: https://github.com/okulynyak
 
 .. _#442: https://github.com/pytest-dev/pytest/issues/442
+.. _#1965: https://github.com/pytest-dev/pytest/issues/1965
 .. _#1976: https://github.com/pytest-dev/pytest/issues/1976
 .. _#1984: https://github.com/pytest-dev/pytest/issues/1984
 .. _#1998: https://github.com/pytest-dev/pytest/issues/1998

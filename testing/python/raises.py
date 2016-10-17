@@ -96,3 +96,21 @@ class TestRaises:
             assert e.msg == message
         else:
             assert False, "Expected pytest.raises.Exception"
+
+    @pytest.mark.parametrize('method', ['function', 'with'])
+    def test_raises_memoryleak(self, method):
+        import weakref
+
+        class T:
+            def __call__(self):
+                raise ValueError
+
+        t = T()
+        if method == 'function':
+            pytest.raises(ValueError, t)
+        else:
+            with pytest.raises(ValueError):
+                t()
+
+        t = weakref.ref(t)
+        assert t() is None
