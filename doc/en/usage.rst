@@ -310,10 +310,6 @@ You can pass in options and arguments::
 
     pytest.main(['-x', 'mytestdir'])
 
-or pass in a string::
-
-    pytest.main("-x mytestdir")
-
 You can specify additional plugins to ``pytest.main``::
 
     # content of myinvoke.py
