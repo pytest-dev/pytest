@@ -1,5 +1,4 @@
 """ recording warnings during test function execution. """
-
 import inspect
 
 import _pytest._code
@@ -7,6 +6,7 @@ import py
 import sys
 import warnings
 import pytest
+from collections import namedtuple
 
 
 @pytest.yield_fixture
@@ -110,15 +110,10 @@ def warns(expected_warning, *args, **kwargs):
             return func(*args[1:], **kwargs)
 
 
-class RecordedWarning(object):
-    def __init__(self, message, category, filename, lineno, file, line):
-        self.message = message
-        self.category = category
-        self.filename = filename
-        self.lineno = lineno
-        self.file = file
-        self.line = line
-
+RecordedWarning = namedtuple('RecordedWarning', (
+    'message', 'category', 'filename', 'lineno', 'file', 'line',
+))
+    
 
 class WarningsRecorder(object):
     """A context manager to record raised warnings.
