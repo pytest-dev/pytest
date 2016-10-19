@@ -12,6 +12,15 @@
 * When loading plugins, import errors which contain non-ascii messages are now properly handled in Python 2 (`#1998`_).
   Thanks `@nicoddemus`_ for the PR.
 
+* Fixed false-positives warnings from assertion rewrite hook for modules that were rewritten but
+  were later marked explicitly by ``pytest.register_assert_rewrite``
+  or implicitly as a plugin (`#2005`_).
+  Thanks `@RonnyPfannschmidt`_ for the report and `@nicoddemus`_ for the PR.
+
+*
+
+*
+
 *
 
 
@@ -21,7 +30,7 @@
 .. _#1976: https://github.com/pytest-dev/pytest/issues/1976
 .. _#1998: https://github.com/pytest-dev/pytest/issues/1998
 .. _#2004: https://github.com/pytest-dev/pytest/issues/2004
-
+.. _#2005: https://github.com/pytest-dev/pytest/issues/2005
 
 
 3.0.3
