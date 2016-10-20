@@ -236,9 +236,10 @@ your own setuptools Test command for invoking pytest.
             self.pytest_args = []
 
         def run_tests(self):
+            import shlex
             #import here, cause outside the eggs aren't loaded
             import pytest
-            errno = pytest.main(self.pytest_args)
+            errno = pytest.main(shlex.split(self.pytest_args))
             sys.exit(errno)
 
 
