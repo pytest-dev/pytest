@@ -12,6 +12,7 @@ import _pytest._code
 import _pytest.hookspec  # the extension point definitions
 import _pytest.assertion
 from _pytest._pluggy import PluginManager, HookimplMarker, HookspecMarker
+from _pytest.compat import safe_str
 
 hookimpl = HookimplMarker("pytest")
 hookspec = HookspecMarker("pytest")
@@ -405,7 +406,7 @@ class PytestPluginManager(PluginManager):
         try:
             __import__(importspec)
         except ImportError as e:
-            new_exc = ImportError('Error importing plugin "%s": %s' % (modname, e))
+            new_exc = ImportError('Error importing plugin "%s": %s' % (modname, safe_str(e.args[0])))
             # copy over name and path attributes
             for attr in ('name', 'path'):
                 if hasattr(e, attr):
@@ -792,7 +793,7 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
             if len(option) == 2 or option[2] == ' ':
                 return_list.append(option)
             if option[2:] == short_long.get(option.replace('-', '')):
-                return_list.append(option.replace(' ', '='))
+                return_list.append(option.replace(' ', '=', 1))
         action._formatted_action_invocation = ', '.join(return_list)
         return action._formatted_action_invocation
 

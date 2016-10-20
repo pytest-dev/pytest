@@ -41,11 +41,25 @@ Changes
 
 *
 
-*
+* Import errors when collecting test modules now display the full traceback (`#1976`_).
+  Thanks `@cwitty`_ for the report and `@nicoddemus`_ for the PR.
+
+* Fix confusing command-line help message for custom options with two or more `metavar` properties (`#2004`_).
+  Thanks `@okulynyak`_ and `@davehunt`_ for the report and `@nicoddemus`_ for the PR.
+
+* When loading plugins, import errors which contain non-ascii messages are now properly handled in Python 2 (`#1998`_).
+  Thanks `@nicoddemus`_ for the PR.
 
 *
 
-*
+
+.. _@cwitty: https://github.com/cwitty
+.. _@okulynyak: https://github.com/okulynyak
+
+.. _#1976: https://github.com/pytest-dev/pytest/issues/1976
+.. _#1998: https://github.com/pytest-dev/pytest/issues/1998
+.. _#2004: https://github.com/pytest-dev/pytest/issues/2004
+
 
 
 3.0.3

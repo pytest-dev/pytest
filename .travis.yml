@@ -22,7 +22,8 @@ env:
     - TESTENV=py27-trial
     - TESTENV=py35-pexpect
     - TESTENV=py35-xdist
-    - TESTENV=py35-trial
+    # Disable py35-trial temporarily: #1989
+    #- TESTENV=py35-trial
     - TESTENV=py27-nobyte
     - TESTENV=doctesting
     - TESTENV=freeze

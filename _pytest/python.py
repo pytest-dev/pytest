@@ -22,11 +22,16 @@ from _pytest.compat import (
     getlocation, enum,
 )
 
-cutdir2 = py.path.local(_pytest.__file__).dirpath()
 cutdir1 = py.path.local(pluggy.__file__.rstrip("oc"))
+cutdir2 = py.path.local(_pytest.__file__).dirpath()
+cutdir3 = py.path.local(py.__file__).dirpath()
 
 
 def filter_traceback(entry):
+    """Return True if a TracebackEntry instance should be removed from tracebacks:
+    * dynamically generated code (no code to show up for it);
+    * internal traceback from pytest or its internal libraries, py and pluggy.
+    """
     # entry.path might sometimes return a str object when the entry
     # points to dynamically generated code
     # see https://bitbucket.org/pytest-dev/py/issues/71
@@ -37,7 +42,7 @@ def filter_traceback(entry):
     # entry.path might point to an inexisting file, in which case it will
     # alsso return a str object. see #1133
     p = py.path.local(entry.path)
-    return p != cutdir1 and not p.relto(cutdir2)
+    return p != cutdir1 and not p.relto(cutdir2) and not p.relto(cutdir3)
 
 
 
@@ -425,20 +430,25 @@ class Module(pytest.File, PyCollector):
                  % e.args
             )
         except ImportError:
-            exc_class, exc, _ = sys.exc_info()
+            from _pytest._code.code import ExceptionInfo
+            exc_info = ExceptionInfo()
+            if self.config.getoption('verbose') < 2:
+                exc_info.traceback = exc_info.traceback.filter(filter_traceback)
+            exc_repr = exc_info.getrepr(style='short') if exc_info.traceback else exc_info.exconly()
+            formatted_tb = py._builtin._totext(exc_repr)
             raise self.CollectError(
-                "ImportError while importing test module '%s'.\n"
-                "Original error message:\n'%s'\n"
-                "Make sure your test modules/packages have valid Python names."
-                % (self.fspath, exc or exc_class)
+                "ImportError while importing test module '{fspath}'.\n"
+                "Hint: make sure your test modules/packages have valid Python names.\n"
+                "Traceback:\n"
+                "{traceback}".format(fspath=self.fspath, traceback=formatted_tb)
             )
         except _pytest.runner.Skipped as e:
             if e.allow_module_level:
                 raise
             raise self.CollectError(
-                "Using @pytest.skip outside of a test (e.g. as a test "
-                "function decorator) is not allowed. Use @pytest.mark.skip or "
-                "@pytest.mark.skipif instead."
+                "Using pytest.skip outside of a test is not allowed. If you are "
+                "trying to decorate a test function, use the @pytest.mark.skip "
+                "or @pytest.mark.skipif decorators instead."
             )
         self.config.pluginmanager.consider_module(mod)
         return mod
