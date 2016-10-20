@@ -248,7 +248,19 @@ class TestParser:
                 help="show help message and configuration info")
         parser.parse(['-h'])
         help = parser.optparser.format_help()
-        assert '-doit, --func-args  foo' in  help
+        assert '-doit, --func-args  foo' in help
+
+    def test_multiple_metavar_help(self, parser):
+        """
+        Help text for options with a metavar tuple should display help
+        in the form "--preferences=value1 value2 value3" (#2004).
+        """
+        group = parser.getgroup("general")
+        group.addoption('--preferences', metavar=('value1', 'value2', 'value3'), nargs=3)
+        group._addoption("-h", "--help", action="store_true", dest="help")
+        parser.parse(['-h'])
+        help = parser.optparser.format_help()
+        assert '--preferences=value1 value2 value3' in help
 
 
 def test_argcomplete(testdir, monkeypatch):
