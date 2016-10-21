@@ -28,7 +28,7 @@ env:
 
 script:
   - tox -e $TESTENV
-  - coverage report -m
+  #- coverage report -m
   - coveralls
   #- coverage run --source=_pytest -m tox --recreate -e $TESTENV
   #- coverage report -m
