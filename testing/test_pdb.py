@@ -281,7 +281,7 @@ class TestPDB:
         child = testdir.spawn("%s %s" %(sys.executable, p1))
         child.expect("x = 5")
         child.sendeof()
-        child.wait()
+        self.flush(child)
 
     def test_pdb_used_in_generate_tests(self, testdir):
         p1 = testdir.makepyfile("""
@@ -295,7 +295,7 @@ class TestPDB:
         child = testdir.spawn_pytest(str(p1))
         child.expect("x = 5")
         child.sendeof()
-        child.wait()
+        self.flush(child)
 
     def test_pdb_collection_failure_is_shown(self, testdir):
         p1 = testdir.makepyfile("""xxx """)
