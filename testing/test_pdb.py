@@ -1,4 +1,5 @@
 import sys
+import platform
 
 import _pytest._code
 import pytest
@@ -80,6 +81,8 @@ class TestPDB:
 
     @staticmethod
     def flush(child):
+        if platform.system() == 'Darwin':
+            return
         if child.isalive():
             child.wait()
 
