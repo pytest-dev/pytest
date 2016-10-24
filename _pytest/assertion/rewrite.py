@@ -51,6 +51,7 @@ class AssertionRewritingHook(object):
         self.fnpats = config.getini("python_files")
         self.session = None
         self.modules = {}
+        self._rewritten_names = set()
         self._register_with_pkg_resources()
         self._must_rewrite = set()
 
@@ -91,6 +92,8 @@ class AssertionRewritingHook(object):
         fn_pypath = py.path.local(fn)
         if not self._should_rewrite(name, fn_pypath, state):
             return None
+
+        self._rewritten_names.add(name)
 
         # The requested module looks like a test file, so rewrite it. This is
         # the most magical part of the process: load the source, rewrite the
@@ -178,7 +181,9 @@ class AssertionRewritingHook(object):
         """
         already_imported = set(names).intersection(set(sys.modules))
         if already_imported:
-            self._warn_already_imported(already_imported)
+            for name in names:
+                if name not in self._rewritten_names:
+                    self._warn_already_imported(already_imported)
         self._must_rewrite.update(names)
 
     def _warn_already_imported(self, names):
