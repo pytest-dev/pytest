@@ -28,6 +28,9 @@ Changes
   to ``io.UnsupportedOperation``. Thanks `@vlad-dragos`_ for the PR.
 
 
+* fix `#2013`_: turn RecordedWarning into namedtupe,
+  to give it a comprehensible repr while preventing unwarranted modification
+
 .. _@davidszotten: https://github.com/davidszotten
 .. _@fushi: https://github.com/fushi
 .. _@mattduck: https://github.com/mattduck
@@ -35,6 +38,7 @@ Changes
 .. _#1512: https://github.com/pytest-dev/pytest/issues/1512
 .. _#1874: https://github.com/pytest-dev/pytest/pull/1874
 .. _#1952: https://github.com/pytest-dev/pytest/pull/1952
+.. _#2013: https://github.com/pytest-dev/pytest/issues/2013
 
 
 3.0.4.dev
