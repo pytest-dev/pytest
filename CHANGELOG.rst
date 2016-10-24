@@ -24,6 +24,8 @@ Changes
 * ``--pdbcls`` no longer implies ``--pdb``. This makes it possible to use 
   ``addopts=--pdbcls=module.SomeClass`` on ``pytest.ini``. Thanks `@davidszotten`_ for
   the PR (`#1952`_).
+* Change exception raised by ``capture.DontReadFromInput.fileno()`` from ``ValueError`` 
+  to ``io.UnsupportedOperation``. Thanks `@vlad-dragos`_ for the PR.
 
 
 .. _@davidszotten: https://github.com/davidszotten
@@ -92,6 +94,7 @@ Changes
 .. _@raquel-ucl: https://github.com/raquel-ucl
 .. _@axil: https://github.com/axil
 .. _@tgoodlet: https://github.com/tgoodlet
+.. _@vlad-dragos: https://github.com/vlad-dragos
 
 .. _#1853: https://github.com/pytest-dev/pytest/issues/1853
 .. _#1905: https://github.com/pytest-dev/pytest/issues/1905
