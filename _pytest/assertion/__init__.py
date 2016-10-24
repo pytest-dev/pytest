@@ -129,11 +129,12 @@ def pytest_runtest_setup(item):
         """
         hook_result = item.ihook.pytest_assertrepr_compare(
             config=item.config, op=op, left=left, right=right)
+        terminal_width = item.config.terminal_width
         for new_expl in hook_result:
             if new_expl:
 
                 # Truncate lines if required
-                if (sum(len(p) for p in new_expl[1:]) > 80*8 and
+                if (sum(len(p) for p in new_expl[1:]) > terminal_width*8 and
                         item.config.option.verbose < 2 and
                         not _running_on_ci()):
                     show_max = 10

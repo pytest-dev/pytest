@@ -48,6 +48,7 @@ def pytest_configure(config):
     config.option.verbose -= config.option.quiet
     reporter = TerminalReporter(config, sys.stdout)
     config.pluginmanager.register(reporter, 'terminalreporter')
+    config.terminal_width = py.io.get_terminal_width()
     if config.option.debug or config.option.traceconfig:
         def mywriter(tags, args):
             msg = " ".join(map(str, args))

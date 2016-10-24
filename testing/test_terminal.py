@@ -203,6 +203,15 @@ class TestTerminal:
         assert result.ret == 2
         result.stdout.fnmatch_lines(['*KeyboardInterrupt*'])
 
+    def test_terminalwidth_in_config(self, testdir, monkeypatch):
+        monkeypatch.setattr(py.io, 'get_terminal_width', lambda: 60)
+        testdir.makepyfile("""
+            def test_foobar(pytestconfig):
+                assert pytestconfig.terminal_width == 60
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=1)
+
 
 class TestCollectonly:
     def test_collectonly_basic(self, testdir):
