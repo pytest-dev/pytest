@@ -51,7 +51,7 @@ Example
 Changes
 =======
 
-0.2.0 - Unreleased
+0.2.0 - 2016-10-24
 ------------------
 
 - Add ``filterwarnings`` option.
