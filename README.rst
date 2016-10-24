@@ -51,6 +51,13 @@ Example
 Changes
 =======
 
+0.2.0 - Unreleased
+------------------
+
+- Add ``filterwarnings`` option.
+  [Carreau (Matthias Bussonnier)]
+
+
 0.1.0 - 2016-06-27
 ------------------
 
