@@ -6,7 +6,7 @@ setup(
     description='pytest plugin to list Python warnings in pytest report',
     long_description=open("README.rst").read(),
     license="MIT license",
-    version='0.2.0',
+    version='0.3.0.dev0',
     author='Florian Schulze',
     author_email='florian.schulze@gmx.net',
     url='https://github.com/fschulze/pytest-warnings',
