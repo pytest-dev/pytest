@@ -225,7 +225,7 @@ class TestMetafunc:
                                       (re.compile('foo'), re.compile('bar')),
                                       (str, int),
                                       (list("six"), [66, 66]),
-                                      (set([7]), set("seven")),
+                                      ({7}, set("seven")),
                                       (tuple("eight"), (8, -8, 8)),
                                       (b'\xc3\xb4', b"name"),
                                       (b'\xc3\xb4', totext("other")),

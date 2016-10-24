@@ -114,7 +114,7 @@ class TestDoctests:
             >>> 1
             1
         """)
-        expected = set(['xdoc.txt', 'test.foo', 'test_normal.txt'])
+        expected = {'xdoc.txt', 'test.foo', 'test_normal.txt'}
         assert set(x.basename for x in testdir.tmpdir.listdir()) == expected
         args = ["--doctest-glob=xdoc*.txt", "--doctest-glob=*.foo"]
         result = testdir.runpytest(*args)

@@ -318,7 +318,7 @@ class TestAssert_reprcompare:
                 + {0: 2}
                 ?     ^
             """),
-            (set([0, 1]), set([0, 2]), """
+            ({0, 1}, {0, 2}, """
                 Full diff:
                 - set([0, 1])
                 ?         ^
@@ -368,11 +368,11 @@ class TestAssert_reprcompare:
         assert lines[2] == "{'b': 1}"
 
     def test_set(self):
-        expl = callequal(set([0, 1]), set([0, 2]))
+        expl = callequal({0, 1}, {0, 2})
         assert len(expl) > 1
 
     def test_frozenzet(self):
-        expl = callequal(frozenset([0, 1]), set([0, 2]))
+        expl = callequal(frozenset([0, 1]), {0, 2})
         assert len(expl) > 1
 
     def test_Sequence(self):

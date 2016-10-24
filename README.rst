@@ -69,7 +69,7 @@ Features
 - Can run `unittest <http://docs.pytest.org/en/latest/unittest.html>`_ (or trial),
   `nose <http://docs.pytest.org/en/latest/nose.html>`_ test suites out of the box;
 
-- Python2.6+, Python3.3+, PyPy-2.3, Jython-2.5 (untested);
+- Python2.7+, Python3.3+, PyPy-2.3, Jython-2.5 (untested);
 
 - Rich plugin architecture, with over 150+ `external plugins <http://docs.pytest.org/en/latest/plugins.html#installing-external-plugins-searching>`_ and thriving community;
 

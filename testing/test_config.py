@@ -134,7 +134,7 @@ class TestConfigAPI:
             assert config.getoption(x) == "this"
         pytest.raises(ValueError, "config.getoption('qweqwe')")
 
-    @pytest.mark.skipif('sys.version_info[:2] not in [(2, 6), (2, 7)]')
+    @pytest.mark.skipif('sys.version_info[:2] != (2, 7)')
     def test_config_getoption_unicode(self, testdir):
         testdir.makeconftest("""
             from __future__ import unicode_literals

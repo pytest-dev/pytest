@@ -9,7 +9,7 @@ environment:
   # create multiple jobs to execute a set of tox runs on each; this is to workaround having
   # builds timing out in AppVeyor
   # pypy is disabled until #1963 gets fixed
-  - TOXENV: "linting,py26,py27,py33,py34,py35"
+  - TOXENV: "linting,py27,py33,py34,py35"
   - TOXENV: "py27-pexpect,py27-xdist,py27-trial,py35-pexpect,py35-xdist,py35-trial"
   - TOXENV: "py27-nobyte,doctesting,freeze,docs"
 

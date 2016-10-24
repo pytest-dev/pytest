@@ -6,7 +6,7 @@ import py
 import pytest
 import _pytest._code
 
-pythonlist = ['python2.6', 'python2.7', 'python3.4', 'python3.5']
+pythonlist = ['python2.7', 'python3.4', 'python3.5']
 @pytest.fixture(params=pythonlist)
 def python1(request, tmpdir):
     picklefile = tmpdir.join("data.pickle")
