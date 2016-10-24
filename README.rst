@@ -27,6 +27,27 @@ You can also turn warnings into actual errors::
     py.test -W error
 
 
+Advance usage
+=============
+
+You can get more fine grained filtering of warnings by using the
+``filterwarnings`` configuration option.
+
+``filterwarnings`` works like the python's ``-W`` flag except it will not
+escape special characters.
+
+Example
+-------
+
+.. code::
+
+    # pytest.ini
+    [pytest]
+    filterwarnings= default
+                    ignore:.*is deprecated.*:Warning
+                    error::DeprecationWarning:importlib.*
+
+
 Changes
 =======
 
