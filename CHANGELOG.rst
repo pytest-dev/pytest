@@ -6,7 +6,7 @@
 * Import errors when collecting test modules now display the full traceback (`#1976`_).
   Thanks `@cwitty`_ for the report and `@nicoddemus`_ for the PR.
 
-* Fix confusing command-line help message for custom options with two or more `metavar` properties (`#2004`_).
+* Fix confusing command-line help message for custom options with two or more ``metavar`` properties (`#2004`_).
   Thanks `@okulynyak`_ and `@davehunt`_ for the report and `@nicoddemus`_ for the PR.
 
 * When loading plugins, import errors which contain non-ascii messages are now properly handled in Python 2 (`#1998`_).
@@ -23,9 +23,17 @@
 * Fix teardown error message in generated xUnit XML.
   Thanks `@gdyuldin`_ or the PR.
 
+* Properly handle exceptions in ``multiprocessing`` tasks (`#1984`_).
+  Thanks `@adborden`_ for the report and `@nicoddemus`_ for the PR.
+
+*
+
+*
+
 *
 
 
+.. _@adborden: https://github.com/adborden
 .. _@cwitty: https://github.com/cwitty
 .. _@okulynyak: https://github.com/okulynyak
 .. _@matclab: https://github.com/matclab
@@ -33,6 +41,7 @@
 
 .. _#442: https://github.com/pytest-dev/pytest/issues/442
 .. _#1976: https://github.com/pytest-dev/pytest/issues/1976
+.. _#1984: https://github.com/pytest-dev/pytest/issues/1984
 .. _#1998: https://github.com/pytest-dev/pytest/issues/1998
 .. _#2004: https://github.com/pytest-dev/pytest/issues/2004
 .. _#2005: https://github.com/pytest-dev/pytest/issues/2005

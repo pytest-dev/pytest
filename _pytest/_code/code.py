@@ -623,16 +623,23 @@ class FormattedExcinfo(object):
             e = excinfo.value
             descr = None
             while e is not None:
-                reprtraceback = self.repr_traceback(excinfo)
-                reprcrash = excinfo._getreprcrash()
+                if excinfo:
+                    reprtraceback = self.repr_traceback(excinfo)
+                    reprcrash = excinfo._getreprcrash()
+                else:
+                    # fallback to native repr if the exception doesn't have a traceback:
+                    # ExceptionInfo objects require a full traceback to work
+                    reprtraceback = ReprTracebackNative(py.std.traceback.format_exception(type(e), e, None))
+                    reprcrash = None
+
                 repr_chain += [(reprtraceback, reprcrash, descr)]
                 if e.__cause__ is not None:
                     e = e.__cause__
-                    excinfo = ExceptionInfo((type(e), e, e.__traceback__))
+                    excinfo = ExceptionInfo((type(e), e, e.__traceback__)) if e.__traceback__ else None
                     descr = 'The above exception was the direct cause of the following exception:'
                 elif e.__context__ is not None:
                     e = e.__context__
-                    excinfo = ExceptionInfo((type(e), e, e.__traceback__))
+                    excinfo = ExceptionInfo((type(e), e, e.__traceback__)) if e.__traceback__ else None
                     descr = 'During handling of the above exception, another exception occurred:'
                 else:
                     e = None

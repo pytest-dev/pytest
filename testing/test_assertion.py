@@ -749,6 +749,37 @@ def test_traceback_failure(testdir):
         "*test_traceback_failure.py:4: AssertionError"
     ])
 
+
+@pytest.mark.skipif(sys.version_info[:2] <= (3, 3), reason='Python 3.4+ shows chained exceptions on multiprocess')
+def test_exception_handling_no_traceback(testdir):
+    """
+    Handle chain exceptions in tasks submitted by the multiprocess module (#1984).
+    """
+    p1 = testdir.makepyfile("""
+        from multiprocessing import Pool
+
+        def process_task(n):
+            assert n == 10
+
+        def multitask_job():
+            tasks = [1]
+            with Pool(processes=1) as pool:
+                pool.map(process_task, tasks)
+
+        def test_multitask_job():
+            multitask_job()
+    """)
+    result = testdir.runpytest(p1, "--tb=long")
+    result.stdout.fnmatch_lines([
+        "====* FAILURES *====",
+        "*multiprocessing.pool.RemoteTraceback:*",
+        "Traceback (most recent call last):",
+        "*assert n == 10",
+        "The above exception was the direct cause of the following exception:",
+        "> * multitask_job()",
+    ])
+
+
 @pytest.mark.skipif("'__pypy__' in sys.builtin_module_names or sys.platform.startswith('java')" )
 def test_warn_missing(testdir):
     testdir.makepyfile("")
