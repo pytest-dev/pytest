@@ -458,6 +458,15 @@ class TerminalReporter:
                     self.write_sep("_", msg)
                     self._outrep_summary(rep)
 
+    def print_teardown_sections(self, rep):
+        for secname, content in rep.sections:
+            if 'teardown' in secname:
+                self._tw.sep('-', secname)
+                if content[-1:] == "\n":
+                    content = content[:-1]
+                self._tw.line(content)
+
+
     def summary_failures(self):
         if self.config.option.tbstyle != "no":
             reports = self.getreports('failed')
@@ -473,6 +482,9 @@ class TerminalReporter:
                     markup = {'red': True, 'bold': True}
                     self.write_sep("_", msg, **markup)
                     self._outrep_summary(rep)
+                    for report in self.getreports(''):
+                        if report.nodeid == rep.nodeid and report.when == 'teardown':
+                            self.print_teardown_sections(report)
 
     def summary_errors(self):
         if self.config.option.tbstyle != "no":

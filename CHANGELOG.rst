@@ -17,7 +17,8 @@
   or implicitly as a plugin (`#2005`_).
   Thanks `@RonnyPfannschmidt`_ for the report and `@nicoddemus`_ for the PR.
 
-*
+* Report teardown output on test failure (`#442`_).
+  Thanks `@matclab`_ or the PR.
 
 *
 
@@ -26,7 +27,9 @@
 
 .. _@cwitty: https://github.com/cwitty
 .. _@okulynyak: https://github.com/okulynyak
+.. _@matclab: https://github.com/matclab
 
+.. _#442: https://github.com/pytest-dev/pytest/issues/442
 .. _#1976: https://github.com/pytest-dev/pytest/issues/1976
 .. _#1998: https://github.com/pytest-dev/pytest/issues/1998
 .. _#2004: https://github.com/pytest-dev/pytest/issues/2004
