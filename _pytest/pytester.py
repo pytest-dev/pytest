@@ -92,7 +92,7 @@ class LsofFdLeakChecker(object):
             gc.collect()
         lines2 = self.get_open_files()
 
-        new_fds = set([t[0] for t in lines2]) - set([t[0] for t in lines1])
+        new_fds = {t[0] for t in lines2} - {t[0] for t in lines1}
         leaked_files = [t for t in lines2 if t[0] in new_fds]
         if leaked_files:
             error = []
@@ -110,7 +110,6 @@ class LsofFdLeakChecker(object):
 # XXX copied from execnet's conftest.py - needs to be merged
 winpymap = {
     'python2.7': r'C:\Python27\python.exe',
-    'python2.6': r'C:\Python26\python.exe',
     'python3.1': r'C:\Python31\python.exe',
     'python3.2': r'C:\Python32\python.exe',
     'python3.3': r'C:\Python33\python.exe',
@@ -139,8 +138,8 @@ def getexecutable(name, cache={}):
         cache[name] = executable
         return executable
 
-@pytest.fixture(params=['python2.6', 'python2.7', 'python3.3', "python3.4",
-                        'pypy', 'pypy3'])
+@pytest.fixture(params=['python2.7', 'python3.3', "python3.4", 'pypy',
+                        'pypy3'])
 def anypython(request):
     name = request.param
     executable = getexecutable(name)

@@ -11,7 +11,6 @@ env:
     - TESTENV=coveralls
     # note: please use "tox --listenvs" to populate the build matrix below
     - TESTENV=linting
-    - TESTENV=py26
     - TESTENV=py27
     - TESTENV=py33
     - TESTENV=py34

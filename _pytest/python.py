@@ -1229,13 +1229,6 @@ class RaisesContext(object):
         __tracebackhide__ = True
         if tp[0] is None:
             pytest.fail(self.message)
-        if sys.version_info < (2, 7):
-            # py26: on __exit__() exc_value often does not contain the
-            # exception value.
-            # http://bugs.python.org/issue7853
-            if not isinstance(tp[1], BaseException):
-                exc_type, value, traceback = tp
-                tp = exc_type, exc_type(value), traceback
         self.excinfo.__init__(tp)
         return issubclass(self.excinfo.type, self.expected_exception)
 

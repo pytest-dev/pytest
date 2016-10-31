@@ -1,15 +1,14 @@
 Installation and Getting Started
 ===================================
 
-**Pythons**: Python 2.6,2.7,3.3,3.4,3.5, Jython, PyPy-2.3
+**Pythons**: Python 2.7,3.3,3.4,3.5, Jython, PyPy-2.3
 
 **Platforms**: Unix/Posix and Windows
 
 **PyPI package name**: `pytest <http://pypi.python.org/pypi/pytest>`_
 
 **dependencies**: `py <http://pypi.python.org/pypi/py>`_,
-`colorama (Windows) <http://pypi.python.org/pypi/colorama>`_,
-`argparse (py26) <http://pypi.python.org/pypi/argparse>`_.
+`colorama (Windows) <http://pypi.python.org/pypi/colorama>`_.
 
 **documentation as PDF**: `download latest <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
 
