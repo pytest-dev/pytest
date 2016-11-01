@@ -93,6 +93,9 @@ class of the warning. The ``message`` is the warning itself; calling
 ``str(message)`` will return the actual message of the warning.
 
 .. note::
+    :class:`RecordedWarning` was changed from a plain class to a namedtuple in pytest 3.1
+
+.. note::
     ``DeprecationWarning`` and ``PendingDeprecationWarning`` are treated
     differently; see :ref:`ensuring_function_triggers`.
 
