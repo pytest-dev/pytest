@@ -20,7 +20,8 @@
 * Report teardown output on test failure (`#442`_).
   Thanks `@matclab`_ or the PR.
 
-*
+* Fix teardown error message in generated xUnit XML.
+  Thanks `@gdyuldin`_ or the PR.
 
 *
 
@@ -28,6 +29,7 @@
 .. _@cwitty: https://github.com/cwitty
 .. _@okulynyak: https://github.com/okulynyak
 .. _@matclab: https://github.com/matclab
+.. _@gdyuldin: https://github.com/gdyuldin
 
 .. _#442: https://github.com/pytest-dev/pytest/issues/442
 .. _#1976: https://github.com/pytest-dev/pytest/issues/1976
@@ -98,7 +100,7 @@
   enabled. This allows proper post mortem debugging for all applications
   which have significant logic in their tearDown machinery (`#1890`_). Thanks
   `@mbyt`_ for the PR.
-  
+
 * Fix use of deprecated ``getfuncargvalue`` method in the internal doctest plugin.
   Thanks `@ViviCoder`_ for the report (`#1898`_).
 
@@ -395,7 +397,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 * Refined logic for determining the ``rootdir``, considering only valid
   paths which fixes a number of issues: `#1594`_, `#1435`_ and `#1471`_.
-  Updated the documentation according to current behavior. Thanks to 
+  Updated the documentation according to current behavior. Thanks to
   `@blueyed`_, `@davehunt`_ and `@matthiasha`_ for the PR.
 
 * Always include full assertion explanation. The previous behaviour was hiding
