@@ -1050,6 +1050,50 @@ raise ValueError()
         assert line.endswith('mod.py')
         assert tw.lines[47] == ":15: AttributeError"
 
+    @pytest.mark.skipif("sys.version_info[0] < 3")
+    @pytest.mark.parametrize('reason, description', [
+        ('cause', 'The above exception was the direct cause of the following exception:'),
+        ('context', 'During handling of the above exception, another exception occurred:'),
+    ])
+    def test_exc_chain_repr_without_traceback(self, importasmod, reason, description):
+        """
+        Handle representation of exception chains where one of the exceptions doesn't have a
+        real traceback, such as those raised in a subprocess submitted by the multiprocessing
+        module (#1984).
+        """
+        from _pytest.pytester import LineMatcher
+        exc_handling_code = ' from e' if reason == 'cause' else ''
+        mod = importasmod("""
+            def f():
+                try:
+                    g()
+                except Exception as e:
+                    raise RuntimeError('runtime problem'){exc_handling_code}
+            def g():
+                raise ValueError('invalid value')
+        """.format(exc_handling_code=exc_handling_code))
+
+        with pytest.raises(RuntimeError) as excinfo:
+            mod.f()
+
+        # emulate the issue described in #1984
+        attr = '__%s__' % reason
+        getattr(excinfo.value, attr).__traceback__ = None
+
+        r = excinfo.getrepr()
+        tw = py.io.TerminalWriter(stringio=True)
+        tw.hasmarkup = False
+        r.toterminal(tw)
+
+        matcher = LineMatcher(tw.stringio.getvalue().splitlines())
+        matcher.fnmatch_lines([
+            "ValueError: invalid value",
+            description,
+            "* except Exception as e:",
+            "> * raise RuntimeError('runtime problem')" + exc_handling_code,
+            "E *RuntimeError: runtime problem",
+        ])
+
 
 @pytest.mark.parametrize("style", ["short", "long"])
 @pytest.mark.parametrize("encoding", [None, "utf8", "utf16"])
