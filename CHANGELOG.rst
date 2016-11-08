@@ -12,7 +12,10 @@
 * When loading plugins, import errors which contain non-ascii messages are now properly handled in Python 2 (`#1998`_).
   Thanks `@nicoddemus`_ for the PR.
 
-* Fixed memory leak in the RaisesContext (pytest.raises) (`#1965`_).
+* Fixed cyclic reference when ``pytest.raises`` is used in context-manager form (`#1965`_). Also as a
+  result of this fix, ``sys.exc_info()`` is left empty in both context-manager and function call usages.
+  Previously, ``sys.exc_info`` would contain the exception caught by the context manager,
+  even when the expected exception occurred.
   Thanks `@MSeifert04`_ for the report and the PR.
 
 * Fixed false-positives warnings from assertion rewrite hook for modules that were rewritten but
