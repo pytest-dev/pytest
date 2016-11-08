@@ -26,7 +26,8 @@
 * Properly handle exceptions in ``multiprocessing`` tasks (`#1984`_).
   Thanks `@adborden`_ for the report and `@nicoddemus`_ for the PR.
 
-*
+* Clean up unittest TestCase objects after tests are complete (`#1649`_).
+  Thanks `@d_b_w`_ for the report and PR.
 
 *
 
@@ -38,6 +39,7 @@
 .. _@okulynyak: https://github.com/okulynyak
 .. _@matclab: https://github.com/matclab
 .. _@gdyuldin: https://github.com/gdyuldin
+.. _@d_b_w: https://github.com/d_b_w
 
 .. _#442: https://github.com/pytest-dev/pytest/issues/442
 .. _#1976: https://github.com/pytest-dev/pytest/issues/1976
@@ -45,6 +47,7 @@
 .. _#1998: https://github.com/pytest-dev/pytest/issues/1998
 .. _#2004: https://github.com/pytest-dev/pytest/issues/2004
 .. _#2005: https://github.com/pytest-dev/pytest/issues/2005
+.. _#1649: https://github.com/pytest-dev/pytest/issues/1649
 
 
 3.0.3
