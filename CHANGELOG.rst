@@ -12,6 +12,12 @@
 * When loading plugins, import errors which contain non-ascii messages are now properly handled in Python 2 (`#1998`_).
   Thanks `@nicoddemus`_ for the PR.
 
+* Fixed cyclic reference when ``pytest.raises`` is used in context-manager form (`#1965`_). Also as a
+  result of this fix, ``sys.exc_info()`` is left empty in both context-manager and function call usages.
+  Previously, ``sys.exc_info`` would contain the exception caught by the context manager,
+  even when the expected exception occurred.
+  Thanks `@MSeifert04`_ for the report and the PR.
+
 * Fixed false-positives warnings from assertion rewrite hook for modules that were rewritten but
   were later marked explicitly by ``pytest.register_assert_rewrite``
   or implicitly as a plugin (`#2005`_).
@@ -36,12 +42,14 @@
 
 .. _@adborden: https://github.com/adborden
 .. _@cwitty: https://github.com/cwitty
-.. _@okulynyak: https://github.com/okulynyak
-.. _@matclab: https://github.com/matclab
-.. _@gdyuldin: https://github.com/gdyuldin
 .. _@d_b_w: https://github.com/d_b_w
+.. _@gdyuldin: https://github.com/gdyuldin
+.. _@matclab: https://github.com/matclab
+.. _@MSeifert04: https://github.com/MSeifert04
+.. _@okulynyak: https://github.com/okulynyak
 
 .. _#442: https://github.com/pytest-dev/pytest/issues/442
+.. _#1965: https://github.com/pytest-dev/pytest/issues/1965
 .. _#1976: https://github.com/pytest-dev/pytest/issues/1976
 .. _#1984: https://github.com/pytest-dev/pytest/issues/1984
 .. _#1998: https://github.com/pytest-dev/pytest/issues/1998

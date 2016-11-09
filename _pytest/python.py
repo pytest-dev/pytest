@@ -1237,7 +1237,11 @@ class RaisesContext(object):
                 exc_type, value, traceback = tp
                 tp = exc_type, exc_type(value), traceback
         self.excinfo.__init__(tp)
-        return issubclass(self.excinfo.type, self.expected_exception)
+        suppress_exception = issubclass(self.excinfo.type, self.expected_exception)
+        if sys.version_info[0] == 2 and suppress_exception:
+            sys.exc_clear()
+        return suppress_exception
+
 
 # builtin pytest.approx helper
 
