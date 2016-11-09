@@ -72,6 +72,7 @@ def main():
         entry_points={'console_scripts':
                           ['pytest=pytest:main', 'py.test=pytest:main']},
         classifiers=classifiers,
+        keywords="test unittest",
         cmdclass={'test': PyTest},
         # the following should be enabled for release
         install_requires=install_requires,
