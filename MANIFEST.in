@@ -23,6 +23,10 @@ exclude _pytest/impl
 graft _pytest/vendored_packages
 
 recursive-exclude * *.pyc *.pyo
+recursive-exclude testing/.hypothesis *
+recursive-exclude testing/freeze/~ *
+recursive-exclude testing/freeze/build *
+recursive-exclude testing/freeze/dist *
 
 exclude appveyor.yml
 exclude .travis.yml
