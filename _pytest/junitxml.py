@@ -158,8 +158,12 @@ class _NodeReporter(object):
             Junit.skipped, "collection skipped", report.longrepr)
 
     def append_error(self, report):
+        if getattr(report, 'when', None) == 'teardown':
+            msg = "test teardown failure"
+        else:
+            msg = "test setup failure"
         self._add_simple(
-            Junit.error, "test setup failure", report.longrepr)
+            Junit.error, msg, report.longrepr)
         self._write_captured_output(report)
 
     def append_skipped(self, report):

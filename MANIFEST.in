@@ -11,22 +11,23 @@ include setup.py
 
 include .coveragerc
 
-include plugin-test.sh
-include requirements-docs.txt
-include runtox.py
-
 recursive-include bench *.py
 recursive-include extra *.py
 
 graft testing
 graft doc
+prune doc/en/_build
 
 exclude _pytest/impl
 
 graft _pytest/vendored_packages
 
 recursive-exclude * *.pyc *.pyo
+recursive-exclude testing/.hypothesis *
+recursive-exclude testing/freeze/~ *
+recursive-exclude testing/freeze/build *
+recursive-exclude testing/freeze/dist *
 
-exclude appveyor/install.ps1
 exclude appveyor.yml
-exclude appveyor
+exclude .travis.yml
+prune .github

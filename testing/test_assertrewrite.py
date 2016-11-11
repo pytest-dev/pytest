@@ -543,6 +543,22 @@ def test_rewritten():
         ''')
         assert testdir.runpytest_subprocess().ret == 0
 
+    def test_remember_rewritten_modules(self, pytestconfig, testdir, monkeypatch):
+        """
+        AssertionRewriteHook should remember rewritten modules so it
+        doesn't give false positives (#2005).
+        """
+        monkeypatch.syspath_prepend(testdir.tmpdir)
+        testdir.makepyfile(test_remember_rewritten_modules='')
+        warnings = []
+        hook = AssertionRewritingHook(pytestconfig)
+        monkeypatch.setattr(hook.config, 'warn', lambda code, msg: warnings.append(msg))
+        hook.find_module('test_remember_rewritten_modules')
+        hook.load_module('test_remember_rewritten_modules')
+        hook.mark_rewrite('test_remember_rewritten_modules')
+        hook.mark_rewrite('test_remember_rewritten_modules')
+        assert warnings == []
+
 
 class TestAssertionRewriteHookDetails(object):
     def test_loader_is_package_false_for_module(self, testdir):

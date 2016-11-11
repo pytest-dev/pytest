@@ -1,5 +1,6 @@
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 import pytest
+import gc
 
 def test_simple_unittest(testdir):
     testpath = testdir.makepyfile("""
@@ -133,6 +134,28 @@ def test_teardown(testdir):
     assert failed == 0, failed
     assert passed == 2
     assert passed + skipped + failed == 2
+
+def test_teardown_issue1649(testdir):
+    """
+    Are TestCase objects cleaned up? Often unittest TestCase objects set
+    attributes that are large and expensive during setUp.
+
+    The TestCase will not be cleaned up if the test fails, because it
+    would then exist in the stackframe.
+    """
+    testpath = testdir.makepyfile("""
+        import unittest
+        class TestCaseObjectsShouldBeCleanedUp(unittest.TestCase):
+            def setUp(self):
+                self.an_expensive_object = 1
+            def test_demo(self):
+                pass
+
+    """)
+    testdir.inline_run("-s", testpath)
+    gc.collect()
+    for obj in gc.get_objects():
+        assert type(obj).__name__ != 'TestCaseObjectsShouldBeCleanedUp'
 
 @pytest.mark.skipif("sys.version_info < (2,7)")
 def test_unittest_skip_issue148(testdir):

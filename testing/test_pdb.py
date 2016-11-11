@@ -1,4 +1,5 @@
 import sys
+import platform
 
 import _pytest._code
 import pytest
@@ -96,6 +97,12 @@ class TestPDB:
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
         assert "def test_1" not in rest
+        self.flush(child)
+
+    @staticmethod
+    def flush(child):
+        if platform.system() == 'Darwin':
+            return
         if child.isalive():
             child.wait()
 
@@ -115,8 +122,7 @@ class TestPDB:
         child.sendeof()
         rest = child.read().decode("utf8")
         assert 'debug.me' in rest
-        if child.isalive():
-            child.wait()
+        self.flush(child)
 
     def test_pdb_interaction_capture(self, testdir):
         p1 = testdir.makepyfile("""
@@ -131,8 +137,7 @@ class TestPDB:
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
         assert "getrekt" not in rest
-        if child.isalive():
-            child.wait()
+        self.flush(child)
 
     def test_pdb_interaction_exception(self, testdir):
         p1 = testdir.makepyfile("""
@@ -150,8 +155,7 @@ class TestPDB:
         child.expect(".*function")
         child.sendeof()
         child.expect("1 failed")
-        if child.isalive():
-            child.wait()
+        self.flush(child)
 
     def test_pdb_interaction_on_collection_issue181(self, testdir):
         p1 = testdir.makepyfile("""
@@ -163,8 +167,7 @@ class TestPDB:
         child.expect("(Pdb)")
         child.sendeof()
         child.expect("1 error")
-        if child.isalive():
-            child.wait()
+        self.flush(child)
 
     def test_pdb_interaction_on_internal_error(self, testdir):
         testdir.makeconftest("""
@@ -176,8 +179,7 @@ class TestPDB:
         #child.expect(".*import pytest.*")
         child.expect("(Pdb)")
         child.sendeof()
-        if child.isalive():
-            child.wait()
+        self.flush(child)
 
     def test_pdb_interaction_capturing_simple(self, testdir):
         p1 = testdir.makepyfile("""
@@ -197,8 +199,7 @@ class TestPDB:
         assert "1 failed" in rest
         assert "def test_1" in rest
         assert "hello17" in rest # out is captured
-        if child.isalive():
-            child.wait()
+        self.flush(child)
 
     def test_pdb_set_trace_interception(self, testdir):
         p1 = testdir.makepyfile("""
@@ -213,8 +214,7 @@ class TestPDB:
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
         assert "reading from stdin while output" not in rest
-        if child.isalive():
-            child.wait()
+        self.flush(child)
 
     def test_pdb_and_capsys(self, testdir):
         p1 = testdir.makepyfile("""
@@ -229,8 +229,7 @@ class TestPDB:
         child.expect("hello1")
         child.sendeof()
         child.read()
-        if child.isalive():
-            child.wait()
+        self.flush(child)
 
     def test_set_trace_capturing_afterwards(self, testdir):
         p1 = testdir.makepyfile("""
@@ -249,8 +248,7 @@ class TestPDB:
         child.expect("hello")
         child.sendeof()
         child.read()
-        if child.isalive():
-            child.wait()
+        self.flush(child)
 
     def test_pdb_interaction_doctest(self, testdir):
         p1 = testdir.makepyfile("""
@@ -269,8 +267,7 @@ class TestPDB:
         child.sendeof()
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
-        if child.isalive():
-            child.wait()
+        self.flush(child)
 
     def test_pdb_interaction_capturing_twice(self, testdir):
         p1 = testdir.makepyfile("""
@@ -296,8 +293,7 @@ class TestPDB:
         assert "def test_1" in rest
         assert "hello17" in rest # out is captured
         assert "hello18" in rest # out is captured
-        if child.isalive():
-            child.wait()
+        self.flush(child)
 
     def test_pdb_used_outside_test(self, testdir):
         p1 = testdir.makepyfile("""
@@ -308,7 +304,7 @@ class TestPDB:
         child = testdir.spawn("%s %s" %(sys.executable, p1))
         child.expect("x = 5")
         child.sendeof()
-        child.wait()
+        self.flush(child)
 
     def test_pdb_used_in_generate_tests(self, testdir):
         p1 = testdir.makepyfile("""
@@ -322,7 +318,7 @@ class TestPDB:
         child = testdir.spawn_pytest(str(p1))
         child.expect("x = 5")
         child.sendeof()
-        child.wait()
+        self.flush(child)
 
     def test_pdb_collection_failure_is_shown(self, testdir):
         p1 = testdir.makepyfile("""xxx """)
@@ -351,8 +347,7 @@ class TestPDB:
         child.expect("enter_pdb_hook")
         child.send('c\n')
         child.sendeof()
-        if child.isalive():
-            child.wait()
+        self.flush(child)
 
     def test_pdb_custom_cls(self, testdir, custom_pdb_calls):
         p1 = testdir.makepyfile("""xxx """)
