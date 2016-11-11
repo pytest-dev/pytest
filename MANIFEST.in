@@ -9,6 +9,8 @@ include HOWTORELEASE.rst
 include tox.ini
 include setup.py
 
+recursive-include scripts *.py
+
 include .coveragerc
 
 recursive-include bench *.py
