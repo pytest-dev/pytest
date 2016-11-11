@@ -8,10 +8,15 @@ environment:
   matrix:
   # create multiple jobs to execute a set of tox runs on each; this is to workaround having
   # builds timing out in AppVeyor
-  # pypy is disabled until #1963 gets fixed
   - TOXENV: "linting,py26,py27,py33,py34,py35"
   - TOXENV: "py27-pexpect,py27-xdist,py27-trial,py35-pexpect,py35-xdist,py35-trial"
   - TOXENV: "py27-nobyte,doctesting,freeze,docs"
+  - TOXENV: "pypy"
+
+matrix:
+  allow_failures:
+    # pypy is disabled until #1963 gets fixed
+    - TOXENV: "pypy"
 
 install:
   - echo Installed Pythons
@@ -21,10 +26,10 @@ install:
   # choco install returns non-zero, because choco install python.pypy is too
   # noisy)
   # pypy is disabled until #1963 gets fixed
-  #- choco install python.pypy > pypy-inst.log 2>&1 || (type pypy-inst.log & exit /b 1)
-  #- set PATH=C:\tools\pypy\pypy;%PATH% # so tox can find pypy
-  #- echo PyPy installed
-  #- pypy --version
+  - choco install python.pypy > pypy-inst.log 2>&1 || (type pypy-inst.log & exit /b 1)
+  - set PATH=C:\tools\pypy\pypy;%PATH% # so tox can find pypy
+  - echo PyPy installed
+  - pypy --version
 
   - C:\Python35\python -m pip install tox
 
