@@ -1,7 +1,5 @@
-3.0.4.dev0
-==========
-
-*
+3.0.4
+=====
 
 * Import errors when collecting test modules now display the full traceback (`#1976`_).
   Thanks `@cwitty`_ for the report and `@nicoddemus`_ for the PR.
@@ -34,10 +32,6 @@
 
 * Clean up unittest TestCase objects after tests are complete (`#1649`_).
   Thanks `@d_b_w`_ for the report and PR.
-
-*
-
-*
 
 
 .. _@adborden: https://github.com/adborden
