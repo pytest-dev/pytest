@@ -1,4 +1,6 @@
 import pytest
+import sys
+
 
 class TestRaises:
     def test_raises(self):
@@ -88,3 +90,31 @@ class TestRaises:
             assert e.msg == message
         else:
             assert False, "Expected pytest.raises.Exception"
+
+    @pytest.mark.parametrize('method', ['function', 'with'])
+    def test_raises_cyclic_reference(self, method):
+        """
+        Ensure pytest.raises does not leave a reference cycle (#1965).
+        """
+        import gc
+
+        class T(object):
+            def __call__(self):
+                raise ValueError
+
+        t = T()
+        if method == 'function':
+            pytest.raises(ValueError, t)
+        else:
+            with pytest.raises(ValueError):
+                t()
+
+        # ensure both forms of pytest.raises don't leave exceptions in sys.exc_info()
+        assert sys.exc_info() == (None, None, None)
+
+        del t
+
+        # ensure the t instance is not stuck in a cyclic reference
+        for o in gc.get_objects():
+            assert type(o) is not T
+

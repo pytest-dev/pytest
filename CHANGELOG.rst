@@ -41,31 +41,74 @@ Changes
 .. _#2013: https://github.com/pytest-dev/pytest/issues/2013
 
 
-3.0.4.dev
-=========
+3.0.5.dev0
+==========
+
 
 
 *
 
+*
+
+*
+
+*
+
+*
+
+
+3.0.4
+=====
+
 * Import errors when collecting test modules now display the full traceback (`#1976`_).
   Thanks `@cwitty`_ for the report and `@nicoddemus`_ for the PR.
 
-* Fix confusing command-line help message for custom options with two or more `metavar` properties (`#2004`_).
+* Fix confusing command-line help message for custom options with two or more ``metavar`` properties (`#2004`_).
   Thanks `@okulynyak`_ and `@davehunt`_ for the report and `@nicoddemus`_ for the PR.
 
 * When loading plugins, import errors which contain non-ascii messages are now properly handled in Python 2 (`#1998`_).
   Thanks `@nicoddemus`_ for the PR.
 
-*
+* Fixed cyclic reference when ``pytest.raises`` is used in context-manager form (`#1965`_). Also as a
+  result of this fix, ``sys.exc_info()`` is left empty in both context-manager and function call usages.
+  Previously, ``sys.exc_info`` would contain the exception caught by the context manager,
+  even when the expected exception occurred.
+  Thanks `@MSeifert04`_ for the report and the PR.
+
+* Fixed false-positives warnings from assertion rewrite hook for modules that were rewritten but
+  were later marked explicitly by ``pytest.register_assert_rewrite``
+  or implicitly as a plugin (`#2005`_).
+  Thanks `@RonnyPfannschmidt`_ for the report and `@nicoddemus`_ for the PR.
+
+* Report teardown output on test failure (`#442`_).
+  Thanks `@matclab`_ or the PR.
+
+* Fix teardown error message in generated xUnit XML.
+  Thanks `@gdyuldin`_ or the PR.
+
+* Properly handle exceptions in ``multiprocessing`` tasks (`#1984`_).
+  Thanks `@adborden`_ for the report and `@nicoddemus`_ for the PR.
+
+* Clean up unittest TestCase objects after tests are complete (`#1649`_).
+  Thanks `@d_b_w`_ for the report and PR.
 
 
+.. _@adborden: https://github.com/adborden
 .. _@cwitty: https://github.com/cwitty
+.. _@d_b_w: https://github.com/d_b_w
+.. _@gdyuldin: https://github.com/gdyuldin
+.. _@matclab: https://github.com/matclab
+.. _@MSeifert04: https://github.com/MSeifert04
 .. _@okulynyak: https://github.com/okulynyak
 
+.. _#442: https://github.com/pytest-dev/pytest/issues/442
+.. _#1965: https://github.com/pytest-dev/pytest/issues/1965
 .. _#1976: https://github.com/pytest-dev/pytest/issues/1976
+.. _#1984: https://github.com/pytest-dev/pytest/issues/1984
 .. _#1998: https://github.com/pytest-dev/pytest/issues/1998
 .. _#2004: https://github.com/pytest-dev/pytest/issues/2004
-
+.. _#2005: https://github.com/pytest-dev/pytest/issues/2005
+.. _#1649: https://github.com/pytest-dev/pytest/issues/1649
 
 
 3.0.3
@@ -439,7 +482,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 * Refined logic for determining the ``rootdir``, considering only valid
   paths which fixes a number of issues: `#1594`_, `#1435`_ and `#1471`_.
-  Updated the documentation according to current behavior. Thanks to 
+  Updated the documentation according to current behavior. Thanks to
   `@blueyed`_, `@davehunt`_ and `@matthiasha`_ for the PR.
 
 * Always include full assertion explanation. The previous behaviour was hiding

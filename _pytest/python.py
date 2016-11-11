@@ -1106,7 +1106,9 @@ def raises(expected_exception, *args, **kwargs):
 
         >>> with raises(ZeroDivisionError, message="Expecting ZeroDivisionError"):
         ...    pass
-        ... Failed: Expecting ZeroDivisionError
+        Traceback (most recent call last):
+          ...
+        Failed: Expecting ZeroDivisionError
 
 
     .. note::
@@ -1117,19 +1119,21 @@ def raises(expected_exception, *args, **kwargs):
        Lines of code after that, within the scope of the context manager will
        not be executed. For example::
 
-           >>> with raises(OSError) as exc_info:
-                   assert 1 == 1  # this will execute as expected
-                   raise OSError(errno.EEXISTS, 'directory exists')
-                   assert exc_info.value.errno == errno.EEXISTS  # this will not execute
+           >>> value = 15
+           >>> with raises(ValueError) as exc_info:
+           ...     if value > 10:
+           ...         raise ValueError("value must be <= 10")
+           ...     assert str(exc_info.value) == "value must be <= 10"  # this will not execute
 
        Instead, the following approach must be taken (note the difference in
        scope)::
 
-           >>> with raises(OSError) as exc_info:
-                   assert 1 == 1  # this will execute as expected
-                   raise OSError(errno.EEXISTS, 'directory exists')
+           >>> with raises(ValueError) as exc_info:
+           ...     if value > 10:
+           ...         raise ValueError("value must be <= 10")
+           ...
+           >>> assert str(exc_info.value) == "value must be <= 10"
 
-               assert exc_info.value.errno == errno.EEXISTS  # this will now execute
 
     Or you can specify a callable by passing a to-be-called lambda::
 
@@ -1228,7 +1232,11 @@ class RaisesContext(object):
                 exc_type, value, traceback = tp
                 tp = exc_type, exc_type(value), traceback
         self.excinfo.__init__(tp)
-        return issubclass(self.excinfo.type, self.expected_exception)
+        suppress_exception = issubclass(self.excinfo.type, self.expected_exception)
+        if sys.version_info[0] == 2 and suppress_exception:
+            sys.exc_clear()
+        return suppress_exception
+
 
 # builtin pytest.approx helper
 

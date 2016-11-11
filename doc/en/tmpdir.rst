@@ -29,7 +29,7 @@ Running this would result in a passed test except for the last
 
     $ pytest test_tmpdir.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.3, py-1.4.31, pluggy-0.4.0
+    platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     

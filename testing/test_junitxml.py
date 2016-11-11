@@ -165,6 +165,30 @@ class TestPython:
         fnode.assert_attr(message="test setup failure")
         assert "ValueError" in fnode.toxml()
 
+    def test_teardown_error(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture
+            def arg():
+                yield
+                raise ValueError()
+            def test_function(arg):
+                pass
+        """)
+        result, dom = runandparse(testdir)
+        assert result.ret
+        node = dom.find_first_by_tag("testsuite")
+        tnode = node.find_first_by_tag("testcase")
+        tnode.assert_attr(
+            file="test_teardown_error.py",
+            line="6",
+            classname="test_teardown_error",
+            name="test_function")
+        fnode = tnode.find_first_by_tag("error")
+        fnode.assert_attr(message="test teardown failure")
+        assert "ValueError" in fnode.toxml()
+
     def test_skip_contains_name_reason(self, testdir):
         testdir.makepyfile("""
             import pytest

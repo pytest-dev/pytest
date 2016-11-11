@@ -94,6 +94,9 @@ class TestCaseFunction(pytest.Function):
     def teardown(self):
         if hasattr(self._testcase, 'teardown_method'):
             self._testcase.teardown_method(self._obj)
+        # Allow garbage collection on TestCase instance attributes.
+        self._testcase = None
+        self._obj = None
 
     def startTest(self, testcase):
         pass

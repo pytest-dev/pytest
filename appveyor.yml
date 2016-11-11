@@ -20,10 +20,11 @@ install:
   # install pypy using choco (redirect to a file and write to console in case
   # choco install returns non-zero, because choco install python.pypy is too
   # noisy)
-  - choco install python.pypy > pypy-inst.log 2>&1 || (type pypy-inst.log & exit /b 1)
-  - set PATH=C:\tools\pypy\pypy;%PATH% # so tox can find pypy
-  - echo PyPy installed
-  - pypy --version
+  # pypy is disabled until #1963 gets fixed
+  #- choco install python.pypy > pypy-inst.log 2>&1 || (type pypy-inst.log & exit /b 1)
+  #- set PATH=C:\tools\pypy\pypy;%PATH% # so tox can find pypy
+  #- echo PyPy installed
+  #- pypy --version
 
   - C:\Python35\python -m pip install tox
 
