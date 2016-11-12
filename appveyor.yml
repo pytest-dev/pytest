@@ -6,6 +6,7 @@ environment:
     # https://www.appveyor.com/docs/build-configuration#secure-variables
 
   matrix:
+  # note: please use "tox --listenvs" to populate the build matrix below
   - TOXENV: "linting"
   - TOXENV: "py26"
   - TOXENV: "py27"
@@ -28,14 +29,7 @@ install:
   - echo Installed Pythons
   - dir c:\Python*
 
-  # install pypy using choco (redirect to a file and write to console in case
-  # choco install returns non-zero, because choco install python.pypy is too
-  # noisy)
-  # pypy is disabled until #1963 gets fixed
-  - choco install python.pypy > pypy-inst.log 2>&1 || (type pypy-inst.log & exit /b 1)
-  - set PATH=C:\tools\pypy\pypy;%PATH% # so tox can find pypy
-  - echo PyPy installed
-  - pypy --version
+  - if "%TOXENV%" == "pypy" scripts\install-pypy.bat
 
   - C:\Python35\python -m pip install tox
 
