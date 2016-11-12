@@ -6,17 +6,23 @@ environment:
     # https://www.appveyor.com/docs/build-configuration#secure-variables
 
   matrix:
-  # create multiple jobs to execute a set of tox runs on each; this is to workaround having
-  # builds timing out in AppVeyor
-  - TOXENV: "linting,py26,py27,py33,py34,py35"
-  - TOXENV: "py27-pexpect,py27-xdist,py27-trial,py35-pexpect,py35-xdist,py35-trial"
-  - TOXENV: "py27-nobyte,doctesting,freeze,docs"
+  - TOXENV: "linting"
+  - TOXENV: "py26"
+  - TOXENV: "py27"
+  - TOXENV: "py33"
+  - TOXENV: "py34"
+  - TOXENV: "py35"
   - TOXENV: "pypy"
-
-matrix:
-  allow_failures:
-    # pypy is disabled until #1963 gets fixed
-    - TOXENV: "pypy"
+  - TOXENV: "py27-pexpect"
+  - TOXENV: "py27-xdist"
+  - TOXENV: "py27-trial"
+  - TOXENV: "py35-pexpect"
+  - TOXENV: "py35-xdist"
+  - TOXENV: "py35-trial"
+  - TOXENV: "py27-nobyte"
+  - TOXENV: "doctesting"
+  - TOXENV: "freeze"
+  - TOXENV: "docs"
 
 install:
   - echo Installed Pythons
