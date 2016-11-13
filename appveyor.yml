@@ -6,30 +6,30 @@ environment:
     # https://www.appveyor.com/docs/build-configuration#secure-variables
 
   matrix:
-  # create multiple jobs to execute a set of tox runs on each; this is to workaround having
-  # builds timing out in AppVeyor
-  - TOXENV: "linting,py26,py27,py33,py34,py35"
-  - TOXENV: "py27-pexpect,py27-xdist,py27-trial,py35-pexpect,py35-xdist,py35-trial"
-  - TOXENV: "py27-nobyte,doctesting,freeze,docs"
+  # note: please use "tox --listenvs" to populate the build matrix below
+  - TOXENV: "linting"
+  - TOXENV: "py26"
+  - TOXENV: "py27"
+  - TOXENV: "py33"
+  - TOXENV: "py34"
+  - TOXENV: "py35"
   - TOXENV: "pypy"
-
-matrix:
-  allow_failures:
-    # pypy is disabled until #1963 gets fixed
-    - TOXENV: "pypy"
+  - TOXENV: "py27-pexpect"
+  - TOXENV: "py27-xdist"
+  - TOXENV: "py27-trial"
+  - TOXENV: "py35-pexpect"
+  - TOXENV: "py35-xdist"
+  - TOXENV: "py35-trial"
+  - TOXENV: "py27-nobyte"
+  - TOXENV: "doctesting"
+  - TOXENV: "freeze"
+  - TOXENV: "docs"
 
 install:
   - echo Installed Pythons
   - dir c:\Python*
 
-  # install pypy using choco (redirect to a file and write to console in case
-  # choco install returns non-zero, because choco install python.pypy is too
-  # noisy)
-  # pypy is disabled until #1963 gets fixed
-  - choco install python.pypy > pypy-inst.log 2>&1 || (type pypy-inst.log & exit /b 1)
-  - set PATH=C:\tools\pypy\pypy;%PATH% # so tox can find pypy
-  - echo PyPy installed
-  - pypy --version
+  - if "%TOXENV%" == "pypy" scripts\install-pypy.bat
 
   - C:\Python35\python -m pip install tox
 
