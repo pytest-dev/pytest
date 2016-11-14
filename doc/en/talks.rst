@@ -11,6 +11,9 @@ Talks and Tutorials
 Talks and blog postings
 ---------------------------------------------
 
+- `Pythonic testing, Igor Starikov (Russian, PyNsk, November 2016)
+  <https://www.youtube.com/watch?v=_92nfdd5nK8>`_.
+
 - `pytest - Rapid Simple Testing, Florian Bruhin, Swiss Python Summit 2016
   <https://www.youtube.com/watch?v=rCBHkQ_LVIs>`_.
 
