@@ -1,7 +1,10 @@
+import glob
 import os
+import py_compile
 import stat
 import sys
 import zipfile
+
 import py
 import pytest
 
@@ -479,6 +482,31 @@ def test_rewritten():
                 assert not os.path.exists(os.path.dirname(__cached__))""")
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
         assert testdir.runpytest_subprocess().ret == 0
+
+    def test_orphaned_pyc_file(self, testdir):
+        if sys.version_info < (3, 0) and hasattr(sys, 'pypy_version_info'):
+            pytest.skip("pypy2 doesn't run orphaned pyc files")
+
+        testdir.makepyfile("""
+            import orphan
+            def test_it():
+                assert orphan.value == 17
+            """)
+        testdir.makepyfile(orphan="""
+            value = 17
+            """)
+        py_compile.compile("orphan.py")
+        os.remove("orphan.py")
+
+        # Python 3 puts the .pyc files in a __pycache__ directory, and will
+        # not import from there without source.  It will import a .pyc from
+        # the source location though.
+        if not os.path.exists("orphan.pyc"):
+            pycs = glob.glob("__pycache__/orphan.*.pyc")
+            assert len(pycs) == 1
+            os.rename(pycs[0], "orphan.pyc")
+
+        assert testdir.runpytest().ret == 0
 
     @pytest.mark.skipif('"__pypy__" in sys.modules')
     def test_pyc_vs_pyo(self, testdir, monkeypatch):
