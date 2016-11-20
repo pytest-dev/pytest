@@ -24,6 +24,7 @@ def test_code_with_class():
         pass
     pytest.raises(TypeError, "_pytest._code.Code(A)")
 
+
 if True:
     def x():
         pass
@@ -68,8 +69,10 @@ def test_code_from_func():
 
 def test_unicode_handling():
     value = py.builtin._totext('\xc4\x85\xc4\x87\n', 'utf-8').encode('utf8')
+
     def f():
         raise Exception(value)
+
     excinfo = pytest.raises(Exception, f)
     str(excinfo)
     if sys.version_info[0] < 3:
@@ -79,8 +82,10 @@ def test_unicode_handling():
 @pytest.mark.skipif(sys.version_info[0] >= 3, reason='python 2 only issue')
 def test_unicode_handling_syntax_error():
     value = py.builtin._totext('\xc4\x85\xc4\x87\n', 'utf-8').encode('utf8')
+
     def f():
         raise SyntaxError('invalid syntax', (None, 1, 3, value))
+
     excinfo = pytest.raises(Exception, f)
     str(excinfo)
     if sys.version_info[0] < 3:

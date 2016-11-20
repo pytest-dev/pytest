@@ -38,9 +38,13 @@ class TestSetupState:
 
     def test_teardown_multiple_one_fails(self, testdir):
         r = []
+
         def fin1(): r.append('fin1')
+
         def fin2(): raise Exception('oops')
+
         def fin3(): r.append('fin3')
+
         item = testdir.getitem("def test_func(): pass")
         ss = runner.SetupState()
         ss.addfinalizer(fin1, item)
@@ -55,7 +59,9 @@ class TestSetupState:
         # Ensure the first exception is the one which is re-raised.
         # Ideally both would be reported however.
         def fin1(): raise Exception('oops1')
+
         def fin2(): raise Exception('oops2')
+
         item = testdir.getitem("def test_func(): pass")
         ss = runner.SetupState()
         ss.addfinalizer(fin1, item)
@@ -527,8 +533,10 @@ def test_exception_printing_skip():
 
 def test_importorskip(monkeypatch):
     importorskip = pytest.importorskip
+
     def f():
         importorskip("asdlkj")
+
     try:
         sys = importorskip("sys")  # noqa
         assert sys == py.std.sys
@@ -643,11 +651,13 @@ def test_makereport_getsource_dynamic_code(testdir, monkeypatch):
     """Test that exception in dynamically generated code doesn't break getting the source line."""
     import inspect
     original_findsource = inspect.findsource
+
     def findsource(obj, *args, **kwargs):
         # Can be triggered by dynamically created functions
         if obj.__name__ == 'foo':
             raise IndexError()
         return original_findsource(obj, *args, **kwargs)
+
     monkeypatch.setattr(inspect, 'findsource', findsource)
 
     testdir.makepyfile("""

@@ -32,11 +32,13 @@ scope2props["function"] = scope2props["instance"] + ("function", "keywords")
 def scopeproperty(name=None, doc=None):
     def decoratescope(func):
         scopename = name or func.__name__
+
         def provide(self):
             if func.__name__ in scope2props[self.scope]:
                 return func(self)
             raise AttributeError("%s not available in %s-scoped context" % (
                 scopename, self.scope))
+
         return property(provide, None, None, func.__doc__)
     return decoratescope
 

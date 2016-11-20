@@ -63,10 +63,12 @@ class TestOEJSKITSpecials:
 def test_wrapped_getfslineno():
     def func():
         pass
+
     def wrap(f):
         func.__wrapped__ = f
         func.patchings = ["qwe"]
         return func
+
     @wrap
     def wrapped_func(x, y, z):
         pass
@@ -77,28 +79,36 @@ def test_wrapped_getfslineno():
 class TestMockDecoration:
     def test_wrapped_getfuncargnames(self):
         from _pytest.compat import getfuncargnames
+
         def wrap(f):
+
             def func():
                 pass
+
             func.__wrapped__ = f
             return func
+
         @wrap
         def f(x):
             pass
+
         l = getfuncargnames(f)
         assert l == ("x",)
 
     def test_wrapped_getfuncargnames_patching(self):
         from _pytest.compat import getfuncargnames
+
         def wrap(f):
             def func():
                 pass
             func.__wrapped__ = f
             func.patchings = ["qwe"]
             return func
+
         @wrap
         def f(x, y, z):
             pass
+
         l = getfuncargnames(f)
         assert l == ("y", "z")
 

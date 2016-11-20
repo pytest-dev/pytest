@@ -83,6 +83,7 @@ class TestPytestPluginInteractions:
     def test_configure(self, testdir):
         config = testdir.parseconfig()
         l = []
+
         class A:
             def pytest_configure(self, config):
                 l.append(self)
@@ -102,13 +103,16 @@ class TestPytestPluginInteractions:
     def test_hook_tracing(self):
         pytestpm = get_config().pluginmanager  # fully initialized with plugins
         saveindent = []
+
         class api1:
             def pytest_plugin_registered(self):
                 saveindent.append(pytestpm.trace.root.indent)
+
         class api2:
             def pytest_plugin_registered(self):
                 saveindent.append(pytestpm.trace.root.indent)
                 raise ValueError()
+
         l = []
         pytestpm.trace.root.setwriter(l.append)
         undo = pytestpm.enable_tracing()

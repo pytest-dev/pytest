@@ -104,20 +104,29 @@ class TestAssertionRewrite:
         def f():
             assert False
         assert getmsg(f) == "assert False"
+
         def f():
             f = False
             assert f
+
         assert getmsg(f) == "assert False"
+
         def f():
             assert a_global  # noqa
+
         assert getmsg(f, {"a_global" : False}) == "assert False"
+
         def f():
             assert sys == 42
+
         assert getmsg(f, {"sys" : sys}) == "assert sys == 42"
+
         def f():
             assert cls == 42  # noqa
+
         class X(object):
             pass
+
         assert getmsg(f, {"cls" : X}) == "assert cls == 42"
 
     def test_assert_already_has_message(self):
@@ -190,78 +199,110 @@ class TestAssertionRewrite:
         def f():
             f = g = False
             assert f and g
+
         assert getmsg(f) == "assert (False)"
+
         def f():
             f = True
             g = False
             assert f and g
+
         assert getmsg(f) == "assert (True and False)"
+
         def f():
             f = False
             g = True
             assert f and g
+
         assert getmsg(f) == "assert (False)"
+
         def f():
             f = g = False
             assert f or g
+
         assert getmsg(f) == "assert (False or False)"
+
         def f():
             f = g = False
             assert not f and not g
+
         getmsg(f, must_pass=True)
+
         def x():
             return False
+
         def f():
             assert x() and x()
+
         assert getmsg(f, {"x" : x}) == """assert (False)
  +  where False = x()"""
+
         def f():
             assert False or x()
+
         assert getmsg(f, {"x" : x}) == """assert (False or False)
  +  where False = x()"""
+
         def f():
             assert 1 in {} and 2 in {}
+
         assert getmsg(f) == "assert (1 in {})"
+
         def f():
             x = 1
             y = 2
             assert x in {1 : None} and y in {}
+
         assert getmsg(f) == "assert (1 in {1: None} and 2 in {})"
+
         def f():
             f = True
             g = False
             assert f or g
+
         getmsg(f, must_pass=True)
+
         def f():
             f = g = h = lambda: True
             assert f() and g() and h()
+
         getmsg(f, must_pass=True)
 
     def test_short_circut_evaluation(self):
         def f():
             assert True or explode  # noqa
+
         getmsg(f, must_pass=True)
+
         def f():
             x = 1
             assert x == 1 or x == 2
+
         getmsg(f, must_pass=True)
 
     def test_unary_op(self):
         def f():
             x = True
             assert not x
+
         assert getmsg(f) == "assert not True"
+
         def f():
             x = 0
             assert ~x + 1
+
         assert getmsg(f) == "assert (~0 + 1)"
+
         def f():
             x = 3
             assert -x + x
+
         assert getmsg(f) == "assert (-3 + 3)"
+
         def f():
             x = 0
             assert +x + x
+
         assert getmsg(f) == "assert (+0 + 0)"
 
     def test_binary_op(self):
@@ -269,7 +310,9 @@ class TestAssertionRewrite:
             x = 1
             y = -1
             assert x + y
+
         assert getmsg(f) == "assert (1 + -1)"
+
         def f():
             assert not 5 % 4
         assert getmsg(f) == "assert not (5 % 4)"
@@ -277,7 +320,9 @@ class TestAssertionRewrite:
     def test_boolop_percent(self):
         def f():
             assert 3 % 2 and False
+
         assert getmsg(f) == "assert ((3 % 2) and False)"
+
         def f():
             assert False or 4 % 2
         assert getmsg(f) == "assert (False or (4 % 2))"
@@ -298,113 +343,159 @@ class TestAssertionRewrite:
     def test_call(self):
         def g(a=42, *args, **kwargs):
             return False
+
         ns = {"g" : g}
+
         def f():
             assert g()
+
         assert getmsg(f, ns) == """assert False
  +  where False = g()"""
+
         def f():
             assert g(1)
+
         assert getmsg(f, ns) == """assert False
  +  where False = g(1)"""
+
         def f():
             assert g(1, 2)
+
         assert getmsg(f, ns) == """assert False
  +  where False = g(1, 2)"""
+
         def f():
             assert g(1, g=42)
+
         assert getmsg(f, ns) == """assert False
  +  where False = g(1, g=42)"""
+
         def f():
             assert g(1, 3, g=23)
+
         assert getmsg(f, ns) == """assert False
  +  where False = g(1, 3, g=23)"""
+
         def f():
             seq = [1, 2, 3]
             assert g(*seq)
+
         assert getmsg(f, ns) == """assert False
  +  where False = g(*[1, 2, 3])"""
+
         def f():
             x = "a"
             assert g(**{x : 2})
+
         assert getmsg(f, ns) == """assert False
  +  where False = g(**{'a': 2})"""
 
     def test_attribute(self):
         class X(object):
             g = 3
+
         ns = {"x" : X}
+
         def f():
             assert not x.g # noqa
+
         assert getmsg(f, ns) == """assert not 3
  +  where 3 = x.g"""
+
         def f():
             x.a = False  # noqa
             assert x.a   # noqa
+
         assert getmsg(f, ns) == """assert False
  +  where False = x.a"""
 
     def test_comparisons(self):
+
         def f():
             a, b = range(2)
             assert b < a
+
         assert getmsg(f) == """assert 1 < 0"""
+
         def f():
             a, b, c = range(3)
             assert a > b > c
+
         assert getmsg(f) == """assert 0 > 1"""
+
         def f():
             a, b, c = range(3)
             assert a < b > c
+
         assert getmsg(f) == """assert 1 > 2"""
+
         def f():
             a, b, c = range(3)
             assert a < b <= c
+
         getmsg(f, must_pass=True)
+
         def f():
             a, b, c = range(3)
             assert a < b
             assert b < c
+
         getmsg(f, must_pass=True)
 
     def test_len(self):
+
         def f():
             l = list(range(10))
             assert len(l) == 11
+
         assert getmsg(f).startswith("""assert 10 == 11
  +  where 10 = len([""")
 
     def test_custom_reprcompare(self, monkeypatch):
         def my_reprcompare(op, left, right):
             return "42"
+
         monkeypatch.setattr(util, "_reprcompare", my_reprcompare)
+
         def f():
             assert 42 < 3
+
         assert getmsg(f) == "assert 42"
+
         def my_reprcompare(op, left, right):
             return "%s %s %s" % (left, op, right)
+
         monkeypatch.setattr(util, "_reprcompare", my_reprcompare)
+
         def f():
             assert 1 < 3 < 5 <= 4 < 7
+
         assert getmsg(f) == "assert 5 <= 4"
 
     def test_assert_raising_nonzero_in_comparison(self):
         def f():
             class A(object):
+
                 def __nonzero__(self):
                     raise ValueError(42)
+
                 def __lt__(self, other):
                     return A()
+
                 def __repr__(self):
                     return "<MY42 object>"
+
             def myany(x):
                 return False
+
             assert myany(A() < 0)
+
         assert "<MY42 object> < 0" in getmsg(f)
 
     def test_formatchar(self):
         def f():
             assert "%test" == "test"
+
         assert getmsg(f).startswith("assert '%test' == 'test'")
 
     def test_custom_repr(self):
@@ -414,8 +505,10 @@ class TestAssertionRewrite:
 
                 def __repr__(self):
                     return "\n{ \n~ \n}"
+
             f = Foo()
             assert 0 == f.a
+
         assert r"where 1 = \n{ \n~ \n}.a" in util._format_lines([getmsg(f)])[0]
 
 
@@ -527,8 +620,10 @@ def test_rewritten():
     def test_rewrite_warning(self, pytestconfig, monkeypatch):
         hook = AssertionRewritingHook(pytestconfig)
         warnings = []
+
         def mywarn(code, msg):
             warnings.append((code, msg))
+
         monkeypatch.setattr(hook.config, 'warn', mywarn)
         hook.mark_rewrite('_pytest')
         assert '_pytest' in warnings[0][1]
@@ -642,10 +737,12 @@ class TestAssertionRewriteHookDetails(object):
         source_path = tmpdir.ensure("source.py")
         pycpath = tmpdir.join("pyc").strpath
         assert _write_pyc(state, [1], source_path.stat(), pycpath)
+
         def open(*args):
             e = IOError()
             e.errno = 10
             raise e
+
         monkeypatch.setattr(b, "open", open)
         assert not _write_pyc(state, [1], source_path.stat(), pycpath)
 

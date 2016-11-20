@@ -19,8 +19,10 @@ class TestPDB:
     def pdblist(self, request):
         monkeypatch = request.getfixturevalue("monkeypatch")
         pdblist = []
+
         def mypdb(*args):
             pdblist.append(args)
+
         plugin = request.config.pluginmanager.getplugin('debugging')
         monkeypatch.setattr(plugin, 'post_mortem', mypdb)
         return pdblist

@@ -152,6 +152,7 @@ class CaptureManager:
         item.add_report_section(when, "stdout", out)
         item.add_report_section(when, "stderr", err)
 
+
 error_capsysfderror = "cannot use capsys and capfd at the same time"
 
 

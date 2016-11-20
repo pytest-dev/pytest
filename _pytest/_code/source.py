@@ -265,6 +265,7 @@ def findsource(obj):
     source.lines = [line.rstrip() for line in sourcelines]
     return source, lineno
 
+
 def getsource(obj, **kwargs):
     import _pytest._code
     obj = _pytest._code.getrawcode(obj)
@@ -274,6 +275,7 @@ def getsource(obj, **kwargs):
         strsrc = "\"Buggy python version consider upgrading, cannot get source\""
     assert isinstance(strsrc, str)
     return Source(strsrc, **kwargs)
+
 
 def deindent(lines, offset=None):
     if offset is None:
@@ -288,6 +290,7 @@ def deindent(lines, offset=None):
     if offset == 0:
         return list(lines)
     newlines = []
+
     def readline_generator(lines):
         for line in lines:
             yield line + '\n'

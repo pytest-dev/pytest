@@ -186,6 +186,7 @@ def pytest_runtest_protocol(item):
         ut = sys.modules['twisted.python.failure']
         Failure__init__ = ut.Failure.__init__
         check_testcase_implements_trial_reporter()
+
         def excstore(self, exc_value=None, exc_type=None, exc_tb=None,
             captureVars=None):
             if exc_value is None:
@@ -199,6 +200,7 @@ def pytest_runtest_protocol(item):
                     captureVars=captureVars)
             except TypeError:
                 Failure__init__(self, exc_value, exc_type, exc_tb)
+
         ut.Failure.__init__ = excstore
         yield
         ut.Failure.__init__ = Failure__init__

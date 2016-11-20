@@ -25,18 +25,22 @@ def test_nose_setup(testdir):
 def test_setup_func_with_setup_decorator():
     from _pytest.nose import call_optional
     l = []
+
     class A:
         @pytest.fixture(autouse=True)
         def f(self):
             l.append(1)
+
     call_optional(A(), "f")
     assert not l
 
 
 def test_setup_func_not_callable():
     from _pytest.nose import call_optional
+
     class A:
         f = 1
+
     call_optional(A(), "f")
 
 def test_nose_setup_func(testdir):

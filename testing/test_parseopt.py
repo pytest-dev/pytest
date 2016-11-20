@@ -138,7 +138,10 @@ class TestParser:
     def test_parse_setoption(self, parser):
         parser.addoption("--hello", dest="hello", action="store")
         parser.addoption("--world", dest="world", default=42)
-        class A: pass
+
+        class A:
+            pass
+
         option = A()
         args = parser.parse_setoption(['--hello', 'world'], option)
         assert option.hello == "world"
