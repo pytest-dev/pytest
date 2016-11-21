@@ -594,7 +594,7 @@ class Argument:
                 if typ == 'choice':
                     warnings.warn(
                         'type argument to addoption() is a string %r.'
-                        ' For parsearg this is optional and when supplied '
+                        ' For parsearg this is optional and when supplied'
                         ' should be a type.'
                         ' (options: %s)' % (typ, names),
                         DeprecationWarning,
