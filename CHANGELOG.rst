@@ -26,6 +26,10 @@
   once by the ``pytest_plugins`` mechanism.
   Thanks `@nicoddemus`_ for the PR.
 
+* Remove an internal cache which could cause hooks from ``conftest.py`` files in
+  sub-directories to be called in other directories incorrectly (`#2016`_).
+  Thanks `@d-b-w`_ for the report and `@nicoddemus`_ for the PR.
+
 * Remove internal code meant to support earlier Python 3 versions that produced the side effect
   of leaving ``None`` in ``sys.modules`` when expressions were evaluated by pytest (for example passing a condition
   as a string to ``pytest.mark.skipif``)(`#2103`_).
@@ -40,6 +44,7 @@
 
 .. _@mbukatov: https://github.com/mbukatov
 .. _@dupuy: https://bitbucket.org/dupuy/
+.. _@d-b-w: https://bitbucket.org/d-b-w/
 .. _@lwm: https://github.com/lwm
 .. _@adler-j: https://github.com/adler-j
 .. _@DuncanBetts: https://github.com/DuncanBetts
@@ -49,6 +54,7 @@
 .. _#2089: https://github.com/pytest-dev/pytest/issues/2089
 .. _#478: https://github.com/pytest-dev/pytest/issues/478
 .. _#687: https://github.com/pytest-dev/pytest/issues/687
+.. _#2016: https://github.com/pytest-dev/pytest/issues/2016
 .. _#2034: https://github.com/pytest-dev/pytest/issues/2034
 .. _#2038: https://github.com/pytest-dev/pytest/issues/2038
 .. _#2078: https://github.com/pytest-dev/pytest/issues/2078
