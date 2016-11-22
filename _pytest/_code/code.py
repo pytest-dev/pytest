@@ -343,6 +343,7 @@ class Traceback(list):
             l.append(entry.frame.f_locals)
         return None
 
+
 co_equal = compile('__recursioncache_locals_1 == __recursioncache_locals_2',
                    '?', 'eval')
 
@@ -845,6 +846,7 @@ def getrawcode(obj, trycall=True):
                 if hasattr(x, 'co_firstlineno'):
                     return x
         return obj
+
 
 if sys.version_info[:2] >= (3, 5):  # RecursionError introduced in 3.5
     def is_recursion_error(excinfo):

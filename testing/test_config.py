@@ -373,23 +373,31 @@ def test_options_on_small_file_do_not_blow_up(testdir):
                  ['--traceconfig'], ['-v'], ['-v', '-v']):
         runfiletest(opts + [path])
 
+
 def test_preparse_ordering_with_setuptools(testdir, monkeypatch):
     pkg_resources = pytest.importorskip("pkg_resources")
+
     def my_iter(name):
         assert name == "pytest11"
+
         class Dist:
             project_name = 'spam'
             version = '1.0'
+
             def _get_metadata(self, name):
                 return ['foo.txt,sha256=abc,123']
+
         class EntryPoint:
             name = "mytestplugin"
             dist = Dist()
+
             def load(self):
                 class PseudoPlugin:
                     x = 42
                 return PseudoPlugin()
+
         return iter([EntryPoint()])
+
     monkeypatch.setattr(pkg_resources, 'iter_entry_points', my_iter)
     testdir.makeconftest("""
         pytest_plugins = "mytestplugin",
@@ -402,18 +410,24 @@ def test_preparse_ordering_with_setuptools(testdir, monkeypatch):
 
 def test_setuptools_importerror_issue1479(testdir, monkeypatch):
     pkg_resources = pytest.importorskip("pkg_resources")
+
     def my_iter(name):
         assert name == "pytest11"
+
         class Dist:
             project_name = 'spam'
             version = '1.0'
+
             def _get_metadata(self, name):
                 return ['foo.txt,sha256=abc,123']
+
         class EntryPoint:
             name = "mytestplugin"
             dist = Dist()
+
             def load(self):
                 raise ImportError("Don't hide me!")
+
         return iter([EntryPoint()])
 
     monkeypatch.setattr(pkg_resources, 'iter_entry_points', my_iter)
@@ -423,19 +437,26 @@ def test_setuptools_importerror_issue1479(testdir, monkeypatch):
 
 def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch):
     pkg_resources = pytest.importorskip("pkg_resources")
+
     def my_iter(name):
         assert name == "pytest11"
+
         class Dist:
             project_name = 'spam'
             version = '1.0'
+
             def _get_metadata(self, name):
                 return ['foo.txt,sha256=abc,123']
+
         class EntryPoint:
             name = "mytestplugin"
             dist = Dist()
+
             def load(self):
                 assert 0, "should not arrive here"
+
         return iter([EntryPoint()])
+
     monkeypatch.setattr(pkg_resources, 'iter_entry_points', my_iter)
     config = testdir.parseconfig("-p", "no:mytestplugin")
     plugin = config.pluginmanager.getplugin("mytestplugin")
@@ -503,9 +524,11 @@ def test_notify_exception(testdir, capfd):
     config.notify_exception(excinfo)
     out, err = capfd.readouterr()
     assert "ValueError" in err
+
     class A:
         def pytest_internalerror(self, excrepr):
             return True
+
     config.pluginmanager.register(A())
     config.notify_exception(excinfo)
     out, err = capfd.readouterr()
@@ -515,9 +538,11 @@ def test_notify_exception(testdir, capfd):
 def test_load_initial_conftest_last_ordering(testdir):
     from _pytest.config  import get_config
     pm = get_config().pluginmanager
+
     class My:
         def pytest_load_initial_conftests(self):
             pass
+
     m = My()
     pm.register(m)
     hc = pm.hook.pytest_load_initial_conftests

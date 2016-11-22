@@ -65,8 +65,10 @@ def main(args=None, plugins=None):
 class cmdline:  # compatibility namespace
     main = staticmethod(main)
 
+
 class UsageError(Exception):
     """ error in pytest usage or invocation"""
+
 
 _preinit = []
 
@@ -594,7 +596,7 @@ class Argument:
                 if typ == 'choice':
                     warnings.warn(
                         'type argument to addoption() is a string %r.'
-                        ' For parsearg this is optional and when supplied '
+                        ' For parsearg this is optional and when supplied'
                         ' should be a type.'
                         ' (options: %s)' % (typ, names),
                         DeprecationWarning,
@@ -818,8 +820,10 @@ class Notset:
     def __repr__(self):
         return "<NOTSET>"
 
+
 notset = Notset()
 FILE_OR_DIR = 'file_or_dir'
+
 
 class Config(object):
     """ access to configuration values, pluginmanager and plugin hooks.  """
@@ -843,9 +847,11 @@ class Config(object):
         self._warn = self.pluginmanager._warn
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
+
         def do_setns(dic):
             import pytest
             setns(pytest, dic)
+
         self.hook.pytest_namespace.call_historic(do_setns, {})
         self.hook.pytest_addoption.call_historic(kwargs=dict(parser=self._parser))
 

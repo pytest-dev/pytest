@@ -31,10 +31,12 @@ def pytest_configure(config):
         config.pluginmanager.register(PdbInvoke(), 'pdbinvoke')
 
     old = (pdb.set_trace, pytestPDB._pluginmanager)
+
     def fin():
         pdb.set_trace, pytestPDB._pluginmanager = old
         pytestPDB._config = None
         pytestPDB._pdb_cls = pdb.Pdb
+
     pdb.set_trace = pytest.set_trace
     pytestPDB._pluginmanager = config.pluginmanager
     pytestPDB._config = config

@@ -11,6 +11,7 @@ def pytest_addoption(parser):
         choices=['failed', 'all'],
         help="send failed|all info to bpaste.net pastebin service.")
 
+
 @pytest.hookimpl(trylast=True)
 def pytest_configure(config):
     import py
@@ -23,12 +24,15 @@ def pytest_configure(config):
             # pastebin file will be utf-8 encoded binary file
             config._pastebinfile = tempfile.TemporaryFile('w+b')
             oldwrite = tr._tw.write
+
             def tee_write(s, **kwargs):
                 oldwrite(s, **kwargs)
                 if py.builtin._istext(s):
                     s = s.encode('utf-8')
                 config._pastebinfile.write(s)
+
             tr._tw.write = tee_write
+
 
 def pytest_unconfigure(config):
     if hasattr(config, '_pastebinfile'):
@@ -44,6 +48,7 @@ def pytest_unconfigure(config):
         tr.write_sep("=", "Sending information to Paste Service")
         pastebinurl = create_new_paste(sessionlog)
         tr.write_line("pastebin session-log: %s\n" % pastebinurl)
+
 
 def create_new_paste(contents):
     """
@@ -71,6 +76,7 @@ def create_new_paste(contents):
         return '%s/show/%s' % (url, m.group(1))
     else:
         return 'bad response: ' + response
+
 
 def pytest_terminal_summary(terminalreporter):
     import _pytest.config

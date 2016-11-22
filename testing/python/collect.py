@@ -383,10 +383,13 @@ class TestFunction:
         config = testdir.parseconfigure()
         session = testdir.Session(config)
         session._fixturemanager = FixtureManager(session)
+
         def func1():
             pass
+
         def func2():
             pass
+
         f1 = pytest.Function(name="name", parent=session, config=config,
                 args=(1,), callobj=func1)
         assert f1 == f1
@@ -547,12 +550,15 @@ class TestFunction:
     def test_pyfunc_call(self, testdir):
         item = testdir.getitem("def test_func(): raise ValueError")
         config = item.config
+
         class MyPlugin1:
             def pytest_pyfunc_call(self, pyfuncitem):
                 raise ValueError
+
         class MyPlugin2:
             def pytest_pyfunc_call(self, pyfuncitem):
                 return True
+
         config.pluginmanager.register(MyPlugin1())
         config.pluginmanager.register(MyPlugin2())
         config.hook.pytest_runtest_setup(item=item)

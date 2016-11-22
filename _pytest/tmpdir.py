@@ -81,6 +81,7 @@ def get_user():
     except (ImportError, KeyError):
         return None
 
+
 # backward compatibility
 TempdirHandler = TempdirFactory
 

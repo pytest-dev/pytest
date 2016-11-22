@@ -27,6 +27,7 @@ else:
 class Junit(py.xml.Namespace):
     pass
 
+
 # We need to get the subset of the invalid unicode ranges according to
 # XML 1.0 which are valid in this python build.  Hence we calculate
 # this dynamically instead of hardcoding it.  The spec range of valid

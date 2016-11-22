@@ -60,6 +60,8 @@ def pytest_cmdline_main(config):
             tw.line()
         config._ensure_unconfigure()
         return 0
+
+
 pytest_cmdline_main.tryfirst = True
 
 

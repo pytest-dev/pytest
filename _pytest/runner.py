@@ -517,7 +517,9 @@ def exit(msg):
     __tracebackhide__ = True
     raise Exit(msg)
 
+
 exit.Exception = Exit
+
 
 def skip(msg=""):
     """ skip an executing test with the given message.  Note: it's usually
@@ -527,7 +529,10 @@ def skip(msg=""):
     """
     __tracebackhide__ = True
     raise Skipped(msg=msg)
+
+
 skip.Exception = Skipped
+
 
 def fail(msg="", pytrace=True):
     """ explicitly fail an currently-executing test with the given Message.
@@ -537,6 +542,8 @@ def fail(msg="", pytrace=True):
     """
     __tracebackhide__ = True
     raise Failed(msg=msg, pytrace=pytrace)
+
+
 fail.Exception = Failed
 
 

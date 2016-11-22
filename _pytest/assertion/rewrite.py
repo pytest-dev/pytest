@@ -276,6 +276,7 @@ def _write_pyc(state, co, source_stat, pyc):
         fp.close()
     return True
 
+
 RN = "\r\n".encode("utf-8")
 N = "\n".encode("utf-8")
 

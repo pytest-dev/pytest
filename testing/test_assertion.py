@@ -13,12 +13,15 @@ PY3 = sys.version_info >= (3, 0)
 
 @pytest.fixture
 def mock_config():
+
     class Config(object):
         verbose = False
+
         def getoption(self, name):
             if name == 'verbose':
                 return self.verbose
             raise KeyError('Not mocked out: %s' % name)
+
     return Config()
 
 

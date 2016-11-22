@@ -11,6 +11,7 @@ def test_make_hook_recorder(testdir):
     assert not recorder.getfailures()
 
     pytest.xfail("internal reportrecorder tests need refactoring")
+
     class rep:
         excinfo = None
         passed = False
@@ -80,10 +81,13 @@ def make_holder():
             "x"
 
     apimod = type(os)('api')
+
     def pytest_xyz(arg):
         "x"
+
     def pytest_xyz_noarg():
         "x"
+
     apimod.pytest_xyz = pytest_xyz
     apimod.pytest_xyz_noarg = pytest_xyz_noarg
     return apiclass, apimod
