@@ -150,11 +150,13 @@ class TestCollectFS:
 class TestCollectPluginHookRelay:
     def test_pytest_collect_file(self, testdir):
         wascalled = []
+
         class Plugin:
             def pytest_collect_file(self, path, parent):
                 if not path.basename.startswith("."):
                     # Ignore hidden files, e.g. .testmondata.
                     wascalled.append(path)
+
         testdir.makefile(".abc", "xyz")
         pytest.main([testdir.tmpdir], plugins=[Plugin()])
         assert len(wascalled) == 1
@@ -162,14 +164,17 @@ class TestCollectPluginHookRelay:
 
     def test_pytest_collect_directory(self, testdir):
         wascalled = []
+
         class Plugin:
             def pytest_collect_directory(self, path, parent):
                 wascalled.append(path.basename)
+
         testdir.mkdir("hello")
         testdir.mkdir("world")
         pytest.main(testdir.tmpdir, plugins=[Plugin()])
         assert "hello" in wascalled
         assert "world" in wascalled
+
 
 class TestPrunetraceback:
 

@@ -81,10 +81,10 @@ Changes
   Thanks `@RonnyPfannschmidt`_ for the report and `@nicoddemus`_ for the PR.
 
 * Report teardown output on test failure (`#442`_).
-  Thanks `@matclab`_ or the PR.
+  Thanks `@matclab`_ for the PR.
 
 * Fix teardown error message in generated xUnit XML.
-  Thanks `@gdyuldin`_ or the PR.
+  Thanks `@gdyuldin`_ for the PR.
 
 * Properly handle exceptions in ``multiprocessing`` tasks (`#1984`_).
   Thanks `@adborden`_ for the report and `@nicoddemus`_ for the PR.

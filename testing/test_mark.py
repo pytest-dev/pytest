@@ -23,15 +23,19 @@ class TestMark:
 
     def test_pytest_mark_bare(self):
         mark = Mark()
+
         def f():
             pass
+
         mark.hello(f)
         assert f.hello
 
     def test_pytest_mark_keywords(self):
         mark = Mark()
+
         def f():
             pass
+
         mark.world(x=3, y=4)(f)
         assert f.world
         assert f.world.kwargs['x'] == 3
@@ -39,8 +43,10 @@ class TestMark:
 
     def test_apply_multiple_and_merge(self):
         mark = Mark()
+
         def f():
             pass
+
         mark.world
         mark.world(x=3)(f)
         assert f.world.kwargs['x'] == 3
@@ -53,33 +59,43 @@ class TestMark:
 
     def test_pytest_mark_positional(self):
         mark = Mark()
+
         def f():
             pass
+
         mark.world("hello")(f)
         assert f.world.args[0] == "hello"
         mark.world("world")(f)
 
     def test_pytest_mark_positional_func_and_keyword(self):
         mark = Mark()
+
         def f():
             raise Exception
+
         m = mark.world(f, omega="hello")
+
         def g():
             pass
+
         assert m(g) == g
         assert g.world.args[0] is f
         assert g.world.kwargs["omega"] == "hello"
 
     def test_pytest_mark_reuse(self):
         mark = Mark()
+
         def f():
             pass
+
         w = mark.some
         w("hello", reason="123")(f)
         assert f.some.args[0] == "hello"
         assert f.some.kwargs['reason'] == "123"
+
         def g():
             pass
+
         w("world", reason2="456")(g)
         assert g.some.args[0] == "world"
         assert 'reason' not in g.some.kwargs
@@ -610,11 +626,12 @@ class TestFunctional:
             def test_1(parameter):
                 assert True
         """)
-
         reprec = testdir.inline_run()
         reprec.assertoutcome(skipped=1)
 
+
 class TestKeywordSelection:
+
     def test_select_simple(self, testdir):
         file_test = testdir.makepyfile("""
             def test_one():
@@ -623,6 +640,7 @@ class TestKeywordSelection:
                 def test_method_one(self):
                     assert 42 == 43
         """)
+
         def check(keyword, name):
             reprec = testdir.inline_run("-s", "-k", keyword, file_test)
             passed, skipped, failed = reprec.listoutcomes()
@@ -709,6 +727,7 @@ class TestKeywordSelection:
         p = testdir.makepyfile("""
             def test_one(): assert 1
         """)
+
         def assert_test_is_not_selected(keyword):
             reprec = testdir.inline_run("-k", keyword, p)
             passed, skipped, failed = reprec.countoutcomes()

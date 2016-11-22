@@ -214,9 +214,12 @@ class PyobjMixin(PyobjContext):
             if obj is None:
                 self._obj = obj = self._getobj()
             return obj
+
         def fset(self, value):
             self._obj = value
+
         return property(fget, fset, None, "underlying python object")
+
     obj = obj()
 
     def _getobj(self):

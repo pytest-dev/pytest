@@ -25,8 +25,10 @@ def pytest_configure(config):
     if config.option.runxfail:
         old = pytest.xfail
         config._cleanup.append(lambda: setattr(pytest, "xfail", old))
+
         def nop(*args, **kwargs):
             pass
+
         nop.Exception = XFailed
         setattr(pytest, "xfail", nop)
 
@@ -65,6 +67,8 @@ def xfail(reason=""):
     """ xfail an executing test or setup functions with the given reason."""
     __tracebackhide__ = True
     raise XFailed(reason)
+
+
 xfail.Exception = XFailed
 
 
