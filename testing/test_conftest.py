@@ -200,8 +200,10 @@ def test_conftest_import_order(testdir, monkeypatch):
     sub = testdir.mkdir("sub")
     ct2 = sub.join("conftest.py")
     ct2.write("")
+
     def impct(p):
         return p
+
     conftest = PytestPluginManager()
     conftest._confcutdir = testdir.tmpdir
     monkeypatch.setattr(conftest, '_importconftest', impct)

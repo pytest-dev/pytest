@@ -41,12 +41,14 @@ def pytest_cmdline_parse():
         config.trace.root.setwriter(debugfile.write)
         undo_tracing = config.pluginmanager.enable_tracing()
         sys.stderr.write("writing pytestdebug information to %s\n" % path)
+
         def unset_tracing():
             debugfile.close()
             sys.stderr.write("wrote pytestdebug information to %s\n" %
                              debugfile.name)
             config.trace.root.setwriter(None)
             undo_tracing()
+
         config.add_cleanup(unset_tracing)
 
 def pytest_cmdline_main(config):

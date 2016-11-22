@@ -80,10 +80,12 @@ def install_importhook(config):
     config._assertstate.hook = hook = rewrite.AssertionRewritingHook(config)
     sys.meta_path.insert(0, hook)
     config._assertstate.trace('installed rewrite import hook')
+
     def undo():
         hook = config._assertstate.hook
         if hook is not None and hook in sys.meta_path:
             sys.meta_path.remove(hook)
+
     config.add_cleanup(undo)
     return hook
 

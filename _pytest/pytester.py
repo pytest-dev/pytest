@@ -479,10 +479,12 @@ class Testdir:
         for name, value in items:
             p = self.tmpdir.join(name).new(ext=ext)
             source = Source(value)
+
             def my_totext(s, encoding="utf-8"):
                 if py.builtin._isbytes(s):
                     s = py.builtin._totext(s, encoding=encoding)
                 return s
+
             source_unicode = "\n".join([my_totext(line) for line in source.lines])
             source = py.builtin._totext(source_unicode)
             content = source.strip().encode("utf-8") # + "\n"
@@ -692,12 +694,15 @@ class Testdir:
         # warning which will trigger to say they can no longer be
         # re-written, which is fine as they are already re-written.
         orig_warn = AssertionRewritingHook._warn_already_imported
+
         def revert():
             AssertionRewritingHook._warn_already_imported = orig_warn
+
         self.request.addfinalizer(revert)
         AssertionRewritingHook._warn_already_imported = lambda *a: None
 
         rec = []
+
         class Collect:
             def pytest_configure(x, config):
                 rec.append(self.make_hook_recorder(config.pluginmanager))
@@ -732,10 +737,13 @@ class Testdir:
             try:
                 reprec = self.inline_run(*args, **kwargs)
             except SystemExit as e:
+
                 class reprec:
                     ret = e.args[0]
+
             except Exception:
                 traceback.print_exc()
+
                 class reprec:
                     ret = 3
         finally:
