@@ -5,11 +5,16 @@
 
 *
 
-*
+* Cope gracefully with a .pyc file with no matching .py file (`#2038`_). Thanks
+  `@nedbat`_.
 
 *
 
 *
+
+.. _@nedbat: https://github.com/nedbat
+
+.. _#2038: https://github.com/pytest-dev/pytest/issues/2038
 
 
 3.0.4
