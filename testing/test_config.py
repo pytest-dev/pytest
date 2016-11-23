@@ -294,6 +294,15 @@ class TestConfigAPI:
         assert len(l) == 2
         assert l == ["456", "123"]
 
+    def test_confcutdir_check_isdir(self, testdir):
+        """Give an error if --confcutdir is not a valid directory (#2078)"""
+        with pytest.raises(pytest.UsageError):
+            testdir.parseconfig('--confcutdir', testdir.tmpdir.join('file').ensure(file=1))
+        with pytest.raises(pytest.UsageError):
+            testdir.parseconfig('--confcutdir', testdir.tmpdir.join('inexistant'))
+        config = testdir.parseconfig('--confcutdir', testdir.tmpdir.join('dir').ensure(dir=1))
+        assert config.getoption('confcutdir') == str(testdir.tmpdir.join('dir'))
+
 
 class TestConfigFromdictargs:
     def test_basic_behavior(self):

@@ -3,7 +3,10 @@
 
 *
 
-*
+* An error message is now displayed if ``--confcutdir`` is not a valid directory, avoiding
+  subtle bugs (`#2078`_).
+  Thanks `@nicoddemus`_ for the PR.
+
 
 * Cope gracefully with a .pyc file with no matching .py file (`#2038`_). Thanks
   `@nedbat`_.
@@ -15,6 +18,7 @@
 .. _@nedbat: https://github.com/nedbat
 
 .. _#2038: https://github.com/pytest-dev/pytest/issues/2038
+.. _#2078: https://github.com/pytest-dev/pytest/issues/2078
 
 
 3.0.4
