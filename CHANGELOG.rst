@@ -7,6 +7,10 @@
   subtle bugs (`#2078`_).
   Thanks `@nicoddemus`_ for the PR.
 
+* Fix error message using ``approx`` with complex numbers (`#2082`_).
+  Thanks `@adler-j`_ for the report and `@nicoddemus`_ for the PR.
+
+*
 
 * Cope gracefully with a .pyc file with no matching .py file (`#2038`_). Thanks
   `@nedbat`_.
@@ -15,10 +19,12 @@
 
 *
 
+.. _@adler-j: https://github.com/adler-j
 .. _@nedbat: https://github.com/nedbat
 
 .. _#2038: https://github.com/pytest-dev/pytest/issues/2038
 .. _#2078: https://github.com/pytest-dev/pytest/issues/2078
+.. _#2082: https://github.com/pytest-dev/pytest/issues/2082
 
 
 3.0.4
