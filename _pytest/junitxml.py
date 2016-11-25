@@ -103,6 +103,8 @@ class _NodeReporter(object):
         }
         if testreport.location[1] is not None:
             attrs["line"] = testreport.location[1]
+        if hasattr(testreport, "url"):
+            attrs["url"] = testreport.url
         self.attrs = attrs
 
     def to_xml(self):

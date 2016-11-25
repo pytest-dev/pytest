@@ -10,6 +10,8 @@ import time
 import traceback
 from fnmatch import fnmatch
 
+from weakref import WeakKeyDictionary
+
 from py.builtin import print_
 
 from _pytest._code import Source
@@ -401,6 +403,7 @@ class Testdir:
 
     def __init__(self, request, tmpdir_factory):
         self.request = request
+        self._mod_collections  = WeakKeyDictionary()
         # XXX remove duplication with tmpdir plugin
         basetmp = tmpdir_factory.ensuretemp("testdir")
         name = request.function.__name__
@@ -864,6 +867,7 @@ class Testdir:
             self.makepyfile(__init__ = "#")
         self.config = config = self.parseconfigure(path, *configargs)
         node = self.getnode(config, path)
+
         return node
 
     def collect_by_name(self, modcol, name):
@@ -878,7 +882,9 @@ class Testdir:
         :param name: The name of the node to return.
 
         """
-        for colitem in modcol._memocollect():
+        if modcol not in self._mod_collections:
+            self._mod_collections[modcol] = list(modcol.collect())
+        for colitem in self._mod_collections[modcol]:
             if colitem.name == name:
                 return colitem
 

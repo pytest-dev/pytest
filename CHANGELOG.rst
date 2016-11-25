@@ -1,5 +1,50 @@
+3.1.0.dev
+=========
+
+
+New Features
+------------
+
+*
+
+*
+
+
+Changes
+-------
+
+* Testcase reports with a ``url`` attribute will now properly write this to junitxml.
+  Thanks `@fushi`_ for the PR (`#1874`_).
+
+* Remove common items from dict comparision output when verbosity=1. Also update
+  the truncation message to make it clearer that pytest truncates all
+  assertion messages if verbosity < 2 (`#1512`_).
+  Thanks `@mattduck`_ for the PR
+
+* ``--pdbcls`` no longer implies ``--pdb``. This makes it possible to use 
+  ``addopts=--pdbcls=module.SomeClass`` on ``pytest.ini``. Thanks `@davidszotten`_ for
+  the PR (`#1952`_).
+* Change exception raised by ``capture.DontReadFromInput.fileno()`` from ``ValueError`` 
+  to ``io.UnsupportedOperation``. Thanks `@vlad-dragos`_ for the PR.
+
+
+* fix `#2013`_: turn RecordedWarning into namedtupe,
+  to give it a comprehensible repr while preventing unwarranted modification
+
+.. _@davidszotten: https://github.com/davidszotten
+.. _@fushi: https://github.com/fushi
+.. _@mattduck: https://github.com/mattduck
+
+.. _#1512: https://github.com/pytest-dev/pytest/issues/1512
+.. _#1874: https://github.com/pytest-dev/pytest/pull/1874
+.. _#1952: https://github.com/pytest-dev/pytest/pull/1952
+.. _#2013: https://github.com/pytest-dev/pytest/issues/2013
+
+
 3.0.5.dev0
 ==========
+
+
 
 *
 
@@ -111,6 +156,7 @@
 .. _@raquel-ucl: https://github.com/raquel-ucl
 .. _@axil: https://github.com/axil
 .. _@tgoodlet: https://github.com/tgoodlet
+.. _@vlad-dragos: https://github.com/vlad-dragos
 
 .. _#1853: https://github.com/pytest-dev/pytest/issues/1853
 .. _#1905: https://github.com/pytest-dev/pytest/issues/1905
@@ -159,6 +205,17 @@
 .. _#1890: https://github.com/pytest-dev/pytest/issues/1890
 .. _#1898: https://github.com/pytest-dev/pytest/issues/1898
 
+
+3.0.2.dev
+=========
+
+*
+
+*
+
+*
+
+*
 
 3.0.1
 =====

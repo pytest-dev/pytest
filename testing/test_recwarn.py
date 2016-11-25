@@ -203,6 +203,9 @@ class TestWarns(object):
         assert len(record) == 1
         assert str(record[0].message) == "user"
 
+        print(repr(record[0]))
+        assert str(record[0].message) in repr(record[0])
+
     def test_record_only(self):
         with pytest.warns(None) as record:
             warnings.warn("user", UserWarning)

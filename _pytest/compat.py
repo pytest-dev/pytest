@@ -111,7 +111,7 @@ if  sys.version_info[:2] == (2, 6):
 
 if _PY3:
     import codecs
-
+    imap = map
     STRING_TYPES = bytes, str
 
     def _escape_strings(val):
@@ -144,6 +144,8 @@ if _PY3:
             return val.encode('unicode_escape').decode('ascii')
 else:
     STRING_TYPES = bytes, str, unicode
+
+    from itertools import imap  # NOQA
 
     def _escape_strings(val):
         """In py2 bytes and str are the same type, so return if it's a bytes
