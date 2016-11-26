@@ -6,6 +6,9 @@
 * Provide ``:ref:`` targets for ``recwarn.rst`` so we can use intersphinx referencing.
   Thanks to `@dupuy`_ for the report and `@lwm`_ for the PR.
 
+* Using ``pytest.main.compatproperty`` is now issuing deprecation warning.
+  Thanks `@nmundar` for the PR.
+
 * An error message is now displayed if ``--confcutdir`` is not a valid directory, avoiding
   subtle bugs (`#2078`_).
   Thanks `@nicoddemus`_ for the PR.
