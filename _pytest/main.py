@@ -191,7 +191,7 @@ class FSHookProxy:
 def compatproperty(name):
     def fget(self):
         import warnings
-        warnings.warn("compatproperty is deprecated. Use pytest.name",
+        warnings.warn("This usage is deprecated, please use pytest.{0} instead".format(name),
                       PendingDeprecationWarning, stacklevel=2)
         return getattr(pytest, name)
 
