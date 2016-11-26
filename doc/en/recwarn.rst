@@ -1,7 +1,11 @@
+.. _`asserting warnings`:
+
 .. _assertwarnings:
 
 Asserting Warnings
 =====================================================
+
+.. _`asserting warnings with the warns function`:
 
 .. _warns:
 
@@ -45,6 +49,8 @@ Alternatively, you can examine raised warnings in detail using the
 .. note::
     ``DeprecationWarning`` and ``PendingDeprecationWarning`` are treated
     differently; see :ref:`ensuring_function_triggers`.
+
+.. _`recording warnings`:
 
 .. _recwarn:
 
@@ -95,6 +101,8 @@ class of the warning. The ``message`` is the warning itself; calling
 .. note::
     ``DeprecationWarning`` and ``PendingDeprecationWarning`` are treated
     differently; see :ref:`ensuring_function_triggers`.
+
+.. _`ensuring a function triggers a deprecation warning`:
 
 .. _ensuring_function_triggers:
 
