@@ -704,10 +704,9 @@ class Session(FSCollector):
         path = self.config.invocation_dir.join(relpath, abs=True)
         if not path.check():
             if self.config.option.pyargs:
-                msg = "file or package not found: "
+                raise pytest.UsageError("file or package not found: " + arg + " (missing __init__.py?)")
             else:
-                msg = "file not found: "
-            raise pytest.UsageError(msg + arg)
+                raise pytest.UsageError("file not found: " + arg)
         parts[0] = path
         return parts
 
