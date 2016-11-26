@@ -1,7 +1,7 @@
 3.0.5.dev0
 ==========
 
-*
+* Add hint to error message hinting possible missing __init__.py (`#478`_). Thanks `@DuncanBetts`_.
 
 * An error message is now displayed if ``--confcutdir`` is not a valid directory, avoiding
   subtle bugs (`#2078`_).
@@ -20,8 +20,10 @@
 *
 
 .. _@adler-j: https://github.com/adler-j
+.. _@DuncanBetts: https://github.com/DuncanBetts
 .. _@nedbat: https://github.com/nedbat
 
+.. _#478: https://github.com/pytest-dev/pytest/issues/478
 .. _#2038: https://github.com/pytest-dev/pytest/issues/2038
 .. _#2078: https://github.com/pytest-dev/pytest/issues/2078
 .. _#2082: https://github.com/pytest-dev/pytest/issues/2082
