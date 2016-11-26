@@ -3,6 +3,9 @@
 
 * Add hint to error message hinting possible missing __init__.py (`#478`_). Thanks `@DuncanBetts`_.
 
+* Provide ``:ref:`` targets for ``recwarn.rst`` so we can use intersphinx referencing.
+  Thanks to `@dupuy`_ for the report and `@lwm`_ for the PR.
+
 * An error message is now displayed if ``--confcutdir`` is not a valid directory, avoiding
   subtle bugs (`#2078`_).
   Thanks `@nicoddemus`_ for the PR.
@@ -19,6 +22,8 @@
 
 *
 
+.. _@dupuy: https://bitbucket.org/dupuy/
+.. _@lwm: https://github.com/lwm
 .. _@adler-j: https://github.com/adler-j
 .. _@DuncanBetts: https://github.com/DuncanBetts
 .. _@nedbat: https://github.com/nedbat
