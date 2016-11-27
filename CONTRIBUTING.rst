@@ -79,6 +79,16 @@ Pytest could always use more documentation.  What exactly is needed?
 You can also edit documentation files directly in the GitHub web interface,
 without using a local copy.  This can be convenient for small fixes.
 
+.. note::
+    Build the documentation locally with the following command:
+
+    .. code:: bash
+
+        $ tox -e docs
+
+    The built documentation should be available in the ``doc/en/_build/``.
+
+    Where 'en' refers to the documentation language.
 
 .. _submitplugin:
 
