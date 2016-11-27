@@ -715,6 +715,10 @@ def test_logxml_makedir(testdir):
     assert result.ret == 0
     assert testdir.tmpdir.join("path/to/results.xml").check()
 
+def test_logxml_check_isdir(testdir):
+    """Give an error if --junit-xml is a directory (#2089)"""
+    result = testdir.runpytest("--junit-xml=.")
+    result.stderr.fnmatch_lines(["*--junitxml must be a filename*"])
 
 def test_escaped_parametrized_names_xml(testdir):
     testdir.makepyfile("""

@@ -1,4 +1,5 @@
 """ core implementation of testing process: init, session, runtest loop. """
+import functools
 import os
 import sys
 
@@ -11,6 +12,7 @@ try:
 except ImportError:
     from UserDict import DictMixin as MappingMixin
 
+from _pytest.config import directory_arg
 from _pytest.runner import collect_one_node
 
 tracebackcutdir = py.path.local(_pytest.__file__).dirpath()
@@ -58,7 +60,7 @@ def pytest_addoption(parser):
     # when changing this to --conf-cut-dir, config.py Conftest.setinitial
     # needs upgrading as well
     group.addoption('--confcutdir', dest="confcutdir", default=None,
-        metavar="dir",
+        metavar="dir", type=functools.partial(directory_arg, optname="--confcutdir"),
         help="only load conftest.py's relative to specified dir.")
     group.addoption('--noconftest', action="store_true",
         dest="noconftest", default=False,
