@@ -24,31 +24,31 @@ An example of a simple test:
 .. code-block:: python
 
     # content of test_sample.py
-    def func(x):
+    def inc(x):
         return x + 1
 
     def test_answer():
-        assert func(3) == 5
+        assert inc(3) == 5
 
 
 To execute it::
 
     $ pytest
-    ======= test session starts ========
+    ============================= test session starts =============================    
     collected 1 items
 
     test_sample.py F
 
-    ======= FAILURES ========
-    _______ test_answer ________
+    ================================== FAILURES ===================================
+    _________________________________ test_answer _________________________________
 
         def test_answer():
-    >       assert func(3) == 5
+    >       assert inc(3) == 5
     E       assert 4 == 5
-    E        +  where 4 = func(3)
+    E        +  where 4 = inc(3)
 
     test_sample.py:5: AssertionError
-    ======= 1 failed in 0.12 seconds ========
+    ========================== 1 failed in 0.04 seconds ===========================
 
 
 Due to ``pytest``'s detailed assertion introspection, only plain ``assert`` statements are used. See `getting-started <http://docs.pytest.org/en/latest/getting-started.html#our-first-test-run>`_ for more examples.
