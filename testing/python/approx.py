@@ -28,6 +28,7 @@ class TestApprox:
         print(approx(inf))
         print(approx(1.0, rel=nan))
         print(approx(1.0, rel=inf))
+        print(approx(1.0j, rel=inf))
 
     def test_operator_overloading(self):
         assert 1 == approx(1, rel=1e-6, abs=1e-12)

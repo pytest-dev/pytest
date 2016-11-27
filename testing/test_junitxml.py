@@ -249,6 +249,18 @@ class TestPython:
         snode = tnode.find_first_by_tag("skipped")
         snode.assert_attr(type="pytest.skip", message="hello25", )
 
+    def test_mark_skip_doesnt_capture_output(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.skip(reason="foo")
+            def test_skip():
+                print("bar!")
+        """)
+        result, dom = runandparse(testdir)
+        assert result.ret == 0
+        node_xml = dom.find_first_by_tag("testsuite").toxml()
+        assert "bar!" not in node_xml
+
     def test_classname_instance(self, testdir):
         testdir.makepyfile("""
             class TestClass:
