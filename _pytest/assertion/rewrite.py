@@ -80,7 +80,12 @@ class AssertionRewritingHook(object):
             tp = desc[2]
             if tp == imp.PY_COMPILED:
                 if hasattr(imp, "source_from_cache"):
-                    fn = imp.source_from_cache(fn)
+                    try:
+                        fn = imp.source_from_cache(fn)
+                    except ValueError:
+                        # Python 3 doesn't like orphaned but still-importable
+                        # .pyc files.
+                        fn = fn[:-1]
                 else:
                     fn = fn[:-1]
             elif tp != imp.PY_SOURCE:

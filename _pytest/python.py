@@ -1414,6 +1414,9 @@ class ApproxNonIterable(object):
         self.rel = rel
 
     def __repr__(self):
+        if isinstance(self.expected, complex):
+            return str(self.expected)
+
         # Infinities aren't compared using tolerances, so don't show a
         # tolerance.
         if math.isinf(self.expected):

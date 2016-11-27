@@ -16,10 +16,12 @@ Conventions for Python test discovery
 * If no arguments are specified then collection starts from :confval:`testpaths`
   (if configured) or the current directory. Alternatively, command line arguments
   can be used in any combination of directories, file names or node ids.
-* recurse into directories, unless they match :confval:`norecursedirs`
-* ``test_*.py`` or ``*_test.py`` files, imported by their `test package name`_.
-* ``Test`` prefixed test classes (without an ``__init__`` method)
-* ``test_`` prefixed test functions or methods are test items
+* Recurse into directories, unless they match :confval:`norecursedirs`.
+* In those directories, search for ``test_*.py`` or ``*_test.py`` files, imported by their `test package name`_.
+* From those files, collect test items:
+
+  * ``test_`` prefixed test functions or methods outside of class
+  * ``test_`` prefixed test functions or methods inside ``Test`` prefixed test classes (without an ``__init__`` method)
 
 For examples of how to customize your test discovery :doc:`example/pythoncollection`.
 

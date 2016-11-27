@@ -45,16 +45,44 @@ Changes
 ==========
 
 
+* Add hint to error message hinting possible missing ``__init__.py`` (`#478`_). Thanks `@DuncanBetts`_.
+
+
+* Provide ``:ref:`` targets for ``recwarn.rst`` so we can use intersphinx referencing.
+  Thanks to `@dupuy`_ for the report and `@lwm`_ for the PR.
+
+* Using ``item.Function``, ``item.Module``, etc., is now issuing deprecation warnings, prefer
+  ``pytest.Function``, ``pytest.Module``, etc., instead (`#2034`_).
+  Thanks `@nmundar`_ for the PR.
+
+* An error message is now displayed if ``--confcutdir`` is not a valid directory, avoiding
+  subtle bugs (`#2078`_).
+  Thanks `@nicoddemus`_ for the PR.
+
+* Fix error message using ``approx`` with complex numbers (`#2082`_).
+  Thanks `@adler-j`_ for the report and `@nicoddemus`_ for the PR.
+
+*
+
+* Cope gracefully with a .pyc file with no matching .py file (`#2038`_). Thanks
+  `@nedbat`_.
 
 *
 
 *
 
-*
+.. _@dupuy: https://bitbucket.org/dupuy/
+.. _@lwm: https://github.com/lwm
+.. _@adler-j: https://github.com/adler-j
+.. _@DuncanBetts: https://github.com/DuncanBetts
+.. _@nedbat: https://github.com/nedbat
+.. _@nmundar: https://github.com/nmundar
 
-*
-
-*
+.. _#478: https://github.com/pytest-dev/pytest/issues/478
+.. _#2034: https://github.com/pytest-dev/pytest/issues/2034
+.. _#2038: https://github.com/pytest-dev/pytest/issues/2038
+.. _#2078: https://github.com/pytest-dev/pytest/issues/2078
+.. _#2082: https://github.com/pytest-dev/pytest/issues/2082
 
 
 3.0.4
