@@ -70,6 +70,28 @@ class UsageError(Exception):
     """ error in pytest usage or invocation"""
 
 
+def filename_arg(path, optname):
+    """ Argparse type validator for filename arguments.
+
+    :path: path of filename
+    :optname: name of the option
+    """
+    if os.path.isdir(path):
+        raise UsageError("{0} must be a filename, given: {1}".format(optname, path))
+    return path
+
+
+def directory_arg(path, optname):
+    """Argparse type validator for directory arguments.
+
+    :path: path of directory
+    :optname: name of the option
+    """
+    if not os.path.isdir(path):
+        raise UsageError("{0} must be a directory, given: {1}".format(optname, path))
+    return path
+
+
 _preinit = []
 
 default_plugins = (
@@ -996,7 +1018,6 @@ class Config(object):
                                  "(are you using python -O?)\n")
 
     def _preparse(self, args, addopts=True):
-        import pytest
         self._initini(args)
         if addopts:
             args[:] = shlex.split(os.environ.get('PYTEST_ADDOPTS', '')) + args
@@ -1009,9 +1030,7 @@ class Config(object):
         self.pluginmanager.consider_env()
         self.known_args_namespace = ns = self._parser.parse_known_args(args, namespace=self.option.copy())
         confcutdir = self.known_args_namespace.confcutdir
-        if confcutdir and not os.path.isdir(confcutdir):
-            raise pytest.UsageError('--confcutdir must be a directory, given: {0}'.format(confcutdir))
-        if confcutdir is None and self.inifile:
+        if self.known_args_namespace.confcutdir is None and self.inifile:
             confcutdir = py.path.local(self.inifile).dirname
             self.known_args_namespace.confcutdir = confcutdir
         try:

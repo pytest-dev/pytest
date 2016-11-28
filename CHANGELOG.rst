@@ -1,6 +1,9 @@
 3.0.5.dev0
 ==========
 
+* Now ``--confcutdir`` and ``--junit-xml`` are properly validated if they are directories
+  and filenames, respectively (`#2089`_ and `#2078`_). Thanks to `@lwm`_ for the PR.
+
 * Add hint to error message hinting possible missing ``__init__.py`` (`#478`_). Thanks `@DuncanBetts`_.
 
 * Provide ``:ref:`` targets for ``recwarn.rst`` so we can use intersphinx referencing.
@@ -9,10 +12,6 @@
 * Using ``item.Function``, ``item.Module``, etc., is now issuing deprecation warnings, prefer
   ``pytest.Function``, ``pytest.Module``, etc., instead (`#2034`_).
   Thanks `@nmundar`_ for the PR.
-
-* An error message is now displayed if ``--confcutdir`` is not a valid directory, avoiding
-  subtle bugs (`#2078`_).
-  Thanks `@nicoddemus`_ for the PR.
 
 * Fix error message using ``approx`` with complex numbers (`#2082`_).
   Thanks `@adler-j`_ for the report and `@nicoddemus`_ for the PR.
@@ -33,6 +32,7 @@
 .. _@nedbat: https://github.com/nedbat
 .. _@nmundar: https://github.com/nmundar
 
+.. _#2089: https://github.com/pytest-dev/pytest/issues/2089
 .. _#478: https://github.com/pytest-dev/pytest/issues/478
 .. _#2034: https://github.com/pytest-dev/pytest/issues/2034
 .. _#2038: https://github.com/pytest-dev/pytest/issues/2038
