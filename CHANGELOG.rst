@@ -6,6 +6,8 @@
 
 * Add hint to error message hinting possible missing ``__init__.py`` (`#478`_). Thanks `@DuncanBetts`_.
 
+* More accurately describe when fixture finalization occurs in documentation (`#687`_). Thanks `@DuncanBetts`_.
+
 * Provide ``:ref:`` targets for ``recwarn.rst`` so we can use intersphinx referencing.
   Thanks to `@dupuy`_ for the report and `@lwm`_ for the PR.
 
@@ -34,6 +36,7 @@
 
 .. _#2089: https://github.com/pytest-dev/pytest/issues/2089
 .. _#478: https://github.com/pytest-dev/pytest/issues/478
+.. _#687: https://github.com/pytest-dev/pytest/issues/687
 .. _#2034: https://github.com/pytest-dev/pytest/issues/2034
 .. _#2038: https://github.com/pytest-dev/pytest/issues/2038
 .. _#2078: https://github.com/pytest-dev/pytest/issues/2078

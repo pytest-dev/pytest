@@ -318,8 +318,7 @@ the ``with`` statement ends.
             request.addfinalizer(fin)
             return smtp  # provide the fixture value
 
-    The ``fin`` function will execute when the last test using
-    the fixture in the module has finished execution.
+    The ``fin`` function will execute when the last test in the module has finished execution.
 
     This method is still fully supported, but ``yield`` is recommended from 2.10 onward because
     it is considered simpler and better describes the natural code flow.
