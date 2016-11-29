@@ -129,6 +129,52 @@ class TestDoctests:
             '*1 passed*',
         ])
 
+    def test_encoding_ascii(self, testdir):
+        """Test support for --doctest-encoding option.
+        """
+        testdir._makefile(".txt", ["""
+            >>> 1
+            1
+        """], {}, encoding='ascii')
+
+        result = testdir.runpytest("--doctest-encoding=ascii")
+
+        result.stdout.fnmatch_lines([
+            '*1 passed*',
+        ])
+
+    def test_encoding_latin1(self, testdir):
+        """Test support for --doctest-encoding option.
+        """
+        testdir._makefile(".txt", ["""
+            >>> 'üäö'
+            'üäö'
+        """], {}, encoding='latin1')
+
+        result = testdir.runpytest("--doctest-encoding=latin1")
+
+        result.stdout.fnmatch_lines([
+            '*1 passed*',
+        ])
+
+    def test_encoding_utf8(self, testdir):
+        """Test support for --doctest-encoding option.
+        """
+        testdir.maketxtfile("""
+            >>> 'üäö'
+            'üäö'
+        """)
+
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            '*1 passed*',
+        ])
+
+        result = testdir.runpytest("--doctest-encoding=utf-8")
+        result.stdout.fnmatch_lines([
+            '*1 passed*',
+        ])
+
     def test_doctest_unexpected_exception(self, testdir):
         testdir.maketxtfile("""
             >>> i = 0
