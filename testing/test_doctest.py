@@ -146,9 +146,9 @@ class TestDoctests:
     def test_encoding_latin1(self, testdir):
         """Test support for --doctest-encoding option.
         """
-        testdir._makefile(".txt", ["""
-            >>> 'üäö'
-            'üäö'
+        testdir._makefile(".txt", [u"""
+            >>> len(u'üäö')
+            3
         """], {}, encoding='latin1')
 
         result = testdir.runpytest("--doctest-encoding=latin1")
@@ -160,9 +160,9 @@ class TestDoctests:
     def test_encoding_utf8(self, testdir):
         """Test support for --doctest-encoding option.
         """
-        testdir.maketxtfile("""
-            >>> 'üäö'
-            'üäö'
+        testdir.maketxtfile(u"""
+            >>> len(u'üäö')
+            3
         """)
 
         result = testdir.runpytest()
