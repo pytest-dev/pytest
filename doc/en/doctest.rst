@@ -11,6 +11,13 @@ can change the pattern by issuing::
 on the command line. Since version ``2.9``, ``--doctest-glob``
 can be given multiple times in the command-line.
 
+You can specify the encoding that will be used for those doctest files
+using the ``--doctest-encoding`` command line option::
+
+    pytest --doctest-encoding='ascii'
+
+The default encoding is UTF-8.
+
 You can also trigger running of doctests
 from docstrings in all python modules (including regular
 python test modules)::
@@ -52,9 +59,9 @@ then you can just invoke ``pytest`` without command line options::
     platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 1 items
-    
+
     mymodule.py .
-    
+
     ======= 1 passed in 0.12 seconds ========
 
 It is possible to use fixtures using the ``getfixture`` helper::

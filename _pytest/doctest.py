@@ -43,6 +43,10 @@ def pytest_addoption(parser):
         action="store_true", default=False,
         help="ignore doctest ImportErrors",
         dest="doctest_ignore_import_errors")
+    group.addoption("--doctest-encoding",
+        type=str.lower, default="utf-8",
+        help="choose the encoding to use for doctest files",
+        dest="doctestencoding")
 
 
 def pytest_collect_file(path, parent):
@@ -171,7 +175,7 @@ class DoctestTextfile(pytest.Module):
 
         # inspired by doctest.testfile; ideally we would use it directly,
         # but it doesn't support passing a custom checker
-        text = self.fspath.read()
+        text = self.fspath.read_text(self.config.getoption("doctestencoding"))
         filename = str(self.fspath)
         name = self.fspath.basename
         globs = {'__name__': '__main__'}
