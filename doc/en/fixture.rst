@@ -257,8 +257,9 @@ the code after the *yield* statement serves as the teardown code.::
         print("teardown smtp")
         smtp.close()
 
-The ``print`` and ``smtp.close()`` statements will execute when the last test using
-the fixture in the module has finished execution, regardless of the exception status of the tests.
+The ``print`` and ``smtp.close()`` statements will execute when the last test in
+the module has finished execution, regardless of the exception status of the
+tests.
 
 Let's execute it::
 
