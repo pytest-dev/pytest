@@ -11,16 +11,18 @@ can change the pattern by issuing::
 on the command line. Since version ``2.9``, ``--doctest-glob``
 can be given multiple times in the command-line.
 
-You can specify the encoding that will be used for those doctest files
-using the ``doctest_encoding`` ini option:
+.. versionadded:: 3.1
 
-.. code-block:: ini
+    You can specify the encoding that will be used for those doctest files
+    using the ``doctest_encoding`` ini option:
 
-    # content of pytest.ini
-    [pytest]
-    doctest_encoding = latin1
+    .. code-block:: ini
 
-The default encoding is UTF-8.
+        # content of pytest.ini
+        [pytest]
+        doctest_encoding = latin1
+
+    The default encoding is UTF-8.
 
 You can also trigger running of doctests
 from docstrings in all python modules (including regular
