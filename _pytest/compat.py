@@ -200,7 +200,7 @@ def safe_getattr(object, name, default):
     """ Like getattr but return default upon any Exception.
 
     Attribute access can potentially fail for 'evil' Python objects.
-    See issue214
+    See issue #214.
     """
     try:
         return getattr(object, name, default)
