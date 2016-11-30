@@ -5,7 +5,8 @@
 New Features
 ------------
 
-*
+* Added an ini option ``doctest_encoding`` to specify which encoding to use for doctest files.
+  Thanks `@wheerd`_ for the PR (`#2101`_).
 
 *
 
@@ -25,10 +26,10 @@ Changes
   assertion messages if verbosity < 2 (`#1512`_).
   Thanks `@mattduck`_ for the PR
 
-* ``--pdbcls`` no longer implies ``--pdb``. This makes it possible to use 
+* ``--pdbcls`` no longer implies ``--pdb``. This makes it possible to use
   ``addopts=--pdbcls=module.SomeClass`` on ``pytest.ini``. Thanks `@davidszotten`_ for
   the PR (`#1952`_).
-* Change exception raised by ``capture.DontReadFromInput.fileno()`` from ``ValueError`` 
+* Change exception raised by ``capture.DontReadFromInput.fileno()`` from ``ValueError``
   to ``io.UnsupportedOperation``. Thanks `@vlad-dragos`_ for the PR.
 
 
@@ -38,11 +39,13 @@ Changes
 .. _@davidszotten: https://github.com/davidszotten
 .. _@fushi: https://github.com/fushi
 .. _@mattduck: https://github.com/mattduck
+.. _@wheerd: https://github.com/wheerd
 
 .. _#1512: https://github.com/pytest-dev/pytest/issues/1512
 .. _#1874: https://github.com/pytest-dev/pytest/pull/1874
 .. _#1952: https://github.com/pytest-dev/pytest/pull/1952
 .. _#2013: https://github.com/pytest-dev/pytest/issues/2013
+.. _#2101: https://github.com/pytest-dev/pytest/pull/2101
 
 
 3.0.5.dev0

@@ -129,6 +129,33 @@ class TestDoctests:
             '*1 passed*',
         ])
 
+    @pytest.mark.parametrize(
+        '   test_string,    encoding',
+        [
+            (u'foo',         'ascii'),
+            (u'öäü',         'latin1'),
+            (u'öäü',         'utf-8')
+        ]
+    )
+    def test_encoding(self, testdir, test_string, encoding):
+        """Test support for doctest_encoding ini option.
+        """
+        testdir.makeini("""
+            [pytest]
+            doctest_encoding={0}
+        """.format(encoding))
+        doctest = u"""
+            >>> u"{0}"
+            {1}
+        """.format(test_string, repr(test_string))
+        testdir._makefile(".txt", [doctest], {}, encoding=encoding)
+
+        result = testdir.runpytest()
+
+        result.stdout.fnmatch_lines([
+            '*1 passed*',
+        ])
+
     def test_doctest_unexpected_exception(self, testdir):
         testdir.maketxtfile("""
             >>> i = 0

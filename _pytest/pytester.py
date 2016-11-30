@@ -471,7 +471,7 @@ class Testdir:
         if not hasattr(self, '_olddir'):
             self._olddir = old
 
-    def _makefile(self, ext, args, kwargs):
+    def _makefile(self, ext, args, kwargs, encoding="utf-8"):
         items = list(kwargs.items())
         if args:
             source = py.builtin._totext("\n").join(
@@ -490,7 +490,7 @@ class Testdir:
 
             source_unicode = "\n".join([my_totext(line) for line in source.lines])
             source = py.builtin._totext(source_unicode)
-            content = source.strip().encode("utf-8") # + "\n"
+            content = source.strip().encode(encoding) # + "\n"
             #content = content.rstrip() + "\n"
             p.write(content, "wb")
             if ret is None:
