@@ -145,8 +145,8 @@ class TestDoctests:
             doctest_encoding={0}
         """.format(encoding))
         doctest = u"""
-            >>> u"{}"
-            {}
+            >>> u"{0}"
+            {1}
         """.format(test_string, repr(test_string))
         testdir._makefile(".txt", [doctest], {}, encoding=encoding)
 
