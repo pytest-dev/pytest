@@ -12,9 +12,13 @@ on the command line. Since version ``2.9``, ``--doctest-glob``
 can be given multiple times in the command-line.
 
 You can specify the encoding that will be used for those doctest files
-using the ``--doctest-encoding`` command line option::
+using the ``doctest_encoding`` ini option:
 
-    pytest --doctest-encoding='ascii'
+.. code-block:: ini
+
+    # content of pytest.ini
+    [pytest]
+    doctest_encoding = latin1
 
 The default encoding is UTF-8.
 
