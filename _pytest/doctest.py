@@ -25,6 +25,7 @@ DOCTEST_REPORT_CHOICES = (
 def pytest_addoption(parser):
     parser.addini('doctest_optionflags', 'option flags for doctests',
         type="args", default=["ELLIPSIS"])
+    parser.addini("doctest_encoding", 'encoding used for doctest files', default="utf-8")
     group = parser.getgroup("collect")
     group.addoption("--doctest-modules",
         action="store_true", default=False,
@@ -43,10 +44,6 @@ def pytest_addoption(parser):
         action="store_true", default=False,
         help="ignore doctest ImportErrors",
         dest="doctest_ignore_import_errors")
-    group.addoption("--doctest-encoding",
-        type=str.lower, default="utf-8",
-        help="choose the encoding to use for doctest files",
-        dest="doctestencoding")
 
 
 def pytest_collect_file(path, parent):
@@ -166,7 +163,6 @@ def get_optionflags(parent):
         flag_acc |= flag_lookup_table[flag]
     return flag_acc
 
-
 class DoctestTextfile(pytest.Module):
     obj = None
 
@@ -175,7 +171,8 @@ class DoctestTextfile(pytest.Module):
 
         # inspired by doctest.testfile; ideally we would use it directly,
         # but it doesn't support passing a custom checker
-        text = self.fspath.read_text(self.config.getoption("doctestencoding"))
+        encoding = self.config.getini("doctest_encoding")
+        text = self.fspath.read_text(encoding)
         filename = str(self.fspath)
         name = self.fspath.basename
         globs = {'__name__': '__main__'}

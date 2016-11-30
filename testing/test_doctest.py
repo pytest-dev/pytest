@@ -129,48 +129,29 @@ class TestDoctests:
             '*1 passed*',
         ])
 
-    def test_encoding_ascii(self, testdir):
-        """Test support for --doctest-encoding option.
+    @pytest.mark.parametrize(
+        '   test_string,    encoding',
+        [
+            (u'foo',         'ascii'),
+            (u'öäü',         'latin1'),
+            (u'öäü',         'utf-8')
+        ]
+    )
+    def test_encoding(self, testdir, test_string, encoding):
+        """Test support for doctest_encoding ini option.
         """
-        testdir._makefile(".txt", ["""
-            >>> 1
-            1
-        """], {}, encoding='ascii')
-
-        result = testdir.runpytest("--doctest-encoding=ascii")
-
-        result.stdout.fnmatch_lines([
-            '*1 passed*',
-        ])
-
-    def test_encoding_latin1(self, testdir):
-        """Test support for --doctest-encoding option.
-        """
-        testdir._makefile(".txt", [u"""
-            >>> len(u'üäö')
-            3
-        """], {}, encoding='latin1')
-
-        result = testdir.runpytest("--doctest-encoding=latin1")
-
-        result.stdout.fnmatch_lines([
-            '*1 passed*',
-        ])
-
-    def test_encoding_utf8(self, testdir):
-        """Test support for --doctest-encoding option.
-        """
-        testdir.maketxtfile(u"""
-            >>> len(u'üäö')
-            3
-        """)
+        testdir.makeini("""
+            [pytest]
+            doctest_encoding={0}
+        """.format(encoding))
+        doctest = u"""
+            >>> u"{}"
+            {}
+        """.format(test_string, repr(test_string))
+        testdir._makefile(".txt", [doctest], {}, encoding=encoding)
 
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines([
-            '*1 passed*',
-        ])
 
-        result = testdir.runpytest("--doctest-encoding=utf-8")
         result.stdout.fnmatch_lines([
             '*1 passed*',
         ])
