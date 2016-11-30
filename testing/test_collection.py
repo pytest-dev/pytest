@@ -85,6 +85,22 @@ class TestCollector:
         assert len(nodes) == 1
         assert isinstance(nodes[0], pytest.File)
 
+    def test_can_skip_class_with_test_attr(self, testdir):
+        """Assure test class is skipped when using `__test__=False` (See #2007)."""
+        testdir.makepyfile("""
+            class TestFoo():
+                __test__ = False
+                def __init__(self):
+                    pass
+                def test_foo():
+                    assert True
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            'collected 0 items',
+            '*no tests ran in*',
+        ])
+
 class TestCollectFS:
     def test_ignored_certain_directories(self, testdir):
         tmpdir = testdir.tmpdir

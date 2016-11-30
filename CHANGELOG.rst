@@ -13,6 +13,10 @@ New Features
 Changes
 -------
 
+* It is now possible to skip test classes from being collected by setting a
+  ``__test__`` attribute to ``False`` in the class body (`#2007`_). Thanks
+  to `@syre`_ for the report and `@lwm`_ for the PR.
+
 * Testcase reports with a ``url`` attribute will now properly write this to junitxml.
   Thanks `@fushi`_ for the PR (`#1874`_).
 
@@ -71,6 +75,7 @@ Changes
 
 *
 
+.. _@syre: https://github.com/syre
 .. _@dupuy: https://bitbucket.org/dupuy/
 .. _@lwm: https://github.com/lwm
 .. _@adler-j: https://github.com/adler-j
@@ -83,6 +88,7 @@ Changes
 .. _#2038: https://github.com/pytest-dev/pytest/issues/2038
 .. _#2078: https://github.com/pytest-dev/pytest/issues/2078
 .. _#2082: https://github.com/pytest-dev/pytest/issues/2082
+.. _#2007: https://github.com/pytest-dev/pytest/issues/2007
 
 
 3.0.4
