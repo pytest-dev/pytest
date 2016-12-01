@@ -4,7 +4,6 @@ from bisect import bisect_right
 import sys
 import inspect, tokenize
 import py
-from types import ModuleType
 cpy_compile = compile
 
 try:
