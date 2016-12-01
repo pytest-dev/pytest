@@ -18,7 +18,10 @@
 * Fix error message using ``approx`` with complex numbers (`#2082`_).
   Thanks `@adler-j`_ for the report and `@nicoddemus`_ for the PR.
 
-*
+* Remove internal code meant to support earlier Python 3 versions that produced the side effect
+  of leaving ``None`` in ``sys.modules`` when expressions were evaluated by pytest (for example passing a condition
+  as a string to ``pytest.mark.skipif``)(`#2103`_).
+  Thanks `@jaraco`_ for the report and `@nicoddemus`_ for the PR.
 
 * Cope gracefully with a .pyc file with no matching .py file (`#2038`_). Thanks
   `@nedbat`_.
@@ -41,6 +44,7 @@
 .. _#2038: https://github.com/pytest-dev/pytest/issues/2038
 .. _#2078: https://github.com/pytest-dev/pytest/issues/2078
 .. _#2082: https://github.com/pytest-dev/pytest/issues/2082
+.. _#2103: https://github.com/pytest-dev/pytest/issues/2103
 
 
 3.0.4
