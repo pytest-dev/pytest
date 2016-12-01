@@ -1,6 +1,10 @@
 3.0.5.dev0
 ==========
 
+* Add warning when not passing ``option=value`` correctly to ``-o/--override-ini`` (`#2105`_).
+  Also improved the help documentation. Thanks to `@mbukatov`_ for the report and
+  `@lwm`_ for the PR.
+
 * Now ``--confcutdir`` and ``--junit-xml`` are properly validated if they are directories
   and filenames, respectively (`#2089`_ and `#2078`_). Thanks to `@lwm`_ for the PR.
 
@@ -30,6 +34,7 @@
 
 *
 
+.. _@mbukatov: https://github.com/mbukatov
 .. _@dupuy: https://bitbucket.org/dupuy/
 .. _@lwm: https://github.com/lwm
 .. _@adler-j: https://github.com/adler-j
@@ -45,6 +50,7 @@
 .. _#2078: https://github.com/pytest-dev/pytest/issues/2078
 .. _#2082: https://github.com/pytest-dev/pytest/issues/2082
 .. _#2103: https://github.com/pytest-dev/pytest/issues/2103
+.. _#2105: https://github.com/pytest-dev/pytest/issues/2105
 
 
 3.0.4

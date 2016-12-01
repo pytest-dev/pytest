@@ -1149,7 +1149,10 @@ class Config(object):
         if self.getoption("override_ini", None):
             for ini_config_list in self.option.override_ini:
                 for ini_config in ini_config_list:
-                    (key, user_ini_value) = ini_config.split("=", 1)
+                    try:
+                        (key, user_ini_value) = ini_config.split("=", 1)
+                    except ValueError:
+                        raise UsageError("-o/--override-ini expects option=value style.")
                     if key == name:
                         value = user_ini_value
         return value

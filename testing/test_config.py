@@ -83,7 +83,7 @@ class TestParseIni:
         """)
         result = testdir.inline_run("--confcutdir=.")
         assert result.ret == 0
-        
+
 class TestConfigCmdlineParsing:
     def test_parsing_again_fails(self, testdir):
         config = testdir.parseconfig()
@@ -731,6 +731,14 @@ class TestOverrideIniArgs:
                                      "ini2:url=/tmp/user2?a=b&d=e",
                                      "ini3:True",
                                      "ini4:False"])
+
+    def test_override_ini_usage_error_bad_style(self, testdir):
+        testdir.makeini("""
+            [pytest]
+            xdist_strict=False
+        """)
+        result = testdir.runpytest("--override-ini", 'xdist_strict True', "-s")
+        result.stderr.fnmatch_lines(["*ERROR* *expects option=value*"])
 
     def test_with_arg_outside_cwd_without_inifile(self, tmpdir, monkeypatch):
         monkeypatch.chdir(str(tmpdir))
