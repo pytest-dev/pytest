@@ -22,6 +22,10 @@
 * Fix error message using ``approx`` with complex numbers (`#2082`_).
   Thanks `@adler-j`_ for the report and `@nicoddemus`_ for the PR.
 
+* Fixed false-positives warnings from assertion rewrite hook for modules imported more than
+  once by the ``pytest_plugins`` mechanism.
+  Thanks `@nicoddemus`_ for the PR.
+
 * Remove internal code meant to support earlier Python 3 versions that produced the side effect
   of leaving ``None`` in ``sys.modules`` when expressions were evaluated by pytest (for example passing a condition
   as a string to ``pytest.mark.skipif``)(`#2103`_).
