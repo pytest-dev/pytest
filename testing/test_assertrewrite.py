@@ -682,6 +682,19 @@ def test_rewritten():
         hook.mark_rewrite('test_remember_rewritten_modules')
         assert warnings == []
 
+    def test_rewrite_warning_using_pytest_plugins(self, testdir, monkeypatch):
+        testdir.makepyfile(**{
+            'conftest.py': "pytest_plugins = ['core', 'gui', 'sci']",
+            'core.py': "",
+            'gui.py': "pytest_plugins = ['core', 'sci']",
+            'sci.py': "pytest_plugins = ['core']",
+            'test_rewrite_warning_pytest_plugins.py': "def test(): pass",
+        })
+        testdir.chdir()
+        result = testdir.runpytest_subprocess()
+        result.stdout.fnmatch_lines(['*= 1 passed in *=*'])
+        assert 'pytest-warning summary' not in result.stdout.str()
+
 
 class TestAssertionRewriteHookDetails(object):
     def test_loader_is_package_false_for_module(self, testdir):
