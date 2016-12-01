@@ -23,7 +23,7 @@ def pytest_addoption(parser):
     group._addoption(
         '-o', '--override-ini', nargs='*', dest="override_ini",
         action="append",
-        help="override config option, e.g. `-o xfail_strict=True`.")
+        help="override config option with option=value style, e.g. `-o xfail_strict=True`.")
 
 
 @pytest.hookimpl(hookwrapper=True)
