@@ -423,3 +423,28 @@ def test_conftest_exception_handling(testdir):
     res = testdir.runpytest()
     assert res.ret == 4
     assert 'raise ValueError()' in [line.strip() for line in res.errlines]
+
+
+def test_hook_proxy(testdir):
+    """Session's gethookproxy() would cache conftests incorrectly (#2016).
+    It was decided to remove the cache altogether.
+    """
+    testdir.makepyfile(**{
+        'root/demo-0/test_foo1.py': "def test1(): pass",
+
+        'root/demo-a/test_foo2.py': "def test1(): pass",
+        'root/demo-a/conftest.py': """
+            def pytest_ignore_collect(path, config):
+                return True
+            """,
+
+        'root/demo-b/test_foo3.py': "def test1(): pass",
+        'root/demo-c/test_foo4.py': "def test1(): pass",
+    })
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        '*test_foo1.py*',
+        '*test_foo3.py*',
+        '*test_foo4.py*',
+        '*3 passed*',
+    ])
