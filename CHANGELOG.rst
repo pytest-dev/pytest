@@ -15,6 +15,11 @@
 * Provide ``:ref:`` targets for ``recwarn.rst`` so we can use intersphinx referencing.
   Thanks to `@dupuy`_ for the report and `@lwm`_ for the PR.
 
+* In Python 2, use a simple ``+-`` ASCII string in the string representation of ``pytest.approx`` (for example ``"4 +- 4.0e-06"``)
+  because it is brittle to handle that in different contexts and representations internally in pytest
+  which can result in bugs such as `#2111`_. In Python 3, the representation still uses ``±`` (for example ``4 ± 4.0e-06``).
+  Thanks `@kerrick-lyft`_ for the report and `@nicoddemus`_ for the PR.
+
 * Using ``item.Function``, ``item.Module``, etc., is now issuing deprecation warnings, prefer
   ``pytest.Function``, ``pytest.Module``, etc., instead (`#2034`_).
   Thanks `@nmundar`_ for the PR.
@@ -42,25 +47,27 @@
 
 *
 
-.. _@mbukatov: https://github.com/mbukatov
-.. _@dupuy: https://bitbucket.org/dupuy/
-.. _@d-b-w: https://bitbucket.org/d-b-w/
-.. _@lwm: https://github.com/lwm
 .. _@adler-j: https://github.com/adler-j
+.. _@d-b-w: https://bitbucket.org/d-b-w/
 .. _@DuncanBetts: https://github.com/DuncanBetts
+.. _@dupuy: https://bitbucket.org/dupuy/
+.. _@kerrick-lyft: https://github.com/kerrick-lyft
+.. _@lwm: https://github.com/lwm
+.. _@mbukatov: https://github.com/mbukatov
 .. _@nedbat: https://github.com/nedbat
 .. _@nmundar: https://github.com/nmundar
 
-.. _#2089: https://github.com/pytest-dev/pytest/issues/2089
-.. _#478: https://github.com/pytest-dev/pytest/issues/478
-.. _#687: https://github.com/pytest-dev/pytest/issues/687
 .. _#2016: https://github.com/pytest-dev/pytest/issues/2016
 .. _#2034: https://github.com/pytest-dev/pytest/issues/2034
 .. _#2038: https://github.com/pytest-dev/pytest/issues/2038
 .. _#2078: https://github.com/pytest-dev/pytest/issues/2078
 .. _#2082: https://github.com/pytest-dev/pytest/issues/2082
+.. _#2089: https://github.com/pytest-dev/pytest/issues/2089
 .. _#2103: https://github.com/pytest-dev/pytest/issues/2103
 .. _#2105: https://github.com/pytest-dev/pytest/issues/2105
+.. _#2111: https://github.com/pytest-dev/pytest/issues/2111
+.. _#478: https://github.com/pytest-dev/pytest/issues/478
+.. _#687: https://github.com/pytest-dev/pytest/issues/687
 
 
 3.0.4
