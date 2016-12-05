@@ -1,5 +1,5 @@
-3.0.5.dev0
-==========
+3.0.5
+=====
 
 * Add warning when not passing ``option=value`` correctly to ``-o/--override-ini`` (`#2105`_).
   Also improved the help documentation. Thanks to `@mbukatov`_ for the report and
@@ -42,10 +42,6 @@
 
 * Cope gracefully with a .pyc file with no matching .py file (`#2038`_). Thanks
   `@nedbat`_.
-
-*
-
-*
 
 .. _@adler-j: https://github.com/adler-j
 .. _@d-b-w: https://bitbucket.org/d-b-w/
