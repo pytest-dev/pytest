@@ -1,7 +1,9 @@
 3.0.6.dev0
 ==========
 
-*
+* fix issue #2118 - protect against internal deprecationerrors by changing the code path of Node._getcustomclass.
+  This also turns a internal deprecation into a real deprecation.
+  Thanks to `@nicoddemus`_ for the report and `@RonnyPfannschmidt`_ for the PR.
 
 *
 

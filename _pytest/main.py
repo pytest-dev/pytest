@@ -3,6 +3,8 @@ import functools
 import os
 import sys
 
+import warnings
+
 import _pytest
 import _pytest._code
 import py
@@ -190,14 +192,21 @@ class FSHookProxy:
         self.__dict__[name] = x
         return x
 
-def compatproperty(name):
-    def fget(self):
-        import warnings
-        warnings.warn("This usage is deprecated, please use pytest.{0} instead".format(name),
-                      PendingDeprecationWarning, stacklevel=2)
-        return getattr(pytest, name)
+class _CompatProperty(object):
+    def __init__(self, name):
+        self.name = name
 
-    return property(fget)
+    def __get__(self, obj, owner):
+        if obj is None:
+            return self
+
+        warnings.warn(
+            "usage of {owner!r}.{name} is deprecated, please use pytest.{name} instead".format(
+                name=self.name, owner=type(owner).__name__),
+            PendingDeprecationWarning, stacklevel=2)
+        return getattr(pytest, self.name)
+
+
 
 class NodeKeywords(MappingMixin):
     def __init__(self, node):
@@ -269,19 +278,23 @@ class Node(object):
         """ fspath sensitive hook proxy used to call pytest hooks"""
         return self.session.gethookproxy(self.fspath)
 
-    Module = compatproperty("Module")
-    Class = compatproperty("Class")
-    Instance = compatproperty("Instance")
-    Function = compatproperty("Function")
-    File = compatproperty("File")
-    Item = compatproperty("Item")
+    Module = _CompatProperty("Module")
+    Class = _CompatProperty("Class")
+    Instance = _CompatProperty("Instance")
+    Function = _CompatProperty("Function")
+    File = _CompatProperty("File")
+    Item = _CompatProperty("Item")
 
     def _getcustomclass(self, name):
-        cls = getattr(self, name)
-        if cls != getattr(pytest, name):
-            py.log._apiwarn("2.0", "use of node.%s is deprecated, "
+        maybe_compatprop = getattr(type(self), name)
+        if isinstance(maybe_compatprop, _CompatProperty):
+            return getattr(pytest, name)
+        else:
+            cls = getattr(self, name)
+
+            warnings.warn("use of node.%s is deprecated, "
                 "use pytest_pycollect_makeitem(...) to create custom "
-                "collection nodes" % name)
+                "collection nodes" % name, category=DeprecationWarning)
         return cls
 
     def __repr__(self):
