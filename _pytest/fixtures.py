@@ -754,8 +754,8 @@ class FixtureDef:
                 func = self._finalizer.pop()
                 func()
         finally:
-            ihook = self._fixturemanager.session.ihook
-            ihook.pytest_fixture_post_finalizer(fixturedef=self)
+            hook = self._fixturemanager.session.config.hook
+            hook.pytest_fixture_post_finalizer(fixturedef=self)
             # even if finalization fails, we invalidate
             # the cached fixture value
             if hasattr(self, "cached_result"):
@@ -783,8 +783,8 @@ class FixtureDef:
             self.finish()
             assert not hasattr(self, "cached_result")
 
-        ihook = self._fixturemanager.session.ihook
-        return ihook.pytest_fixture_setup(fixturedef=self, request=request)
+        hook = self._fixturemanager.session.config.hook
+        return hook.pytest_fixture_setup(fixturedef=self, request=request)
 
     def __repr__(self):
         return ("<FixtureDef name=%r scope=%r baseid=%r >" %

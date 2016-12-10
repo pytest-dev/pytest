@@ -2984,4 +2984,49 @@ class TestParameterizedSubRequest:
             """.format(fixfile.strpath, testfile.basename))
 
 
+def test_pytest_fixture_setup_hook(testdir):
+    testdir.makeconftest("""
+        import pytest
 
+        def pytest_fixture_setup():
+            print('pytest_fixture_setup hook called')
+    """)
+    testdir.makepyfile("""
+        import pytest
+
+        @pytest.fixture()
+        def some():
+            return 'some'
+
+        def test_func(some):
+            assert some == 'some'
+    """)
+    result = testdir.runpytest("-s")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines([
+        "*pytest_fixture_setup hook called*",
+    ])
+
+
+def test_pytest_fixture_post_finalizer_hook(testdir):
+    testdir.makeconftest("""
+        import pytest
+
+        def pytest_fixture_post_finalizer():
+            print('pytest_fixture_post_finalizer hook called')
+    """)
+    testdir.makepyfile("""
+        import pytest
+
+        @pytest.fixture()
+        def some():
+            return 'some'
+
+        def test_func(some):
+            assert some == 'some'
+    """)
+    result = testdir.runpytest("-s")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines([
+        "*pytest_fixture_post_finalizer hook called*",
+    ])
