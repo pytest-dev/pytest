@@ -19,6 +19,12 @@ except ImportError:  # pragma: no cover
     # Only available in Python 3.4+ or as a backport
     enum = None
 
+try:
+    import asyncio
+except ImportError:  # pragma: no cover
+    # Only available in Python 3.4+ or as a backport
+    asyncio = None
+
 _PY3 = sys.version_info > (3, 0)
 _PY2 = not _PY3
 
@@ -42,11 +48,10 @@ REGEX_TYPE = type(re.compile(''))
 
 
 def is_generator(func):
-    try:
-        return _pytest._code.getrawcode(func).co_flags & 32 # generator function
-    except AttributeError: # builtin functions have no bytecode
-        # assume them to not be generators
-        return False
+    genfunc = inspect.isgeneratorfunction(func)
+    if asyncio is not None:
+        return genfunc and not asyncio.iscoroutinefunction(func)
+    return genfunc
 
 
 def getlocation(function, curdir):
