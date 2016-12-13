@@ -15,8 +15,8 @@ def test_is_generator():
     assert not is_generator(foo)
 
 
+@pytest.mark.skipif(sys.version_info < (3, 4), reason='asyncio available in Python 3.4+')
 def test_is_generator_asyncio(testdir):
-    pytest.importorskip('asyncio')
     testdir.makepyfile("""
         from _pytest.compat import is_generator
         import asyncio
@@ -27,7 +27,8 @@ def test_is_generator_asyncio(testdir):
         def test_is_generator_asyncio():
             assert not is_generator(baz)
     """)
-    result = testdir.runpytest()
+    # avoid importing asyncio into pytest's own process, which in turn imports logging (#8)
+    result = testdir.runpytest_subprocess()
     result.stdout.fnmatch_lines(['*1 passed*'])
 
 
