@@ -32,6 +32,9 @@ matrix:
   allow_failures:
     # py35-trial failing on Linux: #1989
     - env: TESTENV=py35-trial
+  include:
+    - env: TESTENV=py36
+      python: '3.6-dev'
 
 script: tox --recreate -e $TESTENV
 
