@@ -300,6 +300,26 @@ def test_parametrized_collected_from_command_line(testdir):
     rec = testdir.inline_run(file_name + "::" + "test_func")
     rec.assertoutcome(passed=3)
 
+@pytest.mark.parametrize("name, arg", [
+        ("foo", "bar"),
+        ("foo", "foo"),
+])
+def test_marker_in_fixture_params(name, arg, testdir):
+    p = testdir.makepyfile("""
+        import pytest
+        @pytest.fixture(params=[pytest.mark.{name}('{arg}')])
+        def fixture():
+            return 1
+
+        def test_baz(fixture):
+            assert fixture
+    """.format(name=name, arg=arg))
+    reprec = testdir.inline_run("-m", name, p)
+    passed, skipped, failed = reprec.listoutcomes()
+    assert len(passed) == 1
+    assert len(skipped) == 0
+    assert len(failed) == 0
+
 
 class TestFunctional:
 

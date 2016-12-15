@@ -3,7 +3,8 @@
 
 *
 
-*
+* Fix ``pytest.mark.foo('foo')`` when the marker name is the same as the arg.
+  Thanks `@cr3`_ for the PR.
 
 *
 
@@ -11,6 +12,7 @@
 
 *
 
+.. _@cr3: https://github.com/cr3
 
 
 3.0.5 (2016-12-05)
