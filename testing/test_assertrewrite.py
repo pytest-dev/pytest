@@ -956,3 +956,17 @@ class TestIssue925(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines('*E*assert True == ((False == True) == True)')
 
+
+class TestIssue2121():
+    def test_simple(self, testdir):
+        testdir.tmpdir.join("tests/file.py").ensure().write("""
+def test_simple_failure():
+    assert 1 + 1 == 3
+""")
+        testdir.tmpdir.join("pytest.ini").write(py.std.textwrap.dedent("""
+            [pytest]
+            python_files = tests/**.py
+        """))
+
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines('*E*assert (1 + 1) == 3')
