@@ -11,7 +11,6 @@ import re
 import struct
 import sys
 import types
-from fnmatch import fnmatch
 
 import py
 from _pytest.assertion import util
@@ -167,7 +166,7 @@ class AssertionRewritingHook(object):
             # latter might trigger an import to fnmatch.fnmatch
             # internally, which would cause this method to be
             # called recursively
-            if fnmatch(fn_pypath.basename, pat):
+            if fn_pypath.fnmatch(pat):
                 state.trace("matched test file %r" % (fn,))
                 return True
 
