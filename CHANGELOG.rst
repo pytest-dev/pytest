@@ -1,7 +1,10 @@
 3.0.6.dev0 (unreleased)
 =======================
 
-*
+* Conditionless ``xfail`` markers no longer rely on the underlying test item
+  being an instance of ``PyobjMixin``, and can therefore apply to tests not
+  collected by the built-in python test collector. Thanks `@barneygale`_ for the
+  PR.
 
 * pytest no longer recognizes coroutine functions as yield tests (`#2129`_).
   Thanks to `@malinoff`_ for the PR.
