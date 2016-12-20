@@ -10,7 +10,8 @@ New Features
 
 * pytest now warns when a callable ids raises in a parametrized test. Thanks `@fogo`_ for the PR.
 
-*
+* ``pytest.warns`` now checks for subclass relationship rather than
+  class equality. Thanks `@lesteve`_ for the PR (`#2166`_)
 
 
 Changes
@@ -41,7 +42,11 @@ Changes
 .. _@fushi: https://github.com/fushi
 .. _@mattduck: https://github.com/mattduck
 .. _@wheerd: https://github.com/wheerd
+<<<<<<< HEAD
 .. _@fogo: https://github.com/fogo
+=======
+.. _@lesteve: https://github.com/lesteve
+>>>>>>> pytest.warns checks for subclass relationship
 
 .. _#1512: https://github.com/pytest-dev/pytest/issues/1512
 .. _#1874: https://github.com/pytest-dev/pytest/pull/1874
@@ -49,7 +54,7 @@ Changes
 .. _#2007: https://github.com/pytest-dev/pytest/issues/2007
 .. _#2013: https://github.com/pytest-dev/pytest/issues/2013
 .. _#2101: https://github.com/pytest-dev/pytest/pull/2101
-
+.. _#2166: https://github.com/pytest-dev/pytest/pull/2166
 
 3.0.6.dev0 (unreleased)
 =======================
