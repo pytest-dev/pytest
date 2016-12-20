@@ -9,13 +9,17 @@
   expected warnings and the list of caught warnings is added to the
   error message. Thanks `@lesteve`_ for the PR.
 
-*
+* Specifying tests with colons like ``test_foo.py::test_bar`` for tests in
+  subdirectories with ini configuration files now uses the correct ini file
+  (`#2148`_).  Thanks `@pelme`_.
 
 *
 
 .. _@lesteve: https://github.com/lesteve
+.. _@pelme: https://github.com/pelme
 
 .. _#2150: https://github.com/pytest-dev/pytest/issues/2150
+.. _#2148: https://github.com/pytest-dev/pytest/issues/2148
 
 
 3.0.5 (2016-12-05)
