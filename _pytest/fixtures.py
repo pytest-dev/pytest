@@ -783,7 +783,9 @@ class FixtureDef:
             self.finish()
             assert not hasattr(self, "cached_result")
 
-        hook = self._fixturemanager.session.config.hook
+        hook = self._fixturemanager.session.gethookproxy(
+            request._pyfuncitem.fspath
+        )
         return hook.pytest_fixture_setup(fixturedef=self, request=request)
 
     def __repr__(self):
