@@ -331,3 +331,19 @@ def test_issue1338_name_resolving():
         monkeypatch.undo()
 
 
+def test_issue1938_patch_class_bases():
+    class Loud:
+        def thing(self):
+            return '!!!!'
+
+    class Quiet:
+        def thing(self):
+            return 'sssh...'
+
+    class ThingToTest(Loud):
+        pass
+
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setattr(ThingToTest, '__bases__', (Quiet,))
+    assert ThingToTest().thing() == 'sssh...'
+    monkeypatch.undo()

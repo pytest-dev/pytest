@@ -131,13 +131,18 @@ class MonkeyPatch:
             value = name
             name, target = derive_importpath(target, raising)
 
-        oldval = getattr(target, name, notset)
+        # avoid class descriptors like staticmethod/classmethod
+        use_classdict = inspect.isclass(target) and name in target.__dict__
+
+        oldval = (
+            target.__dict__[name]
+            if use_classdict else
+            getattr(target, name, notset)
+        )
+
         if raising and oldval is notset:
             raise AttributeError("%r has no attribute %r" % (target, name))
 
-        # avoid class descriptors like staticmethod/classmethod
-        if inspect.isclass(target):
-            oldval = target.__dict__.get(name, notset)
         self._setattr.append((target, name, oldval))
         setattr(target, name, value)
 
