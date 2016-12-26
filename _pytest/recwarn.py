@@ -223,4 +223,7 @@ class WarningsChecker(WarningsRecorder):
             if self.expected_warning is not None:
                 if not any(r.category in self.expected_warning for r in self):
                     __tracebackhide__ = True
-                    pytest.fail("DID NOT WARN")
+                    pytest.fail("DID NOT WARN. No warnings of type {0} was emitted. "
+                                "The list of emitted warnings is: {1}.".format(
+                                    self.expected_warning,
+                                    [each.message for each in self]))

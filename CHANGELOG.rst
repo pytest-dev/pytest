@@ -5,12 +5,17 @@
 
 *
 
-*
+* Improve error message when pytest.warns fails (`#2150`_). The type(s) of the
+  expected warnings and the list of caught warnings is added to the
+  error message. Thanks `@lesteve`_ for the PR.
 
 *
 
 *
 
+.. _@lesteve: https://github.com/lesteve
+
+.. _#2150: https://github.com/pytest-dev/pytest/issues/2150
 
 
 3.0.5 (2016-12-05)

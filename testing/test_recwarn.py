@@ -1,4 +1,5 @@
 import warnings
+import re
 import py
 import pytest
 from _pytest.recwarn import WarningsRecorder
@@ -114,7 +115,7 @@ class TestDeprecatedCall(object):
         with pytest.raises(pytest.fail.Exception) as ex:
             with pytest.deprecated_call():
                 self.dep(1)
-        assert str(ex.value) == "DID NOT WARN"
+        assert str(ex.value).startswith("DID NOT WARN")
 
     def test_deprecated_call_as_context_manager(self):
         with pytest.deprecated_call():
@@ -185,16 +186,38 @@ class TestWarns(object):
         with pytest.warns(RuntimeWarning):
             warnings.warn("runtime", RuntimeWarning)
 
-        with pytest.raises(pytest.fail.Exception):
-            with pytest.warns(RuntimeWarning):
-                warnings.warn("user", UserWarning)
-
-        with pytest.raises(pytest.fail.Exception):
-            with pytest.warns(UserWarning):
-                warnings.warn("runtime", RuntimeWarning)
-
         with pytest.warns(UserWarning):
             warnings.warn("user", UserWarning)
+
+        with pytest.raises(pytest.fail.Exception) as excinfo:
+            with pytest.warns(RuntimeWarning):
+                warnings.warn("user", UserWarning)
+        excinfo.match(r"DID NOT WARN. No warnings of type \(.+RuntimeWarning.+,\) was emitted. "
+                      r"The list of emitted warnings is: \[UserWarning\('user',\)\].")
+
+        with pytest.raises(pytest.fail.Exception) as excinfo:
+            with pytest.warns(UserWarning):
+                warnings.warn("runtime", RuntimeWarning)
+        excinfo.match(r"DID NOT WARN. No warnings of type \(.+UserWarning.+,\) was emitted. "
+                      r"The list of emitted warnings is: \[RuntimeWarning\('runtime',\)\].")
+
+        with pytest.raises(pytest.fail.Exception) as excinfo:
+            with pytest.warns(UserWarning):
+                pass
+        excinfo.match(r"DID NOT WARN. No warnings of type \(.+UserWarning.+,\) was emitted. "
+                      r"The list of emitted warnings is: \[\].")
+
+        warning_classes = (UserWarning, FutureWarning)
+        with pytest.raises(pytest.fail.Exception) as excinfo:
+            with pytest.warns(warning_classes) as warninfo:
+                warnings.warn("runtime", RuntimeWarning)
+                warnings.warn("import", ImportWarning)
+
+        message_template = ("DID NOT WARN. No warnings of type {0} was emitted. "
+                            "The list of emitted warnings is: {1}.")
+        excinfo.match(re.escape(message_template.format(warning_classes,
+                                                        [each.message for each in warninfo])))
+
 
     def test_record(self):
         with pytest.warns(UserWarning) as record:
