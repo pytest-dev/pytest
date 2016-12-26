@@ -1002,7 +1002,7 @@ Given the tests file structure is:
 
             @pytest.mark.parametrize('username', ['directly-overridden-username-other'])
             def test_username_other(other_username):
-                assert username == 'other-directly-overridden-username-other'
+                assert other_username == 'other-directly-overridden-username-other'
 
 In the example above, a fixture value is overridden by the test parameter value. Note that the value of the fixture
 can be overridden this way even if the test doesn't use it directly (doesn't mention it in the function prototype).
