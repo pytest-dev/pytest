@@ -527,6 +527,29 @@ def test_toolongargs_issue224(testdir):
     result = testdir.runpytest("-m", "hello" * 500)
     assert result.ret == EXIT_NOTESTSCOLLECTED
 
+def test_config_in_subdirectory_colon_command_line_issue2148(testdir):
+    conftest_source = '''
+        def pytest_addoption(parser):
+            parser.addini('foo', 'foo')
+    '''
+
+    testdir.makefile('.ini', **{
+        'pytest': '[pytest]\nfoo = root',
+        'subdir/pytest': '[pytest]\nfoo = subdir',
+    })
+
+    testdir.makepyfile(**{
+        'conftest': conftest_source,
+        'subdir/conftest': conftest_source,
+        'subdir/test_foo': '''
+            def test_foo(pytestconfig):
+                assert pytestconfig.getini('foo') == 'subdir'
+        '''})
+
+    result = testdir.runpytest('subdir/test_foo.py::test_foo')
+    assert result.ret == 0
+
+
 def test_notify_exception(testdir, capfd):
     config = testdir.parseconfig()
     excinfo = pytest.raises(ValueError, "raise ValueError(1)")
