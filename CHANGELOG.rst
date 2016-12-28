@@ -17,14 +17,13 @@
 *
 
 .. _@lesteve: https://github.com/lesteve
+.. _@malinoff: https://github.com/malinoff
 .. _@pelme: https://github.com/pelme
 
-.. _#2150: https://github.com/pytest-dev/pytest/issues/2150
-.. _#2148: https://github.com/pytest-dev/pytest/issues/2148
-
-.. _@malinoff: https://github.com/malinoff
-
 .. _#2129: https://github.com/pytest-dev/pytest/issues/2129
+.. _#2148: https://github.com/pytest-dev/pytest/issues/2148
+.. _#2150: https://github.com/pytest-dev/pytest/issues/2150
+
 
 3.0.5 (2016-12-05)
 ==================
