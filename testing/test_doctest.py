@@ -1,11 +1,9 @@
 # encoding: utf-8
 import sys
 import _pytest._code
+from _pytest.compat import MODULE_NOT_FOUND_ERROR
 from _pytest.doctest import DoctestItem, DoctestModule, DoctestTextfile
 import pytest
-
-PY36 = sys.version_info[:2] >= (3, 6)
-MODULE_NOT_FOUND_ERROR = 'ModuleNotFoundError' if PY36 else 'ImportError'
 
 
 class TestDoctests:
