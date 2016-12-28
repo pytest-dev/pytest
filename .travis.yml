@@ -33,6 +33,9 @@ matrix:
     # see #1989
     - env: TESTENV=py27-trial
     - env: TESTENV=py35-trial
+  include:
+    - env: TESTENV=py36
+      python: '3.6-dev'
 
 script: tox --recreate -e $TESTENV
 
