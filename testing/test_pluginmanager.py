@@ -4,7 +4,8 @@ import py
 import os
 
 from _pytest.config import get_config, PytestPluginManager
-from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import EXIT_NOTESTSCOLLECTED, Session
+
 
 @pytest.fixture
 def pytestpm():
@@ -132,6 +133,25 @@ class TestPytestPluginInteractions:
             assert saveindent[0] > indent
         finally:
             undo()
+
+    def test_hook_proxy(self, testdir):
+        """Test the gethookproxy function(#2016)"""
+        config = testdir.parseconfig()
+        session = Session(config)
+        testdir.makepyfile(**{
+            'tests/conftest.py': '',
+            'tests/subdir/conftest.py': '',
+        })
+
+        conftest1 = testdir.tmpdir.join('tests/conftest.py')
+        conftest2 = testdir.tmpdir.join('tests/subdir/conftest.py')
+
+        config.pluginmanager._importconftest(conftest1)
+        ihook_a = session.gethookproxy(testdir.tmpdir.join('tests'))
+        assert ihook_a is not None
+        config.pluginmanager._importconftest(conftest2)
+        ihook_b = session.gethookproxy(testdir.tmpdir.join('tests'))
+        assert ihook_a is not ihook_b
 
     def test_warn_on_deprecated_multicall(self, pytestpm):
         warnings = []

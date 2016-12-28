@@ -16,8 +16,8 @@ You can invoke testing through the Python interpreter from the command line::
 
     python -m pytest [...]
 
-This is equivalent to invoking the command line script ``pytest [...]``
-directly.
+This is almost equivalent to invoking the command line script ``pytest [...]``
+directly, except that python will also add the current directory to ``sys.path``.
 
 Getting help on version, option names, environment variables
 --------------------------------------------------------------

@@ -186,16 +186,15 @@ class AssertionRewritingHook(object):
         """
         already_imported = set(names).intersection(set(sys.modules))
         if already_imported:
-            for name in names:
+            for name in already_imported:
                 if name not in self._rewritten_names:
-                    self._warn_already_imported(already_imported)
+                    self._warn_already_imported(name)
         self._must_rewrite.update(names)
 
-    def _warn_already_imported(self, names):
+    def _warn_already_imported(self, name):
         self.config.warn(
             'P1',
-            'Modules are already imported so can not be re-written: %s' %
-            ','.join(names))
+            'Module already imported so can not be re-written: %s' % name)
 
     def load_module(self, name):
         # If there is an existing module object named 'fullname' in

@@ -70,7 +70,7 @@ marked ``smtp`` fixture function.  Running the test looks like this::
 
     $ pytest test_smtpsimple.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0
+    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
@@ -188,7 +188,7 @@ inspect what is going on and can now run the tests::
 
     $ pytest test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0
+    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -257,8 +257,9 @@ the code after the *yield* statement serves as the teardown code.::
         print("teardown smtp")
         smtp.close()
 
-The ``print`` and ``smtp.close()`` statements will execute when the last test using
-the fixture in the module has finished execution, regardless of the exception status of the tests.
+The ``print`` and ``smtp.close()`` statements will execute when the last test in
+the module has finished execution, regardless of the exception status of the
+tests.
 
 Let's execute it::
 
@@ -318,8 +319,7 @@ the ``with`` statement ends.
             request.addfinalizer(fin)
             return smtp  # provide the fixture value
 
-    The ``fin`` function will execute when the last test using
-    the fixture in the module has finished execution.
+    The ``fin`` function will execute when the last test in the module has finished execution.
 
     This method is still fully supported, but ``yield`` is recommended from 2.10 onward because
     it is considered simpler and better describes the natural code flow.
@@ -520,7 +520,7 @@ Running the above tests results in the following test IDs being used::
 
    $ pytest --collect-only
    ======= test session starts ========
-   platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0
+   platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
    rootdir: $REGENDOC_TMPDIR, inifile: 
    collected 11 items
    <Module 'test_anothersmtp.py'>
@@ -573,7 +573,7 @@ Here we declare an ``app`` fixture which receives the previously defined
 
     $ pytest -v test_appsetup.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 2 items
@@ -642,7 +642,7 @@ Let's run the tests in verbose mode and with looking at the print-output::
 
     $ pytest -v -s test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 8 items
@@ -1002,7 +1002,7 @@ Given the tests file structure is:
 
             @pytest.mark.parametrize('username', ['directly-overridden-username-other'])
             def test_username_other(other_username):
-                assert username == 'other-directly-overridden-username-other'
+                assert other_username == 'other-directly-overridden-username-other'
 
 In the example above, a fixture value is overridden by the test parameter value. Note that the value of the fixture
 can be overridden this way even if the test doesn't use it directly (doesn't mention it in the function prototype).

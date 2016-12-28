@@ -1,4 +1,5 @@
 """ core implementation of testing process: init, session, runtest loop. """
+import functools
 import os
 import sys
 
@@ -11,6 +12,7 @@ try:
 except ImportError:
     from UserDict import DictMixin as MappingMixin
 
+from _pytest.config import directory_arg
 from _pytest.runner import collect_one_node
 
 tracebackcutdir = py.path.local(_pytest.__file__).dirpath()
@@ -58,7 +60,7 @@ def pytest_addoption(parser):
     # when changing this to --conf-cut-dir, config.py Conftest.setinitial
     # needs upgrading as well
     group.addoption('--confcutdir', dest="confcutdir", default=None,
-        metavar="dir",
+        metavar="dir", type=functools.partial(directory_arg, optname="--confcutdir"),
         help="only load conftest.py's relative to specified dir.")
     group.addoption('--noconftest', action="store_true",
         dest="noconftest", default=False,
@@ -533,7 +535,6 @@ class Session(FSCollector):
     def __init__(self, config):
         FSCollector.__init__(self, config.rootdir, parent=None,
                              config=config, session=self)
-        self._fs2hookproxy = {}
         self.testsfailed = 0
         self.testscollected = 0
         self.shouldstop = False
@@ -564,23 +565,18 @@ class Session(FSCollector):
         return path in self._initialpaths
 
     def gethookproxy(self, fspath):
-        try:
-            return self._fs2hookproxy[fspath]
-        except KeyError:
-            # check if we have the common case of running
-            # hooks with all conftest.py filesall conftest.py
-            pm = self.config.pluginmanager
-            my_conftestmodules = pm._getconftestmodules(fspath)
-            remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
-            if remove_mods:
-                # one or more conftests are not in use at this fspath
-                proxy = FSHookProxy(fspath, pm, remove_mods)
-            else:
-                # all plugis are active for this fspath
-                proxy = self.config.hook
-
-            self._fs2hookproxy[fspath] = proxy
-            return proxy
+        # check if we have the common case of running
+        # hooks with all conftest.py filesall conftest.py
+        pm = self.config.pluginmanager
+        my_conftestmodules = pm._getconftestmodules(fspath)
+        remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
+        if remove_mods:
+            # one or more conftests are not in use at this fspath
+            proxy = FSHookProxy(fspath, pm, remove_mods)
+        else:
+            # all plugis are active for this fspath
+            proxy = self.config.hook
+        return proxy
 
     def perform_collect(self, args=None, genitems=True):
         hook = self.config.hook

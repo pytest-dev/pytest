@@ -1,5 +1,5 @@
 # encoding: utf-8
-
+import sys
 import pytest
 import doctest
 
@@ -8,6 +8,7 @@ from operator import eq, ne
 from decimal import Decimal
 from fractions import Fraction
 inf, nan = float('inf'), float('nan')
+
 
 class MyDocTestRunner(doctest.DocTestRunner):
 
@@ -22,13 +23,17 @@ class MyDocTestRunner(doctest.DocTestRunner):
 class TestApprox:
 
     def test_repr_string(self):
-        # Just make sure the Unicode handling doesn't raise any exceptions.
-        print(approx(1.0))
-        print(approx([1.0, 2.0, 3.0]))
-        print(approx(inf))
-        print(approx(1.0, rel=nan))
-        print(approx(1.0, rel=inf))
-        print(approx(1.0j, rel=inf))
+        # for some reason in Python 2.6 it is not displaying the tolerance representation correctly
+        plus_minus = u'\u00b1' if sys.version_info[0] > 2 else u'+-'
+        tol1, tol2, infr = '1.0e-06', '2.0e-06', 'inf'
+        if sys.version_info[:2] == (2, 6):
+            tol1, tol2, infr = '???', '???', '???'
+        assert repr(approx(1.0)) == '1.0 {pm} {tol1}'.format(pm=plus_minus, tol1=tol1)
+        assert repr(approx([1.0, 2.0])) == '1.0 {pm} {tol1}, 2.0 {pm} {tol2}'.format(pm=plus_minus, tol1=tol1, tol2=tol2)
+        assert repr(approx(inf)) == 'inf'
+        assert repr(approx(1.0, rel=nan)) == '1.0 {pm} ???'.format(pm=plus_minus)
+        assert repr(approx(1.0, rel=inf)) == '1.0 {pm} {infr}'.format(pm=plus_minus, infr=infr)
+        assert repr(approx(1.0j, rel=inf)) == '1j'
 
     def test_operator_overloading(self):
         assert 1 == approx(1, rel=1e-6, abs=1e-12)
@@ -284,4 +289,24 @@ class TestApprox:
         )
         runner = MyDocTestRunner()
         runner.run(test)
+
+    def test_unicode_plus_minus(self, testdir):
+        """
+        Comparing approx instances inside lists should not produce an error in the detailed diff.
+        Integration test for issue #2111.
+        """
+        testdir.makepyfile("""
+            import pytest
+            def test_foo():
+                assert [3] == [pytest.approx(4)]
+        """)
+        expected = '4.0e-06'
+        # for some reason in Python 2.6 it is not displaying the tolerance representation correctly
+        if sys.version_info[:2] == (2, 6):
+            expected = '???'
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            '*At index 0 diff: 3 != 4 * {0}'.format(expected),
+            '=* 1 failed in *=',
+        ])
 

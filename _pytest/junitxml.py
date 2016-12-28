@@ -8,12 +8,14 @@ Based on initial code from Ross Lawley.
 # Output conforms to https://github.com/jenkinsci/xunit-plugin/blob/master/
 # src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd
 
+import functools
 import py
 import os
 import re
 import sys
 import time
 import pytest
+from _pytest.config import filename_arg
 
 # Python 2.X and 3.X compatibility
 if sys.version_info[0] < 3:
@@ -216,6 +218,7 @@ def pytest_addoption(parser):
         action="store",
         dest="xmlpath",
         metavar="path",
+        type=functools.partial(filename_arg, optname="--junitxml"),
         default=None,
         help="create junit-xml style report file at given path.")
     group.addoption(
