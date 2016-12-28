@@ -3,7 +3,8 @@
 
 *
 
-*
+* pytest no longer recognizes coroutine functions as yield tests (`#2129`_).
+  Thanks to `@malinoff`_ for the PR.
 
 * Improve error message when pytest.warns fails (`#2150`_). The type(s) of the
   expected warnings and the list of caught warnings is added to the
@@ -21,6 +22,9 @@
 .. _#2150: https://github.com/pytest-dev/pytest/issues/2150
 .. _#2148: https://github.com/pytest-dev/pytest/issues/2148
 
+.. _@malinoff: https://github.com/malinoff
+
+.. _#2129: https://github.com/pytest-dev/pytest/issues/2129
 
 3.0.5 (2016-12-05)
 ==================

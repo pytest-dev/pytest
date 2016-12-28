@@ -19,6 +19,7 @@ except ImportError:  # pragma: no cover
     # Only available in Python 3.4+ or as a backport
     enum = None
 
+
 _PY3 = sys.version_info > (3, 0)
 _PY2 = not _PY3
 
@@ -42,11 +43,18 @@ REGEX_TYPE = type(re.compile(''))
 
 
 def is_generator(func):
-    try:
-        return _pytest._code.getrawcode(func).co_flags & 32 # generator function
-    except AttributeError: # builtin functions have no bytecode
-        # assume them to not be generators
-        return False
+    genfunc = inspect.isgeneratorfunction(func)
+    return genfunc and not iscoroutinefunction(func)
+
+
+def iscoroutinefunction(func):
+    """Return True if func is a decorated coroutine function.
+
+    Note: copied and modified from Python 3.5's builtin couroutines.py to avoid import asyncio directly,
+    which in turns also initializes the "logging" module as side-effect (see issue #8).
+    """
+    return (getattr(func, '_is_coroutine', False) or
+           (hasattr(inspect, 'iscoroutinefunction') and inspect.iscoroutinefunction(func)))
 
 
 def getlocation(function, curdir):
