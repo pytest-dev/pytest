@@ -127,7 +127,7 @@ required configurations.
     The reason for this somewhat evolved importing technique is
     that in larger projects multiple test modules might import
     from each other and thus deriving a canonical import name helps
-    to avoid surprises such as a test modules getting imported twice.
+    to avoid surprises such as a test module getting imported twice.
 
 
 .. _`virtualenv`: http://pypi.python.org/pypi/virtualenv

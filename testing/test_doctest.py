@@ -1,8 +1,10 @@
 # encoding: utf-8
 import sys
 import _pytest._code
+from _pytest.compat import MODULE_NOT_FOUND_ERROR
 from _pytest.doctest import DoctestItem, DoctestModule, DoctestTextfile
 import pytest
+
 
 class TestDoctests:
 
@@ -238,8 +240,8 @@ class TestDoctests:
         # doctest is never executed because of error during hello.py collection
         result.stdout.fnmatch_lines([
             "*>>> import asdals*",
-            "*UNEXPECTED*ImportError*",
-            "ImportError: No module named *asdal*",
+            "*UNEXPECTED*{e}*".format(e=MODULE_NOT_FOUND_ERROR),
+            "{e}: No module named *asdal*".format(e=MODULE_NOT_FOUND_ERROR),
         ])
 
     def test_doctest_unex_importerror_with_module(self, testdir):
@@ -254,7 +256,7 @@ class TestDoctests:
         # doctest is never executed because of error during hello.py collection
         result.stdout.fnmatch_lines([
             "*ERROR collecting hello.py*",
-            "*ImportError: No module named *asdals*",
+            "*{e}: No module named *asdals*".format(e=MODULE_NOT_FOUND_ERROR),
             "*Interrupted: 1 errors during collection*",
         ])
 

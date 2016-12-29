@@ -27,6 +27,12 @@ environment:
   - TOXENV: "freeze"
   - TOXENV: "docs"
 
+matrix:
+  allow_failures:
+    # see #1989
+    - TOXENV: "py27-trial"
+    - TOXENV: "py35-trial"
+
 install:
   - echo Installed Pythons
   - dir c:\Python*

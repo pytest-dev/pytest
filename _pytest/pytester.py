@@ -481,6 +481,7 @@ class Testdir:
         ret = None
         for name, value in items:
             p = self.tmpdir.join(name).new(ext=ext)
+            p.dirpath().ensure_dir()
             source = Source(value)
 
             def my_totext(s, encoding="utf-8"):

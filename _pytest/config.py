@@ -70,6 +70,28 @@ class UsageError(Exception):
     """ error in pytest usage or invocation"""
 
 
+def filename_arg(path, optname):
+    """ Argparse type validator for filename arguments.
+
+    :path: path of filename
+    :optname: name of the option
+    """
+    if os.path.isdir(path):
+        raise UsageError("{0} must be a filename, given: {1}".format(optname, path))
+    return path
+
+
+def directory_arg(path, optname):
+    """Argparse type validator for directory arguments.
+
+    :path: path of directory
+    :optname: name of the option
+    """
+    if not os.path.isdir(path):
+        raise UsageError("{0} must be a directory, given: {1}".format(optname, path))
+    return path
+
+
 _preinit = []
 
 default_plugins = (
@@ -996,7 +1018,6 @@ class Config(object):
                                  "(are you using python -O?)\n")
 
     def _preparse(self, args, addopts=True):
-        import pytest
         self._initini(args)
         if addopts:
             args[:] = shlex.split(os.environ.get('PYTEST_ADDOPTS', '')) + args
@@ -1009,9 +1030,7 @@ class Config(object):
         self.pluginmanager.consider_env()
         self.known_args_namespace = ns = self._parser.parse_known_args(args, namespace=self.option.copy())
         confcutdir = self.known_args_namespace.confcutdir
-        if confcutdir and not os.path.isdir(confcutdir):
-            raise pytest.UsageError('--confcutdir must be a directory, given: {0}'.format(confcutdir))
-        if confcutdir is None and self.inifile:
+        if self.known_args_namespace.confcutdir is None and self.inifile:
             confcutdir = py.path.local(self.inifile).dirname
             self.known_args_namespace.confcutdir = confcutdir
         try:
@@ -1130,7 +1149,10 @@ class Config(object):
         if self.getoption("override_ini", None):
             for ini_config_list in self.option.override_ini:
                 for ini_config in ini_config_list:
-                    (key, user_ini_value) = ini_config.split("=", 1)
+                    try:
+                        (key, user_ini_value) = ini_config.split("=", 1)
+                    except ValueError:
+                        raise UsageError("-o/--override-ini expects option=value style.")
                     if key == name:
                         value = user_ini_value
         return value
@@ -1206,25 +1228,20 @@ def getcfg(args, warnfunc=None):
     return None, None, None
 
 
-def get_common_ancestor(args):
-    # args are what we get after early command line parsing (usually
-    # strings, but can be py.path.local objects as well)
+def get_common_ancestor(paths):
     common_ancestor = None
-    for arg in args:
-        if str(arg)[0] == "-":
-            continue
-        p = py.path.local(arg)
-        if not p.exists():
+    for path in paths:
+        if not path.exists():
             continue
         if common_ancestor is None:
-            common_ancestor = p
+            common_ancestor = path
         else:
-            if p.relto(common_ancestor) or p == common_ancestor:
+            if path.relto(common_ancestor) or path == common_ancestor:
                 continue
-            elif common_ancestor.relto(p):
-                common_ancestor = p
+            elif common_ancestor.relto(path):
+                common_ancestor = path
             else:
-                shared = p.common(common_ancestor)
+                shared = path.common(common_ancestor)
                 if shared is not None:
                     common_ancestor = shared
     if common_ancestor is None:
@@ -1235,9 +1252,29 @@ def get_common_ancestor(args):
 
 
 def get_dirs_from_args(args):
-    return [d for d in (py.path.local(x) for x in args
-                        if not str(x).startswith("-"))
-            if d.exists()]
+    def is_option(x):
+        return str(x).startswith('-')
+
+    def get_file_part_from_node_id(x):
+        return str(x).split('::')[0]
+
+    def get_dir_from_path(path):
+        if path.isdir():
+            return path
+        return py.path.local(path.dirname)
+
+    # These look like paths but may not exist
+    possible_paths = (
+        py.path.local(get_file_part_from_node_id(arg))
+        for arg in args
+        if not is_option(arg)
+    )
+
+    return [
+        get_dir_from_path(path)
+        for path in possible_paths
+        if path.exists()
+    ]
 
 
 def determine_setup(inifile, args, warnfunc=None):

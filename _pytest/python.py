@@ -1431,16 +1431,10 @@ class ApproxNonIterable(object):
         except ValueError:
             vetted_tolerance = '???'
 
-        plus_minus = u'{0} \u00b1 {1}'.format(self.expected, vetted_tolerance)
-
-        # In python2, __repr__() must return a string (i.e. not a unicode
-        # object).  In python3, __repr__() must return a unicode object
-        # (although now strings are unicode objects and bytes are what
-        # strings were).
         if sys.version_info[0] == 2:
-            return plus_minus.encode('utf-8')
+            return '{0} +- {1}'.format(self.expected, vetted_tolerance)
         else:
-            return plus_minus
+            return u'{0} \u00b1 {1}'.format(self.expected, vetted_tolerance)
 
     def __eq__(self, actual):
         # Short-circuit exact equality.
