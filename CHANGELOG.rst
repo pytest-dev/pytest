@@ -42,11 +42,8 @@ Changes
 .. _@fushi: https://github.com/fushi
 .. _@mattduck: https://github.com/mattduck
 .. _@wheerd: https://github.com/wheerd
-<<<<<<< HEAD
 .. _@fogo: https://github.com/fogo
-=======
 .. _@lesteve: https://github.com/lesteve
->>>>>>> pytest.warns checks for subclass relationship
 
 .. _#1512: https://github.com/pytest-dev/pytest/issues/1512
 .. _#1874: https://github.com/pytest-dev/pytest/pull/1874
