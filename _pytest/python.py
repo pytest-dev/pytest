@@ -928,12 +928,17 @@ def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
 
 def _idval(val, argname, idx, idfn, config=None):
     if idfn:
+        s = None
         try:
             s = idfn(val)
-            if s:
-                return _escape_strings(s)
         except Exception:
-            pass
+            # See issue https://github.com/pytest-dev/pytest/issues/2169
+            import warnings
+            msg = "Raised while trying to determine id of parameter %s at position %d." % (argname, idx)
+            msg += '\nUpdate your code as this will raise an error in pytest-4.0.'
+            warnings.warn(msg)
+        if s:
+            return _escape_strings(s)
 
     if config:
         hook_id = config.hook.pytest_make_parametrize_id(config=config, val=val)

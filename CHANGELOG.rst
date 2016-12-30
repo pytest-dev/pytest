@@ -8,6 +8,8 @@ New Features
 * Added an ini option ``doctest_encoding`` to specify which encoding to use for doctest files.
   Thanks `@wheerd`_ for the PR (`#2101`_).
 
+* pytest now warns when a callable ids raises in a parametrized test. Thanks `@fogo`_ for the PR.
+
 *
 
 
@@ -39,6 +41,7 @@ Changes
 .. _@fushi: https://github.com/fushi
 .. _@mattduck: https://github.com/mattduck
 .. _@wheerd: https://github.com/wheerd
+.. _@fogo: https://github.com/fogo
 
 .. _#1512: https://github.com/pytest-dev/pytest/issues/1512
 .. _#1874: https://github.com/pytest-dev/pytest/pull/1874
