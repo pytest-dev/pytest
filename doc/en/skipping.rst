@@ -2,7 +2,7 @@
 
 .. _skipping:
 
-Skip and xfail: dealing with tests that can not succeed
+Skip and xfail: dealing with tests that cannot succeed
 =====================================================================
 
 If you have test functions that cannot be run on certain platforms

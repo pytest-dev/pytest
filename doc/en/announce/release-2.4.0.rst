@@ -36,7 +36,7 @@ a full list of details.  A few feature highlights:
 - reporting: color the last line red or green depending if
   failures/errors occurred or everything passed.
 
-The documentation has been updated to accomodate the changes, 
+The documentation has been updated to accommodate the changes, 
 see `http://pytest.org <http://pytest.org>`_ 
 
 To install or upgrade pytest::
@@ -118,7 +118,7 @@ new features:
 
 - fix issue322: tearDownClass is not run if setUpClass failed. Thanks
   Mathieu Agopian for the initial fix.  Also make all of pytest/nose
-  finalizer mimick the same generic behaviour: if a setupX exists and
+  finalizer mimic the same generic behaviour: if a setupX exists and
   fails, don't run teardownX.  This internally introduces a new method
   "node.addfinalizer()" helper which can only be called during the setup
   phase of a node.

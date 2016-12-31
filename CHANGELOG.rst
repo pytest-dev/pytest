@@ -690,7 +690,7 @@ time or change existing behaviors in order to make them less surprising/more use
   Thanks `@astraw38`_ for reporting the issue (`#1496`_) and `@tomviner`_
   for PR the (`#1524`_).
 
-* Fix win32 path issue when puttinging custom config file with absolute path
+* Fix win32 path issue when putting custom config file with absolute path
   in ``pytest.main("-c your_absolute_path")``.
 
 * Fix maximum recursion depth detection when raised error class is not aware
@@ -1022,7 +1022,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 - (experimental) adapt more SEMVER style versioning and change meaning of
   master branch in git repo: "master" branch now keeps the bugfixes, changes
-  aimed for micro releases.  "features" branch will only be be released
+  aimed for micro releases.  "features" branch will only be released
   with minor or major pytest releases.
 
 - Fix issue #766 by removing documentation references to distutils.
@@ -1156,7 +1156,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 - new option ``--import-mode`` to allow to change test module importing
   behaviour to append to sys.path instead of prepending.  This better allows
-  to run test modules against installated versions of a package even if the
+  to run test modules against installed versions of a package even if the
   package under test has the same import root.  In this example::
 
         testing/__init__.py
@@ -1314,7 +1314,7 @@ time or change existing behaviors in order to make them less surprising/more use
   explanations.  Thanks Carl Meyer for the report and test case.
 
 - fix issue553: properly handling inspect.getsourcelines failures in
-  FixtureLookupError which would lead to to an internal error,
+  FixtureLookupError which would lead to an internal error,
   obfuscating the original problem. Thanks talljosh for initial
   diagnose/patch and Bruno Oliveira for final patch.
 
@@ -1457,7 +1457,7 @@ time or change existing behaviors in order to make them less surprising/more use
 
 - fix conftest related fixture visibility issue: when running with a
   CWD outside of a test package pytest would get fixture discovery wrong.
-  Thanks to Wolfgang Schnerring for figuring out a reproducable example.
+  Thanks to Wolfgang Schnerring for figuring out a reproducible example.
 
 - Introduce pytest_enter_pdb hook (needed e.g. by pytest_timeout to cancel the
   timeout when interactively entering pdb).  Thanks Wolfgang Schnerring.
@@ -1656,7 +1656,7 @@ time or change existing behaviors in order to make them less surprising/more use
 - fix issue429: comparing byte strings with non-ascii chars in assert
   expressions now work better.  Thanks Floris Bruynooghe.
 
-- make capfd/capsys.capture private, its unused and shouldnt be exposed
+- make capfd/capsys.capture private, its unused and shouldn't be exposed
 
 
 2.5.1 (2013-12-17)
@@ -1713,7 +1713,7 @@ time or change existing behaviors in order to make them less surprising/more use
   to problems for more than >966 non-function scoped parameters).
 
 - fix issue290 - there is preliminary support now for parametrizing
-  with repeated same values (sometimes useful to to test if calling
+  with repeated same values (sometimes useful to test if calling
   a second time works as with the first time).
 
 - close issue240 - document precisely how pytest module importing
@@ -1927,7 +1927,7 @@ new features:
 
 - fix issue322: tearDownClass is not run if setUpClass failed. Thanks
   Mathieu Agopian for the initial fix.  Also make all of pytest/nose
-  finalizer mimick the same generic behaviour: if a setupX exists and
+  finalizer mimic the same generic behaviour: if a setupX exists and
   fails, don't run teardownX.  This internally introduces a new method
   "node.addfinalizer()" helper which can only be called during the setup
   phase of a node.
@@ -2046,11 +2046,11 @@ Bug fixes:
   (thanks Adam Goucher)
 
 - Issue 265 - integrate nose setup/teardown with setupstate
-  so it doesnt try to teardown if it did not setup
+  so it doesn't try to teardown if it did not setup
 
-- issue 271 - dont write junitxml on slave nodes
+- issue 271 - don't write junitxml on slave nodes
 
-- Issue 274 - dont try to show full doctest example
+- Issue 274 - don't try to show full doctest example
   when doctest does not know the example location
 
 - issue 280 - disable assertion rewriting on buggy CPython 2.6.0
@@ -2086,7 +2086,7 @@ Bug fixes:
 - allow to specify prefixes starting with "_" when
   customizing python_functions test discovery. (thanks Graham Horler)
 
-- improve PYTEST_DEBUG tracing output by puting
+- improve PYTEST_DEBUG tracing output by putting
   extra data on a new lines with additional indent
 
 - ensure OutcomeExceptions like skip/fail have initialized exception attributes
@@ -2135,7 +2135,7 @@ Bug fixes:
 - fix issue209 - reintroduce python2.4 support by depending on newer
   pylib which re-introduced statement-finding for pre-AST interpreters
 
-- nose support: only call setup if its a callable, thanks Andrew
+- nose support: only call setup if it's a callable, thanks Andrew
   Taumoefolau
 
 - fix issue219 - add py2.4-3.3 classifiers to TROVE list
@@ -2231,7 +2231,7 @@ Bug fixes:
 
 - fix issue128: show captured output when capsys/capfd are used
 
-- fix issue179: propperly show the dependency chain of factories
+- fix issue179: properly show the dependency chain of factories
 
 - pluginmanager.register(...) now raises ValueError if the
   plugin has been already registered or the name is taken
@@ -2272,7 +2272,7 @@ Bug fixes:
 
   - don't show deselected reason line if there is none
 
-  - py.test -vv will show all of assert comparisations instead of truncating
+  - py.test -vv will show all of assert comparisons instead of truncating
 
 2.2.4 (2012-05-22)
 ==================
@@ -2283,7 +2283,7 @@ Bug fixes:
 - fix issue with unittest: now @unittest.expectedFailure markers should
   be processed correctly (you can also use @pytest.mark markers)
 - document integration with the extended distribute/setuptools test commands
-- fix issue 140: propperly get the real functions
+- fix issue 140: properly get the real functions
   of bound classmethods for setup/teardown_class
 - fix issue #141: switch from the deceased paste.pocoo.org to bpaste.net
 - fix issue #143: call unconfigure/sessionfinish always when
@@ -2294,7 +2294,7 @@ Bug fixes:
 2.2.3 (2012-02-05)
 ==================
 
-- fix uploaded package to only include neccesary files
+- fix uploaded package to only include necessary files
 
 2.2.2 (2012-02-05)
 ==================
@@ -2435,7 +2435,7 @@ Bug fixes:
 - don't require zlib (and other libs) for genscript plugin without
   --genscript actually being used.
 
-- speed up skips (by not doing a full traceback represenation
+- speed up skips (by not doing a full traceback representation
   internally)
 
 - fix issue37: avoid invalid characters in junitxml's output
@@ -2483,9 +2483,9 @@ Bug fixes:
   this.
 
 - fixed typos in the docs (thanks Victor Garcia, Brianna Laugher) and particular
-  thanks to Laura Creighton who also revieved parts of the documentation.
+  thanks to Laura Creighton who also reviewed parts of the documentation.
 
-- fix slighly wrong output of verbose progress reporting for classes
+- fix slightly wrong output of verbose progress reporting for classes
   (thanks Amaury)
 
 - more precise (avoiding of) deprecation warnings for node.Class|Function accesses
@@ -2546,7 +2546,7 @@ Bug fixes:
 
 - pytest-2.0 is now its own package and depends on pylib-2.0
 - new ability: python -m pytest / python -m pytest.main ability
-- new python invcation: pytest.main(args, plugins) to load
+- new python invocation: pytest.main(args, plugins) to load
   some custom plugins early.
 - try harder to run unittest test suites in a more compatible manner
   by deferring setup/teardown semantics to the unittest package.
@@ -2785,7 +2785,7 @@ Bug fixes:
 - extend and refine xfail mechanism:
   ``@py.test.mark.xfail(run=False)`` do not run the decorated test
   ``@py.test.mark.xfail(reason="...")`` prints the reason string in xfail summaries
-  specifiying ``--runxfail`` on command line virtually ignores xfail markers
+  specifying ``--runxfail`` on command line virtually ignores xfail markers
 
 - expose (previously internal) commonly useful methods:
   py.io.get_terminal_with() -> return terminal width
@@ -3010,7 +3010,7 @@ Bug fixes:
 
 * add the ability to specify a path for py.lookup to search in
 
-* fix a funcarg cached_setup bug probably only occuring
+* fix a funcarg cached_setup bug probably only occurring
   in distributed testing and "module" scope with teardown.
 
 * many fixes and changes for making the code base python3 compatible,
@@ -3276,10 +3276,10 @@ serve as a reference for developers.
 * fixed issue with 2.5 type representations in py.test [45483, 45484]
 * made that internal reporting issues displaying is done atomically in py.test
   [45518]
-* made that non-existing files are igored by the py.lookup script [45519]
+* made that non-existing files are ignored by the py.lookup script [45519]
 * improved exception name creation in py.test [45535]
 * made that less threads are used in execnet [merge in 45539]
-* removed lock required for atomical reporting issue displaying in py.test
+* removed lock required for atomic reporting issue displaying in py.test
   [45545]
 * removed globals from execnet [45541, 45547]
 * refactored cleanup mechanics, made that setDaemon is set to 1 to make atexit

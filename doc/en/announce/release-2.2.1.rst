@@ -2,7 +2,7 @@ pytest-2.2.1: bug fixes, perfect teardowns
 ===========================================================================
 
 
-pytest-2.2.1 is a minor backward-compatible release of the the py.test
+pytest-2.2.1 is a minor backward-compatible release of the py.test
 testing tool.   It contains bug fixes and little improvements, including
 documentation fixes.  If you are using the distributed testing
 pluginmake sure to upgrade it to pytest-xdist-1.8.

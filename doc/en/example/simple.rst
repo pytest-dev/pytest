@@ -476,7 +476,7 @@ concept.  It's however recommended to have explicit fixture references in your
 tests or test classes rather than relying on implicitly executing
 setup/teardown functions, especially if they are far away from the actual tests.
 
-Here is a an example for making a ``db`` fixture available in a directory:
+Here is an example for making a ``db`` fixture available in a directory:
 
 .. code-block:: python
 
@@ -585,7 +585,7 @@ environment you can implement a hook that gets called when the test
 "report" object is about to be created.  Here we write out all failing
 test calls and also access a fixture (if it was used by the test) in
 case you want to query/look at it during your post processing.  In our
-case we just write some informations out to a ``failures`` file:
+case we just write some information out to a ``failures`` file:
 
 .. code-block:: python
 
@@ -678,7 +678,7 @@ here is a little example implemented via a local plugin:
         outcome = yield
         rep = outcome.get_result()
 
-        # set an report attribute for each phase of a call, which can
+        # set a report attribute for each phase of a call, which can
         # be "setup", "call", "teardown"
 
         setattr(item, "rep_" + rep.when, rep)
