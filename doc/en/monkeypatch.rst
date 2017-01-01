@@ -35,7 +35,7 @@ patch this function before calling into a function which uses it::
         assert x == '/abc/.ssh'
 
 Here our test function monkeypatches ``os.path.expanduser`` and
-then calls into an function that calls it.  After the test function 
+then calls into a function that calls it.  After the test function 
 finishes the ``os.path.expanduser`` modification will be undone.
 
 example: preventing "requests" from remote operations
@@ -60,7 +60,7 @@ so that any attempts within tests to create http requests will fail.
     Be advised that it is not recommended to patch builtin functions such as ``open``,
     ``compile``, etc., because it might break pytest's internals. If that's
     unavoidable, passing ``--tb=native``, ``--assert=plain`` and ``--capture=no`` might 
-    help althought there's no guarantee.
+    help although there's no guarantee.
     
 
 Method reference of the monkeypatch fixture

@@ -246,7 +246,7 @@ by adding the ``--cache-clear`` option like this::
 
     pytest --cache-clear
 
-This is recommended for invocations from Continous Integration
+This is recommended for invocations from Continuous Integration
 servers where isolation and correctness is more important
 than speed.
 
