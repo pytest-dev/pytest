@@ -11,7 +11,7 @@ pytest fixtures: explicit, modular, scalable
 
 .. _`xUnit`: http://en.wikipedia.org/wiki/XUnit
 .. _`purpose of test fixtures`: http://en.wikipedia.org/wiki/Test_fixture#Software
-.. _`Dependency injection`: http://en.wikipedia.org/wiki/Dependency_injection#Definition
+.. _`Dependency injection`: http://en.wikipedia.org/wiki/Dependency_injection
 
 The `purpose of test fixtures`_ is to provide a fixed baseline
 upon which tests can reliably and repeatedly execute.   pytest fixtures
