@@ -296,18 +296,58 @@ class TestMetafunc:
     @pytest.mark.issue351
     def test_idmaker_idfn_exception(self):
         from _pytest.python import idmaker
+        from _pytest.recwarn import WarningsRecorder
+
+        class BadIdsException(Exception):
+            pass
 
         def ids(val):
-            raise Exception("bad code")
+            raise BadIdsException("ids raised")
 
-        result = idmaker(("a", "b"), [(10.0, IndexError()),
-                                      (20, KeyError()),
-                                      ("three", [1, 2, 3]),
-        ], idfn=ids)
-        assert result == ["10.0-b0",
-                          "20-b1",
-                          "three-b2",
-                         ]
+        rec = WarningsRecorder()
+        with rec:
+            idmaker(("a", "b"), [(10.0, IndexError()),
+                                          (20, KeyError()),
+                                          ("three", [1, 2, 3]),
+            ], idfn=ids)
+
+        assert [str(i.message) for i in rec.list] == [
+            "Raised while trying to determine id of parameter a at position 0."
+            "\nUpdate your code as this will raise an error in pytest-4.0.",
+            "Raised while trying to determine id of parameter b at position 0."
+            "\nUpdate your code as this will raise an error in pytest-4.0.",
+            "Raised while trying to determine id of parameter a at position 1."
+            "\nUpdate your code as this will raise an error in pytest-4.0.",
+            "Raised while trying to determine id of parameter b at position 1."
+            "\nUpdate your code as this will raise an error in pytest-4.0.",
+            "Raised while trying to determine id of parameter a at position 2."
+            "\nUpdate your code as this will raise an error in pytest-4.0.",
+            "Raised while trying to determine id of parameter b at position 2."
+            "\nUpdate your code as this will raise an error in pytest-4.0.",
+        ]
+
+
+    def test_parametrize_ids_exception(self, testdir):
+        """
+        :param testdir: the instance of Testdir class, a temporary
+        test directory.
+        """
+        testdir.makepyfile("""
+                import pytest
+
+                def ids(arg):
+                    raise Exception("bad ids")
+
+                @pytest.mark.parametrize("arg", ["a", "b"], ids=ids)
+                def test_foo(arg):
+                    pass
+            """)
+        result = testdir.runpytest("--collect-only")
+        result.stdout.fnmatch_lines([
+            "<Module 'test_parametrize_ids_exception.py'>",
+            "  <Function 'test_foo[a]'>",
+            "  <Function 'test_foo[b]'>",
+        ])
 
     def test_idmaker_with_ids(self):
         from _pytest.python import idmaker
