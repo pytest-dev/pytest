@@ -71,7 +71,6 @@ Changes
 
 *
 
-.. _@lesteve: https://github.com/lesteve
 .. _@malinoff: https://github.com/malinoff
 .. _@pelme: https://github.com/pelme
 
