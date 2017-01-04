@@ -11,7 +11,7 @@ RE_IMPORT_ERROR_NAME = re.compile("^No module named (.*)$")
 
 
 @pytest.fixture
-def monkeypatch(request):
+def monkeypatch():
     """The returned ``monkeypatch`` fixture provides these
     helper methods to modify objects, dictionaries or os.environ::
 
@@ -30,8 +30,8 @@ def monkeypatch(request):
     will be raised if the set/deletion operation has no target.
     """
     mpatch = MonkeyPatch()
-    request.addfinalizer(mpatch.undo)
-    return mpatch
+    yield mpatch
+    mpatch.undo()
 
 
 def resolve(name):
