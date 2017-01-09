@@ -75,7 +75,7 @@ __all__ = ["PluginManager", "PluginValidationError", "HookCallError",
 _py3 = sys.version_info > (3, 0)
 
 
-class HookspecMarker:
+class HookspecMarker(object):
     """ Decorator helper class for marking functions as hook specifications.
 
     You can instantiate it with a project_name to get a decorator.
@@ -113,7 +113,7 @@ class HookspecMarker:
             return setattr_hookspec_opts
 
 
-class HookimplMarker:
+class HookimplMarker(object):
     """ Decorator helper class for marking functions as hook implementations.
 
     You can instantiate with a project_name to get a decorator.
@@ -770,7 +770,7 @@ class _HookCaller(object):
                     proc(res[0])
 
 
-class HookImpl:
+class HookImpl(object):
     def __init__(self, plugin, plugin_name, function, hook_impl_opts):
         self.function = function
         self.argnames = varnames(self.function)

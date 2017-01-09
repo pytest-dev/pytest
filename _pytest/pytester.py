@@ -165,7 +165,7 @@ def _pytest(request):
     """
     return PytestArg(request)
 
-class PytestArg:
+class PytestArg(object):
     def __init__(self, request):
         self.request = request
 
@@ -180,7 +180,7 @@ def get_public_names(l):
     return [x for x in l if x[0] != "_"]
 
 
-class ParsedCall:
+class ParsedCall(object):
     def __init__(self, name, kwargs):
         self.__dict__.update(kwargs)
         self._name = name
@@ -191,7 +191,7 @@ class ParsedCall:
         return "<ParsedCall %r(**%r)>" %(self._name, d)
 
 
-class HookRecorder:
+class HookRecorder(object):
     """Record all hooks called in a plugin manager.
 
     This wraps all the hook calls in the plugin manager, recording
@@ -335,7 +335,7 @@ def testdir(request, tmpdir_factory):
 
 
 rex_outcome = re.compile("(\d+) ([\w-]+)")
-class RunResult:
+class RunResult(object):
     """The result of running a command.
 
     Attributes:
@@ -380,7 +380,7 @@ class RunResult:
 
 
 
-class Testdir:
+class Testdir(object):
     """Temporary test directory with tools to test/run pytest itself.
 
     This is based on the ``tmpdir`` fixture but provides a number of
@@ -707,7 +707,7 @@ class Testdir:
 
         rec = []
 
-        class Collect:
+        class Collect(object):
             def pytest_configure(x, config):
                 rec.append(self.make_hook_recorder(config.pluginmanager))
 
@@ -718,7 +718,7 @@ class Testdir:
         if len(rec) == 1:
             reprec = rec.pop()
         else:
-            class reprec:
+            class reprec(object):
                 pass
         reprec.ret = ret
 
@@ -742,13 +742,13 @@ class Testdir:
                 reprec = self.inline_run(*args, **kwargs)
             except SystemExit as e:
 
-                class reprec:
+                class reprec(object):
                     ret = e.args[0]
 
             except Exception:
                 traceback.print_exc()
 
-                class reprec:
+                class reprec(object):
                     ret = 3
         finally:
             out, err = capture.reset()
@@ -1033,7 +1033,7 @@ def getdecoded(out):
                     py.io.saferepr(out),)
 
 
-class LineComp:
+class LineComp(object):
     def __init__(self):
         self.stringio = py.io.TextIO()
 
@@ -1049,7 +1049,7 @@ class LineComp:
         return LineMatcher(lines1).fnmatch_lines(lines2)
 
 
-class LineMatcher:
+class LineMatcher(object):
     """Flexible matching of text.
 
     This is a convenience class to test large texts like the output of
