@@ -80,7 +80,7 @@ def pytest_report_teststatus(report):
             letter = "f"
     return report.outcome, letter, report.outcome.upper()
 
-class WarningReport:
+class WarningReport(object):
     def __init__(self, code, message, nodeid=None, fslocation=None):
         self.code = code
         self.message = message
@@ -88,7 +88,7 @@ class WarningReport:
         self.fslocation = fslocation
 
 
-class TerminalReporter:
+class TerminalReporter(object):
     def __init__(self, config, file=None):
         import _pytest.config
         self.config = config

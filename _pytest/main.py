@@ -179,7 +179,7 @@ def pytest_ignore_collect(path, config):
     return False
 
 
-class FSHookProxy:
+class FSHookProxy(object):
     def __init__(self, fspath, pm, remove_mods):
         self.fspath = fspath
         self.pm = pm

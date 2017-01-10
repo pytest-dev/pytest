@@ -17,6 +17,9 @@ New Features
 Changes
 -------
 
+* Old-style classes have been changed to new-style classes in order to improve
+  compatability with Python 2. Thanks to `@mandeep`_ for the PR (`#2147`_).
+
 * It is now possible to skip test classes from being collected by setting a
   ``__test__`` attribute to ``False`` in the class body (`#2007`_). Thanks
   to `@syre`_ for the report and `@lwm`_ for the PR.
@@ -44,6 +47,7 @@ Changes
 .. _@wheerd: https://github.com/wheerd
 .. _@fogo: https://github.com/fogo
 .. _@lesteve: https://github.com/lesteve
+.. _@mandeep: https://github.com/mandeep
 
 .. _#1512: https://github.com/pytest-dev/pytest/issues/1512
 .. _#1874: https://github.com/pytest-dev/pytest/pull/1874
@@ -52,6 +56,7 @@ Changes
 .. _#2013: https://github.com/pytest-dev/pytest/issues/2013
 .. _#2101: https://github.com/pytest-dev/pytest/pull/2101
 .. _#2166: https://github.com/pytest-dev/pytest/pull/2166
+.. _#2147: https://github.com/pytest-dev/pytest/issues/2147
 
 3.0.6.dev0 (unreleased)
 =======================

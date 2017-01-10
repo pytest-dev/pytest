@@ -6,7 +6,7 @@ import py
 from _pytest.monkeypatch import MonkeyPatch
 
 
-class TempdirFactory:
+class TempdirFactory(object):
     """Factory for temporary directories under the common base temp directory.
 
     The base directory can be configured using the ``--basetemp`` option.
