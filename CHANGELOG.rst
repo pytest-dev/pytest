@@ -14,11 +14,15 @@
   subdirectories with ini configuration files now uses the correct ini file
   (`#2148`_).  Thanks `@pelme`_.
 
+* Fail ``testdir.runpytest().assert_outcomes()`` explicitly if the pytest
+  terminal output it relies on is missing. Thanks to `@eli-b`_ for the PR.
+
 *
 
 .. _@lesteve: https://github.com/lesteve
 .. _@malinoff: https://github.com/malinoff
 .. _@pelme: https://github.com/pelme
+.. _@eli-b: https://github.com/eli-b
 
 .. _#2129: https://github.com/pytest-dev/pytest/issues/2129
 .. _#2148: https://github.com/pytest-dev/pytest/issues/2148
