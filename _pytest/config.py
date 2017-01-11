@@ -399,13 +399,15 @@ class PytestPluginManager(PluginManager):
             self.consider_module(conftestmodule)
 
     def consider_env(self):
-        self._import_plugin_specs(os.environ.get("PYTEST_PLUGINS"))
+        specs = os.environ.get("PYTEST_PLUGINS")
+        if specs:
+            plugins = specs.split(',')
+            self._import_plugin_specs(plugins)
 
     def consider_module(self, mod):
         plugins = getattr(mod, 'pytest_plugins', [])
         if isinstance(plugins, str):
             plugins = [plugins]
-        self.rewrite_hook.mark_rewrite(*plugins)
         self._import_plugin_specs(plugins)
 
     def _import_plugin_specs(self, spec):
@@ -427,6 +429,7 @@ class PytestPluginManager(PluginManager):
             importspec = "_pytest." + modname
         else:
             importspec = modname
+        self.rewrite_hook.mark_rewrite(modname)
         try:
             __import__(importspec)
         except ImportError as e:

@@ -6,6 +6,10 @@
 * pytest no longer recognizes coroutine functions as yield tests (`#2129`_).
   Thanks to `@malinoff`_ for the PR.
 
+* Plugins loaded by the ``PYTEST_PLUGINS`` environment variable are now automatically
+  considered for assertion rewriting (`#2185`_).
+  Thanks `@nicoddemus`_ for the PR.
+
 * Improve error message when pytest.warns fails (`#2150`_). The type(s) of the
   expected warnings and the list of caught warnings is added to the
   error message. Thanks `@lesteve`_ for the PR.
@@ -23,6 +27,7 @@
 .. _#2129: https://github.com/pytest-dev/pytest/issues/2129
 .. _#2148: https://github.com/pytest-dev/pytest/issues/2148
 .. _#2150: https://github.com/pytest-dev/pytest/issues/2150
+.. _#2185: https://github.com/pytest-dev/pytest/issues/2185
 
 
 3.0.5 (2016-12-05)
