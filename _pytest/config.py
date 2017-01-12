@@ -399,30 +399,22 @@ class PytestPluginManager(PluginManager):
             self.consider_module(conftestmodule)
 
     def consider_env(self):
-        specs = os.environ.get("PYTEST_PLUGINS")
-        if specs:
-            plugins = specs.split(',')
-            self._import_plugin_specs(plugins)
+        self._import_plugin_specs(os.environ.get("PYTEST_PLUGINS"))
 
     def consider_module(self, mod):
-        plugins = getattr(mod, 'pytest_plugins', [])
-        if isinstance(plugins, str):
-            plugins = [plugins]
-        self._import_plugin_specs(plugins)
+        self._import_plugin_specs(getattr(mod, 'pytest_plugins', []))
 
     def _import_plugin_specs(self, spec):
-        if spec:
-            if isinstance(spec, str):
-                spec = spec.split(",")
-            for import_spec in spec:
-                self.import_plugin(import_spec)
+        plugins = _get_plugin_specs_as_list(spec)
+        for import_spec in plugins:
+            self.import_plugin(import_spec)
 
     def import_plugin(self, modname):
         # most often modname refers to builtin modules, e.g. "pytester",
         # "terminal" or "capture".  Those plugins are registered under their
         # basename for historic purposes but must be imported with the
         # _pytest prefix.
-        assert isinstance(modname, str)
+        assert isinstance(modname, str), "module name as string required, got %r" % modname
         if self.get_plugin(modname) is not None:
             return
         if modname in builtin_plugins:
@@ -448,6 +440,24 @@ class PytestPluginManager(PluginManager):
             mod = sys.modules[importspec]
             self.register(mod, modname)
             self.consider_module(mod)
+
+
+def _get_plugin_specs_as_list(specs):
+    """
+    Parses a list of "plugin specs" and returns a list of plugin names.
+
+    Plugin specs can be given as a list of strings separated by "," or already as a list/tuple in
+    which case it is returned as a list. Specs can also be `None` in which case an
+    empty list is returned.
+    """
+    if specs is not None:
+        if isinstance(specs, str):
+            specs = specs.split(',') if specs else []
+        if not isinstance(specs, (list, tuple)):
+            raise UsageError("Plugin specs must be a ','-separated string or a "
+                             "list/tuple of strings for plugin names. Given: %r" % specs)
+        return list(specs)
+    return []
 
 
 class Parser:
