@@ -79,10 +79,15 @@ Changes
   subdirectories with ini configuration files now uses the correct ini file
   (`#2148`_).  Thanks `@pelme`_.
 
+* Modify ``pytest_make_parametrize_id()`` hook to accept ``argname`` as an
+  additional parameter.
+  Thanks `@unsignedint`_ for the PR.
+
 *
 
 .. _@malinoff: https://github.com/malinoff
 .. _@pelme: https://github.com/pelme
+.. _@unsignedint: https://github.com/unsignedint
 
 .. _#2129: https://github.com/pytest-dev/pytest/issues/2129
 .. _#2148: https://github.com/pytest-dev/pytest/issues/2148

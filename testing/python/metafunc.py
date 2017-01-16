@@ -1455,3 +1455,26 @@ class TestMarkersWithParametrization:
             "*test_func*0*PASS*",
             "*test_func*2*PASS*",
         ])
+
+    def test_pytest_make_parametrize_id_with_argname(self, testdir):
+        testdir.makeconftest("""
+            def pytest_make_parametrize_id(config, val, argname):
+                return str(val * 2 if argname == 'x' else val * 10)
+        """)
+        testdir.makepyfile("""
+                import pytest
+
+                @pytest.mark.parametrize("x", range(2))
+                def test_func(x):
+                    pass
+
+                @pytest.mark.parametrize("y", [1])
+                def test_func2(y):
+                    pass
+                """)
+        result = testdir.runpytest("-v")
+        result.stdout.fnmatch_lines([
+            "*test_func*0*PASS*",
+            "*test_func*2*PASS*",
+            "*test_func2*10*PASS*",
+        ])
