@@ -1415,3 +1415,31 @@ class TestMarkersWithParametrization:
             "*test_func*0*PASS*",
             "*test_func*2*PASS*",
         ])
+
+    _make_parametrize_return_conf_blob = """
+            def pytest_make_parametrize_id(config, val):
+                return ''
+            """
+    _make_parametrize_return_test_blob = """
+            import pytest
+
+            @pytest.mark.parametrize("x", ['foo'])
+            def test_func(x):
+                pass
+            """
+
+    def test_pytest_make_parametrize_legacy_return_behaviour(self, testdir):
+        testdir.makeconftest(self._make_parametrize_return_conf_blob)
+        testdir.makepyfile(self._make_parametrize_return_test_blob)
+        result = testdir.runpytest("-v")
+        result.stdout.fnmatch_lines([
+            "*test_func?foo? PASS*",
+        ])
+
+    def test_pytest_make_parametrize_new_return_behaviour(self, testdir):
+        testdir.makeconftest(self._make_parametrize_return_conf_blob)
+        testdir.makepyfile(self._make_parametrize_return_test_blob)
+        result = testdir.runpytest("--override-ini", "make_parameterize_legacy=false", "-v")
+        result.stdout.fnmatch_lines([
+            "*test_func?? PASS*",
+        ])

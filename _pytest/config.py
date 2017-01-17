@@ -977,6 +977,9 @@ class Config(object):
         self.invocation_dir = py.path.local()
         self._parser.addini('addopts', 'extra command line options', 'args')
         self._parser.addini('minversion', 'minimally required pytest version')
+        self._parser.addini('make_parameterize_legacy',
+                            'legacy return value behaviour of `make_parametrize` hook (skips false looking values)',
+                            type='bool', default=True)
 
     def _consider_importhook(self, args, entrypoint_name):
         """Install the PEP 302 import hook if using assertion re-writing.

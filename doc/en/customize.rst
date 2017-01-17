@@ -240,3 +240,10 @@ Builtin configuration file options
    By default, pytest will stop searching for ``conftest.py`` files upwards
    from ``pytest.ini``/``tox.ini``/``setup.cfg`` of the project if any,
    or up to the file-system root.
+
+.. confval:: make_parameterize_legacy
+
+  Alters the behaviour of the ``pytest_make_parametrize_id`` hook function. When
+  enabled the hook function will be skipped if it returns any False-like value.
+  When disabled the hook will only be skipped when it returns ``None``. Defaults
+  to ``True``.

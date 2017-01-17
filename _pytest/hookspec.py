@@ -159,7 +159,9 @@ def pytest_generate_tests(metafunc):
 @hookspec(firstresult=True)
 def pytest_make_parametrize_id(config, val):
     """Return a user-friendly string representation of the given ``val`` that will be used
-    by @pytest.mark.parametrize calls. Return None if the hook doesn't know about ``val``.
+    by @pytest.mark.parametrize calls. Legacy behaviour: return any false-like value
+    to ignore the hook. New behaviour: return `None` instead. Behaviour can be configured
+    using the `make_parameterize_legacy` ini option.
     """
 
 # -------------------------------------------------------------------------
