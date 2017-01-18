@@ -450,7 +450,7 @@ for your particular platform, you could use the following plugin::
     import sys
     import pytest
 
-    ALL = set("darwin linux2 win32".split())
+    ALL = set("darwin linux win32".split())
 
     def pytest_runtest_setup(item):
         if isinstance(item, item.Function):
@@ -470,7 +470,7 @@ Let's do a little test file to show how this looks like::
     def test_if_apple_is_evil():
         pass
 
-    @pytest.mark.linux2
+    @pytest.mark.linux
     def test_if_linux_works():
         pass
 
@@ -481,7 +481,7 @@ Let's do a little test file to show how this looks like::
     def test_runs_everywhere():
         pass
 
-then you will see two test skipped and two executed tests as expected::
+then you will see two tests skipped and two executed tests as expected::
 
     $ pytest -rs # this option reports skip reasons
     ======= test session starts ========
@@ -489,15 +489,15 @@ then you will see two test skipped and two executed tests as expected::
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
-    test_plat.py sss.
+    test_plat.py s.s.
     ======= short test summary info ========
-    SKIP [3] $REGENDOC_TMPDIR/conftest.py:12: cannot run on platform linux
+    SKIP [2] $REGENDOC_TMPDIR/conftest.py:12: cannot run on platform linux
     
-    ======= 1 passed, 3 skipped in 0.12 seconds ========
+    ======= 2 passed, 2 skipped in 0.12 seconds ========
 
 Note that if you specify a platform via the marker-command line option like this::
 
-    $ pytest -m linux2
+    $ pytest -m linux
     ======= test session starts ========
     platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR, inifile: 
@@ -506,7 +506,7 @@ Note that if you specify a platform via the marker-command line option like this
     test_plat.py s
     
     ======= 3 tests deselected ========
-    ======= 1 skipped, 3 deselected in 0.12 seconds ========
+    ======= 1 passed, 3 deselected in 0.12 seconds ========
 
 then the unmarked-tests will not be run.  It is thus a way to restrict the run to the specific tests.
 
