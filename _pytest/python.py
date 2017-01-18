@@ -933,8 +933,13 @@ def _idval(val, argname, idx, idfn, config=None):
             pass
 
     if config:
+        # hook function return value checking behaviour is controlled by
+        # this ini setting; long-term we want to deprecate legacy mode
+        legacy_behaviour = config.getini('make_parameterize_legacy')
         hook_id = config.hook.pytest_make_parametrize_id(config=config, val=val)
-        if hook_id:
+        if legacy_behaviour and hook_id:
+            return hook_id
+        elif not legacy_behaviour and hook_id is not None:
             return hook_id
 
     if isinstance(val, STRING_TYPES):

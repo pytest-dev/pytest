@@ -18,11 +18,18 @@
   subdirectories with ini configuration files now uses the correct ini file
   (`#2148`_).  Thanks `@pelme`_.
 
+* Add ``make_parameterize_legacy`` ini option to alter the behaviour of the
+  ``pytest_make_parametrize_id`` hook function (defaults to ``True``). When
+  enabled the hook function will be skipped if it returns any False-like value.
+  When disabled the hook will only be skipped when it returns ``None``.
+  Thanks `@unsignedint`_ for the PR.
+
 *
 
 .. _@lesteve: https://github.com/lesteve
 .. _@malinoff: https://github.com/malinoff
 .. _@pelme: https://github.com/pelme
+.. _@unsignedint: https://github.com/unsignedint
 
 .. _#2129: https://github.com/pytest-dev/pytest/issues/2129
 .. _#2148: https://github.com/pytest-dev/pytest/issues/2148
