@@ -367,6 +367,7 @@ class RunResult:
                     for num, cat in outcomes:
                         d[cat] = int(num)
                     return d
+        raise ValueError("Pytest terminal report not found")
 
     def assert_outcomes(self, passed=0, skipped=0, failed=0):
         """ assert that the specified outcomes appear with the respective
