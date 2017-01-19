@@ -14,6 +14,9 @@
   expected warnings and the list of caught warnings is added to the
   error message. Thanks `@lesteve`_ for the PR.
 
+* Assert statements of the ``pytester`` plugin again benefit from assertion rewriting (`#1920`_).
+  Thanks `@RonnyPfannschmidt`_ for the report and `@nicoddemus`_ for the PR.
+
 * Specifying tests with colons like ``test_foo.py::test_bar`` for tests in
   subdirectories with ini configuration files now uses the correct ini file
   (`#2148`_).  Thanks `@pelme`_.
@@ -24,6 +27,7 @@
 .. _@malinoff: https://github.com/malinoff
 .. _@pelme: https://github.com/pelme
 
+.. _#1920: https://github.com/pytest-dev/pytest/issues/1920
 .. _#2129: https://github.com/pytest-dev/pytest/issues/2129
 .. _#2148: https://github.com/pytest-dev/pytest/issues/2148
 .. _#2150: https://github.com/pytest-dev/pytest/issues/2150
