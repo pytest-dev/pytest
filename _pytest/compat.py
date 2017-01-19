@@ -180,8 +180,18 @@ def get_real_func(obj):
     """ gets the real function object of the (possibly) wrapped object by
     functools.wraps or functools.partial.
     """
-    while hasattr(obj, "__wrapped__"):
-        obj = obj.__wrapped__
+    start_obj = obj
+    for i in range(100):
+        new_obj = getattr(obj, '__wrapped__', None)
+        if new_obj is None:
+            break
+        obj = new_obj
+    else:
+        raise ValueError(
+            ("could not find real function of {start}"
+             "\nstopped at {current}").format(
+                start=py.io.saferepr(start_obj),
+                current=py.io.saferepr(obj)))
     if isinstance(obj, functools.partial):
         obj = obj.func
     return obj

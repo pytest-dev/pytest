@@ -41,6 +41,10 @@ Changes
 * fix `#2013`_: turn RecordedWarning into namedtupe,
   to give it a comprehensible repr while preventing unwarranted modification
 
+* fix `#2208`_: ensure a iteration limit for _pytest.compat.get_real_func.
+  Thanks `@RonnyPfannschmidt`_ for the Report and PR
+
+
 .. _@davidszotten: https://github.com/davidszotten
 .. _@fushi: https://github.com/fushi
 .. _@mattduck: https://github.com/mattduck
@@ -57,6 +61,7 @@ Changes
 .. _#2101: https://github.com/pytest-dev/pytest/pull/2101
 .. _#2166: https://github.com/pytest-dev/pytest/pull/2166
 .. _#2147: https://github.com/pytest-dev/pytest/issues/2147
+.. _#2208: https://github.com/pytest-dev/pytest/issues/2208
 
 3.0.6.dev0 (unreleased)
 =======================
