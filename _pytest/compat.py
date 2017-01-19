@@ -189,7 +189,9 @@ def get_real_func(obj):
     else:
         raise ValueError(
             ("could not find real function of {start}"
-             "\nstopped at {current}").format(start=start_obj, current=obj))
+             "\nstopped at {current}").format(
+                start=py.io.saferepr(start_obj),
+                current=py.io.saferepr(obj)))
     if isinstance(obj, functools.partial):
         obj = obj.func
     return obj
