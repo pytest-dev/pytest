@@ -1,7 +1,7 @@
-pytest-3.0.5
+pytest-3.0.6
 ============
 
-pytest 3.0.5 has just been released to PyPI.
+pytest 3.0.6 has just been released to PyPI.
 
 This is a bug-fix release, being a drop-in replacement. To upgrade::
 
