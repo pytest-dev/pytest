@@ -3,8 +3,6 @@ import functools
 import os
 import sys
 
-import warnings
-
 import _pytest
 import _pytest._code
 import py
