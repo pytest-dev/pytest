@@ -14,6 +14,9 @@
   expected warnings and the list of caught warnings is added to the
   error message. Thanks `@lesteve`_ for the PR.
 
+* Fix ``pytester`` internal plugin to work correctly with latest versions of
+  ``zope.interface`` (`#1989`_). Thanks `@nicoddemus`_ for the PR.
+
 * Assert statements of the ``pytester`` plugin again benefit from assertion rewriting (`#1920`_).
   Thanks `@RonnyPfannschmidt`_ for the report and `@nicoddemus`_ for the PR.
 
@@ -31,6 +34,8 @@
 .. _@pelme: https://github.com/pelme
 .. _@eli-b: https://github.com/eli-b
 
+
+.. _#1989: https://github.com/pytest-dev/pytest/issues/1989
 .. _#1920: https://github.com/pytest-dev/pytest/issues/1920
 .. _#2129: https://github.com/pytest-dev/pytest/issues/2129
 .. _#2148: https://github.com/pytest-dev/pytest/issues/2148
