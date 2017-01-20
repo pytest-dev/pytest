@@ -1,10 +1,11 @@
 3.0.6.dev0
 ==========
 
-* fix issue #2118 - protect against internal deprecationerrors by changing the code path of Node._getcustomclass.
-  This also turns a internal deprecation into a real deprecation.
+* pytest no longer generates ``PendingDeprecationWarning`` from its own operations, which was introduced by mistake in version ``3.0.5`` (`#2118`_).
   Thanks to `@nicoddemus`_ for the report and `@RonnyPfannschmidt`_ for the PR.
 
+
+
 *
 
 *
@@ -14,6 +15,7 @@
 *
 
 
+.. _#2118: https://github.com/pytest-dev/pytest/issues/2118
 
 3.0.5
 =====
