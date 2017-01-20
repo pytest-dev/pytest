@@ -421,7 +421,7 @@ class PytestPluginManager(PluginManager):
             importspec = "_pytest." + modname
         else:
             importspec = modname
-        self.rewrite_hook.mark_rewrite(modname)
+        self.rewrite_hook.mark_rewrite(importspec)
         try:
             __import__(importspec)
         except ImportError as e:

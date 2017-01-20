@@ -17,17 +17,26 @@
 * Fix ``pytester`` internal plugin to work correctly with latest versions of
   ``zope.interface`` (`#1989`_). Thanks `@nicoddemus`_ for the PR.
 
+* Assert statements of the ``pytester`` plugin again benefit from assertion rewriting (`#1920`_).
+  Thanks `@RonnyPfannschmidt`_ for the report and `@nicoddemus`_ for the PR.
+
 * Specifying tests with colons like ``test_foo.py::test_bar`` for tests in
   subdirectories with ini configuration files now uses the correct ini file
   (`#2148`_).  Thanks `@pelme`_.
+
+* Fail ``testdir.runpytest().assert_outcomes()`` explicitly if the pytest
+  terminal output it relies on is missing. Thanks to `@eli-b`_ for the PR.
 
 *
 
 .. _@lesteve: https://github.com/lesteve
 .. _@malinoff: https://github.com/malinoff
 .. _@pelme: https://github.com/pelme
+.. _@eli-b: https://github.com/eli-b
+
 
 .. _#1989: https://github.com/pytest-dev/pytest/issues/1989
+.. _#1920: https://github.com/pytest-dev/pytest/issues/1920
 .. _#2129: https://github.com/pytest-dev/pytest/issues/2129
 .. _#2148: https://github.com/pytest-dev/pytest/issues/2148
 .. _#2150: https://github.com/pytest-dev/pytest/issues/2150
