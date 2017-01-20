@@ -359,7 +359,7 @@ get on the terminal - we are working on that)::
     >   int(s)
     E   ValueError: invalid literal for int() with base 10: 'qwe'
     
-    <0-codegen /home/ronny/Projects/pytest-dev/pytest/_pytest/python.py:1207>:1: ValueError
+    <0-codegen $PYTHON_PREFIX/lib/python3.5/site-packages/_pytest/python.py:1207>:1: ValueError
     _______ TestRaises.test_raises_doesnt ________
     
     self = <failure_demo.TestRaises object at 0xdeadbeef>

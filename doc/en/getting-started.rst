@@ -26,7 +26,7 @@ Installation::
 To check your installation has installed the correct version::
 
     $ pytest --version
-    This is pytest version 3.0.6, imported from /home/ronny/Projects/pytest-dev/pytest/pytest.py
+    This is pytest version 3.0.6, imported from $PYTHON_PREFIX/lib/python3.5/site-packages/pytest.py
 
 .. _`simpletest`:
 

@@ -399,8 +399,8 @@ Running it results in some skips if we don't have all the python interpreters in
    . $ pytest -rs -q multipython.py
    sssssssssssssssssssssssssssssssssssssssssssss...
    ======= short test summary info ========
-   SKIP [15] $REGENDOC_TMPDIR/CWD/multipython.py:23: 'python3.4' not found
    SKIP [15] $REGENDOC_TMPDIR/CWD/multipython.py:23: 'python2.6' not found
+   SKIP [15] $REGENDOC_TMPDIR/CWD/multipython.py:23: 'python3.4' not found
    SKIP [15] $REGENDOC_TMPDIR/CWD/multipython.py:23: 'python2.7' not found
    3 passed, 45 skipped in 0.12 seconds
 
