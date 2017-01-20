@@ -27,18 +27,17 @@ now execute the test specification::
 
     nonpython $ pytest test_simple.yml
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
+    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile: 
-    collected 2 items
+    collected 0 items / 1 errors
     
-    test_simple.yml F.
-    
-    ======= FAILURES ========
-    _______ usecase: hello ________
-    usecase execution failed
-       spec failed: 'some': 'other'
-       no further details known at this point.
-    ======= 1 failed, 1 passed in 0.12 seconds ========
+    ======= ERRORS ========
+    _______ ERROR collecting test_simple.yml ________
+    conftest.py:11: in collect
+        import yaml # we need a yaml parser, e.g. PyYAML
+    E   ImportError: No module named 'yaml'
+    !!!!!!!!!!!!!!!!! Interrupted: 1 errors during collection !!!!!!!!!!!!!!!!!!
+    ======= 1 error in 0.12 seconds ========
 
 .. regendoc:wipe
 
@@ -59,20 +58,18 @@ consulted when reporting in ``verbose`` mode::
 
     nonpython $ pytest -v
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5m
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile: 
-    collecting ... collected 2 items
+    collecting ... collected 0 items / 1 errors
     
-    test_simple.yml::hello FAILED
-    test_simple.yml::ok PASSED
-    
-    ======= FAILURES ========
-    _______ usecase: hello ________
-    usecase execution failed
-       spec failed: 'some': 'other'
-       no further details known at this point.
-    ======= 1 failed, 1 passed in 0.12 seconds ========
+    ======= ERRORS ========
+    _______ ERROR collecting test_simple.yml ________
+    conftest.py:11: in collect
+        import yaml # we need a yaml parser, e.g. PyYAML
+    E   ImportError: No module named 'yaml'
+    !!!!!!!!!!!!!!!!! Interrupted: 1 errors during collection !!!!!!!!!!!!!!!!!!
+    ======= 1 error in 0.12 seconds ========
 
 .. regendoc:wipe
 
@@ -81,11 +78,14 @@ interesting to just look at the collection tree::
 
     nonpython $ pytest --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
+    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR/nonpython, inifile: 
-    collected 2 items
-    <YamlFile 'test_simple.yml'>
-      <YamlItem 'hello'>
-      <YamlItem 'ok'>
+    collected 0 items / 1 errors
     
-    ======= no tests ran in 0.12 seconds ========
+    ======= ERRORS ========
+    _______ ERROR collecting test_simple.yml ________
+    conftest.py:11: in collect
+        import yaml # we need a yaml parser, e.g. PyYAML
+    E   ImportError: No module named 'yaml'
+    !!!!!!!!!!!!!!!!! Interrupted: 1 errors during collection !!!!!!!!!!!!!!!!!!
+    ======= 1 error in 0.12 seconds ========
