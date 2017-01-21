@@ -1465,16 +1465,16 @@ class TestMarkersWithParametrization:
                 import pytest
 
                 @pytest.mark.parametrize("x", range(2))
-                def test_func(x):
+                def test_func_a(x):
                     pass
 
                 @pytest.mark.parametrize("y", [1])
-                def test_func2(y):
+                def test_func_b(y):
                     pass
                 """)
         result = testdir.runpytest("-v")
         result.stdout.fnmatch_lines([
-            "*test_func*0*PASS*",
-            "*test_func*2*PASS*",
-            "*test_func2*10*PASS*",
+            "*test_func_a*0*PASS*",
+            "*test_func_a*2*PASS*",
+            "*test_func_b*10*PASS*",
         ])
