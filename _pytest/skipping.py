@@ -46,7 +46,7 @@ def pytest_configure(config):
     )
     config.addinivalue_line("markers",
         "xfail(condition, reason=None, run=True, raises=None, strict=False): "
-        "mark the the test function as an expected failure if eval(condition) "
+        "mark the test function as an expected failure if eval(condition) "
         "has a True value. Optionally specify a reason for better reporting "
         "and run=False if you don't even want to execute the test function. "
         "If only specific exception(s) are expected, you can list them in "

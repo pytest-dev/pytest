@@ -68,7 +68,6 @@ def main():
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='Holger Krekel, Bruno Oliveira, Ronny Pfannschmidt, Floris Bruynooghe, Brianna Laugher, Florian Bruhin and others',
-        author_email='holger at merlinux.eu',
         entry_points={'console_scripts':
                           ['pytest=pytest:main', 'py.test=pytest:main']},
         classifiers=classifiers,
