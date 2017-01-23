@@ -10,8 +10,8 @@
 *
 
 
-3.0.6 (2017-01-29)
-=======================
+3.0.6 (2017-01-22)
+==================
 
 * pytest no longer generates ``PendingDeprecationWarning`` from its own operations, which was introduced by mistake in version ``3.0.5`` (`#2118`_).
   Thanks to `@nicoddemus`_ for the report and `@RonnyPfannschmidt`_ for the PR.
