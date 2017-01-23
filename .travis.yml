@@ -32,6 +32,8 @@ matrix:
   include:
     - env: TESTENV=py36
       python: '3.6-dev'
+    - env: TESTENV=py37
+      python: 'nightly'
 
 script: tox --recreate -e $TESTENV
 
