@@ -44,6 +44,10 @@ Changes
 * fix `#2208`_: ensure a iteration limit for _pytest.compat.get_real_func.
   Thanks `@RonnyPfannschmidt`_ for the Report and PR
 
+* Modify ``pytest_make_parametrize_id()`` hook to accept ``argname`` as an
+  additional parameter.
+  Thanks `@unsignedint`_ for the PR.
+
 
 .. _@davidszotten: https://github.com/davidszotten
 .. _@fushi: https://github.com/fushi
@@ -52,6 +56,7 @@ Changes
 .. _@fogo: https://github.com/fogo
 .. _@lesteve: https://github.com/lesteve
 .. _@mandeep: https://github.com/mandeep
+.. _@unsignedint: https://github.com/unsignedint
 
 .. _#1512: https://github.com/pytest-dev/pytest/issues/1512
 .. _#1874: https://github.com/pytest-dev/pytest/pull/1874
