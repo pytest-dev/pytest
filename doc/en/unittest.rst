@@ -17,6 +17,14 @@ run using ``pytest``.  We assume here that you are familiar with writing
 ``unittest.TestCase`` style tests and rather focus on 
 integration aspects.
 
+Note that this is meant as a provisional way of running your test code 
+until you fully convert to pytest-style tests. To fully take advantage of
+:ref:`fixtures <fixture>`, :ref:`parametrization <parametrize>` and 
+:ref:`hooks <writing-plugins>` you should convert (tools like `unittest2pytest 
+<https://pypi.python.org/pypi/unittest2pytest/>`__ are helpful). 
+Also, not all 3rd party pluging are expected to work best with 
+``unittest.TestCase`` style tests.
+
 Usage
 -------------------------------------------------------------------
 
@@ -191,12 +199,3 @@ was executed ahead of the ``test_method``.
    pytest fixtures into unittest suites.  And of course you can also start
    to selectively leave away the ``unittest.TestCase`` subclassing, use
    plain asserts and get the unlimited pytest feature set.
-
-
-Converting from unittest to pytest
----------------------------------------
-
-If you want to convert your unittest testcases to pytest, there are
-some helpers like `unittest2pytest
-<https://pypi.python.org/pypi/unittest2pytest/>`__, which uses lib2to3
-and introspection for the transformation.
