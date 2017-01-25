@@ -20,7 +20,7 @@ integration aspects.
 Note that this is meant as a provisional way of running your test code 
 until you fully convert to pytest-style tests. To fully take advantage of
 :ref:`fixtures <fixture>`, :ref:`parametrization <parametrize>` and 
-:ref:`hooks <writing_plugins>` you should convert (tools like `unittest2pytest 
+:ref:`hooks <writing-plugins>` you should convert (tools like `unittest2pytest 
 <https://pypi.python.org/pypi/unittest2pytest/>`__ are helpful). 
 Also, not all 3rd party pluging are expected to work best with 
 ``unittest.TestCase`` style tests.
