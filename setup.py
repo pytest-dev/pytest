@@ -13,7 +13,7 @@ classifiers = ['Development Status :: 6 - Mature',
                'Topic :: Software Development :: Libraries',
                'Topic :: Utilities'] + [
               ('Programming Language :: Python :: %s' % x) for x in
-                  '2 2.6 2.7 3 3.3 3.4 3.5'.split()]
+                  '2 2.6 2.7 3 3.3 3.4 3.5 3.6'.split()]
 
 with open('README.rst') as fd:
     long_description = fd.read()
@@ -68,7 +68,6 @@ def main():
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='Holger Krekel, Bruno Oliveira, Ronny Pfannschmidt, Floris Bruynooghe, Brianna Laugher, Florian Bruhin and others',
-        author_email='holger at merlinux.eu',
         entry_points={'console_scripts':
                           ['pytest=pytest:main', 'py.test=pytest:main']},
         classifiers=classifiers,

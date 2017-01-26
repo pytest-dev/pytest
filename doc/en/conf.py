@@ -303,7 +303,7 @@ texinfo_documents = [
    ('Holger Krekel@*Benjamin Peterson@*Ronny Pfannschmidt@*'
     'Floris Bruynooghe@*others'),
    'pytest',
-   'simple powerful testing with Pytho',
+   'simple powerful testing with Python',
    'Programming',
    1),
 ]
