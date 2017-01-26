@@ -172,7 +172,7 @@ If a package is installed this way, ``pytest`` will load
 .. note::
 
     Make sure to include ``Framework :: Pytest`` in your list of
-    `PyPI classifiers <https://python-packaging-user-guide.readthedocs.io/en/latest/distributing/#classifiers>`_
+    `PyPI classifiers <https://python-packaging-user-guide.readthedocs.io/distributing/#classifiers>`_
     to make it easy for users to find your plugin.
 
 
@@ -250,8 +250,8 @@ which will import the specified module as a ``pytest`` plugin.
 Plugins imported like this will automatically be marked to require
 assertion rewriting using the :func:`pytest.register_assert_rewrite`
 mechanism.  However for this to have any effect the module must not be
-imported already, it it was already imported at the time the
-``pytest_plugins`` statement is processed a warning will result and
+imported already; if it was already imported at the time the
+``pytest_plugins`` statement is processed, a warning will result and
 assertions inside the plugin will not be re-written.  To fix this you
 can either call :func:`pytest.register_assert_rewrite` yourself before
 the module is imported, or you can arrange the code to delay the

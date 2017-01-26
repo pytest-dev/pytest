@@ -59,6 +59,23 @@ class TestImportHookInstallation:
             assert 0
         result.stdout.fnmatch_lines([expected])
 
+    def test_rewrite_assertions_pytester_plugin(self, testdir):
+        """
+        Assertions in the pytester plugin must also benefit from assertion
+        rewriting (#1920).
+        """
+        testdir.makepyfile("""
+            pytest_plugins = ['pytester']
+            def test_dummy_failure(testdir):  # how meta!
+                testdir.makepyfile('def test(): assert 0')
+                r = testdir.inline_run()
+                r.assertoutcome(passed=1)
+        """)
+        result = testdir.runpytest_subprocess()
+        result.stdout.fnmatch_lines([
+            '*assert 1 == 0*',
+        ])
+
     @pytest.mark.parametrize('mode', ['plain', 'rewrite'])
     def test_pytest_plugins_rewrite(self, testdir, mode):
         contents = {

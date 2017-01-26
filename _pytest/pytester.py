@@ -369,6 +369,7 @@ class RunResult(object):
                     for num, cat in outcomes:
                         d[cat] = int(num)
                     return d
+        raise ValueError("Pytest terminal report not found")
 
     def assert_outcomes(self, passed=0, skipped=0, failed=0):
         """ assert that the specified outcomes appear with the respective
@@ -449,9 +450,9 @@ class Testdir(object):
         the module is re-imported.
         """
         for name in set(sys.modules).difference(self._savemodulekeys):
-            # it seems zope.interfaces is keeping some state
-            # (used by twisted related tests)
-            if name != "zope.interface":
+            # zope.interface (used by twisted-related tests) keeps internal
+            # state and can't be deleted
+            if not name.startswith("zope.interface"):
                 del sys.modules[name]
 
     def make_hook_recorder(self, pluginmanager):

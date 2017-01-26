@@ -80,7 +80,7 @@ If you then run it with ``--lf``::
 
     $ pytest --lf
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
+    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
     run-last-failure: rerun last 2 failures
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 50 items
@@ -122,7 +122,7 @@ of ``FF`` and dots)::
 
     $ pytest --ff
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
+    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
     run-last-failure: rerun last 2 failures first
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 50 items
@@ -227,7 +227,7 @@ You can always peek at the content of the cache using the
 
     $ py.test --cache-show
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
+    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR, inifile: 
     cachedir: $REGENDOC_TMPDIR/.cache
     ------------------------------- cache values -------------------------------
@@ -246,7 +246,7 @@ by adding the ``--cache-clear`` option like this::
 
     pytest --cache-clear
 
-This is recommended for invocations from Continous Integration
+This is recommended for invocations from Continuous Integration
 servers where isolation and correctness is more important
 than speed.
 

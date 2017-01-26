@@ -587,6 +587,21 @@ def test_load_initial_conftest_last_ordering(testdir):
     assert [x.function.__module__ for x in l] == expected
 
 
+def test_get_plugin_specs_as_list():
+    from _pytest.config import _get_plugin_specs_as_list
+    with pytest.raises(pytest.UsageError):
+        _get_plugin_specs_as_list(set(['foo']))
+    with pytest.raises(pytest.UsageError):
+        _get_plugin_specs_as_list(dict())
+
+    assert _get_plugin_specs_as_list(None) == []
+    assert _get_plugin_specs_as_list('') == []
+    assert _get_plugin_specs_as_list('foo') == ['foo']
+    assert _get_plugin_specs_as_list('foo,bar') == ['foo', 'bar']
+    assert _get_plugin_specs_as_list(['foo', 'bar']) == ['foo', 'bar']
+    assert _get_plugin_specs_as_list(('foo', 'bar')) == ['foo', 'bar']
+
+
 class TestWarning:
     def test_warn_config(self, testdir):
         testdir.makeconftest("""

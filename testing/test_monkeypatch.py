@@ -7,16 +7,12 @@ from _pytest.monkeypatch import MonkeyPatch
 
 
 @pytest.fixture
-def mp(request):
+def mp():
     cwd = os.getcwd()
     sys_path = list(sys.path)
-
-    def cleanup():
-        sys.path[:] = sys_path
-        os.chdir(cwd)
-
-    request.addfinalizer(cleanup)
-    return MonkeyPatch()
+    yield MonkeyPatch()
+    sys.path[:] = sys_path
+    os.chdir(cwd)
 
 
 def test_setattr():
@@ -329,5 +325,3 @@ def test_issue1338_name_resolving():
          monkeypatch.delattr('requests.sessions.Session.request')
     finally:
         monkeypatch.undo()
-
-

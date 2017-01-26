@@ -60,5 +60,5 @@ holger krekel
 - fix issue429: comparing byte strings with non-ascii chars in assert
   expressions now work better.  Thanks Floris Bruynooghe.
 
-- make capfd/capsys.capture private, its unused and shouldnt be exposed
+- make capfd/capsys.capture private, its unused and shouldn't be exposed
 

@@ -682,13 +682,29 @@ def test_rewritten():
         hook.mark_rewrite('test_remember_rewritten_modules')
         assert warnings == []
 
-    def test_rewrite_warning_using_pytest_plugins(self, testdir, monkeypatch):
+    def test_rewrite_warning_using_pytest_plugins(self, testdir):
         testdir.makepyfile(**{
             'conftest.py': "pytest_plugins = ['core', 'gui', 'sci']",
             'core.py': "",
             'gui.py': "pytest_plugins = ['core', 'sci']",
             'sci.py': "pytest_plugins = ['core']",
             'test_rewrite_warning_pytest_plugins.py': "def test(): pass",
+        })
+        testdir.chdir()
+        result = testdir.runpytest_subprocess()
+        result.stdout.fnmatch_lines(['*= 1 passed in *=*'])
+        assert 'pytest-warning summary' not in result.stdout.str()
+
+    def test_rewrite_warning_using_pytest_plugins_env_var(self, testdir, monkeypatch):
+        monkeypatch.setenv('PYTEST_PLUGINS', 'plugin')
+        testdir.makepyfile(**{
+            'plugin.py': "",
+            'test_rewrite_warning_using_pytest_plugins_env_var.py': """
+                import plugin
+                pytest_plugins = ['plugin']
+                def test():
+                    pass
+            """,
         })
         testdir.chdir()
         result = testdir.runpytest_subprocess()
