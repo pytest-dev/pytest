@@ -46,7 +46,6 @@ Changes
 .. _@mattduck: https://github.com/mattduck
 .. _@wheerd: https://github.com/wheerd
 .. _@fogo: https://github.com/fogo
-.. _@lesteve: https://github.com/lesteve
 .. _@mandeep: https://github.com/mandeep
 
 .. _#1512: https://github.com/pytest-dev/pytest/issues/1512
