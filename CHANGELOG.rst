@@ -1,13 +1,18 @@
 3.0.7 (unreleased)
 =======================
 
-*
+* Fix regression, pytest now skips unittest correctly if run with ``--pdb``
+  (`#2137`_). Thanks to `@gst`_ for the report and `@mbyt`_ for the PR.
 
 *
 
 *
 
 *
+
+.. _@gst: https://github.com/gst
+
+.. _#2137: https://github.com/pytest-dev/pytest/issues/2137
 
 
 3.0.6 (2017-01-22)

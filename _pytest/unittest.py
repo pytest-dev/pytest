@@ -65,7 +65,6 @@ class UnitTestCase(pytest.Class):
                     yield TestCaseFunction('runTest', parent=self)
 
 
-
 class TestCaseFunction(pytest.Function):
     _excinfo = None
 
@@ -157,8 +156,19 @@ class TestCaseFunction(pytest.Function):
             self._testcase(result=self)
         else:
             # disables tearDown and cleanups for post mortem debugging (see #1890)
+            # but still implements the skipping machinery (see #2137)
+            testMethod = getattr(self._testcase, self._testcase._testMethodName)
+            if (getattr(self._testcase.__class__, "__unittest_skip__", False) or
+                getattr(testMethod, "__unittest_skip__", False)):
+                # If the class or method was skipped.
+                skip_why = (getattr(self._testcase.__class__, '__unittest_skip_why__', '')
+                            or getattr(testMethod, '__unittest_skip_why__', ''))
+                try:
+                    self._testcase._addSkip(self, self._testcase, skip_why)
+                except TypeError:  # PY2
+                    self._testcase._addSkip(self, skip_why)
+                return
             self._testcase.debug()
-
 
     def _prunetraceback(self, excinfo):
         pytest.Function._prunetraceback(self, excinfo)

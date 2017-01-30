@@ -106,6 +106,20 @@ class TestPDB:
         assert 'debug.me' in rest
         self.flush(child)
 
+    def test_pdb_unittest_skip(self, testdir):
+        p1 = testdir.makepyfile("""
+            import unittest
+            @unittest.skipIf(True, 'Skipping also with pdb active')
+            class MyTestCase(unittest.TestCase):
+                def test_one(self):
+                    assert 0
+        """)
+        child = testdir.spawn_pytest("-rs --pdb %s" % p1)
+        child.expect('Skipping also with pdb active')
+        child.expect('1 skipped in')
+        child.sendeof()
+        self.flush(child)
+
     def test_pdb_interaction_capture(self, testdir):
         p1 = testdir.makepyfile("""
             def test_1():
