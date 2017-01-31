@@ -161,8 +161,8 @@ class TestCaseFunction(pytest.Function):
             if (getattr(self._testcase.__class__, "__unittest_skip__", False) or
                 getattr(testMethod, "__unittest_skip__", False)):
                 # If the class or method was skipped.
-                skip_why = (getattr(self._testcase.__class__, '__unittest_skip_why__', '')
-                            or getattr(testMethod, '__unittest_skip_why__', ''))
+                skip_why = (getattr(self._testcase.__class__, '__unittest_skip_why__', '') or
+                            getattr(testMethod, '__unittest_skip_why__', ''))
                 try:
                     self._testcase._addSkip(self, self._testcase, skip_why)
                 except TypeError:  # PY2
