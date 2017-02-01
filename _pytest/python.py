@@ -174,7 +174,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
     outcome = yield
     res = outcome.get_result()
     if res is not None:
-        raise StopIteration
+        return
     # nothing was collected elsewhere, let's do it here
     if isclass(obj):
         if collector.istestclass(obj, name):
