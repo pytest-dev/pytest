@@ -1,8 +1,11 @@
 3.0.7 (unreleased)
-=======================
+==================
 
 * Fix regression, pytest now skips unittest correctly if run with ``--pdb``
   (`#2137`_). Thanks to `@gst`_ for the report and `@mbyt`_ for the PR.
+
+* Replace ``raise StopIteration`` usages in the code by simple ``returns`` to finish generators, in accordance to `PEP-479`_ (`#2160`_).
+  Thanks `@tgoodlet`_ for the report and `@nicoddemus`_ for the PR.
 
 *
 
@@ -13,6 +16,9 @@
 .. _@gst: https://github.com/gst
 
 .. _#2137: https://github.com/pytest-dev/pytest/issues/2137
+.. _#2160: https://github.com/pytest-dev/pytest/issues/2160
+
+.. _PEP-479: https://www.python.org/dev/peps/pep-0479/
 
 
 3.0.6 (2017-01-22)
