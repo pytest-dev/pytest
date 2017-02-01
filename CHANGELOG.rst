@@ -13,6 +13,9 @@ New Features
 * ``pytest.warns`` now checks for subclass relationship rather than
   class equality. Thanks `@lesteve`_ for the PR (`#2166`_)
 
+* ``pytest.raises`` now asserts that the error message matches a text or regex
+  with the ``match`` keyword argument. Thanks `@Kriechi`_ for the PR.
+
 
 Changes
 -------
@@ -56,6 +59,7 @@ Changes
 .. _@fogo: https://github.com/fogo
 .. _@mandeep: https://github.com/mandeep
 .. _@unsignedint: https://github.com/unsignedint
+.. _@Kriechi: https://github.com/Kriechi
 
 .. _#1512: https://github.com/pytest-dev/pytest/issues/1512
 .. _#1874: https://github.com/pytest-dev/pytest/pull/1874

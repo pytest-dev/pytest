@@ -1134,7 +1134,7 @@ def raises(expected_exception, *args, **kwargs):
            >>> with raises(ValueError) as exc_info:
            ...     if value > 10:
            ...         raise ValueError("value must be <= 10")
-           ...     assert str(exc_info.value) == "value must be <= 10"  # this will not execute
+           ...     assert exc_info.type == ValueError  # this will not execute
 
        Instead, the following approach must be taken (note the difference in
        scope)::
@@ -1143,7 +1143,16 @@ def raises(expected_exception, *args, **kwargs):
            ...     if value > 10:
            ...         raise ValueError("value must be <= 10")
            ...
-           >>> assert str(exc_info.value) == "value must be <= 10"
+           >>> assert exc_info.type == ValueError
+
+    Or you can use the keyword argument ``match`` to assert that the
+    exception matches a text or regex::
+
+        >>> with raises(ValueError, match='must be 0 or None'):
+        ...     raise ValueError("value must be 0 or None")
+
+        >>> with raises(ValueError, match=r'must be \d+$'):
+        ...     raise ValueError("value must be 42")
 
 
     Or you can specify a callable by passing a to-be-called lambda::
@@ -1194,11 +1203,15 @@ def raises(expected_exception, *args, **kwargs):
         raise TypeError(msg % type(expected_exception))
 
     message = "DID NOT RAISE {0}".format(expected_exception)
+    match_expr = None
 
     if not args:
         if "message" in kwargs:
             message = kwargs.pop("message")
-        return RaisesContext(expected_exception, message)
+        if "match" in kwargs:
+            match_expr = kwargs.pop("match")
+            message += " matching '{0}'".format(match_expr)
+        return RaisesContext(expected_exception, message, match_expr)
     elif isinstance(args[0], str):
         code, = args
         assert isinstance(code, str)
@@ -1222,9 +1235,10 @@ def raises(expected_exception, *args, **kwargs):
     pytest.fail(message)
 
 class RaisesContext(object):
-    def __init__(self, expected_exception, message):
+    def __init__(self, expected_exception, message, match_expr):
         self.expected_exception = expected_exception
         self.message = message
+        self.match_expr = match_expr
         self.excinfo = None
 
     def __enter__(self):
@@ -1246,6 +1260,8 @@ class RaisesContext(object):
         suppress_exception = issubclass(self.excinfo.type, self.expected_exception)
         if sys.version_info[0] == 2 and suppress_exception:
             sys.exc_clear()
+        if self.match_expr:
+            self.excinfo.match(self.match_expr)
         return suppress_exception
 
 
