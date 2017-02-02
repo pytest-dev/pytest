@@ -7,6 +7,8 @@ import _pytest
 import _pytest._code
 import py
 import pytest
+import logging
+
 try:
     from collections import MutableMapping as MappingMixin
 except ImportError:
@@ -86,6 +88,7 @@ def pytest_configure(config):
 
 def wrap_session(config, doit):
     """Skeleton command line program"""
+
     session = Session(config)
     session.exitstatus = EXIT_OK
     initstate = 0
@@ -141,6 +144,8 @@ def pytest_collection(session):
     return session.perform_collect()
 
 def pytest_runtestloop(session):
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
     if (session.testsfailed and
             not session.config.option.continue_on_collection_errors):
         raise session.Interrupted(
