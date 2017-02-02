@@ -129,7 +129,7 @@ class TestRaises:
             int('asdf')
 
         msg = "with base 16"
-        expr = r"Pattern '{}' not found in 'invalid literal for int\(\) with base 10: 'asdf''".format(msg)
+        expr = r"Pattern '{0}' not found in 'invalid literal for int\(\) with base 10: 'asdf''".format(msg)
         with pytest.raises(AssertionError, match=expr):
             with pytest.raises(ValueError, match=msg):
                 int('asdf', base=10)
