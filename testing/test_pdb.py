@@ -107,6 +107,7 @@ class TestPDB:
         self.flush(child)
 
     def test_pdb_unittest_skip(self, testdir):
+        """Test for issue #2137"""
         p1 = testdir.makepyfile("""
             import unittest
             @unittest.skipIf(True, 'Skipping also with pdb active')
