@@ -119,7 +119,6 @@ class MarkEvaluator:
         if hasattr(self, 'result'):
             return self.result
         if self.holder:
-            d = self._getglobals()
             if self.holder.args or 'condition' in self.holder.kwargs:
                 self.result = False
                 # "holder" might be a MarkInfo or a MarkDecorator; only
@@ -135,6 +134,7 @@ class MarkEvaluator:
                     for expr in args:
                         self.expr = expr
                         if isinstance(expr, py.builtin._basestring):
+                            d = self._getglobals()
                             result = cached_eval(self.item.config, expr, d)
                         else:
                             if "reason" not in kwargs:

@@ -8,7 +8,10 @@
 
 *
 
-*
+* Conditionless ``xfail`` markers no longer rely on the underlying test item
+  being an instance of ``PyobjMixin``, and can therefore apply to tests not
+  collected by the built-in python test collector. Thanks `@barneygale`_ for the
+  PR.
 
 *
 
@@ -49,6 +52,7 @@
   terminal output it relies on is missing. Thanks to `@eli-b`_ for the PR.
 
 
+.. _@barneygale: https://github.com/barneygale
 .. _@lesteve: https://github.com/lesteve
 .. _@malinoff: https://github.com/malinoff
 .. _@pelme: https://github.com/pelme
