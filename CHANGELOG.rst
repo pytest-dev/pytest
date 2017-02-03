@@ -87,13 +87,20 @@ Bug Fixes
 3.0.7 (unreleased)
 =======================
 
-*
+* Change junitxml.py to produce reports that comply with Junitxml schema.
+  If the same test fails with failure in call and then errors in teardown
+  we split testcase element into two, one containing the error and the other
+  the failure. (`#2228`_) Thanks to `@kkoukiou`_ for the PR.
 
 *
 
 *
 
 *
+
+.. _@kkoukiou: https://github.com/KKoukiou
+
+.. _#2228:  https://github.com/pytest-dev/pytest/issues/2228
 
 
 3.0.6 (2017-01-22)
