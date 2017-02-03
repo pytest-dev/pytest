@@ -969,3 +969,26 @@ def test_module_level_skip_error(testdir):
     result.stdout.fnmatch_lines(
         "*Using pytest.skip outside of a test is not allowed*"
     )
+
+
+def test_mark_xfail_item(testdir):
+    # Ensure pytest.mark.xfail works with non-Python Item
+    testdir.makeconftest("""
+        import pytest
+
+        class MyItem(pytest.Item):
+            nodeid = 'foo'
+            def setup(self):
+                marker = pytest.mark.xfail(True, reason="Expected failure")
+                self.add_marker(marker)
+            def runtest(self):
+                assert False
+
+        def pytest_collect_file(path, parent):
+            return MyItem("foo", parent)
+    """)
+    result = testdir.inline_run()
+    passed, skipped, failed = result.listoutcomes()
+    assert not failed
+    xfailed = [r for r in skipped if hasattr(r, 'wasxfail')]
+    assert xfailed
