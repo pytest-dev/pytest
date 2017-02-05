@@ -14,6 +14,7 @@ from _pytest.compat import (
     getfslineno, get_real_func,
     is_generator, isclass, getimfunc,
     getlocation, getfuncargnames,
+    safe_getattr,
 )
 
 def pytest_sessionstart(session):
@@ -1066,7 +1067,9 @@ class FixtureManager:
         self._holderobjseen.add(holderobj)
         autousenames = []
         for name in dir(holderobj):
-            obj = getattr(holderobj, name, None)
+            # The attribute can be an arbitrary descriptor, so the attribute
+            # access below can raise. safe_getatt() ignores such exceptions.
+            obj = safe_getattr(holderobj, name, None)
             # fixture functions have a pytest_funcarg__ prefix (pre-2.3 style)
             # or are "@pytest.fixture" marked
             marker = getfixturemarker(obj)

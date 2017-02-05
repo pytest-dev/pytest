@@ -3,6 +3,9 @@
 
 *
 
+* Ignore exceptions raised from descriptors (e.g. properties) during Python test collection (`#2234`_).
+  Thanks to `@bluetech`_.
+
 * Replace ``raise StopIteration`` usages in the code by simple ``returns`` to finish generators, in accordance to `PEP-479`_ (`#2160`_).
   Thanks `@tgoodlet`_ for the report and `@nicoddemus`_ for the PR.
 
@@ -15,6 +18,10 @@
   PR.
 
 *
+
+.. _#2234: https://github.com/pytest-dev/pytest/issues/2234
+
+.. _@bluetech: https://github.com/bluetech
 
 .. _#2160: https://github.com/pytest-dev/pytest/issues/2160
 
