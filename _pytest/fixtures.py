@@ -124,8 +124,6 @@ def getfixturemarker(obj):
     exceptions."""
     try:
         return getattr(obj, "_pytestfixturefunction", None)
-    except KeyboardInterrupt:
-        raise
     except Exception:
         # some objects raise errors like request (from flask import request)
         # we don't expect them to be fixture functions
