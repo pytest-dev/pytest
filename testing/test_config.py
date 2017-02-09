@@ -100,6 +100,7 @@ class TestParseIni:
             [pytest]
             pathtype = {}
         """.format(pathimpl))
+        # disable cacheprovider to get out of breaking bad
         config = testdir.parseconfigure('-p', 'no:cacheprovider')
         assert isinstance(config.make_path(testdir.tmpdir), pathtype)
 
