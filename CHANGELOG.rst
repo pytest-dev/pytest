@@ -51,6 +51,9 @@ Changes
   additional parameter.
   Thanks `@unsignedint`_ for the PR.
 
+* Add ``venv`` to the default ``norecursedirs`` setting.
+  Thanks `@The-Compiler`_ for the PR.
+
 
 .. _@davidszotten: https://github.com/davidszotten
 .. _@fushi: https://github.com/fushi
