@@ -7,7 +7,8 @@
 * Ignore exceptions raised from descriptors (e.g. properties) during Python test collection (`#2234`_).
   Thanks to `@bluetech`_.
   
-*  
+* ``--override-ini`` now correctly overrides some fundamental options like ``python_files`` (`#2238`_).
+  Thanks `@sirex`_ for the report and `@nicoddemus`_ for the PR.
 
 * Replace ``raise StopIteration`` usages in the code by simple ``returns`` to finish generators, in accordance to `PEP-479`_ (`#2160`_).
   Thanks `@tgoodlet`_ for the report and `@nicoddemus`_ for the PR.
@@ -28,12 +29,14 @@
 
 .. _@bluetech: https://github.com/bluetech
 .. _@gst: https://github.com/gst
+.. _@sirex: https://github.com/sirex
 .. _@vidartf: https://github.com/vidartf
 
 .. _#2137: https://github.com/pytest-dev/pytest/issues/2137
 .. _#2160: https://github.com/pytest-dev/pytest/issues/2160
 .. _#2231: https://github.com/pytest-dev/pytest/issues/2231
 .. _#2234: https://github.com/pytest-dev/pytest/issues/2234
+.. _#2238: https://github.com/pytest-dev/pytest/issues/2238
 
 .. _PEP-479: https://www.python.org/dev/peps/pep-0479/
 
