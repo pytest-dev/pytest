@@ -27,7 +27,7 @@ EXIT_NOTESTSCOLLECTED = 5
 
 def pytest_addoption(parser):
     parser.addini("norecursedirs", "directory patterns to avoid for recursion",
-        type="args", default=['.*', 'build', 'dist', 'CVS', '_darcs', '{arch}', '*.egg'])
+        type="args", default=['.*', 'build', 'dist', 'CVS', '_darcs', '{arch}', '*.egg', 'venv'])
     parser.addini("testpaths", "directories to search for tests when no files or directories are given in the command line.",
         type="args", default=[])
     #parser.addini("dirpatterns",

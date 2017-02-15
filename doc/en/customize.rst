@@ -158,7 +158,7 @@ Builtin configuration file options
         [seq]   matches any character in seq
         [!seq]  matches any char not in seq
 
-   Default patterns are ``'.*', 'build', 'dist', 'CVS', '_darcs', '{arch}', '*.egg'``.
+   Default patterns are ``'.*', 'build', 'dist', 'CVS', '_darcs', '{arch}', '*.egg', 'venv'``.
    Setting a ``norecursedirs`` replaces the default.  Here is an example of
    how to avoid certain directories:
 
