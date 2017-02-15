@@ -254,7 +254,7 @@ application modules:
 if ``myapp.testsupport.myplugin`` also declares ``pytest_plugins``, the contents
 of the variable will also be loaded as plugins, and so on.
 
-This mechanism makes it easy to share textures within applications or even
+This mechanism makes it easy to share fixtures within applications or even
 external applications without the need to create external plugins using 
 the ``setuptools``'s entry point technique.
 
