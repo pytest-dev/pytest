@@ -4,6 +4,23 @@ import _pytest._code
 from _pytest.config import getcfg, get_common_ancestor, determine_setup
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 
+try:
+    from pathlib import Path as PathlibPath
+except ImportError:
+    PathlibPath = None
+
+try:
+    from pathlib2 import Path as Pathlib2Path
+except ImportError:
+    Pathlib2Path = None
+
+PATHIMPLS = {
+    'pylib': py.path.local,
+    'pathlib': PathlibPath,
+    'pathlib2': Pathlib2Path,
+}
+
+
 class TestParseIni:
 
     @pytest.mark.parametrize('section, filename',
@@ -72,6 +89,20 @@ class TestParseIni:
         """))
         config = testdir.parseconfigure(sub)
         assert config.getini("minversion") == "2.0"
+
+    @pytest.mark.parametrize('pathimpl, pathtype', sorted(PATHIMPLS.items()))
+    def test_configure_makepath(self, testdir, pathimpl, pathtype):
+        if pathtype is None:
+            pytest.skip(
+                "{} path implementation is missing, not testing"
+                .format(pathimpl))
+        testdir.makeini("""
+            [pytest]
+            pathtype = {}
+        """.format(pathimpl))
+        # disable cacheprovider to get out of breaking bad
+        config = testdir.parseconfigure('-p', 'no:cacheprovider')
+        assert isinstance(config.make_path(testdir.tmpdir), pathtype)
 
     @pytest.mark.xfail(reason="probably not needed")
     def test_confcutdir(self, testdir):
@@ -809,4 +840,7 @@ class TestOverrideIniArgs:
             rootdir, inifile, inicfg = determine_setup(None, ['a/exist'])
             assert rootdir == tmpdir
             assert inifile is None
+ 
+
+
 

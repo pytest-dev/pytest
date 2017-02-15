@@ -972,11 +972,31 @@ class Config(object):
         ns, unknown_args = self._parser.parse_known_and_unknown_args(args, namespace=self.option.copy())
         r = determine_setup(ns.inifilename, ns.file_or_dir + unknown_args, warnfunc=self.warn)
         self.rootdir, self.inifile, self.inicfg = r
-        self._parser.extra_info['rootdir'] = self.rootdir
-        self._parser.extra_info['inifile'] = self.inifile
-        self.invocation_dir = py.path.local()
         self._parser.addini('addopts', 'extra command line options', 'args')
         self._parser.addini('minversion', 'minimally required pytest version')
+        self._parser.addini('pathtype', 'path implementation to be used', default='pylib')
+
+        self.invocation_dir = self.make_path()
+        self.rootdir = self.make_path(self.rootdir)
+        self.inifile = self.make_path(self.inifile)
+        self._parser.extra_info['rootdir'] = self.rootdir
+        self._parser.extra_info['inifile'] = self.inifile
+
+    def make_path(self, input=None):
+        if input is None:
+            input = os.getcwd()
+        pathtype = self.getini('pathtype')
+        if pathtype == 'pylib':
+            return py.path.local(input)
+        elif pathtype == 'pathlib':
+            # for pythons that dont use fspath
+            if isinstance(input, py.path.local):
+                input = str(input)
+            import pathlib
+            return pathlib.Path(input)
+        elif pathtype == 'pathlib2':
+            import pathlib2
+            return pathlib2.Path(input)
 
     def _consider_importhook(self, args, entrypoint_name):
         """Install the PEP 302 import hook if using assertion re-writing.
@@ -1311,7 +1331,7 @@ def determine_setup(inifile, args, warnfunc=None):
                 if rootdir is None:
                     rootdir = get_common_ancestor([py.path.local(), ancestor])
                     is_fs_root = os.path.splitdrive(str(rootdir))[1] == os.sep
-                    if is_fs_root:
+                    if is_fs_root: 
                         rootdir = ancestor
     return rootdir, inifile, inicfg or {}
 
