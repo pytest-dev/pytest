@@ -1,6 +1,9 @@
 3.0.7 (unreleased)
 ==================
 
+* Fix issue when trying to import the `anydbm` module. (`#2248`_).
+  Thanks `@pfhayes`_ for the PR.
+
 * Fix regression, pytest now skips unittest correctly if run with ``--pdb``
   (`#2137`_). Thanks to `@gst`_ for the report and `@mbyt`_ for the PR.
 
@@ -30,6 +33,7 @@
 .. _@gst: https://github.com/gst
 .. _@vidartf: https://github.com/vidartf
 
+.. _#2248: https://github.com/pytest-dev/pytest/issues/2248
 .. _#2137: https://github.com/pytest-dev/pytest/issues/2137
 .. _#2160: https://github.com/pytest-dev/pytest/issues/2160
 .. _#2231: https://github.com/pytest-dev/pytest/issues/2231
