@@ -5,7 +5,7 @@ import sys
 import traceback
 
 import pytest
-# for transfering markers
+# for transferring markers
 import _pytest._code
 from _pytest.python import transfer_markers
 from _pytest.skipping import MarkEvaluator

@@ -271,7 +271,7 @@ class TestAssertionRewrite:
 
         getmsg(f, must_pass=True)
 
-    def test_short_circut_evaluation(self):
+    def test_short_circuit_evaluation(self):
         def f():
             assert True or explode  # noqa
 

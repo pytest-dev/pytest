@@ -2404,7 +2404,7 @@ Bug fixes:
   teardown function are called earlier.
 - add an all-powerful metafunc.parametrize function which allows to
   parametrize test function arguments in multiple steps and therefore
-  from indepdenent plugins and palces.
+  from independent plugins and places.
 - add a @pytest.mark.parametrize helper which allows to easily
   call a test function with different argument values
 - Add examples to the "parametrize" example page, including a quick port

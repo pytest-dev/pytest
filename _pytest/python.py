@@ -629,7 +629,7 @@ class Generator(FunctionMixin, PyCollector):
     def getcallargs(self, obj):
         if not isinstance(obj, (tuple, list)):
             obj = (obj,)
-        # explict naming
+        # explicit naming
         if isinstance(obj[0], py.builtin._basestring):
             name = obj[0]
             obj = obj[1:]

@@ -255,7 +255,7 @@ def pytest_assertrepr_compare(config, op, left, right):
     Return None for no custom explanation, otherwise return a list
     of strings.  The strings will be joined by newlines but any newlines
     *in* a string will be escaped.  Note that all but the first line will
-    be indented sligthly, the intention is for the first line to be a summary.
+    be indented slightly, the intention is for the first line to be a summary.
     """
 
 # -------------------------------------------------------------------------
