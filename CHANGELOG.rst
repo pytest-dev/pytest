@@ -1,7 +1,9 @@
 3.0.7 (unreleased)
 ==================
 
-* Fix issue when trying to import the `anydbm` module. (`#2248`_).
+* Fix issue in assertion rewriting breaking due to modules silently discarding
+  other modules when importing fails
+  Notably, importing the `anydbm` module is fixed. (`#2248`_).
   Thanks `@pfhayes`_ for the PR.
 
 * Fix regression, pytest now skips unittest correctly if run with ``--pdb``
