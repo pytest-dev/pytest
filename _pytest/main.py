@@ -81,7 +81,7 @@ def pytest_namespace():
 
 
 def pytest_configure(config):
-    pytest.config = config # compatibiltiy
+    pytest.config = config # compatibility
 
 
 def wrap_session(config, doit):

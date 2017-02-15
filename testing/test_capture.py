@@ -604,7 +604,7 @@ def test_capture_binary_output(testdir):
 
 
 def test_error_during_readouterr(testdir):
-    """Make sure we suspend capturing if errors occurr during readouterr"""
+    """Make sure we suspend capturing if errors occur during readouterr"""
     testdir.makepyfile(pytest_xyz="""
         from _pytest.capture import FDCapture
         def bad_snap(self):
