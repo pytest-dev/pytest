@@ -223,7 +223,7 @@ provides an alternative explanation for ``Foo`` objects::
 now, given this test module::
 
    # content of test_foocompare.py
-   class Foo:
+   class Foo(object):
        def __init__(self, val):
            self.val = val
 

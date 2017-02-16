@@ -25,7 +25,7 @@ def mock_config():
     return Config()
 
 
-class TestImportHookInstallation:
+class TestImportHookInstallation(object):
 
     @pytest.mark.parametrize('initial_conftest', [True, False])
     @pytest.mark.parametrize('mode', ['plain', 'rewrite'])
@@ -159,7 +159,7 @@ class TestImportHookInstallation:
 
             plugin_state = "{plugin_state}"
 
-            class DummyDistInfo:
+            class DummyDistInfo(object):
                 project_name = 'spam'
                 version = '1.0'
 
@@ -174,7 +174,7 @@ class TestImportHookInstallation:
                                 'hampkg/__init__.py']
                     return []
 
-            class DummyEntryPoint:
+            class DummyEntryPoint(object):
                 name = 'spam'
                 module_name = 'spam.py'
                 attrs = ()
@@ -257,7 +257,7 @@ class TestImportHookInstallation:
                                        'pytest_tests_internal_non_existing2')
 
 
-class TestBinReprIntegration:
+class TestBinReprIntegration(object):
 
     def test_pytest_assertrepr_compare_called(self, testdir):
         testdir.makeconftest("""
@@ -288,7 +288,7 @@ def callequal(left, right, verbose=False):
     return plugin.pytest_assertrepr_compare(config, '==', left, right)
 
 
-class TestAssert_reprcompare:
+class TestAssert_reprcompare(object):
     def test_different_types(self):
         assert callequal([0, 1], 'foo') is None
 
@@ -442,7 +442,7 @@ class TestAssert_reprcompare:
         assert len(expl) > 1
 
     def test_list_bad_repr(self):
-        class A:
+        class A(object):
             def __repr__(self):
                 raise ValueError(42)
         expl = callequal([], [A()])
@@ -501,7 +501,7 @@ class TestAssert_reprcompare:
         assert msg
 
 
-class TestFormatExplanation:
+class TestFormatExplanation(object):
 
     def test_special_chars_full(self, testdir):
         # Issue 453, for the bug this would raise IndexError
@@ -593,7 +593,7 @@ class TestFormatExplanation:
         assert util.format_explanation(expl) == res
 
 
-class TestTruncateExplanation:
+class TestTruncateExplanation(object):
 
     """ Confirm assertion output is truncated as expected """
 

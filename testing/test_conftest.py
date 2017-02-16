@@ -24,14 +24,14 @@ def ConftestWithSetinitial(path):
     return conftest
 
 def conftest_setinitial(conftest, args, confcutdir=None):
-    class Namespace:
+    class Namespace(object):
         def __init__(self):
             self.file_or_dir = args
             self.confcutdir = str(confcutdir)
             self.noconftest = False
     conftest._set_initial_conftests(Namespace())
 
-class TestConftestValueAccessGlobal:
+class TestConftestValueAccessGlobal(object):
     def test_basic_init(self, basedir):
         conftest = PytestPluginManager()
         p = basedir.join("adir")
@@ -265,7 +265,7 @@ def test_conftest_found_with_double_dash(testdir):
     """)
 
 
-class TestConftestVisibility:
+class TestConftestVisibility(object):
     def _setup_tree(self, testdir):  # for issue616
         # example mostly taken from:
         # https://mail.python.org/pipermail/pytest-dev/2014-September/002617.html
@@ -398,7 +398,7 @@ def test_search_conftest_up_to_inifile(testdir, confcutdir, passed, error):
 
 def test_issue1073_conftest_special_objects(testdir):
     testdir.makeconftest("""
-        class DontTouchMe:
+        class DontTouchMe(object):
             def __getattr__(self, x):
                 raise Exception('cant touch me')
 

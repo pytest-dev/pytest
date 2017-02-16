@@ -79,7 +79,7 @@ class DomNode(object):
         return type(self)(self.__node.nextSibling)
 
 
-class TestPython:
+class TestPython(object):
     def test_summing_simple(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -263,7 +263,7 @@ class TestPython:
 
     def test_classname_instance(self, testdir):
         testdir.makepyfile("""
-            class TestClass:
+            class TestClass(object):
                 def test_method(self):
                     assert 0
         """)
@@ -376,7 +376,7 @@ class TestPython:
         testdir.makepyfile("""
             def test_func():
                 assert 0
-            class TestHello:
+            class TestHello(object):
                 def test_hello(self):
                     pass
         """)
@@ -569,7 +569,7 @@ def test_mangle_test_address():
 def test_dont_configure_on_slaves(tmpdir):
     gotten = []
 
-    class FakeConfig:
+    class FakeConfig(object):
         def __init__(self):
             self.pluginmanager = self
             self.option = self
@@ -588,7 +588,7 @@ def test_dont_configure_on_slaves(tmpdir):
     assert len(gotten) == 1
 
 
-class TestNonPython:
+class TestNonPython(object):
     def test_summing_simple(self, testdir):
         testdir.makeconftest("""
             import pytest
@@ -750,7 +750,7 @@ def test_double_colon_split_function_issue469(testdir):
 def test_double_colon_split_method_issue469(testdir):
     testdir.makepyfile("""
         import pytest
-        class TestClass:
+        class TestClass(object):
             @pytest.mark.parametrize('param', ["double::colon"])
             def test_func(self, param):
                 pass

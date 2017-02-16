@@ -13,12 +13,12 @@ from hypothesis import strategies
 PY3 = sys.version_info >= (3, 0)
 
 
-class TestMetafunc:
+class TestMetafunc(object):
     def Metafunc(self, func):
         # the unit tests of this class check if things work correctly
         # on the funcarg level, so we don't need a full blown
         # initiliazation
-        class FixtureInfo:
+        class FixtureInfo(object):
             name2fixturedefs = None
 
             def __init__(self, names):
@@ -68,7 +68,7 @@ class TestMetafunc:
         def func(arg1): pass
         metafunc = self.Metafunc(func)
 
-        class obj: pass
+        class obj(object): pass
 
         metafunc.addcall(param=obj)
         metafunc.addcall(param=obj)
@@ -83,7 +83,7 @@ class TestMetafunc:
 
         metafunc = self.Metafunc(func)
 
-        class obj: pass
+        class obj(object): pass
 
         metafunc.addcall(funcargs={"x": 2})
         metafunc.addcall(funcargs={"x": 3})
@@ -150,7 +150,7 @@ class TestMetafunc:
         def func(x, y): pass
         metafunc = self.Metafunc(func)
 
-        class A:
+        class A(object):
             pass
 
         metafunc.parametrize("x", [A(), A()])
@@ -601,7 +601,7 @@ class TestMetafunc:
             pytestmark = pytest.mark.parametrize("x", [1,2])
             def test_func(x):
                 assert 0, x
-            class TestClass:
+            class TestClass(object):
                 pytestmark = pytest.mark.parametrize("y", [3,4])
                 def test_meth(self, x, y):
                     assert 0, x
@@ -672,7 +672,7 @@ class TestMetafunc:
         assert fixtures._format_args(function4) == "(arg1, *args, **kwargs)"
 
 
-class TestMetafuncFunctional:
+class TestMetafuncFunctional(object):
     def test_attributes(self, testdir):
         p = testdir.makepyfile("""
             # assumes that generate/provide runs in the same process
@@ -691,7 +691,7 @@ class TestMetafuncFunctional:
                 assert metafunc.function == test_function
                 assert metafunc.cls is None
 
-            class TestClass:
+            class TestClass(object):
                 def test_method(self, metafunc, pytestconfig):
                     assert metafunc.config == pytestconfig
                     assert metafunc.module.__name__ == __name__
@@ -716,7 +716,7 @@ class TestMetafuncFunctional:
             def pytest_generate_tests(metafunc):
                 metafunc.addcall(funcargs=dict(arg1=1, arg2=1))
 
-            class TestClass:
+            class TestClass(object):
                 def test_myfunc(self, arg1, arg2):
                     assert arg1 == arg2
         """)
@@ -756,7 +756,7 @@ class TestMetafuncFunctional:
             def pytest_generate_tests(metafunc):
                 assert 'xyz' not in metafunc.fixturenames
 
-            class TestHello:
+            class TestHello(object):
                 def test_hello(xyz):
                     pass
         """)
@@ -782,7 +782,7 @@ class TestMetafuncFunctional:
             def arg2(request):
                 return request.param[1]
 
-            class TestClass:
+            class TestClass(object):
                 def test_myfunc(self, arg1, arg2):
                     assert arg1 == arg2
         """)
@@ -795,7 +795,7 @@ class TestMetafuncFunctional:
 
     def test_generate_tests_in_class(self, testdir):
         p = testdir.makepyfile("""
-            class TestClass:
+            class TestClass(object):
                 def pytest_generate_tests(self, metafunc):
                     metafunc.addcall(funcargs={'hello': 'world'}, id="hello")
 
@@ -814,7 +814,7 @@ class TestMetafuncFunctional:
                 metafunc.addcall({'arg1': 10})
                 metafunc.addcall({'arg1': 20})
 
-            class TestClass:
+            class TestClass(object):
                 def test_func(self, arg1):
                     assert not hasattr(self, 'x')
                     self.x = 1
@@ -831,7 +831,7 @@ class TestMetafuncFunctional:
             def pytest_generate_tests(metafunc):
                 metafunc.addcall({'arg1': 1})
 
-            class TestClass:
+            class TestClass(object):
                 def test_method(self, arg1):
                     assert arg1 == self.val
                 def setup_method(self, func):
@@ -1117,7 +1117,7 @@ class TestMetafuncFunctional:
         assert expectederror in failures[0].longrepr.reprcrash.message
 
 
-class TestMetafuncFunctionalAuto:
+class TestMetafuncFunctionalAuto(object):
     """
     Tests related to automatically find out the correct scope for parametrized tests (#1832).
     """
@@ -1236,7 +1236,7 @@ class TestMetafuncFunctionalAuto:
         assert output.count('preparing foo-3') == 1
 
 
-class TestMarkersWithParametrization:
+class TestMarkersWithParametrization(object):
     pytestmark = pytest.mark.issue308
     def test_simple_mark(self, testdir):
         s = """

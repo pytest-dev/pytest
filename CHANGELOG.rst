@@ -21,7 +21,7 @@ Changes
 -------
 
 * Old-style classes have been changed to new-style classes in order to improve
-  compatability with Python 2. Thanks to `@mandeep`_ for the PR (`#2147`_).
+  compatibility with Python 2. Thanks to `@MichalTHEDUDE`_ and `@mandeep`_ for the PR (`#2147`_).
 
 * It is now possible to skip test classes from being collected by setting a
   ``__test__`` attribute to ``False`` in the class body (`#2007`_). Thanks
@@ -61,6 +61,7 @@ Changes
 .. _@wheerd: https://github.com/wheerd
 .. _@fogo: https://github.com/fogo
 .. _@mandeep: https://github.com/mandeep
+.. _@MichalTHEDUDE: https://github.com/MichalTHEDUDE
 .. _@unsignedint: https://github.com/unsignedint
 .. _@Kriechi: https://github.com/Kriechi
 

@@ -168,7 +168,7 @@ only have to work a bit to construct the correct arguments for pytest's
     scenario1 = ('basic', {'attribute': 'value'})
     scenario2 = ('advanced', {'attribute': 'value2'})
 
-    class TestSampleWithScenarios:
+    class TestSampleWithScenarios(object):
         scenarios = [scenario1, scenario2]
 
         def test_demo1(self, attribute):
@@ -241,9 +241,9 @@ creates a database object for the actual test invocations::
         if 'db' in metafunc.fixturenames:
             metafunc.parametrize("db", ['d1', 'd2'], indirect=True)
 
-    class DB1:
+    class DB1(object):
         "one database object"
-    class DB2:
+    class DB2(object):
         "alternative database object"
 
     @pytest.fixture
@@ -350,7 +350,7 @@ parametrizer`_ but in a lot less code::
         metafunc.parametrize(argnames, [[funcargs[name] for name in argnames]
                 for funcargs in funcarglist])
 
-    class TestClass:
+    class TestClass(object):
         # a map specifying multiple argument sets for a test method
         params = {
             'test_equals': [dict(a=1, b=2), dict(a=3, b=3), ],

@@ -6,7 +6,7 @@ from _pytest.doctest import DoctestItem, DoctestModule, DoctestTextfile
 import pytest
 
 
-class TestDoctests:
+class TestDoctests(object):
 
     def test_collect_testtextfile(self, testdir):
         w = testdir.maketxtfile(whatever="")
@@ -378,7 +378,7 @@ class TestDoctests:
 
     def test_doctestmodule_two_tests_one_fail(self, testdir):
         p = testdir.makepyfile("""
-            class MyClass:
+            class MyClass(object):
                 def bad_meth(self):
                     '''
                     >>> magic = 42
@@ -401,7 +401,7 @@ class TestDoctests:
             doctest_optionflags = ELLIPSIS NORMALIZE_WHITESPACE
         """)
         p = testdir.makepyfile("""
-            class MyClass:
+            class MyClass(object):
                 '''
                 >>> a = "foo    "
                 >>> print(a)
@@ -418,7 +418,7 @@ class TestDoctests:
             doctest_optionflags = ELLIPSIS
         """)
         p = testdir.makepyfile("""
-            class MyClass:
+            class MyClass(object):
                 '''
                 >>> a = "foo    "
                 >>> print(a)
@@ -505,7 +505,7 @@ class TestDoctests:
         reprec.assertoutcome(failed=1)
 
 
-class TestLiterals:
+class TestLiterals(object):
 
     @pytest.mark.parametrize('config_mode', ['ini', 'comment'])
     def test_allow_unicode(self, testdir, config_mode):
@@ -592,7 +592,7 @@ class TestLiterals:
         reprec.assertoutcome(passed=passed, failed=int(not passed))
 
 
-class TestDoctestSkips:
+class TestDoctestSkips(object):
     """
     If all examples in a doctest are skipped due to the SKIP option, then
     the tests should be SKIPPED rather than PASSED. (#957)
@@ -646,7 +646,7 @@ class TestDoctestSkips:
         reprec.assertoutcome(passed=0, skipped=0)
 
 
-class TestDoctestAutoUseFixtures:
+class TestDoctestAutoUseFixtures(object):
 
     SCOPES = ['module', 'session', 'class', 'function']
 
@@ -765,7 +765,7 @@ class TestDoctestAutoUseFixtures:
         result.stdout.fnmatch_lines(['*=== 1 passed in *'])
 
 
-class TestDoctestNamespaceFixture:
+class TestDoctestNamespaceFixture(object):
 
     SCOPES = ['module', 'session', 'class', 'function']
 
@@ -815,7 +815,7 @@ class TestDoctestNamespaceFixture:
         reprec.assertoutcome(passed=1)
 
 
-class TestDoctestReportingOption:
+class TestDoctestReportingOption(object):
     def _run_doctest_report(self, testdir, format):
         testdir.makepyfile("""
             def foo():

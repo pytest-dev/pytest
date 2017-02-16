@@ -107,7 +107,7 @@ This would make ``pytest`` look for tests in files that match the ``check_*
 that match ``*_check``.  For example, if we have::
 
     # content of check_myapp.py
-    class CheckMyApp:
+    class CheckMyApp(object):
         def simple_check(self):
             pass
         def complex_check(self):

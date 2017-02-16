@@ -55,7 +55,7 @@ def StdCapture(out=True, err=True, in_=True):
     return capture.MultiCapture(out, err, in_, Capture=capture.SysCapture)
 
 
-class TestCaptureManager:
+class TestCaptureManager(object):
     def test_getmethod_default_no_fd(self, monkeypatch):
         from _pytest.capture import pytest_addoption
         from _pytest.config import Parser
@@ -154,7 +154,7 @@ def test_collect_capturing(testdir):
     ])
 
 
-class TestPerTestCapturing:
+class TestPerTestCapturing(object):
     def test_capture_and_fixtures(self, testdir):
         p = testdir.makepyfile("""
             def setup_module(mod):
@@ -275,7 +275,7 @@ class TestPerTestCapturing:
         ])
 
 
-class TestLoggingInteraction:
+class TestLoggingInteraction(object):
     def test_logging_stream_ownership(self, testdir):
         p = testdir.makepyfile("""
             def test_logging():
@@ -395,7 +395,7 @@ class TestLoggingInteraction:
         assert 'operation on closed file' not in result.stderr.str()
 
 
-class TestCaptureFixture:
+class TestCaptureFixture(object):
     @pytest.mark.parametrize("opt", [[], ["-s"]])
     def test_std_functional(self, testdir, opt):
         reprec = testdir.inline_runsource("""
@@ -622,7 +622,7 @@ def test_error_during_readouterr(testdir):
     ])
 
 
-class TestTextIO:
+class TestTextIO(object):
     def test_text(self):
         f = capture.TextIO()
         f.write("hello")
@@ -737,7 +737,7 @@ def lsof_check():
     assert len2 < len1 + 3, out2
 
 
-class TestFDCapture:
+class TestFDCapture(object):
     pytestmark = needsosdup
 
     def test_simple(self, tmpfile):
@@ -832,7 +832,7 @@ def saved_fd(fd):
         os.close(new_fd)
 
 
-class TestStdCapture:
+class TestStdCapture(object):
     captureclass = staticmethod(StdCapture)
 
     @contextlib.contextmanager
@@ -990,7 +990,7 @@ class TestStdCaptureFD(TestStdCapture):
                 cap.stop_capturing()
 
 
-class TestStdCaptureFDinvalidFD:
+class TestStdCaptureFDinvalidFD(object):
     pytestmark = needsosdup
 
     def test_stdcapture_fd_invalid_fd(self, testdir):
