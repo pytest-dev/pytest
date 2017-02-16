@@ -4,7 +4,7 @@ import _pytest._code
 from _pytest.config import getcfg, get_common_ancestor, determine_setup
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 
-class TestParseIni:
+class TestParseIni(object):
 
     @pytest.mark.parametrize('section, filename',
                              [('pytest', 'pytest.ini'), ('tool:pytest', 'setup.cfg')])
@@ -84,7 +84,7 @@ class TestParseIni:
         result = testdir.inline_run("--confcutdir=.")
         assert result.ret == 0
 
-class TestConfigCmdlineParsing:
+class TestConfigCmdlineParsing(object):
     def test_parsing_again_fails(self, testdir):
         config = testdir.parseconfig()
         pytest.raises(AssertionError, lambda: config.parse([]))
@@ -115,7 +115,7 @@ class TestConfigCmdlineParsing:
         ret = pytest.main("-c " + temp_cfg_file)
         assert ret == _pytest.main.EXIT_OK
 
-class TestConfigAPI:
+class TestConfigAPI(object):
     def test_config_trace(self, testdir):
         config = testdir.parseconfig()
         l = []
@@ -304,7 +304,7 @@ class TestConfigAPI:
         assert config.getoption('confcutdir') == str(testdir.tmpdir.join('dir'))
 
 
-class TestConfigFromdictargs:
+class TestConfigFromdictargs(object):
     def test_basic_behavior(self):
         from _pytest.config import Config
         option_dict = {
@@ -389,19 +389,19 @@ def test_preparse_ordering_with_setuptools(testdir, monkeypatch):
     def my_iter(name):
         assert name == "pytest11"
 
-        class Dist:
+        class Dist(object):
             project_name = 'spam'
             version = '1.0'
 
             def _get_metadata(self, name):
                 return ['foo.txt,sha256=abc,123']
 
-        class EntryPoint:
+        class EntryPoint(object):
             name = "mytestplugin"
             dist = Dist()
 
             def load(self):
-                class PseudoPlugin:
+                class PseudoPlugin(object):
                     x = 42
                 return PseudoPlugin()
 
@@ -423,14 +423,14 @@ def test_setuptools_importerror_issue1479(testdir, monkeypatch):
     def my_iter(name):
         assert name == "pytest11"
 
-        class Dist:
+        class Dist(object):
             project_name = 'spam'
             version = '1.0'
 
             def _get_metadata(self, name):
                 return ['foo.txt,sha256=abc,123']
 
-        class EntryPoint:
+        class EntryPoint(object):
             name = "mytestplugin"
             dist = Dist()
 
@@ -450,14 +450,14 @@ def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch):
     def my_iter(name):
         assert name == "pytest11"
 
-        class Dist:
+        class Dist(object):
             project_name = 'spam'
             version = '1.0'
 
             def _get_metadata(self, name):
                 return ['foo.txt,sha256=abc,123']
 
-        class EntryPoint:
+        class EntryPoint(object):
             name = "mytestplugin"
             dist = Dist()
 
@@ -557,7 +557,7 @@ def test_notify_exception(testdir, capfd):
     out, err = capfd.readouterr()
     assert "ValueError" in err
 
-    class A:
+    class A(object):
         def pytest_internalerror(self, excrepr):
             return True
 
@@ -571,7 +571,7 @@ def test_load_initial_conftest_last_ordering(testdir):
     from _pytest.config  import get_config
     pm = get_config().pluginmanager
 
-    class My:
+    class My(object):
         def pytest_load_initial_conftests(self):
             pass
 
@@ -602,7 +602,7 @@ def test_get_plugin_specs_as_list():
     assert _get_plugin_specs_as_list(('foo', 'bar')) == ['foo', 'bar']
 
 
-class TestWarning:
+class TestWarning(object):
     def test_warn_config(self, testdir):
         testdir.makeconftest("""
             l = []
@@ -641,7 +641,7 @@ class TestWarning:
             *WT1*test_warn_on_test_item*:7 hello*
         """)
 
-class TestRootdir:
+class TestRootdir(object):
     def test_simple_noini(self, tmpdir):
         assert get_common_ancestor([tmpdir]) == tmpdir
         a = tmpdir.mkdir("a")
@@ -699,7 +699,7 @@ class TestRootdir:
         assert rootdir == tmpdir
 
 
-class TestOverrideIniArgs:
+class TestOverrideIniArgs(object):
     @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
     def test_override_ini_names(self, testdir, name):
         testdir.tmpdir.join(name).write(py.std.textwrap.dedent("""

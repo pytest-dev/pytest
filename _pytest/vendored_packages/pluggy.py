@@ -167,7 +167,7 @@ def normalize_hookimpl_opts(opts):
     opts.setdefault("optionalhook", False)
 
 
-class _TagTracer:
+class _TagTracer(object):
     def __init__(self):
         self._tag2proc = {}
         self.writer = None
@@ -214,7 +214,7 @@ class _TagTracer:
         self._tag2proc[tags] = processor
 
 
-class _TagTracerSub:
+class _TagTracerSub(object):
     def __init__(self, root, tags):
         self.root = root
         self.tags = tags
@@ -254,7 +254,7 @@ def _wrapped_call(wrap_controller, func):
     return call_outcome.get_result()
 
 
-class _CallOutcome:
+class _CallOutcome(object):
     """ Outcome of a function call, either an exception or a proper result.
     Calling the ``get_result`` method will return the result or reraise
     the exception raised when the function was called. """
@@ -286,7 +286,7 @@ def _reraise(cls, val, tb):
 """)
 
 
-class _TracedHookExecution:
+class _TracedHookExecution(object):
     def __init__(self, pluginmanager, before, after):
         self.pluginmanager = pluginmanager
         self.before = before
@@ -580,7 +580,7 @@ class PluginManager(object):
         return orig
 
 
-class _MultiCall:
+class _MultiCall(object):
     """ execute a call into multiple python functions/methods. """
 
     # XXX note that the __multicall__ argument is supported only
@@ -673,7 +673,7 @@ def varnames(func, startindex=None):
     return x
 
 
-class _HookRelay:
+class _HookRelay(object):
     """ hook holder object for performing 1:N hook calls where N is the number
     of registered plugins.
 

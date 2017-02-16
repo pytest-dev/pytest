@@ -24,7 +24,7 @@ def test_module_and_function_setup(testdir):
             assert modlevel[0] == 42
             assert test_modlevel.answer == 17
 
-        class TestFromClass:
+        class TestFromClass(object):
             def test_module(self):
                 assert modlevel[0] == 42
                 assert not hasattr(test_modlevel, 'answer')
@@ -69,7 +69,7 @@ def test_setup_function_failure_no_teardown(testdir):
 
 def test_class_setup(testdir):
     reprec = testdir.inline_runsource("""
-        class TestSimpleClassSetup:
+        class TestSimpleClassSetup(object):
             clslevel = []
             def setup_class(cls):
                 cls.clslevel.append(23)
@@ -92,7 +92,7 @@ def test_class_setup(testdir):
 
 def test_class_setup_failure_no_teardown(testdir):
     reprec = testdir.inline_runsource("""
-        class TestSimpleClassSetup:
+        class TestSimpleClassSetup(object):
             clslevel = []
             def setup_class(cls):
                 0/0
@@ -110,7 +110,7 @@ def test_class_setup_failure_no_teardown(testdir):
 
 def test_method_setup(testdir):
     reprec = testdir.inline_runsource("""
-        class TestSetupMethod:
+        class TestSetupMethod(object):
             def setup_method(self, meth):
                 self.methsetup = meth
             def teardown_method(self, meth):
@@ -126,7 +126,7 @@ def test_method_setup(testdir):
 
 def test_method_setup_failure_no_teardown(testdir):
     reprec = testdir.inline_runsource("""
-        class TestMethodSetup:
+        class TestMethodSetup(object):
             clslevel = []
             def setup_method(self, method):
                 self.clslevel.append(1)
@@ -145,7 +145,7 @@ def test_method_setup_failure_no_teardown(testdir):
 
 def test_method_generator_setup(testdir):
     reprec = testdir.inline_runsource("""
-        class TestSetupTeardownOnInstance:
+        class TestSetupTeardownOnInstance(object):
             def setup_class(cls):
                 cls.classsetup = True
 
@@ -195,7 +195,7 @@ def test_func_generator_setup(testdir):
 
 def test_method_setup_uses_fresh_instances(testdir):
     reprec = testdir.inline_runsource("""
-        class TestSelfState1:
+        class TestSelfState1(object):
             memory = []
             def test_hello(self):
                 self.memory.append(self)
@@ -276,7 +276,7 @@ def test_setup_teardown_function_level_with_optional_argument(testdir, monkeypat
         def test_function_1(): pass
         def test_function_2(): pass
 
-        class Test:
+        class Test(object):
             def setup_method(self, {arg}): trace('setup_method')
             def teardown_method(self, {arg}): trace('teardown_method')
 

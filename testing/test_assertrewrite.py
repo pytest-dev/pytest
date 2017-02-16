@@ -57,7 +57,7 @@ def getmsg(f, extra_ns=None, must_pass=False):
             pytest.fail("function didn't raise at all")
 
 
-class TestAssertionRewrite:
+class TestAssertionRewrite(object):
 
     def test_place_initial_imports(self):
         s = """'Doc string'\nother = stuff"""
@@ -333,7 +333,7 @@ class TestAssertionRewrite:
     @pytest.mark.skipif("sys.version_info < (3,5)")
     def test_at_operator_issue1290(self, testdir):
         testdir.makepyfile("""
-            class Matrix:
+            class Matrix(object):
                 def __init__(self, num):
                     self.num = num
                 def __matmul__(self, other):
@@ -515,7 +515,7 @@ class TestAssertionRewrite:
         assert r"where 1 = \n{ \n~ \n}.a" in util._format_lines([getmsg(f)])[0]
 
 
-class TestRewriteOnImport:
+class TestRewriteOnImport(object):
 
     def test_pycache_is_a_file(self, testdir):
         testdir.tmpdir.join("__pycache__").write("Hello")
@@ -884,7 +884,7 @@ class TestAssertionRewriteHookDetails(object):
         """
         path = testdir.mkpydir("foo")
         path.join("test_foo.py").write(_pytest._code.Source("""
-            class Test:
+            class Test(object):
                 def test_foo(self):
                     import pkgutil
                     data = pkgutil.get_data('foo.test_foo', 'data.txt')
@@ -912,7 +912,7 @@ def test_issue731(testdir):
     assert 'unbalanced braces' not in result.stdout.str()
 
 
-class TestIssue925():
+class TestIssue925(object):
     def test_simple_case(self, testdir):
         testdir.makepyfile("""
         def test_ternary_display():

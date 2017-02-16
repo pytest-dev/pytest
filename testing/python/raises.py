@@ -2,7 +2,7 @@ import pytest
 import sys
 
 
-class TestRaises:
+class TestRaises(object):
     def test_raises(self):
         source = "int('qwe')"
         excinfo = pytest.raises(ValueError, source)
@@ -20,7 +20,7 @@ class TestRaises:
         pytest.raises(ValueError, int, 'hello')
 
     def test_raises_callable_no_exception(self):
-        class A:
+        class A(object):
             def __call__(self):
                 pass
         try:

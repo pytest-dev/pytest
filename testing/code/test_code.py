@@ -20,7 +20,7 @@ def test_code_gives_back_name_for_not_existing_file():
     assert code.fullsource is None
 
 def test_code_with_class():
-    class A:
+    class A(object):
         pass
     pytest.raises(TypeError, "_pytest._code.Code(A)")
 
@@ -136,7 +136,7 @@ def test_frame_getargs():
                                      ('z', {'c': 'd'})]
 
 
-class TestExceptionInfo:
+class TestExceptionInfo(object):
 
     def test_bad_getsource(self):
         try:
@@ -147,7 +147,7 @@ class TestExceptionInfo:
         assert exci.getrepr()
 
 
-class TestTracebackEntry:
+class TestTracebackEntry(object):
 
     def test_getsource(self):
         try:

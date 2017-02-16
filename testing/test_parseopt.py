@@ -8,7 +8,7 @@ from _pytest import config as parseopt
 def parser():
     return parseopt.Parser()
 
-class TestParser:
+class TestParser(object):
     def test_no_help_by_default(self, capsys):
         parser = parseopt.Parser(usage="xyz")
         pytest.raises(SystemExit, lambda: parser.parse(["-h"]))
@@ -139,7 +139,7 @@ class TestParser:
         parser.addoption("--hello", dest="hello", action="store")
         parser.addoption("--world", dest="world", default=42)
 
-        class A:
+        class A(object):
             pass
 
         option = A()

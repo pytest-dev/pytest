@@ -226,7 +226,7 @@ to all testcases you can use ``LogXML.add_global_properties``
     def start_and_prepare_env():
         pass
 
-    class TestMe:
+    class TestMe(object):
         def test_foo(self):
             assert True
 
@@ -314,7 +314,7 @@ You can specify additional plugins to ``pytest.main``::
 
     # content of myinvoke.py
     import pytest
-    class MyPlugin:
+    class MyPlugin(object):
         def pytest_sessionfinish(self):
             print("*** test run reporting finishing")
 

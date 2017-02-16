@@ -16,7 +16,7 @@ def python1(request, tmpdir):
 def python2(request, python1):
     return Python(request.param, python1.picklefile)
 
-class Python:
+class Python(object):
     def __init__(self, version, picklefile):
         self.pythonpath = py.path.local.sysfind(version)
         if not self.pythonpath:

@@ -8,7 +8,7 @@ import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED, EXIT_USAGEERROR
 
 
-class TestGeneralUsage:
+class TestGeneralUsage(object):
     def test_config_error(self, testdir):
         testdir.makeconftest("""
             def pytest_configure(config):
@@ -410,7 +410,7 @@ class TestGeneralUsage:
         ])
 
 
-class TestInvocationVariants:
+class TestInvocationVariants(object):
     def test_earlyinit(self, testdir):
         p = testdir.makepyfile("""
             import pytest
@@ -502,7 +502,7 @@ class TestInvocationVariants:
         out, err = capsys.readouterr()
 
     def test_invoke_plugin_api(self, testdir, capsys):
-        class MyPlugin:
+        class MyPlugin(object):
             def pytest_addoption(self, parser):
                 parser.addoption("--myopt")
 
@@ -670,7 +670,7 @@ class TestInvocationVariants:
         assert request.config.pluginmanager.hasplugin('python')
 
 
-class TestDurations:
+class TestDurations(object):
     source = """
         import time
         frag = 0.002
@@ -741,7 +741,7 @@ class TestDurations:
         assert result.ret == 0
 
 
-class TestDurationWithFixture:
+class TestDurationWithFixture(object):
     source = """
         import time
         frag = 0.001

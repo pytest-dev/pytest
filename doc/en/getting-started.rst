@@ -111,7 +111,7 @@ to group tests logically, in classes and modules.  Let's write a class
 containing two tests::
 
     # content of test_class.py
-    class TestClass:
+    class TestClass(object):
         def test_one(self):
             x = "this"
             assert 'h' in x

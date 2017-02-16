@@ -25,7 +25,7 @@ else:
 import pytest
 pytest_version_info = tuple(map(int, pytest.__version__.split(".")[:3]))
 
-class TWMock:
+class TWMock(object):
     WRITE = object()
 
     def __init__(self):
@@ -89,7 +89,7 @@ def h():
     g()
     #
 
-class TestTraceback_f_g_h:
+class TestTraceback_f_g_h(object):
     def setup_method(self, method):
         try:
             h()
@@ -386,7 +386,7 @@ def test_match_raises_error(testdir):
         "*AssertionError*Pattern*[123]*not found*",
     ])
 
-class TestFormattedExcinfo:
+class TestFormattedExcinfo(object):
 
     @pytest.fixture
     def importasmod(self, request):
@@ -472,7 +472,7 @@ raise ValueError()
         pr = FormattedExcinfo()
 
         class FakeCode(object):
-            class raw:
+            class raw(object):
                 co_filename = '?'
 
             path = '?'

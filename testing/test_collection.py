@@ -2,7 +2,7 @@ import pytest, py
 
 from _pytest.main import Session, EXIT_NOTESTSCOLLECTED
 
-class TestCollector:
+class TestCollector(object):
     def test_collect_versus_item(self):
         from pytest import Collector, Item
         assert not issubclass(Collector, Item)
@@ -50,7 +50,7 @@ class TestCollector:
 
     def test_getparent(self, testdir):
         modcol = testdir.getmodulecol("""
-            class TestClass:
+            class TestClass(object):
                  def test_foo():
                      pass
         """)
@@ -88,7 +88,7 @@ class TestCollector:
     def test_can_skip_class_with_test_attr(self, testdir):
         """Assure test class is skipped when using `__test__=False` (See #2007)."""
         testdir.makepyfile("""
-            class TestFoo():
+            class TestFoo(object):
                 __test__ = False
                 def __init__(self):
                     pass
@@ -101,7 +101,7 @@ class TestCollector:
             '*no tests ran in*',
         ])
 
-class TestCollectFS:
+class TestCollectFS(object):
     def test_ignored_certain_directories(self, testdir):
         tmpdir = testdir.tmpdir
         tmpdir.ensure("build", 'test_notfound.py')
@@ -163,11 +163,11 @@ class TestCollectFS:
             assert [x.name for x in items] == ['test_%s' % dirname]
 
 
-class TestCollectPluginHookRelay:
+class TestCollectPluginHookRelay(object):
     def test_pytest_collect_file(self, testdir):
         wascalled = []
 
-        class Plugin:
+        class Plugin(object):
             def pytest_collect_file(self, path, parent):
                 if not path.basename.startswith("."):
                     # Ignore hidden files, e.g. .testmondata.
@@ -181,7 +181,7 @@ class TestCollectPluginHookRelay:
     def test_pytest_collect_directory(self, testdir):
         wascalled = []
 
-        class Plugin:
+        class Plugin(object):
             def pytest_collect_directory(self, path, parent):
                 wascalled.append(path.basename)
 
@@ -192,7 +192,7 @@ class TestCollectPluginHookRelay:
         assert "world" in wascalled
 
 
-class TestPrunetraceback:
+class TestPrunetraceback(object):
 
     def test_custom_repr_failure(self, testdir):
         p = testdir.makepyfile("""
@@ -238,7 +238,7 @@ class TestPrunetraceback:
         ])
 
 
-class TestCustomConftests:
+class TestCustomConftests(object):
     def test_ignore_collect_path(self, testdir):
         testdir.makeconftest("""
             def pytest_ignore_collect(path, config):
@@ -333,7 +333,7 @@ class TestCustomConftests:
             "*test_x*"
         ])
 
-class TestSession:
+class TestSession(object):
     def test_parsearg(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
         subdir = testdir.mkdir("sub")
@@ -391,7 +391,7 @@ class TestSession:
 
     def test_collect_protocol_method(self, testdir):
         p = testdir.makepyfile("""
-            class TestClass:
+            class TestClass(object):
                 def test_method(self):
                     pass
         """)
@@ -490,7 +490,7 @@ class TestSession:
 
     def test_find_byid_without_instance_parents(self, testdir):
         p = testdir.makepyfile("""
-            class TestClass:
+            class TestClass(object):
                 def test_method(self):
                     pass
         """)
@@ -500,7 +500,7 @@ class TestSession:
         item, = items
         assert item.nodeid.endswith("TestClass::()::test_method")
 
-class Test_getinitialnodes:
+class Test_getinitialnodes(object):
     def test_global_file(self, testdir, tmpdir):
         x = tmpdir.ensure("x.py")
         with tmpdir.as_cwd():
@@ -527,7 +527,7 @@ class Test_getinitialnodes:
         for col in col.listchain():
             assert col.config is config
 
-class Test_genitems:
+class Test_genitems(object):
     def test_check_collect_hashes(self, testdir):
         p = testdir.makepyfile("""
             def test_1():
@@ -550,7 +550,7 @@ class Test_genitems:
             def testone():
                 pass
 
-            class TestX:
+            class TestX(object):
                 def testmethod_one(self):
                     pass
 
@@ -583,11 +583,11 @@ class Test_genitems:
             python_functions = *_test test
         """)
         p = testdir.makepyfile('''
-            class MyTestSuite:
+            class MyTestSuite(object):
                 def x_test(self):
                     pass
 
-            class TestCase:
+            class TestCase(object):
                 def test_y(self):
                     pass
         ''')
@@ -602,7 +602,7 @@ def test_matchnodes_two_collections_same_file(testdir):
         def pytest_configure(config):
             config.pluginmanager.register(Plugin2())
 
-        class Plugin2:
+        class Plugin2(object):
             def pytest_collect_file(self, path, parent):
                 if path.ext == ".abc":
                     return MyFile2(path, parent)
@@ -634,7 +634,7 @@ def test_matchnodes_two_collections_same_file(testdir):
     ])
 
 
-class TestNodekeywords:
+class TestNodekeywords(object):
     def test_no_under(self, testdir):
         modcol = testdir.getmodulecol("""
             def test_pass(): pass

@@ -550,7 +550,7 @@ get on the terminal - we are working on that)::
     self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef>
     
         def test_single_line(self):
-            class A:
+            class A(object):
                 a = 1
             b = 2
     >       assert A.a == b, "A.a appears not to be b"
@@ -564,7 +564,7 @@ get on the terminal - we are working on that)::
     self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef>
     
         def test_multiline(self):
-            class A:
+            class A(object):
                 a = 1
             b = 2
     >       assert A.a == b, "A.a appears not to be b\n" \
@@ -581,7 +581,7 @@ get on the terminal - we are working on that)::
     self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef>
     
         def test_custom_repr(self):
-            class JSON:
+            class JSON(object):
                 a = 1
                 def __repr__(self):
                     return "This is JSON\n{\n  'foo': 'bar'\n}"
