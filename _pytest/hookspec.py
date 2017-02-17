@@ -246,7 +246,7 @@ def pytest_unconfigure(config):
 
 
 # -------------------------------------------------------------------------
-# hooks for customising the assert methods
+# hooks for customizing the assert methods
 # -------------------------------------------------------------------------
 
 def pytest_assertrepr_compare(config, op, left, right):
