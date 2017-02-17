@@ -246,7 +246,7 @@ def pytest_unconfigure(config):
 
 
 # -------------------------------------------------------------------------
-# hooks for customising the assert methods
+# hooks for customizing the assert methods
 # -------------------------------------------------------------------------
 
 def pytest_assertrepr_compare(config, op, left, right):
@@ -263,7 +263,14 @@ def pytest_assertrepr_compare(config, op, left, right):
 # -------------------------------------------------------------------------
 
 def pytest_report_header(config, startdir):
-    """ return a string to be displayed as header info for terminal reporting."""
+    """ return a string to be displayed as header info for terminal reporting.
+
+    .. note::
+
+        This function should be implemented only in plugins or ``conftest.py``
+        files situated at the tests root directory due to how pytest
+        :ref:`discovers plugins during startup <pluginorder>`.
+    """
 
 @hookspec(firstresult=True)
 def pytest_report_teststatus(report):
