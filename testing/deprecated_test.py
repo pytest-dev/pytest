@@ -48,7 +48,7 @@ def test_str_args_deprecated(tmpdir, testdir):
     from _pytest.main import EXIT_NOTESTSCOLLECTED
     warnings = []
 
-    class Collect:
+    class Collect(object):
         def pytest_logwarning(self, message):
             warnings.append(message)
 

@@ -1,7 +1,7 @@
 import textwrap
 import inspect
 
-class Writer:
+class Writer(object):
     def __init__(self, clsname):
         self.clsname = clsname
 

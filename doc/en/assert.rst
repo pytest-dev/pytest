@@ -26,7 +26,7 @@ you will see the return value of the function call::
 
     $ pytest test_assert1.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0
+    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
@@ -170,7 +170,7 @@ if you run this module::
 
     $ pytest test_assert2.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0
+    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
@@ -223,7 +223,7 @@ provides an alternative explanation for ``Foo`` objects::
 now, given this test module::
 
    # content of test_foocompare.py
-   class Foo:
+   class Foo(object):
        def __init__(self, val):
            self.val = val
 
@@ -262,50 +262,20 @@ Advanced assertion introspection
 .. versionadded:: 2.1
 
 
-Reporting details about a failing assertion is achieved either by rewriting
-assert statements before they are run or re-evaluating the assert expression and
-recording the intermediate values. Which technique is used depends on the
-location of the assert, ``pytest`` configuration, and Python version being used
-to run ``pytest``.
-
-By default, ``pytest`` rewrites assert statements in test modules.
-Rewritten assert statements put introspection information into the assertion failure message.
-``pytest`` only rewrites test modules directly discovered by its test collection process, so
-asserts in supporting modules which are not themselves test modules will not be
-rewritten.
+Reporting details about a failing assertion is achieved by rewriting assert
+statements before they are run.  Rewritten assert statements put introspection
+information into the assertion failure message.  ``pytest`` only rewrites test
+modules directly discovered by its test collection process, so asserts in
+supporting modules which are not themselves test modules will not be rewritten.
 
 .. note::
 
    ``pytest`` rewrites test modules on import. It does this by using an import
-   hook to write a new pyc files. Most of the time this works transparently.
+   hook to write new pyc files. Most of the time this works transparently.
    However, if you are messing with import yourself, the import hook may
-   interfere. If this is the case, simply use ``--assert=reinterp`` or
-   ``--assert=plain``. Additionally, rewriting will fail silently if it cannot
-   write new pycs, i.e. in a read-only filesystem or a zipfile.
-
-If an assert statement has not been rewritten or the Python version is less than
-2.6, ``pytest`` falls back on assert reinterpretation. In assert
-reinterpretation, ``pytest`` walks the frame of the function containing the
-assert statement to discover sub-expression results of the failing assert
-statement. You can force ``pytest`` to always use assertion reinterpretation by
-passing the ``--assert=reinterp`` option.
-
-Assert reinterpretation has a caveat not present with assert rewriting: If
-evaluating the assert expression has side effects you may get a warning that the
-intermediate values could not be determined safely.  A common example of this
-issue is an assertion which reads from a file::
-
-        assert f.read() != '...'
-
-If this assertion fails then the re-evaluation will probably succeed!
-This is because ``f.read()`` will return an empty string when it is
-called the second time during the re-evaluation.  However, it is
-easy to rewrite the assertion and avoid any trouble::
-
-        content = f.read()
-        assert content != '...'
-
-All assert introspection can be turned off by passing ``--assert=plain``.
+   interfere. If this is the case, use ``--assert=plain``. Additionally,
+   rewriting will fail silently if it cannot write new pycs, i.e. in a read-only
+   filesystem or a zipfile.
 
 For further information, Benjamin Peterson wrote up `Behind the scenes of pytest's new assertion rewriting <http://pybites.blogspot.com/2011/07/behind-scenes-of-pytests-new-assertion.html>`_.
 
@@ -318,3 +288,4 @@ For further information, Benjamin Peterson wrote up `Behind the scenes of pytest
 
 .. versionchanged:: 3.0
    Removes the ``--no-assert`` and``--nomagic`` options.
+   Removes the ``--assert=reinterp`` option.

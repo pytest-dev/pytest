@@ -99,7 +99,7 @@ def pytest_collection_modifyitems(items, config):
         items[:] = remaining
 
 
-class MarkMapping:
+class MarkMapping(object):
     """Provides a local mapping for markers where item access
     resolves to True if the marker is present. """
     def __init__(self, keywords):
@@ -113,7 +113,7 @@ class MarkMapping:
         return name in self._mymarks
 
 
-class KeywordMapping:
+class KeywordMapping(object):
     """Provides a local mapping for keywords.
     Given a list of names, map any substring of one of these names to True.
     """
@@ -173,7 +173,7 @@ def pytest_configure(config):
         pytest.mark._config = config
 
 
-class MarkGenerator:
+class MarkGenerator(object):
     """ Factory for :class:`MarkDecorator` objects - exposed as
     a ``pytest.mark`` singleton instance.  Example::
 
@@ -210,7 +210,7 @@ def istestfunc(func):
     return hasattr(func, "__call__") and \
         getattr(func, "__name__", "<lambda>") != "<lambda>"
 
-class MarkDecorator:
+class MarkDecorator(object):
     """ A decorator for test functions and test classes.  When applied
     it will create :class:`MarkInfo` objects which may be
     :ref:`retrieved by hooks as item keywords <excontrolskip>`.

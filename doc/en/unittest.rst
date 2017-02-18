@@ -17,6 +17,14 @@ run using ``pytest``.  We assume here that you are familiar with writing
 ``unittest.TestCase`` style tests and rather focus on 
 integration aspects.
 
+Note that this is meant as a provisional way of running your test code 
+until you fully convert to pytest-style tests. To fully take advantage of
+:ref:`fixtures <fixture>`, :ref:`parametrization <parametrize>` and 
+:ref:`hooks <writing-plugins>` you should convert (tools like `unittest2pytest 
+<https://pypi.python.org/pypi/unittest2pytest/>`__ are helpful). 
+Also, not all 3rd party pluging are expected to work best with 
+``unittest.TestCase`` style tests.
+
 Usage
 -------------------------------------------------------------------
 
@@ -63,7 +71,7 @@ it from a unittest-style test::
 
     @pytest.fixture(scope="class")
     def db_class(request):
-        class DummyDB:
+        class DummyDB(object):
             pass
         # set a class attribute on the invoking test context 
         request.cls.db = DummyDB()
@@ -100,7 +108,7 @@ the ``self.db`` values in the traceback::
 
     $ pytest test_unittest_db.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0
+    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 2 items
     
@@ -191,12 +199,3 @@ was executed ahead of the ``test_method``.
    pytest fixtures into unittest suites.  And of course you can also start
    to selectively leave away the ``unittest.TestCase`` subclassing, use
    plain asserts and get the unlimited pytest feature set.
-
-
-Converting from unittest to pytest
----------------------------------------
-
-If you want to convert your unittest testcases to pytest, there are
-some helpers like `unittest2pytest
-<https://pypi.python.org/pypi/unittest2pytest/>`__, which uses lib2to3
-and introspection for the transformation.

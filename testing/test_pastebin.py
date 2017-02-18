@@ -2,7 +2,7 @@
 import sys
 import pytest
 
-class TestPasteCapture:
+class TestPasteCapture(object):
 
     @pytest.fixture
     def pastebinlist(self, monkeypatch, request):
@@ -71,7 +71,7 @@ class TestPasteCapture:
         ])
 
 
-class TestPaste:
+class TestPaste(object):
 
     @pytest.fixture
     def pastebin(self, request):
@@ -88,7 +88,7 @@ class TestPaste:
         def mocked(url, data):
             calls.append((url, data))
 
-            class DummyFile:
+            class DummyFile(object):
                 def read(self):
                     # part of html of a normal response
                     return b'View <a href="/raw/3c0c6750bd">raw</a>.'

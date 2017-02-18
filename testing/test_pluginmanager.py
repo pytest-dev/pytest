@@ -4,13 +4,14 @@ import py
 import os
 
 from _pytest.config import get_config, PytestPluginManager
-from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import EXIT_NOTESTSCOLLECTED, Session
+
 
 @pytest.fixture
 def pytestpm():
     return PytestPluginManager()
 
-class TestPytestPluginInteractions:
+class TestPytestPluginInteractions(object):
     def test_addhooks_conftestplugin(self, testdir):
         testdir.makepyfile(newhooks="""
             def pytest_myhook(xyz):
@@ -84,7 +85,7 @@ class TestPytestPluginInteractions:
         config = testdir.parseconfig()
         l = []
 
-        class A:
+        class A(object):
             def pytest_configure(self, config):
                 l.append(self)
 
@@ -104,11 +105,11 @@ class TestPytestPluginInteractions:
         pytestpm = get_config().pluginmanager  # fully initialized with plugins
         saveindent = []
 
-        class api1:
+        class api1(object):
             def pytest_plugin_registered(self):
                 saveindent.append(pytestpm.trace.root.indent)
 
-        class api2:
+        class api2(object):
             def pytest_plugin_registered(self):
                 saveindent.append(pytestpm.trace.root.indent)
                 raise ValueError()
@@ -133,14 +134,33 @@ class TestPytestPluginInteractions:
         finally:
             undo()
 
+    def test_hook_proxy(self, testdir):
+        """Test the gethookproxy function(#2016)"""
+        config = testdir.parseconfig()
+        session = Session(config)
+        testdir.makepyfile(**{
+            'tests/conftest.py': '',
+            'tests/subdir/conftest.py': '',
+        })
+
+        conftest1 = testdir.tmpdir.join('tests/conftest.py')
+        conftest2 = testdir.tmpdir.join('tests/subdir/conftest.py')
+
+        config.pluginmanager._importconftest(conftest1)
+        ihook_a = session.gethookproxy(testdir.tmpdir.join('tests'))
+        assert ihook_a is not None
+        config.pluginmanager._importconftest(conftest2)
+        ihook_b = session.gethookproxy(testdir.tmpdir.join('tests'))
+        assert ihook_a is not ihook_b
+
     def test_warn_on_deprecated_multicall(self, pytestpm):
         warnings = []
 
-        class get_warnings:
+        class get_warnings(object):
             def pytest_logwarning(self, message):
                 warnings.append(message)
 
-        class Plugin:
+        class Plugin(object):
             def pytest_configure(self, __multicall__):
                 pass
 
@@ -153,11 +173,11 @@ class TestPytestPluginInteractions:
     def test_warn_on_deprecated_addhooks(self, pytestpm):
         warnings = []
 
-        class get_warnings:
+        class get_warnings(object):
             def pytest_logwarning(self, code, fslocation, message, nodeid):
                 warnings.append(message)
 
-        class Plugin:
+        class Plugin(object):
             def pytest_testhook():
                 pass
 
@@ -201,7 +221,7 @@ def test_importplugin_error_message(testdir, pytestpm):
     assert py.std.re.match(expected, str(excinfo.value))
 
 
-class TestPytestPluginManager:
+class TestPytestPluginManager(object):
     def test_register_imported_modules(self):
         pm = PytestPluginManager()
         mod = py.std.types.ModuleType("x.y.pytest_hello")
@@ -328,7 +348,7 @@ class TestPytestPluginManager:
             pytestpm.consider_conftest(mod)
 
 
-class TestPytestPluginManagerBootstrapming:
+class TestPytestPluginManagerBootstrapming(object):
     def test_preparse_args(self, pytestpm):
         pytest.raises(ImportError, lambda:
             pytestpm.consider_preparse(["xyz", "-p", "hello123"]))

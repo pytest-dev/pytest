@@ -216,6 +216,10 @@ class WarningsChecker(WarningsRecorder):
         # only check if we're not currently handling an exception
         if all(a is None for a in exc_info):
             if self.expected_warning is not None:
-                if not any(r.category in self.expected_warning for r in self):
+                if not any(issubclass(r.category, self.expected_warning)
+                           for r in self):
                     __tracebackhide__ = True
-                    pytest.fail("DID NOT WARN")
+                    pytest.fail("DID NOT WARN. No warnings of type {0} was emitted. "
+                                "The list of emitted warnings is: {1}.".format(
+                                    self.expected_warning,
+                                    [each.message for each in self]))

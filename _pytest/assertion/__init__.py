@@ -29,7 +29,7 @@ def pytest_namespace():
 
 
 def register_assert_rewrite(*names):
-    """Register a module name to be rewritten on import.
+    """Register one or more module names to be rewritten on import.
 
     This function will make sure that this module or all modules inside
     the package will get their assert statements rewritten.
@@ -59,7 +59,7 @@ class DummyRewriteHook(object):
         pass
 
 
-class AssertionState:
+class AssertionState(object):
     """State for the assertion plugin."""
 
     def __init__(self, config, mode):

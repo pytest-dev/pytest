@@ -19,12 +19,16 @@ except ImportError:  # pragma: no cover
     # Only available in Python 3.4+ or as a backport
     enum = None
 
+
 _PY3 = sys.version_info > (3, 0)
 _PY2 = not _PY3
 
 
 NoneType = type(None)
 NOTSET = object()
+
+PY36 = sys.version_info[:2] >= (3, 6)
+MODULE_NOT_FOUND_ERROR = 'ModuleNotFoundError' if PY36 else 'ImportError'
 
 if hasattr(inspect, 'signature'):
     def _format_args(func):
@@ -42,11 +46,18 @@ REGEX_TYPE = type(re.compile(''))
 
 
 def is_generator(func):
-    try:
-        return _pytest._code.getrawcode(func).co_flags & 32 # generator function
-    except AttributeError: # builtin functions have no bytecode
-        # assume them to not be generators
-        return False
+    genfunc = inspect.isgeneratorfunction(func)
+    return genfunc and not iscoroutinefunction(func)
+
+
+def iscoroutinefunction(func):
+    """Return True if func is a decorated coroutine function.
+
+    Note: copied and modified from Python 3.5's builtin couroutines.py to avoid import asyncio directly,
+    which in turns also initializes the "logging" module as side-effect (see issue #8).
+    """
+    return (getattr(func, '_is_coroutine', False) or
+           (hasattr(inspect, 'iscoroutinefunction') and inspect.iscoroutinefunction(func)))
 
 
 def getlocation(function, curdir):
@@ -169,8 +180,18 @@ def get_real_func(obj):
     """ gets the real function object of the (possibly) wrapped object by
     functools.wraps or functools.partial.
     """
-    while hasattr(obj, "__wrapped__"):
-        obj = obj.__wrapped__
+    start_obj = obj
+    for i in range(100):
+        new_obj = getattr(obj, '__wrapped__', None)
+        if new_obj is None:
+            break
+        obj = new_obj
+    else:
+        raise ValueError(
+            ("could not find real function of {start}"
+             "\nstopped at {current}").format(
+                start=py.io.saferepr(start_obj),
+                current=py.io.saferepr(obj)))
     if isinstance(obj, functools.partial):
         obj = obj.func
     return obj
@@ -200,7 +221,7 @@ def safe_getattr(object, name, default):
     """ Like getattr but return default upon any Exception.
 
     Attribute access can potentially fail for 'evil' Python objects.
-    See issue214
+    See issue #214.
     """
     try:
         return getattr(object, name, default)

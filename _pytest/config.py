@@ -62,12 +62,34 @@ def main(args=None, plugins=None):
             sys.stderr.write("ERROR: %s\n" %(msg,))
         return 4
 
-class cmdline:  # compatibility namespace
+class cmdline(object):  # compatibility namespace
     main = staticmethod(main)
 
 
 class UsageError(Exception):
     """ error in pytest usage or invocation"""
+
+
+def filename_arg(path, optname):
+    """ Argparse type validator for filename arguments.
+
+    :path: path of filename
+    :optname: name of the option
+    """
+    if os.path.isdir(path):
+        raise UsageError("{0} must be a filename, given: {1}".format(optname, path))
+    return path
+
+
+def directory_arg(path, optname):
+    """Argparse type validator for directory arguments.
+
+    :path: path of directory
+    :optname: name of the option
+    """
+    if not os.path.isdir(path):
+        raise UsageError("{0} must be a directory, given: {1}".format(optname, path))
+    return path
 
 
 _preinit = []
@@ -380,31 +402,26 @@ class PytestPluginManager(PluginManager):
         self._import_plugin_specs(os.environ.get("PYTEST_PLUGINS"))
 
     def consider_module(self, mod):
-        plugins = getattr(mod, 'pytest_plugins', [])
-        if isinstance(plugins, str):
-            plugins = [plugins]
-        self.rewrite_hook.mark_rewrite(*plugins)
-        self._import_plugin_specs(plugins)
+        self._import_plugin_specs(getattr(mod, 'pytest_plugins', []))
 
     def _import_plugin_specs(self, spec):
-        if spec:
-            if isinstance(spec, str):
-                spec = spec.split(",")
-            for import_spec in spec:
-                self.import_plugin(import_spec)
+        plugins = _get_plugin_specs_as_list(spec)
+        for import_spec in plugins:
+            self.import_plugin(import_spec)
 
     def import_plugin(self, modname):
         # most often modname refers to builtin modules, e.g. "pytester",
         # "terminal" or "capture".  Those plugins are registered under their
         # basename for historic purposes but must be imported with the
         # _pytest prefix.
-        assert isinstance(modname, str)
+        assert isinstance(modname, str), "module name as string required, got %r" % modname
         if self.get_plugin(modname) is not None:
             return
         if modname in builtin_plugins:
             importspec = "_pytest." + modname
         else:
             importspec = modname
+        self.rewrite_hook.mark_rewrite(importspec)
         try:
             __import__(importspec)
         except ImportError as e:
@@ -425,7 +442,25 @@ class PytestPluginManager(PluginManager):
             self.consider_module(mod)
 
 
-class Parser:
+def _get_plugin_specs_as_list(specs):
+    """
+    Parses a list of "plugin specs" and returns a list of plugin names.
+
+    Plugin specs can be given as a list of strings separated by "," or already as a list/tuple in
+    which case it is returned as a list. Specs can also be `None` in which case an
+    empty list is returned.
+    """
+    if specs is not None:
+        if isinstance(specs, str):
+            specs = specs.split(',') if specs else []
+        if not isinstance(specs, (list, tuple)):
+            raise UsageError("Plugin specs must be a ','-separated string or a "
+                             "list/tuple of strings for plugin names. Given: %r" % specs)
+        return list(specs)
+    return []
+
+
+class Parser(object):
     """ Parser for command line arguments and ini-file values.
 
     :ivar extra_info: dict of generic param -> value to display in case
@@ -560,7 +595,7 @@ class ArgumentError(Exception):
             return self.msg
 
 
-class Argument:
+class Argument(object):
     """class that mimics the necessary behaviour of optparse.Option
 
     its currently a least effort implementation
@@ -690,7 +725,7 @@ class Argument:
         return 'Argument({0})'.format(', '.join(args))
 
 
-class OptionGroup:
+class OptionGroup(object):
     def __init__(self, name, description="", parser=None):
         self.name = name
         self.description = description
@@ -816,7 +851,7 @@ class CmdOptions(object):
     def copy(self):
         return CmdOptions(self.__dict__)
 
-class Notset:
+class Notset(object):
     def __repr__(self):
         return "<NOTSET>"
 
@@ -1007,6 +1042,7 @@ class Config(object):
         self.pluginmanager.load_setuptools_entrypoints(entrypoint_name)
         self.pluginmanager.consider_env()
         self.known_args_namespace = ns = self._parser.parse_known_args(args, namespace=self.option.copy())
+        confcutdir = self.known_args_namespace.confcutdir
         if self.known_args_namespace.confcutdir is None and self.inifile:
             confcutdir = py.path.local(self.inifile).dirname
             self.known_args_namespace.confcutdir = confcutdir
@@ -1126,7 +1162,10 @@ class Config(object):
         if self.getoption("override_ini", None):
             for ini_config_list in self.option.override_ini:
                 for ini_config in ini_config_list:
-                    (key, user_ini_value) = ini_config.split("=", 1)
+                    try:
+                        (key, user_ini_value) = ini_config.split("=", 1)
+                    except ValueError:
+                        raise UsageError("-o/--override-ini expects option=value style.")
                     if key == name:
                         value = user_ini_value
         return value
@@ -1202,25 +1241,20 @@ def getcfg(args, warnfunc=None):
     return None, None, None
 
 
-def get_common_ancestor(args):
-    # args are what we get after early command line parsing (usually
-    # strings, but can be py.path.local objects as well)
+def get_common_ancestor(paths):
     common_ancestor = None
-    for arg in args:
-        if str(arg)[0] == "-":
-            continue
-        p = py.path.local(arg)
-        if not p.exists():
+    for path in paths:
+        if not path.exists():
             continue
         if common_ancestor is None:
-            common_ancestor = p
+            common_ancestor = path
         else:
-            if p.relto(common_ancestor) or p == common_ancestor:
+            if path.relto(common_ancestor) or path == common_ancestor:
                 continue
-            elif common_ancestor.relto(p):
-                common_ancestor = p
+            elif common_ancestor.relto(path):
+                common_ancestor = path
             else:
-                shared = p.common(common_ancestor)
+                shared = path.common(common_ancestor)
                 if shared is not None:
                     common_ancestor = shared
     if common_ancestor is None:
@@ -1231,9 +1265,29 @@ def get_common_ancestor(args):
 
 
 def get_dirs_from_args(args):
-    return [d for d in (py.path.local(x) for x in args
-                        if not str(x).startswith("-"))
-            if d.exists()]
+    def is_option(x):
+        return str(x).startswith('-')
+
+    def get_file_part_from_node_id(x):
+        return str(x).split('::')[0]
+
+    def get_dir_from_path(path):
+        if path.isdir():
+            return path
+        return py.path.local(path.dirname)
+
+    # These look like paths but may not exist
+    possible_paths = (
+        py.path.local(get_file_part_from_node_id(arg))
+        for arg in args
+        if not is_option(arg)
+    )
+
+    return [
+        get_dir_from_path(path)
+        for path in possible_paths
+        if path.exists()
+    ]
 
 
 def determine_setup(inifile, args, warnfunc=None):

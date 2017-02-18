@@ -5,9 +5,9 @@ import sys
 def pytest_addoption(parser):
     group = parser.getgroup("debugconfig")
     group.addoption('--setuponly', '--setup-only', action="store_true",
-                    help="only setup fixtures, don't execute the tests.")
+                    help="only setup fixtures, do not execute tests.")
     group.addoption('--setupshow', '--setup-show', action="store_true",
-                    help="show setup fixtures while executing the tests.")
+                    help="show setup of fixtures while executing tests.")
 
 
 @pytest.hookimpl(hookwrapper=True)

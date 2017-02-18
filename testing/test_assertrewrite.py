@@ -1,7 +1,10 @@
+import glob
 import os
+import py_compile
 import stat
 import sys
 import zipfile
+
 import py
 import pytest
 
@@ -54,7 +57,7 @@ def getmsg(f, extra_ns=None, must_pass=False):
             pytest.fail("function didn't raise at all")
 
 
-class TestAssertionRewrite:
+class TestAssertionRewrite(object):
 
     def test_place_initial_imports(self):
         s = """'Doc string'\nother = stuff"""
@@ -330,7 +333,7 @@ class TestAssertionRewrite:
     @pytest.mark.skipif("sys.version_info < (3,5)")
     def test_at_operator_issue1290(self, testdir):
         testdir.makepyfile("""
-            class Matrix:
+            class Matrix(object):
                 def __init__(self, num):
                     self.num = num
                 def __matmul__(self, other):
@@ -512,7 +515,7 @@ class TestAssertionRewrite:
         assert r"where 1 = \n{ \n~ \n}.a" in util._format_lines([getmsg(f)])[0]
 
 
-class TestRewriteOnImport:
+class TestRewriteOnImport(object):
 
     def test_pycache_is_a_file(self, testdir):
         testdir.tmpdir.join("__pycache__").write("Hello")
@@ -572,6 +575,31 @@ def test_rewritten():
                 assert not os.path.exists(os.path.dirname(__cached__))""")
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", "1")
         assert testdir.runpytest_subprocess().ret == 0
+
+    def test_orphaned_pyc_file(self, testdir):
+        if sys.version_info < (3, 0) and hasattr(sys, 'pypy_version_info'):
+            pytest.skip("pypy2 doesn't run orphaned pyc files")
+
+        testdir.makepyfile("""
+            import orphan
+            def test_it():
+                assert orphan.value == 17
+            """)
+        testdir.makepyfile(orphan="""
+            value = 17
+            """)
+        py_compile.compile("orphan.py")
+        os.remove("orphan.py")
+
+        # Python 3 puts the .pyc files in a __pycache__ directory, and will
+        # not import from there without source.  It will import a .pyc from
+        # the source location though.
+        if not os.path.exists("orphan.pyc"):
+            pycs = glob.glob("__pycache__/orphan.*.pyc")
+            assert len(pycs) == 1
+            os.rename(pycs[0], "orphan.pyc")
+
+        assert testdir.runpytest().ret == 0
 
     @pytest.mark.skipif('"__pypy__" in sys.modules')
     def test_pyc_vs_pyo(self, testdir, monkeypatch):
@@ -653,6 +681,35 @@ def test_rewritten():
         hook.mark_rewrite('test_remember_rewritten_modules')
         hook.mark_rewrite('test_remember_rewritten_modules')
         assert warnings == []
+
+    def test_rewrite_warning_using_pytest_plugins(self, testdir):
+        testdir.makepyfile(**{
+            'conftest.py': "pytest_plugins = ['core', 'gui', 'sci']",
+            'core.py': "",
+            'gui.py': "pytest_plugins = ['core', 'sci']",
+            'sci.py': "pytest_plugins = ['core']",
+            'test_rewrite_warning_pytest_plugins.py': "def test(): pass",
+        })
+        testdir.chdir()
+        result = testdir.runpytest_subprocess()
+        result.stdout.fnmatch_lines(['*= 1 passed in *=*'])
+        assert 'pytest-warning summary' not in result.stdout.str()
+
+    def test_rewrite_warning_using_pytest_plugins_env_var(self, testdir, monkeypatch):
+        monkeypatch.setenv('PYTEST_PLUGINS', 'plugin')
+        testdir.makepyfile(**{
+            'plugin.py': "",
+            'test_rewrite_warning_using_pytest_plugins_env_var.py': """
+                import plugin
+                pytest_plugins = ['plugin']
+                def test():
+                    pass
+            """,
+        })
+        testdir.chdir()
+        result = testdir.runpytest_subprocess()
+        result.stdout.fnmatch_lines(['*= 1 passed in *=*'])
+        assert 'pytest-warning summary' not in result.stdout.str()
 
 
 class TestAssertionRewriteHookDetails(object):
@@ -827,7 +884,7 @@ class TestAssertionRewriteHookDetails(object):
         """
         path = testdir.mkpydir("foo")
         path.join("test_foo.py").write(_pytest._code.Source("""
-            class Test:
+            class Test(object):
                 def test_foo(self):
                     import pkgutil
                     data = pkgutil.get_data('foo.test_foo', 'data.txt')
@@ -855,7 +912,7 @@ def test_issue731(testdir):
     assert 'unbalanced braces' not in result.stdout.str()
 
 
-class TestIssue925():
+class TestIssue925(object):
     def test_simple_case(self, testdir):
         testdir.makepyfile("""
         def test_ternary_display():

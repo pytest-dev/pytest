@@ -16,10 +16,12 @@ Conventions for Python test discovery
 * If no arguments are specified then collection starts from :confval:`testpaths`
   (if configured) or the current directory. Alternatively, command line arguments
   can be used in any combination of directories, file names or node ids.
-* recurse into directories, unless they match :confval:`norecursedirs`
-* ``test_*.py`` or ``*_test.py`` files, imported by their `test package name`_.
-* ``Test`` prefixed test classes (without an ``__init__`` method)
-* ``test_`` prefixed test functions or methods are test items
+* Recurse into directories, unless they match :confval:`norecursedirs`.
+* In those directories, search for ``test_*.py`` or ``*_test.py`` files, imported by their `test package name`_.
+* From those files, collect test items:
+
+  * ``test_`` prefixed test functions or methods outside of class
+  * ``test_`` prefixed test functions or methods inside ``Test`` prefixed test classes (without an ``__init__`` method)
 
 For examples of how to customize your test discovery :doc:`example/pythoncollection`.
 
@@ -125,7 +127,7 @@ required configurations.
     The reason for this somewhat evolved importing technique is
     that in larger projects multiple test modules might import
     from each other and thus deriving a canonical import name helps
-    to avoid surprises such as a test modules getting imported twice.
+    to avoid surprises such as a test module getting imported twice.
 
 
 .. _`virtualenv`: http://pypi.python.org/pypi/virtualenv
@@ -145,7 +147,7 @@ dependencies are isolated from the system Python installation.
 If you frequently release code and want to make sure that your actual
 package passes all tests you may want to look into `tox`_, the
 virtualenv test automation tool and its `pytest support
-<http://testrun.org/tox/latest/example/pytest.html>`_.
+<https://tox.readthedocs.io/en/latest/example/pytest.html>`_.
 Tox helps you to setup virtualenv environments with pre-defined
 dependencies and then executing a pre-configured test command with
 options.  It will run tests against the installed package and not

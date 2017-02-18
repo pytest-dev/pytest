@@ -16,8 +16,8 @@ You can invoke testing through the Python interpreter from the command line::
 
     python -m pytest [...]
 
-This is equivalent to invoking the command line script ``pytest [...]``
-directly.
+This is almost equivalent to invoking the command line script ``pytest [...]``
+directly, except that python will also add the current directory to ``sys.path``.
 
 Getting help on version, option names, environment variables
 --------------------------------------------------------------
@@ -49,7 +49,7 @@ Several test run options::
                           # will select TestMyClass.test_something
                           # but not TestMyClass.test_method_simple
     pytest test_mod.py::test_func  # only run tests that match the "node ID",
-                                    # e.g "test_mod.py::test_func" will select
+                                    # e.g. "test_mod.py::test_func" will select
                                     # only test_func in test_mod.py
     pytest test_mod.py::TestClass::test_method  # run a single method in
                                                  # a single class
@@ -76,7 +76,7 @@ Examples for modifying traceback printing::
 
 The ``--full-trace`` causes very long traces to be printed on error (longer
 than ``--tb=long``). It also ensures that a stack trace is printed on
-**KeyboardInterrrupt** (Ctrl+C).
+**KeyboardInterrupt** (Ctrl+C).
 This is very useful if the tests are taking too long and you interrupt them
 with Ctrl+C to find out where the tests are *hanging*. By default no output
 will be shown (because KeyboardInterrupt is caught by pytest). By using this
@@ -226,7 +226,7 @@ to all testcases you can use ``LogXML.add_global_properties``
     def start_and_prepare_env():
         pass
 
-    class TestMe:
+    class TestMe(object):
         def test_foo(self):
             assert True
 
@@ -314,7 +314,7 @@ You can specify additional plugins to ``pytest.main``::
 
     # content of myinvoke.py
     import pytest
-    class MyPlugin:
+    class MyPlugin(object):
         def pytest_sessionfinish(self):
             print("*** test run reporting finishing")
 

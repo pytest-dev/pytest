@@ -18,7 +18,7 @@ def custom_pdb_calls():
     called = []
 
     # install dummy debugger class and track which methods were called on it
-    class _CustomPdb:
+    class _CustomPdb(object):
         def __init__(self, *args, **kwargs):
             called.append("init")
 
@@ -33,7 +33,7 @@ def custom_pdb_calls():
 
 
 
-class TestPDB:
+class TestPDB(object):
 
     @pytest.fixture
     def pdblist(self, request):
@@ -374,7 +374,7 @@ class TestPDB:
 
     def test_pdb_custom_cls_with_settrace(self, testdir, monkeypatch):
         testdir.makepyfile(custom_pdb="""
-            class CustomPdb:
+            class CustomPdb(object):
                 def set_trace(*args, **kwargs):
                     print 'custom set_trace>'
          """)

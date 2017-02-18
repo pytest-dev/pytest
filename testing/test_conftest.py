@@ -24,14 +24,14 @@ def ConftestWithSetinitial(path):
     return conftest
 
 def conftest_setinitial(conftest, args, confcutdir=None):
-    class Namespace:
+    class Namespace(object):
         def __init__(self):
             self.file_or_dir = args
             self.confcutdir = str(confcutdir)
             self.noconftest = False
     conftest._set_initial_conftests(Namespace())
 
-class TestConftestValueAccessGlobal:
+class TestConftestValueAccessGlobal(object):
     def test_basic_init(self, basedir):
         conftest = PytestPluginManager()
         p = basedir.join("adir")
@@ -265,7 +265,7 @@ def test_conftest_found_with_double_dash(testdir):
     """)
 
 
-class TestConftestVisibility:
+class TestConftestVisibility(object):
     def _setup_tree(self, testdir):  # for issue616
         # example mostly taken from:
         # https://mail.python.org/pipermail/pytest-dev/2014-September/002617.html
@@ -398,7 +398,7 @@ def test_search_conftest_up_to_inifile(testdir, confcutdir, passed, error):
 
 def test_issue1073_conftest_special_objects(testdir):
     testdir.makeconftest("""
-        class DontTouchMe:
+        class DontTouchMe(object):
             def __getattr__(self, x):
                 raise Exception('cant touch me')
 
@@ -423,3 +423,28 @@ def test_conftest_exception_handling(testdir):
     res = testdir.runpytest()
     assert res.ret == 4
     assert 'raise ValueError()' in [line.strip() for line in res.errlines]
+
+
+def test_hook_proxy(testdir):
+    """Session's gethookproxy() would cache conftests incorrectly (#2016).
+    It was decided to remove the cache altogether.
+    """
+    testdir.makepyfile(**{
+        'root/demo-0/test_foo1.py': "def test1(): pass",
+
+        'root/demo-a/test_foo2.py': "def test1(): pass",
+        'root/demo-a/conftest.py': """
+            def pytest_ignore_collect(path, config):
+                return True
+            """,
+
+        'root/demo-b/test_foo3.py': "def test1(): pass",
+        'root/demo-c/test_foo4.py': "def test1(): pass",
+    })
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        '*test_foo1.py*',
+        '*test_foo3.py*',
+        '*test_foo4.py*',
+        '*3 passed*',
+    ])

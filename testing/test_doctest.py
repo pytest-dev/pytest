@@ -1,10 +1,12 @@
 # encoding: utf-8
 import sys
 import _pytest._code
+from _pytest.compat import MODULE_NOT_FOUND_ERROR
 from _pytest.doctest import DoctestItem, DoctestModule, DoctestTextfile
 import pytest
 
-class TestDoctests:
+
+class TestDoctests(object):
 
     def test_collect_testtextfile(self, testdir):
         w = testdir.maketxtfile(whatever="")
@@ -129,6 +131,33 @@ class TestDoctests:
             '*1 passed*',
         ])
 
+    @pytest.mark.parametrize(
+        '   test_string,    encoding',
+        [
+            (u'foo',         'ascii'),
+            (u'öäü',         'latin1'),
+            (u'öäü',         'utf-8')
+        ]
+    )
+    def test_encoding(self, testdir, test_string, encoding):
+        """Test support for doctest_encoding ini option.
+        """
+        testdir.makeini("""
+            [pytest]
+            doctest_encoding={0}
+        """.format(encoding))
+        doctest = u"""
+            >>> u"{0}"
+            {1}
+        """.format(test_string, repr(test_string))
+        testdir._makefile(".txt", [doctest], {}, encoding=encoding)
+
+        result = testdir.runpytest()
+
+        result.stdout.fnmatch_lines([
+            '*1 passed*',
+        ])
+
     def test_doctest_unexpected_exception(self, testdir):
         testdir.maketxtfile("""
             >>> i = 0
@@ -211,8 +240,8 @@ class TestDoctests:
         # doctest is never executed because of error during hello.py collection
         result.stdout.fnmatch_lines([
             "*>>> import asdals*",
-            "*UNEXPECTED*ImportError*",
-            "ImportError: No module named *asdal*",
+            "*UNEXPECTED*{e}*".format(e=MODULE_NOT_FOUND_ERROR),
+            "{e}: No module named *asdal*".format(e=MODULE_NOT_FOUND_ERROR),
         ])
 
     def test_doctest_unex_importerror_with_module(self, testdir):
@@ -227,7 +256,7 @@ class TestDoctests:
         # doctest is never executed because of error during hello.py collection
         result.stdout.fnmatch_lines([
             "*ERROR collecting hello.py*",
-            "*ImportError: No module named *asdals*",
+            "*{e}: No module named *asdals*".format(e=MODULE_NOT_FOUND_ERROR),
             "*Interrupted: 1 errors during collection*",
         ])
 
@@ -349,7 +378,7 @@ class TestDoctests:
 
     def test_doctestmodule_two_tests_one_fail(self, testdir):
         p = testdir.makepyfile("""
-            class MyClass:
+            class MyClass(object):
                 def bad_meth(self):
                     '''
                     >>> magic = 42
@@ -372,7 +401,7 @@ class TestDoctests:
             doctest_optionflags = ELLIPSIS NORMALIZE_WHITESPACE
         """)
         p = testdir.makepyfile("""
-            class MyClass:
+            class MyClass(object):
                 '''
                 >>> a = "foo    "
                 >>> print(a)
@@ -389,7 +418,7 @@ class TestDoctests:
             doctest_optionflags = ELLIPSIS
         """)
         p = testdir.makepyfile("""
-            class MyClass:
+            class MyClass(object):
                 '''
                 >>> a = "foo    "
                 >>> print(a)
@@ -476,7 +505,7 @@ class TestDoctests:
         reprec.assertoutcome(failed=1)
 
 
-class TestLiterals:
+class TestLiterals(object):
 
     @pytest.mark.parametrize('config_mode', ['ini', 'comment'])
     def test_allow_unicode(self, testdir, config_mode):
@@ -563,7 +592,7 @@ class TestLiterals:
         reprec.assertoutcome(passed=passed, failed=int(not passed))
 
 
-class TestDoctestSkips:
+class TestDoctestSkips(object):
     """
     If all examples in a doctest are skipped due to the SKIP option, then
     the tests should be SKIPPED rather than PASSED. (#957)
@@ -617,7 +646,7 @@ class TestDoctestSkips:
         reprec.assertoutcome(passed=0, skipped=0)
 
 
-class TestDoctestAutoUseFixtures:
+class TestDoctestAutoUseFixtures(object):
 
     SCOPES = ['module', 'session', 'class', 'function']
 
@@ -736,7 +765,7 @@ class TestDoctestAutoUseFixtures:
         result.stdout.fnmatch_lines(['*=== 1 passed in *'])
 
 
-class TestDoctestNamespaceFixture:
+class TestDoctestNamespaceFixture(object):
 
     SCOPES = ['module', 'session', 'class', 'function']
 
@@ -786,7 +815,7 @@ class TestDoctestNamespaceFixture:
         reprec.assertoutcome(passed=1)
 
 
-class TestDoctestReportingOption:
+class TestDoctestReportingOption(object):
     def _run_doctest_report(self, testdir, format):
         testdir.makepyfile("""
             def foo():

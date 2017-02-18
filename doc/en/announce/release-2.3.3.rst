@@ -1,7 +1,7 @@
-pytest-2.3.3: integration fixes, py24 suport, ``*/**`` shown in traceback
+pytest-2.3.3: integration fixes, py24 support, ``*/**`` shown in traceback
 ===========================================================================
 
-pytest-2.3.3 is a another stabilization release of the py.test tool
+pytest-2.3.3 is another stabilization release of the py.test tool
 which offers uebersimple assertions, scalable fixture mechanisms
 and deep customization for testing with Python.  Particularly,
 this release provides:
@@ -46,7 +46,7 @@ Changes between 2.3.2 and 2.3.3
 - fix issue209 - reintroduce python2.4 support by depending on newer
   pylib which re-introduced statement-finding for pre-AST interpreters
 
-- nose support: only call setup if its a callable, thanks Andrew
+- nose support: only call setup if it's a callable, thanks Andrew
   Taumoefolau
 
 - fix issue219 - add py2.4-3.3 classifiers to TROVE list

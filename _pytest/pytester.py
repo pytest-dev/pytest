@@ -165,7 +165,7 @@ def _pytest(request):
     """
     return PytestArg(request)
 
-class PytestArg:
+class PytestArg(object):
     def __init__(self, request):
         self.request = request
 
@@ -180,7 +180,7 @@ def get_public_names(l):
     return [x for x in l if x[0] != "_"]
 
 
-class ParsedCall:
+class ParsedCall(object):
     def __init__(self, name, kwargs):
         self.__dict__.update(kwargs)
         self._name = name
@@ -191,7 +191,7 @@ class ParsedCall:
         return "<ParsedCall %r(**%r)>" %(self._name, d)
 
 
-class HookRecorder:
+class HookRecorder(object):
     """Record all hooks called in a plugin manager.
 
     This wraps all the hook calls in the plugin manager, recording
@@ -335,7 +335,7 @@ def testdir(request, tmpdir_factory):
 
 
 rex_outcome = re.compile("(\d+) ([\w-]+)")
-class RunResult:
+class RunResult(object):
     """The result of running a command.
 
     Attributes:
@@ -369,6 +369,7 @@ class RunResult:
                     for num, cat in outcomes:
                         d[cat] = int(num)
                     return d
+        raise ValueError("Pytest terminal report not found")
 
     def assert_outcomes(self, passed=0, skipped=0, failed=0):
         """ assert that the specified outcomes appear with the respective
@@ -380,7 +381,7 @@ class RunResult:
 
 
 
-class Testdir:
+class Testdir(object):
     """Temporary test directory with tools to test/run pytest itself.
 
     This is based on the ``tmpdir`` fixture but provides a number of
@@ -449,9 +450,9 @@ class Testdir:
         the module is re-imported.
         """
         for name in set(sys.modules).difference(self._savemodulekeys):
-            # it seems zope.interfaces is keeping some state
-            # (used by twisted related tests)
-            if name != "zope.interface":
+            # zope.interface (used by twisted-related tests) keeps internal
+            # state and can't be deleted
+            if not name.startswith("zope.interface"):
                 del sys.modules[name]
 
     def make_hook_recorder(self, pluginmanager):
@@ -471,7 +472,7 @@ class Testdir:
         if not hasattr(self, '_olddir'):
             self._olddir = old
 
-    def _makefile(self, ext, args, kwargs):
+    def _makefile(self, ext, args, kwargs, encoding="utf-8"):
         items = list(kwargs.items())
         if args:
             source = py.builtin._totext("\n").join(
@@ -481,6 +482,7 @@ class Testdir:
         ret = None
         for name, value in items:
             p = self.tmpdir.join(name).new(ext=ext)
+            p.dirpath().ensure_dir()
             source = Source(value)
 
             def my_totext(s, encoding="utf-8"):
@@ -490,7 +492,7 @@ class Testdir:
 
             source_unicode = "\n".join([my_totext(line) for line in source.lines])
             source = py.builtin._totext(source_unicode)
-            content = source.strip().encode("utf-8") # + "\n"
+            content = source.strip().encode(encoding) # + "\n"
             #content = content.rstrip() + "\n"
             p.write(content, "wb")
             if ret is None:
@@ -706,7 +708,7 @@ class Testdir:
 
         rec = []
 
-        class Collect:
+        class Collect(object):
             def pytest_configure(x, config):
                 rec.append(self.make_hook_recorder(config.pluginmanager))
 
@@ -717,7 +719,7 @@ class Testdir:
         if len(rec) == 1:
             reprec = rec.pop()
         else:
-            class reprec:
+            class reprec(object):
                 pass
         reprec.ret = ret
 
@@ -741,13 +743,13 @@ class Testdir:
                 reprec = self.inline_run(*args, **kwargs)
             except SystemExit as e:
 
-                class reprec:
+                class reprec(object):
                     ret = e.args[0]
 
             except Exception:
                 traceback.print_exc()
 
-                class reprec:
+                class reprec(object):
                     ret = 3
         finally:
             out, err = capture.reset()
@@ -1032,7 +1034,7 @@ def getdecoded(out):
                     py.io.saferepr(out),)
 
 
-class LineComp:
+class LineComp(object):
     def __init__(self):
         self.stringio = py.io.TextIO()
 
@@ -1048,7 +1050,7 @@ class LineComp:
         return LineMatcher(lines1).fnmatch_lines(lines2)
 
 
-class LineMatcher:
+class LineMatcher(object):
     """Flexible matching of text.
 
     This is a convenience class to test large texts like the output of

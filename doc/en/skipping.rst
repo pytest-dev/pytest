@@ -2,7 +2,7 @@
 
 .. _skipping:
 
-Skip and xfail: dealing with tests that can not succeed
+Skip and xfail: dealing with tests that cannot succeed
 =====================================================================
 
 If you have test functions that cannot be run on certain platforms
@@ -98,7 +98,7 @@ You can use the ``skipif`` decorator (and any other marker) on classes::
 
     @pytest.mark.skipif(sys.platform == 'win32',
                         reason="does not run on windows")
-    class TestPosixCalls:
+    class TestPosixCalls(object):
 
         def test_function(self):
             "will not be setup or run under 'win32' platform"
@@ -224,7 +224,7 @@ Running it with the report-on-xfail option gives this output::
 
     example $ pytest -rx xfail_demo.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0
+    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR/example, inifile: 
     collected 7 items
     

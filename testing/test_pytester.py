@@ -12,7 +12,7 @@ def test_make_hook_recorder(testdir):
 
     pytest.xfail("internal reportrecorder tests need refactoring")
 
-    class rep:
+    class rep(object):
         excinfo = None
         passed = False
         failed = True
@@ -25,7 +25,7 @@ def test_make_hook_recorder(testdir):
     failures = recorder.getfailures()
     assert failures == [rep]
 
-    class rep:
+    class rep(object):
         excinfo = None
         passed = False
         failed = False
@@ -74,7 +74,7 @@ def test_testdir_runs_with_plugin(testdir):
 
 
 def make_holder():
-    class apiclass:
+    class apiclass(object):
         def pytest_xyz(self, arg):
             "x"
         def pytest_xyz_noarg(self):
@@ -124,3 +124,10 @@ def test_inline_run_clean_modules(testdir):
     test_mod.write("def test_foo(): assert False")
     result2 = testdir.inline_run(str(test_mod))
     assert result2.ret == EXIT_TESTSFAILED
+
+def test_assert_outcomes_after_pytest_erro(testdir):
+    testdir.makepyfile("def test_foo(): assert True")
+
+    result = testdir.runpytest('--unexpected-argument')
+    with pytest.raises(ValueError, message="Pytest terminal report not found"):
+        result.assert_outcomes(passed=0)

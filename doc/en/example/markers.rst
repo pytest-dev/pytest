@@ -21,7 +21,7 @@ You can "mark" a test function with custom metadata like this::
         pass
     def test_another():
         pass
-    class TestClass:
+    class TestClass(object):
         def test_method(self):
             pass
 
@@ -31,7 +31,7 @@ You can then restrict a test run to only run tests marked with ``webtest``::
 
     $ pytest -v -m webtest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5m
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
@@ -45,7 +45,7 @@ Or the inverse, running all tests except the webtest ones::
 
     $ pytest -v -m "not webtest"
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5m
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
@@ -66,7 +66,7 @@ tests based on their module, class, method, or function name::
 
     $ pytest -v test_server.py::TestClass::test_method
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5m
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 5 items
@@ -79,7 +79,7 @@ You can also select on the class::
 
     $ pytest -v test_server.py::TestClass
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5m
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
@@ -92,7 +92,7 @@ Or select multiple nodes::
 
   $ pytest -v test_server.py::TestClass test_server.py::test_send_http
   ======= test session starts ========
-  platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+  platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5m
   cachedir: .cache
   rootdir: $REGENDOC_TMPDIR, inifile: 
   collecting ... collected 8 items
@@ -130,7 +130,7 @@ select tests based on their names::
 
     $ pytest -v -k http  # running with the above defined example module
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5m
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
@@ -144,7 +144,7 @@ And you can also run all tests except the ones that match the keyword::
 
     $ pytest -k "not send_http" -v
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5m
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
@@ -160,7 +160,7 @@ Or to select "http" and "quick" tests::
 
     $ pytest -k "http or quick" -v
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5m
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collecting ... collected 4 items
@@ -205,7 +205,7 @@ You can ask which markers exist for your test suite - the list includes our just
     
     @pytest.mark.skipif(condition): skip the given test function if eval(condition) results in a True value.  Evaluation happens within the module global context. Example: skipif('sys.platform == "win32"') skips the test if we are on the win32 platform. see http://pytest.org/latest/skipping.html
     
-    @pytest.mark.xfail(condition, reason=None, run=True, raises=None, strict=False): mark the the test function as an expected failure if eval(condition) has a True value. Optionally specify a reason for better reporting and run=False if you don't even want to execute the test function. If only specific exception(s) are expected, you can list them in raises, and if the test fails in other ways, it will be reported as a true failure. See http://pytest.org/latest/skipping.html
+    @pytest.mark.xfail(condition, reason=None, run=True, raises=None, strict=False): mark the test function as an expected failure if eval(condition) has a True value. Optionally specify a reason for better reporting and run=False if you don't even want to execute the test function. If only specific exception(s) are expected, you can list them in raises, and if the test fails in other ways, it will be reported as a true failure. See http://pytest.org/latest/skipping.html
     
     @pytest.mark.parametrize(argnames, argvalues): call a test function multiple times passing in different arguments in turn. argvalues generally needs to be a list of values if argnames specifies only one name or a list of tuples of values if argnames specifies multiple names. Example: @parametrize('arg1', [1,2]) would lead to two calls of the decorated test function, one with arg1=1 and another with arg1=2.see http://pytest.org/latest/parametrize.html for more info and examples.
     
@@ -242,7 +242,7 @@ its test methods::
     # content of test_mark_classlevel.py
     import pytest
     @pytest.mark.webtest
-    class TestClass:
+    class TestClass(object):
         def test_startup(self):
             pass
         def test_startup_and_more(self):
@@ -256,14 +256,14 @@ To remain backward-compatible with Python 2.4 you can also set a
 
     import pytest
 
-    class TestClass:
+    class TestClass(object):
         pytestmark = pytest.mark.webtest
 
 or if you need to use multiple markers you can use a list::
 
     import pytest
 
-    class TestClass:
+    class TestClass(object):
         pytestmark = [pytest.mark.webtest, pytest.mark.slowtest]
 
 You can also set a module level marker::
@@ -352,7 +352,7 @@ the test needs::
 
     $ pytest -E stage2
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0
+    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
@@ -364,7 +364,7 @@ and here is one that specifies exactly the environment needed::
 
     $ pytest -E stage1
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0
+    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 1 items
     
@@ -381,7 +381,7 @@ The ``--markers`` option always gives you a list of available markers::
     
     @pytest.mark.skipif(condition): skip the given test function if eval(condition) results in a True value.  Evaluation happens within the module global context. Example: skipif('sys.platform == "win32"') skips the test if we are on the win32 platform. see http://pytest.org/latest/skipping.html
     
-    @pytest.mark.xfail(condition, reason=None, run=True, raises=None, strict=False): mark the the test function as an expected failure if eval(condition) has a True value. Optionally specify a reason for better reporting and run=False if you don't even want to execute the test function. If only specific exception(s) are expected, you can list them in raises, and if the test fails in other ways, it will be reported as a true failure. See http://pytest.org/latest/skipping.html
+    @pytest.mark.xfail(condition, reason=None, run=True, raises=None, strict=False): mark the test function as an expected failure if eval(condition) has a True value. Optionally specify a reason for better reporting and run=False if you don't even want to execute the test function. If only specific exception(s) are expected, you can list them in raises, and if the test fails in other ways, it will be reported as a true failure. See http://pytest.org/latest/skipping.html
     
     @pytest.mark.parametrize(argnames, argvalues): call a test function multiple times passing in different arguments in turn. argvalues generally needs to be a list of values if argnames specifies only one name or a list of tuples of values if argnames specifies multiple names. Example: @parametrize('arg1', [1,2]) would lead to two calls of the decorated test function, one with arg1=1 and another with arg1=2.see http://pytest.org/latest/parametrize.html for more info and examples.
     
@@ -407,7 +407,7 @@ code you can read over all such settings.  Example::
     pytestmark = pytest.mark.glob("module", x=1)
 
     @pytest.mark.glob("class", x=2)
-    class TestClass:
+    class TestClass(object):
         @pytest.mark.glob("function", x=3)
         def test_something(self):
             pass
@@ -450,7 +450,7 @@ for your particular platform, you could use the following plugin::
     import sys
     import pytest
 
-    ALL = set("darwin linux2 win32".split())
+    ALL = set("darwin linux win32".split())
 
     def pytest_runtest_setup(item):
         if isinstance(item, item.Function):
@@ -470,7 +470,7 @@ Let's do a little test file to show how this looks like::
     def test_if_apple_is_evil():
         pass
 
-    @pytest.mark.linux2
+    @pytest.mark.linux
     def test_if_linux_works():
         pass
 
@@ -481,32 +481,32 @@ Let's do a little test file to show how this looks like::
     def test_runs_everywhere():
         pass
 
-then you will see two test skipped and two executed tests as expected::
+then you will see two tests skipped and two executed tests as expected::
 
     $ pytest -rs # this option reports skip reasons
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0
+    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
-    test_plat.py sss.
+    test_plat.py s.s.
     ======= short test summary info ========
-    SKIP [3] $REGENDOC_TMPDIR/conftest.py:12: cannot run on platform linux
+    SKIP [2] $REGENDOC_TMPDIR/conftest.py:12: cannot run on platform linux
     
-    ======= 1 passed, 3 skipped in 0.12 seconds ========
+    ======= 2 passed, 2 skipped in 0.12 seconds ========
 
 Note that if you specify a platform via the marker-command line option like this::
 
-    $ pytest -m linux2
+    $ pytest -m linux
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0
+    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR, inifile: 
     collected 4 items
     
-    test_plat.py s
+    test_plat.py .
     
     ======= 3 tests deselected ========
-    ======= 1 skipped, 3 deselected in 0.12 seconds ========
+    ======= 1 passed, 3 deselected in 0.12 seconds ========
 
 then the unmarked-tests will not be run.  It is thus a way to restrict the run to the specific tests.
 
@@ -551,7 +551,7 @@ We can now use the ``-m option`` to select one set::
 
   $ pytest -m interface --tb=short
   ======= test session starts ========
-  platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0
+  platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
   rootdir: $REGENDOC_TMPDIR, inifile: 
   collected 4 items
   
@@ -573,7 +573,7 @@ or to select both "event" and "interface" tests::
 
   $ pytest -m "interface or event" --tb=short
   ======= test session starts ========
-  platform linux -- Python 3.5.2, pytest-3.0.4, py-1.4.31, pluggy-0.4.0
+  platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
   rootdir: $REGENDOC_TMPDIR, inifile: 
   collected 4 items
   

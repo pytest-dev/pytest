@@ -79,7 +79,7 @@ class DomNode(object):
         return type(self)(self.__node.nextSibling)
 
 
-class TestPython:
+class TestPython(object):
     def test_summing_simple(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -249,9 +249,21 @@ class TestPython:
         snode = tnode.find_first_by_tag("skipped")
         snode.assert_attr(type="pytest.skip", message="hello25", )
 
+    def test_mark_skip_doesnt_capture_output(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.skip(reason="foo")
+            def test_skip():
+                print("bar!")
+        """)
+        result, dom = runandparse(testdir)
+        assert result.ret == 0
+        node_xml = dom.find_first_by_tag("testsuite").toxml()
+        assert "bar!" not in node_xml
+
     def test_classname_instance(self, testdir):
         testdir.makepyfile("""
-            class TestClass:
+            class TestClass(object):
                 def test_method(self):
                     assert 0
         """)
@@ -364,7 +376,7 @@ class TestPython:
         testdir.makepyfile("""
             def test_func():
                 assert 0
-            class TestHello:
+            class TestHello(object):
                 def test_hello(self):
                     pass
         """)
@@ -557,7 +569,7 @@ def test_mangle_test_address():
 def test_dont_configure_on_slaves(tmpdir):
     gotten = []
 
-    class FakeConfig:
+    class FakeConfig(object):
         def __init__(self):
             self.pluginmanager = self
             self.option = self
@@ -576,7 +588,7 @@ def test_dont_configure_on_slaves(tmpdir):
     assert len(gotten) == 1
 
 
-class TestNonPython:
+class TestNonPython(object):
     def test_summing_simple(self, testdir):
         testdir.makeconftest("""
             import pytest
@@ -703,6 +715,10 @@ def test_logxml_makedir(testdir):
     assert result.ret == 0
     assert testdir.tmpdir.join("path/to/results.xml").check()
 
+def test_logxml_check_isdir(testdir):
+    """Give an error if --junit-xml is a directory (#2089)"""
+    result = testdir.runpytest("--junit-xml=.")
+    result.stderr.fnmatch_lines(["*--junitxml must be a filename*"])
 
 def test_escaped_parametrized_names_xml(testdir):
     testdir.makepyfile("""
@@ -734,7 +750,7 @@ def test_double_colon_split_function_issue469(testdir):
 def test_double_colon_split_method_issue469(testdir):
     testdir.makepyfile("""
         import pytest
-        class TestClass:
+        class TestClass(object):
             @pytest.mark.parametrize('param', ["double::colon"])
             def test_func(self, param):
                 pass
