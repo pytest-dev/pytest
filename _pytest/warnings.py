@@ -1,5 +1,3 @@
-from _pytest.recwarn import RecordedWarning, WarningsRecorder
-import inspect
 import os
 import pytest
 import warnings
@@ -42,35 +40,19 @@ def pytest_addoption(parser):
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_call(item):
-    wrec = WarningsRecorder()
-
-    def showwarning(message, category, filename, lineno, file=None, line=None):
-        frame = inspect.currentframe()
-        if '/_pytest/recwarn' in frame.f_back.f_code.co_filename:
-            # we are in test recorder, so this warning is already handled
-            return
-        wrec._list.append(RecordedWarning(
-            message, category, filename, lineno, file, line))
-        # still perform old showwarning functionality
-        wrec._showwarning(
-            message, category, filename, lineno, file=file, line=line)
-
     args = item.config.getoption('pythonwarnings') or []
     inifilters = item.config.getini("filterwarnings")
-    with wrec:
-        _showwarning = wrec._showwarning
-        warnings.showwarning = showwarning
-        wrec._module.simplefilter('once')
+    with warnings.catch_warnings(record=True) as log:
+        warnings.simplefilter('once')
         for arg in args:
-            wrec._module._setoption(arg)
+            warnings._setoption(arg)
 
         for arg in inifilters:
-            _setoption(wrec._module, arg)
+            _setoption(warnings, arg)
 
         yield
-        wrec._showwarning = _showwarning
 
-    for warning in wrec.list:
+    for warning in log:
         msg = warnings.formatwarning(
             warning.message, warning.category,
             os.path.relpath(warning.filename), warning.lineno, warning.line)

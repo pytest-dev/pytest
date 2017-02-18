@@ -12,7 +12,7 @@ def pyfile_with_warnings(testdir):
 
 
 def test_normal_flow(testdir, pyfile_with_warnings):
-    result = testdir.runpytest_subprocess()
+    result = testdir.runpytest()
     result.stdout.fnmatch_lines([
         '*== pytest-warning summary ==*',
 
@@ -35,7 +35,7 @@ def test_as_errors(testdir, pyfile_with_warnings, method):
             [pytest]
             filterwarnings= error
             ''')
-    result = testdir.runpytest_subprocess(*args)
+    result = testdir.runpytest(*args)
     result.stdout.fnmatch_lines([
         'E       PendingDeprecationWarning: functionality is pending deprecation',
         'test_as_errors.py:3: PendingDeprecationWarning',
@@ -52,7 +52,7 @@ def test_ignore(testdir, pyfile_with_warnings, method):
         filterwarnings= ignore
         ''')
 
-    result = testdir.runpytest_subprocess(*args)
+    result = testdir.runpytest(*args)
     result.stdout.fnmatch_lines([
         '* 1 passed in *',
     ])
