@@ -75,7 +75,7 @@ __all__ = ["PluginManager", "PluginValidationError", "HookCallError",
 _py3 = sys.version_info > (3, 0)
 
 
-class HookspecMarker(object):
+class HookspecMarker:
     """ Decorator helper class for marking functions as hook specifications.
 
     You can instantiate it with a project_name to get a decorator.
@@ -113,7 +113,7 @@ class HookspecMarker(object):
             return setattr_hookspec_opts
 
 
-class HookimplMarker(object):
+class HookimplMarker:
     """ Decorator helper class for marking functions as hook implementations.
 
     You can instantiate with a project_name to get a decorator.
@@ -167,7 +167,7 @@ def normalize_hookimpl_opts(opts):
     opts.setdefault("optionalhook", False)
 
 
-class _TagTracer(object):
+class _TagTracer:
     def __init__(self):
         self._tag2proc = {}
         self.writer = None
@@ -214,7 +214,7 @@ class _TagTracer(object):
         self._tag2proc[tags] = processor
 
 
-class _TagTracerSub(object):
+class _TagTracerSub:
     def __init__(self, root, tags):
         self.root = root
         self.tags = tags
@@ -254,7 +254,7 @@ def _wrapped_call(wrap_controller, func):
     return call_outcome.get_result()
 
 
-class _CallOutcome(object):
+class _CallOutcome:
     """ Outcome of a function call, either an exception or a proper result.
     Calling the ``get_result`` method will return the result or reraise
     the exception raised when the function was called. """
@@ -286,7 +286,7 @@ def _reraise(cls, val, tb):
 """)
 
 
-class _TracedHookExecution(object):
+class _TracedHookExecution:
     def __init__(self, pluginmanager, before, after):
         self.pluginmanager = pluginmanager
         self.before = before
@@ -580,7 +580,7 @@ class PluginManager(object):
         return orig
 
 
-class _MultiCall(object):
+class _MultiCall:
     """ execute a call into multiple python functions/methods. """
 
     # XXX note that the __multicall__ argument is supported only
@@ -673,7 +673,7 @@ def varnames(func, startindex=None):
     return x
 
 
-class _HookRelay(object):
+class _HookRelay:
     """ hook holder object for performing 1:N hook calls where N is the number
     of registered plugins.
 
@@ -770,7 +770,7 @@ class _HookCaller(object):
                     proc(res[0])
 
 
-class HookImpl(object):
+class HookImpl:
     def __init__(self, plugin, plugin_name, function, hook_impl_opts):
         self.function = function
         self.argnames = varnames(self.function)
