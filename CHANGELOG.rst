@@ -1,6 +1,10 @@
 3.0.7 (unreleased)
 ==================
 
+* Fix ``AttributeError`` on ``sys.stdout.buffer`` / ``sys.stderr.buffer``
+  while using ``capsys`` fixture in python 3. (`#1407`_).
+  Thanks to `@asottile`_.
+
 * Fix regression, pytest now skips unittest correctly if run with ``--pdb``
   (`#2137`_). Thanks to `@gst`_ for the report and `@mbyt`_ for the PR.
 
@@ -32,6 +36,7 @@
 .. _@sirex: https://github.com/sirex
 .. _@vidartf: https://github.com/vidartf
 
+.. _#1407: https://github.com/pytest-dev/pytest/issues/1407
 .. _#2137: https://github.com/pytest-dev/pytest/issues/2137
 .. _#2160: https://github.com/pytest-dev/pytest/issues/2160
 .. _#2231: https://github.com/pytest-dev/pytest/issues/2231

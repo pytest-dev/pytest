@@ -239,3 +239,19 @@ else:
         except UnicodeError:
             errors = 'replace'
             return v.encode('ascii', errors)
+
+
+if _PY2:
+    from py.io import TextIO as CaptureIO
+else:
+    import io
+
+    class CaptureIO(io.TextIOWrapper):
+        def __init__(self):
+            super(CaptureIO, self).__init__(
+                io.BytesIO(),
+                encoding='UTF-8', newline='', write_through=True,
+            )
+
+        def getvalue(self):
+            return self.buffer.getvalue().decode('UTF-8')
