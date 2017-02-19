@@ -12,6 +12,7 @@ from fnmatch import fnmatch
 
 from py.builtin import print_
 
+from _pytest.capture import MultiCapture, SysCapture
 from _pytest._code import Source
 import py
 import pytest
@@ -734,7 +735,8 @@ class Testdir:
         if kwargs.get("syspathinsert"):
             self.syspathinsert()
         now = time.time()
-        capture = py.io.StdCapture()
+        capture = MultiCapture(Capture=SysCapture)
+        capture.start_capturing()
         try:
             try:
                 reprec = self.inline_run(*args, **kwargs)
@@ -749,7 +751,8 @@ class Testdir:
                 class reprec:
                     ret = 3
         finally:
-            out, err = capture.reset()
+            out, err = capture.readouterr()
+            capture.stop_capturing()
             sys.stdout.write(out)
             sys.stderr.write(err)
 
