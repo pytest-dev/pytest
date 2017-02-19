@@ -281,7 +281,7 @@ class TestLoggingInteraction:
             def test_logging():
                 import logging
                 import pytest
-                stream = capture.TextIO()
+                stream = capture.CaptureIO()
                 logging.basicConfig(stream=stream)
                 stream.close() # to free memory/release resources
         """)
@@ -622,16 +622,16 @@ def test_error_during_readouterr(testdir):
     ])
 
 
-class TestTextIO:
+class TestCaptureIO:
     def test_text(self):
-        f = capture.TextIO()
+        f = capture.CaptureIO()
         f.write("hello")
         s = f.getvalue()
         assert s == "hello"
         f.close()
 
     def test_unicode_and_str_mixture(self):
-        f = capture.TextIO()
+        f = capture.CaptureIO()
         if sys.version_info >= (3, 0):
             f.write("\u00f6")
             pytest.raises(TypeError, "f.write(bytes('hello', 'UTF-8'))")
@@ -641,6 +641,13 @@ class TestTextIO:
             s = f.getvalue()
             f.close()
             assert isinstance(s, unicode)
+
+    def test_write_bytes_to_buffer(self):
+        f = capture.CaptureIO()
+        # In python3, stdout / stderr are text io wrappers (exposing a buffer
+        # property of the underlying bytestream).
+        getattr(f, 'buffer', f).write(b'foo\n')
+        assert f.getvalue() == 'foo\n'
 
 
 def test_bytes_io():
@@ -900,8 +907,8 @@ class TestStdCapture:
         with self.getcapture() as cap:
             sys.stdout.write("hello")
             sys.stderr.write("world")
-            sys.stdout = capture.TextIO()
-            sys.stderr = capture.TextIO()
+            sys.stdout = capture.CaptureIO()
+            sys.stderr = capture.CaptureIO()
             print ("not seen")
             sys.stderr.write("not seen\n")
             out, err = cap.readouterr()

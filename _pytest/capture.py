@@ -11,8 +11,8 @@ from tempfile import TemporaryFile
 
 import py
 import pytest
+from _pytest.compat import CaptureIO
 
-from py.io import TextIO
 unicode = py.builtin.text
 
 patchsysdict = {0: 'stdin', 1: 'stdout', 2: 'stderr'}
@@ -402,7 +402,7 @@ class SysCapture:
             if name == "stdin":
                 tmpfile = DontReadFromInput()
             else:
-                tmpfile = TextIO()
+                tmpfile = CaptureIO()
         self.tmpfile = tmpfile
 
     def start(self):
