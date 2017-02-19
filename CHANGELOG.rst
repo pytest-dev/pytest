@@ -55,6 +55,14 @@ Changes
   Thanks `@The-Compiler`_ for the PR.
 
 
+Bug Fixes
+---------
+
+* Fix ``AttributeError`` on ``sys.stdout.buffer`` / ``sys.stderr.buffer``
+  while using ``capsys`` fixture in python 3. (`#1407`_).
+  Thanks to `@asottile`_.
+
+
 .. _@davidszotten: https://github.com/davidszotten
 .. _@fushi: https://github.com/fushi
 .. _@mattduck: https://github.com/mattduck
@@ -65,6 +73,7 @@ Changes
 .. _@unsignedint: https://github.com/unsignedint
 .. _@Kriechi: https://github.com/Kriechi
 
+.. _#1407: https://github.com/pytest-dev/pytest/issues/1407
 .. _#1512: https://github.com/pytest-dev/pytest/issues/1512
 .. _#1874: https://github.com/pytest-dev/pytest/pull/1874
 .. _#1952: https://github.com/pytest-dev/pytest/pull/1952
