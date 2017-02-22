@@ -2,7 +2,7 @@ import pytest
 import sys
 
 
-class TestRaises:
+class TestRaises(object):
     def test_raises(self):
         source = "int('qwe')"
         excinfo = pytest.raises(ValueError, source)
@@ -20,21 +20,13 @@ class TestRaises:
         pytest.raises(ValueError, int, 'hello')
 
     def test_raises_callable_no_exception(self):
-        class A:
+        class A(object):
             def __call__(self):
                 pass
         try:
             pytest.raises(ValueError, A())
         except pytest.raises.Exception:
             pass
-
-    def test_raises_flip_builtin_AssertionError(self):
-        # we replace AssertionError on python level
-        # however c code might still raise the builtin one
-        from _pytest.assertion.util import BuiltinAssertionError # noqa
-        pytest.raises(AssertionError,"""
-            raise BuiltinAssertionError
-        """)
 
     def test_raises_as_contextmanager(self, testdir):
         testdir.makepyfile("""
@@ -126,3 +118,18 @@ class TestRaises:
         for o in gc.get_objects():
             assert type(o) is not T
 
+
+    def test_raises_match(self):
+        msg = r"with base \d+"
+        with pytest.raises(ValueError, match=msg):
+            int('asdf')
+
+        msg = "with base 10"
+        with pytest.raises(ValueError, match=msg):
+            int('asdf')
+
+        msg = "with base 16"
+        expr = r"Pattern '{0}' not found in 'invalid literal for int\(\) with base 10: 'asdf''".format(msg)
+        with pytest.raises(AssertionError, match=expr):
+            with pytest.raises(ValueError, match=msg):
+                int('asdf', base=10)

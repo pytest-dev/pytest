@@ -27,7 +27,7 @@ EXIT_NOTESTSCOLLECTED = 5
 
 def pytest_addoption(parser):
     parser.addini("norecursedirs", "directory patterns to avoid for recursion",
-        type="args", default=['.*', 'build', 'dist', 'CVS', '_darcs', '{arch}', '*.egg'])
+        type="args", default=['.*', 'build', 'dist', 'CVS', '_darcs', '{arch}', '*.egg', 'venv'])
     parser.addini("testpaths", "directories to search for tests when no files or directories are given in the command line.",
         type="args", default=[])
     #parser.addini("dirpatterns",
@@ -179,7 +179,7 @@ def pytest_ignore_collect(path, config):
     return False
 
 
-class FSHookProxy:
+class FSHookProxy(object):
     def __init__(self, fspath, pm, remove_mods):
         self.fspath = fspath
         self.pm = pm
@@ -372,7 +372,7 @@ class Node(object):
         """
         from _pytest.mark import MarkDecorator
         if isinstance(marker, py.builtin._basestring):
-            marker = MarkDecorator(marker)
+            marker = getattr(pytest.mark, marker)
         elif not isinstance(marker, MarkDecorator):
             raise ValueError("is not a string or pytest.mark.* Marker")
         self.keywords[marker.name] = marker
@@ -470,10 +470,6 @@ class Collector(Node):
             exc = excinfo.value
             return str(exc.args[0])
         return self._repr_failure_py(excinfo, style="short")
-
-    def _memocollect(self):
-        """ internal helper method to cache results of calling collect(). """
-        return self._memoizedcall('_collected', lambda: list(self.collect()))
 
     def _prunetraceback(self, excinfo):
         if hasattr(self, 'fspath'):

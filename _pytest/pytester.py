@@ -10,6 +10,8 @@ import time
 import traceback
 from fnmatch import fnmatch
 
+from weakref import WeakKeyDictionary
+
 from py.builtin import print_
 
 from _pytest._code import Source
@@ -163,7 +165,7 @@ def _pytest(request):
     """
     return PytestArg(request)
 
-class PytestArg:
+class PytestArg(object):
     def __init__(self, request):
         self.request = request
 
@@ -178,7 +180,7 @@ def get_public_names(l):
     return [x for x in l if x[0] != "_"]
 
 
-class ParsedCall:
+class ParsedCall(object):
     def __init__(self, name, kwargs):
         self.__dict__.update(kwargs)
         self._name = name
@@ -189,7 +191,7 @@ class ParsedCall:
         return "<ParsedCall %r(**%r)>" %(self._name, d)
 
 
-class HookRecorder:
+class HookRecorder(object):
     """Record all hooks called in a plugin manager.
 
     This wraps all the hook calls in the plugin manager, recording
@@ -332,8 +334,8 @@ def testdir(request, tmpdir_factory):
     return Testdir(request, tmpdir_factory)
 
 
-rex_outcome = re.compile(r"(\d+) ([\w-]+)")
-class RunResult:
+rex_outcome = re.compile("(\d+) ([\w-]+)")
+class RunResult(object):
     """The result of running a command.
 
     Attributes:
@@ -379,7 +381,7 @@ class RunResult:
 
 
 
-class Testdir:
+class Testdir(object):
     """Temporary test directory with tools to test/run pytest itself.
 
     This is based on the ``tmpdir`` fixture but provides a number of
@@ -402,6 +404,7 @@ class Testdir:
 
     def __init__(self, request, tmpdir_factory):
         self.request = request
+        self._mod_collections  = WeakKeyDictionary()
         # XXX remove duplication with tmpdir plugin
         basetmp = tmpdir_factory.ensuretemp("testdir")
         name = request.function.__name__
@@ -469,7 +472,7 @@ class Testdir:
         if not hasattr(self, '_olddir'):
             self._olddir = old
 
-    def _makefile(self, ext, args, kwargs):
+    def _makefile(self, ext, args, kwargs, encoding="utf-8"):
         items = list(kwargs.items())
         if args:
             source = py.builtin._totext("\n").join(
@@ -489,7 +492,7 @@ class Testdir:
 
             source_unicode = "\n".join([my_totext(line) for line in source.lines])
             source = py.builtin._totext(source_unicode)
-            content = source.strip().encode("utf-8") # + "\n"
+            content = source.strip().encode(encoding) # + "\n"
             #content = content.rstrip() + "\n"
             p.write(content, "wb")
             if ret is None:
@@ -705,7 +708,7 @@ class Testdir:
 
         rec = []
 
-        class Collect:
+        class Collect(object):
             def pytest_configure(x, config):
                 rec.append(self.make_hook_recorder(config.pluginmanager))
 
@@ -716,7 +719,7 @@ class Testdir:
         if len(rec) == 1:
             reprec = rec.pop()
         else:
-            class reprec:
+            class reprec(object):
                 pass
         reprec.ret = ret
 
@@ -740,13 +743,13 @@ class Testdir:
                 reprec = self.inline_run(*args, **kwargs)
             except SystemExit as e:
 
-                class reprec:
+                class reprec(object):
                     ret = e.args[0]
 
             except Exception:
                 traceback.print_exc()
 
-                class reprec:
+                class reprec(object):
                     ret = 3
         finally:
             out, err = capture.reset()
@@ -866,6 +869,7 @@ class Testdir:
             self.makepyfile(__init__ = "#")
         self.config = config = self.parseconfigure(path, *configargs)
         node = self.getnode(config, path)
+
         return node
 
     def collect_by_name(self, modcol, name):
@@ -880,7 +884,9 @@ class Testdir:
         :param name: The name of the node to return.
 
         """
-        for colitem in modcol._memocollect():
+        if modcol not in self._mod_collections:
+            self._mod_collections[modcol] = list(modcol.collect())
+        for colitem in self._mod_collections[modcol]:
             if colitem.name == name:
                 return colitem
 
@@ -1028,7 +1034,7 @@ def getdecoded(out):
                     py.io.saferepr(out),)
 
 
-class LineComp:
+class LineComp(object):
     def __init__(self):
         self.stringio = py.io.TextIO()
 
@@ -1044,7 +1050,7 @@ class LineComp:
         return LineMatcher(lines1).fnmatch_lines(lines2)
 
 
-class LineMatcher:
+class LineMatcher(object):
     """Flexible matching of text.
 
     This is a convenience class to test large texts like the output of

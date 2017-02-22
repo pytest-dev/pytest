@@ -16,7 +16,7 @@ from _pytest.terminal import build_summary_stats_line, _plugin_nameversions
 DistInfo = collections.namedtuple('DistInfo', ['project_name', 'version'])
 
 
-class Option:
+class Option(object):
     def __init__(self, verbose=False, fulltrace=False):
         self.verbose = verbose
         self.fulltrace = fulltrace
@@ -56,7 +56,7 @@ def test_plugin_nameversion(input, expected):
     assert result == expected
 
 
-class TestTerminal:
+class TestTerminal(object):
     def test_pass_skip_fail(self, testdir, option):
         testdir.makepyfile("""
             import pytest
@@ -127,7 +127,7 @@ class TestTerminal:
 
     def test_itemreport_subclasses_show_subclassed_file(self, testdir):
         testdir.makepyfile(test_p1="""
-            class BaseTests:
+            class BaseTests(object):
                 def test_p1(self):
                     pass
             class TestClass(BaseTests):
@@ -151,7 +151,7 @@ class TestTerminal:
     def test_itemreport_directclasses_not_shown_as_subclasses(self, testdir):
         a = testdir.mkpydir("a123")
         a.join("test_hello123.py").write(_pytest._code.Source("""
-            class TestClass:
+            class TestClass(object):
                 def test_method(self):
                     pass
         """))
@@ -204,7 +204,7 @@ class TestTerminal:
         result.stdout.fnmatch_lines(['*KeyboardInterrupt*'])
 
 
-class TestCollectonly:
+class TestCollectonly(object):
     def test_collectonly_basic(self, testdir):
         testdir.makepyfile("""
             def test_func():
@@ -249,7 +249,7 @@ class TestCollectonly:
         p = testdir.makepyfile("""
             def test_func1():
                 pass
-            class TestClass:
+            class TestClass(object):
                 def test_method(self):
                     pass
         """)
@@ -310,7 +310,7 @@ def test_repr_python_version(monkeypatch):
     finally:
         monkeypatch.undo() # do this early as pytest can get confused
 
-class TestFixtureReporting:
+class TestFixtureReporting(object):
     def test_setup_fixture_error(self, testdir):
         testdir.makepyfile("""
             def setup_function(function):
@@ -395,7 +395,7 @@ class TestFixtureReporting:
             "*1 failed*",
          ])
 
-class TestTerminalFunctional:
+class TestTerminalFunctional(object):
     def test_deselected(self, testdir):
         testpath = testdir.makepyfile("""
                 def test_one():
@@ -431,7 +431,7 @@ class TestTerminalFunctional:
         p1 = testdir.makepyfile("""
             def test_passes():
                 pass
-            class TestClass:
+            class TestClass(object):
                 def test_method(self):
                     pass
         """)
@@ -487,7 +487,7 @@ class TestTerminalFunctional:
                 raise ValueError()
             def test_pass():
                 pass
-            class TestClass:
+            class TestClass(object):
                 def test_skip(self):
                     pytest.skip("hello")
             def test_gen():
@@ -612,8 +612,8 @@ def test_color_yes_collection_on_non_atty(testdir, verbose):
 
 
 def test_getreportopt():
-    class config:
-        class option:
+    class config(object):
+        class option(object):
             reportchars = ""
             disablepytestwarnings = True
 
@@ -683,7 +683,7 @@ def test_traceconfig(testdir, monkeypatch):
     assert result.ret == EXIT_NOTESTSCOLLECTED
 
 
-class TestGenericReporting:
+class TestGenericReporting(object):
     """ this test class can be subclassed with a different option
         provider to run e.g. distributed tests.
     """

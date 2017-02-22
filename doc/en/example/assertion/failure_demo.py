@@ -128,7 +128,7 @@ def test_attribute_multiple():
 def globf(x):
     return x+1
 
-class TestRaises:
+class TestRaises(object):
     def test_raises(self):
         s = 'qwe'
         raises(TypeError, "int(s)")
@@ -167,7 +167,7 @@ def test_dynamic_compile_shows_nicely():
 
 
 
-class TestMoreErrors:
+class TestMoreErrors(object):
     def test_complex_error(self):
         def f():
             return 44
@@ -213,23 +213,23 @@ class TestMoreErrors:
             x = 0
 
 
-class TestCustomAssertMsg:
+class TestCustomAssertMsg(object):
 
     def test_single_line(self):
-        class A:
+        class A(object):
             a = 1
         b = 2
         assert A.a == b, "A.a appears not to be b"
 
     def test_multiline(self):
-        class A:
+        class A(object):
             a = 1
         b = 2
         assert A.a == b, "A.a appears not to be b\n" \
             "or does not appear to be b\none of those"
 
     def test_custom_repr(self):
-        class JSON:
+        class JSON(object):
             a = 1
             def __repr__(self):
                 return "This is JSON\n{\n  'foo': 'bar'\n}"

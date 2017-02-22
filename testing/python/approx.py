@@ -20,7 +20,7 @@ class MyDocTestRunner(doctest.DocTestRunner):
             example.source.strip(), got.strip(), example.want.strip()))
 
 
-class TestApprox:
+class TestApprox(object):
 
     def test_repr_string(self):
         # for some reason in Python 2.6 it is not displaying the tolerance representation correctly

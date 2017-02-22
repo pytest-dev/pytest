@@ -98,7 +98,7 @@ You can use the ``skipif`` decorator (and any other marker) on classes::
 
     @pytest.mark.skipif(sys.platform == 'win32',
                         reason="does not run on windows")
-    class TestPosixCalls:
+    class TestPosixCalls(object):
 
         def test_function(self):
             "will not be setup or run under 'win32' platform"

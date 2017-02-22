@@ -197,7 +197,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
                 res = list(collector._genfunctions(name, obj))
             outcome.force_result(res)
 
-def pytest_make_parametrize_id(config, val):
+def pytest_make_parametrize_id(config, val, argname=None):
     return None
 
 
@@ -404,8 +404,9 @@ def transfer_markers(funcobj, cls, mod):
 
 class Module(pytest.File, PyCollector):
     """ Collector for test classes and functions. """
+
     def _getobj(self):
-        return self._memoizedcall('_obj', self._importtestmodule)
+        return self._importtestmodule()
 
     def collect(self):
         self.session._fixturemanager.parsefactories(self)
@@ -502,6 +503,8 @@ def _get_xunit_func(obj, name):
 class Class(PyCollector):
     """ Collector for test methods. """
     def collect(self):
+        if not safe_getattr(self.obj, "__test__", True):
+            return []
         if hasinit(self.obj):
             self.warn("C1", "cannot collect test class %r because it has a "
                 "__init__ constructor" % self.obj.__name__)
@@ -925,15 +928,21 @@ def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
 
 def _idval(val, argname, idx, idfn, config=None):
     if idfn:
+        s = None
         try:
             s = idfn(val)
-            if s:
-                return _escape_strings(s)
         except Exception:
-            pass
+            # See issue https://github.com/pytest-dev/pytest/issues/2169
+            import warnings
+            msg = "Raised while trying to determine id of parameter %s at position %d." % (argname, idx)
+            msg += '\nUpdate your code as this will raise an error in pytest-4.0.'
+            warnings.warn(msg)
+        if s:
+            return _escape_strings(s)
 
     if config:
-        hook_id = config.hook.pytest_make_parametrize_id(config=config, val=val)
+        hook_id = config.hook.pytest_make_parametrize_id(
+            config=config, val=val, argname=argname)
         if hook_id:
             return hook_id
 
@@ -1125,7 +1134,7 @@ def raises(expected_exception, *args, **kwargs):
            >>> with raises(ValueError) as exc_info:
            ...     if value > 10:
            ...         raise ValueError("value must be <= 10")
-           ...     assert str(exc_info.value) == "value must be <= 10"  # this will not execute
+           ...     assert exc_info.type == ValueError  # this will not execute
 
        Instead, the following approach must be taken (note the difference in
        scope)::
@@ -1134,7 +1143,16 @@ def raises(expected_exception, *args, **kwargs):
            ...     if value > 10:
            ...         raise ValueError("value must be <= 10")
            ...
-           >>> assert str(exc_info.value) == "value must be <= 10"
+           >>> assert exc_info.type == ValueError
+
+    Or you can use the keyword argument ``match`` to assert that the
+    exception matches a text or regex::
+
+        >>> with raises(ValueError, match='must be 0 or None'):
+        ...     raise ValueError("value must be 0 or None")
+
+        >>> with raises(ValueError, match=r'must be \d+$'):
+        ...     raise ValueError("value must be 42")
 
 
     Or you can specify a callable by passing a to-be-called lambda::
@@ -1175,12 +1193,6 @@ def raises(expected_exception, *args, **kwargs):
 
     """
     __tracebackhide__ = True
-    if expected_exception is AssertionError:
-        # we want to catch a AssertionError
-        # replace our subclass with the builtin one
-        # see https://github.com/pytest-dev/pytest/issues/176
-        from _pytest.assertion.util import BuiltinAssertionError \
-            as expected_exception
     msg = ("exceptions must be old-style classes or"
            " derived from BaseException, not %s")
     if isinstance(expected_exception, tuple):
@@ -1191,11 +1203,15 @@ def raises(expected_exception, *args, **kwargs):
         raise TypeError(msg % type(expected_exception))
 
     message = "DID NOT RAISE {0}".format(expected_exception)
+    match_expr = None
 
     if not args:
         if "message" in kwargs:
             message = kwargs.pop("message")
-        return RaisesContext(expected_exception, message)
+        if "match" in kwargs:
+            match_expr = kwargs.pop("match")
+            message += " matching '{0}'".format(match_expr)
+        return RaisesContext(expected_exception, message, match_expr)
     elif isinstance(args[0], str):
         code, = args
         assert isinstance(code, str)
@@ -1219,9 +1235,10 @@ def raises(expected_exception, *args, **kwargs):
     pytest.fail(message)
 
 class RaisesContext(object):
-    def __init__(self, expected_exception, message):
+    def __init__(self, expected_exception, message, match_expr):
         self.expected_exception = expected_exception
         self.message = message
+        self.match_expr = match_expr
         self.excinfo = None
 
     def __enter__(self):
@@ -1243,6 +1260,8 @@ class RaisesContext(object):
         suppress_exception = issubclass(self.excinfo.type, self.expected_exception)
         if sys.version_info[0] == 2 and suppress_exception:
             sys.exc_clear()
+        if self.match_expr:
+            self.excinfo.match(self.match_expr)
         return suppress_exception
 
 

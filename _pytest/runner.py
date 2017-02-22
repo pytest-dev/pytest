@@ -55,7 +55,7 @@ def pytest_sessionstart(session):
 def pytest_sessionfinish(session):
     session._setupstate.teardown_all()
 
-class NodeInfo:
+class NodeInfo(object):
     def __init__(self, location):
         self.location = location
 
@@ -150,7 +150,7 @@ def call_runtest_hook(item, when, **kwds):
     ihook = getattr(item.ihook, hookname)
     return CallInfo(lambda: ihook(item=item, **kwds), when=when)
 
-class CallInfo:
+class CallInfo(object):
     """ Result/Exception info a function invocation. """
     #: None or ExceptionInfo object.
     excinfo = None
@@ -330,7 +330,9 @@ class TeardownErrorReport(BaseReport):
         self.__dict__.update(extra)
 
 def pytest_make_collect_report(collector):
-    call = CallInfo(collector._memocollect, "memocollect")
+    call = CallInfo(
+        lambda: list(collector.collect()),
+        'collect')
     longrepr = None
     if not call.excinfo:
         outcome = "passed"
@@ -575,4 +577,3 @@ def importorskip(modname, minversion=None):
             raise Skipped("module %r has __version__ %r, required is: %r" %(
                           modname, verattr, minversion), allow_module_level=True)
     return mod
-

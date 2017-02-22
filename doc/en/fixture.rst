@@ -557,7 +557,7 @@ and instantiate an object ``app`` where we stick the already defined
 
     import pytest
 
-    class App:
+    class App(object):
         def __init__(self, smtp):
             self.smtp = smtp
 
@@ -728,7 +728,7 @@ and declare its use in a test module via a ``usefixtures`` marker::
     import pytest
 
     @pytest.mark.usefixtures("cleandir")
-    class TestDirectoryInit:
+    class TestDirectoryInit(object):
         def test_cwd_starts_empty(self):
             assert os.listdir(os.getcwd()) == []
             with open("myfile", "w") as f:
@@ -791,7 +791,7 @@ self-contained implementation of this idea::
 
     import pytest
 
-    class DB:
+    class DB(object):
         def __init__(self):
             self.intransaction = []
         def begin(self, name):
@@ -803,7 +803,7 @@ self-contained implementation of this idea::
     def db():
         return DB()
 
-    class TestClass:
+    class TestClass(object):
         @pytest.fixture(autouse=True)
         def transact(self, request, db):
             db.begin(request.function.__name__)
@@ -861,7 +861,7 @@ into a conftest.py file **without** using ``autouse``::
 and then e.g. have a TestClass using it by declaring the need::
 
     @pytest.mark.usefixtures("transact")
-    class TestClass:
+    class TestClass(object):
         def test_method1(self):
             ...
 

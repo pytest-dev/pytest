@@ -425,7 +425,7 @@ tests in a class.  Here is a test module example:
     import pytest
 
     @pytest.mark.incremental
-    class TestUserHandling:
+    class TestUserHandling(object):
         def test_login(self):
             pass
         def test_modification(self):
@@ -483,7 +483,7 @@ Here is an example for making a ``db`` fixture available in a directory:
     # content of a/conftest.py
     import pytest
 
-    class DB:
+    class DB(object):
         pass
 
     @pytest.fixture(scope="session")

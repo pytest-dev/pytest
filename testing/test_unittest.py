@@ -385,7 +385,7 @@ def test_trial_testfunction_todo_property(testdir):
     reprec.assertoutcome(skipped=1)
 
 
-class TestTrialUnittest:
+class TestTrialUnittest(object):
     def setup_class(cls):
         cls.ut = pytest.importorskip("twisted.trial.unittest")
 
@@ -704,7 +704,7 @@ def test_unittest_setup_interaction(testdir, fix_type, stmt):
 
 def test_non_unittest_no_setupclass_support(testdir):
     testpath = testdir.makepyfile("""
-        class TestFoo:
+        class TestFoo(object):
             x = 0
 
             @classmethod

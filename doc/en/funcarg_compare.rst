@@ -24,7 +24,7 @@ resources.  Here is a basic example how we could implement
 a per-session Database object::
 
     # content of conftest.py 
-    class Database:
+    class Database(object):
         def __init__(self):
             print ("database instance created")
         def destroy(self):

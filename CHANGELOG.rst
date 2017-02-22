@@ -1,3 +1,80 @@
+3.1.0.dev (unreleased)
+======================
+
+
+New Features
+------------
+
+* Added an ini option ``doctest_encoding`` to specify which encoding to use for doctest files.
+  Thanks `@wheerd`_ for the PR (`#2101`_).
+
+* pytest now warns when a callable ids raises in a parametrized test. Thanks `@fogo`_ for the PR.
+
+* ``pytest.warns`` now checks for subclass relationship rather than
+  class equality. Thanks `@lesteve`_ for the PR (`#2166`_)
+
+* ``pytest.raises`` now asserts that the error message matches a text or regex
+  with the ``match`` keyword argument. Thanks `@Kriechi`_ for the PR.
+
+
+Changes
+-------
+
+* Old-style classes have been changed to new-style classes in order to improve
+  compatibility with Python 2. Thanks to `@MichalTHEDUDE`_ and `@mandeep`_ for the PR (`#2147`_).
+
+* It is now possible to skip test classes from being collected by setting a
+  ``__test__`` attribute to ``False`` in the class body (`#2007`_). Thanks
+  to `@syre`_ for the report and `@lwm`_ for the PR.
+
+* Testcase reports with a ``url`` attribute will now properly write this to junitxml.
+  Thanks `@fushi`_ for the PR (`#1874`_).
+
+* Remove common items from dict comparision output when verbosity=1. Also update
+  the truncation message to make it clearer that pytest truncates all
+  assertion messages if verbosity < 2 (`#1512`_).
+  Thanks `@mattduck`_ for the PR
+
+* ``--pdbcls`` no longer implies ``--pdb``. This makes it possible to use
+  ``addopts=--pdbcls=module.SomeClass`` on ``pytest.ini``. Thanks `@davidszotten`_ for
+  the PR (`#1952`_).
+* Change exception raised by ``capture.DontReadFromInput.fileno()`` from ``ValueError``
+  to ``io.UnsupportedOperation``. Thanks `@vlad-dragos`_ for the PR.
+
+* fix `#2013`_: turn RecordedWarning into namedtupe,
+  to give it a comprehensible repr while preventing unwarranted modification
+
+* fix `#2208`_: ensure a iteration limit for _pytest.compat.get_real_func.
+  Thanks `@RonnyPfannschmidt`_ for the Report and PR
+
+* Modify ``pytest_make_parametrize_id()`` hook to accept ``argname`` as an
+  additional parameter.
+  Thanks `@unsignedint`_ for the PR.
+
+* Add ``venv`` to the default ``norecursedirs`` setting.
+  Thanks `@The-Compiler`_ for the PR.
+
+
+.. _@davidszotten: https://github.com/davidszotten
+.. _@fushi: https://github.com/fushi
+.. _@mattduck: https://github.com/mattduck
+.. _@wheerd: https://github.com/wheerd
+.. _@fogo: https://github.com/fogo
+.. _@mandeep: https://github.com/mandeep
+.. _@MichalTHEDUDE: https://github.com/MichalTHEDUDE
+.. _@unsignedint: https://github.com/unsignedint
+.. _@Kriechi: https://github.com/Kriechi
+
+.. _#1512: https://github.com/pytest-dev/pytest/issues/1512
+.. _#1874: https://github.com/pytest-dev/pytest/pull/1874
+.. _#1952: https://github.com/pytest-dev/pytest/pull/1952
+.. _#2007: https://github.com/pytest-dev/pytest/issues/2007
+.. _#2013: https://github.com/pytest-dev/pytest/issues/2013
+.. _#2101: https://github.com/pytest-dev/pytest/pull/2101
+.. _#2166: https://github.com/pytest-dev/pytest/pull/2166
+.. _#2147: https://github.com/pytest-dev/pytest/issues/2147
+.. _#2208: https://github.com/pytest-dev/pytest/issues/2208
+
 3.0.7 (unreleased)
 ==================
 
@@ -140,6 +217,7 @@
 * Cope gracefully with a .pyc file with no matching .py file (`#2038`_). Thanks
   `@nedbat`_.
 
+.. _@syre: https://github.com/syre
 .. _@adler-j: https://github.com/adler-j
 .. _@d-b-w: https://bitbucket.org/d-b-w/
 .. _@DuncanBetts: https://github.com/DuncanBetts
@@ -247,6 +325,7 @@
 .. _@raquel-ucl: https://github.com/raquel-ucl
 .. _@axil: https://github.com/axil
 .. _@tgoodlet: https://github.com/tgoodlet
+.. _@vlad-dragos: https://github.com/vlad-dragos
 
 .. _#1853: https://github.com/pytest-dev/pytest/issues/1853
 .. _#1905: https://github.com/pytest-dev/pytest/issues/1905

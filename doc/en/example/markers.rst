@@ -21,7 +21,7 @@ You can "mark" a test function with custom metadata like this::
         pass
     def test_another():
         pass
-    class TestClass:
+    class TestClass(object):
         def test_method(self):
             pass
 
@@ -242,7 +242,7 @@ its test methods::
     # content of test_mark_classlevel.py
     import pytest
     @pytest.mark.webtest
-    class TestClass:
+    class TestClass(object):
         def test_startup(self):
             pass
         def test_startup_and_more(self):
@@ -256,14 +256,14 @@ To remain backward-compatible with Python 2.4 you can also set a
 
     import pytest
 
-    class TestClass:
+    class TestClass(object):
         pytestmark = pytest.mark.webtest
 
 or if you need to use multiple markers you can use a list::
 
     import pytest
 
-    class TestClass:
+    class TestClass(object):
         pytestmark = [pytest.mark.webtest, pytest.mark.slowtest]
 
 You can also set a module level marker::
@@ -407,7 +407,7 @@ code you can read over all such settings.  Example::
     pytestmark = pytest.mark.glob("module", x=1)
 
     @pytest.mark.glob("class", x=2)
-    class TestClass:
+    class TestClass(object):
         @pytest.mark.glob("function", x=3)
         def test_something(self):
             pass

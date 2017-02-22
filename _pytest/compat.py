@@ -122,7 +122,7 @@ if  sys.version_info[:2] == (2, 6):
 
 if _PY3:
     import codecs
-
+    imap = map
     STRING_TYPES = bytes, str
 
     def _escape_strings(val):
@@ -156,6 +156,8 @@ if _PY3:
 else:
     STRING_TYPES = bytes, str, unicode
 
+    from itertools import imap  # NOQA
+
     def _escape_strings(val):
         """In py2 bytes and str are the same type, so return if it's a bytes
         object, return it unchanged if it is a full ascii string,
@@ -178,8 +180,18 @@ def get_real_func(obj):
     """ gets the real function object of the (possibly) wrapped object by
     functools.wraps or functools.partial.
     """
-    while hasattr(obj, "__wrapped__"):
-        obj = obj.__wrapped__
+    start_obj = obj
+    for i in range(100):
+        new_obj = getattr(obj, '__wrapped__', None)
+        if new_obj is None:
+            break
+        obj = new_obj
+    else:
+        raise ValueError(
+            ("could not find real function of {start}"
+             "\nstopped at {current}").format(
+                start=py.io.saferepr(start_obj),
+                current=py.io.saferepr(obj)))
     if isinstance(obj, functools.partial):
         obj = obj.func
     return obj
@@ -209,7 +221,7 @@ def safe_getattr(object, name, default):
     """ Like getattr but return default upon any Exception.
 
     Attribute access can potentially fail for 'evil' Python objects.
-    See issue214
+    See issue #214.
     """
     try:
         return getattr(object, name, default)

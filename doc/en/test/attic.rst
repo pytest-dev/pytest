@@ -110,7 +110,7 @@ If you want to disable a complete test class you
 can set the class-level attribute ``disabled``.
 For example, in order to avoid running some tests on Win32::
 
-    class TestPosixOnly:
+    class TestPosixOnly(object):
         disabled = sys.platform == 'win32'
 
         def test_xxx(self):

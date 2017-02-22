@@ -7,7 +7,7 @@ import shutil
 
 pytest_plugins = "pytester",
 
-class TestNewAPI:
+class TestNewAPI(object):
     def test_config_cache_makedir(self, testdir):
         testdir.makeini("[pytest]")
         config = testdir.parseconfigure()
@@ -129,7 +129,7 @@ def test_cache_show(testdir):
     ])
 
 
-class TestLastFailed:
+class TestLastFailed(object):
 
     def test_lastfailed_usecase(self, testdir, monkeypatch):
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", 1)

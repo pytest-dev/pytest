@@ -20,15 +20,15 @@ def pytest_namespace():
     return {'set_trace': pytestPDB().set_trace}
 
 def pytest_configure(config):
-    if config.getvalue("usepdb") or config.getvalue("usepdb_cls"):
+    if config.getvalue("usepdb_cls"):
+        modname, classname = config.getvalue("usepdb_cls").split(":")
+        __import__(modname)
+        pdb_cls = getattr(sys.modules[modname], classname)
+    else:
+        pdb_cls = pdb.Pdb
+
+    if config.getvalue("usepdb"):
         config.pluginmanager.register(PdbInvoke(), 'pdbinvoke')
-        if config.getvalue("usepdb_cls"):
-            modname, classname = config.getvalue("usepdb_cls").split(":")
-            __import__(modname)
-            pdb_cls = getattr(sys.modules[modname], classname)
-        else:
-            pdb_cls = pdb.Pdb
-        pytestPDB._pdb_cls = pdb_cls
 
     old = (pdb.set_trace, pytestPDB._pluginmanager)
 
@@ -40,9 +40,10 @@ def pytest_configure(config):
     pdb.set_trace = pytest.set_trace
     pytestPDB._pluginmanager = config.pluginmanager
     pytestPDB._config = config
+    pytestPDB._pdb_cls = pdb_cls
     config._cleanup.append(fin)
 
-class pytestPDB:
+class pytestPDB(object):
     """ Pseudo PDB that defers to the real pdb. """
     _pluginmanager = None
     _config = None
@@ -63,7 +64,7 @@ class pytestPDB:
         self._pdb_cls().set_trace(frame)
 
 
-class PdbInvoke:
+class PdbInvoke(object):
     def pytest_exception_interact(self, node, call, report):
         capman = node.config.pluginmanager.getplugin("capturemanager")
         if capman:

@@ -7,7 +7,7 @@ def setup(request):
     yield setup
     setup.finalize()
 
-class CostlySetup:
+class CostlySetup(object):
     def __init__(self):
         import time
         print ("performing costly setup")
