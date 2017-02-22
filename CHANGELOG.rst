@@ -5,6 +5,8 @@
 New Features
 ------------
 
+* junitxml: Add `--junit-suite-name` option to specify root `<testsuite>` name for JUnit XML reports
+
 * Added an ini option ``doctest_encoding`` to specify which encoding to use for doctest files.
   Thanks `@wheerd`_ for the PR (`#2101`_).
 
