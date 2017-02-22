@@ -1,6 +1,9 @@
 3.0.7 (unreleased)
 ==================
 
+* junitxml: Fix problematic case where system-out tag occured twice per testcase
+  element in the XML report. Thanks `@kkoukiou`_ for the PR.
+
 * Fix regression, pytest now skips unittest correctly if run with ``--pdb``
   (`#2137`_). Thanks to `@gst`_ for the report and `@mbyt`_ for the PR.
 
@@ -31,6 +34,7 @@
 .. _@gst: https://github.com/gst
 .. _@sirex: https://github.com/sirex
 .. _@vidartf: https://github.com/vidartf
+.. _@kkoukiou: https://github.com/KKoukiou
 
 .. _#2137: https://github.com/pytest-dev/pytest/issues/2137
 .. _#2160: https://github.com/pytest-dev/pytest/issues/2160
