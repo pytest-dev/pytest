@@ -557,6 +557,25 @@ class TestPython:
         systemout = pnode.find_first_by_tag("system-err")
         assert "hello-stderr" in systemout.toxml()
 
+    def test_avoid_double_stdout(self, testdir):
+        testdir.makepyfile("""
+            import sys
+            import pytest
+
+            @pytest.fixture
+            def arg(request):
+                yield
+                sys.stdout.write('hello-stdout teardown')
+                raise ValueError()
+            def test_function(arg):
+                sys.stdout.write('hello-stdout call')
+        """)
+        result, dom = runandparse(testdir)
+        node = dom.find_first_by_tag("testsuite")
+        pnode = node.find_first_by_tag("testcase")
+        systemout = pnode.find_first_by_tag("system-out")
+        assert "hello-stdout call" in systemout.toxml()
+        assert "hello-stdout teardown" in systemout.toxml()
 
 def test_mangle_test_address():
     from _pytest.junitxml import mangle_test_address
