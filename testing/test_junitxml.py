@@ -594,6 +594,7 @@ def test_dont_configure_on_slaves(tmpdir):
             self.option = self
 
         junitprefix = None
+        junitsuitename = "pytest"
         # XXX: shouldnt need tmpdir ?
         xmlpath = str(tmpdir.join('junix.xml'))
         register = gotten.append
@@ -981,3 +982,29 @@ def test_global_properties(testdir):
         actual[k] = v
 
     assert actual == expected
+
+
+def test_set_suite_name(testdir):
+    testdir.makepyfile("""
+        import pytest
+
+        def test_func():
+            pass
+    """)
+    result, dom = runandparse(testdir, '--junit-suite-name', "my_suite")
+    assert result.ret == 0
+    node = dom.find_first_by_tag("testsuite")
+    node.assert_attr(name="my_suite")
+
+
+def test_set_suite_name_default(testdir):
+    testdir.makepyfile("""
+        import pytest
+
+        def test_func():
+            pass
+    """)
+    result, dom = runandparse(testdir)
+    assert result.ret == 0
+    node = dom.find_first_by_tag("testsuite")
+    node.assert_attr(name="pytest")
