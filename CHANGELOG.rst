@@ -1,6 +1,8 @@
 3.0.7 (unreleased)
 ==================
 
+* junitxml: Add `--junit-suite-name` option to specify root `<testsuite>` name for JUnit XML reports
+
 * junitxml: Fix problematic case where system-out tag occured twice per testcase
   element in the XML report. Thanks `@kkoukiou`_ for the PR.
 
