@@ -557,6 +557,25 @@ class TestPython(object):
         systemout = pnode.find_first_by_tag("system-err")
         assert "hello-stderr" in systemout.toxml()
 
+    def test_avoid_double_stdout(self, testdir):
+        testdir.makepyfile("""
+            import sys
+            import pytest
+
+            @pytest.fixture
+            def arg(request):
+                yield
+                sys.stdout.write('hello-stdout teardown')
+                raise ValueError()
+            def test_function(arg):
+                sys.stdout.write('hello-stdout call')
+        """)
+        result, dom = runandparse(testdir)
+        node = dom.find_first_by_tag("testsuite")
+        pnode = node.find_first_by_tag("testcase")
+        systemout = pnode.find_first_by_tag("system-out")
+        assert "hello-stdout call" in systemout.toxml()
+        assert "hello-stdout teardown" in systemout.toxml()
 
 def test_mangle_test_address():
     from _pytest.junitxml import mangle_test_address
@@ -575,6 +594,7 @@ def test_dont_configure_on_slaves(tmpdir):
             self.option = self
 
         junitprefix = None
+        junitsuitename = "pytest"
         # XXX: shouldnt need tmpdir ?
         xmlpath = str(tmpdir.join('junix.xml'))
         register = gotten.append
@@ -963,7 +983,6 @@ def test_global_properties(testdir):
 
     assert actual == expected
 
-
 def test_url_property(testdir):
     test_url = "http://www.github.com/pytest-dev"
     path = testdir.tmpdir.join("test_url_property.xml")
@@ -987,3 +1006,27 @@ def test_url_property(testdir):
     test_case = minidom.parse(str(path)).getElementsByTagName('testcase')[0]
 
     assert (test_case.getAttribute('url') == test_url), "The URL did not get written to the xml"
+
+def test_set_suite_name(testdir):
+    testdir.makepyfile("""
+        import pytest
+
+        def test_func():
+            pass
+    """)
+    result, dom = runandparse(testdir, '--junit-suite-name', "my_suite")
+    assert result.ret == 0
+    node = dom.find_first_by_tag("testsuite")
+    node.assert_attr(name="my_suite")
+
+def test_set_suite_name_default(testdir):
+    testdir.makepyfile("""
+        import pytest
+
+        def test_func():
+            pass
+    """)
+    result, dom = runandparse(testdir)
+    assert result.ret == 0
+    node = dom.find_first_by_tag("testsuite")
+    node.assert_attr(name="pytest")

@@ -166,6 +166,16 @@ class TestClass(object):
             "because it has a __new__ constructor*"
         )
 
+    def test_issue2234_property(self, testdir):
+        testdir.makepyfile("""
+            class TestCase(object):
+                @property
+                def prop(self):
+                    raise NotImplementedError()
+        """)
+        result = testdir.runpytest()
+        assert result.ret == EXIT_NOTESTSCOLLECTED
+
 
 class TestGenerator(object):
     def test_generative_functions(self, testdir):

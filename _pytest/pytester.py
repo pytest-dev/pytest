@@ -569,7 +569,7 @@ class Testdir(object):
     def mkpydir(self, name):
         """Create a new python package.
 
-        This creates a (sub)direcotry with an empty ``__init__.py``
+        This creates a (sub)directory with an empty ``__init__.py``
         file so that is recognised as a python package.
 
         """
@@ -664,7 +664,7 @@ class Testdir(object):
     def inline_genitems(self, *args):
         """Run ``pytest.main(['--collectonly'])`` in-process.
 
-        Retuns a tuple of the collected items and a
+        Returns a tuple of the collected items and a
         :py:class:`HookRecorder` instance.
 
         This runs the :py:func:`pytest.main` function to run all of
@@ -860,7 +860,7 @@ class Testdir(object):
            :py:meth:`parseconfigure`.
 
         :param withinit: Whether to also write a ``__init__.py`` file
-           to the temporarly directory to ensure it is a package.
+           to the temporary directory to ensure it is a package.
 
         """
         kw = {self.request.function.__name__: Source(source).strip()}

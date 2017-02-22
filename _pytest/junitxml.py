@@ -121,7 +121,7 @@ class _NodeReporter(object):
         node = kind(data, message=message)
         self.append(node)
 
-    def _write_captured_output(self, report):
+    def write_captured_output(self, report):
         for capname in ('out', 'err'):
             content = getattr(report, 'capstd' + capname)
             if content:
@@ -130,7 +130,6 @@ class _NodeReporter(object):
 
     def append_pass(self, report):
         self.add_stats('passed')
-        self._write_captured_output(report)
 
     def append_failure(self, report):
         # msg = str(report.longrepr.reprtraceback.extraline)
@@ -149,7 +148,6 @@ class _NodeReporter(object):
             fail = Junit.failure(message=message)
             fail.append(bin_xml_escape(report.longrepr))
             self.append(fail)
-        self._write_captured_output(report)
 
     def append_collect_error(self, report):
         # msg = str(report.longrepr.reprtraceback.extraline)
@@ -167,7 +165,6 @@ class _NodeReporter(object):
             msg = "test setup failure"
         self._add_simple(
             Junit.error, msg, report.longrepr)
-        self._write_captured_output(report)
 
     def append_skipped(self, report):
         if hasattr(report, "wasxfail"):
@@ -182,7 +179,7 @@ class _NodeReporter(object):
                 Junit.skipped("%s:%s: %s" % (filename, lineno, skipreason),
                               type="pytest.skip",
                               message=skipreason))
-        self._write_captured_output(report)
+        self.write_captured_output(report)
 
     def finalize(self):
         data = self.to_xml().unicode(indent=0)
@@ -227,13 +224,19 @@ def pytest_addoption(parser):
         metavar="str",
         default=None,
         help="prepend prefix to classnames in junit-xml output")
+    group.addoption(
+        '--junitsuitename', '--junit-suite-name',
+        action="store",
+        metavar="name",
+        default="pytest",
+        help="set the name attribute of root <testsuite> tag")
 
 
 def pytest_configure(config):
     xmlpath = config.option.xmlpath
     # prevent opening xmllog on slave nodes (xdist)
     if xmlpath and not hasattr(config, 'slaveinput'):
-        config._xml = LogXML(xmlpath, config.option.junitprefix)
+        config._xml = LogXML(xmlpath, config.option.junitprefix, config.option.junitsuitename)
         config.pluginmanager.register(config._xml)
 
 
@@ -260,10 +263,11 @@ def mangle_test_address(address):
 
 
 class LogXML(object):
-    def __init__(self, logfile, prefix):
+    def __init__(self, logfile, prefix, suite_name="pytest"):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
         self.prefix = prefix
+        self.suite_name = suite_name
         self.stats = dict.fromkeys([
             'error',
             'passed',
@@ -347,6 +351,8 @@ class LogXML(object):
             reporter.append_skipped(report)
         self.update_testcase_duration(report)
         if report.when == "teardown":
+            reporter = self._opentestcase(report)
+            reporter.write_captured_output(report)
             self.finalize(report)
 
     def update_testcase_duration(self, report):
@@ -387,7 +393,7 @@ class LogXML(object):
         logfile.write(Junit.testsuite(
             self._get_global_properties_node(),
             [x.to_xml() for x in self.node_reporters_ordered],
-            name="pytest",
+            name=self.suite_name,
             errors=self.stats['error'],
             failures=self.stats['failure'],
             skips=self.stats['skipped'],
