@@ -55,11 +55,5 @@ def pytest_runtest_call(item):
     for warning in log:
         msg = warnings.formatwarning(
             warning.message, warning.category,
-            os.path.relpath(warning.filename), warning.lineno, warning.line)
-        fslocation = getattr(item, "location", None)
-        if fslocation is None:
-            fslocation = getattr(item, "fspath", None)
-        else:
-            fslocation = "%s:%s" % fslocation[:2]
-        fslocation = "in %s the following warning was recorded:\n" % fslocation
-        item.config.warn("W0", msg, fslocation=fslocation)
+            warning.filename, warning.lineno, warning.line)
+        item.config.warn("W0", msg, fslocation=None)

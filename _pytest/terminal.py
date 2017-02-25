@@ -24,9 +24,9 @@ def pytest_addoption(parser):
          help="show extra test summary info as specified by chars (f)ailed, "
               "(E)error, (s)skipped, (x)failed, (X)passed, "
               "(p)passed, (P)passed with output, (a)all except pP. "
-              "The pytest warnings are displayed at all times except when "
-              "--disable-pytest-warnings is set")
-    group._addoption('--disable-pytest-warnings', default=False,
+              "Warnings are displayed at all times except when "
+              "--disable-warnings is set")
+    group._addoption('--disable-warnings', '--disable-pytest-warnings', default=False,
                      dest='disablepytestwarnings', action='store_true',
                      help='disable warnings summary, overrides -r w flag')
     group._addoption('-l', '--showlocals',
@@ -441,10 +441,14 @@ class TerminalReporter(object):
             warnings = self.stats.get("warnings")
             if not warnings:
                 return
-            self.write_sep("=", "pytest-warning summary")
+            self.write_sep("=", "warnings summary")
             for w in warnings:
-                self._tw.line("W%s %s %s" % (w.code,
-                              w.fslocation, w.message))
+                msg = ''
+                if w.fslocation:
+                    msg += str(w.fslocation) + ' '
+                msg += w.message
+                self._tw.line(msg)
+            self._tw.line('-- Docs: http://doc.pytest.org/en/latest/warnings.html')
 
     def summary_passes(self):
         if self.config.option.tbstyle != "no":
@@ -546,8 +550,7 @@ def flatten(l):
 
 def build_summary_stats_line(stats):
     keys = ("failed passed skipped deselected "
-           "xfailed xpassed warnings error").split()
-    key_translation = {'warnings': 'pytest-warnings'}
+            "xfailed xpassed warnings error").split()
     unknown_key_seen = False
     for key in stats.keys():
         if key not in keys:
@@ -558,8 +561,7 @@ def build_summary_stats_line(stats):
     for key in keys:
         val = stats.get(key, None)
         if val:
-            key_name = key_translation.get(key, key)
-            parts.append("%d %s" % (len(val), key_name))
+            parts.append("%d %s" % (len(val), key))
 
     if parts:
         line = ", ".join(parts)

@@ -1,6 +1,8 @@
 import pytest
 
 
+WARNINGS_SUMMARY_HEADER = 'warnings summary'
+
 @pytest.fixture
 def pyfile_with_warnings(testdir):
     testdir.makepyfile('''
@@ -14,16 +16,14 @@ def pyfile_with_warnings(testdir):
 def test_normal_flow(testdir, pyfile_with_warnings):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines([
-        '*== pytest-warning summary ==*',
+        '*== %s ==*' % WARNINGS_SUMMARY_HEADER,
 
-        'WW0 in *test_normal_flow.py:1 the following warning was recorded:',
-        ' test_normal_flow.py:3: PendingDeprecationWarning: functionality is pending deprecation',
+        '*test_normal_flow.py:3: PendingDeprecationWarning: functionality is pending deprecation',
         '  warnings.warn(PendingDeprecationWarning("functionality is pending deprecation"))',
 
-        'WW0 in *test_normal_flow.py:1 the following warning was recorded:',
-        ' test_normal_flow.py:4: DeprecationWarning: functionality is deprecated',
+        '*test_normal_flow.py:4: DeprecationWarning: functionality is deprecated',
         '  warnings.warn(DeprecationWarning("functionality is deprecated"))',
-        '* 1 passed, 2 pytest-warnings*',
+        '* 1 passed, 2 warnings*',
     ])
 
 
@@ -56,5 +56,5 @@ def test_ignore(testdir, pyfile_with_warnings, method):
     result.stdout.fnmatch_lines([
         '* 1 passed in *',
     ])
-    assert 'pytest-warning summary' not in result.stdout.str()
+    assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
 
