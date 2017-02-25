@@ -243,7 +243,9 @@ Fixture finalization / executing teardown code
 
 pytest supports execution of fixture specific finalization code
 when the fixture goes out of scope.  By using a ``yield`` statement instead of ``return``, all
-the code after the *yield* statement serves as the teardown code.::
+the code after the *yield* statement serves as the teardown code:
+
+.. code-block:: python
 
     # content of conftest.py
 
@@ -275,22 +277,23 @@ occur around each single test.  In either case the test
 module itself does not need to change or know about these details
 of fixture setup.
 
-Note that we can also seamlessly use the ``yield`` syntax with ``with`` statements::
+Note that we can also seamlessly use the ``yield`` syntax with ``with`` statements:
+
+.. code-block:: python
 
     # content of test_yield2.py
 
+    import smtplib
     import pytest
 
-    @pytest.fixture
-    def passwd():
-        with open("/etc/passwd") as f:
-            yield f.readlines()
+    @pytest.fixture(scope="module")
+    def smtp(request):
+        with smtplib.SMTP("smtp.gmail.com") as smtp:
+            yield smtp  # provide the fixture value
 
-    def test_has_lines(passwd):
-        assert len(passwd) >= 1
 
-The file ``f`` will be closed after the test finished execution
-because the Python ``file`` object supports finalization when
+The ``smtp`` connection will be closed after the test finished execution
+because the ``smtp`` object automatically closes when
 the ``with`` statement ends.
 
 
