@@ -47,4 +47,7 @@ from _pytest.mark import MARK_GEN as mark
 from _pytest.skipping import xfail
 set_trace = __pytestPDB.set_trace
 
+
+from _pytest.compat import _setup_collect_fakemodule
 _preloadplugins() # to populate pytest.* namespace so help(pytest) works
+_setup_collect_fakemodule()
