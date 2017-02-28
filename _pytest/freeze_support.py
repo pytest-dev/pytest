@@ -3,9 +3,6 @@ Provides a function to report all internal modules for using freezing tools
 pytest
 """
 
-def pytest_namespace():
-    return {'freeze_includes': freeze_includes}
-
 
 def freeze_includes():
     """
