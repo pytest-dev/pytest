@@ -21,6 +21,7 @@ from _pytest.compat import (
     get_real_func, getfslineno, safe_getattr,
     getlocation, enum,
 )
+from _pytest.runner import fail
 
 cutdir1 = py.path.local(pluggy.__file__.rstrip("oc"))
 cutdir2 = py.path.local(_pytest.__file__).dirpath()
@@ -124,21 +125,6 @@ def pytest_configure(config):
         "usefixtures(fixturename1, fixturename2, ...): mark tests as needing "
         "all of the specified fixtures. see http://pytest.org/latest/fixture.html#usefixtures "
     )
-
-@pytest.hookimpl(trylast=True)
-def pytest_namespace():
-    raises.Exception = pytest.fail.Exception
-    return {
-        'raises': raises,
-        'approx': approx,
-        'collect': {
-            'Module': Module,
-            'Class': Class,
-            'Instance': Instance,
-            'Function': Function,
-            'Generator': Generator,
-        }
-    }
 
 
 @pytest.hookimpl(trylast=True)
@@ -1232,7 +1218,11 @@ def raises(expected_exception, *args, **kwargs):
             func(*args[1:], **kwargs)
         except expected_exception:
             return _pytest._code.ExceptionInfo()
-    pytest.fail(message)
+    fail(message)
+
+raises.Exception = fail.Exception
+
+
 
 class RaisesContext(object):
     def __init__(self, expected_exception, message, match_expr):
