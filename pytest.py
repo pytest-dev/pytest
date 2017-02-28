@@ -11,6 +11,7 @@ __all__ = [
     '__version__',
     'register_assert_rewrite',
     'freeze_includes',
+    'set_trace',
 ]
 
 if __name__ == '__main__': # if run as a script or by 'python -m pytest'
@@ -27,7 +28,10 @@ from _pytest.config import (
 from _pytest.assertion import register_assert_rewrite
 from _pytest.freeze_support import freeze_includes
 from _pytest import __version__
+from _pytest.debugging import pytestPDB as __pytestPDB
 
+
+
+set_trace = __pytestPDB.set_trace
 
 _preloadplugins() # to populate pytest.* namespace so help(pytest) works
-
