@@ -77,11 +77,6 @@ def pytest_addoption(parser):
                help="base temporary directory for this test run.")
 
 
-def pytest_namespace():
-    collect = dict(Item=Item, Collector=Collector, File=File, Session=Session)
-    return dict(collect=collect)
-
-
 def pytest_configure(config):
     pytest.config = config # compatibility
 
