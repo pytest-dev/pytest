@@ -23,6 +23,14 @@ __all__ = [
     'exit',
     'mark',
 
+    '_fillfuncargs',
+
+    'Item',
+    'File',
+    'Collector',
+    'Session',
+
+
 ]
 
 if __name__ == '__main__': # if run as a script or by 'python -m pytest'
@@ -45,7 +53,10 @@ from _pytest.recwarn import warns, deprecated_call
 from _pytest.runner import fail, skip, importorskip, exit
 from _pytest.mark import MARK_GEN as mark
 from _pytest.skipping import xfail
+from _pytest.main import Item, Collector, File, Session
 from _pytest.fixtures import fillfixtures as _fillfuncargs
+
+
 set_trace = __pytestPDB.set_trace
 
 
