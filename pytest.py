@@ -15,7 +15,12 @@ __all__ = [
     'warns',
     'deprecated_call',
     'fixture',
-    'yield_fixture'
+    'yield_fixture',
+    'fail',
+    'skip',
+    'importorskip',
+    'exit',
+
 ]
 
 if __name__ == '__main__': # if run as a script or by 'python -m pytest'
@@ -35,8 +40,7 @@ from _pytest.freeze_support import freeze_includes
 from _pytest import __version__
 from _pytest.debugging import pytestPDB as __pytestPDB
 from _pytest.recwarn import warns, deprecated_call
-
-
+from _pytest.runner import fail, skip, importorskip, exit
 set_trace = __pytestPDB.set_trace
 
 _preloadplugins() # to populate pytest.* namespace so help(pytest) works

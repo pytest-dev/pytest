@@ -8,13 +8,6 @@ import pytest
 from _pytest._code.code import TerminalRepr, ExceptionInfo
 
 
-def pytest_namespace():
-    return {
-        'fail'         : fail,
-        'skip'         : skip,
-        'importorskip' : importorskip,
-        'exit'         : exit,
-    }
 
 #
 # pytest plugin hooks
