@@ -13,10 +13,6 @@ class MarkerError(Exception):
     """Error in use of a pytest marker/attribute."""
 
 
-def pytest_namespace():
-    return {'mark': MarkGenerator()}
-
-
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group._addoption(
@@ -168,9 +164,13 @@ def matchkeyword(colitem, keywordexpr):
 
 
 def pytest_configure(config):
-    import pytest
+    config._old_mark_config = MARK_GEN._config
     if config.option.strict:
-        pytest.mark._config = config
+        MARK_GEN._config = config
+
+
+def pytest_unconfigure(config):
+    MARK_GEN._config = config._old_mark_config
 
 
 class MarkGenerator(object):
@@ -184,11 +184,13 @@ class MarkGenerator(object):
 
     will set a 'slowtest' :class:`MarkInfo` object
     on the ``test_function`` object. """
+    _config = None
+
 
     def __getattr__(self, name):
         if name[0] == "_":
             raise AttributeError("Marker name must NOT start with underscore")
-        if hasattr(self, '_config'):
+        if self._config is not None:
             self._check(name)
         return MarkDecorator(Mark(name, (), {}))
 
@@ -206,9 +208,11 @@ class MarkGenerator(object):
         if name not in self._markers:
             raise AttributeError("%r not a registered marker" % (name,))
 
+
 def istestfunc(func):
     return hasattr(func, "__call__") and \
         getattr(func, "__name__", "<lambda>") != "<lambda>"
+
 
 class MarkDecorator(object):
     """ A decorator for test functions and test classes.  When applied
@@ -335,3 +339,6 @@ class MarkInfo(object):
     def __iter__(self):
         """ yield MarkInfo objects each relating to a marking-call. """
         return imap(MarkInfo, self._marks)
+
+
+MARK_GEN = MarkGenerator()

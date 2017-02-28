@@ -20,6 +20,7 @@ __all__ = [
     'skip',
     'importorskip',
     'exit',
+    'mark',
 
 ]
 
@@ -41,6 +42,7 @@ from _pytest import __version__
 from _pytest.debugging import pytestPDB as __pytestPDB
 from _pytest.recwarn import warns, deprecated_call
 from _pytest.runner import fail, skip, importorskip, exit
+from _pytest.mark import MARK_GEN as mark
 set_trace = __pytestPDB.set_trace
 
 _preloadplugins() # to populate pytest.* namespace so help(pytest) works
