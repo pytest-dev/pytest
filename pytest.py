@@ -45,6 +45,7 @@ from _pytest.recwarn import warns, deprecated_call
 from _pytest.runner import fail, skip, importorskip, exit
 from _pytest.mark import MARK_GEN as mark
 from _pytest.skipping import xfail
+from _pytest.fixtures import fillfixtures as _fillfuncargs
 set_trace = __pytestPDB.set_trace
 
 

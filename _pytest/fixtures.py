@@ -49,9 +49,7 @@ def pytest_namespace():
         'module': pytest.Module,
         'function': pytest.Item,
     })
-    return {
-        'collect': {'_fillfuncargs': fillfixtures}
-    }
+    return {}
 
 
 def get_scope_node(node, scope):
