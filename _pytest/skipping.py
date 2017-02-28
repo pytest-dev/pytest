@@ -55,10 +55,6 @@ def pytest_configure(config):
     )
 
 
-def pytest_namespace():
-    return dict(xfail=xfail)
-
-
 class XFailed(pytest.fail.Exception):
     """ raised from an explicit call to pytest.xfail() """
 
