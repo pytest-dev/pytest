@@ -25,11 +25,6 @@ def recwarn(request):
         yield wrec
 
 
-def pytest_namespace():
-    return {'deprecated_call': deprecated_call,
-            'warns': warns}
-
-
 def deprecated_call(func=None, *args, **kwargs):
     """ assert that calling ``func(*args, **kwargs)`` triggers a
     ``DeprecationWarning`` or ``PendingDeprecationWarning``.

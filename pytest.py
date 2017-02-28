@@ -12,6 +12,10 @@ __all__ = [
     'register_assert_rewrite',
     'freeze_includes',
     'set_trace',
+    'warns',
+    'deprecated_call',
+    'fixture',
+    'yield_fixture'
 ]
 
 if __name__ == '__main__': # if run as a script or by 'python -m pytest'
@@ -25,11 +29,12 @@ from _pytest.config import (
     main, UsageError, _preloadplugins, cmdline,
     hookspec, hookimpl
 )
+from _pytest.fixtures import fixture, yield_fixture
 from _pytest.assertion import register_assert_rewrite
 from _pytest.freeze_support import freeze_includes
 from _pytest import __version__
 from _pytest.debugging import pytestPDB as __pytestPDB
-
+from _pytest.recwarn import warns, deprecated_call
 
 
 set_trace = __pytestPDB.set_trace
