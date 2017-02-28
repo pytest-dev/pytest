@@ -9,6 +9,7 @@ __all__ = [
     'hookspec',
     'hookimpl',
     '__version__',
+    'register_assert_rewrite'
 ]
 
 if __name__ == '__main__': # if run as a script or by 'python -m pytest'
@@ -22,6 +23,7 @@ from _pytest.config import (
     main, UsageError, _preloadplugins, cmdline,
     hookspec, hookimpl
 )
+from _pytest.assertion import register_assert_rewrite
 from _pytest import __version__
 
 _preloadplugins() # to populate pytest.* namespace so help(pytest) works
