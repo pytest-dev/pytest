@@ -52,8 +52,6 @@ def pytest_namespace():
         'function': pytest.Item,
     })
     return {
-        'fixture': fixture,
-        'yield_fixture': yield_fixture,
         'collect': {'_fillfuncargs': fillfixtures}
     }
 
