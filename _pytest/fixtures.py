@@ -17,6 +17,11 @@ from _pytest.compat import (
 )
 
 def pytest_sessionstart(session):
+    scopename2class.update({
+        'class': pytest.Class,
+        'module': pytest.Module,
+        'function': pytest.Item,
+    })
     session._fixturemanager = FixtureManager(session)
 
 
@@ -41,15 +46,6 @@ def scopeproperty(name=None, doc=None):
 
         return property(provide, None, None, func.__doc__)
     return decoratescope
-
-
-def pytest_namespace():
-    scopename2class.update({
-        'class': pytest.Class,
-        'module': pytest.Module,
-        'function': pytest.Item,
-    })
-    return {}
 
 
 def get_scope_node(node, scope):
