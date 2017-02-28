@@ -16,7 +16,9 @@ def pytest_addhooks(pluginmanager):
 
 @hookspec(historic=True)
 def pytest_namespace():
-    """return dict of name->object to be made globally available in
+    """
+    DEPRECATED: this hook causes direct monkeypatching on pytest, its use is strongly discouraged
+    return dict of name->object to be made globally available in
     the pytest namespace.  This hook is called at plugin registration
     time.
     """
