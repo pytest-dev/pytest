@@ -170,7 +170,7 @@ def pytest_configure(config):
 
 
 def pytest_unconfigure(config):
-    MARK_GEN._config = config._old_mark_config
+    MARK_GEN._config = getattr(config, '_old_mark_config', None)
 
 
 class MarkGenerator(object):
