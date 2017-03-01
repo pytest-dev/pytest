@@ -27,6 +27,10 @@ New Features
 Changes
 -------
 
+* remove all internal uses of pytest_namespace hooks,
+  this is to prepare the removal of preloadconfig in pytest 4.0
+  Thanks to `@RonnyPfannschmidt`_ for the PR.
+
 * Old-style classes have been changed to new-style classes in order to improve
   compatibility with Python 2. Thanks to `@MichalTHEDUDE`_ and `@mandeep`_ for the PR (`#2147`_).
 
