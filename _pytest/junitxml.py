@@ -119,7 +119,7 @@ class _NodeReporter(object):
         node = kind(data, message=message)
         self.append(node)
 
-    def _write_captured_output(self, report):
+    def write_captured_output(self, report):
         for capname in ('out', 'err'):
             content = getattr(report, 'capstd' + capname)
             if content:
@@ -128,7 +128,6 @@ class _NodeReporter(object):
 
     def append_pass(self, report):
         self.add_stats('passed')
-        self._write_captured_output(report)
 
     def append_failure(self, report):
         # msg = str(report.longrepr.reprtraceback.extraline)
@@ -147,7 +146,6 @@ class _NodeReporter(object):
             fail = Junit.failure(message=message)
             fail.append(bin_xml_escape(report.longrepr))
             self.append(fail)
-        self._write_captured_output(report)
 
     def append_collect_error(self, report):
         # msg = str(report.longrepr.reprtraceback.extraline)
@@ -165,7 +163,6 @@ class _NodeReporter(object):
             msg = "test setup failure"
         self._add_simple(
             Junit.error, msg, report.longrepr)
-        self._write_captured_output(report)
 
     def append_skipped(self, report):
         if hasattr(report, "wasxfail"):
@@ -180,7 +177,7 @@ class _NodeReporter(object):
                 Junit.skipped("%s:%s: %s" % (filename, lineno, skipreason),
                               type="pytest.skip",
                               message=skipreason))
-        self._write_captured_output(report)
+        self.write_captured_output(report)
 
     def finalize(self):
         data = self.to_xml().unicode(indent=0)
@@ -345,6 +342,8 @@ class LogXML(object):
             reporter.append_skipped(report)
         self.update_testcase_duration(report)
         if report.when == "teardown":
+            reporter = self._opentestcase(report)
+            reporter.write_captured_output(report)
             self.finalize(report)
 
     def update_testcase_duration(self, report):
