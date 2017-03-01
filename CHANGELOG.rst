@@ -1,6 +1,12 @@
 3.0.7 (unreleased)
 ==================
 
+
+* Fix issue in assertion rewriting breaking due to modules silently discarding
+  other modules when importing fails
+  Notably, importing the `anydbm` module is fixed. (`#2248`_).
+  Thanks `@pfhayes`_ for the PR.
+
 * junitxml: Fix problematic case where system-out tag occured twice per testcase
   element in the XML report. Thanks `@kkoukiou`_ for the PR.
 
@@ -30,12 +36,14 @@
 
 *
 
+.. _@pfhayes: https://github.com/pfhayes
 .. _@bluetech: https://github.com/bluetech
 .. _@gst: https://github.com/gst
 .. _@sirex: https://github.com/sirex
 .. _@vidartf: https://github.com/vidartf
 .. _@kkoukiou: https://github.com/KKoukiou
 
+.. _#2248: https://github.com/pytest-dev/pytest/issues/2248
 .. _#2137: https://github.com/pytest-dev/pytest/issues/2137
 .. _#2160: https://github.com/pytest-dev/pytest/issues/2160
 .. _#2231: https://github.com/pytest-dev/pytest/issues/2231
