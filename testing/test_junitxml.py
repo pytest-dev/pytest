@@ -189,6 +189,29 @@ class TestPython(object):
         fnode.assert_attr(message="test teardown failure")
         assert "ValueError" in fnode.toxml()
 
+    def test_call_failure_teardown_error(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture
+            def arg():
+                yield
+                raise Exception("Teardown Exception")
+            def test_function(arg):
+                raise Exception("Call Exception")
+        """)
+        result, dom = runandparse(testdir)
+        assert result.ret
+        node = dom.find_first_by_tag("testsuite")
+        node.assert_attr(errors=1, failures=1, tests=1)
+        first, second = dom.find_by_tag("testcase")
+        if not first or not second or first == second:
+            assert 0
+        fnode = first.find_first_by_tag("failure")
+        fnode.assert_attr(message="Exception: Call Exception")
+        snode = second.find_first_by_tag("error")
+        snode.assert_attr(message="test teardown failure")
+
     def test_skip_contains_name_reason(self, testdir):
         testdir.makepyfile("""
             import pytest
