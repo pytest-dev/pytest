@@ -63,7 +63,7 @@ def catch_warnings_for_item(item):
         msg = warnings.formatwarning(
             warning.message, warning.category,
             warning.filename, warning.lineno, warning.line)
-        item.config.warn("unused", msg, fslocation=None)
+        item.warn("unused", msg)
 
 
 @pytest.hookimpl(hookwrapper=True)

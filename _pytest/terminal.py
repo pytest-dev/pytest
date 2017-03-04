@@ -2,6 +2,9 @@
 
 This is a good source for looking at the various reporting hooks.
 """
+import operator
+import itertools
+
 from _pytest.main import EXIT_OK, EXIT_TESTSFAILED, EXIT_INTERRUPTED, \
     EXIT_USAGEERROR, EXIT_NOTESTSCOLLECTED
 import pytest
@@ -28,7 +31,7 @@ def pytest_addoption(parser):
               "--disable-warnings is set")
     group._addoption('--disable-warnings', '--disable-pytest-warnings', default=False,
                      dest='disable_warnings', action='store_true',
-                     help='disable warnings summary, overrides -r w flag')
+                     help='disable warnings summary')
     group._addoption('-l', '--showlocals',
          action="store_true", dest="showlocals", default=False,
          help="show locals in tracebacks (disabled by default).")
@@ -438,16 +441,15 @@ class TerminalReporter(object):
 
     def summary_warnings(self):
         if self.hasopt("w"):
-            warnings = self.stats.get("warnings")
-            if not warnings:
+            all_warnings = self.stats.get("warnings")
+            if not all_warnings:
                 return
-            self.write_sep("=", "warnings summary")
-            for w in warnings:
-                msg = ''
-                if w.fslocation:
-                    msg += str(w.fslocation) + ' '
-                msg += w.message
-                self._tw.line(msg)
+            self.write_sep("=", "warnings summary", yellow=True, bold=False)
+            grouped = itertools.groupby(all_warnings, key=operator.attrgetter('nodeid'))
+            for nodeid, warnings in grouped:
+                self._tw.line(str(nodeid))
+                for w in warnings:
+                    self._tw.line(w.message)
             self._tw.line('-- Docs: http://doc.pytest.org/en/latest/warnings.html')
 
     def summary_passes(self):
