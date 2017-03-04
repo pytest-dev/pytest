@@ -1,4 +1,6 @@
 import os
+from contextlib import contextmanager
+
 import pytest
 import warnings
 
@@ -38,8 +40,13 @@ def pytest_addoption(parser):
                   "to warnings.filterwarnings. Process after -W and --pythonwarnings.")
 
 
-@pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_call(item):
+@contextmanager
+def catch_warnings_for_item(item):
+    """
+    catches the warnings generated during setup/call/teardown execution
+    of the given item and after it is done posts them as warnings to this
+    item.
+    """
     args = item.config.getoption('pythonwarnings') or []
     inifilters = item.config.getini("filterwarnings")
     with warnings.catch_warnings(record=True) as log:
@@ -56,4 +63,23 @@ def pytest_runtest_call(item):
         msg = warnings.formatwarning(
             warning.message, warning.category,
             warning.filename, warning.lineno, warning.line)
-        item.config.warn("W0", msg, fslocation=None)
+        item.config.warn("unused", msg, fslocation=None)
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_call(item):
+    with catch_warnings_for_item(item):
+        yield
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_setup(item):
+    with catch_warnings_for_item(item):
+        yield
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_teardown(item):
+    with catch_warnings_for_item(item):
+        yield
+

@@ -27,6 +27,34 @@ def test_normal_flow(testdir, pyfile_with_warnings):
     ])
 
 
+def test_setup_teardown_warnings(testdir, pyfile_with_warnings):
+    testdir.makepyfile('''
+        import warnings
+        import pytest
+
+        @pytest.fixture
+        def fix():
+            warnings.warn(UserWarning("warning during setup"))
+            yield
+            warnings.warn(UserWarning("warning during teardown"))
+
+        def test_func(fix):
+            pass
+    ''')
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        '*== %s ==*' % WARNINGS_SUMMARY_HEADER,
+
+        '*test_setup_teardown_warnings.py:6: UserWarning: warning during setup',
+        '  warnings.warn(UserWarning("warning during setup"))',
+
+        '*test_setup_teardown_warnings.py:8: UserWarning: warning during teardown',
+        '  warnings.warn(UserWarning("warning during teardown"))',
+        '* 1 passed, 2 warnings*',
+    ])
+
+
+
 @pytest.mark.parametrize('method', ['cmdline', 'ini'])
 def test_as_errors(testdir, pyfile_with_warnings, method):
     args = ('-W', 'error') if method == 'cmdline' else ()
