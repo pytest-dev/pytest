@@ -27,7 +27,7 @@ def pytest_addoption(parser):
               "Warnings are displayed at all times except when "
               "--disable-warnings is set")
     group._addoption('--disable-warnings', '--disable-pytest-warnings', default=False,
-                     dest='disablepytestwarnings', action='store_true',
+                     dest='disable_warnings', action='store_true',
                      help='disable warnings summary, overrides -r w flag')
     group._addoption('-l', '--showlocals',
          action="store_true", dest="showlocals", default=False,
@@ -57,9 +57,9 @@ def pytest_configure(config):
 def getreportopt(config):
     reportopts = ""
     reportchars = config.option.reportchars
-    if not config.option.disablepytestwarnings and 'w' not in reportchars:
+    if not config.option.disable_warnings and 'w' not in reportchars:
         reportchars += 'w'
-    elif config.option.disablepytestwarnings and 'w' in reportchars:
+    elif config.option.disable_warnings and 'w' in reportchars:
         reportchars = reportchars.replace('w', '')
     if reportchars:
         for char in reportchars:
