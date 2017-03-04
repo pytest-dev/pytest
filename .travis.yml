@@ -34,6 +34,9 @@ matrix:
       python: '3.6-dev'
     - env: TOXENV=py37
       python: 'nightly'
+  allow_failures:
+    - env: TOXENV=py37
+      python: 'nightly'
 
 script: tox --recreate
 
