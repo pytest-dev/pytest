@@ -916,6 +916,25 @@ def test_assert_with_unicode(monkeypatch, testdir):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(['*AssertionError*'])
 
+def test_raise_unprintable_assertion_error(testdir):
+    testdir.makepyfile(r"""
+        def test_raise_assertion_error():
+            raise AssertionError('\xff')
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([r">       raise AssertionError('\xff')", 'E       AssertionError: *'])
+
+def test_raise_assertion_error_raisin_repr(testdir):
+    testdir.makepyfile(u"""
+        class RaisingRepr(object):
+            def __repr__(self):
+                raise Exception()
+        def test_raising_repr():
+            raise AssertionError(RaisingRepr())
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(['E       AssertionError: <unprintable AssertionError object>'])
+
 def test_issue_1944(testdir):
     testdir.makepyfile("""
         def f():
