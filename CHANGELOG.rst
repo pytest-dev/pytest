@@ -43,6 +43,7 @@
 .. _@sirex: https://github.com/sirex
 .. _@vidartf: https://github.com/vidartf
 .. _@kkoukiou: https://github.com/KKoukiou
+.. _@omerhadari: https://github.com/omerhadari
 
 .. _#2248: https://github.com/pytest-dev/pytest/issues/2248
 .. _#2137: https://github.com/pytest-dev/pytest/issues/2137
