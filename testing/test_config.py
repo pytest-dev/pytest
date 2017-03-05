@@ -519,7 +519,7 @@ def test_consider_args_after_options_for_rootdir_and_inifile(testdir, args):
             args[i] = d2
     with root.as_cwd():
         result = testdir.runpytest(*args)
-    result.stdout.fnmatch_lines(['*rootdir: *myroot, inifile: '])
+    result.stdout.fnmatch_lines(['*rootdir: *myroot, inifile:'])
 
 
 @pytest.mark.skipif("sys.platform == 'win32'")
