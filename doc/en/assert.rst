@@ -287,5 +287,5 @@ For further information, Benjamin Peterson wrote up `Behind the scenes of pytest
    ``--nomagic``.
 
 .. versionchanged:: 3.0
-   Removes the ``--no-assert`` and``--nomagic`` options.
+   Removes the ``--no-assert`` and ``--nomagic`` options.
    Removes the ``--assert=reinterp`` option.
