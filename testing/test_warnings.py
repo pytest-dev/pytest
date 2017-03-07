@@ -75,7 +75,6 @@ def test_setup_teardown_warnings(testdir, pyfile_with_warnings):
     ])
 
 
-
 @pytest.mark.parametrize('method', ['cmdline', 'ini'])
 def test_as_errors(testdir, pyfile_with_warnings, method):
     args = ('-W', 'error') if method == 'cmdline' else ()

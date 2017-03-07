@@ -615,7 +615,7 @@ def test_getreportopt():
     class config(object):
         class option(object):
             reportchars = ""
-            disablepytestwarnings = True
+            disable_warnings = True
 
     config.option.reportchars = "sf"
     assert getreportopt(config) == "sf"
@@ -624,11 +624,11 @@ def test_getreportopt():
     assert getreportopt(config) == "sfx"
 
     config.option.reportchars = "sfx"
-    config.option.disablepytestwarnings = False
+    config.option.disable_warnings = False
     assert getreportopt(config) == "sfxw"
 
     config.option.reportchars = "sfxw"
-    config.option.disablepytestwarnings = False
+    config.option.disable_warnings = False
     assert getreportopt(config) == "sfxw"
 
 
@@ -837,8 +837,8 @@ def test_terminal_summary_warnings_are_displayed(testdir):
     """)
     result = testdir.runpytest('-rw')
     result.stdout.fnmatch_lines([
-        '*C1*internal warning',
-        '*== 1 pytest-warnings in *',
+        '*internal warning',
+        '*== 1 warnings in *',
     ])
 
 
@@ -858,9 +858,9 @@ def test_terminal_summary_warnings_are_displayed(testdir):
     ("yellow", "1 weird", {"weird": (1,)}),
     ("yellow", "1 passed, 1 weird", {"weird": (1,), "passed": (1,)}),
 
-    ("yellow", "1 pytest-warnings", {"warnings": (1,)}),
-    ("yellow", "1 passed, 1 pytest-warnings", {"warnings": (1,),
-                                               "passed": (1,)}),
+    ("yellow", "1 warnings", {"warnings": (1,)}),
+    ("yellow", "1 passed, 1 warnings", {"warnings": (1,),
+                                        "passed": (1,)}),
 
     ("green", "5 passed", {"passed": (1,2,3,4,5)}),
 

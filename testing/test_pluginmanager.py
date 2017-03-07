@@ -284,8 +284,8 @@ class TestPytestPluginManager(object):
         result = testdir.runpytest("-rw", "-p", "skipping1", syspathinsert=True)
         assert result.ret == EXIT_NOTESTSCOLLECTED
         result.stdout.fnmatch_lines([
-            "WI1*skipped plugin*skipping1*hello*",
-            "WI1*skipped plugin*skipping2*hello*",
+            "*skipped plugin*skipping1*hello*",
+            "*skipped plugin*skipping2*hello*",
         ])
 
     def test_consider_env_plugin_instantiation(self, testdir, monkeypatch, pytestpm):
