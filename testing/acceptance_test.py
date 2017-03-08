@@ -807,3 +807,31 @@ def test_import_plugin_unicode_name(testdir):
     """)
     r = testdir.runpytest()
     assert r.ret == 0
+
+
+def test_deferred_hook_checking(testdir):
+    """
+    Check hooks as late as possible (#1821).
+    """
+    testdir.syspathinsert()
+    testdir.makepyfile(**{
+        'plugin.py': """
+        class Hooks:
+            def pytest_my_hook(self, config):
+                pass
+
+        def pytest_configure(config):
+            config.pluginmanager.add_hookspecs(Hooks)
+        """,
+        'conftest.py': """
+            pytest_plugins = ['plugin']
+            def pytest_my_hook(config):
+                return 40
+        """,
+        'test_foo.py': """
+            def test(request):
+                assert request.config.hook.pytest_my_hook(config=request.config) == [40]
+        """
+    })
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(['* 1 passed *'])

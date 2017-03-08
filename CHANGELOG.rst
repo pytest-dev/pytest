@@ -53,11 +53,16 @@ Changes
 * Change exception raised by ``capture.DontReadFromInput.fileno()`` from ``ValueError``
   to ``io.UnsupportedOperation``. Thanks `@vlad-dragos`_ for the PR.
 
-* fix `#2013`_: turn RecordedWarning into namedtupe,
-  to give it a comprehensible repr while preventing unwarranted modification
+* fix `#2013`_: turn RecordedWarning into ``namedtuple``,
+  to give it a comprehensible repr while preventing unwarranted modification.
 
 * fix `#2208`_: ensure a iteration limit for _pytest.compat.get_real_func.
-  Thanks `@RonnyPfannschmidt`_ for the Report and PR
+  Thanks `@RonnyPfannschmidt`_ for the report and PR.
+
+* Hooks are now verified after collection is complete, rather than right after loading installed plugins. This
+  makes it easy to write hooks for plugins which will be loaded during collection, for example using the
+  ``pytest_plugins`` special variable (`#1821`_).
+  Thanks `@nicoddemus`_ for the PR.
 
 * Modify ``pytest_make_parametrize_id()`` hook to accept ``argname`` as an
   additional parameter.
@@ -96,6 +101,7 @@ Bug Fixes
 
 .. _#1407: https://github.com/pytest-dev/pytest/issues/1407
 .. _#1512: https://github.com/pytest-dev/pytest/issues/1512
+.. _#1821: https://github.com/pytest-dev/pytest/issues/1821
 .. _#1874: https://github.com/pytest-dev/pytest/pull/1874
 .. _#1952: https://github.com/pytest-dev/pytest/pull/1952
 .. _#2007: https://github.com/pytest-dev/pytest/issues/2007

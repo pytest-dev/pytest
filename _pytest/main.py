@@ -596,6 +596,7 @@ class Session(FSCollector):
         hook = self.config.hook
         try:
             items = self._perform_collect(args, genitems)
+            self.config.pluginmanager.check_pending()
             hook.pytest_collection_modifyitems(session=self,
                 config=self.config, items=items)
         finally:
