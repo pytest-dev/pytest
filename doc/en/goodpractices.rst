@@ -76,7 +76,7 @@ want to distribute them along with your application::
             test_view.py
             ...
 
-In this scheme, it is easy to your tests using the ``--pyargs`` option::
+In this scheme, it is easy to your run tests using the ``--pyargs`` option::
 
     pytest --pyargs mypkg
 
