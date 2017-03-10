@@ -778,6 +778,21 @@ class TestOverrideIniArgs(object):
         result = testdir.runpytest("--override-ini", 'xdist_strict True', "-s")
         result.stderr.fnmatch_lines(["*ERROR* *expects option=value*"])
 
+    @pytest.mark.parametrize('with_ini', [True, False])
+    def test_override_ini_handled_asap(self, testdir, with_ini):
+        """-o should be handled as soon as possible and always override what's in ini files (#2238)"""
+        if with_ini:
+            testdir.makeini("""
+                [pytest]
+                python_files=test_*.py
+            """)
+        testdir.makepyfile(unittest_ini_handle="""
+            def test():
+                pass
+        """)
+        result = testdir.runpytest("--override-ini", 'python_files=unittest_*.py')
+        result.stdout.fnmatch_lines(["*1 passed in*"])
+
     def test_with_arg_outside_cwd_without_inifile(self, tmpdir, monkeypatch):
         monkeypatch.chdir(str(tmpdir))
         a = tmpdir.mkdir("a")
