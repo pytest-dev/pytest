@@ -217,16 +217,12 @@ class TestWarns(object):
         excinfo.match(re.escape(message_template.format(warning_classes,
                                                         [each.message for each in warninfo])))
 
-
     def test_record(self):
         with pytest.warns(UserWarning) as record:
             warnings.warn("user", UserWarning)
 
         assert len(record) == 1
         assert str(record[0].message) == "user"
-
-        print(repr(record[0]))
-        assert str(record[0].message) in repr(record[0])
 
     def test_record_only(self):
         with pytest.warns(None) as record:
