@@ -365,7 +365,7 @@ class TestAssert_reprcompare(object):
         expl = '\n'.join(callequal(left, right, verbose=True))
         assert expl.endswith(textwrap.dedent(expected).strip())
 
-    def test_list_different_lenghts(self):
+    def test_list_different_lengths(self):
         expl = callequal([0, 1], [0, 1, 2])
         assert len(expl) > 1
         expl = callequal([0, 1, 2], [0, 1])
