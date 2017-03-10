@@ -906,3 +906,12 @@ def test_summary_stats(exp_line, exp_color, stats_arg):
     print("Actually got:   \"%s\"; with color \"%s\"" % (line, color))
     assert line == exp_line
     assert color == exp_color
+
+
+def test_no_trailing_whitespace_after_inifile_word(testdir):
+    result = testdir.runpytest('')
+    assert 'inifile:\n' in result.stdout.str()
+
+    testdir.makeini('[pytest]')
+    result = testdir.runpytest('')
+    assert 'inifile: tox.ini\n' in result.stdout.str()
