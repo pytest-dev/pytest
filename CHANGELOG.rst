@@ -130,6 +130,7 @@ Bug Fixes
 
 .. _@bluetech: https://github.com/bluetech
 .. _@gst: https://github.com/gst
+.. _@pfhayes: https://github.com/pfhayes
 .. _@sirex: https://github.com/sirex
 .. _@vidartf: https://github.com/vidartf
 .. _@kkoukiou: https://github.com/KKoukiou
@@ -139,6 +140,7 @@ Bug Fixes
 .. _#2231: https://github.com/pytest-dev/pytest/issues/2231
 .. _#2234: https://github.com/pytest-dev/pytest/issues/2234
 .. _#2238: https://github.com/pytest-dev/pytest/issues/2238
+.. _#2248: https://github.com/pytest-dev/pytest/issues/2248
 
 .. _PEP-479: https://www.python.org/dev/peps/pep-0479/
 
