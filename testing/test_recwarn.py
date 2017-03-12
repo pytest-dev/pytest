@@ -2,67 +2,70 @@ import warnings
 import re
 import py
 import pytest
-from _pytest.recwarn import WarningsRecorder
 
 
 def test_recwarn_functional(testdir):
-    reprec = testdir.inline_runsource("""
+    testdir.makepyfile("""
         import warnings
-        oldwarn = warnings.showwarning
+
         def test_method(recwarn):
-            assert warnings.showwarning != oldwarn
             warnings.warn("hello")
             warn = recwarn.pop()
             assert isinstance(warn.message, UserWarning)
-        def test_finalized():
-            assert warnings.showwarning == oldwarn
     """)
-    res = reprec.countoutcomes()
-    assert tuple(res) == (2, 0, 0), res
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(['* 1 passed *'])
 
 
 class TestWarningsRecorderChecker(object):
-    def test_recording(self, recwarn):
-        showwarning = py.std.warnings.showwarning
-        rec = WarningsRecorder()
-        with rec:
-            assert py.std.warnings.showwarning != showwarning
-            assert not rec.list
-            py.std.warnings.warn_explicit("hello", UserWarning, "xyz", 13)
-            assert len(rec.list) == 1
-            py.std.warnings.warn(DeprecationWarning("hello"))
-            assert len(rec.list) == 2
-            warn = rec.pop()
-            assert str(warn.message) == "hello"
-            l = rec.list
-            rec.clear()
-            assert len(rec.list) == 0
-            assert l is rec.list
-            pytest.raises(AssertionError, "rec.pop()")
 
-        assert showwarning == py.std.warnings.showwarning
+    def test_recording(self, testdir):
+        testdir.makepyfile('''
+            import pytest
+            import warnings
 
-    def test_typechecking(self):
-        from _pytest.recwarn import WarningsChecker
-        with pytest.raises(TypeError):
-            WarningsChecker(5)
-        with pytest.raises(TypeError):
-            WarningsChecker(('hi', RuntimeWarning))
-        with pytest.raises(TypeError):
-            WarningsChecker([DeprecationWarning, RuntimeWarning])
+            def test(recwarn):
+                assert len(recwarn) == 0
+                assert len(recwarn.list) == 0
+                warnings.warn_explicit("hello", UserWarning, "xyz", 13)
+                assert len(recwarn.list) == 1
+                warnings.warn(DeprecationWarning("hello"))
+                assert len(recwarn.list) == 2
+                warn = recwarn.pop()
+                assert str(warn.message) == "hello"
+                l = recwarn.list
+                recwarn.clear()
+                assert len(recwarn.list) == 0
+                assert l is recwarn.list
+                with pytest.raises(AssertionError):
+                    recwarn.pop()
+        ''')
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(['* 1 passed *'])
 
-    def test_invalid_enter_exit(self):
-        # wrap this test in WarningsRecorder to ensure warning state gets reset
-        with WarningsRecorder():
-            with pytest.raises(RuntimeError):
-                rec = WarningsRecorder()
-                rec.__exit__(None, None, None)  # can't exit before entering
+    def test_type_checking(self, testdir):
+        testdir.makepyfile('''
+            import pytest
 
-            with pytest.raises(RuntimeError):
-                rec = WarningsRecorder()
-                with rec:
-                    with rec:
-                        pass  # can't enter twice
+            @pytest.mark.parametrize('v', [5, ('hi', RuntimeWarning), [DeprecationWarning, RuntimeWarning]])
+            def test(v):
+                with pytest.raises(TypeError):
+                    pytest.warns(v)
+        ''')
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(['* 3 passed *'])
+
+    def test_invalid_enter_exit(self, testdir):
+        testdir.makepyfile('''
+            import pytest
+
+            def test(recwarn):
+                with pytest.raises(RuntimeError):
+                    with recwarn:
+                        pass
+        ''')
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(['* 1 passed *'])
 
 
 class TestDeprecatedCall(object):
@@ -90,18 +93,6 @@ class TestDeprecatedCall(object):
     def test_deprecated_call_ret(self):
         ret = pytest.deprecated_call(self.dep, 0)
         assert ret == 42
-
-    def test_deprecated_call_preserves(self):
-        onceregistry = py.std.warnings.onceregistry.copy()
-        filters = py.std.warnings.filters[:]
-        warn = py.std.warnings.warn
-        warn_explicit = py.std.warnings.warn_explicit
-        self.test_deprecated_call_raises()
-        self.test_deprecated_call()
-        assert onceregistry == py.std.warnings.onceregistry
-        assert filters == py.std.warnings.filters
-        assert warn is py.std.warnings.warn
-        assert warn_explicit is py.std.warnings.warn_explicit
 
     def test_deprecated_explicit_call_raises(self):
         with pytest.raises(AssertionError):
@@ -225,9 +216,6 @@ class TestWarns(object):
         assert len(record) == 1
         assert str(record[0].message) == "user"
 
-        print(repr(record[0]))
-        assert str(record[0].message) in repr(record[0])
-
     def test_record_only(self):
         with pytest.warns(None) as record:
             warnings.warn("user", UserWarning)
@@ -257,7 +245,6 @@ class TestWarns(object):
         assert len(record) == 2
         assert str(record[0].message) == "user"
         assert str(record[1].message) == "runtime"
-
 
     def test_double_test(self, testdir):
         """If a test is run again, the warning should still be raised"""
