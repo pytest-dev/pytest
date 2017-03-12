@@ -112,14 +112,14 @@ class MarkEvaluator(object):
 
     def _getglobals(self):
         d = {'os': os, 'sys': sys, 'config': self.item.config}
-        d.update(self.item.obj.__globals__)
+        if hasattr(self.item, 'obj'):
+            d.update(self.item.obj.__globals__)
         return d
 
     def _istrue(self):
         if hasattr(self, 'result'):
             return self.result
         if self.holder:
-            d = self._getglobals()
             if self.holder.args or 'condition' in self.holder.kwargs:
                 self.result = False
                 # "holder" might be a MarkInfo or a MarkDecorator; only
@@ -133,6 +133,7 @@ class MarkEvaluator(object):
                     for expr in args:
                         self.expr = expr
                         if isinstance(expr, py.builtin._basestring):
+                            d = self._getglobals()
                             result = cached_eval(self.item.config, expr, d)
                         else:
                             if "reason" not in kwargs:

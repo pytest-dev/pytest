@@ -8,34 +8,37 @@ install: "pip install -U tox"
 env:
   matrix:
     # coveralls is not listed in tox's envlist, but should run in travis
-    - TESTENV=coveralls
+    - TOXENV=coveralls
     # note: please use "tox --listenvs" to populate the build matrix below
-    - TESTENV=linting
-    - TESTENV=py26
-    - TESTENV=py27
-    - TESTENV=py33
-    - TESTENV=py34
-    - TESTENV=py35
-    - TESTENV=pypy
-    - TESTENV=py27-pexpect
-    - TESTENV=py27-xdist
-    - TESTENV=py27-trial
-    - TESTENV=py35-pexpect
-    - TESTENV=py35-xdist
-    - TESTENV=py35-trial
-    - TESTENV=py27-nobyte
-    - TESTENV=doctesting
-    - TESTENV=freeze
-    - TESTENV=docs
+    - TOXENV=linting
+    - TOXENV=py26
+    - TOXENV=py27
+    - TOXENV=py33
+    - TOXENV=py34
+    - TOXENV=py35
+    - TOXENV=pypy
+    - TOXENV=py27-pexpect
+    - TOXENV=py27-xdist
+    - TOXENV=py27-trial
+    - TOXENV=py35-pexpect
+    - TOXENV=py35-xdist
+    - TOXENV=py35-trial
+    - TOXENV=py27-nobyte
+    - TOXENV=doctesting
+    - TOXENV=freeze
+    - TOXENV=docs
 
 matrix:
   include:
-    - env: TESTENV=py36
+    - env: TOXENV=py36
       python: '3.6-dev'
-    - env: TESTENV=py37
+    - env: TOXENV=py37
+      python: 'nightly'
+  allow_failures:
+    - env: TOXENV=py37
       python: 'nightly'
 
-script: tox --recreate -e $TESTENV
+script: tox --recreate
 
 notifications:
   irc:
