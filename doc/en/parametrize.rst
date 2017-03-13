@@ -55,8 +55,8 @@ them in turn::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 3 items
     
     test_expectation.py ..F
@@ -73,7 +73,7 @@ them in turn::
         ])
         def test_eval(test_input, expected):
     >       assert eval(test_input) == expected
-    E       assert 54 == 42
+    E       AssertionError: assert 54 == 42
     E        +  where 54 = eval('6*9')
     
     test_expectation.py:8: AssertionError
@@ -103,8 +103,8 @@ Let's run this::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 3 items
     
     test_expectation.py ..x
@@ -186,7 +186,7 @@ Let's also run with a stringinput that will lead to a failing test::
     
         def test_valid_string(stringinput):
     >       assert stringinput.isalpha()
-    E       assert False
+    E       AssertionError: assert False
     E        +  where False = <built-in method isalpha of str object at 0xdeadbeef>()
     E        +    where <built-in method isalpha of str object at 0xdeadbeef> = '!'.isalpha
     
