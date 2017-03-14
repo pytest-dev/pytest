@@ -1,6 +1,9 @@
 3.0.7 (unreleased)
 ==================
 
+* Change capture.py's DontReadFromInput class to throw io.UnsupportedOperation errors rather
+  than ValueErrors in the fileno method (`#2276`).
+  Thanks `@metasyn` for the PR.
 
 * Fix issue in assertion rewriting breaking due to modules silently discarding
   other modules when importing fails
@@ -45,6 +48,7 @@
 .. _@kkoukiou: https://github.com/KKoukiou
 .. _@omerhadari: https://github.com/omerhadari
 .. _@fbjorn: https://github.com/fbjorn
+.. _@metasyn: https://github.com/metasyn
 
 .. _#2248: https://github.com/pytest-dev/pytest/issues/2248
 .. _#2137: https://github.com/pytest-dev/pytest/issues/2137
@@ -53,6 +57,7 @@
 .. _#2234: https://github.com/pytest-dev/pytest/issues/2234
 .. _#2238: https://github.com/pytest-dev/pytest/issues/2238
 .. _#2281: https://github.com/pytest-dev/pytest/issues/2281
+.. _#2276: https://github.com/pytest-dev/pytest/issues/2276
 
 .. _PEP-479: https://www.python.org/dev/peps/pep-0479/
 
