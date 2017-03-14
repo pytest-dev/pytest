@@ -70,8 +70,8 @@ marked ``smtp`` fixture function.  Running the test looks like this::
 
     $ pytest test_smtpsimple.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 items
     
     test_smtpsimple.py F
@@ -188,8 +188,8 @@ inspect what is going on and can now run the tests::
 
     $ pytest test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     
     test_module.py FF
@@ -355,8 +355,8 @@ again, nothing much has changed::
 
     $ pytest -s -q --tb=no
     FFfinalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
-    .
-    2 failed, 1 passed in 0.12 seconds
+    
+    2 failed in 0.12 seconds
 
 Let's quickly create another test module that actually sets the
 server URL in its module namespace::
@@ -453,7 +453,7 @@ So let's just do another run::
             response, msg = smtp.ehlo()
             assert response == 250
     >       assert b"smtp.gmail.com" in msg
-    E       assert b'smtp.gmail.com' in b'mail.python.org\nSIZE 51200000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8'
+    E       AssertionError: assert b'smtp.gmail.com' in b'mail.python.org\nSIZE 51200000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8'
     
     test_module.py:5: AssertionError
     -------------------------- Captured stdout setup ---------------------------
@@ -523,9 +523,9 @@ Running the above tests results in the following test IDs being used::
 
    $ pytest --collect-only
    ======= test session starts ========
-   platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
-   rootdir: $REGENDOC_TMPDIR, inifile: 
-   collected 11 items
+   platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+   rootdir: $REGENDOC_TMPDIR, inifile:
+   collected 10 items
    <Module 'test_anothersmtp.py'>
      <Function 'test_showhelo[smtp.gmail.com]'>
      <Function 'test_showhelo[mail.python.org]'>
@@ -539,8 +539,6 @@ Running the above tests results in the following test IDs being used::
      <Function 'test_noop[smtp.gmail.com]'>
      <Function 'test_ehlo[mail.python.org]'>
      <Function 'test_noop[mail.python.org]'>
-   <Module 'test_yield2.py'>
-     <Function 'test_has_lines'>
    
    ======= no tests ran in 0.12 seconds ========
 
@@ -576,9 +574,9 @@ Here we declare an ``app`` fixture which receives the previously defined
 
     $ pytest -v test_appsetup.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5m
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 2 items
     
     test_appsetup.py::test_smtp_exists[smtp.gmail.com] PASSED
@@ -645,9 +643,9 @@ Let's run the tests in verbose mode and with looking at the print-output::
 
     $ pytest -v -s test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5m
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 8 items
     
     test_module.py::test_0[1]   SETUP otherarg 1
