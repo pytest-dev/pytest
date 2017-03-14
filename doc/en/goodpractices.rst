@@ -63,6 +63,7 @@ be imported as ``test_app`` and ``test_view`` top-level modules by adding ``test
 If you need to have test modules with the same name, you might add ``__init__.py`` files to your
 ``tests`` folder and subfolders, changing them to packages::
 
+    setup.py
     mypkg/
         ...
     tests/
@@ -81,19 +82,27 @@ the test modules from the ``tests`` directory, pytest prepends the root of the r
 This is problematic if you are using a tool like `tox`_ to test your package in a virtual environment,
 because you want to test the *installed* version of your package, not the local code from the repository.
 
-There are a couple of solutions to this:
+In this situation, it is **strongly** suggested to use a ``src`` layout where application root package resides in a
+sub-directory of your root::
 
-* Do not add the ``tests/__init__.py`` file. This will cause your test modules to be loaded as
-  ``foo.test_view`` and ``bar.test_view``, which is usually fine and avoids having the root of
-  the repository being added to the ``PYTHONPATH``.
+    setup.py
+    src/
+        mypkg/
+            __init__.py
+            app.py
+            view.py
+    tests/
+        __init__.py
+        foo/
+            __init__.py
+            test_view.py
+        bar/
+            __init__.py
+            test_view.py
 
-* Add ``addopts=--import-mode=append`` to your ``pytest.ini`` file. This will cause ``pytest`` to
-  load your modules by *appending* the root directory instead of prepending.
 
-* Alternatively, consider using the ``src`` layout explained in detail in this excellent
-  `blog post by Ionel Cristian Mărieș <https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure>`_
-  which prevents a lot of the pitfalls described here.
-
+This layout prevents a lot of common pitfalls and has many benefits, which are better explained in this excellent
+`blog post by Ionel Cristian Mărieș <https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure>`_.
 
 Tests as part of application code
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -118,6 +127,8 @@ In this scheme, it is easy to your run tests using the ``--pyargs`` option::
     pytest --pyargs mypkg
 
 ``pytest`` will discover where ``mypkg`` is installed and collect tests from there.
+
+Note that this layout also works in conjunction with the ``src`` layout mentioned in the previous section.
 
 
 .. note::
