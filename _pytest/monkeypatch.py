@@ -1,16 +1,16 @@
 """ monkeypatching and mocking functionality.  """
 
-import os, sys
+import os
+import sys
 import re
 
 from py.builtin import _basestring
-
-import pytest
+from _pytest.fixtures import fixture
 
 RE_IMPORT_ERROR_NAME = re.compile("^No module named (.*)$")
 
 
-@pytest.fixture
+@fixture
 def monkeypatch():
     """The returned ``monkeypatch`` fixture provides these
     helper methods to modify objects, dictionaries or os.environ::

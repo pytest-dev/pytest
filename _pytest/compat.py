@@ -290,3 +290,12 @@ else:
 
         def getvalue(self):
             return self.buffer.getvalue().decode('UTF-8')
+
+class FuncargnamesCompatAttr(object):
+    """ helper class so that Metafunc, Function and FixtureRequest
+    don't need to each define the "funcargnames" compatibility attribute.
+    """
+    @property
+    def funcargnames(self):
+        """ alias attribute for ``fixturenames`` for pre-2.3 compatibility"""
+        return self.fixturenames

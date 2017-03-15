@@ -5,11 +5,11 @@ import _pytest._code
 import py
 import sys
 import warnings
-import pytest
 from collections import namedtuple
+from _pytest.fixtures import yield_fixture
 
 
-@pytest.yield_fixture
+@yield_fixture
 def recwarn(request):
     """Return a WarningsRecorder instance that provides these methods:
 
@@ -214,7 +214,8 @@ class WarningsChecker(WarningsRecorder):
                 if not any(issubclass(r.category, self.expected_warning)
                            for r in self):
                     __tracebackhide__ = True
-                    pytest.fail("DID NOT WARN. No warnings of type {0} was emitted. "
-                                "The list of emitted warnings is: {1}.".format(
-                                    self.expected_warning,
-                                    [each.message for each in self]))
+                    from _pytest.runner import fail
+                    fail("DID NOT WARN. No warnings of type {0} was emitted. "
+                         "The list of emitted warnings is: {1}.".format(
+                            self.expected_warning,
+                            [each.message for each in self]))
