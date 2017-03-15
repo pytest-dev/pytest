@@ -91,7 +91,22 @@ Bug Fixes
 .. _#2208: https://github.com/pytest-dev/pytest/issues/2208
 .. _#2228:  https://github.com/pytest-dev/pytest/issues/2228
 
-3.0.7 (unreleased)
+
+3.0.8 (unreleased)
+==================
+
+*
+
+*
+
+*
+
+*
+
+*
+
+
+3.0.7 (2017-03-14)
 ==================
 
 
@@ -128,7 +143,6 @@ Bug Fixes
   collected by the built-in python test collector. Thanks `@barneygale`_ for the
   PR.
 
-*
 
 .. _@pfhayes: https://github.com/pfhayes
 .. _@bluetech: https://github.com/bluetech

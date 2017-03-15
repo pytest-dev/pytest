@@ -26,7 +26,7 @@ Installation::
 To check your installation has installed the correct version::
 
     $ pytest --version
-    This is pytest version 3.0.6, imported from $PYTHON_PREFIX/lib/python3.5/site-packages/pytest.py
+    This is pytest version 3.0.7, imported from $PYTHON_PREFIX/lib/python3.5/site-packages/pytest.py
 
 .. _`simpletest`:
 
@@ -46,8 +46,8 @@ That's it. You can execute the test function now::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 items
     
     test_sample.py F
@@ -134,7 +134,7 @@ run the module by passing its filename::
         def test_two(self):
             x = "hello"
     >       assert hasattr(x, 'check')
-    E       assert False
+    E       AssertionError: assert False
     E        +  where False = hasattr('hello', 'check')
     
     test_class.py:8: AssertionError
