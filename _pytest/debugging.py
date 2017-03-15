@@ -3,7 +3,6 @@ from __future__ import absolute_import, division, print_function
 import pdb
 import sys
 
-import pytest
 
 
 def pytest_addoption(parser):
@@ -35,7 +34,7 @@ def pytest_configure(config):
         pytestPDB._config = None
         pytestPDB._pdb_cls = pdb.Pdb
 
-    pdb.set_trace = pytest.set_trace
+    pdb.set_trace = pytestPDB.set_trace
     pytestPDB._pluginmanager = config.pluginmanager
     pytestPDB._config = config
     pytestPDB._pdb_cls = pdb_cls
@@ -75,7 +74,7 @@ class PdbInvoke(object):
 
     def pytest_internalerror(self, excrepr, excinfo):
         for line in str(excrepr).split("\n"):
-            sys.stderr.write("INTERNALERROR> %s\n" %line)
+            sys.stderr.write("INTERNALERROR> %s\n" % line)
             sys.stderr.flush()
         tb = _postmortem_traceback(excinfo)
         post_mortem(tb)

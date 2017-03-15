@@ -8,14 +8,13 @@ import sys
 import _pytest
 import _pytest._code
 import py
-import pytest
 try:
     from collections import MutableMapping as MappingMixin
 except ImportError:
     from UserDict import DictMixin as MappingMixin
 
-from _pytest.config import directory_arg
-from _pytest.runner import collect_one_node
+from _pytest.config import directory_arg, UsageError, hookimpl
+from _pytest.runner import collect_one_node, exit
 
 tracebackcutdir = py.path.local(_pytest.__file__).dirpath()
 
@@ -26,6 +25,7 @@ EXIT_INTERRUPTED = 2
 EXIT_INTERNALERROR = 3
 EXIT_USAGEERROR = 4
 EXIT_NOTESTSCOLLECTED = 5
+
 
 def pytest_addoption(parser):
     parser.addini("norecursedirs", "directory patterns to avoid for recursion",
@@ -78,7 +78,7 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-    pytest.config = config # compatibility
+    pytest.config = config # compatibiltiy
 
 
 def wrap_session(config, doit):
@@ -93,12 +93,11 @@ def wrap_session(config, doit):
             config.hook.pytest_sessionstart(session=session)
             initstate = 2
             session.exitstatus = doit(config, session) or 0
-        except pytest.UsageError:
+        except UsageError:
             raise
         except KeyboardInterrupt:
             excinfo = _pytest._code.ExceptionInfo()
-            if initstate < 2 and isinstance(
-                    excinfo.value, pytest.exit.Exception):
+            if initstate < 2 and isinstance(excinfo.value, exit.Exception):
                 sys.stderr.write('{0}: {1}\n'.format(
                     excinfo.typename, excinfo.value.msg))
             config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
@@ -120,8 +119,10 @@ def wrap_session(config, doit):
         config._ensure_unconfigure()
     return session.exitstatus
 
+
 def pytest_cmdline_main(config):
     return wrap_session(config, _main)
+
 
 def _main(config, session):
     """ default command line protocol for initialization, session,
@@ -134,8 +135,10 @@ def _main(config, session):
     elif session.testscollected == 0:
         return EXIT_NOTESTSCOLLECTED
 
+
 def pytest_collection(session):
     return session.perform_collect()
+
 
 def pytest_runtestloop(session):
     if (session.testsfailed and
@@ -152,6 +155,7 @@ def pytest_runtestloop(session):
         if session.shouldstop:
             raise session.Interrupted(session.shouldstop)
     return True
+
 
 def pytest_ignore_collect(path, config):
     p = path.dirpath()
@@ -200,7 +204,7 @@ class _CompatProperty(object):
         #     "usage of {owner!r}.{name} is deprecated, please use pytest.{name} instead".format(
         #         name=self.name, owner=type(owner).__name__),
         #     PendingDeprecationWarning, stacklevel=2)
-        return getattr(pytest, self.name)
+        return getattr(__import__('pytest'), self.name)
 
 
 
@@ -284,7 +288,7 @@ class Node(object):
     def _getcustomclass(self, name):
         maybe_compatprop = getattr(type(self), name)
         if isinstance(maybe_compatprop, _CompatProperty):
-            return getattr(pytest, name)
+            return getattr(__import__('pytest'), name)
         else:
             cls = getattr(self, name)
             # TODO: reenable in the features branch
@@ -367,9 +371,9 @@ class Node(object):
 
         ``marker`` can be a string or pytest.mark.* instance.
         """
-        from _pytest.mark import MarkDecorator
+        from _pytest.mark import MarkDecorator, MARK_GEN
         if isinstance(marker, py.builtin._basestring):
-            marker = getattr(pytest.mark, marker)
+            marker = getattr(MARK_GEN, marker)
         elif not isinstance(marker, MarkDecorator):
             raise ValueError("is not a string or pytest.mark.* Marker")
         self.keywords[marker.name] = marker
@@ -555,12 +559,12 @@ class Session(FSCollector):
     def _makeid(self):
         return ""
 
-    @pytest.hookimpl(tryfirst=True)
+    @hookimpl(tryfirst=True)
     def pytest_collectstart(self):
         if self.shouldstop:
             raise self.Interrupted(self.shouldstop)
 
-    @pytest.hookimpl(tryfirst=True)
+    @hookimpl(tryfirst=True)
     def pytest_runtest_logreport(self, report):
         if report.failed and not hasattr(report, 'wasxfail'):
             self.testsfailed += 1
@@ -619,8 +623,8 @@ class Session(FSCollector):
             for arg, exc in self._notfound:
                 line = "(no name %r in any of %r)" % (arg, exc.args[0])
                 errors.append("not found: %s\n%s" % (arg, line))
-                #XXX: test this
-            raise pytest.UsageError(*errors)
+                # XXX: test this
+            raise UsageError(*errors)
         if not genitems:
             return rep.result
         else:
@@ -648,7 +652,7 @@ class Session(FSCollector):
         names = self._parsearg(arg)
         path = names.pop(0)
         if path.check(dir=1):
-            assert not names, "invalid arg %r" %(arg,)
+            assert not names, "invalid arg %r" % (arg,)
             for path in path.visit(fil=lambda x: x.check(file=1),
                                    rec=self._recurse, bf=True, sort=True):
                 for x in self._collectfile(path):
@@ -707,9 +711,11 @@ class Session(FSCollector):
         path = self.config.invocation_dir.join(relpath, abs=True)
         if not path.check():
             if self.config.option.pyargs:
-                raise pytest.UsageError("file or package not found: " + arg + " (missing __init__.py?)")
+                raise UsageError(
+                    "file or package not found: " + arg +
+                    " (missing __init__.py?)")
             else:
-                raise pytest.UsageError("file not found: " + arg)
+                raise UsageError("file not found: " + arg)
         parts[0] = path
         return parts
 
@@ -732,11 +738,11 @@ class Session(FSCollector):
         nextnames = names[1:]
         resultnodes = []
         for node in matching:
-            if isinstance(node, pytest.Item):
+            if isinstance(node, Item):
                 if not names:
                     resultnodes.append(node)
                 continue
-            assert isinstance(node, pytest.Collector)
+            assert isinstance(node, Collector)
             rep = collect_one_node(node)
             if rep.passed:
                 has_matched = False
@@ -754,11 +760,11 @@ class Session(FSCollector):
 
     def genitems(self, node):
         self.trace("genitems", node)
-        if isinstance(node, pytest.Item):
+        if isinstance(node, Item):
             node.ihook.pytest_itemcollected(item=node)
             yield node
         else:
-            assert isinstance(node, pytest.Collector)
+            assert isinstance(node, Collector)
             rep = collect_one_node(node)
             if rep.passed:
                 for subnode in rep.result:

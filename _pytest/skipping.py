@@ -6,9 +6,9 @@ import sys
 import traceback
 
 import py
-import pytest
+from _pytest.config import hookimpl
 from _pytest.mark import MarkInfo, MarkDecorator
-
+from _pytest.runner import fail, skip
 
 def pytest_addoption(parser):
     group = parser.getgroup("general")
@@ -25,6 +25,8 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     if config.option.runxfail:
+        # yay a hack
+        import pytest
         old = pytest.xfail
         config._cleanup.append(lambda: setattr(pytest, "xfail", old))
 
@@ -57,7 +59,7 @@ def pytest_configure(config):
     )
 
 
-class XFailed(pytest.fail.Exception):
+class XFailed(fail.Exception):
     """ raised from an explicit call to pytest.xfail() """
 
 
@@ -98,15 +100,15 @@ class MarkEvaluator(object):
         except Exception:
             self.exc = sys.exc_info()
             if isinstance(self.exc[1], SyntaxError):
-                msg = [" " * (self.exc[1].offset + 4) + "^",]
+                msg = [" " * (self.exc[1].offset + 4) + "^", ]
                 msg.append("SyntaxError: invalid syntax")
             else:
                 msg = traceback.format_exception_only(*self.exc[:2])
-            pytest.fail("Error evaluating %r expression\n"
-                        "    %s\n"
-                        "%s"
-                        %(self.name, self.expr, "\n".join(msg)),
-                        pytrace=False)
+            fail("Error evaluating %r expression\n"
+                 "    %s\n"
+                 "%s"
+                 % (self.name, self.expr, "\n".join(msg)),
+                 pytrace=False)
 
     def _getglobals(self):
         d = {'os': os, 'sys': sys, 'config': self.item.config}
@@ -138,7 +140,7 @@ class MarkEvaluator(object):
                                 # XXX better be checked at collection time
                                 msg = "you need to specify reason=STRING " \
                                       "when using booleans as conditions."
-                                pytest.fail(msg)
+                                fail(msg)
                             result = bool(expr)
                         if result:
                             self.result = True
@@ -162,7 +164,7 @@ class MarkEvaluator(object):
         return expl
 
 
-@pytest.hookimpl(tryfirst=True)
+@hookimpl(tryfirst=True)
 def pytest_runtest_setup(item):
     # Check if skip or skipif are specified as pytest marks
 
@@ -171,23 +173,23 @@ def pytest_runtest_setup(item):
         eval_skipif = MarkEvaluator(item, 'skipif')
         if eval_skipif.istrue():
             item._evalskip = eval_skipif
-            pytest.skip(eval_skipif.getexplanation())
+            skip(eval_skipif.getexplanation())
 
     skip_info = item.keywords.get('skip')
     if isinstance(skip_info, (MarkInfo, MarkDecorator)):
         item._evalskip = True
         if 'reason' in skip_info.kwargs:
-            pytest.skip(skip_info.kwargs['reason'])
+            skip(skip_info.kwargs['reason'])
         elif skip_info.args:
-            pytest.skip(skip_info.args[0])
+            skip(skip_info.args[0])
         else:
-            pytest.skip("unconditional skip")
+            skip("unconditional skip")
 
     item._evalxfail = MarkEvaluator(item, 'xfail')
     check_xfail_no_run(item)
 
 
-@pytest.mark.hookwrapper
+@hookimpl(hookwrapper=True)
 def pytest_pyfunc_call(pyfuncitem):
     check_xfail_no_run(pyfuncitem)
     outcome = yield
@@ -217,7 +219,7 @@ def check_strict_xfail(pyfuncitem):
             pytest.fail('[XPASS(strict)] ' + explanation, pytrace=False)
 
 
-@pytest.hookimpl(hookwrapper=True)
+@hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     outcome = yield
     rep = outcome.get_result()
@@ -237,7 +239,7 @@ def pytest_runtest_makereport(item, call):
             rep.wasxfail = rep.longrepr
     elif item.config.option.runxfail:
         pass   # don't interefere
-    elif call.excinfo and call.excinfo.errisinstance(pytest.xfail.Exception):
+    elif call.excinfo and call.excinfo.errisinstance(xfail.Exception):
         rep.wasxfail = "reason: " + call.excinfo.value.msg
         rep.outcome = "skipped"
     elif evalxfail and not rep.skipped and evalxfail.wasvalid() and \
