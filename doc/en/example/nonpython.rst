@@ -27,8 +27,8 @@ now execute the test specification::
 
     nonpython $ pytest test_simple.yml
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR/nonpython, inifile: 
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    rootdir: $REGENDOC_TMPDIR/nonpython, inifile:
     collected 2 items
     
     test_simple.yml F.
@@ -59,9 +59,9 @@ consulted when reporting in ``verbose`` mode::
 
     nonpython $ pytest -v
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5m
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
-    rootdir: $REGENDOC_TMPDIR/nonpython, inifile: 
+    rootdir: $REGENDOC_TMPDIR/nonpython, inifile:
     collecting ... collected 2 items
     
     test_simple.yml::hello FAILED
@@ -81,8 +81,8 @@ interesting to just look at the collection tree::
 
     nonpython $ pytest --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.6, py-1.4.33, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR/nonpython, inifile: 
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    rootdir: $REGENDOC_TMPDIR/nonpython, inifile:
     collected 2 items
     <YamlFile 'test_simple.yml'>
       <YamlItem 'hello'>

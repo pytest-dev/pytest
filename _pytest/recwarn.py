@@ -110,19 +110,14 @@ def warns(expected_warning, *args, **kwargs):
             return func(*args[1:], **kwargs)
 
 
-RecordedWarning = namedtuple('RecordedWarning', (
-    'message', 'category', 'filename', 'lineno', 'file', 'line',
-))
-    
-
-class WarningsRecorder(object):
+class WarningsRecorder(warnings.catch_warnings):
     """A context manager to record raised warnings.
 
     Adapted from `warnings.catch_warnings`.
     """
 
-    def __init__(self, module=None):
-        self._module = sys.modules['warnings'] if module is None else module
+    def __init__(self):
+        super(WarningsRecorder, self).__init__(record=True)
         self._entered = False
         self._list = []
 
@@ -159,38 +154,20 @@ class WarningsRecorder(object):
         if self._entered:
             __tracebackhide__ = True
             raise RuntimeError("Cannot enter %r twice" % self)
-        self._entered = True
-        self._filters = self._module.filters
-        self._module.filters = self._filters[:]
-        self._showwarning = self._module.showwarning
-
-        def showwarning(message, category, filename, lineno,
-                        file=None, line=None):
-            self._list.append(RecordedWarning(
-                message, category, filename, lineno, file, line))
-
-            # still perform old showwarning functionality
-            self._showwarning(
-                message, category, filename, lineno, file=file, line=line)
-
-        self._module.showwarning = showwarning
-
-        # allow the same warning to be raised more than once
-
-        self._module.simplefilter('always')
+        self._list = super(WarningsRecorder, self).__enter__()
+        warnings.simplefilter('always')
         return self
 
     def __exit__(self, *exc_info):
         if not self._entered:
             __tracebackhide__ = True
             raise RuntimeError("Cannot exit %r without entering first" % self)
-        self._module.filters = self._filters
-        self._module.showwarning = self._showwarning
+        super(WarningsRecorder, self).__exit__(*exc_info)
 
 
 class WarningsChecker(WarningsRecorder):
-    def __init__(self, expected_warning=None, module=None):
-        super(WarningsChecker, self).__init__(module=module)
+    def __init__(self, expected_warning=None):
+        super(WarningsChecker, self).__init__()
 
         msg = ("exceptions must be old-style classes or "
                "derived from Warning, not %s")

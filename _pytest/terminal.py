@@ -295,8 +295,8 @@ class TerminalReporter(object):
     def pytest_report_header(self, config):
         inifile = ""
         if config.inifile:
-            inifile = config.rootdir.bestrelpath(config.inifile)
-        lines = ["rootdir: %s, inifile: %s" %(config.rootdir, inifile)]
+            inifile = " " + config.rootdir.bestrelpath(config.inifile)
+        lines = ["rootdir: %s, inifile:%s" % (config.rootdir, inifile)]
 
         plugininfo = config.pluginmanager.list_plugin_distinfo()
         if plugininfo:

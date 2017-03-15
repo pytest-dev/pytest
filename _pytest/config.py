@@ -877,6 +877,7 @@ class Config(object):
         self.trace = self.pluginmanager.trace.root.get("config")
         self.hook = self.pluginmanager.hook
         self._inicache = {}
+        self._override_ini = ()
         self._opt2dest = {}
         self._cleanup = []
         self._warn = self.pluginmanager._warn
@@ -977,6 +978,7 @@ class Config(object):
         self.invocation_dir = py.path.local()
         self._parser.addini('addopts', 'extra command line options', 'args')
         self._parser.addini('minversion', 'minimally required pytest version')
+        self._override_ini = ns.override_ini or ()
 
     def _consider_importhook(self, args, entrypoint_name):
         """Install the PEP 302 import hook if using assertion re-writing.
@@ -1159,15 +1161,14 @@ class Config(object):
         # and -o foo1=bar1 -o foo2=bar2 options
         # always use the last item if multiple value set for same ini-name,
         # e.g. -o foo=bar1 -o foo=bar2 will set foo to bar2
-        if self.getoption("override_ini", None):
-            for ini_config_list in self.option.override_ini:
-                for ini_config in ini_config_list:
-                    try:
-                        (key, user_ini_value) = ini_config.split("=", 1)
-                    except ValueError:
-                        raise UsageError("-o/--override-ini expects option=value style.")
-                    if key == name:
-                        value = user_ini_value
+        for ini_config_list in self._override_ini:
+            for ini_config in ini_config_list:
+                try:
+                    (key, user_ini_value) = ini_config.split("=", 1)
+                except ValueError:
+                    raise UsageError("-o/--override-ini expects option=value style.")
+                if key == name:
+                    value = user_ini_value
         return value
 
     def getoption(self, name, default=notset, skip=False):

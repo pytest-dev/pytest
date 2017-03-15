@@ -189,6 +189,29 @@ class TestPython(object):
         fnode.assert_attr(message="test teardown failure")
         assert "ValueError" in fnode.toxml()
 
+    def test_call_failure_teardown_error(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture
+            def arg():
+                yield
+                raise Exception("Teardown Exception")
+            def test_function(arg):
+                raise Exception("Call Exception")
+        """)
+        result, dom = runandparse(testdir)
+        assert result.ret
+        node = dom.find_first_by_tag("testsuite")
+        node.assert_attr(errors=1, failures=1, tests=1)
+        first, second = dom.find_by_tag("testcase")
+        if not first or not second or first == second:
+            assert 0
+        fnode = first.find_first_by_tag("failure")
+        fnode.assert_attr(message="Exception: Call Exception")
+        snode = second.find_first_by_tag("error")
+        snode.assert_attr(message="test teardown failure")
+
     def test_skip_contains_name_reason(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -557,6 +580,25 @@ class TestPython(object):
         systemout = pnode.find_first_by_tag("system-err")
         assert "hello-stderr" in systemout.toxml()
 
+    def test_avoid_double_stdout(self, testdir):
+        testdir.makepyfile("""
+            import sys
+            import pytest
+
+            @pytest.fixture
+            def arg(request):
+                yield
+                sys.stdout.write('hello-stdout teardown')
+                raise ValueError()
+            def test_function(arg):
+                sys.stdout.write('hello-stdout call')
+        """)
+        result, dom = runandparse(testdir)
+        node = dom.find_first_by_tag("testsuite")
+        pnode = node.find_first_by_tag("testcase")
+        systemout = pnode.find_first_by_tag("system-out")
+        assert "hello-stdout call" in systemout.toxml()
+        assert "hello-stdout teardown" in systemout.toxml()
 
 def test_mangle_test_address():
     from _pytest.junitxml import mangle_test_address
