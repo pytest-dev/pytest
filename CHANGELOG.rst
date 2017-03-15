@@ -1,7 +1,9 @@
 3.0.8 (unreleased)
 ==================
 
-*
+* Change capture.py's ``DontReadFromInput`` class to throw ``io.UnsupportedOperation`` errors rather
+  than ValueErrors in the ``fileno`` method (`#2276`_).
+  Thanks `@metasyn`_ for the PR.
 
 *
 
@@ -10,6 +12,12 @@
 *
 
 *
+
+
+.. _@metasyn: https://github.com/metasyn
+
+
+.. _#2276: https://github.com/pytest-dev/pytest/issues/2276
 
 
 3.0.7 (2017-03-14)
@@ -18,7 +26,7 @@
 
 * Fix issue in assertion rewriting breaking due to modules silently discarding
   other modules when importing fails
-  Notably, importing the `anydbm` module is fixed. (`#2248`_).
+  Notably, importing the ``anydbm`` module is fixed. (`#2248`_).
   Thanks `@pfhayes`_ for the PR.
 
 * junitxml: Fix problematic case where system-out tag occured twice per testcase
