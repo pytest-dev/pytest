@@ -898,6 +898,16 @@ class TestStdCapture(object):
             out, err = cap.readouterr()
         assert out == py.builtin._totext('\ufffd\n', 'unicode-escape')
 
+    def test_capturing_bytes(self):
+        some_bytes = b'\xf1\xe7\x12\r\n'
+        with self.getcapture() as cap:
+            # Write bytes to output in a py2+py3
+            getattr(sys.stdout, 'buffer', sys.stdout).write(some_bytes)
+            getattr(sys.stderr, 'buffer', sys.stderr).write(some_bytes)
+            out, err = cap.readouterr_bytes()
+            assert out == some_bytes
+            assert err == some_bytes
+
     def test_reset_twice_error(self):
         with self.getcapture() as cap:
             print ("hello")

@@ -204,6 +204,12 @@ class CaptureFixture(object):
         except AttributeError:
             return self._outerr
 
+    def readouterr_bytes(self):
+        try:
+            return self._capture.readouterr_bytes()
+        except AttributeError:
+            return self._outerr
+
     @contextlib.contextmanager
     def disabled(self):
         capmanager = self.request.config.pluginmanager.getplugin('capturemanager')
@@ -315,6 +321,12 @@ class MultiCapture(object):
         return (self.out.snap() if self.out is not None else "",
                 self.err.snap() if self.err is not None else "")
 
+    def readouterr_bytes(self):
+        """ return snapshot bytes value of stdout/stderr capturings. """
+        return (self.out.snap_bytes() if self.out is not None else b'',
+                self.err.snap_bytes() if self.err is not None else b'')
+
+
 class NoCapture(object):
     __init__ = start = done = suspend = resume = lambda *args: None
 
@@ -370,6 +382,14 @@ class FDCapture(object):
             return res
         return ''
 
+    def snap_bytes(self):
+        f = self.tmpfile
+        f.seek(0)
+        res = f.read()
+        f.truncate(0)
+        f.seek(0)
+        return res
+
     def done(self):
         """ stop capturing, restore streams, return original capture file,
         seeked to position zero. """
@@ -411,6 +431,13 @@ class SysCapture(object):
 
     def snap(self):
         f = self.tmpfile
+        res = f.getvalue()
+        f.truncate(0)
+        f.seek(0)
+        return res
+
+    def snap_bytes(self):
+        f = getattr(self.tmpfile, 'buffer', self.tmpfile)
         res = f.getvalue()
         f.truncate(0)
         f.seek(0)
