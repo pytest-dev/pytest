@@ -215,7 +215,8 @@ class AssertionRewritingHook(object):
             mod.__loader__ = self
             py.builtin.exec_(co, mod.__dict__)
         except:
-            del sys.modules[name]
+            if name in sys.modules:
+                del sys.modules[name]
             raise
         return sys.modules[name]
 

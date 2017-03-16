@@ -121,7 +121,7 @@ class _NodeReporter(object):
         node = kind(data, message=message)
         self.append(node)
 
-    def _write_captured_output(self, report):
+    def write_captured_output(self, report):
         for capname in ('out', 'err'):
             content = getattr(report, 'capstd' + capname)
             if content:
@@ -130,7 +130,6 @@ class _NodeReporter(object):
 
     def append_pass(self, report):
         self.add_stats('passed')
-        self._write_captured_output(report)
 
     def append_failure(self, report):
         # msg = str(report.longrepr.reprtraceback.extraline)
@@ -149,7 +148,6 @@ class _NodeReporter(object):
             fail = Junit.failure(message=message)
             fail.append(bin_xml_escape(report.longrepr))
             self.append(fail)
-        self._write_captured_output(report)
 
     def append_collect_error(self, report):
         # msg = str(report.longrepr.reprtraceback.extraline)
@@ -167,7 +165,6 @@ class _NodeReporter(object):
             msg = "test setup failure"
         self._add_simple(
             Junit.error, msg, report.longrepr)
-        self._write_captured_output(report)
 
     def append_skipped(self, report):
         if hasattr(report, "wasxfail"):
@@ -182,7 +179,7 @@ class _NodeReporter(object):
                 Junit.skipped("%s:%s: %s" % (filename, lineno, skipreason),
                               type="pytest.skip",
                               message=skipreason))
-        self._write_captured_output(report)
+        self.write_captured_output(report)
 
     def finalize(self):
         data = self.to_xml().unicode(indent=0)
@@ -273,6 +270,9 @@ class LogXML(object):
         self.node_reporters = {}  # nodeid -> _NodeReporter
         self.node_reporters_ordered = []
         self.global_properties = []
+        # List of reports that failed on call but teardown is pending.
+        self.open_reports = []
+        self.cnt_double_fail_tests = 0
 
     def finalize(self, report):
         nodeid = getattr(report, 'nodeid', report)
@@ -332,14 +332,33 @@ class LogXML(object):
             -> teardown node2
             -> teardown node1
         """
+        close_report = None
         if report.passed:
             if report.when == "call":  # ignore setup/teardown
                 reporter = self._opentestcase(report)
                 reporter.append_pass(report)
         elif report.failed:
+            if report.when == "teardown":
+                # The following vars are needed when xdist plugin is used
+                report_wid = getattr(report, "worker_id", None)
+                report_ii = getattr(report, "item_index", None)
+                close_report = next(
+                    (rep for rep in self.open_reports
+                     if (rep.nodeid == report.nodeid and
+                         getattr(rep, "item_index", None) == report_ii and
+                         getattr(rep, "worker_id", None) == report_wid
+                         )
+                     ), None)
+                if close_report:
+                    # We need to open new testcase in case we have failure in
+                    # call and error in teardown in order to follow junit
+                    # schema
+                    self.finalize(close_report)
+                    self.cnt_double_fail_tests += 1
             reporter = self._opentestcase(report)
             if report.when == "call":
                 reporter.append_failure(report)
+                self.open_reports.append(report)
             else:
                 reporter.append_error(report)
         elif report.skipped:
@@ -347,7 +366,20 @@ class LogXML(object):
             reporter.append_skipped(report)
         self.update_testcase_duration(report)
         if report.when == "teardown":
+            reporter = self._opentestcase(report)
+            reporter.write_captured_output(report)
             self.finalize(report)
+            report_wid = getattr(report, "worker_id", None)
+            report_ii = getattr(report, "item_index", None)
+            close_report = next(
+                (rep for rep in self.open_reports
+                 if (rep.nodeid == report.nodeid and
+                      getattr(rep, "item_index", None) == report_ii and
+                      getattr(rep, "worker_id", None) == report_wid
+                     )
+                 ), None)
+            if close_report:
+                self.open_reports.remove(close_report)
 
     def update_testcase_duration(self, report):
         """accumulates total duration for nodeid from given report and updates
@@ -380,8 +412,9 @@ class LogXML(object):
         suite_stop_time = time.time()
         suite_time_delta = suite_stop_time - self.suite_start_time
 
-        numtests = self.stats['passed'] + self.stats['failure'] + self.stats['skipped'] + self.stats['error']
-
+        numtests = (self.stats['passed'] + self.stats['failure'] +
+                    self.stats['skipped'] + self.stats['error'] -
+                    self.cnt_double_fail_tests)
         logfile.write('<?xml version="1.0" encoding="utf-8"?>')
 
         logfile.write(Junit.testsuite(

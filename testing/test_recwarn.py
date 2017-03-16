@@ -8,25 +8,19 @@ from _pytest.recwarn import WarningsRecorder
 def test_recwarn_functional(testdir):
     reprec = testdir.inline_runsource("""
         import warnings
-        oldwarn = warnings.showwarning
         def test_method(recwarn):
-            assert warnings.showwarning != oldwarn
             warnings.warn("hello")
             warn = recwarn.pop()
             assert isinstance(warn.message, UserWarning)
-        def test_finalized():
-            assert warnings.showwarning == oldwarn
     """)
     res = reprec.countoutcomes()
-    assert tuple(res) == (2, 0, 0), res
+    assert tuple(res) == (1, 0, 0), res
 
 
 class TestWarningsRecorderChecker(object):
-    def test_recording(self, recwarn):
-        showwarning = py.std.warnings.showwarning
+    def test_recording(self):
         rec = WarningsRecorder()
         with rec:
-            assert py.std.warnings.showwarning != showwarning
             assert not rec.list
             py.std.warnings.warn_explicit("hello", UserWarning, "xyz", 13)
             assert len(rec.list) == 1
@@ -39,8 +33,6 @@ class TestWarningsRecorderChecker(object):
             assert len(rec.list) == 0
             assert l is rec.list
             pytest.raises(AssertionError, "rec.pop()")
-
-        assert showwarning == py.std.warnings.showwarning
 
     def test_typechecking(self):
         from _pytest.recwarn import WarningsChecker
@@ -217,16 +209,12 @@ class TestWarns(object):
         excinfo.match(re.escape(message_template.format(warning_classes,
                                                         [each.message for each in warninfo])))
 
-
     def test_record(self):
         with pytest.warns(UserWarning) as record:
             warnings.warn("user", UserWarning)
 
         assert len(record) == 1
         assert str(record[0].message) == "user"
-
-        print(repr(record[0]))
-        assert str(record[0].message) in repr(record[0])
 
     def test_record_only(self):
         with pytest.warns(None) as record:

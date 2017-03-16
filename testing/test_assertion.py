@@ -365,7 +365,7 @@ class TestAssert_reprcompare(object):
         expl = '\n'.join(callequal(left, right, verbose=True))
         assert expl.endswith(textwrap.dedent(expected).strip())
 
-    def test_list_different_lenghts(self):
+    def test_list_different_lengths(self):
         expl = callequal([0, 1], [0, 1, 2])
         assert len(expl) > 1
         expl = callequal([0, 1, 2], [0, 1])
@@ -995,6 +995,25 @@ def test_assert_with_unicode(monkeypatch, testdir):
     """)
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(['*AssertionError*'])
+
+def test_raise_unprintable_assertion_error(testdir):
+    testdir.makepyfile(r"""
+        def test_raise_assertion_error():
+            raise AssertionError('\xff')
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([r">       raise AssertionError('\xff')", 'E       AssertionError: *'])
+
+def test_raise_assertion_error_raisin_repr(testdir):
+    testdir.makepyfile(u"""
+        class RaisingRepr(object):
+            def __repr__(self):
+                raise Exception()
+        def test_raising_repr():
+            raise AssertionError(RaisingRepr())
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(['E       AssertionError: <unprintable AssertionError object>'])
 
 def test_issue_1944(testdir):
     testdir.makepyfile("""

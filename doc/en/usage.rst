@@ -192,7 +192,7 @@ This will add an extra property ``example_key="1"`` to the generated
 
 .. warning::
 
-    This is an experimental feature, and its interface might be replaced
+    ``record_xml_property`` is an experimental feature, and its interface might be replaced
     by something more powerful and general in future versions. The
     functionality per-se will be kept, however.
 
