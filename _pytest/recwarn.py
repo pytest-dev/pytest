@@ -7,7 +7,6 @@ import _pytest._code
 import py
 import sys
 import warnings
-
 from _pytest.fixtures import yield_fixture
 
 

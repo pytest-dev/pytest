@@ -1223,8 +1223,8 @@ def raises(expected_exception, *args, **kwargs):
             return _pytest._code.ExceptionInfo()
     fail(message)
 
-raises.Exception = fail.Exception
 
+raises.Exception = fail.Exception
 
 
 class RaisesContext(object):
