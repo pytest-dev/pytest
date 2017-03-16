@@ -78,7 +78,7 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-    pytest.config = config # compatibiltiy
+    __import__('pytest').config = config # compatibiltiy
 
 
 def wrap_session(config, doit):
