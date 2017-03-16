@@ -202,7 +202,7 @@ def check_xfail_no_run(item):
         evalxfail = item._evalxfail
         if evalxfail.istrue():
             if not evalxfail.get('run', True):
-                pytest.xfail("[NOTRUN] " + evalxfail.getexplanation())
+                xfail("[NOTRUN] " + evalxfail.getexplanation())
 
 
 def check_strict_xfail(pyfuncitem):
@@ -214,7 +214,7 @@ def check_strict_xfail(pyfuncitem):
         if is_strict_xfail:
             del pyfuncitem._evalxfail
             explanation = evalxfail.getexplanation()
-            pytest.fail('[XPASS(strict)] ' + explanation, pytrace=False)
+            fail('[XPASS(strict)] ' + explanation, pytrace=False)
 
 
 @hookimpl(hookwrapper=True)
@@ -305,12 +305,14 @@ def pytest_terminal_summary(terminalreporter):
         for line in lines:
             tr._tw.line(line)
 
+
 def show_simple(terminalreporter, lines, stat, format):
     failed = terminalreporter.stats.get(stat)
     if failed:
         for rep in failed:
             pos = terminalreporter.config.cwd_relative_nodeid(rep.nodeid)
-            lines.append(format %(pos,))
+            lines.append(format % (pos,))
+
 
 def show_xfailed(terminalreporter, lines):
     xfailed = terminalreporter.stats.get("xfailed")
@@ -322,13 +324,15 @@ def show_xfailed(terminalreporter, lines):
             if reason:
                 lines.append("  " + str(reason))
 
+
 def show_xpassed(terminalreporter, lines):
     xpassed = terminalreporter.stats.get("xpassed")
     if xpassed:
         for rep in xpassed:
             pos = terminalreporter.config.cwd_relative_nodeid(rep.nodeid)
             reason = rep.wasxfail
-            lines.append("XPASS %s %s" %(pos, reason))
+            lines.append("XPASS %s %s" % (pos, reason))
+
 
 def cached_eval(config, expr, d):
     if not hasattr(config, '_evalcache'):
@@ -353,6 +357,7 @@ def folded_skips(skipped):
         l.append((len(events),) + key)
     return l
 
+
 def show_skipped(terminalreporter, lines):
     tr = terminalreporter
     skipped = tr.stats.get('skipped', [])
@@ -368,5 +373,6 @@ def show_skipped(terminalreporter, lines):
             for num, fspath, lineno, reason in fskips:
                 if reason.startswith("Skipped: "):
                     reason = reason[9:]
-                lines.append("SKIP [%d] %s:%d: %s" %
+                lines.append(
+                    "SKIP [%d] %s:%d: %s" %
                     (num, fspath, lineno, reason))

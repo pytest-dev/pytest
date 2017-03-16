@@ -5,7 +5,6 @@ import _pytest._code
 import py
 import sys
 import warnings
-from collections import namedtuple
 from _pytest.fixtures import yield_fixture
 
 

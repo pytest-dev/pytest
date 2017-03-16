@@ -681,8 +681,9 @@ def fail_fixturefunc(fixturefunc, msg):
     fs, lineno = getfslineno(fixturefunc)
     location = "%s:%s" % (fs, lineno+1)
     source = _pytest._code.Source(fixturefunc)
-    pytest.fail(msg + ":\n\n" + str(source.indent()) + "\n" + location,
-                pytrace=False)
+    fail(msg + ":\n\n" + str(source.indent()) + "\n" + location,
+         pytrace=False)
+
 
 def call_fixture_func(fixturefunc, request, kwargs):
     yieldctx = is_generator(fixturefunc)
