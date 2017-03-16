@@ -18,12 +18,12 @@ from _pytest.compat import (
 )
 from _pytest.runner import fail
 from _pytest.compat import FuncargnamesCompatAttr
-from _pytest import python
 
 def pytest_sessionstart(session):
+    import _pytest.python
     scopename2class.update({
-        'class': python.Class,
-        'module': python.Module,
+        'class': _pytest.python.Class,
+        'module': _pytest.python.Module,
         'function': _pytest.main.Item,
     })
     session._fixturemanager = FixtureManager(session)
