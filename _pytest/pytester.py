@@ -14,8 +14,6 @@ from fnmatch import fnmatch
 
 from weakref import WeakKeyDictionary
 
-from py.builtin import print_
-
 from _pytest.capture import MultiCapture, SysCapture
 from _pytest._code import Source
 import py
@@ -231,15 +229,15 @@ class HookRecorder(object):
             name, check = entries.pop(0)
             for ind, call in enumerate(self.calls[i:]):
                 if call._name == name:
-                    print_("NAMEMATCH", name, call)
+                    print("NAMEMATCH", name, call)
                     if eval(check, backlocals, call.__dict__):
-                        print_("CHECKERMATCH", repr(check), "->", call)
+                        print("CHECKERMATCH", repr(check), "->", call)
                     else:
-                        print_("NOCHECKERMATCH", repr(check), "-", call)
+                        print("NOCHECKERMATCH", repr(check), "-", call)
                         continue
                     i += ind + 1
                     break
-                print_("NONAMEMATCH", name, "with", call)
+                print("NONAMEMATCH", name, "with", call)
             else:
                 pytest.fail("could not find %r check %r" % (name, check))
 
@@ -926,8 +924,8 @@ class Testdir(object):
         cmdargs = [str(x) for x in cmdargs]
         p1 = self.tmpdir.join("stdout")
         p2 = self.tmpdir.join("stderr")
-        print_("running:", ' '.join(cmdargs))
-        print_("     in:", str(py.path.local()))
+        print("running:", ' '.join(cmdargs))
+        print("     in:", str(py.path.local()))
         f1 = codecs.open(str(p1), "w", encoding="utf8")
         f2 = codecs.open(str(p2), "w", encoding="utf8")
         try:
@@ -953,7 +951,7 @@ class Testdir(object):
     def _dump_lines(self, lines, fp):
         try:
             for line in lines:
-                py.builtin.print_(line, file=fp)
+                print(line, file=fp)
         except UnicodeEncodeError:
             print("couldn't print to %s because of encoding" % (fp,))
 
