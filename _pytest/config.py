@@ -910,11 +910,11 @@ class Config(object):
             fin = self._cleanup.pop()
             fin()
 
-    def warn(self, code, message, fslocation=None):
+    def warn(self, code, message, fslocation=None, nodeid=None):
         """ generate a warning for this test session. """
         self.hook.pytest_logwarning.call_historic(kwargs=dict(
             code=code, message=message,
-            fslocation=fslocation, nodeid=None))
+            fslocation=fslocation, nodeid=nodeid))
 
     def get_terminal_writer(self):
         return self.pluginmanager.get_plugin("terminalreporter")._tw

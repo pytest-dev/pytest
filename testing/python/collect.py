@@ -113,9 +113,9 @@ class TestClass(object):
                     pass
         """)
         result = testdir.runpytest("-rw")
-        result.stdout.fnmatch_lines_random("""
-            WC1*test_class_with_init_warning.py*__init__*
-        """)
+        result.stdout.fnmatch_lines([
+            "*cannot collect test class 'TestClass1' because it has a __init__ constructor",
+        ])
 
     def test_class_subclassobject(self, testdir):
         testdir.getmodulecol("""
@@ -1241,8 +1241,8 @@ def test_dont_collect_non_function_callable(testdir):
     result = testdir.runpytest('-rw')
     result.stdout.fnmatch_lines([
         '*collected 1 item*',
-        'WC2 *',
-        '*1 passed, 1 pytest-warnings in *',
+        "*cannot collect 'test_a' because it is not a function*",
+        '*1 passed, 1 warnings in *',
     ])
 
 

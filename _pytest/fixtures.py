@@ -1080,7 +1080,7 @@ class FixtureManager(object):
                     continue
                 marker = defaultfuncargprefixmarker
                 from _pytest import deprecated
-                self.config.warn('C1', deprecated.FUNCARG_PREFIX.format(name=name))
+                self.config.warn('C1', deprecated.FUNCARG_PREFIX.format(name=name), nodeid=nodeid)
                 name = name[len(self._argprefix):]
             elif not isinstance(marker, FixtureFunctionMarker):
                 # magic globals  with __getattr__ might have got us a wrong

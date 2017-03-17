@@ -2,7 +2,6 @@
 
 This is a good source for looking at the various reporting hooks.
 """
-import operator
 import itertools
 
 from _pytest.main import EXIT_OK, EXIT_TESTSFAILED, EXIT_INTERRUPTED, \
@@ -83,12 +82,39 @@ def pytest_report_teststatus(report):
             letter = "f"
     return report.outcome, letter, report.outcome.upper()
 
+
 class WarningReport(object):
+    """
+    Simple structure to hold warnings information captured by ``pytest_logwarning``.
+    """
     def __init__(self, code, message, nodeid=None, fslocation=None):
+        """
+        :param code: unused
+        :param str message: user friendly message about the warning
+        :param str|None nodeid: node id that generated the warning (see ``get_location``).
+        :param tuple|py.path.local fslocation:
+            file system location of the source of the warning (see ``get_location``).
+        """
         self.code = code
         self.message = message
         self.nodeid = nodeid
         self.fslocation = fslocation
+
+    def get_location(self, config):
+        """
+        Returns the more user-friendly information about the location
+        of a warning, or None.
+        """
+        if self.nodeid:
+            return self.nodeid
+        if self.fslocation:
+            if isinstance(self.fslocation, tuple) and len(self.fslocation) == 2:
+                filename, linenum = self.fslocation
+                relpath = py.path.local(filename).relto(config.invocation_dir)
+                return '%s:%d' % (relpath, linenum)
+            else:
+                return str(self.fslocation)
+        return None
 
 
 class TerminalReporter(object):
@@ -169,8 +195,6 @@ class TerminalReporter(object):
 
     def pytest_logwarning(self, code, fslocation, message, nodeid):
         warnings = self.stats.setdefault("warnings", [])
-        if isinstance(fslocation, tuple):
-            fslocation = "%s:%d" % fslocation
         warning = WarningReport(code=code, fslocation=fslocation,
                                 message=message, nodeid=nodeid)
         warnings.append(warning)
@@ -444,12 +468,17 @@ class TerminalReporter(object):
             all_warnings = self.stats.get("warnings")
             if not all_warnings:
                 return
+
+            grouped = itertools.groupby(all_warnings, key=lambda wr: wr.get_location(self.config))
+
             self.write_sep("=", "warnings summary", yellow=True, bold=False)
-            grouped = itertools.groupby(all_warnings, key=operator.attrgetter('nodeid'))
-            for nodeid, warnings in grouped:
-                self._tw.line(str(nodeid))
+            for location, warnings in grouped:
+                self._tw.line(str(location) or '<undetermined location>')
                 for w in warnings:
-                    self._tw.line(w.message)
+                    lines = w.message.splitlines()
+                    indented = '\n'.join('  ' + x for x in lines)
+                    self._tw.line(indented)
+                self._tw.line()
             self._tw.line('-- Docs: http://doc.pytest.org/en/latest/warnings.html')
 
     def summary_passes(self):

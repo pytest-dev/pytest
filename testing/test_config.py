@@ -638,7 +638,7 @@ class TestWarning(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines("""
             ===*warnings summary*===
-            *test_warn_on_test_item_from_request::test_hello*
+            *test_warn_on_test_item_from_request.py::test_hello*
             *hello*
         """)
 

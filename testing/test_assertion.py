@@ -975,7 +975,10 @@ def test_assert_tuple_warning(testdir):
             assert(False, 'you shall not pass')
     """)
     result = testdir.runpytest('-rw')
-    result.stdout.fnmatch_lines('*test_assert_tuple_warning.py:2 assertion is always true*')
+    result.stdout.fnmatch_lines([
+        '*test_assert_tuple_warning.py:2',
+        '*assertion is always true*',
+    ])
 
 def test_assert_indirect_tuple_no_warning(testdir):
     testdir.makepyfile("""

@@ -39,10 +39,10 @@ def test_normal_flow(testdir, pyfile_with_warnings):
         '*test_normal_flow.py::test_func',
 
         '*normal_flow_module.py:3: PendingDeprecationWarning: functionality is pending deprecation',
-        '  warnings.warn(PendingDeprecationWarning("functionality is pending deprecation"))',
+        '*  warnings.warn(PendingDeprecationWarning("functionality is pending deprecation"))',
 
         '*normal_flow_module.py:4: DeprecationWarning: functionality is deprecated',
-        '  warnings.warn(DeprecationWarning("functionality is deprecated"))',
+        '*  warnings.warn(DeprecationWarning("functionality is deprecated"))',
         '* 1 passed, 2 warnings*',
     ])
     assert result.stdout.str().count('test_normal_flow.py::test_func') == 1
@@ -67,10 +67,10 @@ def test_setup_teardown_warnings(testdir, pyfile_with_warnings):
         '*== %s ==*' % WARNINGS_SUMMARY_HEADER,
 
         '*test_setup_teardown_warnings.py:6: UserWarning: warning during setup',
-        '  warnings.warn(UserWarning("warning during setup"))',
+        '*warnings.warn(UserWarning("warning during setup"))',
 
         '*test_setup_teardown_warnings.py:8: UserWarning: warning during teardown',
-        '  warnings.warn(UserWarning("warning during teardown"))',
+        '*warnings.warn(UserWarning("warning during teardown"))',
         '* 1 passed, 2 warnings*',
     ])
 
