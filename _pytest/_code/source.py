@@ -1,4 +1,4 @@
-from __future__ import generators
+from __future__ import absolute_import, division, generators, print_function
 
 from bisect import bisect_right
 import sys

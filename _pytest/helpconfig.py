@@ -1,4 +1,6 @@
 """ version info, help messages, tracing configuration.  """
+from __future__ import absolute_import, division, print_function
+
 import py
 import pytest
 import os, sys

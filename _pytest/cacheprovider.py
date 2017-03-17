@@ -4,7 +4,7 @@ merged implementation of the cache provider
 the name cache was not chosen to ensure pluggy automatically
 ignores the external pytest-cache
 """
-
+from __future__ import absolute_import, division, print_function
 import py
 import pytest
 import json

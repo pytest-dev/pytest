@@ -1,6 +1,7 @@
 """ log machine-parseable test session result information in a plain
 text file.
 """
+from __future__ import absolute_import, division, print_function
 
 import py
 import os

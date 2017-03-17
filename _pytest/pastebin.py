@@ -1,4 +1,6 @@
 """ submit failure or test session information to a pastebin service. """
+from __future__ import absolute_import, division, print_function
+
 import pytest
 import sys
 import tempfile

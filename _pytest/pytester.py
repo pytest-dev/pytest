@@ -1,4 +1,6 @@
 """ (disabled by default) support for testing pytest and pytest plugins. """
+from __future__ import absolute_import, division, print_function
+
 import codecs
 import gc
 import os
