@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 import os
 
 import py, pytest
@@ -673,7 +674,7 @@ class TestKeywordSelection(object):
                     item.extra_keyword_matches.add("xxx")
         """)
         reprec = testdir.inline_run(p.dirpath(), '-s', '-k', keyword)
-        py.builtin.print_("keyword", repr(keyword))
+        print("keyword", repr(keyword))
         passed, skipped, failed = reprec.listoutcomes()
         assert len(passed) == 1
         assert passed[0].nodeid.endswith("test_2")

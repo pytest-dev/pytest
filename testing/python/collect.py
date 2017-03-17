@@ -274,6 +274,7 @@ class TestGenerator(object):
 
     def test_order_of_execution_generator_same_codeline(self, testdir, tmpdir):
         o = testdir.makepyfile("""
+            from __future__ import print_function
             def test_generative_order_of_execution():
                 import py, pytest
                 test_list = []
@@ -283,8 +284,8 @@ class TestGenerator(object):
                     test_list.append(item)
 
                 def assert_order_of_execution():
-                    py.builtin.print_('expected order', expected_list)
-                    py.builtin.print_('but got       ', test_list)
+                    print('expected order', expected_list)
+                    print('but got       ', test_list)
                     assert test_list == expected_list
 
                 for i in expected_list:
@@ -298,6 +299,7 @@ class TestGenerator(object):
 
     def test_order_of_execution_generator_different_codeline(self, testdir):
         o = testdir.makepyfile("""
+            from __future__ import print_function
             def test_generative_tests_different_codeline():
                 import py, pytest
                 test_list = []
@@ -313,8 +315,8 @@ class TestGenerator(object):
                     test_list.append(0)
 
                 def assert_order_of_execution():
-                    py.builtin.print_('expected order', expected_list)
-                    py.builtin.print_('but got       ', test_list)
+                    print('expected order', expected_list)
+                    print('but got       ', test_list)
                     assert test_list == expected_list
 
                 yield list_append_0

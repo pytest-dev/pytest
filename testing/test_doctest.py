@@ -1,4 +1,5 @@
 # encoding: utf-8
+from __future__ import absolute_import, division, print_function
 import sys
 import _pytest._code
 from _pytest.compat import MODULE_NOT_FOUND_ERROR

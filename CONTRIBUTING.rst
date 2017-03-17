@@ -206,12 +206,12 @@ but here is a simple overview:
 
 #. Run all the tests
 
-   You need to have Python 2.7 and 3.5 available in your system.  Now
+   You need to have Python 2.7 and 3.6 available in your system.  Now
    running tests is as simple as issuing this command::
 
-    $ tox -e linting,py27,py35
+    $ tox -e linting,py27,py36
 
-   This command will run tests via the "tox" tool against Python 2.7 and 3.5
+   This command will run tests via the "tox" tool against Python 2.7 and 3.6
    and also perform "lint" coding-style checks.
 
 #. You can now edit your local working copy.
@@ -223,9 +223,9 @@ but here is a simple overview:
 
     $ tox -e py27 -- --pdb
 
-   Or to only run tests in a particular test module on Python 3.5::
+   Or to only run tests in a particular test module on Python 3.6::
 
-    $ tox -e py35 -- testing/test_config.py
+    $ tox -e py36 -- testing/test_config.py
 
 #. Commit and push once your tests pass and you are happy with your change(s)::
 

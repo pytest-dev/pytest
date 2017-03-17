@@ -1,6 +1,7 @@
 """
 support for presenting detailed information in failing assertions.
 """
+from __future__ import absolute_import, division, print_function
 import py
 import sys
 

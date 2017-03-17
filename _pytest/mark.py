@@ -1,4 +1,6 @@
 """ generic mechanism for marking and selecting python functions. """
+from __future__ import absolute_import, division, print_function
+
 import inspect
 from collections import namedtuple
 from operator import attrgetter

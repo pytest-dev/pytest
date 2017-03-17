@@ -2,7 +2,7 @@
 per-test stdout/stderr capturing mechanism.
 
 """
-from __future__ import with_statement
+from __future__ import absolute_import, division, print_function
 
 import contextlib
 import sys

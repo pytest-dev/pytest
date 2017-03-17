@@ -1,4 +1,6 @@
 """ basic collect and runtest protocol implementations """
+from __future__ import absolute_import, division, print_function
+
 import bdb
 import sys
 from time import time

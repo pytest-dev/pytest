@@ -5,7 +5,7 @@ that is planned to be removed in the next pytest release.
 Keeping it in a central location makes it easy to track what is deprecated and should
 be removed when the time comes.
 """
-
+from __future__ import absolute_import, division, print_function
 
 MAIN_STR_ARGS = 'passing a string to pytest.main() is deprecated, ' \
                       'pass a list of arguments instead.'

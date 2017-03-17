@@ -4,7 +4,7 @@ Utilities for truncating assertion output.
 Current default behaviour is to truncate assertion explanations at
 ~8 terminal lines, unless running in "-vv" mode or running on CI.
 """
-
+from __future__ import absolute_import, division, print_function
 import os
 
 import py
