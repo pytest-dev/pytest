@@ -370,7 +370,7 @@ def test_codepath_Queue_example():
 
 def test_match_succeeds():
     with pytest.raises(ZeroDivisionError) as excinfo:
-        0 / 0
+        0 // 0
     excinfo.match(r'.*zero.*')
 
 def test_match_raises_error(testdir):
