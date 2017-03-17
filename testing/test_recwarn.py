@@ -145,7 +145,9 @@ class TestDeprecatedCall(object):
                 pytest.deprecated_call(deprecated_function)
         """)
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines('*=== 2 passed in *===')
+        # the 2 tests must pass, but the call to test_one() will generate a warning
+        # in pytest's summary
+        result.stdout.fnmatch_lines('*=== 2 passed, 1 warnings in *===')
 
 
 class TestWarns(object):

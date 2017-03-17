@@ -1,4 +1,3 @@
-import os
 from contextlib import contextmanager
 
 import pytest
@@ -50,7 +49,7 @@ def catch_warnings_for_item(item):
     args = item.config.getoption('pythonwarnings') or []
     inifilters = item.config.getini("filterwarnings")
     with warnings.catch_warnings(record=True) as log:
-        warnings.simplefilter('once')
+        warnings.simplefilter('always')
         for arg in args:
             warnings._setoption(arg)
 
@@ -59,27 +58,14 @@ def catch_warnings_for_item(item):
 
         yield
 
-    for warning in log:
-        msg = warnings.formatwarning(
-            warning.message, warning.category,
-            warning.filename, warning.lineno, warning.line)
-        item.warn("unused", msg)
+        for warning in log:
+            msg = warnings.formatwarning(
+                warning.message, warning.category,
+                warning.filename, warning.lineno, warning.line)
+            item.warn("unused", msg)
 
 
 @pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_call(item):
+def pytest_runtest_protocol(item):
     with catch_warnings_for_item(item):
         yield
-
-
-@pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_setup(item):
-    with catch_warnings_for_item(item):
-        yield
-
-
-@pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_teardown(item):
-    with catch_warnings_for_item(item):
-        yield
-
