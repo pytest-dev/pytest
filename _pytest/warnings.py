@@ -1,7 +1,9 @@
+from __future__ import absolute_import, division, print_function
+
+import warnings
 from contextlib import contextmanager
 
 import pytest
-import warnings
 
 
 def _setoption(wmod, arg):
