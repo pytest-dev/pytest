@@ -2,8 +2,9 @@
 
 This is a good source for looking at the various reporting hooks.
 """
-import itertools
+from __future__ import absolute_import, division, print_function
 
+import itertools
 from _pytest.main import EXIT_OK, EXIT_TESTSFAILED, EXIT_INTERRUPTED, \
     EXIT_USAGEERROR, EXIT_NOTESTSCOLLECTED
 import pytest

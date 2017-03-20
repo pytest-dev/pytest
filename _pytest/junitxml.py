@@ -4,9 +4,11 @@
 
 
 Based on initial code from Ross Lawley.
+
+Output conforms to https://github.com/jenkinsci/xunit-plugin/blob/master/
+src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd
 """
-# Output conforms to https://github.com/jenkinsci/xunit-plugin/blob/master/
-# src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd
+from __future__ import absolute_import, division, print_function
 
 import functools
 import py

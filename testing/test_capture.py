@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 # note: py.io capture tests where copied from
 # pylib 1.4.20.dev2 (rev 13d9af95547e)
 from __future__ import with_statement
@@ -13,7 +14,7 @@ import contextlib
 from _pytest import capture
 from _pytest.capture import CaptureManager
 from _pytest.main import EXIT_NOTESTSCOLLECTED
-from py.builtin import print_
+
 
 needsosdup = pytest.mark.xfail("not hasattr(os, 'dup')")
 
@@ -711,7 +712,7 @@ def test_dupfile(tmpfile):
         assert nf != tmpfile
         assert nf.fileno() != tmpfile.fileno()
         assert nf not in flist
-        print_(i, end="", file=nf)
+        print(i, end="", file=nf)
         flist.append(nf)
     for i in range(5):
         f = flist[i]
@@ -785,7 +786,7 @@ class TestFDCapture(object):
     def test_stderr(self):
         cap = capture.FDCapture(2)
         cap.start()
-        print_("hello", file=sys.stderr)
+        print("hello", file=sys.stderr)
         s = cap.snap()
         cap.done()
         assert s == "hello\n"

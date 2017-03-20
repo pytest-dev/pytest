@@ -1,4 +1,6 @@
 """ recording warnings during test function execution. """
+from __future__ import absolute_import, division, print_function
+
 import inspect
 
 import _pytest._code

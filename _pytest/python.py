@@ -1,4 +1,5 @@
 """ Python test discovery, setup and run of test functions. """
+from __future__ import absolute_import, division, print_function
 
 import fnmatch
 import inspect
@@ -787,36 +788,35 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             to set a dynamic scope using test context or configuration.
         """
         from _pytest.fixtures import scope2index
-        from _pytest.mark import extract_argvalue
+        from _pytest.mark import ParameterSet
         from py.io import saferepr
-
-        unwrapped_argvalues = []
-        newkeywords = []
-        for maybe_marked_args in argvalues:
-            argval, newmarks = extract_argvalue(maybe_marked_args)
-            unwrapped_argvalues.append(argval)
-            newkeywords.append(newmarks)
-        argvalues = unwrapped_argvalues
 
         if not isinstance(argnames, (tuple, list)):
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
-            if len(argnames) == 1:
-                argvalues = [(val,) for val in argvalues]
-        if not argvalues:
-            argvalues = [(NOTSET,) * len(argnames)]
-            # we passed a empty list to parameterize, skip that test
-            #
+            force_tuple = len(argnames) == 1
+        else:
+            force_tuple = False
+        parameters = [
+            ParameterSet.extract_from(x, legacy_force_tuple=force_tuple)
+            for x in argvalues]
+        del argvalues
+
+        
+        if not parameters:
             fs, lineno = getfslineno(self.function)
-            newmark = pytest.mark.skip(
-                reason="got empty parameter set %r, function %s at %s:%d" % (
-                    argnames, self.function.__name__, fs, lineno))
-            newkeywords = [{newmark.markname: newmark}]
+            reason = "got empty parameter set %r, function %s at %s:%d" % (
+                    argnames, self.function.__name__, fs, lineno)
+            mark = pytest.mark.skip(reason=reason)
+            parameters.append(ParameterSet(
+                values=(NOTSET,) * len(argnames),
+                marks=[mark],
+                id=None,
+            ))
 
         if scope is None:
             scope = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)
 
-        scopenum = scope2index(
-            scope, descr='call to {0}'.format(self.parametrize))
+        scopenum = scope2index(scope, descr='call to {0}'.format(self.parametrize))
         valtypes = {}
         for arg in argnames:
             if arg not in self.fixturenames:
@@ -844,22 +844,22 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             idfn = ids
             ids = None
         if ids:
-            if len(ids) != len(argvalues):
-                raise ValueError('%d tests specified with %d ids' %(
-                                 len(argvalues), len(ids)))
+            if len(ids) != len(parameters):
+                raise ValueError('%d tests specified with %d ids' % (
+                                 len(parameters), len(ids)))
             for id_value in ids:
                 if id_value is not None and not isinstance(id_value, py.builtin._basestring):
                     msg = 'ids must be list of strings, found: %s (type: %s)'
                     raise ValueError(msg % (saferepr(id_value), type(id_value).__name__))
-        ids = idmaker(argnames, argvalues, idfn, ids, self.config)
+        ids = idmaker(argnames, parameters, idfn, ids, self.config)
         newcalls = []
         for callspec in self._calls or [CallSpec2(self)]:
-            elements = zip(ids, argvalues, newkeywords, count())
-            for a_id, valset, keywords, param_index in elements:
-                assert len(valset) == len(argnames)
+            elements = zip(ids, parameters, count())
+            for a_id, param, param_index in elements:
+                assert len(param.values) == len(argnames)
                 newcallspec = callspec.copy(self)
-                newcallspec.setmulti(valtypes, argnames, valset, a_id,
-                                     keywords, scopenum, param_index)
+                newcallspec.setmulti(valtypes, argnames, param.values, a_id,
+                                     param.deprecated_arg_dict, scopenum, param_index)
                 newcalls.append(newcallspec)
         self._calls = newcalls
 
@@ -958,17 +958,19 @@ def _idval(val, argname, idx, idfn, config=None):
         return val.__name__
     return str(argname)+str(idx)
 
-def _idvalset(idx, valset, argnames, idfn, ids, config=None):
+def _idvalset(idx, parameterset, argnames, idfn, ids, config=None):
+    if parameterset.id is not None:
+        return parameterset.id
     if ids is None or (idx >= len(ids) or ids[idx] is None):
         this_id = [_idval(val, argname, idx, idfn, config)
-                   for val, argname in zip(valset, argnames)]
+                   for val, argname in zip(parameterset.values, argnames)]
         return "-".join(this_id)
     else:
         return _escape_strings(ids[idx])
 
-def idmaker(argnames, argvalues, idfn=None, ids=None, config=None):
-    ids = [_idvalset(valindex, valset, argnames, idfn, ids, config)
-           for valindex, valset in enumerate(argvalues)]
+def idmaker(argnames, parametersets, idfn=None, ids=None, config=None):
+    ids = [_idvalset(valindex, parameterset, argnames, idfn, ids, config)
+           for valindex, parameterset in enumerate(parametersets)]
     if len(set(ids)) != len(ids):
         # The ids are not unique
         duplicates = [testid for testid in ids if ids.count(testid) > 1]

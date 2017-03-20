@@ -207,37 +207,40 @@ class TestMetafunc(object):
     @pytest.mark.issue250
     def test_idmaker_autoname(self):
         from _pytest.python import idmaker
-        result = idmaker(("a", "b"), [("string", 1.0),
-                                      ("st-ring", 2.0)])
+        result = idmaker(("a", "b"), [pytest.param("string", 1.0),
+                                      pytest.param("st-ring", 2.0)])
         assert result == ["string-1.0", "st-ring-2.0"]
 
-        result = idmaker(("a", "b"), [(object(), 1.0),
-                                      (object(), object())])
+        result = idmaker(("a", "b"), [pytest.param(object(), 1.0),
+                                      pytest.param(object(), object())])
         assert result == ["a0-1.0", "a1-b1"]
         # unicode mixing, issue250
-        result = idmaker((py.builtin._totext("a"), "b"), [({}, b'\xc3\xb4')])
+        result = idmaker(
+            (py.builtin._totext("a"), "b"),
+            [pytest.param({}, b'\xc3\xb4')])
         assert result == ['a0-\\xc3\\xb4']
 
     def test_idmaker_with_bytes_regex(self):
         from _pytest.python import idmaker
-        result = idmaker(("a"), [(re.compile(b'foo'), 1.0)])
+        result = idmaker(("a"), [pytest.param(re.compile(b'foo'), 1.0)])
         assert result == ["foo"]
 
     def test_idmaker_native_strings(self):
         from _pytest.python import idmaker
         totext = py.builtin._totext
-        result = idmaker(("a", "b"), [(1.0, -1.1),
-                                      (2, -202),
-                                      ("three", "three hundred"),
-                                      (True, False),
-                                      (None, None),
-                                      (re.compile('foo'), re.compile('bar')),
-                                      (str, int),
-                                      (list("six"), [66, 66]),
-                                      (set([7]), set("seven")),
-                                      (tuple("eight"), (8, -8, 8)),
-                                      (b'\xc3\xb4', b"name"),
-                                      (b'\xc3\xb4', totext("other")),
+        result = idmaker(("a", "b"), [
+            pytest.param(1.0, -1.1),
+            pytest.param(2, -202),
+            pytest.param("three", "three hundred"),
+            pytest.param(True, False),
+            pytest.param(None, None),
+            pytest.param(re.compile('foo'), re.compile('bar')),
+            pytest.param(str, int),
+            pytest.param(list("six"), [66, 66]),
+            pytest.param(set([7]), set("seven")),
+            pytest.param(tuple("eight"), (8, -8, 8)),
+            pytest.param(b'\xc3\xb4', b"name"),
+            pytest.param(b'\xc3\xb4', totext("other")),
         ])
         assert result == ["1.0--1.1",
                           "2--202",
@@ -257,7 +260,7 @@ class TestMetafunc(object):
         from _pytest.python import idmaker
         enum = pytest.importorskip("enum")
         e = enum.Enum("Foo", "one, two")
-        result = idmaker(("a", "b"), [(e.one, e.two)])
+        result = idmaker(("a", "b"), [pytest.param(e.one, e.two)])
         assert result == ["Foo.one-Foo.two"]
 
     @pytest.mark.issue351
@@ -268,9 +271,10 @@ class TestMetafunc(object):
             if isinstance(val, Exception):
                 return repr(val)
 
-        result = idmaker(("a", "b"), [(10.0, IndexError()),
-                                      (20, KeyError()),
-                                      ("three", [1, 2, 3]),
+        result = idmaker(("a", "b"), [
+            pytest.param(10.0, IndexError()),
+            pytest.param(20, KeyError()),
+            pytest.param("three", [1, 2, 3]),
         ], idfn=ids)
         assert result == ["10.0-IndexError()",
                           "20-KeyError()",
@@ -284,9 +288,9 @@ class TestMetafunc(object):
         def ids(val):
             return 'a'
 
-        result = idmaker(("a", "b"), [(10.0, IndexError()),
-                                      (20, KeyError()),
-                                      ("three", [1, 2, 3]),
+        result = idmaker(("a", "b"), [pytest.param(10.0, IndexError()),
+                                      pytest.param(20, KeyError()),
+                                      pytest.param("three", [1, 2, 3]),
         ], idfn=ids)
         assert result == ["a-a0",
                           "a-a1",
@@ -306,9 +310,10 @@ class TestMetafunc(object):
 
         rec = WarningsRecorder()
         with rec:
-            idmaker(("a", "b"), [(10.0, IndexError()),
-                                          (20, KeyError()),
-                                          ("three", [1, 2, 3]),
+            idmaker(("a", "b"), [
+                pytest.param(10.0, IndexError()),
+                pytest.param(20, KeyError()),
+                pytest.param("three", [1, 2, 3]),
             ], idfn=ids)
 
         assert [str(i.message) for i in rec.list] == [
@@ -351,14 +356,21 @@ class TestMetafunc(object):
 
     def test_idmaker_with_ids(self):
         from _pytest.python import idmaker
-        result = idmaker(("a", "b"), [(1, 2),
-                                      (3, 4)],
+        result = idmaker(("a", "b"), [pytest.param(1, 2),
+                                      pytest.param(3, 4)],
                          ids=["a", None])
         assert result == ["a", "3-4"]
 
+    def test_idmaker_with_paramset_id(self):
+        from _pytest.python import idmaker
+        result = idmaker(("a", "b"), [pytest.param(1, 2, id="me"),
+                                      pytest.param(3, 4, id="you")],
+                         ids=["a", None])
+        assert result == ["me", "you"]
+
     def test_idmaker_with_ids_unique_names(self):
         from _pytest.python import idmaker
-        result = idmaker(("a"), [1,2,3,4,5],
+        result = idmaker(("a"), map(pytest.param, [1,2,3,4,5]),
                          ids=["a", "a", "b", "c", "b"])
         assert result == ["a0", "a1", "b0", "c", "b1"]
 
@@ -1437,6 +1449,31 @@ class TestMarkersWithParametrization(object):
         """)
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
+
+
+    @pytest.mark.parametrize('strict', [True, False])
+    def test_parametrize_marked_value(self, testdir, strict):
+        s = """
+            import pytest
+
+            @pytest.mark.parametrize(("n", "expected"), [
+                pytest.param(
+                    2,3,
+                    marks=pytest.mark.xfail("sys.version_info > (0, 0, 0)", reason="some bug", strict={strict}),
+                ),
+                pytest.param(
+                    2,3,
+                    marks=[pytest.mark.xfail("sys.version_info > (0, 0, 0)", reason="some bug", strict={strict})],
+                ),
+            ])
+            def test_increment(n, expected):
+                assert n + 1 == expected
+        """.format(strict=strict)
+        testdir.makepyfile(s)
+        reprec = testdir.inline_run()
+        passed, failed = (0, 2) if strict else (2, 0)
+        reprec.assertoutcome(passed=passed, failed=failed)
+
 
     def test_pytest_make_parametrize_id(self, testdir):
         testdir.makeconftest("""

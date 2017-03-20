@@ -1,6 +1,7 @@
 """
 terminal reporting of the full testing process.
 """
+from __future__ import absolute_import, division, print_function
 import collections
 import sys
 

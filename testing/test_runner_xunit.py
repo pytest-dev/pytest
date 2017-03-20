@@ -1,6 +1,8 @@
-#
-# test correct setup/teardowns at
-# module, class, and instance level
+"""
+ test correct setup/teardowns at
+ module, class, and instance level
+"""
+from __future__ import absolute_import, division, print_function
 import pytest
 
 
