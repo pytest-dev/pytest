@@ -98,7 +98,7 @@ _preinit = []
 default_plugins = (
      "mark main terminal runner python fixtures debugging unittest capture skipping "
      "tmpdir monkeypatch recwarn pastebin helpconfig nose assertion "
-     "junitxml resultlog doctest cacheprovider freeze_support "
+     "junitxml resultlog doctest cacheprovider "
      "setuponly setupplan").split()
 
 builtin_plugins = set(default_plugins)

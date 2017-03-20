@@ -3,7 +3,6 @@ from __future__ import absolute_import, division, print_function
 import pdb
 import sys
 
-import pytest
 
 
 def pytest_addoption(parser):
@@ -16,8 +15,6 @@ def pytest_addoption(parser):
         help="start a custom interactive Python debugger on errors. "
              "For example: --pdbcls=IPython.terminal.debugger:TerminalPdb")
 
-def pytest_namespace():
-    return {'set_trace': pytestPDB().set_trace}
 
 def pytest_configure(config):
     if config.getvalue("usepdb_cls"):
@@ -37,11 +34,12 @@ def pytest_configure(config):
         pytestPDB._config = None
         pytestPDB._pdb_cls = pdb.Pdb
 
-    pdb.set_trace = pytest.set_trace
+    pdb.set_trace = pytestPDB.set_trace
     pytestPDB._pluginmanager = config.pluginmanager
     pytestPDB._config = config
     pytestPDB._pdb_cls = pdb_cls
     config._cleanup.append(fin)
+
 
 class pytestPDB(object):
     """ Pseudo PDB that defers to the real pdb. """
@@ -49,19 +47,20 @@ class pytestPDB(object):
     _config = None
     _pdb_cls = pdb.Pdb
 
-    def set_trace(self):
+    @classmethod
+    def set_trace(cls):
         """ invoke PDB set_trace debugging, dropping any IO capturing. """
         import _pytest.config
         frame = sys._getframe().f_back
-        if self._pluginmanager is not None:
-            capman = self._pluginmanager.getplugin("capturemanager")
+        if cls._pluginmanager is not None:
+            capman = cls._pluginmanager.getplugin("capturemanager")
             if capman:
                 capman.suspendcapture(in_=True)
-            tw = _pytest.config.create_terminal_writer(self._config)
+            tw = _pytest.config.create_terminal_writer(cls._config)
             tw.line()
             tw.sep(">", "PDB set_trace (IO-capturing turned off)")
-            self._pluginmanager.hook.pytest_enter_pdb(config=self._config)
-        self._pdb_cls().set_trace(frame)
+            cls._pluginmanager.hook.pytest_enter_pdb(config=cls._config)
+        cls._pdb_cls().set_trace(frame)
 
 
 class PdbInvoke(object):
@@ -75,7 +74,7 @@ class PdbInvoke(object):
 
     def pytest_internalerror(self, excrepr, excinfo):
         for line in str(excrepr).split("\n"):
-            sys.stderr.write("INTERNALERROR> %s\n" %line)
+            sys.stderr.write("INTERNALERROR> %s\n" % line)
             sys.stderr.flush()
         tb = _postmortem_traceback(excinfo)
         post_mortem(tb)

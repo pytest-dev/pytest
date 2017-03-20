@@ -9,19 +9,20 @@ import math
 from itertools import count
 
 import py
-import pytest
 from _pytest.mark import MarkerError
-
+from _pytest.config import hookimpl
 
 import _pytest
 import _pytest._pluggy as pluggy
 from _pytest import fixtures
+from _pytest import main
 from _pytest.compat import (
     isclass, isfunction, is_generator, _escape_strings,
     REGEX_TYPE, STRING_TYPES, NoneType, NOTSET,
     get_real_func, getfslineno, safe_getattr,
     getlocation, enum,
 )
+from _pytest.runner import fail
 
 cutdir1 = py.path.local(pluggy.__file__.rstrip("oc"))
 cutdir2 = py.path.local(_pytest.__file__).dirpath()
@@ -49,7 +50,7 @@ def filter_traceback(entry):
 
 def pyobj_property(name):
     def get(self):
-        node = self.getparent(getattr(pytest, name))
+        node = self.getparent(getattr(__import__('pytest'), name))
         if node is not None:
             return node.obj
     doc = "python %s object this node was collected from (can be None)." % (
@@ -126,23 +127,8 @@ def pytest_configure(config):
         "all of the specified fixtures. see http://pytest.org/latest/fixture.html#usefixtures "
     )
 
-@pytest.hookimpl(trylast=True)
-def pytest_namespace():
-    raises.Exception = pytest.fail.Exception
-    return {
-        'raises': raises,
-        'approx': approx,
-        'collect': {
-            'Module': Module,
-            'Class': Class,
-            'Instance': Instance,
-            'Function': Function,
-            'Generator': Generator,
-        }
-    }
 
-
-@pytest.hookimpl(trylast=True)
+@hookimpl(trylast=True)
 def pytest_pyfunc_call(pyfuncitem):
     testfunction = pyfuncitem.obj
     if pyfuncitem._isyieldedfunction():
@@ -154,6 +140,7 @@ def pytest_pyfunc_call(pyfuncitem):
             testargs[arg] = funcargs[arg]
         testfunction(**testargs)
     return True
+
 
 def pytest_collect_file(path, parent):
     ext = path.ext
@@ -170,7 +157,7 @@ def pytest_collect_file(path, parent):
 def pytest_pycollect_makemodule(path, parent):
     return Module(path, parent)
 
-@pytest.hookimpl(hookwrapper=True)
+@hookimpl(hookwrapper=True)
 def pytest_pycollect_makeitem(collector, name, obj):
     outcome = yield
     res = outcome.get_result()
@@ -266,7 +253,7 @@ class PyobjMixin(PyobjContext):
         assert isinstance(lineno, int)
         return fspath, lineno, modpath
 
-class PyCollector(PyobjMixin, pytest.Collector):
+class PyCollector(PyobjMixin, main.Collector):
 
     def funcnamefilter(self, name):
         return self._matches_prefix_or_glob_option('python_functions', name)
@@ -403,7 +390,8 @@ def transfer_markers(funcobj, cls, mod):
             if not _marked(funcobj, pytestmark):
                 pytestmark(funcobj)
 
-class Module(pytest.File, PyCollector):
+
+class Module(main.File, PyCollector):
     """ Collector for test classes and functions. """
 
     def _getobj(self):
@@ -590,7 +578,7 @@ class FunctionMixin(PyobjMixin):
                         entry.set_repr_style('short')
 
     def _repr_failure_py(self, excinfo, style="long"):
-        if excinfo.errisinstance(pytest.fail.Exception):
+        if excinfo.errisinstance(fail.Exception):
             if not excinfo.value.pytrace:
                 return py._builtin._totext(excinfo.value)
         return super(FunctionMixin, self)._repr_failure_py(excinfo,
@@ -788,7 +776,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             to set a dynamic scope using test context or configuration.
         """
         from _pytest.fixtures import scope2index
-        from _pytest.mark import extract_argvalue
+        from _pytest.mark import extract_argvalue, MARK_GEN
         from py.io import saferepr
 
         unwrapped_argvalues = []
@@ -808,7 +796,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             # we passed a empty list to parameterize, skip that test
             #
             fs, lineno = getfslineno(self.function)
-            newmark = pytest.mark.skip(
+            newmark = MARK_GEN.skip(
                 reason="got empty parameter set %r, function %s at %s:%d" % (
                     argnames, self.function.__name__, fs, lineno))
             newkeywords = [{newmark.markname: newmark}]
@@ -884,7 +872,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         if funcargs is not None:
             for name in funcargs:
                 if name not in self.fixturenames:
-                    pytest.fail("funcarg %r not used in this function." % name)
+                    fail("funcarg %r not used in this function." % name)
         else:
             funcargs = {}
         if id is None:
@@ -1233,7 +1221,11 @@ def raises(expected_exception, *args, **kwargs):
             func(*args[1:], **kwargs)
         except expected_exception:
             return _pytest._code.ExceptionInfo()
-    pytest.fail(message)
+    fail(message)
+
+
+raises.Exception = fail.Exception
+
 
 class RaisesContext(object):
     def __init__(self, expected_exception, message, match_expr):
@@ -1249,7 +1241,7 @@ class RaisesContext(object):
     def __exit__(self, *tp):
         __tracebackhide__ = True
         if tp[0] is None:
-            pytest.fail(self.message)
+            fail(self.message)
         if sys.version_info < (2, 7):
             # py26: on __exit__() exc_value often does not contain the
             # exception value.
@@ -1520,7 +1512,7 @@ class ApproxNonIterable(object):
 #  the basic pytest Function item
 #
 
-class Function(FunctionMixin, pytest.Item, fixtures.FuncargnamesCompatAttr):
+class Function(FunctionMixin, main.Item, fixtures.FuncargnamesCompatAttr):
     """ a Function Item is responsible for setting up and executing a
     Python test function.
     """

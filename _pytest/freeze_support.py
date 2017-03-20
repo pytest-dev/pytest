@@ -5,9 +5,6 @@ pytest
 from __future__ import absolute_import, division, print_function
 
 
-def pytest_namespace():
-    return {'freeze_includes': freeze_includes}
-
 
 def freeze_includes():
     """

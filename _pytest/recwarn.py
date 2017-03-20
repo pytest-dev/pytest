@@ -7,11 +7,11 @@ import _pytest._code
 import py
 import sys
 import warnings
-import pytest
+from _pytest.fixtures import yield_fixture
 
 
-@pytest.yield_fixture
-def recwarn():
+@yield_fixture
+def recwarn(request):
     """Return a WarningsRecorder instance that provides these methods:
 
     * ``pop(category=None)``: return last warning matching the category.
@@ -24,11 +24,6 @@ def recwarn():
     with wrec:
         warnings.simplefilter('default')
         yield wrec
-
-
-def pytest_namespace():
-    return {'deprecated_call': deprecated_call,
-            'warns': warns}
 
 
 def deprecated_call(func=None, *args, **kwargs):
@@ -197,7 +192,8 @@ class WarningsChecker(WarningsRecorder):
                 if not any(issubclass(r.category, self.expected_warning)
                            for r in self):
                     __tracebackhide__ = True
-                    pytest.fail("DID NOT WARN. No warnings of type {0} was emitted. "
-                                "The list of emitted warnings is: {1}.".format(
-                                    self.expected_warning,
-                                    [each.message for each in self]))
+                    from _pytest.runner import fail
+                    fail("DID NOT WARN. No warnings of type {0} was emitted. "
+                         "The list of emitted warnings is: {1}.".format(
+                            self.expected_warning,
+                            [each.message for each in self]))
