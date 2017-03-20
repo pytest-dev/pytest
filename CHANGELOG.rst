@@ -16,6 +16,9 @@ New Features
 * ``pytest.raises`` now asserts that the error message matches a text or regex
   with the ``match`` keyword argument. Thanks `@Kriechi`_ for the PR.
 
+* ``pytest.param`` can be used to declare test parameter sets with marks and test ids.
+  Thanks `@RonnyPfannschmidt`_ for the PR.
+
 
 Changes
 -------

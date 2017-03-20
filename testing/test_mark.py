@@ -1,8 +1,9 @@
 from __future__ import absolute_import, division, print_function
 import os
+import sys
 
-import py, pytest
-from _pytest.mark import MarkGenerator as Mark
+import pytest
+from _pytest.mark import MarkGenerator as Mark, ParameterSet
 
 class TestMark(object):
     def test_markinfo_repr(self):
@@ -10,9 +11,11 @@ class TestMark(object):
         m = MarkInfo(Mark("hello", (1,2), {}))
         repr(m)
 
-    def test_pytest_exists_in_namespace_all(self):
-        assert 'mark' in py.test.__all__
-        assert 'mark' in pytest.__all__
+    @pytest.mark.parametrize('attr', ['mark', 'param'])
+    @pytest.mark.parametrize('modulename', ['py.test', 'pytest'])
+    def test_pytest_exists_in_namespace_all(self, attr, modulename):
+        module = sys.modules[modulename]
+        assert attr in module.__all__
 
     def test_pytest_mark_notcallable(self):
         mark = Mark()
@@ -415,7 +418,7 @@ class TestFunctional(object):
         """)
         items, rec = testdir.inline_genitems(p)
         for item in items:
-            print (item, item.keywords)
+            print(item, item.keywords)
             assert 'a' in item.keywords
 
     def test_mark_decorator_subclass_does_not_propagate_to_base(self, testdir):
@@ -739,3 +742,16 @@ class TestKeywordSelection(object):
 
         assert_test_is_not_selected("__")
         assert_test_is_not_selected("()")
+
+
+@pytest.mark.parametrize('argval, expected', [
+    (pytest.mark.skip()((1, 2)),
+     ParameterSet(values=(1, 2), marks=[pytest.mark.skip], id=None)),
+    (pytest.mark.xfail(pytest.mark.skip()((1, 2))),
+     ParameterSet(values=(1, 2),
+                  marks=[pytest.mark.xfail, pytest.mark.skip], id=None)),
+
+])
+def test_parameterset_extractfrom(argval, expected):
+    extracted = ParameterSet.extract_from(argval)
+    assert extracted == expected
