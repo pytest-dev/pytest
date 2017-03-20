@@ -390,7 +390,8 @@ def transfer_markers(funcobj, cls, mod):
             if not _marked(funcobj, pytestmark):
                 pytestmark(funcobj)
 
-class Module(pytest.File, PyCollector):
+
+class Module(main.File, PyCollector):
     """ Collector for test classes and functions. """
 
     def _getobj(self):
@@ -775,7 +776,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             to set a dynamic scope using test context or configuration.
         """
         from _pytest.fixtures import scope2index
-        from _pytest.mark import extract_argvalue, MARK_GEN
+        from _pytest.mark import MARK_GEN, ParameterSet
         from py.io import saferepr
 
         if not isinstance(argnames, (tuple, list)):
@@ -788,12 +789,11 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             for x in argvalues]
         del argvalues
 
-        
         if not parameters:
             fs, lineno = getfslineno(self.function)
             reason = "got empty parameter set %r, function %s at %s:%d" % (
                     argnames, self.function.__name__, fs, lineno)
-            mark = pytest.mark.skip(reason=reason)
+            mark = MARK_GEN.skip(reason=reason)
             parameters.append(ParameterSet(
                 values=(NOTSET,) * len(argnames),
                 marks=[mark],
@@ -870,7 +870,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         if funcargs is not None:
             for name in funcargs:
                 if name not in self.fixturenames:
-                    pytest.fail("funcarg %r not used in this function." % name)
+                    fail("funcarg %r not used in this function." % name)
         else:
             funcargs = {}
         if id is None:
@@ -945,6 +945,7 @@ def _idval(val, argname, idx, idfn, config=None):
         return val.__name__
     return str(argname)+str(idx)
 
+
 def _idvalset(idx, parameterset, argnames, idfn, ids, config=None):
     if parameterset.id is not None:
         return parameterset.id
@@ -954,6 +955,7 @@ def _idvalset(idx, parameterset, argnames, idfn, ids, config=None):
         return "-".join(this_id)
     else:
         return _escape_strings(ids[idx])
+
 
 def idmaker(argnames, parametersets, idfn=None, ids=None, config=None):
     ids = [_idvalset(valindex, parameterset, argnames, idfn, ids, config)
@@ -1032,6 +1034,7 @@ def _show_fixtures_per_test(config, session):
 def showfixtures(config):
     from _pytest.main import wrap_session
     return wrap_session(config, _showfixtures_main)
+
 
 def _showfixtures_main(config, session):
     import _pytest.config
