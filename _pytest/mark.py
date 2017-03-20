@@ -66,10 +66,8 @@ class MarkerError(Exception):
     """Error in use of a pytest marker/attribute."""
 
 
-def pytest_namespace():
-    return {
-        'param': ParameterSet.param,
-    }
+def param(*values, **kw):
+    return ParameterSet.param(*values, **kw)
 
 
 def pytest_addoption(parser):

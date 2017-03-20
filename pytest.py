@@ -17,7 +17,7 @@ from _pytest import __version__
 from _pytest.debugging import pytestPDB as __pytestPDB
 from _pytest.recwarn import warns, deprecated_call
 from _pytest.runner import fail, skip, importorskip, exit
-from _pytest.mark import MARK_GEN as mark
+from _pytest.mark import MARK_GEN as mark, param
 from _pytest.skipping import xfail
 from _pytest.main import Item, Collector, File, Session
 from _pytest.fixtures import fillfixtures as _fillfuncargs
@@ -48,6 +48,7 @@ __all__ = [
     'importorskip',
     'exit',
     'mark',
+    'param',
     'approx',
     '_fillfuncargs',
 
