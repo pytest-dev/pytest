@@ -51,7 +51,7 @@ def catch_warnings_for_item(item):
     args = item.config.getoption('pythonwarnings') or []
     inifilters = item.config.getini("filterwarnings")
     with warnings.catch_warnings(record=True) as log:
-        warnings.simplefilter('always')
+        warnings.simplefilter('once')
         for arg in args:
             warnings._setoption(arg)
 
