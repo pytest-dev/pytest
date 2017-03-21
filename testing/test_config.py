@@ -141,7 +141,7 @@ class TestConfigAPI(object):
             from __future__ import unicode_literals
 
             def pytest_addoption(parser):
-                parser.addoption('--hello', type='string')
+                parser.addoption('--hello', type=str)
         """)
         config = testdir.parseconfig('--hello=this')
         assert config.getoption('hello') == 'this'

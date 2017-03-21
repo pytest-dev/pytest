@@ -347,7 +347,8 @@ class TestMetafunc(object):
                 def test_foo(arg):
                     pass
             """)
-        result = testdir.runpytest("--collect-only")
+        with pytest.warns(DeprecationWarning):
+            result = testdir.runpytest("--collect-only")
         result.stdout.fnmatch_lines([
             "<Module 'test_parametrize_ids_exception.py'>",
             "  <Function 'test_foo[a]'>",

@@ -936,7 +936,7 @@ def _idval(val, argname, idx, idfn, config=None):
             import warnings
             msg = "Raised while trying to determine id of parameter %s at position %d." % (argname, idx)
             msg += '\nUpdate your code as this will raise an error in pytest-4.0.'
-            warnings.warn(msg)
+            warnings.warn(msg, DeprecationWarning)
         if s:
             return _escape_strings(s)
 

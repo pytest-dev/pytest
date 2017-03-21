@@ -339,10 +339,16 @@ class TestGeneralUsage(object):
             "*ERROR*test_b.py::b*",
         ])
 
+    @pytest.mark.usefixtures('recwarn')
     def test_namespace_import_doesnt_confuse_import_hook(self, testdir):
-        # Ref #383. Python 3.3's namespace package messed with our import hooks
-        # Importing a module that didn't exist, even if the ImportError was
-        # gracefully handled, would make our test crash.
+        """
+        Ref #383. Python 3.3's namespace package messed with our import hooks
+        Importing a module that didn't exist, even if the ImportError was
+        gracefully handled, would make our test crash.
+
+        Use recwarn here to silence this warning in Python 2.6 and 2.7:
+            ImportWarning: Not importing directory '...\not_a_package': missing __init__.py
+        """
         testdir.mkdir('not_a_package')
         p = testdir.makepyfile("""
             try:

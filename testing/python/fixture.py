@@ -545,22 +545,33 @@ class TestRequestBasic(object):
                 return l.pop()
             def test_func(something): pass
         """)
+        import contextlib
+        if getfixmethod == 'getfuncargvalue':
+            warning_expectation = pytest.warns(DeprecationWarning)
+        else:
+            # see #1830 for a cleaner way to accomplish this
+            @contextlib.contextmanager
+            def expecting_no_warning(): yield
+
+            warning_expectation = expecting_no_warning()
+
         req = item._request
-        fixture_fetcher = getattr(req, getfixmethod)
-        pytest.raises(FixtureLookupError, fixture_fetcher, "notexists")
-        val = fixture_fetcher("something")
-        assert val == 1
-        val = fixture_fetcher("something")
-        assert val == 1
-        val2 = fixture_fetcher("other")
-        assert val2 == 2
-        val2 = fixture_fetcher("other")  # see about caching
-        assert val2 == 2
-        pytest._fillfuncargs(item)
-        assert item.funcargs["something"] == 1
-        assert len(get_public_names(item.funcargs)) == 2
-        assert "request" in item.funcargs
-        #assert item.funcargs == {'something': 1, "other": 2}
+        with warning_expectation:
+            fixture_fetcher = getattr(req, getfixmethod)
+            with pytest.raises(FixtureLookupError):
+                fixture_fetcher("notexists")
+            val = fixture_fetcher("something")
+            assert val == 1
+            val = fixture_fetcher("something")
+            assert val == 1
+            val2 = fixture_fetcher("other")
+            assert val2 == 2
+            val2 = fixture_fetcher("other")  # see about caching
+            assert val2 == 2
+            pytest._fillfuncargs(item)
+            assert item.funcargs["something"] == 1
+            assert len(get_public_names(item.funcargs)) == 2
+            assert "request" in item.funcargs
 
     def test_request_addfinalizer(self, testdir):
         item = testdir.getitem("""
