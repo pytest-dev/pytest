@@ -55,7 +55,7 @@ class TestNewAPI(object):
         assert result.ret == 1
         result.stdout.fnmatch_lines([
             "*could not create cache path*",
-            "*1 pytest-warnings*",
+            "*1 warnings*",
         ])
 
     def test_config_cache(self, testdir):

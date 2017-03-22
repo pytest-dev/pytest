@@ -99,7 +99,7 @@ default_plugins = (
      "mark main terminal runner python fixtures debugging unittest capture skipping "
      "tmpdir monkeypatch recwarn pastebin helpconfig nose assertion "
      "junitxml resultlog doctest cacheprovider freeze_support "
-     "setuponly setupplan").split()
+     "setuponly setupplan warnings").split()
 
 builtin_plugins = set(default_plugins)
 builtin_plugins.add("pytester")
@@ -911,11 +911,11 @@ class Config(object):
             fin = self._cleanup.pop()
             fin()
 
-    def warn(self, code, message, fslocation=None):
+    def warn(self, code, message, fslocation=None, nodeid=None):
         """ generate a warning for this test session. """
         self.hook.pytest_logwarning.call_historic(kwargs=dict(
             code=code, message=message,
-            fslocation=fslocation, nodeid=None))
+            fslocation=fslocation, nodeid=nodeid))
 
     def get_terminal_writer(self):
         return self.pluginmanager.get_plugin("terminalreporter")._tw

@@ -240,3 +240,23 @@ Builtin configuration file options
    By default, pytest will stop searching for ``conftest.py`` files upwards
    from ``pytest.ini``/``tox.ini``/``setup.cfg`` of the project if any,
    or up to the file-system root.
+
+
+.. confval:: filterwarnings
+
+   .. versionadded:: 3.1
+
+   Sets a list of filters and actions that should be taken for matched
+   warnings. By default all warnings emitted during the test session
+   will be displayed in a summary at the end of the test session.
+
+   .. code-block:: ini
+
+        # content of pytest.ini
+        [pytest]
+        filterwarnings =
+            error
+            ignore::DeprecationWarning
+
+   This tells pytest to ignore deprecation warnings and turn all other warnings
+   into errors. For more information please refer to :ref:`warnings`.

@@ -852,7 +852,10 @@ def test_record_property(testdir):
     pnodes = psnode.find_by_tag('property')
     pnodes[0].assert_attr(name="bar", value="1")
     pnodes[1].assert_attr(name="foo", value="<1")
-    result.stdout.fnmatch_lines('*C3*test_record_property.py*experimental*')
+    result.stdout.fnmatch_lines([
+        'test_record_property.py::test_record',
+        '*record_xml_property*experimental*',
+    ])
 
 
 def test_record_property_same_name(testdir):

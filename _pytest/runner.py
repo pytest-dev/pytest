@@ -554,14 +554,21 @@ def importorskip(modname, minversion=None):
     __version__ attribute.  If no minversion is specified the a skip
     is only triggered if the module can not be imported.
     """
+    import warnings
     __tracebackhide__ = True
     compile(modname, '', 'eval') # to catch syntaxerrors
     should_skip = False
-    try:
-        __import__(modname)
-    except ImportError:
-        # Do not raise chained exception here(#1485)
-        should_skip = True
+
+    with warnings.catch_warnings():
+        # make sure to ignore ImportWarnings that might happen because
+        # of existing directories with the same name we're trying to
+        # import but without a __init__.py file
+        warnings.simplefilter('ignore')
+        try:
+            __import__(modname)
+        except ImportError:
+            # Do not raise chained exception here(#1485)
+            should_skip = True
     if should_skip:
         raise Skipped("could not import %r" %(modname,), allow_module_level=True)
     mod = sys.modules[modname]

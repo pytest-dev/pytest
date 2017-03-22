@@ -1008,7 +1008,7 @@ class Testdir(object):
         The pexpect child is returned.
 
         """
-        basetemp = self.tmpdir.mkdir("pexpect")
+        basetemp = self.tmpdir.mkdir("temp-pexpect")
         invoke = " ".join(map(str, self._getpytestargs()))
         cmd = "%s --basetemp=%s %s" % (invoke, basetemp, string)
         return self.spawn(cmd, expect_timeout=expect_timeout)

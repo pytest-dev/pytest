@@ -141,7 +141,7 @@ class TestConfigAPI(object):
             from __future__ import unicode_literals
 
             def pytest_addoption(parser):
-                parser.addoption('--hello', type='string')
+                parser.addoption('--hello', type=str)
         """)
         config = testdir.parseconfig('--hello=this')
         assert config.getoption('hello') == 'this'
@@ -633,13 +633,14 @@ class TestWarning(object):
                 pass
         """)
         result = testdir.runpytest("--disable-pytest-warnings")
-        assert result.parseoutcomes()["pytest-warnings"] > 0
+        assert result.parseoutcomes()["warnings"] > 0
         assert "hello" not in result.stdout.str()
 
         result = testdir.runpytest()
         result.stdout.fnmatch_lines("""
-            ===*pytest-warning summary*===
-            *WT1*test_warn_on_test_item*:7 hello*
+            ===*warnings summary*===
+            *test_warn_on_test_item_from_request.py::test_hello*
+            *hello*
         """)
 
 class TestRootdir(object):
