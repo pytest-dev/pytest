@@ -530,6 +530,7 @@ class TestInvocationVariants(object):
         ])
 
     def test_cmdline_python_package(self, testdir, monkeypatch):
+        import warnings
         monkeypatch.delenv('PYTHONDONTWRITEBYTECODE', False)
         path = testdir.mkpydir("tpkg")
         path.join("test_hello.py").write("def test_hello(): pass")
@@ -552,7 +553,11 @@ class TestInvocationVariants(object):
             return what
         empty_package = testdir.mkpydir("empty_package")
         monkeypatch.setenv('PYTHONPATH', join_pythonpath(empty_package))
-        result = testdir.runpytest("--pyargs", ".")
+        # the path which is not a package raises a warning on pypy;
+        # no idea why only pypy and not normal python warn about it here
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', ImportWarning)
+            result = testdir.runpytest("--pyargs", ".")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
             "*2 passed*"
