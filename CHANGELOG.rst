@@ -19,6 +19,10 @@ New Features
 * ``pytest.param`` can be used to declare test parameter sets with marks and test ids.
   Thanks `@RonnyPfannschmidt`_ for the PR.
 
+* The ``pytest-warnings`` plugin has been integrated into the core, so now ``pytest`` automatically
+  captures and displays warnings at the end of the test session.
+  Thanks `@nicoddemus`_ for the PR.
+
 
 Changes
 -------
