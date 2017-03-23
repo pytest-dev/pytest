@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function
 import pdb
 import sys
+from collections import namedtuple
 
 
 def pytest_addoption(parser):
@@ -15,6 +16,9 @@ def pytest_addoption(parser):
              "For example: --pdbcls=IPython.terminal.debugger:TerminalPdb")
 
 
+
+_PdbState = namedtuple('PdbState', 'config, pluginmanager, pdb_cls')
+
 def pytest_configure(config):
     if config.getvalue("usepdb_cls"):
         modname, classname = config.getvalue("usepdb_cls").split(":")
@@ -26,25 +30,25 @@ def pytest_configure(config):
     if config.getvalue("usepdb"):
         config.pluginmanager.register(PdbInvoke(), 'pdbinvoke')
 
-    old = (pdb.set_trace, pytestPDB._pluginmanager)
+    old = (pdb.set_trace, pytestPDB._state)
 
     def fin():
-        pdb.set_trace, pytestPDB._pluginmanager = old
-        pytestPDB._config = None
-        pytestPDB._pdb_cls = pdb.Pdb
+        pdb.set_trace, pytestPDB._state = old
 
     pdb.set_trace = pytestPDB.set_trace
-    pytestPDB._pluginmanager = config.pluginmanager
-    pytestPDB._config = config
-    pytestPDB._pdb_cls = pdb_cls
+    pytestPDB._state = _PdbState(
+        pluginmanager=config.pluginmanager,
+        config=config,
+        pdb_cls=pdb_cls,
+    )
     config._cleanup.append(fin)
 
 
-class pytestPDB:
+
+class pytestPDB(object):
     """ Pseudo PDB that defers to the real pdb. """
-    _pluginmanager = None
-    _config = None
-    _pdb_cls = pdb.Pdb
+
+    _state = _PdbState(config=None, pluginmanager=None, pdb_cls=pdb.Pdb)
 
     @classmethod
     def set_trace(cls):
@@ -53,6 +57,7 @@ class pytestPDB:
         frame = sys._getframe().f_back
         if cls._pluginmanager is not None:
             capman = cls._pluginmanager.getplugin("capturemanager")
+            capman = pm.getplugin("capturemanager")
             if capman:
                 capman.suspendcapture(in_=True)
             tw = _pytest.config.create_terminal_writer(cls._config)
@@ -112,9 +117,11 @@ def _find_last_non_hidden_frame(stack):
 
 
 def post_mortem(t):
-    class Pdb(pytestPDB._pdb_cls):
+    PdbBase = pytestPDB._state.pdb_cls
+
+    class Pdb(PdbBase):
         def get_stack(self, f, t):
-            stack, i = pdb.Pdb.get_stack(self, f, t)
+            stack, i = PdbBase.get_stack(self, f, t)
             if f is None:
                 i = _find_last_non_hidden_frame(stack)
             return stack, i
