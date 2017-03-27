@@ -19,7 +19,7 @@ from _pytest.compat import (
     isclass, isfunction, is_generator, _escape_strings,
     REGEX_TYPE, STRING_TYPES, NoneType, NOTSET,
     get_real_func, getfslineno, safe_getattr,
-    getlocation, enum,
+    getlocation, enum, isawaitable,
 )
 
 cutdir1 = py.path.local(pluggy.__file__.rstrip("oc"))
@@ -151,7 +151,11 @@ def pytest_pyfunc_call(pyfuncitem):
         testargs = {}
         for arg in pyfuncitem._fixtureinfo.argnames:
             testargs[arg] = funcargs[arg]
-        testfunction(**testargs)
+        testreturn = testfunction(**testargs)
+        if isawaitable(testreturn):
+            import asyncio
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(testreturn)
     return True
 
 def pytest_collect_file(path, parent):

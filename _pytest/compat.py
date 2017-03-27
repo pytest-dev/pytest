@@ -227,6 +227,13 @@ def _is_unittest_unexpected_success_a_failure():
     return sys.version_info >= (3, 4)
 
 
+if hasattr(inspect, 'isawaitable'):
+    isawaitable = inspect.isawaitable
+else:
+    def isawaitable(f):
+        return False
+
+
 if _PY3:
     def safe_str(v):
         """returns v as string"""
