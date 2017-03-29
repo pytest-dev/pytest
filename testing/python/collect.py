@@ -105,6 +105,23 @@ class TestModule:
                 assert name not in stdout
 
 
+    def test_show_traceback_import_error_unicode(self, testdir):
+        """Check test modules collected which raise ImportError with unicode messages
+        are handled properly (#2336).
+        """
+        testdir.makepyfile(u"""
+            # -*- coding: utf-8 -*-
+            raise ImportError(u'Something bad happened ☺')
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "ImportError while importing test module*",
+            "Traceback:",
+            "*raise ImportError*Something bad happened*",
+        ])
+        assert result.ret == 2
+
+
 class TestClass:
     def test_class_with_init_warning(self, testdir):
         testdir.makepyfile("""
