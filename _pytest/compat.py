@@ -240,4 +240,4 @@ else:
             if not isinstance(v, unicode):
                 v = unicode(v)
             errors = 'replace'
-            return v.encode('ascii', errors)
+            return v.encode('utf-8', errors)
