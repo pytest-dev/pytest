@@ -19,7 +19,7 @@ from _pytest.compat import (
     isclass, isfunction, is_generator, _escape_strings,
     REGEX_TYPE, STRING_TYPES, NoneType, NOTSET,
     get_real_func, getfslineno, safe_getattr,
-    getlocation, enum,
+    safe_str, getlocation, enum,
 )
 
 cutdir1 = py.path.local(pluggy.__file__.rstrip("oc"))
@@ -437,7 +437,7 @@ class Module(pytest.File, PyCollector):
             if self.config.getoption('verbose') < 2:
                 exc_info.traceback = exc_info.traceback.filter(filter_traceback)
             exc_repr = exc_info.getrepr(style='short') if exc_info.traceback else exc_info.exconly()
-            formatted_tb = py._builtin._totext(exc_repr)
+            formatted_tb = safe_str(exc_repr)
             raise self.CollectError(
                 "ImportError while importing test module '{fspath}'.\n"
                 "Hint: make sure your test modules/packages have valid Python names.\n"

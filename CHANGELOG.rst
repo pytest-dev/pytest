@@ -5,19 +5,24 @@
   than ValueErrors in the ``fileno`` method (`#2276`_).
   Thanks `@metasyn`_ for the PR.
 
+* Fix exception formatting while importing modules when the exception message
+  contains non-ascii characters (`#2336`_).
+  Thanks `@fabioz`_ for the report and `@nicoddemus`_ for the PR.
+
+
 *
 
 *
 
 *
 
-*
 
-
+.. _@fabioz: https://github.com/fabioz
 .. _@metasyn: https://github.com/metasyn
 
 
 .. _#2276: https://github.com/pytest-dev/pytest/issues/2276
+.. _#2336: https://github.com/pytest-dev/pytest/issues/2336
 
 
 3.0.7 (2017-03-14)
