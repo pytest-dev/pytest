@@ -118,7 +118,6 @@ class TestRaises(object):
         for o in gc.get_objects():
             assert type(o) is not T
 
-
     def test_raises_match(self):
         msg = r"with base \d+"
         with pytest.raises(ValueError, match=msg):
@@ -133,3 +132,13 @@ class TestRaises(object):
         with pytest.raises(AssertionError, match=expr):
             with pytest.raises(ValueError, match=msg):
                 int('asdf', base=10)
+
+
+def test_not_raises():
+    """pytest.not_raises() does not do anything, just ensure it follows the declared API"""
+    with pytest.not_raises():
+        pass
+    with pytest.raises(ValueError):
+        with pytest.not_raises():
+            raise ValueError
+

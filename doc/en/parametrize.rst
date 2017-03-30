@@ -154,6 +154,75 @@ x=1/y=3.
     comma-separated-string syntax is now advertised first because
     it's easier to write and produces less line noise.
 
+
+``pytest.mark.parametrize`` and exception expectations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 3.1
+
+Sometimes you might want to make sure a function raises an exception for
+a set of inputs but should not raise anything for another set of inputs.
+
+For example, consider this function:
+
+.. code-block:: python
+
+    def check_python_identifier(ident):
+        """raise ValueError if ``ident`` is not a valid Python identifier."""
+
+
+This is a natural job for a ``pytest.mark.parametrize``, so you might write
+a test like this:
+
+.. code-block:: python
+
+    @pytest.mark.parametrize('ident, valid', [
+        ('foobar', True),
+        ('Foobar1', True),
+        ('Foobar_', True),
+        ('Foo_bar_', True),
+        ('Foo bar_', False),
+        ('foo bar_', False),
+        ('1foo bar_', False),
+    ])
+    def test_check_python_identifier(ident, valid):
+        if not valid:
+            with pytest.raises(ValueError):
+                check_python_identifier(ident)
+        else:
+            check_python_identifier(ident)  # should not raise
+
+
+But this makes us repeat ourselves on the test function.
+
+For these situations, where you need to ``parametrize`` a test function
+so that sometimes it raises an exception and others do not, you can use
+the convenient ``pytest.not_raises`` helper:
+
+.. code-block:: python
+
+    @pytest.mark.parametrize('ident, valid', [
+        ('foobar', pytest.not_raises()),
+        ('Foobar1', pytest.not_raises()),
+        ('Foobar_', pytest.not_raises()),
+        ('Foo_bar_', pytest.not_raises()),
+        ('Foo bar_', pytest.raises(ValueError)),
+        ('foo bar_', pytest.raises(ValueError)),
+        ('1foo bar_', pytest.raises(ValueError)),
+    ])
+    def test_check_python_identifier(ident, expectation):
+        with pytest.raises(expectation):
+            check_python_identifier(ident)
+
+How does it work? ``pytest.not_raises`` is a context-manager which **does nothing**. It is merely
+a convenience helper to use in conjunction with ``parametrize`` for testing that functions
+raise errors sometimes and other times do not.
+
+.. note::
+    Do not use ``pytest.not_raises()`` in a non-parametrized test just to
+    check if some code does not raise something; just let the original code propagate
+    any exception to make the test fail.
+
 .. _`pytest_generate_tests`:
 
 Basic ``pytest_generate_tests`` example

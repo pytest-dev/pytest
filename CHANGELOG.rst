@@ -16,6 +16,10 @@ New Features
 * ``pytest.raises`` now asserts that the error message matches a text or regex
   with the ``match`` keyword argument. Thanks `@Kriechi`_ for the PR.
 
+* ``pytest.not_raises`` helper to use in parametrized tests that expect exceptions or
+  not depending on other parameters (`#1830`_).
+  Thanks `@The-Compiler`_ for the idea and `@nicoddemus`_ for the PR.
+
 * ``pytest.param`` can be used to declare test parameter sets with marks and test ids.
   Thanks `@RonnyPfannschmidt`_ for the PR.
 
@@ -88,6 +92,7 @@ Bug Fixes
 
 .. _#1407: https://github.com/pytest-dev/pytest/issues/1407
 .. _#1512: https://github.com/pytest-dev/pytest/issues/1512
+.. _#1830: https://github.com/pytest-dev/pytest/issues/1830
 .. _#1874: https://github.com/pytest-dev/pytest/pull/1874
 .. _#1952: https://github.com/pytest-dev/pytest/pull/1952
 .. _#2007: https://github.com/pytest-dev/pytest/issues/2007
