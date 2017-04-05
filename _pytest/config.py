@@ -415,7 +415,8 @@ class PytestPluginManager(PluginManager):
         # "terminal" or "capture".  Those plugins are registered under their
         # basename for historic purposes but must be imported with the
         # _pytest prefix.
-        assert isinstance(modname, str), "module name as string required, got %r" % modname
+        assert isinstance(modname, (py.builtin.text, str)), "module name as text required, got %r" % modname
+        modname = str(modname)
         if self.get_plugin(modname) is not None:
             return
         if modname in builtin_plugins:
