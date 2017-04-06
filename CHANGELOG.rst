@@ -65,6 +65,9 @@ Changes
 
 * Add ``venv`` to the default ``norecursedirs`` setting.
   Thanks `@The-Compiler`_ for the PR.
+  
+* ``PluginManager.import_plugin`` now accepts unicode plugin names in Python 2.
+  Thanks `@reutsharabani`_ for the PR.
 
 
 Bug Fixes
@@ -82,6 +85,7 @@ Bug Fixes
 .. _@fogo: https://github.com/fogo
 .. _@mandeep: https://github.com/mandeep
 .. _@MichalTHEDUDE: https://github.com/MichalTHEDUDE
+.. _@reutsharabani: https://github.com/reutsharabani
 .. _@unsignedint: https://github.com/unsignedint
 .. _@Kriechi: https://github.com/Kriechi
 
