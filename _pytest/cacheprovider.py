@@ -1,7 +1,7 @@
 """
 merged implementation of the cache provider
 
-the name cache was not choosen to ensure pluggy automatically
+the name cache was not chosen to ensure pluggy automatically
 ignores the external pytest-cache
 """
 

@@ -1,4 +1,5 @@
 """ core implementation of testing process: init, session, runtest loop. """
+import functools
 import os
 import sys
 
@@ -11,6 +12,7 @@ try:
 except ImportError:
     from UserDict import DictMixin as MappingMixin
 
+from _pytest.config import directory_arg
 from _pytest.runner import collect_one_node
 
 tracebackcutdir = py.path.local(_pytest.__file__).dirpath()
@@ -58,7 +60,7 @@ def pytest_addoption(parser):
     # when changing this to --conf-cut-dir, config.py Conftest.setinitial
     # needs upgrading as well
     group.addoption('--confcutdir', dest="confcutdir", default=None,
-        metavar="dir",
+        metavar="dir", type=functools.partial(directory_arg, optname="--confcutdir"),
         help="only load conftest.py's relative to specified dir.")
     group.addoption('--noconftest', action="store_true",
         dest="noconftest", default=False,
@@ -79,7 +81,7 @@ def pytest_namespace():
 
 
 def pytest_configure(config):
-    pytest.config = config # compatibiltiy
+    pytest.config = config # compatibility
 
 
 def wrap_session(config, doit):
@@ -188,12 +190,22 @@ class FSHookProxy:
         self.__dict__[name] = x
         return x
 
-def compatproperty(name):
-    def fget(self):
-        # deprecated - use pytest.name
-        return getattr(pytest, name)
+class _CompatProperty(object):
+    def __init__(self, name):
+        self.name = name
 
-    return property(fget)
+    def __get__(self, obj, owner):
+        if obj is None:
+            return self
+
+        # TODO: reenable in the features branch
+        # warnings.warn(
+        #     "usage of {owner!r}.{name} is deprecated, please use pytest.{name} instead".format(
+        #         name=self.name, owner=type(owner).__name__),
+        #     PendingDeprecationWarning, stacklevel=2)
+        return getattr(pytest, self.name)
+
+
 
 class NodeKeywords(MappingMixin):
     def __init__(self, node):
@@ -265,19 +277,23 @@ class Node(object):
         """ fspath sensitive hook proxy used to call pytest hooks"""
         return self.session.gethookproxy(self.fspath)
 
-    Module = compatproperty("Module")
-    Class = compatproperty("Class")
-    Instance = compatproperty("Instance")
-    Function = compatproperty("Function")
-    File = compatproperty("File")
-    Item = compatproperty("Item")
+    Module = _CompatProperty("Module")
+    Class = _CompatProperty("Class")
+    Instance = _CompatProperty("Instance")
+    Function = _CompatProperty("Function")
+    File = _CompatProperty("File")
+    Item = _CompatProperty("Item")
 
     def _getcustomclass(self, name):
-        cls = getattr(self, name)
-        if cls != getattr(pytest, name):
-            py.log._apiwarn("2.0", "use of node.%s is deprecated, "
-                "use pytest_pycollect_makeitem(...) to create custom "
-                "collection nodes" % name)
+        maybe_compatprop = getattr(type(self), name)
+        if isinstance(maybe_compatprop, _CompatProperty):
+            return getattr(pytest, name)
+        else:
+            cls = getattr(self, name)
+            # TODO: reenable in the features branch
+            # warnings.warn("use of node.%s is deprecated, "
+            #    "use pytest_pycollect_makeitem(...) to create custom "
+            #    "collection nodes" % name, category=DeprecationWarning)
         return cls
 
     def __repr__(self):
@@ -535,7 +551,6 @@ class Session(FSCollector):
     def __init__(self, config):
         FSCollector.__init__(self, config.rootdir, parent=None,
                              config=config, session=self)
-        self._fs2hookproxy = {}
         self.testsfailed = 0
         self.testscollected = 0
         self.shouldstop = False
@@ -566,23 +581,18 @@ class Session(FSCollector):
         return path in self._initialpaths
 
     def gethookproxy(self, fspath):
-        try:
-            return self._fs2hookproxy[fspath]
-        except KeyError:
-            # check if we have the common case of running
-            # hooks with all conftest.py filesall conftest.py
-            pm = self.config.pluginmanager
-            my_conftestmodules = pm._getconftestmodules(fspath)
-            remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
-            if remove_mods:
-                # one or more conftests are not in use at this fspath
-                proxy = FSHookProxy(fspath, pm, remove_mods)
-            else:
-                # all plugis are active for this fspath
-                proxy = self.config.hook
-
-            self._fs2hookproxy[fspath] = proxy
-            return proxy
+        # check if we have the common case of running
+        # hooks with all conftest.py filesall conftest.py
+        pm = self.config.pluginmanager
+        my_conftestmodules = pm._getconftestmodules(fspath)
+        remove_mods = pm._conftest_plugins.difference(my_conftestmodules)
+        if remove_mods:
+            # one or more conftests are not in use at this fspath
+            proxy = FSHookProxy(fspath, pm, remove_mods)
+        else:
+            # all plugis are active for this fspath
+            proxy = self.config.hook
+        return proxy
 
     def perform_collect(self, args=None, genitems=True):
         hook = self.config.hook
@@ -704,10 +714,9 @@ class Session(FSCollector):
         path = self.config.invocation_dir.join(relpath, abs=True)
         if not path.check():
             if self.config.option.pyargs:
-                msg = "file or package not found: "
+                raise pytest.UsageError("file or package not found: " + arg + " (missing __init__.py?)")
             else:
-                msg = "file not found: "
-            raise pytest.UsageError(msg + arg)
+                raise pytest.UsageError("file not found: " + arg)
         parts[0] = path
         return parts
 

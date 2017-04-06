@@ -113,8 +113,8 @@ directory with the above conftest.py::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 0 items
     
     ======= no tests ran in 0.12 seconds ========
@@ -164,8 +164,8 @@ and when running it will see a skipped "slow" test::
 
     $ pytest -rs    # "-rs" means report details on the little 's'
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     
     test_module.py .s
@@ -178,8 +178,8 @@ Or run it including the ``slow`` marked test::
 
     $ pytest --runslow
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     
     test_module.py ..
@@ -302,9 +302,9 @@ which will add the string to the test header accordingly::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
     project deps: mylib-1.1
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 0 items
     
     ======= no tests ran in 0.12 seconds ========
@@ -327,11 +327,11 @@ which will add info only when run with "--v"::
 
     $ pytest -v
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     info1: did you know that ...
     did you?
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 0 items
     
     ======= no tests ran in 0.12 seconds ========
@@ -340,8 +340,8 @@ and nothing when run plainly::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 0 items
     
     ======= no tests ran in 0.12 seconds ========
@@ -374,8 +374,8 @@ Now we can profile which test functions execute the slowest::
 
     $ pytest --durations=3
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 3 items
     
     test_some_are_slow.py ...
@@ -440,8 +440,8 @@ If we run this::
 
     $ pytest -rx
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
     
     test_step.py .Fx.
@@ -476,7 +476,7 @@ concept.  It's however recommended to have explicit fixture references in your
 tests or test classes rather than relying on implicitly executing
 setup/teardown functions, especially if they are far away from the actual tests.
 
-Here is a an example for making a ``db`` fixture available in a directory:
+Here is an example for making a ``db`` fixture available in a directory:
 
 .. code-block:: python
 
@@ -519,8 +519,8 @@ We can run this::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 7 items
     
     test_step.py .Fx.
@@ -585,7 +585,7 @@ environment you can implement a hook that gets called when the test
 "report" object is about to be created.  Here we write out all failing
 test calls and also access a fixture (if it was used by the test) in
 case you want to query/look at it during your post processing.  In our
-case we just write some informations out to a ``failures`` file:
+case we just write some information out to a ``failures`` file:
 
 .. code-block:: python
 
@@ -627,8 +627,8 @@ and run them::
 
     $ pytest test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     
     test_module.py FF
@@ -678,7 +678,7 @@ here is a little example implemented via a local plugin:
         outcome = yield
         rep = outcome.get_result()
 
-        # set an report attribute for each phase of a call, which can
+        # set a report attribute for each phase of a call, which can
         # be "setup", "call", "teardown"
 
         setattr(item, "rep_" + rep.when, rep)
@@ -721,8 +721,8 @@ and run it::
 
     $ pytest -s test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 3 items
     
     test_module.py Esetting up a test failed! test_module.py::test_setup_fails

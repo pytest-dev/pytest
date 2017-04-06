@@ -54,6 +54,8 @@ def pytest_cmdline_main(config):
             tw.line()
         config._ensure_unconfigure()
         return 0
+
+
 pytest_cmdline_main.tryfirst = True
 
 
@@ -64,7 +66,7 @@ def pytest_collection_modifyitems(items, config):
         return
     # pytest used to allow "-" for negating
     # but today we just allow "-" at the beginning, use "not" instead
-    # we probably remove "-" alltogether soon
+    # we probably remove "-" altogether soon
     if keywordexpr.startswith("-"):
         keywordexpr = "not " + keywordexpr[1:]
     selectuntil = False

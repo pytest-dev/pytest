@@ -5,7 +5,6 @@ import traceback
 import types
 import warnings
 
-import pkg_resources
 import py
 # DON't import pytest here because it causes import cycle troubles
 import sys, os
@@ -13,6 +12,7 @@ import _pytest._code
 import _pytest.hookspec  # the extension point definitions
 import _pytest.assertion
 from _pytest._pluggy import PluginManager, HookimplMarker, HookspecMarker
+from _pytest.compat import safe_str
 
 hookimpl = HookimplMarker("pytest")
 hookspec = HookspecMarker("pytest")
@@ -65,8 +65,32 @@ def main(args=None, plugins=None):
 class cmdline:  # compatibility namespace
     main = staticmethod(main)
 
+
 class UsageError(Exception):
     """ error in pytest usage or invocation"""
+
+
+def filename_arg(path, optname):
+    """ Argparse type validator for filename arguments.
+
+    :path: path of filename
+    :optname: name of the option
+    """
+    if os.path.isdir(path):
+        raise UsageError("{0} must be a filename, given: {1}".format(optname, path))
+    return path
+
+
+def directory_arg(path, optname):
+    """Argparse type validator for directory arguments.
+
+    :path: path of directory
+    :optname: name of the option
+    """
+    if not os.path.isdir(path):
+        raise UsageError("{0} must be a directory, given: {1}".format(optname, path))
+    return path
+
 
 _preinit = []
 
@@ -378,35 +402,30 @@ class PytestPluginManager(PluginManager):
         self._import_plugin_specs(os.environ.get("PYTEST_PLUGINS"))
 
     def consider_module(self, mod):
-        plugins = getattr(mod, 'pytest_plugins', [])
-        if isinstance(plugins, str):
-            plugins = [plugins]
-        self.rewrite_hook.mark_rewrite(*plugins)
-        self._import_plugin_specs(plugins)
+        self._import_plugin_specs(getattr(mod, 'pytest_plugins', []))
 
     def _import_plugin_specs(self, spec):
-        if spec:
-            if isinstance(spec, str):
-                spec = spec.split(",")
-            for import_spec in spec:
-                self.import_plugin(import_spec)
+        plugins = _get_plugin_specs_as_list(spec)
+        for import_spec in plugins:
+            self.import_plugin(import_spec)
 
     def import_plugin(self, modname):
         # most often modname refers to builtin modules, e.g. "pytester",
         # "terminal" or "capture".  Those plugins are registered under their
         # basename for historic purposes but must be imported with the
         # _pytest prefix.
-        assert isinstance(modname, str)
+        assert isinstance(modname, str), "module name as string required, got %r" % modname
         if self.get_plugin(modname) is not None:
             return
         if modname in builtin_plugins:
             importspec = "_pytest." + modname
         else:
             importspec = modname
+        self.rewrite_hook.mark_rewrite(importspec)
         try:
             __import__(importspec)
         except ImportError as e:
-            new_exc = ImportError('Error importing plugin "%s": %s' % (modname, e))
+            new_exc = ImportError('Error importing plugin "%s": %s' % (modname, safe_str(e.args[0])))
             # copy over name and path attributes
             for attr in ('name', 'path'):
                 if hasattr(e, attr):
@@ -421,6 +440,24 @@ class PytestPluginManager(PluginManager):
             mod = sys.modules[importspec]
             self.register(mod, modname)
             self.consider_module(mod)
+
+
+def _get_plugin_specs_as_list(specs):
+    """
+    Parses a list of "plugin specs" and returns a list of plugin names.
+
+    Plugin specs can be given as a list of strings separated by "," or already as a list/tuple in
+    which case it is returned as a list. Specs can also be `None` in which case an
+    empty list is returned.
+    """
+    if specs is not None:
+        if isinstance(specs, str):
+            specs = specs.split(',') if specs else []
+        if not isinstance(specs, (list, tuple)):
+            raise UsageError("Plugin specs must be a ','-separated string or a "
+                             "list/tuple of strings for plugin names. Given: %r" % specs)
+        return list(specs)
+    return []
 
 
 class Parser:
@@ -594,7 +631,7 @@ class Argument:
                 if typ == 'choice':
                     warnings.warn(
                         'type argument to addoption() is a string %r.'
-                        ' For parsearg this is optional and when supplied '
+                        ' For parsearg this is optional and when supplied'
                         ' should be a type.'
                         ' (options: %s)' % (typ, names),
                         DeprecationWarning,
@@ -793,7 +830,7 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
             if len(option) == 2 or option[2] == ' ':
                 return_list.append(option)
             if option[2:] == short_long.get(option.replace('-', '')):
-                return_list.append(option.replace(' ', '='))
+                return_list.append(option.replace(' ', '=', 1))
         action._formatted_action_invocation = ', '.join(return_list)
         return action._formatted_action_invocation
 
@@ -818,8 +855,10 @@ class Notset:
     def __repr__(self):
         return "<NOTSET>"
 
+
 notset = Notset()
 FILE_OR_DIR = 'file_or_dir'
+
 
 class Config(object):
     """ access to configuration values, pluginmanager and plugin hooks.  """
@@ -838,14 +877,17 @@ class Config(object):
         self.trace = self.pluginmanager.trace.root.get("config")
         self.hook = self.pluginmanager.hook
         self._inicache = {}
+        self._override_ini = ()
         self._opt2dest = {}
         self._cleanup = []
         self._warn = self.pluginmanager._warn
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
+
         def do_setns(dic):
             import pytest
             setns(pytest, dic)
+
         self.hook.pytest_namespace.call_historic(do_setns, {})
         self.hook.pytest_addoption.call_historic(kwargs=dict(parser=self._parser))
 
@@ -936,6 +978,7 @@ class Config(object):
         self.invocation_dir = py.path.local()
         self._parser.addini('addopts', 'extra command line options', 'args')
         self._parser.addini('minversion', 'minimally required pytest version')
+        self._override_ini = ns.override_ini or ()
 
     def _consider_importhook(self, args, entrypoint_name):
         """Install the PEP 302 import hook if using assertion re-writing.
@@ -952,6 +995,7 @@ class Config(object):
             except SystemError:
                 mode = 'plain'
             else:
+                import pkg_resources
                 self.pluginmanager.rewrite_hook = hook
                 for entrypoint in pkg_resources.iter_entry_points('pytest11'):
                     # 'RECORD' available for plugins installed normally (pip install)
@@ -1000,6 +1044,7 @@ class Config(object):
         self.pluginmanager.load_setuptools_entrypoints(entrypoint_name)
         self.pluginmanager.consider_env()
         self.known_args_namespace = ns = self._parser.parse_known_args(args, namespace=self.option.copy())
+        confcutdir = self.known_args_namespace.confcutdir
         if self.known_args_namespace.confcutdir is None and self.inifile:
             confcutdir = py.path.local(self.inifile).dirname
             self.known_args_namespace.confcutdir = confcutdir
@@ -1116,12 +1161,14 @@ class Config(object):
         # and -o foo1=bar1 -o foo2=bar2 options
         # always use the last item if multiple value set for same ini-name,
         # e.g. -o foo=bar1 -o foo=bar2 will set foo to bar2
-        if self.getoption("override_ini", None):
-            for ini_config_list in self.option.override_ini:
-                for ini_config in ini_config_list:
+        for ini_config_list in self._override_ini:
+            for ini_config in ini_config_list:
+                try:
                     (key, user_ini_value) = ini_config.split("=", 1)
-                    if key == name:
-                        value = user_ini_value
+                except ValueError:
+                    raise UsageError("-o/--override-ini expects option=value style.")
+                if key == name:
+                    value = user_ini_value
         return value
 
     def getoption(self, name, default=notset, skip=False):
@@ -1195,25 +1242,20 @@ def getcfg(args, warnfunc=None):
     return None, None, None
 
 
-def get_common_ancestor(args):
-    # args are what we get after early command line parsing (usually
-    # strings, but can be py.path.local objects as well)
+def get_common_ancestor(paths):
     common_ancestor = None
-    for arg in args:
-        if str(arg)[0] == "-":
-            continue
-        p = py.path.local(arg)
-        if not p.exists():
+    for path in paths:
+        if not path.exists():
             continue
         if common_ancestor is None:
-            common_ancestor = p
+            common_ancestor = path
         else:
-            if p.relto(common_ancestor) or p == common_ancestor:
+            if path.relto(common_ancestor) or path == common_ancestor:
                 continue
-            elif common_ancestor.relto(p):
-                common_ancestor = p
+            elif common_ancestor.relto(path):
+                common_ancestor = path
             else:
-                shared = p.common(common_ancestor)
+                shared = path.common(common_ancestor)
                 if shared is not None:
                     common_ancestor = shared
     if common_ancestor is None:
@@ -1224,9 +1266,29 @@ def get_common_ancestor(args):
 
 
 def get_dirs_from_args(args):
-    return [d for d in (py.path.local(x) for x in args
-                        if not str(x).startswith("-"))
-            if d.exists()]
+    def is_option(x):
+        return str(x).startswith('-')
+
+    def get_file_part_from_node_id(x):
+        return str(x).split('::')[0]
+
+    def get_dir_from_path(path):
+        if path.isdir():
+            return path
+        return py.path.local(path.dirname)
+
+    # These look like paths but may not exist
+    possible_paths = (
+        py.path.local(get_file_part_from_node_id(arg))
+        for arg in args
+        if not is_option(arg)
+    )
+
+    return [
+        get_dir_from_path(path)
+        for path in possible_paths
+        if path.exists()
+    ]
 
 
 def determine_setup(inifile, args, warnfunc=None):

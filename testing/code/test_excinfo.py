@@ -56,13 +56,15 @@ def test_excinfo_simple():
 def test_excinfo_getstatement():
     def g():
         raise ValueError
+
     def f():
         g()
+
     try:
         f()
     except ValueError:
         excinfo = _pytest._code.ExceptionInfo()
-    linenumbers = [_pytest._code.getrawcode(f).co_firstlineno - 1 + 3,
+    linenumbers = [_pytest._code.getrawcode(f).co_firstlineno - 1 + 4,
                    _pytest._code.getrawcode(f).co_firstlineno - 1 + 1,
                    _pytest._code.getrawcode(g).co_firstlineno - 1 + 1, ]
     l = list(excinfo.traceback)
@@ -168,11 +170,13 @@ class TestTraceback_f_g_h:
             #
             raise ValueError
             #
+
         def g():
             #
             __tracebackhide__ = tracebackhide
             f()
             #
+
         def h():
             #
             g()
@@ -214,15 +218,18 @@ class TestTraceback_f_g_h:
     def test_traceback_no_recursion_index(self):
         def do_stuff():
             raise RuntimeError
+
         def reraise_me():
             import sys
             exc, val, tb = sys.exc_info()
             py.builtin._reraise(exc, val, tb)
+
         def f(n):
             try:
                 do_stuff()
             except:
                 reraise_me()
+
         excinfo = pytest.raises(RuntimeError, f, 8)
         traceback = excinfo.traceback
         recindex = traceback.recursionindex()
@@ -245,17 +252,18 @@ class TestTraceback_f_g_h:
         excinfo = pytest.raises(ValueError, fail)
         assert excinfo.traceback.recursionindex() is None
 
-
-
     def test_traceback_getcrashentry(self):
         def i():
             __tracebackhide__ = True
             raise ValueError
+
         def h():
             i()
+
         def g():
             __tracebackhide__ = True
             h()
+
         def f():
             g()
 
@@ -271,6 +279,7 @@ class TestTraceback_f_g_h:
         def g():
             __tracebackhide__ = True
             raise ValueError
+
         def f():
             __tracebackhide__ = True
             g()
@@ -465,11 +474,13 @@ raise ValueError()
         class FakeCode(object):
             class raw:
                 co_filename = '?'
+
             path = '?'
             firstlineno = 5
 
             def fullsource(self):
                 return None
+
             fullsource = property(fullsource)
 
         class FakeFrame(object):
@@ -491,17 +502,21 @@ raise ValueError()
         class FakeExcinfo(_pytest._code.ExceptionInfo):
             typename = "Foo"
             value = Exception()
+
             def __init__(self):
                 pass
 
             def exconly(self, tryshort):
                 return "EXC"
+
             def errisinstance(self, cls):
                 return False
 
         excinfo = FakeExcinfo()
+
         class FakeRawTB(object):
             tb_next = None
+
         tb = FakeRawTB()
         excinfo.traceback = Traceback(tb)
 
@@ -719,8 +734,10 @@ raise ValueError()
         excinfo = pytest.raises(ValueError, mod.entry)
 
         p = FormattedExcinfo()
+
         def raiseos():
             raise OSError(2)
+
         monkeypatch.setattr(py.std.os, 'getcwd', raiseos)
         assert p._makepath(__file__) == __file__
         p.repr_traceback(excinfo)
@@ -789,9 +806,11 @@ raise ValueError()
 
     def test_reprexcinfo_unicode(self):
         from _pytest._code.code import TerminalRepr
+
         class MyRepr(TerminalRepr):
             def toterminal(self, tw):
                 tw.line(py.builtin._totext("я", "utf-8"))
+
         x = py.builtin._totext(MyRepr())
         assert x == py.builtin._totext("я", "utf-8")
 
@@ -1049,6 +1068,50 @@ raise ValueError()
         line = tw.get_write_msg(46)
         assert line.endswith('mod.py')
         assert tw.lines[47] == ":15: AttributeError"
+
+    @pytest.mark.skipif("sys.version_info[0] < 3")
+    @pytest.mark.parametrize('reason, description', [
+        ('cause', 'The above exception was the direct cause of the following exception:'),
+        ('context', 'During handling of the above exception, another exception occurred:'),
+    ])
+    def test_exc_chain_repr_without_traceback(self, importasmod, reason, description):
+        """
+        Handle representation of exception chains where one of the exceptions doesn't have a
+        real traceback, such as those raised in a subprocess submitted by the multiprocessing
+        module (#1984).
+        """
+        from _pytest.pytester import LineMatcher
+        exc_handling_code = ' from e' if reason == 'cause' else ''
+        mod = importasmod("""
+            def f():
+                try:
+                    g()
+                except Exception as e:
+                    raise RuntimeError('runtime problem'){exc_handling_code}
+            def g():
+                raise ValueError('invalid value')
+        """.format(exc_handling_code=exc_handling_code))
+
+        with pytest.raises(RuntimeError) as excinfo:
+            mod.f()
+
+        # emulate the issue described in #1984
+        attr = '__%s__' % reason
+        getattr(excinfo.value, attr).__traceback__ = None
+
+        r = excinfo.getrepr()
+        tw = py.io.TerminalWriter(stringio=True)
+        tw.hasmarkup = False
+        r.toterminal(tw)
+
+        matcher = LineMatcher(tw.stringio.getvalue().splitlines())
+        matcher.fnmatch_lines([
+            "ValueError: invalid value",
+            description,
+            "* except Exception as e:",
+            "> * raise RuntimeError('runtime problem')" + exc_handling_code,
+            "E *RuntimeError: runtime problem",
+        ])
 
 
 @pytest.mark.parametrize("style", ["short", "long"])

@@ -97,7 +97,7 @@ sets.  pytest-2.3 introduces a decorator for use on the factory itself::
         ... # use request.param
 
 Here the factory will be invoked twice (with the respective "mysql" 
-and "pg" values set as ``request.param`` attributes) and and all of 
+and "pg" values set as ``request.param`` attributes) and all of 
 the tests requiring "db" will run twice as well.  The "mysql" and 
 "pg" values will also be used for reporting the test-invocation variants.
 

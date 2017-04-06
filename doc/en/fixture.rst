@@ -11,7 +11,7 @@ pytest fixtures: explicit, modular, scalable
 
 .. _`xUnit`: http://en.wikipedia.org/wiki/XUnit
 .. _`purpose of test fixtures`: http://en.wikipedia.org/wiki/Test_fixture#Software
-.. _`Dependency injection`: http://en.wikipedia.org/wiki/Dependency_injection#Definition
+.. _`Dependency injection`: http://en.wikipedia.org/wiki/Dependency_injection
 
 The `purpose of test fixtures`_ is to provide a fixed baseline
 upon which tests can reliably and repeatedly execute.   pytest fixtures
@@ -70,8 +70,8 @@ marked ``smtp`` fixture function.  Running the test looks like this::
 
     $ pytest test_smtpsimple.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 items
     
     test_smtpsimple.py F
@@ -188,8 +188,8 @@ inspect what is going on and can now run the tests::
 
     $ pytest test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     
     test_module.py FF
@@ -243,7 +243,9 @@ Fixture finalization / executing teardown code
 
 pytest supports execution of fixture specific finalization code
 when the fixture goes out of scope.  By using a ``yield`` statement instead of ``return``, all
-the code after the *yield* statement serves as the teardown code.::
+the code after the *yield* statement serves as the teardown code:
+
+.. code-block:: python
 
     # content of conftest.py
 
@@ -257,8 +259,9 @@ the code after the *yield* statement serves as the teardown code.::
         print("teardown smtp")
         smtp.close()
 
-The ``print`` and ``smtp.close()`` statements will execute when the last test using
-the fixture in the module has finished execution, regardless of the exception status of the tests.
+The ``print`` and ``smtp.close()`` statements will execute when the last test in
+the module has finished execution, regardless of the exception status of the
+tests.
 
 Let's execute it::
 
@@ -274,22 +277,23 @@ occur around each single test.  In either case the test
 module itself does not need to change or know about these details
 of fixture setup.
 
-Note that we can also seamlessly use the ``yield`` syntax with ``with`` statements::
+Note that we can also seamlessly use the ``yield`` syntax with ``with`` statements:
+
+.. code-block:: python
 
     # content of test_yield2.py
 
+    import smtplib
     import pytest
 
-    @pytest.fixture
-    def passwd():
-        with open("/etc/passwd") as f:
-            yield f.readlines()
+    @pytest.fixture(scope="module")
+    def smtp(request):
+        with smtplib.SMTP("smtp.gmail.com") as smtp:
+            yield smtp  # provide the fixture value
 
-    def test_has_lines(passwd):
-        assert len(passwd) >= 1
 
-The file ``f`` will be closed after the test finished execution
-because the Python ``file`` object supports finalization when
+The ``smtp`` connection will be closed after the test finished execution
+because the ``smtp`` object automatically closes when
 the ``with`` statement ends.
 
 
@@ -318,8 +322,7 @@ the ``with`` statement ends.
             request.addfinalizer(fin)
             return smtp  # provide the fixture value
 
-    The ``fin`` function will execute when the last test using
-    the fixture in the module has finished execution.
+    The ``fin`` function will execute when the last test in the module has finished execution.
 
     This method is still fully supported, but ``yield`` is recommended from 2.10 onward because
     it is considered simpler and better describes the natural code flow.
@@ -352,8 +355,8 @@ again, nothing much has changed::
 
     $ pytest -s -q --tb=no
     FFfinalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
-    .
-    2 failed, 1 passed in 0.12 seconds
+    
+    2 failed in 0.12 seconds
 
 Let's quickly create another test module that actually sets the
 server URL in its module namespace::
@@ -375,6 +378,8 @@ Running it::
         assert 0, smtp.helo()
     E   AssertionError: (250, b'mail.python.org')
     E   assert 0
+    ------------------------- Captured stdout teardown -------------------------
+    finalizing <smtplib.SMTP object at 0xdeadbeef> (mail.python.org)
 
 voila! The ``smtp`` fixture function picked up our mail server name
 from the module namespace.
@@ -448,7 +453,7 @@ So let's just do another run::
             response, msg = smtp.ehlo()
             assert response == 250
     >       assert b"smtp.gmail.com" in msg
-    E       assert b'smtp.gmail.com' in b'mail.python.org\nSIZE 51200000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8'
+    E       AssertionError: assert b'smtp.gmail.com' in b'mail.python.org\nSIZE 51200000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8'
     
     test_module.py:5: AssertionError
     -------------------------- Captured stdout setup ---------------------------
@@ -464,6 +469,8 @@ So let's just do another run::
     E       assert 0
     
     test_module.py:11: AssertionError
+    ------------------------- Captured stdout teardown -------------------------
+    finalizing <smtplib.SMTP object at 0xdeadbeef>
     4 failed in 0.12 seconds
 
 We see that our two test functions each ran twice, against the different
@@ -516,9 +523,9 @@ Running the above tests results in the following test IDs being used::
 
    $ pytest --collect-only
    ======= test session starts ========
-   platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
-   rootdir: $REGENDOC_TMPDIR, inifile: 
-   collected 11 items
+   platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+   rootdir: $REGENDOC_TMPDIR, inifile:
+   collected 10 items
    <Module 'test_anothersmtp.py'>
      <Function 'test_showhelo[smtp.gmail.com]'>
      <Function 'test_showhelo[mail.python.org]'>
@@ -532,8 +539,6 @@ Running the above tests results in the following test IDs being used::
      <Function 'test_noop[smtp.gmail.com]'>
      <Function 'test_ehlo[mail.python.org]'>
      <Function 'test_noop[mail.python.org]'>
-   <Module 'test_yield2.py'>
-     <Function 'test_has_lines'>
    
    ======= no tests ran in 0.12 seconds ========
 
@@ -569,9 +574,9 @@ Here we declare an ``app`` fixture which receives the previously defined
 
     $ pytest -v test_appsetup.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 2 items
     
     test_appsetup.py::test_smtp_exists[smtp.gmail.com] PASSED
@@ -638,9 +643,9 @@ Let's run the tests in verbose mode and with looking at the print-output::
 
     $ pytest -v -s test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 8 items
     
     test_module.py::test_0[1]   SETUP otherarg 1
@@ -701,7 +706,7 @@ Using fixtures from classes, modules or projects
 Sometimes test functions do not directly need access to a fixture object.
 For example, tests may require to operate with an empty directory as the
 current working directory but otherwise do not care for the concrete
-directory.  Here is how you can can use the standard `tempfile
+directory.  Here is how you can use the standard `tempfile
 <http://docs.python.org/library/tempfile.html>`_ and pytest fixtures to
 achieve it.  We separate the creation of the fixture into a conftest.py
 file::
@@ -998,7 +1003,7 @@ Given the tests file structure is:
 
             @pytest.mark.parametrize('username', ['directly-overridden-username-other'])
             def test_username_other(other_username):
-                assert username == 'other-directly-overridden-username-other'
+                assert other_username == 'other-directly-overridden-username-other'
 
 In the example above, a fixture value is overridden by the test parameter value. Note that the value of the fixture
 can be overridden this way even if the test doesn't use it directly (doesn't mention it in the function prototype).

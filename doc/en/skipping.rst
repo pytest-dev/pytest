@@ -2,7 +2,7 @@
 
 .. _skipping:
 
-Skip and xfail: dealing with tests that can not succeed
+Skip and xfail: dealing with tests that cannot succeed
 =====================================================================
 
 If you have test functions that cannot be run on certain platforms
@@ -224,8 +224,8 @@ Running it with the report-on-xfail option gives this output::
 
     example $ pytest -rx xfail_demo.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
-    rootdir: $REGENDOC_TMPDIR/example, inifile: 
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    rootdir: $REGENDOC_TMPDIR/example, inifile:
     collected 7 items
     
     xfail_demo.py xxxxxxx
@@ -292,6 +292,20 @@ imperatively, in test or setup code::
             pytest.xfail("failing configuration (but should work)")
             # or
             pytest.skip("unsupported configuration")
+
+Note that calling ``pytest.skip`` at the module level 
+is not allowed since pytest 3.0. If you are upgrading
+and ``pytest.skip`` was being used at the module level, you can set a
+``pytestmark`` variable:
+
+.. code-block:: python
+
+    # before pytest 3.0
+    pytest.skip('skipping all tests because of reasons')
+    # after pytest 3.0
+    pytestmark = pytest.mark.skip('skipping all tests because of reasons')
+
+``pytestmark`` applies a mark or list of marks to all tests in a module.
 
 
 Skipping on a missing import dependency
@@ -371,3 +385,27 @@ The equivalent with "boolean conditions" is::
     imported before pytest's argument parsing takes place.  For example,
     ``conftest.py`` files are imported before command line parsing and thus
     ``config.getvalue()`` will not execute correctly.
+
+
+Summary
+-------
+
+Here's a quick guide on how to skip tests in a module in different situations:
+
+1. Skip all tests in a module unconditionally:
+
+  .. code-block:: python
+
+        pytestmark = pytest.mark.skip('all tests still WIP')
+
+2. Skip all tests in a module based on some condition:
+
+  .. code-block:: python
+
+        pytestmark = pytest.mark.skipif(sys.platform == 'win32', 'tests for linux only')
+
+3. Skip all tests in a module if some import is missing:
+
+  .. code-block:: python
+
+        pexpect = pytest.importorskip('pexpect')

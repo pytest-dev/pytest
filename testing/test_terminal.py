@@ -370,6 +370,31 @@ class TestFixtureReporting:
             "*1 failed*1 error*",
          ])
 
+    def test_setup_teardown_output_and_test_failure(self, testdir):
+        """ Test for issue #442 """
+        testdir.makepyfile("""
+            def setup_function(function):
+                print ("setup func")
+
+            def test_fail():
+                assert 0, "failingfunc"
+
+            def teardown_function(function):
+                print ("teardown func")
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*test_fail*",
+            "*def test_fail():",
+            "*failingfunc*",
+            "*Captured stdout setup*",
+            "*setup func*",
+            "*Captured stdout teardown*",
+            "*teardown func*",
+
+            "*1 failed*",
+         ])
+
 class TestTerminalFunctional:
     def test_deselected(self, testdir):
         testpath = testdir.makepyfile("""
@@ -667,7 +692,7 @@ class TestGenericReporting:
         result = testdir.runpytest(*option.args)
         result.stdout.fnmatch_lines([
             "ImportError while importing*",
-            "'No module named *xyz*",
+            "*No module named *xyz*",
             "*1 error*",
         ])
 
@@ -881,3 +906,12 @@ def test_summary_stats(exp_line, exp_color, stats_arg):
     print("Actually got:   \"%s\"; with color \"%s\"" % (line, color))
     assert line == exp_line
     assert color == exp_color
+
+
+def test_no_trailing_whitespace_after_inifile_word(testdir):
+    result = testdir.runpytest('')
+    assert 'inifile:\n' in result.stdout.str()
+
+    testdir.makeini('[pytest]')
+    result = testdir.runpytest('')
+    assert 'inifile: tox.ini\n' in result.stdout.str()

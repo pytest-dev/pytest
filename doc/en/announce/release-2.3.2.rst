@@ -1,7 +1,7 @@
 pytest-2.3.2: some fixes and more traceback-printing speed
 ===========================================================================
 
-pytest-2.3.2 is a another stabilization release:
+pytest-2.3.2 is another stabilization release:
 
 - issue 205: fixes a regression with conftest detection
 - issue 208/29: fixes traceback-printing speed in some bad cases

@@ -84,8 +84,10 @@ class TestPaste:
         function that connects to bpaste service.
         """
         calls = []
+
         def mocked(url, data):
             calls.append((url, data))
+
             class DummyFile:
                 def read(self):
                     # part of html of a normal response

@@ -36,8 +36,13 @@ def deprecated_call(func=None, *args, **kwargs):
 
     This function can be used as a context manager::
 
+        >>> import warnings
+        >>> def api_call_v2():
+        ...     warnings.warn('use v3 of this api', DeprecationWarning)
+        ...     return 200
+
         >>> with deprecated_call():
-        ...    myobject.deprecated_method()
+        ...    assert api_call_v2() == 200
 
     Note: we cannot use WarningsRecorder here because it is still subject
     to the mechanism that prevents warnings of the same type from being
@@ -218,4 +223,7 @@ class WarningsChecker(WarningsRecorder):
             if self.expected_warning is not None:
                 if not any(r.category in self.expected_warning for r in self):
                     __tracebackhide__ = True
-                    pytest.fail("DID NOT WARN")
+                    pytest.fail("DID NOT WARN. No warnings of type {0} was emitted. "
+                                "The list of emitted warnings is: {1}.".format(
+                                    self.expected_warning,
+                                    [each.message for each in self]))

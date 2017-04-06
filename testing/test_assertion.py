@@ -12,12 +12,15 @@ PY3 = sys.version_info >= (3, 0)
 
 @pytest.fixture
 def mock_config():
+
     class Config(object):
         verbose = False
+
         def getoption(self, name):
             if name == 'verbose':
                 return self.verbose
             raise KeyError('Not mocked out: %s' % name)
+
     return Config()
 
 
@@ -54,6 +57,23 @@ class TestImportHookInstallation:
         else:
             assert 0
         result.stdout.fnmatch_lines([expected])
+
+    def test_rewrite_assertions_pytester_plugin(self, testdir):
+        """
+        Assertions in the pytester plugin must also benefit from assertion
+        rewriting (#1920).
+        """
+        testdir.makepyfile("""
+            pytest_plugins = ['pytester']
+            def test_dummy_failure(testdir):  # how meta!
+                testdir.makepyfile('def test(): assert 0')
+                r = testdir.inline_run()
+                r.assertoutcome(passed=1)
+        """)
+        result = testdir.runpytest_subprocess()
+        result.stdout.fnmatch_lines([
+            '*assert 1 == 0*',
+        ])
 
     @pytest.mark.parametrize('mode', ['plain', 'rewrite'])
     def test_pytest_plugins_rewrite(self, testdir, mode):
@@ -344,7 +364,7 @@ class TestAssert_reprcompare:
         expl = '\n'.join(callequal(left, right, verbose=True))
         assert expl.endswith(textwrap.dedent(expected).strip())
 
-    def test_list_different_lenghts(self):
+    def test_list_different_lengths(self):
         expl = callequal([0, 1], [0, 1, 2])
         assert len(expl) > 1
         expl = callequal([0, 1, 2], [0, 1])
@@ -749,6 +769,37 @@ def test_traceback_failure(testdir):
         "*test_traceback_failure.py:4: AssertionError"
     ])
 
+
+@pytest.mark.skipif(sys.version_info[:2] <= (3, 3), reason='Python 3.4+ shows chained exceptions on multiprocess')
+def test_exception_handling_no_traceback(testdir):
+    """
+    Handle chain exceptions in tasks submitted by the multiprocess module (#1984).
+    """
+    p1 = testdir.makepyfile("""
+        from multiprocessing import Pool
+
+        def process_task(n):
+            assert n == 10
+
+        def multitask_job():
+            tasks = [1]
+            with Pool(processes=1) as pool:
+                pool.map(process_task, tasks)
+
+        def test_multitask_job():
+            multitask_job()
+    """)
+    result = testdir.runpytest(p1, "--tb=long")
+    result.stdout.fnmatch_lines([
+        "====* FAILURES *====",
+        "*multiprocessing.pool.RemoteTraceback:*",
+        "Traceback (most recent call last):",
+        "*assert n == 10",
+        "The above exception was the direct cause of the following exception:",
+        "> * multitask_job()",
+    ])
+
+
 @pytest.mark.skipif("'__pypy__' in sys.builtin_module_names or sys.platform.startswith('java')" )
 def test_warn_missing(testdir):
     testdir.makepyfile("")
@@ -864,3 +915,34 @@ def test_assert_with_unicode(monkeypatch, testdir):
     """)
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(['*AssertionError*'])
+
+def test_raise_unprintable_assertion_error(testdir):
+    testdir.makepyfile(r"""
+        def test_raise_assertion_error():
+            raise AssertionError('\xff')
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([r">       raise AssertionError('\xff')", 'E       AssertionError: *'])
+
+def test_raise_assertion_error_raisin_repr(testdir):
+    testdir.makepyfile(u"""
+        class RaisingRepr(object):
+            def __repr__(self):
+                raise Exception()
+        def test_raising_repr():
+            raise AssertionError(RaisingRepr())
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(['E       AssertionError: <unprintable AssertionError object>'])
+
+def test_issue_1944(testdir):
+    testdir.makepyfile("""
+        def f():
+            return
+
+        assert f() == 10
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["*1 error*"])
+    assert "AttributeError: 'Module' object has no attribute '_obj'" not in result.stdout.str()
+

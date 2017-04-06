@@ -29,7 +29,7 @@ def pytest_namespace():
 
 
 def register_assert_rewrite(*names):
-    """Register a module name to be rewritten on import.
+    """Register one or more module names to be rewritten on import.
 
     This function will make sure that this module or all modules inside
     the package will get their assert statements rewritten.
@@ -80,10 +80,12 @@ def install_importhook(config):
     config._assertstate.hook = hook = rewrite.AssertionRewritingHook(config)
     sys.meta_path.insert(0, hook)
     config._assertstate.trace('installed rewrite import hook')
+
     def undo():
         hook = config._assertstate.hook
         if hook is not None and hook in sys.meta_path:
             sys.meta_path.remove(hook)
+
     config.add_cleanup(undo)
     return hook
 

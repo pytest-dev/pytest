@@ -51,6 +51,7 @@ class AssertionRewritingHook(object):
         self.fnpats = config.getini("python_files")
         self.session = None
         self.modules = {}
+        self._rewritten_names = set()
         self._register_with_pkg_resources()
         self._must_rewrite = set()
 
@@ -79,7 +80,12 @@ class AssertionRewritingHook(object):
             tp = desc[2]
             if tp == imp.PY_COMPILED:
                 if hasattr(imp, "source_from_cache"):
-                    fn = imp.source_from_cache(fn)
+                    try:
+                        fn = imp.source_from_cache(fn)
+                    except ValueError:
+                        # Python 3 doesn't like orphaned but still-importable
+                        # .pyc files.
+                        fn = fn[:-1]
                 else:
                     fn = fn[:-1]
             elif tp != imp.PY_SOURCE:
@@ -91,6 +97,8 @@ class AssertionRewritingHook(object):
         fn_pypath = py.path.local(fn)
         if not self._should_rewrite(name, fn_pypath, state):
             return None
+
+        self._rewritten_names.add(name)
 
         # The requested module looks like a test file, so rewrite it. This is
         # the most magical part of the process: load the source, rewrite the
@@ -178,14 +186,15 @@ class AssertionRewritingHook(object):
         """
         already_imported = set(names).intersection(set(sys.modules))
         if already_imported:
-            self._warn_already_imported(already_imported)
+            for name in already_imported:
+                if name not in self._rewritten_names:
+                    self._warn_already_imported(name)
         self._must_rewrite.update(names)
 
-    def _warn_already_imported(self, names):
+    def _warn_already_imported(self, name):
         self.config.warn(
             'P1',
-            'Modules are already imported so can not be re-written: %s' %
-            ','.join(names))
+            'Module already imported so can not be re-written: %s' % name)
 
     def load_module(self, name):
         # If there is an existing module object named 'fullname' in
@@ -206,7 +215,8 @@ class AssertionRewritingHook(object):
             mod.__loader__ = self
             py.builtin.exec_(co, mod.__dict__)
         except:
-            del sys.modules[name]
+            if name in sys.modules:
+                del sys.modules[name]
             raise
         return sys.modules[name]
 
@@ -270,6 +280,7 @@ def _write_pyc(state, co, source_stat, pyc):
     finally:
         fp.close()
     return True
+
 
 RN = "\r\n".encode("utf-8")
 N = "\n".encode("utf-8")

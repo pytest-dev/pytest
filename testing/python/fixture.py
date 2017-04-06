@@ -10,15 +10,20 @@ from _pytest import fixtures
 def test_getfuncargnames():
     def f(): pass
     assert not fixtures.getfuncargnames(f)
+
     def g(arg): pass
     assert fixtures.getfuncargnames(g) == ('arg',)
+
     def h(arg1, arg2="hello"): pass
     assert fixtures.getfuncargnames(h) == ('arg1',)
+
     def h(arg1, arg2, arg3="hello"): pass
     assert fixtures.getfuncargnames(h) == ('arg1', 'arg2')
+
     class A:
         def f(self, arg1, arg2="hello"):
             pass
+
     assert fixtures.getfuncargnames(A().f) == ('arg1',)
     if sys.version_info < (3,0):
         assert fixtures.getfuncargnames(A.f) == ('arg1',)
@@ -869,8 +874,10 @@ class TestRequestCachedSetup:
         item1 = testdir.getitem("def test_func(): pass")
         req1 = fixtures.FixtureRequest(item1)
         l = ["hello", "world"]
+
         def setup():
             return l.pop()
+
         ret1 = req1.cached_setup(setup, extrakey=1)
         ret2 = req1.cached_setup(setup, extrakey=2)
         assert ret2 == "hello"
@@ -884,10 +891,13 @@ class TestRequestCachedSetup:
         item1 = testdir.getitem("def test_func(): pass")
         req1 = fixtures.FixtureRequest(item1)
         l = []
+
         def setup():
             l.append("setup")
+
         def teardown(val):
             l.append("teardown")
+
         req1.cached_setup(setup, teardown, scope="function")
         assert l == ['setup']
         # artificial call of finalizer
@@ -1062,6 +1072,22 @@ class TestFixtureUsages:
             "* def arg2*",
             "*1 error*"
         ])
+
+    def test_invalid_scope(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.fixture(scope="functions")
+            def badscope():
+                pass
+
+            def test_nothing(badscope):
+                pass
+        """)
+        result = testdir.runpytest_inprocess()
+        result.stdout.fnmatch_lines(
+            ("*ValueError: fixture badscope from test_invalid_scope.py has an unsupported"
+             " scope value 'functions'")
+        )
 
     def test_funcarg_parametrized_and_used_twice(self, testdir):
         testdir.makepyfile("""

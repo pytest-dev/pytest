@@ -3,6 +3,9 @@ Thanks for submitting a PR, your contribution is really appreciated!
 Here's a quick checklist that should be present in PRs:
 
 - [ ] Target: for bug or doc fixes, target `master`; for new features, target `features`;
+
+Unless your change is trivial documentation fix (e.g.,  a typo or reword of a small section) please:
+
 - [ ] Make sure to include one or more tests for your change;
 - [ ] Add yourself to `AUTHORS`;
 - [ ] Add a new entry to `CHANGELOG.rst`

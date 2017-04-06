@@ -1,9 +1,11 @@
+# encoding: UTF-8
 import pytest
 import py
 import os
 
 from _pytest.config import get_config, PytestPluginManager
-from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.main import EXIT_NOTESTSCOLLECTED, Session
+
 
 @pytest.fixture
 def pytestpm():
@@ -82,6 +84,7 @@ class TestPytestPluginInteractions:
     def test_configure(self, testdir):
         config = testdir.parseconfig()
         l = []
+
         class A:
             def pytest_configure(self, config):
                 l.append(self)
@@ -101,13 +104,16 @@ class TestPytestPluginInteractions:
     def test_hook_tracing(self):
         pytestpm = get_config().pluginmanager  # fully initialized with plugins
         saveindent = []
+
         class api1:
             def pytest_plugin_registered(self):
                 saveindent.append(pytestpm.trace.root.indent)
+
         class api2:
             def pytest_plugin_registered(self):
                 saveindent.append(pytestpm.trace.root.indent)
                 raise ValueError()
+
         l = []
         pytestpm.trace.root.setwriter(l.append)
         undo = pytestpm.enable_tracing()
@@ -127,6 +133,25 @@ class TestPytestPluginInteractions:
             assert saveindent[0] > indent
         finally:
             undo()
+
+    def test_hook_proxy(self, testdir):
+        """Test the gethookproxy function(#2016)"""
+        config = testdir.parseconfig()
+        session = Session(config)
+        testdir.makepyfile(**{
+            'tests/conftest.py': '',
+            'tests/subdir/conftest.py': '',
+        })
+
+        conftest1 = testdir.tmpdir.join('tests/conftest.py')
+        conftest2 = testdir.tmpdir.join('tests/subdir/conftest.py')
+
+        config.pluginmanager._importconftest(conftest1)
+        ihook_a = session.gethookproxy(testdir.tmpdir.join('tests'))
+        assert ihook_a is not None
+        config.pluginmanager._importconftest(conftest2)
+        ihook_b = session.gethookproxy(testdir.tmpdir.join('tests'))
+        assert ihook_a is not ihook_b
 
     def test_warn_on_deprecated_multicall(self, pytestpm):
         warnings = []
@@ -179,15 +204,20 @@ def test_default_markers(testdir):
     ])
 
 
-def test_importplugin_issue375(testdir, pytestpm):
+def test_importplugin_error_message(testdir, pytestpm):
     """Don't hide import errors when importing plugins and provide
     an easy to debug message.
+
+    See #375 and #1998.
     """
     testdir.syspathinsert(testdir.tmpdir)
-    testdir.makepyfile(qwe="import aaaa")
+    testdir.makepyfile(qwe="""
+        # encoding: UTF-8
+        raise ImportError(u'Not possible to import: ☺')
+    """)
     with pytest.raises(ImportError) as excinfo:
         pytestpm.import_plugin("qwe")
-    expected = '.*Error importing plugin "qwe": No module named \'?aaaa\'?'
+    expected = '.*Error importing plugin "qwe": Not possible to import: .'
     assert py.std.re.match(expected, str(excinfo.value))
 
 

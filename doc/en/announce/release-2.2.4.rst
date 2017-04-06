@@ -29,7 +29,7 @@ Changes between 2.2.3 and 2.2.4
 - fix issue with unittest: now @unittest.expectedFailure markers should
   be processed correctly (you can also use @pytest.mark markers)
 - document integration with the extended distribute/setuptools test commands
-- fix issue 140: propperly get the real functions
+- fix issue 140: properly get the real functions
   of bound classmethods for setup/teardown_class
 - fix issue #141: switch from the deceased paste.pocoo.org to bpaste.net
 - fix issue #143: call unconfigure/sessionfinish always when

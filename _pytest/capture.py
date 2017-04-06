@@ -13,6 +13,7 @@ import py
 import pytest
 
 from py.io import TextIO
+from io import UnsupportedOperation
 unicode = py.builtin.text
 
 patchsysdict = {0: 'stdin', 1: 'stdout', 2: 'stderr'}
@@ -151,6 +152,7 @@ class CaptureManager:
         out, err = self.suspendcapture(in_=in_)
         item.add_report_section(when, "stdout", out)
         item.add_report_section(when, "stderr", err)
+
 
 error_capsysfderror = "cannot use capsys and capfd at the same time"
 
@@ -447,7 +449,7 @@ class DontReadFromInput:
     __iter__ = read
 
     def fileno(self):
-        raise ValueError("redirected Stdin is pseudofile, has no fileno()")
+        raise UnsupportedOperation("redirected Stdin is pseudofile, has no fileno()")
 
     def isatty(self):
         return False

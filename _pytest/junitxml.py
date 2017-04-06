@@ -8,12 +8,14 @@ Based on initial code from Ross Lawley.
 # Output conforms to https://github.com/jenkinsci/xunit-plugin/blob/master/
 # src/main/resources/org/jenkinsci/plugins/xunit/types/model/xsd/junit-10.xsd
 
+import functools
 import py
 import os
 import re
 import sys
 import time
 import pytest
+from _pytest.config import filename_arg
 
 # Python 2.X and 3.X compatibility
 if sys.version_info[0] < 3:
@@ -26,6 +28,7 @@ else:
 
 class Junit(py.xml.Namespace):
     pass
+
 
 # We need to get the subset of the invalid unicode ranges according to
 # XML 1.0 which are valid in this python build.  Hence we calculate
@@ -116,7 +119,7 @@ class _NodeReporter(object):
         node = kind(data, message=message)
         self.append(node)
 
-    def _write_captured_output(self, report):
+    def write_captured_output(self, report):
         for capname in ('out', 'err'):
             content = getattr(report, 'capstd' + capname)
             if content:
@@ -125,7 +128,6 @@ class _NodeReporter(object):
 
     def append_pass(self, report):
         self.add_stats('passed')
-        self._write_captured_output(report)
 
     def append_failure(self, report):
         # msg = str(report.longrepr.reprtraceback.extraline)
@@ -144,7 +146,6 @@ class _NodeReporter(object):
             fail = Junit.failure(message=message)
             fail.append(bin_xml_escape(report.longrepr))
             self.append(fail)
-        self._write_captured_output(report)
 
     def append_collect_error(self, report):
         # msg = str(report.longrepr.reprtraceback.extraline)
@@ -156,9 +157,12 @@ class _NodeReporter(object):
             Junit.skipped, "collection skipped", report.longrepr)
 
     def append_error(self, report):
+        if getattr(report, 'when', None) == 'teardown':
+            msg = "test teardown failure"
+        else:
+            msg = "test setup failure"
         self._add_simple(
-            Junit.error, "test setup failure", report.longrepr)
-        self._write_captured_output(report)
+            Junit.error, msg, report.longrepr)
 
     def append_skipped(self, report):
         if hasattr(report, "wasxfail"):
@@ -173,7 +177,7 @@ class _NodeReporter(object):
                 Junit.skipped("%s:%s: %s" % (filename, lineno, skipreason),
                               type="pytest.skip",
                               message=skipreason))
-        self._write_captured_output(report)
+        self.write_captured_output(report)
 
     def finalize(self):
         data = self.to_xml().unicode(indent=0)
@@ -209,6 +213,7 @@ def pytest_addoption(parser):
         action="store",
         dest="xmlpath",
         metavar="path",
+        type=functools.partial(filename_arg, optname="--junitxml"),
         default=None,
         help="create junit-xml style report file at given path.")
     group.addoption(
@@ -337,6 +342,8 @@ class LogXML(object):
             reporter.append_skipped(report)
         self.update_testcase_duration(report)
         if report.when == "teardown":
+            reporter = self._opentestcase(report)
+            reporter.write_captured_output(report)
             self.finalize(report)
 
     def update_testcase_duration(self, report):

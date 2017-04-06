@@ -4,7 +4,6 @@ from bisect import bisect_right
 import sys
 import inspect, tokenize
 import py
-from types import ModuleType
 cpy_compile = compile
 
 try:
@@ -52,21 +51,20 @@ class Source(object):
                 return str(self) == other
             return False
 
+    __hash__ = None
+
     def __getitem__(self, key):
         if isinstance(key, int):
             return self.lines[key]
         else:
             if key.step not in (None, 1):
                 raise IndexError("cannot slice a Source with a step")
-            return self.__getslice__(key.start, key.stop)
+            newsource = Source()
+            newsource.lines = self.lines[key.start:key.stop]
+            return newsource
 
     def __len__(self):
         return len(self.lines)
-
-    def __getslice__(self, start, end):
-        newsource = Source()
-        newsource.lines = self.lines[start:end]
-        return newsource
 
     def strip(self):
         """ return new source object with trailing
@@ -193,14 +191,6 @@ class Source(object):
             if flag & _AST_FLAG:
                 return co
             lines = [(x + "\n") for x in self.lines]
-            if sys.version_info[0] >= 3:
-                # XXX py3's inspect.getsourcefile() checks for a module
-                # and a pep302 __loader__ ... we don't have a module
-                # at code compile-time so we need to fake it here
-                m = ModuleType("_pycodecompile_pseudo_module")
-                py.std.inspect.modulesbyfile[filename] = None
-                py.std.sys.modules[None] = m
-                m.__loader__ = 1
             py.std.linecache.cache[filename] = (1, None, lines, filename)
             return co
 
@@ -266,6 +256,7 @@ def findsource(obj):
     source.lines = [line.rstrip() for line in sourcelines]
     return source, lineno
 
+
 def getsource(obj, **kwargs):
     import _pytest._code
     obj = _pytest._code.getrawcode(obj)
@@ -275,6 +266,7 @@ def getsource(obj, **kwargs):
         strsrc = "\"Buggy python version consider upgrading, cannot get source\""
     assert isinstance(strsrc, str)
     return Source(strsrc, **kwargs)
+
 
 def deindent(lines, offset=None):
     if offset is None:
@@ -289,6 +281,7 @@ def deindent(lines, offset=None):
     if offset == 0:
         return list(lines)
     newlines = []
+
     def readline_generator(lines):
         for line in lines:
             yield line + '\n'

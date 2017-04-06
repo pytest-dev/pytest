@@ -87,6 +87,7 @@ class FastFilesCompleter:
             completion.append(x[prefix_dir:])
         return completion
 
+
 if os.environ.get('_ARGCOMPLETE'):
     try:
         import argcomplete.completers

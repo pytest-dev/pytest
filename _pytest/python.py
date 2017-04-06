@@ -19,14 +19,19 @@ from _pytest.compat import (
     isclass, isfunction, is_generator, _escape_strings,
     REGEX_TYPE, STRING_TYPES, NoneType, NOTSET,
     get_real_func, getfslineno, safe_getattr,
-    getlocation, enum,
+    safe_str, getlocation, enum,
 )
 
-cutdir2 = py.path.local(_pytest.__file__).dirpath()
 cutdir1 = py.path.local(pluggy.__file__.rstrip("oc"))
+cutdir2 = py.path.local(_pytest.__file__).dirpath()
+cutdir3 = py.path.local(py.__file__).dirpath()
 
 
 def filter_traceback(entry):
+    """Return True if a TracebackEntry instance should be removed from tracebacks:
+    * dynamically generated code (no code to show up for it);
+    * internal traceback from pytest or its internal libraries, py and pluggy.
+    """
     # entry.path might sometimes return a str object when the entry
     # points to dynamically generated code
     # see https://bitbucket.org/pytest-dev/py/issues/71
@@ -37,7 +42,7 @@ def filter_traceback(entry):
     # entry.path might point to an inexisting file, in which case it will
     # alsso return a str object. see #1133
     p = py.path.local(entry.path)
-    return p != cutdir1 and not p.relto(cutdir2)
+    return p != cutdir1 and not p.relto(cutdir2) and not p.relto(cutdir3)
 
 
 
@@ -169,7 +174,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
     outcome = yield
     res = outcome.get_result()
     if res is not None:
-        raise StopIteration
+        return
     # nothing was collected elsewhere, let's do it here
     if isclass(obj):
         if collector.istestclass(obj, name):
@@ -205,14 +210,16 @@ class PyobjContext(object):
 class PyobjMixin(PyobjContext):
     def obj():
         def fget(self):
-            try:
-                return self._obj
-            except AttributeError:
+            obj = getattr(self, '_obj', None)
+            if obj is None:
                 self._obj = obj = self._getobj()
-                return obj
+            return obj
+
         def fset(self, value):
             self._obj = value
+
         return property(fget, fset, None, "underlying python object")
+
     obj = obj()
 
     def _getobj(self):
@@ -425,20 +432,25 @@ class Module(pytest.File, PyCollector):
                  % e.args
             )
         except ImportError:
-            exc_class, exc, _ = sys.exc_info()
+            from _pytest._code.code import ExceptionInfo
+            exc_info = ExceptionInfo()
+            if self.config.getoption('verbose') < 2:
+                exc_info.traceback = exc_info.traceback.filter(filter_traceback)
+            exc_repr = exc_info.getrepr(style='short') if exc_info.traceback else exc_info.exconly()
+            formatted_tb = safe_str(exc_repr)
             raise self.CollectError(
-                "ImportError while importing test module '%s'.\n"
-                "Original error message:\n'%s'\n"
-                "Make sure your test modules/packages have valid Python names."
-                % (self.fspath, exc or exc_class)
+                "ImportError while importing test module '{fspath}'.\n"
+                "Hint: make sure your test modules/packages have valid Python names.\n"
+                "Traceback:\n"
+                "{traceback}".format(fspath=self.fspath, traceback=formatted_tb)
             )
         except _pytest.runner.Skipped as e:
             if e.allow_module_level:
                 raise
             raise self.CollectError(
-                "Using @pytest.skip outside of a test (e.g. as a test "
-                "function decorator) is not allowed. Use @pytest.mark.skip or "
-                "@pytest.mark.skipif instead."
+                "Using pytest.skip outside of a test is not allowed. If you are "
+                "trying to decorate a test function, use the @pytest.mark.skip "
+                "or @pytest.mark.skipif decorators instead."
             )
         self.config.pluginmanager.consider_module(mod)
         return mod
@@ -617,7 +629,7 @@ class Generator(FunctionMixin, PyCollector):
     def getcallargs(self, obj):
         if not isinstance(obj, (tuple, list)):
             obj = (obj,)
-        # explict naming
+        # explicit naming
         if isinstance(obj[0], py.builtin._basestring):
             name = obj[0]
             obj = obj[1:]
@@ -771,7 +783,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             It will also override any fixture-function defined scope, allowing
             to set a dynamic scope using test context or configuration.
         """
-        from _pytest.fixtures import scopes
+        from _pytest.fixtures import scope2index
         from _pytest.mark import extract_argvalue
         from py.io import saferepr
 
@@ -800,7 +812,8 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         if scope is None:
             scope = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)
 
-        scopenum = scopes.index(scope)
+        scopenum = scope2index(
+            scope, descr='call to {0}'.format(self.parametrize))
         valtypes = {}
         for arg in argnames:
             if arg not in self.fixturenames:
@@ -1095,7 +1108,9 @@ def raises(expected_exception, *args, **kwargs):
 
         >>> with raises(ZeroDivisionError, message="Expecting ZeroDivisionError"):
         ...    pass
-        ... Failed: Expecting ZeroDivisionError
+        Traceback (most recent call last):
+          ...
+        Failed: Expecting ZeroDivisionError
 
 
     .. note::
@@ -1106,19 +1121,21 @@ def raises(expected_exception, *args, **kwargs):
        Lines of code after that, within the scope of the context manager will
        not be executed. For example::
 
-           >>> with raises(OSError) as exc_info:
-                   assert 1 == 1  # this will execute as expected
-                   raise OSError(errno.EEXISTS, 'directory exists')
-                   assert exc_info.value.errno == errno.EEXISTS  # this will not execute
+           >>> value = 15
+           >>> with raises(ValueError) as exc_info:
+           ...     if value > 10:
+           ...         raise ValueError("value must be <= 10")
+           ...     assert str(exc_info.value) == "value must be <= 10"  # this will not execute
 
        Instead, the following approach must be taken (note the difference in
        scope)::
 
-           >>> with raises(OSError) as exc_info:
-                   assert 1 == 1  # this will execute as expected
-                   raise OSError(errno.EEXISTS, 'directory exists')
+           >>> with raises(ValueError) as exc_info:
+           ...     if value > 10:
+           ...         raise ValueError("value must be <= 10")
+           ...
+           >>> assert str(exc_info.value) == "value must be <= 10"
 
-               assert exc_info.value.errno == errno.EEXISTS  # this will now execute
 
     Or you can specify a callable by passing a to-be-called lambda::
 
@@ -1223,7 +1240,11 @@ class RaisesContext(object):
                 exc_type, value, traceback = tp
                 tp = exc_type, exc_type(value), traceback
         self.excinfo.__init__(tp)
-        return issubclass(self.excinfo.type, self.expected_exception)
+        suppress_exception = issubclass(self.excinfo.type, self.expected_exception)
+        if sys.version_info[0] == 2 and suppress_exception:
+            sys.exc_clear()
+        return suppress_exception
+
 
 # builtin pytest.approx helper
 
@@ -1357,6 +1378,8 @@ class approx(object):
             return False
         return all(a == x for a, x in zip(actual, self.expected))
 
+    __hash__ = None
+
     def __ne__(self, actual):
         return not (actual == self)
 
@@ -1396,6 +1419,9 @@ class ApproxNonIterable(object):
         self.rel = rel
 
     def __repr__(self):
+        if isinstance(self.expected, complex):
+            return str(self.expected)
+
         # Infinities aren't compared using tolerances, so don't show a
         # tolerance.
         if math.isinf(self.expected):
@@ -1408,16 +1434,10 @@ class ApproxNonIterable(object):
         except ValueError:
             vetted_tolerance = '???'
 
-        plus_minus = u'{0} \u00b1 {1}'.format(self.expected, vetted_tolerance)
-
-        # In python2, __repr__() must return a string (i.e. not a unicode
-        # object).  In python3, __repr__() must return a unicode object
-        # (although now strings are unicode objects and bytes are what
-        # strings were).
         if sys.version_info[0] == 2:
-            return plus_minus.encode('utf-8')
+            return '{0} +- {1}'.format(self.expected, vetted_tolerance)
         else:
-            return plus_minus
+            return u'{0} \u00b1 {1}'.format(self.expected, vetted_tolerance)
 
     def __eq__(self, actual):
         # Short-circuit exact equality.
@@ -1435,6 +1455,8 @@ class ApproxNonIterable(object):
 
         # Return true if the two numbers are within the tolerance.
         return abs(self.expected - actual) <= self.tolerance
+
+    __hash__ = None
 
     def __ne__(self, actual):
         return not (actual == self)

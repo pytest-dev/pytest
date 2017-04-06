@@ -332,7 +332,7 @@ def testdir(request, tmpdir_factory):
     return Testdir(request, tmpdir_factory)
 
 
-rex_outcome = re.compile("(\d+) ([\w-]+)")
+rex_outcome = re.compile(r"(\d+) ([\w-]+)")
 class RunResult:
     """The result of running a command.
 
@@ -367,6 +367,7 @@ class RunResult:
                     for num, cat in outcomes:
                         d[cat] = int(num)
                     return d
+        raise ValueError("Pytest terminal report not found")
 
     def assert_outcomes(self, passed=0, skipped=0, failed=0):
         """ assert that the specified outcomes appear with the respective
@@ -446,9 +447,9 @@ class Testdir:
         the module is re-imported.
         """
         for name in set(sys.modules).difference(self._savemodulekeys):
-            # it seems zope.interfaces is keeping some state
-            # (used by twisted related tests)
-            if name != "zope.interface":
+            # zope.interface (used by twisted-related tests) keeps internal
+            # state and can't be deleted
+            if not name.startswith("zope.interface"):
                 del sys.modules[name]
 
     def make_hook_recorder(self, pluginmanager):
@@ -478,11 +479,14 @@ class Testdir:
         ret = None
         for name, value in items:
             p = self.tmpdir.join(name).new(ext=ext)
+            p.dirpath().ensure_dir()
             source = Source(value)
+
             def my_totext(s, encoding="utf-8"):
                 if py.builtin._isbytes(s):
                     s = py.builtin._totext(s, encoding=encoding)
                 return s
+
             source_unicode = "\n".join([my_totext(line) for line in source.lines])
             source = py.builtin._totext(source_unicode)
             content = source.strip().encode("utf-8") # + "\n"
@@ -562,7 +566,7 @@ class Testdir:
     def mkpydir(self, name):
         """Create a new python package.
 
-        This creates a (sub)direcotry with an empty ``__init__.py``
+        This creates a (sub)directory with an empty ``__init__.py``
         file so that is recognised as a python package.
 
         """
@@ -657,7 +661,7 @@ class Testdir:
     def inline_genitems(self, *args):
         """Run ``pytest.main(['--collectonly'])`` in-process.
 
-        Retuns a tuple of the collected items and a
+        Returns a tuple of the collected items and a
         :py:class:`HookRecorder` instance.
 
         This runs the :py:func:`pytest.main` function to run all of
@@ -692,12 +696,15 @@ class Testdir:
         # warning which will trigger to say they can no longer be
         # re-written, which is fine as they are already re-written.
         orig_warn = AssertionRewritingHook._warn_already_imported
+
         def revert():
             AssertionRewritingHook._warn_already_imported = orig_warn
+
         self.request.addfinalizer(revert)
         AssertionRewritingHook._warn_already_imported = lambda *a: None
 
         rec = []
+
         class Collect:
             def pytest_configure(x, config):
                 rec.append(self.make_hook_recorder(config.pluginmanager))
@@ -732,10 +739,13 @@ class Testdir:
             try:
                 reprec = self.inline_run(*args, **kwargs)
             except SystemExit as e:
+
                 class reprec:
                     ret = e.args[0]
+
             except Exception:
                 traceback.print_exc()
+
                 class reprec:
                     ret = 3
         finally:
@@ -847,7 +857,7 @@ class Testdir:
            :py:meth:`parseconfigure`.
 
         :param withinit: Whether to also write a ``__init__.py`` file
-           to the temporarly directory to ensure it is a package.
+           to the temporary directory to ensure it is a package.
 
         """
         kw = {self.request.function.__name__: Source(source).strip()}
@@ -1002,8 +1012,6 @@ class Testdir:
         pexpect = pytest.importorskip("pexpect", "3.0")
         if hasattr(sys, 'pypy_version_info') and '64' in platform.machine():
             pytest.skip("pypy-64 bit not supported")
-        if sys.platform == "darwin":
-            pytest.xfail("pexpect does not work reliably on darwin?!")
         if sys.platform.startswith("freebsd"):
             pytest.xfail("pexpect does not work reliably on freebsd")
         logfile = self.tmpdir.join("spawn.out").open("wb")

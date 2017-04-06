@@ -165,6 +165,30 @@ class TestPython:
         fnode.assert_attr(message="test setup failure")
         assert "ValueError" in fnode.toxml()
 
+    def test_teardown_error(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture
+            def arg():
+                yield
+                raise ValueError()
+            def test_function(arg):
+                pass
+        """)
+        result, dom = runandparse(testdir)
+        assert result.ret
+        node = dom.find_first_by_tag("testsuite")
+        tnode = node.find_first_by_tag("testcase")
+        tnode.assert_attr(
+            file="test_teardown_error.py",
+            line="6",
+            classname="test_teardown_error",
+            name="test_function")
+        fnode = tnode.find_first_by_tag("error")
+        fnode.assert_attr(message="test teardown failure")
+        assert "ValueError" in fnode.toxml()
+
     def test_skip_contains_name_reason(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -224,6 +248,18 @@ class TestPython:
             name="test_skip")
         snode = tnode.find_first_by_tag("skipped")
         snode.assert_attr(type="pytest.skip", message="hello25", )
+
+    def test_mark_skip_doesnt_capture_output(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.skip(reason="foo")
+            def test_skip():
+                print("bar!")
+        """)
+        result, dom = runandparse(testdir)
+        assert result.ret == 0
+        node_xml = dom.find_first_by_tag("testsuite").toxml()
+        assert "bar!" not in node_xml
 
     def test_classname_instance(self, testdir):
         testdir.makepyfile("""
@@ -521,6 +557,25 @@ class TestPython:
         systemout = pnode.find_first_by_tag("system-err")
         assert "hello-stderr" in systemout.toxml()
 
+    def test_avoid_double_stdout(self, testdir):
+        testdir.makepyfile("""
+            import sys
+            import pytest
+
+            @pytest.fixture
+            def arg(request):
+                yield
+                sys.stdout.write('hello-stdout teardown')
+                raise ValueError()
+            def test_function(arg):
+                sys.stdout.write('hello-stdout call')
+        """)
+        result, dom = runandparse(testdir)
+        node = dom.find_first_by_tag("testsuite")
+        pnode = node.find_first_by_tag("testcase")
+        systemout = pnode.find_first_by_tag("system-out")
+        assert "hello-stdout call" in systemout.toxml()
+        assert "hello-stdout teardown" in systemout.toxml()
 
 def test_mangle_test_address():
     from _pytest.junitxml import mangle_test_address
@@ -679,6 +734,10 @@ def test_logxml_makedir(testdir):
     assert result.ret == 0
     assert testdir.tmpdir.join("path/to/results.xml").check()
 
+def test_logxml_check_isdir(testdir):
+    """Give an error if --junit-xml is a directory (#2089)"""
+    result = testdir.runpytest("--junit-xml=.")
+    result.stderr.fnmatch_lines(["*--junitxml must be a filename*"])
 
 def test_escaped_parametrized_names_xml(testdir):
     testdir.makepyfile("""

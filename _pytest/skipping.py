@@ -25,8 +25,10 @@ def pytest_configure(config):
     if config.option.runxfail:
         old = pytest.xfail
         config._cleanup.append(lambda: setattr(pytest, "xfail", old))
+
         def nop(*args, **kwargs):
             pass
+
         nop.Exception = XFailed
         setattr(pytest, "xfail", nop)
 
@@ -44,7 +46,7 @@ def pytest_configure(config):
     )
     config.addinivalue_line("markers",
         "xfail(condition, reason=None, run=True, raises=None, strict=False): "
-        "mark the the test function as an expected failure if eval(condition) "
+        "mark the test function as an expected failure if eval(condition) "
         "has a True value. Optionally specify a reason for better reporting "
         "and run=False if you don't even want to execute the test function. "
         "If only specific exception(s) are expected, you can list them in "
@@ -65,6 +67,8 @@ def xfail(reason=""):
     """ xfail an executing test or setup functions with the given reason."""
     __tracebackhide__ = True
     raise XFailed(reason)
+
+
 xfail.Exception = XFailed
 
 
@@ -108,14 +112,14 @@ class MarkEvaluator:
 
     def _getglobals(self):
         d = {'os': os, 'sys': sys, 'config': self.item.config}
-        d.update(self.item.obj.__globals__)
+        if hasattr(self.item, 'obj'):
+            d.update(self.item.obj.__globals__)
         return d
 
     def _istrue(self):
         if hasattr(self, 'result'):
             return self.result
         if self.holder:
-            d = self._getglobals()
             if self.holder.args or 'condition' in self.holder.kwargs:
                 self.result = False
                 # "holder" might be a MarkInfo or a MarkDecorator; only
@@ -131,6 +135,7 @@ class MarkEvaluator:
                     for expr in args:
                         self.expr = expr
                         if isinstance(expr, py.builtin._basestring):
+                            d = self._getglobals()
                             result = cached_eval(self.item.config, expr, d)
                         else:
                             if "reason" not in kwargs:

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 import sys
 from textwrap import dedent
 
@@ -68,8 +69,57 @@ class TestModule:
         result = testdir.runpytest("-rw")
         result.stdout.fnmatch_lines([
             "ImportError while importing test module*test_one.part1*",
-            "Make sure your test modules/packages have valid Python names.",
+            "Hint: make sure your test modules/packages have valid Python names.",
         ])
+
+    @pytest.mark.parametrize('verbose', [0, 1, 2])
+    def test_show_traceback_import_error(self, testdir, verbose):
+        """Import errors when collecting modules should display the traceback (#1976).
+
+        With low verbosity we omit pytest and internal modules, otherwise show all traceback entries.
+        """
+        testdir.makepyfile(
+            foo_traceback_import_error="""
+               from bar_traceback_import_error import NOT_AVAILABLE
+           """,
+            bar_traceback_import_error="",
+        )
+        testdir.makepyfile("""
+               import foo_traceback_import_error
+        """)
+        args = ('-v',) * verbose
+        result = testdir.runpytest(*args)
+        result.stdout.fnmatch_lines([
+            "ImportError while importing test module*",
+            "Traceback:",
+            "*from bar_traceback_import_error import NOT_AVAILABLE",
+            "*cannot import name *NOT_AVAILABLE*",
+        ])
+        assert result.ret == 2
+
+        stdout = result.stdout.str()
+        for name in ('_pytest', os.path.join('py', '_path')):
+            if verbose == 2:
+                assert name in stdout
+            else:
+                assert name not in stdout
+
+
+    def test_show_traceback_import_error_unicode(self, testdir):
+        """Check test modules collected which raise ImportError with unicode messages
+        are handled properly (#2336).
+        """
+        testdir.makepyfile(u"""
+            # -*- coding: utf-8 -*-
+            raise ImportError(u'Something bad happened ☺')
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "ImportError while importing test module*",
+            "Traceback:",
+            "*raise ImportError*Something bad happened*",
+        ])
+        assert result.ret == 2
 
 
 class TestClass:
@@ -132,6 +182,16 @@ class TestClass:
             "*cannot collect test class 'TestCase' "
             "because it has a __new__ constructor*"
         )
+
+    def test_issue2234_property(self, testdir):
+        testdir.makepyfile("""
+            class TestCase(object):
+                @property
+                def prop(self):
+                    raise NotImplementedError()
+        """)
+        result = testdir.runpytest()
+        assert result.ret == EXIT_NOTESTSCOLLECTED
 
 
 class TestGenerator:
@@ -350,10 +410,13 @@ class TestFunction:
         config = testdir.parseconfigure()
         session = testdir.Session(config)
         session._fixturemanager = FixtureManager(session)
+
         def func1():
             pass
+
         def func2():
             pass
+
         f1 = pytest.Function(name="name", parent=session, config=config,
                 args=(1,), callobj=func1)
         assert f1 == f1
@@ -514,12 +577,15 @@ class TestFunction:
     def test_pyfunc_call(self, testdir):
         item = testdir.getitem("def test_func(): raise ValueError")
         config = item.config
+
         class MyPlugin1:
             def pytest_pyfunc_call(self, pyfuncitem):
                 raise ValueError
+
         class MyPlugin2:
             def pytest_pyfunc_call(self, pyfuncitem):
                 return True
+
         config.pluginmanager.register(MyPlugin1())
         config.pluginmanager.register(MyPlugin2())
         config.hook.pytest_runtest_setup(item=item)

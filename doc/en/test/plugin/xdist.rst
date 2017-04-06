@@ -71,7 +71,7 @@ you can ad-hoc distribute your tests by typing::
     pytest -d --tx ssh=myhostpopen --rsyncdir mypkg mypkg
 
 This will synchronize your ``mypkg`` package directory
-to an remote ssh account and then locally collect tests
+to a remote ssh account and then locally collect tests
 and send them to remote places for execution.
 
 You can specify multiple ``--rsyncdir`` directories

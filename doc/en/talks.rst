@@ -4,12 +4,17 @@ Talks and Tutorials
 
 .. sidebar:: Next Open Trainings
 
-   `professional testing with pytest and tox <http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_, 27-29th June 2016, Freiburg, Germany
+   `Professional Testing with Python
+   <http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_,
+   26-28 April 2017, Leipzig, Germany.
 
 .. _`funcargs`: funcargs.html
 
 Talks and blog postings
 ---------------------------------------------
+
+- `Pythonic testing, Igor Starikov (Russian, PyNsk, November 2016)
+  <https://www.youtube.com/watch?v=_92nfdd5nK8>`_.
 
 - `pytest - Rapid Simple Testing, Florian Bruhin, Swiss Python Summit 2016
   <https://www.youtube.com/watch?v=rCBHkQ_LVIs>`_.

@@ -20,8 +20,10 @@ class TestMetafunc:
         # initiliazation
         class FixtureInfo:
             name2fixturedefs = None
+
             def __init__(self, names):
                 self.names_closure = names
+
         names = fixtures.getfuncargnames(func)
         fixtureinfo = FixtureInfo(names)
         return python.Metafunc(func, fixtureinfo, None)
@@ -65,7 +67,9 @@ class TestMetafunc:
     def test_addcall_param(self):
         def func(arg1): pass
         metafunc = self.Metafunc(func)
+
         class obj: pass
+
         metafunc.addcall(param=obj)
         metafunc.addcall(param=obj)
         metafunc.addcall(param=1)
@@ -76,8 +80,11 @@ class TestMetafunc:
 
     def test_addcall_funcargs(self):
         def func(x): pass
+
         metafunc = self.Metafunc(func)
+
         class obj: pass
+
         metafunc.addcall(funcargs={"x": 2})
         metafunc.addcall(funcargs={"x": 3})
         pytest.raises(pytest.fail.Exception, "metafunc.addcall({'xyz': 0})")
@@ -95,6 +102,14 @@ class TestMetafunc:
         metafunc.parametrize("y", [1,2])
         pytest.raises(ValueError, lambda: metafunc.parametrize("y", [5,6]))
         pytest.raises(ValueError, lambda: metafunc.parametrize("y", [5,6]))
+
+    def test_parametrize_bad_scope(self, testdir):
+        def func(x): pass
+        metafunc = self.Metafunc(func)
+        try:
+            metafunc.parametrize("x", [1], scope='doggy')
+        except ValueError as ve:
+            assert "has an unsupported scope value 'doggy'" in str(ve)
 
     def test_parametrize_and_id(self):
         def func(x, y): pass
@@ -134,8 +149,10 @@ class TestMetafunc:
     def test_parametrize_with_userobjects(self):
         def func(x, y): pass
         metafunc = self.Metafunc(func)
+
         class A:
             pass
+
         metafunc.parametrize("x", [A(), A()])
         metafunc.parametrize("y", list("ab"))
         assert metafunc._calls[0].id == "x0-a"
@@ -246,6 +263,7 @@ class TestMetafunc:
     @pytest.mark.issue351
     def test_idmaker_idfn(self):
         from _pytest.python import idmaker
+
         def ids(val):
             if isinstance(val, Exception):
                 return repr(val)
@@ -262,6 +280,7 @@ class TestMetafunc:
     @pytest.mark.issue351
     def test_idmaker_idfn_unique_names(self):
         from _pytest.python import idmaker
+
         def ids(val):
             return 'a'
 
@@ -277,6 +296,7 @@ class TestMetafunc:
     @pytest.mark.issue351
     def test_idmaker_idfn_exception(self):
         from _pytest.python import idmaker
+
         def ids(val):
             raise Exception("bad code")
 

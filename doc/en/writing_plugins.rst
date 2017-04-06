@@ -172,7 +172,7 @@ If a package is installed this way, ``pytest`` will load
 .. note::
 
     Make sure to include ``Framework :: Pytest`` in your list of
-    `PyPI classifiers <https://python-packaging-user-guide.readthedocs.io/en/latest/distributing/#classifiers>`_
+    `PyPI classifiers <https://python-packaging-user-guide.readthedocs.io/distributing/#classifiers>`_
     to make it easy for users to find your plugin.
 
 
@@ -236,22 +236,33 @@ import ``helper.py`` normally.  The contents of
 Requiring/Loading plugins in a test module or conftest file
 -----------------------------------------------------------
 
-You can require plugins in a test module or a conftest file like this::
+You can require plugins in a test module or a ``conftest.py`` file like this:
 
-    pytest_plugins = "name1", "name2",
+.. code-block:: python
+
+    pytest_plugins = ["name1", "name2"]
 
 When the test module or conftest plugin is loaded the specified plugins
-will be loaded as well.  You can also use dotted path like this::
+will be loaded as well. Any module can be blessed as a plugin, including internal
+application modules:
+
+.. code-block:: python
 
     pytest_plugins = "myapp.testsupport.myplugin"
 
-which will import the specified module as a ``pytest`` plugin.
+``pytest_plugins`` variables are processed recursively, so note that in the example above
+if ``myapp.testsupport.myplugin`` also declares ``pytest_plugins``, the contents
+of the variable will also be loaded as plugins, and so on.
 
-Plugins imported like this will automatically be marked to require
-assertion rewriting using the :func:`pytest.register_assert_rewrite`
-mechanism.  However for this to have any effect the module must not be
-imported already, it it was already imported at the time the
-``pytest_plugins`` statement is processed a warning will result and
+This mechanism makes it easy to share fixtures within applications or even
+external applications without the need to create external plugins using 
+the ``setuptools``'s entry point technique.
+
+Plugins imported by ``pytest_plugins`` will also automatically be marked
+for assertion rewriting (see :func:`pytest.register_assert_rewrite`). 
+However for this to have any effect the module must not be
+imported already; if it was already imported at the time the
+``pytest_plugins`` statement is processed, a warning will result and
 assertions inside the plugin will not be re-written.  To fix this you
 can either call :func:`pytest.register_assert_rewrite` yourself before
 the module is imported, or you can arrange the code to delay the

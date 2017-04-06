@@ -16,8 +16,20 @@ You can invoke testing through the Python interpreter from the command line::
 
     python -m pytest [...]
 
-This is equivalent to invoking the command line script ``pytest [...]``
-directly.
+This is almost equivalent to invoking the command line script ``pytest [...]``
+directly, except that python will also add the current directory to ``sys.path``.
+
+Possible exit codes
+--------------------------------------------------------------
+
+Running ``pytest`` can result in six different exit codes:
+
+:Exit code 0: All tests were collected and passed successfully
+:Exit code 1: Tests were collected and run but some of the tests failed
+:Exit code 2: Test execution was interrupted by the user
+:Exit code 3: Internal error happened while executing tests
+:Exit code 4: pytest command line usage error
+:Exit code 5: No tests were collected
 
 Getting help on version, option names, environment variables
 --------------------------------------------------------------
@@ -49,7 +61,7 @@ Several test run options::
                           # will select TestMyClass.test_something
                           # but not TestMyClass.test_method_simple
     pytest test_mod.py::test_func  # only run tests that match the "node ID",
-                                    # e.g "test_mod.py::test_func" will select
+                                    # e.g. "test_mod.py::test_func" will select
                                     # only test_func in test_mod.py
     pytest test_mod.py::TestClass::test_method  # run a single method in
                                                  # a single class
@@ -76,7 +88,7 @@ Examples for modifying traceback printing::
 
 The ``--full-trace`` causes very long traces to be printed on error (longer
 than ``--tb=long``). It also ensures that a stack trace is printed on
-**KeyboardInterrrupt** (Ctrl+C).
+**KeyboardInterrupt** (Ctrl+C).
 This is very useful if the tests are taking too long and you interrupt them
 with Ctrl+C to find out where the tests are *hanging*. By default no output
 will be shown (because KeyboardInterrupt is caught by pytest). By using this
@@ -192,7 +204,7 @@ This will add an extra property ``example_key="1"`` to the generated
 
 .. warning::
 
-    This is an experimental feature, and its interface might be replaced
+    ``record_xml_property`` is an experimental feature, and its interface might be replaced
     by something more powerful and general in future versions. The
     functionality per-se will be kept, however.
 
@@ -309,10 +321,6 @@ It will not raise ``SystemExit`` but return the exitcode instead.
 You can pass in options and arguments::
 
     pytest.main(['-x', 'mytestdir'])
-
-or pass in a string::
-
-    pytest.main("-x mytestdir")
 
 You can specify additional plugins to ``pytest.main``::
 

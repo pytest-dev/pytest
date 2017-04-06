@@ -95,7 +95,7 @@ the :confval:`python_files`, :confval:`python_classes` and
 :confval:`python_functions` configuration options.  Example::
 
     # content of pytest.ini
-    # can also be defined in in tox.ini or setup.cfg file, although the section
+    # can also be defined in tox.ini or setup.cfg file, although the section
     # name in setup.cfg files should be "tool:pytest"
     [pytest]
     python_files=check_*.py
@@ -117,7 +117,7 @@ then the test collection looks like this::
 
     $ pytest --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 2 items
     <Module 'check_myapp.py'>
@@ -163,7 +163,7 @@ You can always peek at the collection tree without running tests like this::
 
     . $ pytest --collect-only pythoncollection.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 3 items
     <Module 'CWD/pythoncollection.py'>
@@ -230,7 +230,7 @@ will be left out::
 
     $ pytest --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.2, py-1.4.31, pluggy-0.3.1
+    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 0 items
     

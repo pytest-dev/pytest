@@ -23,7 +23,7 @@ def pytest_addoption(parser):
     group._addoption(
         '-o', '--override-ini', nargs='*', dest="override_ini",
         action="append",
-        help="override config option, e.g. `-o xfail_strict=True`.")
+        help="override config option with option=value style, e.g. `-o xfail_strict=True`.")
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -41,12 +41,14 @@ def pytest_cmdline_parse():
         config.trace.root.setwriter(debugfile.write)
         undo_tracing = config.pluginmanager.enable_tracing()
         sys.stderr.write("writing pytestdebug information to %s\n" % path)
+
         def unset_tracing():
             debugfile.close()
             sys.stderr.write("wrote pytestdebug information to %s\n" %
                              debugfile.name)
             config.trace.root.setwriter(None)
             undo_tracing()
+
         config.add_cleanup(unset_tracing)
 
 def pytest_cmdline_main(config):
@@ -71,8 +73,8 @@ def showhelp(config):
     tw.write(config._parser.optparser.format_help())
     tw.line()
     tw.line()
-    tw.line("[pytest] ini-options in the next "
-            "pytest.ini|tox.ini|setup.cfg file:")
+    tw.line("[pytest] ini-options in the first "
+            "pytest.ini|tox.ini|setup.cfg file found:")
     tw.line()
 
     for name in config._parser._ininames:

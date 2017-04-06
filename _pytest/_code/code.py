@@ -1,6 +1,7 @@
 import sys
 from inspect import CO_VARARGS, CO_VARKEYWORDS
 import re
+from weakref import ref
 
 import py
 builtin_repr = repr
@@ -11,6 +12,7 @@ if sys.version_info[0] >= 3:
     from traceback import format_exception_only
 else:
     from ._py2traceback import format_exception_only
+
 
 class Code(object):
     """ wrapper around Python code objects """
@@ -27,6 +29,8 @@ class Code(object):
 
     def __eq__(self, other):
         return self.raw == other.raw
+
+    __hash__ = None
 
     def __ne__(self, other):
         return not self == other
@@ -227,7 +231,7 @@ class TracebackEntry(object):
                 return False
 
         if py.builtin.callable(tbh):
-            return tbh(self._excinfo)
+            return tbh(None if self._excinfo is None else self._excinfo())
         else:
             return tbh
 
@@ -339,6 +343,7 @@ class Traceback(list):
             l.append(entry.frame.f_locals)
         return None
 
+
 co_equal = compile('__recursioncache_locals_1 == __recursioncache_locals_2',
                    '?', 'eval')
 
@@ -347,6 +352,8 @@ class ExceptionInfo(object):
         help for navigating the traceback.
     """
     _striptext = ''
+    _assert_start_repr = "AssertionError(u\'assert " if sys.version_info[0] < 3 else "AssertionError(\'assert "
+
     def __init__(self, tup=None, exprinfo=None):
         import _pytest._code
         if tup is None:
@@ -354,8 +361,8 @@ class ExceptionInfo(object):
             if exprinfo is None and isinstance(tup[1], AssertionError):
                 exprinfo = getattr(tup[1], 'msg', None)
                 if exprinfo is None:
-                    exprinfo = py._builtin._totext(tup[1])
-                if exprinfo and exprinfo.startswith('assert '):
+                    exprinfo = py.io.saferepr(tup[1])
+                if exprinfo and exprinfo.startswith(self._assert_start_repr):
                     self._striptext = 'AssertionError: '
         self._excinfo = tup
         #: the exception class
@@ -367,7 +374,7 @@ class ExceptionInfo(object):
         #: the exception type name
         self.typename = self.type.__name__
         #: the exception traceback (_pytest._code.Traceback instance)
-        self.traceback = _pytest._code.Traceback(self.tb, excinfo=self)
+        self.traceback = _pytest._code.Traceback(self.tb, excinfo=ref(self))
 
     def __repr__(self):
         return "<ExceptionInfo %s tblen=%d>" % (self.typename, len(self.traceback))
@@ -620,16 +627,23 @@ class FormattedExcinfo(object):
             e = excinfo.value
             descr = None
             while e is not None:
-                reprtraceback = self.repr_traceback(excinfo)
-                reprcrash = excinfo._getreprcrash()
+                if excinfo:
+                    reprtraceback = self.repr_traceback(excinfo)
+                    reprcrash = excinfo._getreprcrash()
+                else:
+                    # fallback to native repr if the exception doesn't have a traceback:
+                    # ExceptionInfo objects require a full traceback to work
+                    reprtraceback = ReprTracebackNative(py.std.traceback.format_exception(type(e), e, None))
+                    reprcrash = None
+
                 repr_chain += [(reprtraceback, reprcrash, descr)]
                 if e.__cause__ is not None:
                     e = e.__cause__
-                    excinfo = ExceptionInfo((type(e), e, e.__traceback__))
+                    excinfo = ExceptionInfo((type(e), e, e.__traceback__)) if e.__traceback__ else None
                     descr = 'The above exception was the direct cause of the following exception:'
                 elif e.__context__ is not None:
                     e = e.__context__
-                    excinfo = ExceptionInfo((type(e), e, e.__traceback__))
+                    excinfo = ExceptionInfo((type(e), e, e.__traceback__)) if e.__traceback__ else None
                     descr = 'During handling of the above exception, another exception occurred:'
                 else:
                     e = None
@@ -834,6 +848,7 @@ def getrawcode(obj, trycall=True):
                 if hasattr(x, 'co_firstlineno'):
                     return x
         return obj
+
 
 if sys.version_info[:2] >= (3, 5):  # RecursionError introduced in 3.5
     def is_recursion_error(excinfo):
