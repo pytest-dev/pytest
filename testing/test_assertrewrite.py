@@ -712,6 +712,24 @@ def test_rewritten():
         result.stdout.fnmatch_lines(['*= 1 passed in *=*'])
         assert 'pytest-warning summary' not in result.stdout.str()
 
+    @pytest.mark.skipif(sys.version_info[0] > 2, reason='python 2 only')
+    def test_rewrite_future_imports(self, testdir):
+        """Test that rewritten modules don't inherit the __future__ flags
+        from the assertrewrite module.
+
+        assertion.rewrite imports __future__.division (and others), so
+        ensure rewritten modules don't inherit those flags.
+
+        The test below will fail if __future__.division is enabled
+        """
+        testdir.makepyfile('''
+            def test():
+                x = 1 / 2
+                assert type(x) is int
+        ''')
+        result = testdir.runpytest()
+        assert result.ret == 0
+
 
 class TestAssertionRewriteHookDetails(object):
     def test_loader_is_package_false_for_module(self, testdir):
