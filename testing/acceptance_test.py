@@ -793,3 +793,17 @@ def test_zipimport_hook(testdir, tmpdir):
     assert result.ret == 0
     result.stderr.fnmatch_lines(['*not found*foo*'])
     assert 'INTERNALERROR>' not in result.stdout.str()
+
+
+def test_import_plugin_unicode_name(testdir):
+    testdir.makepyfile(
+        myplugin='',
+    )
+    testdir.makepyfile("""
+        def test(): pass
+    """)
+    testdir.makeconftest("""
+        pytest_plugins = [u'myplugin']
+    """)
+    r = testdir.runpytest()
+    assert r.ret == 0
