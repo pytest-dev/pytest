@@ -25,6 +25,7 @@
 .. _@metasyn: https://github.com/metasyn
 
 
+.. _#1937: https://github.com/pytest-dev/pytest/issues/1937
 .. _#2276: https://github.com/pytest-dev/pytest/issues/2276
 .. _#2336: https://github.com/pytest-dev/pytest/issues/2336
 
