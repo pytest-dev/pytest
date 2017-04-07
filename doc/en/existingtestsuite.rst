@@ -1,7 +1,7 @@
 Using pytest with an existing test suite
 ===========================================
 
-Pytest can be used with most existing test suites, but it's 
+Pytest can be used with most existing test suites, but its 
 behavior differs from other test runners such as :ref:`nose` or 
 Python's default unittest framework. 
 
@@ -27,6 +27,6 @@ Setting up your project in development mode lets you avoid having to
 reinstall every time you want to run your tests, and is less brittle than 
 mucking about with sys.path to point your tests at local code.
 
-Also consider using Tox - https://tox.readthedocs.io/en/latest/
+Also consider using `Tox <https://tox.readthedocs.io/en/latest>`_.
 
 .. include:: links.inc
