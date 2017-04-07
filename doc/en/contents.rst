@@ -12,6 +12,7 @@ Full pytest documentation
 
    getting-started
    usage
+   existingtestsuite
    assert
    builtin
    fixture

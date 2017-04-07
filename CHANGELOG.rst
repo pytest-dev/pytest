@@ -8,19 +8,24 @@
 * Fix exception formatting while importing modules when the exception message
   contains non-ascii characters (`#2336`_).
   Thanks `@fabioz`_ for the report and `@nicoddemus`_ for the PR.
+  
+* Added documentation related to issue (`#1937`_)
+  Thanks `@skylarjhdownes`_ for the PR.
 
+*
 
 *
 
 *
 
-*
 
-
+  
+.. _@skylarjhdownes: https://github.com/skylarjhdownes
 .. _@fabioz: https://github.com/fabioz
 .. _@metasyn: https://github.com/metasyn
 
 
+.. _#1937: https://github.com/pytest-dev/pytest/issues/1937
 .. _#2276: https://github.com/pytest-dev/pytest/issues/2276
 .. _#2336: https://github.com/pytest-dev/pytest/issues/2336
 
@@ -289,6 +294,7 @@
 .. _#1934: https://github.com/pytest-dev/pytest/issues/1934
 .. _#1944: https://github.com/pytest-dev/pytest/issues/1944
 .. _#704: https://github.com/pytest-dev/pytest/issues/704
+
 
 
 
