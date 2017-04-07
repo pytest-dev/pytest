@@ -49,7 +49,7 @@ Here is the algorithm which finds the rootdir from ``args``:
   a package and don't have any particular ini-file configuration.
 
 If no ``args`` are given, pytest collects test below the current working
-directory and also starts determining the rootdir from there. 
+directory and also starts determining the rootdir from there.
 
 :warning: custom pytest plugin commandline arguments may include a path, as in
     ``pytest --log-output ../../test.log args``. Then ``args`` is mandatory,
@@ -97,18 +97,7 @@ check for ini-files as follows::
 .. _`how to change command line options defaults`:
 .. _`adding default options`:
 
-Change which files are added to sys.path
------------------------------------------------
 
-If you place a conftest.py file in the root directory of your project
-(as determined by pytest, see above.) pytest will run tests against 
-the code below that directory by adding it to your sys.path instead of 
-running against your installed code.
-
-You may find yourself wanting to do this if you ran `python setup.py install` 
-to set up your project, as opposed to `python setup.py develop` or any of 
-the package manager equivalents.  Installing with develop in a 
-virtual environment is recommended over using the conftest.py pattern.
 
 How to change command line options defaults
 ------------------------------------------------
