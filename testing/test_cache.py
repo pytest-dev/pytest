@@ -192,11 +192,32 @@ class TestLastFailed(object):
             "test_a.py*",
             "test_b.py*",
         ])
-        result = testdir.runpytest("--lf", "--ff")
+        result = testdir.runpytest("--ff")
         # Test order will be failing tests firs
         result.stdout.fnmatch_lines([
             "test_b.py*",
             "test_a.py*",
+        ])
+
+    def test_lastfailed_failedfirst_order(self, testdir):
+        testdir.tmpdir.join('test_a.py').write(_pytest._code.Source("""
+            def test_always_passes():
+                assert 1
+        """))
+        testdir.tmpdir.join('test_b.py').write(_pytest._code.Source("""
+            def test_always_fails():
+                assert 0
+        """))
+        result = testdir.runpytest()
+        # Test order will be collection order; alphabetical
+        result.stdout.fnmatch_lines([
+            "test_a.py*",
+            "test_b.py*",
+        ])
+        result = testdir.runpytest("--lf", "--ff")
+        # Test order will be failing tests firs
+        result.stdout.fnmatch_lines([
+            "test_b.py*",
         ])
 
     def test_lastfailed_difference_invocations(self, testdir, monkeypatch):
