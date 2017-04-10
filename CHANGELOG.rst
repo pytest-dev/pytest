@@ -69,6 +69,9 @@ Changes
 * ``PluginManager.import_plugin`` now accepts unicode plugin names in Python 2.
   Thanks `@reutsharabani`_ for the PR.
 
+* fix `#2308`_: When using both ``--lf`` and ``--ff``, only the last failed tests are run.
+  Thanks `@ojii`_ for the PR.
+
 
 Bug Fixes
 ---------
@@ -88,6 +91,7 @@ Bug Fixes
 .. _@reutsharabani: https://github.com/reutsharabani
 .. _@unsignedint: https://github.com/unsignedint
 .. _@Kriechi: https://github.com/Kriechi
+.. _@ojii: https://github.com/ojii
 
 
 .. _#1407: https://github.com/pytest-dev/pytest/issues/1407
@@ -101,6 +105,7 @@ Bug Fixes
 .. _#2147: https://github.com/pytest-dev/pytest/issues/2147
 .. _#2208: https://github.com/pytest-dev/pytest/issues/2208
 .. _#2228:  https://github.com/pytest-dev/pytest/issues/2228
+.. _#2308: https://github.com/pytest-dev/pytest/issues/2308
 
 
 3.0.8 (unreleased)
