@@ -200,14 +200,16 @@ class TestLastFailed(object):
         ])
 
     def test_lastfailed_failedfirst_order(self, testdir):
-        testdir.tmpdir.join('test_a.py').write(_pytest._code.Source("""
-            def test_always_passes():
-                assert 1
-        """))
-        testdir.tmpdir.join('test_b.py').write(_pytest._code.Source("""
-            def test_always_fails():
-                assert 0
-        """))
+        testdir.makepyfile(**{
+            'test_a.py': """
+                def test_always_passes():
+                    assert 1
+            """,
+            'test_b.py': """
+                def test_always_fails():
+                    assert 0
+            """,
+        })
         result = testdir.runpytest()
         # Test order will be collection order; alphabetical
         result.stdout.fnmatch_lines([
@@ -219,6 +221,7 @@ class TestLastFailed(object):
         result.stdout.fnmatch_lines([
             "test_b.py*",
         ])
+        assert 'test_a.py' not in result.stdout.str()
 
     def test_lastfailed_difference_invocations(self, testdir, monkeypatch):
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", 1)
