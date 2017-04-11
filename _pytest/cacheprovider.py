@@ -139,11 +139,11 @@ class LFPlugin(object):
                 # running a subset of all tests with recorded failures outside
                 # of the set of tests currently executing
                 pass
-            elif self.config.getvalue("failedfirst"):
-                items[:] = previously_failed + previously_passed
-            else:
+            elif self.config.getvalue("lf"):
                 items[:] = previously_failed
                 config.hook.pytest_deselected(items=previously_passed)
+            else:
+                items[:] = previously_failed + previously_passed
 
     def pytest_sessionfinish(self, session):
         config = self.config
