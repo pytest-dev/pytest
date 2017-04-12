@@ -94,8 +94,7 @@ In the context manager form you may use the keyword argument
      ...    pass
      ... Failed: Expecting ZeroDivisionError
 
-If you want to write test code that works on Python 2.4 as well,
-you may also use two other ways to test for an expected exception::
+You may also use two other ways to test for an expected exception::
 
     pytest.raises(ExpectedException, func, *args, **kwargs)
     pytest.raises(ExpectedException, "func(*args, **kwargs)")

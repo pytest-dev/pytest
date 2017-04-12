@@ -131,6 +131,7 @@ def pytest_namespace():
     raises.Exception = pytest.fail.Exception
     return {
         'raises': raises,
+        'not_raises': NotRaisesContext,
         'approx': approx,
         'collect': {
             'Module': Module,
@@ -956,6 +957,8 @@ def _idval(val, argname, idx, idfn, config=None):
         return str(val)
     elif isclass(val) and hasattr(val, '__name__'):
         return val.__name__
+    elif isinstance(val, (RaisesContext, NotRaisesContext)):
+        return str(val)
     return str(argname)+str(idx)
 
 def _idvalset(idx, parameterset, argnames, idfn, ids, config=None):
@@ -1265,6 +1268,27 @@ class RaisesContext(object):
         if self.match_expr:
             self.excinfo.match(self.match_expr)
         return suppress_exception
+
+    def __str__(self):
+        return 'raises({0})'.format(self.expected_exception.__name__)
+
+
+# builtin pytest.not_raises helper
+
+class NotRaisesContext(object):
+    """
+    Dummy helper class for use in parametrized tests, for non-raising
+    cases.
+    """
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+    def __str__(self):
+        return 'not_raises'
 
 
 # builtin pytest.approx helper

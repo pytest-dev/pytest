@@ -263,6 +263,13 @@ class TestMetafunc(object):
         result = idmaker(("a", "b"), [pytest.param(e.one, e.two)])
         assert result == ["Foo.one-Foo.two"]
 
+    def test_idmaker_raises(self):
+        from _pytest.python import idmaker
+        result = idmaker(("amount", "exc"), [pytest.param("foo", pytest.raises(TypeError))])
+        assert result == ["foo-raises(TypeError)"]
+        result = idmaker(("amount", "exc"), [pytest.param("foo", pytest.not_raises())])
+        assert result == ["foo-not_raises"]
+
     @pytest.mark.issue351
     def test_idmaker_idfn(self):
         from _pytest.python import idmaker
