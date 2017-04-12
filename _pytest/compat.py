@@ -27,6 +27,7 @@ _PY2 = not _PY3
 NoneType = type(None)
 NOTSET = object()
 
+PY35 = sys.version_info[:2] >= (3, 5)
 PY36 = sys.version_info[:2] >= (3, 6)
 MODULE_NOT_FOUND_ERROR = 'ModuleNotFoundError' if PY36 else 'ImportError'
 
