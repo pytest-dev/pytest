@@ -2,13 +2,14 @@ import sys
 from inspect import CO_VARARGS, CO_VARKEYWORDS
 import re
 from weakref import ref
+from _pytest.compat import _PY2, _PY3, PY35
 
 import py
 builtin_repr = repr
 
 reprlib = py.builtin._tryimport('repr', 'reprlib')
 
-if sys.version_info[0] >= 3:
+if _PY3:
     from traceback import format_exception_only
 else:
     from ._py2traceback import format_exception_only
@@ -352,7 +353,7 @@ class ExceptionInfo(object):
         help for navigating the traceback.
     """
     _striptext = ''
-    _assert_start_repr = "AssertionError(u\'assert " if sys.version_info[0] < 3 else "AssertionError(\'assert "
+    _assert_start_repr = "AssertionError(u\'assert " if _PY2 else "AssertionError(\'assert "
 
     def __init__(self, tup=None, exprinfo=None):
         import _pytest._code
@@ -617,7 +618,7 @@ class FormattedExcinfo(object):
 
 
     def repr_excinfo(self, excinfo):
-        if sys.version_info[0] < 3:
+        if _PY2:
             reprtraceback = self.repr_traceback(excinfo)
             reprcrash = excinfo._getreprcrash()
 
@@ -654,7 +655,7 @@ class FormattedExcinfo(object):
 class TerminalRepr(object):
     def __str__(self):
         s = self.__unicode__()
-        if sys.version_info[0] < 3:
+        if _PY2:
             s = s.encode('utf-8')
         return s
 
@@ -850,7 +851,7 @@ def getrawcode(obj, trycall=True):
         return obj
 
 
-if sys.version_info[:2] >= (3, 5):  # RecursionError introduced in 3.5
+if PY35:  # RecursionError introduced in 3.5
     def is_recursion_error(excinfo):
         return excinfo.errisinstance(RecursionError)  # noqa
 else:
