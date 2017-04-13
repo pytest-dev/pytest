@@ -109,10 +109,10 @@ class WarningReport(object):
         if self.nodeid:
             return self.nodeid
         if self.fslocation:
-            if isinstance(self.fslocation, tuple) and len(self.fslocation) == 2:
-                filename, linenum = self.fslocation
+            if isinstance(self.fslocation, tuple) and len(self.fslocation) >= 2:
+                filename, linenum = self.fslocation[:2]
                 relpath = py.path.local(filename).relto(config.invocation_dir)
-                return '%s:%d' % (relpath, linenum)
+                return '%s:%s' % (relpath, linenum)
             else:
                 return str(self.fslocation)
         return None

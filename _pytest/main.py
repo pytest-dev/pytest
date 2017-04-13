@@ -309,9 +309,6 @@ class Node(object):
         fslocation = getattr(self, "location", None)
         if fslocation is None:
             fslocation = getattr(self, "fspath", None)
-        else:
-            fslocation = "%s:%s" % (fslocation[0], fslocation[1] + 1)
-
         self.ihook.pytest_logwarning.call_historic(kwargs=dict(
             code=code, message=message,
             nodeid=self.nodeid, fslocation=fslocation))
