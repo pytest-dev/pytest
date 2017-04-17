@@ -18,6 +18,8 @@ from _pytest.compat import safe_str
 hookimpl = HookimplMarker("pytest")
 hookspec = HookspecMarker("pytest")
 
+_PY2 = sys.version_info[0] == 2
+
 # pytest startup
 #
 
@@ -362,7 +364,19 @@ class PytestPluginManager(PluginManager):
             try:
                 mod = conftestpath.pyimport()
             except Exception:
-                raise ConftestImportFailure(conftestpath, sys.exc_info())
+                exc_info = sys.exc_info()
+
+                if _PY2:
+                    lines = traceback.format_exception(*exc_info)
+                else:
+                    # Python 3 supports exception chaining. Do not show
+                    # tracebacks for regular pytest-internal exceptions.
+                    lines = traceback.format_exception(*exc_info, chain=False)
+
+                sys.stderr.write(
+                    "Exception during conftest import. %s\n" % "".join(lines))
+
+                raise ConftestImportFailure(conftestpath, exc_info)
 
             self._conftest_plugins.add(mod)
             self._conftestpath2mod[conftestpath] = mod
