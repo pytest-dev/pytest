@@ -142,6 +142,7 @@ class TestPDB:
             def globalfunc():
                 pass
             def test_1():
+                print("getrekt")
                 pytest.raises(ValueError, globalfunc)
         """)
         child = testdir.spawn_pytest("--pdb %s" % p1)
@@ -151,6 +152,7 @@ class TestPDB:
         child.sendline("globalfunc")
         child.expect(".*function")
         child.sendeof()
+        child.expect("getrekt")
         child.expect("1 failed")
         self.flush(child)
 
