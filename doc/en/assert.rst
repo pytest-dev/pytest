@@ -270,12 +270,21 @@ supporting modules which are not themselves test modules will not be rewritten.
 
 .. note::
 
-   ``pytest`` rewrites test modules on import. It does this by using an import
-   hook to write new pyc files. Most of the time this works transparently.
+   ``pytest`` rewrites test modules on import by using an import
+   hook to write new ``pyc`` files. Most of the time this works transparently.
    However, if you are messing with import yourself, the import hook may
-   interfere. If this is the case, use ``--assert=plain``. Additionally,
-   rewriting will fail silently if it cannot write new pycs, i.e. in a read-only
-   filesystem or a zipfile.
+   interfere.
+
+   If this is the case you have two options:
+
+   * Disable rewriting for a specific module by adding the string
+     ``PYTEST_DONT_REWRITE`` to its docstring.
+
+   * Disable rewriting for all modules by using ``--assert=plain``.
+
+   Additionally, rewriting will fail silently if it cannot write new ``.pyc`` files,
+   i.e. in a read-only filesystem or a zipfile.
+
 
 For further information, Benjamin Peterson wrote up `Behind the scenes of pytest's new assertion rewriting <http://pybites.blogspot.com/2011/07/behind-scenes-of-pytests-new-assertion.html>`_.
 
