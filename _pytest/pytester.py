@@ -88,7 +88,7 @@ class LsofFdLeakChecker(object):
             return True
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
-    def pytest_runtest_item(self, item):
+    def pytest_runtest_protocol(self, item):
         lines1 = self.get_open_files()
         yield
         if hasattr(sys, "pypy_version_info"):
@@ -107,7 +107,8 @@ class LsofFdLeakChecker(object):
             error.extend([str(f) for f in lines2])
             error.append(error[0])
             error.append("*** function %s:%s: %s " % item.location)
-            pytest.fail("\n".join(error), pytrace=False)
+            error.append("See issue #2366")
+            item.warn('', "\n".join(error))
 
 
 # XXX copied from execnet's conftest.py - needs to be merged

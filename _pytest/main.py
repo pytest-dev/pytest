@@ -309,9 +309,6 @@ class Node(object):
         fslocation = getattr(self, "location", None)
         if fslocation is None:
             fslocation = getattr(self, "fspath", None)
-        else:
-            fslocation = "%s:%s" % (fslocation[0], fslocation[1] + 1)
-
         self.ihook.pytest_logwarning.call_historic(kwargs=dict(
             code=code, message=message,
             nodeid=self.nodeid, fslocation=fslocation))
@@ -596,6 +593,7 @@ class Session(FSCollector):
         hook = self.config.hook
         try:
             items = self._perform_collect(args, genitems)
+            self.config.pluginmanager.check_pending()
             hook.pytest_collection_modifyitems(session=self,
                 config=self.config, items=items)
         finally:

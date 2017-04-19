@@ -54,7 +54,6 @@ def main(args=None, plugins=None):
             return 4
         else:
             try:
-                config.pluginmanager.check_pending()
                 return config.hook.pytest_cmdline_main(config=config)
             finally:
                 config._ensure_unconfigure()
