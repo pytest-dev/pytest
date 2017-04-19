@@ -3,6 +3,7 @@
 import fnmatch
 import inspect
 import sys
+import os
 import collections
 import math
 from itertools import count
@@ -235,8 +236,7 @@ class PyobjMixin(PyobjContext):
                 continue
             name = node.name
             if isinstance(node, Module):
-                assert name.endswith(".py")
-                name = name[:-3]
+                name = os.path.splitext(name)[0]
                 if stopatmodule:
                     if includemodule:
                         parts.append(name)

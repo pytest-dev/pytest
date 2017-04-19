@@ -841,6 +841,34 @@ class TestConftestCustomization:
         l = modcol.collect()
         assert '_hello' not in l
 
+    def test_issue2369_collect_module_fileext(self, testdir):
+        """Ensure we can collect files with weird file extensions as Python
+        modules (#2369)"""
+        # We'll implement a little finder and loader to import files containing
+        # Python source code whose file extension is ".narf".
+        testdir.makeconftest("""
+            import sys, os, imp
+            from _pytest.python import Module
+
+            class Loader:
+                def load_module(self, name):
+                    return imp.load_source(name, name + ".narf")
+            class Finder:
+                def find_module(self, name, path=None):
+                    if os.path.exists(name + ".narf"):
+                        return Loader()
+            sys.meta_path.append(Finder())
+
+            def pytest_collect_file(path, parent):
+                if path.ext == ".narf":
+                    return Module(path, parent)""")
+        testdir.makefile(".narf", """
+            def test_something():
+                assert 1 + 1 == 2""")
+        # Use runpytest_subprocess, since we're futzing with sys.meta_path.
+        result = testdir.runpytest_subprocess()
+        result.stdout.fnmatch_lines('*1 passed*')
+
 def test_setup_only_available_in_subdir(testdir):
     sub1 = testdir.mkpydir("sub1")
     sub2 = testdir.mkpydir("sub2")
