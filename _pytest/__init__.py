@@ -1,5 +1,7 @@
 __all__ = ['__version__']
+import pkg_resources
+
 try:
-    from ._version import version as __version__
-except ImportError:
+    __version__ = pkg_resources.get_distribution('pytest').version
+except Exception:
     __version__ = None  # broken installation, we don't even try
