@@ -6,17 +6,9 @@ import sys
 from time import time
 
 import py
-import pytest
 from _pytest._code.code import TerminalRepr, ExceptionInfo
 
 
-def pytest_namespace():
-    return {
-        'fail'         : fail,
-        'skip'         : skip,
-        'importorskip' : importorskip,
-        'exit'         : exit,
-    }
 
 #
 # pytest plugin hooks
@@ -264,7 +256,7 @@ def pytest_runtest_makereport(item, call):
         if not isinstance(excinfo, ExceptionInfo):
             outcome = "failed"
             longrepr = excinfo
-        elif excinfo.errisinstance(pytest.skip.Exception):
+        elif excinfo.errisinstance(skip.Exception):
             outcome = "skipped"
             r = excinfo._getreprcrash()
             longrepr = (str(r.path), r.lineno, r.message)

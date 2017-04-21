@@ -100,6 +100,7 @@ default_plugins = (
      "junitxml resultlog doctest cacheprovider freeze_support "
      "setuponly setupplan warnings").split()
 
+
 builtin_plugins = set(default_plugins)
 builtin_plugins.add("pytester")
 
