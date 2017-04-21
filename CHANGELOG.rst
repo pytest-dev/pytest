@@ -12,6 +12,9 @@
 * Added documentation related to issue (`#1937`_)
   Thanks `@skylarjhdownes`_ for the PR.
 
+* Allow collecting files with any file extension as Python modules (`#2369`_).
+  Thanks `@Kodiologist`_ for the PR.
+
 *
 
 *
@@ -23,11 +26,13 @@
 .. _@skylarjhdownes: https://github.com/skylarjhdownes
 .. _@fabioz: https://github.com/fabioz
 .. _@metasyn: https://github.com/metasyn
+.. _@Kodiologist: https://github.com/Kodiologist
 
 
 .. _#1937: https://github.com/pytest-dev/pytest/issues/1937
 .. _#2276: https://github.com/pytest-dev/pytest/issues/2276
 .. _#2336: https://github.com/pytest-dev/pytest/issues/2336
+.. _#2369: https://github.com/pytest-dev/pytest/issues/2369
 
 
 3.0.7 (2017-03-14)
