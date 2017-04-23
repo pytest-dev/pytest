@@ -1,19 +1,23 @@
-import os, sys
+import os
+import sys
 import setuptools
 import pkg_resources
 from setuptools import setup, Command
 
-classifiers = ['Development Status :: 6 - Mature',
-               'Intended Audience :: Developers',
-               'License :: OSI Approved :: MIT License',
-               'Operating System :: POSIX',
-               'Operating System :: Microsoft :: Windows',
-               'Operating System :: MacOS :: MacOS X',
-               'Topic :: Software Development :: Testing',
-               'Topic :: Software Development :: Libraries',
-               'Topic :: Utilities'] + [
-              ('Programming Language :: Python :: %s' % x) for x in
-                  '2 2.6 2.7 3 3.3 3.4 3.5 3.6'.split()]
+classifiers = [
+    'Development Status :: 6 - Mature',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: POSIX',
+    'Operating System :: Microsoft :: Windows',
+    'Operating System :: MacOS :: MacOS X',
+    'Topic :: Software Development :: Testing',
+    'Topic :: Software Development :: Libraries',
+    'Topic :: Utilities',
+] + [
+    ('Programming Language :: Python :: %s' % x)
+    for x in '2 2.6 2.7 3 3.3 3.4 3.5 3.6'.split()
+]
 
 with open('README.rst') as fd:
     long_description = fd.read()
@@ -54,7 +58,9 @@ def main():
         name='pytest',
         description='pytest: simple powerful testing with Python',
         long_description=long_description,
-        use_scm_version=True,
+        use_scm_version={
+            'write_to': '_pytest/_version.py',
+        },
         url='http://pytest.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
