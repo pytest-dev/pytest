@@ -24,8 +24,8 @@ def pytest_addoption(parser):
     group._addoption(
         '--capture', action="store",
         default="fd" if hasattr(os, "dup") else "sys",
-        metavar="method", choices=['fd', 'sys', 'no'],
-        help="per-test capturing method: one of fd|sys|no.")
+        metavar="method", choices=['fd', 'sys', 'no', 'forget'],
+        help="per-test capturing method: one of fd|sys|no|forget.")
     group._addoption(
         '-s', action="store_const", const="no", dest="capture",
         help="shortcut for --capture=no.")
@@ -66,6 +66,8 @@ class CaptureManager:
             return MultiCapture(out=True, err=True, Capture=FDCapture)
         elif method == "sys":
             return MultiCapture(out=True, err=True, Capture=SysCapture)
+        elif method == "forget":
+            return MultiCapture(out=True, err=True, Capture=ForgetCapture)
         elif method == "no":
             return MultiCapture(out=False, err=False, in_=False)
         else:
@@ -430,6 +432,28 @@ class SysCapture:
     def writeorg(self, data):
         self._old.write(data)
         self._old.flush()
+
+
+class ForgetCapture(FDCapture):
+    """ Capture IO to/from a given os-level filedescriptor and forget it. """
+
+    def __init__(self, targetfd, tmpfile=None):
+        super().__init__(targetfd, tmpfile=None)
+
+    def __repr__(self):
+        return "<ForgetCapture %s oldfd=%s>" % (self.targetfd, self.targetfd_save)
+
+    def snap(self):
+        f = self.tmpfile
+        f.seek(0)
+        res = f.read()
+        if res:
+            enc = getattr(f, "encoding", None)
+            if enc and isinstance(res, bytes):
+                res = py.builtin._totext(res, enc, "replace")
+            f.truncate(0)
+            f.seek(0)
+        return ''
 
 
 class DontReadFromInput:
