@@ -30,68 +30,106 @@ Within Python modules, ``pytest`` also discovers tests using the standard
 
 
 Choosing a test layout / import rules
-------------------------------------------
+-------------------------------------
 
 ``pytest`` supports two common test layouts:
 
-* putting tests into an extra directory outside your actual application
-  code, useful if you have many functional tests or for other reasons
-  want to keep tests separate from actual application code (often a good
-  idea)::
+Tests outside application code
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    setup.py   # your setuptools Python package metadata
+Putting tests into an extra directory outside your actual application code
+might be useful if you have many functional tests or for other reasons want
+to keep tests separate from actual application code (often a good idea)::
+
+    setup.py
     mypkg/
         __init__.py
-        appmodule.py
+        app.py
+        view.py
     tests/
         test_app.py
+        test_view.py
         ...
 
+This way your tests can run easily against an installed version
+of ``mypkg``.
 
-* inlining test directories into your application package, useful if you
-  have direct relation between (unit-)test and application modules and
-  want to distribute your tests along with your application::
+Note that using this scheme your test files must have **unique names**, because
+``pytest`` will import them as *top-level* modules since there are no packages
+to derive a full package name from. In other words, the test files in the example above will
+be imported as ``test_app`` and ``test_view`` top-level modules by adding ``tests/`` to
+``sys.path``.
 
-    setup.py   # your setuptools Python package metadata
+If you need to have test modules with the same name, you might add ``__init__.py`` files to your
+``tests`` folder and subfolders, changing them to packages::
+
+    setup.py
+    mypkg/
+        ...
+    tests/
+        __init__.py
+        foo/
+            __init__.py
+            test_view.py
+        bar/
+            __init__.py
+            test_view.py
+
+Now pytest will load the modules as ``tests.foo.test_view`` and ``tests.bar.test_view``, allowing
+you to have modules with the same name. But now this introduces a subtle problem: in order to load
+the test modules from the ``tests`` directory, pytest prepends the root of the repository to
+``sys.path``, which adds the side-effect that now ``mypkg`` is also importable.
+This is problematic if you are using a tool like `tox`_ to test your package in a virtual environment,
+because you want to test the *installed* version of your package, not the local code from the repository.
+
+In this situation, it is **strongly** suggested to use a ``src`` layout where application root package resides in a
+sub-directory of your root::
+
+    setup.py
+    src/
+        mypkg/
+            __init__.py
+            app.py
+            view.py
+    tests/
+        __init__.py
+        foo/
+            __init__.py
+            test_view.py
+        bar/
+            __init__.py
+            test_view.py
+
+
+This layout prevents a lot of common pitfalls and has many benefits, which are better explained in this excellent
+`blog post by Ionel Cristian Mărieș <https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure>`_.
+
+Tests as part of application code
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Inlining test directories into your application package
+is useful if you have direct relation between tests and application modules and
+want to distribute them along with your application::
+
+    setup.py
     mypkg/
         __init__.py
-        appmodule.py
-        ...
+        app.py
+        view.py
         test/
+            __init__.py
             test_app.py
+            test_view.py
             ...
 
-Important notes relating to both schemes:
+In this scheme, it is easy to your run tests using the ``--pyargs`` option::
 
-- **make sure that "mypkg" is importable**, for example by typing once::
+    pytest --pyargs mypkg
 
-     pip install -e .   # install package using setup.py in editable mode
+``pytest`` will discover where ``mypkg`` is installed and collect tests from there.
 
-- **avoid "__init__.py" files in your test directories**.
-  This way your tests can run easily against an installed version
-  of ``mypkg``, independently from the installed package if it contains
-  the tests or not.
+Note that this layout also works in conjunction with the ``src`` layout mentioned in the previous section.
 
-- With inlined tests you might put ``__init__.py`` into test
-  directories and make them installable as part of your application.
-  Using the ``pytest --pyargs mypkg`` invocation pytest will
-  discover where mypkg is installed and collect tests from there.
-  With the "external" test you can still distribute tests but they
-  will not be installed or become importable.
-
-Typically you can run tests by pointing to test directories or modules::
-
-    pytest tests/test_app.py       # for external test dirs
-    pytest mypkg/test/test_app.py  # for inlined test dirs
-    pytest mypkg                   # run tests in all below test directories
-    pytest                         # run all tests below current dir
-    ...
-
-Because of the above ``editable install`` mode you can change your
-source code (both tests and the app) and rerun tests at will.
-Once you are done with your work, you can `use tox`_ to make sure
-that the package is really correct and tests pass in all
-required configurations.
 
 .. note::
 
@@ -144,7 +182,15 @@ for installing your application and any dependencies
 as well as the ``pytest`` package itself. This ensures your code and
 dependencies are isolated from the system Python installation.
 
-If you frequently release code and want to make sure that your actual
+You can then install your package in "editable" mode::
+
+     pip install -e .
+
+which lets you change your source code (both tests and application) and rerun tests at will.
+This is similar to running `python setup.py develop` or `conda develop` in that it installs
+your package using a symlink to your development code.
+
+Once you are done with your work and want to make sure that your actual
 package passes all tests you may want to look into `tox`_, the
 virtualenv test automation tool and its `pytest support
 <https://tox.readthedocs.io/en/latest/example/pytest.html>`_.
@@ -153,11 +199,6 @@ dependencies and then executing a pre-configured test command with
 options.  It will run tests against the installed package and not
 against your source code checkout, helping to detect packaging
 glitches.
-
-Continuous integration services such as Jenkins_ can make use of the
-``--junitxml=PATH`` option to create a JUnitXML file and generate reports (e.g.
-by publishing the results in a nice format with the `Jenkins xUnit Plugin
-<https://wiki.jenkins-ci.org/display/JENKINS/xUnit+Plugin>`_).
 
 
 Integrating with setuptools / ``python setup.py test`` / ``pytest-runner``

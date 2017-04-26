@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function
 import fnmatch
 import inspect
 import sys
+import os
 import collections
 import math
 from itertools import count
@@ -20,7 +21,7 @@ from _pytest.compat import (
     isclass, isfunction, is_generator, _escape_strings,
     REGEX_TYPE, STRING_TYPES, NoneType, NOTSET,
     get_real_func, getfslineno, safe_getattr,
-    getlocation, enum,
+    safe_str, getlocation, enum,
 )
 from _pytest.runner import fail
 
@@ -223,8 +224,7 @@ class PyobjMixin(PyobjContext):
                 continue
             name = node.name
             if isinstance(node, Module):
-                assert name.endswith(".py")
-                name = name[:-3]
+                name = os.path.splitext(name)[0]
                 if stopatmodule:
                     if includemodule:
                         parts.append(name)
@@ -427,7 +427,7 @@ class Module(main.File, PyCollector):
             if self.config.getoption('verbose') < 2:
                 exc_info.traceback = exc_info.traceback.filter(filter_traceback)
             exc_repr = exc_info.getrepr(style='short') if exc_info.traceback else exc_info.exconly()
-            formatted_tb = py._builtin._totext(exc_repr)
+            formatted_tb = safe_str(exc_repr)
             raise self.CollectError(
                 "ImportError while importing test module '{fspath}'.\n"
                 "Hint: make sure your test modules/packages have valid Python names.\n"
