@@ -18,4 +18,3 @@ if os.path.isdir('.git'):
 else:
     print('No .git directory found, skipping checking the manifest file')
     sys.exit(0)
-
