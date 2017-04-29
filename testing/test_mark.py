@@ -301,6 +301,23 @@ def test_parametrized_collected_from_command_line(testdir):
     rec.assertoutcome(passed=3)
 
 
+def test_parametrized_collect_with_wrong_args(testdir):
+    """Test collect parametrized func with wrong number of args."""
+    py_file = testdir.makepyfile("""
+        import pytest
+
+        @pytest.mark.parametrize('foo, bar', [(1, 2, 3)])
+        def test_func(foo, bar):
+            pass
+    """)
+
+    result = testdir.runpytest(py_file)
+    result.stdout.fnmatch_lines([
+        'E   ValueError: In "parametrize" the number of values ((1, 2, 3)) '
+        'must be equal to the number of names ([\'foo\', \'bar\'])'
+    ])
+
+
 class TestFunctional:
 
     def test_mark_per_function(self, testdir):

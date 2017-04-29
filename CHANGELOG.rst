@@ -15,6 +15,9 @@
 * Allow collecting files with any file extension as Python modules (`#2369`_).
   Thanks `@Kodiologist`_ for the PR.
 
+* Show the correct error message when collect "parametrize" func with wrong args (`#2383`_).
+  Thanks `@The-Compiler`_ for the report and `@robin0371`_ for the PR.
+
 *
 
 *
@@ -27,12 +30,14 @@
 .. _@fabioz: https://github.com/fabioz
 .. _@metasyn: https://github.com/metasyn
 .. _@Kodiologist: https://github.com/Kodiologist
+.. _@robin0371: https://github.com/robin0371
 
 
 .. _#1937: https://github.com/pytest-dev/pytest/issues/1937
 .. _#2276: https://github.com/pytest-dev/pytest/issues/2276
 .. _#2336: https://github.com/pytest-dev/pytest/issues/2336
 .. _#2369: https://github.com/pytest-dev/pytest/issues/2369
+.. _#2383: https://github.com/pytest-dev/pytest/issues/2383
 
 
 3.0.7 (2017-03-14)

@@ -853,7 +853,11 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         for callspec in self._calls or [CallSpec2(self)]:
             elements = zip(ids, argvalues, newkeywords, count())
             for a_id, valset, keywords, param_index in elements:
-                assert len(valset) == len(argnames)
+                if len(valset) != len(argnames):
+                    raise ValueError(
+                        'In "parametrize" the number of values ({0}) must be '
+                        'equal to the number of names ({1})'.format(
+                            valset, argnames))
                 newcallspec = callspec.copy(self)
                 newcallspec.setmulti(valtypes, argnames, valset, a_id,
                                      keywords, scopenum, param_index)
