@@ -447,9 +447,10 @@ class Testdir:
         the module is re-imported.
         """
         for name in set(sys.modules).difference(self._savemodulekeys):
-            # zope.interface (used by twisted-related tests) keeps internal
-            # state and can't be deleted
-            if not name.startswith("zope.interface"):
+            # some zope modules used by twisted-related tests keeps internal
+            # state and can't be deleted; we had some trouble in the past
+            # with zope.interface for example
+            if not name.startswith("zope"):
                 del sys.modules[name]
 
     def make_hook_recorder(self, pluginmanager):
