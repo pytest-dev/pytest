@@ -31,7 +31,7 @@ env:
 matrix:
   include:
     - env: TOXENV=py36
-      python: '3.6-dev'
+      python: '3.6'
     - env: TOXENV=py37
       python: 'nightly'
   allow_failures:

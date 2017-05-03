@@ -253,7 +253,7 @@ the code after the *yield* statement serves as the teardown code:
     import pytest
 
     @pytest.fixture(scope="module")
-    def smtp(request):
+    def smtp():
         smtp = smtplib.SMTP("smtp.gmail.com")
         yield smtp  # provide the fixture value
         print("teardown smtp")
@@ -287,7 +287,7 @@ Note that we can also seamlessly use the ``yield`` syntax with ``with`` statemen
     import pytest
 
     @pytest.fixture(scope="module")
-    def smtp(request):
+    def smtp():
         with smtplib.SMTP("smtp.gmail.com") as smtp:
             yield smtp  # provide the fixture value
 

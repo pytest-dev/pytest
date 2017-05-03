@@ -28,6 +28,7 @@ _PY2 = not _PY3
 NoneType = type(None)
 NOTSET = object()
 
+PY35 = sys.version_info[:2] >= (3, 5)
 PY36 = sys.version_info[:2] >= (3, 6)
 MODULE_NOT_FOUND_ERROR = 'ModuleNotFoundError' if PY36 else 'ImportError'
 
@@ -250,8 +251,10 @@ else:
         try:
             return str(v)
         except UnicodeError:
+            if not isinstance(v, unicode):
+                v = unicode(v)
             errors = 'replace'
-            return v.encode('ascii', errors)
+            return v.encode('utf-8', errors)
 
 
 COLLECT_FAKEMODULE_ATTRIBUTES = (

@@ -121,7 +121,22 @@ Bug Fixes
 3.0.8 (unreleased)
 ==================
 
-*
+* Change capture.py's ``DontReadFromInput`` class to throw ``io.UnsupportedOperation`` errors rather
+  than ValueErrors in the ``fileno`` method (`#2276`_).
+  Thanks `@metasyn`_ for the PR.
+
+* Fix exception formatting while importing modules when the exception message
+  contains non-ascii characters (`#2336`_).
+  Thanks `@fabioz`_ for the report and `@nicoddemus`_ for the PR.
+  
+* Added documentation related to issue (`#1937`_)
+  Thanks `@skylarjhdownes`_ for the PR.
+
+* Allow collecting files with any file extension as Python modules (`#2369`_).
+  Thanks `@Kodiologist`_ for the PR.
+
+* Show the correct error message when collect "parametrize" func with wrong args (`#2383`_).
+  Thanks `@The-Compiler`_ for the report and `@robin0371`_ for the PR.
 
 *
 
@@ -129,7 +144,20 @@ Bug Fixes
 
 *
 
-*
+
+  
+.. _@skylarjhdownes: https://github.com/skylarjhdownes
+.. _@fabioz: https://github.com/fabioz
+.. _@metasyn: https://github.com/metasyn
+.. _@Kodiologist: https://github.com/Kodiologist
+.. _@robin0371: https://github.com/robin0371
+
+
+.. _#1937: https://github.com/pytest-dev/pytest/issues/1937
+.. _#2276: https://github.com/pytest-dev/pytest/issues/2276
+.. _#2336: https://github.com/pytest-dev/pytest/issues/2336
+.. _#2369: https://github.com/pytest-dev/pytest/issues/2369
+.. _#2383: https://github.com/pytest-dev/pytest/issues/2383
 
 
 3.0.7 (2017-03-14)
@@ -138,7 +166,7 @@ Bug Fixes
 
 * Fix issue in assertion rewriting breaking due to modules silently discarding
   other modules when importing fails
-  Notably, importing the `anydbm` module is fixed. (`#2248`_).
+  Notably, importing the ``anydbm`` module is fixed. (`#2248`_).
   Thanks `@pfhayes`_ for the PR.
 
 * junitxml: Fix problematic case where system-out tag occured twice per testcase
@@ -398,6 +426,7 @@ Bug Fixes
 .. _#1934: https://github.com/pytest-dev/pytest/issues/1934
 .. _#1944: https://github.com/pytest-dev/pytest/issues/1944
 .. _#704: https://github.com/pytest-dev/pytest/issues/704
+
 
 
 
