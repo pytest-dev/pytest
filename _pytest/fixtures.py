@@ -826,8 +826,8 @@ class FixtureFunctionMarker(object):
 def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
     """ (return a) decorator to mark a fixture factory function.
 
-    This decorator can be used (with or or without parameters) to define
-    a fixture function.  The name of the fixture function can later be
+    This decorator can be used (with or without parameters) to define a
+    fixture function.  The name of the fixture function can later be
     referenced to cause its invocation ahead of running tests: test
     modules or classes can use the pytest.mark.usefixtures(fixturename)
     marker.  Test functions can directly use fixture names as input
@@ -846,16 +846,16 @@ def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
                 reference is needed to activate the fixture.
 
     :arg ids: list of string ids each corresponding to the params
-       so that they are part of the test id. If no ids are provided
-       they will be generated automatically from the params.
+                so that they are part of the test id. If no ids are provided
+                they will be generated automatically from the params.
 
     :arg name: the name of the fixture. This defaults to the name of the
-               decorated function. If a fixture is used in the same module in
-               which it is defined, the function name of the fixture will be
-               shadowed by the function arg that requests the fixture; one way
-               to resolve this is to name the decorated function
-               ``fixture_<fixturename>`` and then use
-               ``@pytest.fixture(name='<fixturename>')``.
+                decorated function. If a fixture is used in the same module in
+                which it is defined, the function name of the fixture will be
+                shadowed by the function arg that requests the fixture; one way
+                to resolve this is to name the decorated function
+                ``fixture_<fixturename>`` and then use
+                ``@pytest.fixture(name='<fixturename>')``.
 
     Fixtures can optionally provide their values to test functions using a ``yield`` statement,
     instead of ``return``. In this case, the code block after the ``yield`` statement is executed

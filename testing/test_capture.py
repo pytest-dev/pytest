@@ -5,6 +5,7 @@ from __future__ import with_statement
 import pickle
 import os
 import sys
+from io import UnsupportedOperation
 
 import _pytest._code
 import py
@@ -671,7 +672,7 @@ def test_dontreadfrominput():
     pytest.raises(IOError, f.read)
     pytest.raises(IOError, f.readlines)
     pytest.raises(IOError, iter, f)
-    pytest.raises(ValueError, f.fileno)
+    pytest.raises(UnsupportedOperation, f.fileno)
     f.close()  # just for completeness
 
 

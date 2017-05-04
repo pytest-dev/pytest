@@ -45,11 +45,11 @@ Here is the algorithm which finds the rootdir from ``args``:
   matched, it becomes the ini-file and its directory becomes the rootdir.
 
 - if no ini-file was found, use the already determined common ancestor as root
-  directory. This allows to work with pytest in structures that are not part of
+  directory. This allows the use of pytest in structures that are not part of
   a package and don't have any particular ini-file configuration.
 
 If no ``args`` are given, pytest collects test below the current working
-directory and also starts determining the rootdir from there. 
+directory and also starts determining the rootdir from there.
 
 :warning: custom pytest plugin commandline arguments may include a path, as in
     ``pytest --log-output ../../test.log args``. Then ``args`` is mandatory,
@@ -96,6 +96,8 @@ check for ini-files as follows::
 
 .. _`how to change command line options defaults`:
 .. _`adding default options`:
+
+
 
 How to change command line options defaults
 ------------------------------------------------
