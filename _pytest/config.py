@@ -8,7 +8,8 @@ import warnings
 
 import py
 # DON't import pytest here because it causes import cycle troubles
-import sys, os
+import sys
+import os
 import _pytest._code
 import _pytest.hookspec  # the extension point definitions
 import _pytest.assertion
@@ -252,6 +253,9 @@ class PytestPluginManager(PluginManager):
         if ret:
             self.hook.pytest_plugin_registered.call_historic(
                       kwargs=dict(plugin=plugin, manager=self))
+
+            if isinstance(plugin, types.ModuleType):
+                self.consider_module(plugin)
         return ret
 
     def getplugin(self, name):
@@ -396,8 +400,7 @@ class PytestPluginManager(PluginManager):
             self.import_plugin(arg)
 
     def consider_conftest(self, conftestmodule):
-        if self.register(conftestmodule, name=conftestmodule.__file__):
-            self.consider_module(conftestmodule)
+        self.register(conftestmodule, name=conftestmodule.__file__)
 
     def consider_env(self):
         self._import_plugin_specs(os.environ.get("PYTEST_PLUGINS"))
@@ -441,7 +444,6 @@ class PytestPluginManager(PluginManager):
         else:
             mod = sys.modules[importspec]
             self.register(mod, modname)
-            self.consider_module(mod)
 
 
 def _get_plugin_specs_as_list(specs):
