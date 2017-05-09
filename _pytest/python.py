@@ -796,7 +796,15 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         argvalues = unwrapped_argvalues
 
         if not isinstance(argnames, (tuple, list)):
-            argnames = [x.strip() for x in argnames.split(",") if x.strip()]
+            if argnames is Ellipsis:
+                try:
+                    autoargs = len(argval)
+                except TypeError:
+                    autoargs = 1
+                argnames = inspect.getargspec(self.function)[0][:autoargs]
+            else:
+                argnames = [x.strip() for x in argnames.split(",")
+                            if x.strip()]
             if len(argnames) == 1:
                 argvalues = [(val,) for val in argvalues]
         if not argvalues:
