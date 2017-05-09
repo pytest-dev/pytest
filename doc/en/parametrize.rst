@@ -9,17 +9,16 @@
 Parametrizing fixtures and test functions
 ==========================================================================
 
-pytest supports test parametrization in several well-integrated ways:
+pytest enables test parametrization at several levels:
 
-- :py:func:`pytest.fixture` allows to define :ref:`parametrization
-  at the level of fixture functions <fixture-parametrize>`.
+- :py:func:`pytest.fixture` allows one to :ref:`parametrize fixture 
+  functions <fixture-parametrize>`.
 
-* `@pytest.mark.parametrize`_ allows to define parametrization at the
-  function or class level, provides multiple argument/fixture sets
-  for a particular test function or class.
+* `@pytest.mark.parametrize`_ allows one to define multiple sets of 
+  arguments and fixtures at the test function or class.
 
-* `pytest_generate_tests`_ enables implementing your own custom
-  dynamic parametrization scheme or extensions.
+* `pytest_generate_tests`_ allows one to define custom parametrization 
+  schemes or extensions.
 
 .. _parametrizemark:
 .. _`@pytest.mark.parametrize`:
