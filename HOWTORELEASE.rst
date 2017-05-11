@@ -1,18 +1,20 @@
 How to release pytest
 --------------------------------------------
 
-Note: this assumes you have already registered on pypi.
+Note: this assumes you have already registered on PyPI and you have
+`invoke <https://pypi.org/project/invoke/>`_ installed.
 
 #. Check and finalize ``CHANGELOG.rst``.
 
-#. Write ``doc/en/announce/release-VERSION.txt`` and include
-   it in ``doc/en/announce/index.txt``. Run this command to list names of authors involved::
+#. Generate a new release announcement::
 
-        git log $(git describe --abbrev=0 --tags)..HEAD --format='%aN' | sort -u
+     invoke generate.announce VERSION
+
+Feel free to modify the generated files before committing.
 
 #. Regenerate the docs examples using tox::
 
-      tox -e regen
+     tox -e regen
 
 #. At this point, open a PR named ``release-X`` so others can help find regressions or provide suggestions.
 
