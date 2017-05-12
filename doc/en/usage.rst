@@ -177,6 +177,15 @@ integration servers, use this invocation::
 
 to create an XML file at ``path``.
 
+.. versionadded:: 3.1
+
+To set the name of the root test suite xml item, you can configure the ``junit_suite_name`` option in your config file:
+
+.. code-block:: ini
+
+    [pytest]
+    junit_suite_name = my_suite
+
 record_xml_property
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
