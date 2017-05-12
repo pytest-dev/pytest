@@ -616,8 +616,9 @@ def test_dont_configure_on_slaves(tmpdir):
             self.pluginmanager = self
             self.option = self
 
+        getini = lambda self, name: "pytest"
+
         junitprefix = None
-        junitsuitename = "pytest"
         # XXX: shouldnt need tmpdir ?
         xmlpath = str(tmpdir.join('junix.xml'))
         register = gotten.append
@@ -1042,7 +1043,7 @@ def test_set_suite_name(testdir):
         def test_func():
             pass
     """)
-    result, dom = runandparse(testdir, '--junit-suite-name', "my_suite")
+    result, dom = runandparse(testdir, '-o', "junit_suite_name=my_suite")
     assert result.ret == 0
     node = dom.find_first_by_tag("testsuite")
     node.assert_attr(name="my_suite")

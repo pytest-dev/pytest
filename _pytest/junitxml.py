@@ -226,19 +226,14 @@ def pytest_addoption(parser):
         metavar="str",
         default=None,
         help="prepend prefix to classnames in junit-xml output")
-    group.addoption(
-        '--junitsuitename', '--junit-suite-name',
-        action="store",
-        metavar="name",
-        default="pytest",
-        help="set the name attribute of root <testsuite> tag")
+    parser.addini("junit_suite_name", "Test suite name for JUnit report", default="pytest")
 
 
 def pytest_configure(config):
     xmlpath = config.option.xmlpath
     # prevent opening xmllog on slave nodes (xdist)
     if xmlpath and not hasattr(config, 'slaveinput'):
-        config._xml = LogXML(xmlpath, config.option.junitprefix, config.option.junitsuitename)
+        config._xml = LogXML(xmlpath, config.option.junitprefix, config.getini("junit_suite_name"))
         config.pluginmanager.register(config._xml)
 
 
