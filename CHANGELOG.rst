@@ -81,6 +81,8 @@ Changes
 * fix `#2308`_: When using both ``--lf`` and ``--ff``, only the last failed tests are run.
   Thanks `@ojii`_ for the PR.
 
+* fix `#2391`_: consider pytest_plugins on all plugin modules
+  Thansks `@RonnyPfannschmidt`_ for the PR.
 
 Bug Fixes
 ---------
@@ -114,8 +116,9 @@ Bug Fixes
 .. _#2166: https://github.com/pytest-dev/pytest/pull/2166
 .. _#2147: https://github.com/pytest-dev/pytest/issues/2147
 .. _#2208: https://github.com/pytest-dev/pytest/issues/2208
-.. _#2228:  https://github.com/pytest-dev/pytest/issues/2228
+.. _#2228: https://github.com/pytest-dev/pytest/issues/2228
 .. _#2308: https://github.com/pytest-dev/pytest/issues/2308
+.. _#2391: https://github.com/pytest-dev/pytest/issues/2391
 
 
 3.0.8 (unreleased)
