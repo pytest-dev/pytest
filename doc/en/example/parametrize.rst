@@ -130,7 +130,7 @@ objects, they are still using the default pytest representation::
 
     $ pytest test_time.py --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 6 items
     <Module 'test_time.py'>
@@ -181,7 +181,7 @@ this is a fully self-contained example which you can run with::
 
     $ pytest test_scenarios.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
     
@@ -194,7 +194,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
 
     $ pytest --collect-only test_scenarios.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
     <Module 'test_scenarios.py'>
@@ -259,7 +259,7 @@ Let's first see how it looks like at collection time::
 
     $ pytest test_backends.py --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     <Module 'test_backends.py'>
@@ -320,7 +320,7 @@ The result of this test will be successful::
 
     $ pytest test_indirect_list.py --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 items
     <Module 'test_indirect_list.py'>
@@ -397,10 +397,32 @@ is to be run with different sets of arguments for its three arguments:
 Running it results in some skips if we don't have all the python interpreters installed and otherwise runs all combinations (5 interpreters times 5 interpreters times 3 objects to serialize/deserialize)::
 
    . $ pytest -rs -q multipython.py
-   sssssssssssssss.........sss.........sss.........
-   ======= short test summary info ========
-   SKIP [21] $REGENDOC_TMPDIR/CWD/multipython.py:23: 'python2.6' not found
-   27 passed, 21 skipped in 0.12 seconds
+   Traceback (most recent call last):
+     File "$PYTHON_PREFIX/lib/python3.5/site-packages/_pytest/config.py", line 326, in _getconftestmodules
+       return self._path2confmods[path]
+   KeyError: local('$REGENDOC_TMPDIR/CWD/multipython.py')
+   
+   During handling of the above exception, another exception occurred:
+   Traceback (most recent call last):
+     File "$PYTHON_PREFIX/lib/python3.5/site-packages/_pytest/config.py", line 326, in _getconftestmodules
+       return self._path2confmods[path]
+   KeyError: local('$REGENDOC_TMPDIR/CWD')
+   
+   During handling of the above exception, another exception occurred:
+   Traceback (most recent call last):
+     File "$PYTHON_PREFIX/lib/python3.5/site-packages/_pytest/config.py", line 357, in _importconftest
+       return self._conftestpath2mod[conftestpath]
+   KeyError: local('$REGENDOC_TMPDIR/CWD/conftest.py')
+   
+   During handling of the above exception, another exception occurred:
+   Traceback (most recent call last):
+     File "$PYTHON_PREFIX/lib/python3.5/site-packages/_pytest/config.py", line 363, in _importconftest
+       mod = conftestpath.pyimport()
+     File "$PYTHON_PREFIX/lib/python3.5/site-packages/py/_path/local.py", line 680, in pyimport
+       raise self.ImportMismatchError(modname, modfile, self)
+   py._path.local.LocalPath.ImportMismatchError: ('conftest', '$PWD/example/conftest.py', local('$REGENDOC_TMPDIR/CWD/conftest.py'))
+   ERROR: could not load $REGENDOC_TMPDIR/CWD/conftest.py
+   
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------
@@ -447,7 +469,7 @@ If you run this with reporting for skips enabled::
 
     $ pytest -rs test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     

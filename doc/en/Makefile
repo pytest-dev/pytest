@@ -17,7 +17,10 @@ REGENDOC_ARGS := \
 	--normalize "/_{8,} (.*) _{8,}/_______ \1 ________/" \
 	--normalize "/in \d+.\d+ seconds/in 0.12 seconds/" \
 	--normalize "@/tmp/pytest-of-.*/pytest-\d+@PYTEST_TMPDIR@" \
-
+	--normalize "@pytest-(\d+)\\.[^ ,]+@pytest-\1.x.y@" \
+	--normalize "@py-(\d+)\\.[^ ,]+@py-\1.x.y@" \
+	--normalize "@pluggy-(\d+)\\.[.\d,]+@pluggy-\1.x.y@" \
+	--normalize "@Python (\d+)\\.[^ ,]+@Python \1.x.y@" \
 
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest
 

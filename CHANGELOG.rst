@@ -81,6 +81,10 @@ Changes
 * fix `#2308`_: When using both ``--lf`` and ``--ff``, only the last failed tests are run.
   Thanks `@ojii`_ for the PR.
 
+* Replace minor/patch level version numbers in the documentation with placeholders.
+  This significantly reduces change-noise as different contributors regnerate
+  the documentation on different platforms.
+  Thanks `@RonnyPfannschmidt`_ for the PR.
 
 Bug Fixes
 ---------
