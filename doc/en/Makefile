@@ -21,6 +21,7 @@ REGENDOC_ARGS := \
 	--normalize "@(This is pytest version )(\d+)\\.[^ ,]+@\1\2.x.y@" \
 	--normalize "@py-(\d+)\\.[^ ,]+@py-\1.x.y@" \
 	--normalize "@pluggy-(\d+)\\.[.\d,]+@pluggy-\1.x.y@" \
+	--normalize "@hypothesis-(\d+)\\.[.\d,]+@hypothesis-\1.x.y@" \
 	--normalize "@Python (\d+)\\.[^ ,]+@Python \1.x.y@"
 
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest

@@ -223,32 +223,28 @@ Here is a simple test file with the several usages:
 Running it with the report-on-xfail option gives this output::
 
     example $ pytest -rx xfail_demo.py
-    Traceback (most recent call last):
-      File "$PYTHON_PREFIX/lib/python3.5/site-packages/_pytest/config.py", line 326, in _getconftestmodules
-        return self._path2confmods[path]
-    KeyError: local('$REGENDOC_TMPDIR/example/xfail_demo.py')
+    ======= test session starts ========
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR/example, inifile:
+    plugins: hypothesis-3.x.y
+    collected 7 items
     
-    During handling of the above exception, another exception occurred:
-    Traceback (most recent call last):
-      File "$PYTHON_PREFIX/lib/python3.5/site-packages/_pytest/config.py", line 326, in _getconftestmodules
-        return self._path2confmods[path]
-    KeyError: local('$REGENDOC_TMPDIR/example')
+    xfail_demo.py xxxxxxx
+    ======= short test summary info ========
+    XFAIL xfail_demo.py::test_hello
+    XFAIL xfail_demo.py::test_hello2
+      reason: [NOTRUN] 
+    XFAIL xfail_demo.py::test_hello3
+      condition: hasattr(os, 'sep')
+    XFAIL xfail_demo.py::test_hello4
+      bug 110
+    XFAIL xfail_demo.py::test_hello5
+      condition: pytest.__version__[0] != "17"
+    XFAIL xfail_demo.py::test_hello6
+      reason: reason
+    XFAIL xfail_demo.py::test_hello7
     
-    During handling of the above exception, another exception occurred:
-    Traceback (most recent call last):
-      File "$PYTHON_PREFIX/lib/python3.5/site-packages/_pytest/config.py", line 357, in _importconftest
-        return self._conftestpath2mod[conftestpath]
-    KeyError: local('$REGENDOC_TMPDIR/example/conftest.py')
-    
-    During handling of the above exception, another exception occurred:
-    Traceback (most recent call last):
-      File "$PYTHON_PREFIX/lib/python3.5/site-packages/_pytest/config.py", line 363, in _importconftest
-        mod = conftestpath.pyimport()
-      File "$PYTHON_PREFIX/lib/python3.5/site-packages/py/_path/local.py", line 680, in pyimport
-        raise self.ImportMismatchError(modname, modfile, self)
-    py._path.local.LocalPath.ImportMismatchError: ('conftest', '$PWD/example/conftest.py', local('$REGENDOC_TMPDIR/example/conftest.py'))
-    ERROR: could not load $REGENDOC_TMPDIR/example/conftest.py
-    
+    ======= 7 xfailed in 0.12 seconds ========
 
 xfail signature summary
 ~~~~~~~~~~~~~~~~~~~~~~~

@@ -72,6 +72,7 @@ marked ``smtp`` fixture function.  Running the test looks like this::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collected 1 items
     
     test_smtpsimple.py F
@@ -190,6 +191,7 @@ inspect what is going on and can now run the tests::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collected 2 items
     
     test_module.py FF
@@ -525,6 +527,7 @@ Running the above tests results in the following test IDs being used::
    ======= test session starts ========
    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
    rootdir: $REGENDOC_TMPDIR, inifile:
+   plugins: hypothesis-3.x.y
    collected 10 items
    <Module 'test_anothersmtp.py'>
      <Function 'test_showhelo[smtp.gmail.com]'>
@@ -574,9 +577,10 @@ Here we declare an ``app`` fixture which receives the previously defined
 
     $ pytest -v test_appsetup.py
     ======= test session starts ========
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collecting ... collected 2 items
     
     test_appsetup.py::test_smtp_exists[smtp.gmail.com] PASSED
@@ -643,9 +647,10 @@ Let's run the tests in verbose mode and with looking at the print-output::
 
     $ pytest -v -s test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collecting ... collected 8 items
     
     test_module.py::test_0[1]   SETUP otherarg 1

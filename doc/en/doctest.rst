@@ -64,6 +64,7 @@ then you can just invoke ``pytest`` without command line options::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
+    plugins: hypothesis-3.x.y
     collected 1 items
     
     mymodule.py .

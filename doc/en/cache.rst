@@ -83,6 +83,7 @@ If you then run it with ``--lf``::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     run-last-failure: rerun last 2 failures
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collected 50 items
     
     test_50.py FF
@@ -125,6 +126,7 @@ of ``FF`` and dots)::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     run-last-failure: rerun last 2 failures first
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collected 50 items
     
     test_50.py FF................................................
@@ -229,6 +231,7 @@ You can always peek at the content of the cache using the
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     cachedir: $REGENDOC_TMPDIR/.cache
     ------------------------------- cache values -------------------------------
     cache/lastfailed contains:

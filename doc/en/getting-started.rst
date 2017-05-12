@@ -26,7 +26,9 @@ Installation::
 To check your installation has installed the correct version::
 
     $ pytest --version
-    This is pytest version 3.x.y, imported from $PYTHON_PREFIX/lib/python3.5/site-packages/pytest.py
+    This is pytest version 3.x.y, imported from /home/rpfannsc/Projects/pytest-dev/pytest/pytest.py
+    setuptools registered plugins:
+      hypothesis-3.x.y at $PYTHON_PREFIX/lib/python3.5/site-packages/hypothesis/extra/pytestplugin.py
 
 .. _`simpletest`:
 
@@ -48,6 +50,7 @@ That's it. You can execute the test function now::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
+    plugins: hypothesis-3.x.y
     collected 1 items
     
     test_sample.py F
