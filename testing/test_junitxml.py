@@ -616,7 +616,8 @@ def test_dont_configure_on_slaves(tmpdir):
             self.pluginmanager = self
             self.option = self
 
-        getini = lambda self, name: "pytest"
+        def getini(self, name):
+            return "pytest"
 
         junitprefix = None
         # XXX: shouldnt need tmpdir ?
@@ -1036,20 +1037,16 @@ def test_url_property(testdir):
     assert (test_case.getAttribute('url') == test_url), "The URL did not get written to the xml"
 
 
-def test_set_suite_name(testdir):
-    testdir.makepyfile("""
-        import pytest
-
-        def test_func():
-            pass
-    """)
-    result, dom = runandparse(testdir, '-o', "junit_suite_name=my_suite")
-    assert result.ret == 0
-    node = dom.find_first_by_tag("testsuite")
-    node.assert_attr(name="my_suite")
-
-
-def test_set_suite_name_default(testdir):
+@pytest.mark.parametrize('suite_name', ['my_suite', ''])
+def test_set_suite_name(testdir, suite_name):
+    if suite_name:
+        testdir.makeini("""
+            [pytest]
+            junit_suite_name={0}
+        """.format(suite_name))
+        expected = suite_name
+    else:
+        expected = 'pytest'
     testdir.makepyfile("""
         import pytest
 
@@ -1059,4 +1056,5 @@ def test_set_suite_name_default(testdir):
     result, dom = runandparse(testdir)
     assert result.ret == 0
     node = dom.find_first_by_tag("testsuite")
-    node.assert_attr(name="pytest")
+    node.assert_attr(name=expected)
+
