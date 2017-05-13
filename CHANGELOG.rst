@@ -5,6 +5,8 @@
 New Features
 ------------
 
+* fix `#533`_: Added ``junit_suite_name`` ini option to specify root `<testsuite>` name for JUnit XML reports
+
 * Added an ini option ``doctest_encoding`` to specify which encoding to use for doctest files.
   Thanks `@wheerd`_ for the PR (`#2101`_).
 
@@ -105,6 +107,7 @@ Bug Fixes
 .. _@ojii: https://github.com/ojii
 
 
+.. _#533: https://github.com/pytest-dev/pytest/issues/533
 .. _#1407: https://github.com/pytest-dev/pytest/issues/1407
 .. _#1512: https://github.com/pytest-dev/pytest/issues/1512
 .. _#1821: https://github.com/pytest-dev/pytest/issues/1821

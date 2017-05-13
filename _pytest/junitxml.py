@@ -226,13 +226,14 @@ def pytest_addoption(parser):
         metavar="str",
         default=None,
         help="prepend prefix to classnames in junit-xml output")
+    parser.addini("junit_suite_name", "Test suite name for JUnit report", default="pytest")
 
 
 def pytest_configure(config):
     xmlpath = config.option.xmlpath
     # prevent opening xmllog on slave nodes (xdist)
     if xmlpath and not hasattr(config, 'slaveinput'):
-        config._xml = LogXML(xmlpath, config.option.junitprefix)
+        config._xml = LogXML(xmlpath, config.option.junitprefix, config.getini("junit_suite_name"))
         config.pluginmanager.register(config._xml)
 
 
@@ -259,10 +260,11 @@ def mangle_test_address(address):
 
 
 class LogXML(object):
-    def __init__(self, logfile, prefix):
+    def __init__(self, logfile, prefix, suite_name="pytest"):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
         self.prefix = prefix
+        self.suite_name = suite_name
         self.stats = dict.fromkeys([
             'error',
             'passed',
@@ -422,7 +424,7 @@ class LogXML(object):
         logfile.write(Junit.testsuite(
             self._get_global_properties_node(),
             [x.to_xml() for x in self.node_reporters_ordered],
-            name="pytest",
+            name=self.suite_name,
             errors=self.stats['error'],
             failures=self.stats['failure'],
             skips=self.stats['skipped'],
