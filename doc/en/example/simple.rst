@@ -115,7 +115,6 @@ directory with the above conftest.py::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 0 items
     
     ======= no tests ran in 0.12 seconds ========
@@ -167,7 +166,6 @@ and when running it will see a skipped "slow" test::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 2 items
     
     test_module.py .s
@@ -182,7 +180,6 @@ Or run it including the ``slow`` marked test::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 2 items
     
     test_module.py ..
@@ -308,7 +305,6 @@ which will add the string to the test header accordingly::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     project deps: mylib-1.1
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 0 items
     
     ======= no tests ran in 0.12 seconds ========
@@ -331,12 +327,11 @@ which will add info only when run with "--v"::
 
     $ pytest -v
     ======= test session starts ========
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     info1: did you know that ...
     did you?
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collecting ... collected 0 items
     
     ======= no tests ran in 0.12 seconds ========
@@ -347,7 +342,6 @@ and nothing when run plainly::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 0 items
     
     ======= no tests ran in 0.12 seconds ========
@@ -382,7 +376,6 @@ Now we can profile which test functions execute the slowest::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 3 items
     
     test_some_are_slow.py ...
@@ -390,7 +383,7 @@ Now we can profile which test functions execute the slowest::
     ======= slowest 3 test durations ========
     0.20s call     test_some_are_slow.py::test_funcslow2
     0.10s call     test_some_are_slow.py::test_funcslow1
-    0.00s teardown test_some_are_slow.py::test_funcslow2
+    0.00s setup    test_some_are_slow.py::test_funcfast
     ======= 3 passed in 0.12 seconds ========
 
 incremental testing - test steps
@@ -449,7 +442,6 @@ If we run this::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 4 items
     
     test_step.py .Fx.
@@ -529,7 +521,6 @@ We can run this::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 7 items
     
     test_step.py .Fx.
@@ -638,7 +629,6 @@ and run them::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 2 items
     
     test_module.py FF
@@ -733,7 +723,6 @@ and run it::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 3 items
     
     test_module.py Esetting up a test failed! test_module.py::test_setup_fails

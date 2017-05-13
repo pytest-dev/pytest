@@ -24,7 +24,6 @@ Running pytest now produces this output::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 1 items
     
     test_show_warnings.py .

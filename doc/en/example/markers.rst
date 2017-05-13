@@ -31,10 +31,9 @@ You can then restrict a test run to only run tests marked with ``webtest``::
 
     $ pytest -v -m webtest
     ======= test session starts ========
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collecting ... collected 4 items
     
     test_server.py::test_send_http PASSED
@@ -46,10 +45,9 @@ Or the inverse, running all tests except the webtest ones::
 
     $ pytest -v -m "not webtest"
     ======= test session starts ========
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collecting ... collected 4 items
     
     test_server.py::test_something_quick PASSED
@@ -68,10 +66,9 @@ tests based on their module, class, method, or function name::
 
     $ pytest -v test_server.py::TestClass::test_method
     ======= test session starts ========
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collecting ... collected 5 items
     
     test_server.py::TestClass::test_method PASSED
@@ -82,10 +79,9 @@ You can also select on the class::
 
     $ pytest -v test_server.py::TestClass
     ======= test session starts ========
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collecting ... collected 4 items
     
     test_server.py::TestClass::test_method PASSED
@@ -96,10 +92,9 @@ Or select multiple nodes::
 
   $ pytest -v test_server.py::TestClass test_server.py::test_send_http
   ======= test session starts ========
-  platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3
+  platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
   cachedir: .cache
   rootdir: $REGENDOC_TMPDIR, inifile:
-  plugins: hypothesis-3.x.y
   collecting ... collected 8 items
   
   test_server.py::TestClass::test_method PASSED
@@ -135,10 +130,9 @@ select tests based on their names::
 
     $ pytest -v -k http  # running with the above defined example module
     ======= test session starts ========
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collecting ... collected 4 items
     
     test_server.py::test_send_http PASSED
@@ -150,10 +144,9 @@ And you can also run all tests except the ones that match the keyword::
 
     $ pytest -k "not send_http" -v
     ======= test session starts ========
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collecting ... collected 4 items
     
     test_server.py::test_something_quick PASSED
@@ -167,10 +160,9 @@ Or to select "http" and "quick" tests::
 
     $ pytest -k "http or quick" -v
     ======= test session starts ========
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collecting ... collected 4 items
     
     test_server.py::test_send_http PASSED
@@ -208,8 +200,6 @@ You can ask which markers exist for your test suite - the list includes our just
 
     $ pytest --markers
     @pytest.mark.webtest: mark a test as a webtest.
-    
-    @pytest.mark.hypothesis: Tests which use hypothesis.
     
     @pytest.mark.skip(reason=None): skip the given test function with an optional reason. Example: skip(reason="no way of currently testing this") skips the test.
     
@@ -364,7 +354,6 @@ the test needs::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 1 items
     
     test_someenv.py s
@@ -377,7 +366,6 @@ and here is one that specifies exactly the environment needed::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 1 items
     
     test_someenv.py .
@@ -388,8 +376,6 @@ The ``--markers`` option always gives you a list of available markers::
 
     $ pytest --markers
     @pytest.mark.env(name): mark test to run only on named environment
-    
-    @pytest.mark.hypothesis: Tests which use hypothesis.
     
     @pytest.mark.skip(reason=None): skip the given test function with an optional reason. Example: skip(reason="no way of currently testing this") skips the test.
     
@@ -501,7 +487,6 @@ then you will see two tests skipped and two executed tests as expected::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 4 items
     
     test_plat.py s.s.
@@ -516,7 +501,6 @@ Note that if you specify a platform via the marker-command line option like this
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    plugins: hypothesis-3.x.y
     collected 4 items
     
     test_plat.py .
@@ -569,7 +553,6 @@ We can now use the ``-m option`` to select one set::
   ======= test session starts ========
   platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
   rootdir: $REGENDOC_TMPDIR, inifile:
-  plugins: hypothesis-3.x.y
   collected 4 items
   
   test_module.py FF
@@ -592,7 +575,6 @@ or to select both "event" and "interface" tests::
   ======= test session starts ========
   platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
   rootdir: $REGENDOC_TMPDIR, inifile:
-  plugins: hypothesis-3.x.y
   collected 4 items
   
   test_module.py FFF

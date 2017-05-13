@@ -119,7 +119,6 @@ then the test collection looks like this::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
-    plugins: hypothesis-3.x.y
     collected 2 items
     <Module 'check_myapp.py'>
       <Class 'CheckMyApp'>
@@ -166,7 +165,6 @@ You can always peek at the collection tree without running tests like this::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
-    plugins: hypothesis-3.x.y
     collected 3 items
     <Module 'CWD/pythoncollection.py'>
       <Function 'test_function'>
@@ -234,7 +232,6 @@ will be left out::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
-    plugins: hypothesis-3.x.y
     collected 0 items
     
     ======= no tests ran in 0.12 seconds ========
