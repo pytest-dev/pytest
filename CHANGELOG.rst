@@ -5,6 +5,8 @@
 New Features
 ------------
 
+* fix `#533`_: Added ``junit_suite_name`` ini option to specify root `<testsuite>` name for JUnit XML reports
+
 * Added an ini option ``doctest_encoding`` to specify which encoding to use for doctest files.
   Thanks `@wheerd`_ for the PR (`#2101`_).
 
@@ -86,6 +88,10 @@ Changes
   the documentation on different platforms.
   Thanks `@RonnyPfannschmidt`_ for the PR.
 
+* fix `#2391`_: consider pytest_plugins on all plugin modules
+  Thansks `@RonnyPfannschmidt`_ for the PR.
+
+
 Bug Fixes
 ---------
 
@@ -107,6 +113,7 @@ Bug Fixes
 .. _@ojii: https://github.com/ojii
 
 
+.. _#533: https://github.com/pytest-dev/pytest/issues/533
 .. _#1407: https://github.com/pytest-dev/pytest/issues/1407
 .. _#1512: https://github.com/pytest-dev/pytest/issues/1512
 .. _#1821: https://github.com/pytest-dev/pytest/issues/1821
@@ -118,8 +125,9 @@ Bug Fixes
 .. _#2166: https://github.com/pytest-dev/pytest/pull/2166
 .. _#2147: https://github.com/pytest-dev/pytest/issues/2147
 .. _#2208: https://github.com/pytest-dev/pytest/issues/2208
-.. _#2228:  https://github.com/pytest-dev/pytest/issues/2228
+.. _#2228: https://github.com/pytest-dev/pytest/issues/2228
 .. _#2308: https://github.com/pytest-dev/pytest/issues/2308
+.. _#2391: https://github.com/pytest-dev/pytest/issues/2391
 
 
 3.0.8 (unreleased)
