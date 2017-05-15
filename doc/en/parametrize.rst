@@ -55,17 +55,17 @@ them in turn::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.3, py-1.4.31, pluggy-0.4.0
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 3 items
-
+    
     test_expectation.py ..F
-
+    
     ======= FAILURES ========
     _______ test_eval[6*9-42] ________
-
+    
     test_input = '6*9', expected = 42
-
+    
         @pytest.mark.parametrize("test_input,expected", [
             ("3+5", 8),
             ("2+4", 6),
@@ -73,9 +73,9 @@ them in turn::
         ])
         def test_eval(test_input, expected):
     >       assert eval(test_input) == expected
-    E       assert 54 == 42
+    E       AssertionError: assert 54 == 42
     E        +  where 54 = eval('6*9')
-
+    
     test_expectation.py:8: AssertionError
     ======= 1 failed, 2 passed in 0.12 seconds ========
 
@@ -124,12 +124,12 @@ Let's run this::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.3, py-1.4.31, pluggy-0.4.0
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 3 items
-
+    
     test_expectation.py ..x
-
+    
     ======= 2 passed, 1 xfailed in 0.12 seconds ========
 
 The one parameter set which caused a failure previously now
@@ -202,15 +202,15 @@ Let's also run with a stringinput that will lead to a failing test::
     F
     ======= FAILURES ========
     _______ test_valid_string[!] ________
-
+    
     stringinput = '!'
-
+    
         def test_valid_string(stringinput):
     >       assert stringinput.isalpha()
-    E       assert False
+    E       AssertionError: assert False
     E        +  where False = <built-in method isalpha of str object at 0xdeadbeef>()
     E        +    where <built-in method isalpha of str object at 0xdeadbeef> = '!'.isalpha
-
+    
     test_strings.py:3: AssertionError
     1 failed in 0.12 seconds
 

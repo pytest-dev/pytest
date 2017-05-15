@@ -70,7 +70,7 @@ marked ``smtp`` fixture function.  Running the test looks like this::
 
     $ pytest test_smtpsimple.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 items
     
@@ -188,7 +188,7 @@ inspect what is going on and can now run the tests::
 
     $ pytest test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     
@@ -523,7 +523,7 @@ Running the above tests results in the following test IDs being used::
 
    $ pytest --collect-only
    ======= test session starts ========
-   platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+   platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
    rootdir: $REGENDOC_TMPDIR, inifile:
    collected 10 items
    <Module 'test_anothersmtp.py'>
@@ -574,7 +574,7 @@ Here we declare an ``app`` fixture which receives the previously defined
 
     $ pytest -v test_appsetup.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 2 items
@@ -643,7 +643,7 @@ Let's run the tests in verbose mode and with looking at the print-output::
 
     $ pytest -v -s test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 8 items

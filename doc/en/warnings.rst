@@ -21,35 +21,28 @@ and displays them at the end of the session::
 Running pytest now produces this output::
 
     $ pytest test_show_warnings.py
-    .
-    ============================== warnings summary ===============================
-    test_show_warning.py::test_one
-      C:\pytest\.tmp\test_show_warning.py:4: DeprecationWarning: this function is deprecated, use another_function()
+    ======= test session starts ========
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 1 items
+    
+    test_show_warnings.py .
+    
+    ======= warnings summary ========
+    test_show_warnings.py::test_one
+      $REGENDOC_TMPDIR/test_show_warnings.py:4: DeprecationWarning: this function is deprecated, use another_function()
         warnings.warn("this function is deprecated, use another_function()", DeprecationWarning)
-
+    
     -- Docs: http://doc.pytest.org/en/latest/warnings.html
-    1 passed, 1 warnings in 0.01 seconds
+    ======= 1 passed, 1 warnings in 0.12 seconds ========
 
 The ``-W`` flag can be passed to control which warnings will be displayed or even turn
 them into errors::
 
     $ pytest -q test_show_warning.py -W error::DeprecationWarning
-    F
-    ================================== FAILURES ===================================
-    __________________________________ test_one ___________________________________
-
-        def test_one():
-    >       assert deprecated_function() == 1
-
-    test_show_warning.py:8:
-    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-
-        def deprecated_function():
-    >       warnings.warn("this function is deprecated, use another_function()", DeprecationWarning)
-    E       DeprecationWarning: this function is deprecated, use another_function()
-
-    test_show_warning.py:4: DeprecationWarning
-    1 failed in 0.02 seconds
+    
+    no tests ran in 0.12 seconds
+    ERROR: file not found: test_show_warning.py
 
 The same option can be set in the ``pytest.ini`` file using the ``filterwarnings`` ini option.
 For example, the configuration below will ignore all deprecation warnings, but will transform
