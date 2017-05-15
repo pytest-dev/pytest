@@ -1,27 +1,28 @@
 How to release pytest
 --------------------------------------------
 
-Note: this assumes you have already registered on PyPI and you have
-`invoke <https://pypi.org/project/invoke/>`_ installed.
+.. important::
 
-#. Check and finalize ``CHANGELOG.rst``.
+    pytest releases must be prepared on **linux** because the docs and examples expect
+    to be executed in that platform.
 
-#. Generate a new release announcement::
+#. Install development dependencies in a virtual environment with::
 
-     invoke generate.announce VERSION
+    pip3 install -r tasks/requirements.txt
 
-Feel free to modify the generated files before committing.
+#. Create a branch ``release-X.Y.Z`` with the version for the release. Make sure it is up to date
+   with the latest ``master`` (for patch releases) and with the latest ``features`` merged with
+   the latest ``master`` (for minor releases). Ensure your are in a clean work tree.
 
-#. Regenerate the docs examples using tox::
+#. Check and finalize ``CHANGELOG.rst`` (will be automated soon).
 
-     tox -e regen
+#. Execute to automatically generate docs, announcements and upload a package to
+   your ``devpi`` staging server::
 
-#. At this point, open a PR named ``release-X`` so others can help find regressions or provide suggestions.
+     invoke generate.pre_release <VERSION> <DEVPI USER> --password <DEVPI PASSWORD>
 
-#. Use devpi for uploading a release tarball to a staging area::
-
-     devpi use https://devpi.net/USER/dev
-     devpi upload --formats sdist,bdist_wheel
+   If ``--password`` is not given, it is assumed the user is already logged in. If you don't have
+   an account, please ask for one!
 
 #. Run from multiple machines::
 
