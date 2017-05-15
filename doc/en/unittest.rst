@@ -171,7 +171,8 @@ creation of a per-test temporary directory::
             tmpdir.join("samplefile.ini").write("# testdata")
 
         def test_method(self):
-            s = open("samplefile.ini").read() 
+            with open("samplefile.ini") as f:
+                s = f.read()
             assert "testdata" in s
 
 Due to the ``autouse`` flag the ``initdir`` fixture function will be

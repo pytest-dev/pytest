@@ -39,7 +39,7 @@ Running pytest now produces this output::
 The ``-W`` flag can be passed to control which warnings will be displayed or even turn
 them into errors::
 
-    $ pytest -q test_show_warning.py -W error::DeprecationWarning
+    $ pytest -q test_show_warnings.py -W error::DeprecationWarning
     
     no tests ran in 0.12 seconds
     ERROR: file not found: test_show_warning.py
