@@ -397,8 +397,10 @@ is to be run with different sets of arguments for its three arguments:
 Running it results in some skips if we don't have all the python interpreters installed and otherwise runs all combinations (5 interpreters times 5 interpreters times 3 objects to serialize/deserialize)::
 
    . $ pytest -rs -q multipython.py
-   ................................................
-   48 passed in 0.12 seconds
+   sssssssssssssss.........sss.........sss.........
+   ======= short test summary info ========
+   SKIP [21] $REGENDOC_TMPDIR/CWD/multipython.py:23: 'python2.6' not found
+   27 passed, 21 skipped in 0.12 seconds
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------

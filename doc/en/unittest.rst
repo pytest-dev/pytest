@@ -184,13 +184,7 @@ Running this test module ...::
 
     $ pytest -q test_unittest_cleandir.py
     .
-    ======= warnings summary ========
-    test_unittest_cleandir.py::MyTest::test_method
-      $REGENDOC_TMPDIR/test_unittest_cleandir.py:11: ResourceWarning: unclosed file <_io.TextIOWrapper name='samplefile.ini' mode='r' encoding='UTF-8'>
-        s = open("samplefile.ini").read()
-    
-    -- Docs: http://doc.pytest.org/en/latest/warnings.html
-    1 passed, 1 warnings in 0.12 seconds
+    1 passed in 0.12 seconds
 
 ... gives us one passed test because the ``initdir`` fixture function
 was executed ahead of the ``test_method``.

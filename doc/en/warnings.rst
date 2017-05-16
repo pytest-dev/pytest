@@ -40,9 +40,22 @@ The ``-W`` flag can be passed to control which warnings will be displayed or eve
 them into errors::
 
     $ pytest -q test_show_warnings.py -W error::DeprecationWarning
+    F
+    ======= FAILURES ========
+    _______ test_one ________
     
-    no tests ran in 0.12 seconds
-    ERROR: file not found: test_show_warning.py
+        def test_one():
+    >       assert deprecated_function() == 1
+    
+    test_show_warnings.py:8: 
+    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    
+        def deprecated_function():
+    >       warnings.warn("this function is deprecated, use another_function()", DeprecationWarning)
+    E       DeprecationWarning: this function is deprecated, use another_function()
+    
+    test_show_warnings.py:4: DeprecationWarning
+    1 failed in 0.12 seconds
 
 The same option can be set in the ``pytest.ini`` file using the ``filterwarnings`` ini option.
 For example, the configuration below will ignore all deprecation warnings, but will transform
