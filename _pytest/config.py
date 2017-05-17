@@ -63,7 +63,7 @@ def main(args=None, plugins=None):
             sys.stderr.write("ERROR: %s\n" %(msg,))
         return 4
 
-class cmdline(object):  # compatibility namespace
+class cmdline:  # compatibility namespace
     main = staticmethod(main)
 
 
@@ -464,7 +464,7 @@ def _get_plugin_specs_as_list(specs):
     return []
 
 
-class Parser(object):
+class Parser:
     """ Parser for command line arguments and ini-file values.
 
     :ivar extra_info: dict of generic param -> value to display in case
@@ -599,7 +599,7 @@ class ArgumentError(Exception):
             return self.msg
 
 
-class Argument(object):
+class Argument:
     """class that mimics the necessary behaviour of optparse.Option
 
     its currently a least effort implementation
@@ -729,7 +729,7 @@ class Argument(object):
         return 'Argument({0})'.format(', '.join(args))
 
 
-class OptionGroup(object):
+class OptionGroup:
     def __init__(self, name, description="", parser=None):
         self.name = name
         self.description = description
@@ -855,7 +855,7 @@ class CmdOptions(object):
     def copy(self):
         return CmdOptions(self.__dict__)
 
-class Notset(object):
+class Notset:
     def __repr__(self):
         return "<NOTSET>"
 

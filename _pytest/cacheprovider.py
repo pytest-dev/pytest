@@ -87,7 +87,7 @@ class Cache(object):
                 json.dump(value, f, indent=2, sort_keys=True)
 
 
-class LFPlugin(object):
+class LFPlugin:
     """ Plugin which implements the --lf (run last-failing) option """
     def __init__(self, config):
         self.config = config

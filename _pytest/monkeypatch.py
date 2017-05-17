@@ -89,7 +89,7 @@ def derive_importpath(import_path, raising):
     return attr, target
 
 
-class Notset(object):
+class Notset:
     def __repr__(self):
         return "<notset>"
 
@@ -97,7 +97,7 @@ class Notset(object):
 notset = Notset()
 
 
-class MonkeyPatch(object):
+class MonkeyPatch:
     """ Object returned by the ``monkeypatch`` fixture keeping a record of setattr/item/env/syspath changes.
     """
 

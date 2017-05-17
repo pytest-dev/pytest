@@ -33,9 +33,6 @@ Changes
   this is to prepare the removal of preloadconfig in pytest 4.0
   Thanks to `@RonnyPfannschmidt`_ for the PR.
 
-* Old-style classes have been changed to new-style classes in order to improve
-  compatibility with Python 2. Thanks to `@MichalTHEDUDE`_ and `@mandeep`_ for the PR (`#2147`_).
-
 * It is now possible to skip test classes from being collected by setting a
   ``__test__`` attribute to ``False`` in the class body (`#2007`_). Thanks
   to `@syre`_ for the report and `@lwm`_ for the PR.
@@ -123,7 +120,6 @@ Bug Fixes
 .. _#2013: https://github.com/pytest-dev/pytest/issues/2013
 .. _#2101: https://github.com/pytest-dev/pytest/pull/2101
 .. _#2166: https://github.com/pytest-dev/pytest/pull/2166
-.. _#2147: https://github.com/pytest-dev/pytest/issues/2147
 .. _#2208: https://github.com/pytest-dev/pytest/issues/2208
 .. _#2228: https://github.com/pytest-dev/pytest/issues/2228
 .. _#2308: https://github.com/pytest-dev/pytest/issues/2308
