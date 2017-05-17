@@ -2,11 +2,12 @@
 Talks and Tutorials
 ==========================
 
-.. sidebar:: Next Open Trainings
+..
+   .. sidebar:: Next Open Trainings
 
-   `Professional Testing with Python
-   <http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_,
-   26-28 April 2017, Leipzig, Germany.
+      `Professional Testing with Python
+      <http://www.python-academy.com/courses/specialtopics/python_course_testing.html>`_,
+      26-28 April 2017, Leipzig, Germany.
 
 .. _`funcargs`: funcargs.html
 
