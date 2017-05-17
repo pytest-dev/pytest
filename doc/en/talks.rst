@@ -10,6 +10,12 @@ Talks and Tutorials
 
 .. _`funcargs`: funcargs.html
 
+Books
+---------------------------------------------
+
+- `Python Testing with pytest, by Brian Okken (2017)
+  <https://pragprog.com/book/bopytest/python-testing-with-pytest>`_.
+
 Talks and blog postings
 ---------------------------------------------
 
