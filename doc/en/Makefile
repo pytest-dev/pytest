@@ -41,7 +41,7 @@ clean:
 	-rm -rf $(BUILDDIR)/*
 
 regen:
-	PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPT=-p\	 no:hypothesis COLUMNS=76 regendoc --update *.rst */*.rst ${REGENDOC_ARGS}
+	PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPT=-pno:hypothesis COLUMNS=76 regendoc --update *.rst */*.rst ${REGENDOC_ARGS}
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html

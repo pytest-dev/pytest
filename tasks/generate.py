@@ -1,5 +1,6 @@
+import os
 from pathlib import Path
-from subprocess import check_output
+from subprocess import check_output, check_call
 
 import invoke
 
@@ -9,11 +10,7 @@ import invoke
 })
 def announce(ctx, version):
     """Generates a new release announcement entry in the docs."""
-    print("[generate.announce] Generating Announce")
-
     # Get our list of authors
-    print("[generate.announce] Collecting author names")
-
     stdout = check_output(["git", "describe", "--abbrev=0", '--tags'])
     stdout = stdout.decode('utf-8')
     last_version = stdout.strip()
@@ -29,12 +26,12 @@ def announce(ctx, version):
     contributors_text = '\n'.join('* {}'.format(name) for name in sorted(contributors)) + '\n'
     text = template_text.format(version=version, contributors=contributors_text)
 
-    target = Path(__file__).joinpath('../../doc/en/announce/release-{}.rst'.format(version))
+    target = Path(__file__).parent.joinpath('../doc/en/announce/release-{}.rst'.format(version))
     target.write_text(text, encoding='UTF-8')
     print("[generate.announce] Generated {}".format(target.name))
 
     # Update index with the new release entry
-    index_path = Path(__file__).joinpath('../../doc/en/announce/index.rst')
+    index_path = Path(__file__).parent.joinpath('../doc/en/announce/index.rst')
     lines = index_path.read_text(encoding='UTF-8').splitlines()
     indent = '   '
     for index, line in enumerate(lines):
@@ -48,9 +45,68 @@ def announce(ctx, version):
                 print("[generate.announce] Skip {} (already contains release)".format(index_path.name))
             break
 
+    check_call(['git', 'add', str(target)])
+
+
+@invoke.task()
+def regen(ctx):
+    """Call regendoc tool to update examples and pytest output in the docs."""
+    print("[generate.regen] Updating docs")
+    check_call(['tox', '-e', 'regen'])
+
+
+@invoke.task()
+def make_tag(ctx, version):
+    """Create a new (local) tag for the release, only if the repository is clean."""
+    from git import Repo
+
+    repo = Repo('.')
+    if repo.is_dirty():
+        print('Current repository is dirty. Please commit any changes and try again.')
+        raise invoke.Exit(code=2)
+
+    tag_names = [x.name for x in repo.tags]
+    if version in tag_names:
+        print("[generate.make_tag] Delete existing tag {}".format(version))
+        repo.delete_tag(version)
+
+    print("[generate.make_tag] Create tag {}".format(version))
+    repo.create_tag(version)
+
+
+@invoke.task()
+def devpi_upload(ctx, version, user, password=None):
+    """Creates and uploads a package to devpi for testing."""
+    if password:
+        print("[generate.devpi_upload] devpi login {}".format(user))
+        check_call(['devpi', 'login', user, '--password', password])
+
+    check_call(['devpi', 'use', 'https://devpi.net/{}/dev'.format(user)])
+    
+    env = os.environ.copy()
+    env['SETUPTOOLS_SCM_PRETEND_VERSION'] = version
+    check_call(['devpi', 'upload', '--formats', 'sdist,bdist_wheel'], env=env)
+    print("[generate.devpi_upload] package uploaded")
+
+
+@invoke.task(help={
+    'version': 'version being released',
+    'user': 'name of the user on devpi to stage the generated package',
+    'password': 'user password on devpi to stage the generated package '
+                '(if not given assumed logged in)',
+})
+def pre_release(ctx, version, user, password=None):
+    """Generates new docs, release announcements and uploads a new release to devpi for testing."""    
+    announce(ctx, version)
+    regen(ctx)
+
+    msg = 'Preparing release version {}'.format(version)
+    check_call(['git', 'commit', '-a', '-m', msg])
+    
+    make_tag(ctx, version)
+
+    devpi_upload(ctx, version=version, user=user, password=password)
+    
     print()
-    print('Please review the generated files and commit with:')
-    print('    git commit -a -m "Generate new release announcement for {}'.format(version))
-
-
+    print('[generate.pre_release] Please push your branch and open a PR.')
 
