@@ -1,16 +1,18 @@
-3.1.0.dev (unreleased)
-======================
+3.1.0 (2017-05-20)
+==================
 
 
 New Features
 ------------
 
-* fix `#533`_: Added ``junit_suite_name`` ini option to specify root `<testsuite>` name for JUnit XML reports
+* The ``pytest-warnings`` plugin has been integrated into the core, so now ``pytest`` automatically
+  captures and displays warnings at the end of the test session.
+  Thanks `@nicoddemus`_ for the PR.
+
+* Added ``junit_suite_name`` ini option to specify root `<testsuite>` name for JUnit XML reports (`#533`_).
 
 * Added an ini option ``doctest_encoding`` to specify which encoding to use for doctest files.
   Thanks `@wheerd`_ for the PR (`#2101`_).
-
-* pytest now warns when a callable ids raises in a parametrized test. Thanks `@fogo`_ for the PR.
 
 * ``pytest.warns`` now checks for subclass relationship rather than
   class equality. Thanks `@lesteve`_ for the PR (`#2166`_)
@@ -21,10 +23,6 @@ New Features
 * ``pytest.param`` can be used to declare test parameter sets with marks and test ids.
   Thanks `@RonnyPfannschmidt`_ for the PR.
 
-* The ``pytest-warnings`` plugin has been integrated into the core, so now ``pytest`` automatically
-  captures and displays warnings at the end of the test session.
-  Thanks `@nicoddemus`_ for the PR.
-
 
 Changes
 -------
@@ -32,6 +30,8 @@ Changes
 * remove all internal uses of pytest_namespace hooks,
   this is to prepare the removal of preloadconfig in pytest 4.0
   Thanks to `@RonnyPfannschmidt`_ for the PR.
+
+* pytest now warns when a callable ids raises in a parametrized test. Thanks `@fogo`_ for the PR.
 
 * It is now possible to skip test classes from being collected by setting a
   ``__test__`` attribute to ``False`` in the class body (`#2007`_). Thanks
@@ -96,39 +96,6 @@ Bug Fixes
   while using ``capsys`` fixture in python 3. (`#1407`_).
   Thanks to `@asottile`_.
 
-
-.. _@davidszotten: https://github.com/davidszotten
-.. _@fushi: https://github.com/fushi
-.. _@mattduck: https://github.com/mattduck
-.. _@wheerd: https://github.com/wheerd
-.. _@fogo: https://github.com/fogo
-.. _@mandeep: https://github.com/mandeep
-.. _@MichalTHEDUDE: https://github.com/MichalTHEDUDE
-.. _@reutsharabani: https://github.com/reutsharabani
-.. _@unsignedint: https://github.com/unsignedint
-.. _@Kriechi: https://github.com/Kriechi
-.. _@ojii: https://github.com/ojii
-
-
-.. _#533: https://github.com/pytest-dev/pytest/issues/533
-.. _#1407: https://github.com/pytest-dev/pytest/issues/1407
-.. _#1512: https://github.com/pytest-dev/pytest/issues/1512
-.. _#1821: https://github.com/pytest-dev/pytest/issues/1821
-.. _#1874: https://github.com/pytest-dev/pytest/pull/1874
-.. _#1952: https://github.com/pytest-dev/pytest/pull/1952
-.. _#2007: https://github.com/pytest-dev/pytest/issues/2007
-.. _#2013: https://github.com/pytest-dev/pytest/issues/2013
-.. _#2101: https://github.com/pytest-dev/pytest/pull/2101
-.. _#2166: https://github.com/pytest-dev/pytest/pull/2166
-.. _#2208: https://github.com/pytest-dev/pytest/issues/2208
-.. _#2228: https://github.com/pytest-dev/pytest/issues/2228
-.. _#2308: https://github.com/pytest-dev/pytest/issues/2308
-.. _#2391: https://github.com/pytest-dev/pytest/issues/2391
-
-
-3.0.8 (unreleased)
-==================
-
 * Change capture.py's ``DontReadFromInput`` class to throw ``io.UnsupportedOperation`` errors rather
   than ValueErrors in the ``fileno`` method (`#2276`_).
   Thanks `@metasyn`_ for the PR.
@@ -136,7 +103,7 @@ Bug Fixes
 * Fix exception formatting while importing modules when the exception message
   contains non-ascii characters (`#2336`_).
   Thanks `@fabioz`_ for the report and `@nicoddemus`_ for the PR.
-  
+
 * Added documentation related to issue (`#1937`_)
   Thanks `@skylarjhdownes`_ for the PR.
 
@@ -146,26 +113,45 @@ Bug Fixes
 * Show the correct error message when collect "parametrize" func with wrong args (`#2383`_).
   Thanks `@The-Compiler`_ for the report and `@robin0371`_ for the PR.
 
-*
 
-*
-
-*
-
-
-  
-.. _@skylarjhdownes: https://github.com/skylarjhdownes
+.. _@davidszotten: https://github.com/davidszotten
 .. _@fabioz: https://github.com/fabioz
-.. _@metasyn: https://github.com/metasyn
+.. _@fogo: https://github.com/fogo
+.. _@fushi: https://github.com/fushi
 .. _@Kodiologist: https://github.com/Kodiologist
+.. _@Kriechi: https://github.com/Kriechi
+.. _@mandeep: https://github.com/mandeep
+.. _@mattduck: https://github.com/mattduck
+.. _@metasyn: https://github.com/metasyn
+.. _@MichalTHEDUDE: https://github.com/MichalTHEDUDE
+.. _@ojii: https://github.com/ojii
+.. _@reutsharabani: https://github.com/reutsharabani
 .. _@robin0371: https://github.com/robin0371
+.. _@skylarjhdownes: https://github.com/skylarjhdownes
+.. _@unsignedint: https://github.com/unsignedint
+.. _@wheerd: https://github.com/wheerd
 
 
+.. _#1407: https://github.com/pytest-dev/pytest/issues/1407
+.. _#1512: https://github.com/pytest-dev/pytest/issues/1512
+.. _#1821: https://github.com/pytest-dev/pytest/issues/1821
+.. _#1874: https://github.com/pytest-dev/pytest/pull/1874
 .. _#1937: https://github.com/pytest-dev/pytest/issues/1937
+.. _#1952: https://github.com/pytest-dev/pytest/pull/1952
+.. _#2007: https://github.com/pytest-dev/pytest/issues/2007
+.. _#2013: https://github.com/pytest-dev/pytest/issues/2013
+.. _#2101: https://github.com/pytest-dev/pytest/pull/2101
+.. _#2166: https://github.com/pytest-dev/pytest/pull/2166
+.. _#2208: https://github.com/pytest-dev/pytest/issues/2208
+.. _#2228: https://github.com/pytest-dev/pytest/issues/2228
 .. _#2276: https://github.com/pytest-dev/pytest/issues/2276
+.. _#2308: https://github.com/pytest-dev/pytest/issues/2308
 .. _#2336: https://github.com/pytest-dev/pytest/issues/2336
 .. _#2369: https://github.com/pytest-dev/pytest/issues/2369
 .. _#2383: https://github.com/pytest-dev/pytest/issues/2383
+.. _#2391: https://github.com/pytest-dev/pytest/issues/2391
+.. _#533: https://github.com/pytest-dev/pytest/issues/533
+
 
 
 3.0.7 (2017-03-14)
