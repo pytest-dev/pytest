@@ -231,10 +231,10 @@ You can always peek at the content of the cache using the
     rootdir: $REGENDOC_TMPDIR, inifile:
     cachedir: $REGENDOC_TMPDIR/.cache
     ------------------------------- cache values -------------------------------
-    cache/lastfailed contains:
-      {'test_caching.py::test_function': True}
     example/value contains:
       42
+    cache/lastfailed contains:
+      {'test_caching.py::test_function': True}
     
     ======= no tests ran in 0.12 seconds ========
 
