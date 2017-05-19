@@ -49,7 +49,7 @@ def pytest_sessionstart(session):
 def pytest_sessionfinish(session):
     session._setupstate.teardown_all()
 
-class NodeInfo(object):
+class NodeInfo:
     def __init__(self, location):
         self.location = location
 
@@ -144,7 +144,7 @@ def call_runtest_hook(item, when, **kwds):
     ihook = getattr(item.ihook, hookname)
     return CallInfo(lambda: ihook(item=item, **kwds), when=when)
 
-class CallInfo(object):
+class CallInfo:
     """ Result/Exception info a function invocation. """
     #: None or ExceptionInfo object.
     excinfo = None

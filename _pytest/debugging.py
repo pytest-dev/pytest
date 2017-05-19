@@ -40,8 +40,7 @@ def pytest_configure(config):
     pytestPDB._pdb_cls = pdb_cls
     config._cleanup.append(fin)
 
-
-class pytestPDB(object):
+class pytestPDB:
     """ Pseudo PDB that defers to the real pdb. """
     _pluginmanager = None
     _config = None
@@ -63,7 +62,7 @@ class pytestPDB(object):
         cls._pdb_cls().set_trace(frame)
 
 
-class PdbInvoke(object):
+class PdbInvoke:
     def pytest_exception_interact(self, node, call, report):
         capman = node.config.pluginmanager.getplugin("capturemanager")
         if capman:

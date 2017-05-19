@@ -72,7 +72,7 @@ def xfail(reason=""):
 xfail.Exception = XFailed
 
 
-class MarkEvaluator(object):
+class MarkEvaluator:
     def __init__(self, item, name):
         self.item = item
         self.name = name

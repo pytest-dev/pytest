@@ -62,7 +62,7 @@ import sys
 import os
 from glob import glob
 
-class FastFilesCompleter(object):
+class FastFilesCompleter:
     'Fast file completer class'
     def __init__(self, directories=True):
         self.directories = directories

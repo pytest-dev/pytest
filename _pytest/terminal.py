@@ -84,7 +84,7 @@ def pytest_report_teststatus(report):
     return report.outcome, letter, report.outcome.upper()
 
 
-class WarningReport(object):
+class WarningReport:
     """
     Simple structure to hold warnings information captured by ``pytest_logwarning``.
     """
@@ -118,7 +118,7 @@ class WarningReport(object):
         return None
 
 
-class TerminalReporter(object):
+class TerminalReporter:
     def __init__(self, config, file=None):
         import _pytest.config
         self.config = config
