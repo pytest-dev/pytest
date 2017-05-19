@@ -269,6 +269,7 @@ running from a test you can do something like this:
         sys._called_from_test = True
 
     def pytest_unconfigure(config):
+        import sys
         del sys._called_from_test
 
 and then check for the ``sys._called_from_test`` flag:
