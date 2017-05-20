@@ -85,6 +85,17 @@ def pytest_addoption(parser):
         help="prepend/append to sys.path when importing test modules, "
              "default is to prepend.")
 
+    group.addoption("--pep420-mode", action="store_true", default=False,
+        help="by default, the module name by which a discovered test module "
+             "is imported is determined by traversing the file system "
+             "upwards from the module path as long as an __init__.py is "
+             "found. In this mode, the traversal will instead stop when it "
+             "encounters a directory that is in sys.path. This is useful "
+             "when PEP 420 implicit namespace packages are present, which "
+             "lack an __init__.py, but requires you as a user to ensure "
+             "that sys.path is configured property (typically that it "
+             "contains your project root directory)")
+
 
 def pytest_cmdline_main(config):
     if config.option.showfixtures:
@@ -402,6 +413,30 @@ def transfer_markers(funcobj, cls, mod):
             if not _marked(funcobj, pytestmark):
                 pytestmark(funcobj)
 
+
+def pyimport420(path):
+    def isimportable(name):
+        if name and (name[0].isalpha() or name[0] == '_'):
+            name = name.replace("_", '')
+        return not name or name.isalnum()
+
+    def pypkgpath(path):
+        sys_path = [py.path.local(p) for p in sys.path]
+        pkgpath = None
+        for parent in path.parts(reverse=True):
+            if parent.isdir():
+                pkgpath = parent
+                if parent in sys_path:
+                    break
+                if not isimportable(parent.basename):
+                    break
+        return pkgpath
+
+    modname = ".".join(path.new(ext="").relto(pypkgpath(path)).split(path.sep))
+    __import__(modname)
+    return sys.modules[modname]
+
+
 class Module(pytest.File, PyCollector):
     """ Collector for test classes and functions. """
     def _getobj(self):
@@ -415,7 +450,10 @@ class Module(pytest.File, PyCollector):
         # we assume we are only called once per module
         importmode = self.config.getoption("--import-mode")
         try:
-            mod = self.fspath.pyimport(ensuresyspath=importmode)
+            if self.config.getoption("--pep420-mode"):
+                mod = pyimport420(self.fspath)
+            else:
+                mod = self.fspath.pyimport(ensuresyspath=importmode)
         except SyntaxError:
             raise self.CollectError(
                 _pytest._code.ExceptionInfo().getrepr(style="short"))
