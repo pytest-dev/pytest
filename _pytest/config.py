@@ -980,7 +980,7 @@ class Config(object):
         self._parser.addini('minversion', 'minimally required pytest version')
         self._override_ini = ns.override_ini or ()
 
-    def _consider_importhook(self, args, entrypoint_name):
+    def _consider_importhook(self, args):
         """Install the PEP 302 import hook if using assertion re-writing.
 
         Needs to parse the --assert=<mode> option from the commandline
@@ -995,25 +995,40 @@ class Config(object):
             except SystemError:
                 mode = 'plain'
             else:
-                import pkg_resources
-                self.pluginmanager.rewrite_hook = hook
-                for entrypoint in pkg_resources.iter_entry_points('pytest11'):
-                    # 'RECORD' available for plugins installed normally (pip install)
-                    # 'SOURCES.txt' available for plugins installed in dev mode (pip install -e)
-                    # for installed plugins 'SOURCES.txt' returns an empty list, and vice-versa
-                    # so it shouldn't be an issue
-                    for metadata in ('RECORD', 'SOURCES.txt'):
-                        for entry in entrypoint.dist._get_metadata(metadata):
-                            fn = entry.split(',')[0]
-                            is_simple_module = os.sep not in fn and fn.endswith('.py')
-                            is_package = fn.count(os.sep) == 1 and fn.endswith('__init__.py')
-                            if is_simple_module:
-                                module_name, ext = os.path.splitext(fn)
-                                hook.mark_rewrite(module_name)
-                            elif is_package:
-                                package_name = os.path.dirname(fn)
-                                hook.mark_rewrite(package_name)
+                self._mark_plugins_for_rewrite(hook)
         self._warn_about_missing_assertion(mode)
+
+    def _mark_plugins_for_rewrite(self, hook):
+        """
+        Given an importhook, mark for rewrite any top-level
+        modules or packages in the distribution package for
+        all pytest plugins.
+        """
+        import pkg_resources
+        self.pluginmanager.rewrite_hook = hook
+
+        # 'RECORD' available for plugins installed normally (pip install)
+        # 'SOURCES.txt' available for plugins installed in dev mode (pip install -e)
+        # for installed plugins 'SOURCES.txt' returns an empty list, and vice-versa
+        # so it shouldn't be an issue
+        metadata_files = 'RECORD', 'SOURCES.txt'
+
+        package_files = (
+            entry.split(',')[0]
+            for entrypoint in pkg_resources.iter_entry_points('pytest11')
+            for metadata in metadata_files
+            for entry in entrypoint.dist._get_metadata(metadata)
+        )
+
+        for fn in package_files:
+            is_simple_module = os.sep not in fn and fn.endswith('.py')
+            is_package = fn.count(os.sep) == 1 and fn.endswith('__init__.py')
+            if is_simple_module:
+                module_name, ext = os.path.splitext(fn)
+                hook.mark_rewrite(module_name)
+            elif is_package:
+                package_name = os.path.dirname(fn)
+                hook.mark_rewrite(package_name)
 
     def _warn_about_missing_assertion(self, mode):
         try:
@@ -1038,10 +1053,9 @@ class Config(object):
             args[:] = shlex.split(os.environ.get('PYTEST_ADDOPTS', '')) + args
             args[:] = self.getini("addopts") + args
         self._checkversion()
-        entrypoint_name = 'pytest11'
-        self._consider_importhook(args, entrypoint_name)
+        self._consider_importhook(args)
         self.pluginmanager.consider_preparse(args)
-        self.pluginmanager.load_setuptools_entrypoints(entrypoint_name)
+        self.pluginmanager.load_setuptools_entrypoints('pytest11')
         self.pluginmanager.consider_env()
         self.known_args_namespace = ns = self._parser.parse_known_args(args, namespace=self.option.copy())
         confcutdir = self.known_args_namespace.confcutdir
