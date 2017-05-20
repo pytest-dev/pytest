@@ -1013,15 +1013,14 @@ class Config(object):
         # so it shouldn't be an issue
         metadata_files = 'RECORD', 'SOURCES.txt'
 
-        metadata_entries = (
-            entry
+        package_files = (
+            entry.split(',')[0]
             for entrypoint in pkg_resources.iter_entry_points('pytest11')
             for metadata in metadata_files
             for entry in entrypoint.dist._get_metadata(metadata)
         )
 
-        for entry in metadata_entries:
-            fn = entry.split(',')[0]
+        for fn in package_files:
             is_simple_module = os.sep not in fn and fn.endswith('.py')
             is_package = fn.count(os.sep) == 1 and fn.endswith('__init__.py')
             if is_simple_module:
