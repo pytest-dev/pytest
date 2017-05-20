@@ -980,7 +980,7 @@ class Config(object):
         self._parser.addini('minversion', 'minimally required pytest version')
         self._override_ini = ns.override_ini or ()
 
-    def _consider_importhook(self, args, entrypoint_name):
+    def _consider_importhook(self, args):
         """Install the PEP 302 import hook if using assertion re-writing.
 
         Needs to parse the --assert=<mode> option from the commandline
@@ -1053,10 +1053,9 @@ class Config(object):
             args[:] = shlex.split(os.environ.get('PYTEST_ADDOPTS', '')) + args
             args[:] = self.getini("addopts") + args
         self._checkversion()
-        entrypoint_name = 'pytest11'
-        self._consider_importhook(args, entrypoint_name)
+        self._consider_importhook(args)
         self.pluginmanager.consider_preparse(args)
-        self.pluginmanager.load_setuptools_entrypoints(entrypoint_name)
+        self.pluginmanager.load_setuptools_entrypoints('pytest11')
         self.pluginmanager.consider_env()
         self.known_args_namespace = ns = self._parser.parse_known_args(args, namespace=self.option.copy())
         confcutdir = self.known_args_namespace.confcutdir
