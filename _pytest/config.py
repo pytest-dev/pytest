@@ -995,6 +995,10 @@ class Config(object):
             except SystemError:
                 mode = 'plain'
             else:
+                self._mark_plugins_for_rewrite(hook)
+        self._warn_about_missing_assertion(mode)
+
+    def _mark_plugins_for_rewrite(self, hook):
                 import pkg_resources
                 self.pluginmanager.rewrite_hook = hook
                 for entrypoint in pkg_resources.iter_entry_points('pytest11'):
@@ -1013,7 +1017,6 @@ class Config(object):
                             elif is_package:
                                 package_name = os.path.dirname(fn)
                                 hook.mark_rewrite(package_name)
-        self._warn_about_missing_assertion(mode)
 
     def _warn_about_missing_assertion(self, mode):
         try:
