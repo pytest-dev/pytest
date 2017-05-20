@@ -1006,13 +1006,21 @@ class Config(object):
         """
         import pkg_resources
         self.pluginmanager.rewrite_hook = hook
-        for entrypoint in pkg_resources.iter_entry_points('pytest11'):
-            # 'RECORD' available for plugins installed normally (pip install)
-            # 'SOURCES.txt' available for plugins installed in dev mode (pip install -e)
-            # for installed plugins 'SOURCES.txt' returns an empty list, and vice-versa
-            # so it shouldn't be an issue
-            for metadata in ('RECORD', 'SOURCES.txt'):
-                for entry in entrypoint.dist._get_metadata(metadata):
+
+        # 'RECORD' available for plugins installed normally (pip install)
+        # 'SOURCES.txt' available for plugins installed in dev mode (pip install -e)
+        # for installed plugins 'SOURCES.txt' returns an empty list, and vice-versa
+        # so it shouldn't be an issue
+        metadata_files = 'RECORD', 'SOURCES.txt'
+
+        metadata_entries = (
+            entry
+            for entrypoint in pkg_resources.iter_entry_points('pytest11')
+            for metadata in metadata_files
+            for entry in entrypoint.dist._get_metadata(metadata)
+        )
+
+        for entry in metadata_entries:
                     fn = entry.split(',')[0]
                     is_simple_module = os.sep not in fn and fn.endswith('.py')
                     is_package = fn.count(os.sep) == 1 and fn.endswith('__init__.py')
