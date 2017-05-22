@@ -1,4 +1,4 @@
-3.1.0 (2017-05-20)
+3.1.0 (2017-05-22)
 ==================
 
 
@@ -73,7 +73,7 @@ Changes
 
 * Add ``venv`` to the default ``norecursedirs`` setting.
   Thanks `@The-Compiler`_ for the PR.
-  
+
 * ``PluginManager.import_plugin`` now accepts unicode plugin names in Python 2.
   Thanks `@reutsharabani`_ for the PR.
 
@@ -171,13 +171,13 @@ Bug Fixes
 
 * Ignore exceptions raised from descriptors (e.g. properties) during Python test collection (`#2234`_).
   Thanks to `@bluetech`_.
-  
+
 * ``--override-ini`` now correctly overrides some fundamental options like ``python_files`` (`#2238`_).
   Thanks `@sirex`_ for the report and `@nicoddemus`_ for the PR.
 
 * Replace ``raise StopIteration`` usages in the code by simple ``returns`` to finish generators, in accordance to `PEP-479`_ (`#2160`_).
   Thanks `@tgoodlet`_ for the report and `@nicoddemus`_ for the PR.
-  
+
 * Fix internal errors when an unprintable ``AssertionError`` is raised inside a test.
   Thanks `@omerhadari`_ for the PR.
 
