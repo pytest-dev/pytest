@@ -1,5 +1,100 @@
-3.0.8 (unreleased)
+3.1.0 (2017-05-20)
 ==================
+
+
+New Features
+------------
+
+* The ``pytest-warnings`` plugin has been integrated into the core, so now ``pytest`` automatically
+  captures and displays warnings at the end of the test session.
+  Thanks `@nicoddemus`_ for the PR.
+
+* Added ``junit_suite_name`` ini option to specify root `<testsuite>` name for JUnit XML reports (`#533`_).
+
+* Added an ini option ``doctest_encoding`` to specify which encoding to use for doctest files.
+  Thanks `@wheerd`_ for the PR (`#2101`_).
+
+* ``pytest.warns`` now checks for subclass relationship rather than
+  class equality. Thanks `@lesteve`_ for the PR (`#2166`_)
+
+* ``pytest.raises`` now asserts that the error message matches a text or regex
+  with the ``match`` keyword argument. Thanks `@Kriechi`_ for the PR.
+
+* ``pytest.param`` can be used to declare test parameter sets with marks and test ids.
+  Thanks `@RonnyPfannschmidt`_ for the PR.
+
+
+Changes
+-------
+
+* remove all internal uses of pytest_namespace hooks,
+  this is to prepare the removal of preloadconfig in pytest 4.0
+  Thanks to `@RonnyPfannschmidt`_ for the PR.
+
+* pytest now warns when a callable ids raises in a parametrized test. Thanks `@fogo`_ for the PR.
+
+* It is now possible to skip test classes from being collected by setting a
+  ``__test__`` attribute to ``False`` in the class body (`#2007`_). Thanks
+  to `@syre`_ for the report and `@lwm`_ for the PR.
+
+* Change junitxml.py to produce reports that comply with Junitxml schema.
+  If the same test fails with failure in call and then errors in teardown
+  we split testcase element into two, one containing the error and the other
+  the failure. (`#2228`_) Thanks to `@kkoukiou`_ for the PR.
+
+* Testcase reports with a ``url`` attribute will now properly write this to junitxml.
+  Thanks `@fushi`_ for the PR (`#1874`_).
+
+* Remove common items from dict comparision output when verbosity=1. Also update
+  the truncation message to make it clearer that pytest truncates all
+  assertion messages if verbosity < 2 (`#1512`_).
+  Thanks `@mattduck`_ for the PR
+
+* ``--pdbcls`` no longer implies ``--pdb``. This makes it possible to use
+  ``addopts=--pdbcls=module.SomeClass`` on ``pytest.ini``. Thanks `@davidszotten`_ for
+  the PR (`#1952`_).
+* Change exception raised by ``capture.DontReadFromInput.fileno()`` from ``ValueError``
+  to ``io.UnsupportedOperation``. Thanks `@vlad-dragos`_ for the PR.
+
+* fix `#2013`_: turn RecordedWarning into ``namedtuple``,
+  to give it a comprehensible repr while preventing unwarranted modification.
+
+* fix `#2208`_: ensure a iteration limit for _pytest.compat.get_real_func.
+  Thanks `@RonnyPfannschmidt`_ for the report and PR.
+
+* Hooks are now verified after collection is complete, rather than right after loading installed plugins. This
+  makes it easy to write hooks for plugins which will be loaded during collection, for example using the
+  ``pytest_plugins`` special variable (`#1821`_).
+  Thanks `@nicoddemus`_ for the PR.
+
+* Modify ``pytest_make_parametrize_id()`` hook to accept ``argname`` as an
+  additional parameter.
+  Thanks `@unsignedint`_ for the PR.
+
+* Add ``venv`` to the default ``norecursedirs`` setting.
+  Thanks `@The-Compiler`_ for the PR.
+  
+* ``PluginManager.import_plugin`` now accepts unicode plugin names in Python 2.
+  Thanks `@reutsharabani`_ for the PR.
+
+* fix `#2308`_: When using both ``--lf`` and ``--ff``, only the last failed tests are run.
+  Thanks `@ojii`_ for the PR.
+
+* Replace minor/patch level version numbers in the documentation with placeholders.
+  This significantly reduces change-noise as different contributors regnerate
+  the documentation on different platforms.
+  Thanks `@RonnyPfannschmidt`_ for the PR.
+
+* fix `#2391`_: consider pytest_plugins on all plugin modules
+  Thansks `@RonnyPfannschmidt`_ for the PR.
+
+
+Bug Fixes
+---------
+
+* Fix ``AttributeError`` on ``sys.stdout.buffer`` / ``sys.stderr.buffer``
+  while using ``capsys`` fixture in python 3. (`#1407`_).
+  Thanks to `@asottile`_.
 
 * Change capture.py's ``DontReadFromInput`` class to throw ``io.UnsupportedOperation`` errors rather
   than ValueErrors in the ``fileno`` method (`#2276`_).
@@ -8,7 +103,7 @@
 * Fix exception formatting while importing modules when the exception message
   contains non-ascii characters (`#2336`_).
   Thanks `@fabioz`_ for the report and `@nicoddemus`_ for the PR.
-  
+
 * Added documentation related to issue (`#1937`_)
   Thanks `@skylarjhdownes`_ for the PR.
 
@@ -18,26 +113,45 @@
 * Show the correct error message when collect "parametrize" func with wrong args (`#2383`_).
   Thanks `@The-Compiler`_ for the report and `@robin0371`_ for the PR.
 
-*
 
-*
-
-*
-
-
-  
-.. _@skylarjhdownes: https://github.com/skylarjhdownes
+.. _@davidszotten: https://github.com/davidszotten
 .. _@fabioz: https://github.com/fabioz
-.. _@metasyn: https://github.com/metasyn
+.. _@fogo: https://github.com/fogo
+.. _@fushi: https://github.com/fushi
 .. _@Kodiologist: https://github.com/Kodiologist
+.. _@Kriechi: https://github.com/Kriechi
+.. _@mandeep: https://github.com/mandeep
+.. _@mattduck: https://github.com/mattduck
+.. _@metasyn: https://github.com/metasyn
+.. _@MichalTHEDUDE: https://github.com/MichalTHEDUDE
+.. _@ojii: https://github.com/ojii
+.. _@reutsharabani: https://github.com/reutsharabani
 .. _@robin0371: https://github.com/robin0371
+.. _@skylarjhdownes: https://github.com/skylarjhdownes
+.. _@unsignedint: https://github.com/unsignedint
+.. _@wheerd: https://github.com/wheerd
 
 
+.. _#1407: https://github.com/pytest-dev/pytest/issues/1407
+.. _#1512: https://github.com/pytest-dev/pytest/issues/1512
+.. _#1821: https://github.com/pytest-dev/pytest/issues/1821
+.. _#1874: https://github.com/pytest-dev/pytest/pull/1874
 .. _#1937: https://github.com/pytest-dev/pytest/issues/1937
+.. _#1952: https://github.com/pytest-dev/pytest/pull/1952
+.. _#2007: https://github.com/pytest-dev/pytest/issues/2007
+.. _#2013: https://github.com/pytest-dev/pytest/issues/2013
+.. _#2101: https://github.com/pytest-dev/pytest/pull/2101
+.. _#2166: https://github.com/pytest-dev/pytest/pull/2166
+.. _#2208: https://github.com/pytest-dev/pytest/issues/2208
+.. _#2228: https://github.com/pytest-dev/pytest/issues/2228
 .. _#2276: https://github.com/pytest-dev/pytest/issues/2276
+.. _#2308: https://github.com/pytest-dev/pytest/issues/2308
 .. _#2336: https://github.com/pytest-dev/pytest/issues/2336
 .. _#2369: https://github.com/pytest-dev/pytest/issues/2369
 .. _#2383: https://github.com/pytest-dev/pytest/issues/2383
+.. _#2391: https://github.com/pytest-dev/pytest/issues/2391
+.. _#533: https://github.com/pytest-dev/pytest/issues/533
+
 
 
 3.0.7 (2017-03-14)
@@ -191,6 +305,7 @@
 * Cope gracefully with a .pyc file with no matching .py file (`#2038`_). Thanks
   `@nedbat`_.
 
+.. _@syre: https://github.com/syre
 .. _@adler-j: https://github.com/adler-j
 .. _@d-b-w: https://bitbucket.org/d-b-w/
 .. _@DuncanBetts: https://github.com/DuncanBetts
@@ -298,6 +413,7 @@
 .. _@raquel-ucl: https://github.com/raquel-ucl
 .. _@axil: https://github.com/axil
 .. _@tgoodlet: https://github.com/tgoodlet
+.. _@vlad-dragos: https://github.com/vlad-dragos
 
 .. _#1853: https://github.com/pytest-dev/pytest/issues/1853
 .. _#1905: https://github.com/pytest-dev/pytest/issues/1905

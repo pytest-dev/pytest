@@ -1,5 +1,5 @@
 """Rewrite assertion AST to produce nice error messages"""
-
+from __future__ import absolute_import, division, print_function
 import ast
 import _ast
 import errno
@@ -337,7 +337,7 @@ def _rewrite_test(config, fn):
         return None, None
     rewrite_asserts(tree, fn, config)
     try:
-        co = compile(tree, fn.strpath, "exec")
+        co = compile(tree, fn.strpath, "exec", dont_inherit=True)
     except SyntaxError:
         # It's possible that this error is from some bug in the
         # assertion rewriting, but I don't know of a fast way to tell.

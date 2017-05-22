@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 import pytest
 
 def setup_module(mod):
@@ -26,7 +27,7 @@ def test_setup_func_with_setup_decorator():
     from _pytest.nose import call_optional
     l = []
 
-    class A:
+    class A(object):
         @pytest.fixture(autouse=True)
         def f(self):
             l.append(1)
@@ -38,7 +39,7 @@ def test_setup_func_with_setup_decorator():
 def test_setup_func_not_callable():
     from _pytest.nose import call_optional
 
-    class A:
+    class A(object):
         f = 1
 
     call_optional(A(), "f")
@@ -270,7 +271,7 @@ def test_nose_setup_ordering(testdir):
         def setup_module(mod):
             mod.visited = True
 
-        class TestClass:
+        class TestClass(object):
             def setup(self):
                 assert visited
             def test_first(self):
@@ -377,7 +378,7 @@ def test_istest_class_decorator(testdir):
     p = testdir.makepyfile("""
         import nose.tools
         @nose.tools.istest
-        class NotTestPrefix:
+        class NotTestPrefix(object):
             def test_method(self):
                 pass
         """)
@@ -388,7 +389,7 @@ def test_nottest_class_decorator(testdir):
     testdir.makepyfile("""
         import nose.tools
         @nose.tools.nottest
-        class TestPrefix:
+        class TestPrefix(object):
             def test_method(self):
                 pass
         """)

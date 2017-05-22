@@ -1,17 +1,21 @@
+from __future__ import absolute_import, division, print_function
 import os
+import sys
 
-import py, pytest
-from _pytest.mark import MarkGenerator as Mark
+import pytest
+from _pytest.mark import MarkGenerator as Mark, ParameterSet
 
-class TestMark:
+class TestMark(object):
     def test_markinfo_repr(self):
-        from _pytest.mark import MarkInfo
-        m = MarkInfo("hello", (1,2), {})
+        from _pytest.mark import MarkInfo, Mark
+        m = MarkInfo(Mark("hello", (1,2), {}))
         repr(m)
 
-    def test_pytest_exists_in_namespace_all(self):
-        assert 'mark' in py.test.__all__
-        assert 'mark' in pytest.__all__
+    @pytest.mark.parametrize('attr', ['mark', 'param'])
+    @pytest.mark.parametrize('modulename', ['py.test', 'pytest'])
+    def test_pytest_exists_in_namespace_all(self, attr, modulename):
+        module = sys.modules[modulename]
+        assert attr in module.__all__
 
     def test_pytest_mark_notcallable(self):
         mark = Mark()
@@ -318,7 +322,7 @@ def test_parametrized_collect_with_wrong_args(testdir):
     ])
 
 
-class TestFunctional:
+class TestFunctional(object):
 
     def test_mark_per_function(self, testdir):
         p = testdir.makepyfile("""
@@ -343,7 +347,7 @@ class TestFunctional:
     def test_marklist_per_class(self, testdir):
         item = testdir.getitem("""
             import pytest
-            class TestClass:
+            class TestClass(object):
                 pytestmark = [pytest.mark.hello, pytest.mark.world]
                 def test_func(self):
                     assert TestClass.test_func.hello
@@ -356,7 +360,7 @@ class TestFunctional:
         item = testdir.getitem("""
             import pytest
             pytestmark = [pytest.mark.hello, pytest.mark.world]
-            class TestClass:
+            class TestClass(object):
                 def test_func(self):
                     assert TestClass.test_func.hello
                     assert TestClass.test_func.world
@@ -369,7 +373,7 @@ class TestFunctional:
         item = testdir.getitem("""
             import pytest
             @pytest.mark.hello
-            class TestClass:
+            class TestClass(object):
                 def test_func(self):
                     assert TestClass.test_func.hello
         """)
@@ -380,7 +384,7 @@ class TestFunctional:
         item = testdir.getitem("""
             import pytest
             @pytest.mark.hello
-            class TestClass:
+            class TestClass(object):
                 pytestmark = pytest.mark.world
                 def test_func(self):
                     assert TestClass.test_func.hello
@@ -394,7 +398,7 @@ class TestFunctional:
         p = testdir.makepyfile("""
             import pytest
             pytestmark = pytest.mark.hello("pos1", x=1, y=2)
-            class TestClass:
+            class TestClass(object):
                 # classlevel overrides module level
                 pytestmark = pytest.mark.hello(x=3)
                 @pytest.mark.hello("pos0", z=4)
@@ -420,18 +424,18 @@ class TestFunctional:
         # issue 199 - propagate markers into nested classes
         p = testdir.makepyfile("""
             import pytest
-            class TestA:
+            class TestA(object):
                 pytestmark = pytest.mark.a
                 def test_b(self):
                     assert True
-                class TestC:
+                class TestC(object):
                     # this one didnt get marked
                     def test_d(self):
                         assert True
         """)
         items, rec = testdir.inline_genitems(p)
         for item in items:
-            print (item, item.keywords)
+            print(item, item.keywords)
             assert 'a' in item.keywords
 
     def test_mark_decorator_subclass_does_not_propagate_to_base(self, testdir):
@@ -439,7 +443,7 @@ class TestFunctional:
             import pytest
 
             @pytest.mark.a
-            class Base: pass
+            class Base(object): pass
 
             @pytest.mark.b
             class Test1(Base):
@@ -458,7 +462,7 @@ class TestFunctional:
         p = testdir.makepyfile("""
             import pytest
 
-            class TestBase:
+            class TestBase(object):
                 def test_foo(self):
                     pass
 
@@ -482,7 +486,7 @@ class TestFunctional:
             import pytest
 
             @pytest.mark.a
-            class Base: pass
+            class Base(object): pass
 
             @pytest.mark.b
             class Base2(Base): pass
@@ -502,7 +506,7 @@ class TestFunctional:
     def test_mark_with_wrong_marker(self, testdir):
         reprec = testdir.inline_runsource("""
                 import pytest
-                class pytestmark:
+                class pytestmark(object):
                     pass
                 def test_func():
                     pass
@@ -647,7 +651,7 @@ class TestFunctional:
         reprec.assertoutcome(skipped=1)
 
 
-class TestKeywordSelection:
+class TestKeywordSelection(object):
 
     def test_select_simple(self, testdir):
         file_test = testdir.makepyfile("""
@@ -676,7 +680,7 @@ class TestKeywordSelection:
         p = testdir.makepyfile(test_select="""
             def test_1():
                 pass
-            class TestClass:
+            class TestClass(object):
                 def test_2(self):
                     pass
         """)
@@ -690,7 +694,7 @@ class TestKeywordSelection:
                     item.extra_keyword_matches.add("xxx")
         """)
         reprec = testdir.inline_run(p.dirpath(), '-s', '-k', keyword)
-        py.builtin.print_("keyword", repr(keyword))
+        print("keyword", repr(keyword))
         passed, skipped, failed = reprec.listoutcomes()
         assert len(passed) == 1
         assert passed[0].nodeid.endswith("test_2")
@@ -755,3 +759,16 @@ class TestKeywordSelection:
 
         assert_test_is_not_selected("__")
         assert_test_is_not_selected("()")
+
+
+@pytest.mark.parametrize('argval, expected', [
+    (pytest.mark.skip()((1, 2)),
+     ParameterSet(values=(1, 2), marks=[pytest.mark.skip], id=None)),
+    (pytest.mark.xfail(pytest.mark.skip()((1, 2))),
+     ParameterSet(values=(1, 2),
+                  marks=[pytest.mark.xfail, pytest.mark.skip], id=None)),
+
+])
+def test_parameterset_extractfrom(argval, expected):
+    extracted = ParameterSet.extract_from(argval)
+    assert extracted == expected

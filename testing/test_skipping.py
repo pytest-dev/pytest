@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 import pytest
 import sys
 
@@ -5,7 +6,7 @@ from _pytest.skipping import MarkEvaluator, folded_skips, pytest_runtest_setup
 from _pytest.runner import runtestprotocol
 
 
-class TestEvaluator:
+class TestEvaluator(object):
     def test_no_marker(self, testdir):
         item = testdir.getitem("def test_func(): pass")
         evalskipif = MarkEvaluator(item, 'skipif')
@@ -114,7 +115,7 @@ class TestEvaluator:
     def test_skipif_class(self, testdir):
         item, = testdir.getitems("""
             import pytest
-            class TestClass:
+            class TestClass(object):
                 pytestmark = pytest.mark.skipif("config._hackxyz")
                 def test_func(self):
                     pass
@@ -126,7 +127,7 @@ class TestEvaluator:
         assert expl == "condition: config._hackxyz"
 
 
-class TestXFail:
+class TestXFail(object):
 
     @pytest.mark.parametrize('strict', [True, False])
     def test_xfail_simple(self, testdir, strict):
@@ -452,7 +453,7 @@ class TestXFail:
         assert result.ret == (1 if strict else 0)
 
 
-class TestXFailwithSetupTeardown:
+class TestXFailwithSetupTeardown(object):
     def test_failing_setup_issue9(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -484,7 +485,7 @@ class TestXFailwithSetupTeardown:
         ])
 
 
-class TestSkip:
+class TestSkip(object):
     def test_skip_class(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -581,7 +582,7 @@ class TestSkip:
             "*1 skipped*",
         ])
 
-class TestSkipif:
+class TestSkipif(object):
     def test_skipif_conditional(self, testdir):
         item = testdir.getitem("""
             import pytest
@@ -648,7 +649,7 @@ def test_skipif_class(testdir):
     p = testdir.makepyfile("""
         import pytest
 
-        class TestClass:
+        class TestClass(object):
             pytestmark = pytest.mark.skipif("True")
             def test_that(self):
                 assert 0
@@ -667,7 +668,7 @@ def test_skip_reasons_folding():
     message = "justso"
     longrepr = (path, lineno, message)
 
-    class X:
+    class X(object):
         pass
     ev1 = X()
     ev1.when = "execute"
@@ -694,7 +695,7 @@ def test_skipped_reasons_functional(testdir):
                 doskip()
             def test_func():
                 pass
-            class TestClass:
+            class TestClass(object):
                 def test_method(self):
                     doskip()
        """,
@@ -892,7 +893,7 @@ def test_imperativeskip_on_xfail_test(testdir):
         *2 skipped*
     """)
 
-class TestBooleanCondition:
+class TestBooleanCondition(object):
     def test_skipif(self, testdir):
         testdir.makepyfile("""
             import pytest

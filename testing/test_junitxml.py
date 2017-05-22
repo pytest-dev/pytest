@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from __future__ import absolute_import, division, print_function
 from xml.dom import minidom
 import py
 import sys
@@ -79,7 +79,7 @@ class DomNode(object):
         return type(self)(self.__node.nextSibling)
 
 
-class TestPython:
+class TestPython(object):
     def test_summing_simple(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -189,6 +189,29 @@ class TestPython:
         fnode.assert_attr(message="test teardown failure")
         assert "ValueError" in fnode.toxml()
 
+    def test_call_failure_teardown_error(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture
+            def arg():
+                yield
+                raise Exception("Teardown Exception")
+            def test_function(arg):
+                raise Exception("Call Exception")
+        """)
+        result, dom = runandparse(testdir)
+        assert result.ret
+        node = dom.find_first_by_tag("testsuite")
+        node.assert_attr(errors=1, failures=1, tests=1)
+        first, second = dom.find_by_tag("testcase")
+        if not first or not second or first == second:
+            assert 0
+        fnode = first.find_first_by_tag("failure")
+        fnode.assert_attr(message="Exception: Call Exception")
+        snode = second.find_first_by_tag("error")
+        snode.assert_attr(message="test teardown failure")
+
     def test_skip_contains_name_reason(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -263,7 +286,7 @@ class TestPython:
 
     def test_classname_instance(self, testdir):
         testdir.makepyfile("""
-            class TestClass:
+            class TestClass(object):
                 def test_method(self):
                     assert 0
         """)
@@ -376,7 +399,7 @@ class TestPython:
         testdir.makepyfile("""
             def test_func():
                 assert 0
-            class TestHello:
+            class TestHello(object):
                 def test_hello(self):
                     pass
         """)
@@ -588,10 +611,13 @@ def test_mangle_test_address():
 def test_dont_configure_on_slaves(tmpdir):
     gotten = []
 
-    class FakeConfig:
+    class FakeConfig(object):
         def __init__(self):
             self.pluginmanager = self
             self.option = self
+
+        def getini(self, name):
+            return "pytest"
 
         junitprefix = None
         # XXX: shouldnt need tmpdir ?
@@ -607,7 +633,7 @@ def test_dont_configure_on_slaves(tmpdir):
     assert len(gotten) == 1
 
 
-class TestNonPython:
+class TestNonPython(object):
     def test_summing_simple(self, testdir):
         testdir.makeconftest("""
             import pytest
@@ -769,7 +795,7 @@ def test_double_colon_split_function_issue469(testdir):
 def test_double_colon_split_method_issue469(testdir):
     testdir.makepyfile("""
         import pytest
-        class TestClass:
+        class TestClass(object):
             @pytest.mark.parametrize('param', ["double::colon"])
             def test_func(self, param):
                 pass
@@ -829,7 +855,10 @@ def test_record_property(testdir):
     pnodes = psnode.find_by_tag('property')
     pnodes[0].assert_attr(name="bar", value="1")
     pnodes[1].assert_attr(name="foo", value="<1")
-    result.stdout.fnmatch_lines('*C3*test_record_property.py*experimental*')
+    result.stdout.fnmatch_lines([
+        'test_record_property.py::test_record',
+        '*record_xml_property*experimental*',
+    ])
 
 
 def test_record_property_same_name(testdir):
@@ -981,3 +1010,51 @@ def test_global_properties(testdir):
         actual[k] = v
 
     assert actual == expected
+
+
+def test_url_property(testdir):
+    test_url = "http://www.github.com/pytest-dev"
+    path = testdir.tmpdir.join("test_url_property.xml")
+    log = LogXML(str(path), None)
+    from _pytest.runner import BaseReport
+
+    class Report(BaseReport):
+        longrepr = "FooBarBaz"
+        sections = []
+        nodeid = "something"
+        location = 'tests/filename.py', 42, 'TestClass.method'
+        url = test_url
+
+    test_report = Report()
+
+    log.pytest_sessionstart()
+    node_reporter = log._opentestcase(test_report)
+    node_reporter.append_failure(test_report)
+    log.pytest_sessionfinish()
+
+    test_case = minidom.parse(str(path)).getElementsByTagName('testcase')[0]
+
+    assert (test_case.getAttribute('url') == test_url), "The URL did not get written to the xml"
+
+
+@pytest.mark.parametrize('suite_name', ['my_suite', ''])
+def test_set_suite_name(testdir, suite_name):
+    if suite_name:
+        testdir.makeini("""
+            [pytest]
+            junit_suite_name={0}
+        """.format(suite_name))
+        expected = suite_name
+    else:
+        expected = 'pytest'
+    testdir.makepyfile("""
+        import pytest
+
+        def test_func():
+            pass
+    """)
+    result, dom = runandparse(testdir)
+    assert result.ret == 0
+    node = dom.find_first_by_tag("testsuite")
+    node.assert_attr(name=expected)
+

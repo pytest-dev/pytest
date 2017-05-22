@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 import os
 
 import _pytest._code
@@ -70,7 +71,7 @@ def test_write_log_entry():
     assert entry_lines[1:] == [' '+line for line in longrepr.splitlines()]
 
 
-class TestWithFunctionIntegration:
+class TestWithFunctionIntegration(object):
     # XXX (hpk) i think that the resultlog plugin should
     # provide a Parser object so that one can remain
     # ignorant regarding formatting details.

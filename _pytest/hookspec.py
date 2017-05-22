@@ -16,7 +16,9 @@ def pytest_addhooks(pluginmanager):
 
 @hookspec(historic=True)
 def pytest_namespace():
-    """return dict of name->object to be made globally available in
+    """
+    DEPRECATED: this hook causes direct monkeypatching on pytest, its use is strongly discouraged
+    return dict of name->object to be made globally available in
     the pytest namespace.  This hook is called at plugin registration
     time.
     """
@@ -157,9 +159,10 @@ def pytest_generate_tests(metafunc):
     """ generate (multiple) parametrized calls to a test function."""
 
 @hookspec(firstresult=True)
-def pytest_make_parametrize_id(config, val):
+def pytest_make_parametrize_id(config, val, argname):
     """Return a user-friendly string representation of the given ``val`` that will be used
     by @pytest.mark.parametrize calls. Return None if the hook doesn't know about ``val``.
+    The parameter name is available as ``argname``, if required.
     """
 
 # -------------------------------------------------------------------------

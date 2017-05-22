@@ -160,7 +160,7 @@ Builtin configuration file options
         [seq]   matches any character in seq
         [!seq]  matches any char not in seq
 
-   Default patterns are ``'.*', 'build', 'dist', 'CVS', '_darcs', '{arch}', '*.egg'``.
+   Default patterns are ``'.*', 'build', 'dist', 'CVS', '_darcs', '{arch}', '*.egg', 'venv'``.
    Setting a ``norecursedirs`` replaces the default.  Here is an example of
    how to avoid certain directories:
 
@@ -242,3 +242,23 @@ Builtin configuration file options
    By default, pytest will stop searching for ``conftest.py`` files upwards
    from ``pytest.ini``/``tox.ini``/``setup.cfg`` of the project if any,
    or up to the file-system root.
+
+
+.. confval:: filterwarnings
+
+   .. versionadded:: 3.1
+
+   Sets a list of filters and actions that should be taken for matched
+   warnings. By default all warnings emitted during the test session
+   will be displayed in a summary at the end of the test session.
+
+   .. code-block:: ini
+
+        # content of pytest.ini
+        [pytest]
+        filterwarnings =
+            error
+            ignore::DeprecationWarning
+
+   This tells pytest to ignore deprecation warnings and turn all other warnings
+   into errors. For more information please refer to :ref:`warnings`.

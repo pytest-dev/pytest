@@ -2,6 +2,7 @@
 # CHANGES:
 # - some_str is replaced, trying to create unicode strings
 #
+from __future__ import absolute_import, division, print_function
 import types
 
 def format_exception_only(etype, value):

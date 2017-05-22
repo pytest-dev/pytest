@@ -19,7 +19,7 @@ Full pytest documentation
    monkeypatch
    tmpdir
    capture
-   recwarn
+   warnings
    doctest
    mark
    skipping

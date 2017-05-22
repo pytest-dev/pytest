@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 import pytest
 
 
@@ -26,7 +27,7 @@ def test_funcarg_prefix_deprecation(testdir):
     """)
     result = testdir.runpytest('-ra')
     result.stdout.fnmatch_lines([
-        ('WC1 None pytest_funcarg__value: '
+        ('*pytest_funcarg__value: '
          'declaring fixtures using "pytest_funcarg__" prefix is deprecated '
          'and scheduled to be removed in pytest 4.0.  '
          'Please remove the prefix and use the @pytest.fixture decorator instead.'),
@@ -48,7 +49,7 @@ def test_str_args_deprecated(tmpdir, testdir):
     from _pytest.main import EXIT_NOTESTSCOLLECTED
     warnings = []
 
-    class Collect:
+    class Collect(object):
         def pytest_logwarning(self, message):
             warnings.append(message)
 

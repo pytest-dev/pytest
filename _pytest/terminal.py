@@ -2,6 +2,9 @@
 
 This is a good source for looking at the various reporting hooks.
 """
+from __future__ import absolute_import, division, print_function
+
+import itertools
 from _pytest.main import EXIT_OK, EXIT_TESTSFAILED, EXIT_INTERRUPTED, \
     EXIT_USAGEERROR, EXIT_NOTESTSCOLLECTED
 import pytest
@@ -24,11 +27,11 @@ def pytest_addoption(parser):
          help="show extra test summary info as specified by chars (f)ailed, "
               "(E)error, (s)skipped, (x)failed, (X)passed, "
               "(p)passed, (P)passed with output, (a)all except pP. "
-              "The pytest warnings are displayed at all times except when "
-              "--disable-pytest-warnings is set")
-    group._addoption('--disable-pytest-warnings', default=False,
-                     dest='disablepytestwarnings', action='store_true',
-                     help='disable warnings summary, overrides -r w flag')
+              "Warnings are displayed at all times except when "
+              "--disable-warnings is set")
+    group._addoption('--disable-warnings', '--disable-pytest-warnings', default=False,
+                     dest='disable_warnings', action='store_true',
+                     help='disable warnings summary')
     group._addoption('-l', '--showlocals',
          action="store_true", dest="showlocals", default=False,
          help="show locals in tracebacks (disabled by default).")
@@ -57,9 +60,9 @@ def pytest_configure(config):
 def getreportopt(config):
     reportopts = ""
     reportchars = config.option.reportchars
-    if not config.option.disablepytestwarnings and 'w' not in reportchars:
+    if not config.option.disable_warnings and 'w' not in reportchars:
         reportchars += 'w'
-    elif config.option.disablepytestwarnings and 'w' in reportchars:
+    elif config.option.disable_warnings and 'w' in reportchars:
         reportchars = reportchars.replace('w', '')
     if reportchars:
         for char in reportchars:
@@ -80,12 +83,39 @@ def pytest_report_teststatus(report):
             letter = "f"
     return report.outcome, letter, report.outcome.upper()
 
+
 class WarningReport:
+    """
+    Simple structure to hold warnings information captured by ``pytest_logwarning``.
+    """
     def __init__(self, code, message, nodeid=None, fslocation=None):
+        """
+        :param code: unused
+        :param str message: user friendly message about the warning
+        :param str|None nodeid: node id that generated the warning (see ``get_location``).
+        :param tuple|py.path.local fslocation:
+            file system location of the source of the warning (see ``get_location``).
+        """
         self.code = code
         self.message = message
         self.nodeid = nodeid
         self.fslocation = fslocation
+
+    def get_location(self, config):
+        """
+        Returns the more user-friendly information about the location
+        of a warning, or None.
+        """
+        if self.nodeid:
+            return self.nodeid
+        if self.fslocation:
+            if isinstance(self.fslocation, tuple) and len(self.fslocation) >= 2:
+                filename, linenum = self.fslocation[:2]
+                relpath = py.path.local(filename).relto(config.invocation_dir)
+                return '%s:%s' % (relpath, linenum)
+            else:
+                return str(self.fslocation)
+        return None
 
 
 class TerminalReporter:
@@ -166,8 +196,6 @@ class TerminalReporter:
 
     def pytest_logwarning(self, code, fslocation, message, nodeid):
         warnings = self.stats.setdefault("warnings", [])
-        if isinstance(fslocation, tuple):
-            fslocation = "%s:%d" % fslocation
         warning = WarningReport(code=code, fslocation=fslocation,
                                 message=message, nodeid=nodeid)
         warnings.append(warning)
@@ -438,13 +466,21 @@ class TerminalReporter:
 
     def summary_warnings(self):
         if self.hasopt("w"):
-            warnings = self.stats.get("warnings")
-            if not warnings:
+            all_warnings = self.stats.get("warnings")
+            if not all_warnings:
                 return
-            self.write_sep("=", "pytest-warning summary")
-            for w in warnings:
-                self._tw.line("W%s %s %s" % (w.code,
-                              w.fslocation, w.message))
+
+            grouped = itertools.groupby(all_warnings, key=lambda wr: wr.get_location(self.config))
+
+            self.write_sep("=", "warnings summary", yellow=True, bold=False)
+            for location, warnings in grouped:
+                self._tw.line(str(location) or '<undetermined location>')
+                for w in warnings:
+                    lines = w.message.splitlines()
+                    indented = '\n'.join('  ' + x for x in lines)
+                    self._tw.line(indented)
+                self._tw.line()
+            self._tw.line('-- Docs: http://doc.pytest.org/en/latest/warnings.html')
 
     def summary_passes(self):
         if self.config.option.tbstyle != "no":
@@ -546,8 +582,7 @@ def flatten(l):
 
 def build_summary_stats_line(stats):
     keys = ("failed passed skipped deselected "
-           "xfailed xpassed warnings error").split()
-    key_translation = {'warnings': 'pytest-warnings'}
+            "xfailed xpassed warnings error").split()
     unknown_key_seen = False
     for key in stats.keys():
         if key not in keys:
@@ -558,8 +593,7 @@ def build_summary_stats_line(stats):
     for key in keys:
         val = stats.get(key, None)
         if val:
-            key_name = key_translation.get(key, key)
-            parts.append("%d %s" % (len(val), key_name))
+            parts.append("%d %s" % (len(val), key))
 
     if parts:
         line = ", ".join(parts)

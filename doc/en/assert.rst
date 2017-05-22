@@ -26,7 +26,7 @@ you will see the return value of the function call::
 
     $ pytest test_assert1.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 items
     
@@ -170,7 +170,7 @@ if you run this module::
 
     $ pytest test_assert2.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 items
     
@@ -223,7 +223,7 @@ provides an alternative explanation for ``Foo`` objects::
 now, given this test module::
 
    # content of test_foocompare.py
-   class Foo:
+   class Foo(object):
        def __init__(self, val):
            self.val = val
 

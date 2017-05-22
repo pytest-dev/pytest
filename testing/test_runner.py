@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import with_statement
+from __future__ import absolute_import, division, print_function
 
 import _pytest._code
 import os
@@ -8,7 +8,7 @@ import pytest
 import sys
 from _pytest import runner, main
 
-class TestSetupState:
+class TestSetupState(object):
     def test_setup(self, testdir):
         ss = runner.SetupState()
         item = testdir.getitem("def test_func(): pass")
@@ -71,7 +71,7 @@ class TestSetupState:
         assert err.value.args == ('oops2',)
 
 
-class BaseFunctionalTests:
+class BaseFunctionalTests(object):
     def test_passfunction(self, testdir):
         reports = testdir.runitem("""
             def test_func():
@@ -200,7 +200,7 @@ class BaseFunctionalTests:
         rec = testdir.inline_runsource("""
             import pytest
 
-            class TestClass:
+            class TestClass(object):
                 def test_method(self):
                     pass
                 def teardown_class(cls):
@@ -239,7 +239,7 @@ class BaseFunctionalTests:
         rec = testdir.inline_runsource("""
             import pytest
 
-            class TestClass:
+            class TestClass(object):
                 def teardown_method(self, x, y, z):
                     pass
 
@@ -351,12 +351,12 @@ class TestExecutionForked(BaseFunctionalTests):
         assert rep.failed
         assert rep.when == "???"
 
-class TestSessionReports:
+class TestSessionReports(object):
     def test_collect_result(self, testdir):
         col = testdir.getmodulecol("""
             def test_func1():
                 pass
-            class TestClass:
+            class TestClass(object):
                 pass
         """)
         rep = runner.collect_one_node(col)
@@ -409,7 +409,7 @@ def test_runtest_in_module_ordering(testdir):
         import pytest
         def pytest_runtest_setup(item): # runs after class-level!
             item.function.mylist.append("module")
-        class TestClass:
+        class TestClass(object):
             def pytest_runtest_setup(self, item):
                 assert not hasattr(item.function, 'mylist')
                 item.function.mylist = ['class']
@@ -680,7 +680,7 @@ def test_store_except_info_on_eror():
     sys.last_traceback and friends.
     """
     # Simulate item that raises a specific exception
-    class ItemThatRaises:
+    class ItemThatRaises(object):
         def runtest(self):
             raise IndexError('TEST')
     try:
@@ -693,7 +693,7 @@ def test_store_except_info_on_eror():
     assert sys.last_traceback
 
 
-class TestReportContents:
+class TestReportContents(object):
     """
     Test user-level API of ``TestReport`` objects.
     """

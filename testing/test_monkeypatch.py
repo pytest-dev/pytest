@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 import os
 import sys
 import textwrap
@@ -16,7 +17,7 @@ def mp():
 
 
 def test_setattr():
-    class A:
+    class A(object):
         x = 1
 
     monkeypatch = MonkeyPatch()
@@ -39,7 +40,7 @@ def test_setattr():
     assert A.x == 5
 
 
-class TestSetattrWithImportPath:
+class TestSetattrWithImportPath(object):
     def test_string_expression(self, monkeypatch):
         monkeypatch.setattr("os.path.abspath", lambda x: "hello2")
         assert os.path.abspath("123") == "hello2"
@@ -79,7 +80,7 @@ class TestSetattrWithImportPath:
 
 
 def test_delattr():
-    class A:
+    class A(object):
         x = 1
 
     monkeypatch = MonkeyPatch()
@@ -294,7 +295,7 @@ class SampleNewInherit(SampleNew):
     pass
 
 
-class SampleOld:
+class SampleOld(object):
     # oldstyle on python2
     @staticmethod
     def hello():

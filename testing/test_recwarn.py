@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 import warnings
 import re
 import py
@@ -8,25 +9,19 @@ from _pytest.recwarn import WarningsRecorder
 def test_recwarn_functional(testdir):
     reprec = testdir.inline_runsource("""
         import warnings
-        oldwarn = warnings.showwarning
         def test_method(recwarn):
-            assert warnings.showwarning != oldwarn
             warnings.warn("hello")
             warn = recwarn.pop()
             assert isinstance(warn.message, UserWarning)
-        def test_finalized():
-            assert warnings.showwarning == oldwarn
     """)
     res = reprec.countoutcomes()
-    assert tuple(res) == (2, 0, 0), res
+    assert tuple(res) == (1, 0, 0), res
 
 
 class TestWarningsRecorderChecker(object):
-    def test_recording(self, recwarn):
-        showwarning = py.std.warnings.showwarning
+    def test_recording(self):
         rec = WarningsRecorder()
         with rec:
-            assert py.std.warnings.showwarning != showwarning
             assert not rec.list
             py.std.warnings.warn_explicit("hello", UserWarning, "xyz", 13)
             assert len(rec.list) == 1
@@ -39,8 +34,6 @@ class TestWarningsRecorderChecker(object):
             assert len(rec.list) == 0
             assert l is rec.list
             pytest.raises(AssertionError, "rec.pop()")
-
-        assert showwarning == py.std.warnings.showwarning
 
     def test_typechecking(self):
         from _pytest.recwarn import WarningsChecker
@@ -112,10 +105,9 @@ class TestDeprecatedCall(object):
         pytest.deprecated_call(self.dep_explicit, 0)
 
     def test_deprecated_call_as_context_manager_no_warning(self):
-        with pytest.raises(pytest.fail.Exception) as ex:
+        with pytest.raises(pytest.fail.Exception, matches='^DID NOT WARN'):
             with pytest.deprecated_call():
                 self.dep(1)
-        assert str(ex.value).startswith("DID NOT WARN")
 
     def test_deprecated_call_as_context_manager(self):
         with pytest.deprecated_call():
@@ -154,7 +146,9 @@ class TestDeprecatedCall(object):
                 pytest.deprecated_call(deprecated_function)
         """)
         result = testdir.runpytest()
-        result.stdout.fnmatch_lines('*=== 2 passed in *===')
+        # the 2 tests must pass, but the call to test_one() will generate a warning
+        # in pytest's summary
+        result.stdout.fnmatch_lines('*=== 2 passed, 1 warnings in *===')
 
 
 class TestWarns(object):
@@ -218,7 +212,6 @@ class TestWarns(object):
         excinfo.match(re.escape(message_template.format(warning_classes,
                                                         [each.message for each in warninfo])))
 
-
     def test_record(self):
         with pytest.warns(UserWarning) as record:
             warnings.warn("user", UserWarning)
@@ -234,6 +227,28 @@ class TestWarns(object):
         assert len(record) == 2
         assert str(record[0].message) == "user"
         assert str(record[1].message) == "runtime"
+
+    def test_record_by_subclass(self):
+        with pytest.warns(Warning) as record:
+            warnings.warn("user", UserWarning)
+            warnings.warn("runtime", RuntimeWarning)
+
+        assert len(record) == 2
+        assert str(record[0].message) == "user"
+        assert str(record[1].message) == "runtime"
+
+        class MyUserWarning(UserWarning): pass
+
+        class MyRuntimeWarning(RuntimeWarning): pass
+
+        with pytest.warns((UserWarning, RuntimeWarning)) as record:
+            warnings.warn("user", MyUserWarning)
+            warnings.warn("runtime", MyRuntimeWarning)
+
+        assert len(record) == 2
+        assert str(record[0].message) == "user"
+        assert str(record[1].message) == "runtime"
+
 
     def test_double_test(self, testdir):
         """If a test is run again, the warning should still be raised"""

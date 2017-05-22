@@ -1,4 +1,5 @@
 """ command line options, ini-file and conftest.py processing. """
+from __future__ import absolute_import, division, print_function
 import argparse
 import shlex
 import traceback
@@ -7,7 +8,8 @@ import warnings
 
 import py
 # DON't import pytest here because it causes import cycle troubles
-import sys, os
+import sys
+import os
 import _pytest._code
 import _pytest.hookspec  # the extension point definitions
 import _pytest.assertion
@@ -53,7 +55,6 @@ def main(args=None, plugins=None):
             return 4
         else:
             try:
-                config.pluginmanager.check_pending()
                 return config.hook.pytest_cmdline_main(config=config)
             finally:
                 config._ensure_unconfigure()
@@ -98,7 +99,8 @@ default_plugins = (
      "mark main terminal runner python fixtures debugging unittest capture skipping "
      "tmpdir monkeypatch recwarn pastebin helpconfig nose assertion "
      "junitxml resultlog doctest cacheprovider freeze_support "
-     "setuponly setupplan").split()
+     "setuponly setupplan warnings").split()
+
 
 builtin_plugins = set(default_plugins)
 builtin_plugins.add("pytester")
@@ -251,6 +253,9 @@ class PytestPluginManager(PluginManager):
         if ret:
             self.hook.pytest_plugin_registered.call_historic(
                       kwargs=dict(plugin=plugin, manager=self))
+
+            if isinstance(plugin, types.ModuleType):
+                self.consider_module(plugin)
         return ret
 
     def getplugin(self, name):
@@ -395,8 +400,7 @@ class PytestPluginManager(PluginManager):
             self.import_plugin(arg)
 
     def consider_conftest(self, conftestmodule):
-        if self.register(conftestmodule, name=conftestmodule.__file__):
-            self.consider_module(conftestmodule)
+        self.register(conftestmodule, name=conftestmodule.__file__)
 
     def consider_env(self):
         self._import_plugin_specs(os.environ.get("PYTEST_PLUGINS"))
@@ -414,7 +418,8 @@ class PytestPluginManager(PluginManager):
         # "terminal" or "capture".  Those plugins are registered under their
         # basename for historic purposes but must be imported with the
         # _pytest prefix.
-        assert isinstance(modname, str), "module name as string required, got %r" % modname
+        assert isinstance(modname, (py.builtin.text, str)), "module name as text required, got %r" % modname
+        modname = str(modname)
         if self.get_plugin(modname) is not None:
             return
         if modname in builtin_plugins:
@@ -439,7 +444,6 @@ class PytestPluginManager(PluginManager):
         else:
             mod = sys.modules[importspec]
             self.register(mod, modname)
-            self.consider_module(mod)
 
 
 def _get_plugin_specs_as_list(specs):
@@ -910,11 +914,11 @@ class Config(object):
             fin = self._cleanup.pop()
             fin()
 
-    def warn(self, code, message, fslocation=None):
+    def warn(self, code, message, fslocation=None, nodeid=None):
         """ generate a warning for this test session. """
         self.hook.pytest_logwarning.call_historic(kwargs=dict(
             code=code, message=message,
-            fslocation=fslocation, nodeid=None))
+            fslocation=fslocation, nodeid=nodeid))
 
     def get_terminal_writer(self):
         return self.pluginmanager.get_plugin("terminalreporter")._tw

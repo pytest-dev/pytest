@@ -1,9 +1,9 @@
+from __future__ import absolute_import, division, print_function
 import sys
 
 from py._code.code import FormattedExcinfo
 
 import py
-import pytest
 import warnings
 
 import inspect
@@ -16,8 +16,16 @@ from _pytest.compat import (
     getlocation, getfuncargnames,
     safe_getattr,
 )
+from _pytest.runner import fail
+from _pytest.compat import FuncargnamesCompatAttr
 
 def pytest_sessionstart(session):
+    import _pytest.python
+    scopename2class.update({
+        'class': _pytest.python.Class,
+        'module': _pytest.python.Module,
+        'function': _pytest.main.Item,
+    })
     session._fixturemanager = FixtureManager(session)
 
 
@@ -42,19 +50,6 @@ def scopeproperty(name=None, doc=None):
 
         return property(provide, None, None, func.__doc__)
     return decoratescope
-
-
-def pytest_namespace():
-    scopename2class.update({
-        'class': pytest.Class,
-        'module': pytest.Module,
-        'function': pytest.Item,
-    })
-    return {
-        'fixture': fixture,
-        'yield_fixture': yield_fixture,
-        'collect': {'_fillfuncargs': fillfixtures}
-    }
 
 
 def get_scope_node(node, scope):
@@ -104,7 +99,7 @@ def add_funcarg_pseudo_fixture_def(collector, metafunc, fixturemanager):
         if scope != "function":
             node = get_scope_node(collector, scope)
             if node is None:
-                assert scope == "class" and isinstance(collector, pytest.Module)
+                assert scope == "class" and isinstance(collector, _pytest.python.Module)
                 # use module-level collector for class-scope (for now)
                 node = collector
         if node and argname in node._name2pseudofixturedef:
@@ -220,17 +215,6 @@ def slice_items(items, ignore, scoped_argkeys_cache):
     return items, None, None, None
 
 
-
-class FuncargnamesCompatAttr:
-    """ helper class so that Metafunc, Function and FixtureRequest
-    don't need to each define the "funcargnames" compatibility attribute.
-    """
-    @property
-    def funcargnames(self):
-        """ alias attribute for ``fixturenames`` for pre-2.3 compatibility"""
-        return self.fixturenames
-
-
 def fillfixtures(function):
     """ fill missing funcargs for a test function. """
     try:
@@ -326,7 +310,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
     @scopeproperty("class")
     def cls(self):
         """ class (can be None) where the test function was collected. """
-        clscol = self._pyfuncitem.getparent(pytest.Class)
+        clscol = self._pyfuncitem.getparent(_pytest.python.Class)
         if clscol:
             return clscol.obj
 
@@ -344,7 +328,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
     @scopeproperty()
     def module(self):
         """ python module object where the test function was collected. """
-        return self._pyfuncitem.getparent(pytest.Module).obj
+        return self._pyfuncitem.getparent(_pytest.python.Module).obj
 
     @scopeproperty()
     def fspath(self):
@@ -507,7 +491,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
                         source_lineno,
                     )
                 )
-                pytest.fail(msg)
+                fail(msg)
         else:
             # indices might not be set if old-style metafunc.addcall() was used
             param_index = funcitem.callspec.indices.get(argname, 0)
@@ -540,10 +524,10 @@ class FixtureRequest(FuncargnamesCompatAttr):
         if scopemismatch(invoking_scope, requested_scope):
             # try to report something helpful
             lines = self._factorytraceback()
-            pytest.fail("ScopeMismatch: You tried to access the %r scoped "
-                "fixture %r with a %r scoped request object, "
-                "involved factories\n%s" %(
-                (requested_scope, argname, invoking_scope, "\n".join(lines))),
+            fail("ScopeMismatch: You tried to access the %r scoped "
+                 "fixture %r with a %r scoped request object, "
+                 "involved factories\n%s" % (
+                    (requested_scope, argname, invoking_scope, "\n".join(lines))),
                 pytrace=False)
 
     def _factorytraceback(self):
@@ -553,7 +537,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
             fs, lineno = getfslineno(factory)
             p = self._pyfuncitem.session.fspath.bestrelpath(fs)
             args = _format_args(factory)
-            lines.append("%s:%d:  def %s%s" %(
+            lines.append("%s:%d:  def %s%s" % (
                 p, lineno, factory.__name__, args))
         return lines
 
@@ -698,8 +682,9 @@ def fail_fixturefunc(fixturefunc, msg):
     fs, lineno = getfslineno(fixturefunc)
     location = "%s:%s" % (fs, lineno+1)
     source = _pytest._code.Source(fixturefunc)
-    pytest.fail(msg + ":\n\n" + str(source.indent()) + "\n" + location,
-                pytrace=False)
+    fail(msg + ":\n\n" + str(source.indent()) + "\n" + location,
+         pytrace=False)
+
 
 def call_fixture_func(fixturefunc, request, kwargs):
     yieldctx = is_generator(fixturefunc)
@@ -1080,7 +1065,7 @@ class FixtureManager:
                     continue
                 marker = defaultfuncargprefixmarker
                 from _pytest import deprecated
-                self.config.warn('C1', deprecated.FUNCARG_PREFIX.format(name=name))
+                self.config.warn('C1', deprecated.FUNCARG_PREFIX.format(name=name), nodeid=nodeid)
                 name = name[len(self._argprefix):]
             elif not isinstance(marker, FixtureFunctionMarker):
                 # magic globals  with __getattr__ might have got us a wrong

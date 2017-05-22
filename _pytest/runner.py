@@ -1,20 +1,14 @@
 """ basic collect and runtest protocol implementations """
+from __future__ import absolute_import, division, print_function
+
 import bdb
 import sys
 from time import time
 
 import py
-import pytest
 from _pytest._code.code import TerminalRepr, ExceptionInfo
 
 
-def pytest_namespace():
-    return {
-        'fail'         : fail,
-        'skip'         : skip,
-        'importorskip' : importorskip,
-        'exit'         : exit,
-    }
 
 #
 # pytest plugin hooks
@@ -262,7 +256,7 @@ def pytest_runtest_makereport(item, call):
         if not isinstance(excinfo, ExceptionInfo):
             outcome = "failed"
             longrepr = excinfo
-        elif excinfo.errisinstance(pytest.skip.Exception):
+        elif excinfo.errisinstance(skip.Exception):
             outcome = "skipped"
             r = excinfo._getreprcrash()
             longrepr = (str(r.path), r.lineno, r.message)
@@ -330,7 +324,9 @@ class TeardownErrorReport(BaseReport):
         self.__dict__.update(extra)
 
 def pytest_make_collect_report(collector):
-    call = CallInfo(collector._memocollect, "memocollect")
+    call = CallInfo(
+        lambda: list(collector.collect()),
+        'collect')
     longrepr = None
     if not call.excinfo:
         outcome = "passed"
@@ -550,14 +546,21 @@ def importorskip(modname, minversion=None):
     __version__ attribute.  If no minversion is specified the a skip
     is only triggered if the module can not be imported.
     """
+    import warnings
     __tracebackhide__ = True
     compile(modname, '', 'eval') # to catch syntaxerrors
     should_skip = False
-    try:
-        __import__(modname)
-    except ImportError:
-        # Do not raise chained exception here(#1485)
-        should_skip = True
+
+    with warnings.catch_warnings():
+        # make sure to ignore ImportWarnings that might happen because
+        # of existing directories with the same name we're trying to
+        # import but without a __init__.py file
+        warnings.simplefilter('ignore')
+        try:
+            __import__(modname)
+        except ImportError:
+            # Do not raise chained exception here(#1485)
+            should_skip = True
     if should_skip:
         raise Skipped("could not import %r" %(modname,), allow_module_level=True)
     mod = sys.modules[modname]
@@ -575,4 +578,3 @@ def importorskip(modname, minversion=None):
             raise Skipped("module %r has __version__ %r, required is: %r" %(
                           modname, verattr, minversion), allow_module_level=True)
     return mod
-

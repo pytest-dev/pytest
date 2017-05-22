@@ -1,4 +1,6 @@
 """ (disabled by default) support for testing pytest and pytest plugins. """
+from __future__ import absolute_import, division, print_function
+
 import codecs
 import gc
 import os
@@ -10,8 +12,9 @@ import time
 import traceback
 from fnmatch import fnmatch
 
-from py.builtin import print_
+from weakref import WeakKeyDictionary
 
+from _pytest.capture import MultiCapture, SysCapture
 from _pytest._code import Source
 import py
 import pytest
@@ -85,7 +88,7 @@ class LsofFdLeakChecker(object):
             return True
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
-    def pytest_runtest_item(self, item):
+    def pytest_runtest_protocol(self, item):
         lines1 = self.get_open_files()
         yield
         if hasattr(sys, "pypy_version_info"):
@@ -104,7 +107,8 @@ class LsofFdLeakChecker(object):
             error.extend([str(f) for f in lines2])
             error.append(error[0])
             error.append("*** function %s:%s: %s " % item.location)
-            pytest.fail("\n".join(error), pytrace=False)
+            error.append("See issue #2366")
+            item.warn('', "\n".join(error))
 
 
 # XXX copied from execnet's conftest.py - needs to be merged
@@ -226,15 +230,15 @@ class HookRecorder:
             name, check = entries.pop(0)
             for ind, call in enumerate(self.calls[i:]):
                 if call._name == name:
-                    print_("NAMEMATCH", name, call)
+                    print("NAMEMATCH", name, call)
                     if eval(check, backlocals, call.__dict__):
-                        print_("CHECKERMATCH", repr(check), "->", call)
+                        print("CHECKERMATCH", repr(check), "->", call)
                     else:
-                        print_("NOCHECKERMATCH", repr(check), "-", call)
+                        print("NOCHECKERMATCH", repr(check), "-", call)
                         continue
                     i += ind + 1
                     break
-                print_("NONAMEMATCH", name, "with", call)
+                print("NONAMEMATCH", name, "with", call)
             else:
                 pytest.fail("could not find %r check %r" % (name, check))
 
@@ -402,6 +406,7 @@ class Testdir:
 
     def __init__(self, request, tmpdir_factory):
         self.request = request
+        self._mod_collections  = WeakKeyDictionary()
         # XXX remove duplication with tmpdir plugin
         basetmp = tmpdir_factory.ensuretemp("testdir")
         name = request.function.__name__
@@ -470,7 +475,7 @@ class Testdir:
         if not hasattr(self, '_olddir'):
             self._olddir = old
 
-    def _makefile(self, ext, args, kwargs):
+    def _makefile(self, ext, args, kwargs, encoding="utf-8"):
         items = list(kwargs.items())
         if args:
             source = py.builtin._totext("\n").join(
@@ -490,7 +495,7 @@ class Testdir:
 
             source_unicode = "\n".join([my_totext(line) for line in source.lines])
             source = py.builtin._totext(source_unicode)
-            content = source.strip().encode("utf-8") # + "\n"
+            content = source.strip().encode(encoding) # + "\n"
             #content = content.rstrip() + "\n"
             p.write(content, "wb")
             if ret is None:
@@ -735,7 +740,8 @@ class Testdir:
         if kwargs.get("syspathinsert"):
             self.syspathinsert()
         now = time.time()
-        capture = py.io.StdCapture()
+        capture = MultiCapture(Capture=SysCapture)
+        capture.start_capturing()
         try:
             try:
                 reprec = self.inline_run(*args, **kwargs)
@@ -750,7 +756,8 @@ class Testdir:
                 class reprec:
                     ret = 3
         finally:
-            out, err = capture.reset()
+            out, err = capture.readouterr()
+            capture.stop_capturing()
             sys.stdout.write(out)
             sys.stderr.write(err)
 
@@ -867,6 +874,7 @@ class Testdir:
             self.makepyfile(__init__ = "#")
         self.config = config = self.parseconfigure(path, *configargs)
         node = self.getnode(config, path)
+
         return node
 
     def collect_by_name(self, modcol, name):
@@ -881,7 +889,9 @@ class Testdir:
         :param name: The name of the node to return.
 
         """
-        for colitem in modcol._memocollect():
+        if modcol not in self._mod_collections:
+            self._mod_collections[modcol] = list(modcol.collect())
+        for colitem in self._mod_collections[modcol]:
             if colitem.name == name:
                 return colitem
 
@@ -916,8 +926,8 @@ class Testdir:
         cmdargs = [str(x) for x in cmdargs]
         p1 = self.tmpdir.join("stdout")
         p2 = self.tmpdir.join("stderr")
-        print_("running:", ' '.join(cmdargs))
-        print_("     in:", str(py.path.local()))
+        print("running:", ' '.join(cmdargs))
+        print("     in:", str(py.path.local()))
         f1 = codecs.open(str(p1), "w", encoding="utf8")
         f2 = codecs.open(str(p2), "w", encoding="utf8")
         try:
@@ -943,7 +953,7 @@ class Testdir:
     def _dump_lines(self, lines, fp):
         try:
             for line in lines:
-                py.builtin.print_(line, file=fp)
+                print(line, file=fp)
         except UnicodeEncodeError:
             print("couldn't print to %s because of encoding" % (fp,))
 
@@ -1000,7 +1010,7 @@ class Testdir:
         The pexpect child is returned.
 
         """
-        basetemp = self.tmpdir.mkdir("pexpect")
+        basetemp = self.tmpdir.mkdir("temp-pexpect")
         invoke = " ".join(map(str, self._getpytestargs()))
         cmd = "%s --basetemp=%s %s" % (invoke, basetemp, string)
         return self.spawn(cmd, expect_timeout=expect_timeout)

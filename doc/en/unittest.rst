@@ -71,7 +71,7 @@ it from a unittest-style test::
 
     @pytest.fixture(scope="class")
     def db_class(request):
-        class DummyDB:
+        class DummyDB(object):
             pass
         # set a class attribute on the invoking test context 
         request.cls.db = DummyDB()
@@ -108,7 +108,7 @@ the ``self.db`` values in the traceback::
 
     $ pytest test_unittest_db.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     
@@ -171,7 +171,8 @@ creation of a per-test temporary directory::
             tmpdir.join("samplefile.ini").write("# testdata")
 
         def test_method(self):
-            s = open("samplefile.ini").read() 
+            with open("samplefile.ini") as f:
+                s = f.read()
             assert "testdata" in s
 
 Due to the ``autouse`` flag the ``initdir`` fixture function will be

@@ -1,8 +1,9 @@
+from __future__ import absolute_import, division, print_function
 import pytest
 
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 
-class SessionTests:
+class SessionTests(object):
     def test_basic_testitem_events(self, testdir):
         tfile = testdir.makepyfile("""
             def test_one():
@@ -11,7 +12,7 @@ class SessionTests:
                 assert 0
             def test_other():
                 raise ValueError(23)
-            class TestClass:
+            class TestClass(object):
                 def test_two(self, someargs):
                     pass
         """)
@@ -97,12 +98,12 @@ class SessionTests:
     def test_broken_repr(self, testdir):
         p = testdir.makepyfile("""
             import pytest
-            class BrokenRepr1:
+            class BrokenRepr1(object):
                 foo=0
                 def __repr__(self):
                     raise Exception("Ha Ha fooled you, I'm a broken repr().")
 
-            class TestBrokenClass:
+            class TestBrokenClass(object):
                 def test_explicit_bad_repr(self):
                     t = BrokenRepr1()
                     pytest.raises(Exception, 'repr(t)')
@@ -145,7 +146,7 @@ class TestNewSession(SessionTests):
                 l.append(2)
             def test_3():
                 assert l == [1,2]
-            class Testmygroup:
+            class Testmygroup(object):
                 reslist = l
                 def test_1(self):
                     self.reslist.append(1)
@@ -167,7 +168,7 @@ class TestNewSession(SessionTests):
                 def test_one():
                     raise ValueError()
 
-                class TestX:
+                class TestX(object):
                     def test_method_one(self):
                         pass
 

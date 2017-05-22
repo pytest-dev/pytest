@@ -1,4 +1,4 @@
-from __future__ import with_statement
+from __future__ import absolute_import, division, print_function
 import sys
 import os
 import py, pytest
@@ -8,7 +8,7 @@ from _pytest import config as parseopt
 def parser():
     return parseopt.Parser()
 
-class TestParser:
+class TestParser(object):
     def test_no_help_by_default(self, capsys):
         parser = parseopt.Parser(usage="xyz")
         pytest.raises(SystemExit, lambda: parser.parse(["-h"]))
@@ -34,15 +34,16 @@ class TestParser:
         )
 
     def test_argument_type(self):
-        argument = parseopt.Argument('-t', dest='abc', type='int')
+        argument = parseopt.Argument('-t', dest='abc', type=int)
         assert argument.type is int
-        argument = parseopt.Argument('-t', dest='abc', type='string')
+        argument = parseopt.Argument('-t', dest='abc', type=str)
         assert argument.type is str
         argument = parseopt.Argument('-t', dest='abc', type=float)
         assert argument.type is float
-        with pytest.raises(KeyError):
-            argument = parseopt.Argument('-t', dest='abc', type='choice')
-        argument = parseopt.Argument('-t', dest='abc', type='choice',
+        with pytest.warns(DeprecationWarning):
+            with pytest.raises(KeyError):
+                argument = parseopt.Argument('-t', dest='abc', type='choice')
+        argument = parseopt.Argument('-t', dest='abc', type=str,
                                      choices=['red', 'blue'])
         assert argument.type is str
 
@@ -139,7 +140,7 @@ class TestParser:
         parser.addoption("--hello", dest="hello", action="store")
         parser.addoption("--world", dest="world", default=42)
 
-        class A:
+        class A(object):
             pass
 
         option = A()
@@ -176,8 +177,8 @@ class TestParser:
             elif option.type is str:
                 option.default = "world"
         parser = parseopt.Parser(processopt=defaultget)
-        parser.addoption("--this", dest="this", type="int", action="store")
-        parser.addoption("--hello", dest="hello", type="string", action="store")
+        parser.addoption("--this", dest="this", type=int, action="store")
+        parser.addoption("--hello", dest="hello", type=str, action="store")
         parser.addoption("--no", dest="no", action="store_true")
         option = parser.parse([])
         assert option.hello == "world"

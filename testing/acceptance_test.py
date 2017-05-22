@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import, division, print_function
 import os
 import sys
 
@@ -8,7 +9,7 @@ import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED, EXIT_USAGEERROR
 
 
-class TestGeneralUsage:
+class TestGeneralUsage(object):
     def test_config_error(self, testdir):
         testdir.makeconftest("""
             def pytest_configure(config):
@@ -338,10 +339,16 @@ class TestGeneralUsage:
             "*ERROR*test_b.py::b*",
         ])
 
+    @pytest.mark.usefixtures('recwarn')
     def test_namespace_import_doesnt_confuse_import_hook(self, testdir):
-        # Ref #383. Python 3.3's namespace package messed with our import hooks
-        # Importing a module that didn't exist, even if the ImportError was
-        # gracefully handled, would make our test crash.
+        """
+        Ref #383. Python 3.3's namespace package messed with our import hooks
+        Importing a module that didn't exist, even if the ImportError was
+        gracefully handled, would make our test crash.
+
+        Use recwarn here to silence this warning in Python 2.6 and 2.7:
+            ImportWarning: Not importing directory '...\not_a_package': missing __init__.py
+        """
         testdir.mkdir('not_a_package')
         p = testdir.makepyfile("""
             try:
@@ -410,7 +417,7 @@ class TestGeneralUsage:
         ])
 
 
-class TestInvocationVariants:
+class TestInvocationVariants(object):
     def test_earlyinit(self, testdir):
         p = testdir.makepyfile("""
             import pytest
@@ -502,7 +509,7 @@ class TestInvocationVariants:
         out, err = capsys.readouterr()
 
     def test_invoke_plugin_api(self, testdir, capsys):
-        class MyPlugin:
+        class MyPlugin(object):
             def pytest_addoption(self, parser):
                 parser.addoption("--myopt")
 
@@ -523,6 +530,7 @@ class TestInvocationVariants:
         ])
 
     def test_cmdline_python_package(self, testdir, monkeypatch):
+        import warnings
         monkeypatch.delenv('PYTHONDONTWRITEBYTECODE', False)
         path = testdir.mkpydir("tpkg")
         path.join("test_hello.py").write("def test_hello(): pass")
@@ -545,7 +553,11 @@ class TestInvocationVariants:
             return what
         empty_package = testdir.mkpydir("empty_package")
         monkeypatch.setenv('PYTHONPATH', join_pythonpath(empty_package))
-        result = testdir.runpytest("--pyargs", ".")
+        # the path which is not a package raises a warning on pypy;
+        # no idea why only pypy and not normal python warn about it here
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', ImportWarning)
+            result = testdir.runpytest("--pyargs", ".")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
             "*2 passed*"
@@ -670,7 +682,7 @@ class TestInvocationVariants:
         assert request.config.pluginmanager.hasplugin('python')
 
 
-class TestDurations:
+class TestDurations(object):
     source = """
         import time
         frag = 0.002
@@ -741,7 +753,7 @@ class TestDurations:
         assert result.ret == 0
 
 
-class TestDurationWithFixture:
+class TestDurationWithFixture(object):
     source = """
         import time
         frag = 0.001
@@ -781,3 +793,45 @@ def test_zipimport_hook(testdir, tmpdir):
     assert result.ret == 0
     result.stderr.fnmatch_lines(['*not found*foo*'])
     assert 'INTERNALERROR>' not in result.stdout.str()
+
+
+def test_import_plugin_unicode_name(testdir):
+    testdir.makepyfile(
+        myplugin='',
+    )
+    testdir.makepyfile("""
+        def test(): pass
+    """)
+    testdir.makeconftest("""
+        pytest_plugins = [u'myplugin']
+    """)
+    r = testdir.runpytest()
+    assert r.ret == 0
+
+
+def test_deferred_hook_checking(testdir):
+    """
+    Check hooks as late as possible (#1821).
+    """
+    testdir.syspathinsert()
+    testdir.makepyfile(**{
+        'plugin.py': """
+        class Hooks:
+            def pytest_my_hook(self, config):
+                pass
+
+        def pytest_configure(config):
+            config.pluginmanager.add_hookspecs(Hooks)
+        """,
+        'conftest.py': """
+            pytest_plugins = ['plugin']
+            def pytest_my_hook(config):
+                return 40
+        """,
+        'test_foo.py': """
+            def test(request):
+                assert request.config.hook.pytest_my_hook(config=request.config) == [40]
+        """
+    })
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(['* 1 passed *'])

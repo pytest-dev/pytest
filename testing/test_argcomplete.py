@@ -1,4 +1,4 @@
-from __future__ import with_statement
+from __future__ import absolute_import, division, print_function
 import py, pytest
 
 # test for _argcomplete but not specific for any application
@@ -69,7 +69,7 @@ class FilesCompleter(object):
                 completion += [f + '/' for f in anticomp]
         return completion
 
-class TestArgComplete:
+class TestArgComplete(object):
     @pytest.mark.skipif("sys.platform in ('win32', 'darwin')")
     def test_compare_with_compgen(self):
         from _pytest._argcomplete import FastFilesCompleter

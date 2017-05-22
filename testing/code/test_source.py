@@ -1,6 +1,7 @@
 # flake8: noqa
 # disable flake check on this file because some constructs are strange
 # or redundant on purpose and can't be disable on a line-by-line basis
+from __future__ import absolute_import, division, print_function
 import sys
 
 import _pytest._code
@@ -49,7 +50,7 @@ def test_source_from_function():
     assert str(source).startswith('def test_source_str_function():')
 
 def test_source_from_method():
-    class TestClass:
+    class TestClass(object):
         def test_method(self):
             pass
     source = _pytest._code.Source(TestClass().test_method)
@@ -119,7 +120,7 @@ def test_isparseable():
     assert not Source(" \nif 1:\npass").isparseable()
     assert not Source(chr(0)).isparseable()
 
-class TestAccesses:
+class TestAccesses(object):
     source = Source("""\
         def f(x):
             pass
@@ -143,7 +144,7 @@ class TestAccesses:
         l = [x for x in self.source]
         assert len(l) == 4
 
-class TestSourceParsingAndCompiling:
+class TestSourceParsingAndCompiling(object):
     source = Source("""\
         def f(x):
             assert (x ==
@@ -307,7 +308,7 @@ class TestSourceParsingAndCompiling:
         pytest.raises(SyntaxError, _pytest._code.compile, "lambda a,a: 0", mode='eval')
 
 def test_getstartingblock_singleline():
-    class A:
+    class A(object):
         def __init__(self, *args):
             frame = sys._getframe(1)
             self.source = _pytest._code.Frame(frame).statement
@@ -318,7 +319,7 @@ def test_getstartingblock_singleline():
     assert len(l) == 1
 
 def test_getstartingblock_multiline():
-    class A:
+    class A(object):
         def __init__(self, *args):
             frame = sys._getframe(1)
             self.source = _pytest._code.Frame(frame).statement
@@ -461,16 +462,16 @@ def test_getfslineno():
     assert lineno == A_lineno
 
     assert getfslineno(3) == ("", -1)
-    class B:
+    class B(object):
         pass
     B.__name__ = "B2"
     assert getfslineno(B)[1] == -1
 
 def test_code_of_object_instance_with_call():
-    class A:
+    class A(object):
         pass
     pytest.raises(TypeError, lambda: _pytest._code.Source(A()))
-    class WithCall:
+    class WithCall(object):
         def __call__(self):
             pass
 
@@ -559,7 +560,7 @@ x = 3
 """)
     assert str(source) == "raise ValueError(\n    23\n)"
 
-class TestTry:
+class TestTry(object):
     pytestmark = astonly
     source = """\
 try:
@@ -586,7 +587,7 @@ else:
         source = getstatement(5, self.source)
         assert str(source) == "    raise KeyError()"
 
-class TestTryFinally:
+class TestTryFinally(object):
     source = """\
 try:
     raise ValueError
@@ -604,7 +605,7 @@ finally:
 
 
 
-class TestIf:
+class TestIf(object):
     pytestmark = astonly
     source = """\
 if 1:

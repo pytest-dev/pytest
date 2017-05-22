@@ -1,6 +1,7 @@
 """ log machine-parseable test session result information in a plain
 text file.
 """
+from __future__ import absolute_import, division, print_function
 
 import py
 import os
@@ -61,9 +62,9 @@ class ResultLog(object):
         self.logfile = logfile # preferably line buffered
 
     def write_log_entry(self, testpath, lettercode, longrepr):
-        py.builtin.print_("%s %s" % (lettercode, testpath), file=self.logfile)
+        print("%s %s" % (lettercode, testpath), file=self.logfile)
         for line in longrepr.splitlines():
-            py.builtin.print_(" %s" % line, file=self.logfile)
+            print(" %s" % line, file=self.logfile)
 
     def log_outcome(self, report, lettercode, longrepr):
         testpath = getattr(report, 'nodeid', None)

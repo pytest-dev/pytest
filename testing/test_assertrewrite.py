@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 import glob
 import os
 import py_compile
@@ -57,7 +58,7 @@ def getmsg(f, extra_ns=None, must_pass=False):
             pytest.fail("function didn't raise at all")
 
 
-class TestAssertionRewrite:
+class TestAssertionRewrite(object):
 
     def test_place_initial_imports(self):
         s = """'Doc string'\nother = stuff"""
@@ -333,7 +334,7 @@ class TestAssertionRewrite:
     @pytest.mark.skipif("sys.version_info < (3,5)")
     def test_at_operator_issue1290(self, testdir):
         testdir.makepyfile("""
-            class Matrix:
+            class Matrix(object):
                 def __init__(self, num):
                     self.num = num
                 def __matmul__(self, other):
@@ -515,7 +516,7 @@ class TestAssertionRewrite:
         assert r"where 1 = \n{ \n~ \n}.a" in util._format_lines([getmsg(f)])[0]
 
 
-class TestRewriteOnImport:
+class TestRewriteOnImport(object):
 
     def test_pycache_is_a_file(self, testdir):
         testdir.tmpdir.join("__pycache__").write("Hello")
@@ -711,6 +712,24 @@ def test_rewritten():
         result.stdout.fnmatch_lines(['*= 1 passed in *=*'])
         assert 'pytest-warning summary' not in result.stdout.str()
 
+    @pytest.mark.skipif(sys.version_info[0] > 2, reason='python 2 only')
+    def test_rewrite_future_imports(self, testdir):
+        """Test that rewritten modules don't inherit the __future__ flags
+        from the assertrewrite module.
+
+        assertion.rewrite imports __future__.division (and others), so
+        ensure rewritten modules don't inherit those flags.
+
+        The test below will fail if __future__.division is enabled
+        """
+        testdir.makepyfile('''
+            def test():
+                x = 1 / 2
+                assert type(x) is int
+        ''')
+        result = testdir.runpytest()
+        assert result.ret == 0
+
 
 class TestAssertionRewriteHookDetails(object):
     def test_loader_is_package_false_for_module(self, testdir):
@@ -884,7 +903,7 @@ class TestAssertionRewriteHookDetails(object):
         """
         path = testdir.mkpydir("foo")
         path.join("test_foo.py").write(_pytest._code.Source("""
-            class Test:
+            class Test(object):
                 def test_foo(self):
                     import pkgutil
                     data = pkgutil.get_data('foo.test_foo', 'data.txt')
@@ -912,7 +931,7 @@ def test_issue731(testdir):
     assert 'unbalanced braces' not in result.stdout.str()
 
 
-class TestIssue925():
+class TestIssue925(object):
     def test_simple_case(self, testdir):
         testdir.makepyfile("""
         def test_ternary_display():

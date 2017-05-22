@@ -1,6 +1,7 @@
 """
 python version compatibility code
 """
+from __future__ import absolute_import, division, print_function
 import sys
 import inspect
 import types
@@ -123,7 +124,7 @@ if  sys.version_info[:2] == (2, 6):
 
 if _PY3:
     import codecs
-
+    imap = map
     STRING_TYPES = bytes, str
 
     def _escape_strings(val):
@@ -157,6 +158,8 @@ if _PY3:
 else:
     STRING_TYPES = bytes, str, unicode
 
+    from itertools import imap  # NOQA
+
     def _escape_strings(val):
         """In py2 bytes and str are the same type, so return if it's a bytes
         object, return it unchanged if it is a full ascii string,
@@ -179,8 +182,18 @@ def get_real_func(obj):
     """ gets the real function object of the (possibly) wrapped object by
     functools.wraps or functools.partial.
     """
-    while hasattr(obj, "__wrapped__"):
-        obj = obj.__wrapped__
+    start_obj = obj
+    for i in range(100):
+        new_obj = getattr(obj, '__wrapped__', None)
+        if new_obj is None:
+            break
+        obj = new_obj
+    else:
+        raise ValueError(
+            ("could not find real function of {start}"
+             "\nstopped at {current}").format(
+                start=py.io.saferepr(start_obj),
+                current=py.io.saferepr(obj)))
     if isinstance(obj, functools.partial):
         obj = obj.func
     return obj
@@ -210,7 +223,7 @@ def safe_getattr(object, name, default):
     """ Like getattr but return default upon any Exception.
 
     Attribute access can potentially fail for 'evil' Python objects.
-    See issue214
+    See issue #214.
     """
     try:
         return getattr(object, name, default)
@@ -242,3 +255,51 @@ else:
                 v = unicode(v)
             errors = 'replace'
             return v.encode('utf-8', errors)
+
+
+COLLECT_FAKEMODULE_ATTRIBUTES = (
+    'Collector',
+    'Module',
+    'Generator',
+    'Function',
+    'Instance',
+    'Session',
+    'Item',
+    'Class',
+    'File',
+    '_fillfuncargs',
+)
+
+
+def _setup_collect_fakemodule():
+    from types import ModuleType
+    import pytest
+    pytest.collect = ModuleType('pytest.collect')
+    pytest.collect.__all__ = []  # used for setns
+    for attr in COLLECT_FAKEMODULE_ATTRIBUTES:
+        setattr(pytest.collect, attr, getattr(pytest, attr))
+
+
+if _PY2:
+    from py.io import TextIO as CaptureIO
+else:
+    import io
+
+    class CaptureIO(io.TextIOWrapper):
+        def __init__(self):
+            super(CaptureIO, self).__init__(
+                io.BytesIO(),
+                encoding='UTF-8', newline='', write_through=True,
+            )
+
+        def getvalue(self):
+            return self.buffer.getvalue().decode('UTF-8')
+
+class FuncargnamesCompatAttr(object):
+    """ helper class so that Metafunc, Function and FixtureRequest
+    don't need to each define the "funcargnames" compatibility attribute.
+    """
+    @property
+    def funcargnames(self):
+        """ alias attribute for ``fixturenames`` for pre-2.3 compatibility"""
+        return self.fixturenames

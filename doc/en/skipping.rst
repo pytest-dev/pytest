@@ -98,7 +98,7 @@ You can use the ``skipif`` decorator (and any other marker) on classes::
 
     @pytest.mark.skipif(sys.platform == 'win32',
                         reason="does not run on windows")
-    class TestPosixCalls:
+    class TestPosixCalls(object):
 
         def test_function(self):
             "will not be setup or run under 'win32' platform"
@@ -224,7 +224,7 @@ Running it with the report-on-xfail option gives this output::
 
     example $ pytest -rx xfail_demo.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR/example, inifile:
     collected 7 items
     

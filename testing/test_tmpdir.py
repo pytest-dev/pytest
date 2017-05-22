@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 import sys
 import py
 import pytest
@@ -34,7 +35,7 @@ def test_ensuretemp(recwarn):
     assert d1 == d2
     assert d1.check(dir=1)
 
-class TestTempdirHandler:
+class TestTempdirHandler(object):
     def test_mktemp(self, testdir):
         from _pytest.tmpdir import TempdirFactory
         config = testdir.parseconfig()
@@ -48,7 +49,7 @@ class TestTempdirHandler:
         assert tmp2.relto(t.getbasetemp()).startswith("this")
         assert tmp2 != tmp
 
-class TestConfigTmpdir:
+class TestConfigTmpdir(object):
     def test_getbasetemp_custom_removes_old(self, testdir):
         mytemp = testdir.tmpdir.join("xyz")
         p = testdir.makepyfile("""

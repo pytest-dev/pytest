@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 import pytest
 
@@ -32,7 +33,7 @@ def test_hookvalidation_unknown(testdir):
     """)
     result = testdir.runpytest()
     assert result.ret != 0
-    result.stderr.fnmatch_lines([
+    result.stdout.fnmatch_lines([
         '*unknown hook*pytest_hello*'
     ])
 

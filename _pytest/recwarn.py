@@ -1,4 +1,5 @@
 """ recording warnings during test function execution. """
+from __future__ import absolute_import, division, print_function
 
 import inspect
 
@@ -6,11 +7,11 @@ import _pytest._code
 import py
 import sys
 import warnings
-import pytest
+from _pytest.fixtures import yield_fixture
 
 
-@pytest.yield_fixture
-def recwarn(request):
+@yield_fixture
+def recwarn():
     """Return a WarningsRecorder instance that provides these methods:
 
     * ``pop(category=None)``: return last warning matching the category.
@@ -23,11 +24,6 @@ def recwarn(request):
     with wrec:
         warnings.simplefilter('default')
         yield wrec
-
-
-def pytest_namespace():
-    return {'deprecated_call': deprecated_call,
-            'warns': warns}
 
 
 def deprecated_call(func=None, *args, **kwargs):
@@ -55,14 +51,12 @@ def deprecated_call(func=None, *args, **kwargs):
 
     def warn_explicit(message, category, *args, **kwargs):
         categories.append(category)
-        old_warn_explicit(message, category, *args, **kwargs)
 
     def warn(message, category=None, *args, **kwargs):
         if isinstance(message, Warning):
             categories.append(message.__class__)
         else:
             categories.append(category)
-        old_warn(message, category, *args, **kwargs)
 
     old_warn = warnings.warn
     old_warn_explicit = warnings.warn_explicit
@@ -115,24 +109,14 @@ def warns(expected_warning, *args, **kwargs):
             return func(*args[1:], **kwargs)
 
 
-class RecordedWarning(object):
-    def __init__(self, message, category, filename, lineno, file, line):
-        self.message = message
-        self.category = category
-        self.filename = filename
-        self.lineno = lineno
-        self.file = file
-        self.line = line
-
-
-class WarningsRecorder(object):
+class WarningsRecorder(warnings.catch_warnings):
     """A context manager to record raised warnings.
 
     Adapted from `warnings.catch_warnings`.
     """
 
-    def __init__(self, module=None):
-        self._module = sys.modules['warnings'] if module is None else module
+    def __init__(self):
+        super(WarningsRecorder, self).__init__(record=True)
         self._entered = False
         self._list = []
 
@@ -169,38 +153,20 @@ class WarningsRecorder(object):
         if self._entered:
             __tracebackhide__ = True
             raise RuntimeError("Cannot enter %r twice" % self)
-        self._entered = True
-        self._filters = self._module.filters
-        self._module.filters = self._filters[:]
-        self._showwarning = self._module.showwarning
-
-        def showwarning(message, category, filename, lineno,
-                        file=None, line=None):
-            self._list.append(RecordedWarning(
-                message, category, filename, lineno, file, line))
-
-            # still perform old showwarning functionality
-            self._showwarning(
-                message, category, filename, lineno, file=file, line=line)
-
-        self._module.showwarning = showwarning
-
-        # allow the same warning to be raised more than once
-
-        self._module.simplefilter('always')
+        self._list = super(WarningsRecorder, self).__enter__()
+        warnings.simplefilter('always')
         return self
 
     def __exit__(self, *exc_info):
         if not self._entered:
             __tracebackhide__ = True
             raise RuntimeError("Cannot exit %r without entering first" % self)
-        self._module.filters = self._filters
-        self._module.showwarning = self._showwarning
+        super(WarningsRecorder, self).__exit__(*exc_info)
 
 
 class WarningsChecker(WarningsRecorder):
-    def __init__(self, expected_warning=None, module=None):
-        super(WarningsChecker, self).__init__(module=module)
+    def __init__(self, expected_warning=None):
+        super(WarningsChecker, self).__init__()
 
         msg = ("exceptions must be old-style classes or "
                "derived from Warning, not %s")
@@ -221,9 +187,11 @@ class WarningsChecker(WarningsRecorder):
         # only check if we're not currently handling an exception
         if all(a is None for a in exc_info):
             if self.expected_warning is not None:
-                if not any(r.category in self.expected_warning for r in self):
+                if not any(issubclass(r.category, self.expected_warning)
+                           for r in self):
                     __tracebackhide__ = True
-                    pytest.fail("DID NOT WARN. No warnings of type {0} was emitted. "
-                                "The list of emitted warnings is: {1}.".format(
-                                    self.expected_warning,
-                                    [each.message for each in self]))
+                    from _pytest.runner import fail
+                    fail("DID NOT WARN. No warnings of type {0} was emitted. "
+                         "The list of emitted warnings is: {1}.".format(
+                            self.expected_warning,
+                            [each.message for each in self]))

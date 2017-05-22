@@ -517,7 +517,6 @@ Initialization, command line and configuration hooks
 .. autofunction:: pytest_load_initial_conftests
 .. autofunction:: pytest_cmdline_preparse
 .. autofunction:: pytest_cmdline_parse
-.. autofunction:: pytest_namespace
 .. autofunction:: pytest_addoption
 .. autofunction:: pytest_cmdline_main
 .. autofunction:: pytest_configure

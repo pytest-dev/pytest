@@ -2,18 +2,18 @@
 per-test stdout/stderr capturing mechanism.
 
 """
-from __future__ import with_statement
+from __future__ import absolute_import, division, print_function
 
 import contextlib
 import sys
 import os
+from io import UnsupportedOperation
 from tempfile import TemporaryFile
 
 import py
 import pytest
+from _pytest.compat import CaptureIO
 
-from py.io import TextIO
-from io import UnsupportedOperation
 unicode = py.builtin.text
 
 patchsysdict = {0: 'stdin', 1: 'stdout', 2: 'stderr'}
@@ -403,7 +403,7 @@ class SysCapture:
             if name == "stdin":
                 tmpfile = DontReadFromInput()
             else:
-                tmpfile = TextIO()
+                tmpfile = CaptureIO()
         self.tmpfile = tmpfile
 
     def start(self):
@@ -449,7 +449,8 @@ class DontReadFromInput:
     __iter__ = read
 
     def fileno(self):
-        raise UnsupportedOperation("redirected Stdin is pseudofile, has no fileno()")
+        raise UnsupportedOperation("redirected stdin is pseudofile, "
+                                   "has no fileno()")
 
     def isatty(self):
         return False

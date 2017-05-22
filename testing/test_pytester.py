@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 import pytest
 import os
 from _pytest.pytester import HookRecorder
@@ -12,7 +13,7 @@ def test_make_hook_recorder(testdir):
 
     pytest.xfail("internal reportrecorder tests need refactoring")
 
-    class rep:
+    class rep(object):
         excinfo = None
         passed = False
         failed = True
@@ -25,7 +26,7 @@ def test_make_hook_recorder(testdir):
     failures = recorder.getfailures()
     assert failures == [rep]
 
-    class rep:
+    class rep(object):
         excinfo = None
         passed = False
         failed = False
@@ -74,7 +75,7 @@ def test_testdir_runs_with_plugin(testdir):
 
 
 def make_holder():
-    class apiclass:
+    class apiclass(object):
         def pytest_xyz(self, arg):
             "x"
         def pytest_xyz_noarg(self):

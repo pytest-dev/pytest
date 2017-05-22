@@ -1,10 +1,11 @@
 """ run test suites written for nose. """
+from __future__ import absolute_import, division, print_function
 
 import sys
 
 import py
-import pytest
-from _pytest import unittest
+from _pytest import unittest, runner, python
+from _pytest.config import hookimpl
 
 
 def get_skip_exceptions():
@@ -19,19 +20,19 @@ def get_skip_exceptions():
 def pytest_runtest_makereport(item, call):
     if call.excinfo and call.excinfo.errisinstance(get_skip_exceptions()):
         # let's substitute the excinfo with a pytest.skip one
-        call2 = call.__class__(lambda:
-                    pytest.skip(str(call.excinfo.value)), call.when)
+        call2 = call.__class__(
+            lambda: runner.skip(str(call.excinfo.value)), call.when)
         call.excinfo = call2.excinfo
 
 
-@pytest.hookimpl(trylast=True)
+@hookimpl(trylast=True)
 def pytest_runtest_setup(item):
     if is_potential_nosetest(item):
-        if isinstance(item.parent, pytest.Generator):
+        if isinstance(item.parent, python.Generator):
             gen = item.parent
             if not hasattr(gen, '_nosegensetup'):
                 call_optional(gen.obj, 'setup')
-                if isinstance(gen.parent, pytest.Instance):
+                if isinstance(gen.parent, python.Instance):
                     call_optional(gen.parent.obj, 'setup')
                 gen._nosegensetup = True
         if not call_optional(item.obj, 'setup'):
@@ -50,14 +51,14 @@ def teardown_nose(item):
 
 
 def pytest_make_collect_report(collector):
-    if isinstance(collector, pytest.Generator):
+    if isinstance(collector, python.Generator):
         call_optional(collector.obj, 'setup')
 
 
 def is_potential_nosetest(item):
     # extra check needed since we do not do nose style setup/teardown
     # on direct unittest style classes
-    return isinstance(item, pytest.Function) and \
+    return isinstance(item, python.Function) and \
         not isinstance(item, unittest.TestCaseFunction)
 
 

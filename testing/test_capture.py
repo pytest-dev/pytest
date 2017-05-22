@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 # note: py.io capture tests where copied from
 # pylib 1.4.20.dev2 (rev 13d9af95547e)
 from __future__ import with_statement
@@ -14,7 +15,7 @@ import contextlib
 from _pytest import capture
 from _pytest.capture import CaptureManager
 from _pytest.main import EXIT_NOTESTSCOLLECTED
-from py.builtin import print_
+
 
 needsosdup = pytest.mark.xfail("not hasattr(os, 'dup')")
 
@@ -56,7 +57,7 @@ def StdCapture(out=True, err=True, in_=True):
     return capture.MultiCapture(out, err, in_, Capture=capture.SysCapture)
 
 
-class TestCaptureManager:
+class TestCaptureManager(object):
     def test_getmethod_default_no_fd(self, monkeypatch):
         from _pytest.capture import pytest_addoption
         from _pytest.config import Parser
@@ -155,7 +156,7 @@ def test_collect_capturing(testdir):
     ])
 
 
-class TestPerTestCapturing:
+class TestPerTestCapturing(object):
     def test_capture_and_fixtures(self, testdir):
         p = testdir.makepyfile("""
             def setup_module(mod):
@@ -276,13 +277,13 @@ class TestPerTestCapturing:
         ])
 
 
-class TestLoggingInteraction:
+class TestLoggingInteraction(object):
     def test_logging_stream_ownership(self, testdir):
         p = testdir.makepyfile("""
             def test_logging():
                 import logging
                 import pytest
-                stream = capture.TextIO()
+                stream = capture.CaptureIO()
                 logging.basicConfig(stream=stream)
                 stream.close() # to free memory/release resources
         """)
@@ -396,7 +397,7 @@ class TestLoggingInteraction:
         assert 'operation on closed file' not in result.stderr.str()
 
 
-class TestCaptureFixture:
+class TestCaptureFixture(object):
     @pytest.mark.parametrize("opt", [[], ["-s"]])
     def test_std_functional(self, testdir, opt):
         reprec = testdir.inline_runsource("""
@@ -623,16 +624,16 @@ def test_error_during_readouterr(testdir):
     ])
 
 
-class TestTextIO:
+class TestCaptureIO(object):
     def test_text(self):
-        f = capture.TextIO()
+        f = capture.CaptureIO()
         f.write("hello")
         s = f.getvalue()
         assert s == "hello"
         f.close()
 
     def test_unicode_and_str_mixture(self):
-        f = capture.TextIO()
+        f = capture.CaptureIO()
         if sys.version_info >= (3, 0):
             f.write("\u00f6")
             pytest.raises(TypeError, "f.write(bytes('hello', 'UTF-8'))")
@@ -642,6 +643,18 @@ class TestTextIO:
             s = f.getvalue()
             f.close()
             assert isinstance(s, unicode)
+
+    @pytest.mark.skipif(
+        sys.version_info[0] == 2,
+        reason='python 3 only behaviour',
+    )
+    def test_write_bytes_to_buffer(self):
+        """In python3, stdout / stderr are text io wrappers (exposing a buffer
+        property of the underlying bytestream).  See issue #1407
+        """
+        f = capture.CaptureIO()
+        f.buffer.write(b'foo\r\n')
+        assert f.getvalue() == 'foo\r\n'
 
 
 def test_bytes_io():
@@ -700,7 +713,7 @@ def test_dupfile(tmpfile):
         assert nf != tmpfile
         assert nf.fileno() != tmpfile.fileno()
         assert nf not in flist
-        print_(i, end="", file=nf)
+        print(i, end="", file=nf)
         flist.append(nf)
     for i in range(5):
         f = flist[i]
@@ -738,7 +751,7 @@ def lsof_check():
     assert len2 < len1 + 3, out2
 
 
-class TestFDCapture:
+class TestFDCapture(object):
     pytestmark = needsosdup
 
     def test_simple(self, tmpfile):
@@ -774,7 +787,7 @@ class TestFDCapture:
     def test_stderr(self):
         cap = capture.FDCapture(2)
         cap.start()
-        print_("hello", file=sys.stderr)
+        print("hello", file=sys.stderr)
         s = cap.snap()
         cap.done()
         assert s == "hello\n"
@@ -833,7 +846,7 @@ def saved_fd(fd):
         os.close(new_fd)
 
 
-class TestStdCapture:
+class TestStdCapture(object):
     captureclass = staticmethod(StdCapture)
 
     @contextlib.contextmanager
@@ -901,8 +914,8 @@ class TestStdCapture:
         with self.getcapture() as cap:
             sys.stdout.write("hello")
             sys.stderr.write("world")
-            sys.stdout = capture.TextIO()
-            sys.stderr = capture.TextIO()
+            sys.stdout = capture.CaptureIO()
+            sys.stderr = capture.CaptureIO()
             print ("not seen")
             sys.stderr.write("not seen\n")
             out, err = cap.readouterr()
@@ -991,7 +1004,7 @@ class TestStdCaptureFD(TestStdCapture):
                 cap.stop_capturing()
 
 
-class TestStdCaptureFDinvalidFD:
+class TestStdCaptureFDinvalidFD(object):
     pytestmark = needsosdup
 
     def test_stdcapture_fd_invalid_fd(self, testdir):

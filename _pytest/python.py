@@ -1,4 +1,5 @@
 """ Python test discovery, setup and run of test functions. """
+from __future__ import absolute_import, division, print_function
 
 import fnmatch
 import inspect
@@ -9,19 +10,20 @@ import math
 from itertools import count
 
 import py
-import pytest
 from _pytest.mark import MarkerError
-
+from _pytest.config import hookimpl
 
 import _pytest
 import _pytest._pluggy as pluggy
 from _pytest import fixtures
+from _pytest import main
 from _pytest.compat import (
     isclass, isfunction, is_generator, _escape_strings,
     REGEX_TYPE, STRING_TYPES, NoneType, NOTSET,
     get_real_func, getfslineno, safe_getattr,
     safe_str, getlocation, enum,
 )
+from _pytest.runner import fail
 
 cutdir1 = py.path.local(pluggy.__file__.rstrip("oc"))
 cutdir2 = py.path.local(_pytest.__file__).dirpath()
@@ -49,7 +51,7 @@ def filter_traceback(entry):
 
 def pyobj_property(name):
     def get(self):
-        node = self.getparent(getattr(pytest, name))
+        node = self.getparent(getattr(__import__('pytest'), name))
         if node is not None:
             return node.obj
     doc = "python %s object this node was collected from (can be None)." % (
@@ -126,23 +128,8 @@ def pytest_configure(config):
         "all of the specified fixtures. see http://pytest.org/latest/fixture.html#usefixtures "
     )
 
-@pytest.hookimpl(trylast=True)
-def pytest_namespace():
-    raises.Exception = pytest.fail.Exception
-    return {
-        'raises': raises,
-        'approx': approx,
-        'collect': {
-            'Module': Module,
-            'Class': Class,
-            'Instance': Instance,
-            'Function': Function,
-            'Generator': Generator,
-        }
-    }
 
-
-@pytest.hookimpl(trylast=True)
+@hookimpl(trylast=True)
 def pytest_pyfunc_call(pyfuncitem):
     testfunction = pyfuncitem.obj
     if pyfuncitem._isyieldedfunction():
@@ -154,6 +141,7 @@ def pytest_pyfunc_call(pyfuncitem):
             testargs[arg] = funcargs[arg]
         testfunction(**testargs)
     return True
+
 
 def pytest_collect_file(path, parent):
     ext = path.ext
@@ -170,7 +158,7 @@ def pytest_collect_file(path, parent):
 def pytest_pycollect_makemodule(path, parent):
     return Module(path, parent)
 
-@pytest.hookimpl(hookwrapper=True)
+@hookimpl(hookwrapper=True)
 def pytest_pycollect_makeitem(collector, name, obj):
     outcome = yield
     res = outcome.get_result()
@@ -198,7 +186,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
                 res = list(collector._genfunctions(name, obj))
             outcome.force_result(res)
 
-def pytest_make_parametrize_id(config, val):
+def pytest_make_parametrize_id(config, val, argname=None):
     return None
 
 
@@ -265,7 +253,7 @@ class PyobjMixin(PyobjContext):
         assert isinstance(lineno, int)
         return fspath, lineno, modpath
 
-class PyCollector(PyobjMixin, pytest.Collector):
+class PyCollector(PyobjMixin, main.Collector):
 
     def funcnamefilter(self, name):
         return self._matches_prefix_or_glob_option('python_functions', name)
@@ -402,10 +390,12 @@ def transfer_markers(funcobj, cls, mod):
             if not _marked(funcobj, pytestmark):
                 pytestmark(funcobj)
 
-class Module(pytest.File, PyCollector):
+
+class Module(main.File, PyCollector):
     """ Collector for test classes and functions. """
+
     def _getobj(self):
-        return self._memoizedcall('_obj', self._importtestmodule)
+        return self._importtestmodule()
 
     def collect(self):
         self.session._fixturemanager.parsefactories(self)
@@ -502,6 +492,8 @@ def _get_xunit_func(obj, name):
 class Class(PyCollector):
     """ Collector for test methods. """
     def collect(self):
+        if not safe_getattr(self.obj, "__test__", True):
+            return []
         if hasinit(self.obj):
             self.warn("C1", "cannot collect test class %r because it has a "
                 "__init__ constructor" % self.obj.__name__)
@@ -586,7 +578,7 @@ class FunctionMixin(PyobjMixin):
                         entry.set_repr_style('short')
 
     def _repr_failure_py(self, excinfo, style="long"):
-        if excinfo.errisinstance(pytest.fail.Exception):
+        if excinfo.errisinstance(fail.Exception):
             if not excinfo.value.pytrace:
                 return py._builtin._totext(excinfo.value)
         return super(FunctionMixin, self)._repr_failure_py(excinfo,
@@ -784,36 +776,34 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             to set a dynamic scope using test context or configuration.
         """
         from _pytest.fixtures import scope2index
-        from _pytest.mark import extract_argvalue
+        from _pytest.mark import MARK_GEN, ParameterSet
         from py.io import saferepr
-
-        unwrapped_argvalues = []
-        newkeywords = []
-        for maybe_marked_args in argvalues:
-            argval, newmarks = extract_argvalue(maybe_marked_args)
-            unwrapped_argvalues.append(argval)
-            newkeywords.append(newmarks)
-        argvalues = unwrapped_argvalues
 
         if not isinstance(argnames, (tuple, list)):
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
-            if len(argnames) == 1:
-                argvalues = [(val,) for val in argvalues]
-        if not argvalues:
-            argvalues = [(NOTSET,) * len(argnames)]
-            # we passed a empty list to parameterize, skip that test
-            #
+            force_tuple = len(argnames) == 1
+        else:
+            force_tuple = False
+        parameters = [
+            ParameterSet.extract_from(x, legacy_force_tuple=force_tuple)
+            for x in argvalues]
+        del argvalues
+
+        if not parameters:
             fs, lineno = getfslineno(self.function)
-            newmark = pytest.mark.skip(
-                reason="got empty parameter set %r, function %s at %s:%d" % (
-                    argnames, self.function.__name__, fs, lineno))
-            newkeywords = [{newmark.markname: newmark}]
+            reason = "got empty parameter set %r, function %s at %s:%d" % (
+                    argnames, self.function.__name__, fs, lineno)
+            mark = MARK_GEN.skip(reason=reason)
+            parameters.append(ParameterSet(
+                values=(NOTSET,) * len(argnames),
+                marks=[mark],
+                id=None,
+            ))
 
         if scope is None:
             scope = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)
 
-        scopenum = scope2index(
-            scope, descr='call to {0}'.format(self.parametrize))
+        scopenum = scope2index(scope, descr='call to {0}'.format(self.parametrize))
         valtypes = {}
         for arg in argnames:
             if arg not in self.fixturenames:
@@ -841,26 +831,26 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             idfn = ids
             ids = None
         if ids:
-            if len(ids) != len(argvalues):
-                raise ValueError('%d tests specified with %d ids' %(
-                                 len(argvalues), len(ids)))
+            if len(ids) != len(parameters):
+                raise ValueError('%d tests specified with %d ids' % (
+                                 len(parameters), len(ids)))
             for id_value in ids:
                 if id_value is not None and not isinstance(id_value, py.builtin._basestring):
                     msg = 'ids must be list of strings, found: %s (type: %s)'
                     raise ValueError(msg % (saferepr(id_value), type(id_value).__name__))
-        ids = idmaker(argnames, argvalues, idfn, ids, self.config)
+        ids = idmaker(argnames, parameters, idfn, ids, self.config)
         newcalls = []
         for callspec in self._calls or [CallSpec2(self)]:
-            elements = zip(ids, argvalues, newkeywords, count())
-            for a_id, valset, keywords, param_index in elements:
-                if len(valset) != len(argnames):
+            elements = zip(ids, parameters, count())
+            for a_id, param, param_index in elements:
+                if len(param.values) != len(argnames):
                     raise ValueError(
                         'In "parametrize" the number of values ({0}) must be '
                         'equal to the number of names ({1})'.format(
-                            valset, argnames))
+                            param.values, argnames))
                 newcallspec = callspec.copy(self)
-                newcallspec.setmulti(valtypes, argnames, valset, a_id,
-                                     keywords, scopenum, param_index)
+                newcallspec.setmulti(valtypes, argnames, param.values, a_id,
+                                     param.deprecated_arg_dict, scopenum, param_index)
                 newcalls.append(newcallspec)
         self._calls = newcalls
 
@@ -884,7 +874,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         if funcargs is not None:
             for name in funcargs:
                 if name not in self.fixturenames:
-                    pytest.fail("funcarg %r not used in this function." % name)
+                    fail("funcarg %r not used in this function." % name)
         else:
             funcargs = {}
         if id is None:
@@ -929,15 +919,21 @@ def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
 
 def _idval(val, argname, idx, idfn, config=None):
     if idfn:
+        s = None
         try:
             s = idfn(val)
-            if s:
-                return _escape_strings(s)
         except Exception:
-            pass
+            # See issue https://github.com/pytest-dev/pytest/issues/2169
+            import warnings
+            msg = "Raised while trying to determine id of parameter %s at position %d." % (argname, idx)
+            msg += '\nUpdate your code as this will raise an error in pytest-4.0.'
+            warnings.warn(msg, DeprecationWarning)
+        if s:
+            return _escape_strings(s)
 
     if config:
-        hook_id = config.hook.pytest_make_parametrize_id(config=config, val=val)
+        hook_id = config.hook.pytest_make_parametrize_id(
+            config=config, val=val, argname=argname)
         if hook_id:
             return hook_id
 
@@ -953,17 +949,21 @@ def _idval(val, argname, idx, idfn, config=None):
         return val.__name__
     return str(argname)+str(idx)
 
-def _idvalset(idx, valset, argnames, idfn, ids, config=None):
+
+def _idvalset(idx, parameterset, argnames, idfn, ids, config=None):
+    if parameterset.id is not None:
+        return parameterset.id
     if ids is None or (idx >= len(ids) or ids[idx] is None):
         this_id = [_idval(val, argname, idx, idfn, config)
-                   for val, argname in zip(valset, argnames)]
+                   for val, argname in zip(parameterset.values, argnames)]
         return "-".join(this_id)
     else:
         return _escape_strings(ids[idx])
 
-def idmaker(argnames, argvalues, idfn=None, ids=None, config=None):
-    ids = [_idvalset(valindex, valset, argnames, idfn, ids, config)
-           for valindex, valset in enumerate(argvalues)]
+
+def idmaker(argnames, parametersets, idfn=None, ids=None, config=None):
+    ids = [_idvalset(valindex, parameterset, argnames, idfn, ids, config)
+           for valindex, parameterset in enumerate(parametersets)]
     if len(set(ids)) != len(ids):
         # The ids are not unique
         duplicates = [testid for testid in ids if ids.count(testid) > 1]
@@ -1038,6 +1038,7 @@ def _show_fixtures_per_test(config, session):
 def showfixtures(config):
     from _pytest.main import wrap_session
     return wrap_session(config, _showfixtures_main)
+
 
 def _showfixtures_main(config, session):
     import _pytest.config
@@ -1129,7 +1130,7 @@ def raises(expected_exception, *args, **kwargs):
            >>> with raises(ValueError) as exc_info:
            ...     if value > 10:
            ...         raise ValueError("value must be <= 10")
-           ...     assert str(exc_info.value) == "value must be <= 10"  # this will not execute
+           ...     assert exc_info.type == ValueError  # this will not execute
 
        Instead, the following approach must be taken (note the difference in
        scope)::
@@ -1138,7 +1139,16 @@ def raises(expected_exception, *args, **kwargs):
            ...     if value > 10:
            ...         raise ValueError("value must be <= 10")
            ...
-           >>> assert str(exc_info.value) == "value must be <= 10"
+           >>> assert exc_info.type == ValueError
+
+    Or you can use the keyword argument ``match`` to assert that the
+    exception matches a text or regex::
+
+        >>> with raises(ValueError, match='must be 0 or None'):
+        ...     raise ValueError("value must be 0 or None")
+
+        >>> with raises(ValueError, match=r'must be \d+$'):
+        ...     raise ValueError("value must be 42")
 
 
     Or you can specify a callable by passing a to-be-called lambda::
@@ -1179,12 +1189,6 @@ def raises(expected_exception, *args, **kwargs):
 
     """
     __tracebackhide__ = True
-    if expected_exception is AssertionError:
-        # we want to catch a AssertionError
-        # replace our subclass with the builtin one
-        # see https://github.com/pytest-dev/pytest/issues/176
-        from _pytest.assertion.util import BuiltinAssertionError \
-            as expected_exception
     msg = ("exceptions must be old-style classes or"
            " derived from BaseException, not %s")
     if isinstance(expected_exception, tuple):
@@ -1195,11 +1199,15 @@ def raises(expected_exception, *args, **kwargs):
         raise TypeError(msg % type(expected_exception))
 
     message = "DID NOT RAISE {0}".format(expected_exception)
+    match_expr = None
 
     if not args:
         if "message" in kwargs:
             message = kwargs.pop("message")
-        return RaisesContext(expected_exception, message)
+        if "match" in kwargs:
+            match_expr = kwargs.pop("match")
+            message += " matching '{0}'".format(match_expr)
+        return RaisesContext(expected_exception, message, match_expr)
     elif isinstance(args[0], str):
         code, = args
         assert isinstance(code, str)
@@ -1220,12 +1228,17 @@ def raises(expected_exception, *args, **kwargs):
             func(*args[1:], **kwargs)
         except expected_exception:
             return _pytest._code.ExceptionInfo()
-    pytest.fail(message)
+    fail(message)
+
+
+raises.Exception = fail.Exception
+
 
 class RaisesContext(object):
-    def __init__(self, expected_exception, message):
+    def __init__(self, expected_exception, message, match_expr):
         self.expected_exception = expected_exception
         self.message = message
+        self.match_expr = match_expr
         self.excinfo = None
 
     def __enter__(self):
@@ -1235,7 +1248,7 @@ class RaisesContext(object):
     def __exit__(self, *tp):
         __tracebackhide__ = True
         if tp[0] is None:
-            pytest.fail(self.message)
+            fail(self.message)
         if sys.version_info < (2, 7):
             # py26: on __exit__() exc_value often does not contain the
             # exception value.
@@ -1247,6 +1260,8 @@ class RaisesContext(object):
         suppress_exception = issubclass(self.excinfo.type, self.expected_exception)
         if sys.version_info[0] == 2 and suppress_exception:
             sys.exc_clear()
+        if self.match_expr:
+            self.excinfo.match(self.match_expr)
         return suppress_exception
 
 
@@ -1504,7 +1519,7 @@ class ApproxNonIterable(object):
 #  the basic pytest Function item
 #
 
-class Function(FunctionMixin, pytest.Item, fixtures.FuncargnamesCompatAttr):
+class Function(FunctionMixin, main.Item, fixtures.FuncargnamesCompatAttr):
     """ a Function Item is responsible for setting up and executing a
     Python test function.
     """

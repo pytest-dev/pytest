@@ -11,7 +11,7 @@ get on the terminal - we are working on that)::
 
     assertion $ pytest failure_demo.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.7, py-1.4.32, pluggy-0.4.0
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR/assertion, inifile:
     collected 42 items
     
@@ -144,13 +144,9 @@ get on the terminal - we are working on that)::
     E           1
     E           1
     E           1
-    E           1
-    E         - a2
-    E         + b2
-    E           2
-    E           2
-    E           2
-    E           2
+    E           1...
+    E         
+    E         ...Full output truncated (7 lines hidden), use '-vv' to show
     
     failure_demo.py:59: AssertionError
     _______ TestSpecialisedExplanations.test_eq_list ________
@@ -184,14 +180,15 @@ get on the terminal - we are working on that)::
         def test_eq_dict(self):
     >       assert {'a': 0, 'b': 1, 'c': 0} == {'a': 0, 'b': 2, 'd': 0}
     E       AssertionError: assert {'a': 0, 'b': 1, 'c': 0} == {'a': 0, 'b': 2, 'd': 0}
-    E         Omitting 1 identical items, use -v to show
+    E         Omitting 1 identical items, use -vv to show
     E         Differing items:
     E         {'b': 1} != {'b': 2}
     E         Left contains more items:
     E         {'c': 0}
     E         Right contains more items:
-    E         {'d': 0}
-    E         Use -v to get the full diff
+    E         {'d': 0}...
+    E         
+    E         ...Full output truncated (2 lines hidden), use '-vv' to show
     
     failure_demo.py:70: AssertionError
     _______ TestSpecialisedExplanations.test_eq_set ________
@@ -200,15 +197,16 @@ get on the terminal - we are working on that)::
     
         def test_eq_set(self):
     >       assert set([0, 10, 11, 12]) == set([0, 20, 21])
-    E       assert {0, 10, 11, 12} == {0, 20, 21}
+    E       AssertionError: assert {0, 10, 11, 12} == {0, 20, 21}
     E         Extra items in the left set:
     E         10
     E         11
     E         12
     E         Extra items in the right set:
     E         20
-    E         21
-    E         Use -v to get the full diff
+    E         21...
+    E         
+    E         ...Full output truncated (2 lines hidden), use '-vv' to show
     
     failure_demo.py:73: AssertionError
     _______ TestSpecialisedExplanations.test_eq_longer_list ________
@@ -245,8 +243,9 @@ get on the terminal - we are working on that)::
     E           which
     E           includes foo
     E         ?          +++
-    E           and a
-    E           tail
+    E           and a...
+    E         
+    E         ...Full output truncated (2 lines hidden), use '-vv' to show
     
     failure_demo.py:83: AssertionError
     _______ TestSpecialisedExplanations.test_not_in_text_single ________
@@ -359,7 +358,7 @@ get on the terminal - we are working on that)::
     >   int(s)
     E   ValueError: invalid literal for int() with base 10: 'qwe'
     
-    <0-codegen $PYTHON_PREFIX/lib/python3.5/site-packages/_pytest/python.py:1207>:1: ValueError
+    <0-codegen $PYTHON_PREFIX/lib/python3.5/site-packages/_pytest/python.py:1219>:1: ValueError
     _______ TestRaises.test_raises_doesnt ________
     
     self = <failure_demo.TestRaises object at 0xdeadbeef>
@@ -550,7 +549,7 @@ get on the terminal - we are working on that)::
     self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef>
     
         def test_single_line(self):
-            class A:
+            class A(object):
                 a = 1
             b = 2
     >       assert A.a == b, "A.a appears not to be b"
@@ -564,7 +563,7 @@ get on the terminal - we are working on that)::
     self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef>
     
         def test_multiline(self):
-            class A:
+            class A(object):
                 a = 1
             b = 2
     >       assert A.a == b, "A.a appears not to be b\n" \
@@ -581,7 +580,7 @@ get on the terminal - we are working on that)::
     self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef>
     
         def test_custom_repr(self):
-            class JSON:
+            class JSON(object):
                 a = 1
                 def __repr__(self):
                     return "This is JSON\n{\n  'foo': 'bar'\n}"

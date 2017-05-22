@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 import sys
 
 import _pytest
@@ -7,7 +8,7 @@ import shutil
 
 pytest_plugins = "pytester",
 
-class TestNewAPI:
+class TestNewAPI(object):
     def test_config_cache_makedir(self, testdir):
         testdir.makeini("[pytest]")
         config = testdir.parseconfigure()
@@ -54,7 +55,7 @@ class TestNewAPI:
         assert result.ret == 1
         result.stdout.fnmatch_lines([
             "*could not create cache path*",
-            "*1 pytest-warnings*",
+            "*1 warnings*",
         ])
 
     def test_config_cache(self, testdir):
@@ -129,7 +130,7 @@ def test_cache_show(testdir):
     ])
 
 
-class TestLastFailed:
+class TestLastFailed(object):
 
     def test_lastfailed_usecase(self, testdir, monkeypatch):
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", 1)
@@ -191,12 +192,36 @@ class TestLastFailed:
             "test_a.py*",
             "test_b.py*",
         ])
-        result = testdir.runpytest("--lf", "--ff")
+        result = testdir.runpytest("--ff")
         # Test order will be failing tests firs
         result.stdout.fnmatch_lines([
             "test_b.py*",
             "test_a.py*",
         ])
+
+    def test_lastfailed_failedfirst_order(self, testdir):
+        testdir.makepyfile(**{
+            'test_a.py': """
+                def test_always_passes():
+                    assert 1
+            """,
+            'test_b.py': """
+                def test_always_fails():
+                    assert 0
+            """,
+        })
+        result = testdir.runpytest()
+        # Test order will be collection order; alphabetical
+        result.stdout.fnmatch_lines([
+            "test_a.py*",
+            "test_b.py*",
+        ])
+        result = testdir.runpytest("--lf", "--ff")
+        # Test order will be failing tests firs
+        result.stdout.fnmatch_lines([
+            "test_b.py*",
+        ])
+        assert 'test_a.py' not in result.stdout.str()
 
     def test_lastfailed_difference_invocations(self, testdir, monkeypatch):
         monkeypatch.setenv("PYTHONDONTWRITEBYTECODE", 1)
