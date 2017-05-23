@@ -116,6 +116,15 @@ the argument name::
         diff = a - b
         assert diff == expected
 
+    @pytest.mark.parametrize("a,b,expected", [
+        pytest.param(datetime(2001, 12, 12), datetime(2001, 12, 11),
+                     timedelta(1), id='forward'),
+        pytest.param(datetime(2001, 12, 11), datetime(2001, 12, 12),
+                     timedelta(-1), id='backward'),
+    ])
+    def test_timedistance_v3(a, b, expected):
+        diff = a - b
+        assert diff == expected
 
 In ``test_timedistance_v0``, we let pytest generate the test IDs.
 
@@ -132,7 +141,7 @@ objects, they are still using the default pytest representation::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 6 items
+    collected 8 items
     <Module 'test_time.py'>
       <Function 'test_timedistance_v0[a0-b0-expected0]'>
       <Function 'test_timedistance_v0[a1-b1-expected1]'>
@@ -140,8 +149,13 @@ objects, they are still using the default pytest representation::
       <Function 'test_timedistance_v1[backward]'>
       <Function 'test_timedistance_v2[20011212-20011211-expected0]'>
       <Function 'test_timedistance_v2[20011211-20011212-expected1]'>
+      <Function 'test_timedistance_v3[forward]'>
+      <Function 'test_timedistance_v3[backward]'>
     
     ======= no tests ran in 0.12 seconds ========
+
+In ``test_timedistance_v3``, we used ``pytest.param`` to specify the test IDs
+together with the actual data, instead of listing them separately.
 
 A quick port of "testscenarios"
 ------------------------------------
