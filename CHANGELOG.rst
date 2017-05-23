@@ -53,8 +53,6 @@ Changes
 * ``--pdbcls`` no longer implies ``--pdb``. This makes it possible to use
   ``addopts=--pdbcls=module.SomeClass`` on ``pytest.ini``. Thanks `@davidszotten`_ for
   the PR (`#1952`_).
-* Change exception raised by ``capture.DontReadFromInput.fileno()`` from ``ValueError``
-  to ``io.UnsupportedOperation``. Thanks `@vlad-dragos`_ for the PR.
 
 * fix `#2013`_: turn RecordedWarning into ``namedtuple``,
   to give it a comprehensible repr while preventing unwarranted modification.
@@ -86,7 +84,7 @@ Changes
   Thanks `@RonnyPfannschmidt`_ for the PR.
 
 * fix `#2391`_: consider pytest_plugins on all plugin modules
-  Thansks `@RonnyPfannschmidt`_ for the PR.
+  Thanks `@RonnyPfannschmidt`_ for the PR.
 
 
 Bug Fixes
@@ -98,7 +96,7 @@ Bug Fixes
 
 * Change capture.py's ``DontReadFromInput`` class to throw ``io.UnsupportedOperation`` errors rather
   than ValueErrors in the ``fileno`` method (`#2276`_).
-  Thanks `@metasyn`_ for the PR.
+  Thanks `@metasyn`_ and `@vlad-dragos`_ for the PR.
 
 * Fix exception formatting while importing modules when the exception message
   contains non-ascii characters (`#2336`_).
