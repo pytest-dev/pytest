@@ -110,3 +110,39 @@ def pre_release(ctx, version, user, password=None):
     print()
     print('[generate.pre_release] Please push your branch and open a PR.')
 
+
+@invoke.task(help={
+    'version': 'version being released',
+    'user': 'name of the user on devpi to stage the generated package',
+    'pypi_name': 'name of the pypi configuration section in your ~/.pypirc',
+})
+def publish_release(ctx, version, user, pypi_name):
+    """Publishes a package previously created by the 'pre_release' command."""
+    from git import Repo
+    repo = Repo('.')
+    tag_names = [x.name for x in repo.tags]
+    if version not in tag_names:
+        print('Could not find tag for version {}, exiting...'.format(version))
+        raise invoke.Exit(code=2)
+
+    check_call(['devpi', 'use', 'https://devpi.net/{}/dev'.format(user)])
+    check_call(['devpi', 'push', 'pytest=={}'.format(version), 'pypi:{}'.format(pypi_name)])
+    check_call(['git', 'push', 'git@github.com:pytest-dev/pytest.git', version])
+
+    emails = [
+        'pytest-dev@python.org',
+        'python-announce-list@python.org'
+    ]
+    if version.endswith('.0'):
+        emails.append('testing-in-python@lists.idyll.org')
+    print('Version {} has been published to PyPI!'.format(version))
+    print()
+    print('Please send an email announcement with the contents from:')
+    print()
+    print('  doc/en/announce/release-{}.rst'.format(version))
+    print()
+    print('To the following mail lists:')
+    print()
+    print(' ', ','.join(emails))
+    print()
+    print('And announce it on twitter adding the #pytest hash tag.')
