@@ -181,6 +181,7 @@ class DoctestTextfile(pytest.Module):
         optionflags = get_optionflags(self)
         runner = doctest.DebugRunner(verbose=0, optionflags=optionflags,
                                      checker=_get_checker())
+        _fix_spoof_python2(runner, encoding)
 
         parser = doctest.DocTestParser()
         test = parser.get_doctest(text, globs, name, filename, 0)
@@ -216,6 +217,10 @@ class DoctestModule(pytest.Module):
         optionflags = get_optionflags(self)
         runner = doctest.DebugRunner(verbose=0, optionflags=optionflags,
                                      checker=_get_checker())
+
+        encoding = self.config.getini("doctest_encoding")
+        _fix_spoof_python2(runner, encoding)
+        
         for test in finder.find(module, module.__name__):
             if test.examples:  # skip empty doctests
                 yield DoctestItem(test.name, self, runner, test)
@@ -323,6 +328,30 @@ def _get_report_choice(key):
         DOCTEST_REPORT_CHOICE_ONLY_FIRST_FAILURE: doctest.REPORT_ONLY_FIRST_FAILURE,
         DOCTEST_REPORT_CHOICE_NONE: 0,
     }[key]
+
+
+def _fix_spoof_python2(runner, encoding):
+    """
+    Installs a "SpoofOut" into the given DebugRunner so it properly deals with unicode output.
+    
+    This fixes the problem related in issue #2434.
+    """
+    from _pytest.compat import _PY2
+    if not _PY2:
+        return
+
+    from doctest import _SpoofOut
+
+    class UnicodeSpoof(_SpoofOut):
+
+        def getvalue(self):
+            result = _SpoofOut.getvalue(self)
+            if encoding:
+                result = result.decode(encoding)
+            return result
+
+    runner._fakeout = UnicodeSpoof()
+
 
 @pytest.fixture(scope='session')
 def doctest_namespace():

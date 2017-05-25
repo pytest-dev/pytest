@@ -505,6 +505,28 @@ class TestDoctests(object):
                                     "--junit-xml=junit.xml")
         reprec.assertoutcome(failed=1)
 
+    def test_unicode_doctest(self, testdir):
+        """
+        Test case for issue 2434: DecodeError on Python 2 when doctest contains non-ascii
+        characters.
+        """
+        p = testdir.maketxtfile(test_unicode_doctest="""
+            .. doctest::
+
+                >>> print(
+                ...    "Hi\\n\\nByé")
+                Hi
+                ...
+                Byé
+                >>> 1/0  # Byé
+                1
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([
+            '*UNEXPECTED EXCEPTION: ZeroDivisionError*',
+            '*1 failed*',
+        ])
+
 
 class TestLiterals(object):
 
