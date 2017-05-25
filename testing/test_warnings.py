@@ -1,3 +1,6 @@
+# -*- coding: utf8 -*-
+from __future__ import unicode_literals
+
 import pytest
 
 
@@ -105,4 +108,30 @@ def test_ignore(testdir, pyfile_with_warnings, method):
         '* 1 passed in *',
     ])
     assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
+
+
+
+def test_unicode(testdir, pyfile_with_warnings):
+    testdir.makepyfile('''
+        # -*- coding: utf8 -*-
+        import warnings
+        import pytest
+
+
+        @pytest.fixture
+        def fix():
+            warnings.warn(u"测试")
+            yield
+
+        def test_func(fix):
+            pass
+    ''')
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        '*== %s ==*' % WARNINGS_SUMMARY_HEADER,
+
+        '*test_unicode.py:8: UserWarning: \u6d4b\u8bd5',
+        '*warnings.warn(u"\u6d4b\u8bd5")',
+        '* 1 passed, 1 warnings*',
+    ])
 

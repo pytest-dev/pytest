@@ -5,6 +5,8 @@ from contextlib import contextmanager
 
 import pytest
 
+from _pytest import compat
+
 
 def _setoption(wmod, arg):
     """
@@ -62,7 +64,7 @@ def catch_warnings_for_item(item):
 
         for warning in log:
             msg = warnings.formatwarning(
-                warning.message, warning.category,
+                compat.safe_str(warning.message), warning.category,
                 warning.filename, warning.lineno, warning.line)
             item.warn("unused", msg)
 
