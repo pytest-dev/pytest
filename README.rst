@@ -26,9 +26,11 @@
 The ``pytest`` framework makes it easy to write small tests, yet
 scales to support complex functional testing for applications and libraries.
 
-An example of a simple test:
+An example of a simple test after `installation <http://doc.pytest.org/en/latest/getting-started.html>`_:
 
 .. code-block:: python
+
+    import pytest
 
     # content of test_sample.py
     def inc(x):
