@@ -5,11 +5,25 @@
 New Features
 ------------
 
-* The ``pytest-warnings`` plugin has been integrated into the core, so now ``pytest`` automatically
+* The ``pytest-warnings`` plugin has been integrated into the core and now ``pytest`` automatically
   captures and displays warnings at the end of the test session.
+
+  .. warning::
+
+    This feature may disrupt test suites which apply and treat warnings themselves, and can be
+    disabled in your ``pytest.ini``:
+
+    .. code-block:: ini
+
+      [pytest]
+      addopts = -p no:warnings
+
+    See the `warnings documentation page <https://docs.pytest.org/en/latest/warnings.html>`_ for more
+    information.
+
   Thanks `@nicoddemus`_ for the PR.
 
-* Added ``junit_suite_name`` ini option to specify root `<testsuite>` name for JUnit XML reports (`#533`_).
+* Added ``junit_suite_name`` ini option to specify root ``<testsuite>`` name for JUnit XML reports (`#533`_).
 
 * Added an ini option ``doctest_encoding`` to specify which encoding to use for doctest files.
   Thanks `@wheerd`_ for the PR (`#2101`_).
