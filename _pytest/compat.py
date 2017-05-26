@@ -126,6 +126,7 @@ if _PY3:
     import codecs
     imap = map
     STRING_TYPES = bytes, str
+    UNICODE_TYPES = str,
 
     def _escape_strings(val):
         """If val is pure ascii, returns it as a str().  Otherwise, escapes
@@ -157,6 +158,7 @@ if _PY3:
             return val.encode('unicode_escape').decode('ascii')
 else:
     STRING_TYPES = bytes, str, unicode
+    UNICODE_TYPES = unicode,
 
     from itertools import imap  # NOQA
 

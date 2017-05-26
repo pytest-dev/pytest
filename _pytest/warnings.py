@@ -63,10 +63,23 @@ def catch_warnings_for_item(item):
         yield
 
         for warning in log:
+            warn_msg = warning.message
+            unicode_warning = False
+
+            if compat._PY2 and any(isinstance(m, compat.UNICODE_TYPES) for m in warn_msg.args):
+                warn_msg.args = [compat.safe_str(m) for m in warn_msg.args]
+                unicode_warning = True
+
             msg = warnings.formatwarning(
-                compat.safe_str(warning.message), warning.category,
+                warn_msg, warning.category,
                 warning.filename, warning.lineno, warning.line)
             item.warn("unused", msg)
+
+            if unicode_warning:
+                warnings.warn(
+                    "This warning %s is broken as it's message is not a str instance"
+                    "(after all this is a stdlib problem workaround)" % msg,
+                    UnicodeWarning)
 
 
 @pytest.hookimpl(hookwrapper=True)
