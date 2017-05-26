@@ -1,3 +1,9 @@
+3.1.1 (unreleased)
+==================
+
+* Fix encoding errors for unicode warnings in Python 2.
+
+
 3.1.0 (2017-05-22)
 ==================
 
