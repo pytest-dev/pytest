@@ -2,6 +2,9 @@ sudo: false
 language: python
 python:
     - '3.5'
+cache:
+  pip: true
+  
 # command to install dependencies
 install: "pip install -U tox"
 # # command to run tests
