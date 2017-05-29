@@ -1,7 +1,9 @@
 3.1.1 (unreleased)
 ==================
 
-* Fix encoding errors for unicode warnings in Python 2.
+* Fix encoding errors for unicode warnings in Python 2. (towncrier: 2436.bugfix)
+
+* Fix issue with non-ascii contents in doctest text files. (towncrier: 2434.bugfix)
 
 
 3.1.0 (2017-05-22)
