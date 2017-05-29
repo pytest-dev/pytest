@@ -1,3 +1,11 @@
+3.1.1 (unreleased)
+==================
+
+* Fix encoding errors for unicode warnings in Python 2. (towncrier: 2436.bugfix)
+
+* Fix issue with non-ascii contents in doctest text files. (towncrier: 2434.bugfix)
+
+
 3.1.0 (2017-05-22)
 ==================
 
@@ -5,11 +13,25 @@
 New Features
 ------------
 
-* The ``pytest-warnings`` plugin has been integrated into the core, so now ``pytest`` automatically
+* The ``pytest-warnings`` plugin has been integrated into the core and now ``pytest`` automatically
   captures and displays warnings at the end of the test session.
+
+  .. warning::
+
+    This feature may disrupt test suites which apply and treat warnings themselves, and can be
+    disabled in your ``pytest.ini``:
+
+    .. code-block:: ini
+
+      [pytest]
+      addopts = -p no:warnings
+
+    See the `warnings documentation page <https://docs.pytest.org/en/latest/warnings.html>`_ for more
+    information.
+
   Thanks `@nicoddemus`_ for the PR.
 
-* Added ``junit_suite_name`` ini option to specify root `<testsuite>` name for JUnit XML reports (`#533`_).
+* Added ``junit_suite_name`` ini option to specify root ``<testsuite>`` name for JUnit XML reports (`#533`_).
 
 * Added an ini option ``doctest_encoding`` to specify which encoding to use for doctest files.
   Thanks `@wheerd`_ for the PR (`#2101`_).
@@ -53,8 +75,6 @@ Changes
 * ``--pdbcls`` no longer implies ``--pdb``. This makes it possible to use
   ``addopts=--pdbcls=module.SomeClass`` on ``pytest.ini``. Thanks `@davidszotten`_ for
   the PR (`#1952`_).
-* Change exception raised by ``capture.DontReadFromInput.fileno()`` from ``ValueError``
-  to ``io.UnsupportedOperation``. Thanks `@vlad-dragos`_ for the PR.
 
 * fix `#2013`_: turn RecordedWarning into ``namedtuple``,
   to give it a comprehensible repr while preventing unwarranted modification.
@@ -86,7 +106,7 @@ Changes
   Thanks `@RonnyPfannschmidt`_ for the PR.
 
 * fix `#2391`_: consider pytest_plugins on all plugin modules
-  Thansks `@RonnyPfannschmidt`_ for the PR.
+  Thanks `@RonnyPfannschmidt`_ for the PR.
 
 
 Bug Fixes
@@ -98,7 +118,7 @@ Bug Fixes
 
 * Change capture.py's ``DontReadFromInput`` class to throw ``io.UnsupportedOperation`` errors rather
   than ValueErrors in the ``fileno`` method (`#2276`_).
-  Thanks `@metasyn`_ for the PR.
+  Thanks `@metasyn`_ and `@vlad-dragos`_ for the PR.
 
 * Fix exception formatting while importing modules when the exception message
   contains non-ascii characters (`#2336`_).

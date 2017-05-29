@@ -219,7 +219,7 @@ def cacheshow(config, session):
     basedir = config.cache._cachedir
     vdir = basedir.join("v")
     tw.sep("-", "cache values")
-    for valpath in vdir.visit(lambda x: x.isfile()):
+    for valpath in sorted(vdir.visit(lambda x: x.isfile())):
         key = valpath.relto(vdir).replace(valpath.sep, "/")
         val = config.cache.get(key, dummy)
         if val is dummy:
@@ -235,7 +235,7 @@ def cacheshow(config, session):
     ddir = basedir.join("d")
     if ddir.isdir() and ddir.listdir():
         tw.sep("-", "cache directories")
-        for p in basedir.join("d").visit():
+        for p in sorted(basedir.join("d").visit()):
             #if p.check(dir=1):
             #    print("%s/" % p.relto(basedir))
             if p.isfile():

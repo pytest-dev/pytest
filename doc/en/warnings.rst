@@ -5,6 +5,20 @@ Warnings Capture
 
 .. versionadded:: 3.1
 
+.. warning::
+    pytest captures all warnings between tests, which prevents custom warning
+    filters in existing test suites from working. If this causes problems to your test suite,
+    this plugin can be disabled in your ``pytest.ini`` file with:
+
+    .. code-block:: ini
+
+        [pytest]
+        addopts = -p no:warnings
+
+    There's an ongoing discussion about this on `#2430
+    <https://github.com/pytest-dev/pytest/issues/2430>`_.
+
+
 Starting from version ``3.1``, pytest now automatically catches all warnings during test execution
 and displays them at the end of the session::
 
