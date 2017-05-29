@@ -1,5 +1,27 @@
-3.1.1 (unreleased)
+3.2.0 (unreleased)
 ==================
+
+
+Changes
+-------
+
+* The warnings capture plugin introduced in 3.1 in now **opt-in**: users must explicitly enable it by adding this to their
+  ``pytest.ini`` file:
+
+  .. code-block:: ini
+
+        [pytest]
+        addopts = -p _pytest.warnings
+
+  This change was made because it being automatically active has broken some test suites and the team reconsidered
+  it being active by default (See `#2430`_ for a complete overview of the discussion).
+
+
+.. _#2430: https://github.com/pytest-dev/pytest/issues/2430
+
+
+Bug Fixes
+---------
 
 * Fix encoding errors for unicode warnings in Python 2. (towncrier: 2436.bugfix)
 

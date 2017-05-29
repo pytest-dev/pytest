@@ -8,6 +8,15 @@ import pytest
 
 WARNINGS_SUMMARY_HEADER = 'warnings summary'
 
+
+@pytest.fixture(autouse=True)
+def enable_warnings_plugin(monkeypatch):
+    """
+    Auto-use fixture for this module which enables the warnings plugin, because it is opt-in.
+    """
+    monkeypatch.setenv('PYTEST_ADDOPTS', '-p _pytest.warnings')
+
+
 @pytest.fixture
 def pyfile_with_warnings(testdir, request):
     """
@@ -51,6 +60,16 @@ def test_normal_flow(testdir, pyfile_with_warnings):
         '* 1 passed, 2 warnings*',
     ])
     assert result.stdout.str().count('test_normal_flow.py::test_func') == 1
+
+
+def test_plugin_is_opt_in(testdir, pyfile_with_warnings, monkeypatch):
+    """
+    Ensure warnings plugin is opt-in (#2430).
+    """
+    monkeypatch.delenv('PYTEST_ADDOPTS')
+    result = testdir.runpytest()
+    assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
+    assert 'DeprecationWarning' not in result.stdout.str()
 
 
 def test_setup_teardown_warnings(testdir, pyfile_with_warnings):
