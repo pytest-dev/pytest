@@ -20,8 +20,8 @@ def pyfile_with_warnings(testdir, request):
         module_name: '''
             import warnings
             def foo():
-                warnings.warn(PendingDeprecationWarning("functionality is pending deprecation"))
-                warnings.warn(DeprecationWarning("functionality is deprecated"))
+                warnings.warn(UserWarning("user warning"))
+                warnings.warn(RuntimeWarning("runtime warning"))
                 return 1
         ''',
         test_name: '''
@@ -43,11 +43,11 @@ def test_normal_flow(testdir, pyfile_with_warnings):
 
         '*test_normal_flow.py::test_func',
 
-        '*normal_flow_module.py:3: PendingDeprecationWarning: functionality is pending deprecation',
-        '*  warnings.warn(PendingDeprecationWarning("functionality is pending deprecation"))',
+        '*normal_flow_module.py:3: UserWarning: user warning',
+        '*  warnings.warn(UserWarning("user warning"))',
 
-        '*normal_flow_module.py:4: DeprecationWarning: functionality is deprecated',
-        '*  warnings.warn(DeprecationWarning("functionality is deprecated"))',
+        '*normal_flow_module.py:4: RuntimeWarning: runtime warning',
+        '*  warnings.warn(RuntimeWarning("runtime warning"))',
         '* 1 passed, 2 warnings*',
     ])
     assert result.stdout.str().count('test_normal_flow.py::test_func') == 1
@@ -90,8 +90,8 @@ def test_as_errors(testdir, pyfile_with_warnings, method):
             ''')
     result = testdir.runpytest(*args)
     result.stdout.fnmatch_lines([
-        'E       PendingDeprecationWarning: functionality is pending deprecation',
-        'as_errors_module.py:3: PendingDeprecationWarning',
+        'E       UserWarning: user warning',
+        'as_errors_module.py:3: UserWarning',
         '* 1 failed in *',
     ])
 
@@ -133,9 +133,7 @@ def test_unicode(testdir, pyfile_with_warnings):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines([
         '*== %s ==*' % WARNINGS_SUMMARY_HEADER,
-
-        '*test_unicode.py:8: UserWarning: \u6d4b\u8bd5',
-        '*warnings.warn(u"\u6d4b\u8bd5")',
+        '*test_unicode.py:8: UserWarning: \u6d4b\u8bd5*',
         '* 1 passed, 1 warnings*',
     ])
 
@@ -163,6 +161,30 @@ def test_py2_unicode(testdir, pyfile_with_warnings):
 
         '*test_py2_unicode.py:8: UserWarning: \u6d4b\u8bd5',
         '*warnings.warn(u"\u6d4b\u8bd5")',
-        '*warnings.py:82: UnicodeWarning: This warning*\u6d4b\u8bd5',
+        '*warnings.py:*: UnicodeWarning: This warning*\u6d4b\u8bd5',
         '* 1 passed, 2 warnings*',
+    ])
+
+
+def test_works_with_filterwarnings(testdir):
+    """Ensure our warnings capture does not mess with pre-installed filters (#2430)."""
+    testdir.makepyfile('''
+        import warnings
+
+        class MyWarning(Warning):
+            pass
+        
+        warnings.filterwarnings("error", category=MyWarning)
+        
+        class TestWarnings(object):
+            def test_my_warning(self):
+                try:
+                    warnings.warn(MyWarning("warn!"))
+                    assert False
+                except MyWarning:
+                    assert True
+    ''')
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        '*== 1 passed in *',
     ])
