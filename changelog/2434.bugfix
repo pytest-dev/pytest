@@ -1,0 +1,1 @@
+Fix issue with non-ascii contents in doctest text files.

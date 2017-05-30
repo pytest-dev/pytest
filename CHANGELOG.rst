@@ -1,9 +1,13 @@
-3.1.1 (unreleased)
-==================
+.. 
+    You should *NOT* be adding new change log entries to this file, this
+    file is managed by towncrier. You *may* edit previous change logs to
+    fix problems like typo corrections or such.
+    To add a new change log entry, please see
+    https://pip.pypa.io/en/latest/development/#adding-a-news-entry
+    we named the news folder changelog
 
-* Fix encoding errors for unicode warnings in Python 2. (towncrier: 2436.bugfix)
 
-* Fix issue with non-ascii contents in doctest text files. (towncrier: 2434.bugfix)
+.. towncrier release notes start
 
 
 3.1.0 (2017-05-22)
