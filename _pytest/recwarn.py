@@ -45,7 +45,7 @@ def deprecated_call(func=None, *args, **kwargs):
     triggered twice for the same module. See #1190.
     """
     if not func:
-        return WarningsChecker(expected_warning=DeprecationWarning)
+        return WarningsChecker(expected_warning=(DeprecationWarning, PendingDeprecationWarning))
 
     categories = []
 

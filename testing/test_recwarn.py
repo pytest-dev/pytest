@@ -109,14 +109,17 @@ class TestDeprecatedCall(object):
             with pytest.deprecated_call():
                 self.dep(1)
 
-    def test_deprecated_call_as_context_manager(self):
-        with pytest.deprecated_call():
-            self.dep(0)
-
-    def test_deprecated_call_pending(self):
+    @pytest.mark.parametrize('warning_type', [PendingDeprecationWarning, DeprecationWarning])
+    @pytest.mark.parametrize('mode', ['context_manager', 'call'])
+    def test_deprecated_call_modes(self, warning_type, mode):
         def f():
-            py.std.warnings.warn(PendingDeprecationWarning("hi"))
-        pytest.deprecated_call(f)
+            warnings.warn(warning_type("hi"))
+            
+        if mode == 'call':
+            pytest.deprecated_call(f)
+        else:
+            with pytest.deprecated_call():
+                f()
 
     def test_deprecated_call_specificity(self):
         other_warnings = [Warning, UserWarning, SyntaxWarning, RuntimeWarning,
