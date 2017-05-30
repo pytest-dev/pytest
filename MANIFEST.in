@@ -1,6 +1,7 @@
 include CHANGELOG.rst
 include LICENSE
 include AUTHORS
+include pyproject.toml
 
 include README.rst
 include CONTRIBUTING.rst
@@ -9,6 +10,7 @@ include HOWTORELEASE.rst
 include tox.ini
 include setup.py
 
+recursive-include changelog *
 recursive-include scripts *.py
 recursive-include scripts *.bat
 
