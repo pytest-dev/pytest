@@ -1,0 +1,1 @@
+``pytest.deprecated_call`` now captures ``PendingDeprecationWarning`` in context manager form.
