@@ -1,0 +1,4 @@
+pytest warning capture no longer overrides existing warning filters. The previous
+behaviour would override all filters and caused regressions in test suites which configure warning
+filters to match their needs. Note that as a side-effect of this is that ``DeprecationWarning``
+and ``PendingDeprecationWarning`` are no longer shown by default.

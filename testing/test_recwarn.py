@@ -2,6 +2,8 @@ from __future__ import absolute_import, division, print_function
 import warnings
 import re
 import py
+import sys
+
 import pytest
 from _pytest.recwarn import WarningsRecorder
 
@@ -149,9 +151,12 @@ class TestDeprecatedCall(object):
                 pytest.deprecated_call(deprecated_function)
         """)
         result = testdir.runpytest()
-        # the 2 tests must pass, but the call to test_one() will generate a warning
-        # in pytest's summary
-        result.stdout.fnmatch_lines('*=== 2 passed, 1 warnings in *===')
+        # for some reason in py26 catch_warnings manages to catch the deprecation warning
+        # from deprecated_function(), even with default filters active (which ignore deprecation
+        # warnings)
+        py26 = sys.version_info[:2] == (2, 6)
+        expected = '*=== 2 passed in *===' if not py26 else '*=== 2 passed, 1 warnings in *==='
+        result.stdout.fnmatch_lines(expected)
 
 
 class TestWarns(object):
