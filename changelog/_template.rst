@@ -15,6 +15,7 @@
 {% for text, values in sections[section][category]|dictsort(by='value') %}
 - {{ text }}{% if category != 'vendor' %} ({{ values|sort|join(', ') }}){% endif %}
 
+
 {% endfor %}
 {% else %}
 - {{ sections[section][category]['']|sort|join(', ') }}

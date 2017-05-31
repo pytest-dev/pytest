@@ -25,14 +25,14 @@ Running pytest now produces this output::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 items
-
+    
     test_show_warnings.py .
-
+    
     ======= warnings summary ========
     test_show_warnings.py::test_one
-      $REGENDOC_TMPDIR/test_show_warnings.py:4: DeprecationWarning: this function is deprecated, use another_function()
-        warnings.warn("this function is deprecated, use another_function()", DeprecationWarning)
-
+      $REGENDOC_TMPDIR/test_show_warnings.py:4: UserWarning: api v1, should use functions from v2
+        warnings.warn(UserWarning("api v1, should use functions from v2"))
+    
     -- Docs: http://doc.pytest.org/en/latest/warnings.html
     ======= 1 passed, 1 warnings in 0.12 seconds ========
 
@@ -45,18 +45,18 @@ them into errors::
     F
     ======= FAILURES ========
     _______ test_one ________
-
+    
         def test_one():
-    >       assert deprecated_function() == 1
-
-    test_show_warnings.py:8:
-    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-
-        def deprecated_function():
-    >       warnings.warn("this function is deprecated, use another_function()", DeprecationWarning)
-    E       DeprecationWarning: this function is deprecated, use another_function()
-
-    test_show_warnings.py:4: DeprecationWarning
+    >       assert api_v1() == 1
+    
+    test_show_warnings.py:8: 
+    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    
+        def api_v1():
+    >       warnings.warn(UserWarning("api v1, should use functions from v2"))
+    E       UserWarning: api v1, should use functions from v2
+    
+    test_show_warnings.py:4: UserWarning
     1 failed in 0.12 seconds
 
 The same option can be set in the ``pytest.ini`` file using the ``filterwarnings`` ini option.
