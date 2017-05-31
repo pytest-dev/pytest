@@ -11,10 +11,10 @@ from __future__ import print_function
 import os
 import subprocess
 import sys
-
+from check_manifest import main
 
 if os.path.isdir('.git'):
-    sys.exit(subprocess.call('check-manifest', shell=True))
+    sys.exit(main())
 else:
     print('No .git directory found, skipping checking the manifest file')
     sys.exit(0)

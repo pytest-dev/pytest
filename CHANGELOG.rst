@@ -1,9 +1,37 @@
-3.1.1 (unreleased)
-==================
+.. 
+    You should *NOT* be adding new change log entries to this file, this
+    file is managed by towncrier. You *may* edit previous change logs to
+    fix problems like typo corrections or such.
+    To add a new change log entry, please see
+    https://pip.pypa.io/en/latest/development/#adding-a-news-entry
+    we named the news folder changelog
 
-* Fix encoding errors for unicode warnings in Python 2. (towncrier: 2436.bugfix)
+.. towncrier release notes start
 
-* Fix issue with non-ascii contents in doctest text files. (towncrier: 2434.bugfix)
+Pytest 3.1.1 (2017-05-30)
+=========================
+
+Bug Fixes
+---------
+
+- pytest warning capture no longer overrides existing warning filters. The
+  previous behaviour would override all filters and caused regressions in test
+  suites which configure warning filters to match their needs. Note that as a
+  side-effect of this is that ``DeprecationWarning`` and
+  ``PendingDeprecationWarning`` are no longer shown by default. (#2430)
+
+- Fix issue with non-ascii contents in doctest text files. (#2434)
+
+- Fix encoding errors for unicode warnings in Python 2. (#2436)
+
+- ``pytest.deprecated_call`` now captures ``PendingDeprecationWarning`` in
+  context manager form. (#2441)
+
+
+Improved Documentation
+----------------------
+
+- Addition of towncrier for changelog management. (#2390)
 
 
 3.1.0 (2017-05-22)
