@@ -71,6 +71,12 @@ class UsageError(Exception):
     """ error in pytest usage or invocation"""
 
 
+class PrintHelp(Exception):
+    """Raised when pytest should print it's help to skip the rest of the
+    argument parsing and validation."""
+    pass
+
+
 def filename_arg(path, optname):
     """ Argparse type validator for filename arguments.
 
@@ -1100,14 +1106,18 @@ class Config(object):
         self._preparse(args, addopts=addopts)
         # XXX deprecated hook:
         self.hook.pytest_cmdline_preparse(config=self, args=args)
-        args = self._parser.parse_setoption(args, self.option, namespace=self.option)
-        if not args:
-            cwd = os.getcwd()
-            if cwd == self.rootdir:
-                args = self.getini('testpaths')
+        self._parser.after_preparse = True
+        try:
+            args = self._parser.parse_setoption(args, self.option, namespace=self.option)
             if not args:
-                args = [cwd]
-        self.args = args
+                cwd = os.getcwd()
+                if cwd == self.rootdir:
+                    args = self.getini('testpaths')
+                if not args:
+                    args = [cwd]
+            self.args = args
+        except PrintHelp:
+            pass
 
     def addinivalue_line(self, name, line):
         """ add a line to an ini-file option. The option must have been
