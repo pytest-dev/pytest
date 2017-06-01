@@ -9,6 +9,14 @@ from argparse import Action
 
 
 class HelpAction(Action):
+    """This is an argparse Action that will raise an exception in
+    order to skip the rest of the argument parsing when --help is passed.
+    This prevents argparse from quitting due to missing required arguments
+    when any are defined, for example by ``pytest_addoption``.
+    This is similar to the way that the builtin argparse --help option is
+    implemented by raising SystemExit.
+    """
+
     def __init__(self,
                  option_strings,
                  dest=None,
