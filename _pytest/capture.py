@@ -515,7 +515,7 @@ def _py36_windowsconsoleio_workaround():
 
     See https://github.com/pytest-dev/py/issues/103
     """
-    if not sys.platform.startswith('win32') and sys.version_info[:2] >= (3, 6):
+    if not sys.platform.startswith('win32') or sys.version_info[:2] < (3, 6):
         return
 
     buffered = hasattr(sys.stdout.buffer, 'raw')
