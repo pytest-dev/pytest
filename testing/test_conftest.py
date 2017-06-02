@@ -449,3 +449,15 @@ def test_hook_proxy(testdir):
         '*test_foo4.py*',
         '*3 passed*',
     ])
+
+
+def test_required_option_help(testdir):
+    testdir.makeconftest("assert 0")
+    x = testdir.mkdir("x")
+    x.join("conftest.py").write(_pytest._code.Source("""
+        def pytest_addoption(parser):
+            parser.addoption("--xyz", action="store_true", required=True)
+    """))
+    result = testdir.runpytest("-h", x)
+    assert 'argument --xyz is required' not in result.stdout.str()
+    assert 'general:' in result.stdout.str()
