@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function
 import contextlib
 import sys
 import os
+import io
 from io import UnsupportedOperation
 from tempfile import TemporaryFile
 
@@ -33,8 +34,10 @@ def pytest_addoption(parser):
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_load_initial_conftests(early_config, parser, args):
-    _readline_workaround()
     ns = early_config.known_args_namespace
+    if ns.capture == "fd":
+        _py36_windowsconsoleio_workaround()
+    _readline_workaround()
     pluginmanager = early_config.pluginmanager
     capman = CaptureManager(ns.capture)
     pluginmanager.register(capman, "capturemanager")
@@ -491,3 +494,49 @@ def _readline_workaround():
         import readline  # noqa
     except ImportError:
         pass
+
+
+def _py36_windowsconsoleio_workaround():
+    """
+    Python 3.6 implemented unicode console handling for Windows. This works
+    by reading/writing to the raw console handle using
+    ``{Read,Write}ConsoleW``.
+
+    The problem is that we are going to ``dup2`` over the stdio file
+    descriptors when doing ``FDCapture`` and this will ``CloseHandle`` the
+    handles used by Python to write to the console. Though there is still some
+    weirdness and the console handle seems to only be closed randomly and not
+    on the first call to ``CloseHandle``, or maybe it gets reopened with the
+    same handle value when we suspend capturing.
+
+    The workaround in this case will reopen stdio with a different fd which
+    also means a different handle by replicating the logic in
+    "Py_lifecycle.c:initstdio/create_stdio".
+
+    See https://github.com/pytest-dev/py/issues/103
+    """
+    if not sys.platform.startswith('win32') and sys.version_info[:2] >= (3, 6):
+        return
+
+    buffered = hasattr(sys.stdout.buffer, 'raw')
+    raw_stdout = sys.stdout.buffer.raw if buffered else sys.stdout.buffer
+
+    if not isinstance(raw_stdout, io._WindowsConsoleIO):
+        return
+
+    def _reopen_stdio(f, mode):
+        if not buffered and mode[0] == 'w':
+            buffering = 0
+        else:
+            buffering = -1
+
+        return io.TextIOWrapper(
+            open(os.dup(f.fileno()), mode, buffering),
+            f.encoding,
+            f.errors,
+            f.newlines,
+            f.line_buffering)
+
+    sys.__stdin__ = sys.stdin = _reopen_stdio(sys.stdin, 'rb')
+    sys.__stdout__ = sys.stdout = _reopen_stdio(sys.stdout, 'wb')
+    sys.__stderr__ = sys.stderr = _reopen_stdio(sys.stderr, 'wb')
