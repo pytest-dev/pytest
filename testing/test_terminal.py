@@ -204,6 +204,15 @@ class TestTerminal(object):
         assert result.ret == 2
         result.stdout.fnmatch_lines(['*KeyboardInterrupt*'])
 
+    def test_collect_single_item(self, testdir):
+        """Use singular 'item' when reporting a single test item"""
+        testdir.makepyfile("""
+            def test_foobar():
+                pass
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(['collected 1 item'])
+
 
 class TestCollectonly(object):
     def test_collectonly_basic(self, testdir):

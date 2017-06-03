@@ -282,7 +282,7 @@ class TerminalReporter:
             line = "collected "
         else:
             line = "collecting "
-        line += str(self._numcollected) + " items"
+        line += str(self._numcollected) + " item" + ('' if self._numcollected == 1 else 's')
         if errors:
             line += " / %d errors" % errors
         if skipped:
