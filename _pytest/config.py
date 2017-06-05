@@ -169,7 +169,7 @@ def _prepareconfig(args=None, plugins=None):
 
 class PytestPluginManager(PluginManager):
     """
-    Overwrites :py:class:`pluggy.PluginManager` to add pytest-specific
+    Overwrites :py:class:`pluggy.PluginManager <_pytest.vendored_packages.pluggy.PluginManager>` to add pytest-specific
     functionality:
 
     * loading plugins from the command line, ``PYTEST_PLUGIN`` env variable and
@@ -206,7 +206,7 @@ class PytestPluginManager(PluginManager):
         """
         .. deprecated:: 2.8
 
-        Use :py:meth:`pluggy.PluginManager.add_hookspecs` instead.
+        Use :py:meth:`pluggy.PluginManager.add_hookspecs <_pytest.vendored_packages.pluggy.PluginManager.add_hookspecs>` instead.
         """
         warning = dict(code="I2",
                        fslocation=_pytest._code.getfslineno(sys._getframe(1)),
@@ -1130,7 +1130,7 @@ class Config(object):
     def getini(self, name):
         """ return configuration value from an :ref:`ini file <inifiles>`. If the
         specified name hasn't been registered through a prior
-        :py:func:`parser.addini <pytest.config.Parser.addini>`
+        :py:func:`parser.addini <_pytest.config.Parser.addini>`
         call (usually from a plugin), a ValueError is raised. """
         try:
             return self._inicache[name]

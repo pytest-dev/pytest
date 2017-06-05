@@ -383,7 +383,7 @@ hook wrappers and passes the same arguments as to the regular hooks.
 
 At the yield point of the hook wrapper pytest will execute the next hook
 implementations and return their result to the yield point in the form of
-a :py:class:`CallOutcome` instance which encapsulates a result or
+a :py:class:`CallOutcome <_pytest.vendored_packages.pluggy._CallOutcome>` instance which encapsulates a result or
 exception info.  The yield point itself will thus typically not raise
 exceptions (unless there are bugs).
 
@@ -448,7 +448,7 @@ Here is the order of execution:
    Plugin1).
 
 4. Plugin3's pytest_collection_modifyitems then executing the code after the yield
-   point.  The yield receives a :py:class:`CallOutcome` instance which encapsulates
+   point.  The yield receives a :py:class:`CallOutcome <_pytest.vendored_packages.pluggy._CallOutcome>` instance which encapsulates
    the result from calling the non-wrappers.  Wrappers shall not modify the result.
 
 It's possible to use ``tryfirst`` and ``trylast`` also in conjunction with
@@ -525,7 +525,7 @@ Initialization, command line and configuration hooks
 Generic "runtest" hooks
 -----------------------
 
-All runtest related hooks receive a :py:class:`pytest.Item` object.
+All runtest related hooks receive a :py:class:`pytest.Item <_pytest.main.Item>` object.
 
 .. autofunction:: pytest_runtest_protocol
 .. autofunction:: pytest_runtest_setup
