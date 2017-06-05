@@ -66,8 +66,9 @@ def catch_warnings_for_item(item):
             unicode_warning = False
 
             if compat._PY2 and any(isinstance(m, compat.UNICODE_TYPES) for m in warn_msg.args):
-                warn_msg.args = [compat.safe_str(m) for m in warn_msg.args]
-                unicode_warning = True
+                new_args = [compat.safe_str(m) for m in warn_msg.args]
+                unicode_warning = warn_msg.args != new_args
+                warn_msg.args = new_args
 
             msg = warnings.formatwarning(
                 warn_msg, warning.category,
@@ -76,8 +77,8 @@ def catch_warnings_for_item(item):
 
             if unicode_warning:
                 warnings.warn(
-                    "This warning %s is broken as it's message is not a str instance"
-                    "(after all this is a stdlib problem workaround)" % msg,
+                    "Warning is using unicode non convertible to ascii, "
+                    "converting to a safe representation:\n  %s"  % msg,
                     UnicodeWarning)
 
 

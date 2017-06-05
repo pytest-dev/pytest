@@ -161,7 +161,7 @@ def test_py2_unicode(testdir, pyfile_with_warnings):
 
         '*test_py2_unicode.py:8: UserWarning: \u6d4b\u8bd5',
         '*warnings.warn(u"\u6d4b\u8bd5")',
-        '*warnings.py:*: UnicodeWarning: This warning*\u6d4b\u8bd5',
+        '*warnings.py:*: UnicodeWarning: Warning is using unicode non*',
         '* 1 passed, 2 warnings*',
     ])
 
