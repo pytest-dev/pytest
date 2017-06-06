@@ -1140,3 +1140,36 @@ def test_cwd_deleted(testdir):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(['* 1 failed in *'])
     assert 'INTERNALERROR' not in result.stdout.str() + result.stderr.str()
+
+
+def test_exception_repr_extraction_error_on_recursion():
+    """
+    Ensure we can properly detect a recursion error even
+    if some locals raise error on comparision (#2459).
+    """
+    class numpy_like(object):
+
+        def __eq__(self, other):
+            if type(other) is numpy_like:
+                raise ValueError('The truth value of an array '
+                                 'with more than one element is ambiguous.')
+
+    def a(x):
+        return b(numpy_like())
+
+    def b(x):
+        return a(numpy_like())
+
+    try:
+        a(numpy_like())
+    except:
+        from _pytest._code.code import ExceptionInfo
+        from _pytest.pytester import LineMatcher
+        exc_info = ExceptionInfo()
+
+        matcher = LineMatcher(str(exc_info.getrepr()).splitlines())
+        matcher.fnmatch_lines([
+            '!!! Recursion error detected, but an error occurred locating the origin of recursion.',
+            '*The following exception happened*',
+            '*ValueError: The truth value of an array*',
+        ])

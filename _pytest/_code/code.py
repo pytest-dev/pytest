@@ -3,7 +3,7 @@ import sys
 from inspect import CO_VARARGS, CO_VARKEYWORDS
 import re
 from weakref import ref
-from _pytest.compat import _PY2, _PY3, PY35
+from _pytest.compat import _PY2, _PY3, PY35, safe_str
 
 import py
 builtin_repr = repr
@@ -602,21 +602,48 @@ class FormattedExcinfo(object):
         traceback = excinfo.traceback
         if self.tbfilter:
             traceback = traceback.filter()
-        recursionindex = None
+
         if is_recursion_error(excinfo):
-            recursionindex = traceback.recursionindex()
+            traceback, extraline = self._truncate_recursive_traceback(traceback)
+        else:
+            extraline = None
+
         last = traceback[-1]
         entries = []
-        extraline = None
         for index, entry in enumerate(traceback):
             einfo = (last == entry) and excinfo or None
             reprentry = self.repr_traceback_entry(entry, einfo)
             entries.append(reprentry)
-            if index == recursionindex:
-                extraline = "!!! Recursion detected (same locals & position)"
-                break
         return ReprTraceback(entries, extraline, style=self.style)
 
+    def _truncate_recursive_traceback(self, traceback):
+        """
+        Truncate the given recursive traceback trying to find the starting point
+        of the recursion.
+
+        The detection is done by going through each traceback entry and finding the
+        point in which the locals of the frame are equal to the locals of a previous frame (see ``recursionindex()``.
+
+        Handle the situation where the recursion process might raise an exception (for example
+        comparing numpy arrays using equality raises a TypeError), in which case we do our best to
+        warn the user of the error and show a limited traceback.
+        """
+        try:
+            recursionindex = traceback.recursionindex()
+        except Exception as e:
+            max_frames = 10
+            extraline = (
+                '!!! Recursion error detected, but an error occurred locating the origin of recursion.\n'
+                '  The following exception happened when comparing locals in the stack frame:\n'
+                '    {exc_type}: {exc_msg}\n'
+                '  Displaying first and last {max_frames} stack frames out of {total}.'
+            ).format(exc_type=type(e).__name__, exc_msg=safe_str(e), max_frames=max_frames, total=len(traceback))
+            traceback = traceback[:max_frames] + traceback[-max_frames:]
+        else:
+            extraline = "!!! Recursion detected (same locals & position)"
+            traceback = traceback[:recursionindex + 1]
+            
+        return traceback, extraline
 
     def repr_excinfo(self, excinfo):
         if _PY2:
