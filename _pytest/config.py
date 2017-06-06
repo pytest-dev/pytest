@@ -71,6 +71,12 @@ class UsageError(Exception):
     """ error in pytest usage or invocation"""
 
 
+class PrintHelp(Exception):
+    """Raised when pytest should print it's help to skip the rest of the
+    argument parsing and validation."""
+    pass
+
+
 def filename_arg(path, optname):
     """ Argparse type validator for filename arguments.
 
@@ -163,7 +169,7 @@ def _prepareconfig(args=None, plugins=None):
 
 class PytestPluginManager(PluginManager):
     """
-    Overwrites :py:class:`pluggy.PluginManager` to add pytest-specific
+    Overwrites :py:class:`pluggy.PluginManager <_pytest.vendored_packages.pluggy.PluginManager>` to add pytest-specific
     functionality:
 
     * loading plugins from the command line, ``PYTEST_PLUGIN`` env variable and
@@ -200,7 +206,7 @@ class PytestPluginManager(PluginManager):
         """
         .. deprecated:: 2.8
 
-        Use :py:meth:`pluggy.PluginManager.add_hookspecs` instead.
+        Use :py:meth:`pluggy.PluginManager.add_hookspecs <_pytest.vendored_packages.pluggy.PluginManager.add_hookspecs>` instead.
         """
         warning = dict(code="I2",
                        fslocation=_pytest._code.getfslineno(sys._getframe(1)),
@@ -1100,14 +1106,18 @@ class Config(object):
         self._preparse(args, addopts=addopts)
         # XXX deprecated hook:
         self.hook.pytest_cmdline_preparse(config=self, args=args)
-        args = self._parser.parse_setoption(args, self.option, namespace=self.option)
-        if not args:
-            cwd = os.getcwd()
-            if cwd == self.rootdir:
-                args = self.getini('testpaths')
+        self._parser.after_preparse = True
+        try:
+            args = self._parser.parse_setoption(args, self.option, namespace=self.option)
             if not args:
-                args = [cwd]
-        self.args = args
+                cwd = os.getcwd()
+                if cwd == self.rootdir:
+                    args = self.getini('testpaths')
+                if not args:
+                    args = [cwd]
+            self.args = args
+        except PrintHelp:
+            pass
 
     def addinivalue_line(self, name, line):
         """ add a line to an ini-file option. The option must have been
@@ -1120,7 +1130,7 @@ class Config(object):
     def getini(self, name):
         """ return configuration value from an :ref:`ini file <inifiles>`. If the
         specified name hasn't been registered through a prior
-        :py:func:`parser.addini <pytest.config.Parser.addini>`
+        :py:func:`parser.addini <_pytest.config.Parser.addini>`
         call (usually from a plugin), a ValueError is raised. """
         try:
             return self._inicache[name]

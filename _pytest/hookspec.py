@@ -213,7 +213,7 @@ def pytest_runtest_teardown(item, nextitem):
 @hookspec(firstresult=True)
 def pytest_runtest_makereport(item, call):
     """ return a :py:class:`_pytest.runner.TestReport` object
-    for the given :py:class:`pytest.Item` and
+    for the given :py:class:`pytest.Item <_pytest.main.Item>` and
     :py:class:`_pytest.runner.CallInfo`.
     """
 

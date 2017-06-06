@@ -5,14 +5,17 @@
 Skip and xfail: dealing with tests that cannot succeed
 =====================================================================
 
-If you have test functions that cannot be run on certain platforms
-or that you expect to fail you can mark them accordingly or you
-may call helper functions during execution of setup or test functions.
+You can mark test functions that cannot be run on certain platforms
+or that you expect to fail so pytest can deal with them accordingly and
+present a summary of the test session, while keeping the test suite *green*.
 
-A *skip* means that you expect your test to pass unless the environment
-(e.g. wrong Python interpreter, missing dependency) prevents it to run.
-And *xfail* means that your test can run but you expect it to fail
-because there is an implementation problem.
+A **skip** means that you expect your test to pass only if some conditions are met,
+otherwise pytest should skip running the test altogether. Common examples are skipping
+windows-only tests on non-windows platforms, or skipping tests that depend on an external
+resource which is not available at the moment (for example a database).
+
+A **xfail** means that you expect a test to fail for some reason.
+A common example is a test for a feature not yet implemented, or a bug not yet fixed.
 
 ``pytest`` counts and lists *skip* and *xfail* tests separately. Detailed
 information about skipped/xfailed tests is not shown by default to avoid
@@ -26,8 +29,8 @@ corresponding to the "short" letters shown in the test progress::
 .. _skipif:
 .. _`condition booleans`:
 
-Marking a test function to be skipped
--------------------------------------------
+Skipping test functions
+-----------------------
 
 .. versionadded:: 2.9
 
@@ -40,10 +43,23 @@ which may be passed an optional ``reason``:
     def test_the_unknown():
         ...
 
+
+Alternatively, it is also possible to skip imperatively during test execution or setup
+by calling the ``pytest.skip(reason)`` function:
+
+.. code-block:: python
+
+    def test_function():
+        if not valid_config():
+            pytest.skip("unsupported configuration")
+
+The imperative method is useful when it is not possible to evaluate the skip condition 
+during import time.
+
 ``skipif``
 ~~~~~~~~~~
 
-.. versionadded:: 2.0, 2.4
+.. versionadded:: 2.0
 
 If you wish to skip something conditionally then you can use ``skipif`` instead.
 Here is an example of marking a test function to be skipped
@@ -55,16 +71,12 @@ when run on a Python3.3 interpreter::
     def test_function():
         ...
 
-During test function setup the condition ("sys.version_info >= (3,3)") is
-checked.  If it evaluates to True, the test function will be skipped
-with the specified reason.  Note that pytest enforces specifying a reason
-in order to report meaningful "skip reasons" (e.g. when using ``-rs``).
-If the condition is a string, it will be evaluated as python expression.
+If the condition evaluates to ``True`` during collection, the test function will be skipped,
+with the specified reason appearing in the summary when using ``-rs``.  
 
-You can share skipif markers between modules.  Consider this test module::
+You can share ``skipif`` markers between modules.  Consider this test module::
 
     # content of test_mymodule.py
-
     import mymodule
     minversion = pytest.mark.skipif(mymodule.__versioninfo__ < (1,1),
                                     reason="at least mymodule-1.1 required")
@@ -72,7 +84,7 @@ You can share skipif markers between modules.  Consider this test module::
     def test_function():
         ...
 
-You can import it from another test module::
+You can import the marker and reuse it in another test module::
 
     # test_myothermodule.py
     from test_mymodule import minversion
@@ -85,16 +97,15 @@ For larger test suites it's usually a good idea to have one file
 where you define the markers which you then consistently apply
 throughout your test suite.
 
-Alternatively, the pre pytest-2.4 way to specify :ref:`condition strings
-<string conditions>` instead of booleans will remain fully supported in future
-versions of pytest.  It couldn't be easily used for importing markers
-between test modules so it's no longer advertised as the primary method.
+Alternatively, you can use :ref:`condition strings
+<string conditions>` instead of booleans, but they can't be shared between modules easily
+so they are supported mainly for backward compatibility reasons.
 
 
 Skip all test functions of a class or module
----------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can use the ``skipif`` decorator (and any other marker) on classes::
+You can use the ``skipif`` marker (as any other marker) on classes::
 
     @pytest.mark.skipif(sys.platform == 'win32',
                         reason="does not run on windows")
@@ -103,10 +114,10 @@ You can use the ``skipif`` decorator (and any other marker) on classes::
         def test_function(self):
             "will not be setup or run under 'win32' platform"
 
-If the condition is true, this marker will produce a skip result for
-each of the test methods.
+If the condition is ``True``, this marker will produce a skip result for
+each of the test methods of that class.
 
-If you want to skip all test functions of a module, you must use
+If you want to skip all test functions of a module, you may use
 the ``pytestmark`` name on the global level:
 
 .. code-block:: python
@@ -114,15 +125,57 @@ the ``pytestmark`` name on the global level:
     # test_module.py
     pytestmark = pytest.mark.skipif(...)
 
-If multiple "skipif" decorators are applied to a test function, it
+If multiple ``skipif`` decorators are applied to a test function, it
 will be skipped if any of the skip conditions is true.
 
 .. _`whole class- or module level`: mark.html#scoped-marking
 
+
+Skipping on a missing import dependency
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can use the following helper at module level
+or within a test or test setup function::
+
+    docutils = pytest.importorskip("docutils")
+
+If ``docutils`` cannot be imported here, this will lead to a
+skip outcome of the test.  You can also skip based on the
+version number of a library::
+
+    docutils = pytest.importorskip("docutils", minversion="0.3")
+
+The version will be read from the specified
+module's ``__version__`` attribute.
+
+Summary
+~~~~~~~
+
+Here's a quick guide on how to skip tests in a module in different situations:
+
+1. Skip all tests in a module unconditionally:
+
+  .. code-block:: python
+
+        pytestmark = pytest.mark.skip('all tests still WIP')
+
+2. Skip all tests in a module based on some condition:
+
+  .. code-block:: python
+
+        pytestmark = pytest.mark.skipif(sys.platform == 'win32', 'tests for linux only')
+
+3. Skip all tests in a module if some import is missing:
+
+  .. code-block:: python
+
+        pexpect = pytest.importorskip('pexpect')
+
+
 .. _xfail:
 
-Mark a test function as expected to fail
--------------------------------------------------------
+XFail: mark test functions as expected to fail
+----------------------------------------------
 
 You can use the ``xfail`` marker to indicate that you
 expect a test to fail::
@@ -134,6 +187,29 @@ expect a test to fail::
 This test will be run but no traceback will be reported
 when it fails. Instead terminal reporting will list it in the
 "expected to fail" (``XFAIL``) or "unexpectedly passing" (``XPASS``) sections.
+
+Alternatively, you can also mark a test as ``XFAIL`` from within a test or setup function
+imperatively:
+
+.. code-block:: python
+
+    def test_function():
+        if not valid_config():
+            pytest.xfail("failing configuration (but should work)")
+
+This will unconditionally make ``test_function`` ``XFAIL``. Note that no other code is executed
+after ``pytest.xfail`` call, differently from the marker. That's because it is implemented
+internally by raising a known exception.
+
+Here's the signature of the ``xfail`` **marker** (not the function), using Python 3 keyword-only
+arguments syntax:
+
+.. code-block:: python
+
+    def xfail(condition=None, *, reason=None, raises=None, run=True, strict=False):
+
+
+
 
 ``strict`` parameter
 ~~~~~~~~~~~~~~~~~~~~
@@ -200,18 +276,19 @@ even executed, use the ``run`` parameter as ``False``:
     def test_function():
         ...
 
-This is specially useful for marking crashing tests for later inspection.
+This is specially useful for xfailing tests that are crashing the interpreter and should be
+investigated later.
 
 
-Ignoring xfail marks
-~~~~~~~~~~~~~~~~~~~~
+Ignoring xfail
+~~~~~~~~~~~~~~
 
 By specifying on the commandline::
 
     pytest --runxfail
 
 you can force the running and reporting of an ``xfail`` marked test
-as if it weren't marked at all.
+as if it weren't marked at all. This also causes ``pytest.xfail`` to produce no effect.
 
 Examples
 ~~~~~~~~
@@ -245,16 +322,6 @@ Running it with the report-on-xfail option gives this output::
     
     ======= 7 xfailed in 0.12 seconds ========
 
-xfail signature summary
-~~~~~~~~~~~~~~~~~~~~~~~
-
-Here's the signature of the ``xfail`` marker, using Python 3 keyword-only
-arguments syntax:
-
-.. code-block:: python
-
-    def xfail(condition=None, *, reason=None, raises=None, run=True, strict=False):
-
 
 
 .. _`skip/xfail with parametrize`:
@@ -263,73 +330,29 @@ Skip/xfail with parametrize
 ---------------------------
 
 It is possible to apply markers like skip and xfail to individual
-test instances when using parametrize::
+test instances when using parametrize:
+
+.. code-block:: python
 
     import pytest
 
     @pytest.mark.parametrize(("n", "expected"), [
         (1, 2),
-    pytest.mark.xfail((1, 0)),
-	pytest.mark.xfail(reason="some bug")((1, 3)),
+    pytest.param(1, 0, marks=pytest.mark.xfail),
+	pytest.param(1, 3, marks=pytest.mark.xfail(reason="some bug")),
         (2, 3),
         (3, 4),
         (4, 5),
-        pytest.mark.skipif("sys.version_info >= (3,0)")((10, 11)),
+    pytest.param(10, 11, marks=pytest.mark.skipif(sys.version_info >= (3, 0), reason="py2k")),
     ])
     def test_increment(n, expected):
         assert n + 1 == expected
 
 
-Imperative xfail from within a test or setup function
-------------------------------------------------------
-
-If you cannot declare xfail- of skipif conditions at import
-time you can also imperatively produce an according outcome
-imperatively, in test or setup code::
-
-    def test_function():
-        if not valid_config():
-            pytest.xfail("failing configuration (but should work)")
-            # or
-            pytest.skip("unsupported configuration")
-
-Note that calling ``pytest.skip`` at the module level 
-is not allowed since pytest 3.0. If you are upgrading
-and ``pytest.skip`` was being used at the module level, you can set a
-``pytestmark`` variable:
-
-.. code-block:: python
-
-    # before pytest 3.0
-    pytest.skip('skipping all tests because of reasons')
-    # after pytest 3.0
-    pytestmark = pytest.mark.skip('skipping all tests because of reasons')
-
-``pytestmark`` applies a mark or list of marks to all tests in a module.
-
-
-Skipping on a missing import dependency
---------------------------------------------------
-
-You can use the following import helper at module level
-or within a test or test setup function::
-
-    docutils = pytest.importorskip("docutils")
-
-If ``docutils`` cannot be imported here, this will lead to a
-skip outcome of the test.  You can also skip based on the
-version number of a library::
-
-    docutils = pytest.importorskip("docutils", minversion="0.3")
-
-The version will be read from the specified
-module's ``__version__`` attribute.
-
-
 .. _string conditions:
 
-specifying conditions as strings versus booleans
-----------------------------------------------------------
+Conditions as strings instead of booleans
+-----------------------------------------
 
 Prior to pytest-2.4 the only way to specify skipif/xfail conditions was
 to use strings::
@@ -346,7 +369,7 @@ all the module globals, and ``os`` and ``sys`` as a minimum.
 Since pytest-2.4 `condition booleans`_ are considered preferable
 because markers can then be freely imported between test modules.
 With strings you need to import not only the marker but all variables
-everything used by the marker, which violates encapsulation.
+used by the marker, which violates encapsulation.
 
 The reason for specifying the condition as a string was that ``pytest`` can
 report a summary of skip conditions based purely on the condition string.
@@ -387,25 +410,3 @@ The equivalent with "boolean conditions" is::
     ``config.getvalue()`` will not execute correctly.
 
 
-Summary
--------
-
-Here's a quick guide on how to skip tests in a module in different situations:
-
-1. Skip all tests in a module unconditionally:
-
-  .. code-block:: python
-
-        pytestmark = pytest.mark.skip('all tests still WIP')
-
-2. Skip all tests in a module based on some condition:
-
-  .. code-block:: python
-
-        pytestmark = pytest.mark.skipif(sys.platform == 'win32', 'tests for linux only')
-
-3. Skip all tests in a module if some import is missing:
-
-  .. code-block:: python
-
-        pexpect = pytest.importorskip('pexpect')
