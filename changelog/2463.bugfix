@@ -1,0 +1,2 @@
+``UnicodeWarning`` is issued from the internal pytest warnings plugin only when the message contains non-ascii
+unicode (Python 2 only).
