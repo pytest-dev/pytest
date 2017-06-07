@@ -27,10 +27,8 @@ def recwarn():
 
 
 def deprecated_call(func=None, *args, **kwargs):
-    """ assert that calling ``func(*args, **kwargs)`` triggers a
-    ``DeprecationWarning`` or ``PendingDeprecationWarning``.
-
-    This function can be used as a context manager::
+    """context manager that can be used to ensure a block of code triggers a
+    ``DeprecationWarning`` or ``PendingDeprecationWarning``::
 
         >>> import warnings
         >>> def api_call_v2():
@@ -40,38 +38,46 @@ def deprecated_call(func=None, *args, **kwargs):
         >>> with deprecated_call():
         ...    assert api_call_v2() == 200
 
-    Note: we cannot use WarningsRecorder here because it is still subject
-    to the mechanism that prevents warnings of the same type from being
-    triggered twice for the same module. See #1190.
+    ``deprecated_call`` can also be used by passing a function and ``*args`` and ``*kwargs``,
+    in which case it will ensure calling ``func(*args, **kwargs)`` produces one of the warnings
+    types above.
     """
     if not func:
-        return WarningsChecker(expected_warning=(DeprecationWarning, PendingDeprecationWarning))
+        return _DeprecatedCallContext()
+    else:
+        with _DeprecatedCallContext():
+            return func(*args, **kwargs)
 
-    categories = []
 
-    def warn_explicit(message, category, *args, **kwargs):
-        categories.append(category)
+class _DeprecatedCallContext(object):
+    """Implements the logic to capture deprecation warnings as a context manager."""
 
-    def warn(message, category=None, *args, **kwargs):
+    def __enter__(self):
+        self._captured_categories = []
+        self._old_warn = warnings.warn
+        self._old_warn_explicit = warnings.warn_explicit
+        warnings.warn_explicit = self._warn_explicit
+        warnings.warn = self._warn
+
+    def _warn_explicit(self, message, category, *args, **kwargs):
+        self._captured_categories.append(category)
+
+    def _warn(self, message, category=None, *args, **kwargs):
         if isinstance(message, Warning):
-            categories.append(message.__class__)
+            self._captured_categories.append(message.__class__)
         else:
-            categories.append(category)
+            self._captured_categories.append(category)
 
-    old_warn = warnings.warn
-    old_warn_explicit = warnings.warn_explicit
-    warnings.warn_explicit = warn_explicit
-    warnings.warn = warn
-    try:
-        ret = func(*args, **kwargs)
-    finally:
-        warnings.warn_explicit = old_warn_explicit
-        warnings.warn = old_warn
-    deprecation_categories = (DeprecationWarning, PendingDeprecationWarning)
-    if not any(issubclass(c, deprecation_categories) for c in categories):
-        __tracebackhide__ = True
-        raise AssertionError("%r did not produce DeprecationWarning" % (func,))
-    return ret
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        warnings.warn_explicit = self._old_warn_explicit
+        warnings.warn = self._old_warn
+        
+        if exc_type is None:
+            deprecation_categories = (DeprecationWarning, PendingDeprecationWarning)
+            if not any(issubclass(c, deprecation_categories) for c in self._captured_categories):
+                __tracebackhide__ = True
+                msg = "Did not produce DeprecationWarning or PendingDeprecationWarning"
+                raise AssertionError(msg)
 
 
 def warns(expected_warning, *args, **kwargs):
