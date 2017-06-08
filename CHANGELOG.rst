@@ -8,6 +8,38 @@
 
 .. towncrier release notes start
 
+Pytest 3.1.2 (2017-06-08)
+=========================
+
+Bug Fixes
+---------
+
+- Required options added via ``pytest_addoption`` will no longer prevent using
+  --help without passing them. (#1999)
+
+- Respect ``python_files`` in assertion rewriting. (#2121)
+
+- Fix recursion error detection when frames in the traceback contain objects
+  that can't be compared (like ``numpy`` arrays). (#2459)
+
+- ``UnicodeWarning`` is issued from the internal pytest warnings plugin only
+  when the message contains non-ascii unicode (Python 2 only). (#2463)
+
+- Added a workaround for Python 3.6 WindowsConsoleIO breaking due to Pytests's
+  FDCapture. Other code using console handles might still be affected by the
+  very same issue and might require further workarounds/fixes, i.e. colorama.
+  (#2467)
+
+
+Improved Documentation
+----------------------
+
+- Fix internal API links to ``pluggy`` objects. (#2331)
+
+- Make it clear that ``pytest.xfail`` stops test execution at the calling point
+  and improve overall flow of the ``skipping`` docs. (#810)
+
+
 Pytest 3.1.1 (2017-05-30)
 =========================
 
