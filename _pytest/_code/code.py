@@ -640,8 +640,11 @@ class FormattedExcinfo(object):
             ).format(exc_type=type(e).__name__, exc_msg=safe_str(e), max_frames=max_frames, total=len(traceback))
             traceback = traceback[:max_frames] + traceback[-max_frames:]
         else:
-            extraline = "!!! Recursion detected (same locals & position)"
-            traceback = traceback[:recursionindex + 1]
+            if recursionindex is not None:
+                extraline = "!!! Recursion detected (same locals & position)"
+                traceback = traceback[:recursionindex + 1]
+            else:
+                extraline = None
             
         return traceback, extraline
 
