@@ -1,1 +1,0 @@
-Fix recursion error detection when frames in the traceback contain objects that can't be compared (like ``numpy`` arrays).
