@@ -1,2 +1,0 @@
-Required options added via ``pytest_addoption`` will no longer prevent
-using --help without passing them.

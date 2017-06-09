@@ -322,8 +322,6 @@ Running it with the report-on-xfail option gives this output::
     
     ======= 7 xfailed in 0.12 seconds ========
 
-
-
 .. _`skip/xfail with parametrize`:
 
 Skip/xfail with parametrize
