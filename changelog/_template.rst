@@ -13,7 +13,7 @@
 
 {% if definitions[category]['showcontent'] %}
 {% for text, values in sections[section][category]|dictsort(by='value') %}
-- {{ text }}{% if category != 'vendor' %} ({{ values|sort|join(', ') }}){% endif %}
+- {{ text }}{% if category != 'vendor' %} (`{{ values[0] }} <https://github.com/pytest-dev/pytest/issues/{{ values[0][1:] }}>`_){% endif %}
 
 
 {% endfor %}
