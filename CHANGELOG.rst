@@ -25,9 +25,9 @@ Bug Fixes
 - ``UnicodeWarning`` is issued from the internal pytest warnings plugin only
   when the message contains non-ascii unicode (Python 2 only). (#2463)
 
-- Added a workaround for Python 3.6 WindowsConsoleIO breaking due to Pytests's
-  FDCapture. Other code using console handles might still be affected by the
-  very same issue and might require further workarounds/fixes, i.e. colorama.
+- Added a workaround for Python 3.6 ``WindowsConsoleIO`` breaking due to Pytests's
+  ``FDCapture``. Other code using console handles might still be affected by the
+  very same issue and might require further workarounds/fixes, i.e. ``colorama``.
   (#2467)
 
 
