@@ -22,9 +22,11 @@ from _pytest.skipping import xfail
 from _pytest.main import Item, Collector, File, Session
 from _pytest.fixtures import fillfixtures as _fillfuncargs
 from _pytest.python import (
-    raises, approx,
+    raises,
     Module, Class, Instance, Function, Generator,
 )
+
+from _pytest.python_api import approx
 
 set_trace = __pytestPDB.set_trace
 
