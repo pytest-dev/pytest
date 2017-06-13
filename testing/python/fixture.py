@@ -658,11 +658,15 @@ class TestRequestBasic(object):
             ])
 
     def test_request_subrequest_addfinalizer_exceptions(self, testdir):
+        """
+        Ensure exceptions raised during teardown by a finalizer are suppressed
+        until all finalizers are called, re-raising the first exception (#2440)
+        """
         testdir.makepyfile("""
             import pytest
             l = []
-            def _excepts():
-                raise Exception('Error')
+            def _excepts(where):
+                raise Exception('Error in %s fixture' % where)
             @pytest.fixture
             def subrequest(request):
                 return request
@@ -670,18 +674,21 @@ class TestRequestBasic(object):
             def something(subrequest):
                 subrequest.addfinalizer(lambda: l.append(1))
                 subrequest.addfinalizer(lambda: l.append(2))
-                subrequest.addfinalizer(_excepts)
+                subrequest.addfinalizer(lambda: _excepts('something'))
             @pytest.fixture
             def excepts(subrequest):
-                subrequest.addfinalizer(_excepts)
+                subrequest.addfinalizer(lambda: _excepts('excepts'))
                 subrequest.addfinalizer(lambda: l.append(3))
             def test_first(something, excepts):
                 pass
             def test_second():
                 assert l == [3, 2, 1]
         """)
-        reprec = testdir.inline_run()
-        reprec.assertoutcome(passed=2, failed=1)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            '*Exception: Error in excepts fixture',
+            '* 2 passed, 1 error in *',
+        ])
 
     def test_request_getmodulepath(self, testdir):
         modcol = testdir.getmodulecol("def test_somefunc(): pass")

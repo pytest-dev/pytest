@@ -742,7 +742,10 @@ class FixtureDef:
                 except:
                     exceptions.append(sys.exc_info())
             if exceptions:
-                py.builtin._reraise(*exceptions[0])
+                e = exceptions[0]
+                del exceptions  # ensure we don't keep all frames alive because of the traceback
+                py.builtin._reraise(*e)
+
         finally:
             ihook = self._fixturemanager.session.ihook
             ihook.pytest_fixture_post_finalizer(fixturedef=self)
