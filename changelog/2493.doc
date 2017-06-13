@@ -1,0 +1,1 @@
+Explicitly state for which hooks the calls stop after the first non-None result.
