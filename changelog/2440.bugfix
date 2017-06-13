@@ -1,0 +1,1 @@
+Exceptions in a SubRequest's finish() block are suppressed until all finalizers are called, with the initial exception reraised.

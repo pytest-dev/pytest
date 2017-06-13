@@ -657,6 +657,32 @@ class TestRequestBasic(object):
             "*1 error*"  # XXX the whole module collection fails
             ])
 
+    def test_request_subrequest_addfinalizer_exceptions(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+            l = []
+            def _excepts():
+                raise Exception('Error')
+            @pytest.fixture
+            def subrequest(request):
+                return request
+            @pytest.fixture
+            def something(subrequest):
+                subrequest.addfinalizer(lambda: l.append(1))
+                subrequest.addfinalizer(lambda: l.append(2))
+                subrequest.addfinalizer(_excepts)
+            @pytest.fixture
+            def excepts(subrequest):
+                subrequest.addfinalizer(_excepts)
+                subrequest.addfinalizer(lambda: l.append(3))
+            def test_first(something, excepts):
+                pass
+            def test_second():
+                assert l == [3, 2, 1]
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2, failed=1)
+
     def test_request_getmodulepath(self, testdir):
         modcol = testdir.getmodulecol("def test_somefunc(): pass")
         item, = testdir.genitems([modcol])
