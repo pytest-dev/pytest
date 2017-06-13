@@ -527,6 +527,25 @@ class TestDoctests(object):
             '*1 failed*',
         ])
 
+    def test_unicode_doctest_module(self, testdir):
+        """
+        Test case for issue 2434: DecodeError on Python 2 when doctest docstring
+        contains non-ascii characters.
+        """
+        p = testdir.makepyfile(test_unicode_doctest_module="""
+            # -*- encoding: utf-8 -*-
+            from __future__ import unicode_literals
+            
+            def fix_bad_unicode(text):
+                '''
+                    >>> print(fix_bad_unicode('Ãºnico'))
+                    único
+                '''
+                return "único"
+        """)
+        result = testdir.runpytest(p, '--doctest-modules')
+        result.stdout.fnmatch_lines(['* 1 passed *'])
+
 
 class TestLiterals(object):
 
