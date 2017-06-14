@@ -177,7 +177,6 @@ class DoctestTextfile(pytest.Module):
         name = self.fspath.basename
         globs = {'__name__': '__main__'}
 
-
         optionflags = get_optionflags(self)
         runner = doctest.DebugRunner(verbose=0, optionflags=optionflags,
                                      checker=_get_checker())
@@ -218,9 +217,6 @@ class DoctestModule(pytest.Module):
         runner = doctest.DebugRunner(verbose=0, optionflags=optionflags,
                                      checker=_get_checker())
 
-        encoding = self.config.getini("doctest_encoding")
-        _fix_spoof_python2(runner, encoding)
-        
         for test in finder.find(module, module.__name__):
             if test.examples:  # skip empty doctests
                 yield DoctestItem(test.name, self, runner, test)
@@ -332,7 +328,10 @@ def _get_report_choice(key):
 
 def _fix_spoof_python2(runner, encoding):
     """
-    Installs a "SpoofOut" into the given DebugRunner so it properly deals with unicode output.
+    Installs a "SpoofOut" into the given DebugRunner so it properly deals with unicode output. This
+    should patch only doctests for text files because they don't have a way to declare their
+    encoding. Doctests in docstrings from Python modules don't have the same problem given that
+    Python already decoded the strings.
     
     This fixes the problem related in issue #2434.
     """
