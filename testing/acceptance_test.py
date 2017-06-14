@@ -317,8 +317,8 @@ class TestGeneralUsage(object):
         ])
         assert 'sessionstarttime' not in result.stderr.str()
 
-    @pytest.mark.parametrize('lookfor', ['test_fun.py', 'test_fun.py::test_a'])
-    def test_issue134_report_syntaxerror_when_collecting_member(self, testdir, lookfor):
+    @pytest.mark.parametrize('lookfor', ['test_fun.py::test_a'])
+    def test_issue134_report_error_when_collecting_member(self, testdir, lookfor):
         testdir.makepyfile(test_fun="""
             def test_a():
                 pass

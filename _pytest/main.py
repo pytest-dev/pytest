@@ -763,7 +763,11 @@ class Session(FSCollector):
                 if not has_matched and len(rep.result) == 1 and x.name == "()":
                     nextnames.insert(0, name)
                     resultnodes.extend(self.matchnodes([x], nextnames))
-            node.ihook.pytest_collectreport(report=rep)
+            else:
+                # report collection failures here to avoid failing to run some test
+                # specified in the command line because the module could not be
+                # imported (#134)
+                node.ihook.pytest_collectreport(report=rep)
         return resultnodes
 
     def genitems(self, node):
