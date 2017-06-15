@@ -3,7 +3,7 @@ import sys
 
 import py
 
-from _pytest.compat import isclass
+from _pytest.compat import isclass, izip
 from _pytest.runner import fail
 import _pytest._code
 
@@ -11,19 +11,18 @@ import _pytest._code
 
 class ApproxBase(object):
     """
-    Provide shared utilities for making approximate comparisons between numbers 
+    Provide shared utilities for making approximate comparisons between numbers
     or sequences of numbers.
     """
 
-    def __init__(self, expected, rel=None, abs=None):
+    def __init__(self, expected, rel=None, abs=None, nan_ok=False):
         self.expected = expected
         self.abs = abs
         self.rel = rel
+        self.nan_ok = nan_ok
 
     def __repr__(self):
-        return ', '.join(
-                repr(self._approx_scalar(x))
-                for x in self._yield_expected())
+        raise NotImplementedError
 
     def __eq__(self, actual):
         return all(
@@ -36,109 +35,109 @@ class ApproxBase(object):
         return not (actual == self)
 
     def _approx_scalar(self, x):
-        return ApproxScalar(x, rel=self.rel, abs=self.abs)
-
-    def _yield_expected(self, actual):
-        """
-        Yield all the expected values associated with this object.  This is 
-        used to implement the `__repr__` method.
-        """
-        raise NotImplementedError
+        return ApproxScalar(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
 
     def _yield_comparisons(self, actual):
         """
-        Yield all the pairs of numbers to be compared.  This is used to 
+        Yield all the pairs of numbers to be compared.  This is used to
         implement the `__eq__` method.
         """
         raise NotImplementedError
 
 
+class ApproxNumpyBase(ApproxBase):
+    """
+    Perform approximate comparisons for numpy arrays.
 
-try:
-    import numpy as np
+    This class should not be used directly.  Instead, it should be used to make
+    a subclass that also inherits from `np.ndarray`, e.g.::
 
-    class ApproxNumpy(ApproxBase, np.ndarray):
+        import numpy as np
+        ApproxNumpy = type('ApproxNumpy', (ApproxNumpyBase, np.ndarray), {})
+
+    This bizarre invocation is necessary because the object doing the
+    approximate comparison must inherit from `np.ndarray`, or it will only work
+    on the left side of the `==` operator.  But importing numpy is relatively
+    expensive, so we also want to avoid that unless we actually have a numpy
+    array to compare.
+
+    The reason why the approx object needs to inherit from `np.ndarray` has to
+    do with how python decides whether to call `a.__eq__()` or `b.__eq__()`
+    when it parses `a == b`.  If `a` and `b` are not related by inheritance,
+    `a` gets priority.  So as long as `a.__eq__` is defined, it will be called.
+    Because most implementations of `a.__eq__` end up calling `b.__eq__`, this
+    detail usually doesn't matter.  However, `np.ndarray.__eq__` treats the
+    approx object as a scalar and builds a new array by comparing it to each
+    item in the original array.  `b.__eq__` is called to compare against each
+    individual element in the array, but it has no way (that I can see) to
+    prevent the return value from being an boolean array, and boolean arrays
+    can't be used with assert because "the truth value of an array with more
+    than one element is ambiguous."
+
+    The trick is that the priority rules change if `a` and `b` are related
+    by inheritance.  Specifically, `b.__eq__` gets priority if `b` is a
+    subclass of `a`.  So by inheriting from `np.ndarray`, we can guarantee that
+    `ApproxNumpy.__eq__` gets called no matter which side of the `==` operator
+    it appears on.
+    """
+
+    def __new__(cls, expected, rel=None, abs=None, nan_ok=False):
         """
-        Perform approximate comparisons for numpy arrays.
+        Numpy uses __new__ (rather than __init__) to initialize objects.
 
-        This class must inherit from numpy.ndarray in order to allow the approx 
-        to be on either side of the `==` operator.  The reason for this has to 
-        do with how python decides whether to call `a.__eq__()` or `b.__eq__()` 
-        when it encounters `a == b`.  
-        
-        If `a` and `b` are not related by inheritance, `a` gets priority.  So 
-        as long as `a.__eq__` is defined, it will be called.  Because most 
-        implementations of `a.__eq__` end up calling `b.__eq__`, this detail 
-        usually doesn't matter.  However, `numpy.ndarray.__eq__` raises an 
-        error complaining that "the truth value of an array with more than 
-        one element is ambiguous. Use a.any() or a.all()" when compared with a 
-        custom class, so `b.__eq__` never gets called.
-
-        The trick is that the priority rules change if `a` and `b` are related 
-        by inheritance.  Specifically, `b.__eq__` gets priority if `b` is a 
-        subclass of `a`.  So we can guarantee that `ApproxNumpy.__eq__` gets 
-        called by inheriting from `numpy.ndarray`.
+        The `expected` argument must be a numpy array.  This should be
+        ensured by the approx() delegator function.
         """
+        obj = super(ApproxNumpyBase, cls).__new__(cls, ())
+        obj.__init__(expected, rel, abs, nan_ok)
+        return obj
 
-        def __new__(cls, expected, rel=None, abs=None):
-            """
-            Numpy uses __new__ (rather than __init__) to initialize objects. 
-            
-            The `expected` argument must be a numpy array.  This should be 
-            ensured by the approx() delegator function.
-            """
-            assert isinstance(expected, np.ndarray)
-            obj = super(ApproxNumpy, cls).__new__(cls, expected.shape)
-            obj.__init__(expected, rel, abs)
-            return obj
+    def __repr__(self):
+        # It might be nice to rewrite this function to account for the
+        # shape of the array...
+        return repr(list(
+            self._approx_scalar(x) for x in self.expected))
 
-        def __repr__(self):
-            # It might be nice to rewrite this function to account for the 
-            # shape of the array...
-            return '[' + ApproxBase.__repr__(self) + ']'
+    def __eq__(self, actual):
+        import numpy as np
 
-        def __eq__(self, actual):
-            try:
-                actual = np.array(actual)
-            except:
-                raise ValueError("cannot cast '{0}' to numpy.ndarray".format(actual))
+        try:
+            actual = np.asarray(actual)
+        except:
+            raise ValueError("cannot cast '{0}' to numpy.ndarray".format(actual))
 
-            if actual.shape != self.expected.shape:
-                return False
+        if actual.shape != self.expected.shape:
+            return False
 
-            return ApproxBase.__eq__(self, actual)
+        return ApproxBase.__eq__(self, actual)
 
-        def _yield_expected(self):
-            for x in self.expected:
-                yield x
+    def _yield_comparisons(self, actual):
+        import numpy as np
 
-        def _yield_comparisons(self, actual):
-            # We can be sure that `actual` is a numpy array, because it's 
-            # casted in `__eq__` before being passed to `ApproxBase.__eq__`, 
-            # which is the only method that calls this one.
-            for i in np.ndindex(self.expected.shape):
-                yield actual[i], self.expected[i]
+        # We can be sure that `actual` is a numpy array, because it's
+        # casted in `__eq__` before being passed to `ApproxBase.__eq__`,
+        # which is the only method that calls this one.
+        for i in np.ndindex(self.expected.shape):
+            yield actual[i], self.expected[i]
 
-
-except ImportError:
-    np = None
 
 class ApproxMapping(ApproxBase):
     """
-    Perform approximate comparisons for mappings where the values are numbers 
+    Perform approximate comparisons for mappings where the values are numbers
     (the keys can be anything).
     """
 
     def __repr__(self):
-        item = lambda k, v: "'{0}': {1}".format(k, self._approx_scalar(v))
-        return '{' + ', '.join(item(k,v) for k,v in self.expected.items()) + '}'
+        return repr({
+            k: self._approx_scalar(v)
+            for k,v in self.expected.items()})
 
     def __eq__(self, actual):
         if actual.keys() != self.expected.keys():
             return False
 
         return ApproxBase.__eq__(self, actual)
-        
+
     def _yield_comparisons(self, actual):
         for k in self.expected.keys():
             yield actual[k], self.expected[k]
@@ -150,19 +149,19 @@ class ApproxSequence(ApproxBase):
     """
 
     def __repr__(self):
-        open, close = '()' if isinstance(self.expected, tuple) else '[]'
-        return open + ApproxBase.__repr__(self) + close
+        seq_type = type(self.expected)
+        if seq_type not in (tuple, list, set):
+            seq_type = list
+        return repr(seq_type(
+            self._approx_scalar(x) for x in self.expected))
 
     def __eq__(self, actual):
         if len(actual) != len(self.expected):
             return False
         return ApproxBase.__eq__(self, actual)
-        
-    def _yield_expected(self):
-        return iter(self.expected)
 
     def _yield_comparisons(self, actual):
-        return zip(actual, self.expected)
+        return izip(actual, self.expected)
 
 
 class ApproxScalar(ApproxBase):
@@ -172,9 +171,9 @@ class ApproxScalar(ApproxBase):
 
     def __repr__(self):
         """
-        Return a string communicating both the expected value and the tolerance 
-        for the comparison being made, e.g. '1.0 +- 1e-6'.  Use the unicode 
-        plus/minus symbol if this is python3 (it's too hard to get right for 
+        Return a string communicating both the expected value and the tolerance
+        for the comparison being made, e.g. '1.0 +- 1e-6'.  Use the unicode
+        plus/minus symbol if this is python3 (it's too hard to get right for
         python2).
         """
         if isinstance(self.expected, complex):
@@ -199,21 +198,19 @@ class ApproxScalar(ApproxBase):
 
     def __eq__(self, actual):
         """
-        Return true if the given value is equal to the expected value within 
+        Return true if the given value is equal to the expected value within
         the pre-specified tolerance.
         """
-        from numbers import Number
-
-        # Give a good error message we get values to compare that aren't 
-        # numbers, rather than choking on them later on.
-        if not isinstance(actual, Number):
-            raise ValueError("approx can only compare numbers, not '{0}'".format(actual))
-        if not isinstance(self.expected, Number):
-            raise ValueError("approx can only compare numbers, not '{0}'".format(self.expected))
 
         # Short-circuit exact equality.
         if actual == self.expected:
             return True
+
+        # Allow the user to control whether NaNs are considered equal to each
+        # other or not.  The abs() calls are for compatibility with complex
+        # numbers.
+        if math.isnan(abs(self.expected)):
+            return self.nan_ok and math.isnan(abs(actual))
 
         # Infinity shouldn't be approximately equal to anything but itself, but
         # if there's a relative tolerance, it will be infinite and infinity
@@ -232,8 +229,8 @@ class ApproxScalar(ApproxBase):
     @property
     def tolerance(self):
         """
-        Return the tolerance for the comparison.  This could be either an 
-        absolute tolerance or a relative tolerance, depending on what the user 
+        Return the tolerance for the comparison.  This could be either an
+        absolute tolerance or a relative tolerance, depending on what the user
         specified or which would be larger.
         """
         set_default = lambda x, default: x if x is not None else default
@@ -270,7 +267,7 @@ class ApproxScalar(ApproxBase):
 
 
 
-def approx(expected, rel=None, abs=None):
+def approx(expected, rel=None, abs=None, nan_ok=False):
     """
     Assert that two numbers (or two sets of numbers) are equal to each other
     within some tolerance.
@@ -306,11 +303,19 @@ def approx(expected, rel=None, abs=None):
         >>> 0.1 + 0.2 == approx(0.3)
         True
 
-    The same syntax also works on sequences of numbers::
+    The same syntax also works for sequences of numbers::
 
         >>> (0.1 + 0.2, 0.2 + 0.4) == approx((0.3, 0.6))
         True
+
+    Dictionary *values*::
+
         >>> {'a': 0.1 + 0.2, 'b': 0.2 + 0.4} == approx({'a': 0.3, 'b': 0.6})
+        True
+
+    And ``numpy`` arrays::
+
+        >>> np.array([0.1, 0.2]) + np.array([0.2, 0.4]) == approx(np.array([0.3, 0.6]))
         True
 
     By default, ``approx`` considers numbers within a relative tolerance of
@@ -319,10 +324,14 @@ def approx(expected, rel=None, abs=None):
     ``0.0``, because nothing but ``0.0`` itself is relatively close to ``0.0``.
     To handle this case less surprisingly, ``approx`` also considers numbers
     within an absolute tolerance of ``1e-12`` of its expected value to be
-    equal.  Infinite numbers are another special case.  They are only
-    considered equal to themselves, regardless of the relative tolerance.  Both
-    the relative and absolute tolerances can be changed by passing arguments to
-    the ``approx`` constructor::
+    equal.  Infinity and NaN are special cases.  Infinity is only considered
+    equal to itself, regardless of the relative tolerance.  NaN is not
+    considered equal to anything by default, but you can make it be equal to
+    itself by setting the ``nan_ok`` argument to True.  (This is meant to
+    facilitate comparing arrays that use NaN to mean "no data".)
+
+    Both the relative and absolute tolerances can be changed by passing
+    arguments to the ``approx`` constructor::
 
         >>> 1.0001 == approx(1)
         False
@@ -385,29 +394,29 @@ def approx(expected, rel=None, abs=None):
       special case that you explicitly specify an absolute tolerance but not a
       relative tolerance, only the absolute tolerance is considered.
     """
-    
-    from collections import Mapping, Sequence
-    try:
-        String = basestring  # python2
-    except NameError:
-        String = str, bytes  # python3
 
-    # Delegate the comparison to a class that knows how to deal with the type 
-    # of the expected value (e.g. int, float, list, dict, numpy.array, etc).  
+    from collections import Mapping, Sequence
+    from _pytest.compat import STRING_TYPES as String
+
+    # Delegate the comparison to a class that knows how to deal with the type
+    # of the expected value (e.g. int, float, list, dict, numpy.array, etc).
     #
-    # This architecture is really driven by the need to support numpy arrays.  
-    # The only way to override `==` for arrays without requiring that approx be 
-    # the left operand is to inherit the approx object from `numpy.ndarray`.  
-    # But that can't be a general solution, because it requires (1) numpy to be 
-    # installed and (2) the expected value to be a numpy array.  So the general 
+    # This architecture is really driven by the need to support numpy arrays.
+    # The only way to override `==` for arrays without requiring that approx be
+    # the left operand is to inherit the approx object from `numpy.ndarray`.
+    # But that can't be a general solution, because it requires (1) numpy to be
+    # installed and (2) the expected value to be a numpy array.  So the general
     # solution is to delegate each type of expected value to a different class.
     #
-    # This has the advantage that it made it easy to support mapping types 
-    # (i.e. dict).  The old code accepted mapping types, but would only compare 
+    # This has the advantage that it made it easy to support mapping types
+    # (i.e. dict).  The old code accepted mapping types, but would only compare
     # their keys, which is probably not what most people would expect.
 
-    if np and isinstance(expected, np.ndarray):
-        cls = ApproxNumpy
+    if _is_numpy_array(expected):
+        # Create the delegate class on the fly.  This allow us to inherit from
+        # ``np.ndarray`` while still not importing numpy unless we need to.
+        import numpy as np
+        cls = type('ApproxNumpy', (ApproxNumpyBase, np.ndarray), {})
     elif isinstance(expected, Mapping):
         cls = ApproxMapping
     elif isinstance(expected, Sequence) and not isinstance(expected, String):
@@ -415,7 +424,25 @@ def approx(expected, rel=None, abs=None):
     else:
         cls = ApproxScalar
 
-    return cls(expected, rel, abs)
+    return cls(expected, rel, abs, nan_ok)
+
+
+def _is_numpy_array(obj):
+    """
+    Return true if the given object is a numpy array.  Make a special effort to
+    avoid importing numpy unless it's really necessary.
+    """
+    import inspect
+
+    for cls in inspect.getmro(type(obj)):
+        if cls.__module__ == 'numpy':
+            try:
+                import numpy as np
+                return isinstance(obj, np.ndarray)
+            except ImportError:
+                pass
+
+    return False
 
 
 # builtin pytest.raises helper
@@ -554,6 +581,7 @@ def raises(expected_exception, *args, **kwargs):
         except expected_exception:
             return _pytest._code.ExceptionInfo()
     fail(message)
+
 
 raises.Exception = fail.Exception
 

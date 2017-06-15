@@ -218,21 +218,18 @@ class TestApprox(object):
 
     def test_expecting_nan(self):
         examples = [
-                (nan, nan),
-                (-nan, -nan),
-                (nan, -nan),
-                (0.0, nan),
-                (inf, nan),
+                (eq, nan, nan),
+                (eq, -nan, -nan),
+                (eq, nan, -nan),
+                (ne, 0.0, nan),
+                (ne, inf, nan),
         ]
-        for a, x in examples:
-            # If there is a relative tolerance and the expected value is NaN,
-            # the actual tolerance is a NaN, which should be an error.
-            with pytest.raises(ValueError):
-                a != approx(x, rel=inf)
+        for op, a, x in examples:
+            # Nothing is equal to NaN by default.
+            assert a != approx(x)
 
-            # You can make comparisons against NaN by not specifying a relative
-            # tolerance, so only an absolute tolerance is calculated.
-            assert a != approx(x, abs=inf)
+            # If ``nan_ok=True``, then NaN is equal to NaN.
+            assert op(a, approx(x, nan_ok=True))
 
     def test_int(self):
         within_1e6 = [
@@ -310,8 +307,9 @@ class TestApprox(object):
 
     def test_dict(self):
         actual = {'a': 1 + 1e-7, 'b': 2 + 1e-8}
-        expected = {'b': 2, 'a': 1} # Dictionaries became ordered in python3.6,
-                                    # so make sure the order doesn't matter
+        # Dictionaries became ordered in python3.6, so switch up the order here
+        # to make sure it doesn't matter.
+        expected = {'b': 2, 'a': 1}
 
         # Return false if any element is outside the tolerance.
         assert actual == approx(expected, rel=5e-7, abs=0)
@@ -325,10 +323,7 @@ class TestApprox(object):
         assert {'a': 1, 'b': 2} != approx({'a': 1, 'b': 2, 'c': 3})
 
     def test_numpy_array(self):
-        try:
-            import numpy as np
-        except ImportError:
-            pytest.skip("numpy not installed")
+        np = pytest.importorskip('numpy')
 
         actual = np.array([1 + 1e-7, 2 + 1e-8])
         expected = np.array([1, 2])
@@ -339,30 +334,27 @@ class TestApprox(object):
         assert approx(expected, rel=5e-7, abs=0) == expected
         assert approx(expected, rel=5e-8, abs=0) != actual
 
-    def test_numpy_array_wrong_shape(self):
-        try:
-            import numpy as np
-        except ImportError:
-            pytest.skip("numpy not installed")
+        # Should be able to compare lists with numpy arrays.
+        assert list(actual) == approx(expected, rel=5e-7, abs=0)
+        assert list(actual) != approx(expected, rel=5e-8, abs=0)
+        assert actual == approx(list(expected), rel=5e-7, abs=0)
+        assert actual != approx(list(expected), rel=5e-8, abs=0)
 
-        import numpy as np
+    def test_numpy_array_wrong_shape(self):
+        np = pytest.importorskip('numpy')
+
         a12 = np.array([[1, 2]])
         a21 = np.array([[1],[2]])
 
         assert a12 != approx(a21)
         assert a21 != approx(a12)
 
-    def test_non_number(self):
-        with pytest.raises(ValueError):
-            1 == approx("1")
-        with pytest.raises(ValueError):
-            "1" == approx(1)
-
     def test_doctests(self):
+        np = pytest.importorskip('numpy')
         parser = doctest.DocTestParser()
         test = parser.get_doctest(
                 approx.__doc__,
-                {'approx': approx},
+                {'approx': approx ,'np': np},
                 approx.__name__,
                 None, None,
         )
