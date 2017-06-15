@@ -315,7 +315,8 @@ def approx(expected, rel=None, abs=None, nan_ok=False):
 
     And ``numpy`` arrays::
 
-        >>> np.array([0.1, 0.2]) + np.array([0.2, 0.4]) == approx(np.array([0.3, 0.6]))
+        >>> import numpy as np                                                          # doctest: +SKIP
+        >>> np.array([0.1, 0.2]) + np.array([0.2, 0.4]) == approx(np.array([0.3, 0.6])) # doctest: +SKIP
         True
 
     By default, ``approx`` considers numbers within a relative tolerance of

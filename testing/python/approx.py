@@ -350,11 +350,10 @@ class TestApprox(object):
         assert a21 != approx(a12)
 
     def test_doctests(self):
-        np = pytest.importorskip('numpy')
         parser = doctest.DocTestParser()
         test = parser.get_doctest(
                 approx.__doc__,
-                {'approx': approx ,'np': np},
+                {'approx': approx},
                 approx.__name__,
                 None, None,
         )
