@@ -133,7 +133,7 @@ class ApproxMapping(ApproxBase):
             for k,v in self.expected.items()))
 
     def __eq__(self, actual):
-        if actual.keys() != self.expected.keys():
+        if set(actual.keys()) != set(self.expected.keys()):
             return False
 
         return ApproxBase.__eq__(self, actual)
