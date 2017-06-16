@@ -128,9 +128,9 @@ class ApproxMapping(ApproxBase):
     """
 
     def __repr__(self):
-        return repr({
-            k: self._approx_scalar(v)
-            for k,v in self.expected.items()})
+        return repr(dict(
+            (k, self._approx_scalar(v))
+            for k,v in self.expected.items()))
 
     def __eq__(self, actual):
         if actual.keys() != self.expected.keys():
