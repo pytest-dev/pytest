@@ -1,1 +1,1 @@
-Return the oldval in monkeypatch for easier wrapping.
+Return the previous value in monkeypatch.setattr for easier wrapping.
