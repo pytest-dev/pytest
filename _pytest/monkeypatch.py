@@ -141,6 +141,7 @@ class MonkeyPatch:
             oldval = target.__dict__.get(name, notset)
         self._setattr.append((target, name, oldval))
         setattr(target, name, value)
+        return oldval
 
     def delattr(self, target, name=notset, raising=True):
         """ Delete attribute ``name`` from ``target``, by default raise
