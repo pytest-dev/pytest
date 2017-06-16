@@ -16,13 +16,16 @@ env:
     - TOXENV=py33
     - TOXENV=py34
     - TOXENV=py35
+    - TOXENV=py36
     - TOXENV=pypy
     - TOXENV=py27-pexpect
     - TOXENV=py27-xdist
     - TOXENV=py27-trial
+    - TOXENV=py27-numpy
     - TOXENV=py35-pexpect
     - TOXENV=py35-xdist
     - TOXENV=py35-trial
+    - TOXENV=py35-numpy
     - TOXENV=py27-nobyte
     - TOXENV=doctesting
     - TOXENV=freeze
