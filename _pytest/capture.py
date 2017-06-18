@@ -106,8 +106,6 @@ class CaptureManager:
 
     def deactivate_funcargs(self):
         capfuncarg = self.__dict__.pop("_capfuncarg", None)
-        if capfuncarg is not None:
-            capfuncarg.close()
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_make_collect_report(self, collector):
@@ -382,8 +380,6 @@ class FDCapture:
         targetfd_save = self.__dict__.pop("targetfd_save")
         os.dup2(targetfd_save, self.targetfd)
         os.close(targetfd_save)
-        self.syscapture.done()
-        self.tmpfile.close()
 
     def suspend(self):
         self.syscapture.suspend()
@@ -425,7 +421,6 @@ class SysCapture:
     def done(self):
         setattr(sys, self.name, self._old)
         del self._old
-        self.tmpfile.close()
 
     def suspend(self):
         setattr(sys, self.name, self._old)
