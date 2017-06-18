@@ -362,7 +362,10 @@ class FDCapture:
 
     def snap(self):
         f = self.tmpfile
-        f.seek(0)
+        try:
+            f.seek(0)
+        except OSError:
+            return ''
         res = f.read()
         if res:
             enc = getattr(f, "encoding", None)
