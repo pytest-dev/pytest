@@ -23,7 +23,7 @@ from _pytest.compat import (
     safe_str, getlocation, enum,
 )
 from _pytest.runner import fail
-
+from _pytest.mark import transfer_markers
 cutdir1 = py.path.local(pluggy.__file__.rstrip("oc"))
 cutdir2 = py.path.local(_pytest.__file__).dirpath()
 cutdir3 = py.path.local(py.__file__).dirpath()
@@ -359,35 +359,6 @@ class PyCollector(PyobjMixin, main.Collector):
                                keywords={callspec.id:True},
                                originalname=name,
                                )
-
-
-def _marked(func, mark):
-    """ Returns True if :func: is already marked with :mark:, False otherwise.
-    This can happen if marker is applied to class and the test file is
-    invoked more than once.
-    """
-    try:
-        func_mark = getattr(func, mark.name)
-    except AttributeError:
-        return False
-    return mark.args == func_mark.args and mark.kwargs == func_mark.kwargs
-
-
-def transfer_markers(funcobj, cls, mod):
-    # XXX this should rather be code in the mark plugin or the mark
-    # plugin should merge with the python plugin.
-    for holder in (cls, mod):
-        try:
-            pytestmark = holder.pytestmark
-        except AttributeError:
-            continue
-        if isinstance(pytestmark, list):
-            for mark in pytestmark:
-                if not _marked(funcobj, mark):
-                    mark(funcobj)
-        else:
-            if not _marked(funcobj, pytestmark):
-                pytestmark(funcobj)
 
 
 class Module(main.File, PyCollector):
