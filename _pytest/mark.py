@@ -2,14 +2,20 @@
 from __future__ import absolute_import, division, print_function
 
 import inspect
+import warnings
 from collections import namedtuple
 from operator import attrgetter
 from .compat import imap
+from .deprecated import MARK_INFO_ATTRIBUTE
 
+def alias(name, warning=None):
+    getter = attrgetter(name)
 
-def alias(name):
-    # todo: introduce deprecationwarnings
-    return property(attrgetter(name), doc='alias for ' + name)
+    def warned(self):
+        warnings.warn(warning, stacklevel=2)
+        return getter(self)
+
+    return property(getter if warning is None else warned, doc='alias for ' + name)
 
 
 class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
@@ -382,9 +388,9 @@ class MarkInfo(object):
         self.combined = mark
         self._marks = [mark]
 
-    name = alias('combined.name')
-    args = alias('combined.args')
-    kwargs = alias('combined.kwargs')
+    name = alias('combined.name', warning=MARK_INFO_ATTRIBUTE)
+    args = alias('combined.args', warning=MARK_INFO_ATTRIBUTE)
+    kwargs = alias('combined.kwargs', warning=MARK_INFO_ATTRIBUTE)
 
     def __repr__(self):
         return "<MarkInfo {0!r}>".format(self.combined)
