@@ -45,6 +45,7 @@ def deprecated_call(func=None, *args, **kwargs):
     if not func:
         return _DeprecatedCallContext()
     else:
+        __tracebackhide__ = True
         with _DeprecatedCallContext():
             return func(*args, **kwargs)
 
@@ -71,7 +72,7 @@ class _DeprecatedCallContext(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         warnings.warn_explicit = self._old_warn_explicit
         warnings.warn = self._old_warn
-        
+
         if exc_type is None:
             deprecation_categories = (DeprecationWarning, PendingDeprecationWarning)
             if not any(issubclass(c, deprecation_categories) for c in self._captured_categories):
