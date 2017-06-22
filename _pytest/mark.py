@@ -8,6 +8,7 @@ from .compat import imap
 
 
 def alias(name):
+    # todo: introduce deprecationwarnings
     return property(attrgetter(name), doc='alias for ' + name)
 
 
@@ -329,30 +330,39 @@ class MarkDecorator:
             is_class = inspect.isclass(func)
             if len(args) == 1 and (istestfunc(func) or is_class):
                 if is_class:
-                    if hasattr(func, 'pytestmark'):
-                        mark_list = func.pytestmark
-                        if not isinstance(mark_list, list):
-                            mark_list = [mark_list]
-                        # always work on a copy to avoid updating pytestmark
-                        # from a superclass by accident
-                        mark_list = mark_list + [self]
-                        func.pytestmark = mark_list
-                    else:
-                        func.pytestmark = [self]
+                    apply_mark(func, self.mark)
                 else:
-                    holder = getattr(func, self.name, None)
-                    if holder is None:
-                        holder = MarkInfo(self.mark)
-                        setattr(func, self.name, holder)
-                    else:
-                        holder.add_mark(self.mark)
+                    apply_legacy_mark(func, self.mark)
                 return func
 
         mark = Mark(self.name, args, kwargs)
         return self.__class__(self.mark.combined_with(mark))
 
 
+def apply_mark(obj, mark):
+    assert isinstance(mark, Mark), mark
+    """applies a marker to an object,
+    makrer transfers only update legacy markinfo objects
+    """
+    mark_list = getattr(obj, 'pytestmark', [])
 
+    if not isinstance(mark_list, list):
+        mark_list = [mark_list]
+    # always work on a copy to avoid updating pytestmark
+    # from a superclass by accident
+    mark_list = mark_list + [mark]
+    obj.pytestmark = mark_list
+
+
+def apply_legacy_mark(func, mark):
+    if not isinstance(mark, Mark):
+        raise TypeError("got {mark!r} instead of a Mark".format(mark=mark))
+    holder = getattr(func, mark.name, None)
+    if holder is None:
+        holder = MarkInfo(mark)
+        setattr(func, mark.name, holder)
+    else:
+        holder.add_mark(mark)
 
 
 class Mark(namedtuple('Mark', 'name, args, kwargs')):
@@ -404,17 +414,17 @@ def _marked(func, mark):
 
 
 def transfer_markers(funcobj, cls, mod):
-    # XXX this should rather be code in the mark plugin or the mark
-    # plugin should merge with the python plugin.
-    for holder in (cls, mod):
-        try:
-            pytestmark = holder.pytestmark
-        except AttributeError:
-            continue
-        if isinstance(pytestmark, list):
-            for mark in pytestmark:
-                if not _marked(funcobj, mark):
-                    mark(funcobj)
-        else:
-            if not _marked(funcobj, pytestmark):
-                pytestmark(funcobj)
+    """
+    transfer legacy markers to the function level marminfo objects
+    this one is a major fsckup for mark breakages
+    """
+    for obj in (cls, mod):
+        mark_list = getattr(obj, 'pytestmark', [])
+
+        if not isinstance(mark_list, list):
+            mark_list = [mark_list]
+
+        for mark in mark_list:
+            mark = getattr(mark, 'mark', mark)  # unpack MarkDecorator
+            if not _marked(funcobj, mark):
+                apply_legacy_mark(funcobj, mark)
