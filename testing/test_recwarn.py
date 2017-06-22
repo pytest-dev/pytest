@@ -77,7 +77,7 @@ class TestDeprecatedCall(object):
     def test_deprecated_call_raises(self):
         with pytest.raises(AssertionError) as excinfo:
             pytest.deprecated_call(self.dep, 3, 5)
-        assert str(excinfo).find("did not produce") != -1
+        assert 'Did not produce' in str(excinfo)
 
     def test_deprecated_call(self):
         pytest.deprecated_call(self.dep, 0, 5)
@@ -106,31 +106,69 @@ class TestDeprecatedCall(object):
         pytest.deprecated_call(self.dep_explicit, 0)
         pytest.deprecated_call(self.dep_explicit, 0)
 
-    def test_deprecated_call_as_context_manager_no_warning(self):
-        with pytest.raises(pytest.fail.Exception, matches='^DID NOT WARN'):
-            with pytest.deprecated_call():
-                self.dep(1)
+    @pytest.mark.parametrize('mode', ['context_manager', 'call'])
+    def test_deprecated_call_no_warning(self, mode):
+        """Ensure deprecated_call() raises the expected failure when its block/function does
+        not raise a deprecation warning.
+        """
+        def f():
+            pass
+
+        msg = 'Did not produce DeprecationWarning or PendingDeprecationWarning'
+        with pytest.raises(AssertionError, matches=msg):
+            if mode == 'call':
+                pytest.deprecated_call(f)
+            else:
+                with pytest.deprecated_call():
+                    f()
 
     @pytest.mark.parametrize('warning_type', [PendingDeprecationWarning, DeprecationWarning])
     @pytest.mark.parametrize('mode', ['context_manager', 'call'])
-    def test_deprecated_call_modes(self, warning_type, mode):
+    @pytest.mark.parametrize('call_f_first', [True, False])
+    def test_deprecated_call_modes(self, warning_type, mode, call_f_first):
+        """Ensure deprecated_call() captures a deprecation warning as expected inside its
+        block/function.
+        """
         def f():
             warnings.warn(warning_type("hi"))
-            
+            return 10
+
+        # ensure deprecated_call() can capture the warning even if it has already been triggered
+        if call_f_first:
+            assert f() == 10
         if mode == 'call':
-            pytest.deprecated_call(f)
+            assert pytest.deprecated_call(f) == 10
         else:
             with pytest.deprecated_call():
-                f()
+                assert f() == 10
+
+    @pytest.mark.parametrize('mode', ['context_manager', 'call'])
+    def test_deprecated_call_exception_is_raised(self, mode):
+        """If the block of the code being tested by deprecated_call() raises an exception,
+        it must raise the exception undisturbed.
+        """
+        def f():
+            raise ValueError('some exception')
+
+        with pytest.raises(ValueError, match='some exception'):
+            if mode == 'call':
+                pytest.deprecated_call(f)
+            else:
+                with pytest.deprecated_call():
+                    f()
 
     def test_deprecated_call_specificity(self):
         other_warnings = [Warning, UserWarning, SyntaxWarning, RuntimeWarning,
                           FutureWarning, ImportWarning, UnicodeWarning]
         for warning in other_warnings:
             def f():
-                py.std.warnings.warn(warning("hi"))
+                warnings.warn(warning("hi"))
+
             with pytest.raises(AssertionError):
                 pytest.deprecated_call(f)
+            with pytest.raises(AssertionError):
+                with pytest.deprecated_call():
+                    f()
 
     def test_deprecated_function_already_called(self, testdir):
         """deprecated_call should be able to catch a call to a deprecated
