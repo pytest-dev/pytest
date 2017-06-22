@@ -333,6 +333,7 @@ class MarkDecorator:
                     apply_mark(func, self.mark)
                 else:
                     apply_legacy_mark(func, self.mark)
+                    apply_mark(func, self.mark)
                 return func
 
         mark = Mark(self.name, args, kwargs)
