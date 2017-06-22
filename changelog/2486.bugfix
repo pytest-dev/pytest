@@ -1,0 +1,1 @@
+Fix internal error when trying to detect the start of a recursive traceback.
