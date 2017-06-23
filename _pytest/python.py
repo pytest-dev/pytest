@@ -24,6 +24,7 @@ from _pytest.compat import (
 )
 from _pytest.runner import fail
 from _pytest.mark import transfer_markers
+
 cutdir1 = py.path.local(pluggy.__file__.rstrip("oc"))
 cutdir2 = py.path.local(_pytest.__file__).dirpath()
 cutdir3 = py.path.local(py.__file__).dirpath()
