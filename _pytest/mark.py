@@ -6,7 +6,7 @@ import warnings
 from collections import namedtuple
 from operator import attrgetter
 from .compat import imap
-from .deprecated import MARK_INFO_ATTRIBUTE
+from .deprecated import MARK_INFO_ATTRIBUTE, MARK_PARAMETERSET_UNPACKING
 
 def alias(name, warning=None):
     getter = attrgetter(name)
@@ -60,6 +60,9 @@ class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
         assert not isinstance(argval, ParameterSet)
         if legacy_force_tuple:
             argval = argval,
+
+        if newmarks:
+            warnings.warn(MARK_PARAMETERSET_UNPACKING)
 
         return cls(argval, marks=newmarks, id=None)
 
