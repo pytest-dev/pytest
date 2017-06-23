@@ -2,13 +2,20 @@
 from __future__ import absolute_import, division, print_function
 
 import inspect
+import warnings
 from collections import namedtuple
 from operator import attrgetter
 from .compat import imap
+from .deprecated import MARK_INFO_ATTRIBUTE
 
+def alias(name, warning=None):
+    getter = attrgetter(name)
 
-def alias(name):
-    return property(attrgetter(name), doc='alias for ' + name)
+    def warned(self):
+        warnings.warn(warning, stacklevel=2)
+        return getter(self)
+
+    return property(getter if warning is None else warned, doc='alias for ' + name)
 
 
 class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
@@ -329,30 +336,50 @@ class MarkDecorator:
             is_class = inspect.isclass(func)
             if len(args) == 1 and (istestfunc(func) or is_class):
                 if is_class:
-                    if hasattr(func, 'pytestmark'):
-                        mark_list = func.pytestmark
-                        if not isinstance(mark_list, list):
-                            mark_list = [mark_list]
-                        # always work on a copy to avoid updating pytestmark
-                        # from a superclass by accident
-                        mark_list = mark_list + [self]
-                        func.pytestmark = mark_list
-                    else:
-                        func.pytestmark = [self]
+                    store_mark(func, self.mark)
                 else:
-                    holder = getattr(func, self.name, None)
-                    if holder is None:
-                        holder = MarkInfo(self.mark)
-                        setattr(func, self.name, holder)
-                    else:
-                        holder.add_mark(self.mark)
+                    store_legacy_markinfo(func, self.mark)
+                    store_mark(func, self.mark)
                 return func
 
         mark = Mark(self.name, args, kwargs)
         return self.__class__(self.mark.combined_with(mark))
 
+def get_unpacked_marks(obj):
+    """
+    obtain the unpacked marks that are stored on a object
+    """
+    mark_list = getattr(obj, 'pytestmark', [])
+
+    if not isinstance(mark_list, list):
+        mark_list = [mark_list]
+    return [
+        getattr(mark, 'mark', mark)  # unpack MarkDecorator
+        for mark in mark_list
+    ]
 
 
+def store_mark(obj, mark):
+    """store a Mark on a object
+    this is used to implement the Mark declarations/decorators correctly
+    """
+    assert isinstance(mark, Mark), mark
+    # always reassign name to avoid updating pytestmark
+    # in a referene that was only borrowed
+    obj.pytestmark = get_unpacked_marks(obj) + [mark]
+
+
+def store_legacy_markinfo(func, mark):
+    """create the legacy MarkInfo objects and put them onto the function
+    """
+    if not isinstance(mark, Mark):
+        raise TypeError("got {mark!r} instead of a Mark".format(mark=mark))
+    holder = getattr(func, mark.name, None)
+    if holder is None:
+        holder = MarkInfo(mark)
+        setattr(func, mark.name, holder)
+    else:
+        holder.add_mark(mark)
 
 
 class Mark(namedtuple('Mark', 'name, args, kwargs')):
@@ -371,9 +398,9 @@ class MarkInfo(object):
         self.combined = mark
         self._marks = [mark]
 
-    name = alias('combined.name')
-    args = alias('combined.args')
-    kwargs = alias('combined.kwargs')
+    name = alias('combined.name', warning=MARK_INFO_ATTRIBUTE)
+    args = alias('combined.args', warning=MARK_INFO_ATTRIBUTE)
+    kwargs = alias('combined.kwargs', warning=MARK_INFO_ATTRIBUTE)
 
     def __repr__(self):
         return "<MarkInfo {0!r}>".format(self.combined)
@@ -389,3 +416,30 @@ class MarkInfo(object):
 
 
 MARK_GEN = MarkGenerator()
+
+
+def _marked(func, mark):
+    """ Returns True if :func: is already marked with :mark:, False otherwise.
+    This can happen if marker is applied to class and the test file is
+    invoked more than once.
+    """
+    try:
+        func_mark = getattr(func, mark.name)
+    except AttributeError:
+        return False
+    return mark.args == func_mark.args and mark.kwargs == func_mark.kwargs
+
+
+def transfer_markers(funcobj, cls, mod):
+    """
+    this function transfers class level markers and module level markers
+    into function level markinfo objects
+
+    this is the main reason why marks are so broken
+    the resolution will involve phasing out function level MarkInfo objects
+
+    """
+    for obj in (cls, mod):
+        for mark in get_unpacked_marks(obj):
+            if not _marked(funcobj, mark):
+                store_legacy_markinfo(funcobj, mark)
