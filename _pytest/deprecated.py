@@ -8,8 +8,8 @@ be removed when the time comes.
 from __future__ import absolute_import, division, print_function
 
 
-class RemovedInPytest4_0Warning(DeprecationWarning):
-    "warning class for features removed in pytest 4.0"
+class RemovedInPytest4Warning(DeprecationWarning):
+    """warning class for features removed in pytest 4.0"""
 
 
 MAIN_STR_ARGS = 'passing a string to pytest.main() is deprecated, ' \
@@ -28,5 +28,6 @@ GETFUNCARGVALUE = "use of getfuncargvalue is deprecated, use getfixturevalue"
 
 RESULT_LOG = '--result-log is deprecated and scheduled for removal in pytest 4.0'
 
-MARK_INFO_ATTRIBUTE = RemovedInPytest4_0Warning(
-    "Markinfo attributes are deprecated, please iterate the mark Collection")
+MARK_INFO_ATTRIBUTE = RemovedInPytest4Warning(
+    "MarkInfo objects are deprecated as they contain the merged marks"
+)

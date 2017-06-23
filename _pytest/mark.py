@@ -336,32 +336,42 @@ class MarkDecorator:
             is_class = inspect.isclass(func)
             if len(args) == 1 and (istestfunc(func) or is_class):
                 if is_class:
-                    apply_mark(func, self.mark)
+                    store_mark(func, self.mark)
                 else:
-                    apply_legacy_mark(func, self.mark)
-                    apply_mark(func, self.mark)
+                    store_legacy_markinfo(func, self.mark)
+                    store_mark(func, self.mark)
                 return func
 
         mark = Mark(self.name, args, kwargs)
         return self.__class__(self.mark.combined_with(mark))
 
-
-def apply_mark(obj, mark):
-    assert isinstance(mark, Mark), mark
-    """applies a marker to an object,
-    makrer transfers only update legacy markinfo objects
+def get_unpacked_marks(obj):
+    """
+    obtain the unpacked marks that are stored on a object
     """
     mark_list = getattr(obj, 'pytestmark', [])
 
     if not isinstance(mark_list, list):
         mark_list = [mark_list]
-    # always work on a copy to avoid updating pytestmark
-    # from a superclass by accident
-    mark_list = mark_list + [mark]
-    obj.pytestmark = mark_list
+    return [
+        getattr(mark, 'mark', mark)  # unpack MarkDecorator
+        for mark in mark_list
+    ]
 
 
-def apply_legacy_mark(func, mark):
+def store_mark(obj, mark):
+    """store a Mark on a object
+    this is used to implement the Mark declarations/decorators correctly
+    """
+    assert isinstance(mark, Mark), mark
+    # always reassign name to avoid updating pytestmark
+    # in a referene that was only borrowed
+    obj.pytestmark = get_unpacked_marks(obj) + [mark]
+
+
+def store_legacy_markinfo(func, mark):
+    """create the legacy MarkInfo objects and put them onto the function
+    """
     if not isinstance(mark, Mark):
         raise TypeError("got {mark!r} instead of a Mark".format(mark=mark))
     holder = getattr(func, mark.name, None)
@@ -422,16 +432,14 @@ def _marked(func, mark):
 
 def transfer_markers(funcobj, cls, mod):
     """
-    transfer legacy markers to the function level marminfo objects
-    this one is a major fsckup for mark breakages
+    this function transfers class level markers and module level markers
+    into function level markinfo objects
+
+    this is the main reason why marks are so broken
+    the resolution will involve phasing out function level MarkInfo objects
+
     """
     for obj in (cls, mod):
-        mark_list = getattr(obj, 'pytestmark', [])
-
-        if not isinstance(mark_list, list):
-            mark_list = [mark_list]
-
-        for mark in mark_list:
-            mark = getattr(mark, 'mark', mark)  # unpack MarkDecorator
+        for mark in get_unpacked_marks(obj):
             if not _marked(funcobj, mark):
-                apply_legacy_mark(funcobj, mark)
+                store_legacy_markinfo(funcobj, mark)
