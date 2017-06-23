@@ -31,5 +31,5 @@ template = "changelog/_template.rst"
 
   [[tool.towncrier.type]]
   directory = "trivial"
-  name = "Trivial Changes"
-  showcontent = false
+  name = "Trivial/Internal Changes"
+  showcontent = true
