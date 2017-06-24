@@ -255,11 +255,11 @@ if ``myapp.testsupport.myplugin`` also declares ``pytest_plugins``, the contents
 of the variable will also be loaded as plugins, and so on.
 
 This mechanism makes it easy to share fixtures within applications or even
-external applications without the need to create external plugins using 
+external applications without the need to create external plugins using
 the ``setuptools``'s entry point technique.
 
 Plugins imported by ``pytest_plugins`` will also automatically be marked
-for assertion rewriting (see :func:`pytest.register_assert_rewrite`). 
+for assertion rewriting (see :func:`pytest.register_assert_rewrite`).
 However for this to have any effect the module must not be
 imported already; if it was already imported at the time the
 ``pytest_plugins`` statement is processed, a warning will result and
@@ -356,6 +356,8 @@ Note that hook functions other than ``pytest_runtest_*`` are not
 allowed to raise exceptions.  Doing so will break the pytest run.
 
 
+
+.. _firstresult:
 
 firstresult: stop at first non-None result
 -------------------------------------------
