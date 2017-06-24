@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 
+import sys
 import operator
 import _pytest
 import py
@@ -1173,3 +1174,25 @@ def test_exception_repr_extraction_error_on_recursion():
             '*The following exception happened*',
             '*ValueError: The truth value of an array*',
         ])
+
+
+def test_no_recursion_index_on_recursion_error():
+    """
+    Ensure that we don't break in case we can't find the recursion index
+    during a recursion error (#2486).
+    """
+    try:
+        class RecursionDepthError(object):
+            def __getattr__(self, attr):
+                return getattr(self, '_' + attr)
+
+        RecursionDepthError().trigger
+    except:
+        from _pytest._code.code import ExceptionInfo
+        exc_info = ExceptionInfo()
+        if sys.version_info[:2] == (2, 6):
+            assert "'RecursionDepthError' object has no attribute '___" in str(exc_info.getrepr())
+        else:
+            assert 'maximum recursion' in str(exc_info.getrepr())
+    else:
+        assert 0

@@ -4,6 +4,10 @@ Invoke tasks to help with pytest development and release process.
 
 import invoke
 
-from . import generate
+from . import generate, vendoring
 
-ns = invoke.Collection(generate)
+
+ns = invoke.Collection(
+    generate,
+    vendoring
+)

@@ -162,10 +162,6 @@ class AssertionRewritingHook(object):
         # modules not passed explicitly on the command line are only
         # rewritten if they match the naming convention for test files
         for pat in self.fnpats:
-            # use fnmatch instead of fn_pypath.fnmatch because the
-            # latter might trigger an import to fnmatch.fnmatch
-            # internally, which would cause this method to be
-            # called recursively
             if fn_pypath.fnmatch(pat):
                 state.trace("matched test file %r" % (fn,))
                 return True

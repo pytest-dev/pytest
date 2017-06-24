@@ -369,6 +369,11 @@ class TestSession(object):
         assert len(colitems) == 1
         assert colitems[0].fspath == p
 
+    def get_reported_items(self, hookrec):
+        """Return pytest.Item instances reported by the pytest_collectreport hook"""
+        calls = hookrec.getcalls('pytest_collectreport')
+        return [x for call in calls for x in call.report.result
+                if isinstance(x, pytest.Item)]
 
     def test_collect_protocol_single_function(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
@@ -386,9 +391,10 @@ class TestSession(object):
             ("pytest_collectstart", "collector.fspath == p"),
             ("pytest_make_collect_report", "collector.fspath == p"),
             ("pytest_pycollect_makeitem", "name == 'test_func'"),
-            ("pytest_collectreport", "report.nodeid.startswith(p.basename)"),
-            ("pytest_collectreport", "report.nodeid == ''")
+            ("pytest_collectreport", "report.result[0].name == 'test_func'"),
         ])
+        # ensure we are reporting the collection of the single test item (#2464)
+        assert [x.name for x in self.get_reported_items(hookrec)] == ['test_func']
 
     def test_collect_protocol_method(self, testdir):
         p = testdir.makepyfile("""
@@ -407,6 +413,8 @@ class TestSession(object):
             assert items[0].name == "test_method"
             newid = items[0].nodeid
             assert newid == normid
+            # ensure we are reporting the collection of the single test item (#2464)
+            assert [x.name for x in self.get_reported_items(hookrec)] == ['test_method']
 
     def test_collect_custom_nodes_multi_id(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
@@ -436,9 +444,8 @@ class TestSession(object):
                 "collector.__class__.__name__ == 'Module'"),
             ("pytest_pycollect_makeitem", "name == 'test_func'"),
             ("pytest_collectreport", "report.nodeid.startswith(p.basename)"),
-            #("pytest_collectreport",
-            #    "report.fspath == %r" % str(rcol.fspath)),
         ])
+        assert len(self.get_reported_items(hookrec)) == 2
 
     def test_collect_subdir_event_ordering(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
@@ -495,11 +502,13 @@ class TestSession(object):
                 def test_method(self):
                     pass
         """)
-        arg = p.basename + ("::TestClass::test_method")
+        arg = p.basename + "::TestClass::test_method"
         items, hookrec = testdir.inline_genitems(arg)
         assert len(items) == 1
         item, = items
         assert item.nodeid.endswith("TestClass::()::test_method")
+        # ensure we are reporting the collection of the single test item (#2464)
+        assert [x.name for x in self.get_reported_items(hookrec)] == ['test_method']
 
 class Test_getinitialnodes(object):
     def test_global_file(self, testdir, tmpdir):

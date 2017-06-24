@@ -513,12 +513,12 @@ def test_pytest_no_tests_collected_exit_status(testdir):
             assert 1
     """)
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines('*collected 1 items*')
+    result.stdout.fnmatch_lines('*collected 1 item*')
     result.stdout.fnmatch_lines('*1 passed*')
     assert result.ret == main.EXIT_OK
 
     result = testdir.runpytest('-k nonmatch')
-    result.stdout.fnmatch_lines('*collected 1 items*')
+    result.stdout.fnmatch_lines('*collected 1 item*')
     result.stdout.fnmatch_lines('*1 deselected*')
     assert result.ret == main.EXIT_NOTESTSCOLLECTED
 

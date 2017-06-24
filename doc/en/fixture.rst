@@ -73,20 +73,20 @@ marked ``smtp`` fixture function.  Running the test looks like this::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 items
-    
+
     test_smtpsimple.py F
-    
+
     ======= FAILURES ========
     _______ test_ehlo ________
-    
+
     smtp = <smtplib.SMTP object at 0xdeadbeef>
-    
+
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
             assert response == 250
     >       assert 0 # for demo purposes
     E       assert 0
-    
+
     test_smtpsimple.py:11: AssertionError
     ======= 1 failed in 0.12 seconds ========
 
@@ -123,20 +123,13 @@ with a list of available function arguments.
     but is not anymore advertised as the primary means of declaring fixture
     functions.
 
-"Funcargs" a prime example of dependency injection
+Fixtures: a prime example of dependency injection
 ---------------------------------------------------
 
-When injecting fixtures to test functions, pytest-2.0 introduced the
-term "funcargs" or "funcarg mechanism" which continues to be present
-also in docs today.  It now refers to the specific case of injecting
-fixture values as arguments to test functions.  With pytest-2.3 there are
-more possibilities to use fixtures but "funcargs" remain as the main way
-as they allow to directly state the dependencies of a test function.
-
-As the following examples show in more detail, funcargs allow test
-functions to easily receive and work against specific pre-initialized
-application objects without having to care about import/setup/cleanup
-details.  It's a prime example of `dependency injection`_ where fixture
+Fixtures allow test functions to easily receive and work
+against specific pre-initialized application objects without having
+to care about import/setup/cleanup details.
+It's a prime example of `dependency injection`_ where fixture
 functions take the role of the *injector* and test functions are the
 *consumers* of fixture objects.
 
@@ -176,7 +169,7 @@ function (in or below the directory where ``conftest.py`` is located)::
         response, msg = smtp.ehlo()
         assert response == 250
         assert b"smtp.gmail.com" in msg
-        assert 0  # for demo purposes   
+        assert 0  # for demo purposes
 
     def test_noop(smtp):
         response, msg = smtp.noop()
@@ -191,32 +184,32 @@ inspect what is going on and can now run the tests::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
-    
+
     test_module.py FF
-    
+
     ======= FAILURES ========
     _______ test_ehlo ________
-    
+
     smtp = <smtplib.SMTP object at 0xdeadbeef>
-    
+
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
             assert response == 250
             assert b"smtp.gmail.com" in msg
     >       assert 0  # for demo purposes
     E       assert 0
-    
+
     test_module.py:6: AssertionError
     _______ test_noop ________
-    
+
     smtp = <smtplib.SMTP object at 0xdeadbeef>
-    
+
         def test_noop(smtp):
             response, msg = smtp.noop()
             assert response == 250
     >       assert 0  # for demo purposes
     E       assert 0
-    
+
     test_module.py:11: AssertionError
     ======= 2 failed in 0.12 seconds ========
 
@@ -267,7 +260,7 @@ Let's execute it::
 
     $ pytest -s -q --tb=no
     FFteardown smtp
-    
+
     2 failed in 0.12 seconds
 
 We see that the ``smtp`` instance is finalized after the two
@@ -296,6 +289,9 @@ The ``smtp`` connection will be closed after the test finished execution
 because the ``smtp`` object automatically closes when
 the ``with`` statement ends.
 
+Note that if an exception happens during the *setup* code (before the ``yield`` keyword), the
+*teardown* code (after the ``yield``) will not be called.
+
 
 .. note::
     Prior to version 2.10, in order to use a ``yield`` statement to execute teardown code one
@@ -303,29 +299,51 @@ the ``with`` statement ends.
     fixtures can use ``yield`` directly so the ``yield_fixture`` decorator is no longer needed
     and considered deprecated.
 
-.. note::
-    As historical note, another way to write teardown code is
-    by accepting a ``request`` object into your fixture function and can call its
-    ``request.addfinalizer`` one or multiple times::
 
-        # content of conftest.py
+An alternative option for executing *teardown* code is to
+make use of the ``addfinalizer`` method of the `request-context`_ object to register
+finalization functions.
 
-        import smtplib
-        import pytest
+Here's the ``smtp`` fixture changed to use ``addfinalizer`` for cleanup:
 
-        @pytest.fixture(scope="module")
-        def smtp(request):
-            smtp = smtplib.SMTP("smtp.gmail.com")
-            def fin():
-                print ("teardown smtp")
-                smtp.close()
-            request.addfinalizer(fin)
-            return smtp  # provide the fixture value
+.. code-block:: python
 
-    The ``fin`` function will execute when the last test in the module has finished execution.
+    # content of conftest.py
+    import smtplib
+    import pytest
 
-    This method is still fully supported, but ``yield`` is recommended from 2.10 onward because
-    it is considered simpler and better describes the natural code flow.
+    @pytest.fixture(scope="module")
+    def smtp(request):
+        smtp = smtplib.SMTP("smtp.gmail.com")
+        def fin():
+            print ("teardown smtp")
+            smtp.close()
+        request.addfinalizer(fin)
+        return smtp  # provide the fixture value
+
+
+Both ``yield`` and ``addfinalizer`` methods work similarly by calling their code after the test
+ends, but ``addfinalizer`` has two key differences over ``yield``:
+
+1. It is possible to register multiple finalizer functions.
+
+2. Finalizers will always be called regardless if the fixture *setup* code raises an exception.
+   This is handy to properly close all resources created by a fixture even if one of them
+   fails to be created/acquired::
+
+        @pytest.fixture
+        def equipments(request):
+            r = []
+            for port in ('C1', 'C3', 'C28'):
+                equip = connect(port)
+                request.addfinalizer(equip.disconnect)
+                r.append(equip)
+            return r
+
+   In the example above, if ``"C28"`` fails with an exception, ``"C1"`` and ``"C3"`` will still
+   be properly closed. Of course, if an exception happens before the finalize function is
+   registered then it will not be executed.
+
 
 .. _`request-context`:
 
@@ -355,7 +373,7 @@ again, nothing much has changed::
 
     $ pytest -s -q --tb=no
     FFfinalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
-    
+
     2 failed in 0.12 seconds
 
 Let's quickly create another test module that actually sets the
@@ -423,51 +441,51 @@ So let's just do another run::
     FFFF
     ======= FAILURES ========
     _______ test_ehlo[smtp.gmail.com] ________
-    
+
     smtp = <smtplib.SMTP object at 0xdeadbeef>
-    
+
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
             assert response == 250
             assert b"smtp.gmail.com" in msg
     >       assert 0  # for demo purposes
     E       assert 0
-    
+
     test_module.py:6: AssertionError
     _______ test_noop[smtp.gmail.com] ________
-    
+
     smtp = <smtplib.SMTP object at 0xdeadbeef>
-    
+
         def test_noop(smtp):
             response, msg = smtp.noop()
             assert response == 250
     >       assert 0  # for demo purposes
     E       assert 0
-    
+
     test_module.py:11: AssertionError
     _______ test_ehlo[mail.python.org] ________
-    
+
     smtp = <smtplib.SMTP object at 0xdeadbeef>
-    
+
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
             assert response == 250
     >       assert b"smtp.gmail.com" in msg
     E       AssertionError: assert b'smtp.gmail.com' in b'mail.python.org\nSIZE 51200000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8'
-    
+
     test_module.py:5: AssertionError
     -------------------------- Captured stdout setup ---------------------------
     finalizing <smtplib.SMTP object at 0xdeadbeef>
     _______ test_noop[mail.python.org] ________
-    
+
     smtp = <smtplib.SMTP object at 0xdeadbeef>
-    
+
         def test_noop(smtp):
             response, msg = smtp.noop()
             assert response == 250
     >       assert 0  # for demo purposes
     E       assert 0
-    
+
     test_module.py:11: AssertionError
     ------------------------- Captured stdout teardown -------------------------
     finalizing <smtplib.SMTP object at 0xdeadbeef>
@@ -539,7 +557,7 @@ Running the above tests results in the following test IDs being used::
      <Function 'test_noop[smtp.gmail.com]'>
      <Function 'test_ehlo[mail.python.org]'>
      <Function 'test_noop[mail.python.org]'>
-   
+
    ======= no tests ran in 0.12 seconds ========
 
 .. _`interdependent fixtures`:
@@ -578,10 +596,10 @@ Here we declare an ``app`` fixture which receives the previously defined
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 2 items
-    
+
     test_appsetup.py::test_smtp_exists[smtp.gmail.com] PASSED
     test_appsetup.py::test_smtp_exists[mail.python.org] PASSED
-    
+
     ======= 2 passed in 0.12 seconds ========
 
 Due to the parametrization of ``smtp`` the test will run twice with two
@@ -647,26 +665,26 @@ Let's run the tests in verbose mode and with looking at the print-output::
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 8 items
-    
+
     test_module.py::test_0[1]   SETUP otherarg 1
       RUN test0 with otherarg 1
     PASSED  TEARDOWN otherarg 1
-    
+
     test_module.py::test_0[2]   SETUP otherarg 2
       RUN test0 with otherarg 2
     PASSED  TEARDOWN otherarg 2
-    
+
     test_module.py::test_1[mod1]   SETUP modarg mod1
       RUN test1 with modarg mod1
     PASSED
     test_module.py::test_2[1-mod1]   SETUP otherarg 1
       RUN test2 with otherarg 1 and modarg mod1
     PASSED  TEARDOWN otherarg 1
-    
+
     test_module.py::test_2[2-mod1]   SETUP otherarg 2
       RUN test2 with otherarg 2 and modarg mod1
     PASSED  TEARDOWN otherarg 2
-    
+
     test_module.py::test_1[mod2]   TEARDOWN modarg mod1
       SETUP modarg mod2
       RUN test1 with modarg mod2
@@ -674,13 +692,13 @@ Let's run the tests in verbose mode and with looking at the print-output::
     test_module.py::test_2[1-mod2]   SETUP otherarg 1
       RUN test2 with otherarg 1 and modarg mod2
     PASSED  TEARDOWN otherarg 1
-    
+
     test_module.py::test_2[2-mod2]   SETUP otherarg 2
       RUN test2 with otherarg 2 and modarg mod2
     PASSED  TEARDOWN otherarg 2
       TEARDOWN modarg mod2
-    
-    
+
+
     ======= 8 passed in 0.12 seconds ========
 
 You can see that the parametrized module-scoped ``modarg`` resource caused an
@@ -782,8 +800,8 @@ Autouse fixtures (xUnit setup on steroids)
 .. regendoc:wipe
 
 Occasionally, you may want to have fixtures get invoked automatically
-without a `usefixtures`_ or `funcargs`_ reference.   As a practical
-example, suppose we have a database fixture which has a
+without declaring a function argument explicitly or a `usefixtures`_ decorator.
+As a practical example, suppose we have a database fixture which has a
 begin/rollback/commit architecture and we want to automatically surround
 each test method by a transaction and a rollback.  Here is a dummy
 self-contained implementation of this idea::
