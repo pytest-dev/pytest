@@ -143,6 +143,26 @@ class TestClass(object):
             "*collected 0*",
         ])
 
+    def test_static_method(self, testdir):
+        testdir.getmodulecol("""
+            class Test(object):
+                @staticmethod
+                def test_something():
+                    pass
+        """)
+        result = testdir.runpytest()
+        if sys.version_info < (2,7):
+            # in 2.6, the code to handle static methods doesn't work
+            result.stdout.fnmatch_lines([
+                "*collected 0 items*",
+                "*cannot collect static method*",
+            ])
+        else:
+            result.stdout.fnmatch_lines([
+                "*collected 1 item*",
+                "*1 passed in*",
+            ])
+
     def test_setup_teardown_class_as_classmethod(self, testdir):
         testdir.makepyfile(test_mod1="""
             class TestClassMethod(object):

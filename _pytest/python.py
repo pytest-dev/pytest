@@ -271,10 +271,19 @@ class PyCollector(PyobjMixin, main.Collector):
         return self._matches_prefix_or_glob_option('python_classes', name)
 
     def istestfunction(self, obj, name):
-        return (
-            (self.funcnamefilter(name) or self.isnosetest(obj)) and
-            safe_getattr(obj, "__call__", False) and fixtures.getfixturemarker(obj) is None
-        )
+        if self.funcnamefilter(name) or self.isnosetest(obj):
+            if isinstance(obj, staticmethod):
+                # static methods need to be unwrapped
+                obj = safe_getattr(obj, '__func__', False)
+                if obj is False:
+                    # Python 2.6 wraps in a different way that we won't try to handle
+                    self.warn(code="C2", message="cannot collect static method %r because it is not a function (always the case in Python 2.6)" % name)
+                    return False
+            return (
+                safe_getattr(obj, "__call__", False) and fixtures.getfixturemarker(obj) is None
+            )
+        else:
+            return False
 
     def istestclass(self, obj, name):
         return self.classnamefilter(name) or self.isnosetest(obj)
