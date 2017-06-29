@@ -57,7 +57,7 @@ using it::
     @pytest.fixture
     def smtp():
         import smtplib
-        return smtplib.SMTP("smtp.gmail.com")
+        return smtplib.SMTP("smtp.gmail.com", 587, timeout=5)
 
     def test_ehlo(smtp):
         response, msg = smtp.ehlo()
@@ -157,7 +157,7 @@ access the fixture function::
 
     @pytest.fixture(scope="module")
     def smtp():
-        return smtplib.SMTP("smtp.gmail.com")
+        return smtplib.SMTP("smtp.gmail.com", 587, timeout=5)
 
 The name of the fixture again is ``smtp`` and you can access its result by
 listing the name ``smtp`` as an input parameter in any test or fixture
@@ -247,7 +247,7 @@ the code after the *yield* statement serves as the teardown code:
 
     @pytest.fixture(scope="module")
     def smtp():
-        smtp = smtplib.SMTP("smtp.gmail.com")
+        smtp = smtplib.SMTP("smtp.gmail.com", 587, timeout=5)
         yield smtp  # provide the fixture value
         print("teardown smtp")
         smtp.close()
@@ -281,7 +281,7 @@ Note that we can also seamlessly use the ``yield`` syntax with ``with`` statemen
 
     @pytest.fixture(scope="module")
     def smtp():
-        with smtplib.SMTP("smtp.gmail.com") as smtp:
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=5) as smtp:
             yield smtp  # provide the fixture value
 
 
@@ -314,7 +314,7 @@ Here's the ``smtp`` fixture changed to use ``addfinalizer`` for cleanup:
 
     @pytest.fixture(scope="module")
     def smtp(request):
-        smtp = smtplib.SMTP("smtp.gmail.com")
+        smtp = smtplib.SMTP("smtp.gmail.com", 587, timeout=5)
         def fin():
             print ("teardown smtp")
             smtp.close()
@@ -362,7 +362,7 @@ read an optional server URL from the test module which uses our fixture::
     @pytest.fixture(scope="module")
     def smtp(request):
         server = getattr(request.module, "smtpserver", "smtp.gmail.com")
-        smtp = smtplib.SMTP(server)
+        smtp = smtplib.SMTP(server, 587, timeout=5)
         yield smtp
         print ("finalizing %s (%s)" % (smtp, server))
         smtp.close()
@@ -426,7 +426,7 @@ through the special :py:class:`request <FixtureRequest>` object::
     @pytest.fixture(scope="module",
                     params=["smtp.gmail.com", "mail.python.org"])
     def smtp(request):
-        smtp = smtplib.SMTP(request.param)
+        smtp = smtplib.SMTP(request.param, 587, timeout=5)
         yield smtp
         print ("finalizing %s" % smtp)
         smtp.close()
