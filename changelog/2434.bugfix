@@ -1,1 +1,0 @@
-Fix decode error in Python 2 for doctests in docstrings.
