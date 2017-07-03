@@ -168,14 +168,13 @@ def pytest_runtestloop(session):
 
 
 def pytest_ignore_collect(path, config):
-    p = path.dirpath()
-    ignore_paths = config._getconftest_pathlist("collect_ignore", path=p)
+    ignore_paths = config._getconftest_pathlist("collect_ignore", path=path.dirpath())
     ignore_paths = ignore_paths or []
     excludeopt = config.getoption("ignore")
     if excludeopt:
         ignore_paths.extend([py.path.local(x) for x in excludeopt])
 
-    if path in ignore_paths:
+    if py.path.local(path) in ignore_paths:
         return True
 
     # Skip duplicate paths.

@@ -1,0 +1,1 @@
+Fix issue where paths collected by pytest could have triple leading ``/`` characters.
