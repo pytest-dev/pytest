@@ -28,8 +28,8 @@ class TestApprox(object):
         if sys.version_info[:2] == (2, 6):
             tol1, tol2, infr = '???', '???', '???'
         assert repr(approx(1.0)) == '1.0 {pm} {tol1}'.format(pm=plus_minus, tol1=tol1)
-        assert repr(approx([1.0, 2.0])) == '[1.0 {pm} {tol1}, 2.0 {pm} {tol2}]'.format(pm=plus_minus, tol1=tol1, tol2=tol2)
-        assert repr(approx((1.0, 2.0))) == '(1.0 {pm} {tol1}, 2.0 {pm} {tol2})'.format(pm=plus_minus, tol1=tol1, tol2=tol2)
+        assert repr(approx([1.0, 2.0])) == 'approx([1.0 {pm} {tol1}, 2.0 {pm} {tol2}])'.format(pm=plus_minus, tol1=tol1, tol2=tol2)
+        assert repr(approx((1.0, 2.0))) == 'approx((1.0 {pm} {tol1}, 2.0 {pm} {tol2}))'.format(pm=plus_minus, tol1=tol1, tol2=tol2)
         assert repr(approx(inf)) == 'inf'
         assert repr(approx(1.0, rel=nan)) == '1.0 {pm} ???'.format(pm=plus_minus)
         assert repr(approx(1.0, rel=inf)) == '1.0 {pm} {infr}'.format(pm=plus_minus, infr=infr)
@@ -37,8 +37,8 @@ class TestApprox(object):
 
         # Dictionaries aren't ordered, so we need to check both orders.
         assert repr(approx({'a': 1.0, 'b': 2.0})) in (
-                "{{'a': 1.0 {pm} {tol1}, 'b': 2.0 {pm} {tol2}}}".format(pm=plus_minus, tol1=tol1, tol2=tol2),
-                "{{'b': 2.0 {pm} {tol2}, 'a': 1.0 {pm} {tol1}}}".format(pm=plus_minus, tol1=tol1, tol2=tol2),
+                "approx({{'a': 1.0 {pm} {tol1}, 'b': 2.0 {pm} {tol2}}})".format(pm=plus_minus, tol1=tol1, tol2=tol2),
+                "approx({{'b': 2.0 {pm} {tol2}, 'a': 1.0 {pm} {tol1}}})".format(pm=plus_minus, tol1=tol1, tol2=tol2),
         )
 
     def test_operator_overloading(self):

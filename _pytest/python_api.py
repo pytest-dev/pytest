@@ -95,7 +95,7 @@ class ApproxNumpyBase(ApproxBase):
     def __repr__(self):
         # It might be nice to rewrite this function to account for the
         # shape of the array...
-        return repr(list(
+        return "approx({0!r})".format(list(
             self._approx_scalar(x) for x in self.expected))
 
     def __eq__(self, actual):
@@ -128,7 +128,7 @@ class ApproxMapping(ApproxBase):
     """
 
     def __repr__(self):
-        return repr(dict(
+        return "approx({0!r})".format(dict(
             (k, self._approx_scalar(v))
             for k,v in self.expected.items()))
 
@@ -152,7 +152,7 @@ class ApproxSequence(ApproxBase):
         seq_type = type(self.expected)
         if seq_type not in (tuple, list, set):
             seq_type = list
-        return repr(seq_type(
+        return "approx({0!r})".format(seq_type(
             self._approx_scalar(x) for x in self.expected))
 
     def __eq__(self, actual):
