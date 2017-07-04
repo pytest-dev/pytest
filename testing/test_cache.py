@@ -87,6 +87,14 @@ class TestNewAPI(object):
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*1 passed*"])
 
+    def test_custom_cache_dirname(self, testdir):
+        testdir.makeini("""
+            [pytest]
+            cache_dirname = custom_cache_dirname
+        """)
+        testdir.makepyfile(test_errored='def test_error():\n    assert False')
+        testdir.runpytest()
+        assert os.path.exists('custom_cache_dirname')
 
 
 def test_cache_reportheader(testdir):
