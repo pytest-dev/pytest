@@ -45,7 +45,7 @@ def pytest_addoption(parser):
                action="store", type=int, dest="maxfail", default=0,
                help="exit after first num failures or errors.")
     group._addoption('--strict', action="store_true",
-               help="run pytest in strict mode, warnings become errors.")
+               help="marks not registered in configuration file raise errors.")
     group._addoption("-c", metavar="file", type=str, dest="inifilename",
                help="load configuration from `file` instead of trying to locate one of the implicit configuration files.")
     group._addoption("--continue-on-collection-errors", action="store_true",
