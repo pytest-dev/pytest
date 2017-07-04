@@ -85,7 +85,7 @@ class ApproxNumpyBase(ApproxBase):
         assert not isinstance(cls, np.ndarray)
 
         if cls.subclass is None:
-            cls.subclass = type('ApproxNumpy', (ApproxNumpyBase, np.ndarray), {})
+            cls.subclass = type('ApproxNumpy', (cls, np.ndarray), {})
 
         return cls.subclass
 
