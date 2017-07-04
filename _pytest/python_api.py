@@ -49,13 +49,9 @@ class ApproxNumpyBase(ApproxBase):
     """
     Perform approximate comparisons for numpy arrays.
 
-    This class should not be used directly.  Instead, it should be used to make
-    a subclass that also inherits from `np.ndarray`, e.g.::
-
-        import numpy as np
-        ApproxNumpy = type('ApproxNumpy', (ApproxNumpyBase, np.ndarray), {})
-
-    This bizarre invocation is necessary because the object doing the
+    This class should not be used directly.  Instead, the `inherit_ndarray()`
+    class method should be used to make a subclass that also inherits from
+    `np.ndarray`.  This indirection is necessary because the object doing the
     approximate comparison must inherit from `np.ndarray`, or it will only work
     on the left side of the `==` operator.  But importing numpy is relatively
     expensive, so we also want to avoid that unless we actually have a numpy
@@ -80,6 +76,18 @@ class ApproxNumpyBase(ApproxBase):
     `ApproxNumpy.__eq__` gets called no matter which side of the `==` operator
     it appears on.
     """
+
+    subclass = None
+
+    @classmethod
+    def inherit_ndarray(cls):
+        import numpy as np
+        assert not isinstance(cls, np.ndarray)
+
+        if cls.subclass is None:
+            cls.subclass = type('ApproxNumpy', (ApproxNumpyBase, np.ndarray), {})
+
+        return cls.subclass
 
     def __new__(cls, expected, rel=None, abs=None, nan_ok=False):
         """
@@ -416,8 +424,7 @@ def approx(expected, rel=None, abs=None, nan_ok=False):
     if _is_numpy_array(expected):
         # Create the delegate class on the fly.  This allow us to inherit from
         # ``np.ndarray`` while still not importing numpy unless we need to.
-        import numpy as np
-        cls = type('ApproxNumpy', (ApproxNumpyBase, np.ndarray), {})
+        cls = ApproxNumpyBase.inherit_ndarray()
     elif isinstance(expected, Mapping):
         cls = ApproxMapping
     elif isinstance(expected, Sequence) and not isinstance(expected, String):
