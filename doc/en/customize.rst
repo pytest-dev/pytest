@@ -262,3 +262,11 @@ Builtin configuration file options
 
    This tells pytest to ignore deprecation warnings and turn all other warnings
    into errors. For more information please refer to :ref:`warnings`.
+
+.. confval:: cache_dirname
+
+   .. versionadded:: 3.2
+
+   Sets a directory name where stores content of cache plugin. The directory is
+   created in rootdir. Default name is ``.cache``. For more information about
+   cache please refer to :ref:`cache_provider`.
