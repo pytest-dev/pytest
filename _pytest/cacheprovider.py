@@ -14,7 +14,8 @@ from os.path import sep as _sep, altsep as _altsep
 class Cache(object):
     def __init__(self, config):
         self.config = config
-        self._cachedir = config.rootdir.join(".cache")
+        cache_dirname = config.getini("cache_dirname")
+        self._cachedir = config.rootdir.join(cache_dirname)
         self.trace = config.trace.root.get("cache")
         if config.getvalue("cacheclear"):
             self.trace("clearing cachedir")
@@ -171,6 +172,9 @@ def pytest_addoption(parser):
     group.addoption(
         '--cache-clear', action='store_true', dest="cacheclear",
         help="remove all cache contents at start of test run.")
+    parser.addini(
+        "cache_dirname", default='.cache',
+        help="directory name for cache content.")
 
 
 def pytest_cmdline_main(config):
