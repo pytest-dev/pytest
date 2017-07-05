@@ -8,13 +8,16 @@ from __future__ import absolute_import, division, print_function
 import py
 import pytest
 import json
-from os.path import sep as _sep, altsep as _altsep
+from os.path import sep as _sep, altsep as _altsep, \
+                    isabs as _isabs, expanduser as _expanduser
 
 
 class Cache(object):
     def __init__(self, config):
         self.config = config
         cache_dirname = config.getini("cache_dirname")
+        if _isabs(_expanduser(cache_dirname)):
+            raise ValueError("cache dirname must be relative path, not absolute")
         self._cachedir = config.rootdir.join(cache_dirname)
         self.trace = config.trace.root.get("cache")
         if config.getvalue("cacheclear"):
