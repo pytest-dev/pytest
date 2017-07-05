@@ -15,16 +15,20 @@ from os.path import sep as _sep, altsep as _altsep, \
 class Cache(object):
     def __init__(self, config):
         self.config = config
-        cache_dirname = config.getini("cache_dirname")
-        if _isabs(_expanduser(cache_dirname)):
-            raise ValueError("cache dirname must be relative path, not absolute")
-        self._cachedir = config.rootdir.join(cache_dirname)
+        self._cachedir = Cache.cache_dir_from_config(config)
         self.trace = config.trace.root.get("cache")
         if config.getvalue("cacheclear"):
             self.trace("clearing cachedir")
             if self._cachedir.check():
                 self._cachedir.remove()
             self._cachedir.mkdir()
+
+    @staticmethod
+    def cache_dir_from_config(config):
+        cache_dir = config.getini("cache_dir")
+        if _isabs(_expanduser(cache_dir)):
+            raise ValueError("cache dirname must be relative path, not absolute")
+        return config.rootdir.join(cache_dir)
 
     def makedir(self, name):
         """ return a directory path object with the given name.  If the
@@ -176,7 +180,7 @@ def pytest_addoption(parser):
         '--cache-clear', action='store_true', dest="cacheclear",
         help="remove all cache contents at start of test run.")
     parser.addini(
-        "cache_dirname", default='.cache',
+        "cache_dir", default='.cache',
         help="directory name for cache content.")
 
 

@@ -263,7 +263,7 @@ Builtin configuration file options
    This tells pytest to ignore deprecation warnings and turn all other warnings
    into errors. For more information please refer to :ref:`warnings`.
 
-.. confval:: cache_dirname
+.. confval:: cache_dir
 
    .. versionadded:: 3.2
 
