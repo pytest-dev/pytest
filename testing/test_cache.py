@@ -88,27 +88,23 @@ class TestNewAPI(object):
         result.stdout.fnmatch_lines(["*1 passed*"])
 
     def test_custom_cache_dirname(self, testdir):
+        cache_dir = 'custom_cache_dirname'
         testdir.makeini("""
             [pytest]
-            cache_dirname = custom_cache_dirname
-        """)
+            cache_dir = {cache_dir}
+        """.format(cache_dir=cache_dir))
         testdir.makepyfile(test_errored='def test_error():\n    assert False')
         testdir.runpytest()
-        assert os.path.exists('custom_cache_dirname')
+        assert testdir.tmpdir.join(cache_dir).isdir()
 
-    @pytest.mark.parametrize('custom_cache_dirname', [
-        pytest.param('/tmp/mycache', marks=pytest.mark.skipif(sys.platform == 'win32',
-                                                              reason='test for linux pathes')),
-        pytest.param('~/mycache', marks=pytest.mark.skipif(sys.platform == 'win32',
-                                                           reason='test for linux pathes')),
-        pytest.param('C:\mycache', marks=pytest.mark.skipif(sys.platform != 'win32',
-                                                            reason='test for win32 pathes')),
-    ])
-    def test_cache_dirname_fail_on_abs(self, testdir, custom_cache_dirname):
+    @pytest.mark.parametrize('cache_dir', [
+                             os.path.abspath('tmp'),
+                             os.path.join('~', 'tmp')])
+    def test_cache_dirname_fail_on_abs(self, testdir, cache_dir):
         testdir.makeini("""
             [pytest]
-            cache_dirname = {custom_cache_dirname}
-        """.format(custom_cache_dirname=custom_cache_dirname))
+            cache_dir = {cache_dir}
+        """.format(cache_dir=cache_dir))
         pytest.raises(ValueError, "testdir.parseconfigure()",
                       message="cache dirname must be relative path, not absolute")
 
