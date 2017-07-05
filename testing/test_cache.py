@@ -107,8 +107,8 @@ class TestNewAPI(object):
     def test_cache_dirname_fail_on_abs(self, testdir, custom_cache_dirname):
         testdir.makeini("""
             [pytest]
-            cache_dirname = {}
-        """.format(custom_cache_dirname))
+            cache_dirname = {custom_cache_dirname}
+        """.format(custom_cache_dirname=custom_cache_dirname))
         pytest.raises(ValueError, "testdir.parseconfigure()",
                       message="cache dirname must be relative path, not absolute")
 
