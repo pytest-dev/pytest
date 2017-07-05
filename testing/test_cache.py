@@ -98,8 +98,10 @@ class TestNewAPI(object):
         assert testdir.tmpdir.join(cache_dir).isdir()
 
     @pytest.mark.parametrize('cache_dir', [
-                             os.path.abspath('tmp'),
-                             os.path.join('~', 'tmp')])
+        os.path.abspath('tmp'),
+        pytest.param(os.path.join('~', 'tmp'), marks=pytest.mark.skipif(sys.platform == 'win32',
+                                                                        reason='test for linux pathes')),
+    ])
     def test_cache_dirname_fail_on_abs(self, testdir, cache_dir):
         testdir.makeini("""
             [pytest]
