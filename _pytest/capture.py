@@ -254,6 +254,11 @@ class EncodedFile(object):
         data = ''.join(linelist)
         self.write(data)
 
+    @property
+    def name(self):
+        """Ensure that file.name is a string."""
+        return repr(self.buffer)
+
     def __getattr__(self, name):
         return getattr(object.__getattribute__(self, "buffer"), name)
 
