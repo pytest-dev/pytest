@@ -8,8 +8,8 @@ from __future__ import absolute_import, division, print_function
 import py
 import pytest
 import json
-from os.path import sep as _sep, altsep as _altsep, \
-                    isabs as _isabs, expanduser as _expanduser
+import os
+from os.path import sep as _sep, altsep as _altsep
 
 
 class Cache(object):
@@ -26,8 +26,10 @@ class Cache(object):
     @staticmethod
     def cache_dir_from_config(config):
         cache_dir = config.getini("cache_dir")
-        if _isabs(_expanduser(cache_dir)):
-            return py.path.local(cache_dir, expanduser=True)
+        cache_dir = os.path.expanduser(cache_dir)
+        cache_dir = os.path.expandvars(cache_dir)
+        if os.path.isabs(cache_dir):
+            return py.path.local(cache_dir)
         else:
             return config.rootdir.join(cache_dir)
 
