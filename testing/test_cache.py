@@ -107,6 +107,15 @@ class TestNewAPI(object):
         testdir.runpytest()
         assert py.path.local(abs_cache_dir).isdir()
 
+    def test_custom_cache_dir_with_env_var(self, testdir, monkeypatch):
+        monkeypatch.setenv('env_var', 'custom_cache_dir')
+        testdir.makeini("""
+            [pytest]
+            cache_dir = {cache_dir}
+        """.format(cache_dir='$env_var'))
+        testdir.makepyfile(test_errored='def test_error():\n    assert False')
+        testdir.runpytest()
+        assert testdir.tmpdir.join('custom_cache_dir').isdir()
 
 def test_cache_reportheader(testdir):
     testdir.makepyfile("""
