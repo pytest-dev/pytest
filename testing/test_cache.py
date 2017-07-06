@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function
 import sys
-
+import py
 import _pytest
 import pytest
 import os
@@ -87,6 +87,25 @@ class TestNewAPI(object):
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*1 passed*"])
 
+    def test_custom_rel_cache_dir(self, testdir):
+        rel_cache_dir = os.path.join('custom_cache_dir', 'subdir')
+        testdir.makeini("""
+            [pytest]
+            cache_dir = {cache_dir}
+        """.format(cache_dir=rel_cache_dir))
+        testdir.makepyfile(test_errored='def test_error():\n    assert False')
+        testdir.runpytest()
+        assert testdir.tmpdir.join(rel_cache_dir).isdir()
+
+    def test_custom_abs_cache_dir(self, testdir):
+        abs_cache_dir = os.path.abspath(testdir.tmpdir.join('custom_cache_dir').strpath)
+        testdir.makeini("""
+            [pytest]
+            cache_dir = {cache_dir}
+        """.format(cache_dir=abs_cache_dir))
+        testdir.makepyfile(test_errored='def test_error():\n    assert False')
+        testdir.runpytest()
+        assert py.path.local(abs_cache_dir).isdir()
 
 
 def test_cache_reportheader(testdir):
