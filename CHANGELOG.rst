@@ -19,6 +19,52 @@ Pytest 3.2.0 (unreleased)
   variables, that will be expanded.
 
 
+Pytest 3.1.3 (2017-07-03)
+=========================
+
+Bug Fixes
+---------
+
+- Fix decode error in Python 2 for doctests in docstrings. (`#2434
+  <https://github.com/pytest-dev/pytest/issues/2434>`_)
+
+- Exceptions raised during teardown by finalizers are now suppressed until all
+  finalizers are called, with the initial exception reraised. (`#2440
+  <https://github.com/pytest-dev/pytest/issues/2440>`_)
+
+- Fix incorrect "collected items" report when specifying tests on the command-
+  line. (`#2464 <https://github.com/pytest-dev/pytest/issues/2464>`_)
+
+- ``deprecated_call`` in context-manager form now captures deprecation warnings
+  even if the same warning has already been raised. Also, ``deprecated_call``
+  will always produce the same error message (previously it would produce
+  different messages in context-manager vs. function-call mode). (`#2469
+  <https://github.com/pytest-dev/pytest/issues/2469>`_)
+
+- Fix issue where paths collected by pytest could have triple leading ``/``
+  characters. (`#2475 <https://github.com/pytest-dev/pytest/issues/2475>`_)
+
+- Fix internal error when trying to detect the start of a recursive traceback.
+  (`#2486 <https://github.com/pytest-dev/pytest/issues/2486>`_)
+
+
+Improved Documentation
+----------------------
+
+- Explicitly state for which hooks the calls stop after the first non-None
+  result. (`#2493 <https://github.com/pytest-dev/pytest/issues/2493>`_)
+
+
+Trivial/Internal Changes
+------------------------
+
+- Create invoke tasks for updating the vendored packages. (`#2474
+  <https://github.com/pytest-dev/pytest/issues/2474>`_)
+
+- Update copyright dates in LICENSE, README.rst and in the documentation.
+  (`#2499 <https://github.com/pytest-dev/pytest/issues/2499>`_)
+
+
 Pytest 3.1.2 (2017-06-08)
 =========================
 

@@ -69,7 +69,7 @@ tests based on their module, class, method, or function name::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collecting ... collected 5 items
+    collecting ... collected 1 item
     
     test_server.py::TestClass::test_method PASSED
     
@@ -82,7 +82,7 @@ You can also select on the class::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collecting ... collected 4 items
+    collecting ... collected 1 item
     
     test_server.py::TestClass::test_method PASSED
     
@@ -95,7 +95,7 @@ Or select multiple nodes::
   platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
   cachedir: .cache
   rootdir: $REGENDOC_TMPDIR, inifile:
-  collecting ... collected 8 items
+  collecting ... collected 2 items
   
   test_server.py::TestClass::test_method PASSED
   test_server.py::test_send_http PASSED
@@ -354,7 +354,7 @@ the test needs::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 1 items
+    collected 1 item
     
     test_someenv.py s
     
@@ -366,7 +366,7 @@ and here is one that specifies exactly the environment needed::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 1 items
+    collected 1 item
     
     test_someenv.py .
     

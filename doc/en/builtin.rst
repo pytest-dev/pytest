@@ -38,7 +38,7 @@ Examples at :ref:`assertraises`.
 Comparing floating point numbers
 --------------------------------
 
-.. autoclass:: approx
+.. autofunction:: approx
 
 Raising a specific test outcome
 --------------------------------------
