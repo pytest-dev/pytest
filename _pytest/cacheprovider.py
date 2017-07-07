@@ -8,19 +8,30 @@ from __future__ import absolute_import, division, print_function
 import py
 import pytest
 import json
+import os
 from os.path import sep as _sep, altsep as _altsep
 
 
 class Cache(object):
     def __init__(self, config):
         self.config = config
-        self._cachedir = config.rootdir.join(".cache")
+        self._cachedir = Cache.cache_dir_from_config(config)
         self.trace = config.trace.root.get("cache")
         if config.getvalue("cacheclear"):
             self.trace("clearing cachedir")
             if self._cachedir.check():
                 self._cachedir.remove()
             self._cachedir.mkdir()
+
+    @staticmethod
+    def cache_dir_from_config(config):
+        cache_dir = config.getini("cache_dir")
+        cache_dir = os.path.expanduser(cache_dir)
+        cache_dir = os.path.expandvars(cache_dir)
+        if os.path.isabs(cache_dir):
+            return py.path.local(cache_dir)
+        else:
+            return config.rootdir.join(cache_dir)
 
     def makedir(self, name):
         """ return a directory path object with the given name.  If the
@@ -171,6 +182,9 @@ def pytest_addoption(parser):
     group.addoption(
         '--cache-clear', action='store_true', dest="cacheclear",
         help="remove all cache contents at start of test run.")
+    parser.addini(
+        "cache_dir", default='.cache',
+        help="cache directory path.")
 
 
 def pytest_cmdline_main(config):
