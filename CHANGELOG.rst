@@ -8,6 +8,17 @@
 
 .. towncrier release notes start
 
+
+Pytest 3.2.0 (unreleased)
+=========================
+
+- New ``cache_dir`` ini option: sets a directory where stores content of cache plugin.
+  Default directory is ``.cache`` which is created in :ref:`rootdir <rootdir>`.
+  Directory may be relative or absolute path. If setting relative path, then directory
+  is created relative to :ref:`rootdir <rootdir>`. Additionally path may contain environment
+  variables, that will be expanded.
+
+
 Pytest 3.1.3 (2017-07-03)
 =========================
 
