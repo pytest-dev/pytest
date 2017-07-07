@@ -97,8 +97,9 @@ class TestNewAPI(object):
         testdir.runpytest()
         assert testdir.tmpdir.join(rel_cache_dir).isdir()
 
-    def test_custom_abs_cache_dir(self, testdir):
-        abs_cache_dir = os.path.abspath(testdir.tmpdir.join('custom_cache_dir').strpath)
+    def test_custom_abs_cache_dir(self, testdir, tmpdir_factory):
+        tmp = str(tmpdir_factory.mktemp('tmp'))
+        abs_cache_dir = os.path.join(tmp, 'custom_cache_dir')
         testdir.makeini("""
             [pytest]
             cache_dir = {cache_dir}
