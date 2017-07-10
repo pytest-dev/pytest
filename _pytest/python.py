@@ -18,7 +18,7 @@ import _pytest._pluggy as pluggy
 from _pytest import fixtures
 from _pytest import main
 from _pytest.compat import (
-    isclass, isfunction, is_generator, _escape_strings,
+    isclass, isfunction, is_generator, _ascii_escaped,
     REGEX_TYPE, STRING_TYPES, NoneType, NOTSET,
     get_real_func, getfslineno, safe_getattr,
     safe_str, getlocation, enum,
@@ -929,7 +929,7 @@ def _idval(val, argname, idx, idfn, config=None):
             msg += '\nUpdate your code as this will raise an error in pytest-4.0.'
             warnings.warn(msg, DeprecationWarning)
         if s:
-            return _escape_strings(s)
+            return _ascii_escaped(s)
 
     if config:
         hook_id = config.hook.pytest_make_parametrize_id(
@@ -938,11 +938,11 @@ def _idval(val, argname, idx, idfn, config=None):
             return hook_id
 
     if isinstance(val, STRING_TYPES):
-        return _escape_strings(val)
+        return _ascii_escaped(val)
     elif isinstance(val, (float, int, bool, NoneType)):
         return str(val)
     elif isinstance(val, REGEX_TYPE):
-        return _escape_strings(val.pattern)
+        return _ascii_escaped(val.pattern)
     elif enum is not None and isinstance(val, enum.Enum):
         return str(val)
     elif isclass(val) and hasattr(val, '__name__'):
@@ -958,7 +958,7 @@ def _idvalset(idx, parameterset, argnames, idfn, ids, config=None):
                    for val, argname in zip(parameterset.values, argnames)]
         return "-".join(this_id)
     else:
-        return _escape_strings(ids[idx])
+        return _ascii_escaped(ids[idx])
 
 
 def idmaker(argnames, parametersets, idfn=None, ids=None, config=None):
