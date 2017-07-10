@@ -223,13 +223,12 @@ For an example on how to add and work with markers from a plugin, see
 
     It is recommended to explicitly register markers so that:
 
-    * there is one place in your test suite defining your markers
+    * There is one place in your test suite defining your markers
 
-    * asking for existing markers via ``pytest --markers`` gives good output
+    * Asking for existing markers via ``pytest --markers`` gives good output
 
-    * typos in function markers are treated as an error if you use
-      the ``--strict`` option. Future versions of ``pytest`` are probably
-      going to start treating non-registered markers as errors at some point.
+    * Typos in function markers are treated as an error if you use
+      the ``--strict`` option. 
 
 .. _`scoped-marking`:
 

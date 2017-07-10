@@ -576,7 +576,7 @@ class TestSkip(object):
             def test_hello():
                 pass
         """)
-        result = testdir.runpytest("-rs --strict")
+        result = testdir.runpytest("-rs")
         result.stdout.fnmatch_lines([
             "*unconditional skip*",
             "*1 skipped*",
