@@ -615,7 +615,7 @@ class Generator(FunctionMixin, PyCollector):
                 raise ValueError("%r generated tests with non-unique name %r" %(self, name))
             seen[name] = True
             l.append(self.Function(name, self, args=args, callobj=call))
-            self.config.warn('C1', deprecated.YIELD_TESTS, fslocation=self.fspath)
+        self.warn('C1', deprecated.YIELD_TESTS)
         return l
 
     def getcallargs(self, obj):
