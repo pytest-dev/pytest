@@ -1,0 +1,1 @@
+Renamed the utility function `_pytest.compat._escape_strings` to `_ascii_escaped` to better communicate the function's purpose.
