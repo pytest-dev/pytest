@@ -179,7 +179,7 @@ def pytest_ignore_collect(path, config):
     if py.path.local(path) in ignore_paths:
         return True
 
-    invenv =  py.path.local(sys.prefix) == path 
+    invenv =  py.path.local(sys.prefix) == path
     allow_invenv = config.getoption("collect_in_virtualenv")
     if invenv and not allow_invenv:
         config.warn(RuntimeWarning,
