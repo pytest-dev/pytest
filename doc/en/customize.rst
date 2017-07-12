@@ -171,7 +171,16 @@ Builtin configuration file options
         norecursedirs = .svn _build tmp*
 
    This would tell ``pytest`` to not look into typical subversion or
-   sphinx-build directories or into any ``tmp`` prefixed directory.
+   sphinx-build directories or into any ``tmp`` prefixed directory.  
+   
+   Additionally, ``pytest`` will attempt to intelligently identify and ignore a
+   virtualenv by the presence of an activation script.  Any directory deemed to
+   be the root of a virtual environment will not be considered during test
+   collection unless ``‑‑collect‑in‑virtualenv`` is given.  Note also that
+   ``norecursedirs`` takes precedence over ``‑‑collect‑in‑virtualenv``; e.g. if
+   you intend to run tests in a virtualenv with a base directory that matches
+   ``'.*'`` you *must* override ``norecursedirs`` in addition to using the
+   ``‑‑collect‑in‑virtualenv`` flag.
 
 .. confval:: testpaths
 

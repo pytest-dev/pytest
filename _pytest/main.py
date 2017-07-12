@@ -71,7 +71,8 @@ def pytest_addoption(parser):
         dest="keepduplicates", default=False,
         help="Keep duplicate tests.")
     group.addoption('--collect-in-virtualenv', action='store_true',
-        help="Collect tests in the current Python installation (default False)")
+        dest='collect_in_virtualenv', default=False,
+        help="Don't ignore tests in a local virtualenv directory")
 
     group = parser.getgroup("debugconfig",
         "test session debugging and configuration")
@@ -192,11 +193,6 @@ def pytest_ignore_collect(path, config):
 
     allow_in_venv = config.getoption("collect_in_virtualenv")
     if _in_venv(path) and not allow_in_venv:
-        config.warn(RuntimeWarning,
-            'Path "%s" appears to be a Python virtual installation; skipping\n'
-            'Pass --collect-in-virtualenv to force collection of tests in "%s"\n'
-            'Use --ignore="%s" to silence this warning' % (path, path, path)
-        )
         return True
 
     # Skip duplicate paths.
