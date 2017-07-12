@@ -133,6 +133,10 @@ class _NodeReporter(object):
     def append_pass(self, report):
         self.add_stats('passed')
 
+    def append_rerun(self, report):
+        self._add_simple(
+            Junit.rerun, "rerun", report.longrepr)
+
     def append_failure(self, report):
         # msg = str(report.longrepr.reprtraceback.extraline)
         if hasattr(report, "wasxfail"):
@@ -270,6 +274,7 @@ class LogXML(object):
             'passed',
             'failure',
             'skipped',
+            'rerun',
         ], 0)
         self.node_reporters = {}  # nodeid -> _NodeReporter
         self.node_reporters_ordered = []
@@ -341,6 +346,9 @@ class LogXML(object):
             if report.when == "call":  # ignore setup/teardown
                 reporter = self._opentestcase(report)
                 reporter.append_pass(report)
+        elif hasattr(report, "outcome") and report.outcome == 'rerun':
+            reporter = self._opentestcase(report)
+            reporter.append_rerun(report)
         elif report.failed:
             if report.when == "teardown":
                 # The following vars are needed when xdist plugin is used
@@ -417,8 +425,8 @@ class LogXML(object):
         suite_time_delta = suite_stop_time - self.suite_start_time
 
         numtests = (self.stats['passed'] + self.stats['failure'] +
-                    self.stats['skipped'] + self.stats['error'] -
-                    self.cnt_double_fail_tests)
+                    self.stats['skipped'] + self.stats['error'] +
+                    self.stats['rerun'] - self.cnt_double_fail_tests)
         logfile.write('<?xml version="1.0" encoding="utf-8"?>')
 
         logfile.write(Junit.testsuite(
@@ -428,6 +436,7 @@ class LogXML(object):
             errors=self.stats['error'],
             failures=self.stats['failure'],
             skips=self.stats['skipped'],
+            reruns=self.stats['rerun'],
             tests=numtests,
             time="%.3f" % suite_time_delta, ).unicode(indent=0))
         logfile.close()
