@@ -1,1 +1,0 @@
-Now test function objects have a ``pytestmark`` attribute containing a list of marks applied directly to the test function, as opposed to marks inherited from parent classes or modules.

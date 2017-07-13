@@ -8,6 +8,80 @@
 
 .. towncrier release notes start
 
+Pytest 3.2.0 (2017-07-13)
+=========================
+
+Deprecations and Removals
+-------------------------
+
+- All old-style specific behavior in current classes in the pytest's API is
+  considered deprecated at this point and will be removed in a future release.
+  This affects Python 2 users only and in rare situations. (`#2147
+  <https://github.com/pytest-dev/pytest/issues/2147>`_)
+
+- A deprecation warning is now raised when using marks directly into parameters
+  in ``pytest.mark.parametrize``. Use ``pytest.param`` to apply marks to
+  parameters instead. (`#2427 <https://github.com/pytest-
+  dev/pytest/issues/2427>`_)
+
+
+Features
+--------
+
+- ``pytest.approx`` now supports ``numpy`` arrays and ``dicts``. (`#1994
+  <https://github.com/pytest-dev/pytest/issues/1994>`_)
+
+- Now test function objects have a ``pytestmark`` attribute containing a list
+  of marks applied directly to the test function, as opposed to marks inherited
+  from parent classes or modules. (`#2516 <https://github.com/pytest-
+  dev/pytest/issues/2516>`_)
+
+- Collection ignores local virtualenvs by default; `--collect-in-virtualenv`
+  overrides this behavior. (`#2518 <https://github.com/pytest-
+  dev/pytest/issues/2518>`_)
+
+- Allow class methods decorated as ``@staticmethod`` to be candidates for
+  collection as a test function. (Only for Python 2.7 and above. Python 2.6
+  will still ignore static methods.) (`#2528 <https://github.com/pytest-
+  dev/pytest/issues/2528>`_)
+
+- New ``cache_dir`` ini option: sets a directory where stores content of cache
+  plugin. Default directory is ``.cache`` which is created in ``rootdir``.
+  Directory may be relative or absolute path. If setting relative path, then
+  directory is created relative to ``rootdir``. Additionally path may contain
+  environment variables, that will be expanded. (`#2543
+  <https://github.com/pytest-dev/pytest/issues/2543>`_)
+
+
+Improved Documentation
+----------------------
+
+- Clarify ``pytest_configure`` hook call order. (`#2539
+  <https://github.com/pytest-dev/pytest/issues/2539>`_)
+
+
+Trivial/Internal Changes
+------------------------
+
+- Update help message for ``--strict`` to make it clear it only deals with
+  unregistered markers, not warnings. (`#2444 <https://github.com/pytest-
+  dev/pytest/issues/2444>`_)
+
+- Internal code move: move code for pytest.approx/pytest.raises to own files in
+  order to cut down the size of python.py (`#2489 <https://github.com/pytest-
+  dev/pytest/issues/2489>`_)
+
+- Renamed the utility function `_pytest.compat._escape_strings` to
+  `_ascii_escaped` to better communicate the function's purpose. (`#2533
+  <https://github.com/pytest-dev/pytest/issues/2533>`_)
+
+- Emit yield test warning only once per generator (`#2562
+  <https://github.com/pytest-dev/pytest/issues/2562>`_)
+
+- Ensure final collected line doesn't include artifacts of previous write.
+  (`#2571 <https://github.com/pytest-dev/pytest/issues/2571>`_)
+
+
 Pytest 3.1.3 (2017-07-03)
 =========================
 
