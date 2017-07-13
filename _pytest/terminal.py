@@ -290,6 +290,9 @@ class TerminalReporter:
         if self.isatty:
             if final:
                 line += " \n"
+                # Rewrite with empty line so we will not see the artifact of
+                # previous write
+                self.rewrite('')
             self.rewrite(line, bold=True)
         else:
             self.write_line(line)
