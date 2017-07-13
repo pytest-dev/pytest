@@ -3,7 +3,7 @@ import os
 import sys
 
 import pytest
-from _pytest.mark import MarkGenerator as Mark, ParameterSet
+from _pytest.mark import MarkGenerator as Mark, ParameterSet, transfer_markers
 
 class TestMark(object):
     def test_markinfo_repr(self):
@@ -772,3 +772,25 @@ class TestKeywordSelection(object):
 def test_parameterset_extractfrom(argval, expected):
     extracted = ParameterSet.extract_from(argval)
     assert extracted == expected
+
+
+def test_legacy_transfer():
+
+    class FakeModule(object):
+        pytestmark = []
+
+    class FakeClass(object):
+        pytestmark = pytest.mark.nofun
+
+    @pytest.mark.fun
+    def fake_method(self):
+        pass
+
+
+    transfer_markers(fake_method, FakeClass, FakeModule)
+
+    # legacy marks transfer smeared
+    assert fake_method.nofun
+    assert fake_method.fun
+    # pristine marks dont transfer
+    assert fake_method.pytestmark == [pytest.mark.fun.mark]

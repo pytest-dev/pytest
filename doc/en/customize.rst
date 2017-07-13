@@ -171,7 +171,16 @@ Builtin configuration file options
         norecursedirs = .svn _build tmp*
 
    This would tell ``pytest`` to not look into typical subversion or
-   sphinx-build directories or into any ``tmp`` prefixed directory.
+   sphinx-build directories or into any ``tmp`` prefixed directory.  
+   
+   Additionally, ``pytest`` will attempt to intelligently identify and ignore a
+   virtualenv by the presence of an activation script.  Any directory deemed to
+   be the root of a virtual environment will not be considered during test
+   collection unless ``‑‑collect‑in‑virtualenv`` is given.  Note also that
+   ``norecursedirs`` takes precedence over ``‑‑collect‑in‑virtualenv``; e.g. if
+   you intend to run tests in a virtualenv with a base directory that matches
+   ``'.*'`` you *must* override ``norecursedirs`` in addition to using the
+   ``‑‑collect‑in‑virtualenv`` flag.
 
 .. confval:: testpaths
 
@@ -262,3 +271,14 @@ Builtin configuration file options
 
    This tells pytest to ignore deprecation warnings and turn all other warnings
    into errors. For more information please refer to :ref:`warnings`.
+
+.. confval:: cache_dir
+
+   .. versionadded:: 3.2
+
+   Sets a directory where stores content of cache plugin. Default directory is
+   ``.cache`` which is created in :ref:`rootdir <rootdir>`. Directory may be
+   relative or absolute path. If setting relative path, then directory is created
+   relative to :ref:`rootdir <rootdir>`. Additionally path may contain environment
+   variables, that will be expanded. For more information about cache plugin
+   please refer to :ref:`cache_provider`.

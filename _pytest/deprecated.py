@@ -7,6 +7,11 @@ be removed when the time comes.
 """
 from __future__ import absolute_import, division, print_function
 
+
+class RemovedInPytest4Warning(DeprecationWarning):
+    """warning class for features removed in pytest 4.0"""
+
+
 MAIN_STR_ARGS = 'passing a string to pytest.main() is deprecated, ' \
                       'pass a list of arguments instead.'
 
@@ -22,3 +27,13 @@ SETUP_CFG_PYTEST = '[pytest] section in setup.cfg files is deprecated, use [tool
 GETFUNCARGVALUE = "use of getfuncargvalue is deprecated, use getfixturevalue"
 
 RESULT_LOG = '--result-log is deprecated and scheduled for removal in pytest 4.0'
+
+MARK_INFO_ATTRIBUTE = RemovedInPytest4Warning(
+    "MarkInfo objects are deprecated as they contain the merged marks"
+)
+
+MARK_PARAMETERSET_UNPACKING = RemovedInPytest4Warning(
+    "Applying marks directly to parameters is deprecated,"
+    " please use pytest.param(..., marks=...) instead.\n"
+    "For more details, see: https://docs.pytest.org/en/latest/parametrize.html"
+)
