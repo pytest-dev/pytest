@@ -70,6 +70,9 @@ def pytest_addoption(parser):
     group.addoption('--keepduplicates', '--keep-duplicates', action="store_true",
         dest="keepduplicates", default=False,
         help="Keep duplicate tests.")
+    group.addoption('--collect-in-virtualenv', action='store_true',
+        dest='collect_in_virtualenv', default=False,
+        help="Don't ignore tests in a local virtualenv directory")
 
     group = parser.getgroup("debugconfig",
         "test session debugging and configuration")
@@ -167,6 +170,17 @@ def pytest_runtestloop(session):
     return True
 
 
+def _in_venv(path):
+    """Attempts to detect if ``path`` is the root of a Virtual Environment by
+    checking for the existence of the appropriate activate script"""
+    bindir = path.join('Scripts' if sys.platform.startswith('win') else 'bin')
+    if not bindir.exists():
+        return False
+    activates = ('activate', 'activate.csh', 'activate.fish',
+                 'Activate', 'Activate.bat', 'Activate.ps1')
+    return any([fname.basename in activates for fname in bindir.listdir()])
+
+
 def pytest_ignore_collect(path, config):
     ignore_paths = config._getconftest_pathlist("collect_ignore", path=path.dirpath())
     ignore_paths = ignore_paths or []
@@ -175,6 +189,10 @@ def pytest_ignore_collect(path, config):
         ignore_paths.extend([py.path.local(x) for x in excludeopt])
 
     if py.path.local(path) in ignore_paths:
+        return True
+
+    allow_in_venv = config.getoption("collect_in_virtualenv")
+    if _in_venv(path) and not allow_in_venv:
         return True
 
     # Skip duplicate paths.
