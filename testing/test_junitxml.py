@@ -231,6 +231,27 @@ class TestPython(object):
         snode = tnode.find_first_by_tag("skipped")
         snode.assert_attr(type="pytest.skip", message="hello23", )
 
+    def test_rerun_contains_name_reason(self, testdir):
+        pytest.importorskip('pytest_rerunfailures')
+        testdir.makepyfile("""
+            import pytest
+            def test_rerun(my_lst=[]):
+                my_lst.append(None)
+                assert len(my_lst) > 2
+        """)
+        result, dom = runandparse(testdir, '--rerun=5')
+        assert result.ret == 0
+        node = dom.find_first_by_tag("testsuite")
+        node.assert_attr(reruns=2)
+        tnode = node.find_first_by_tag("testcase")
+        tnode.assert_attr(
+            file="test_rerun_contains_name_reason.py",
+            line="1",
+            classname="test_rerun_contains_name_reason",
+            name="test_rerun")
+        snode = tnode.find_first_by_tag("rerun")
+        snode.assert_attr(message="rerun", )
+
     def test_mark_skip_contains_name_reason(self, testdir):
         testdir.makepyfile("""
             import pytest
