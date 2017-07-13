@@ -1,1 +1,1 @@
-introduce deprecation warnings for legacy marks based parametersets
+A deprecation warning is now raised when using marks directly into parameters in ``pytest.mark.parametrize``. Use ``pytest.param`` to apply marks to parameters instead.

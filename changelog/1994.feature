@@ -1,1 +1,1 @@
-Add support for numpy arrays (and dicts) to approx.
+``pytest.approx`` now supports ``numpy`` arrays and ``dicts``.
