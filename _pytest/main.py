@@ -536,6 +536,21 @@ class Item(Node):
         self._report_sections = []
 
     def add_report_section(self, when, key, content):
+        """
+        Adds a new report section, similar to what's done internally to add stdout and
+        stderr captured output::
+
+            item.add_report_section("call", "stdout", "report section contents")
+
+        :param str when:
+            One of the possible capture states, ``"setup"``, ``"call"``, ``"teardown"``.
+        :param str key:
+            Name of the section, can be customized at will. Pytest uses ``"stdout"`` and
+            ``"stderr"`` internally.
+
+        :param str content:
+            The full contents as a string.
+        """
         if content:
             self._report_sections.append((when, key, content))
 
