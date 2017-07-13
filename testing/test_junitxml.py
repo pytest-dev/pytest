@@ -232,10 +232,7 @@ class TestPython(object):
         snode.assert_attr(type="pytest.skip", message="hello23", )
 
     def test_rerun_contains_name_reason(self, testdir):
-        try:
-            import pytest_rerunfailures  # noqa
-        except ImportError:
-            pytest.skip("could not import 'python_rerunfailures'")
+        pytest.importorskip('pytest_rerunfailures')
         testdir.makepyfile("""
             import pytest
             def test_rerun(my_lst=[]):
