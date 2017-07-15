@@ -804,47 +804,60 @@ without declaring a function argument explicitly or a `usefixtures`_ decorator.
 As a practical example, suppose we have a database fixture which has a
 begin/rollback/commit architecture and we want to automatically surround
 each test method by a transaction and a rollback.  Here is a dummy
-self-contained implementation of this idea::
+self-contained implementation of this idea in a style resembling xUnit setup
+and tearDown methods::
 
-    # content of test_db_transact.py
+    # content of test_foo.py
 
     import pytest
+    import MyFoo
 
-    class DB(object):
-        def __init__(self):
-            self.intransaction = []
-        def begin(self, name):
-            self.intransaction.append(name)
-        def rollback(self):
-            self.intransaction.pop()
+    foo = MyFoo()
 
-    @pytest.fixture(scope="module")
-    def db():
-        return DB()
+    class TestFoo:
+        @classmethod
+        @pytest.fixture(scope='class', autouse=True)
+        def setup(cls, request):
+            cls.session = foo.session()
+            def tearDown():
+                cls.session.logout()
+            request.addfinalizer(tearDown)
 
-    class TestClass(object):
-        @pytest.fixture(autouse=True)
-        def transact(self, request, db):
-            db.begin(request.function.__name__)
-            yield
-            db.rollback()
+        def test_foo(self):
+            session = self.session
+            # test code can now use session
 
-        def test_method1(self, db):
-            assert db.intransaction == ["test_method1"]
+However, it is preferred to treat the test class purely as a container when
+using fixtures, so it makes more sense to stay away from storing state on it.
+Another way of realizing this, also using fixture names which do not conflict
+with xUnit or nose setup/tearDown compatibility names to avoid confusion::
 
-        def test_method2(self, db):
-            assert db.intransaction == ["test_method2"]
+    # content of test_bar.py
 
-The class-level ``transact`` fixture is marked with *autouse=true*
+    import pytest
+    import MyFoo
+
+    foo = MyFoo()
+
+    class TestFoo:
+        @classmethod
+        @pytest.fixture(scope='class', autouse=True)
+        def session(self, request):
+            session = foo.session()
+            request.addfinalizer(session.logout)
+            return session
+
+        def test_foo(self):
+            # test code not using the session explicitly,
+            # will still be created and logged out however.
+
+        def test_bar(self, session):
+            # test code using session explicitly.
+
+The class-level ``session`` fixture is marked with *autouse=true*
 which implies that all test methods in the class will use this fixture
 without a need to state it in the test function signature or with a
 class-level ``usefixtures`` decorator.
-
-If we run it, we get two passing tests::
-
-    $ pytest -q
-    ..
-    2 passed in 0.12 seconds
 
 Here is how autouse fixtures work in other scopes:
 
@@ -865,28 +878,28 @@ Here is how autouse fixtures work in other scopes:
   a global fixture should always quickly determine if it should do
   any work and avoid otherwise expensive imports or computation.
 
-Note that the above ``transact`` fixture may very well be a fixture that
+Note that the above ``session`` fixture may very well be a fixture that
 you want to make available in your project without having it generally
-active.  The canonical way to do that is to put the transact definition
+active.  The canonical way to do that is to put the session definition
 into a conftest.py file **without** using ``autouse``::
 
     # content of conftest.py
     @pytest.fixture
-    def transact(self, request, db):
-        db.begin()
-        yield
-        db.rollback()
+    def session(self, request):
+        session = foo.session()
+        request.addfinalizer(session.logout)
+        return session
 
 and then e.g. have a TestClass using it by declaring the need::
 
-    @pytest.mark.usefixtures("transact")
+    @pytest.mark.usefixtures("session")
     class TestClass(object):
         def test_method1(self):
             ...
 
-All test methods in this TestClass will use the transaction fixture while
+All test methods in this TestClass will use the session fixture while
 other test classes or functions in the module will not use it unless
-they also add a ``transact`` reference.
+they also add a ``session`` reference.
 
 
 Shifting (visibility of) fixture functions
