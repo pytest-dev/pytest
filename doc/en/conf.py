@@ -19,7 +19,7 @@
 # The short X.Y version.
 
 import os, sys
-from _pytest import __version__ as version
+from pytest import __version__ as version
 release = ".".join(version.split(".")[:2])
 
 # If extensions (or modules to document with autodoc) are in another directory,

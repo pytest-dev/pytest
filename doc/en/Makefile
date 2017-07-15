@@ -6,6 +6,8 @@ SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = _build
+VENV          = env/bin/activate
+
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
@@ -44,7 +46,7 @@ regen:
 	PYTHONDONTWRITEBYTECODE=1 PYTEST_ADDOPT=-pno:hypothesis COLUMNS=76 regendoc --update *.rst */*.rst ${REGENDOC_ARGS}
 
 html:
-	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
+	. $(VENV); $(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
@@ -150,3 +152,17 @@ info:
 	@echo "Running Texinfo files through makeinfo..."
 	make -C $(BUILDDIR)/texinfo info
 	@echo "makeinfo finished; the Info files are in $(BUILDDIR)/texinfo."
+
+
+install:
+	@echo "... setting up virtualenv"
+	virtualenv env
+	. $(VENV); pip install -r requirements.txt
+	@echo "\n" \
+	  "--------------------------------------------------------------- \n" \
+      "* watch, build and serve the documentation: make run \n" \
+	  "* check spelling: make spelling \n" \
+	  "\n" \
+      "enchant must be installed in order for pyenchant (and therefore \n" \
+	  "spelling checks) to work. \n" \
+	  "--------------------------------------------------------------- \n"
