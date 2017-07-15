@@ -1,5 +1,6 @@
 import math
 import sys
+
 import py
 
 from _pytest.compat import isclass, izip
