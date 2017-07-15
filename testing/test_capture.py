@@ -1037,6 +1037,15 @@ def test_capture_not_started_but_reset():
     capsys.stop_capturing()
 
 
+def test_using_capsys_fixture_works_with_sys_stdout_encoding(capsys):
+    test_text = 'test text'
+
+    print(test_text.encode(sys.stdout.encoding, 'replace'))
+    (out, err) = capsys.readouterr()
+    assert out
+    assert err == ''
+
+
 @needsosdup
 @pytest.mark.parametrize('use', [True, False])
 def test_fdcapture_tmpfile_remains_the_same(tmpfile, use):
