@@ -1,6 +1,5 @@
 import math
 import sys
-
 import py
 
 from _pytest.compat import isclass, izip
@@ -32,6 +31,12 @@ class ApproxBase(object):
 
     __hash__ = None
 
+    def __gt__(self, actual):
+        raise NotImplementedError
+
+    def __lt__(self, actual):
+        raise NotImplementedError
+
     def __ne__(self, actual):
         return not (actual == self)
 
@@ -59,6 +64,12 @@ class ApproxNumpy(ApproxBase):
         # shape of the array...
         return "approx({0!r})".format(list(
             self._approx_scalar(x) for x in self.expected))
+
+    def __gt__(self, actual):
+        raise NotImplementedError
+
+    def __lt__(self, actual):
+        raise NotImplementedError
 
     def __eq__(self, actual):
         import numpy as np
@@ -358,6 +369,22 @@ def approx(expected, rel=None, abs=None, nan_ok=False):
       is asymmetric and you can think of ``b`` as the reference value.  In the
       special case that you explicitly specify an absolute tolerance but not a
       relative tolerance, only the absolute tolerance is considered.
+    
+    .. warning::
+
+       In order to avoid inconsistent behavior, a ``NotImplementedError`` is 
+       raised for ``__lt__`` and ``__gt__`` comparisons. The example below 
+       illustrates the problem::
+
+           assert approx(0.1) > 0.1 + 1e-10  # calls approx(0.1).__gt__(0.1 + 1e-10)
+           assert 0.1 + 1e-10 > approx(0.1)  # calls approx(0.1).__lt__(0.1 + 1e-10)
+
+       In the second example one expects ``approx(0.1).__le__(0.1 + 1e-10)``
+       to be called. But instead, ``approx(0.1).__lt__(0.1 + 1e-10)`` is used to
+       comparison. This is because the call hierarchy of rich comparisons
+       follows a fixed behavior. `More information...`__
+
+       __ https://docs.python.org/3/reference/datamodel.html#object.__ge__
     """
 
     from collections import Mapping, Sequence
