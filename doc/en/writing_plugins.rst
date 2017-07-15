@@ -122,8 +122,8 @@ to extend and add functionality.
     for authoring plugins.
 
     The template provides an excellent starting point with a working plugin,
-    tests running with tox, comprehensive README and
-    entry-pointy already pre-configured.
+    tests running with tox, a comprehensive README file as well as a
+    pre-configured entry-point.
 
 Also consider :ref:`contributing your plugin to pytest-dev<submitplugin>`
 once it has some happy users other than yourself.
