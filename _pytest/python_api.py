@@ -372,8 +372,8 @@ def approx(expected, rel=None, abs=None, nan_ok=False):
     
     .. warning::
 
-       In order to avoid inconsistent behavior, a ``NotImplementedError`` is 
-       raised for ``__lt__`` and ``__gt__`` comparisons. The example below 
+       In order to avoid inconsistent behavior, a ``NotImplementedError`` is
+       raised for ``__lt__`` and ``__gt__`` comparisons. The example below
        illustrates the problem::
 
            assert approx(0.1) > 0.1 + 1e-10  # calls approx(0.1).__gt__(0.1 + 1e-10)
