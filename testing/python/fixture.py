@@ -2713,7 +2713,7 @@ class TestShowFixtures(object):
         """)
 
     def test_show_fixtures_trimmed_doc(self, testdir):
-        p = testdir.makepyfile('''
+        p = testdir.makepyfile(dedent('''
             import pytest
             @pytest.fixture
             def arg1():
@@ -2729,9 +2729,9 @@ class TestShowFixtures(object):
                 line2
 
                 """
-        ''')
+        '''))
         result = testdir.runpytest("--fixtures", p)
-        result.stdout.fnmatch_lines("""
+        result.stdout.fnmatch_lines(dedent("""
             * fixtures defined from test_show_fixtures_trimmed_doc *
             arg2
                 line1
@@ -2740,7 +2740,64 @@ class TestShowFixtures(object):
                 line1
                 line2
 
-        """)
+        """))
+
+    def test_show_fixtures_indented_doc(self, testdir):
+        p = testdir.makepyfile(dedent('''
+            import pytest
+            @pytest.fixture
+            def fixture1():
+                """
+                line1
+                    indented line
+                """
+        '''))
+        result = testdir.runpytest("--fixtures", p)
+        result.stdout.fnmatch_lines(dedent("""
+            * fixtures defined from test_show_fixtures_indented_doc *
+            fixture1
+                line1
+                    indented line
+        """))
+
+    def test_show_fixtures_indented_doc_first_line_unindented(self, testdir):
+        p = testdir.makepyfile(dedent('''
+            import pytest
+            @pytest.fixture
+            def fixture1():
+                """line1
+                line2
+                    indented line
+                """
+        '''))
+        result = testdir.runpytest("--fixtures", p)
+        result.stdout.fnmatch_lines(dedent("""
+            * fixtures defined from test_show_fixtures_indented_doc_first_line_unindented *
+            fixture1
+                line1
+                line2
+                    indented line
+        """))
+
+    def test_show_fixtures_indented_in_class(self, testdir):
+        p = testdir.makepyfile(dedent('''
+            import pytest
+            class TestClass:
+                @pytest.fixture
+                def fixture1():
+                    """line1
+                    line2
+                        indented line
+                    """
+        '''))
+        result = testdir.runpytest("--fixtures", p)
+        result.stdout.fnmatch_lines(dedent("""
+            * fixtures defined from test_show_fixtures_indented_in_class *
+            fixture1
+                line1
+                line2
+                    indented line
+        """))
 
 
     def test_show_fixtures_different_files(self, testdir):
