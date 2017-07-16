@@ -30,7 +30,8 @@ EXIT_NOTESTSCOLLECTED = 5
 def pytest_addoption(parser):
     parser.addini("norecursedirs", "directory patterns to avoid for recursion",
                   type="args", default=['.*', 'build', 'dist', 'CVS', '_darcs', '{arch}', '*.egg', 'venv'])
-    parser.addini("testpaths", "directories to search for tests when no files or directories are given in the command line.",
+    parser.addini("testpaths", "directories to search for tests when no files or directories are given in the "
+                               "command line.",
                   type="args", default=[])
     # parser.addini("dirpatterns",
     #    "patterns specifying possible locations of test files",
@@ -47,7 +48,8 @@ def pytest_addoption(parser):
     group._addoption('--strict', action="store_true",
                      help="marks not registered in configuration file raise errors.")
     group._addoption("-c", metavar="file", type=str, dest="inifilename",
-                     help="load configuration from `file` instead of trying to locate one of the implicit configuration files.")
+                     help="load configuration from `file` instead of trying to locate one of the implicit "
+                          "configuration files.")
     group._addoption("--continue-on-collection-errors", action="store_true",
                      default=False, dest="continue_on_collection_errors",
                      help="Force test execution even if collection errors occur.")

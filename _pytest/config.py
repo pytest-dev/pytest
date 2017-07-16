@@ -211,7 +211,8 @@ class PytestPluginManager(PluginManager):
         """
         .. deprecated:: 2.8
 
-        Use :py:meth:`pluggy.PluginManager.add_hookspecs <_pytest.vendored_packages.pluggy.PluginManager.add_hookspecs>` instead.
+        Use :py:meth:`pluggy.PluginManager.add_hookspecs <_pytest.vendored_packages.pluggy.PluginManager.add_hookspecs>`
+        instead.
         """
         warning = dict(code="I2",
                        fslocation=_pytest._code.getfslineno(sys._getframe(1)),

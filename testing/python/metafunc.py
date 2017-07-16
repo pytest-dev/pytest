@@ -178,11 +178,27 @@ class TestMetafunc(object):
         """
         from _pytest.python import _idval
         values = [
-            (u'', ''),
-            (u'ascii', 'ascii'),
-            (u'ação', 'a\\xe7\\xe3o'),
-            (u'josé@blah.com', 'jos\\xe9@blah.com'),
-            (u'δοκ.ιμή@παράδειγμα.δοκιμή', '\\u03b4\\u03bf\\u03ba.\\u03b9\\u03bc\\u03ae@\\u03c0\\u03b1\\u03c1\\u03ac\\u03b4\\u03b5\\u03b9\\u03b3\\u03bc\\u03b1.\\u03b4\\u03bf\\u03ba\\u03b9\\u03bc\\u03ae'),
+            (
+                u'',
+                ''
+            ),
+            (
+                u'ascii',
+                'ascii'
+            ),
+            (
+                u'ação',
+                'a\\xe7\\xe3o'
+            ),
+            (
+                u'josé@blah.com',
+                'jos\\xe9@blah.com'
+            ),
+            (
+                u'δοκ.ιμή@παράδειγμα.δοκιμή',
+                '\\u03b4\\u03bf\\u03ba.\\u03b9\\u03bc\\u03ae@\\u03c0\\u03b1\\u03c1\\u03ac\\u03b4\\u03b5\\u03b9\\u03b3'
+                '\\u03bc\\u03b1.\\u03b4\\u03bf\\u03ba\\u03b9\\u03bc\\u03ae'
+            ),
         ]
         for val, expected in values:
             assert _idval(val, 'a', 6, None) == expected
