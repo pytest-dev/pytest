@@ -1415,7 +1415,10 @@ class approx(object):
         # or a sequence of numbers, return a list of ApproxNotIterable objects
         # that can be compared against.
         from collections import Iterable
-        approx_non_iter = lambda x: ApproxNonIterable(x, self.rel, self.abs)
+
+        def approx_non_iter(x):
+            return ApproxNonIterable(x, self.rel, self.abs)
+
         if isinstance(self._expected, Iterable):
             return [approx_non_iter(x) for x in self._expected]
         else:
@@ -1489,7 +1492,8 @@ class ApproxNonIterable(object):
 
     @property
     def tolerance(self):
-        set_default = lambda x, default: x if x is not None else default
+        def set_default(x, default):
+            return x if x is not None else default
 
         # Figure out what the absolute tolerance should be.  ``self.abs`` is
         # either None or a value specified by the user.

@@ -111,11 +111,17 @@ def assertrepr_compare(config, op, left, right):
 
     summary = u('%s %s %s') % (ecu(left_repr), op, ecu(right_repr))
 
-    issequence = lambda x: (isinstance(x, (list, tuple, Sequence)) and
-                            not isinstance(x, basestring))
-    istext = lambda x: isinstance(x, basestring)
-    isdict = lambda x: isinstance(x, dict)
-    isset = lambda x: isinstance(x, (set, frozenset))
+    def issequence(x):
+        return (isinstance(x, (list, tuple, Sequence)) and not isinstance(x, basestring))
+
+    def istext(x):
+        return isinstance(x, basestring)
+
+    def isdict(x):
+        return isinstance(x, dict)
+
+    def isset(x):
+        return isinstance(x, (set, frozenset))
 
     def isiterable(obj):
         try:

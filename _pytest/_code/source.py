@@ -136,7 +136,8 @@ class Source(object):
         try:
             import parser
         except ImportError:
-            syntax_checker = lambda x: compile(x, 'asd', 'exec')
+            def syntax_checker(x):
+                return compile(x, 'asd', 'exec')
         else:
             syntax_checker = parser.suite
 

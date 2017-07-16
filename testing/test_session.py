@@ -22,7 +22,10 @@ class SessionTests(object):
         assert len(skipped) == 0
         assert len(passed) == 1
         assert len(failed) == 3
-        end = lambda x: x.nodeid.split("::")[-1]
+
+        def end(x):
+            return x.nodeid.split("::")[-1]
+
         assert end(failed[0]) == "test_one_one"
         assert end(failed[1]) == "test_other"
         itemstarted = reprec.getcalls("pytest_itemcollected")
