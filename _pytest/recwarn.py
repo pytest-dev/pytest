@@ -201,4 +201,4 @@ class WarningsChecker(WarningsRecorder):
                     fail("DID NOT WARN. No warnings of type {0} was emitted. "
                          "The list of emitted warnings is: {1}.".format(
                              self.expected_warning,
-                            [each.message for each in self]))
+                             [each.message for each in self]))

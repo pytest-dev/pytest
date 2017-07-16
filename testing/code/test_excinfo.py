@@ -935,9 +935,9 @@ raise ValueError()
         {'style': style, 'showlocals': showlocals,
          'funcargs': funcargs, 'tbfilter': tbfilter
          } for style in ("long", "short", "no")
-            for showlocals in (True, False)
-                for tbfilter in (True, False)
-                    for funcargs in (True, False)])
+        for showlocals in (True, False)
+        for tbfilter in (True, False)
+        for funcargs in (True, False)])
     def test_format_excinfo(self, importasmod, reproptions):
         mod = importasmod("""
             def g(x):

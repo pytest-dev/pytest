@@ -699,7 +699,7 @@ def test_skipped_reasons_functional(testdir):
                 def test_method(self):
                     doskip()
        """,
-       conftest = """
+        conftest = """
             import pytest
             def doskip():
                 pytest.skip('test')

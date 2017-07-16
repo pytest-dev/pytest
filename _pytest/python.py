@@ -419,7 +419,7 @@ class Module(main.File, PyCollector):
                 "  %s\n"
                 "HINT: remove __pycache__ / .pyc files and/or use a "
                 "unique basename for your test file modules"
-                 % e.args
+                % e.args
             )
         except ImportError:
             from _pytest._code.code import ExceptionInfo

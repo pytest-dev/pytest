@@ -44,13 +44,13 @@ class TestApprox(object):
     def test_exactly_equal(self):
         examples = [
             (2.0, 2.0),
-                (0.1e200, 0.1e200),
-                (1.123e-300, 1.123e-300),
-                (12345, 12345.0),
-                (0.0, -0.0),
-                (345678, 345678),
-                (Decimal('1.0001'), Decimal('1.0001')),
-                (Fraction(1, 3), Fraction(-1, -3)),
+            (0.1e200, 0.1e200),
+            (1.123e-300, 1.123e-300),
+            (12345, 12345.0),
+            (0.0, -0.0),
+            (345678, 345678),
+            (Decimal('1.0001'), Decimal('1.0001')),
+            (Fraction(1, 3), Fraction(-1, -3)),
         ]
         for a, x in examples:
             assert a == approx(x)
@@ -58,7 +58,7 @@ class TestApprox(object):
     def test_opposite_sign(self):
         examples = [
             (eq, 1e-100, -1e-100),
-                (ne, 1e100, -1e100),
+            (ne, 1e100, -1e100),
         ]
         for op, a, x in examples:
             assert op(a, approx(x))
@@ -66,7 +66,7 @@ class TestApprox(object):
     def test_zero_tolerance(self):
         within_1e10 = [
             (1.1e-100, 1e-100),
-                (-1.1e-100, -1e-100),
+            (-1.1e-100, -1e-100),
         ]
         for a, x in within_1e10:
             assert x == approx(x, rel=0.0, abs=0.0)
@@ -93,9 +93,9 @@ class TestApprox(object):
         # Everything should be equal if the tolerance is infinite.
         large_diffs = [
             (1, 1000),
-                (1e-50, 1e50),
-                (-1.0, -1e300),
-                (0.0, 10),
+            (1e-50, 1e50),
+            (-1.0, -1e300),
+            (0.0, 10),
         ]
         for a, x in large_diffs:
             assert a != approx(x, rel=0.0, abs=0.0)
@@ -136,14 +136,14 @@ class TestApprox(object):
         # the choice of defaults.
         examples = [
             # Relative tolerance used.
-                (eq, 1e100 + 1e94, 1e100),
-                (ne, 1e100 + 2e94, 1e100),
-                (eq, 1e0 + 1e-6, 1e0),
-                (ne, 1e0 + 2e-6, 1e0),
-                # Absolute tolerance used.
-                (eq, 1e-100, + 1e-106),
-                (eq, 1e-100, + 2e-106),
-                (eq, 1e-100, 0),
+            (eq, 1e100 + 1e94, 1e100),
+            (ne, 1e100 + 2e94, 1e100),
+            (eq, 1e0 + 1e-6, 1e0),
+            (ne, 1e0 + 2e-6, 1e0),
+            # Absolute tolerance used.
+            (eq, 1e-100, + 1e-106),
+            (eq, 1e-100, + 2e-106),
+            (eq, 1e-100, 0),
         ]
         for op, a, x in examples:
             assert op(a, approx(x))
@@ -167,8 +167,8 @@ class TestApprox(object):
     def test_relative_tolerance(self):
         within_1e8_rel = [
             (1e8 + 1e0, 1e8),
-                (1e0 + 1e-8, 1e0),
-                (1e-8 + 1e-16, 1e-8),
+            (1e0 + 1e-8, 1e0),
+            (1e-8 + 1e-16, 1e-8),
         ]
         for a, x in within_1e8_rel:
             assert a == approx(x, rel=5e-8, abs=0.0)
@@ -177,8 +177,8 @@ class TestApprox(object):
     def test_absolute_tolerance(self):
         within_1e8_abs = [
             (1e8 + 9e-9, 1e8),
-                (1e0 + 9e-9, 1e0),
-                (1e-8 + 9e-9, 1e-8),
+            (1e0 + 9e-9, 1e0),
+            (1e-8 + 9e-9, 1e-8),
         ]
         for a, x in within_1e8_abs:
             assert a == approx(x, rel=0, abs=5e-8)
@@ -202,10 +202,10 @@ class TestApprox(object):
     def test_expecting_inf(self):
         examples = [
             (eq, inf, inf),
-                (eq, -inf, -inf),
-                (ne, inf, -inf),
-                (ne, 0.0, inf),
-                (ne, nan, inf),
+            (eq, -inf, -inf),
+            (ne, inf, -inf),
+            (ne, 0.0, inf),
+            (ne, nan, inf),
         ]
         for op, a, x in examples:
             assert op(a, approx(x))
@@ -213,10 +213,10 @@ class TestApprox(object):
     def test_expecting_nan(self):
         examples = [
             (nan, nan),
-                (-nan, -nan),
-                (nan, -nan),
-                (0.0, nan),
-                (inf, nan),
+            (-nan, -nan),
+            (nan, -nan),
+            (0.0, nan),
+            (inf, nan),
         ]
         for a, x in examples:
             # If there is a relative tolerance and the expected value is NaN,
@@ -231,8 +231,8 @@ class TestApprox(object):
     def test_expecting_sequence(self):
         within_1e8 = [
             (1e8 + 1e0, 1e8),
-                (1e0 + 1e-8, 1e0),
-                (1e-8 + 1e-16, 1e-8),
+            (1e0 + 1e-8, 1e0),
+            (1e-8 + 1e-16, 1e-8),
         ]
         actual, expected = zip(*within_1e8)
         assert actual == approx(expected, rel=5e-8, abs=0.0)
@@ -244,9 +244,9 @@ class TestApprox(object):
     def test_complex(self):
         within_1e6 = [
             ( 1.000001 + 1.0j, 1.0 + 1.0j),
-                (1.0 + 1.000001j, 1.0 + 1.0j),
-                (-1.000001 + 1.0j, -1.0 + 1.0j),
-                (1.0 - 1.000001j, 1.0 - 1.0j),
+            (1.0 + 1.000001j, 1.0 + 1.0j),
+            (-1.000001 + 1.0j, -1.0 + 1.0j),
+            (1.0 - 1.000001j, 1.0 - 1.0j),
         ]
         for a, x in within_1e6:
             assert a == approx(x, rel=5e-6, abs=0)
@@ -255,7 +255,7 @@ class TestApprox(object):
     def test_int(self):
         within_1e6 = [
             (1000001, 1000000),
-                (-1000001, -1000000),
+            (-1000001, -1000000),
         ]
         for a, x in within_1e6:
             assert a == approx(x, rel=5e-6, abs=0)
@@ -264,7 +264,7 @@ class TestApprox(object):
     def test_decimal(self):
         within_1e6 = [
             (Decimal('1.000001'), Decimal('1.0')),
-                (Decimal('-1.000001'), Decimal('-1.0')),
+            (Decimal('-1.000001'), Decimal('-1.0')),
         ]
         for a, x in within_1e6:
             assert a == approx(x, rel=Decimal('5e-6'), abs=0)
@@ -273,7 +273,7 @@ class TestApprox(object):
     def test_fraction(self):
         within_1e6 = [
             (1 + Fraction(1, 1000000), Fraction(1)),
-                (-1 - Fraction(-1, 1000000), Fraction(-1)),
+            (-1 - Fraction(-1, 1000000), Fraction(-1)),
         ]
         for a, x in within_1e6:
             assert a == approx(x, rel=5e-6, abs=0)

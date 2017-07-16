@@ -223,7 +223,7 @@ class TestCollectonly(object):
         result = testdir.runpytest("--collect-only",)
         result.stdout.fnmatch_lines([
             "<Module 'test_collectonly_basic.py'>",
-           "  <Function 'test_func'>",
+            "  <Function 'test_func'>",
         ])
 
     def test_collectonly_skipped_module(self, testdir):
