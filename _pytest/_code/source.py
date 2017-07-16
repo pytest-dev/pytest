@@ -86,7 +86,7 @@ class Source(object):
         before = Source(before)
         after = Source(after)
         newsource = Source()
-        lines = [ (indent + line) for line in self.lines]
+        lines = [(indent + line) for line in self.lines]
         newsource.lines = before.lines + lines +  after.lines
         return newsource
 

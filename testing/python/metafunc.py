@@ -141,7 +141,7 @@ class TestMetafunc(object):
 
     @pytest.mark.issue510
     def test_parametrize_empty_list(self):
-        def func( y): pass
+        def func(y): pass
         metafunc = self.Metafunc(func)
         metafunc.parametrize("y", [])
         assert 'skip' in metafunc._calls[0].keywords

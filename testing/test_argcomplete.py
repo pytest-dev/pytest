@@ -52,7 +52,7 @@ class FilesCompleter(object):
             if self.directories:
                 files = _wrapcall(['bash','-c',
                                    "compgen -A directory -- '{p}'".format(p=prefix)])
-                completion += [ f + '/' for f in files]
+                completion += [f + '/' for f in files]
             for x in self.allowednames:
                 completion += _wrapcall(['bash', '-c',
                                          "compgen -A file -X '!*.{0}' -- '{p}'".format(x,p=prefix)])
@@ -63,7 +63,7 @@ class FilesCompleter(object):
             anticomp = _wrapcall(['bash', '-c',
                                   "compgen -A directory -- '{p}'".format(p=prefix)])
 
-            completion = list( set(completion) - set(anticomp))
+            completion = list(set(completion) - set(anticomp))
 
             if self.directories:
                 completion += [f + '/' for f in anticomp]
