@@ -16,8 +16,8 @@ def test_generic_path(testdir):
     p1 = Node('a', config=config, session=session)
     #assert p1.fspath is None
     p2 = Node('B', parent=p1)
-    p3 = Node('()', parent = p2)
-    item = Item('c', parent = p3)
+    p3 = Node('()', parent=p2)
+    item = Item('c', parent=p3)
 
     res = generic_path(item)
     assert res == 'a.B().c'
@@ -25,9 +25,9 @@ def test_generic_path(testdir):
     p0 = FSCollector('proj/test', config=config, session=session)
     p1 = FSCollector('proj/test/a', parent=p0)
     p2 = Node('B', parent=p1)
-    p3 = Node('()', parent = p2)
+    p3 = Node('()', parent=p2)
     p4 = Node('c', parent=p3)
-    item = Item('[1]', parent = p4)
+    item = Item('[1]', parent=p4)
 
     res = generic_path(item)
     assert res == 'test/a:B().c[1]'

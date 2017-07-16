@@ -871,7 +871,7 @@ class Testdir:
         kw = {self.request.function.__name__: Source(source).strip()}
         path = self.makepyfile(**kw)
         if withinit:
-            self.makepyfile(__init__ = "#")
+            self.makepyfile(__init__="#")
         self.config = config = self.parseconfigure(path, *configargs)
         node = self.getnode(config, path)
 

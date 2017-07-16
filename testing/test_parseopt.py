@@ -238,7 +238,7 @@ class TestParser(object):
         assert args.file_or_dir == ['abcd']
 
     def test_drop_short_help0(self, parser, capsys):
-        parser.addoption('--func-args', '--doit', help = 'foo',
+        parser.addoption('--func-args', '--doit', help='foo',
                          action='store_true')
         parser.parse([])
         help = parser.optparser.format_help()

@@ -176,8 +176,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
         # or a funtools.wrapped.
         # We musn't if it's been wrapped with mock.patch (python 2 only)
         if not (isfunction(obj) or isfunction(get_real_func(obj))):
-            collector.warn(code="C2", message=
-                           "cannot collect %r because it is not a function."
+            collector.warn(code="C2", message="cannot collect %r because it is not a function."
                            % name, )
         elif getattr(obj, "__test__", True):
             if is_generator(obj):

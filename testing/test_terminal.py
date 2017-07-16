@@ -38,7 +38,7 @@ def pytest_generate_tests(metafunc):
         metafunc.addcall(id="verbose",
                          funcargs={'option': Option(verbose=True)})
         metafunc.addcall(id="quiet",
-                         funcargs={'option': Option(verbose= -1)})
+                         funcargs={'option': Option(verbose=-1)})
         metafunc.addcall(id="fulltrace",
                          funcargs={'option': Option(fulltrace=True)})
 

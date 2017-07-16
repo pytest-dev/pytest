@@ -44,7 +44,7 @@ def pytest_addoption(parser):
                     help="display pytest lib version and import information.")
     group._addoption("-h", "--help", action=HelpAction, dest="help",
                      help="show help message and configuration info")
-    group._addoption('-p', action="append", dest="plugins", default = [],
+    group._addoption('-p', action="append", dest="plugins", default=[],
                      metavar="name",
                      help="early-load given plugin (multi-allowed). "
                      "To avoid loading of plugins, use the `no:` prefix, e.g. "

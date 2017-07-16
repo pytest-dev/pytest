@@ -99,7 +99,7 @@ class TestConfigCmdlineParsing(object):
             [pytest]
             custom = 0
         """)
-        testdir.makefile(".cfg", custom = """
+        testdir.makefile(".cfg", custom="""
             [pytest]
             custom = 1
         """)
