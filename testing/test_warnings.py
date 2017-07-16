@@ -173,9 +173,9 @@ def test_works_with_filterwarnings(testdir):
 
         class MyWarning(Warning):
             pass
-        
+
         warnings.filterwarnings("error", category=MyWarning)
-        
+
         class TestWarnings(object):
             def test_my_warning(self):
                 try:

@@ -332,7 +332,7 @@ def _fix_spoof_python2(runner, encoding):
     should patch only doctests for text files because they don't have a way to declare their
     encoding. Doctests in docstrings from Python modules don't have the same problem given that
     Python already decoded the strings.
-    
+
     This fixes the problem related in issue #2434.
     """
     from _pytest.compat import _PY2

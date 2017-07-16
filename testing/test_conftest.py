@@ -319,25 +319,25 @@ class TestConftestVisibility(object):
     # N.B.: "swc" stands for "subdir with conftest.py"
     #       "snc" stands for "subdir no [i.e. without] conftest.py"
     @pytest.mark.parametrize("chdir,testarg,expect_ntests_passed", [
-	# Effective target: package/..
+        # Effective target: package/..
         ("runner",  "..",               3),
         ("package", "..",               3),
         ("swc",     "../..",            3),
         ("snc",     "../..",            3),
 
-	# Effective target: package
+        # Effective target: package
         ("runner",  "../package",       3),
         ("package", ".",                3),
         ("swc",     "..",               3),
         ("snc",     "..",               3),
 
-	# Effective target: package/swc
+        # Effective target: package/swc
         ("runner",  "../package/swc",   1),
         ("package", "./swc",            1),
         ("swc",     ".",                1),
         ("snc",     "../swc",           1),
 
-	# Effective target: package/snc
+        # Effective target: package/snc
         ("runner",  "../package/snc",   1),
         ("package", "./snc",            1),
         ("swc",     "../snc",           1),

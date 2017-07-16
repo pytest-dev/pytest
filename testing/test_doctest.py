@@ -535,7 +535,7 @@ class TestDoctests(object):
         p = testdir.makepyfile(test_unicode_doctest_module="""
             # -*- encoding: utf-8 -*-
             from __future__ import unicode_literals
-            
+
             def fix_bad_unicode(text):
                 '''
                     >>> print(fix_bad_unicode('Ãºnico'))

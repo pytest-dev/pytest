@@ -151,7 +151,7 @@ def pytest_collect_file(path, parent):
                 if path.fnmatch(pat):
                     break
             else:
-               return
+                return
         ihook = parent.session.gethookproxy(path)
         return ihook.pytest_pycollect_makemodule(path=path, parent=parent)
 

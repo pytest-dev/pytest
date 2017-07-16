@@ -788,7 +788,7 @@ def test_unittest_raise_skip_issue748(testdir):
 def test_unittest_skip_issue1169(testdir):
     testdir.makepyfile(test_foo="""
         import unittest
-        
+
         class MyTestCase(unittest.TestCase):
             @unittest.skip("skipping due to reasons")
             def test_skip(self):

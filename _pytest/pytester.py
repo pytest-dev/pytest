@@ -1032,11 +1032,11 @@ class Testdir:
         return child
 
 def getdecoded(out):
-        try:
-            return out.decode("utf-8")
-        except UnicodeDecodeError:
-            return "INTERNAL not-utf8-decodeable, truncated string:\n%s" % (
-                    py.io.saferepr(out),)
+    try:
+        return out.decode("utf-8")
+    except UnicodeDecodeError:
+        return "INTERNAL not-utf8-decodeable, truncated string:\n%s" % (
+                py.io.saferepr(out),)
 
 
 class LineComp:

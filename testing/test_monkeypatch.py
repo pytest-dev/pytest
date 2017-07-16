@@ -323,6 +323,6 @@ def test_issue1338_name_resolving():
     pytest.importorskip('requests')
     monkeypatch = MonkeyPatch()
     try:
-         monkeypatch.delattr('requests.sessions.Session.request')
+        monkeypatch.delattr('requests.sessions.Session.request')
     finally:
         monkeypatch.undo()
