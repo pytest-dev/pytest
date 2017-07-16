@@ -12,6 +12,7 @@ def test_ne():
     code2 = _pytest._code.Code(compile('foo = "baz"', '', 'exec'))
     assert code2 != code1
 
+
 def test_code_gives_back_name_for_not_existing_file():
     name = 'abc-123'
     co_code = compile("pass\n", name, 'exec')
@@ -19,6 +20,7 @@ def test_code_gives_back_name_for_not_existing_file():
     code = _pytest._code.Code(co_code)
     assert str(code.path) == name
     assert code.fullsource is None
+
 
 def test_code_with_class():
     class A(object):
@@ -30,10 +32,12 @@ if True:
     def x():
         pass
 
+
 def test_code_fullsource():
     code = _pytest._code.Code(x)
     full = code.fullsource
     assert 'test_code_fullsource()' in str(full)
+
 
 def test_code_source():
     code = _pytest._code.Code(x)
@@ -42,6 +46,7 @@ def test_code_source():
     pass"""
     assert str(src) == expected
 
+
 def test_frame_getsourcelineno_myself():
     def func():
         return sys._getframe(0)
@@ -49,6 +54,7 @@ def test_frame_getsourcelineno_myself():
     f = _pytest._code.Frame(f)
     source, lineno = f.code.fullsource, f.lineno
     assert source[lineno].startswith("        return sys._getframe(0)")
+
 
 def test_getstatement_empty_fullsource():
     def func():
@@ -61,6 +67,7 @@ def test_getstatement_empty_fullsource():
         assert f.statement == _pytest._code.Source("")
     finally:
         f.code.__class__.fullsource = prop
+
 
 def test_code_from_func():
     co = _pytest._code.Code(test_frame_getsourcelineno_myself)
@@ -91,6 +98,7 @@ def test_unicode_handling_syntax_error():
     str(excinfo)
     if sys.version_info[0] < 3:
         unicode(excinfo)
+
 
 def test_code_getargs():
     def f1(x):

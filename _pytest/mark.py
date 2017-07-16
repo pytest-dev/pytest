@@ -272,6 +272,7 @@ def istestfunc(func):
     return hasattr(func, "__call__") and \
         getattr(func, "__name__", "<lambda>") != "<lambda>"
 
+
 class MarkDecorator:
     """ A decorator for test functions and test classes.  When applied
     it will create :class:`MarkInfo` objects which may be

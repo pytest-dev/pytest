@@ -12,6 +12,7 @@ from _pytest.main import EXIT_NOTESTSCOLLECTED, Session
 def pytestpm():
     return PytestPluginManager()
 
+
 class TestPytestPluginInteractions(object):
     def test_addhooks_conftestplugin(self, testdir):
         testdir.makepyfile(newhooks="""
@@ -196,6 +197,7 @@ def test_namespace_has_default_and_env_plugins(testdir):
     """)
     result = testdir.runpython(p)
     assert result.ret == 0
+
 
 def test_default_markers(testdir):
     result = testdir.runpytest("--markers")

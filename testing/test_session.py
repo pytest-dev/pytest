@@ -3,6 +3,7 @@ import pytest
 
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 
+
 class SessionTests(object):
     def test_basic_testitem_events(self, testdir):
         tfile = testdir.makepyfile("""
@@ -135,6 +136,7 @@ class SessionTests(object):
         assert len(reports) == 1
         assert reports[0].skipped
 
+
 class TestNewSession(SessionTests):
 
     def test_order_of_execution(self, testdir):
@@ -215,11 +217,13 @@ def test_plugin_specify(testdir):
     #    "config.do_configure(config)"
     # )
 
+
 def test_plugin_already_exists(testdir):
     config = testdir.parseconfig("-p", "terminal")
     assert config.option.plugins == ['terminal']
     config._do_configure()
     config._ensure_unconfigure()
+
 
 def test_exclude(testdir):
     hellodir = testdir.mkdir("hello")
@@ -230,6 +234,7 @@ def test_exclude(testdir):
     result = testdir.runpytest("--ignore=hello", "--ignore=hello2")
     assert result.ret == 0
     result.stdout.fnmatch_lines(["*1 passed*"])
+
 
 def test_sessionfinish_with_start(testdir):
     testdir.makeconftest("""

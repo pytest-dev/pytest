@@ -8,6 +8,7 @@ import shutil
 
 pytest_plugins = "pytester",
 
+
 class TestNewAPI(object):
     def test_config_cache_makedir(self, testdir):
         testdir.makeini("[pytest]")

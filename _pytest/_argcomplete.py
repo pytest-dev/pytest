@@ -62,6 +62,7 @@ import sys
 import os
 from glob import glob
 
+
 class FastFilesCompleter:
     'Fast file completer class'
 

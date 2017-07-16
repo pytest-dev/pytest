@@ -19,10 +19,12 @@ def basedir(request, tmpdir_factory):
         tmpdir.ensure("adir/b/__init__.py")
     return tmpdir
 
+
 def ConftestWithSetinitial(path):
     conftest = PytestPluginManager()
     conftest_setinitial(conftest, [path])
     return conftest
+
 
 def conftest_setinitial(conftest, args, confcutdir=None):
     class Namespace(object):
@@ -31,6 +33,7 @@ def conftest_setinitial(conftest, args, confcutdir=None):
             self.confcutdir = str(confcutdir)
             self.noconftest = False
     conftest._set_initial_conftests(Namespace())
+
 
 class TestConftestValueAccessGlobal(object):
     def test_basic_init(self, basedir):
@@ -70,12 +73,14 @@ class TestConftestValueAccessGlobal(object):
         assert path.dirpath() == basedir.join("adir", "b")
         assert path.purebasename.startswith("conftest")
 
+
 def test_conftest_in_nonpkg_with_init(tmpdir):
     tmpdir.ensure("adir-1.0/conftest.py").write("a=1 ; Directory = 3")
     tmpdir.ensure("adir-1.0/b/conftest.py").write("b=2 ; a = 1.5")
     tmpdir.ensure("adir-1.0/b/__init__.py")
     tmpdir.ensure("adir-1.0/__init__.py")
     ConftestWithSetinitial(tmpdir.join("adir-1.0", "b"))
+
 
 def test_doubledash_considered(testdir):
     conf = testdir.mkdir("--option")
@@ -84,6 +89,7 @@ def test_doubledash_considered(testdir):
     conftest_setinitial(conftest, [conf.basename, conf.basename])
     l = conftest._getconftestmodules(conf)
     assert len(l) == 1
+
 
 def test_issue151_load_all_conftests(testdir):
     names = "code proj src".split()
@@ -95,6 +101,7 @@ def test_issue151_load_all_conftests(testdir):
     conftest_setinitial(conftest, names)
     d = list(conftest._conftestpath2mod.values())
     assert len(d) == len(names)
+
 
 def test_conftest_global_import(testdir):
     testdir.makeconftest("x=3")
@@ -117,6 +124,7 @@ def test_conftest_global_import(testdir):
     res = testdir.runpython(p)
     assert res.ret == 0
 
+
 def test_conftestcutdir(testdir):
     conf = testdir.makeconftest("")
     p = testdir.mkdir("x")
@@ -136,6 +144,7 @@ def test_conftestcutdir(testdir):
     assert len(l) == 1
     assert l[0].__file__.startswith(str(conf))
 
+
 def test_conftestcutdir_inplace_considered(testdir):
     conf = testdir.makeconftest("")
     conftest = PytestPluginManager()
@@ -143,6 +152,7 @@ def test_conftestcutdir_inplace_considered(testdir):
     l = conftest._getconftestmodules(conf.dirpath())
     assert len(l) == 1
     assert l[0].__file__.startswith(str(conf))
+
 
 @pytest.mark.parametrize("name", 'test tests whatever .dotdir'.split())
 def test_setinitial_conftest_subdirs(testdir, name):
@@ -157,6 +167,7 @@ def test_setinitial_conftest_subdirs(testdir, name):
         assert subconftest not in conftest._conftestpath2mod
         assert len(conftest._conftestpath2mod) == 0
 
+
 def test_conftest_confcutdir(testdir):
     testdir.makeconftest("assert 0")
     x = testdir.mkdir("x")
@@ -168,6 +179,7 @@ def test_conftest_confcutdir(testdir):
     result.stdout.fnmatch_lines(["*--xyz*"])
     assert 'warning: could not load initial' not in result.stdout.str()
 
+
 def test_no_conftest(testdir):
     testdir.makeconftest("assert 0")
     result = testdir.runpytest("--noconftest")
@@ -175,6 +187,7 @@ def test_no_conftest(testdir):
 
     result = testdir.runpytest()
     assert result.ret == EXIT_USAGEERROR
+
 
 def test_conftest_existing_resultlog(testdir):
     x = testdir.mkdir("tests")
@@ -186,6 +199,7 @@ def test_conftest_existing_resultlog(testdir):
     result = testdir.runpytest("-h", "--resultlog", "result.log")
     result.stdout.fnmatch_lines(["*--xyz*"])
 
+
 def test_conftest_existing_junitxml(testdir):
     x = testdir.mkdir("tests")
     x.join("conftest.py").write(_pytest._code.Source("""
@@ -195,6 +209,7 @@ def test_conftest_existing_junitxml(testdir):
     testdir.makefile(ext=".xml", junit="")  # Writes junit.xml
     result = testdir.runpytest("-h", "--junitxml", "junit.xml")
     result.stdout.fnmatch_lines(["*--xyz*"])
+
 
 def test_conftest_import_order(testdir, monkeypatch):
     ct1 = testdir.makeconftest("")

@@ -4,9 +4,11 @@ import os
 import py, pytest
 from _pytest import config as parseopt
 
+
 @pytest.fixture
 def parser():
     return parseopt.Parser()
+
 
 class TestParser(object):
     def test_no_help_by_default(self, capsys):

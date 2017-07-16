@@ -7,6 +7,7 @@ from _pytest.pytester import get_public_names
 from _pytest.fixtures import FixtureLookupError
 from _pytest import fixtures
 
+
 def test_getfuncargnames():
     def f(): pass
     assert not fixtures.getfuncargnames(f)
@@ -27,6 +28,7 @@ def test_getfuncargnames():
     assert fixtures.getfuncargnames(A().f) == ('arg1',)
     if sys.version_info < (3, 0):
         assert fixtures.getfuncargnames(A.f) == ('arg1',)
+
 
 class TestFillFixtures(object):
     def test_fillfuncargs_exposed(self):
@@ -815,6 +817,7 @@ class TestRequestBasic(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
 
+
 class TestRequestMarking(object):
     def test_applymarker(self, testdir):
         item1, item2 = testdir.getitems("""
@@ -874,6 +877,7 @@ class TestRequestMarking(object):
         """)
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
+
 
 class TestRequestCachedSetup(object):
     def test_request_cachedsetup_defaultmodule(self, testdir):
@@ -1039,6 +1043,7 @@ class TestRequestCachedSetup(object):
             "*3/x*",
             "*ZeroDivisionError*",
         ])
+
 
 class TestFixtureUsages(object):
     def test_noargfixturedec(self, testdir):
@@ -2587,6 +2592,7 @@ class TestRequestScopeAccess(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
+
 class TestErrors(object):
     def test_subfactory_missing_funcarg(self, testdir):
         testdir.makepyfile("""
@@ -2650,6 +2656,7 @@ class TestErrors(object):
             "*fixture*qwe123*not found*",
             "*1 error*",
         ])
+
 
 class TestShowFixtures(object):
     def test_funcarg_compat(self, testdir):
@@ -2918,6 +2925,7 @@ class TestContextManagerFixtureFuncs(object):
         """.format(flavor=flavor))
         result = testdir.runpytest("-s")
         result.stdout.fnmatch_lines("*mew*")
+
 
 class TestParameterizedSubRequest(object):
     def test_call_from_fixture(self, testdir):

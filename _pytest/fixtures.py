@@ -19,6 +19,7 @@ from _pytest.compat import (
 from _pytest.runner import fail
 from _pytest.compat import FuncargnamesCompatAttr
 
+
 def pytest_sessionstart(session):
     import _pytest.python
     scopename2class.update({
@@ -37,6 +38,7 @@ scope2props["module"] = ("fspath", "module")
 scope2props["class"] = scope2props["module"] + ("cls",)
 scope2props["instance"] = scope2props["class"] + ("instance", )
 scope2props["function"] = scope2props["instance"] + ("function", "keywords")
+
 
 def scopeproperty(name=None, doc=None):
     def decoratescope(func):
@@ -166,6 +168,7 @@ def reorder_items(items):
                 d[item] = keys
     return reorder_items_atscope(items, set(), argkeys_cache, 0)
 
+
 def reorder_items_atscope(items, ignore, argkeys_cache, scopenum):
     if scopenum >= scopenum_function or len(items) < 3:
         return items
@@ -240,6 +243,7 @@ def fillfixtures(function):
 
 def get_direct_param_fixture_func(request):
     return request.param
+
 
 class FuncFixtureInfo:
     def __init__(self, argnames, names_closure, name2fixturedefs):
@@ -785,6 +789,7 @@ class FixtureDef:
     def __repr__(self):
         return ("<FixtureDef name=%r scope=%r baseid=%r >" %
                 (self.argname, self.scope, self.baseid))
+
 
 def pytest_fixture_setup(fixturedef, request):
     """ Execution of fixture setup. """

@@ -171,6 +171,7 @@ def capsys(request):
     request.node._capfuncarg = c = CaptureFixture(SysCapture, request)
     return c
 
+
 @pytest.fixture
 def capfd(request):
     """Enable capturing of writes to file descriptors 1 and 2 and make
@@ -319,8 +320,10 @@ class MultiCapture(object):
         return (self.out.snap() if self.out is not None else "",
                 self.err.snap() if self.err is not None else "")
 
+
 class NoCapture:
     __init__ = start = done = suspend = resume = lambda *args: None
+
 
 class FDCapture:
     """ Capture IO to/from a given os-level filedescriptor. """

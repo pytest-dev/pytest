@@ -36,6 +36,7 @@ def test_module_and_function_setup(testdir):
     rep = reprec.matchreport("test_module")
     assert rep.passed
 
+
 def test_module_setup_failure_no_teardown(testdir):
     reprec = testdir.inline_runsource("""
         l = []
@@ -53,6 +54,7 @@ def test_module_setup_failure_no_teardown(testdir):
     calls = reprec.getcalls("pytest_runtest_setup")
     assert calls[0].item.module.l == [1]
 
+
 def test_setup_function_failure_no_teardown(testdir):
     reprec = testdir.inline_runsource("""
         modlevel = []
@@ -68,6 +70,7 @@ def test_setup_function_failure_no_teardown(testdir):
     """)
     calls = reprec.getcalls("pytest_runtest_setup")
     assert calls[0].item.module.modlevel == [1]
+
 
 def test_class_setup(testdir):
     reprec = testdir.inline_runsource("""
@@ -92,6 +95,7 @@ def test_class_setup(testdir):
     """)
     reprec.assertoutcome(passed=1 + 2 + 1)
 
+
 def test_class_setup_failure_no_teardown(testdir):
     reprec = testdir.inline_runsource("""
         class TestSimpleClassSetup(object):
@@ -110,6 +114,7 @@ def test_class_setup_failure_no_teardown(testdir):
     """)
     reprec.assertoutcome(failed=1, passed=1)
 
+
 def test_method_setup(testdir):
     reprec = testdir.inline_runsource("""
         class TestSetupMethod(object):
@@ -125,6 +130,7 @@ def test_method_setup(testdir):
                 assert self.methsetup == self.test_other
     """)
     reprec.assertoutcome(passed=2)
+
 
 def test_method_setup_failure_no_teardown(testdir):
     reprec = testdir.inline_runsource("""
@@ -144,6 +150,7 @@ def test_method_setup_failure_no_teardown(testdir):
             assert TestMethodSetup.clslevel == [1]
     """)
     reprec.assertoutcome(failed=1, passed=1)
+
 
 def test_method_generator_setup(testdir):
     reprec = testdir.inline_runsource("""
@@ -166,6 +173,7 @@ def test_method_generator_setup(testdir):
                 assert value == 5
     """)
     reprec.assertoutcome(passed=1, failed=1)
+
 
 def test_func_generator_setup(testdir):
     reprec = testdir.inline_runsource("""
@@ -195,6 +203,7 @@ def test_func_generator_setup(testdir):
     rep = reprec.matchreport("test_one", names="pytest_runtest_logreport")
     assert rep.passed
 
+
 def test_method_setup_uses_fresh_instances(testdir):
     reprec = testdir.inline_runsource("""
         class TestSelfState1(object):
@@ -206,6 +215,7 @@ def test_method_setup_uses_fresh_instances(testdir):
                 assert self != self.memory[0]
     """)
     reprec.assertoutcome(passed=2, failed=0)
+
 
 def test_setup_that_skips_calledagain(testdir):
     p = testdir.makepyfile("""
@@ -220,6 +230,7 @@ def test_setup_that_skips_calledagain(testdir):
     reprec = testdir.inline_run(p)
     reprec.assertoutcome(skipped=2)
 
+
 def test_setup_fails_again_on_all_tests(testdir):
     p = testdir.makepyfile("""
         import pytest
@@ -232,6 +243,7 @@ def test_setup_fails_again_on_all_tests(testdir):
     """)
     reprec = testdir.inline_run(p)
     reprec.assertoutcome(failed=2)
+
 
 def test_setup_funcarg_setup_when_outer_scope_fails(testdir):
     p = testdir.makepyfile("""

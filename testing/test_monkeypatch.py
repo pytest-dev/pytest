@@ -319,6 +319,7 @@ def test_issue156_undo_staticmethod(Sample):
     monkeypatch.undo()
     assert Sample.hello()
 
+
 def test_issue1338_name_resolving():
     pytest.importorskip('requests')
     monkeypatch = MonkeyPatch()

@@ -63,6 +63,7 @@ def main(args=None, plugins=None):
             sys.stderr.write("ERROR: %s\n" % (msg,))
         return 4
 
+
 class cmdline:  # compatibility namespace
     main = staticmethod(main)
 
@@ -116,6 +117,7 @@ def _preloadplugins():
     assert not _preinit
     _preinit.append(get_config())
 
+
 def get_config():
     if _preinit:
         return _preinit.pop(0)
@@ -125,6 +127,7 @@ def get_config():
     for spec in default_plugins:
         pluginmanager.import_plugin(spec)
     return config
+
 
 def get_plugin_manager():
     """
@@ -136,6 +139,7 @@ def get_plugin_manager():
     into pytest to run tests into an IDE.
     """
     return get_config().pluginmanager
+
 
 def _prepareconfig(args=None, plugins=None):
     warning = None
@@ -854,6 +858,7 @@ def _ensure_removed_sysmodule(modname):
     except KeyError:
         pass
 
+
 class CmdOptions(object):
     """ holds cmdline options as attributes."""
 
@@ -865,6 +870,7 @@ class CmdOptions(object):
 
     def copy(self):
         return CmdOptions(self.__dict__)
+
 
 class Notset:
     def __repr__(self):
@@ -1235,11 +1241,13 @@ class Config(object):
         """ (deprecated, use getoption(skip=True)) """
         return self.getoption(name, skip=True)
 
+
 def exists(path, ignore=EnvironmentError):
     try:
         return path.check()
     except ignore:
         return False
+
 
 def getcfg(args, warnfunc=None):
     """

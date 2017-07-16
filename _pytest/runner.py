@@ -9,7 +9,6 @@ import py
 from _pytest._code.code import TerminalRepr, ExceptionInfo
 
 
-
 #
 # pytest plugin hooks
 
@@ -18,6 +17,7 @@ def pytest_addoption(parser):
     group.addoption('--durations',
                     action="store", type=int, default=None, metavar="N",
                     help="show N slowest setup/test durations (N=0 for all)."),
+
 
 def pytest_terminal_summary(terminalreporter):
     durations = terminalreporter.config.option.durations
@@ -44,14 +44,19 @@ def pytest_terminal_summary(terminalreporter):
         tr.write_line("%02.2fs %-8s %s" %
                       (rep.duration, rep.when, nodeid))
 
+
 def pytest_sessionstart(session):
     session._setupstate = SetupState()
+
+
 def pytest_sessionfinish(session):
     session._setupstate.teardown_all()
+
 
 class NodeInfo:
     def __init__(self, location):
         self.location = location
+
 
 def pytest_runtest_protocol(item, nextitem):
     item.ihook.pytest_runtest_logstart(
@@ -59,6 +64,7 @@ def pytest_runtest_protocol(item, nextitem):
     )
     runtestprotocol(item, nextitem=nextitem)
     return True
+
 
 def runtestprotocol(item, log=True, nextitem=None):
     hasrequest = hasattr(item, "_request")
@@ -80,6 +86,7 @@ def runtestprotocol(item, log=True, nextitem=None):
         item.funcargs = None
     return reports
 
+
 def show_test_item(item):
     """Show test function, parameters and the fixtures of the test item."""
     tw = item.config.get_terminal_writer()
@@ -90,8 +97,10 @@ def show_test_item(item):
     if used_fixtures:
         tw.write(' (fixtures used: {0})'.format(', '.join(used_fixtures)))
 
+
 def pytest_runtest_setup(item):
     item.session._setupstate.prepare(item)
+
 
 def pytest_runtest_call(item):
     try:
@@ -106,8 +115,10 @@ def pytest_runtest_call(item):
         del tb  # Get rid of it in this namespace
         raise
 
+
 def pytest_runtest_teardown(item, nextitem):
     item.session._setupstate.teardown_exact(item, nextitem)
+
 
 def pytest_report_teststatus(report):
     if report.when in ("setup", "teardown"):
@@ -133,16 +144,19 @@ def call_and_report(item, when, log=True, **kwds):
         hook.pytest_exception_interact(node=item, call=call, report=report)
     return report
 
+
 def check_interactive_exception(call, report):
     return call.excinfo and not (
         hasattr(report, "wasxfail") or
         call.excinfo.errisinstance(skip.Exception) or
         call.excinfo.errisinstance(bdb.BdbQuit))
 
+
 def call_runtest_hook(item, when, **kwds):
     hookname = "pytest_runtest_" + when
     ihook = getattr(item.ihook, hookname)
     return CallInfo(lambda: ihook(item=item, **kwds), when=when)
+
 
 class CallInfo:
     """ Result/Exception info a function invocation. """
@@ -170,6 +184,7 @@ class CallInfo:
             status = "result: %r" % (self.result,)
         return "<CallInfo when=%r %s>" % (self.when, status)
 
+
 def getslaveinfoline(node):
     try:
         return node._slaveinfocache
@@ -179,6 +194,7 @@ def getslaveinfoline(node):
         node._slaveinfocache = s = "[%s] %s -- Python %s %s" % (
             d['id'], d['sysplatform'], ver, d['executable'])
         return s
+
 
 class BaseReport(object):
 
@@ -244,6 +260,7 @@ class BaseReport(object):
     def fspath(self):
         return self.nodeid.split("::")[0]
 
+
 def pytest_runtest_makereport(item, call):
     when = call.when
     duration = call.stop - call.start
@@ -273,6 +290,7 @@ def pytest_runtest_makereport(item, call):
     return TestReport(item.nodeid, item.location,
                       keywords, outcome, longrepr, when,
                       sections, duration)
+
 
 class TestReport(BaseReport):
     """ Basic test report object (also used for setup and teardown calls if
@@ -317,6 +335,7 @@ class TestReport(BaseReport):
         return "<TestReport %r when=%r outcome=%r>" % (
             self.nodeid, self.when, self.outcome)
 
+
 class TeardownErrorReport(BaseReport):
     outcome = "failed"
     when = "teardown"
@@ -325,6 +344,7 @@ class TeardownErrorReport(BaseReport):
         self.longrepr = longrepr
         self.sections = []
         self.__dict__.update(extra)
+
 
 def pytest_make_collect_report(collector):
     call = CallInfo(
@@ -370,12 +390,14 @@ class CollectReport(BaseReport):
         return "<CollectReport %r lenresult=%s outcome=%r>" % (
             self.nodeid, len(self.result), self.outcome)
 
+
 class CollectErrorRepr(TerminalRepr):
     def __init__(self, msg):
         self.longrepr = msg
 
     def toterminal(self, out):
         out.line(self.longrepr, red=True)
+
 
 class SetupState(object):
     """ shared state for setting up/tearing down test items or collectors. """
@@ -456,6 +478,7 @@ class SetupState(object):
                 col._prepare_exc = sys.exc_info()
                 raise
 
+
 def collect_one_node(collector):
     ihook = collector.ihook
     ihook.pytest_collectstart(collector=collector)
@@ -489,6 +512,7 @@ class OutcomeException(Exception):
         return "<%s instance>" % (self.__class__.__name__,)
     __str__ = __repr__
 
+
 class Skipped(OutcomeException):
     # XXX hackish: on 3k we fake to live in the builtins
     # in order to have Skipped exception printing shorter/nicer
@@ -512,6 +536,7 @@ class Exit(KeyboardInterrupt):
         KeyboardInterrupt.__init__(self, msg)
 
 # exposed helper methods
+
 
 def exit(msg):
     """ exit testing process as if KeyboardInterrupt was triggered. """

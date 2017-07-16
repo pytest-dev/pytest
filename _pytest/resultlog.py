@@ -6,11 +6,13 @@ from __future__ import absolute_import, division, print_function
 import py
 import os
 
+
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "resultlog plugin options")
     group.addoption('--resultlog', '--result-log', action="store",
                     metavar="path", default=None,
                     help="DEPRECATED path for machine-readable result log.")
+
 
 def pytest_configure(config):
     resultlog = config.option.resultlog
@@ -26,12 +28,14 @@ def pytest_configure(config):
         from _pytest.deprecated import RESULT_LOG
         config.warn('C1', RESULT_LOG)
 
+
 def pytest_unconfigure(config):
     resultlog = getattr(config, '_resultlog', None)
     if resultlog:
         resultlog.logfile.close()
         del config._resultlog
         config.pluginmanager.unregister(resultlog)
+
 
 def generic_path(item):
     chain = item.listchain()
@@ -55,6 +59,7 @@ def generic_path(item):
         gpath.append(name)
         fspath = newfspath
     return ''.join(gpath)
+
 
 class ResultLog(object):
     def __init__(self, config, logfile):

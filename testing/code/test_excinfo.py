@@ -27,6 +27,7 @@ else:
 import pytest
 pytest_version_info = tuple(map(int, pytest.__version__.split(".")[:3]))
 
+
 class TWMock(object):
     WRITE = object()
 
@@ -53,12 +54,14 @@ class TWMock(object):
 
     fullwidth = 80
 
+
 def test_excinfo_simple():
     try:
         raise ValueError
     except ValueError:
         info = _pytest._code.ExceptionInfo()
     assert info.type == ValueError
+
 
 def test_excinfo_getstatement():
     def g():
@@ -82,19 +85,26 @@ def test_excinfo_getstatement():
     # xxx
 
 # testchain for getentries test below
+
+
 def f():
     #
     raise ValueError
     #
+
+
 def g():
     #
     __tracebackhide__ = True
     f()
     #
+
+
 def h():
     #
     g()
     #
+
 
 class TestTraceback_f_g_h(object):
     def setup_method(self, method):
@@ -299,6 +309,7 @@ class TestTraceback_f_g_h(object):
         assert entry.lineno == co.firstlineno + 2
         assert entry.frame.code.name == 'g'
 
+
 def test_excinfo_exconly():
     excinfo = pytest.raises(ValueError, h)
     assert excinfo.exconly().startswith('ValueError')
@@ -308,10 +319,12 @@ def test_excinfo_exconly():
     assert msg.startswith('ValueError')
     assert msg.endswith("world")
 
+
 def test_excinfo_repr():
     excinfo = pytest.raises(ValueError, h)
     s = repr(excinfo)
     assert s == "<ExceptionInfo ValueError tblen=4>"
+
 
 def test_excinfo_str():
     excinfo = pytest.raises(ValueError, h)
@@ -320,9 +333,11 @@ def test_excinfo_str():
     assert s.endswith("ValueError")
     assert len(s.split(":")) >= 3  # on windows it's 4
 
+
 def test_excinfo_errisinstance():
     excinfo = pytest.raises(ValueError, h)
     assert excinfo.errisinstance(ValueError)
+
 
 def test_excinfo_no_sourcecode():
     try:
@@ -334,6 +349,7 @@ def test_excinfo_no_sourcecode():
         assert s == "  File '<string>':1 in ?\n  ???\n"
     else:
         assert s == "  File '<string>':1 in <module>\n  ???\n"
+
 
 def test_excinfo_no_python_sourcecode(tmpdir):
     # XXX: simplified locally testable version
@@ -363,6 +379,7 @@ def test_entrysource_Queue_example():
     s = str(source).strip()
     assert s.startswith("def get")
 
+
 def test_codepath_Queue_example():
     try:
         queue.Queue().get(timeout=0.001)
@@ -374,10 +391,12 @@ def test_codepath_Queue_example():
     assert path.basename.lower() == "queue.py"
     assert path.check()
 
+
 def test_match_succeeds():
     with pytest.raises(ZeroDivisionError) as excinfo:
         0 // 0
     excinfo.match(r'.*zero.*')
+
 
 def test_match_raises_error(testdir):
     testdir.makepyfile("""
@@ -392,6 +411,7 @@ def test_match_raises_error(testdir):
     result.stdout.fnmatch_lines([
         "*AssertionError*Pattern*[123]*not found*",
     ])
+
 
 class TestFormattedExcinfo(object):
 

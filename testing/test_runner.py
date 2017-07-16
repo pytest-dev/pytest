@@ -8,6 +8,7 @@ import pytest
 import sys
 from _pytest import runner, main
 
+
 class TestSetupState(object):
     def test_setup(self, testdir):
         ss = runner.SetupState()
@@ -316,6 +317,7 @@ class BaseFunctionalTests(object):
         else:
             pytest.fail("did not raise")
 
+
 class TestExecutionNonForked(BaseFunctionalTests):
     def getrunner(self):
         def f(item):
@@ -332,6 +334,7 @@ class TestExecutionNonForked(BaseFunctionalTests):
             pass
         else:
             pytest.fail("did not raise")
+
 
 class TestExecutionForked(BaseFunctionalTests):
     pytestmark = pytest.mark.skipif("not hasattr(os, 'fork')")
@@ -350,6 +353,7 @@ class TestExecutionForked(BaseFunctionalTests):
         rep = reports[0]
         assert rep.failed
         assert rep.when == "???"
+
 
 class TestSessionReports(object):
     def test_collect_result(self, testdir):
@@ -380,6 +384,7 @@ reporttypes = [
     runner.CollectReport,
 ]
 
+
 @pytest.mark.parametrize('reporttype', reporttypes, ids=[x.__name__ for x in reporttypes])
 def test_report_extra_parameters(reporttype):
     if hasattr(py.std.inspect, 'signature'):
@@ -389,6 +394,7 @@ def test_report_extra_parameters(reporttype):
     basekw = dict.fromkeys(args, [])
     report = reporttype(newthing=1, **basekw)
     assert report.newthing == 1
+
 
 def test_callinfo():
     ci = runner.CallInfo(lambda: 0, '123')
@@ -403,6 +409,8 @@ def test_callinfo():
 
 # design question: do we want general hooks in python files?
 # then something like the following functional tests makes sense
+
+
 @pytest.mark.xfail
 def test_runtest_in_module_ordering(testdir):
     p1 = testdir.makepyfile("""
@@ -439,12 +447,14 @@ def test_outcomeexception_exceptionattributes():
     outcome = runner.OutcomeException('test')
     assert outcome.args[0] == outcome.msg
 
+
 def test_pytest_exit():
     try:
         pytest.exit("hello")
     except pytest.exit.Exception:
         excinfo = _pytest._code.ExceptionInfo()
         assert excinfo.errisinstance(KeyboardInterrupt)
+
 
 def test_pytest_fail():
     try:
@@ -453,6 +463,7 @@ def test_pytest_fail():
         excinfo = _pytest._code.ExceptionInfo()
         s = excinfo.exconly(tryshort=True)
         assert s.startswith("Failed")
+
 
 def test_pytest_exit_msg(testdir):
     testdir.makeconftest("""
@@ -465,6 +476,7 @@ def test_pytest_exit_msg(testdir):
     result.stderr.fnmatch_lines([
         "Exit: oh noes",
     ])
+
 
 def test_pytest_fail_notrace(testdir):
     testdir.makepyfile("""
@@ -531,6 +543,7 @@ def test_exception_printing_skip():
         s = excinfo.exconly(tryshort=True)
         assert s.startswith("Skipped")
 
+
 def test_importorskip(monkeypatch):
     importorskip = pytest.importorskip
 
@@ -561,9 +574,11 @@ def test_importorskip(monkeypatch):
         print(_pytest._code.ExceptionInfo())
         pytest.fail("spurious skip")
 
+
 def test_importorskip_imports_last_module_part():
     ospath = pytest.importorskip("os.path")
     assert os.path == ospath
+
 
 def test_importorskip_dev_module(monkeypatch):
     try:

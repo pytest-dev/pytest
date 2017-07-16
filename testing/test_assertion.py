@@ -283,6 +283,7 @@ class TestBinReprIntegration(object):
             "*test_check*PASS*",
         ])
 
+
 def callequal(left, right, verbose=False):
     config = mock_config()
     config.verbose = verbose
@@ -712,6 +713,7 @@ def test_python25_compile_issue257(testdir):
             *1 failed*
     """)
 
+
 def test_rewritten(testdir):
     testdir.makepyfile("""
         def test_rewritten():
@@ -719,10 +721,12 @@ def test_rewritten(testdir):
     """)
     assert testdir.runpytest().ret == 0
 
+
 def test_reprcompare_notin(mock_config):
     detail = plugin.pytest_assertrepr_compare(
         mock_config, 'not in', 'foo', 'aaafoobbb')[1:]
     assert detail == ["'foo' is contained here:", '  aaafoobbb', '?    +++']
+
 
 def test_pytest_assertrepr_compare_integration(testdir):
     testdir.makepyfile("""
@@ -739,6 +743,7 @@ def test_pytest_assertrepr_compare_integration(testdir):
         "*E*Extra items*left*",
         "*E*50*",
     ])
+
 
 def test_sequence_comparison_uses_repr(testdir):
     testdir.makepyfile("""
@@ -791,6 +796,7 @@ def test_assertion_options(testdir):
     result = testdir.runpytest_subprocess("--assert=plain")
     assert "3 == 4" not in result.stdout.str()
 
+
 def test_triple_quoted_string_issue113(testdir):
     testdir.makepyfile("""
         def test_hello():
@@ -801,6 +807,7 @@ def test_triple_quoted_string_issue113(testdir):
         "*1 failed*",
     ])
     assert 'SyntaxError' not in result.stdout.str()
+
 
 def test_traceback_failure(testdir):
     p1 = testdir.makepyfile("""
@@ -893,6 +900,7 @@ def test_warn_missing(testdir):
         "*WARNING*assert statements are not executed*",
     ])
 
+
 def test_recursion_source_decode(testdir):
     testdir.makepyfile("""
         def test_something():
@@ -907,6 +915,7 @@ def test_recursion_source_decode(testdir):
         <Module*>
     """)
 
+
 def test_AssertionError_message(testdir):
     testdir.makepyfile("""
         def test_hello():
@@ -919,6 +928,7 @@ def test_AssertionError_message(testdir):
         *assert 0, (x,y)*
         *AssertionError: (1, 2)*
     """)
+
 
 @pytest.mark.skipif(PY3, reason='This bug does not exist on PY3')
 def test_set_with_unsortable_elements():
@@ -956,6 +966,7 @@ def test_set_with_unsortable_elements():
     """).strip()
     assert '\n'.join(expl) == dedent
 
+
 def test_diff_newline_at_end(monkeypatch, testdir):
     testdir.makepyfile(r"""
         def test_diff():
@@ -970,6 +981,7 @@ def test_diff_newline_at_end(monkeypatch, testdir):
         *  ?     +
     """)
 
+
 def test_assert_tuple_warning(testdir):
     testdir.makepyfile("""
         def test_tuple():
@@ -981,6 +993,7 @@ def test_assert_tuple_warning(testdir):
         '*assertion is always true*',
     ])
 
+
 def test_assert_indirect_tuple_no_warning(testdir):
     testdir.makepyfile("""
         def test_tuple():
@@ -991,6 +1004,7 @@ def test_assert_indirect_tuple_no_warning(testdir):
     output = '\n'.join(result.stdout.lines)
     assert 'WR1' not in output
 
+
 def test_assert_with_unicode(monkeypatch, testdir):
     testdir.makepyfile(u"""
         # -*- coding: utf-8 -*-
@@ -1000,6 +1014,7 @@ def test_assert_with_unicode(monkeypatch, testdir):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(['*AssertionError*'])
 
+
 def test_raise_unprintable_assertion_error(testdir):
     testdir.makepyfile(r"""
         def test_raise_assertion_error():
@@ -1007,6 +1022,7 @@ def test_raise_unprintable_assertion_error(testdir):
     """)
     result = testdir.runpytest()
     result.stdout.fnmatch_lines([r">       raise AssertionError('\xff')", 'E       AssertionError: *'])
+
 
 def test_raise_assertion_error_raisin_repr(testdir):
     testdir.makepyfile(u"""
@@ -1018,6 +1034,7 @@ def test_raise_assertion_error_raisin_repr(testdir):
     """)
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(['E       AssertionError: <unprintable AssertionError object>'])
+
 
 def test_issue_1944(testdir):
     testdir.makepyfile("""

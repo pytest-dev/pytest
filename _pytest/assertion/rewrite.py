@@ -283,6 +283,7 @@ N = "\n".encode("utf-8")
 cookie_re = re.compile(r"^[ \t\f]*#.*coding[:=][ \t]*[-\w.]+")
 BOM_UTF8 = '\xef\xbb\xbf'
 
+
 def _rewrite_test(config, fn):
     """Try to read and rewrite *fn* and return the code object."""
     state = config._assertstate
@@ -340,6 +341,7 @@ def _rewrite_test(config, fn):
         return None, None
     return stat, co
 
+
 def _make_rewritten_pyc(state, source_stat, pyc, co):
     """Try to dump rewritten code to *pyc*."""
     if sys.platform.startswith("win"):
@@ -352,6 +354,7 @@ def _make_rewritten_pyc(state, source_stat, pyc, co):
         proc_pyc = pyc + "." + str(os.getpid())
         if _write_pyc(state, co, source_stat, proc_pyc):
             os.rename(proc_pyc, pyc)
+
 
 def _read_pyc(source, pyc, trace=lambda x: None):
     """Possibly read a pytest pyc containing rewritten code.
@@ -412,6 +415,7 @@ def _saferepr(obj):
 
 from _pytest.assertion.util import format_explanation as _format_explanation  # noqa
 
+
 def _format_assertmsg(obj):
     """Format the custom assertion message given.
 
@@ -439,8 +443,10 @@ def _format_assertmsg(obj):
         s = s.replace(t("\\n"), t("\n~"))
     return s
 
+
 def _should_repr_global_name(obj):
     return not hasattr(obj, "__name__") and not py.builtin.callable(obj)
+
 
 def _format_boolop(explanations, is_or):
     explanation = "(" + (is_or and " or " or " and ").join(explanations) + ")"
@@ -449,6 +455,7 @@ def _format_boolop(explanations, is_or):
     else:
         t = py.builtin.bytes
     return explanation.replace(t('%'), t('%%'))
+
 
 def _call_reprcompare(ops, results, expls, each_obj):
     for i, res, expl in zip(range(len(ops)), results, expls):

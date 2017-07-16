@@ -41,6 +41,7 @@ def pytest_runtest_setup(item):
         # XXX this implies we only call teardown when setup worked
         item.session._setupstate.addfinalizer((lambda: teardown_nose(item)), item)
 
+
 def teardown_nose(item):
     if is_potential_nosetest(item):
         if not call_optional(item.obj, 'teardown'):

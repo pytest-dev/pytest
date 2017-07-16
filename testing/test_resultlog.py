@@ -32,6 +32,7 @@ def test_generic_path(testdir):
     res = generic_path(item)
     assert res == 'test/a:B().c[1]'
 
+
 def test_write_log_entry():
     reslog = ResultLog(None, None)
     reslog.logfile = py.io.TextIO()
@@ -175,6 +176,7 @@ def test_generic(testdir, LineMatcher):
         "x *:test_xfail",
         "x *:test_xfail_norun",
     ])
+
 
 def test_makedir_for_resultlog(testdir, LineMatcher):
     """--resultlog should automatically create directories for the log file"""

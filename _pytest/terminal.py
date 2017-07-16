@@ -47,6 +47,7 @@ def pytest_addoption(parser):
                      choices=['yes', 'no', 'auto'],
                      help="color terminal output (yes/no/auto).")
 
+
 def pytest_configure(config):
     config.option.verbose -= config.option.quiet
     reporter = TerminalReporter(config, sys.stdout)
@@ -56,6 +57,7 @@ def pytest_configure(config):
             msg = " ".join(map(str, args))
             reporter.write_line("[traceconfig] " + msg)
         config.trace.root.setprocessor("pytest:config", mywriter)
+
 
 def getreportopt(config):
     reportopts = ""
@@ -71,6 +73,7 @@ def getreportopt(config):
             elif char == 'a':
                 reportopts = 'fEsxXw'
     return reportopts
+
 
 def pytest_report_teststatus(report):
     if report.passed:
@@ -568,6 +571,7 @@ class TerminalReporter:
             self.write_sep("=", "%d tests deselected" % (
                 len(self.stats['deselected'])), bold=True)
 
+
 def repr_pythonversion(v=None):
     if v is None:
         v = sys.version_info
@@ -576,6 +580,7 @@ def repr_pythonversion(v=None):
     except (TypeError, ValueError):
         return str(v)
 
+
 def flatten(l):
     for x in l:
         if isinstance(x, (list, tuple)):
@@ -583,6 +588,7 @@ def flatten(l):
                 yield y
         else:
             yield x
+
 
 def build_summary_stats_line(stats):
     keys = ("failed passed skipped deselected "

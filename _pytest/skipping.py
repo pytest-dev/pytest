@@ -10,6 +10,7 @@ from _pytest.config import hookimpl
 from _pytest.mark import MarkInfo, MarkDecorator
 from _pytest.runner import fail, skip
 
+
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group.addoption('--runxfail',
@@ -269,6 +270,8 @@ def pytest_runtest_makereport(item, call):
         rep.longrepr = filename, line, reason
 
 # called by terminalreporter progress reporting
+
+
 def pytest_report_teststatus(report):
     if hasattr(report, "wasxfail"):
         if report.skipped:
@@ -277,6 +280,8 @@ def pytest_report_teststatus(report):
             return "xpassed", "X", ("XPASS", {'yellow': True})
 
 # called by the terminalreporter instance/plugin
+
+
 def pytest_terminal_summary(terminalreporter):
     tr = terminalreporter
     if not tr.reportchars:

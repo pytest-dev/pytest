@@ -22,6 +22,7 @@ DOCTEST_REPORT_CHOICES = (
     DOCTEST_REPORT_CHOICE_ONLY_FIRST_FAILURE,
 )
 
+
 def pytest_addoption(parser):
     parser.addini('doctest_optionflags', 'option flags for doctests',
                   type="args", default=["ELLIPSIS"])
@@ -162,6 +163,7 @@ def get_optionflags(parent):
     for flag in optionflags_str:
         flag_acc |= flag_lookup_table[flag]
     return flag_acc
+
 
 class DoctestTextfile(pytest.Module):
     obj = None

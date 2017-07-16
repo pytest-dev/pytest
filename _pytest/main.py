@@ -200,6 +200,7 @@ class FSHookProxy:
         self.__dict__[name] = x
         return x
 
+
 class _CompatProperty(object):
     def __init__(self, name):
         self.name = name
@@ -457,6 +458,7 @@ class Node(object):
 
     repr_failure = _repr_failure_py
 
+
 class Collector(Node):
     """ Collector instances create children through collect()
         and thus iteratively build a tree.
@@ -486,6 +488,7 @@ class Collector(Node):
                 ntraceback = ntraceback.cut(excludepath=tracebackcutdir)
             excinfo.traceback = ntraceback.filter()
 
+
 class FSCollector(Collector):
     def __init__(self, fspath, parent=None, config=None, session=None):
         fspath = py.path.local(fspath)  # xxx only for test_resultlog.py?
@@ -504,8 +507,10 @@ class FSCollector(Collector):
             relpath = relpath.replace(os.sep, "/")
         return relpath
 
+
 class File(FSCollector):
     """ base class for collecting tests from a file. """
+
 
 class Item(Node):
     """ a basic test invocation item. Note that for a single function
@@ -556,12 +561,15 @@ class Item(Node):
             self._location = location
             return location
 
+
 class NoMatch(Exception):
     """ raised if matching cannot locate a matching names. """
+
 
 class Interrupted(KeyboardInterrupt):
     """ signals an interrupted test run. """
     __module__ = 'builtins'  # for py3
+
 
 class Session(FSCollector):
     Interrupted = Interrupted

@@ -5,6 +5,7 @@ import sys
 import pytest
 from _pytest.mark import MarkGenerator as Mark, ParameterSet
 
+
 class TestMark(object):
     def test_markinfo_repr(self):
         from _pytest.mark import MarkInfo, Mark
@@ -140,6 +141,7 @@ def test_ini_markers(testdir):
     rec = testdir.inline_run()
     rec.assertoutcome(passed=1)
 
+
 def test_markers_option(testdir):
     testdir.makeini("""
         [pytest]
@@ -152,6 +154,7 @@ def test_markers_option(testdir):
         "*a1*this is a webtest*",
         "*a1some*another marker",
     ])
+
 
 def test_markers_option_with_plugin_in_current_dir(testdir):
     testdir.makeconftest('pytest_plugins = "flip_flop"')
@@ -186,6 +189,7 @@ def test_mark_on_pseudo_function(testdir):
     reprec = testdir.inline_run()
     reprec.assertoutcome(passed=1)
 
+
 def test_strict_prohibits_unregistered_markers(testdir):
     testdir.makepyfile("""
         import pytest
@@ -198,6 +202,7 @@ def test_strict_prohibits_unregistered_markers(testdir):
     result.stdout.fnmatch_lines([
         "*unregisteredmark*not*registered*",
     ])
+
 
 @pytest.mark.parametrize("spec", [
     ("xyz", ("test_one",)),
@@ -221,6 +226,7 @@ def test_mark_option(spec, testdir):
     passed = [x.nodeid.split("::")[-1] for x in passed]
     assert len(passed) == len(passed_result)
     assert list(passed) == list(passed_result)
+
 
 @pytest.mark.parametrize("spec", [
     ("interface", ("test_interface",)),
@@ -246,6 +252,7 @@ def test_mark_option_custom(spec, testdir):
     passed = [x.nodeid.split("::")[-1] for x in passed]
     assert len(passed) == len(passed_result)
     assert list(passed) == list(passed_result)
+
 
 @pytest.mark.parametrize("spec", [
     ("interface", ("test_interface",)),

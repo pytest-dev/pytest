@@ -86,6 +86,7 @@ def pytest_cmdline_parse():
 
         config.add_cleanup(unset_tracing)
 
+
 def pytest_cmdline_main(config):
     if config.option.version:
         p = py.path.local(pytest.__file__)
@@ -101,6 +102,7 @@ def pytest_cmdline_main(config):
         showhelp(config)
         config._ensure_unconfigure()
         return 0
+
 
 def showhelp(config):
     reporter = config.pluginmanager.get_plugin('terminalreporter')
@@ -146,6 +148,7 @@ conftest_options = [
     ('pytest_plugins', 'list of plugin names to load'),
 ]
 
+
 def getpluginversioninfo(config):
     lines = []
     plugininfo = config.pluginmanager.list_plugin_distinfo()
@@ -156,6 +159,7 @@ def getpluginversioninfo(config):
             content = "%s-%s at %s" % (dist.project_name, dist.version, loc)
             lines.append("  " + content)
     return lines
+
 
 def pytest_report_header(config):
     lines = []

@@ -64,6 +64,7 @@ def test_parseconfig(testdir):
     assert config2 != config1
     assert config1 != pytest.config
 
+
 def test_testdir_runs_with_plugin(testdir):
     testdir.makepyfile("""
         pytest_plugins = "pytester"
@@ -118,6 +119,7 @@ def test_makepyfile_unicode(testdir):
         unichr = chr
     testdir.makepyfile(unichr(0xfffd))
 
+
 def test_inline_run_clean_modules(testdir):
     test_mod = testdir.makepyfile("def test_foo(): assert True")
     result = testdir.inline_run(str(test_mod))
@@ -126,6 +128,7 @@ def test_inline_run_clean_modules(testdir):
     test_mod.write("def test_foo(): assert False")
     result2 = testdir.inline_run(str(test_mod))
     assert result2.ret == EXIT_TESTSFAILED
+
 
 def test_assert_outcomes_after_pytest_erro(testdir):
     testdir.makepyfile("def test_foo(): assert True")

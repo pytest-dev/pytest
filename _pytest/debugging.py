@@ -40,6 +40,7 @@ def pytest_configure(config):
     pytestPDB._pdb_cls = pdb_cls
     config._cleanup.append(fin)
 
+
 class pytestPDB:
     """ Pseudo PDB that defers to the real pdb. """
     _pluginmanager = None

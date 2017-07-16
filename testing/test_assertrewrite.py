@@ -24,6 +24,7 @@ def setup_module(mod):
     mod._old_reprcompare = util._reprcompare
     _pytest._code._reprcompare = None
 
+
 def teardown_module(mod):
     util._reprcompare = mod._old_reprcompare
     del mod._old_reprcompare
@@ -33,6 +34,7 @@ def rewrite(src):
     tree = ast.parse(src)
     rewrite_asserts(tree)
     return tree
+
 
 def getmsg(f, extra_ns=None, must_pass=False):
     """Rewrite the assertions in f, run it, and get the failure message."""

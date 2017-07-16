@@ -870,6 +870,7 @@ class TestConftestCustomization(object):
         result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines('*1 passed*')
 
+
 def test_setup_only_available_in_subdir(testdir):
     sub1 = testdir.mkpydir("sub1")
     sub2 = testdir.mkpydir("sub2")
@@ -895,6 +896,7 @@ def test_setup_only_available_in_subdir(testdir):
     sub2.join("test_in_sub2.py").write("def test_2(): pass")
     result = testdir.runpytest("-v", "-s")
     result.assert_outcomes(passed=2)
+
 
 def test_modulecol_roundtrip(testdir):
     modcol = testdir.getmodulecol("pass", withinit=True)
@@ -1179,6 +1181,7 @@ def test_collector_attributes(testdir):
     result.stdout.fnmatch_lines([
         "*1 passed*",
     ])
+
 
 def test_customize_through_attributes(testdir):
     testdir.makeconftest("""

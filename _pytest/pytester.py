@@ -122,6 +122,7 @@ winpymap = {
     'python3.5': r'C:\Python35\python.exe',
 }
 
+
 def getexecutable(name, cache={}):
     try:
         return cache[name]
@@ -143,6 +144,7 @@ def getexecutable(name, cache={}):
         cache[name] = executable
         return executable
 
+
 @pytest.fixture(params=['python2.6', 'python2.7', 'python3.3', "python3.4",
                         'pypy', 'pypy3'])
 def anypython(request):
@@ -159,6 +161,8 @@ def anypython(request):
     return executable
 
 # used at least by pytest-xdist plugin
+
+
 @pytest.fixture
 def _pytest(request):
     """ Return a helper which offers a gethookrecorder(hook)
@@ -166,6 +170,7 @@ def _pytest(request):
     to make assertions about called hooks.
     """
     return PytestArg(request)
+
 
 class PytestArg:
     def __init__(self, request):
@@ -337,6 +342,8 @@ def testdir(request, tmpdir_factory):
 
 
 rex_outcome = re.compile(r"(\d+) ([\w-]+)")
+
+
 class RunResult:
     """The result of running a command.
 
@@ -1032,6 +1039,7 @@ class Testdir:
         self.request.addfinalizer(logfile.close)
         child.timeout = expect_timeout
         return child
+
 
 def getdecoded(out):
     try:

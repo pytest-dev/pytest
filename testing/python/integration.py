@@ -76,6 +76,7 @@ def test_wrapped_getfslineno():
     fs2, lineno2 = python.getfslineno(wrap)
     assert lineno > lineno2, "getfslineno does not unwrap correctly"
 
+
 class TestMockDecoration(object):
     def test_wrapped_getfuncargnames(self):
         from _pytest.compat import getfuncargnames
@@ -245,6 +246,7 @@ class TestReRunTests(object):
         result.stdout.fnmatch_lines("""
             *2 passed*
         """)
+
 
 def test_pytestconfig_is_session_scoped():
     from _pytest.fixtures import pytestconfig

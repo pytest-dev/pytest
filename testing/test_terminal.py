@@ -31,6 +31,7 @@ class Option(object):
             l.append('--fulltrace')
         return l
 
+
 def pytest_generate_tests(metafunc):
     if "option" in metafunc.fixturenames:
         metafunc.addcall(id="default",
@@ -320,6 +321,7 @@ def test_repr_python_version(monkeypatch):
     finally:
         monkeypatch.undo()  # do this early as pytest can get confused
 
+
 class TestFixtureReporting(object):
     def test_setup_fixture_error(self, testdir):
         testdir.makepyfile("""
@@ -404,6 +406,7 @@ class TestFixtureReporting(object):
 
             "*1 failed*",
         ])
+
 
 class TestTerminalFunctional(object):
     def test_deselected(self, testdir):
@@ -552,10 +555,12 @@ def test_fail_extra_reporting(testdir):
         "FAIL*test_fail_extra_reporting*",
     ])
 
+
 def test_fail_reporting_on_pass(testdir):
     testdir.makepyfile("def test_this(): assert 1")
     result = testdir.runpytest('-rf')
     assert 'short test summary' not in result.stdout.str()
+
 
 def test_pass_extra_reporting(testdir):
     testdir.makepyfile("def test_this(): assert 1")
@@ -567,10 +572,12 @@ def test_pass_extra_reporting(testdir):
         "PASS*test_pass_extra_reporting*",
     ])
 
+
 def test_pass_reporting_on_fail(testdir):
     testdir.makepyfile("def test_this(): assert 0")
     result = testdir.runpytest('-rp')
     assert 'short test summary' not in result.stdout.str()
+
 
 def test_pass_output_reporting(testdir):
     testdir.makepyfile("""
@@ -583,6 +590,7 @@ def test_pass_output_reporting(testdir):
     result.stdout.fnmatch_lines([
         "Four score and seven years ago...",
     ])
+
 
 def test_color_yes(testdir):
     testdir.makepyfile("def test_this(): assert 1")
@@ -660,6 +668,7 @@ def test_terminalreporter_reportopt_addopts(testdir):
         "*1 passed*"
     ])
 
+
 def test_tbstyle_short(testdir):
     p = testdir.makepyfile("""
         import pytest
@@ -684,6 +693,7 @@ def test_tbstyle_short(testdir):
     s = result.stdout.str()
     assert 'x = 0' in s
     assert 'assert x' in s
+
 
 def test_traceconfig(testdir, monkeypatch):
     result = testdir.runpytest("--traceconfig")
@@ -788,6 +798,7 @@ def pytest_report_header(config, startdir):
             str(testdir.tmpdir),
         ])
 
+
 @pytest.mark.xfail("not hasattr(os, 'dup')")
 def test_fdopen_kept_alive_issue124(testdir):
     testdir.makepyfile("""
@@ -806,6 +817,7 @@ def test_fdopen_kept_alive_issue124(testdir):
         "*2 passed*"
     ])
 
+
 def test_tbstyle_native_setup_error(testdir):
     testdir.makepyfile("""
         import pytest
@@ -820,6 +832,7 @@ def test_tbstyle_native_setup_error(testdir):
     result.stdout.fnmatch_lines([
         '*File *test_tbstyle_native_setup_error.py", line *, in setup_error_fixture*'
     ])
+
 
 def test_terminal_summary(testdir):
     testdir.makeconftest("""

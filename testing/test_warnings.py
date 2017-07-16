@@ -8,6 +8,7 @@ import pytest
 
 WARNINGS_SUMMARY_HEADER = 'warnings summary'
 
+
 @pytest.fixture
 def pyfile_with_warnings(testdir, request):
     """

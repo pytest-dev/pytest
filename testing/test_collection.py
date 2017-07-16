@@ -3,6 +3,7 @@ import pytest, py
 
 from _pytest.main import Session, EXIT_NOTESTSCOLLECTED
 
+
 class TestCollector(object):
     def test_collect_versus_item(self):
         from pytest import Collector, Item
@@ -101,6 +102,7 @@ class TestCollector(object):
             'collected 0 items',
             '*no tests ran in*',
         ])
+
 
 class TestCollectFS(object):
     def test_ignored_certain_directories(self, testdir):
@@ -334,6 +336,7 @@ class TestCustomConftests(object):
             "*test_x*"
         ])
 
+
 class TestSession(object):
     def test_parsearg(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
@@ -510,6 +513,7 @@ class TestSession(object):
         # ensure we are reporting the collection of the single test item (#2464)
         assert [x.name for x in self.get_reported_items(hookrec)] == ['test_method']
 
+
 class Test_getinitialnodes(object):
     def test_global_file(self, testdir, tmpdir):
         x = tmpdir.ensure("x.py")
@@ -536,6 +540,7 @@ class Test_getinitialnodes(object):
         assert col.parent.parent is None
         for col in col.listchain():
             assert col.config is config
+
 
 class Test_genitems(object):
     def test_check_collect_hashes(self, testdir):
@@ -688,6 +693,7 @@ COLLECTION_ERROR_PY_FILES = dict(
             assert True
     """,
 )
+
 
 def test_exit_on_collection_error(testdir):
     """Verify that all collection errors are collected and no tests executed"""

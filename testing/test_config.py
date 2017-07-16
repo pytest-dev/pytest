@@ -5,6 +5,7 @@ import _pytest._code
 from _pytest.config import getcfg, get_common_ancestor, determine_setup
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 
+
 class TestParseIni(object):
 
     @pytest.mark.parametrize('section, filename',
@@ -85,6 +86,7 @@ class TestParseIni(object):
         result = testdir.inline_run("--confcutdir=.")
         assert result.ret == 0
 
+
 class TestConfigCmdlineParsing(object):
     def test_parsing_again_fails(self, testdir):
         config = testdir.parseconfig()
@@ -115,6 +117,7 @@ class TestConfigCmdlineParsing(object):
         temp_cfg_file = normpath(str(temp_cfg_file))
         ret = pytest.main("-c " + temp_cfg_file)
         assert ret == _pytest.main.EXIT_OK
+
 
 class TestConfigAPI(object):
     def test_config_trace(self, testdir):
@@ -472,6 +475,7 @@ def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch):
     plugin = config.pluginmanager.getplugin("mytestplugin")
     assert plugin is None
 
+
 def test_cmdline_processargs_simple(testdir):
     testdir.makeconftest("""
         def pytest_cmdline_preparse(args):
@@ -482,6 +486,7 @@ def test_cmdline_processargs_simple(testdir):
         "*pytest*",
         "*-h*",
     ])
+
 
 def test_invalid_options_show_extra_information(testdir):
     """display extra information when pytest exits due to unrecognized
@@ -527,6 +532,7 @@ def test_consider_args_after_options_for_rootdir_and_inifile(testdir, args):
 def test_toolongargs_issue224(testdir):
     result = testdir.runpytest("-m", "hello" * 500)
     assert result.ret == EXIT_NOTESTSCOLLECTED
+
 
 def test_config_in_subdirectory_colon_command_line_issue2148(testdir):
     conftest_source = '''
@@ -642,6 +648,7 @@ class TestWarning(object):
             *test_warn_on_test_item_from_request.py::test_hello*
             *hello*
         """)
+
 
 class TestRootdir(object):
     def test_simple_noini(self, tmpdir):

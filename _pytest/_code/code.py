@@ -83,6 +83,7 @@ class Code(object):
             argcount += raw.co_flags & CO_VARKEYWORDS
         return raw.co_varnames[:argcount]
 
+
 class Frame(object):
     """Wrapper around a Python frame holding f_locals and f_globals
     in which expressions can be evaluated."""
@@ -143,6 +144,7 @@ class Frame(object):
             except KeyError:
                 pass     # this can occur when using Psyco
         return retval
+
 
 class TracebackEntry(object):
     """ a single entry in a traceback """
@@ -256,6 +258,7 @@ class TracebackEntry(object):
         return self.frame.code.raw.co_name
     name = property(name, None, None, "co_name of underlaying code")
 
+
 class Traceback(list):
     """ Traceback objects encapsulate and offer higher level
         access to Traceback entries.
@@ -350,6 +353,7 @@ class Traceback(list):
 
 co_equal = compile('__recursioncache_locals_1 == __recursioncache_locals_2',
                    '?', 'eval')
+
 
 class ExceptionInfo(object):
     """ wraps sys.exc_info() objects and offers
@@ -745,6 +749,7 @@ class ReprExceptionInfo(ExceptionRepr):
         self.reprtraceback.toterminal(tw)
         super(ReprExceptionInfo, self).toterminal(tw)
 
+
 class ReprTraceback(TerminalRepr):
     entrysep = "_ "
 
@@ -768,11 +773,13 @@ class ReprTraceback(TerminalRepr):
         if self.extraline:
             tw.line(self.extraline)
 
+
 class ReprTracebackNative(ReprTraceback):
     def __init__(self, tblines):
         self.style = "native"
         self.reprentries = [ReprEntryNative(tblines)]
         self.extraline = None
+
 
 class ReprEntryNative(TerminalRepr):
     style = "native"
@@ -782,6 +789,7 @@ class ReprEntryNative(TerminalRepr):
 
     def toterminal(self, tw):
         tw.write("".join(self.lines))
+
 
 class ReprEntry(TerminalRepr):
     localssep = "_ "
@@ -820,6 +828,7 @@ class ReprEntry(TerminalRepr):
                                self.reprlocals,
                                self.reprfileloc)
 
+
 class ReprFileLocation(TerminalRepr):
     def __init__(self, path, lineno, message):
         self.path = str(path)
@@ -836,6 +845,7 @@ class ReprFileLocation(TerminalRepr):
         tw.write(self.path, bold=True, red=True)
         tw.line(":%s: %s" % (self.lineno, msg))
 
+
 class ReprLocals(TerminalRepr):
     def __init__(self, lines):
         self.lines = lines
@@ -843,6 +853,7 @@ class ReprLocals(TerminalRepr):
     def toterminal(self, tw):
         for line in self.lines:
             tw.line(line)
+
 
 class ReprFuncArgs(TerminalRepr):
     def __init__(self, args):

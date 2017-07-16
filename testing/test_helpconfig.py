@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 import pytest
 
+
 def test_version(testdir, pytestconfig):
     result = testdir.runpytest("--version")
     assert result.ret == 0
@@ -15,6 +16,7 @@ def test_version(testdir, pytestconfig):
             "*at*",
         ])
 
+
 def test_help(testdir):
     result = testdir.runpytest("--help")
     assert result.ret == 0
@@ -25,6 +27,7 @@ def test_help(testdir):
         *to see*markers*pytest --markers*
         *to see*fixtures*pytest --fixtures*
     """)
+
 
 def test_hookvalidation_unknown(testdir):
     testdir.makeconftest("""
@@ -37,6 +40,7 @@ def test_hookvalidation_unknown(testdir):
         '*unknown hook*pytest_hello*'
     ])
 
+
 def test_hookvalidation_optional(testdir):
     testdir.makeconftest("""
         import pytest
@@ -47,6 +51,7 @@ def test_hookvalidation_optional(testdir):
     result = testdir.runpytest()
     assert result.ret == EXIT_NOTESTSCOLLECTED
 
+
 def test_traceconfig(testdir):
     result = testdir.runpytest("--traceconfig")
     result.stdout.fnmatch_lines([
@@ -54,11 +59,13 @@ def test_traceconfig(testdir):
         "*active plugins*",
     ])
 
+
 def test_debug(testdir, monkeypatch):
     result = testdir.runpytest_subprocess("--debug")
     assert result.ret == EXIT_NOTESTSCOLLECTED
     p = testdir.tmpdir.join("pytestdebug.log")
     assert "pytest_sessionstart" in p.read()
+
 
 def test_PYTEST_DEBUG(testdir, monkeypatch):
     monkeypatch.setenv("PYTEST_DEBUG", "1")

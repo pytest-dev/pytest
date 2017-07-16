@@ -3,6 +3,7 @@ import py, pytest
 
 # test for _argcomplete but not specific for any application
 
+
 def equal_with_bash(prefix, ffc, fc, out=None):
     res = ffc(prefix)
     res_bash = set(fc(prefix))
@@ -17,6 +18,8 @@ def equal_with_bash(prefix, ffc, fc, out=None):
 # copied from argcomplete.completers as import from there
 # also pulls in argcomplete.__init__ which opens filedescriptor 9
 # this gives an IOError at the end of testrun
+
+
 def _wrapcall(*args, **kargs):
     try:
         if py.std.sys.version_info > (2, 7):
@@ -35,6 +38,7 @@ def _wrapcall(*args, **kargs):
         return output.decode().splitlines()
     except py.std.subprocess.CalledProcessError:
         return []
+
 
 class FilesCompleter(object):
     'File completer class, optionally takes a list of allowed extensions'
@@ -69,6 +73,7 @@ class FilesCompleter(object):
             if self.directories:
                 completion += [f + '/' for f in anticomp]
         return completion
+
 
 class TestArgComplete(object):
     @pytest.mark.skipif("sys.platform in ('win32', 'darwin')")

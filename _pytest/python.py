@@ -112,6 +112,7 @@ def pytest_generate_tests(metafunc):
     for marker in markers:
         metafunc.parametrize(*marker.args, **marker.kwargs)
 
+
 def pytest_configure(config):
     config.addinivalue_line("markers",
                             "parametrize(argnames, argvalues): call a test function multiple "
@@ -155,8 +156,10 @@ def pytest_collect_file(path, parent):
         ihook = parent.session.gethookproxy(path)
         return ihook.pytest_pycollect_makemodule(path=path, parent=parent)
 
+
 def pytest_pycollect_makemodule(path, parent):
     return Module(path, parent)
+
 
 @hookimpl(hookwrapper=True)
 def pytest_pycollect_makeitem(collector, name, obj):
@@ -185,6 +188,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
                 res = list(collector._genfunctions(name, obj))
             outcome.force_result(res)
 
+
 def pytest_make_parametrize_id(config, val, argname=None):
     return None
 
@@ -194,6 +198,7 @@ class PyobjContext(object):
     module = pyobj_property("Module")
     cls = pyobj_property("Class")
     instance = pyobj_property("Instance")
+
 
 class PyobjMixin(PyobjContext):
     def obj():
@@ -251,6 +256,7 @@ class PyobjMixin(PyobjContext):
         modpath = self.getmodpath()
         assert isinstance(lineno, int)
         return fspath, lineno, modpath
+
 
 class PyCollector(PyobjMixin, main.Collector):
 
@@ -517,6 +523,7 @@ class Class(PyCollector):
             fin_class = getattr(fin_class, '__func__', fin_class)
             self.addfinalizer(lambda: fin_class(self.obj))
 
+
 class Instance(PyCollector):
     def _getobj(self):
         return self.parent.obj()
@@ -528,6 +535,7 @@ class Instance(PyCollector):
     def newinstance(self):
         self.obj = self._getobj()
         return self.obj
+
 
 class FunctionMixin(PyobjMixin):
     """ mixin for the code common to Function and Generator.

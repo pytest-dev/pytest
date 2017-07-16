@@ -53,6 +53,7 @@ def oswritebytes(fd, obj):
 def StdCaptureFD(out=True, err=True, in_=True):
     return capture.MultiCapture(out, err, in_, Capture=capture.FDCapture)
 
+
 def StdCapture(out=True, err=True, in_=True):
     return capture.MultiCapture(out, err, in_, Capture=capture.SysCapture)
 
@@ -705,6 +706,7 @@ def tmpfile(testdir):
     if not f.closed:
         f.close()
 
+
 @needsosdup
 def test_dupfile(tmpfile):
     flist = []
@@ -723,11 +725,13 @@ def test_dupfile(tmpfile):
     assert "01234" in repr(s)
     tmpfile.close()
 
+
 def test_dupfile_on_bytesio():
     io = py.io.BytesIO()
     f = capture.safe_text_dupfile(io, "wb")
     f.write("hello")
     assert io.getvalue() == b"hello"
+
 
 def test_dupfile_on_textio():
     io = py.io.TextIO()
@@ -1051,6 +1055,7 @@ def test_fdcapture_tmpfile_remains_the_same(tmpfile, use):
         cap.stop_capturing()
     capfile2 = cap.err.tmpfile
     assert capfile2 == capfile
+
 
 @needsosdup
 def test_close_and_capture_again(testdir):
