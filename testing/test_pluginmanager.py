@@ -29,7 +29,7 @@ class TestPytestPluginInteractions(object):
         config = get_config()
         pm = config.pluginmanager
         pm.hook.pytest_addhooks.call_historic(
-                                kwargs=dict(pluginmanager=config.pluginmanager))
+            kwargs=dict(pluginmanager=config.pluginmanager))
         config.pluginmanager._importconftest(conf)
         #print(config.pluginmanager.get_plugins())
         res = config.hook.pytest_myhook(xyz=10)

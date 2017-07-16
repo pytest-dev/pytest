@@ -102,7 +102,7 @@ def directory_arg(path, optname):
 _preinit = []
 
 default_plugins = (
-     "mark main terminal runner python fixtures debugging unittest capture skipping "
+    "mark main terminal runner python fixtures debugging unittest capture skipping "
      "tmpdir monkeypatch recwarn pastebin helpconfig nose assertion "
      "junitxml resultlog doctest cacheprovider freeze_support "
      "setuponly setupplan warnings").split()
@@ -161,7 +161,7 @@ def _prepareconfig(args=None, plugins=None):
         if warning:
             config.warn('C1', warning)
         return pluginmanager.hook.pytest_cmdline_parse(
-                pluginmanager=pluginmanager, args=args)
+            pluginmanager=pluginmanager, args=args)
     except BaseException:
         config._ensure_unconfigure()
         raise
@@ -235,7 +235,7 @@ class PytestPluginManager(PluginManager):
 
     def parse_hookspec_opts(self, module_or_class, name):
         opts = super(PytestPluginManager, self).parse_hookspec_opts(
-                                                module_or_class, name)
+            module_or_class, name)
         if opts is None:
             method = getattr(module_or_class, name)
             if name.startswith("pytest_"):
@@ -258,7 +258,7 @@ class PytestPluginManager(PluginManager):
         ret = super(PytestPluginManager, self).register(plugin, name)
         if ret:
             self.hook.pytest_plugin_registered.call_historic(
-                      kwargs=dict(plugin=plugin, manager=self))
+                kwargs=dict(plugin=plugin, manager=self))
 
             if isinstance(plugin, types.ModuleType):
                 self.consider_module(plugin)
@@ -1099,10 +1099,10 @@ class Config(object):
     def parse(self, args, addopts=True):
         # parse given cmdline arguments into this config object.
         assert not hasattr(self, 'args'), (
-                "can only parse cmdline args at most once per Config object")
+            "can only parse cmdline args at most once per Config object")
         self._origargs = args
         self.hook.pytest_addhooks.call_historic(
-                                  kwargs=dict(pluginmanager=self.pluginmanager))
+            kwargs=dict(pluginmanager=self.pluginmanager))
         self._preparse(args, addopts=addopts)
         # XXX deprecated hook:
         self.hook.pytest_cmdline_preparse(config=self, args=args)

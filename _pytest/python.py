@@ -792,7 +792,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         if not parameters:
             fs, lineno = getfslineno(self.function)
             reason = "got empty parameter set %r, function %s at %s:%d" % (
-                    argnames, self.function.__name__, fs, lineno)
+                argnames, self.function.__name__, fs, lineno)
             mark = MARK_GEN.skip(reason=reason)
             parameters.append(ParameterSet(
                 values=(NOTSET,) * len(argnames),
@@ -813,7 +813,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
                     name = 'fixture' if indirect else 'argument'
                 raise ValueError(
                     "%r uses no %s %r" % (
-                            self.function, name, arg))
+                        self.function, name, arg))
 
         if indirect is True:
             valtypes = dict.fromkeys(argnames, "params")

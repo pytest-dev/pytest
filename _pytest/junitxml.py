@@ -444,9 +444,9 @@ class LogXML(object):
         """
         if self.global_properties:
             return Junit.properties(
-                    [
-                        Junit.property(name=name, value=value)
-                        for name, value in self.global_properties
-                    ]
+                [
+                    Junit.property(name=name, value=value)
+                    for name, value in self.global_properties
+                ]
             )
         return ''

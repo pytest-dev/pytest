@@ -30,7 +30,7 @@ def pytest_addoption(parser):
 
     parser.addoption('--runpytest', default="inprocess", dest="runpytest",
            choices=("inprocess", "subprocess", ),
-           help=("run pytest sub runs in tests using an 'inprocess' "
+        help=("run pytest sub runs in tests using an 'inprocess' "
                  "or 'subprocess' (python -m main) method"))
 
 
@@ -1036,7 +1036,7 @@ def getdecoded(out):
         return out.decode("utf-8")
     except UnicodeDecodeError:
         return "INTERNAL not-utf8-decodeable, truncated string:\n%s" % (
-                py.io.saferepr(out),)
+            py.io.saferepr(out),)
 
 
 class LineComp:

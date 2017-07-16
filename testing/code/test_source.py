@@ -537,7 +537,7 @@ def test_comment_in_statement():
 '''
     for line in range(1,3):
         assert str(getstatement(line, source)) == \
-               'test(foo=1,\n    # comment 1\n    bar=2)'
+            'test(foo=1,\n    # comment 1\n    bar=2)'
 
 def test_single_line_else():
     source = getstatement(1, "if False: 2\nelse: 3")

@@ -43,7 +43,7 @@ class TestApprox(object):
 
     def test_exactly_equal(self):
         examples = [
-                (2.0, 2.0),
+            (2.0, 2.0),
                 (0.1e200, 0.1e200),
                 (1.123e-300, 1.123e-300),
                 (12345, 12345.0),
@@ -57,7 +57,7 @@ class TestApprox(object):
 
     def test_opposite_sign(self):
         examples = [
-                (eq, 1e-100, -1e-100),
+            (eq, 1e-100, -1e-100),
                 (ne, 1e100, -1e100),
         ]
         for op, a, x in examples:
@@ -65,7 +65,7 @@ class TestApprox(object):
 
     def test_zero_tolerance(self):
         within_1e10 = [
-                (1.1e-100, 1e-100),
+            (1.1e-100, 1e-100),
                 (-1.1e-100, -1e-100),
         ]
         for a, x in within_1e10:
@@ -79,11 +79,11 @@ class TestApprox(object):
     def test_negative_tolerance(self):
         # Negative tolerances are not allowed.
         illegal_kwargs = [
-                dict(rel=-1e100),
-                dict(abs=-1e100),
-                dict(rel=1e100, abs=-1e100),
-                dict(rel=-1e100, abs=1e100),
-                dict(rel=-1e100, abs=-1e100),
+            dict(rel=-1e100),
+            dict(abs=-1e100),
+            dict(rel=1e100, abs=-1e100),
+            dict(rel=-1e100, abs=1e100),
+            dict(rel=-1e100, abs=-1e100),
         ]
         for kwargs in illegal_kwargs:
             with pytest.raises(ValueError):
@@ -92,7 +92,7 @@ class TestApprox(object):
     def test_inf_tolerance(self):
         # Everything should be equal if the tolerance is infinite.
         large_diffs = [
-                (1, 1000),
+            (1, 1000),
                 (1e-50, 1e50),
                 (-1.0, -1e300),
                 (0.0, 10),
@@ -107,8 +107,8 @@ class TestApprox(object):
         # If the relative tolerance is zero but the expected value is infinite,
         # the actual tolerance is a NaN, which should be an error.
         illegal_kwargs = [
-                dict(rel=inf, abs=0.0),
-                dict(rel=inf, abs=inf),
+            dict(rel=inf, abs=0.0),
+            dict(rel=inf, abs=inf),
         ]
         for kwargs in illegal_kwargs:
             with pytest.raises(ValueError):
@@ -116,9 +116,9 @@ class TestApprox(object):
 
     def test_nan_tolerance(self):
         illegal_kwargs = [
-                dict(rel=nan),
-                dict(abs=nan),
-                dict(rel=nan, abs=nan),
+            dict(rel=nan),
+            dict(abs=nan),
+            dict(rel=nan, abs=nan),
         ]
         for kwargs in illegal_kwargs:
             with pytest.raises(ValueError):
@@ -135,7 +135,7 @@ class TestApprox(object):
         # None of the other tests (except the doctests) should be affected by
         # the choice of defaults.
         examples = [
-                # Relative tolerance used.
+            # Relative tolerance used.
                 (eq, 1e100 + 1e94, 1e100),
                 (ne, 1e100 + 2e94, 1e100),
                 (eq, 1e0 + 1e-6, 1e0),
@@ -166,7 +166,7 @@ class TestApprox(object):
 
     def test_relative_tolerance(self):
         within_1e8_rel = [
-                (1e8 + 1e0, 1e8),
+            (1e8 + 1e0, 1e8),
                 (1e0 + 1e-8, 1e0),
                 (1e-8 + 1e-16, 1e-8),
         ]
@@ -176,7 +176,7 @@ class TestApprox(object):
 
     def test_absolute_tolerance(self):
         within_1e8_abs = [
-                (1e8 + 9e-9, 1e8),
+            (1e8 + 9e-9, 1e8),
                 (1e0 + 9e-9, 1e0),
                 (1e-8 + 9e-9, 1e-8),
         ]
@@ -201,7 +201,7 @@ class TestApprox(object):
 
     def test_expecting_inf(self):
         examples = [
-                (eq, inf, inf),
+            (eq, inf, inf),
                 (eq, -inf, -inf),
                 (ne, inf, -inf),
                 (ne, 0.0, inf),
@@ -212,7 +212,7 @@ class TestApprox(object):
 
     def test_expecting_nan(self):
         examples = [
-                (nan, nan),
+            (nan, nan),
                 (-nan, -nan),
                 (nan, -nan),
                 (0.0, nan),
@@ -230,7 +230,7 @@ class TestApprox(object):
 
     def test_expecting_sequence(self):
         within_1e8 = [
-                (1e8 + 1e0, 1e8),
+            (1e8 + 1e0, 1e8),
                 (1e0 + 1e-8, 1e0),
                 (1e-8 + 1e-16, 1e-8),
         ]
@@ -243,7 +243,7 @@ class TestApprox(object):
 
     def test_complex(self):
         within_1e6 = [
-                ( 1.000001 + 1.0j, 1.0 + 1.0j),
+            ( 1.000001 + 1.0j, 1.0 + 1.0j),
                 (1.0 + 1.000001j, 1.0 + 1.0j),
                 (-1.000001 + 1.0j, -1.0 + 1.0j),
                 (1.0 - 1.000001j, 1.0 - 1.0j),
@@ -254,7 +254,7 @@ class TestApprox(object):
 
     def test_int(self):
         within_1e6 = [
-                (1000001, 1000000),
+            (1000001, 1000000),
                 (-1000001, -1000000),
         ]
         for a, x in within_1e6:
@@ -263,7 +263,7 @@ class TestApprox(object):
 
     def test_decimal(self):
         within_1e6 = [
-                (Decimal('1.000001'), Decimal('1.0')),
+            (Decimal('1.000001'), Decimal('1.0')),
                 (Decimal('-1.000001'), Decimal('-1.0')),
         ]
         for a, x in within_1e6:
@@ -272,7 +272,7 @@ class TestApprox(object):
 
     def test_fraction(self):
         within_1e6 = [
-                (1 + Fraction(1, 1000000), Fraction(1)),
+            (1 + Fraction(1, 1000000), Fraction(1)),
                 (-1 - Fraction(-1, 1000000), Fraction(-1)),
         ]
         for a, x in within_1e6:
@@ -282,10 +282,10 @@ class TestApprox(object):
     def test_doctests(self):
         parser = doctest.DocTestParser()
         test = parser.get_doctest(
-                approx.__doc__,
-                {'approx': approx},
-                approx.__name__,
-                None, None,
+            approx.__doc__,
+            {'approx': approx},
+            approx.__name__,
+            None, None,
         )
         runner = MyDocTestRunner()
         runner.run(test)

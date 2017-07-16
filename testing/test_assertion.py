@@ -772,7 +772,7 @@ def test_assertrepr_loaded_per_dir(testdir):
     b_conftest.write('def pytest_assertrepr_compare(): return ["summary b"]')
     result = testdir.runpytest()
     result.stdout.fnmatch_lines([
-            '*def test_base():*',
+        '*def test_base():*',
             '*E*assert 1 == 2*',
             '*def test_a():*',
             '*E*assert summary a*',

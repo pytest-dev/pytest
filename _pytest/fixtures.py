@@ -172,9 +172,9 @@ def reorder_items_atscope(items, ignore, argkeys_cache, scopenum):
     items_done = []
     while 1:
         items_before, items_same, items_other, newignore = \
-                slice_items(items, ignore, argkeys_cache[scopenum])
+            slice_items(items, ignore, argkeys_cache[scopenum])
         items_before = reorder_items_atscope(
-                            items_before, ignore, argkeys_cache,scopenum+1)
+            items_before, ignore, argkeys_cache,scopenum+1)
         if items_same is None:
             # nothing to reorder in this scope
             assert items_other is None
@@ -826,7 +826,7 @@ class FixtureFunctionMarker:
     def __call__(self, function):
         if isclass(function):
             raise ValueError(
-                    "class fixtures not supported (may be in the future)")
+                "class fixtures not supported (may be in the future)")
         function._pytestfixturefunction = self
         return function
 
@@ -873,7 +873,7 @@ def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
     if callable(scope) and params is None and autouse == False:
         # direct decoration
         return FixtureFunctionMarker(
-                "function", params, autouse, name=name)(scope)
+            "function", params, autouse, name=name)(scope)
     if params is not None and not isinstance(params, (list, tuple)):
         params = list(params)
     return FixtureFunctionMarker(scope, params, autouse, ids=ids, name=name)
@@ -888,7 +888,7 @@ def yield_fixture(scope="function", params=None, autouse=False, ids=None, name=N
     if callable(scope) and params is None and not autouse:
         # direct decoration
         return FixtureFunctionMarker(
-                "function", params, autouse, ids=ids, name=name)(scope)
+            "function", params, autouse, ids=ids, name=name)(scope)
     else:
         return FixtureFunctionMarker(scope, params, autouse, ids=ids, name=name)
 

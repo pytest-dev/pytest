@@ -135,9 +135,9 @@ def call_and_report(item, when, log=True, **kwds):
 
 def check_interactive_exception(call, report):
     return call.excinfo and not (
-                hasattr(report, "wasxfail") or
-                call.excinfo.errisinstance(skip.Exception) or
-                call.excinfo.errisinstance(bdb.BdbQuit))
+        hasattr(report, "wasxfail") or
+        call.excinfo.errisinstance(skip.Exception) or
+        call.excinfo.errisinstance(bdb.BdbQuit))
 
 def call_runtest_hook(item, when, **kwds):
     hookname = "pytest_runtest_" + when
@@ -365,7 +365,7 @@ class CollectReport(BaseReport):
 
     def __repr__(self):
         return "<CollectReport %r lenresult=%s outcome=%r>" % (
-                self.nodeid, len(self.result), self.outcome)
+            self.nodeid, len(self.result), self.outcome)
 
 class CollectErrorRepr(TerminalRepr):
     def __init__(self, msg):

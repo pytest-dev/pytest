@@ -6,7 +6,7 @@ import py
 import pytest
 from _pytest.main import Node, Item, FSCollector
 from _pytest.resultlog import generic_path, ResultLog, \
-        pytest_configure, pytest_unconfigure
+    pytest_configure, pytest_unconfigure
 
 
 def test_generic_path(testdir):

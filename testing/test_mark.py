@@ -200,7 +200,7 @@ def test_strict_prohibits_unregistered_markers(testdir):
     ])
 
 @pytest.mark.parametrize("spec", [
-        ("xyz", ("test_one",)),
+    ("xyz", ("test_one",)),
         ("xyz and xyz2", ()),
         ("xyz2", ("test_two",)),
         ("xyz or xyz2", ("test_one", "test_two"),)
@@ -223,7 +223,7 @@ def test_mark_option(spec, testdir):
     assert list(passed) == list(passed_result)
 
 @pytest.mark.parametrize("spec", [
-        ("interface", ("test_interface",)),
+    ("interface", ("test_interface",)),
         ("not interface", ("test_nointer",)),
 ])
 def test_mark_option_custom(spec, testdir):
@@ -248,7 +248,7 @@ def test_mark_option_custom(spec, testdir):
     assert list(passed) == list(passed_result)
 
 @pytest.mark.parametrize("spec", [
-        ("interface", ("test_interface",)),
+    ("interface", ("test_interface",)),
         ("not interface", ("test_nointer", "test_pass")),
         ("pass", ("test_pass",)),
         ("not pass", ("test_interface", "test_nointer")),
@@ -271,7 +271,7 @@ def test_keyword_option_custom(spec, testdir):
 
 
 @pytest.mark.parametrize("spec", [
-        ("None", ("test_func[None]",)),
+    ("None", ("test_func[None]",)),
         ("1.3", ("test_func[1.3]",)),
         ("2-3", ("test_func[2-3]",))
 ])
