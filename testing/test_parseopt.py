@@ -188,7 +188,7 @@ class TestParser(object):
     def test_drop_short_helper(self):
         parser = py.std.argparse.ArgumentParser(formatter_class=parseopt.DropShorterLongHelpFormatter)
         parser.add_argument('-t', '--twoword', '--duo', '--two-word', '--two',
-                             help='foo').map_long_option = {'two': 'two-word'}
+                            help='foo').map_long_option = {'two': 'two-word'}
         # throws error on --deux only!
         parser.add_argument('-d', '--deuxmots', '--deux-mots',
                             action='store_true', help='foo').map_long_option = {'deux': 'deux-mots'}

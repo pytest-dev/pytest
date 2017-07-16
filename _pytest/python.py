@@ -904,7 +904,7 @@ def _find_parametrized_scope(argnames, arg2fixturedefs, indirect):
     from _pytest.fixtures import scopes
     indirect_as_list = isinstance(indirect, (list, tuple))
     all_arguments_are_fixtures = indirect is True or \
-                                 indirect_as_list and len(indirect) == argnames
+        indirect_as_list and len(indirect) == argnames
     if all_arguments_are_fixtures:
         fixturedefs = arg2fixturedefs or {}
         used_scopes = [fixturedef[0].scope for name, fixturedef in fixturedefs.items()]

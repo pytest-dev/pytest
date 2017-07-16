@@ -339,7 +339,7 @@ def test_excinfo_no_python_sourcecode(tmpdir):
     env = jinja2.Environment(loader=loader)
     template = env.get_template('test.txt')
     excinfo = pytest.raises(ValueError,
-                             template.render, h=h)
+                            template.render, h=h)
     for item in excinfo.traceback:
         print(item) #XXX: for some reason jinja.Template.render is printed in full
         item.source # shouldnt fail

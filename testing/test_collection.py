@@ -460,7 +460,7 @@ class TestSession(object):
             ("pytest_collectstart", "collector.fspath == test_aaa"),
             ("pytest_pycollect_makeitem", "name == 'test_func'"),
             ("pytest_collectreport",
-                    "report.nodeid.startswith('aaa/test_aaa.py')"),
+             "report.nodeid.startswith('aaa/test_aaa.py')"),
         ])
 
     def test_collect_two_commandline_args(self, testdir):

@@ -304,7 +304,7 @@ class PytestPluginManager(PluginManager):
         """
         current = py.path.local()
         self._confcutdir = current.join(namespace.confcutdir, abs=True) \
-                                if namespace.confcutdir else None
+            if namespace.confcutdir else None
         self._noconftest = namespace.noconftest
         testpaths = namespace.file_or_dir
         foundanchor = False

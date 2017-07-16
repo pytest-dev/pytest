@@ -79,7 +79,7 @@ def num_mock_patch_args(function):
     mock = sys.modules.get("mock", sys.modules.get("unittest.mock", None))
     if mock is not None:
         return len([p for p in patchings
-                        if not p.attribute_name and p.new is mock.DEFAULT])
+                    if not p.attribute_name and p.new is mock.DEFAULT])
     return len(patchings)
 
 

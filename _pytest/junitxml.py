@@ -378,8 +378,8 @@ class LogXML(object):
             close_report = next(
                 (rep for rep in self.open_reports
                  if (rep.nodeid == report.nodeid and
-                      getattr(rep, "item_index", None) == report_ii and
-                      getattr(rep, "worker_id", None) == report_wid
+                     getattr(rep, "item_index", None) == report_ii and
+                     getattr(rep, "worker_id", None) == report_wid
                      )
                  ), None)
             if close_report:

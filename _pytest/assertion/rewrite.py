@@ -723,7 +723,7 @@ class AssertionRewriter(ast.NodeVisitor):
         if isinstance(assert_.test, ast.Tuple) and self.config is not None:
             fslocation = (self.module_path, assert_.lineno)
             self.config.warn('R1', 'assertion is always true, perhaps '
-                              'remove parentheses?', fslocation=fslocation)
+                             'remove parentheses?', fslocation=fslocation)
         self.statements = []
         self.variables = []
         self.variable_counter = itertools.count()

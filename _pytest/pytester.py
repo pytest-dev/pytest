@@ -31,7 +31,7 @@ def pytest_addoption(parser):
     parser.addoption('--runpytest', default="inprocess", dest="runpytest",
            choices=("inprocess", "subprocess", ),
         help=("run pytest sub runs in tests using an 'inprocess' "
-                 "or 'subprocess' (python -m main) method"))
+              "or 'subprocess' (python -m main) method"))
 
 
 def pytest_configure(config):
