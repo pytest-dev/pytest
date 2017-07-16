@@ -490,6 +490,7 @@ def _get_xunit_func(obj, name):
 
 class Class(PyCollector):
     """ Collector for test methods. """
+
     def collect(self):
         if not safe_getattr(self.obj, "__test__", True):
             return []
@@ -715,6 +716,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
     test configuration or values specified in the class or module where a
     test function is defined.
     """
+
     def __init__(self, function, fixtureinfo, config, cls=None, module=None):
         #: access to the :class:`_pytest.config.Config` object for the test session
         self.config = config
@@ -1523,6 +1525,7 @@ class Function(FunctionMixin, main.Item, fixtures.FuncargnamesCompatAttr):
     Python test function.
     """
     _genid = None
+
     def __init__(self, name, parent, args=None, config=None,
                  callspec=None, callobj=NOTSET, keywords=None, session=None,
                  fixtureinfo=None, originalname=None):

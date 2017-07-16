@@ -18,6 +18,7 @@ else:
 
 class Code(object):
     """ wrapper around Python code objects """
+
     def __init__(self, rawcode):
         if not hasattr(rawcode, "co_filename"):
             rawcode = getrawcode(rawcode)
@@ -260,6 +261,7 @@ class Traceback(list):
         access to Traceback entries.
     """
     Entry = TracebackEntry
+
     def __init__(self, tb, excinfo=None):
         """ initialize from given python traceback object and ExceptionInfo """
         self._excinfo = excinfo

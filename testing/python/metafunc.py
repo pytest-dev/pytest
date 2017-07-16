@@ -1251,6 +1251,7 @@ class TestMetafuncFunctionalAuto(object):
 
 class TestMarkersWithParametrization(object):
     pytestmark = pytest.mark.issue308
+
     def test_simple_mark(self, testdir):
         s = """
             import pytest

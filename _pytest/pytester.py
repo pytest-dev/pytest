@@ -352,6 +352,7 @@ class RunResult:
     :duration: Duration in seconds.
 
     """
+
     def __init__(self, ret, outlines, errlines, duration):
         self.ret = ret
         self.outlines = outlines
@@ -581,6 +582,7 @@ class Testdir:
         return p
 
     Session = Session
+
     def getnode(self, config, arg):
         """Return the collection node of a file.
 

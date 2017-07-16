@@ -38,6 +38,7 @@ def _wrapcall(*args, **kargs):
 
 class FilesCompleter(object):
     'File completer class, optionally takes a list of allowed extensions'
+
     def __init__(self, allowednames=(), directories=True):
         # Fix if someone passes in a string instead of a list
         if type(allowednames) is str:

@@ -89,6 +89,7 @@ class Cache(object):
 
 class LFPlugin:
     """ Plugin which implements the --lf (run last-failing) option """
+
     def __init__(self, config):
         self.config = config
         active_keys = 'lf', 'failedfirst'

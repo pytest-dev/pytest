@@ -559,6 +559,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
 class SubRequest(FixtureRequest):
     """ a sub request for handling getting a fixture from a
     test function/fixture. """
+
     def __init__(self, request, scope, param, param_index, fixturedef):
         self._parent_request = request
         self.fixturename = fixturedef.argname
@@ -609,6 +610,7 @@ def scope2index(scope, descr, where=None):
 
 class FixtureLookupError(LookupError):
     """ could not return a requested Fixture (missing or invalid). """
+
     def __init__(self, argname, request, msg=None):
         self.argname = argname
         self.request = request
@@ -709,6 +711,7 @@ def call_fixture_func(fixturefunc, request, kwargs):
 
 class FixtureDef:
     """ A container for a factory definition. """
+
     def __init__(self, fixturemanager, baseid, argname, func, scope, params,
                  unittest=False, ids=None):
         self._fixturemanager = fixturemanager

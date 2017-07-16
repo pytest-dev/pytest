@@ -176,6 +176,7 @@ class PytestPluginManager(PluginManager):
       ``pytest_plugins`` global variables found in plugins being loaded;
     * ``conftest.py`` loading during start-up;
     """
+
     def __init__(self):
         super(PytestPluginManager, self).__init__("pytest", implprefix="pytest_")
         self._conftest_plugins = set()
@@ -805,6 +806,7 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
     - shortcut if there are only two options and one of them is a short one
     - cache result on action object as this is called at least 2 times
     """
+
     def _format_action_invocation(self, action):
         orgstr = argparse.HelpFormatter._format_action_invocation(self, action)
         if orgstr and orgstr[0] != '-':  # only optional arguments
@@ -854,10 +856,13 @@ def _ensure_removed_sysmodule(modname):
 
 class CmdOptions(object):
     """ holds cmdline options as attributes."""
+
     def __init__(self, values=()):
         self.__dict__.update(values)
+
     def __repr__(self):
         return "<CmdOptions %r>" % (self.__dict__,)
+
     def copy(self):
         return CmdOptions(self.__dict__)
 

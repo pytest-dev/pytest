@@ -148,6 +148,7 @@ class CallInfo:
     """ Result/Exception info a function invocation. """
     #: None or ExceptionInfo object.
     excinfo = None
+
     def __init__(self, func, when):
         #: context of invocation: one of "setup", "call",
         #: "teardown", "memocollect"
@@ -277,6 +278,7 @@ class TestReport(BaseReport):
     """ Basic test report object (also used for setup and teardown calls if
     they fail).
     """
+
     def __init__(self, nodeid, location, keywords, outcome,
                  longrepr, when, sections=(), duration=0, **extra):
         #: normalized collection node id
@@ -318,6 +320,7 @@ class TestReport(BaseReport):
 class TeardownErrorReport(BaseReport):
     outcome = "failed"
     when = "teardown"
+
     def __init__(self, longrepr, **extra):
         self.longrepr = longrepr
         self.sections = []
@@ -370,11 +373,13 @@ class CollectReport(BaseReport):
 class CollectErrorRepr(TerminalRepr):
     def __init__(self, msg):
         self.longrepr = msg
+
     def toterminal(self, out):
         out.line(self.longrepr, red=True)
 
 class SetupState(object):
     """ shared state for setting up/tearing down test items or collectors. """
+
     def __init__(self):
         self.stack = []
         self._finalizers = {}
@@ -469,6 +474,7 @@ class OutcomeException(Exception):
     """ OutcomeException and its subclass instances indicate and
         contain info about test and collection outcomes.
     """
+
     def __init__(self, msg=None, pytrace=True):
         Exception.__init__(self, msg)
         self.msg = msg
@@ -500,6 +506,7 @@ class Failed(OutcomeException):
 
 class Exit(KeyboardInterrupt):
     """ raised for immediate program exits (no tracebacks/summaries)"""
+
     def __init__(self, msg="unknown reason"):
         self.msg = msg
         KeyboardInterrupt.__init__(self, msg)

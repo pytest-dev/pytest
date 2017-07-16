@@ -88,6 +88,7 @@ class WarningReport:
     """
     Simple structure to hold warnings information captured by ``pytest_logwarning``.
     """
+
     def __init__(self, code, message, nodeid=None, fslocation=None):
         """
         :param code: unused

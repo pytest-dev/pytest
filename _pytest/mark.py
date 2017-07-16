@@ -155,6 +155,7 @@ def pytest_collection_modifyitems(items, config):
 class MarkMapping:
     """Provides a local mapping for markers where item access
     resolves to True if the marker is present. """
+
     def __init__(self, keywords):
         mymarks = set()
         for key, value in keywords.items():
@@ -170,6 +171,7 @@ class KeywordMapping:
     """Provides a local mapping for keywords.
     Given a list of names, map any substring of one of these names to True.
     """
+
     def __init__(self, names):
         self._names = names
 
@@ -303,6 +305,7 @@ class MarkDecorator:
     additional keyword or positional arguments.
 
     """
+
     def __init__(self, mark):
         assert isinstance(mark, Mark), repr(mark)
         self.mark = mark
@@ -366,6 +369,7 @@ class Mark(namedtuple('Mark', 'name, args, kwargs')):
 
 class MarkInfo(object):
     """ Marking object created by :class:`MarkDecorator` instances. """
+
     def __init__(self, mark):
         assert isinstance(mark, Mark), repr(mark)
         self.combined = mark

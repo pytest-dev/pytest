@@ -127,6 +127,7 @@ class TestAccesses(object):
         def g(x):
             pass
     """)
+
     def test_getrange(self):
         x = self.source[0:2]
         assert x.isparseable()

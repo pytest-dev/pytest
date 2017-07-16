@@ -697,6 +697,7 @@ class TestGenericReporting(object):
     """ this test class can be subclassed with a different option
         provider to run e.g. distributed tests.
     """
+
     def test_collect_fail(self, testdir, option):
         testdir.makepyfile("import xyz\n")
         result = testdir.runpytest(*option.args)

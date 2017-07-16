@@ -19,6 +19,7 @@ class Source(object):
         possibly deindenting it.
     """
     _compilecounter = 0
+
     def __init__(self, *parts, **kwargs):
         self.lines = lines = []
         de = kwargs.get('deindent', True)

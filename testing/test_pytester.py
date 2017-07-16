@@ -78,6 +78,7 @@ def make_holder():
     class apiclass(object):
         def pytest_xyz(self, arg):
             "x"
+
         def pytest_xyz_noarg(self):
             "x"
 

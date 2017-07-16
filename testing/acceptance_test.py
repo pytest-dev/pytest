@@ -764,6 +764,7 @@ class TestDurationWithFixture(object):
         def test_2():
             time.sleep(frag)
     """
+
     def test_setup_function(self, testdir):
         testdir.makepyfile(self.source)
         result = testdir.runpytest("--durations=10")
