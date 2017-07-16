@@ -414,7 +414,7 @@ class SetupState(object):
             colitem.teardown()
         for colitem in self._finalizers:
             assert colitem is None or colitem in self.stack \
-             or isinstance(colitem, tuple)
+                or isinstance(colitem, tuple)
 
     def teardown_all(self):
         while self.stack:

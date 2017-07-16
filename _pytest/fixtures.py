@@ -527,7 +527,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
             fail("ScopeMismatch: You tried to access the %r scoped "
                  "fixture %r with a %r scoped request object, "
                  "involved factories\n%s" % (
-                    (requested_scope, argname, invoking_scope, "\n".join(lines))),
+                     (requested_scope, argname, invoking_scope, "\n".join(lines))),
                 pytrace=False)
 
     def _factorytraceback(self):

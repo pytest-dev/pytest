@@ -186,15 +186,15 @@ class TestApprox(object):
 
     def test_expecting_zero(self):
         examples = [
-                (ne, 1e-6, 0.0),
-                (ne, -1e-6, 0.0),
-                (eq, 1e-12, 0.0),
-                (eq, -1e-12, 0.0),
-                (ne, 2e-12, 0.0),
-                (ne, -2e-12, 0.0),
-                (ne, inf, 0.0),
-                (ne, nan, 0.0),
-         ]
+            (ne, 1e-6, 0.0),
+            (ne, -1e-6, 0.0),
+            (eq, 1e-12, 0.0),
+            (eq, -1e-12, 0.0),
+            (ne, 2e-12, 0.0),
+            (ne, -2e-12, 0.0),
+            (ne, inf, 0.0),
+            (ne, nan, 0.0),
+        ]
         for op, a, x in examples:
             assert op(a, approx(x, rel=0.0, abs=1e-12))
             assert op(a, approx(x, rel=1e-6, abs=1e-12))

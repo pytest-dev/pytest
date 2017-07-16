@@ -222,7 +222,7 @@ class TestCollectonly(object):
         """)
         result = testdir.runpytest("--collect-only",)
         result.stdout.fnmatch_lines([
-           "<Module 'test_collectonly_basic.py'>",
+            "<Module 'test_collectonly_basic.py'>",
            "  <Function 'test_func'>",
         ])
 
@@ -378,7 +378,7 @@ class TestFixtureReporting(object):
             "*def test_fail():",
             "*failingfunc*",
             "*1 failed*1 error*",
-         ])
+            ])
 
     def test_setup_teardown_output_and_test_failure(self, testdir):
         """ Test for issue #442 """
@@ -403,7 +403,7 @@ class TestFixtureReporting(object):
             "*teardown func*",
 
             "*1 failed*",
-         ])
+            ])
 
 class TestTerminalFunctional(object):
     def test_deselected(self, testdir):
