@@ -589,7 +589,7 @@ class TestSkipif(object):
             @pytest.mark.skipif("hasattr(os, 'sep')")
             def test_func():
                 pass
-        """) # noqa
+        """)  # noqa
         x = pytest.raises(pytest.skip.Exception, lambda:
                           pytest_runtest_setup(item))
         assert x.value.msg == "condition: hasattr(os, 'sep')"

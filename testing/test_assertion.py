@@ -831,7 +831,7 @@ def test_traceback_failure(testdir):
         "*test_traceback_failure.py:4: AssertionError"
     ])
 
-    result = testdir.runpytest(p1) # "auto"
+    result = testdir.runpytest(p1)  # "auto"
     result.stdout.fnmatch_lines([
         "*test_traceback_failure.py F",
         "====* FAILURES *====",

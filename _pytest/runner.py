@@ -264,7 +264,7 @@ def pytest_runtest_makereport(item, call):
             outcome = "failed"
             if call.when == "call":
                 longrepr = item.repr_failure(excinfo)
-            else: # exception in setup or teardown
+            else:  # exception in setup or teardown
                 longrepr = item._repr_failure_py(excinfo,
                                                  style=item.config.option.tbstyle)
     for rwhen, key, content in item._report_sections:
@@ -548,7 +548,7 @@ def importorskip(modname, minversion=None):
     """
     import warnings
     __tracebackhide__ = True
-    compile(modname, '', 'eval') # to catch syntaxerrors
+    compile(modname, '', 'eval')  # to catch syntaxerrors
     should_skip = False
 
     with warnings.catch_warnings():

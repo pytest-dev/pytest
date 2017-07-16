@@ -410,7 +410,7 @@ def _saferepr(obj):
     return repr.replace(t("\n"), t("\\n"))
 
 
-from _pytest.assertion.util import format_explanation as _format_explanation # noqa
+from _pytest.assertion.util import format_explanation as _format_explanation  # noqa
 
 def _format_assertmsg(obj):
     """Format the custom assertion message given.
@@ -483,7 +483,7 @@ binop_map = {
     ast.Mult: "*",
     ast.Div: "/",
     ast.FloorDiv: "//",
-    ast.Mod: "%%", # escaped for string formatting
+    ast.Mod: "%%",  # escaped for string formatting
     ast.Eq: "==",
     ast.NotEq: "!=",
     ast.Lt: "<",
@@ -787,7 +787,7 @@ class AssertionRewriter(ast.NodeVisitor):
             if i:
                 fail_inner = []
                 # cond is set in a prior loop iteration below
-                self.on_failure.append(ast.If(cond, fail_inner, [])) # noqa
+                self.on_failure.append(ast.If(cond, fail_inner, []))  # noqa
                 self.on_failure = fail_inner
             self.push_format_context()
             res, expl = self.visit(v)
@@ -839,7 +839,7 @@ class AssertionRewriter(ast.NodeVisitor):
             new_kwargs.append(ast.keyword(keyword.arg, res))
             if keyword.arg:
                 arg_expls.append(keyword.arg + "=" + expl)
-            else: ## **args have `arg` keywords with an .arg of None
+            else:  # **args have `arg` keywords with an .arg of None
                 arg_expls.append("**" + expl)
 
         expl = "%s(%s)" % (func_expl, ', '.join(arg_expls))

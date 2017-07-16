@@ -44,7 +44,7 @@ class TestFillFixtures(object):
             def test_func(some):
                 pass
         """)
-        result = testdir.runpytest() # "--collect-only")
+        result = testdir.runpytest()  # "--collect-only")
         assert result.ret != 0
         result.stdout.fnmatch_lines([
             "*def test_func(some)*",

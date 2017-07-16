@@ -117,7 +117,7 @@ class SessionTests(object):
         passed, skipped, failed = reprec.listoutcomes()
         assert len(failed) == 1
         out = failed[0].longrepr.reprcrash.message
-        assert out.find("""[Exception("Ha Ha fooled you, I'm a broken repr().") raised in repr()]""") != -1 #'
+        assert out.find("""[Exception("Ha Ha fooled you, I'm a broken repr().") raised in repr()]""") != -1  # '
 
     def test_skip_file_by_conftest(self, testdir):
         testdir.makepyfile(conftest="""
@@ -186,7 +186,7 @@ class TestNewSession(SessionTests):
         started = reprec.getcalls("pytest_collectstart")
         finished = reprec.getreports("pytest_collectreport")
         assert len(started) == len(finished)
-        assert len(started) == 7 # XXX extra TopCollector
+        assert len(started) == 7  # XXX extra TopCollector
         colfail = [x for x in finished if x.failed]
         assert len(colfail) == 1
 

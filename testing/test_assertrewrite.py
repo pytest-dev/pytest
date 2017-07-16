@@ -401,7 +401,7 @@ class TestAssertionRewrite(object):
         ns = {"x": X}
 
         def f():
-            assert not x.g # noqa
+            assert not x.g  # noqa
 
         assert getmsg(f, ns) == """assert not 3
  +  where 3 = x.g"""

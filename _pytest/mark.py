@@ -313,7 +313,7 @@ class MarkDecorator:
 
     @property
     def markname(self):
-        return self.name # for backward-compat (2.4.1 had this attr)
+        return self.name  # for backward-compat (2.4.1 had this attr)
 
     def __eq__(self, other):
         return self.mark == other.mark

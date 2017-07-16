@@ -371,7 +371,7 @@ class TerminalReporter:
         stack = []
         indent = ""
         for item in items:
-            needed_collectors = item.listchain()[1:] # strip root node
+            needed_collectors = item.listchain()[1:]  # strip root node
             while stack:
                 if stack == needed_collectors[:len(stack)]:
                     break
@@ -446,7 +446,7 @@ class TerminalReporter:
             fspath, lineno, domain = rep.location
             return domain
         else:
-            return "test session" # XXX?
+            return "test session"  # XXX?
 
     def _getcrashline(self, rep):
         try:
@@ -589,7 +589,7 @@ def build_summary_stats_line(stats):
     unknown_key_seen = False
     for key in stats.keys():
         if key not in keys:
-            if key: # setup/teardown reports have an empty key, ignore them
+            if key:  # setup/teardown reports have an empty key, ignore them
                 keys.append(key)
                 unknown_key_seen = True
     parts = []

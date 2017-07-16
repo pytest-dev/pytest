@@ -10,7 +10,7 @@ def runpdb_and_get_report(testdir, source):
     p = testdir.makepyfile(source)
     result = testdir.runpytest_inprocess("--pdb", p)
     reports = result.reprec.getreports("pytest_runtest_logreport")
-    assert len(reports) == 3, reports # setup/call/teardown
+    assert len(reports) == 3, reports  # setup/call/teardown
     return reports[1]
 
 
@@ -216,7 +216,7 @@ class TestPDB(object):
         rest = child.read().decode("utf-8")
         assert "1 failed" in rest
         assert "def test_1" in rest
-        assert "hello17" in rest # out is captured
+        assert "hello17" in rest  # out is captured
         self.flush(child)
 
     def test_pdb_set_trace_interception(self, testdir):
@@ -309,8 +309,8 @@ class TestPDB(object):
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
         assert "def test_1" in rest
-        assert "hello17" in rest # out is captured
-        assert "hello18" in rest # out is captured
+        assert "hello17" in rest  # out is captured
+        assert "hello18" in rest  # out is captured
         self.flush(child)
 
     def test_pdb_used_outside_test(self, testdir):

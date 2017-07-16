@@ -164,7 +164,7 @@ class Source(object):
         """
         if not filename or py.path.local(filename).check(file=0):
             if _genframe is None:
-                _genframe = sys._getframe(1) # the caller
+                _genframe = sys._getframe(1)  # the caller
             fn, lineno = _genframe.f_code.co_filename, _genframe.f_lineno
             base = "<%d-codegen " % self._compilecounter
             self.__class__._compilecounter += 1
@@ -207,7 +207,7 @@ def compile_(source, filename=None, mode='exec', flags=generators.compiler_flag,
     if _ast is not None and isinstance(source, _ast.AST):
         # XXX should Source support having AST?
         return cpy_compile(source, filename, mode, flags, dont_inherit)
-    _genframe = sys._getframe(1) # the caller
+    _genframe = sys._getframe(1)  # the caller
     s = Source(source)
     co = s.compile(filename, mode, flags, _genframe=_genframe)
     return co
@@ -292,11 +292,11 @@ def deindent(lines, offset=None):
     try:
         for _, _, (sline, _), (eline, _), _ in tokenize.generate_tokens(lambda: next(it)):
             if sline > len(lines):
-                break # End of input reached
+                break  # End of input reached
             if sline > len(newlines):
                 line = lines[sline - 1].expandtabs()
                 if line.lstrip() and line[:offset].isspace():
-                    line = line[offset:] # Deindent
+                    line = line[offset:]  # Deindent
                 newlines.append(line)
 
             for i in range(sline, eline):

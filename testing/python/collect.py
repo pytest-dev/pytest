@@ -923,13 +923,13 @@ class TestTracebackCutting(object):
         out = result.stdout.str()
         assert "xyz" in out
         assert "conftest.py:5: ValueError" in out
-        numentries = out.count("_ _ _") # separator for traceback entries
+        numentries = out.count("_ _ _")  # separator for traceback entries
         assert numentries == 0
 
         result = testdir.runpytest("--fulltrace", p)
         out = result.stdout.str()
         assert "conftest.py:5: ValueError" in out
-        numentries = out.count("_ _ _ _") # separator for traceback entries
+        numentries = out.count("_ _ _ _")  # separator for traceback entries
         assert numentries > 3
 
     def test_traceback_error_during_import(self, testdir):

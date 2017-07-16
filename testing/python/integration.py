@@ -4,7 +4,7 @@ from _pytest import runner
 
 
 class TestOEJSKITSpecials(object):
-    def test_funcarg_non_pycollectobj(self, testdir): # rough jstests usage
+    def test_funcarg_non_pycollectobj(self, testdir):  # rough jstests usage
         testdir.makeconftest("""
             import pytest
             def pytest_pycollect_makeitem(collector, name, obj):
@@ -30,7 +30,7 @@ class TestOEJSKITSpecials(object):
         pytest._fillfuncargs(clscol)
         assert clscol.funcargs['arg1'] == 42
 
-    def test_autouse_fixture(self, testdir): # rough jstests usage
+    def test_autouse_fixture(self, testdir):  # rough jstests usage
         testdir.makeconftest("""
             import pytest
             def pytest_pycollect_makeitem(collector, name, obj):

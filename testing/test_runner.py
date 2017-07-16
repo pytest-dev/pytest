@@ -31,7 +31,7 @@ class TestSetupState(object):
             def setup_module(mod):
                 raise ValueError(42)
             def test_func(): pass
-        """) # noqa
+        """)  # noqa
         ss = runner.SetupState()
         pytest.raises(ValueError, lambda: ss.prepare(item))
         pytest.raises(ValueError, lambda: ss.prepare(item))
@@ -131,7 +131,7 @@ class BaseFunctionalTests(object):
         #assert rep.skipped.location.lineno == 3
         #assert rep.skipped.location.lineno == 3
         assert len(reports) == 2
-        assert reports[1].passed # teardown
+        assert reports[1].passed  # teardown
 
     def test_failure_in_setup_function(self, testdir):
         reports = testdir.runitem("""

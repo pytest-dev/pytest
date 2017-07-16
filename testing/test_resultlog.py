@@ -144,7 +144,7 @@ class TestWithFunctionIntegration(object):
 
         assert entry_lines[0].startswith('! ')
         if style != "native":
-            assert os.path.basename(__file__)[:-9] in entry_lines[0] #.pyc/class
+            assert os.path.basename(__file__)[:-9] in entry_lines[0]  # .pyc/class
         assert entry_lines[-1][0] == ' '
         assert 'ValueError' in entry
 

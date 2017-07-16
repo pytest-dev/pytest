@@ -393,7 +393,7 @@ class FDCapture:
     def writeorg(self, data):
         """ write to original file descriptor. """
         if py.builtin._istext(data):
-            data = data.encode("utf8") # XXX use encoding of original stream
+            data = data.encode("utf8")  # XXX use encoding of original stream
         os.write(self.targetfd_save, data)
 
 

@@ -315,7 +315,7 @@ class PytestPluginManager(PluginManager):
             if i != -1:
                 path = path[:i]
             anchor = current.join(path, abs=1)
-            if exists(anchor): # we found some file object
+            if exists(anchor):  # we found some file object
                 self._try_load_conftest(anchor)
                 foundanchor = True
         if not foundanchor:
@@ -807,7 +807,7 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
     """
     def _format_action_invocation(self, action):
         orgstr = argparse.HelpFormatter._format_action_invocation(self, action)
-        if orgstr and orgstr[0] != '-': # only optional arguments
+        if orgstr and orgstr[0] != '-':  # only optional arguments
             return orgstr
         res = getattr(action, '_formatted_action_invocation', None)
         if res:
@@ -836,7 +836,7 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
                     short_long[shortened] = xxoption
         # now short_long has been filled out to the longest with dashes
         # **and** we keep the right option ordering from add_argument
-        for option in options: #
+        for option in options:
             if len(option) == 2 or option[2] == ' ':
                 return_list.append(option)
             if option[2:] == short_long.get(option.replace('-', '')):
@@ -1125,7 +1125,7 @@ class Config(object):
         the first line in its value. """
         x = self.getini(name)
         assert isinstance(x, list)
-        x.append(line) # modifies the cached list inline
+        x.append(line)  # modifies the cached list inline
 
     def getini(self, name):
         """ return configuration value from an :ref:`ini file <inifiles>`. If the

@@ -1574,7 +1574,7 @@ class Function(FunctionMixin, main.Item, fixtures.FuncargnamesCompatAttr):
 
     def _getobj(self):
         name = self.name
-        i = name.find("[") # parametrization
+        i = name.find("[")  # parametrization
         if i != -1:
             name = name[:i]
         return getattr(self.parent.obj, name)

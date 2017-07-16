@@ -74,7 +74,7 @@ class TestGeneralUsage(object):
                 print("---unconfigure")
         """)
         result = testdir.runpytest("-s", "asd")
-        assert result.ret == 4 # EXIT_USAGEERROR
+        assert result.ret == 4  # EXIT_USAGEERROR
         result.stderr.fnmatch_lines(["ERROR: file not found*asd"])
         result.stdout.fnmatch_lines([
             "*---configure",
@@ -310,7 +310,7 @@ class TestGeneralUsage(object):
                 x
         """)
         result = testdir.runpytest()
-        assert result.ret == 3 # internal error
+        assert result.ret == 3  # internal error
         result.stderr.fnmatch_lines([
             "INTERNAL*pytest_configure*",
             "INTERNAL*x*",
@@ -719,7 +719,7 @@ class TestDurations(object):
         result = testdir.runpytest("--durations=0")
         assert result.ret == 0
         for x in "123":
-            for y in 'call', : #'setup', 'call', 'teardown':
+            for y in 'call', :  # 'setup', 'call', 'teardown':
                 for line in result.stdout.lines:
                     if ("test_%s" % x) in line and y in line:
                         break

@@ -69,7 +69,7 @@ class FastFilesCompleter:
 
     def __call__(self, prefix, **kwargs):
         """only called on non option completions"""
-        if os.path.sep in prefix[1:]: #
+        if os.path.sep in prefix[1:]:
             prefix_dir = len(os.path.dirname(prefix) + os.path.sep)
         else:
             prefix_dir = 0

@@ -101,8 +101,8 @@ class TestTraceback_f_g_h(object):
     def test_traceback_entries(self):
         tb = self.excinfo.traceback
         entries = list(tb)
-        assert len(tb) == 4 # maybe fragile test
-        assert len(entries) == 4 # maybe fragile test
+        assert len(tb) == 4  # maybe fragile test
+        assert len(entries) == 4  # maybe fragile test
         names = ['f', 'g', 'h']
         for entry in entries:
             try:
@@ -311,9 +311,9 @@ def test_excinfo_repr():
 def test_excinfo_str():
     excinfo = pytest.raises(ValueError, h)
     s = str(excinfo)
-    assert s.startswith(__file__[:-9]) # pyc file and $py.class
+    assert s.startswith(__file__[:-9])  # pyc file and $py.class
     assert s.endswith("ValueError")
-    assert len(s.split(":")) >= 3 # on windows it's 4
+    assert len(s.split(":")) >= 3  # on windows it's 4
 
 def test_excinfo_errisinstance():
     excinfo = pytest.raises(ValueError, h)
@@ -341,8 +341,8 @@ def test_excinfo_no_python_sourcecode(tmpdir):
     excinfo = pytest.raises(ValueError,
                             template.render, h=h)
     for item in excinfo.traceback:
-        print(item) #XXX: for some reason jinja.Template.render is printed in full
-        item.source # shouldnt fail
+        print(item)  # XXX: for some reason jinja.Template.render is printed in full
+        item.source  # shouldnt fail
         if item.path.basename == 'test.txt':
             assert str(item.source) == '{{ h()}}:'
 

@@ -318,7 +318,7 @@ def test_repr_python_version(monkeypatch):
         py.std.sys.version_info = x = (2, 3)
         assert repr_pythonversion() == str(x)
     finally:
-        monkeypatch.undo() # do this early as pytest can get confused
+        monkeypatch.undo()  # do this early as pytest can get confused
 
 class TestFixtureReporting(object):
     def test_setup_fixture_error(self, testdir):

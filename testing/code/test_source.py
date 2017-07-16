@@ -109,7 +109,7 @@ def test_source_strip_multiline():
 def test_syntaxerror_rerepresentation():
     ex = pytest.raises(SyntaxError, _pytest._code.compile, 'xyz xyz')
     assert ex.value.lineno == 1
-    assert ex.value.offset in (4, 7) # XXX pypy/jython versus cpython?
+    assert ex.value.offset in (4, 7)  # XXX pypy/jython versus cpython?
     assert ex.value.text.strip(), 'x x'
 
 def test_isparseable():
@@ -451,7 +451,7 @@ def test_getfslineno():
     fspath, lineno = getfslineno(f)
 
     assert fspath.basename == "test_source.py"
-    assert lineno == _pytest._code.getrawcode(f).co_firstlineno - 1 # see findsource
+    assert lineno == _pytest._code.getrawcode(f).co_firstlineno - 1  # see findsource
 
     class A(object):
         pass

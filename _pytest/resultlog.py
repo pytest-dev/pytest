@@ -19,7 +19,7 @@ def pytest_configure(config):
         dirname = os.path.dirname(os.path.abspath(resultlog))
         if not os.path.isdir(dirname):
             os.makedirs(dirname)
-        logfile = open(resultlog, 'w', 1) # line buffered
+        logfile = open(resultlog, 'w', 1)  # line buffered
         config._resultlog = ResultLog(config, logfile)
         config.pluginmanager.register(config._resultlog)
 
@@ -59,7 +59,7 @@ def generic_path(item):
 class ResultLog(object):
     def __init__(self, config, logfile):
         self.config = config
-        self.logfile = logfile # preferably line buffered
+        self.logfile = logfile  # preferably line buffered
 
     def write_log_entry(self, testpath, lettercode, longrepr):
         print("%s %s" % (lettercode, testpath), file=self.logfile)

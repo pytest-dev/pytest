@@ -69,7 +69,7 @@ def add_funcarg_pseudo_fixture_def(collector, metafunc, fixturemanager):
     # XXX we can probably avoid this algorithm  if we modify CallSpec2
     # to directly care for creating the fixturedefs within its methods.
     if not metafunc._calls[0].funcargs:
-        return # this function call does not have direct parametrization
+        return  # this function call does not have direct parametrization
     # collect funcargs of all callspecs into a list of values
     arg2params = {}
     arg2scope = {}
@@ -397,7 +397,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         :arg extrakey: added to internal caching key of (funcargname, scope).
         """
         if not hasattr(self.config, '_setupcache'):
-            self.config._setupcache = {} # XXX weakref?
+            self.config._setupcache = {}  # XXX weakref?
         cachekey = (self.fixturename, self._getscopeitem(scope), extrakey)
         cache = self.config._setupcache
         try:

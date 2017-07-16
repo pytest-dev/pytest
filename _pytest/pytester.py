@@ -136,7 +136,7 @@ def getexecutable(name, cache={}):
                 if not err or "2.5" not in err:
                     executable = None
                 if "2.5.2" in err:
-                    executable = None # http://bugs.jython.org/issue1790
+                    executable = None  # http://bugs.jython.org/issue1790
             elif popen.returncode != 0:
                 # Handle pyenv's 127.
                 executable = None
@@ -420,7 +420,7 @@ class Testdir:
         self.plugins = []
         self._savesyspath = (list(sys.path), list(sys.meta_path))
         self._savemodulekeys = set(sys.modules)
-        self.chdir() # always chdir
+        self.chdir()  # always chdir
         self.request.addfinalizer(self.finalize)
         method = self.request.config.getoption("--runpytest")
         if method == "inprocess":
@@ -495,7 +495,7 @@ class Testdir:
 
             source_unicode = "\n".join([my_totext(line) for line in source.lines])
             source = py.builtin._totext(source_unicode)
-            content = source.strip().encode(encoding) # + "\n"
+            content = source.strip().encode(encoding)  # + "\n"
             #content = content.rstrip() + "\n"
             p.write(content, "wb")
             if ret is None:
@@ -960,7 +960,7 @@ class Testdir:
     def _getpytestargs(self):
         # we cannot use "(sys.executable,script)"
         # because on windows the script is e.g. a pytest.exe
-        return (sys.executable, _pytest_fullpath,) # noqa
+        return (sys.executable, _pytest_fullpath,)  # noqa
 
     def runpython(self, script):
         """Run a python script using sys.executable as interpreter.

@@ -88,7 +88,7 @@ def pytest_namespace():
 
 
 def pytest_configure(config):
-    __import__('pytest').config = config # compatibiltiy
+    __import__('pytest').config = config  # compatibiltiy
 
 
 def wrap_session(config, doit):
@@ -488,7 +488,7 @@ class Collector(Node):
 
 class FSCollector(Collector):
     def __init__(self, fspath, parent=None, config=None, session=None):
-        fspath = py.path.local(fspath) # xxx only for test_resultlog.py?
+        fspath = py.path.local(fspath)  # xxx only for test_resultlog.py?
         name = fspath.basename
         if parent is not None:
             rel = fspath.relto(parent.fspath)
@@ -561,7 +561,7 @@ class NoMatch(Exception):
 
 class Interrupted(KeyboardInterrupt):
     """ signals an interrupted test run. """
-    __module__ = 'builtins' # for py3
+    __module__ = 'builtins'  # for py3
 
 class Session(FSCollector):
     Interrupted = Interrupted
