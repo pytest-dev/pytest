@@ -303,15 +303,15 @@ class TestAssert_reprcompare(object):
         assert '+ eggs' in diff
 
     def test_text_skipping(self):
-        lines = callequal('a'*50 + 'spam', 'a'*50 + 'eggs')
+        lines = callequal('a' * 50 + 'spam', 'a' * 50 + 'eggs')
         assert 'Skipping' in lines[1]
         for line in lines:
-            assert 'a'*50 not in line
+            assert 'a' * 50 not in line
 
     def test_text_skipping_verbose(self):
-        lines = callequal('a'*50 + 'spam', 'a'*50 + 'eggs', verbose=True)
-        assert '- ' + 'a'*50 + 'spam' in lines
-        assert '+ ' + 'a'*50 + 'eggs' in lines
+        lines = callequal('a' * 50 + 'spam', 'a' * 50 + 'eggs', verbose=True)
+        assert '- ' + 'a' * 50 + 'spam' in lines
+        assert '+ ' + 'a' * 50 + 'eggs' in lines
 
     def test_multiline_text_diff(self):
         left = 'foo\nspam\nbar'
@@ -609,7 +609,7 @@ class TestTruncateExplanation(object):
 
     def test_doesnt_truncate_at_when_input_is_5_lines_and_LT_max_chars(self):
         expl = ['a' * 100 for x in range(5)]
-        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8*80)
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
         assert result == expl
 
     def test_truncates_at_8_lines_when_given_list_of_empty_strings(self):
@@ -624,7 +624,7 @@ class TestTruncateExplanation(object):
 
     def test_truncates_at_8_lines_when_first_8_lines_are_LT_max_chars(self):
         expl = ['a' for x in range(100)]
-        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8*80)
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
         assert result != expl
         assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
@@ -634,7 +634,7 @@ class TestTruncateExplanation(object):
 
     def test_truncates_at_8_lines_when_first_8_lines_are_EQ_max_chars(self):
         expl = ['a' * 80 for x in range(16)]
-        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8*80)
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
         assert result != expl
         assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]

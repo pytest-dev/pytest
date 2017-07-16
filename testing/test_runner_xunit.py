@@ -90,7 +90,7 @@ def test_class_setup(testdir):
             assert not TestSimpleClassSetup.clslevel
             assert not TestInheritedClassSetupStillWorks.clslevel
     """)
-    reprec.assertoutcome(passed=1+2+1)
+    reprec.assertoutcome(passed=1 + 2 + 1)
 
 def test_class_setup_failure_no_teardown(testdir):
     reprec = testdir.inline_runsource("""

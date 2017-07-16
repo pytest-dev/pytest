@@ -245,7 +245,7 @@ class BaseReport(object):
 
 def pytest_runtest_makereport(item, call):
     when = call.when
-    duration = call.stop-call.start
+    duration = call.stop - call.start
     keywords = dict([(x,1) for x in item.keywords])
     excinfo = call.excinfo
     sections = []

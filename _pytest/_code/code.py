@@ -168,7 +168,7 @@ class TracebackEntry(object):
         return self.lineno - self.frame.code.firstlineno
 
     def __repr__(self):
-        return "<TracebackEntry %s:%d>" % (self.frame.code.path, self.lineno+1)
+        return "<TracebackEntry %s:%d>" % (self.frame.code.path, self.lineno + 1)
 
     @property
     def statement(self):
@@ -249,7 +249,7 @@ class TracebackEntry(object):
             raise
         except:
             line = "???"
-        return "  File %r:%d in %s\n  %s\n" % (fn, self.lineno+1, name, line)
+        return "  File %r:%d in %s\n  %s\n" % (fn, self.lineno + 1, name, line)
 
     def name(self):
         return self.frame.code.raw.co_name
@@ -315,7 +315,7 @@ class Traceback(list):
         """ return last non-hidden traceback entry that lead
         to the exception of a traceback.
         """
-        for i in range(-1, -len(self)-1, -1):
+        for i in range(-1, -len(self) - 1, -1):
             entry = self[i]
             if not entry.ishidden():
                 return entry
@@ -405,7 +405,7 @@ class ExceptionInfo(object):
         exconly = self.exconly(tryshort=True)
         entry = self.traceback.getcrashentry()
         path, lineno = entry.frame.code.raw.co_filename, entry.lineno
-        return ReprFileLocation(path, lineno+1, exconly)
+        return ReprFileLocation(path, lineno + 1, exconly)
 
     def getrepr(self, showlocals=False, style="long",
                 abspath=False, tbfilter=True, funcargs=False):
@@ -469,7 +469,7 @@ class FormattedExcinfo(object):
     def _getindent(self, source):
         # figure out indent for given source
         try:
-            s = str(source.getstatement(len(source)-1))
+            s = str(source.getstatement(len(source) - 1))
         except KeyboardInterrupt:
             raise
         except:
@@ -513,7 +513,7 @@ class FormattedExcinfo(object):
             for line in source.lines[:line_index]:
                 lines.append(space_prefix + line)
             lines.append(self.flow_marker + "   " + source.lines[line_index])
-            for line in source.lines[line_index+1:]:
+            for line in source.lines[line_index + 1:]:
                 lines.append(space_prefix + line)
         if excinfo is not None:
             indent = 4 if short else self._getindent(source)
@@ -579,7 +579,7 @@ class FormattedExcinfo(object):
             else:
                 message = excinfo and excinfo.typename or ""
             path = self._makepath(entry.path)
-            filelocrepr = ReprFileLocation(path, entry.lineno+1, message)
+            filelocrepr = ReprFileLocation(path, entry.lineno + 1, message)
             localsrepr = None
             if not short:
                 localsrepr = self.repr_locals(entry.locals)
@@ -758,7 +758,7 @@ class ReprTraceback(TerminalRepr):
                 tw.line("")
             entry.toterminal(tw)
             if i < len(self.reprentries) - 1:
-                next_entry = self.reprentries[i+1]
+                next_entry = self.reprentries[i + 1]
                 if entry.style == "long" or \
                    entry.style == "short" and next_entry.style == "long":
                     tw.sep(self.entrysep)

@@ -73,7 +73,7 @@ class Source(object):
         start, end = 0, len(self)
         while start < end and not self.lines[start].strip():
             start += 1
-        while end > start and not self.lines[end-1].strip():
+        while end > start and not self.lines[end - 1].strip():
             end -= 1
         source = Source()
         source.lines[:] = self.lines[start:end]
@@ -95,7 +95,7 @@ class Source(object):
             all lines indented by the given indent-string.
         """
         newsource = Source()
-        newsource.lines = [(indent+line) for line in self.lines]
+        newsource.lines = [(indent + line) for line in self.lines]
         return newsource
 
     def getstatement(self, lineno, assertion=False):
@@ -144,7 +144,7 @@ class Source(object):
             source = str(self)
         try:
             #compile(source+'\n', "x", "exec")
-            syntax_checker(source+'\n')
+            syntax_checker(source + '\n')
         except KeyboardInterrupt:
             raise
         except Exception:
@@ -180,7 +180,7 @@ class Source(object):
             # re-represent syntax errors from parsing python strings
             msglines = self.lines[:ex.lineno]
             if ex.offset:
-                msglines.append(" "*ex.offset + '^')
+                msglines.append(" " * ex.offset + '^')
             msglines.append("(code was compiled probably from here: %s)" % filename)
             newex = SyntaxError('\n'.join(msglines))
             newex.offset = ex.offset
@@ -274,7 +274,7 @@ def deindent(lines, offset=None):
             line = line.expandtabs()
             s = line.lstrip()
             if s:
-                offset = len(line)-len(s)
+                offset = len(line) - len(s)
                 break
         else:
             offset = 0
@@ -393,7 +393,7 @@ def getstatementrange_old(lineno, source, assertion=False):
                 raise IndexError("likely a subclass")
             if "assert" not in line and "raise" not in line:
                 continue
-        trylines = source.lines[start:lineno+1]
+        trylines = source.lines[start:lineno + 1]
         # quick hack to prepare parsing an indented line with
         # compile_command() (which errors on "return" outside defs)
         trylines.insert(0, 'def xxx():')
@@ -405,7 +405,7 @@ def getstatementrange_old(lineno, source, assertion=False):
             continue
 
         # 2. find the end of the statement
-        for end in range(lineno+1, len(source)+1):
+        for end in range(lineno + 1, len(source) + 1):
             trysource = source[start:end]
             if trysource.isparseable():
                 return start, end

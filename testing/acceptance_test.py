@@ -255,7 +255,7 @@ class TestGeneralUsage(object):
                 if path.basename.startswith("conftest"):
                     return MyCollector(path, parent)
         """)
-        result = testdir.runpytest(c.basename+"::"+"xyz")
+        result = testdir.runpytest(c.basename + "::" + "xyz")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
             "*1 pass*",

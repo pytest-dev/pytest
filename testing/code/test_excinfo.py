@@ -143,7 +143,7 @@ class TestTraceback_f_g_h(object):
         traceback = self.excinfo.traceback
         newtraceback = traceback.cut(path=path, firstlineno=firstlineno)
         assert len(newtraceback) == 1
-        newtraceback = traceback.cut(path=path, lineno=firstlineno+2)
+        newtraceback = traceback.cut(path=path, lineno=firstlineno + 2)
         assert len(newtraceback) == 1
 
     def test_traceback_cut_excludepath(self, testdir):
@@ -210,7 +210,7 @@ class TestTraceback_f_g_h(object):
         def f(n):
             if n == 0:
                 raise RuntimeError("hello")
-            f(n-1)
+            f(n - 1)
 
         excinfo = pytest.raises(RuntimeError, f, 100)
         monkeypatch.delattr(excinfo.traceback.__class__, "recursionindex")
@@ -492,7 +492,7 @@ raise ValueError()
 
         class FakeTracebackEntry(_pytest._code.Traceback.Entry):
             def __init__(self, tb, excinfo=None):
-                self.lineno = 5+3
+                self.lineno = 5 + 3
 
             @property
             def frame(self):
@@ -582,12 +582,12 @@ raise ValueError()
             def func1(m, x, y, z):
                 raise ValueError("hello\\nworld")
         """)
-        excinfo = pytest.raises(ValueError, mod.func1, "m"*90, 5, 13, "z"*120)
+        excinfo = pytest.raises(ValueError, mod.func1, "m" * 90, 5, 13, "z" * 120)
         excinfo.traceback = excinfo.traceback.filter()
         entry = excinfo.traceback[-1]
         p = FormattedExcinfo(funcargs=True)
         reprfuncargs = p.repr_args(entry)
-        assert reprfuncargs.args[0] == ('m', repr("m"*90))
+        assert reprfuncargs.args[0] == ('m', repr("m" * 90))
         assert reprfuncargs.args[1] == ('x', '5')
         assert reprfuncargs.args[2] == ('y', '13')
         assert reprfuncargs.args[3] == ('z', repr("z" * 120))

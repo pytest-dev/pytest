@@ -174,7 +174,7 @@ def reorder_items_atscope(items, ignore, argkeys_cache, scopenum):
         items_before, items_same, items_other, newignore = \
             slice_items(items, ignore, argkeys_cache[scopenum])
         items_before = reorder_items_atscope(
-            items_before, ignore, argkeys_cache,scopenum+1)
+            items_before, ignore, argkeys_cache,scopenum + 1)
         if items_same is None:
             # nothing to reorder in this scope
             assert items_other is None
@@ -631,9 +631,9 @@ class FixtureLookupError(LookupError):
                 lines, _ = inspect.getsourcelines(get_real_func(function))
             except (IOError, IndexError, TypeError):
                 error_msg = "file %s, line %s: source code not available"
-                addline(error_msg % (fspath, lineno+1))
+                addline(error_msg % (fspath, lineno + 1))
             else:
-                addline("file %s, line %s" % (fspath, lineno+1))
+                addline("file %s, line %s" % (fspath, lineno + 1))
                 for i, line in enumerate(lines):
                     line = line.rstrip()
                     addline("  " + line)
@@ -675,12 +675,12 @@ class FixtureLookupErrorRepr(TerminalRepr):
                 tw.line('{0}       {1}'.format(FormattedExcinfo.flow_marker,
                                                line.strip()), red=True)
         tw.line()
-        tw.line("%s:%d" % (self.filename, self.firstlineno+1))
+        tw.line("%s:%d" % (self.filename, self.firstlineno + 1))
 
 
 def fail_fixturefunc(fixturefunc, msg):
     fs, lineno = getfslineno(fixturefunc)
-    location = "%s:%s" % (fs, lineno+1)
+    location = "%s:%s" % (fs, lineno + 1)
     source = _pytest._code.Source(fixturefunc)
     fail(msg + ":\n\n" + str(source.indent()) + "\n" + location,
          pytrace=False)
@@ -989,7 +989,7 @@ class FixtureManager:
             if nodeid.startswith(baseid):
                 if baseid:
                     i = len(baseid)
-                    nextchar = nodeid[i:i+1]
+                    nextchar = nodeid[i:i + 1]
                     if nextchar and nextchar not in ":/":
                         continue
                 autousenames.extend(basenames)

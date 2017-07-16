@@ -511,7 +511,7 @@ class Parser:
         for i, grp in enumerate(self._groups):
             if grp.name == after:
                 break
-        self._groups.insert(i+1, group)
+        self._groups.insert(i + 1, group)
         return group
 
     def addoption(self, *opts, **attrs):

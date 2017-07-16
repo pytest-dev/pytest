@@ -68,7 +68,7 @@ def getlocation(function, curdir):
     lineno = py.builtin._getcode(function).co_firstlineno
     if fn.relto(curdir):
         fn = fn.relto(curdir)
-    return "%s:%d" % (fn, lineno+1)
+    return "%s:%d" % (fn, lineno + 1)
 
 
 def num_mock_patch_args(function):

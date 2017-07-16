@@ -82,7 +82,7 @@ def _format_lines(lines):
             stack.append(len(result))
             stackcnt[-1] += 1
             stackcnt.append(0)
-            result.append(u(' +') + u('  ')*(len(stack)-1) + s + line[1:])
+            result.append(u(' +') + u('  ') * (len(stack) - 1) + s + line[1:])
         elif line.startswith('}'):
             stack.pop()
             stackcnt.pop()
@@ -91,7 +91,7 @@ def _format_lines(lines):
             assert line[0] in ['~', '>']
             stack[-1] += 1
             indent = len(stack) if line.startswith('~') else len(stack) - 1
-            result.append(u('  ')*indent + line[1:])
+            result.append(u('  ') * indent + line[1:])
     assert len(stack) == 1
     return result
 
@@ -106,8 +106,8 @@ except NameError:
 def assertrepr_compare(config, op, left, right):
     """Return specialised explanations for some operators/operands"""
     width = 80 - 15 - len(op) - 2  # 15 chars indentation, 1 space around op
-    left_repr = py.io.saferepr(left, maxsize=int(width//2))
-    right_repr = py.io.saferepr(right, maxsize=width-len(left_repr))
+    left_repr = py.io.saferepr(left, maxsize=int(width // 2))
+    right_repr = py.io.saferepr(right, maxsize=width - len(left_repr))
 
     summary = u('%s %s %s') % (ecu(left_repr), op, ecu(right_repr))
 
@@ -285,7 +285,7 @@ def _compare_eq_dict(left, right, verbose=False):
 def _notin_text(term, text, verbose=False):
     index = text.find(term)
     head = text[:index]
-    tail = text[index+len(term):]
+    tail = text[index + len(term):]
     correct_text = head + tail
     diff = _diff_text(correct_text, text, verbose)
     newdiff = [u('%s is contained here:') % py.io.saferepr(term, maxsize=42)]

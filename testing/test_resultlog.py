@@ -68,7 +68,7 @@ def test_write_log_entry():
     entry_lines = entry.splitlines()
     assert len(entry_lines) == 5
     assert entry_lines[0] == 'F name'
-    assert entry_lines[1:] == [' '+line for line in longrepr.splitlines()]
+    assert entry_lines[1:] == [' ' + line for line in longrepr.splitlines()]
 
 
 class TestWithFunctionIntegration(object):

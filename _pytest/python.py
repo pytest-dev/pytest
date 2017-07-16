@@ -947,7 +947,7 @@ def _idval(val, argname, idx, idfn, config=None):
         return str(val)
     elif isclass(val) and hasattr(val, '__name__'):
         return val.__name__
-    return str(argname)+str(idx)
+    return str(argname) + str(idx)
 
 
 def _idvalset(idx, parameterset, argnames, idfn, ids, config=None):

@@ -763,7 +763,7 @@ class Testdir:
 
         res = RunResult(reprec.ret,
                         out.split("\n"), err.split("\n"),
-                        time.time()-now)
+                        time.time() - now)
         res.reprec = reprec
         return res
 
@@ -948,7 +948,7 @@ class Testdir:
             f2.close()
         self._dump_lines(out, sys.stdout)
         self._dump_lines(err, sys.stderr)
-        return RunResult(ret, out, err, time.time()-now)
+        return RunResult(ret, out, err, time.time() - now)
 
     def _dump_lines(self, lines, fp):
         try:
@@ -1105,7 +1105,7 @@ class LineMatcher:
         """
         for i, line in enumerate(self.lines):
             if fnline == line or fnmatch(line, fnline):
-                return self.lines[i+1:]
+                return self.lines[i + 1:]
         raise ValueError("line %r not found in output" % fnline)
 
     def _log(self, *args):
