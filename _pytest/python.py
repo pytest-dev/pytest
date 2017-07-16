@@ -606,13 +606,13 @@ class Generator(FunctionMixin, PyCollector):
         for i, x in enumerate(self.obj()):
             name, call, args = self.getcallargs(x)
             if not callable(call):
-                raise TypeError("%r yielded non callable test %r" %(self.obj, call,))
+                raise TypeError("%r yielded non callable test %r" % (self.obj, call,))
             if name is None:
                 name = "[%d]" % i
             else:
                 name = "['%s']" % name
             if name in seen:
-                raise ValueError("%r generated tests with non-unique name %r" %(self, name))
+                raise ValueError("%r generated tests with non-unique name %r" % (self, name))
             seen[name] = True
             l.append(self.Function(name, self, args=args, callobj=call))
         self.warn('C1', deprecated.YIELD_TESTS)
@@ -671,7 +671,7 @@ class CallSpec2(object):
 
     def _checkargnotcontained(self, arg):
         if arg in self.params or arg in self.funcargs:
-            raise ValueError("duplicate %r" %(arg,))
+            raise ValueError("duplicate %r" % (arg,))
 
     def getparam(self, name):
         try:
@@ -1072,12 +1072,12 @@ def _showfixtures_main(config, session):
         if currentmodule != module:
             if not module.startswith("_pytest."):
                 tw.line()
-                tw.sep("-", "fixtures defined from %s" %(module,))
+                tw.sep("-", "fixtures defined from %s" % (module,))
                 currentmodule = module
         if verbose <= 0 and argname[0] == "_":
             continue
         if verbose > 0:
-            funcargspec = "%s -- %s" %(argname, bestrel,)
+            funcargspec = "%s -- %s" % (argname, bestrel,)
         else:
             funcargspec = argname
         tw.line(funcargspec, green=True)
@@ -1087,7 +1087,7 @@ def _showfixtures_main(config, session):
             for line in doc.strip().split("\n"):
                 tw.line("    " + line.strip())
         else:
-            tw.line("    %s: no docstring available" %(loc,),
+            tw.line("    %s: no docstring available" % (loc,),
                     red=True)
 
 

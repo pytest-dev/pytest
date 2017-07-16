@@ -97,4 +97,4 @@ def pytest_terminal_summary(terminalreporter):
             s = tw.stringio.getvalue()
             assert len(s)
             pastebinurl = create_new_paste(s)
-            tr.write_line("%s --> %s" %(msg, pastebinurl))
+            tr.write_line("%s --> %s" % (msg, pastebinurl))

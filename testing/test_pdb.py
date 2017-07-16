@@ -319,7 +319,7 @@ class TestPDB(object):
             pytest.set_trace()
             x = 5
         """)
-        child = testdir.spawn("%s %s" %(sys.executable, p1))
+        child = testdir.spawn("%s %s" % (sys.executable, p1))
         child.expect("x = 5")
         child.sendeof()
         self.flush(child)

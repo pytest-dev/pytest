@@ -553,7 +553,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         return node
 
     def __repr__(self):
-        return "<FixtureRequest for %r>" %(self.node)
+        return "<FixtureRequest for %r>" % (self.node)
 
 
 class SubRequest(FixtureRequest):
@@ -649,7 +649,7 @@ class FixtureLookupError(LookupError):
                 if faclist and name not in available:
                     available.append(name)
             msg = "fixture %r not found" % (self.argname,)
-            msg += "\n available fixtures: %s" %(", ".join(sorted(available)),)
+            msg += "\n available fixtures: %s" % (", ".join(sorted(available)),)
             msg += "\n use 'pytest --fixtures [testpath]' for help on them."
 
         return FixtureLookupErrorRepr(fspath, lineno, tblines, msg, self.argname)

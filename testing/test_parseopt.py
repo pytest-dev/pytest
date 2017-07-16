@@ -273,7 +273,7 @@ def test_argcomplete(testdir, monkeypatch):
     script = str(testdir.tmpdir.join("test_argcomplete"))
     pytest_bin = sys.argv[0]
     if "pytest" not in os.path.basename(pytest_bin):
-        pytest.skip("need to be run with pytest executable, not %s" %(pytest_bin,))
+        pytest.skip("need to be run with pytest executable, not %s" % (pytest_bin,))
 
     with open(str(script), 'w') as fp:
         # redirect output from argcomplete to stdin and stderr is not trivial

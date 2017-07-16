@@ -131,7 +131,7 @@ class TestGeneralUsage(object):
         result = testdir.runpytest(p1, p2)
         assert result.ret
         result.stderr.fnmatch_lines([
-            "*ERROR: not found:*%s" %(p2.basename,)
+            "*ERROR: not found:*%s" % (p2.basename,)
         ])
 
     def test_issue486_better_reporting_on_conftest_load_failure(self, testdir):

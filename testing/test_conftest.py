@@ -347,10 +347,10 @@ class TestConftestVisibility(object):
     def test_parsefactories_relative_node_ids(
             self, testdir, chdir,testarg, expect_ntests_passed):
         dirs = self._setup_tree(testdir)
-        print("pytest run in cwd: %s" %(
+        print("pytest run in cwd: %s" % (
               dirs[chdir].relto(testdir.tmpdir)))
-        print("pytestarg        : %s" %(testarg))
-        print("expected pass    : %s" %(expect_ntests_passed))
+        print("pytestarg        : %s" % (testarg))
+        print("expected pass    : %s" % (expect_ntests_passed))
         with dirs[chdir].as_cwd():
             reprec = testdir.inline_run(testarg, "-q", "--traceconfig")
             reprec.assertoutcome(passed=expect_ntests_passed)

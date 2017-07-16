@@ -261,7 +261,7 @@ def _write_pyc(state, co, source_stat, pyc):
         fp = open(pyc, "wb")
     except IOError:
         err = sys.exc_info()[1].errno
-        state.trace("error writing pyc file at %s: errno=%s" %(pyc, err))
+        state.trace("error writing pyc file at %s: errno=%s" % (pyc, err))
         # we ignore any failure to write the cache file
         # there are many reasons, permission-denied, __pycache__ being a
         # file etc.

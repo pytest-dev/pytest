@@ -268,7 +268,7 @@ def pytest_runtest_makereport(item, call):
                 longrepr = item._repr_failure_py(excinfo,
                                                  style=item.config.option.tbstyle)
     for rwhen, key, content in item._report_sections:
-        sections.append(("Captured %s %s" %(key, rwhen), content))
+        sections.append(("Captured %s %s" % (key, rwhen), content))
     return TestReport(item.nodeid, item.location,
                       keywords, outcome, longrepr, when,
                       sections, duration)
@@ -480,7 +480,7 @@ class OutcomeException(Exception):
             if isinstance(val, bytes):
                 val = py._builtin._totext(val, errors='replace')
             return val
-        return "<%s instance>" %(self.__class__.__name__,)
+        return "<%s instance>" % (self.__class__.__name__,)
     __str__ = __repr__
 
 class Skipped(OutcomeException):
@@ -562,7 +562,7 @@ def importorskip(modname, minversion=None):
             # Do not raise chained exception here(#1485)
             should_skip = True
     if should_skip:
-        raise Skipped("could not import %r" %(modname,), allow_module_level=True)
+        raise Skipped("could not import %r" % (modname,), allow_module_level=True)
     mod = sys.modules[modname]
     if minversion is None:
         return mod
@@ -575,6 +575,6 @@ def importorskip(modname, minversion=None):
                           "pkg_resources to parse version strings." % (modname,),
                           allow_module_level=True)
         if verattr is None or pv(verattr) < pv(minversion):
-            raise Skipped("module %r has __version__ %r, required is: %r" %(
+            raise Skipped("module %r has __version__ %r, required is: %r" % (
                           modname, verattr, minversion), allow_module_level=True)
     return mod

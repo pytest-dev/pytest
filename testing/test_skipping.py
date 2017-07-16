@@ -80,7 +80,7 @@ class TestEvaluator(object):
                 %s
                 def test_func():
                     pass
-            """ % (lines[i], lines[(i+1) %2]))
+            """ % (lines[i], lines[(i+1) % 2]))
             ev = MarkEvaluator(item, 'skipif')
             assert ev
             assert ev.istrue()

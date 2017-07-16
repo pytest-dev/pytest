@@ -78,7 +78,7 @@ def test_source_putaround_simple():
             x = 42
         else:
             x = 23""")
-    assert str(source)=="""\
+    assert str(source) == """\
 try:
     raise ValueError
 except ValueError:
@@ -291,7 +291,7 @@ class TestSourceParsingAndCompiling(object):
         def check(comp, name):
             co = comp(self.source, name)
             if not name:
-                expected = "codegen %s:%d>" %(mypath, mylineno+2+2)
+                expected = "codegen %s:%d>" % (mypath, mylineno+2+2)
             else:
                 expected = "codegen %r %s:%d>" % (name, mypath, mylineno+2+2)
             fn = co.co_filename

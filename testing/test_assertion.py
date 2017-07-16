@@ -619,7 +619,7 @@ class TestTruncateExplanation(object):
         assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
         assert "43 lines hidden" in result[-1]
-        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG -1]
+        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG - 1]
         assert last_line_before_trunc_msg.endswith("...")
 
     def test_truncates_at_8_lines_when_first_8_lines_are_LT_max_chars(self):
@@ -629,7 +629,7 @@ class TestTruncateExplanation(object):
         assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
         assert "93 lines hidden" in result[-1]
-        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG -1]
+        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG - 1]
         assert last_line_before_trunc_msg.endswith("...")
 
     def test_truncates_at_8_lines_when_first_8_lines_are_EQ_max_chars(self):
@@ -639,7 +639,7 @@ class TestTruncateExplanation(object):
         assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
         assert "9 lines hidden" in result[-1]
-        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG -1]
+        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG - 1]
         assert last_line_before_trunc_msg.endswith("...")
 
     def test_truncates_at_4_lines_when_first_4_lines_are_GT_max_chars(self):
@@ -649,7 +649,7 @@ class TestTruncateExplanation(object):
         assert len(result) == 4 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
         assert "7 lines hidden" in result[-1]
-        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG -1]
+        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG - 1]
         assert last_line_before_trunc_msg.endswith("...")
 
     def test_truncates_at_1_line_when_first_line_is_GT_max_chars(self):
@@ -659,7 +659,7 @@ class TestTruncateExplanation(object):
         assert len(result) == 1 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
         assert "1000 lines hidden" in result[-1]
-        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG -1]
+        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG - 1]
         assert last_line_before_trunc_msg.endswith("...")
 
     def test_full_output_truncated(self, monkeypatch, testdir):

@@ -307,8 +307,8 @@ class Node(object):
         return cls
 
     def __repr__(self):
-        return "<%s %r>" %(self.__class__.__name__,
-                           getattr(self, 'name', None))
+        return "<%s %r>" % (self.__class__.__name__,
+                            getattr(self, 'name', None))
 
     def warn(self, code, message):
         """ generate a warning with the given code and message for this
@@ -429,7 +429,7 @@ class Node(object):
             return excinfo.value.formatrepr()
         tbfilter = True
         if self.config.option.fulltrace:
-            style="long"
+            style = "long"
         else:
             tb = _pytest._code.Traceback([excinfo.traceback[-1]])
             self._prunetraceback(excinfo)

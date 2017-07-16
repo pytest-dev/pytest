@@ -26,7 +26,7 @@ class Code(object):
             self.firstlineno = rawcode.co_firstlineno - 1
             self.name = rawcode.co_name
         except AttributeError:
-            raise TypeError("not a code object: %r" %(rawcode,))
+            raise TypeError("not a code object: %r" % (rawcode,))
         self.raw = rawcode
 
     def __eq__(self, other):
@@ -168,7 +168,7 @@ class TracebackEntry(object):
         return self.lineno - self.frame.code.firstlineno
 
     def __repr__(self):
-        return "<TracebackEntry %s:%d>" %(self.frame.code.path, self.lineno+1)
+        return "<TracebackEntry %s:%d>" % (self.frame.code.path, self.lineno+1)
 
     @property
     def statement(self):
@@ -249,7 +249,7 @@ class TracebackEntry(object):
             raise
         except:
             line = "???"
-        return "  File %r:%d in %s\n  %s\n" %(fn, self.lineno+1, name, line)
+        return "  File %r:%d in %s\n  %s\n" % (fn, self.lineno+1, name, line)
 
     def name(self):
         return self.frame.code.raw.co_name
@@ -548,7 +548,7 @@ class FormattedExcinfo(object):
                     str_repr = self._saferepr(value)
                     #if len(str_repr) < 70 or not isinstance(value,
                     #                            (list, tuple, dict)):
-                    lines.append("%-10s = %s" %(name, str_repr))
+                    lines.append("%-10s = %s" % (name, str_repr))
                     #else:
                     #    self._line("%-10s =\\" % (name,))
                     #    # XXX
@@ -575,7 +575,7 @@ class FormattedExcinfo(object):
             s = self.get_source(source, line_index, excinfo, short=short)
             lines.extend(s)
             if short:
-                message = "in %s" %(entry.name)
+                message = "in %s" % (entry.name)
             else:
                 message = excinfo and excinfo.typename or ""
             path = self._makepath(entry.path)
@@ -699,7 +699,7 @@ class TerminalRepr(object):
         return io.getvalue().strip()
 
     def __repr__(self):
-        return "<%s instance at %0x>" %(self.__class__, id(self))
+        return "<%s instance at %0x>" % (self.__class__, id(self))
 
 
 class ExceptionRepr(TerminalRepr):
@@ -850,7 +850,7 @@ class ReprFuncArgs(TerminalRepr):
         if self.args:
             linesofar = ""
             for name, value in self.args:
-                ns = "%s = %s" %(name, value)
+                ns = "%s = %s" % (name, value)
                 if len(ns) + len(linesofar) + 2 > tw.fullwidth:
                     if linesofar:
                         tw.line(linesofar)

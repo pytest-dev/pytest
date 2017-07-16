@@ -69,7 +69,7 @@ def pytest_cmdline_parse():
         path = os.path.abspath("pytestdebug.log")
         debugfile = open(path, 'w')
         debugfile.write("versions pytest-%s, py-%s, "
-                        "python-%s\ncwd=%s\nargs=%s\n\n" %(
+                        "python-%s\ncwd=%s\nargs=%s\n\n" % (
                             pytest.__version__, py.__version__,
                             ".".join(map(str, sys.version_info)),
                             os.getcwd(), config._origargs))
@@ -117,7 +117,7 @@ def showhelp(config):
         if type is None:
             type = "string"
         spec = "%s (%s)" % (name, type)
-        line = "  %-24s %s" %(spec, help)
+        line = "  %-24s %s" % (spec, help)
         tw.line(line[:tw.fullwidth])
 
     tw.line()
@@ -175,5 +175,5 @@ def pytest_report_header(config):
                 r = plugin.__file__
             else:
                 r = repr(plugin)
-            lines.append("    %-20s: %s" %(name, r))
+            lines.append("    %-20s: %s" % (name, r))
     return lines

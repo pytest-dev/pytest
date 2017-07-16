@@ -60,7 +60,7 @@ def main(args=None, plugins=None):
                 config._ensure_unconfigure()
     except UsageError as e:
         for msg in e.args:
-            sys.stderr.write("ERROR: %s\n" %(msg,))
+            sys.stderr.write("ERROR: %s\n" % (msg,))
         return 4
 
 class cmdline:  # compatibility namespace
@@ -382,7 +382,7 @@ class PytestPluginManager(PluginManager):
                     if path and path.relto(dirpath) or path == dirpath:
                         assert mod not in mods
                         mods.append(mod)
-            self.trace("loaded conftestmodule %r" %(mod))
+            self.trace("loaded conftestmodule %r" % (mod))
             self.consider_conftest(mod)
             return mod
 
@@ -446,7 +446,7 @@ class PytestPluginManager(PluginManager):
             import pytest
             if not hasattr(pytest, 'skip') or not isinstance(e, pytest.skip.Exception):
                 raise
-            self._warn("skipped plugin %r: %s" %((modname, e.msg)))
+            self._warn("skipped plugin %r: %s" % ((modname, e.msg)))
         else:
             mod = sys.modules[importspec]
             self.register(mod, modname)
@@ -549,7 +549,7 @@ class Parser:
                     a = option.attrs()
                     arggroup.add_argument(*n, **a)
         # bash like autocompletion for dirs (appending '/')
-        optparser.add_argument(FILE_OR_DIR, nargs='*').completer=filescompleter
+        optparser.add_argument(FILE_OR_DIR, nargs='*').completer = filescompleter
         return optparser
 
     def parse_setoption(self, args, option, namespace=None):
@@ -857,7 +857,7 @@ class CmdOptions(object):
     def __init__(self, values=()):
         self.__dict__.update(values)
     def __repr__(self):
-        return "<CmdOptions %r>" %(self.__dict__,)
+        return "<CmdOptions %r>" % (self.__dict__,)
     def copy(self):
         return CmdOptions(self.__dict__)
 
@@ -947,7 +947,7 @@ class Config(object):
                                              excinfo=excinfo)
         if not py.builtin.any(res):
             for line in str(excrepr).split("\n"):
-                sys.stderr.write("INTERNALERROR> %s\n" %line)
+                sys.stderr.write("INTERNALERROR> %s\n" % line)
                 sys.stderr.flush()
 
     def cwd_relative_nodeid(self, nodeid):
@@ -1092,7 +1092,7 @@ class Config(object):
             myver = pytest.__version__.split(".")
             if myver < ver:
                 raise pytest.UsageError(
-                    "%s:%d: requires pytest-%s, actual pytest-%s'" %(
+                    "%s:%d: requires pytest-%s, actual pytest-%s'" % (
                         self.inicfg.config.path, self.inicfg.lineof('minversion'),
                         minver, pytest.__version__))
 
@@ -1142,7 +1142,7 @@ class Config(object):
         try:
             description, type, default = self._parser._inidict[name]
         except KeyError:
-            raise ValueError("unknown configuration value: %r" %(name,))
+            raise ValueError("unknown configuration value: %r" % (name,))
         value = self._get_override_ini_value(name)
         if value is None:
             try:
@@ -1219,7 +1219,7 @@ class Config(object):
                 return default
             if skip:
                 import pytest
-                pytest.skip("no %r option found" %(name,))
+                pytest.skip("no %r option found" % (name,))
             raise ValueError("no option named %r" % (name,))
 
     def getvalue(self, name, path=None):

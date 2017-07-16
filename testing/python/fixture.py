@@ -2565,7 +2565,7 @@ class TestRequestScopeAccess(object):
                 assert request.config
             def test_func():
                 pass
-        """ %(scope, ok.split(), error.split()))
+        """ % (scope, ok.split(), error.split()))
         reprec = testdir.inline_run("-l")
         reprec.assertoutcome(passed=1)
 
@@ -2583,7 +2583,7 @@ class TestRequestScopeAccess(object):
                 assert request.config
             def test_func(arg):
                 pass
-        """ %(scope, ok.split(), error.split()))
+        """ % (scope, ok.split(), error.split()))
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 

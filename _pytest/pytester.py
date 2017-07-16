@@ -190,7 +190,7 @@ class ParsedCall:
     def __repr__(self):
         d = self.__dict__.copy()
         del d['_name']
-        return "<ParsedCall %r(**%r)>" %(self._name, d)
+        return "<ParsedCall %r(**%r)>" % (self._name, d)
 
 
 class HookRecorder:
@@ -283,7 +283,7 @@ class HookRecorder:
                              "no test reports at all!" % (inamepart,))
         if len(l) > 1:
             raise ValueError(
-                "found 2 or more testreports matching %r: %s" %(inamepart, l))
+                "found 2 or more testreports matching %r: %s" % (inamepart, l))
         return l[0]
 
     def getfailures(self,
@@ -838,7 +838,7 @@ class Testdir:
         for item in items:
             if item.name == funcname:
                 return item
-        assert 0, "%r item not found in module:\n%s\nitems: %s" %(
+        assert 0, "%r item not found in module:\n%s\nitems: %s" % (
                   funcname, source, items)
 
     def getitems(self,  source):
