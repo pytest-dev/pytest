@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
-import py, pytest
+import py
+import pytest
 
 import _pytest._code
 from _pytest.config import getcfg, get_common_ancestor, determine_setup

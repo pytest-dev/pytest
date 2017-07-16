@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
-import py, pytest
+import py
+import pytest
 
 # test for _argcomplete but not specific for any application
 

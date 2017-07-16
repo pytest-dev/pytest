@@ -4,7 +4,8 @@ from __future__ import absolute_import, division, print_function
 import py
 import pytest
 from _pytest.config import PrintHelp
-import os, sys
+import os
+import sys
 from argparse import Action
 
 

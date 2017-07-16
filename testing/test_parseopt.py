@@ -1,7 +1,8 @@
 from __future__ import absolute_import, division, print_function
 import sys
 import os
-import py, pytest
+import py
+import pytest
 from _pytest import config as parseopt
 
 

@@ -2,7 +2,8 @@ from __future__ import absolute_import, division, generators, print_function
 
 from bisect import bisect_right
 import sys
-import inspect, tokenize
+import inspect
+import tokenize
 import py
 cpy_compile = compile
 

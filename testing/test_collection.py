@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
-import pytest, py
+import pytest
+import py
 
 from _pytest.main import Session, EXIT_NOTESTSCOLLECTED
 
