@@ -87,7 +87,7 @@ class Source(object):
         after = Source(after)
         newsource = Source()
         lines = [(indent + line) for line in self.lines]
-        newsource.lines = before.lines + lines +  after.lines
+        newsource.lines = before.lines + lines + after.lines
         return newsource
 
     def indent(self, indent=' ' * 4):

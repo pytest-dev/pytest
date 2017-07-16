@@ -347,11 +347,11 @@ class TestSession(object):
         assert rcol.fspath == subdir
         parts = rcol._parsearg(p.basename)
 
-        assert parts[0] ==  target
+        assert parts[0] == target
         assert len(parts) == 1
         parts = rcol._parsearg(p.basename + "::test_func")
-        assert parts[0] ==  target
-        assert parts[1] ==  "test_func"
+        assert parts[0] == target
+        assert parts[1] == "test_func"
         assert len(parts) == 2
 
     def test_collect_topdir(self, testdir):

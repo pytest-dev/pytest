@@ -105,10 +105,10 @@ def add_funcarg_pseudo_fixture_def(collector, metafunc, fixturemanager):
         if node and argname in node._name2pseudofixturedef:
             arg2fixturedefs[argname] = [node._name2pseudofixturedef[argname]]
         else:
-            fixturedef =  FixtureDef(fixturemanager, '', argname,
-                                     get_direct_param_fixture_func,
-                                     arg2scope[argname],
-                                     valuelist, False, False)
+            fixturedef = FixtureDef(fixturemanager, '', argname,
+                                    get_direct_param_fixture_func,
+                                    arg2scope[argname],
+                                    valuelist, False, False)
             arg2fixturedefs[argname] = [fixturedef]
             if node is not None:
                 node._name2pseudofixturedef[argname] = fixturedef

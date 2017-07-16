@@ -818,7 +818,7 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
             action._formatted_action_invocation = orgstr
             return orgstr
         return_list = []
-        option_map =  getattr(action, 'map_long_option', {})
+        option_map = getattr(action, 'map_long_option', {})
         if option_map is None:
             option_map = {}
         short_long = {}

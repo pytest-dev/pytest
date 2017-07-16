@@ -582,7 +582,7 @@ class FormattedExcinfo(object):
             filelocrepr = ReprFileLocation(path, entry.lineno+1, message)
             localsrepr = None
             if not short:
-                localsrepr =  self.repr_locals(entry.locals)
+                localsrepr = self.repr_locals(entry.locals)
             return ReprEntry(lines, reprargs, localsrepr, filelocrepr, style)
         if excinfo:
             lines.extend(self.get_exconly(excinfo, indent=4))
@@ -854,7 +854,7 @@ class ReprFuncArgs(TerminalRepr):
                 if len(ns) + len(linesofar) + 2 > tw.fullwidth:
                     if linesofar:
                         tw.line(linesofar)
-                    linesofar =  ns
+                    linesofar = ns
                 else:
                     if linesofar:
                         linesofar += ", " + ns
