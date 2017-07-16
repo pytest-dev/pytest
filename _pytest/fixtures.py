@@ -569,7 +569,7 @@ class SubRequest(FixtureRequest):
         self._fixturedef = fixturedef
         self.addfinalizer = fixturedef.addfinalizer
         self._pyfuncitem = request._pyfuncitem
-        self._fixture_values  = request._fixture_values
+        self._fixture_values = request._fixture_values
         self._fixture_defs = request._fixture_defs
         self._arg2fixturedefs = request._arg2fixturedefs
         self._arg2index = request._arg2index

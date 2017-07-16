@@ -406,7 +406,7 @@ class Testdir:
 
     def __init__(self, request, tmpdir_factory):
         self.request = request
-        self._mod_collections  = WeakKeyDictionary()
+        self._mod_collections = WeakKeyDictionary()
         # XXX remove duplication with tmpdir plugin
         basetmp = tmpdir_factory.ensuretemp("testdir")
         name = request.function.__name__
