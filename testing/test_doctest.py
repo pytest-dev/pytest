@@ -294,7 +294,6 @@ class TestDoctests(object):
             "*:5: DocTestFailure"
         ])
 
-
     def test_txtfile_failing(self, testdir):
         p = testdir.maketxtfile("""
             >>> i = 0

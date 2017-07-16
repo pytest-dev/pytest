@@ -441,7 +441,6 @@ class TestFillFixtures(object):
         ])
         assert "INTERNAL" not in result.stdout.str()
 
-
     def test_fixture_excinfo_leak(self, testdir):
         # on python2 sys.excinfo would leak into fixture executions
         testdir.makepyfile("""
@@ -640,7 +639,6 @@ class TestRequestBasic(object):
         reprec = testdir.inline_run("-s")
         mod = reprec.getcalls("pytest_runtest_setup")[0].item.module
         assert not mod.l
-
 
     def test_request_addfinalizer_partial_setup_failure(self, testdir):
         p = testdir.makepyfile("""
@@ -1603,8 +1601,6 @@ class TestAutouseManagement(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
 
-
-
     def test_funcarg_and_setup(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -2406,7 +2402,6 @@ class TestFixtureMarker(object):
         reprec = testdir.inline_run("-v")
         reprec.assertoutcome(passed=5)
 
-
     @pytest.mark.issue246
     @pytest.mark.parametrize("scope", ["session", "function", "module"])
     def test_finalizer_order_on_parametrization(self, scope, testdir):
@@ -2638,8 +2633,6 @@ class TestErrors(object):
             *3 pass*2 error*
         """)
 
-
-
     def test_setupfunc_missing_funcarg(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -2746,7 +2739,6 @@ class TestShowFixtures(object):
                 line2
 
         """)
-
 
     def test_show_fixtures_different_files(self, testdir):
         """

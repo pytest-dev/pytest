@@ -350,7 +350,6 @@ class TestXFail(object):
             "*1 xfailed*",
         ])
 
-
     @pytest.mark.parametrize('expected, actual, matchline',
                              [('TypeError', 'TypeError', "*1 xfailed*"),
                               ('(AttributeError, TypeError)', 'TypeError', "*1 xfailed*"),

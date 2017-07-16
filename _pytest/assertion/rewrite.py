@@ -215,8 +215,6 @@ class AssertionRewritingHook(object):
             raise
         return sys.modules[name]
 
-
-
     def is_package(self, name):
         try:
             fd, fn, desc = imp.find_module(name)
@@ -899,7 +897,6 @@ class AssertionRewriter(ast.NodeVisitor):
         visit_Call = visit_Call_35
     else:
         visit_Call = visit_Call_legacy
-
 
     def visit_Attribute(self, attr):
         if not isinstance(attr.ctx, ast.Load):

@@ -48,7 +48,6 @@ def filter_traceback(entry):
     return p != cutdir1 and not p.relto(cutdir2) and not p.relto(cutdir3)
 
 
-
 def pyobj_property(name):
     def get(self):
         node = self.getparent(getattr(__import__('pytest'), name))
@@ -191,7 +190,6 @@ def pytest_pycollect_makeitem(collector, name, obj):
 
 def pytest_make_parametrize_id(config, val, argname=None):
     return None
-
 
 
 class PyobjContext(object):

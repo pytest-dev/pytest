@@ -49,7 +49,6 @@ def oswritebytes(fd, obj):
     os.write(fd, tobytes(obj))
 
 
-
 def StdCaptureFD(out=True, err=True, in_=True):
     return capture.MultiCapture(out, err, in_, Capture=capture.FDCapture)
 
@@ -1074,7 +1073,6 @@ def test_close_and_capture_again(testdir):
         *stdout*
         *hello*
     """)
-
 
 
 @pytest.mark.parametrize('method', ['SysCapture', 'FDCapture'])

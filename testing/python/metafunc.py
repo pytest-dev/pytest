@@ -331,7 +331,6 @@ class TestMetafunc(object):
             "\nUpdate your code as this will raise an error in pytest-4.0.",
         ]
 
-
     def test_parametrize_ids_exception(self, testdir):
         """
         :param testdir: the instance of Testdir class, a temporary
@@ -775,7 +774,6 @@ class TestMetafuncFunctional(object):
         """)
         result = testdir.runpytest(p)
         result.assert_outcomes(passed=1)
-
 
     def test_generate_plugin_and_module(self, testdir):
         testdir.makeconftest("""
@@ -1435,7 +1433,6 @@ class TestMarkersWithParametrization(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2, skipped=2)
 
-
     @pytest.mark.issue290
     def test_parametrize_ID_generation_string_int_works(self, testdir):
         testdir.makepyfile("""
@@ -1451,7 +1448,6 @@ class TestMarkersWithParametrization(object):
         """)
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=2)
-
 
     @pytest.mark.parametrize('strict', [True, False])
     def test_parametrize_marked_value(self, testdir, strict):
@@ -1475,7 +1471,6 @@ class TestMarkersWithParametrization(object):
         reprec = testdir.inline_run()
         passed, failed = (0, 2) if strict else (2, 0)
         reprec.assertoutcome(passed=passed, failed=failed)
-
 
     def test_pytest_make_parametrize_id(self, testdir):
         testdir.makeconftest("""

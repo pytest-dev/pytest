@@ -33,7 +33,6 @@ def custom_pdb_calls():
     return called
 
 
-
 class TestPDB(object):
 
     @pytest.fixture
@@ -376,7 +375,6 @@ class TestPDB(object):
             "*1 error*",
         ])
         assert custom_pdb_calls == ["init", "reset", "interaction"]
-
 
     def test_pdb_custom_cls_without_pdb(self, testdir, custom_pdb_calls):
         p1 = testdir.makepyfile("""xxx """)

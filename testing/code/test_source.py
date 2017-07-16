@@ -642,7 +642,6 @@ finally:
         assert str(source) == "    raise IndexError(1)"
 
 
-
 class TestIf(object):
     pytestmark = astonly
     source = """\

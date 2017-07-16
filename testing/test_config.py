@@ -731,7 +731,6 @@ class TestOverrideIniArgs(object):
         assert result.ret == 0
         result.stdout.fnmatch_lines(["custom_option:3.0"])
 
-
     def test_override_ini_pathlist(self, testdir):
         testdir.makeconftest("""
             def pytest_addoption(parser):

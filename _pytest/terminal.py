@@ -509,7 +509,6 @@ class TerminalReporter:
                     content = content[:-1]
                 self._tw.line(content)
 
-
     def summary_failures(self):
         if self.config.option.tbstyle != "no":
             reports = self.getreports('failed')

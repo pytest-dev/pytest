@@ -13,7 +13,6 @@ import py
 import _pytest
 
 
-
 try:
     import enum
 except ImportError:  # pragma: no cover
@@ -109,7 +108,6 @@ def getfuncargnames(function, startindex=None):
     if numdefaults:
         return tuple(argnames[startindex:-numdefaults])
     return tuple(argnames[startindex:])
-
 
 
 if sys.version_info[:2] == (2, 6):

@@ -851,7 +851,6 @@ class DropShorterLongHelpFormatter(argparse.HelpFormatter):
         return action._formatted_action_invocation
 
 
-
 def _ensure_removed_sysmodule(modname):
     try:
         del sys.modules[modname]

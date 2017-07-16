@@ -116,7 +116,6 @@ def add_funcarg_pseudo_fixture_def(collector, metafunc, fixturemanager):
                 node._name2pseudofixturedef[argname] = fixturedef
 
 
-
 def getfixturemarker(obj):
     """ return fixturemarker or None if it doesn't exist or raised
     exceptions."""
@@ -126,7 +125,6 @@ def getfixturemarker(obj):
         # some objects raise errors like request (from flask import request)
         # we don't expect them to be fixture functions
         return None
-
 
 
 def get_parametrized_fixture_keys(item, scopenum):
@@ -240,7 +238,6 @@ def fillfixtures(function):
         request._fillfixtures()
 
 
-
 def get_direct_param_fixture_func(request):
     return request.param
 
@@ -283,7 +280,6 @@ class FixtureRequest(FuncargnamesCompatAttr):
         """ underlying collection node (depends on current request scope)"""
         return self._getscopeitem(self.scope)
 
-
     def _getnextfixturedef(self, argname):
         fixturedefs = self._arg2fixturedefs.get(argname, None)
         if fixturedefs is None:
@@ -304,7 +300,6 @@ class FixtureRequest(FuncargnamesCompatAttr):
     def config(self):
         """ the pytest config object associated with this request. """
         return self._pyfuncitem.config
-
 
     @scopeproperty()
     def function(self):
@@ -839,7 +834,6 @@ class FixtureFunctionMarker:
         return function
 
 
-
 def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
     """ (return a) decorator to mark a fixture factory function.
 
@@ -954,7 +948,6 @@ class FixtureManager:
         self._arg2finish = {}
         self._nodeid_and_autousenames = [("", self.config.getini("usefixtures"))]
         session.config.pluginmanager.register(self, "funcmanage")
-
 
     def getfixtureinfo(self, node, func, cls, funcargs=True):
         if funcargs and not hasattr(node, "nofuncargs"):

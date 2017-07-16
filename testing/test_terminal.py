@@ -734,7 +734,6 @@ class TestGenericReporting(object):
             "*2 failed*",
         ])
 
-
     def test_tb_option(self, testdir, option):
         testdir.makepyfile("""
             import pytest

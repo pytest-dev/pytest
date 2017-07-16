@@ -295,7 +295,6 @@ class TestWarns(object):
         assert str(record[0].message) == "user"
         assert str(record[1].message) == "runtime"
 
-
     def test_double_test(self, testdir):
         """If a test is run again, the warning should still be raised"""
         testdir.makepyfile('''

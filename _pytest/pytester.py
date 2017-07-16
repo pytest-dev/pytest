@@ -390,7 +390,6 @@ class RunResult:
         assert failed == d.get("failed", 0)
 
 
-
 class Testdir:
     """Temporary test directory with tools to test/run pytest itself.
 

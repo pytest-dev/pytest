@@ -476,7 +476,6 @@ class TestFunction(object):
         rec = testdir.inline_run()
         rec.assertoutcome(passed=2)
 
-
     def test_parametrize_with_non_hashable_values_indirect(self, testdir):
         """Test parametrization with non-hashable values with indirect parametrization."""
         testdir.makepyfile("""
@@ -504,7 +503,6 @@ class TestFunction(object):
         rec = testdir.inline_run()
         rec.assertoutcome(passed=2)
 
-
     def test_parametrize_overrides_fixture(self, testdir):
         """Test parametrization when parameter overrides existing fixture with same name."""
         testdir.makepyfile("""
@@ -531,7 +529,6 @@ class TestFunction(object):
         """)
         rec = testdir.inline_run()
         rec.assertoutcome(passed=3)
-
 
     def test_parametrize_overrides_parametrized_fixture(self, testdir):
         """Test parametrization when parameter overrides existing parametrized fixture with same name."""
@@ -1350,7 +1347,6 @@ def test_skip_duplicates_by_default(testdir):
     result.stdout.fnmatch_lines([
         '*collected 1 item*',
     ])
-
 
 
 def test_keep_duplicates(testdir):

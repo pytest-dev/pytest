@@ -113,7 +113,6 @@ def test_ignore(testdir, pyfile_with_warnings, method):
     assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
 
 
-
 @pytest.mark.skipif(sys.version_info < (3, 0),
                     reason='warnings message is unicode is ok in python3')
 def test_unicode(testdir, pyfile_with_warnings):

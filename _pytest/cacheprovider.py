@@ -180,7 +180,6 @@ def pytest_cmdline_main(config):
         return wrap_session(config, cacheshow)
 
 
-
 @pytest.hookimpl(tryfirst=True)
 def pytest_configure(config):
     config.cache = Cache(config)

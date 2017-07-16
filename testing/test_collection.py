@@ -69,7 +69,6 @@ class TestCollector(object):
         parent = fn.getparent(pytest.Class)
         assert parent is cls
 
-
     def test_getcustomfile_roundtrip(self, testdir):
         hello = testdir.makefile(".xxx", hello="world")
         testdir.makepyfile(conftest="""

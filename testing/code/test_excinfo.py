@@ -467,7 +467,6 @@ class TestFormattedExcinfo(object):
             'E       AssertionError'
         ]
 
-
     def test_repr_source_not_existing(self):
         pr = FormattedExcinfo()
         co = compile("raise ValueError()", "", "exec")
@@ -553,13 +552,11 @@ raise ValueError()
         if py.std.sys.version_info[0] >= 3:
             assert repr.chain[0][0].reprentries[0].lines[0] == ">   ???"
 
-
         fail = py.error.ENOENT  # noqa
         repr = pr.repr_excinfo(excinfo)
         assert repr.reprtraceback.reprentries[0].lines[0] == ">   ???"
         if py.std.sys.version_info[0] >= 3:
             assert repr.chain[0][0].reprentries[0].lines[0] == ">   ???"
-
 
     def test_repr_local(self):
         p = FormattedExcinfo(showlocals=True)

@@ -462,7 +462,6 @@ class TestFunctional(object):
         items, rec = testdir.inline_genitems(p)
         self.assert_markers(items, test_foo=('a', 'b'), test_bar=('a',))
 
-
     @pytest.mark.issue568
     @pytest.mark.xfail(reason="markers smear on methods of base classes")
     def test_mark_should_not_pass_to_siebling_class(self, testdir):
@@ -486,7 +485,6 @@ class TestFunctional(object):
         base_item, sub_item, sub_item_other = items
         assert not hasattr(base_item.obj, 'b')
         assert not hasattr(sub_item_other.obj, 'b')
-
 
     def test_mark_decorator_baseclasses_merged(self, testdir):
         p = testdir.makepyfile("""

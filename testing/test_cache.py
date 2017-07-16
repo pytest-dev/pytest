@@ -89,7 +89,6 @@ class TestNewAPI(object):
         result.stdout.fnmatch_lines(["*1 passed*"])
 
 
-
 def test_cache_reportheader(testdir):
     testdir.makepyfile("""
         def test_hello():
@@ -339,7 +338,6 @@ class TestLastFailed(object):
         lastfailed = rlf(fail_import=0, fail_run=1)
         assert list(lastfailed) == ['test_maybe.py::test_hello']
 
-
     def test_lastfailed_failure_subset(self, testdir, monkeypatch):
 
         testdir.makepyfile(test_maybe="""
@@ -381,11 +379,9 @@ class TestLastFailed(object):
         result, lastfailed = rlf(fail_import=1, fail_run=0)
         assert sorted(list(lastfailed)) == ['test_maybe.py', 'test_maybe2.py']
 
-
         result, lastfailed = rlf(fail_import=0, fail_run=0,
                                  args=('test_maybe2.py',))
         assert list(lastfailed) == ['test_maybe.py']
-
 
         # edge case of test selection - even if we remember failures
         # from other tests we still need to run all tests if no test

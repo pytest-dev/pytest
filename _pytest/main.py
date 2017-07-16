@@ -77,7 +77,6 @@ def pytest_addoption(parser):
                     help="base temporary directory for this test run.")
 
 
-
 def pytest_namespace():
     """keeping this one works around a deeper startup issue in pytest
 
@@ -215,7 +214,6 @@ class _CompatProperty(object):
         #         name=self.name, owner=type(owner).__name__),
         #     PendingDeprecationWarning, stacklevel=2)
         return getattr(__import__('pytest'), self.name)
-
 
 
 class NodeKeywords(MappingMixin):

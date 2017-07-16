@@ -245,7 +245,6 @@ class MarkGenerator:
     on the ``test_function`` object. """
     _config = None
 
-
     def __getattr__(self, name):
         if name[0] == "_":
             raise AttributeError("Marker name must NOT start with underscore")
@@ -354,9 +353,6 @@ class MarkDecorator:
 
         mark = Mark(self.name, args, kwargs)
         return self.__class__(self.mark.combined_with(mark))
-
-
-
 
 
 class Mark(namedtuple('Mark', 'name, args, kwargs')):
