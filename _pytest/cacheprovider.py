@@ -224,7 +224,7 @@ def cacheshow(config, session):
         val = config.cache.get(key, dummy)
         if val is dummy:
             tw.line("%s contains unreadable content, "
-                  "will be ignored" % key)
+                    "will be ignored" % key)
         else:
             tw.line("%s contains:" % key)
             stream = py.io.TextIO()

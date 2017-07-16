@@ -133,11 +133,11 @@ class TestMetafunc(object):
         metafunc = self.Metafunc(func)
 
         pytest.raises(ValueError, lambda:
-            metafunc.parametrize("x", [1,2], ids=['basic']))
+                      metafunc.parametrize("x", [1,2], ids=['basic']))
 
         pytest.raises(ValueError, lambda:
-            metafunc.parametrize(("x","y"), [("abc", "def"),
-                                             ("ghi", "jkl")], ids=["one"]))
+                      metafunc.parametrize(("x","y"), [("abc", "def"),
+                                                       ("ghi", "jkl")], ids=["one"]))
 
     @pytest.mark.issue510
     def test_parametrize_empty_list(self):
@@ -1114,7 +1114,7 @@ class TestMetafuncFunctional(object):
 
     @pytest.mark.issue463
     @pytest.mark.parametrize('attr', ['parametrise', 'parameterize',
-                                     'parameterise'])
+                                      'parameterise'])
     def test_parametrize_misspelling(self, testdir, attr):
         testdir.makepyfile("""
             import pytest

@@ -32,14 +32,14 @@ class TestDoctests(object):
         path = testdir.makepyfile(whatever="#")
         for p in (path, testdir.tmpdir):
             items, reprec = testdir.inline_genitems(p,
-                '--doctest-modules')
+                                                    '--doctest-modules')
             assert len(items) == 0
 
     def test_collect_module_single_modulelevel_doctest(self, testdir):
         path = testdir.makepyfile(whatever='""">>> pass"""')
         for p in (path, testdir.tmpdir):
             items, reprec = testdir.inline_genitems(p,
-                '--doctest-modules')
+                                                    '--doctest-modules')
             assert len(items) == 1
             assert isinstance(items[0], DoctestItem)
             assert isinstance(items[0].parent, DoctestModule)
@@ -52,7 +52,7 @@ class TestDoctests(object):
         """)
         for p in (path, testdir.tmpdir):
             items, reprec = testdir.inline_genitems(p,
-                '--doctest-modules')
+                                                    '--doctest-modules')
             assert len(items) == 2
             assert isinstance(items[0], DoctestItem)
             assert isinstance(items[1], DoctestItem)
@@ -77,7 +77,7 @@ class TestDoctests(object):
         """)
         for p in (path, testdir.tmpdir):
             items, reprec = testdir.inline_genitems(p,
-                '--doctest-modules')
+                                                    '--doctest-modules')
             assert len(items) == 2
             assert isinstance(items[0], DoctestItem)
             assert isinstance(items[1], DoctestItem)

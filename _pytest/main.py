@@ -29,9 +29,9 @@ EXIT_NOTESTSCOLLECTED = 5
 
 def pytest_addoption(parser):
     parser.addini("norecursedirs", "directory patterns to avoid for recursion",
-        type="args", default=['.*', 'build', 'dist', 'CVS', '_darcs', '{arch}', '*.egg', 'venv'])
+                  type="args", default=['.*', 'build', 'dist', 'CVS', '_darcs', '{arch}', '*.egg', 'venv'])
     parser.addini("testpaths", "directories to search for tests when no files or directories are given in the command line.",
-        type="args", default=[])
+                  type="args", default=[])
     #parser.addini("dirpatterns",
     #    "patterns specifying possible locations of test files",
     #    type="linelist", default=["**/test_*.txt",
@@ -39,42 +39,42 @@ def pytest_addoption(parser):
     #)
     group = parser.getgroup("general", "running and selection options")
     group._addoption('-x', '--exitfirst', action="store_const",
-               dest="maxfail", const=1,
-               help="exit instantly on first error or failed test."),
+                     dest="maxfail", const=1,
+                     help="exit instantly on first error or failed test."),
     group._addoption('--maxfail', metavar="num",
-               action="store", type=int, dest="maxfail", default=0,
-               help="exit after first num failures or errors.")
+                     action="store", type=int, dest="maxfail", default=0,
+                     help="exit after first num failures or errors.")
     group._addoption('--strict', action="store_true",
-               help="marks not registered in configuration file raise errors.")
+                     help="marks not registered in configuration file raise errors.")
     group._addoption("-c", metavar="file", type=str, dest="inifilename",
-               help="load configuration from `file` instead of trying to locate one of the implicit configuration files.")
+                     help="load configuration from `file` instead of trying to locate one of the implicit configuration files.")
     group._addoption("--continue-on-collection-errors", action="store_true",
-               default=False, dest="continue_on_collection_errors",
-               help="Force test execution even if collection errors occur.")
+                     default=False, dest="continue_on_collection_errors",
+                     help="Force test execution even if collection errors occur.")
 
     group = parser.getgroup("collect", "collection")
     group.addoption('--collectonly', '--collect-only', action="store_true",
-        help="only collect tests, don't execute them."),
+                    help="only collect tests, don't execute them."),
     group.addoption('--pyargs', action="store_true",
-        help="try to interpret all arguments as python packages.")
+                    help="try to interpret all arguments as python packages.")
     group.addoption("--ignore", action="append", metavar="path",
-        help="ignore path during collection (multi-allowed).")
+                    help="ignore path during collection (multi-allowed).")
     # when changing this to --conf-cut-dir, config.py Conftest.setinitial
     # needs upgrading as well
     group.addoption('--confcutdir', dest="confcutdir", default=None,
-        metavar="dir", type=functools.partial(directory_arg, optname="--confcutdir"),
-        help="only load conftest.py's relative to specified dir.")
+                    metavar="dir", type=functools.partial(directory_arg, optname="--confcutdir"),
+                    help="only load conftest.py's relative to specified dir.")
     group.addoption('--noconftest', action="store_true",
-        dest="noconftest", default=False,
-        help="Don't load any conftest.py files.")
+                    dest="noconftest", default=False,
+                    help="Don't load any conftest.py files.")
     group.addoption('--keepduplicates', '--keep-duplicates', action="store_true",
-        dest="keepduplicates", default=False,
-        help="Keep duplicate tests.")
+                    dest="keepduplicates", default=False,
+                    help="Keep duplicate tests.")
 
     group = parser.getgroup("debugconfig",
-        "test session debugging and configuration")
+                            "test session debugging and configuration")
     group.addoption('--basetemp', dest="basetemp", default=None, metavar="dir",
-               help="base temporary directory for this test run.")
+                    help="base temporary directory for this test run.")
 
 
 
@@ -618,7 +618,7 @@ class Session(FSCollector):
             items = self._perform_collect(args, genitems)
             self.config.pluginmanager.check_pending()
             hook.pytest_collection_modifyitems(session=self,
-                config=self.config, items=items)
+                                               config=self.config, items=items)
         finally:
             hook.pytest_collection_finish(session=self)
         self.testscollected = len(items)

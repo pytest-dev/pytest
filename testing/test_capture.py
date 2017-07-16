@@ -72,7 +72,7 @@ class TestCaptureManager(object):
 
     @needsosdup
     @pytest.mark.parametrize("method",
-        ['no', 'sys', pytest.mark.skipif('not hasattr(os, "dup")', 'fd')])
+                             ['no', 'sys', pytest.mark.skipif('not hasattr(os, "dup")', 'fd')])
     def test_capturing_basic_api(self, method):
         capouter = StdCaptureFD()
         old = sys.stdout, sys.stderr, sys.stdin

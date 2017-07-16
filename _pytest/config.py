@@ -276,11 +276,11 @@ class PytestPluginManager(PluginManager):
         # XXX now that the pluginmanager exposes hookimpl(tryfirst...)
         # we should remove tryfirst/trylast as markers
         config.addinivalue_line("markers",
-            "tryfirst: mark a hook implementation function such that the "
-            "plugin machinery will try to call it first/as early as possible.")
+                                "tryfirst: mark a hook implementation function such that the "
+                                "plugin machinery will try to call it first/as early as possible.")
         config.addinivalue_line("markers",
-            "trylast: mark a hook implementation function such that the "
-            "plugin machinery will try to call it last/as late as possible.")
+                                "trylast: mark a hook implementation function such that the "
+                                "plugin machinery will try to call it last/as late as possible.")
 
     def _warn(self, message):
         kwargs = message if isinstance(message, dict) else {
@@ -777,7 +777,7 @@ class MyOptionParser(argparse.ArgumentParser):
             extra_info = {}
         self._parser = parser
         argparse.ArgumentParser.__init__(self, usage=parser._usage,
-            add_help=False, formatter_class=DropShorterLongHelpFormatter)
+                                         add_help=False, formatter_class=DropShorterLongHelpFormatter)
         # extra_info is a dict of (param -> value) to display if there's
         # an usage error to provide more contextual information to the user
         self.extra_info = extra_info
@@ -940,9 +940,9 @@ class Config(object):
         else:
             style = "native"
         excrepr = excinfo.getrepr(funcargs=True,
-            showlocals=getattr(option, 'showlocals', False),
-            style=style,
-        )
+                                  showlocals=getattr(option, 'showlocals', False),
+                                  style=style,
+                                  )
         res = self.hook.pytest_internalerror(excrepr=excrepr,
                                              excinfo=excinfo)
         if not py.builtin.any(res):
@@ -1074,7 +1074,7 @@ class Config(object):
             self.known_args_namespace.confcutdir = confcutdir
         try:
             self.hook.pytest_load_initial_conftests(early_config=self,
-                    args=args, parser=self._parser)
+                                                    args=args, parser=self._parser)
         except ConftestImportFailure:
             e = sys.exc_info()[1]
             if ns.help or ns.version:

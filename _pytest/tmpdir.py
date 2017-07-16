@@ -38,7 +38,7 @@ class TempdirFactory:
             p = basetemp.mkdir(basename)
         else:
             p = py.path.local.make_numbered_dir(prefix=basename,
-                keep=0, rootdir=basetemp, lock_timeout=None)
+                                                keep=0, rootdir=basetemp, lock_timeout=None)
         self.trace("mktemp", p)
         return p
 

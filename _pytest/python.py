@@ -62,8 +62,8 @@ def pyobj_property(name):
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group.addoption('--fixtures', '--funcargs',
-               action="store_true", dest="showfixtures", default=False,
-               help="show available fixtures, sorted by plugin appearance")
+                    action="store_true", dest="showfixtures", default=False,
+                    help="show available fixtures, sorted by plugin appearance")
     group.addoption(
         '--fixtures-per-test',
         action="store_true",
@@ -72,20 +72,20 @@ def pytest_addoption(parser):
         help="show fixtures per test",
     )
     parser.addini("usefixtures", type="args", default=[],
-        help="list of default fixtures to be used with this project")
+                  help="list of default fixtures to be used with this project")
     parser.addini("python_files", type="args",
-        default=['test_*.py', '*_test.py'],
-        help="glob-style file patterns for Python test module discovery")
+                  default=['test_*.py', '*_test.py'],
+                  help="glob-style file patterns for Python test module discovery")
     parser.addini("python_classes", type="args", default=["Test",],
-        help="prefixes or glob names for Python test class discovery")
+                  help="prefixes or glob names for Python test class discovery")
     parser.addini("python_functions", type="args", default=["test",],
-        help="prefixes or glob names for Python test function and "
-             "method discovery")
+                  help="prefixes or glob names for Python test function and "
+                  "method discovery")
 
     group.addoption("--import-mode", default="prepend",
-        choices=["prepend", "append"], dest="importmode",
-        help="prepend/append to sys.path when importing test modules, "
-             "default is to prepend.")
+                    choices=["prepend", "append"], dest="importmode",
+                    help="prepend/append to sys.path when importing test modules, "
+                    "default is to prepend.")
 
 
 def pytest_cmdline_main(config):
@@ -114,18 +114,18 @@ def pytest_generate_tests(metafunc):
 
 def pytest_configure(config):
     config.addinivalue_line("markers",
-        "parametrize(argnames, argvalues): call a test function multiple "
-        "times passing in different arguments in turn. argvalues generally "
-        "needs to be a list of values if argnames specifies only one name "
-        "or a list of tuples of values if argnames specifies multiple names. "
-        "Example: @parametrize('arg1', [1,2]) would lead to two calls of the "
-        "decorated test function, one with arg1=1 and another with arg1=2."
-        "see http://pytest.org/latest/parametrize.html for more info and "
-        "examples."
+                            "parametrize(argnames, argvalues): call a test function multiple "
+                            "times passing in different arguments in turn. argvalues generally "
+                            "needs to be a list of values if argnames specifies only one name "
+                            "or a list of tuples of values if argnames specifies multiple names. "
+                            "Example: @parametrize('arg1', [1,2]) would lead to two calls of the "
+                            "decorated test function, one with arg1=1 and another with arg1=2."
+                            "see http://pytest.org/latest/parametrize.html for more info and "
+                            "examples."
                             )
     config.addinivalue_line("markers",
-        "usefixtures(fixturename1, fixturename2, ...): mark tests as needing "
-        "all of the specified fixtures. see http://pytest.org/latest/fixture.html#usefixtures "
+                            "usefixtures(fixturename1, fixturename2, ...): mark tests as needing "
+                            "all of the specified fixtures. see http://pytest.org/latest/fixture.html#usefixtures "
                             )
 
 
@@ -177,8 +177,8 @@ def pytest_pycollect_makeitem(collector, name, obj):
         # We musn't if it's been wrapped with mock.patch (python 2 only)
         if not (isfunction(obj) or isfunction(get_real_func(obj))):
             collector.warn(code="C2", message=
-                "cannot collect %r because it is not a function."
-                % name, )
+                           "cannot collect %r because it is not a function."
+                           % name, )
         elif getattr(obj, "__test__", True):
             if is_generator(obj):
                 res = Generator(name, parent=collector)
@@ -496,7 +496,7 @@ class Class(PyCollector):
             return []
         if hasinit(self.obj):
             self.warn("C1", "cannot collect test class %r because it has a "
-                "__init__ constructor" % self.obj.__name__)
+                      "__init__ constructor" % self.obj.__name__)
             return []
         elif hasnew(self.obj):
             self.warn("C1", "cannot collect test class %r because it has a "
@@ -582,7 +582,7 @@ class FunctionMixin(PyobjMixin):
             if not excinfo.value.pytrace:
                 return py._builtin._totext(excinfo.value)
         return super(FunctionMixin, self)._repr_failure_py(excinfo,
-            style=style)
+                                                           style=style)
 
     def repr_failure(self, excinfo, outerr=None):
         assert outerr is None, "XXX outerr usage is deprecated"
@@ -737,7 +737,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs
 
     def parametrize(self, argnames, argvalues, indirect=False, ids=None,
-            scope=None):
+                    scope=None):
         """ Add new invocations to the underlying test function using the list
         of argvalues for the given argnames.  Parametrization is performed
         during the collection phase.  If you need to setup expensive resources
@@ -1088,7 +1088,7 @@ def _showfixtures_main(config, session):
                 tw.line("    " + line.strip())
         else:
             tw.line("    %s: no docstring available" %(loc,),
-                red=True)
+                    red=True)
 
 
 # builtin pytest.raises helper

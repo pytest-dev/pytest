@@ -25,13 +25,13 @@ from _pytest.assertion.rewrite import AssertionRewritingHook
 def pytest_addoption(parser):
     # group = parser.getgroup("pytester", "pytester (self-tests) options")
     parser.addoption('--lsof',
-           action="store_true", dest="lsof", default=False,
-           help=("run FD checks if lsof is available"))
+                     action="store_true", dest="lsof", default=False,
+                     help=("run FD checks if lsof is available"))
 
     parser.addoption('--runpytest', default="inprocess", dest="runpytest",
-           choices=("inprocess", "subprocess", ),
-        help=("run pytest sub runs in tests using an 'inprocess' "
-              "or 'subprocess' (python -m main) method"))
+                     choices=("inprocess", "subprocess", ),
+                     help=("run pytest sub runs in tests using an 'inprocess' "
+                           "or 'subprocess' (python -m main) method"))
 
 
 def pytest_configure(config):
@@ -62,7 +62,7 @@ class LsofFdLeakChecker(object):
     def _parse_lsof_output(self, out):
         def isopen(line):
             return line.startswith('f') and ("deleted" not in line and
-                'mem' not in line and "txt" not in line and 'cwd' not in line)
+                                             'mem' not in line and "txt" not in line and 'cwd' not in line)
 
         open_files = []
 
@@ -130,7 +130,7 @@ def getexecutable(name, cache={}):
         if executable:
             import subprocess
             popen = subprocess.Popen([str(executable), "--version"],
-                universal_newlines=True, stderr=subprocess.PIPE)
+                                     universal_newlines=True, stderr=subprocess.PIPE)
             out, err = popen.communicate()
             if name == "jython":
                 if not err or "2.5" not in err:
@@ -264,7 +264,7 @@ class HookRecorder:
         return [x.report for x in self.getcalls(names)]
 
     def matchreport(self, inamepart="",
-            names="pytest_runtest_logreport pytest_collectreport", when=None):
+                    names="pytest_runtest_logreport pytest_collectreport", when=None):
         """ return a testreport whose dotted import path matches """
         l = []
         for rep in self.getreports(names=names):
@@ -933,7 +933,7 @@ class Testdir:
         try:
             now = time.time()
             popen = self.popen(cmdargs, stdout=f1, stderr=f2,
-                close_fds=(sys.platform != "win32"))
+                               close_fds=(sys.platform != "win32"))
             ret = popen.wait()
         finally:
             f1.close()
@@ -987,7 +987,7 @@ class Testdir:
 
         """
         p = py.path.local.make_numbered_dir(prefix="runpytest-",
-            keep=None, rootdir=self.tmpdir)
+                                            keep=None, rootdir=self.tmpdir)
         args = ('--basetemp=%s' % p, ) + args
         #for x in args:
         #    if '--confcutdir' in str(x):

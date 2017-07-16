@@ -9,9 +9,9 @@ import tempfile
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting")
     group._addoption('--pastebin', metavar="mode",
-        action='store', dest="pastebin", default=None,
-        choices=['failed', 'all'],
-        help="send failed|all info to bpaste.net pastebin service.")
+                     action='store', dest="pastebin", default=None,
+                     choices=['failed', 'all'],
+                     help="send failed|all info to bpaste.net pastebin service.")
 
 
 @pytest.hookimpl(trylast=True)

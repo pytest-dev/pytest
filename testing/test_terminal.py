@@ -110,7 +110,7 @@ class TestTerminal(object):
         item.config.pluginmanager.register(tr)
         location = item.reportinfo()
         tr.config.hook.pytest_runtest_logstart(nodeid=item.nodeid,
-            location=location, fspath=str(item.fspath))
+                                               location=location, fspath=str(item.fspath))
         linecomp.assert_contains_lines([
             "*test_show_runtest_logstart.py*"
         ])
@@ -905,9 +905,9 @@ def test_terminal_summary_warnings_are_displayed(testdir):
 
     ("green", "1 passed, 2 skipped, 3 deselected, 2 xfailed",
         {"passed": (1,),
-        "skipped": (1,2),
-        "deselected": (1,2,3),
-        "xfailed": (1,2)}),
+         "skipped": (1,2),
+         "deselected": (1,2,3),
+         "xfailed": (1,2)}),
 ])
 def test_summary_stats(exp_line, exp_color, stats_arg):
     print("Based on stats: %s" % stats_arg)

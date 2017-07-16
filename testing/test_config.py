@@ -149,7 +149,7 @@ class TestConfigAPI(object):
     def test_config_getvalueorskip(self, testdir):
         config = testdir.parseconfig()
         pytest.raises(pytest.skip.Exception,
-            "config.getvalueorskip('hello')")
+                      "config.getvalueorskip('hello')")
         verbose = config.getvalueorskip("verbose")
         assert verbose == config.option.verbose
 

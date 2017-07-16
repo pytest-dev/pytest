@@ -59,7 +59,7 @@ def iscoroutinefunction(func):
     which in turns also initializes the "logging" module as side-effect (see issue #8).
     """
     return (getattr(func, '_is_coroutine', False) or
-           (hasattr(inspect, 'iscoroutinefunction') and inspect.iscoroutinefunction(func)))
+            (hasattr(inspect, 'iscoroutinefunction') and inspect.iscoroutinefunction(func)))
 
 
 def getlocation(function, curdir):

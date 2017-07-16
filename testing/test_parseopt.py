@@ -249,7 +249,7 @@ class TestParser(object):
         group = parser.getgroup("general")
         group.addoption('--doit', '--func-args', action='store_true', help='foo')
         group._addoption("-h", "--help", action="store_true", dest="help",
-                help="show help message and configuration info")
+                         help="show help message and configuration info")
         parser.parse(['-h'])
         help = parser.optparser.format_help()
         assert '-doit, --func-args  foo' in help

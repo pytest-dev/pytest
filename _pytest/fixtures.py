@@ -106,9 +106,9 @@ def add_funcarg_pseudo_fixture_def(collector, metafunc, fixturemanager):
             arg2fixturedefs[argname] = [node._name2pseudofixturedef[argname]]
         else:
             fixturedef =  FixtureDef(fixturemanager, '', argname,
-                           get_direct_param_fixture_func,
-                           arg2scope[argname],
-                           valuelist, False, False)
+                                     get_direct_param_fixture_func,
+                                     arg2scope[argname],
+                                     valuelist, False, False)
             arg2fixturedefs[argname] = [fixturedef]
             if node is not None:
                 node._name2pseudofixturedef[argname] = fixturedef
@@ -528,7 +528,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
                  "fixture %r with a %r scoped request object, "
                  "involved factories\n%s" % (
                      (requested_scope, argname, invoking_scope, "\n".join(lines))),
-                pytrace=False)
+                 pytrace=False)
 
     def _factorytraceback(self):
         lines = []
@@ -699,7 +699,7 @@ def call_fixture_func(fixturefunc, request, kwargs):
                 pass
             else:
                 fail_fixturefunc(fixturefunc,
-                    "yield_fixture function has more than one 'yield'")
+                                 "yield_fixture function has more than one 'yield'")
 
         request.addfinalizer(teardown)
     else:

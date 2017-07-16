@@ -298,7 +298,7 @@ def test_excinfo_exconly():
     excinfo = pytest.raises(ValueError, h)
     assert excinfo.exconly().startswith('ValueError')
     excinfo = pytest.raises(ValueError,
-        "raise ValueError('hello\\nworld')")
+                            "raise ValueError('hello\\nworld')")
     msg = excinfo.exconly(tryshort=True)
     assert msg.startswith('ValueError')
     assert msg.endswith("world")

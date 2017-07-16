@@ -9,8 +9,8 @@ import os
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "resultlog plugin options")
     group.addoption('--resultlog', '--result-log', action="store",
-        metavar="path", default=None,
-        help="DEPRECATED path for machine-readable result log.")
+                    metavar="path", default=None,
+                    help="DEPRECATED path for machine-readable result log.")
 
 def pytest_configure(config):
     resultlog = config.option.resultlog

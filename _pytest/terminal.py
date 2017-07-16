@@ -19,33 +19,33 @@ import _pytest._pluggy as pluggy
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "reporting", after="general")
     group._addoption('-v', '--verbose', action="count",
-               dest="verbose", default=0, help="increase verbosity."),
+                     dest="verbose", default=0, help="increase verbosity."),
     group._addoption('-q', '--quiet', action="count",
-               dest="quiet", default=0, help="decrease verbosity."),
+                     dest="quiet", default=0, help="decrease verbosity."),
     group._addoption('-r',
-         action="store", dest="reportchars", default='', metavar="chars",
-         help="show extra test summary info as specified by chars (f)ailed, "
-              "(E)error, (s)skipped, (x)failed, (X)passed, "
-              "(p)passed, (P)passed with output, (a)all except pP. "
-              "Warnings are displayed at all times except when "
-              "--disable-warnings is set")
+                     action="store", dest="reportchars", default='', metavar="chars",
+                     help="show extra test summary info as specified by chars (f)ailed, "
+                     "(E)error, (s)skipped, (x)failed, (X)passed, "
+                     "(p)passed, (P)passed with output, (a)all except pP. "
+                     "Warnings are displayed at all times except when "
+                     "--disable-warnings is set")
     group._addoption('--disable-warnings', '--disable-pytest-warnings', default=False,
                      dest='disable_warnings', action='store_true',
                      help='disable warnings summary')
     group._addoption('-l', '--showlocals',
-         action="store_true", dest="showlocals", default=False,
-         help="show locals in tracebacks (disabled by default).")
+                     action="store_true", dest="showlocals", default=False,
+                     help="show locals in tracebacks (disabled by default).")
     group._addoption('--tb', metavar="style",
-               action="store", dest="tbstyle", default='auto',
-               choices=['auto', 'long', 'short', 'no', 'line', 'native'],
-               help="traceback print mode (auto/long/short/line/native/no).")
+                     action="store", dest="tbstyle", default='auto',
+                     choices=['auto', 'long', 'short', 'no', 'line', 'native'],
+                     help="traceback print mode (auto/long/short/line/native/no).")
     group._addoption('--fulltrace', '--full-trace',
-               action="store_true", default=False,
-               help="don't cut any tracebacks (default is to cut).")
+                     action="store_true", default=False,
+                     help="don't cut any tracebacks (default is to cut).")
     group._addoption('--color', metavar="color",
-               action="store", dest="color", default='auto',
-               choices=['yes', 'no', 'auto'],
-               help="color terminal output (yes/no/auto).")
+                     action="store", dest="color", default='auto',
+                     choices=['yes', 'no', 'auto'],
+                     help="color terminal output (yes/no/auto).")
 
 def pytest_configure(config):
     config.option.verbose -= config.option.quiet

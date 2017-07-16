@@ -352,7 +352,7 @@ class TestPytestPluginManager(object):
 class TestPytestPluginManagerBootstrapming(object):
     def test_preparse_args(self, pytestpm):
         pytest.raises(ImportError, lambda:
-            pytestpm.consider_preparse(["xyz", "-p", "hello123"]))
+                      pytestpm.consider_preparse(["xyz", "-p", "hello123"]))
 
     def test_plugin_prevent_register(self, pytestpm):
         pytestpm.consider_preparse(["xyz", "-p", "no:abc"])

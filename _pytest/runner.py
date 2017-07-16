@@ -16,8 +16,8 @@ from _pytest._code.code import TerminalRepr, ExceptionInfo
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "reporting", after="general")
     group.addoption('--durations',
-         action="store", type=int, default=None, metavar="N",
-         help="show N slowest setup/test durations (N=0 for all)."),
+                    action="store", type=int, default=None, metavar="N",
+                    help="show N slowest setup/test durations (N=0 for all)."),
 
 def pytest_terminal_summary(terminalreporter):
     durations = terminalreporter.config.option.durations
@@ -42,7 +42,7 @@ def pytest_terminal_summary(terminalreporter):
     for rep in dlist:
         nodeid = rep.nodeid.replace("::()::", "::")
         tr.write_line("%02.2fs %-8s %s" %
-            (rep.duration, rep.when, nodeid))
+                      (rep.duration, rep.when, nodeid))
 
 def pytest_sessionstart(session):
     session._setupstate = SetupState()
@@ -72,7 +72,7 @@ def runtestprotocol(item, log=True, nextitem=None):
         if not item.config.option.setuponly:
             reports.append(call_and_report(item, "call", log))
     reports.append(call_and_report(item, "teardown", log,
-        nextitem=nextitem))
+                                   nextitem=nextitem))
     # after all teardown hooks have been called
     # want funcargs and request info to go away
     if hasrequest:
@@ -266,7 +266,7 @@ def pytest_runtest_makereport(item, call):
                 longrepr = item.repr_failure(excinfo)
             else: # exception in setup or teardown
                 longrepr = item._repr_failure_py(excinfo,
-                                            style=item.config.option.tbstyle)
+                                                 style=item.config.option.tbstyle)
     for rwhen, key, content in item._report_sections:
         sections.append(("Captured %s %s" %(key, rwhen), content))
     return TestReport(item.nodeid, item.location,
@@ -344,7 +344,7 @@ def pytest_make_collect_report(collector):
                 errorinfo = CollectErrorRepr(errorinfo)
             longrepr = errorinfo
     rep = CollectReport(collector.nodeid, outcome, longrepr,
-        getattr(call, 'result', None))
+                        getattr(call, 'result', None))
     rep.call = call  # see collect_one_node
     return rep
 

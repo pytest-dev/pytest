@@ -24,26 +24,26 @@ DOCTEST_REPORT_CHOICES = (
 
 def pytest_addoption(parser):
     parser.addini('doctest_optionflags', 'option flags for doctests',
-        type="args", default=["ELLIPSIS"])
+                  type="args", default=["ELLIPSIS"])
     parser.addini("doctest_encoding", 'encoding used for doctest files', default="utf-8")
     group = parser.getgroup("collect")
     group.addoption("--doctest-modules",
-        action="store_true", default=False,
-        help="run doctests in all .py modules",
-        dest="doctestmodules")
+                    action="store_true", default=False,
+                    help="run doctests in all .py modules",
+                    dest="doctestmodules")
     group.addoption("--doctest-report",
-        type=str.lower, default="udiff",
-        help="choose another output format for diffs on doctest failure",
-        choices=DOCTEST_REPORT_CHOICES,
-        dest="doctestreport")
+                    type=str.lower, default="udiff",
+                    help="choose another output format for diffs on doctest failure",
+                    choices=DOCTEST_REPORT_CHOICES,
+                    dest="doctestreport")
     group.addoption("--doctest-glob",
-        action="append", default=[], metavar="pat",
-        help="doctests file matching pattern, default: test*.txt",
-        dest="doctestglob")
+                    action="append", default=[], metavar="pat",
+                    help="doctests file matching pattern, default: test*.txt",
+                    dest="doctestglob")
     group.addoption("--doctest-ignore-import-errors",
-        action="store_true", default=False,
-        help="ignore doctest ImportErrors",
-        dest="doctest_ignore_import_errors")
+                    action="store_true", default=False,
+                    help="ignore doctest ImportErrors",
+                    dest="doctest_ignore_import_errors")
 
 
 def pytest_collect_file(path, parent):
@@ -128,7 +128,7 @@ class DoctestItem(pytest.Item):
                     indent = '...'
             if excinfo.errisinstance(doctest.DocTestFailure):
                 lines += checker.output_difference(example,
-                        doctestfailure.got, report_choice).split("\n")
+                                                   doctestfailure.got, report_choice).split("\n")
             else:
                 inner_excinfo = ExceptionInfo(excinfo.value.exc_info)
                 lines += ["UNEXPECTED EXCEPTION: %s" %

@@ -419,10 +419,10 @@ class TestFunction(object):
             pass
 
         f1 = pytest.Function(name="name", parent=session, config=config,
-                args=(1,), callobj=func1)
+                             args=(1,), callobj=func1)
         assert f1 == f1
         f2 = pytest.Function(name="name",config=config,
-                callobj=func2, parent=session)
+                             callobj=func2, parent=session)
         assert f1 != f2
 
     def test_issue197_parametrize_emptyset(self, testdir):
@@ -838,7 +838,7 @@ class TestConftestCustomization(object):
         modcol = testdir.getmodulecol("def _hello(): pass")
         l = []
         monkeypatch.setattr(pytest.Module, 'makeitem',
-            lambda self, name, obj: l.append(name))
+                            lambda self, name, obj: l.append(name))
         l = modcol.collect()
         assert '_hello' not in l
 

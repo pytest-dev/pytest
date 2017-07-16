@@ -339,8 +339,8 @@ class Traceback(list):
                 loc = f.f_locals
                 for otherloc in l:
                     if f.is_true(f.eval(co_equal,
-                            __recursioncache_locals_1=loc,
-                            __recursioncache_locals_2=otherloc)):
+                                        __recursioncache_locals_1=loc,
+                                        __recursioncache_locals_2=otherloc)):
                         return i
             l.append(entry.frame.f_locals)
         return None
@@ -408,7 +408,7 @@ class ExceptionInfo(object):
         return ReprFileLocation(path, lineno+1, exconly)
 
     def getrepr(self, showlocals=False, style="long",
-            abspath=False, tbfilter=True, funcargs=False):
+                abspath=False, tbfilter=True, funcargs=False):
         """ return str()able representation of this exception info.
             showlocals: show locals per traceback entry
             style: long|short|no|native traceback style
@@ -425,7 +425,7 @@ class ExceptionInfo(object):
                 )), self._getreprcrash())
 
         fmt = FormattedExcinfo(showlocals=showlocals, style=style,
-            abspath=abspath, tbfilter=tbfilter, funcargs=funcargs)
+                               abspath=abspath, tbfilter=tbfilter, funcargs=funcargs)
         return fmt.repr_excinfo(self)
 
     def __str__(self):

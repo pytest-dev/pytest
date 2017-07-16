@@ -639,7 +639,7 @@ def test_rewritten():
         assert testdir.runpytest().ret == 0
 
     @pytest.mark.skipif(sys.version_info < (3,3),
-            reason='packages without __init__.py not supported on python 2')
+                        reason='packages without __init__.py not supported on python 2')
     def test_package_without__init__py(self, testdir):
         pkg = testdir.mkdir('a_package_without_init_py')
         pkg.join('module.py').ensure()
