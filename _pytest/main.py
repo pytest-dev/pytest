@@ -32,11 +32,11 @@ def pytest_addoption(parser):
                   type="args", default=['.*', 'build', 'dist', 'CVS', '_darcs', '{arch}', '*.egg', 'venv'])
     parser.addini("testpaths", "directories to search for tests when no files or directories are given in the command line.",
                   type="args", default=[])
-    #parser.addini("dirpatterns",
+    # parser.addini("dirpatterns",
     #    "patterns specifying possible locations of test files",
     #    type="linelist", default=["**/test_*.txt",
     #            "**/test_*.py", "**/*_test.py"]
-    #)
+    # )
     group = parser.getgroup("general", "running and selection options")
     group._addoption('-x', '--exitfirst', action="store_const",
                      dest="maxfail", const=1,

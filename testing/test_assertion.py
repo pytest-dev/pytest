@@ -822,7 +822,7 @@ def test_traceback_failure(testdir):
         "",
         "*test_*.py:6: ",
         "_ _ _ *",
-        #"",
+        # "",
         "    def f(x):",
         ">       assert x == g()",
         "E       assert 3 == 2",

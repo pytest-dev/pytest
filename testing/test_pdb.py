@@ -181,7 +181,7 @@ class TestPDB(object):
             xxx
         """)
         child = testdir.spawn_pytest("--pdb %s" % p1)
-        #child.expect(".*import pytest.*")
+        # child.expect(".*import pytest.*")
         child.expect("(Pdb)")
         child.sendeof()
         child.expect("1 error")
@@ -194,7 +194,7 @@ class TestPDB(object):
         """)
         p1 = testdir.makepyfile("def test_func(): pass")
         child = testdir.spawn_pytest("--pdb %s" % p1)
-        #child.expect(".*import pytest.*")
+        # child.expect(".*import pytest.*")
         child.expect("(Pdb)")
         child.sendeof()
         self.flush(child)

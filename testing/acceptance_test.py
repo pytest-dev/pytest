@@ -119,7 +119,7 @@ class TestGeneralUsage(object):
         testdir.makepyfile(import_fails="import does_not_work")
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
-            #XXX on jython this fails:  ">   import import_fails",
+            # XXX on jython this fails:  ">   import import_fails",
             "ImportError while importing test module*",
             "*No module named *does_not_work*",
         ])
@@ -440,8 +440,8 @@ class TestInvocationVariants(object):
             #collect
             #cmdline
             #Item
-            #assert collect.Item is Item
-            #assert collect.Collector is Collector
+            # assert collect.Item is Item
+            # assert collect.Collector is Collector
             main
             skip
             xfail

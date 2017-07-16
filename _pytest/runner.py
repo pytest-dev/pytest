@@ -386,7 +386,7 @@ class SetupState(object):
         """
         assert colitem and not isinstance(colitem, tuple)
         assert py.builtin.callable(finalizer)
-        #assert colitem in self.stack  # some unit tests don't setup stack :/
+        # assert colitem in self.stack  # some unit tests don't setup stack :/
         self._finalizers.setdefault(colitem, []).append(finalizer)
 
     def _pop_and_teardown(self):

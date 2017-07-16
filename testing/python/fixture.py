@@ -2373,7 +2373,7 @@ class TestFixtureMarker(object):
         l = reprec.getcalls("pytest_runtest_call")[0].item.module.l
         import pprint
         pprint.pprint(l)
-        #assert len(l) == 6
+        # assert len(l) == 6
         assert l[0] == l[1] == 1
         assert l[2] == "fin1"
         assert l[3] == l[4] == 2

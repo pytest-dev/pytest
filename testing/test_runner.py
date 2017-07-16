@@ -94,7 +94,7 @@ class BaseFunctionalTests(object):
         assert rep.failed
         assert rep.when == "call"
         assert rep.outcome == "failed"
-        #assert isinstance(rep.longrepr, ReprExceptionInfo)
+        # assert isinstance(rep.longrepr, ReprExceptionInfo)
 
     def test_skipfunction(self, testdir):
         reports = testdir.runitem("""
@@ -107,12 +107,12 @@ class BaseFunctionalTests(object):
         assert not rep.passed
         assert rep.skipped
         assert rep.outcome == "skipped"
-        #assert rep.skipped.when == "call"
-        #assert rep.skipped.when == "call"
-        #assert rep.skipped == "%sreason == "hello"
-        #assert rep.skipped.location.lineno == 3
-        #assert rep.skipped.location.path
-        #assert not rep.skipped.failurerepr
+        # assert rep.skipped.when == "call"
+        # assert rep.skipped.when == "call"
+        # assert rep.skipped == "%sreason == "hello"
+        # assert rep.skipped.location.lineno == 3
+        # assert rep.skipped.location.path
+        # assert not rep.skipped.failurerepr
 
     def test_skip_in_setup_function(self, testdir):
         reports = testdir.runitem("""
@@ -127,9 +127,9 @@ class BaseFunctionalTests(object):
         assert not rep.failed
         assert not rep.passed
         assert rep.skipped
-        #assert rep.skipped.reason == "hello"
-        #assert rep.skipped.location.lineno == 3
-        #assert rep.skipped.location.lineno == 3
+        # assert rep.skipped.reason == "hello"
+        # assert rep.skipped.location.lineno == 3
+        # assert rep.skipped.location.lineno == 3
         assert len(reports) == 2
         assert reports[1].passed  # teardown
 
@@ -163,8 +163,8 @@ class BaseFunctionalTests(object):
         assert not rep.passed
         assert rep.failed
         assert rep.when == "teardown"
-        #assert rep.longrepr.reprcrash.lineno == 3
-        #assert rep.longrepr.reprtraceback.reprentries
+        # assert rep.longrepr.reprcrash.lineno == 3
+        # assert rep.longrepr.reprtraceback.reprentries
 
     def test_custom_failure_repr(self, testdir):
         testdir.makepyfile(conftest="""
@@ -182,10 +182,10 @@ class BaseFunctionalTests(object):
         assert not rep.skipped
         assert not rep.passed
         assert rep.failed
-        #assert rep.outcome.when == "call"
-        #assert rep.failed.where.lineno == 3
-        #assert rep.failed.where.path.basename == "test_func.py"
-        #assert rep.failed.failurerepr == "hello"
+        # assert rep.outcome.when == "call"
+        # assert rep.failed.where.lineno == 3
+        # assert rep.failed.where.path.basename == "test_func.py"
+        # assert rep.failed.failurerepr == "hello"
 
     def test_teardown_final_returncode(self, testdir):
         rec = testdir.inline_runsource("""
@@ -287,10 +287,10 @@ class BaseFunctionalTests(object):
         assert not rep.skipped
         assert not rep.passed
         assert rep.failed
-        #assert rep.outcome.when == "setup"
-        #assert rep.outcome.where.lineno == 3
-        #assert rep.outcome.where.path.basename == "test_func.py"
-        #assert instanace(rep.failed.failurerepr, PythonFailureRepr)
+        # assert rep.outcome.when == "setup"
+        # assert rep.outcome.where.lineno == 3
+        # assert rep.outcome.where.path.basename == "test_func.py"
+        # assert instanace(rep.failed.failurerepr, PythonFailureRepr)
 
     def test_systemexit_does_not_bail_out(self, testdir):
         try:
@@ -540,8 +540,8 @@ def test_importorskip(monkeypatch):
     try:
         sys = importorskip("sys")  # noqa
         assert sys == py.std.sys
-        #path = pytest.importorskip("os.path")
-        #assert path == py.std.os.path
+        # path = pytest.importorskip("os.path")
+        # assert path == py.std.os.path
         excinfo = pytest.raises(pytest.skip.Exception, f)
         path = py.path.local(excinfo.getrepr().reprcrash.path)
         # check that importorskip reports the actual call

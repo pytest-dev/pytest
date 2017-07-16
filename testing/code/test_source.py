@@ -181,16 +181,16 @@ class TestSourceParsingAndCompiling(object):
         assert 'ValueError' in source2
 
     def test_getstatement(self):
-        #print str(self.source)
+        # print str(self.source)
         ass = str(self.source[1:])
         for i in range(1, 4):
-            #print "trying start in line %r" % self.source[i]
+            # print "trying start in line %r" % self.source[i]
             s = self.source.getstatement(i)
             #x = s.deindent()
             assert str(s) == ass
 
     def test_getstatementrange_triple_quoted(self):
-        #print str(self.source)
+        # print str(self.source)
         source = Source("""hello('''
         ''')""")
         s = source.getstatement(0)
@@ -211,12 +211,12 @@ class TestSourceParsingAndCompiling(object):
         """)
         assert len(source) == 7
         # check all lineno's that could occur in a traceback
-        #assert source.getstatementrange(0) == (0, 7)
-        #assert source.getstatementrange(1) == (1, 5)
+        # assert source.getstatementrange(0) == (0, 7)
+        # assert source.getstatementrange(1) == (1, 5)
         assert source.getstatementrange(2) == (2, 3)
         assert source.getstatementrange(3) == (3, 4)
         assert source.getstatementrange(4) == (4, 5)
-        #assert source.getstatementrange(5) == (0, 7)
+        # assert source.getstatementrange(5) == (0, 7)
         assert source.getstatementrange(6) == (6, 7)
 
     def test_getstatementrange_bug(self):
@@ -283,7 +283,7 @@ class TestSourceParsingAndCompiling(object):
         excinfo = pytest.raises(AssertionError, "f(6)")
         frame = excinfo.traceback[-1].frame
         stmt = frame.code.fullsource.getstatement(frame.lineno)
-        #print "block", str(block)
+        # print "block", str(block)
         assert str(stmt).strip().startswith('assert')
 
     @pytest.mark.parametrize('name', ['', None, 'my'])

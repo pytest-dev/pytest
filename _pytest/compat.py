@@ -85,7 +85,7 @@ def num_mock_patch_args(function):
 
 def getfuncargnames(function, startindex=None):
     # XXX merge with main.py's varnames
-    #assert not isclass(function)
+    # assert not isclass(function)
     realfunction = function
     while hasattr(realfunction, "__wrapped__"):
         realfunction = realfunction.__wrapped__

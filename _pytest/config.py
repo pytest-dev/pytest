@@ -693,7 +693,7 @@ class Argument:
         if self._attrs.get('help'):
             a = self._attrs['help']
             a = a.replace('%default', '%(default)s')
-            #a = a.replace('%prog', '%(prog)s')
+            # a = a.replace('%prog', '%(prog)s')
             self._attrs['help'] = a
         return self._attrs
 
@@ -1361,7 +1361,7 @@ def setns(obj, dic):
         else:
             setattr(obj, name, value)
             obj.__all__.append(name)
-            #if obj != pytest:
+            # if obj != pytest:
             #    pytest.__all__.append(name)
             setattr(pytest, name, value)
 

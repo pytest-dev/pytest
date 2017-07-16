@@ -134,7 +134,7 @@ class CaptureManager:
         self.resumecapture()
         self.activate_funcargs(item)
         yield
-        #self.deactivate_funcargs() called from suspendcapture()
+        # self.deactivate_funcargs() called from suspendcapture()
         self.suspendcapture_item(item, "call")
 
     @pytest.hookimpl(hookwrapper=True)

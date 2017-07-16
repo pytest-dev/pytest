@@ -248,7 +248,7 @@ class TerminalReporter:
             line = self._locationline(rep.nodeid, *rep.location)
             if not hasattr(rep, 'node'):
                 self.write_ensure_prefix(line, word, **markup)
-                #self._tw.write(word, **markup)
+                # self._tw.write(word, **markup)
             else:
                 self.ensure_newline()
                 if hasattr(rep, 'node'):
@@ -269,7 +269,7 @@ class TerminalReporter:
         items = [x for x in report.result if isinstance(x, pytest.Item)]
         self._numcollected += len(items)
         if self.isatty:
-            #self.write_fspath_result(report.nodeid, 'E')
+            # self.write_fspath_result(report.nodeid, 'E')
             self.report_collect()
 
     def report_collect(self, final=False):
@@ -347,7 +347,7 @@ class TerminalReporter:
             return 0
         if not self.showheader:
             return
-        #for i, testarg in enumerate(self.config.args):
+        # for i, testarg in enumerate(self.config.args):
         #    self.write_line("test path %d: %s" %(i+1, testarg))
 
     def _printcollecteditems(self, items):
@@ -378,7 +378,7 @@ class TerminalReporter:
                 stack.pop()
             for col in needed_collectors[len(stack):]:
                 stack.append(col)
-                #if col.name == "()":
+                # if col.name == "()":
                 #    continue
                 indent = (len(stack) - 1) * "  "
                 self._tw.line("%s%s" % (indent, col))

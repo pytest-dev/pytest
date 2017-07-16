@@ -234,7 +234,7 @@ class TestPerTestCapturing(object):
             "setup func1*",
             "in func1*",
             "teardown func1*",
-            #"*1 fixture failure*"
+            # "*1 fixture failure*"
         ])
 
     def test_teardown_capturing_final(self, testdir):

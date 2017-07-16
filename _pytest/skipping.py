@@ -280,7 +280,7 @@ def pytest_report_teststatus(report):
 def pytest_terminal_summary(terminalreporter):
     tr = terminalreporter
     if not tr.reportchars:
-        #for name in "xfailed skipped failed xpassed":
+        # for name in "xfailed skipped failed xpassed":
         #    if not tr.stats.get(name, 0):
         #        tr.write_line("HINT: use '-r' option to see extra "
         #              "summary info about tests")
@@ -364,14 +364,14 @@ def show_skipped(terminalreporter, lines):
     tr = terminalreporter
     skipped = tr.stats.get('skipped', [])
     if skipped:
-        #if not tr.hasopt('skipped'):
+        # if not tr.hasopt('skipped'):
         #    tr.write_line(
         #        "%d skipped tests, specify -rs for more info" %
         #        len(skipped))
         #    return
         fskips = folded_skips(skipped)
         if fskips:
-            #tr.write_sep("_", "skipped test summary")
+            # tr.write_sep("_", "skipped test summary")
             for num, fspath, lineno, reason in fskips:
                 if reason.startswith("Skipped: "):
                     reason = reason[9:]

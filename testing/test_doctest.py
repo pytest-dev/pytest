@@ -19,7 +19,7 @@ class TestDoctests(object):
         """)
 
         for x in (testdir.tmpdir, checkfile):
-            #print "checking that %s returns custom items" % (x,)
+            # print "checking that %s returns custom items" % (x,)
             items, reprec = testdir.inline_genitems(x)
             assert len(items) == 1
             assert isinstance(items[0], DoctestItem)

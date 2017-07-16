@@ -496,7 +496,7 @@ class Testdir:
             source_unicode = "\n".join([my_totext(line) for line in source.lines])
             source = py.builtin._totext(source_unicode)
             content = source.strip().encode(encoding)  # + "\n"
-            #content = content.rstrip() + "\n"
+            # content = content.rstrip() + "\n"
             p.write(content, "wb")
             if ret is None:
                 ret = p
@@ -779,11 +779,11 @@ class Testdir:
         args = [str(x) for x in args]
         for x in args:
             if str(x).startswith('--basetemp'):
-                #print ("basedtemp exists: %s" %(args,))
+                # print("basedtemp exists: %s" %(args,))
                 break
         else:
             args.append("--basetemp=%s" % self.tmpdir.dirpath('basetemp'))
-            #print ("added basetemp: %s" %(args,))
+            # print("added basetemp: %s" %(args,))
         return args
 
     def parseconfig(self, *args):
@@ -989,10 +989,10 @@ class Testdir:
         p = py.path.local.make_numbered_dir(prefix="runpytest-",
                                             keep=None, rootdir=self.tmpdir)
         args = ('--basetemp=%s' % p, ) + args
-        #for x in args:
+        # for x in args:
         #    if '--confcutdir' in str(x):
         #        break
-        #else:
+        # else:
         #    pass
         #    args = ('--confcutdir=.',) + args
         plugins = [x for x in self.plugins if isinstance(x, str)]

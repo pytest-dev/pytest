@@ -43,7 +43,7 @@ class TestConftestValueAccessGlobal(object):
         len(conftest._path2confmods)
         conftest._getconftestmodules(basedir)
         snap1 = len(conftest._path2confmods)
-        #assert len(conftest._path2confmods) == snap1 + 1
+        # assert len(conftest._path2confmods) == snap1 + 1
         conftest._getconftestmodules(basedir.join('adir'))
         assert len(conftest._path2confmods) == snap1 + 1
         conftest._getconftestmodules(basedir.join('b'))

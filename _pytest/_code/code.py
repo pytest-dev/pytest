@@ -330,9 +330,9 @@ class Traceback(list):
             # id for the code.raw is needed to work around
             # the strange metaprogramming in the decorator lib from pypi
             # which generates code objects that have hash/value equality
-            #XXX needs a test
+            # XXX needs a test
             key = entry.frame.code.path, id(entry.frame.code.raw), entry.lineno
-            #print "checking for recursion at", key
+            # print "checking for recursion at", key
             l = cache.setdefault(key, [])
             if l:
                 f = entry.frame
@@ -546,10 +546,10 @@ class FormattedExcinfo(object):
                     # _repr() function, which is only reprlib.Repr in
                     # disguise, so is very configurable.
                     str_repr = self._saferepr(value)
-                    #if len(str_repr) < 70 or not isinstance(value,
+                    # if len(str_repr) < 70 or not isinstance(value,
                     #                            (list, tuple, dict)):
                     lines.append("%-10s = %s" % (name, str_repr))
-                    #else:
+                    # else:
                     #    self._line("%-10s =\\" % (name,))
                     #    # XXX
                     #    py.std.pprint.pprint(value, stream=self.excinfowriter)
@@ -797,7 +797,7 @@ class ReprEntry(TerminalRepr):
             for line in self.lines:
                 red = line.startswith("E   ")
                 tw.line(line, bold=True, red=red)
-            #tw.line("")
+            # tw.line("")
             return
         if self.reprfuncargs:
             self.reprfuncargs.toterminal(tw)
@@ -805,7 +805,7 @@ class ReprEntry(TerminalRepr):
             red = line.startswith("E   ")
             tw.line(line, bold=True, red=red)
         if self.reprlocals:
-            #tw.sep(self.localssep, "Locals")
+            # tw.sep(self.localssep, "Locals")
             tw.line("")
             self.reprlocals.toterminal(tw)
         if self.reprfileloc:

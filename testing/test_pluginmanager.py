@@ -31,7 +31,7 @@ class TestPytestPluginInteractions(object):
         pm.hook.pytest_addhooks.call_historic(
             kwargs=dict(pluginmanager=config.pluginmanager))
         config.pluginmanager._importconftest(conf)
-        #print(config.pluginmanager.get_plugins())
+        # print(config.pluginmanager.get_plugins())
         res = config.hook.pytest_myhook(xyz=10)
         assert res == [11]
 
@@ -232,7 +232,7 @@ class TestPytestPluginManager(object):
         assert mod in l
         pytest.raises(ValueError, "pm.register(mod)")
         pytest.raises(ValueError, lambda: pm.register(mod))
-        #assert not pm.is_registered(mod2)
+        # assert not pm.is_registered(mod2)
         assert pm.get_plugins() == l
 
     def test_canonical_import(self, monkeypatch):
@@ -259,7 +259,7 @@ class TestPytestPluginManager(object):
         mod.pytest_plugins = "pytest_a"
         aplugin = testdir.makepyfile(pytest_a="#")
         reprec = testdir.make_hook_recorder(pytestpm)
-        #syspath.prepend(aplugin.dirpath())
+        # syspath.prepend(aplugin.dirpath())
         py.std.sys.path.insert(0, str(aplugin.dirpath()))
         pytestpm.consider_module(mod)
         call = reprec.getcall(pytestpm.hook.pytest_plugin_registered.name)

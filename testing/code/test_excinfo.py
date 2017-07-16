@@ -72,9 +72,9 @@ def test_excinfo_getstatement():
     l = list(excinfo.traceback)
     foundlinenumbers = [x.lineno for x in l]
     assert foundlinenumbers == linenumbers
-    #for x in info:
+    # for x in info:
     #    print "%s:%d  %s" %(x.path.relto(root), x.lineno, x.statement)
-    #xxx
+    # xxx
 
 # testchain for getentries test below
 def f():
@@ -238,7 +238,7 @@ class TestTraceback_f_g_h(object):
         assert recindex is None
 
     def test_traceback_messy_recursion(self):
-        #XXX: simplified locally testable version
+        # XXX: simplified locally testable version
         decorator = pytest.importorskip('decorator').decorator
 
         def log(f, *k, **kw):
@@ -331,7 +331,7 @@ def test_excinfo_no_sourcecode():
         assert s == "  File '<string>':1 in <module>\n  ???\n"
 
 def test_excinfo_no_python_sourcecode(tmpdir):
-    #XXX: simplified locally testable version
+    # XXX: simplified locally testable version
     tmpdir.join('test.txt').write("{{ h()}}:")
 
     jinja2 = pytest.importorskip('jinja2')
@@ -575,7 +575,7 @@ raise ValueError()
         loc = repr_entry.reprfileloc
         assert loc.path == mod.__file__
         assert loc.lineno == 3
-        #assert loc.message == "ValueError: hello"
+        # assert loc.message == "ValueError: hello"
 
     def test_repr_tracebackentry_lines2(self, importasmod):
         mod = importasmod("""

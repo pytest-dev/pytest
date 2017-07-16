@@ -207,9 +207,9 @@ class TestXFail(object):
                 assert 0
         """)
         testdir.runpytest(p, '-v')
-        #result.stdout.fnmatch_lines([
+        # result.stdout.fnmatch_lines([
         #    "*HINT*use*-r*"
-        #])
+        # ])
 
     def test_xfail_not_run_xfail_reporting(self, testdir):
         p = testdir.makepyfile(test_one="""
@@ -640,7 +640,7 @@ def test_skip_not_report_default(testdir):
     """)
     result = testdir.runpytest(p, '-v')
     result.stdout.fnmatch_lines([
-        #"*HINT*use*-r*",
+        # "*HINT*use*-r*",
         "*1 skipped*",
     ])
 

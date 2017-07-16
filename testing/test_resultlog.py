@@ -14,7 +14,7 @@ def test_generic_path(testdir):
     config = testdir.parseconfig()
     session = Session(config)
     p1 = Node('a', config=config, session=session)
-    #assert p1.fspath is None
+    # assert p1.fspath is None
     p2 = Node('B', parent=p1)
     p3 = Node('()', parent=p2)
     item = Item('c', parent=p3)

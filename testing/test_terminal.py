@@ -264,13 +264,13 @@ class TestCollectonly(object):
                     pass
         """)
         result = testdir.runpytest("--collect-only", p)
-        #assert stderr.startswith("inserting into sys.path")
+        # assert stderr.startswith("inserting into sys.path")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
             "*<Module '*.py'>",
             "* <Function 'test_func1'*>",
             "* <Class 'TestClass'>",
-            #"*  <Instance '()'>",
+            # "*  <Instance '()'>",
             "*   <Function 'test_method'*>",
         ])
 
@@ -485,7 +485,7 @@ class TestTerminalFunctional(object):
         """)
         result = testdir.runpytest(p1, '-l')
         result.stdout.fnmatch_lines([
-            #"_ _ * Locals *",
+            # "_ _ * Locals *",
             "x* = 3",
             "y* = 'xxxxxx*"
         ])

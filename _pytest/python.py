@@ -320,7 +320,7 @@ class PyCollector(PyobjMixin, main.Collector):
         return l
 
     def makeitem(self, name, obj):
-        #assert self.ihook.fspath == self.fspath, self
+        # assert self.ihook.fspath == self.fspath, self
         return self.ihook.pytest_pycollect_makeitem(
             collector=self, name=name, obj=obj)
 
@@ -563,7 +563,7 @@ class FunctionMixin(PyobjMixin):
             if ntraceback == traceback:
                 ntraceback = ntraceback.cut(path=path)
                 if ntraceback == traceback:
-                    #ntraceback = ntraceback.cut(excludepath=cutdir2)
+                    # ntraceback = ntraceback.cut(excludepath=cutdir2)
                     ntraceback = ntraceback.filter(filter_traceback)
                     if not ntraceback:
                         ntraceback = traceback
@@ -1213,7 +1213,7 @@ def raises(expected_exception, *args, **kwargs):
         frame = sys._getframe(1)
         loc = frame.f_locals.copy()
         loc.update(kwargs)
-        #print "raises frame scope: %r" % frame.f_locals
+        # print "raises frame scope: %r" % frame.f_locals
         try:
             code = _pytest._code.Source(code).compile()
             py.builtin.exec_(code, frame.f_globals, loc)

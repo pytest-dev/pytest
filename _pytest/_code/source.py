@@ -143,7 +143,7 @@ class Source(object):
         else:
             source = str(self)
         try:
-            #compile(source+'\n', "x", "exec")
+            # compile(source+'\n', "x", "exec")
             syntax_checker(source + '\n')
         except KeyboardInterrupt:
             raise

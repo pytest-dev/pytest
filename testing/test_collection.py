@@ -362,9 +362,9 @@ class TestSession(object):
         topdir = testdir.tmpdir
         rcol = Session(config)
         assert topdir == rcol.fspath
-        #rootid = rcol.nodeid
-        #root2 = rcol.perform_collect([rcol.nodeid], genitems=False)[0]
-        #assert root2 == rcol, rootid
+        # rootid = rcol.nodeid
+        # root2 = rcol.perform_collect([rcol.nodeid], genitems=False)[0]
+        # assert root2 == rcol, rootid
         colitems = rcol.perform_collect([rcol.nodeid], genitems=False)
         assert len(colitems) == 1
         assert colitems[0].fspath == p

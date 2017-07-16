@@ -236,7 +236,7 @@ def cacheshow(config, session):
     if ddir.isdir() and ddir.listdir():
         tw.sep("-", "cache directories")
         for p in sorted(basedir.join("d").visit()):
-            #if p.check(dir=1):
+            # if p.check(dir=1):
             #    print("%s/" % p.relto(basedir))
             if p.isfile():
                 key = p.relto(basedir)

@@ -27,9 +27,9 @@ class SessionTests(object):
         itemstarted = reprec.getcalls("pytest_itemcollected")
         assert len(itemstarted) == 4
         # XXX check for failing funcarg setup
-        #colreports = reprec.getcalls("pytest_collectreport")
-        #assert len(colreports) == 4
-        #assert colreports[1].report.failed
+        # colreports = reprec.getcalls("pytest_collectreport")
+        # assert len(colreports) == 4
+        # assert colreports[1].report.failed
 
     def test_nested_import_error(self, testdir):
         tfile = testdir.makepyfile("""
@@ -211,9 +211,9 @@ def test_plugin_specify(testdir):
     pytest.raises(ImportError, """
             testdir.parseconfig("-p", "nqweotexistent")
     """)
-    #pytest.raises(ImportError,
+    # pytest.raises(ImportError,
     #    "config.do_configure(config)"
-    #)
+    # )
 
 def test_plugin_already_exists(testdir):
     config = testdir.parseconfig("-p", "terminal")
