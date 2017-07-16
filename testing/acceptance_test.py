@@ -719,12 +719,12 @@ class TestDurations(object):
         result = testdir.runpytest("--durations=0")
         assert result.ret == 0
         for x in "123":
-            for y in 'call',: #'setup', 'call', 'teardown':
+            for y in 'call', : #'setup', 'call', 'teardown':
                 for line in result.stdout.lines:
                     if ("test_%s" % x) in line and y in line:
                         break
                 else:
-                    raise AssertionError("not found %s %s" % (x,y))
+                    raise AssertionError("not found %s %s" % (x, y))
 
     def test_with_deselected(self, testdir):
         testdir.makepyfile(self.source)

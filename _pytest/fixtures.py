@@ -174,7 +174,7 @@ def reorder_items_atscope(items, ignore, argkeys_cache, scopenum):
         items_before, items_same, items_other, newignore = \
             slice_items(items, ignore, argkeys_cache[scopenum])
         items_before = reorder_items_atscope(
-            items_before, ignore, argkeys_cache,scopenum + 1)
+            items_before, ignore, argkeys_cache, scopenum + 1)
         if items_same is None:
             # nothing to reorder in this scope
             assert items_other is None

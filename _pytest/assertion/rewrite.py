@@ -36,10 +36,10 @@ PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
 REWRITE_NEWLINES = sys.version_info[:2] != (2, 7) and sys.version_info < (3, 2)
 ASCII_IS_DEFAULT_ENCODING = sys.version_info[0] < 3
 
-if sys.version_info >= (3,5):
+if sys.version_info >= (3, 5):
     ast_Call = ast.Call
 else:
-    ast_Call = lambda a,b,c: ast.Call(a, b, c, None, None)
+    ast_Call = lambda a, b, c: ast.Call(a, b, c, None, None)
 
 
 class AssertionRewritingHook(object):

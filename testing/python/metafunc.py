@@ -96,12 +96,12 @@ class TestMetafunc(object):
     def test_parametrize_error(self):
         def func(x, y): pass
         metafunc = self.Metafunc(func)
-        metafunc.parametrize("x", [1,2])
-        pytest.raises(ValueError, lambda: metafunc.parametrize("x", [5,6]))
-        pytest.raises(ValueError, lambda: metafunc.parametrize("x", [5,6]))
-        metafunc.parametrize("y", [1,2])
-        pytest.raises(ValueError, lambda: metafunc.parametrize("y", [5,6]))
-        pytest.raises(ValueError, lambda: metafunc.parametrize("y", [5,6]))
+        metafunc.parametrize("x", [1, 2])
+        pytest.raises(ValueError, lambda: metafunc.parametrize("x", [5, 6]))
+        pytest.raises(ValueError, lambda: metafunc.parametrize("x", [5, 6]))
+        metafunc.parametrize("y", [1, 2])
+        pytest.raises(ValueError, lambda: metafunc.parametrize("y", [5, 6]))
+        pytest.raises(ValueError, lambda: metafunc.parametrize("y", [5, 6]))
 
     def test_parametrize_bad_scope(self, testdir):
         def func(x): pass
@@ -115,7 +115,7 @@ class TestMetafunc(object):
         def func(x, y): pass
         metafunc = self.Metafunc(func)
 
-        metafunc.parametrize("x", [1,2], ids=['basic', 'advanced'])
+        metafunc.parametrize("x", [1, 2], ids=['basic', 'advanced'])
         metafunc.parametrize("y", ["abc", "def"])
         ids = [x.id for x in metafunc._calls]
         assert ids == ["basic-abc", "basic-def", "advanced-abc", "advanced-def"]
@@ -133,11 +133,11 @@ class TestMetafunc(object):
         metafunc = self.Metafunc(func)
 
         pytest.raises(ValueError, lambda:
-                      metafunc.parametrize("x", [1,2], ids=['basic']))
+                      metafunc.parametrize("x", [1, 2], ids=['basic']))
 
         pytest.raises(ValueError, lambda:
-                      metafunc.parametrize(("x","y"), [("abc", "def"),
-                                                       ("ghi", "jkl")], ids=["one"]))
+                      metafunc.parametrize(("x", "y"), [("abc", "def"),
+                                                        ("ghi", "jkl")], ids=["one"]))
 
     @pytest.mark.issue510
     def test_parametrize_empty_list(self):
@@ -371,7 +371,7 @@ class TestMetafunc(object):
 
     def test_idmaker_with_ids_unique_names(self):
         from _pytest.python import idmaker
-        result = idmaker(("a"), map(pytest.param, [1,2,3,4,5]),
+        result = idmaker(("a"), map(pytest.param, [1, 2, 3, 4, 5]),
                          ids=["a", "a", "b", "c", "b"])
         assert result == ["a0", "a1", "b0", "c", "b1"]
 
@@ -379,7 +379,7 @@ class TestMetafunc(object):
         def func(x, y): pass
         metafunc = self.Metafunc(func)
         metafunc.addcall({'x': 1})
-        metafunc.parametrize('y', [2,3])
+        metafunc.parametrize('y', [2, 3])
         assert len(metafunc._calls) == 2
         assert metafunc._calls[0].funcargs == {'x': 1, 'y': 2}
         assert metafunc._calls[1].funcargs == {'x': 1, 'y': 3}
@@ -391,12 +391,12 @@ class TestMetafunc(object):
         def func(x, y): pass
         metafunc = self.Metafunc(func)
         metafunc.parametrize('x', [1], indirect=True)
-        metafunc.parametrize('y', [2,3], indirect=True)
+        metafunc.parametrize('y', [2, 3], indirect=True)
         assert len(metafunc._calls) == 2
         assert metafunc._calls[0].funcargs == {}
         assert metafunc._calls[1].funcargs == {}
-        assert metafunc._calls[0].params == dict(x=1,y=2)
-        assert metafunc._calls[1].params == dict(x=1,y=3)
+        assert metafunc._calls[0].params == dict(x=1, y=2)
+        assert metafunc._calls[1].params == dict(x=1, y=3)
 
     @pytest.mark.issue714
     def test_parametrize_indirect_list(self):
@@ -554,12 +554,12 @@ class TestMetafunc(object):
         metafunc = self.Metafunc(func)
         metafunc.addcall(param="123")
         metafunc.parametrize('x', [1], indirect=True)
-        metafunc.parametrize('y', [2,3], indirect=True)
+        metafunc.parametrize('y', [2, 3], indirect=True)
         assert len(metafunc._calls) == 2
         assert metafunc._calls[0].funcargs == {}
         assert metafunc._calls[1].funcargs == {}
-        assert metafunc._calls[0].params == dict(x=1,y=2)
-        assert metafunc._calls[1].params == dict(x=1,y=3)
+        assert metafunc._calls[0].params == dict(x=1, y=2)
+        assert metafunc._calls[1].params == dict(x=1, y=3)
 
     def test_parametrize_functional(self, testdir):
         testdir.makepyfile("""
@@ -584,7 +584,7 @@ class TestMetafunc(object):
 
     def test_parametrize_onearg(self):
         metafunc = self.Metafunc(lambda x: None)
-        metafunc.parametrize("x", [1,2])
+        metafunc.parametrize("x", [1, 2])
         assert len(metafunc._calls) == 2
         assert metafunc._calls[0].funcargs == dict(x=1)
         assert metafunc._calls[0].id == "1"
@@ -593,15 +593,15 @@ class TestMetafunc(object):
 
     def test_parametrize_onearg_indirect(self):
         metafunc = self.Metafunc(lambda x: None)
-        metafunc.parametrize("x", [1,2], indirect=True)
+        metafunc.parametrize("x", [1, 2], indirect=True)
         assert metafunc._calls[0].params == dict(x=1)
         assert metafunc._calls[0].id == "1"
         assert metafunc._calls[1].params == dict(x=2)
         assert metafunc._calls[1].id == "2"
 
     def test_parametrize_twoargs(self):
-        metafunc = self.Metafunc(lambda x,y: None)
-        metafunc.parametrize(("x", "y"), [(1,2), (3,4)])
+        metafunc = self.Metafunc(lambda x, y: None)
+        metafunc.parametrize(("x", "y"), [(1, 2), (3, 4)])
         assert len(metafunc._calls) == 2
         assert metafunc._calls[0].funcargs == dict(x=1, y=2)
         assert metafunc._calls[0].id == "1-2"

@@ -8,7 +8,7 @@ from _pytest.mark import MarkGenerator as Mark, ParameterSet
 class TestMark(object):
     def test_markinfo_repr(self):
         from _pytest.mark import MarkInfo, Mark
-        m = MarkInfo(Mark("hello", (1,2), {}))
+        m = MarkInfo(Mark("hello", (1, 2), {}))
         repr(m)
 
     @pytest.mark.parametrize('attr', ['mark', 'param'])

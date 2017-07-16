@@ -227,7 +227,7 @@ class BaseFunctionalTests(object):
         assert reps[2].when == "teardown"
         assert reps[2].failed
         assert len(reps) == 6
-        for i in range(3,5):
+        for i in range(3, 5):
             assert reps[i].nodeid.endswith("test_func")
             assert reps[i].passed
         assert reps[5].when == "teardown"

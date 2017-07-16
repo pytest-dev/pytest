@@ -240,11 +240,11 @@ class TerminalReporter:
                 word, markup = word
             else:
                 if rep.passed:
-                    markup = {'green':True}
+                    markup = {'green': True}
                 elif rep.failed:
-                    markup = {'red':True}
+                    markup = {'red': True}
                 elif rep.skipped:
-                    markup = {'yellow':True}
+                    markup = {'yellow': True}
             line = self._locationline(rep.nodeid, *rep.location)
             if not hasattr(rep, 'node'):
                 self.write_ensure_prefix(line, word, **markup)

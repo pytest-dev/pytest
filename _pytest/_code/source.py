@@ -165,7 +165,7 @@ class Source(object):
         if not filename or py.path.local(filename).check(file=0):
             if _genframe is None:
                 _genframe = sys._getframe(1) # the caller
-            fn,lineno = _genframe.f_code.co_filename, _genframe.f_lineno
+            fn, lineno = _genframe.f_code.co_filename, _genframe.f_lineno
             base = "<%d-codegen " % self._compilecounter
             self.__class__._compilecounter += 1
             if not filename:
@@ -337,7 +337,7 @@ def get_statement_startend2(lineno, node):
 def getstatementrange_ast(lineno, source, assertion=False, astnode=None):
     if astnode is None:
         content = str(source)
-        if sys.version_info < (2,7):
+        if sys.version_info < (2, 7):
             content += "\n"
         try:
             astnode = compile(content, "source", "exec", 1024)  # 1024 for AST

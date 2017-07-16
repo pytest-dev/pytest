@@ -392,7 +392,7 @@ class PytestPluginManager(PluginManager):
     #
 
     def consider_preparse(self, args):
-        for opt1,opt2 in zip(args, args[1:]):
+        for opt1, opt2 in zip(args, args[1:]):
             if opt1 == "-p":
                 self.consider_pluginarg(opt2)
 

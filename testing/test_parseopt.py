@@ -284,7 +284,7 @@ def test_argcomplete(testdir, monkeypatch):
     # to handle a keyword argument env that replaces os.environ in popen or
     # extends the copy, advantage: could not forget to restore
     monkeypatch.setenv('_ARGCOMPLETE', "1")
-    monkeypatch.setenv('_ARGCOMPLETE_IFS',"\x0b")
+    monkeypatch.setenv('_ARGCOMPLETE_IFS', "\x0b")
     monkeypatch.setenv('COMP_WORDBREAKS', ' \\t\\n"\\\'><=;|&(:')
 
     arg = '--fu'
@@ -297,12 +297,12 @@ def test_argcomplete(testdir, monkeypatch):
     elif not result.stdout.str():
         pytest.skip("bash provided no output, argcomplete not available?")
     else:
-        if py.std.sys.version_info < (2,7):
+        if py.std.sys.version_info < (2, 7):
             result.stdout.lines = result.stdout.lines[0].split('\x0b')
             result.stdout.fnmatch_lines(["--funcargs", "--fulltrace"])
         else:
             result.stdout.fnmatch_lines(["--funcargs", "--fulltrace"])
-    if py.std.sys.version_info < (2,7):
+    if py.std.sys.version_info < (2, 7):
         return
     os.mkdir('test_argcomplete.d')
     arg = 'test_argc'

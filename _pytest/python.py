@@ -76,9 +76,9 @@ def pytest_addoption(parser):
     parser.addini("python_files", type="args",
                   default=['test_*.py', '*_test.py'],
                   help="glob-style file patterns for Python test module discovery")
-    parser.addini("python_classes", type="args", default=["Test",],
+    parser.addini("python_classes", type="args", default=["Test", ],
                   help="prefixes or glob names for Python test class discovery")
-    parser.addini("python_functions", type="args", default=["test",],
+    parser.addini("python_functions", type="args", default=["test", ],
                   help="prefixes or glob names for Python test function and "
                   "method discovery")
 
@@ -357,7 +357,7 @@ class PyCollector(PyobjMixin, main.Collector):
                 yield Function(name=subname, parent=self,
                                callspec=callspec, callobj=funcobj,
                                fixtureinfo=fixtureinfo,
-                               keywords={callspec.id:True},
+                               keywords={callspec.id: True},
                                originalname=name,
                                )
 
@@ -687,7 +687,7 @@ class CallSpec2(object):
 
     def setmulti(self, valtypes, argnames, valset, id, keywords, scopenum,
                  param_index):
-        for arg,val in zip(argnames, valset):
+        for arg, val in zip(argnames, valset):
             self._checkargnotcontained(arg)
             valtype_for_arg = valtypes[arg]
             getattr(self, valtype_for_arg)[arg] = val

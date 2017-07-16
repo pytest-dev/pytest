@@ -239,7 +239,7 @@ class TestApprox(object):
 
     def test_expecting_sequence_wrong_len(self):
         assert [1, 2] != approx([1])
-        assert [1, 2] != approx([1,2,3])
+        assert [1, 2] != approx([1, 2, 3])
 
     def test_complex(self):
         within_1e6 = [

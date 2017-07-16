@@ -638,7 +638,7 @@ def test_rewritten():
         testdir.tmpdir.join("test_newlines.py").write(b, "wb")
         assert testdir.runpytest().ret == 0
 
-    @pytest.mark.skipif(sys.version_info < (3,3),
+    @pytest.mark.skipif(sys.version_info < (3, 3),
                         reason='packages without __init__.py not supported on python 2')
     def test_package_without__init__py(self, testdir):
         pkg = testdir.mkdir('a_package_without_init_py')

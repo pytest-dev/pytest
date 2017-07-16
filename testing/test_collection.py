@@ -42,11 +42,11 @@ class TestCollector(object):
         assert not (fn1 == fn3)
         assert fn1 != fn3
 
-        for fn in fn1,fn2,fn3:
+        for fn in fn1, fn2, fn3:
             assert fn != 3
             assert fn != modcol
-            assert fn != [1,2,3]
-            assert [1,2,3] != fn
+            assert fn != [1, 2, 3]
+            assert [1, 2, 3] != fn
             assert modcol != fn
 
     def test_getparent(self, testdir):

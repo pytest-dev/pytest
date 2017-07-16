@@ -109,7 +109,7 @@ def test_source_strip_multiline():
 def test_syntaxerror_rerepresentation():
     ex = pytest.raises(SyntaxError, _pytest._code.compile, 'xyz xyz')
     assert ex.value.lineno == 1
-    assert ex.value.offset in (4,7) # XXX pypy/jython versus cpython?
+    assert ex.value.offset in (4, 7) # XXX pypy/jython versus cpython?
     assert ex.value.text.strip(), 'x x'
 
 def test_isparseable():
@@ -262,7 +262,7 @@ class TestSourceParsingAndCompiling(object):
     def test_getstatementrange_out_of_bounds_py3(self):
         source = Source("if xxx:\n   from .collections import something")
         r = source.getstatementrange(1)
-        assert r == (1,2)
+        assert r == (1, 2)
 
     def test_getstatementrange_with_syntaxerror_issue7(self):
         source = Source(":")
@@ -524,9 +524,9 @@ def test_comments():
 comment 4
 """
 '''
-    for line in range(2,6):
+    for line in range(2, 6):
         assert str(getstatement(line, source)) == '    x = 1'
-    for line in range(6,10):
+    for line in range(6, 10):
         assert str(getstatement(line, source)) == '    assert False'
     assert str(getstatement(10, source)) == '"""'
 
@@ -535,7 +535,7 @@ def test_comment_in_statement():
     # comment 1
     bar=2)
 '''
-    for line in range(1,3):
+    for line in range(1, 3):
         assert str(getstatement(line, source)) == \
             'test(foo=1,\n    # comment 1\n    bar=2)'
 

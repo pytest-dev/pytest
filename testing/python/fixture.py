@@ -25,7 +25,7 @@ def test_getfuncargnames():
             pass
 
     assert fixtures.getfuncargnames(A().f) == ('arg1',)
-    if sys.version_info < (3,0):
+    if sys.version_info < (3, 0):
         assert fixtures.getfuncargnames(A.f) == ('arg1',)
 
 class TestFillFixtures(object):
@@ -817,7 +817,7 @@ class TestRequestBasic(object):
 
 class TestRequestMarking(object):
     def test_applymarker(self, testdir):
-        item1,item2 = testdir.getitems("""
+        item1, item2 = testdir.getitems("""
             import pytest
 
             @pytest.fixture
@@ -1297,7 +1297,7 @@ class TestFixtureUsages(object):
         reprec = testdir.inline_run("-v")
         reprec.assertoutcome(passed=4)
         l = reprec.getcalls("pytest_runtest_call")[0].item.module.l
-        assert l == [1,2, 10,20]
+        assert l == [1, 2, 10, 20]
 
 
 class TestFixtureManagerParseFactories(object):
@@ -1706,7 +1706,7 @@ class TestAutouseManagement(object):
                     pass
         """)
         confcut = "--confcutdir={0}".format(testdir.tmpdir)
-        reprec = testdir.inline_run("-v","-s", confcut)
+        reprec = testdir.inline_run("-v", "-s", confcut)
         reprec.assertoutcome(passed=8)
         config = reprec.getcalls("pytest_unconfigure")[0].config
         l = config.pluginmanager._getconftestmodules(p)[0].l
@@ -1776,8 +1776,8 @@ class TestAutouseManagement(object):
         reprec.assertoutcome(passed=1)
 
     @pytest.mark.issue226
-    @pytest.mark.parametrize("param1", ["", "params=[1]"], ids=["p00","p01"])
-    @pytest.mark.parametrize("param2", ["", "params=[1]"], ids=["p10","p11"])
+    @pytest.mark.parametrize("param1", ["", "params=[1]"], ids=["p00", "p01"])
+    @pytest.mark.parametrize("param2", ["", "params=[1]"], ids=["p10", "p11"])
     def test_ordering_dependencies_torndown_first(self, testdir, param1, param2):
         testdir.makepyfile("""
             import pytest
@@ -2108,7 +2108,7 @@ class TestFixtureMarker(object):
         reprec = testdir.inline_run("-v")
         reprec.assertoutcome(passed=4)
         l = reprec.getcalls("pytest_runtest_call")[0].item.module.l
-        assert l == [1,1,2,2]
+        assert l == [1, 1, 2, 2]
 
     def test_module_parametrized_ordering(self, testdir):
         testdir.makeconftest("""
@@ -2351,7 +2351,7 @@ class TestFixtureMarker(object):
         """)
         reprec = testdir.inline_run("-s")
         l = reprec.getcalls("pytest_runtest_call")[0].item.module.l
-        assert l == [1,2]
+        assert l == [1, 2]
 
     def test_parametrize_separated_lifecycle(self, testdir):
         testdir.makepyfile("""
@@ -2544,7 +2544,7 @@ class TestFixtureMarker(object):
 
 
 class TestRequestScopeAccess(object):
-    pytestmark = pytest.mark.parametrize(("scope", "ok", "error"),[
+    pytestmark = pytest.mark.parametrize(("scope", "ok", "error"), [
         ["session", "", "fspath class function module"],
         ["module", "module fspath", "cls function"],
         ["class", "module fspath cls", "function"],

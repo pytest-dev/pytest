@@ -872,7 +872,7 @@ def test_terminal_summary_warnings_are_displayed(testdir):
     ("yellow", "1 passed, 1 warnings", {"warnings": (1,),
                                         "passed": (1,)}),
 
-    ("green", "5 passed", {"passed": (1,2,3,4,5)}),
+    ("green", "5 passed", {"passed": (1, 2, 3, 4, 5)}),
 
 
     # "Boring" statuses.  These have no effect on the color of the summary
@@ -901,13 +901,13 @@ def test_terminal_summary_warnings_are_displayed(testdir):
 
     # A couple more complex combinations
     ("red", "1 failed, 2 passed, 3 xfailed",
-        {"passed": (1,2), "failed": (1,), "xfailed": (1,2,3)}),
+        {"passed": (1, 2), "failed": (1,), "xfailed": (1, 2, 3)}),
 
     ("green", "1 passed, 2 skipped, 3 deselected, 2 xfailed",
         {"passed": (1,),
-         "skipped": (1,2),
-         "deselected": (1,2,3),
-         "xfailed": (1,2)}),
+         "skipped": (1, 2),
+         "deselected": (1, 2, 3),
+         "xfailed": (1, 2)}),
 ])
 def test_summary_stats(exp_line, exp_color, stats_arg):
     print("Based on stats: %s" % stats_arg)

@@ -463,7 +463,7 @@ class DontReadFromInput:
 
     @property
     def buffer(self):
-        if sys.version_info >= (3,0):
+        if sys.version_info >= (3, 0):
             return self
         else:
             raise AttributeError('redirected stdin has no attribute buffer')

@@ -19,8 +19,8 @@ def equal_with_bash(prefix, ffc, fc, out=None):
 # this gives an IOError at the end of testrun
 def _wrapcall(*args, **kargs):
     try:
-        if py.std.sys.version_info > (2,7):
-            return py.std.subprocess.check_output(*args,**kargs).decode().splitlines()
+        if py.std.sys.version_info > (2, 7):
+            return py.std.subprocess.check_output(*args, **kargs).decode().splitlines()
         if 'stdout' in kargs:
             raise ValueError('stdout argument not allowed, it will be overridden.')
         process = py.std.subprocess.Popen(
@@ -38,7 +38,7 @@ def _wrapcall(*args, **kargs):
 
 class FilesCompleter(object):
     'File completer class, optionally takes a list of allowed extensions'
-    def __init__(self,allowednames=(),directories=True):
+    def __init__(self, allowednames=(), directories=True):
         # Fix if someone passes in a string instead of a list
         if type(allowednames) is str:
             allowednames = [allowednames]
@@ -50,12 +50,12 @@ class FilesCompleter(object):
         completion = []
         if self.allowednames:
             if self.directories:
-                files = _wrapcall(['bash','-c',
+                files = _wrapcall(['bash', '-c',
                                    "compgen -A directory -- '{p}'".format(p=prefix)])
                 completion += [f + '/' for f in files]
             for x in self.allowednames:
                 completion += _wrapcall(['bash', '-c',
-                                         "compgen -A file -X '!*.{0}' -- '{p}'".format(x,p=prefix)])
+                                         "compgen -A file -X '!*.{0}' -- '{p}'".format(x, p=prefix)])
         else:
             completion += _wrapcall(['bash', '-c',
                                      "compgen -A file -- '{p}'".format(p=prefix)])

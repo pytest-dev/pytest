@@ -325,7 +325,7 @@ def test_excinfo_no_sourcecode():
     except ValueError:
         excinfo = _pytest._code.ExceptionInfo()
     s = str(excinfo.traceback[-1])
-    if py.std.sys.version_info < (2,5):
+    if py.std.sys.version_info < (2, 5):
         assert s == "  File '<string>':1 in ?\n  ???\n"
     else:
         assert s == "  File '<string>':1 in <module>\n  ???\n"

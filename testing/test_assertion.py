@@ -437,9 +437,9 @@ class TestAssert_reprcompare(object):
         assert len(expl) > 1
 
     def test_list_tuples(self):
-        expl = callequal([], [(1,2)])
+        expl = callequal([], [(1, 2)])
         assert len(expl) > 1
-        expl = callequal([(1,2)], [])
+        expl = callequal([(1, 2)], [])
         assert len(expl) > 1
 
     def test_list_bad_repr(self):

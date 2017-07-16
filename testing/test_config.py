@@ -666,7 +666,7 @@ class TestRootdir(object):
             rootdir, inifile, inicfg = determine_setup(None, args)
             assert rootdir == tmpdir
             assert inifile == inifile
-        rootdir, inifile, inicfg = determine_setup(None, [b,a])
+        rootdir, inifile, inicfg = determine_setup(None, [b, a])
         assert rootdir == tmpdir
         assert inifile == inifile
 
