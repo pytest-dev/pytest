@@ -65,7 +65,7 @@ class TestConftestValueAccessGlobal(object):
         startdir.ensure("xx", dir=True)
         conftest = ConftestWithSetinitial(startdir)
         mod, value = conftest._rget_with_confmod("a", startdir)
-        assert  value == 1.5
+        assert value == 1.5
         path = py.path.local(mod.__file__)
         assert path.dirpath() == basedir.join("adir", "b")
         assert path.purebasename.startswith("conftest")
@@ -151,10 +151,10 @@ def test_setinitial_conftest_subdirs(testdir, name):
     conftest = PytestPluginManager()
     conftest_setinitial(conftest, [sub.dirpath()], confcutdir=testdir.tmpdir)
     if name not in ('whatever', '.dotdir'):
-        assert  subconftest in conftest._conftestpath2mod
+        assert subconftest in conftest._conftestpath2mod
         assert len(conftest._conftestpath2mod) == 1
     else:
-        assert  subconftest not in conftest._conftestpath2mod
+        assert subconftest not in conftest._conftestpath2mod
         assert len(conftest._conftestpath2mod) == 0
 
 def test_conftest_confcutdir(testdir):

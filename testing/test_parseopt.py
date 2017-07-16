@@ -242,7 +242,7 @@ class TestParser(object):
                          action='store_true')
         parser.parse([])
         help = parser.optparser.format_help()
-        assert '--func-args, --doit  foo' in  help
+        assert '--func-args, --doit  foo' in help
 
     # testing would be more helpful with all help generated
     def test_drop_short_help1(self, parser, capsys):

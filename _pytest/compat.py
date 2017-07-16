@@ -10,7 +10,7 @@ import functools
 
 import py
 
-import  _pytest
+import _pytest
 
 
 
@@ -112,7 +112,7 @@ def getfuncargnames(function, startindex=None):
 
 
 
-if  sys.version_info[:2] == (2, 6):
+if sys.version_info[:2] == (2, 6):
     def isclass(object):
         """ Return true if the object is a class. Overrides inspect.isclass for
         python 2.6 because it will return True for objects which always return
