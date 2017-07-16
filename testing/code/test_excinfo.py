@@ -113,7 +113,7 @@ class TestTraceback_f_g_h(object):
 
     def test_traceback_entry_getsource(self):
         tb = self.excinfo.traceback
-        s = str(tb[-1].getsource() )
+        s = str(tb[-1].getsource())
         assert s.startswith("def f():")
         assert s.endswith("raise ValueError")
 

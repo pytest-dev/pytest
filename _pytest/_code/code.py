@@ -119,7 +119,7 @@ class Frame(object):
         """
         f_locals = self.f_locals.copy()
         f_locals.update(vars)
-        py.builtin.exec_(code, self.f_globals, f_locals )
+        py.builtin.exec_(code, self.f_globals, f_locals)
 
     def repr(self, object):
         """ return a 'safe' (non-recursive, one-line) string repr for 'object'

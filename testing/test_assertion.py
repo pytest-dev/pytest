@@ -881,7 +881,7 @@ def test_exception_handling_no_traceback(testdir):
     ])
 
 
-@pytest.mark.skipif("'__pypy__' in sys.builtin_module_names or sys.platform.startswith('java')" )
+@pytest.mark.skipif("'__pypy__' in sys.builtin_module_names or sys.platform.startswith('java')")
 def test_warn_missing(testdir):
     testdir.makepyfile("")
     result = testdir.run(sys.executable, "-OO", "-m", "pytest", "-h")
