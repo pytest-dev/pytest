@@ -118,12 +118,12 @@ class TestAssertionRewrite(object):
         def f():
             assert a_global  # noqa
 
-        assert getmsg(f, {"a_global" : False}) == "assert False"
+        assert getmsg(f, {"a_global": False}) == "assert False"
 
         def f():
             assert sys == 42
 
-        assert getmsg(f, {"sys" : sys}) == "assert sys == 42"
+        assert getmsg(f, {"sys": sys}) == "assert sys == 42"
 
         def f():
             assert cls == 42  # noqa
@@ -131,7 +131,7 @@ class TestAssertionRewrite(object):
         class X(object):
             pass
 
-        assert getmsg(f, {"cls" : X}) == "assert cls == 42"
+        assert getmsg(f, {"cls": X}) == "assert cls == 42"
 
     def test_assert_already_has_message(self):
         def f():
@@ -238,13 +238,13 @@ class TestAssertionRewrite(object):
         def f():
             assert x() and x()
 
-        assert getmsg(f, {"x" : x}) == """assert (False)
+        assert getmsg(f, {"x": x}) == """assert (False)
  +  where False = x()"""
 
         def f():
             assert False or x()
 
-        assert getmsg(f, {"x" : x}) == """assert (False or False)
+        assert getmsg(f, {"x": x}) == """assert (False or False)
  +  where False = x()"""
 
         def f():
@@ -255,7 +255,7 @@ class TestAssertionRewrite(object):
         def f():
             x = 1
             y = 2
-            assert x in {1 : None} and y in {}
+            assert x in {1: None} and y in {}
 
         assert getmsg(f) == "assert (1 in {1: None} and 2 in {})"
 
@@ -348,7 +348,7 @@ class TestAssertionRewrite(object):
         def g(a=42, *args, **kwargs):
             return False
 
-        ns = {"g" : g}
+        ns = {"g": g}
 
         def f():
             assert g()
@@ -389,7 +389,7 @@ class TestAssertionRewrite(object):
 
         def f():
             x = "a"
-            assert g(**{x : 2})
+            assert g(**{x: 2})
 
         assert getmsg(f, ns) == """assert False
  +  where False = g(**{'a': 2})"""
@@ -398,7 +398,7 @@ class TestAssertionRewrite(object):
         class X(object):
             g = 3
 
-        ns = {"x" : X}
+        ns = {"x": X}
 
         def f():
             assert not x.g # noqa
