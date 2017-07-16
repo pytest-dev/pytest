@@ -1126,4 +1126,3 @@ class FixtureManager:
         for fixturedef in fixturedefs:
             if nodeid.startswith(fixturedef.baseid):
                 yield fixturedef
-

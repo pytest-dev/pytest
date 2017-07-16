@@ -1057,4 +1057,3 @@ def test_set_suite_name(testdir, suite_name):
     assert result.ret == 0
     node = dom.find_first_by_tag("testsuite")
     node.assert_attr(name=expected)
-

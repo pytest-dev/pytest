@@ -114,5 +114,3 @@ class TestPaste(object):
         assert 'lexer=%s' % lexer in data.decode()
         assert 'code=full-paste-contents' in data.decode()
         assert 'expiry=1week' in data.decode()
-
-

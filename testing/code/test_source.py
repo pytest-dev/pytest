@@ -325,7 +325,7 @@ def test_getstartingblock_multiline():
             self.source = _pytest._code.Frame(frame).statement
 
     x = A('x',
-          'y' \
+          'y'
           ,
           'z')
 
@@ -400,6 +400,7 @@ def test_source_of_class_at_eof_without_newline(tmpdir):
     s2 = _pytest._code.Source(tmpdir.join("a.py").pyimport().A)
     assert str(source).strip() == str(s2).strip()
 
+
 if True:
     def x():
         pass
@@ -462,6 +463,7 @@ def test_getfslineno():
     assert lineno == A_lineno
 
     assert getfslineno(3) == ("", -1)
+
     class B(object):
         pass
     B.__name__ = "B2"
@@ -471,6 +473,7 @@ def test_code_of_object_instance_with_call():
     class A(object):
         pass
     pytest.raises(TypeError, lambda: _pytest._code.Source(A()))
+
     class WithCall(object):
         def __call__(self):
             pass

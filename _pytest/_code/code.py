@@ -645,7 +645,7 @@ class FormattedExcinfo(object):
                 traceback = traceback[:recursionindex + 1]
             else:
                 extraline = None
-            
+
         return traceback, extraline
 
     def repr_excinfo(self, excinfo):

@@ -754,5 +754,3 @@ class TestReportContents(object):
         rep = reports[1]
         assert rep.capstdout == ''
         assert rep.capstderr == ''
-
-

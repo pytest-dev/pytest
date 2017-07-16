@@ -826,4 +826,3 @@ class TestOverrideIniArgs(object):
             rootdir, inifile, inicfg = determine_setup(None, ['a/exist'])
             assert rootdir == tmpdir
             assert inifile is None
-

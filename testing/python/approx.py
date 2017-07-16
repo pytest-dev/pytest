@@ -309,4 +309,3 @@ class TestApprox(object):
             '*At index 0 diff: 3 != 4 * {0}'.format(expected),
             '=* 1 failed in *=',
         ])
-

@@ -932,4 +932,3 @@ class TestDoctestReportingOption(object):
         result.stderr.fnmatch_lines([
             "*error: argument --doctest-report: invalid choice: 'obviously_invalid_format' (choose from*"
         ])
-

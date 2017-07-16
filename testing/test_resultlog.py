@@ -224,5 +224,3 @@ def test_failure_issue380(testdir):
     """)
     result = testdir.runpytest("--resultlog=log")
     assert result.ret == 2
-
-

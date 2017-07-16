@@ -3026,6 +3026,3 @@ class TestParameterizedSubRequest(object):
             E*{1}:5
             *1 failed*
             """.format(fixfile.strpath, testfile.basename))
-
-
-
