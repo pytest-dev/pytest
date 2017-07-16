@@ -289,7 +289,7 @@ class Traceback(list):
                 (excludepath is None or not hasattr(codepath, 'relto') or
                  not codepath.relto(excludepath)) and
                 (lineno is None or x.lineno == lineno) and
-                (firstlineno is None or x.frame.code.firstlineno == firstlineno)):
+                    (firstlineno is None or x.frame.code.firstlineno == firstlineno)):
                 return Traceback(x._rawentry, self._excinfo)
         return self
 

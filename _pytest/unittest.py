@@ -158,7 +158,7 @@ class TestCaseFunction(Function):
         # analog to pythons Lib/unittest/case.py:run
         testMethod = getattr(self._testcase, self._testcase._testMethodName)
         if (getattr(self._testcase.__class__, "__unittest_skip__", False) or
-            getattr(testMethod, "__unittest_skip__", False)):
+                getattr(testMethod, "__unittest_skip__", False)):
             # If the class or method was skipped.
             skip_why = (getattr(self._testcase.__class__, '__unittest_skip_why__', '') or
                         getattr(testMethod, '__unittest_skip_why__', ''))
