@@ -415,7 +415,7 @@ class TestTerminalFunctional(object):
                 def test_three():
                     pass
            """
-        )
+                                      )
         result = testdir.runpytest("-k", "test_two:", testpath)
         result.stdout.fnmatch_lines([
             "*test_deselected.py ..",

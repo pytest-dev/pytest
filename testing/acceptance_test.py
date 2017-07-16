@@ -410,7 +410,7 @@ class TestGeneralUsage(object):
             def test_stuff(r):
                 pass
         """
-        )
+                               )
         res = testdir.runpytest(p)
         res.stdout.fnmatch_lines([
             '*1 passed*'

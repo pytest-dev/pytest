@@ -279,7 +279,7 @@ class TestMetafunc(object):
         assert result == ["10.0-IndexError()",
                           "20-KeyError()",
                           "three-b2",
-                         ]
+                          ]
 
     @pytest.mark.issue351
     def test_idmaker_idfn_unique_names(self):
@@ -291,11 +291,11 @@ class TestMetafunc(object):
         result = idmaker(("a", "b"), [pytest.param(10.0, IndexError()),
                                       pytest.param(20, KeyError()),
                                       pytest.param("three", [1, 2, 3]),
-        ], idfn=ids)
+                                      ], idfn=ids)
         assert result == ["a-a0",
                           "a-a1",
                           "a-a2",
-                         ]
+                          ]
 
     @pytest.mark.issue351
     def test_idmaker_idfn_exception(self):

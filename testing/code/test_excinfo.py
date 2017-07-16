@@ -934,7 +934,7 @@ raise ValueError()
     @pytest.mark.parametrize('reproptions', [
         {'style': style, 'showlocals': showlocals,
          'funcargs': funcargs, 'tbfilter': tbfilter
-        } for style in ("long", "short", "no")
+         } for style in ("long", "short", "no")
             for showlocals in (True, False)
                 for tbfilter in (True, False)
                     for funcargs in (True, False)])

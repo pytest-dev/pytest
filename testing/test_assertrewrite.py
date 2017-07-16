@@ -609,7 +609,7 @@ def test_rewritten():
             def test_optimized():
                 "hello"
                 assert test_optimized.__doc__ is None"""
-        )
+                           )
         p = py.path.local.make_numbered_dir(prefix="runpytest-", keep=None,
                                             rootdir=testdir.tmpdir)
         tmp = "--basetemp=%s" % p
