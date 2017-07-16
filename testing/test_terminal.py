@@ -78,7 +78,7 @@ class TestTerminal(object):
         else:
             result.stdout.fnmatch_lines([
                 "*test_pass_skip_fail.py .sF"
-                ])
+            ])
         result.stdout.fnmatch_lines([
             "    def test_func():",
             ">       assert 0",
@@ -378,7 +378,7 @@ class TestFixtureReporting(object):
             "*def test_fail():",
             "*failingfunc*",
             "*1 failed*1 error*",
-            ])
+        ])
 
     def test_setup_teardown_output_and_test_failure(self, testdir):
         """ Test for issue #442 """
@@ -403,7 +403,7 @@ class TestFixtureReporting(object):
             "*teardown func*",
 
             "*1 failed*",
-            ])
+        ])
 
 class TestTerminalFunctional(object):
     def test_deselected(self, testdir):
@@ -817,8 +817,8 @@ def test_tbstyle_native_setup_error(testdir):
     """)
     result = testdir.runpytest("--tb=native")
     result.stdout.fnmatch_lines([
-            '*File *test_tbstyle_native_setup_error.py", line *, in setup_error_fixture*'
-            ])
+        '*File *test_tbstyle_native_setup_error.py", line *, in setup_error_fixture*'
+    ])
 
 def test_terminal_summary(testdir):
     testdir.makeconftest("""

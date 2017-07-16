@@ -655,7 +655,7 @@ class TestRequestBasic(object):
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
             "*1 error*"  # XXX the whole module collection fails
-            ])
+        ])
 
     def test_request_subrequest_addfinalizer_exceptions(self, testdir):
         """
