@@ -339,8 +339,8 @@ class Traceback(list):
                 loc = f.f_locals
                 for otherloc in l:
                     if f.is_true(f.eval(co_equal,
-                        __recursioncache_locals_1=loc,
-                        __recursioncache_locals_2=otherloc)):
+                            __recursioncache_locals_1=loc,
+                            __recursioncache_locals_2=otherloc)):
                         return i
             l.append(entry.frame.f_locals)
         return None

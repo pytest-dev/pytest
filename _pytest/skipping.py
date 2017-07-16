@@ -243,7 +243,7 @@ def pytest_runtest_makereport(item, call):
         rep.wasxfail = "reason: " + call.excinfo.value.msg
         rep.outcome = "skipped"
     elif evalxfail and not rep.skipped and evalxfail.wasvalid() and \
-        evalxfail.istrue():
+            evalxfail.istrue():
         if call.excinfo:
             if evalxfail.invalidraise(call.excinfo.value):
                 rep.outcome = "failed"

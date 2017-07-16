@@ -205,7 +205,7 @@ def slice_items(items, ignore, scoped_argkeys_cache):
                     for item in it:
                         argkeys = scoped_argkeys_cache.get(item)
                         if argkeys and slicing_argkey in argkeys and \
-                            slicing_argkey not in ignore:
+                                slicing_argkey not in ignore:
                             items_same.append(item)
                         else:
                             items_other.append(item)

@@ -264,7 +264,7 @@ class HookRecorder:
         return [x.report for x in self.getcalls(names)]
 
     def matchreport(self, inamepart="",
-        names="pytest_runtest_logreport pytest_collectreport", when=None):
+            names="pytest_runtest_logreport pytest_collectreport", when=None):
         """ return a testreport whose dotted import path matches """
         l = []
         for rep in self.getreports(names=names):
@@ -298,7 +298,7 @@ class HookRecorder:
         skipped = []
         failed = []
         for rep in self.getreports(
-            "pytest_collectreport pytest_runtest_logreport"):
+                "pytest_collectreport pytest_runtest_logreport"):
             if rep.passed:
                 if getattr(rep, "when", None) == "call":
                     passed.append(rep)

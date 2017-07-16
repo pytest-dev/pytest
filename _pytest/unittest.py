@@ -210,7 +210,7 @@ def pytest_runtest_protocol(item):
         check_testcase_implements_trial_reporter()
 
         def excstore(self, exc_value=None, exc_type=None, exc_tb=None,
-            captureVars=None):
+                captureVars=None):
             if exc_value is None:
                 self._rawexcinfo = sys.exc_info()
             else:
