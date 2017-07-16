@@ -68,7 +68,8 @@ class TestMetafunc(object):
         def func(arg1): pass
         metafunc = self.Metafunc(func)
 
-        class obj(object): pass
+        class obj(object):
+            pass
 
         metafunc.addcall(param=obj)
         metafunc.addcall(param=obj)
@@ -83,7 +84,8 @@ class TestMetafunc(object):
 
         metafunc = self.Metafunc(func)
 
-        class obj(object): pass
+        class obj(object):
+            pass
 
         metafunc.addcall(funcargs={"x": 2})
         metafunc.addcall(funcargs={"x": 3})

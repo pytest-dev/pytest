@@ -283,9 +283,11 @@ class TestWarns(object):
         assert str(record[0].message) == "user"
         assert str(record[1].message) == "runtime"
 
-        class MyUserWarning(UserWarning): pass
+        class MyUserWarning(UserWarning):
+            pass
 
-        class MyRuntimeWarning(RuntimeWarning): pass
+        class MyRuntimeWarning(RuntimeWarning):
+            pass
 
         with pytest.warns((UserWarning, RuntimeWarning)) as record:
             warnings.warn("user", MyUserWarning)

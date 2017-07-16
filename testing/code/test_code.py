@@ -149,8 +149,10 @@ class TestExceptionInfo(object):
 
     def test_bad_getsource(self):
         try:
-            if False: pass
-            else: assert False
+            if False:
+                pass
+            else:
+                assert False
         except AssertionError:
             exci = _pytest._code.ExceptionInfo()
         assert exci.getrepr()
@@ -160,11 +162,13 @@ class TestTracebackEntry(object):
 
     def test_getsource(self):
         try:
-            if False: pass
-            else: assert False
+            if False:
+                pass
+            else:
+                assert False
         except AssertionError:
             exci = _pytest._code.ExceptionInfo()
         entry = exci.traceback[0]
         source = entry.getsource()
-        assert len(source) == 4
-        assert 'else: assert False' in source[3]
+        assert len(source) == 6
+        assert 'assert False' in source[5]

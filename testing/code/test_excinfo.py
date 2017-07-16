@@ -991,7 +991,8 @@ raise ValueError()
         r = excinfo.getrepr(style="long")
         tw = TWMock()
         r.toterminal(tw)
-        for line in tw.lines: print (line)
+        for line in tw.lines:
+            print (line)
         assert tw.lines[0] == ""
         assert tw.lines[1] == "    def f():"
         assert tw.lines[2] == ">       g()"
@@ -1038,7 +1039,8 @@ raise ValueError()
         r = excinfo.getrepr(style="long")
         tw = TWMock()
         r.toterminal(tw)
-        for line in tw.lines: print (line)
+        for line in tw.lines:
+            print (line)
         assert tw.lines[0] == ""
         assert tw.lines[1] == "    def f():"
         assert tw.lines[2] == "        try:"
