@@ -556,7 +556,7 @@ class TestRewriteOnImport(object):
     def test_readonly(self, testdir):
         sub = testdir.mkdir("testing")
         sub.join("test_readonly.py").write(
-        py.builtin._totext("""
+            py.builtin._totext("""
 def test_rewritten():
     assert "@py_builtins" in globals()
             """).encode("utf-8"), "wb")

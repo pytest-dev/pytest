@@ -1093,8 +1093,8 @@ class Config(object):
             if myver < ver:
                 raise pytest.UsageError(
                     "%s:%d: requires pytest-%s, actual pytest-%s'" %(
-                    self.inicfg.config.path, self.inicfg.lineof('minversion'),
-                    minver, pytest.__version__))
+                        self.inicfg.config.path, self.inicfg.lineof('minversion'),
+                        minver, pytest.__version__))
 
     def parse(self, args, addopts=True):
         # parse given cmdline arguments into this config object.

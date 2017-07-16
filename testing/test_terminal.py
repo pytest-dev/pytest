@@ -77,8 +77,8 @@ class TestTerminal(object):
             ])
         else:
             result.stdout.fnmatch_lines([
-            "*test_pass_skip_fail.py .sF"
-        ])
+                "*test_pass_skip_fail.py .sF"
+                ])
         result.stdout.fnmatch_lines([
             "    def test_func():",
             ">       assert 0",

@@ -2243,7 +2243,7 @@ class TestFixtureMarker(object):
             'fin:mod1', 'create:mod2', 'test2', 'create:1', 'test3',
             'fin:1', 'create:2', 'test3', 'fin:2', 'create:1',
             'test4', 'fin:1', 'create:2', 'test4', 'fin:2',
-        'fin:mod2']
+            'fin:mod2']
         import pprint
         pprint.pprint(list(zip(l, expected)))
         assert l == expected
