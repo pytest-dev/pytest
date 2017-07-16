@@ -12,9 +12,6 @@ from _pytest._code.code import (
     ReprExceptionInfo,
     ExceptionChainRepr)
 
-queue = py.builtin._tryimport('queue', 'Queue')
-
-failsonjython = pytest.mark.xfail("sys.platform.startswith('java')")
 from test_source import astonly
 
 try:
@@ -24,7 +21,10 @@ except ImportError:
 else:
     invalidate_import_caches = getattr(importlib, "invalidate_caches", None)
 
-import pytest
+queue = py.builtin._tryimport('queue', 'Queue')
+
+failsonjython = pytest.mark.xfail("sys.platform.startswith('java')")
+
 pytest_version_info = tuple(map(int, pytest.__version__.split(".")[:3]))
 
 

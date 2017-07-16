@@ -1,23 +1,23 @@
 from __future__ import absolute_import, division, print_function
+
 import glob
 import os
 import py_compile
 import stat
 import sys
 import zipfile
-
 import py
 import pytest
-
-ast = pytest.importorskip("ast")
-if sys.platform.startswith("java"):
-    # XXX should be xfail
-    pytest.skip("assert rewrite does currently not work on jython")
 
 import _pytest._code
 from _pytest.assertion import util
 from _pytest.assertion.rewrite import rewrite_asserts, PYTEST_TAG, AssertionRewritingHook
 from _pytest.main import EXIT_NOTESTSCOLLECTED
+
+ast = pytest.importorskip("ast")
+if sys.platform.startswith("java"):
+    # XXX should be xfail
+    pytest.skip("assert rewrite does currently not work on jython")
 
 
 def setup_module(mod):
