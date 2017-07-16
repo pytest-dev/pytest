@@ -872,7 +872,7 @@ def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
     instead of ``return``. In this case, the code block after the ``yield`` statement is executed
     as teardown code regardless of the test outcome. A fixture function must yield exactly once.
     """
-    if callable(scope) and params is None and autouse == False:
+    if callable(scope) and params is None and autouse is False:
         # direct decoration
         return FixtureFunctionMarker(
             "function", params, autouse, name=name)(scope)

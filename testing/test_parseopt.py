@@ -164,12 +164,12 @@ class TestParser(object):
         assert getattr(args, parseopt.FILE_OR_DIR) == ['4', '2']
         args = parser.parse(['-R', '-S', '4', '2', '-R'])
         assert getattr(args, parseopt.FILE_OR_DIR) == ['4', '2']
-        assert args.R == True
-        assert args.S == False
+        assert args.R is True
+        assert args.S is False
         args = parser.parse(['-R', '4', '-S', '2'])
         assert getattr(args, parseopt.FILE_OR_DIR) == ['4', '2']
-        assert args.R == True
-        assert args.S == False
+        assert args.R is True
+        assert args.S is False
 
     def test_parse_defaultgetter(self):
         def defaultget(option):
