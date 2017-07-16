@@ -9,16 +9,20 @@ from _pytest import fixtures
 
 
 def test_getfuncargnames():
-    def f(): pass
+    def f():
+        pass
     assert not fixtures.getfuncargnames(f)
 
-    def g(arg): pass
+    def g(arg):
+        pass
     assert fixtures.getfuncargnames(g) == ('arg',)
 
-    def h(arg1, arg2="hello"): pass
+    def h(arg1, arg2="hello"):
+        pass
     assert fixtures.getfuncargnames(h) == ('arg1',)
 
-    def h(arg1, arg2, arg3="hello"): pass
+    def h(arg1, arg2, arg3="hello"):
+        pass
     assert fixtures.getfuncargnames(h) == ('arg1', 'arg2')
 
     class A(object):
@@ -552,7 +556,8 @@ class TestRequestBasic(object):
         else:
             # see #1830 for a cleaner way to accomplish this
             @contextlib.contextmanager
-            def expecting_no_warning(): yield
+            def expecting_no_warning():
+                yield
 
             warning_expectation = expecting_no_warning()
 

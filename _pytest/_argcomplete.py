@@ -100,5 +100,6 @@ if os.environ.get('_ARGCOMPLETE'):
     def try_argcomplete(parser):
         argcomplete.autocomplete(parser)
 else:
-    def try_argcomplete(parser): pass
+    def try_argcomplete(parser):
+        pass
     filescompleter = None

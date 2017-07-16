@@ -40,11 +40,14 @@ class TestSetupState(object):
     def test_teardown_multiple_one_fails(self, testdir):
         r = []
 
-        def fin1(): r.append('fin1')
+        def fin1():
+            r.append('fin1')
 
-        def fin2(): raise Exception('oops')
+        def fin2():
+            raise Exception('oops')
 
-        def fin3(): r.append('fin3')
+        def fin3():
+            r.append('fin3')
 
         item = testdir.getitem("def test_func(): pass")
         ss = runner.SetupState()
@@ -59,9 +62,11 @@ class TestSetupState(object):
     def test_teardown_multiple_fail(self, testdir):
         # Ensure the first exception is the one which is re-raised.
         # Ideally both would be reported however.
-        def fin1(): raise Exception('oops1')
+        def fin1():
+            raise Exception('oops1')
 
-        def fin2(): raise Exception('oops2')
+        def fin2():
+            raise Exception('oops2')
 
         item = testdir.getitem("def test_func(): pass")
         ss = runner.SetupState()

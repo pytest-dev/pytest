@@ -29,13 +29,15 @@ class TestMetafunc(object):
         return python.Metafunc(func, fixtureinfo, None)
 
     def test_no_funcargs(self, testdir):
-        def function(): pass
+        def function():
+            pass
         metafunc = self.Metafunc(function)
         assert not metafunc.fixturenames
         repr(metafunc._calls)
 
     def test_function_basic(self):
-        def func(arg1, arg2="qwe"): pass
+        def func(arg1, arg2="qwe"):
+            pass
         metafunc = self.Metafunc(func)
         assert len(metafunc.fixturenames) == 1
         assert 'arg1' in metafunc.fixturenames
@@ -43,7 +45,8 @@ class TestMetafunc(object):
         assert metafunc.cls is None
 
     def test_addcall_no_args(self):
-        def func(arg1): pass
+        def func(arg1):
+            pass
         metafunc = self.Metafunc(func)
         metafunc.addcall()
         assert len(metafunc._calls) == 1
@@ -52,7 +55,8 @@ class TestMetafunc(object):
         assert not hasattr(call, 'param')
 
     def test_addcall_id(self):
-        def func(arg1): pass
+        def func(arg1):
+            pass
         metafunc = self.Metafunc(func)
         pytest.raises(ValueError, "metafunc.addcall(id=None)")
 
@@ -65,7 +69,8 @@ class TestMetafunc(object):
         assert metafunc._calls[1].id == "2"
 
     def test_addcall_param(self):
-        def func(arg1): pass
+        def func(arg1):
+            pass
         metafunc = self.Metafunc(func)
 
         class obj(object):
@@ -80,7 +85,8 @@ class TestMetafunc(object):
         assert metafunc._calls[2].getparam("arg1") == 1
 
     def test_addcall_funcargs(self):
-        def func(x): pass
+        def func(x):
+            pass
 
         metafunc = self.Metafunc(func)
 
@@ -96,7 +102,8 @@ class TestMetafunc(object):
         assert not hasattr(metafunc._calls[1], 'param')
 
     def test_parametrize_error(self):
-        def func(x, y): pass
+        def func(x, y):
+            pass
         metafunc = self.Metafunc(func)
         metafunc.parametrize("x", [1, 2])
         pytest.raises(ValueError, lambda: metafunc.parametrize("x", [5, 6]))
@@ -106,7 +113,8 @@ class TestMetafunc(object):
         pytest.raises(ValueError, lambda: metafunc.parametrize("y", [5, 6]))
 
     def test_parametrize_bad_scope(self, testdir):
-        def func(x): pass
+        def func(x):
+            pass
         metafunc = self.Metafunc(func)
         try:
             metafunc.parametrize("x", [1], scope='doggy')
@@ -114,7 +122,8 @@ class TestMetafunc(object):
             assert "has an unsupported scope value 'doggy'" in str(ve)
 
     def test_parametrize_and_id(self):
-        def func(x, y): pass
+        def func(x, y):
+            pass
         metafunc = self.Metafunc(func)
 
         metafunc.parametrize("x", [1, 2], ids=['basic', 'advanced'])
@@ -124,14 +133,16 @@ class TestMetafunc(object):
 
     def test_parametrize_and_id_unicode(self):
         """Allow unicode strings for "ids" parameter in Python 2 (##1905)"""
-        def func(x): pass
+        def func(x):
+            pass
         metafunc = self.Metafunc(func)
         metafunc.parametrize("x", [1, 2], ids=[u'basic', u'advanced'])
         ids = [x.id for x in metafunc._calls]
         assert ids == [u"basic", u"advanced"]
 
     def test_parametrize_with_wrong_number_of_ids(self, testdir):
-        def func(x, y): pass
+        def func(x, y):
+            pass
         metafunc = self.Metafunc(func)
 
         pytest.raises(ValueError, lambda:
@@ -143,13 +154,15 @@ class TestMetafunc(object):
 
     @pytest.mark.issue510
     def test_parametrize_empty_list(self):
-        def func(y): pass
+        def func(y):
+            pass
         metafunc = self.Metafunc(func)
         metafunc.parametrize("y", [])
         assert 'skip' in metafunc._calls[0].keywords
 
     def test_parametrize_with_userobjects(self):
-        def func(x, y): pass
+        def func(x, y):
+            pass
         metafunc = self.Metafunc(func)
 
         class A(object):
@@ -393,7 +406,8 @@ class TestMetafunc(object):
         assert result == ["a0", "a1", "b0", "c", "b1"]
 
     def test_addcall_and_parametrize(self):
-        def func(x, y): pass
+        def func(x, y):
+            pass
         metafunc = self.Metafunc(func)
         metafunc.addcall({'x': 1})
         metafunc.parametrize('y', [2, 3])
@@ -405,7 +419,8 @@ class TestMetafunc(object):
 
     @pytest.mark.issue714
     def test_parametrize_indirect(self):
-        def func(x, y): pass
+        def func(x, y):
+            pass
         metafunc = self.Metafunc(func)
         metafunc.parametrize('x', [1], indirect=True)
         metafunc.parametrize('y', [2, 3], indirect=True)
@@ -417,7 +432,8 @@ class TestMetafunc(object):
 
     @pytest.mark.issue714
     def test_parametrize_indirect_list(self):
-        def func(x, y): pass
+        def func(x, y):
+            pass
         metafunc = self.Metafunc(func)
         metafunc.parametrize('x, y', [('a', 'b')], indirect=['x'])
         assert metafunc._calls[0].funcargs == dict(y='b')
@@ -425,7 +441,8 @@ class TestMetafunc(object):
 
     @pytest.mark.issue714
     def test_parametrize_indirect_list_all(self):
-        def func(x, y): pass
+        def func(x, y):
+            pass
         metafunc = self.Metafunc(func)
         metafunc.parametrize('x, y', [('a', 'b')], indirect=['x', 'y'])
         assert metafunc._calls[0].funcargs == {}
@@ -433,7 +450,8 @@ class TestMetafunc(object):
 
     @pytest.mark.issue714
     def test_parametrize_indirect_list_empty(self):
-        def func(x, y): pass
+        def func(x, y):
+            pass
         metafunc = self.Metafunc(func)
         metafunc.parametrize('x, y', [('a', 'b')], indirect=[])
         assert metafunc._calls[0].funcargs == dict(x='a', y='b')
@@ -471,7 +489,8 @@ class TestMetafunc(object):
 
     @pytest.mark.issue714
     def test_parametrize_indirect_list_error(self, testdir):
-        def func(x, y): pass
+        def func(x, y):
+            pass
         metafunc = self.Metafunc(func)
         with pytest.raises(ValueError):
             metafunc.parametrize('x, y', [('a', 'b')], indirect=['x', 'z'])
@@ -567,7 +586,8 @@ class TestMetafunc(object):
         ])
 
     def test_addcalls_and_parametrize_indirect(self):
-        def func(x, y): pass
+        def func(x, y):
+            pass
         metafunc = self.Metafunc(func)
         metafunc.addcall(param="123")
         metafunc.parametrize('x', [1], indirect=True)
@@ -689,16 +709,20 @@ class TestMetafunc(object):
         """)
 
     def test_format_args(self):
-        def function1(): pass
+        def function1():
+            pass
         assert fixtures._format_args(function1) == '()'
 
-        def function2(arg1): pass
+        def function2(arg1):
+            pass
         assert fixtures._format_args(function2) == "(arg1)"
 
-        def function3(arg1, arg2="qwe"): pass
+        def function3(arg1, arg2="qwe"):
+            pass
         assert fixtures._format_args(function3) == "(arg1, arg2='qwe')"
 
-        def function4(arg1, *args, **kwargs): pass
+        def function4(arg1, *args, **kwargs):
+            pass
         assert fixtures._format_args(function4) == "(arg1, *args, **kwargs)"
 
 
