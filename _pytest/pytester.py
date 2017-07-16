@@ -821,7 +821,7 @@ class Testdir:
         self.request.addfinalizer(config._ensure_unconfigure)
         return config
 
-    def getitem(self,  source, funcname="test_func"):
+    def getitem(self, source, funcname="test_func"):
         """Return the test item for a test function.
 
         This writes the source to a python file and runs pytest's
@@ -841,7 +841,7 @@ class Testdir:
         assert 0, "%r item not found in module:\n%s\nitems: %s" % (
                   funcname, source, items)
 
-    def getitems(self,  source):
+    def getitems(self, source):
         """Return all test items collected from the module.
 
         This writes the source to a python file and runs pytest's
@@ -852,7 +852,7 @@ class Testdir:
         modcol = self.getmodulecol(source)
         return self.genitems([modcol])
 
-    def getmodulecol(self,  source, configargs=(), withinit=False):
+    def getmodulecol(self, source, configargs=(), withinit=False):
         """Return the module collection node for ``source``.
 
         This writes ``source`` to a file using :py:meth:`makepyfile`
@@ -1066,7 +1066,7 @@ class LineMatcher:
 
     """
 
-    def __init__(self,  lines):
+    def __init__(self, lines):
         self.lines = lines
         self._log_output = []
 

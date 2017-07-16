@@ -320,28 +320,28 @@ class TestConftestVisibility(object):
     #       "snc" stands for "subdir no [i.e. without] conftest.py"
     @pytest.mark.parametrize("chdir,testarg,expect_ntests_passed", [
         # Effective target: package/..
-        ("runner",  "..",               3),
-        ("package", "..",               3),
-        ("swc",     "../..",            3),
-        ("snc",     "../..",            3),
+        ("runner", "..", 3),
+        ("package", "..", 3),
+        ("swc", "../..", 3),
+        ("snc", "../..", 3),
 
         # Effective target: package
-        ("runner",  "../package",       3),
-        ("package", ".",                3),
-        ("swc",     "..",               3),
-        ("snc",     "..",               3),
+        ("runner", "../package", 3),
+        ("package", ".", 3),
+        ("swc", "..", 3),
+        ("snc", "..", 3),
 
         # Effective target: package/swc
-        ("runner",  "../package/swc",   1),
-        ("package", "./swc",            1),
-        ("swc",     ".",                1),
-        ("snc",     "../swc",           1),
+        ("runner", "../package/swc", 1),
+        ("package", "./swc", 1),
+        ("swc", ".", 1),
+        ("snc", "../swc", 1),
 
         # Effective target: package/snc
-        ("runner",  "../package/snc",   1),
-        ("package", "./snc",            1),
-        ("swc",     "../snc",           1),
-        ("snc",     ".",                1),
+        ("runner", "../package/snc", 1),
+        ("package", "./snc", 1),
+        ("swc", "../snc", 1),
+        ("snc", ".", 1),
     ])
     @pytest.mark.issue616
     def test_parsefactories_relative_node_ids(

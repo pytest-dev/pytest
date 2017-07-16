@@ -135,9 +135,9 @@ class TestDoctests(object):
     @pytest.mark.parametrize(
         '   test_string,    encoding',
         [
-            (u'foo',         'ascii'),
-            (u'öäü',         'latin1'),
-            (u'öäü',         'utf-8')
+            (u'foo', 'ascii'),
+            (u'öäü', 'latin1'),
+            (u'öäü', 'utf-8')
         ]
     )
     def test_encoding(self, testdir, test_string, encoding):
