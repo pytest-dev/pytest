@@ -226,7 +226,7 @@ class BaseFunctionalTests(object):
                 raise ValueError(42)
         """)
         reps = rec.getreports("pytest_runtest_logreport")
-        print (reps)
+        print(reps)
         for i in range(2):
             assert reps[i].nodeid.endswith("test_method")
             assert reps[i].passed
@@ -253,7 +253,7 @@ class BaseFunctionalTests(object):
                     assert True
         """)
         reps = rec.getreports("pytest_runtest_logreport")
-        print (reps)
+        print(reps)
         assert len(reps) == 3
         #
         assert reps[0].nodeid.endswith("test_method")

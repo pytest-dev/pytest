@@ -9,6 +9,7 @@ import _pytest._code
 
 # builtin pytest.approx helper
 
+
 class ApproxBase(object):
     """
     Provide shared utilities for making approximate comparisons between numbers
@@ -26,8 +27,8 @@ class ApproxBase(object):
 
     def __eq__(self, actual):
         return all(
-                a == self._approx_scalar(x)
-                for a, x in self._yield_comparisons(actual))
+            a == self._approx_scalar(x)
+            for a, x in self._yield_comparisons(actual))
 
     __hash__ = None
 
@@ -138,7 +139,7 @@ class ApproxMapping(ApproxBase):
     def __repr__(self):
         return "approx({0!r})".format(dict(
             (k, self._approx_scalar(v))
-            for k,v in self.expected.items()))
+            for k, v in self.expected.items()))
 
     def __eq__(self, actual):
         if set(actual.keys()) != set(self.expected.keys()):
@@ -241,7 +242,7 @@ class ApproxScalar(ApproxBase):
         absolute tolerance or a relative tolerance, depending on what the user
         specified or which would be larger.
         """
-        set_default = lambda x, default: x if x is not None else default
+        def set_default(x, default): return x if x is not None else default
 
         # Figure out what the absolute tolerance should be.  ``self.abs`` is
         # either None or a value specified by the user.
@@ -272,7 +273,6 @@ class ApproxScalar(ApproxBase):
 
         # Return the larger of the relative and absolute tolerances.
         return max(relative_tolerance, absolute_tolerance)
-
 
 
 def approx(expected, rel=None, abs=None, nan_ok=False):
@@ -574,7 +574,7 @@ def raises(expected_exception, *args, **kwargs):
         frame = sys._getframe(1)
         loc = frame.f_locals.copy()
         loc.update(kwargs)
-        #print "raises frame scope: %r" % frame.f_locals
+        # print "raises frame scope: %r" % frame.f_locals
         try:
             code = _pytest._code.Source(code).compile()
             py.builtin.exec_(code, frame.f_globals, loc)
@@ -592,6 +592,7 @@ def raises(expected_exception, *args, **kwargs):
 
 
 raises.Exception = fail.Exception
+
 
 class RaisesContext(object):
     def __init__(self, expected_exception, message, match_expr):

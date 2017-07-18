@@ -9,6 +9,7 @@ from decimal import Decimal
 from fractions import Fraction
 inf, nan = float('inf'), float('nan')
 
+
 class MyDocTestRunner(doctest.DocTestRunner):
 
     def __init__(self):
@@ -37,8 +38,8 @@ class TestApprox(object):
 
         # Dictionaries aren't ordered, so we need to check both orders.
         assert repr(approx({'a': 1.0, 'b': 2.0})) in (
-                "approx({{'a': 1.0 {pm} {tol1}, 'b': 2.0 {pm} {tol2}}})".format(pm=plus_minus, tol1=tol1, tol2=tol2),
-                "approx({{'b': 2.0 {pm} {tol2}, 'a': 1.0 {pm} {tol1}}})".format(pm=plus_minus, tol1=tol1, tol2=tol2),
+            "approx({{'a': 1.0 {pm} {tol1}, 'b': 2.0 {pm} {tol2}}})".format(pm=plus_minus, tol1=tol1, tol2=tol2),
+            "approx({{'b': 2.0 {pm} {tol2}, 'a': 1.0 {pm} {tol1}}})".format(pm=plus_minus, tol1=tol1, tol2=tol2),
         )
 
     def test_operator_overloading(self):
@@ -218,11 +219,11 @@ class TestApprox(object):
 
     def test_expecting_nan(self):
         examples = [
-                (eq, nan, nan),
-                (eq, -nan, -nan),
-                (eq, nan, -nan),
-                (ne, 0.0, nan),
-                (ne, inf, nan),
+            (eq, nan, nan),
+            (eq, -nan, -nan),
+            (eq, nan, -nan),
+            (ne, 0.0, nan),
+            (ne, inf, nan),
         ]
         for op, a, x in examples:
             # Nothing is equal to NaN by default.
@@ -266,10 +267,10 @@ class TestApprox(object):
 
     def test_complex(self):
         within_1e6 = [
-                ( 1.000001 + 1.0j, 1.0 + 1.0j),
-                (1.0 + 1.000001j, 1.0 + 1.0j),
-                (-1.000001 + 1.0j, -1.0 + 1.0j),
-                (1.0 - 1.000001j, 1.0 - 1.0j),
+            (1.000001 + 1.0j, 1.0 + 1.0j),
+            (1.0 + 1.000001j, 1.0 + 1.0j),
+            (-1.000001 + 1.0j, -1.0 + 1.0j),
+            (1.0 - 1.000001j, 1.0 - 1.0j),
         ]
         for a, x in within_1e6:
             assert a == approx(x, rel=5e-6, abs=0)
@@ -289,7 +290,7 @@ class TestApprox(object):
 
     def test_list_wrong_len(self):
         assert [1, 2] != approx([1])
-        assert [1, 2] != approx([1,2,3])
+        assert [1, 2] != approx([1, 2, 3])
 
     def test_tuple(self):
         actual = (1 + 1e-7, 2 + 1e-8)
@@ -303,7 +304,7 @@ class TestApprox(object):
 
     def test_tuple_wrong_len(self):
         assert (1, 2) != approx((1,))
-        assert (1, 2) != approx((1,2,3))
+        assert (1, 2) != approx((1, 2, 3))
 
     def test_dict(self):
         actual = {'a': 1 + 1e-7, 'b': 2 + 1e-8}
@@ -344,7 +345,7 @@ class TestApprox(object):
         np = pytest.importorskip('numpy')
 
         a12 = np.array([[1, 2]])
-        a21 = np.array([[1],[2]])
+        a21 = np.array([[1], [2]])
 
         assert a12 != approx(a21)
         assert a21 != approx(a12)

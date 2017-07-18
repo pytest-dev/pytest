@@ -791,7 +791,6 @@ def test_legacy_transfer():
     def fake_method(self):
         pass
 
-
     transfer_markers(fake_method, FakeClass, FakeModule)
 
     # legacy marks transfer smeared

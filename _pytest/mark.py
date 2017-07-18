@@ -8,6 +8,7 @@ from operator import attrgetter
 from .compat import imap
 from .deprecated import MARK_INFO_ATTRIBUTE, MARK_PARAMETERSET_UNPACKING
 
+
 def alias(name, warning=None):
     getter = attrgetter(name)
 
@@ -350,6 +351,7 @@ class MarkDecorator:
 
         mark = Mark(self.name, args, kwargs)
         return self.__class__(self.mark.combined_with(mark))
+
 
 def get_unpacked_marks(obj):
     """

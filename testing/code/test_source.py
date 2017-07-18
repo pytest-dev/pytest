@@ -170,12 +170,12 @@ class TestSourceParsingAndCompiling(object):
     def test_compile(self):
         co = _pytest._code.compile("x=3")
         d = {}
-        exec (co, d)
+        exec(co, d)
         assert d['x'] == 3
 
     def test_compile_and_getsource_simple(self):
         co = _pytest._code.compile("x=3")
-        exec (co)
+        exec(co)
         source = _pytest._code.Source(co)
         assert str(source) == "x=3"
 
@@ -342,8 +342,7 @@ def test_getstartingblock_multiline():
             self.source = _pytest._code.Frame(frame).statement
 
     x = A('x',
-          'y'
-          ,
+          'y',
           'z')
 
     l = [i for i in x.source.lines if i.strip()]

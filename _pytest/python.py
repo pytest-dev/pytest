@@ -281,7 +281,10 @@ class PyCollector(PyobjMixin, main.Collector):
                 obj = safe_getattr(obj, '__func__', False)
                 if obj is False:
                     # Python 2.6 wraps in a different way that we won't try to handle
-                    self.warn(code="C2", message="cannot collect static method %r because it is not a function (always the case in Python 2.6)" % name)
+                    msg = "cannot collect static method %r because " \
+                          "it is not a function (always the case in Python 2.6)"
+                    self.warn(
+                        code="C2", message=msg % name)
                     return False
             return (
                 safe_getattr(obj, "__call__", False) and fixtures.getfixturemarker(obj) is None
@@ -1509,6 +1512,7 @@ class ApproxNonIterable(object):
 #
 #  the basic pytest Function item
 #
+
 
 class Function(FunctionMixin, main.Item, fixtures.FuncargnamesCompatAttr):
     """ a Function Item is responsible for setting up and executing a

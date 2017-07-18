@@ -151,7 +151,7 @@ class TestClass(object):
                     pass
         """)
         result = testdir.runpytest()
-        if sys.version_info < (2,7):
+        if sys.version_info < (2, 7):
             # in 2.6, the code to handle static methods doesn't work
             result.stdout.fnmatch_lines([
                 "*collected 0 items*",

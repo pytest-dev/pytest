@@ -119,6 +119,7 @@ class TestNewAPI(object):
         testdir.runpytest()
         assert testdir.tmpdir.join('custom_cache_dir').isdir()
 
+
 def test_cache_reportheader(testdir):
     testdir.makepyfile("""
         def test_hello():
