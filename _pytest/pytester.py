@@ -22,6 +22,12 @@ from _pytest.main import Session, EXIT_OK
 from _pytest.assertion.rewrite import AssertionRewritingHook
 
 
+PYTEST_FULLPATH = os.path.abspath(
+    pytest.__file__.rstrip("oc")
+    ).replace("$py.class", ".py")
+
+
+
 def pytest_addoption(parser):
     # group = parser.getgroup("pytester", "pytester (self-tests) options")
     parser.addoption('--lsof',
@@ -35,14 +41,6 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-    # This might be called multiple times. Only take the first.
-    global _pytest_fullpath
-    try:
-        _pytest_fullpath
-    except NameError:
-        _pytest_fullpath = os.path.abspath(pytest.__file__.rstrip("oc"))
-        _pytest_fullpath = _pytest_fullpath.replace("$py.class", ".py")
-
     if config.getvalue("lsof"):
         checker = LsofFdLeakChecker()
         if checker.matching_platform():
@@ -971,7 +969,7 @@ class Testdir:
     def _getpytestargs(self):
         # we cannot use "(sys.executable,script)"
         # because on windows the script is e.g. a pytest.exe
-        return (sys.executable, _pytest_fullpath,)  # noqa
+        return (sys.executable, PYTEST_FULLPATH) # noqa
 
     def runpython(self, script):
         """Run a python script using sys.executable as interpreter.
