@@ -100,6 +100,7 @@ class Cache(object):
 
 class LFPlugin:
     """ Plugin which implements the --lf (run last-failing) option """
+
     def __init__(self, config):
         self.config = config
         active_keys = 'lf', 'failedfirst'
@@ -193,7 +194,6 @@ def pytest_cmdline_main(config):
         return wrap_session(config, cacheshow)
 
 
-
 @pytest.hookimpl(tryfirst=True)
 def pytest_configure(config):
     config.cache = Cache(config)
@@ -238,7 +238,7 @@ def cacheshow(config, session):
         val = config.cache.get(key, dummy)
         if val is dummy:
             tw.line("%s contains unreadable content, "
-                  "will be ignored" % key)
+                    "will be ignored" % key)
         else:
             tw.line("%s contains:" % key)
             stream = py.io.TextIO()
@@ -250,7 +250,7 @@ def cacheshow(config, session):
     if ddir.isdir() and ddir.listdir():
         tw.sep("-", "cache directories")
         for p in sorted(basedir.join("d").visit()):
-            #if p.check(dir=1):
+            # if p.check(dir=1):
             #    print("%s/" % p.relto(basedir))
             if p.isfile():
                 key = p.relto(basedir)

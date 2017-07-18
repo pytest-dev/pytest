@@ -12,6 +12,7 @@ from _pytest.main import EXIT_NOTESTSCOLLECTED, Session
 def pytestpm():
     return PytestPluginManager()
 
+
 class TestPytestPluginInteractions(object):
     def test_addhooks_conftestplugin(self, testdir):
         testdir.makepyfile(newhooks="""
@@ -29,9 +30,9 @@ class TestPytestPluginInteractions(object):
         config = get_config()
         pm = config.pluginmanager
         pm.hook.pytest_addhooks.call_historic(
-                                kwargs=dict(pluginmanager=config.pluginmanager))
+            kwargs=dict(pluginmanager=config.pluginmanager))
         config.pluginmanager._importconftest(conf)
-        #print(config.pluginmanager.get_plugins())
+        # print(config.pluginmanager.get_plugins())
         res = config.hook.pytest_myhook(xyz=10)
         assert res == [11]
 
@@ -197,6 +198,7 @@ def test_namespace_has_default_and_env_plugins(testdir):
     result = testdir.runpython(p)
     assert result.ret == 0
 
+
 def test_default_markers(testdir):
     result = testdir.runpytest("--markers")
     result.stdout.fnmatch_lines([
@@ -232,7 +234,7 @@ class TestPytestPluginManager(object):
         assert mod in l
         pytest.raises(ValueError, "pm.register(mod)")
         pytest.raises(ValueError, lambda: pm.register(mod))
-        #assert not pm.is_registered(mod2)
+        # assert not pm.is_registered(mod2)
         assert pm.get_plugins() == l
 
     def test_canonical_import(self, monkeypatch):
@@ -259,7 +261,7 @@ class TestPytestPluginManager(object):
         mod.pytest_plugins = "pytest_a"
         aplugin = testdir.makepyfile(pytest_a="#")
         reprec = testdir.make_hook_recorder(pytestpm)
-        #syspath.prepend(aplugin.dirpath())
+        # syspath.prepend(aplugin.dirpath())
         py.std.sys.path.insert(0, str(aplugin.dirpath()))
         pytestpm.consider_module(mod)
         call = reprec.getcall(pytestpm.hook.pytest_plugin_registered.name)
@@ -352,7 +354,7 @@ class TestPytestPluginManager(object):
 class TestPytestPluginManagerBootstrapming(object):
     def test_preparse_args(self, pytestpm):
         pytest.raises(ImportError, lambda:
-            pytestpm.consider_preparse(["xyz", "-p", "hello123"]))
+                      pytestpm.consider_preparse(["xyz", "-p", "hello123"]))
 
     def test_plugin_prevent_register(self, pytestpm):
         pytestpm.consider_preparse(["xyz", "-p", "no:abc"])

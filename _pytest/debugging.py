@@ -4,7 +4,6 @@ import pdb
 import sys
 
 
-
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group._addoption(
@@ -39,6 +38,7 @@ def pytest_configure(config):
     pytestPDB._config = config
     pytestPDB._pdb_cls = pdb_cls
     config._cleanup.append(fin)
+
 
 class pytestPDB:
     """ Pseudo PDB that defers to the real pdb. """

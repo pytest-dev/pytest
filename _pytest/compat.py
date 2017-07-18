@@ -10,8 +10,7 @@ import functools
 
 import py
 
-import  _pytest
-
+import _pytest
 
 
 try:
@@ -59,7 +58,7 @@ def iscoroutinefunction(func):
     which in turns also initializes the "logging" module as side-effect (see issue #8).
     """
     return (getattr(func, '_is_coroutine', False) or
-           (hasattr(inspect, 'iscoroutinefunction') and inspect.iscoroutinefunction(func)))
+            (hasattr(inspect, 'iscoroutinefunction') and inspect.iscoroutinefunction(func)))
 
 
 def getlocation(function, curdir):
@@ -68,7 +67,7 @@ def getlocation(function, curdir):
     lineno = py.builtin._getcode(function).co_firstlineno
     if fn.relto(curdir):
         fn = fn.relto(curdir)
-    return "%s:%d" %(fn, lineno+1)
+    return "%s:%d" % (fn, lineno + 1)
 
 
 def num_mock_patch_args(function):
@@ -79,13 +78,13 @@ def num_mock_patch_args(function):
     mock = sys.modules.get("mock", sys.modules.get("unittest.mock", None))
     if mock is not None:
         return len([p for p in patchings
-                        if not p.attribute_name and p.new is mock.DEFAULT])
+                    if not p.attribute_name and p.new is mock.DEFAULT])
     return len(patchings)
 
 
 def getfuncargnames(function, startindex=None):
     # XXX merge with main.py's varnames
-    #assert not isclass(function)
+    # assert not isclass(function)
     realfunction = function
     while hasattr(realfunction, "__wrapped__"):
         realfunction = realfunction.__wrapped__
@@ -111,8 +110,7 @@ def getfuncargnames(function, startindex=None):
     return tuple(argnames[startindex:])
 
 
-
-if  sys.version_info[:2] == (2, 6):
+if sys.version_info[:2] == (2, 6):
     def isclass(object):
         """ Return true if the object is a class. Overrides inspect.isclass for
         python 2.6 because it will return True for objects which always return
@@ -297,6 +295,7 @@ else:
 
         def getvalue(self):
             return self.buffer.getvalue().decode('UTF-8')
+
 
 class FuncargnamesCompatAttr(object):
     """ helper class so that Metafunc, Function and FixtureRequest

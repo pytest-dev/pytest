@@ -5,10 +5,11 @@ import sys
 import pytest
 from _pytest.mark import MarkGenerator as Mark, ParameterSet, transfer_markers
 
+
 class TestMark(object):
     def test_markinfo_repr(self):
         from _pytest.mark import MarkInfo, Mark
-        m = MarkInfo(Mark("hello", (1,2), {}))
+        m = MarkInfo(Mark("hello", (1, 2), {}))
         repr(m)
 
     @pytest.mark.parametrize('attr', ['mark', 'param'])
@@ -140,6 +141,7 @@ def test_ini_markers(testdir):
     rec = testdir.inline_run()
     rec.assertoutcome(passed=1)
 
+
 def test_markers_option(testdir):
     testdir.makeini("""
         [pytest]
@@ -152,6 +154,7 @@ def test_markers_option(testdir):
         "*a1*this is a webtest*",
         "*a1some*another marker",
     ])
+
 
 def test_markers_option_with_plugin_in_current_dir(testdir):
     testdir.makeconftest('pytest_plugins = "flip_flop"')
@@ -186,6 +189,7 @@ def test_mark_on_pseudo_function(testdir):
     reprec = testdir.inline_run()
     reprec.assertoutcome(passed=1)
 
+
 def test_strict_prohibits_unregistered_markers(testdir):
     testdir.makepyfile("""
         import pytest
@@ -199,11 +203,12 @@ def test_strict_prohibits_unregistered_markers(testdir):
         "*unregisteredmark*not*registered*",
     ])
 
+
 @pytest.mark.parametrize("spec", [
-        ("xyz", ("test_one",)),
-        ("xyz and xyz2", ()),
-        ("xyz2", ("test_two",)),
-        ("xyz or xyz2", ("test_one", "test_two"),)
+    ("xyz", ("test_one",)),
+    ("xyz and xyz2", ()),
+    ("xyz2", ("test_two",)),
+    ("xyz or xyz2", ("test_one", "test_two"),)
 ])
 def test_mark_option(spec, testdir):
     testdir.makepyfile("""
@@ -222,9 +227,10 @@ def test_mark_option(spec, testdir):
     assert len(passed) == len(passed_result)
     assert list(passed) == list(passed_result)
 
+
 @pytest.mark.parametrize("spec", [
-        ("interface", ("test_interface",)),
-        ("not interface", ("test_nointer",)),
+    ("interface", ("test_interface",)),
+    ("not interface", ("test_nointer",)),
 ])
 def test_mark_option_custom(spec, testdir):
     testdir.makeconftest("""
@@ -247,11 +253,12 @@ def test_mark_option_custom(spec, testdir):
     assert len(passed) == len(passed_result)
     assert list(passed) == list(passed_result)
 
+
 @pytest.mark.parametrize("spec", [
-        ("interface", ("test_interface",)),
-        ("not interface", ("test_nointer", "test_pass")),
-        ("pass", ("test_pass",)),
-        ("not pass", ("test_interface", "test_nointer")),
+    ("interface", ("test_interface",)),
+    ("not interface", ("test_nointer", "test_pass")),
+    ("pass", ("test_pass",)),
+    ("not pass", ("test_interface", "test_nointer")),
 ])
 def test_keyword_option_custom(spec, testdir):
     testdir.makepyfile("""
@@ -271,9 +278,9 @@ def test_keyword_option_custom(spec, testdir):
 
 
 @pytest.mark.parametrize("spec", [
-        ("None", ("test_func[None]",)),
-        ("1.3", ("test_func[1.3]",)),
-        ("2-3", ("test_func[2-3]",))
+    ("None", ("test_func[None]",)),
+    ("1.3", ("test_func[1.3]",)),
+    ("2-3", ("test_func[2-3]",))
 ])
 def test_keyword_option_parametrize(spec, testdir):
     testdir.makepyfile("""
@@ -455,7 +462,6 @@ class TestFunctional(object):
         items, rec = testdir.inline_genitems(p)
         self.assert_markers(items, test_foo=('a', 'b'), test_bar=('a',))
 
-
     @pytest.mark.issue568
     @pytest.mark.xfail(reason="markers smear on methods of base classes")
     def test_mark_should_not_pass_to_siebling_class(self, testdir):
@@ -479,7 +485,6 @@ class TestFunctional(object):
         base_item, sub_item, sub_item_other = items
         assert not hasattr(base_item.obj, 'b')
         assert not hasattr(sub_item_other.obj, 'b')
-
 
     def test_mark_decorator_baseclasses_merged(self, testdir):
         p = testdir.makepyfile("""

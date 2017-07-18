@@ -49,9 +49,9 @@ def oswritebytes(fd, obj):
     os.write(fd, tobytes(obj))
 
 
-
 def StdCaptureFD(out=True, err=True, in_=True):
     return capture.MultiCapture(out, err, in_, Capture=capture.FDCapture)
+
 
 def StdCapture(out=True, err=True, in_=True):
     return capture.MultiCapture(out, err, in_, Capture=capture.SysCapture)
@@ -72,7 +72,7 @@ class TestCaptureManager(object):
 
     @needsosdup
     @pytest.mark.parametrize("method",
-        ['no', 'sys', pytest.mark.skipif('not hasattr(os, "dup")', 'fd')])
+                             ['no', 'sys', pytest.mark.skipif('not hasattr(os, "dup")', 'fd')])
     def test_capturing_basic_api(self, method):
         capouter = StdCaptureFD()
         old = sys.stdout, sys.stderr, sys.stdin
@@ -112,7 +112,7 @@ class TestCaptureManager(object):
 
 @pytest.mark.parametrize("method", ['fd', 'sys'])
 def test_capturing_unicode(testdir, method):
-    if hasattr(sys, "pypy_version_info") and sys.pypy_version_info < (2,2):
+    if hasattr(sys, "pypy_version_info") and sys.pypy_version_info < (2, 2):
         pytest.xfail("does not work on pypy < 2.2")
     if sys.version_info >= (3, 0):
         obj = "'b\u00f6y'"
@@ -234,7 +234,7 @@ class TestPerTestCapturing(object):
             "setup func1*",
             "in func1*",
             "teardown func1*",
-            #"*1 fixture failure*"
+            # "*1 fixture failure*"
         ])
 
     def test_teardown_capturing_final(self, testdir):
@@ -705,6 +705,7 @@ def tmpfile(testdir):
     if not f.closed:
         f.close()
 
+
 @needsosdup
 def test_dupfile(tmpfile):
     flist = []
@@ -723,11 +724,13 @@ def test_dupfile(tmpfile):
     assert "01234" in repr(s)
     tmpfile.close()
 
+
 def test_dupfile_on_bytesio():
     io = py.io.BytesIO()
     f = capture.safe_text_dupfile(io, "wb")
     f.write("hello")
     assert io.getvalue() == b"hello"
+
 
 def test_dupfile_on_textio():
     io = py.io.TextIO()
@@ -1052,6 +1055,7 @@ def test_fdcapture_tmpfile_remains_the_same(tmpfile, use):
     capfile2 = cap.err.tmpfile
     assert capfile2 == capfile
 
+
 @needsosdup
 def test_close_and_capture_again(testdir):
     testdir.makepyfile("""
@@ -1069,7 +1073,6 @@ def test_close_and_capture_again(testdir):
         *stdout*
         *hello*
     """)
-
 
 
 @pytest.mark.parametrize('method', ['SysCapture', 'FDCapture'])
