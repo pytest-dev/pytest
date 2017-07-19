@@ -349,7 +349,7 @@ return a result object, with which we can assert the tests' outcomes.
         result.assert_outcomes(passed=4)
 
 
-For more information about the result object, that ``runpytest()`` returns, and
+For more information about the result object that ``runpytest()`` returns, and
 the methods that it provides please check out the :py:class:`RunResult
 <_pytest.pytester.RunResult>` documentation.
 
