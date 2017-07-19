@@ -311,6 +311,34 @@ and we can invoke this function with one optional parameter. It will return a
 string value of ``Hello World!`` if we do not supply a value or ``Hello
 {value}!`` if we do supply a string value.
 
+.. code-block:: python
+
+    # -*- coding: utf-8 -*-
+
+    import pytest
+
+    def pytest_addoption(parser):
+        group = parser.getgroup('helloworld')
+        group.addoption(
+            '--name',
+            action='store',
+            dest='name',
+            default='World',
+            help='Default "name" for hello().'
+        )
+
+    @pytest.fixture
+    def hello(request):
+        name = request.config.option.name
+
+        def _hello(name=None):
+            if not name:
+                name = request.config.option.name
+            return "Hello {name}!".format(name=name)
+
+        return _hello
+
+
 Now the ``testdir`` fixture provides a convenient API for creating temporary
 ``conftest.py`` files and test files. It also allows us to run the tests and
 return a result object, with which we can assert the tests' outcomes.
