@@ -342,7 +342,8 @@ def test_getstartingblock_multiline():
             self.source = _pytest._code.Frame(frame).statement
 
     x = A('x',
-          'y',
+          'y'
+          ,
           'z')
 
     l = [i for i in x.source.lines if i.strip()]
