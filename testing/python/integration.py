@@ -4,7 +4,7 @@ from _pytest import runner
 
 
 class TestOEJSKITSpecials(object):
-    def test_funcarg_non_pycollectobj(self, testdir): # rough jstests usage
+    def test_funcarg_non_pycollectobj(self, testdir):  # rough jstests usage
         testdir.makeconftest("""
             import pytest
             def pytest_pycollect_makeitem(collector, name, obj):
@@ -30,7 +30,7 @@ class TestOEJSKITSpecials(object):
         pytest._fillfuncargs(clscol)
         assert clscol.funcargs['arg1'] == 42
 
-    def test_autouse_fixture(self, testdir): # rough jstests usage
+    def test_autouse_fixture(self, testdir):  # rough jstests usage
         testdir.makeconftest("""
             import pytest
             def pytest_pycollect_makeitem(collector, name, obj):
@@ -75,6 +75,7 @@ def test_wrapped_getfslineno():
     fs, lineno = python.getfslineno(wrapped_func)
     fs2, lineno2 = python.getfslineno(wrap)
     assert lineno > lineno2, "getfslineno does not unwrap correctly"
+
 
 class TestMockDecoration(object):
     def test_wrapped_getfuncargnames(self):
@@ -173,7 +174,7 @@ class TestMockDecoration(object):
         reprec.assertoutcome(passed=2)
         calls = reprec.getcalls("pytest_runtest_logreport")
         funcnames = [call.report.location[2] for call in calls
-                        if call.report.when == "call"]
+                     if call.report.when == "call"]
         assert funcnames == ["T.test_hello", "test_someting"]
 
     def test_mock_sorting(self, testdir):
@@ -245,6 +246,7 @@ class TestReRunTests(object):
         result.stdout.fnmatch_lines("""
             *2 passed*
         """)
+
 
 def test_pytestconfig_is_session_scoped():
     from _pytest.fixtures import pytestconfig

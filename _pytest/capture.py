@@ -134,7 +134,7 @@ class CaptureManager:
         self.resumecapture()
         self.activate_funcargs(item)
         yield
-        #self.deactivate_funcargs() called from suspendcapture()
+        # self.deactivate_funcargs() called from suspendcapture()
         self.suspendcapture_item(item, "call")
 
     @pytest.hookimpl(hookwrapper=True)
@@ -170,6 +170,7 @@ def capsys(request):
         raise request.raiseerror(error_capsysfderror)
     request.node._capfuncarg = c = CaptureFixture(SysCapture, request)
     return c
+
 
 @pytest.fixture
 def capfd(request):
@@ -238,6 +239,7 @@ def safe_text_dupfile(f, mode, default_encoding="UTF8"):
 
 class EncodedFile(object):
     errors = "strict"  # possibly needed by py3 code (issue555)
+
     def __init__(self, buffer, encoding):
         self.buffer = buffer
         self.encoding = encoding
@@ -318,8 +320,10 @@ class MultiCapture(object):
         return (self.out.snap() if self.out is not None else "",
                 self.err.snap() if self.err is not None else "")
 
+
 class NoCapture:
     __init__ = start = done = suspend = resume = lambda *args: None
+
 
 class FDCapture:
     """ Capture IO to/from a given os-level filedescriptor. """
@@ -393,7 +397,7 @@ class FDCapture:
     def writeorg(self, data):
         """ write to original file descriptor. """
         if py.builtin._istext(data):
-            data = data.encode("utf8") # XXX use encoding of original stream
+            data = data.encode("utf8")  # XXX use encoding of original stream
         os.write(self.targetfd_save, data)
 
 
@@ -463,7 +467,7 @@ class DontReadFromInput:
 
     @property
     def buffer(self):
-        if sys.version_info >= (3,0):
+        if sys.version_info >= (3, 0):
             return self
         else:
             raise AttributeError('redirected stdin has no attribute buffer')

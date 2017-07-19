@@ -8,7 +8,7 @@ be removed when the time comes.
 from __future__ import absolute_import, division, print_function
 
 MAIN_STR_ARGS = 'passing a string to pytest.main() is deprecated, ' \
-                      'pass a list of arguments instead.'
+    'pass a list of arguments instead.'
 
 YIELD_TESTS = 'yield tests are deprecated, and scheduled to be removed in pytest 4.0'
 

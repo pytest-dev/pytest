@@ -1,7 +1,9 @@
 from __future__ import absolute_import, division, print_function
-import pytest, py
+import pytest
+import py
 
 from _pytest.main import Session, EXIT_NOTESTSCOLLECTED
+
 
 class TestCollector(object):
     def test_collect_versus_item(self):
@@ -42,11 +44,11 @@ class TestCollector(object):
         assert not (fn1 == fn3)
         assert fn1 != fn3
 
-        for fn in fn1,fn2,fn3:
+        for fn in fn1, fn2, fn3:
             assert fn != 3
             assert fn != modcol
-            assert fn != [1,2,3]
-            assert [1,2,3] != fn
+            assert fn != [1, 2, 3]
+            assert [1, 2, 3] != fn
             assert modcol != fn
 
     def test_getparent(self, testdir):
@@ -67,7 +69,6 @@ class TestCollector(object):
 
         parent = fn.getparent(pytest.Class)
         assert parent is cls
-
 
     def test_getcustomfile_roundtrip(self, testdir):
         hello = testdir.makefile(".xxx", hello="world")
@@ -101,6 +102,7 @@ class TestCollector(object):
             'collected 0 items',
             '*no tests ran in*',
         ])
+
 
 class TestCollectFS(object):
     def test_ignored_certain_directories(self, testdir):
@@ -334,6 +336,7 @@ class TestCustomConftests(object):
             "*test_x*"
         ])
 
+
 class TestSession(object):
     def test_parsearg(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
@@ -347,11 +350,11 @@ class TestSession(object):
         assert rcol.fspath == subdir
         parts = rcol._parsearg(p.basename)
 
-        assert parts[0] ==  target
+        assert parts[0] == target
         assert len(parts) == 1
         parts = rcol._parsearg(p.basename + "::test_func")
-        assert parts[0] ==  target
-        assert parts[1] ==  "test_func"
+        assert parts[0] == target
+        assert parts[1] == "test_func"
         assert len(parts) == 2
 
     def test_collect_topdir(self, testdir):
@@ -362,9 +365,9 @@ class TestSession(object):
         topdir = testdir.tmpdir
         rcol = Session(config)
         assert topdir == rcol.fspath
-        #rootid = rcol.nodeid
-        #root2 = rcol.perform_collect([rcol.nodeid], genitems=False)[0]
-        #assert root2 == rcol, rootid
+        # rootid = rcol.nodeid
+        # root2 = rcol.perform_collect([rcol.nodeid], genitems=False)[0]
+        # assert root2 == rcol, rootid
         colitems = rcol.perform_collect([rcol.nodeid], genitems=False)
         assert len(colitems) == 1
         assert colitems[0].fspath == p
@@ -460,7 +463,7 @@ class TestSession(object):
             ("pytest_collectstart", "collector.fspath == test_aaa"),
             ("pytest_pycollect_makeitem", "name == 'test_func'"),
             ("pytest_collectreport",
-                    "report.nodeid.startswith('aaa/test_aaa.py')"),
+             "report.nodeid.startswith('aaa/test_aaa.py')"),
         ])
 
     def test_collect_two_commandline_args(self, testdir):
@@ -510,6 +513,7 @@ class TestSession(object):
         # ensure we are reporting the collection of the single test item (#2464)
         assert [x.name for x in self.get_reported_items(hookrec)] == ['test_method']
 
+
 class Test_getinitialnodes(object):
     def test_global_file(self, testdir, tmpdir):
         x = tmpdir.ensure("x.py")
@@ -536,6 +540,7 @@ class Test_getinitialnodes(object):
         assert col.parent.parent is None
         for col in col.listchain():
             assert col.config is config
+
 
 class Test_genitems(object):
     def test_check_collect_hashes(self, testdir):
@@ -688,6 +693,7 @@ COLLECTION_ERROR_PY_FILES = dict(
             assert True
     """,
 )
+
 
 def test_exit_on_collection_error(testdir):
     """Verify that all collection errors are collected and no tests executed"""

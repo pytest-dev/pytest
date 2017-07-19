@@ -5,6 +5,7 @@
 from __future__ import absolute_import, division, print_function
 import types
 
+
 def format_exception_only(etype, value):
     """Format the exception part of a traceback.
 
@@ -30,7 +31,7 @@ def format_exception_only(etype, value):
     # would throw another exception and mask the original problem.
     if (isinstance(etype, BaseException) or
         isinstance(etype, types.InstanceType) or
-        etype is None or type(etype) is str):
+            etype is None or type(etype) is str):
         return [_format_final_exc_line(etype, value)]
 
     stype = etype.__name__
@@ -62,6 +63,7 @@ def format_exception_only(etype, value):
     lines.append(_format_final_exc_line(stype, value))
     return lines
 
+
 def _format_final_exc_line(etype, value):
     """Return a list of a single line -- normal case for format_exception_only"""
     valuestr = _some_str(value)
@@ -70,6 +72,7 @@ def _format_final_exc_line(etype, value):
     else:
         line = "%s: %s\n" % (etype, valuestr)
     return line
+
 
 def _some_str(value):
     try:

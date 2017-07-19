@@ -155,6 +155,7 @@ def pytest_collection_modifyitems(items, config):
 class MarkMapping:
     """Provides a local mapping for markers where item access
     resolves to True if the marker is present. """
+
     def __init__(self, keywords):
         mymarks = set()
         for key, value in keywords.items():
@@ -170,6 +171,7 @@ class KeywordMapping:
     """Provides a local mapping for keywords.
     Given a list of names, map any substring of one of these names to True.
     """
+
     def __init__(self, names):
         self._names = names
 
@@ -243,7 +245,6 @@ class MarkGenerator:
     on the ``test_function`` object. """
     _config = None
 
-
     def __getattr__(self, name):
         if name[0] == "_":
             raise AttributeError("Marker name must NOT start with underscore")
@@ -269,6 +270,7 @@ class MarkGenerator:
 def istestfunc(func):
     return hasattr(func, "__call__") and \
         getattr(func, "__name__", "<lambda>") != "<lambda>"
+
 
 class MarkDecorator:
     """ A decorator for test functions and test classes.  When applied
@@ -303,6 +305,7 @@ class MarkDecorator:
     additional keyword or positional arguments.
 
     """
+
     def __init__(self, mark):
         assert isinstance(mark, Mark), repr(mark)
         self.mark = mark
@@ -313,7 +316,7 @@ class MarkDecorator:
 
     @property
     def markname(self):
-        return self.name # for backward-compat (2.4.1 had this attr)
+        return self.name  # for backward-compat (2.4.1 had this attr)
 
     def __eq__(self, other):
         return self.mark == other.mark
@@ -352,9 +355,6 @@ class MarkDecorator:
         return self.__class__(self.mark.combined_with(mark))
 
 
-
-
-
 class Mark(namedtuple('Mark', 'name, args, kwargs')):
 
     def combined_with(self, other):
@@ -366,6 +366,7 @@ class Mark(namedtuple('Mark', 'name, args, kwargs')):
 
 class MarkInfo(object):
     """ Marking object created by :class:`MarkDecorator` instances. """
+
     def __init__(self, mark):
         assert isinstance(mark, Mark), repr(mark)
         self.combined = mark

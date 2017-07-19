@@ -118,7 +118,6 @@ class TestRaises(object):
         for o in gc.get_objects():
             assert type(o) is not T
 
-
     def test_raises_match(self):
         msg = r"with base \d+"
         with pytest.raises(ValueError, match=msg):

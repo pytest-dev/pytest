@@ -10,11 +10,12 @@ from _pytest.config import hookimpl
 from _pytest.mark import MarkInfo, MarkDecorator
 from _pytest.runner import fail, skip
 
+
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group.addoption('--runxfail',
-           action="store_true", dest="runxfail", default=False,
-           help="run tests even if they are marked xfail")
+                    action="store_true", dest="runxfail", default=False,
+                    help="run tests even if they are marked xfail")
 
     parser.addini("xfail_strict", "default for the strict parameter of xfail "
                                   "markers when not given explicitly (default: "
@@ -37,26 +38,26 @@ def pytest_configure(config):
         setattr(pytest, "xfail", nop)
 
     config.addinivalue_line("markers",
-        "skip(reason=None): skip the given test function with an optional reason. "
-        "Example: skip(reason=\"no way of currently testing this\") skips the "
-        "test."
-    )
+                            "skip(reason=None): skip the given test function with an optional reason. "
+                            "Example: skip(reason=\"no way of currently testing this\") skips the "
+                            "test."
+                            )
     config.addinivalue_line("markers",
-        "skipif(condition): skip the given test function if eval(condition) "
-        "results in a True value.  Evaluation happens within the "
-        "module global context. Example: skipif('sys.platform == \"win32\"') "
-        "skips the test if we are on the win32 platform. see "
-        "http://pytest.org/latest/skipping.html"
-    )
+                            "skipif(condition): skip the given test function if eval(condition) "
+                            "results in a True value.  Evaluation happens within the "
+                            "module global context. Example: skipif('sys.platform == \"win32\"') "
+                            "skips the test if we are on the win32 platform. see "
+                            "http://pytest.org/latest/skipping.html"
+                            )
     config.addinivalue_line("markers",
-        "xfail(condition, reason=None, run=True, raises=None, strict=False): "
-        "mark the test function as an expected failure if eval(condition) "
-        "has a True value. Optionally specify a reason for better reporting "
-        "and run=False if you don't even want to execute the test function. "
-        "If only specific exception(s) are expected, you can list them in "
-        "raises, and if the test fails in other ways, it will be reported as "
-        "a true failure. See http://pytest.org/latest/skipping.html"
-    )
+                            "xfail(condition, reason=None, run=True, raises=None, strict=False): "
+                            "mark the test function as an expected failure if eval(condition) "
+                            "has a True value. Optionally specify a reason for better reporting "
+                            "and run=False if you don't even want to execute the test function. "
+                            "If only specific exception(s) are expected, you can list them in "
+                            "raises, and if the test fails in other ways, it will be reported as "
+                            "a true failure. See http://pytest.org/latest/skipping.html"
+                            )
 
 
 class XFailed(fail.Exception):
@@ -243,7 +244,7 @@ def pytest_runtest_makereport(item, call):
         rep.wasxfail = "reason: " + call.excinfo.value.msg
         rep.outcome = "skipped"
     elif evalxfail and not rep.skipped and evalxfail.wasvalid() and \
-        evalxfail.istrue():
+            evalxfail.istrue():
         if call.excinfo:
             if evalxfail.invalidraise(call.excinfo.value):
                 rep.outcome = "failed"
@@ -269,6 +270,8 @@ def pytest_runtest_makereport(item, call):
         rep.longrepr = filename, line, reason
 
 # called by terminalreporter progress reporting
+
+
 def pytest_report_teststatus(report):
     if hasattr(report, "wasxfail"):
         if report.skipped:
@@ -277,10 +280,12 @@ def pytest_report_teststatus(report):
             return "xpassed", "X", ("XPASS", {'yellow': True})
 
 # called by the terminalreporter instance/plugin
+
+
 def pytest_terminal_summary(terminalreporter):
     tr = terminalreporter
     if not tr.reportchars:
-        #for name in "xfailed skipped failed xpassed":
+        # for name in "xfailed skipped failed xpassed":
         #    if not tr.stats.get(name, 0):
         #        tr.write_line("HINT: use '-r' option to see extra "
         #              "summary info about tests")
@@ -364,14 +369,14 @@ def show_skipped(terminalreporter, lines):
     tr = terminalreporter
     skipped = tr.stats.get('skipped', [])
     if skipped:
-        #if not tr.hasopt('skipped'):
+        # if not tr.hasopt('skipped'):
         #    tr.write_line(
         #        "%d skipped tests, specify -rs for more info" %
         #        len(skipped))
         #    return
         fskips = folded_skips(skipped)
         if fskips:
-            #tr.write_sep("_", "skipped test summary")
+            # tr.write_sep("_", "skipped test summary")
             for num, fspath, lineno, reason in fskips:
                 if reason.startswith("Skipped: "):
                     reason = reason[9:]
