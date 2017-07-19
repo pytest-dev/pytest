@@ -112,15 +112,27 @@ progress output, you can write it into a configuration file:
     # content of pytest.ini
     # (or tox.ini or setup.cfg)
     [pytest]
-    addopts = -rsxX -q
+    addopts = -ra -q
 
-Alternatively, you can set a PYTEST_ADDOPTS environment variable to add command
+Alternatively, you can set a ``PYTEST_ADDOPTS`` environment variable to add command
 line options while the environment is in use::
 
-    export PYTEST_ADDOPTS="-rsxX -q"
+    export PYTEST_ADDOPTS="-v"
 
-From now on, running ``pytest`` will add the specified options.
+Here's how the command-line is built in the presence of ``addopts`` or the environment variable::
 
+    <pytest.ini:addopts> $PYTEST_ADDOTPS <extra command-line arguments>
+
+So if the user executes in the command-line::
+
+    pytest -m slow
+
+The actual command line executed is::
+
+    pytest -ra -q -v -m slow
+
+Note that as usual for other command-line applications, in case of conflicting options the last one wins, so the example
+above will show verbose output because ``-v`` overwrites ``-q``.
 
 
 Builtin configuration file options
