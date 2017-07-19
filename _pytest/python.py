@@ -6,6 +6,7 @@ import inspect
 import sys
 import os
 import collections
+from textwrap import dedent
 from itertools import count
 
 import math
@@ -994,14 +995,12 @@ def _show_fixtures_per_test(config, session):
             funcargspec = argname
         tw.line(funcargspec, green=True)
 
-        INDENT = '    {0}'
         fixture_doc = fixture_def.func.__doc__
 
         if fixture_doc:
-            for line in fixture_doc.strip().split('\n'):
-                tw.line(INDENT.format(line.strip()))
+            write_docstring(tw, fixture_doc)
         else:
-            tw.line(INDENT.format('no docstring available'), red=True)
+            tw.line('    no docstring available', red=True)
 
     def write_item(item):
         name2fixturedefs = item._fixtureinfo.name2fixturedefs
@@ -1075,11 +1074,26 @@ def _showfixtures_main(config, session):
         loc = getlocation(fixturedef.func, curdir)
         doc = fixturedef.func.__doc__ or ""
         if doc:
-            for line in doc.strip().split("\n"):
-                tw.line("    " + line.strip())
+            write_docstring(tw, doc)
         else:
             tw.line("    %s: no docstring available" % (loc,),
                     red=True)
+
+
+def write_docstring(tw, doc):
+    INDENT = "    "
+    doc = doc.rstrip()
+    if "\n" in doc:
+        firstline, rest = doc.split("\n", 1)
+    else:
+        firstline, rest = doc, ""
+
+    if firstline.strip():
+        tw.line(INDENT + firstline.strip())
+
+    if rest:
+        for line in dedent(rest).split("\n"):
+            tw.write(INDENT + line + "\n")
 
 
 # builtin pytest.raises helper
