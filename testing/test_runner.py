@@ -701,6 +701,8 @@ def test_store_except_info_on_eror():
     """
     # Simulate item that raises a specific exception
     class ItemThatRaises(object):
+        nodeid = 'item_that_raises'
+
         def runtest(self):
             raise IndexError('TEST')
     try:
@@ -711,6 +713,31 @@ def test_store_except_info_on_eror():
     assert sys.last_type is IndexError
     assert sys.last_value.args[0] == 'TEST'
     assert sys.last_traceback
+
+
+def test_current_test_env_var(testdir, monkeypatch):
+    pytest_current_test_vars = []
+    monkeypatch.setattr(sys, 'pytest_current_test_vars', pytest_current_test_vars, raising=False)
+    testdir.makepyfile('''
+        import pytest
+        import sys
+        import os
+
+        @pytest.fixture
+        def fix():
+            sys.pytest_current_test_vars.append(('setup', os.environ['PYTEST_CURRENT_TEST']))
+            yield
+            sys.pytest_current_test_vars.append(('teardown', os.environ['PYTEST_CURRENT_TEST']))
+
+        def test(fix):
+            sys.pytest_current_test_vars.append(('call', os.environ['PYTEST_CURRENT_TEST']))
+    ''')
+    result = testdir.runpytest_inprocess()
+    assert result.ret == 0
+    test_id = 'test_current_test_env_var.py::test'
+    assert pytest_current_test_vars == [
+        ('setup', test_id + ' (setup)'), ('call', test_id + ' (call)'), ('teardown', test_id + ' (teardown)')]
+    assert 'PYTEST_CURRENT_TEST' not in os.environ
 
 
 class TestReportContents(object):

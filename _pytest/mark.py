@@ -6,7 +6,7 @@ import warnings
 from collections import namedtuple
 from operator import attrgetter
 from .compat import imap
-from .deprecated import MARK_INFO_ATTRIBUTE, MARK_PARAMETERSET_UNPACKING
+from .deprecated import MARK_PARAMETERSET_UNPACKING
 
 
 def alias(name, warning=None):
@@ -407,9 +407,9 @@ class MarkInfo(object):
         self.combined = mark
         self._marks = [mark]
 
-    name = alias('combined.name', warning=MARK_INFO_ATTRIBUTE)
-    args = alias('combined.args', warning=MARK_INFO_ATTRIBUTE)
-    kwargs = alias('combined.kwargs', warning=MARK_INFO_ATTRIBUTE)
+    name = alias('combined.name')
+    args = alias('combined.args')
+    kwargs = alias('combined.kwargs')
 
     def __repr__(self):
         return "<MarkInfo {0!r}>".format(self.combined)

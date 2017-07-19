@@ -52,23 +52,64 @@ To stop the testing process after the first (N) failures::
 Specifying tests / selecting tests
 ---------------------------------------------------
 
-Several test run options::
+Pytest supports several ways to run and select tests from the command-line.
 
-    pytest test_mod.py   # run tests in module
-    pytest somepath      # run all tests below somepath
-    pytest -k stringexpr # only run tests with names that match the
-                          # "string expression", e.g. "MyClass and not method"
-                          # will select TestMyClass.test_something
-                          # but not TestMyClass.test_method_simple
-    pytest test_mod.py::test_func  # only run tests that match the "node ID",
-                                    # e.g. "test_mod.py::test_func" will select
-                                    # only test_func in test_mod.py
-    pytest test_mod.py::TestClass::test_method  # run a single method in
-                                                 # a single class
+**Run tests in a module**
 
-Import 'pkg' and use its filesystem location to find and run tests::
+::
 
-    pytest --pyargs pkg # run all tests found below directory of pkg
+    pytest test_mod.py
+
+**Run tests in a directory**
+
+::
+
+    pytest testing/
+
+**Run tests by keyword expressions**
+
+::
+
+    pytest -k "MyClass and not method"
+
+This will run tests which contain names that match the given *string expression*, which can
+include Python operators that use filenames, class names and function names as variables.
+The example above will run ``TestMyClass.test_something``  but not ``TestMyClass.test_method_simple``.
+
+.. _nodeids:
+
+**Run tests by node ids**
+
+Each collected test is assigned a unique ``nodeid`` which consist of the module filename followed
+by specifiers like class names, function names and parameters from parametrization, separated by ``::`` characters.
+
+To run a specific test within a module::
+
+    pytest test_mod.py::test_func
+
+
+Another example specifying a test method in the command line::
+
+    pytest test_mod.py::TestClass::test_method
+
+**Run tests by marker expressions**
+
+::
+
+    pytest -m slow
+
+Will run all tests which are decorated with the ``@pytest.mark.slow`` decorator.
+
+For more information see :ref:`marks <mark>`.
+
+**Run tests from packages**
+
+::
+
+    pytest --pyargs pkg.testing
+     
+This will import ``pkg.testing`` and use its filesystem location to find and run tests from.
+    
 
 Modifying Python traceback printing
 ----------------------------------------------

@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function
 
 import bdb
+import os
 import sys
 from time import time
 
@@ -99,10 +100,12 @@ def show_test_item(item):
 
 
 def pytest_runtest_setup(item):
+    _update_current_test_var(item, 'setup')
     item.session._setupstate.prepare(item)
 
 
 def pytest_runtest_call(item):
+    _update_current_test_var(item, 'call')
     try:
         item.runtest()
     except Exception:
@@ -117,7 +120,22 @@ def pytest_runtest_call(item):
 
 
 def pytest_runtest_teardown(item, nextitem):
+    _update_current_test_var(item, 'teardown')
     item.session._setupstate.teardown_exact(item, nextitem)
+    _update_current_test_var(item, None)
+
+
+def _update_current_test_var(item, when):
+    """
+    Update PYTEST_CURRENT_TEST to reflect the current item and stage.
+
+    If ``when`` is None, delete PYTEST_CURRENT_TEST from the environment.
+    """
+    var_name = 'PYTEST_CURRENT_TEST'
+    if when:
+        os.environ[var_name] = '{0} ({1})'.format(item.nodeid, when)
+    else:
+        os.environ.pop(var_name)
 
 
 def pytest_report_teststatus(report):

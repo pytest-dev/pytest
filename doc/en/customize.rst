@@ -112,15 +112,27 @@ progress output, you can write it into a configuration file:
     # content of pytest.ini
     # (or tox.ini or setup.cfg)
     [pytest]
-    addopts = -rsxX -q
+    addopts = -ra -q
 
-Alternatively, you can set a PYTEST_ADDOPTS environment variable to add command
+Alternatively, you can set a ``PYTEST_ADDOPTS`` environment variable to add command
 line options while the environment is in use::
 
-    export PYTEST_ADDOPTS="-rsxX -q"
+    export PYTEST_ADDOPTS="-v"
 
-From now on, running ``pytest`` will add the specified options.
+Here's how the command-line is built in the presence of ``addopts`` or the environment variable::
 
+    <pytest.ini:addopts> $PYTEST_ADDOTPS <extra command-line arguments>
+
+So if the user executes in the command-line::
+
+    pytest -m slow
+
+The actual command line executed is::
+
+    pytest -ra -q -v -m slow
+
+Note that as usual for other command-line applications, in case of conflicting options the last one wins, so the example
+above will show verbose output because ``-v`` overwrites ``-q``.
 
 
 Builtin configuration file options
@@ -171,7 +183,16 @@ Builtin configuration file options
         norecursedirs = .svn _build tmp*
 
    This would tell ``pytest`` to not look into typical subversion or
-   sphinx-build directories or into any ``tmp`` prefixed directory.
+   sphinx-build directories or into any ``tmp`` prefixed directory.  
+   
+   Additionally, ``pytest`` will attempt to intelligently identify and ignore a
+   virtualenv by the presence of an activation script.  Any directory deemed to
+   be the root of a virtual environment will not be considered during test
+   collection unless ``‑‑collect‑in‑virtualenv`` is given.  Note also that
+   ``norecursedirs`` takes precedence over ``‑‑collect‑in‑virtualenv``; e.g. if
+   you intend to run tests in a virtualenv with a base directory that matches
+   ``'.*'`` you *must* override ``norecursedirs`` in addition to using the
+   ``‑‑collect‑in‑virtualenv`` flag.
 
 .. confval:: testpaths
 

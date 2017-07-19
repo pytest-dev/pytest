@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 import pytest
 import py
 
-from _pytest.main import Session, EXIT_NOTESTSCOLLECTED
+from _pytest.main import Session, EXIT_NOTESTSCOLLECTED, _in_venv
 
 
 class TestCollector(object):
@@ -122,6 +122,53 @@ class TestCollectFS(object):
         s = result.stdout.str()
         assert "test_notfound" not in s
         assert "test_found" in s
+
+    @pytest.mark.parametrize('fname',
+                             ("activate", "activate.csh", "activate.fish",
+                              "Activate", "Activate.bat", "Activate.ps1"))
+    def test_ignored_virtualenvs(self, testdir, fname):
+        bindir = "Scripts" if py.std.sys.platform.startswith("win") else "bin"
+        testdir.tmpdir.ensure("virtual", bindir, fname)
+        testfile = testdir.tmpdir.ensure("virtual", "test_invenv.py")
+        testfile.write("def test_hello(): pass")
+
+        # by default, ignore tests inside a virtualenv
+        result = testdir.runpytest()
+        assert "test_invenv" not in result.stdout.str()
+        # allow test collection if user insists
+        result = testdir.runpytest("--collect-in-virtualenv")
+        assert "test_invenv" in result.stdout.str()
+        # allow test collection if user directly passes in the directory
+        result = testdir.runpytest("virtual")
+        assert "test_invenv" in result.stdout.str()
+
+    @pytest.mark.parametrize('fname',
+                             ("activate", "activate.csh", "activate.fish",
+                              "Activate", "Activate.bat", "Activate.ps1"))
+    def test_ignored_virtualenvs_norecursedirs_precedence(self, testdir, fname):
+        bindir = "Scripts" if py.std.sys.platform.startswith("win") else "bin"
+        # norecursedirs takes priority
+        testdir.tmpdir.ensure(".virtual", bindir, fname)
+        testfile = testdir.tmpdir.ensure(".virtual", "test_invenv.py")
+        testfile.write("def test_hello(): pass")
+        result = testdir.runpytest("--collect-in-virtualenv")
+        assert "test_invenv" not in result.stdout.str()
+        # ...unless the virtualenv is explicitly given on the CLI
+        result = testdir.runpytest("--collect-in-virtualenv", ".virtual")
+        assert "test_invenv" in result.stdout.str()
+
+    @pytest.mark.parametrize('fname',
+                             ("activate", "activate.csh", "activate.fish",
+                              "Activate", "Activate.bat", "Activate.ps1"))
+    def test__in_venv(self, testdir, fname):
+        """Directly test the virtual env detection function"""
+        bindir = "Scripts" if py.std.sys.platform.startswith("win") else "bin"
+        # no bin/activate, not a virtualenv
+        base_path = testdir.tmpdir.mkdir('venv')
+        assert _in_venv(base_path) is False
+        # with bin/activate, totally a virtualenv
+        base_path.ensure(bindir, fname)
+        assert _in_venv(base_path) is True
 
     def test_custom_norecursedirs(self, testdir):
         testdir.makeini("""
