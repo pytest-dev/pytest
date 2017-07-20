@@ -1079,7 +1079,6 @@ class Config(object):
         self.pluginmanager.load_setuptools_entrypoints('pytest11')
         self.pluginmanager.consider_env()
         self.known_args_namespace = ns = self._parser.parse_known_args(args, namespace=self.option.copy())
-        confcutdir = self.known_args_namespace.confcutdir
         if self.known_args_namespace.confcutdir is None and self.inifile:
             confcutdir = py.path.local(self.inifile).dirname
             self.known_args_namespace.confcutdir = confcutdir
