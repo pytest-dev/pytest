@@ -281,7 +281,16 @@ def _setup_collect_fakemodule():
 
 
 if _PY2:
-    from py.io import TextIO as CaptureIO
+    # Without this the test_dupfile_on_textio will fail, otherwise CaptureIO could directly inherit from StringIO.
+    from py.io import TextIO
+
+
+    class CaptureIO(TextIO):
+
+        @property
+        def encoding(self):
+            return getattr(self, '_encoding', 'UTF-8')
+
 else:
     import io
 
