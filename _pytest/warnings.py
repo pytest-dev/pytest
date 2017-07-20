@@ -78,7 +78,7 @@ def catch_warnings_for_item(item):
             if unicode_warning:
                 warnings.warn(
                     "Warning is using unicode non convertible to ascii, "
-                    "converting to a safe representation:\n  %s"  % msg,
+                    "converting to a safe representation:\n  %s" % msg,
                     UnicodeWarning)
 
 

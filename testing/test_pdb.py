@@ -10,7 +10,7 @@ def runpdb_and_get_report(testdir, source):
     p = testdir.makepyfile(source)
     result = testdir.runpytest_inprocess("--pdb", p)
     reports = result.reprec.getreports("pytest_runtest_logreport")
-    assert len(reports) == 3, reports # setup/call/teardown
+    assert len(reports) == 3, reports  # setup/call/teardown
     return reports[1]
 
 
@@ -31,7 +31,6 @@ def custom_pdb_calls():
 
     _pytest._CustomPdb = _CustomPdb
     return called
-
 
 
 class TestPDB(object):
@@ -181,7 +180,7 @@ class TestPDB(object):
             xxx
         """)
         child = testdir.spawn_pytest("--pdb %s" % p1)
-        #child.expect(".*import pytest.*")
+        # child.expect(".*import pytest.*")
         child.expect("(Pdb)")
         child.sendeof()
         child.expect("1 error")
@@ -194,7 +193,7 @@ class TestPDB(object):
         """)
         p1 = testdir.makepyfile("def test_func(): pass")
         child = testdir.spawn_pytest("--pdb %s" % p1)
-        #child.expect(".*import pytest.*")
+        # child.expect(".*import pytest.*")
         child.expect("(Pdb)")
         child.sendeof()
         self.flush(child)
@@ -216,7 +215,7 @@ class TestPDB(object):
         rest = child.read().decode("utf-8")
         assert "1 failed" in rest
         assert "def test_1" in rest
-        assert "hello17" in rest # out is captured
+        assert "hello17" in rest  # out is captured
         self.flush(child)
 
     def test_pdb_set_trace_interception(self, testdir):
@@ -309,8 +308,8 @@ class TestPDB(object):
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
         assert "def test_1" in rest
-        assert "hello17" in rest # out is captured
-        assert "hello18" in rest # out is captured
+        assert "hello17" in rest  # out is captured
+        assert "hello18" in rest  # out is captured
         self.flush(child)
 
     def test_pdb_used_outside_test(self, testdir):
@@ -319,7 +318,7 @@ class TestPDB(object):
             pytest.set_trace()
             x = 5
         """)
-        child = testdir.spawn("%s %s" %(sys.executable, p1))
+        child = testdir.spawn("%s %s" % (sys.executable, p1))
         child.expect("x = 5")
         child.sendeof()
         self.flush(child)
@@ -376,7 +375,6 @@ class TestPDB(object):
             "*1 error*",
         ])
         assert custom_pdb_calls == ["init", "reset", "interaction"]
-
 
     def test_pdb_custom_cls_without_pdb(self, testdir, custom_pdb_calls):
         p1 = testdir.makepyfile("""xxx """)

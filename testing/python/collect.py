@@ -151,7 +151,7 @@ class TestClass(object):
                     pass
         """)
         result = testdir.runpytest()
-        if sys.version_info < (2,7):
+        if sys.version_info < (2, 7):
             # in 2.6, the code to handle static methods doesn't work
             result.stdout.fnmatch_lines([
                 "*collected 0 items*",
@@ -439,10 +439,10 @@ class TestFunction(object):
             pass
 
         f1 = pytest.Function(name="name", parent=session, config=config,
-                args=(1,), callobj=func1)
+                             args=(1,), callobj=func1)
         assert f1 == f1
-        f2 = pytest.Function(name="name",config=config,
-                callobj=func2, parent=session)
+        f2 = pytest.Function(name="name", config=config,
+                             callobj=func2, parent=session)
         assert f1 != f2
 
     def test_issue197_parametrize_emptyset(self, testdir):
@@ -496,7 +496,6 @@ class TestFunction(object):
         rec = testdir.inline_run()
         rec.assertoutcome(passed=2)
 
-
     def test_parametrize_with_non_hashable_values_indirect(self, testdir):
         """Test parametrization with non-hashable values with indirect parametrization."""
         testdir.makepyfile("""
@@ -524,7 +523,6 @@ class TestFunction(object):
         rec = testdir.inline_run()
         rec.assertoutcome(passed=2)
 
-
     def test_parametrize_overrides_fixture(self, testdir):
         """Test parametrization when parameter overrides existing fixture with same name."""
         testdir.makepyfile("""
@@ -551,7 +549,6 @@ class TestFunction(object):
         """)
         rec = testdir.inline_run()
         rec.assertoutcome(passed=3)
-
 
     def test_parametrize_overrides_parametrized_fixture(self, testdir):
         """Test parametrization when parameter overrides existing parametrized fixture with same name."""
@@ -753,11 +750,11 @@ class TestSorting(object):
         assert not (fn1 == fn3)
         assert fn1 != fn3
 
-        for fn in fn1,fn2,fn3:
+        for fn in fn1, fn2, fn3:
             assert fn != 3
             assert fn != modcol
-            assert fn != [1,2,3]
-            assert [1,2,3] != fn
+            assert fn != [1, 2, 3]
+            assert [1, 2, 3] != fn
             assert modcol != fn
 
     def test_allow_sane_sorting_for_decorators(self, testdir):
@@ -858,7 +855,7 @@ class TestConftestCustomization(object):
         modcol = testdir.getmodulecol("def _hello(): pass")
         l = []
         monkeypatch.setattr(pytest.Module, 'makeitem',
-            lambda self, name, obj: l.append(name))
+                            lambda self, name, obj: l.append(name))
         l = modcol.collect()
         assert '_hello' not in l
 
@@ -890,6 +887,7 @@ class TestConftestCustomization(object):
         result = testdir.runpytest_subprocess()
         result.stdout.fnmatch_lines('*1 passed*')
 
+
 def test_setup_only_available_in_subdir(testdir):
     sub1 = testdir.mkpydir("sub1")
     sub2 = testdir.mkpydir("sub2")
@@ -915,6 +913,7 @@ def test_setup_only_available_in_subdir(testdir):
     sub2.join("test_in_sub2.py").write("def test_2(): pass")
     result = testdir.runpytest("-v", "-s")
     result.assert_outcomes(passed=2)
+
 
 def test_modulecol_roundtrip(testdir):
     modcol = testdir.getmodulecol("pass", withinit=True)
@@ -943,13 +942,13 @@ class TestTracebackCutting(object):
         out = result.stdout.str()
         assert "xyz" in out
         assert "conftest.py:5: ValueError" in out
-        numentries = out.count("_ _ _") # separator for traceback entries
+        numentries = out.count("_ _ _")  # separator for traceback entries
         assert numentries == 0
 
         result = testdir.runpytest("--fulltrace", p)
         out = result.stdout.str()
         assert "conftest.py:5: ValueError" in out
-        numentries = out.count("_ _ _ _") # separator for traceback entries
+        numentries = out.count("_ _ _ _")  # separator for traceback entries
         assert numentries > 3
 
     def test_traceback_error_during_import(self, testdir):
@@ -1200,6 +1199,7 @@ def test_collector_attributes(testdir):
         "*1 passed*",
     ])
 
+
 def test_customize_through_attributes(testdir):
     testdir.makeconftest("""
         import pytest
@@ -1367,7 +1367,6 @@ def test_skip_duplicates_by_default(testdir):
     result.stdout.fnmatch_lines([
         '*collected 1 item*',
     ])
-
 
 
 def test_keep_duplicates(testdir):

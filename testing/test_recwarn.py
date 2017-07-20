@@ -283,9 +283,11 @@ class TestWarns(object):
         assert str(record[0].message) == "user"
         assert str(record[1].message) == "runtime"
 
-        class MyUserWarning(UserWarning): pass
+        class MyUserWarning(UserWarning):
+            pass
 
-        class MyRuntimeWarning(RuntimeWarning): pass
+        class MyRuntimeWarning(RuntimeWarning):
+            pass
 
         with pytest.warns((UserWarning, RuntimeWarning)) as record:
             warnings.warn("user", MyUserWarning)
@@ -294,7 +296,6 @@ class TestWarns(object):
         assert len(record) == 2
         assert str(record[0].message) == "user"
         assert str(record[1].message) == "runtime"
-
 
     def test_double_test(self, testdir):
         """If a test is run again, the warning should still be raised"""

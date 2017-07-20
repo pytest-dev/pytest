@@ -8,6 +8,7 @@ import pytest
 
 WARNINGS_SUMMARY_HEADER = 'warnings summary'
 
+
 @pytest.fixture
 def pyfile_with_warnings(testdir, request):
     """
@@ -112,7 +113,6 @@ def test_ignore(testdir, pyfile_with_warnings, method):
     assert WARNINGS_SUMMARY_HEADER not in result.stdout.str()
 
 
-
 @pytest.mark.skipif(sys.version_info < (3, 0),
                     reason='warnings message is unicode is ok in python3')
 def test_unicode(testdir, pyfile_with_warnings):
@@ -173,9 +173,9 @@ def test_works_with_filterwarnings(testdir):
 
         class MyWarning(Warning):
             pass
-        
+
         warnings.filterwarnings("error", category=MyWarning)
-        
+
         class TestWarnings(object):
             def test_my_warning(self):
                 try:

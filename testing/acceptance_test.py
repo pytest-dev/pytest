@@ -74,13 +74,12 @@ class TestGeneralUsage(object):
                 print("---unconfigure")
         """)
         result = testdir.runpytest("-s", "asd")
-        assert result.ret == 4 # EXIT_USAGEERROR
+        assert result.ret == 4  # EXIT_USAGEERROR
         result.stderr.fnmatch_lines(["ERROR: file not found*asd"])
         result.stdout.fnmatch_lines([
             "*---configure",
             "*---unconfigure",
         ])
-
 
     def test_config_preparse_plugin_option(self, testdir):
         testdir.makepyfile(pytest_xyz="""
@@ -119,7 +118,7 @@ class TestGeneralUsage(object):
         testdir.makepyfile(import_fails="import does_not_work")
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
-            #XXX on jython this fails:  ">   import import_fails",
+            # XXX on jython this fails:  ">   import import_fails",
             "ImportError while importing test module*",
             "*No module named *does_not_work*",
         ])
@@ -131,7 +130,7 @@ class TestGeneralUsage(object):
         result = testdir.runpytest(p1, p2)
         assert result.ret
         result.stderr.fnmatch_lines([
-            "*ERROR: not found:*%s" %(p2.basename,)
+            "*ERROR: not found:*%s" % (p2.basename,)
         ])
 
     def test_issue486_better_reporting_on_conftest_load_failure(self, testdir):
@@ -146,7 +145,6 @@ class TestGeneralUsage(object):
         result.stderr.fnmatch_lines("""
             *ERROR*could not load*conftest.py*
         """)
-
 
     def test_early_skip(self, testdir):
         testdir.mkdir("xyz")
@@ -255,7 +253,7 @@ class TestGeneralUsage(object):
                 if path.basename.startswith("conftest"):
                     return MyCollector(path, parent)
         """)
-        result = testdir.runpytest(c.basename+"::"+"xyz")
+        result = testdir.runpytest(c.basename + "::" + "xyz")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
             "*1 pass*",
@@ -310,7 +308,7 @@ class TestGeneralUsage(object):
                 x
         """)
         result = testdir.runpytest()
-        assert result.ret == 3 # internal error
+        assert result.ret == 3  # internal error
         result.stderr.fnmatch_lines([
             "INTERNAL*pytest_configure*",
             "INTERNAL*x*",
@@ -410,7 +408,7 @@ class TestGeneralUsage(object):
             def test_stuff(r):
                 pass
         """
-        )
+                               )
         res = testdir.runpytest(p)
         res.stdout.fnmatch_lines([
             '*1 passed*'
@@ -440,8 +438,8 @@ class TestInvocationVariants(object):
             #collect
             #cmdline
             #Item
-            #assert collect.Item is Item
-            #assert collect.Collector is Collector
+            # assert collect.Item is Item
+            # assert collect.Collector is Collector
             main
             skip
             xfail
@@ -676,7 +674,6 @@ class TestInvocationVariants(object):
         import _pytest.config
         assert type(_pytest.config.get_plugin_manager()) is _pytest.config.PytestPluginManager
 
-
     def test_has_plugin(self, request):
         """Test hasplugin function of the plugin manager (#932)."""
         assert request.config.pluginmanager.hasplugin('python')
@@ -719,12 +716,12 @@ class TestDurations(object):
         result = testdir.runpytest("--durations=0")
         assert result.ret == 0
         for x in "123":
-            for y in 'call',: #'setup', 'call', 'teardown':
+            for y in 'call', :  # 'setup', 'call', 'teardown':
                 for line in result.stdout.lines:
                     if ("test_%s" % x) in line and y in line:
                         break
                 else:
-                    raise AssertionError("not found %s %s" % (x,y))
+                    raise AssertionError("not found %s %s" % (x, y))
 
     def test_with_deselected(self, testdir):
         testdir.makepyfile(self.source)
@@ -764,6 +761,7 @@ class TestDurationWithFixture(object):
         def test_2():
             time.sleep(frag)
     """
+
     def test_setup_function(self, testdir):
         testdir.makepyfile(self.source)
         result = testdir.runpytest("--durations=10")

@@ -3,6 +3,7 @@ from _pytest.main import EXIT_NOTESTSCOLLECTED
 import pytest
 import gc
 
+
 def test_simple_unittest(testdir):
     testpath = testdir.makepyfile("""
         import unittest
@@ -15,6 +16,7 @@ def test_simple_unittest(testdir):
     reprec = testdir.inline_run(testpath)
     assert reprec.matchreport("testpassing").passed
     assert reprec.matchreport("test_failing").failed
+
 
 def test_runTest_method(testdir):
     testdir.makepyfile("""
@@ -35,6 +37,7 @@ def test_runTest_method(testdir):
         *2 passed*
     """)
 
+
 def test_isclasscheck_issue53(testdir):
     testpath = testdir.makepyfile("""
         import unittest
@@ -45,6 +48,7 @@ def test_isclasscheck_issue53(testdir):
     """)
     result = testdir.runpytest(testpath)
     assert result.ret == EXIT_NOTESTSCOLLECTED
+
 
 def test_setup(testdir):
     testpath = testdir.makepyfile("""
@@ -65,6 +69,7 @@ def test_setup(testdir):
     assert reprec.matchreport("test_both", when="call").passed
     rep = reprec.matchreport("test_both", when="teardown")
     assert rep.failed and '42' in str(rep.longrepr)
+
 
 def test_setUpModule(testdir):
     testpath = testdir.makepyfile("""
@@ -87,6 +92,7 @@ def test_setUpModule(testdir):
         "*2 passed*",
     ])
 
+
 def test_setUpModule_failing_no_teardown(testdir):
     testpath = testdir.makepyfile("""
         l = []
@@ -105,6 +111,7 @@ def test_setUpModule_failing_no_teardown(testdir):
     call = reprec.getcalls("pytest_runtest_setup")[0]
     assert not call.item.module.l
 
+
 def test_new_instances(testdir):
     testpath = testdir.makepyfile("""
         import unittest
@@ -116,6 +123,7 @@ def test_new_instances(testdir):
     """)
     reprec = testdir.inline_run(testpath)
     reprec.assertoutcome(passed=2)
+
 
 def test_teardown(testdir):
     testpath = testdir.makepyfile("""
@@ -135,6 +143,7 @@ def test_teardown(testdir):
     assert failed == 0, failed
     assert passed == 2
     assert passed + skipped + failed == 2
+
 
 def test_teardown_issue1649(testdir):
     """
@@ -158,6 +167,7 @@ def test_teardown_issue1649(testdir):
     for obj in gc.get_objects():
         assert type(obj).__name__ != 'TestCaseObjectsShouldBeCleanedUp'
 
+
 @pytest.mark.skipif("sys.version_info < (2,7)")
 def test_unittest_skip_issue148(testdir):
     testpath = testdir.makepyfile("""
@@ -176,6 +186,7 @@ def test_unittest_skip_issue148(testdir):
     """)
     reprec = testdir.inline_run(testpath)
     reprec.assertoutcome(skipped=1)
+
 
 def test_method_and_teardown_failing_reporting(testdir):
     testdir.makepyfile("""
@@ -196,6 +207,7 @@ def test_method_and_teardown_failing_reporting(testdir):
         "*1 failed*1 error*",
     ])
 
+
 def test_setup_failure_is_shown(testdir):
     testdir.makepyfile("""
         import unittest
@@ -215,6 +227,7 @@ def test_setup_failure_is_shown(testdir):
         "*1 failed*",
     ])
     assert 'never42' not in result.stdout.str()
+
 
 def test_setup_setUpClass(testdir):
     testpath = testdir.makepyfile("""
@@ -237,6 +250,7 @@ def test_setup_setUpClass(testdir):
     """)
     reprec = testdir.inline_run(testpath)
     reprec.assertoutcome(passed=3)
+
 
 def test_setup_class(testdir):
     testpath = testdir.makepyfile("""
@@ -279,6 +293,7 @@ def test_testcase_adderrorandfailure_defers(testdir, type):
     result = testdir.runpytest()
     assert 'should not raise' not in result.stdout.str()
 
+
 @pytest.mark.parametrize("type", ['Error', 'Failure'])
 def test_testcase_custom_exception_info(testdir, type):
     testdir.makepyfile("""
@@ -310,6 +325,7 @@ def test_testcase_custom_exception_info(testdir, type):
         "*1 failed*",
     ])
 
+
 def test_testcase_totally_incompatible_exception_info(testdir):
     item, = testdir.getitems("""
         from unittest import TestCase
@@ -320,6 +336,7 @@ def test_testcase_totally_incompatible_exception_info(testdir):
     item.addError(None, 42)
     excinfo = item._excinfo.pop(0)
     assert 'ERROR: Unknown Incompatible' in str(excinfo.getrepr())
+
 
 def test_module_level_pytestmark(testdir):
     testpath = testdir.makepyfile("""
@@ -520,6 +537,7 @@ class TestTrialUnittest(object):
         child.expect("hellopdb")
         child.sendeof()
 
+
 def test_djangolike_testcase(testdir):
     # contributed from Morten Breekevold
     testdir.makepyfile("""
@@ -585,6 +603,7 @@ def test_unittest_not_shown_in_traceback(testdir):
     res = testdir.runpytest()
     assert "failUnlessEqual" not in res.stdout.str()
 
+
 def test_unorderable_types(testdir):
     testdir.makepyfile("""
         import unittest
@@ -601,6 +620,7 @@ def test_unorderable_types(testdir):
     result = testdir.runpytest()
     assert "TypeError" not in result.stdout.str()
     assert result.ret == EXIT_NOTESTSCOLLECTED
+
 
 def test_unittest_typerror_traceback(testdir):
     testdir.makepyfile("""
@@ -769,6 +789,7 @@ def test_issue333_result_clearing(testdir):
     reprec = testdir.inline_run()
     reprec.assertoutcome(failed=1)
 
+
 @pytest.mark.skipif("sys.version_info < (2,7)")
 def test_unittest_raise_skip_issue748(testdir):
     testdir.makepyfile(test_foo="""
@@ -784,11 +805,12 @@ def test_unittest_raise_skip_issue748(testdir):
         *1 skipped*
     """)
 
+
 @pytest.mark.skipif("sys.version_info < (2,7)")
 def test_unittest_skip_issue1169(testdir):
     testdir.makepyfile(test_foo="""
         import unittest
-        
+
         class MyTestCase(unittest.TestCase):
             @unittest.skip("skipping due to reasons")
             def test_skip(self):
@@ -799,6 +821,7 @@ def test_unittest_skip_issue1169(testdir):
         *SKIP*[1]*skipping due to reasons*
         *1 skipped*
     """)
+
 
 def test_class_method_containing_test_issue1558(testdir):
     testdir.makepyfile(test_foo="""

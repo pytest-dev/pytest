@@ -9,6 +9,7 @@ from decimal import Decimal
 from fractions import Fraction
 inf, nan = float('inf'), float('nan')
 
+
 class MyDocTestRunner(doctest.DocTestRunner):
 
     def __init__(self):
@@ -28,8 +29,10 @@ class TestApprox(object):
         if sys.version_info[:2] == (2, 6):
             tol1, tol2, infr = '???', '???', '???'
         assert repr(approx(1.0)) == '1.0 {pm} {tol1}'.format(pm=plus_minus, tol1=tol1)
-        assert repr(approx([1.0, 2.0])) == 'approx([1.0 {pm} {tol1}, 2.0 {pm} {tol2}])'.format(pm=plus_minus, tol1=tol1, tol2=tol2)
-        assert repr(approx((1.0, 2.0))) == 'approx((1.0 {pm} {tol1}, 2.0 {pm} {tol2}))'.format(pm=plus_minus, tol1=tol1, tol2=tol2)
+        assert repr(approx([1.0, 2.0])) == 'approx([1.0 {pm} {tol1}, 2.0 {pm} {tol2}])'.format(
+            pm=plus_minus, tol1=tol1, tol2=tol2)
+        assert repr(approx((1.0, 2.0))) == 'approx((1.0 {pm} {tol1}, 2.0 {pm} {tol2}))'.format(
+            pm=plus_minus, tol1=tol1, tol2=tol2)
         assert repr(approx(inf)) == 'inf'
         assert repr(approx(1.0, rel=nan)) == '1.0 {pm} ???'.format(pm=plus_minus)
         assert repr(approx(1.0, rel=inf)) == '1.0 {pm} {infr}'.format(pm=plus_minus, infr=infr)
@@ -37,8 +40,8 @@ class TestApprox(object):
 
         # Dictionaries aren't ordered, so we need to check both orders.
         assert repr(approx({'a': 1.0, 'b': 2.0})) in (
-                "approx({{'a': 1.0 {pm} {tol1}, 'b': 2.0 {pm} {tol2}}})".format(pm=plus_minus, tol1=tol1, tol2=tol2),
-                "approx({{'b': 2.0 {pm} {tol2}, 'a': 1.0 {pm} {tol1}}})".format(pm=plus_minus, tol1=tol1, tol2=tol2),
+            "approx({{'a': 1.0 {pm} {tol1}, 'b': 2.0 {pm} {tol2}}})".format(pm=plus_minus, tol1=tol1, tol2=tol2),
+            "approx({{'b': 2.0 {pm} {tol2}, 'a': 1.0 {pm} {tol1}}})".format(pm=plus_minus, tol1=tol1, tol2=tol2),
         )
 
     def test_operator_overloading(self):
@@ -49,30 +52,30 @@ class TestApprox(object):
 
     def test_exactly_equal(self):
         examples = [
-                (2.0, 2.0),
-                (0.1e200, 0.1e200),
-                (1.123e-300, 1.123e-300),
-                (12345, 12345.0),
-                (0.0, -0.0),
-                (345678, 345678),
-                (Decimal('1.0001'), Decimal('1.0001')),
-                (Fraction(1, 3), Fraction(-1, -3)),
+            (2.0, 2.0),
+            (0.1e200, 0.1e200),
+            (1.123e-300, 1.123e-300),
+            (12345, 12345.0),
+            (0.0, -0.0),
+            (345678, 345678),
+            (Decimal('1.0001'), Decimal('1.0001')),
+            (Fraction(1, 3), Fraction(-1, -3)),
         ]
         for a, x in examples:
             assert a == approx(x)
 
     def test_opposite_sign(self):
         examples = [
-                (eq, 1e-100, -1e-100),
-                (ne, 1e100, -1e100),
+            (eq, 1e-100, -1e-100),
+            (ne, 1e100, -1e100),
         ]
         for op, a, x in examples:
             assert op(a, approx(x))
 
     def test_zero_tolerance(self):
         within_1e10 = [
-                (1.1e-100, 1e-100),
-                (-1.1e-100, -1e-100),
+            (1.1e-100, 1e-100),
+            (-1.1e-100, -1e-100),
         ]
         for a, x in within_1e10:
             assert x == approx(x, rel=0.0, abs=0.0)
@@ -85,11 +88,11 @@ class TestApprox(object):
     def test_negative_tolerance(self):
         # Negative tolerances are not allowed.
         illegal_kwargs = [
-                dict(rel=-1e100),
-                dict(abs=-1e100),
-                dict(rel=1e100, abs=-1e100),
-                dict(rel=-1e100, abs=1e100),
-                dict(rel=-1e100, abs=-1e100),
+            dict(rel=-1e100),
+            dict(abs=-1e100),
+            dict(rel=1e100, abs=-1e100),
+            dict(rel=-1e100, abs=1e100),
+            dict(rel=-1e100, abs=-1e100),
         ]
         for kwargs in illegal_kwargs:
             with pytest.raises(ValueError):
@@ -98,10 +101,10 @@ class TestApprox(object):
     def test_inf_tolerance(self):
         # Everything should be equal if the tolerance is infinite.
         large_diffs = [
-                (1, 1000),
-                (1e-50, 1e50),
-                (-1.0, -1e300),
-                (0.0, 10),
+            (1, 1000),
+            (1e-50, 1e50),
+            (-1.0, -1e300),
+            (0.0, 10),
         ]
         for a, x in large_diffs:
             assert a != approx(x, rel=0.0, abs=0.0)
@@ -113,8 +116,8 @@ class TestApprox(object):
         # If the relative tolerance is zero but the expected value is infinite,
         # the actual tolerance is a NaN, which should be an error.
         illegal_kwargs = [
-                dict(rel=inf, abs=0.0),
-                dict(rel=inf, abs=inf),
+            dict(rel=inf, abs=0.0),
+            dict(rel=inf, abs=inf),
         ]
         for kwargs in illegal_kwargs:
             with pytest.raises(ValueError):
@@ -122,9 +125,9 @@ class TestApprox(object):
 
     def test_nan_tolerance(self):
         illegal_kwargs = [
-                dict(rel=nan),
-                dict(abs=nan),
-                dict(rel=nan, abs=nan),
+            dict(rel=nan),
+            dict(abs=nan),
+            dict(rel=nan, abs=nan),
         ]
         for kwargs in illegal_kwargs:
             with pytest.raises(ValueError):
@@ -141,15 +144,15 @@ class TestApprox(object):
         # None of the other tests (except the doctests) should be affected by
         # the choice of defaults.
         examples = [
-                # Relative tolerance used.
-                (eq, 1e100 + 1e94, 1e100),
-                (ne, 1e100 + 2e94, 1e100),
-                (eq, 1e0 + 1e-6, 1e0),
-                (ne, 1e0 + 2e-6, 1e0),
-                # Absolute tolerance used.
-                (eq, 1e-100, + 1e-106),
-                (eq, 1e-100, + 2e-106),
-                (eq, 1e-100, 0),
+            # Relative tolerance used.
+            (eq, 1e100 + 1e94, 1e100),
+            (ne, 1e100 + 2e94, 1e100),
+            (eq, 1e0 + 1e-6, 1e0),
+            (ne, 1e0 + 2e-6, 1e0),
+            # Absolute tolerance used.
+            (eq, 1e-100, + 1e-106),
+            (eq, 1e-100, + 2e-106),
+            (eq, 1e-100, 0),
         ]
         for op, a, x in examples:
             assert op(a, approx(x))
@@ -172,9 +175,9 @@ class TestApprox(object):
 
     def test_relative_tolerance(self):
         within_1e8_rel = [
-                (1e8 + 1e0, 1e8),
-                (1e0 + 1e-8, 1e0),
-                (1e-8 + 1e-16, 1e-8),
+            (1e8 + 1e0, 1e8),
+            (1e0 + 1e-8, 1e0),
+            (1e-8 + 1e-16, 1e-8),
         ]
         for a, x in within_1e8_rel:
             assert a == approx(x, rel=5e-8, abs=0.0)
@@ -182,9 +185,9 @@ class TestApprox(object):
 
     def test_absolute_tolerance(self):
         within_1e8_abs = [
-                (1e8 + 9e-9, 1e8),
-                (1e0 + 9e-9, 1e0),
-                (1e-8 + 9e-9, 1e-8),
+            (1e8 + 9e-9, 1e8),
+            (1e0 + 9e-9, 1e0),
+            (1e-8 + 9e-9, 1e-8),
         ]
         for a, x in within_1e8_abs:
             assert a == approx(x, rel=0, abs=5e-8)
@@ -192,37 +195,37 @@ class TestApprox(object):
 
     def test_expecting_zero(self):
         examples = [
-                (ne, 1e-6, 0.0),
-                (ne, -1e-6, 0.0),
-                (eq, 1e-12, 0.0),
-                (eq, -1e-12, 0.0),
-                (ne, 2e-12, 0.0),
-                (ne, -2e-12, 0.0),
-                (ne, inf, 0.0),
-                (ne, nan, 0.0),
-         ]
+            (ne, 1e-6, 0.0),
+            (ne, -1e-6, 0.0),
+            (eq, 1e-12, 0.0),
+            (eq, -1e-12, 0.0),
+            (ne, 2e-12, 0.0),
+            (ne, -2e-12, 0.0),
+            (ne, inf, 0.0),
+            (ne, nan, 0.0),
+        ]
         for op, a, x in examples:
             assert op(a, approx(x, rel=0.0, abs=1e-12))
             assert op(a, approx(x, rel=1e-6, abs=1e-12))
 
     def test_expecting_inf(self):
         examples = [
-                (eq, inf, inf),
-                (eq, -inf, -inf),
-                (ne, inf, -inf),
-                (ne, 0.0, inf),
-                (ne, nan, inf),
+            (eq, inf, inf),
+            (eq, -inf, -inf),
+            (ne, inf, -inf),
+            (ne, 0.0, inf),
+            (ne, nan, inf),
         ]
         for op, a, x in examples:
             assert op(a, approx(x))
 
     def test_expecting_nan(self):
         examples = [
-                (eq, nan, nan),
-                (eq, -nan, -nan),
-                (eq, nan, -nan),
-                (ne, 0.0, nan),
-                (ne, inf, nan),
+            (eq, nan, nan),
+            (eq, -nan, -nan),
+            (eq, nan, -nan),
+            (ne, 0.0, nan),
+            (ne, inf, nan),
         ]
         for op, a, x in examples:
             # Nothing is equal to NaN by default.
@@ -233,8 +236,8 @@ class TestApprox(object):
 
     def test_int(self):
         within_1e6 = [
-                (1000001, 1000000),
-                (-1000001, -1000000),
+            (1000001, 1000000),
+            (-1000001, -1000000),
         ]
         for a, x in within_1e6:
             assert a == approx(x, rel=5e-6, abs=0)
@@ -244,8 +247,8 @@ class TestApprox(object):
 
     def test_decimal(self):
         within_1e6 = [
-                (Decimal('1.000001'), Decimal('1.0')),
-                (Decimal('-1.000001'), Decimal('-1.0')),
+            (Decimal('1.000001'), Decimal('1.0')),
+            (Decimal('-1.000001'), Decimal('-1.0')),
         ]
         for a, x in within_1e6:
             assert a == approx(x, rel=Decimal('5e-6'), abs=0)
@@ -255,8 +258,8 @@ class TestApprox(object):
 
     def test_fraction(self):
         within_1e6 = [
-                (1 + Fraction(1, 1000000), Fraction(1)),
-                (-1 - Fraction(-1, 1000000), Fraction(-1)),
+            (1 + Fraction(1, 1000000), Fraction(1)),
+            (-1 - Fraction(-1, 1000000), Fraction(-1)),
         ]
         for a, x in within_1e6:
             assert a == approx(x, rel=5e-6, abs=0)
@@ -266,10 +269,10 @@ class TestApprox(object):
 
     def test_complex(self):
         within_1e6 = [
-                ( 1.000001 + 1.0j, 1.0 + 1.0j),
-                (1.0 + 1.000001j, 1.0 + 1.0j),
-                (-1.000001 + 1.0j, -1.0 + 1.0j),
-                (1.0 - 1.000001j, 1.0 - 1.0j),
+            (1.000001 + 1.0j, 1.0 + 1.0j),
+            (1.0 + 1.000001j, 1.0 + 1.0j),
+            (-1.000001 + 1.0j, -1.0 + 1.0j),
+            (1.0 - 1.000001j, 1.0 - 1.0j),
         ]
         for a, x in within_1e6:
             assert a == approx(x, rel=5e-6, abs=0)
@@ -289,7 +292,7 @@ class TestApprox(object):
 
     def test_list_wrong_len(self):
         assert [1, 2] != approx([1])
-        assert [1, 2] != approx([1,2,3])
+        assert [1, 2] != approx([1, 2, 3])
 
     def test_tuple(self):
         actual = (1 + 1e-7, 2 + 1e-8)
@@ -303,7 +306,7 @@ class TestApprox(object):
 
     def test_tuple_wrong_len(self):
         assert (1, 2) != approx((1,))
-        assert (1, 2) != approx((1,2,3))
+        assert (1, 2) != approx((1, 2, 3))
 
     def test_dict(self):
         actual = {'a': 1 + 1e-7, 'b': 2 + 1e-8}
@@ -344,7 +347,7 @@ class TestApprox(object):
         np = pytest.importorskip('numpy')
 
         a12 = np.array([[1, 2]])
-        a21 = np.array([[1],[2]])
+        a21 = np.array([[1], [2]])
 
         assert a12 != approx(a21)
         assert a21 != approx(a12)
@@ -352,10 +355,10 @@ class TestApprox(object):
     def test_doctests(self):
         parser = doctest.DocTestParser()
         test = parser.get_doctest(
-                approx.__doc__,
-                {'approx': approx},
-                approx.__name__,
-                None, None,
+            approx.__doc__,
+            {'approx': approx},
+            approx.__name__,
+            None, None,
         )
         runner = MyDocTestRunner()
         runner.run(test)
@@ -379,4 +382,3 @@ class TestApprox(object):
             '*At index 0 diff: 3 != 4 * {0}'.format(expected),
             '=* 1 failed in *=',
         ])
-

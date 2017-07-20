@@ -29,56 +29,57 @@ EXIT_NOTESTSCOLLECTED = 5
 
 def pytest_addoption(parser):
     parser.addini("norecursedirs", "directory patterns to avoid for recursion",
-        type="args", default=['.*', 'build', 'dist', 'CVS', '_darcs', '{arch}', '*.egg', 'venv'])
-    parser.addini("testpaths", "directories to search for tests when no files or directories are given in the command line.",
-        type="args", default=[])
-    #parser.addini("dirpatterns",
+                  type="args", default=['.*', 'build', 'dist', 'CVS', '_darcs', '{arch}', '*.egg', 'venv'])
+    parser.addini("testpaths", "directories to search for tests when no files or directories are given in the "
+                               "command line.",
+                  type="args", default=[])
+    # parser.addini("dirpatterns",
     #    "patterns specifying possible locations of test files",
     #    type="linelist", default=["**/test_*.txt",
     #            "**/test_*.py", "**/*_test.py"]
-    #)
+    # )
     group = parser.getgroup("general", "running and selection options")
     group._addoption('-x', '--exitfirst', action="store_const",
-               dest="maxfail", const=1,
-               help="exit instantly on first error or failed test."),
+                     dest="maxfail", const=1,
+                     help="exit instantly on first error or failed test."),
     group._addoption('--maxfail', metavar="num",
-               action="store", type=int, dest="maxfail", default=0,
-               help="exit after first num failures or errors.")
+                     action="store", type=int, dest="maxfail", default=0,
+                     help="exit after first num failures or errors.")
     group._addoption('--strict', action="store_true",
-               help="marks not registered in configuration file raise errors.")
+                     help="marks not registered in configuration file raise errors.")
     group._addoption("-c", metavar="file", type=str, dest="inifilename",
-               help="load configuration from `file` instead of trying to locate one of the implicit configuration files.")
+                     help="load configuration from `file` instead of trying to locate one of the implicit "
+                          "configuration files.")
     group._addoption("--continue-on-collection-errors", action="store_true",
-               default=False, dest="continue_on_collection_errors",
-               help="Force test execution even if collection errors occur.")
+                     default=False, dest="continue_on_collection_errors",
+                     help="Force test execution even if collection errors occur.")
 
     group = parser.getgroup("collect", "collection")
     group.addoption('--collectonly', '--collect-only', action="store_true",
-        help="only collect tests, don't execute them."),
+                    help="only collect tests, don't execute them."),
     group.addoption('--pyargs', action="store_true",
-        help="try to interpret all arguments as python packages.")
+                    help="try to interpret all arguments as python packages.")
     group.addoption("--ignore", action="append", metavar="path",
-        help="ignore path during collection (multi-allowed).")
+                    help="ignore path during collection (multi-allowed).")
     # when changing this to --conf-cut-dir, config.py Conftest.setinitial
     # needs upgrading as well
     group.addoption('--confcutdir', dest="confcutdir", default=None,
-        metavar="dir", type=functools.partial(directory_arg, optname="--confcutdir"),
-        help="only load conftest.py's relative to specified dir.")
+                    metavar="dir", type=functools.partial(directory_arg, optname="--confcutdir"),
+                    help="only load conftest.py's relative to specified dir.")
     group.addoption('--noconftest', action="store_true",
-        dest="noconftest", default=False,
-        help="Don't load any conftest.py files.")
+                    dest="noconftest", default=False,
+                    help="Don't load any conftest.py files.")
     group.addoption('--keepduplicates', '--keep-duplicates', action="store_true",
-        dest="keepduplicates", default=False,
-        help="Keep duplicate tests.")
+                    dest="keepduplicates", default=False,
+                    help="Keep duplicate tests.")
     group.addoption('--collect-in-virtualenv', action='store_true',
-        dest='collect_in_virtualenv', default=False,
-        help="Don't ignore tests in a local virtualenv directory")
+                    dest='collect_in_virtualenv', default=False,
+                    help="Don't ignore tests in a local virtualenv directory")
 
     group = parser.getgroup("debugconfig",
-        "test session debugging and configuration")
+                            "test session debugging and configuration")
     group.addoption('--basetemp', dest="basetemp", default=None, metavar="dir",
-               help="base temporary directory for this test run.")
-
+                    help="base temporary directory for this test run.")
 
 
 def pytest_namespace():
@@ -91,7 +92,7 @@ def pytest_namespace():
 
 
 def pytest_configure(config):
-    __import__('pytest').config = config # compatibiltiy
+    __import__('pytest').config = config  # compatibiltiy
 
 
 def wrap_session(config, doit):
@@ -163,7 +164,7 @@ def pytest_runtestloop(session):
         return True
 
     for i, item in enumerate(session.items):
-        nextitem = session.items[i+1] if i+1 < len(session.items) else None
+        nextitem = session.items[i + 1] if i + 1 < len(session.items) else None
         item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
         if session.shouldstop:
             raise session.Interrupted(session.shouldstop)
@@ -218,6 +219,7 @@ class FSHookProxy:
         self.__dict__[name] = x
         return x
 
+
 class _CompatProperty(object):
     def __init__(self, name):
         self.name = name
@@ -232,7 +234,6 @@ class _CompatProperty(object):
         #         name=self.name, owner=type(owner).__name__),
         #     PendingDeprecationWarning, stacklevel=2)
         return getattr(__import__('pytest'), self.name)
-
 
 
 class NodeKeywords(MappingMixin):
@@ -325,8 +326,8 @@ class Node(object):
         return cls
 
     def __repr__(self):
-        return "<%s %r>" %(self.__class__.__name__,
-                           getattr(self, 'name', None))
+        return "<%s %r>" % (self.__class__.__name__,
+                            getattr(self, 'name', None))
 
     def warn(self, code, message):
         """ generate a warning with the given code and message for this
@@ -447,7 +448,7 @@ class Node(object):
             return excinfo.value.formatrepr()
         tbfilter = True
         if self.config.option.fulltrace:
-            style="long"
+            style = "long"
         else:
             tb = _pytest._code.Traceback([excinfo.traceback[-1]])
             self._prunetraceback(excinfo)
@@ -474,6 +475,7 @@ class Node(object):
                                style=style, tbfilter=tbfilter)
 
     repr_failure = _repr_failure_py
+
 
 class Collector(Node):
     """ Collector instances create children through collect()
@@ -504,9 +506,10 @@ class Collector(Node):
                 ntraceback = ntraceback.cut(excludepath=tracebackcutdir)
             excinfo.traceback = ntraceback.filter()
 
+
 class FSCollector(Collector):
     def __init__(self, fspath, parent=None, config=None, session=None):
-        fspath = py.path.local(fspath) # xxx only for test_resultlog.py?
+        fspath = py.path.local(fspath)  # xxx only for test_resultlog.py?
         name = fspath.basename
         if parent is not None:
             rel = fspath.relto(parent.fspath)
@@ -522,8 +525,10 @@ class FSCollector(Collector):
             relpath = relpath.replace(os.sep, "/")
         return relpath
 
+
 class File(FSCollector):
     """ base class for collecting tests from a file. """
+
 
 class Item(Node):
     """ a basic test invocation item. Note that for a single function
@@ -536,6 +541,21 @@ class Item(Node):
         self._report_sections = []
 
     def add_report_section(self, when, key, content):
+        """
+        Adds a new report section, similar to what's done internally to add stdout and
+        stderr captured output::
+
+            item.add_report_section("call", "stdout", "report section contents")
+
+        :param str when:
+            One of the possible capture states, ``"setup"``, ``"call"``, ``"teardown"``.
+        :param str key:
+            Name of the section, can be customized at will. Pytest uses ``"stdout"`` and
+            ``"stderr"`` internally.
+
+        :param str content:
+            The full contents as a string.
+        """
         if content:
             self._report_sections.append((when, key, content))
 
@@ -559,12 +579,15 @@ class Item(Node):
             self._location = location
             return location
 
+
 class NoMatch(Exception):
     """ raised if matching cannot locate a matching names. """
 
+
 class Interrupted(KeyboardInterrupt):
     """ signals an interrupted test run. """
-    __module__ = 'builtins' # for py3
+    __module__ = 'builtins'  # for py3
+
 
 class Session(FSCollector):
     Interrupted = Interrupted
@@ -621,7 +644,7 @@ class Session(FSCollector):
             items = self._perform_collect(args, genitems)
             self.config.pluginmanager.check_pending()
             hook.pytest_collection_modifyitems(session=self,
-                config=self.config, items=items)
+                                               config=self.config, items=items)
         finally:
             hook.pytest_collection_finish(session=self)
         self.testscollected = len(items)

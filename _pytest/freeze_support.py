@@ -5,7 +5,6 @@ pytest
 from __future__ import absolute_import, division, print_function
 
 
-
 def freeze_includes():
     """
     Returns a list of module names used by py.test that should be

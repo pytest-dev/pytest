@@ -10,15 +10,15 @@ import py
 from _pytest._code.code import TerminalRepr, ExceptionInfo
 
 
-
 #
 # pytest plugin hooks
 
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "reporting", after="general")
     group.addoption('--durations',
-         action="store", type=int, default=None, metavar="N",
-         help="show N slowest setup/test durations (N=0 for all)."),
+                    action="store", type=int, default=None, metavar="N",
+                    help="show N slowest setup/test durations (N=0 for all)."),
+
 
 def pytest_terminal_summary(terminalreporter):
     durations = terminalreporter.config.option.durations
@@ -43,16 +43,21 @@ def pytest_terminal_summary(terminalreporter):
     for rep in dlist:
         nodeid = rep.nodeid.replace("::()::", "::")
         tr.write_line("%02.2fs %-8s %s" %
-            (rep.duration, rep.when, nodeid))
+                      (rep.duration, rep.when, nodeid))
+
 
 def pytest_sessionstart(session):
     session._setupstate = SetupState()
+
+
 def pytest_sessionfinish(session):
     session._setupstate.teardown_all()
+
 
 class NodeInfo:
     def __init__(self, location):
         self.location = location
+
 
 def pytest_runtest_protocol(item, nextitem):
     item.ihook.pytest_runtest_logstart(
@@ -60,6 +65,7 @@ def pytest_runtest_protocol(item, nextitem):
     )
     runtestprotocol(item, nextitem=nextitem)
     return True
+
 
 def runtestprotocol(item, log=True, nextitem=None):
     hasrequest = hasattr(item, "_request")
@@ -73,13 +79,14 @@ def runtestprotocol(item, log=True, nextitem=None):
         if not item.config.option.setuponly:
             reports.append(call_and_report(item, "call", log))
     reports.append(call_and_report(item, "teardown", log,
-        nextitem=nextitem))
+                                   nextitem=nextitem))
     # after all teardown hooks have been called
     # want funcargs and request info to go away
     if hasrequest:
         item._request = False
         item.funcargs = None
     return reports
+
 
 def show_test_item(item):
     """Show test function, parameters and the fixtures of the test item."""
@@ -91,9 +98,11 @@ def show_test_item(item):
     if used_fixtures:
         tw.write(' (fixtures used: {0})'.format(', '.join(used_fixtures)))
 
+
 def pytest_runtest_setup(item):
     _update_current_test_var(item, 'setup')
     item.session._setupstate.prepare(item)
+
 
 def pytest_runtest_call(item):
     _update_current_test_var(item, 'call')
@@ -108,6 +117,7 @@ def pytest_runtest_call(item):
         sys.last_traceback = tb
         del tb  # Get rid of it in this namespace
         raise
+
 
 def pytest_runtest_teardown(item, nextitem):
     _update_current_test_var(item, 'teardown')
@@ -152,21 +162,25 @@ def call_and_report(item, when, log=True, **kwds):
         hook.pytest_exception_interact(node=item, call=call, report=report)
     return report
 
+
 def check_interactive_exception(call, report):
     return call.excinfo and not (
-                hasattr(report, "wasxfail") or
-                call.excinfo.errisinstance(skip.Exception) or
-                call.excinfo.errisinstance(bdb.BdbQuit))
+        hasattr(report, "wasxfail") or
+        call.excinfo.errisinstance(skip.Exception) or
+        call.excinfo.errisinstance(bdb.BdbQuit))
+
 
 def call_runtest_hook(item, when, **kwds):
     hookname = "pytest_runtest_" + when
     ihook = getattr(item.ihook, hookname)
     return CallInfo(lambda: ihook(item=item, **kwds), when=when)
 
+
 class CallInfo:
     """ Result/Exception info a function invocation. """
     #: None or ExceptionInfo object.
     excinfo = None
+
     def __init__(self, func, when):
         #: context of invocation: one of "setup", "call",
         #: "teardown", "memocollect"
@@ -188,6 +202,7 @@ class CallInfo:
             status = "result: %r" % (self.result,)
         return "<CallInfo when=%r %s>" % (self.when, status)
 
+
 def getslaveinfoline(node):
     try:
         return node._slaveinfocache
@@ -197,6 +212,7 @@ def getslaveinfoline(node):
         node._slaveinfocache = s = "[%s] %s -- Python %s %s" % (
             d['id'], d['sysplatform'], ver, d['executable'])
         return s
+
 
 class BaseReport(object):
 
@@ -262,10 +278,11 @@ class BaseReport(object):
     def fspath(self):
         return self.nodeid.split("::")[0]
 
+
 def pytest_runtest_makereport(item, call):
     when = call.when
-    duration = call.stop-call.start
-    keywords = dict([(x,1) for x in item.keywords])
+    duration = call.stop - call.start
+    keywords = dict([(x, 1) for x in item.keywords])
     excinfo = call.excinfo
     sections = []
     if not call.excinfo:
@@ -283,19 +300,21 @@ def pytest_runtest_makereport(item, call):
             outcome = "failed"
             if call.when == "call":
                 longrepr = item.repr_failure(excinfo)
-            else: # exception in setup or teardown
+            else:  # exception in setup or teardown
                 longrepr = item._repr_failure_py(excinfo,
-                                            style=item.config.option.tbstyle)
+                                                 style=item.config.option.tbstyle)
     for rwhen, key, content in item._report_sections:
-        sections.append(("Captured %s %s" %(key, rwhen), content))
+        sections.append(("Captured %s %s" % (key, rwhen), content))
     return TestReport(item.nodeid, item.location,
                       keywords, outcome, longrepr, when,
                       sections, duration)
+
 
 class TestReport(BaseReport):
     """ Basic test report object (also used for setup and teardown calls if
     they fail).
     """
+
     def __init__(self, nodeid, location, keywords, outcome,
                  longrepr, when, sections=(), duration=0, **extra):
         #: normalized collection node id
@@ -334,13 +353,16 @@ class TestReport(BaseReport):
         return "<TestReport %r when=%r outcome=%r>" % (
             self.nodeid, self.when, self.outcome)
 
+
 class TeardownErrorReport(BaseReport):
     outcome = "failed"
     when = "teardown"
+
     def __init__(self, longrepr, **extra):
         self.longrepr = longrepr
         self.sections = []
         self.__dict__.update(extra)
+
 
 def pytest_make_collect_report(collector):
     call = CallInfo(
@@ -363,7 +385,7 @@ def pytest_make_collect_report(collector):
                 errorinfo = CollectErrorRepr(errorinfo)
             longrepr = errorinfo
     rep = CollectReport(collector.nodeid, outcome, longrepr,
-        getattr(call, 'result', None))
+                        getattr(call, 'result', None))
     rep.call = call  # see collect_one_node
     return rep
 
@@ -384,16 +406,20 @@ class CollectReport(BaseReport):
 
     def __repr__(self):
         return "<CollectReport %r lenresult=%s outcome=%r>" % (
-                self.nodeid, len(self.result), self.outcome)
+            self.nodeid, len(self.result), self.outcome)
+
 
 class CollectErrorRepr(TerminalRepr):
     def __init__(self, msg):
         self.longrepr = msg
+
     def toterminal(self, out):
         out.line(self.longrepr, red=True)
 
+
 class SetupState(object):
     """ shared state for setting up/tearing down test items or collectors. """
+
     def __init__(self):
         self.stack = []
         self._finalizers = {}
@@ -405,7 +431,7 @@ class SetupState(object):
         """
         assert colitem and not isinstance(colitem, tuple)
         assert py.builtin.callable(finalizer)
-        #assert colitem in self.stack  # some unit tests don't setup stack :/
+        # assert colitem in self.stack  # some unit tests don't setup stack :/
         self._finalizers.setdefault(colitem, []).append(finalizer)
 
     def _pop_and_teardown(self):
@@ -433,7 +459,7 @@ class SetupState(object):
             colitem.teardown()
         for colitem in self._finalizers:
             assert colitem is None or colitem in self.stack \
-             or isinstance(colitem, tuple)
+                or isinstance(colitem, tuple)
 
     def teardown_all(self):
         while self.stack:
@@ -470,6 +496,7 @@ class SetupState(object):
                 col._prepare_exc = sys.exc_info()
                 raise
 
+
 def collect_one_node(collector):
     ihook = collector.ihook
     ihook.pytest_collectstart(collector=collector)
@@ -488,6 +515,7 @@ class OutcomeException(Exception):
     """ OutcomeException and its subclass instances indicate and
         contain info about test and collection outcomes.
     """
+
     def __init__(self, msg=None, pytrace=True):
         Exception.__init__(self, msg)
         self.msg = msg
@@ -499,8 +527,9 @@ class OutcomeException(Exception):
             if isinstance(val, bytes):
                 val = py._builtin._totext(val, errors='replace')
             return val
-        return "<%s instance>" %(self.__class__.__name__,)
+        return "<%s instance>" % (self.__class__.__name__,)
     __str__ = __repr__
+
 
 class Skipped(OutcomeException):
     # XXX hackish: on 3k we fake to live in the builtins
@@ -519,11 +548,13 @@ class Failed(OutcomeException):
 
 class Exit(KeyboardInterrupt):
     """ raised for immediate program exits (no tracebacks/summaries)"""
+
     def __init__(self, msg="unknown reason"):
         self.msg = msg
         KeyboardInterrupt.__init__(self, msg)
 
 # exposed helper methods
+
 
 def exit(msg):
     """ exit testing process as if KeyboardInterrupt was triggered. """
@@ -567,7 +598,7 @@ def importorskip(modname, minversion=None):
     """
     import warnings
     __tracebackhide__ = True
-    compile(modname, '', 'eval') # to catch syntaxerrors
+    compile(modname, '', 'eval')  # to catch syntaxerrors
     should_skip = False
 
     with warnings.catch_warnings():
@@ -581,7 +612,7 @@ def importorskip(modname, minversion=None):
             # Do not raise chained exception here(#1485)
             should_skip = True
     if should_skip:
-        raise Skipped("could not import %r" %(modname,), allow_module_level=True)
+        raise Skipped("could not import %r" % (modname,), allow_module_level=True)
     mod = sys.modules[modname]
     if minversion is None:
         return mod
@@ -594,6 +625,6 @@ def importorskip(modname, minversion=None):
                           "pkg_resources to parse version strings." % (modname,),
                           allow_module_level=True)
         if verattr is None or pv(verattr) < pv(minversion):
-            raise Skipped("module %r has __version__ %r, required is: %r" %(
+            raise Skipped("module %r has __version__ %r, required is: %r" % (
                           modname, verattr, minversion), allow_module_level=True)
     return mod
