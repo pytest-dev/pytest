@@ -144,10 +144,10 @@ class TestTraceback_f_g_h(object):
             xyz()
         """)
         try:
-            exec (source.compile())
+            exec(source.compile())
         except NameError:
             tb = _pytest._code.ExceptionInfo().traceback
-            print (tb[-1].getsource())
+            print(tb[-1].getsource())
             s = str(tb[-1].getsource())
             assert s.startswith("def xyz():\n    try:")
             assert s.strip().endswith("except somenoname:")
@@ -341,7 +341,7 @@ def test_excinfo_errisinstance():
 
 def test_excinfo_no_sourcecode():
     try:
-        exec ("raise ValueError()")
+        exec("raise ValueError()")
     except ValueError:
         excinfo = _pytest._code.ExceptionInfo()
     s = str(excinfo.traceback[-1])
@@ -431,7 +431,7 @@ class TestFormattedExcinfo(object):
     def excinfo_from_exec(self, source):
         source = _pytest._code.Source(source).strip()
         try:
-            exec (source.compile())
+            exec(source.compile())
         except KeyboardInterrupt:
             raise
         except:
@@ -471,7 +471,7 @@ class TestFormattedExcinfo(object):
         pr = FormattedExcinfo()
         co = compile("raise ValueError()", "", "exec")
         try:
-            exec (co)
+            exec(co)
         except ValueError:
             excinfo = _pytest._code.ExceptionInfo()
         repr = pr.repr_excinfo(excinfo)
@@ -486,7 +486,7 @@ a = 1
 raise ValueError()
 """, "", "exec")
         try:
-            exec (co)
+            exec(co)
         except ValueError:
             excinfo = _pytest._code.ExceptionInfo()
         repr = pr.repr_excinfo(excinfo)
@@ -992,7 +992,7 @@ raise ValueError()
         tw = TWMock()
         r.toterminal(tw)
         for line in tw.lines:
-            print (line)
+            print(line)
         assert tw.lines[0] == ""
         assert tw.lines[1] == "    def f():"
         assert tw.lines[2] == ">       g()"
@@ -1040,7 +1040,7 @@ raise ValueError()
         tw = TWMock()
         r.toterminal(tw)
         for line in tw.lines:
-            print (line)
+            print(line)
         assert tw.lines[0] == ""
         assert tw.lines[1] == "    def f():"
         assert tw.lines[2] == "        try:"

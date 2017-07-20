@@ -321,9 +321,9 @@ class TestConftestVisibility(object):
                                                 # use value from parent dir's
 
         """))
-        print ("created directory structure:")
+        print("created directory structure:")
         for x in testdir.tmpdir.visit():
-            print ("   " + x.relto(testdir.tmpdir))
+            print("   " + x.relto(testdir.tmpdir))
 
         return {
             "runner": runner,
