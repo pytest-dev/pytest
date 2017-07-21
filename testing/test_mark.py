@@ -22,6 +22,19 @@ class TestMark(object):
         mark = Mark()
         pytest.raises((AttributeError, TypeError), mark)
 
+    def test_mark_with_param(self):
+        def some_function(abc):
+            pass
+
+        class SomeClass(object):
+            pass
+
+        assert pytest.mark.fun(some_function) is some_function
+        assert pytest.mark.fun.with_args(some_function) is not some_function
+
+        assert pytest.mark.fun(SomeClass) is SomeClass
+        assert pytest.mark.fun.with_args(SomeClass) is not SomeClass
+
     def test_pytest_mark_name_starts_with_underscore(self):
         mark = Mark()
         pytest.raises(AttributeError, getattr, mark, '_some_name')

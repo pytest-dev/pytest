@@ -335,6 +335,17 @@ class MarkDecorator:
     def __repr__(self):
         return "<MarkDecorator %r>" % (self.mark,)
 
+    def with_args(self, *args, **kwargs):
+        """ return a MarkDecorator with extra arguments added
+
+        unlike call this can be used even if the sole argument is a callable/class
+
+        :return: MarkDecorator
+        """
+
+        mark = Mark(self.name, args, kwargs)
+        return self.__class__(self.mark.combined_with(mark))
+
     def __call__(self, *args, **kwargs):
         """ if passed a single callable argument: decorate it with mark info.
             otherwise add *args/**kwargs in-place to mark information. """
@@ -348,9 +359,7 @@ class MarkDecorator:
                     store_legacy_markinfo(func, self.mark)
                     store_mark(func, self.mark)
                 return func
-
-        mark = Mark(self.name, args, kwargs)
-        return self.__class__(self.mark.combined_with(mark))
+        return self.with_args(*args, **kwargs)
 
 
 def get_unpacked_marks(obj):

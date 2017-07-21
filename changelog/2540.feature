@@ -1,0 +1,1 @@
+Introduce ``mark.with_args`` in order to allow passing functions/classes as sole argument to marks.
