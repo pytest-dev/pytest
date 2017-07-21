@@ -916,8 +916,11 @@ class Testdir:
         env['PYTHONPATH'] = os.pathsep.join(filter(None, [
             str(os.getcwd()), env.get('PYTHONPATH', '')]))
         kw['env'] = env
-        return subprocess.Popen(cmdargs,
-                                stdout=stdout, stderr=stderr, **kw)
+
+        popen = subprocess.Popen(cmdargs, stdin=subprocess.PIPE, stdout=stdout, stderr=stderr, **kw)
+        popen.stdin.close()
+
+        return popen
 
     def run(self, *cmdargs):
         """Run a command with arguments.
