@@ -355,7 +355,7 @@ class TestLoggingInteraction(object):
         """)
         result = testdir.runpytest_subprocess(
             p, "--traceconfig",
-            "-p", "no:capturelog")
+            "-p", "no:capturelog", "-p", "no:hypothesis", "-p", "no:hypothesispytest")
         assert result.ret != 0
         result.stdout.fnmatch_lines([
             "*hello432*",

@@ -284,7 +284,6 @@ if _PY2:
     # Without this the test_dupfile_on_textio will fail, otherwise CaptureIO could directly inherit from StringIO.
     from py.io import TextIO
 
-
     class CaptureIO(TextIO):
 
         @property
