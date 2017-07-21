@@ -355,7 +355,7 @@ class TestLoggingInteraction(object):
         """)
         result = testdir.runpytest_subprocess(
             p, "--traceconfig",
-            "-p", "no:capturelog")
+            "-p", "no:capturelog", "-p", "no:hypothesis", "-p", "no:hypothesispytest")
         assert result.ret != 0
         result.stdout.fnmatch_lines([
             "*hello432*",
@@ -1038,6 +1038,15 @@ class TestStdCaptureFDinvalidFD(object):
 def test_capture_not_started_but_reset():
     capsys = StdCapture()
     capsys.stop_capturing()
+
+
+def test_using_capsys_fixture_works_with_sys_stdout_encoding(capsys):
+    test_text = 'test text'
+
+    print(test_text.encode(sys.stdout.encoding, 'replace'))
+    (out, err) = capsys.readouterr()
+    assert out
+    assert err == ''
 
 
 @needsosdup
