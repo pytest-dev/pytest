@@ -188,3 +188,32 @@ def test_works_with_filterwarnings(testdir):
     result.stdout.fnmatch_lines([
         '*== 1 passed in *',
     ])
+
+
+@pytest.mark.parametrize('default_config', ['ini', 'cmdline'])
+def test_filterwarnings_mark(testdir, default_config):
+    """
+    Test ``filterwarnings`` mark works and takes precedence over command line and ini options.
+    """
+    if default_config == 'ini':
+        testdir.makeini("""
+            [pytest]
+            filterwarnings = always
+        """)
+    testdir.makepyfile("""
+        import warnings
+        import pytest
+
+        @pytest.mark.filterwarnings('ignore::RuntimeWarning')
+        def test_ignore_runtime_warning():
+            warnings.warn(RuntimeWarning())
+
+        @pytest.mark.filterwarnings('error')
+        def test_warning_error():
+            warnings.warn(RuntimeWarning())
+
+        def test_show_warning():
+            warnings.warn(RuntimeWarning())
+    """)
+    result = testdir.runpytest('-W always' if default_config == 'cmdline' else '')
+    result.stdout.fnmatch_lines(['*= 1 failed, 2 passed, 1 warnings in *'])
