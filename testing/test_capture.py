@@ -83,14 +83,14 @@ class TestCaptureManager(object):
             assert outerr == ("", "")
             outerr = capman.suspendcapture()
             assert outerr == ("", "")
-            print ("hello")
+            print("hello")
             out, err = capman.suspendcapture()
             if method == "no":
                 assert old == (sys.stdout, sys.stderr, sys.stdin)
             else:
                 assert not out
             capman.resumecapture()
-            print ("hello")
+            print("hello")
             out, err = capman.suspendcapture()
             if method != "no":
                 assert out == "hello\n"
@@ -288,7 +288,7 @@ class TestLoggingInteraction(object):
                 stream.close() # to free memory/release resources
         """)
         result = testdir.runpytest_subprocess(p)
-        result.stderr.str().find("atexit") == -1
+        assert result.stderr.str().find("atexit") == -1
 
     def test_logging_and_immediate_setupteardown(self, testdir):
         p = testdir.makepyfile("""
@@ -305,7 +305,7 @@ class TestLoggingInteraction(object):
                 assert 0
         """)
         for optargs in (('--capture=sys',), ('--capture=fd',)):
-            print (optargs)
+            print(optargs)
             result = testdir.runpytest_subprocess(p, *optargs)
             s = result.stdout.str()
             result.stdout.fnmatch_lines([
@@ -331,7 +331,7 @@ class TestLoggingInteraction(object):
                 assert 0
         """)
         for optargs in (('--capture=sys',), ('--capture=fd',)):
-            print (optargs)
+            print(optargs)
             result = testdir.runpytest_subprocess(p, *optargs)
             s = result.stdout.str()
             result.stdout.fnmatch_lines([
@@ -879,7 +879,7 @@ class TestStdCapture(object):
 
     def test_capturing_readouterr(self):
         with self.getcapture() as cap:
-            print ("hello world")
+            print("hello world")
             sys.stderr.write("hello error\n")
             out, err = cap.readouterr()
             assert out == "hello world\n"
@@ -890,7 +890,7 @@ class TestStdCapture(object):
 
     def test_capturing_readouterr_unicode(self):
         with self.getcapture() as cap:
-            print ("hx\xc4\x85\xc4\x87")
+            print("hx\xc4\x85\xc4\x87")
             out, err = cap.readouterr()
         assert out == py.builtin._totext("hx\xc4\x85\xc4\x87\n", "utf8")
 
@@ -905,7 +905,7 @@ class TestStdCapture(object):
 
     def test_reset_twice_error(self):
         with self.getcapture() as cap:
-            print ("hello")
+            print("hello")
             out, err = cap.readouterr()
         pytest.raises(ValueError, cap.stop_capturing)
         assert out == "hello\n"
@@ -919,7 +919,7 @@ class TestStdCapture(object):
             sys.stderr.write("world")
             sys.stdout = capture.CaptureIO()
             sys.stderr = capture.CaptureIO()
-            print ("not seen")
+            print("not seen")
             sys.stderr.write("not seen\n")
             out, err = cap.readouterr()
         assert out == "hello"
@@ -929,9 +929,9 @@ class TestStdCapture(object):
 
     def test_capturing_error_recursive(self):
         with self.getcapture() as cap1:
-            print ("cap1")
+            print("cap1")
             with self.getcapture() as cap2:
-                print ("cap2")
+                print("cap2")
                 out2, err2 = cap2.readouterr()
                 out1, err1 = cap1.readouterr()
         assert out1 == "cap1\n"
@@ -961,9 +961,9 @@ class TestStdCapture(object):
         assert sys.stdin is old
 
     def test_stdin_nulled_by_default(self):
-        print ("XXX this test may well hang instead of crashing")
-        print ("XXX which indicates an error in the underlying capturing")
-        print ("XXX mechanisms")
+        print("XXX this test may well hang instead of crashing")
+        print("XXX which indicates an error in the underlying capturing")
+        print("XXX mechanisms")
         with self.getcapture():
             pytest.raises(IOError, "sys.stdin.read()")
 

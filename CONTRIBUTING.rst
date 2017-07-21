@@ -212,7 +212,12 @@ but here is a simple overview:
     $ tox -e linting,py27,py36
 
    This command will run tests via the "tox" tool against Python 2.7 and 3.6
-   and also perform "lint" coding-style checks.
+   and also perform "lint" coding-style checks. If you have too much linting errors,
+   try running::
+
+    $ tox -e fix-lint
+
+   To fix pep8 related errors. 
 
 #. You can now edit your local working copy.
 
