@@ -2,7 +2,6 @@ from __future__ import absolute_import, division, print_function
 import warnings
 import re
 import py
-import sys
 
 import pytest
 from _pytest.recwarn import WarningsRecorder
@@ -125,6 +124,7 @@ class TestDeprecatedCall(object):
     @pytest.mark.parametrize('warning_type', [PendingDeprecationWarning, DeprecationWarning])
     @pytest.mark.parametrize('mode', ['context_manager', 'call'])
     @pytest.mark.parametrize('call_f_first', [True, False])
+    @pytest.mark.filterwarnings('ignore')
     def test_deprecated_call_modes(self, warning_type, mode, call_f_first):
         """Ensure deprecated_call() captures a deprecation warning as expected inside its
         block/function.
@@ -169,32 +169,6 @@ class TestDeprecatedCall(object):
             with pytest.raises(AssertionError):
                 with pytest.deprecated_call():
                     f()
-
-    def test_deprecated_function_already_called(self, testdir):
-        """deprecated_call should be able to catch a call to a deprecated
-        function even if that function has already been called in the same
-        module. See #1190.
-        """
-        testdir.makepyfile("""
-            import warnings
-            import pytest
-
-            def deprecated_function():
-                warnings.warn("deprecated", DeprecationWarning)
-
-            def test_one():
-                deprecated_function()
-
-            def test_two():
-                pytest.deprecated_call(deprecated_function)
-        """)
-        result = testdir.runpytest()
-        # for some reason in py26 catch_warnings manages to catch the deprecation warning
-        # from deprecated_function(), even with default filters active (which ignore deprecation
-        # warnings)
-        py26 = sys.version_info[:2] == (2, 6)
-        expected = '*=== 2 passed in *===' if not py26 else '*=== 2 passed, 1 warnings in *==='
-        result.stdout.fnmatch_lines(expected)
 
 
 class TestWarns(object):

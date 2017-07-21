@@ -9,9 +9,9 @@ def test_simple_unittest(testdir):
         import unittest
         class MyTestCase(unittest.TestCase):
             def testpassing(self):
-                self.assertEquals('foo', 'foo')
+                self.assertEqual('foo', 'foo')
             def test_failing(self):
-                self.assertEquals('foo', 'bar')
+                self.assertEqual('foo', 'bar')
     """)
     reprec = testdir.inline_run(testpath)
     assert reprec.matchreport("testpassing").passed
@@ -23,10 +23,10 @@ def test_runTest_method(testdir):
         import unittest
         class MyTestCaseWithRunTest(unittest.TestCase):
             def runTest(self):
-                self.assertEquals('foo', 'foo')
+                self.assertEqual('foo', 'foo')
         class MyTestCaseWithoutRunTest(unittest.TestCase):
             def runTest(self):
-                self.assertEquals('foo', 'foo')
+                self.assertEqual('foo', 'foo')
             def test_something(self):
                 pass
         """)
@@ -59,7 +59,7 @@ def test_setup(testdir):
             def setup_method(self, method):
                 self.foo2 = 1
             def test_both(self):
-                self.assertEquals(1, self.foo)
+                self.assertEqual(1, self.foo)
                 assert self.foo2 == 1
             def teardown_method(self, method):
                 assert 0, "42"
@@ -136,7 +136,7 @@ def test_teardown(testdir):
                 self.l.append(None)
         class Second(unittest.TestCase):
             def test_check(self):
-                self.assertEquals(MyTestCase.l, [None])
+                self.assertEqual(MyTestCase.l, [None])
     """)
     reprec = testdir.inline_run(testpath)
     passed, skipped, failed = reprec.countoutcomes()
@@ -598,7 +598,7 @@ def test_unittest_not_shown_in_traceback(testdir):
         class t(unittest.TestCase):
             def test_hello(self):
                 x = 3
-                self.assertEquals(x, 4)
+                self.assertEqual(x, 4)
     """)
     res = testdir.runpytest()
     assert "failUnlessEqual" not in res.stdout.str()
