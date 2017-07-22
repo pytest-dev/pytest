@@ -9,7 +9,6 @@ import collections
 from textwrap import dedent
 from itertools import count
 
-import math
 import py
 from _pytest.mark import MarkerError
 from _pytest.config import hookimpl
