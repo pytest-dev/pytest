@@ -787,6 +787,7 @@ class TestKeywordSelection(object):
                   marks=[pytest.mark.xfail, pytest.mark.skip], id=None)),
 
 ])
+@pytest.mark.filterwarnings('ignore')
 def test_parameterset_extractfrom(argval, expected):
     extracted = ParameterSet.extract_from(argval)
     assert extracted == expected

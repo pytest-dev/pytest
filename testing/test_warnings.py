@@ -33,6 +33,7 @@ def pyfile_with_warnings(testdir, request):
     })
 
 
+@pytest.mark.filterwarnings('always')
 def test_normal_flow(testdir, pyfile_with_warnings):
     """
     Check that the warnings section is displayed, containing test node ids followed by
@@ -54,6 +55,7 @@ def test_normal_flow(testdir, pyfile_with_warnings):
     assert result.stdout.str().count('test_normal_flow.py::test_func') == 1
 
 
+@pytest.mark.filterwarnings('always')
 def test_setup_teardown_warnings(testdir, pyfile_with_warnings):
     testdir.makepyfile('''
         import warnings
@@ -115,6 +117,7 @@ def test_ignore(testdir, pyfile_with_warnings, method):
 
 @pytest.mark.skipif(sys.version_info < (3, 0),
                     reason='warnings message is unicode is ok in python3')
+@pytest.mark.filterwarnings('always')
 def test_unicode(testdir, pyfile_with_warnings):
     testdir.makepyfile('''
         # -*- coding: utf8 -*-
@@ -152,6 +155,7 @@ def test_py2_unicode(testdir, pyfile_with_warnings):
             warnings.warn(u"测试")
             yield
 
+        @pytest.mark.filterwarnings('always')
         def test_func(fix):
             pass
     ''')

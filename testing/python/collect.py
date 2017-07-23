@@ -12,6 +12,9 @@ from _pytest.main import (
 )
 
 
+ignore_parametrized_marks = pytest.mark.filterwarnings('ignore:Applying marks directly to parameters')
+
+
 class TestModule(object):
     def test_failing_import(self, testdir):
         modcol = testdir.getmodulecol("import alksdjalskdjalkjals")
@@ -567,7 +570,8 @@ class TestFunction(object):
         rec = testdir.inline_run()
         rec.assertoutcome(passed=1)
 
-    def test_parametrize_with_mark(selfself, testdir):
+    @ignore_parametrized_marks
+    def test_parametrize_with_mark(self, testdir):
         items = testdir.getitems("""
             import pytest
             @pytest.mark.foo
@@ -640,6 +644,7 @@ class TestFunction(object):
         assert colitems[2].name == 'test2[a-c]'
         assert colitems[3].name == 'test2[b-c]'
 
+    @ignore_parametrized_marks
     def test_parametrize_skipif(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -653,6 +658,7 @@ class TestFunction(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines('* 2 passed, 1 skipped in *')
 
+    @ignore_parametrized_marks
     def test_parametrize_skip(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -666,6 +672,7 @@ class TestFunction(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines('* 2 passed, 1 skipped in *')
 
+    @ignore_parametrized_marks
     def test_parametrize_skipif_no_skip(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -679,6 +686,7 @@ class TestFunction(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines('* 1 failed, 2 passed in *')
 
+    @ignore_parametrized_marks
     def test_parametrize_xfail(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -692,6 +700,7 @@ class TestFunction(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines('* 2 passed, 1 xfailed in *')
 
+    @ignore_parametrized_marks
     def test_parametrize_passed(self, testdir):
         testdir.makepyfile("""
             import pytest
@@ -705,6 +714,7 @@ class TestFunction(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines('* 2 passed, 1 xpassed in *')
 
+    @ignore_parametrized_marks
     def test_parametrize_xfail_passed(self, testdir):
         testdir.makepyfile("""
             import pytest
