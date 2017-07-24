@@ -1,0 +1,1 @@
+Early import colorama so that it get's the correct terminal.
