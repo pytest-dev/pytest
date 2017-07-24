@@ -37,6 +37,7 @@ def pytest_load_initial_conftests(early_config, parser, args):
     ns = early_config.known_args_namespace
     if ns.capture == "fd":
         _py36_windowsconsoleio_workaround()
+    _colorama_workaround()
     _readline_workaround()
     pluginmanager = early_config.pluginmanager
     capman = CaptureManager(ns.capture)
@@ -471,6 +472,24 @@ class DontReadFromInput:
             return self
         else:
             raise AttributeError('redirected stdin has no attribute buffer')
+
+
+def _colorama_workaround():
+    """
+    Ensure colorama is imported so that it attaches to the correct stdio
+    handles on Windows.
+    
+    colorama uses the terminal on import time. So if something does the
+    first import of colorama while I/O capture is active, colorama will
+    fail in various ways.
+    """
+
+    if not sys.platform.startswith('win32'):
+        return
+    try:
+        import colorama  # noqa
+    except ImportError:
+        pass
 
 
 def _readline_workaround():
