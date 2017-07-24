@@ -1,0 +1,1 @@
+Fix terminal color changing to black on Windows if ``colorama`` is imported in a ``conftest.py`` file.
