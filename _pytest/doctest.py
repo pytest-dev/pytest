@@ -140,7 +140,7 @@ class DoctestItem(pytest.Item):
             return super(DoctestItem, self).repr_failure(excinfo)
 
     def reportinfo(self):
-        return self.fspath, None, "[doctest] %s" % self.name
+        return self.fspath, self.dtest.lineno, "[doctest] %s" % self.name
 
 
 def _get_flag_lookup():
