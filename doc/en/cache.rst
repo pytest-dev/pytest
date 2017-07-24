@@ -1,3 +1,5 @@
+.. _cache:
+
 Cache: working with cross-testrun state
 =======================================
 
