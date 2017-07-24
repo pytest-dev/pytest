@@ -1,0 +1,1 @@
+doctests line numbers are now reported correctly, fixing `pytest-sugar#122 <https://github.com/Frozenball/pytest-sugar/issues/122>`_.
