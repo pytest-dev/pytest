@@ -708,7 +708,7 @@ def test_skipped_reasons_functional(testdir):
     )
     result = testdir.runpytest('-rs')
     result.stdout.fnmatch_lines([
-        "*SKIP*2*conftest.py:3: test",
+        "*SKIP*2*conftest.py:4: test",
     ])
     assert result.ret == 0
 
