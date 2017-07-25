@@ -335,21 +335,6 @@ def test_getstartingblock_singleline():
     assert len(l) == 1
 
 
-def test_getstartingblock_multiline():
-    class A(object):
-        def __init__(self, *args):
-            frame = sys._getframe(1)
-            self.source = _pytest._code.Frame(frame).statement
-
-    x = A('x',
-          'y'
-          ,
-          'z')
-
-    l = [i for i in x.source.lines if i.strip()]
-    assert len(l) == 4
-
-
 def test_getline_finally():
     def c(): pass
     excinfo = pytest.raises(TypeError, """

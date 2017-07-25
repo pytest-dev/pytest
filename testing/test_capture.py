@@ -288,7 +288,7 @@ class TestLoggingInteraction(object):
                 stream.close() # to free memory/release resources
         """)
         result = testdir.runpytest_subprocess(p)
-        result.stderr.str().find("atexit") == -1
+        assert result.stderr.str().find("atexit") == -1
 
     def test_logging_and_immediate_setupteardown(self, testdir):
         p = testdir.makepyfile("""

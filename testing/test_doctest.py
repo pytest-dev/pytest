@@ -545,6 +545,22 @@ class TestDoctests(object):
         result = testdir.runpytest(p, '--doctest-modules')
         result.stdout.fnmatch_lines(['* 1 passed *'])
 
+    def test_reportinfo(self, testdir):
+        '''
+        Test case to make sure that DoctestItem.reportinfo() returns lineno.
+        '''
+        p = testdir.makepyfile(test_reportinfo="""
+            def foo(x):
+                '''
+                    >>> foo('a')
+                    'b'
+                '''
+                return 'c'
+        """)
+        items, reprec = testdir.inline_genitems(p, '--doctest-modules')
+        reportinfo = items[0].reportinfo()
+        assert reportinfo[1] == 1
+
 
 class TestLiterals(object):
 
