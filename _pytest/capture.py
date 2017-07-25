@@ -255,7 +255,7 @@ class EncodedFile(object):
         self.write(data)
 
     def __getattr__(self, name):
-        return getattr(object.__getattribute__(self, "buffer"), name)
+        return getattr(self.buffer, name)
 
 
 class MultiCapture(object):
