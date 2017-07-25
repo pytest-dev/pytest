@@ -2548,7 +2548,6 @@ class TestFixtureMarker(object):
             '*test_foo*beta*'])
 
     @pytest.mark.issue920
-    @pytest.mark.xfail(reason="Fixture reordering not deterministic with hash randomisation")
     def test_deterministic_fixture_collection(self, testdir, monkeypatch):
         testdir.makepyfile("""
             import pytest
