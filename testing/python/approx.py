@@ -1,4 +1,5 @@
 # encoding: utf-8
+import operator
 import sys
 import pytest
 import doctest
@@ -382,3 +383,16 @@ class TestApprox(object):
             '*At index 0 diff: 3 != 4 * {0}'.format(expected),
             '=* 1 failed in *=',
         ])
+
+    @pytest.mark.parametrize('op', [
+        pytest.param(operator.le, id='<='),
+        pytest.param(operator.lt, id='<'),
+        pytest.param(operator.ge, id='>='),
+        pytest.param(operator.gt, id='>'),
+    ])
+    def test_comparison_operator_type_error(self, op):
+        """
+        pytest.approx should raise TypeError for operators other than == and != (#2003).
+        """
+        with pytest.raises(TypeError):
+            op(1, approx(1, rel=1e-6, abs=1e-12))

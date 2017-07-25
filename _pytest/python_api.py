@@ -7,6 +7,19 @@ from _pytest.compat import isclass, izip
 from _pytest.runner import fail
 import _pytest._code
 
+
+def _cmp_raises_type_error(self, other):
+    """__cmp__ implementation which raises TypeError. Used
+    by Approx base classes to implement only == and != and raise a
+    TypeError for other comparisons.
+
+    Needed in Python 2 only, Python 3 all it takes is not implementing the
+    other operators at all.
+    """
+    __tracebackhide__ = True
+    raise TypeError('Comparison operators other than == and != not supported by approx objects')
+
+
 # builtin pytest.approx helper
 
 
@@ -32,14 +45,11 @@ class ApproxBase(object):
 
     __hash__ = None
 
-    def __gt__(self, actual):
-        raise NotImplementedError
-
-    def __lt__(self, actual):
-        raise NotImplementedError
-
     def __ne__(self, actual):
         return not (actual == self)
+
+    if sys.version_info[0] == 2:
+        __cmp__ = _cmp_raises_type_error
 
     def _approx_scalar(self, x):
         return ApproxScalar(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
@@ -66,11 +76,8 @@ class ApproxNumpy(ApproxBase):
         return "approx({0!r})".format(list(
             self._approx_scalar(x) for x in self.expected))
 
-    def __gt__(self, actual):
-        raise NotImplementedError
-
-    def __lt__(self, actual):
-        raise NotImplementedError
+    if sys.version_info[0] == 2:
+        __cmp__ = _cmp_raises_type_error
 
     def __eq__(self, actual):
         import numpy as np
@@ -370,12 +377,14 @@ def approx(expected, rel=None, abs=None, nan_ok=False):
       is asymmetric and you can think of ``b`` as the reference value.  In the
       special case that you explicitly specify an absolute tolerance but not a
       relative tolerance, only the absolute tolerance is considered.
-    
+
     .. warning::
 
-       In order to avoid inconsistent behavior, a ``NotImplementedError`` is
-       raised for ``__lt__`` and ``__gt__`` comparisons. The example below
-       illustrates the problem::
+       .. versionchanged:: 3.2
+
+       In order to avoid inconsistent behavior, ``TypeError`` is
+       raised for ``>``, ``>=``, ``<`` and ``<=`` comparisons.
+       The example below illustrates the problem::
 
            assert approx(0.1) > 0.1 + 1e-10  # calls approx(0.1).__gt__(0.1 + 1e-10)
            assert 0.1 + 1e-10 > approx(0.1)  # calls approx(0.1).__lt__(0.1 + 1e-10)
