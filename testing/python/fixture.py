@@ -2547,6 +2547,40 @@ class TestFixtureMarker(object):
             '*test_foo*alpha*',
             '*test_foo*beta*'])
 
+    @pytest.mark.issue920
+    @pytest.mark.xfail(reason="Fixture reordering not deterministic with hash randomisation")
+    def test_deterministic_fixture_collection(self, testdir, monkeypatch):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture(scope="module",
+                            params=["A",
+                                    "B",
+                                    "C"])
+            def A(request):
+                return request.param
+
+            @pytest.fixture(scope="module",
+                            params=["DDDDDDDDD", "EEEEEEEEEEEE", "FFFFFFFFFFF", "banansda"])
+            def B(request, A):
+                return request.param
+
+            def test_foo(B):
+                # Something funky is going on here.
+                # Despite specified seeds, on what is collected,
+                # sometimes we get unexpected passes. hashing B seems
+                # to help?
+                assert hash(B) or True
+            """)
+        monkeypatch.setenv("PYTHONHASHSEED", "1")
+        out1 = testdir.runpytest_subprocess("-v")
+        monkeypatch.setenv("PYTHONHASHSEED", "2")
+        out2 = testdir.runpytest_subprocess("-v")
+        out1 = [line for line in out1.outlines if line.startswith("test_deterministic_fixture_collection.py::test_foo")]
+        out2 = [line for line in out2.outlines if line.startswith("test_deterministic_fixture_collection.py::test_foo")]
+        assert len(out1) == 12
+        assert out1 == out2
+
 
 class TestRequestScopeAccess(object):
     pytestmark = pytest.mark.parametrize(("scope", "ok", "error"), [
