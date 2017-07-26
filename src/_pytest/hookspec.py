@@ -609,3 +609,13 @@ def pytest_enter_pdb(config):
 
     :param _pytest.config.Config config: pytest config object
     """
+
+
+def pytest_leave_pdb(config):
+    """ called when leaving pdb (e.g. with continue after pdb.set_trace()).
+
+    Can be used by plugins to take special action just after the python
+    debugger leaves interactive mode.
+
+    :param _pytest.config.Config config: pytest config object
+    """

@@ -1,0 +1,1 @@
+Resume capturing output after ``continue`` with ``__import__("pdb").set_trace()``.

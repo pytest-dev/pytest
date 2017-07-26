@@ -96,8 +96,44 @@ class pytestPDB(object):
             tw.line()
             tw.sep(">", "PDB set_trace (IO-capturing turned off)")
             cls._pluginmanager.hook.pytest_enter_pdb(config=cls._config)
+
+            class _PdbWrapper(cls._pdb_cls, object):
+                _pytest_capman = capman
+                _continued = False
+
+                def do_continue(self, arg):
+                    ret = super(_PdbWrapper, self).do_continue(arg)
+                    if self._pytest_capman:
+                        tw = _pytest.config.create_terminal_writer(cls._config)
+                        tw.line()
+                        tw.sep(">", "PDB continue (IO-capturing resumed)")
+                        self._pytest_capman.resume_global_capture()
+                    cls._pluginmanager.hook.pytest_leave_pdb(config=cls._config)
+                    self._continued = True
+                    return ret
+
+                do_c = do_cont = do_continue
+
+                def setup(self, f, tb):
+                    """Suspend on setup().
+
+                    Needed after do_continue resumed, and entering another
+                    breakpoint again.
+                    """
+                    ret = super(_PdbWrapper, self).setup(f, tb)
+                    if not ret and self._continued:
+                        # pdb.setup() returns True if the command wants to exit
+                        # from the interaction: do not suspend capturing then.
+                        if self._pytest_capman:
+                            self._pytest_capman.suspend_global_capture(in_=True)
+                    return ret
+
+            _pdb = _PdbWrapper()
+        else:
+            _pdb = cls._pdb_cls()
+
         if set_break:
-            cls._pdb_cls().set_trace(frame)
+            _pdb.set_trace(frame)
 
 
 class PdbInvoke(object):
