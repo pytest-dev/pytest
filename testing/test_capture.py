@@ -716,13 +716,21 @@ def test_dupfile(tmpfile):
         assert nf not in flist
         print(i, end="", file=nf)
         flist.append(nf)
+
+    fname_open = flist[0].name
+    assert fname_open == repr(flist[0].buffer)
+
     for i in range(5):
         f = flist[i]
         f.close()
+    fname_closed = flist[0].name
+    assert fname_closed == repr(flist[0].buffer)
+    assert fname_closed != fname_open
     tmpfile.seek(0)
     s = tmpfile.read()
     assert "01234" in repr(s)
     tmpfile.close()
+    assert fname_closed == repr(flist[0].buffer)
 
 
 def test_dupfile_on_bytesio():
@@ -730,6 +738,7 @@ def test_dupfile_on_bytesio():
     f = capture.safe_text_dupfile(io, "wb")
     f.write("hello")
     assert io.getvalue() == b"hello"
+    assert 'BytesIO object' in f.name
 
 
 def test_dupfile_on_textio():
@@ -737,6 +746,7 @@ def test_dupfile_on_textio():
     f = capture.safe_text_dupfile(io, "wb")
     f.write("hello")
     assert io.getvalue() == "hello"
+    assert not hasattr(f, 'name')
 
 
 @contextlib.contextmanager
