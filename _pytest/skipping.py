@@ -382,4 +382,4 @@ def show_skipped(terminalreporter, lines):
                     reason = reason[9:]
                 lines.append(
                     "SKIP [%d] %s:%d: %s" %
-                    (num, fspath, lineno, reason))
+                    (num, fspath, lineno + 1, reason))

@@ -34,13 +34,13 @@ If you are reporting a bug, please include:
 
 * Your operating system name and version.
 * Any details about your local setup that might be helpful in troubleshooting,
-  specifically Python interpreter version,
-  installed libraries and pytest version.
+  specifically the Python interpreter version, installed libraries, and pytest
+  version.
 * Detailed steps to reproduce the bug.
 
-If you can write a demonstration test that currently fails but should pass (xfail),
-that is a very useful commit to make as well, even if you can't find how
-to fix the bug yet.
+If you can write a demonstration test that currently fails but should pass
+(xfail), that is a very useful commit to make as well, even if you cannot
+fix the bug itself.
 
 
 .. _fixbugs:
@@ -165,29 +165,30 @@ Short version
 ~~~~~~~~~~~~~
 
 #. Fork the repository;
-#. Target ``master`` for bug-fix and doc changes;
+#. Target ``master`` for bugfixes and doc changes;
 #. Target ``features`` for new features or functionality changes.
 #. Follow **PEP-8**. There's a ``tox`` command to help fixing it: ``tox -e fix-lint``.
 #. Tests are run using ``tox``::
 
     tox -e linting,py27,py36
 
-   The test environments above are usually enough to to cover most cases locally.
+   The test environments above are usually enough to cover most cases locally.
 
-#. Write a ``changelog`` entry: ``changelog/2574.bugfix``, use issue id number and one of
-   ``bugfix``, ``removal``, ``feature``, ``vendor``, ``doc`` or ``trivial`` for the issue type.
+#. Write a ``changelog`` entry: ``changelog/2574.bugfix``, use issue id number
+   and one of ``bugfix``, ``removal``, ``feature``, ``vendor``, ``doc`` or
+   ``trivial`` for the issue type.
 #. Add yourself to ``AUTHORS`` file if not there yet, in alphabetical order.
 
 
 Long version
 ~~~~~~~~~~~~
 
-
-What is a "pull request"?  It informs project's core developers about the
+What is a "pull request"?  It informs the project's core developers about the
 changes you want to review and merge.  Pull requests are stored on
 `GitHub servers <https://github.com/pytest-dev/pytest/pulls>`_.
 Once you send a pull request, we can discuss its potential modifications and
-even add more commits to it later on. There's an excellent tutorial on how Pull Requests work in the
+even add more commits to it later on. There's an excellent tutorial on how Pull
+Requests work in the
 `GitHub Help Center <https://help.github.com/articles/using-pull-requests/>`_.
 
 Here is a simple overview, with pytest-specific bits:
