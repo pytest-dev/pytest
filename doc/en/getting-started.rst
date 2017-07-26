@@ -9,7 +9,8 @@ Installation and Getting Started
 
 **dependencies**: `py <http://pypi.python.org/pypi/py>`_,
 `colorama (Windows) <http://pypi.python.org/pypi/colorama>`_,
-`argparse (py26) <http://pypi.python.org/pypi/argparse>`_.
+`argparse (py26) <http://pypi.python.org/pypi/argparse>`_,
+`ordereddict (py26) <http://pypi.python.org/pypi/ordereddict>`_.
 
 **documentation as PDF**: `download latest <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
 
