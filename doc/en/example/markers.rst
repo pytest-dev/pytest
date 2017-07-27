@@ -173,14 +173,14 @@ Or to select "http" and "quick" tests::
 
 .. note::
 
-    If you are using expressions such as "X and Y" then both X and Y
-    need to be simple non-keyword names.  For example, "pass" or "from"
-    will result in SyntaxErrors because "-k" evaluates the expression.
+    If you are using expressions such as ``"X and Y"`` then both ``X`` and ``Y``
+    need to be simple non-keyword names.  For example, ``"pass"`` or ``"from"``
+    will result in SyntaxErrors because ``"-k"`` evaluates the expression using Python's ``eval`` function.
 
-    However, if the "-k" argument is a simple string, no such restrictions
-    apply.  Also "-k 'not STRING'" has no restrictions.  You can also
-    specify numbers like "-k 1.3" to match tests which are parametrized
-    with the float "1.3".
+    However, if the ``"-k"`` argument is a simple string, no such restrictions
+    apply.  Also ``"-k 'not STRING'"`` has no restrictions.  You can also
+    specify numbers like ``"-k 1.3"`` to match tests which are parametrized
+    with the float ``"1.3"``.
 
 Registering markers
 -------------------------------------

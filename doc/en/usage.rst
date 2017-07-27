@@ -123,22 +123,15 @@ for example::
     >>> sys.last_value
     AssertionError('assert result == "ok"',)
 
-Setting a breakpoint / aka ``set_trace()``
-----------------------------------------------------
+.. _breakpoints:
 
-If you want to set a breakpoint and enter the ``pdb.set_trace()`` you
-can use a helper::
+Setting breakpoints
+-------------------
 
-    import pytest
-    def test_function():
-        ...
-        pytest.set_trace()    # invoke PDB debugger and tracing
+.. versionadded: 2.4.0
 
-.. versionadded: 2.0.0
-
-Prior to pytest version 2.0.0 you could only enter PDB_ tracing if you disabled
-capturing on the command line via ``pytest -s``. In later versions, pytest
-automatically disables its output capture when you enter PDB_ tracing:
+To set a breakpoint in your code use the native Python ``import pdb;pdb.set_trace()`` call
+in your code and pytest automatically disables its output capture for that test:
 
 * Output capture in other tests is not affected.
 * Any prior test output that has already been captured and will be processed as
@@ -148,12 +141,6 @@ automatically disables its output capture when you enter PDB_ tracing:
   for test output occurring after you exit the interactive PDB_ tracing session
   and continue with the regular test run.
 
-.. versionadded: 2.4.0
-
-Since pytest version 2.4.0 you can also use the native Python
-``import pdb;pdb.set_trace()`` call to enter PDB_ tracing without having to use
-the ``pytest.set_trace()`` wrapper or explicitly disable pytest's output
-capturing via ``pytest -s``.
 
 .. _durations:
 

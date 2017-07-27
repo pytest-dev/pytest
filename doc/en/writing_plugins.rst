@@ -90,7 +90,7 @@ Here is how you might run it::
      pytest test_flat.py   # will not show "setting up"
      pytest a/test_sub.py  # will show "setting up"
 
-.. Note::
+.. note::
     If you have ``conftest.py`` files which do not reside in a
     python package directory (i.e. one containing an ``__init__.py``) then
     "import conftest" can be ambiguous because there might be other

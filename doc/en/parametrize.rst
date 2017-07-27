@@ -99,26 +99,6 @@ for example with the builtin ``mark.xfail``::
     def test_eval(test_input, expected):
         assert eval(test_input) == expected
 
-.. note::
-
-  prior to version 3.1 the supported mechanism for marking values
-  used the syntax::
-
-        import pytest
-        @pytest.mark.parametrize("test_input,expected", [
-            ("3+5", 8),
-            ("2+4", 6),
-            pytest.mark.xfail(("6*9", 42),),
-        ])
-        def test_eval(test_input, expected):
-            assert eval(test_input) == expected
-
-
-  This was an initial hack to support the feature but soon was demonstrated to be incomplete,
-  broken for passing functions or applying multiple marks with the same name but different parameters.
-  The old syntax will be removed in pytest-4.0.
-
-
 Let's run this::
 
     $ pytest
@@ -143,15 +123,8 @@ To get all combinations of multiple parametrized arguments you can stack
     def test_foo(x, y):
         pass
 
-This will run the test with the arguments set to x=0/y=2, x=0/y=3, x=1/y=2 and
-x=1/y=3.
-
-.. note::
-
-    In versions prior to 2.4 one needed to specify the argument
-    names as a tuple.  This remains valid but the simpler ``"name1,name2,..."``
-    comma-separated-string syntax is now advertised first because
-    it's easier to write and produces less line noise.
+This will run the test with the arguments set to ``x=0/y=2``, ``x=0/y=3``, ``x=1/y=2`` and
+``x=1/y=3``.
 
 .. _`pytest_generate_tests`:
 
