@@ -460,6 +460,28 @@ class TestLastFailed(object):
         result.stdout.fnmatch_lines('*1 failed*')
         assert self.get_cached_last_failed(testdir) == ['test_xfail_strict_considered_failure.py::test']
 
+    @pytest.mark.parametrize('mark', ['mark.xfail', 'mark.skip'])
+    def test_failed_changed_to_xfail_or_skip(self, testdir, mark):
+        testdir.makepyfile('''
+            import pytest
+            def test():
+                assert 0
+        ''')
+        result = testdir.runpytest()
+        assert self.get_cached_last_failed(testdir) == ['test_failed_changed_to_xfail_or_skip.py::test']
+        assert result.ret == 1
+
+        testdir.makepyfile('''
+            import pytest
+            @pytest.{mark}
+            def test():
+                assert 0
+        '''.format(mark=mark))
+        result = testdir.runpytest()
+        assert result.ret == 0
+        assert self.get_cached_last_failed(testdir) == []
+        assert result.ret == 0
+
     def get_cached_last_failed(self, testdir):
         config = testdir.parseconfigure()
         return sorted(config.cache.get("cache/lastfailed", {}))

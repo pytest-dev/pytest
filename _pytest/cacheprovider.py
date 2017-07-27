@@ -117,7 +117,7 @@ class LFPlugin:
             return "run-last-failure: %s" % mode
 
     def pytest_runtest_logreport(self, report):
-        if report.passed and report.when == 'call':
+        if (report.when == 'call' and report.passed) or report.skipped:
             self.lastfailed.pop(report.nodeid, None)
         elif report.failed:
             self.lastfailed[report.nodeid] = True
