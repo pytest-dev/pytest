@@ -1,0 +1,1 @@
+capture: ensure that EncodedFile.name is a string.

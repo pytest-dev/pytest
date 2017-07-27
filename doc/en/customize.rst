@@ -1,5 +1,5 @@
-Basic test configuration
-===================================
+Configuration
+=============
 
 Command line options and configuration file settings
 -----------------------------------------------------------------
@@ -15,17 +15,31 @@ which were registered by installed plugins.
 .. _rootdir:
 .. _inifiles:
 
-initialization: determining rootdir and inifile
+Initialization: determining rootdir and inifile
 -----------------------------------------------
 
 .. versionadded:: 2.7
 
-pytest determines a "rootdir" for each test run which depends on
+pytest determines a ``rootdir`` for each test run which depends on
 the command line arguments (specified test files, paths) and on
-the existence of inifiles.  The determined rootdir and ini-file are
-printed as part of the pytest header.  The rootdir is used for constructing
-"nodeids" during collection and may also be used by plugins to store
-project/testrun-specific information.
+the existence of *ini-files*.  The determined ``rootdir`` and *ini-file* are
+printed as part of the pytest header during startup.
+
+Here's a summary what ``pytest`` uses ``rootdir`` for:
+
+* Construct *nodeids* during collection; each test is assigned
+  a unique *nodeid* which is rooted at the ``rootdir`` and takes in account full path,
+  class name, function name and parametrization (if any).
+
+* Is used by plugins as a stable location to store project/test run specific information;
+  for example, the internal :ref:`cache <cache>` plugin creates a ``.cache`` subdirectory
+  in ``rootdir`` to store its cross-test run state.
+
+Important to emphasize that ``rootdir`` is **NOT** used to modify ``sys.path``/``PYTHONPATH`` or
+influence how modules are imported. See :ref:`pythonpath` for more details.
+
+Finding the ``rootdir``
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Here is the algorithm which finds the rootdir from ``args``:
 

@@ -1,4 +1,6 @@
 .. _`cache_provider`:
+.. _cache:
+
 
 Cache: working with cross-testrun state
 =======================================
