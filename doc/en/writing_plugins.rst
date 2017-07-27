@@ -331,11 +331,11 @@ string value of ``Hello World!`` if we do not supply a value or ``Hello
 
     @pytest.fixture
     def hello(request):
-        name = request.config.option.name
+        name = request.config.getoption('name')
 
         def _hello(name=None):
             if not name:
-                name = request.config.option.name
+                name = request.config.getoption('name')
             return "Hello {name}!".format(name=name)
 
         return _hello

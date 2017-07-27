@@ -187,7 +187,7 @@ command line option and the parametrization of our test function::
     def pytest_generate_tests(metafunc):
         if 'stringinput' in metafunc.fixturenames:
             metafunc.parametrize("stringinput",
-                                 metafunc.config.option.stringinput)
+                                 metafunc.config.getoption('stringinput'))
 
 If we now pass two stringinput values, our test will run twice::
 

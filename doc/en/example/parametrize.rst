@@ -36,7 +36,7 @@ Now we add a test configuration like this::
 
     def pytest_generate_tests(metafunc):
         if 'param1' in metafunc.fixturenames:
-            if metafunc.config.option.all:
+            if metafunc.config.getoption('all'):
                 end = 5
             else:
                 end = 2
