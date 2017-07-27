@@ -106,14 +106,18 @@ class LFPlugin:
         active_keys = 'lf', 'failedfirst'
         self.active = any(config.getvalue(key) for key in active_keys)
         self.lastfailed = config.cache.get("cache/lastfailed", {})
+        self._previously_failed_count = None
 
-    def pytest_report_header(self):
+    def pytest_report_collectionfinish(self):
         if self.active:
-            if not self.lastfailed:
+            if not self._previously_failed_count:
                 mode = "run all (no recorded failures)"
             else:
-                mode = "rerun previous failures%s" % (
-                    " first" if self.config.getvalue("failedfirst") else "")
+                noun = 'failure' if self._previously_failed_count == 1 else 'failures'
+                suffix = " first" if self.config.getvalue("failedfirst") else ""
+                mode = "rerun previous {count} {noun}{suffix}".format(
+                    count=self._previously_failed_count, suffix=suffix, noun=noun
+                )
             return "run-last-failure: %s" % mode
 
     def pytest_runtest_logreport(self, report):
@@ -142,6 +146,7 @@ class LFPlugin:
                     previously_failed.append(item)
                 else:
                     previously_passed.append(item)
+            self._previously_failed_count = len(previously_failed)
             if not previously_failed:
                 # running a subset of all tests with recorded failures outside
                 # of the set of tests currently executing
