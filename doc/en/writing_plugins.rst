@@ -644,6 +644,7 @@ Session related reporting hooks:
 .. autofunction:: pytest_collectreport
 .. autofunction:: pytest_deselected
 .. autofunction:: pytest_report_header
+.. autofunction:: pytest_report_collectionfinish
 .. autofunction:: pytest_report_teststatus
 .. autofunction:: pytest_terminal_summary
 .. autofunction:: pytest_fixture_setup
