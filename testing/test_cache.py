@@ -438,6 +438,28 @@ class TestLastFailed(object):
         testdir.runpytest('-q', '--lf')
         assert os.path.exists('.cache')
 
+    def test_xfail_not_considered_failure(self, testdir):
+        testdir.makepyfile('''
+            import pytest
+            @pytest.mark.xfail
+            def test():
+                assert 0
+        ''')
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines('*1 xfailed*')
+        assert self.get_cached_last_failed(testdir) == []
+
+    def test_xfail_strict_considered_failure(self, testdir):
+        testdir.makepyfile('''
+            import pytest
+            @pytest.mark.xfail(strict=True)
+            def test():
+                pass
+        ''')
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines('*1 failed*')
+        assert self.get_cached_last_failed(testdir) == ['test_xfail_strict_considered_failure.py::test']
+
     def get_cached_last_failed(self, testdir):
         config = testdir.parseconfigure()
         return sorted(config.cache.get("cache/lastfailed", {}))
