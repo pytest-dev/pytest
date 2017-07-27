@@ -351,7 +351,10 @@ def pytest_report_header(config, startdir):
 
 
 def pytest_report_collectionfinish(config, startdir, items):
-    """ return a string or list of strings to be displayed after collection has finished successfully.
+    """
+    .. versionadded:: 3.2
+    
+    return a string or list of strings to be displayed after collection has finished successfully.
 
     This strings will be displayed after the standard "collected X items" message.
 
