@@ -60,7 +60,6 @@ def pytest_configure(config):
                             )
 
 
-
 class MarkEvaluator:
     def __init__(self, item, name):
         self.item = item

@@ -461,7 +461,6 @@ def test_outcomeexception_passes_except_Exception():
             pass
 
 
-
 def test_pytest_exit():
     try:
         pytest.exit("hello")

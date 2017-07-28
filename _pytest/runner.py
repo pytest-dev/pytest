@@ -13,6 +13,7 @@ from _pytest.outcomes import skip, Skipped, TEST_OUTCOME
 #
 # pytest plugin hooks
 
+
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "reporting", after="general")
     group.addoption('--durations',
@@ -505,7 +506,3 @@ def collect_one_node(collector):
     if call and check_interactive_exception(call, rep):
         ihook.pytest_exception_interact(node=collector, call=call, report=rep)
     return rep
-
-
-
-

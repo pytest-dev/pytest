@@ -11,6 +11,7 @@ import warnings
 from _pytest.fixtures import yield_fixture
 from _pytest.outcomes import fail
 
+
 @yield_fixture
 def recwarn():
     """Return a WarningsRecorder instance that provides these methods:

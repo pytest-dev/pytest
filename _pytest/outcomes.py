@@ -22,7 +22,7 @@ class OutcomeException(BaseException):
             if isinstance(val, bytes):
                 val = py._builtin._totext(val, errors='replace')
             return val
-        return "<%s instance>" %(self.__class__.__name__,)
+        return "<%s instance>" % (self.__class__.__name__,)
     __str__ = __repr__
 
 
@@ -51,6 +51,7 @@ class Exit(KeyboardInterrupt):
         KeyboardInterrupt.__init__(self, msg)
 
 # exposed helper methods
+
 
 def exit(msg):
     """ exit testing process as if KeyboardInterrupt was triggered. """
@@ -87,7 +88,6 @@ def fail(msg="", pytrace=True):
 fail.Exception = Failed
 
 
-
 class XFailed(fail.Exception):
     """ raised from an explicit call to pytest.xfail() """
 
@@ -101,7 +101,6 @@ def xfail(reason=""):
 xfail.Exception = XFailed
 
 
-
 def importorskip(modname, minversion=None):
     """ return imported module if it has at least "minversion" as its
     __version__ attribute.  If no minversion is specified the a skip
@@ -109,7 +108,7 @@ def importorskip(modname, minversion=None):
     """
     import warnings
     __tracebackhide__ = True
-    compile(modname, '', 'eval') # to catch syntaxerrors
+    compile(modname, '', 'eval')  # to catch syntaxerrors
     should_skip = False
 
     with warnings.catch_warnings():
@@ -123,7 +122,7 @@ def importorskip(modname, minversion=None):
             # Do not raise chained exception here(#1485)
             should_skip = True
     if should_skip:
-        raise Skipped("could not import %r" %(modname,), allow_module_level=True)
+        raise Skipped("could not import %r" % (modname,), allow_module_level=True)
     mod = sys.modules[modname]
     if minversion is None:
         return mod
@@ -136,6 +135,6 @@ def importorskip(modname, minversion=None):
                           "pkg_resources to parse version strings." % (modname,),
                           allow_module_level=True)
         if verattr is None or pv(verattr) < pv(minversion):
-            raise Skipped("module %r has __version__ %r, required is: %r" %(
+            raise Skipped("module %r has __version__ %r, required is: %r" % (
                           modname, verattr, minversion), allow_module_level=True)
     return mod
