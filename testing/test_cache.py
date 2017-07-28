@@ -340,6 +340,73 @@ class TestLastFailed(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines('*1 failed in*')
 
+    def test_terminal_report_lastfailed(self, testdir):
+        test_a = testdir.makepyfile(test_a="""
+            def test_a1():
+                pass
+            def test_a2():
+                pass
+        """)
+        test_b = testdir.makepyfile(test_b="""
+            def test_b1():
+                assert 0
+            def test_b2():
+                assert 0
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            'collected 4 items',
+            '*2 failed, 2 passed in*',
+        ])
+
+        result = testdir.runpytest('--lf')
+        result.stdout.fnmatch_lines([
+            'collected 4 items',
+            'run-last-failure: rerun previous 2 failures',
+            '*2 failed, 2 deselected in*',
+        ])
+
+        result = testdir.runpytest(test_a, '--lf')
+        result.stdout.fnmatch_lines([
+            'collected 2 items',
+            'run-last-failure: run all (no recorded failures)',
+            '*2 passed in*',
+        ])
+
+        result = testdir.runpytest(test_b, '--lf')
+        result.stdout.fnmatch_lines([
+            'collected 2 items',
+            'run-last-failure: rerun previous 2 failures',
+            '*2 failed in*',
+        ])
+
+        result = testdir.runpytest('test_b.py::test_b1', '--lf')
+        result.stdout.fnmatch_lines([
+            'collected 1 item',
+            'run-last-failure: rerun previous 1 failure',
+            '*1 failed in*',
+        ])
+
+    def test_terminal_report_failedfirst(self, testdir):
+        testdir.makepyfile(test_a="""
+            def test_a1():
+                assert 0
+            def test_a2():
+                pass
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            'collected 2 items',
+            '*1 failed, 1 passed in*',
+        ])
+
+        result = testdir.runpytest('--ff')
+        result.stdout.fnmatch_lines([
+            'collected 2 items',
+            'run-last-failure: rerun previous 1 failure first',
+            '*1 failed, 1 passed in*',
+        ])
+
     def test_lastfailed_collectfailure(self, testdir, monkeypatch):
 
         testdir.makepyfile(test_maybe="""
