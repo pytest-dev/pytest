@@ -1,0 +1,1 @@
+Correctly consider ``/`` as the file separator to automatically mark plugin files for rewrite on Windows.
