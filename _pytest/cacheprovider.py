@@ -105,27 +105,22 @@ class LFPlugin:
         self.config = config
         active_keys = 'lf', 'failedfirst'
         self.active = any(config.getvalue(key) for key in active_keys)
-        if self.active:
-            self.lastfailed = config.cache.get("cache/lastfailed", {})
-        else:
-            self.lastfailed = {}
+        self.lastfailed = config.cache.get("cache/lastfailed", {})
 
     def pytest_report_header(self):
         if self.active:
             if not self.lastfailed:
                 mode = "run all (no recorded failures)"
             else:
-                mode = "rerun last %d failures%s" % (
-                    len(self.lastfailed),
+                mode = "rerun previous failures%s" % (
                     " first" if self.config.getvalue("failedfirst") else "")
             return "run-last-failure: %s" % mode
 
     def pytest_runtest_logreport(self, report):
-        if report.failed and "xfail" not in report.keywords:
+        if (report.when == 'call' and report.passed) or report.skipped:
+            self.lastfailed.pop(report.nodeid, None)
+        elif report.failed:
             self.lastfailed[report.nodeid] = True
-        elif not report.failed:
-            if report.when == "call":
-                self.lastfailed.pop(report.nodeid, None)
 
     def pytest_collectreport(self, report):
         passed = report.outcome in ('passed', 'skipped')
@@ -147,11 +142,11 @@ class LFPlugin:
                     previously_failed.append(item)
                 else:
                     previously_passed.append(item)
-            if not previously_failed and previously_passed:
+            if not previously_failed:
                 # running a subset of all tests with recorded failures outside
                 # of the set of tests currently executing
-                pass
-            elif self.config.getvalue("lf"):
+                return
+            if self.config.getvalue("lf"):
                 items[:] = previously_failed
                 config.hook.pytest_deselected(items=previously_passed)
             else:
@@ -161,8 +156,9 @@ class LFPlugin:
         config = self.config
         if config.getvalue("cacheshow") or hasattr(config, "slaveinput"):
             return
-        prev_failed = config.cache.get("cache/lastfailed", None) is not None
-        if (session.testscollected and prev_failed) or self.lastfailed:
+
+        saved_lastfailed = config.cache.get("cache/lastfailed", {})
+        if saved_lastfailed != self.lastfailed:
             config.cache.set("cache/lastfailed", self.lastfailed)
 
 
