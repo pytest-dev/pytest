@@ -249,15 +249,6 @@ by putting them into a ``[tool:pytest]`` section:
     python_files = testing/*/*.py
 
 
-.. note::
-    Prior to 3.0, the supported section name was ``[pytest]``. Due to how
-    this may collide with some distutils commands, the recommended
-    section name for ``setup.cfg`` files is now ``[tool:pytest]``.
-
-    Note that for ``pytest.ini`` and ``tox.ini`` files the section
-    name is ``[pytest]``.
-
-
 Manual Integration
 ^^^^^^^^^^^^^^^^^^
 

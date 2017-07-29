@@ -191,12 +191,12 @@ was executed ahead of the ``test_method``.
 
 .. note::
 
-   While pytest supports receiving fixtures via :ref:`test function arguments <funcargs>` for non-unittest test methods, ``unittest.TestCase`` methods cannot directly receive fixture 
-   function arguments as implementing that is likely to inflict
+   ``unittest.TestCase`` methods cannot directly receive fixture
+   arguments as implementing that is likely to inflict
    on the ability to run general unittest.TestCase test suites.
-   Maybe optional support would be possible, though.  If unittest finally 
-   grows a plugin system that should help as well.  In the meanwhile, the 
-   above ``usefixtures`` and ``autouse`` examples should help to mix in 
-   pytest fixtures into unittest suites.  And of course you can also start
-   to selectively leave away the ``unittest.TestCase`` subclassing, use
-   plain asserts and get the unlimited pytest feature set.
+
+   The above ``usefixtures`` and ``autouse`` examples should help to mix in
+   pytest fixtures into unittest suites.
+
+   You can also gradually move away from subclassing from ``unittest.TestCase`` to *plain asserts*
+   and then start to benefit from the full pytest feature set step by step.

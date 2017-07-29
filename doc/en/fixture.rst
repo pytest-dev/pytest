@@ -109,19 +109,13 @@ Note that if you misspell a function argument or want
 to use one that isn't available, you'll see an error
 with a list of available function arguments.
 
-.. Note::
+.. note::
 
     You can always issue::
 
         pytest --fixtures test_simplefactory.py
 
     to see available fixtures.
-
-    In versions prior to 2.3 there was no ``@pytest.fixture`` marker
-    and you had to use a magic ``pytest_funcarg__NAME`` prefix
-    for the fixture factory.  This remains and will remain supported
-    but is not anymore advertised as the primary means of declaring fixture
-    functions.
 
 Fixtures: a prime example of dependency injection
 ---------------------------------------------------
@@ -291,14 +285,6 @@ the ``with`` statement ends.
 
 Note that if an exception happens during the *setup* code (before the ``yield`` keyword), the
 *teardown* code (after the ``yield``) will not be called.
-
-
-.. note::
-    Prior to version 2.10, in order to use a ``yield`` statement to execute teardown code one
-    had to mark a fixture using the ``yield_fixture`` marker. From 2.10 onward, normal
-    fixtures can use ``yield`` directly so the ``yield_fixture`` decorator is no longer needed
-    and considered deprecated.
-
 
 An alternative option for executing *teardown* code is to
 make use of the ``addfinalizer`` method of the `request-context`_ object to register
