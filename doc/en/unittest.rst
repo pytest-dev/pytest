@@ -198,5 +198,5 @@ was executed ahead of the ``test_method``.
    The above ``usefixtures`` and ``autouse`` examples should help to mix in
    pytest fixtures into unittest suites.
 
-   You can also gradually move away from subclassing from ``unittest.TestCase``
-   to *plain asserts* and the benefits from the full pytest feature set.
+   You can also gradually move away from subclassing from ``unittest.TestCase`` to *plain asserts*
+   and then start to benefit from the full pytest feature set step by step.
