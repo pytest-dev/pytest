@@ -1096,6 +1096,36 @@ raise ValueError()
         assert tw.lines[47] == ":15: AttributeError"
 
     @pytest.mark.skipif("sys.version_info[0] < 3")
+    def test_exc_repr_with_raise_from_none_chain_suppression(self, importasmod):
+        mod = importasmod("""
+            def f():
+                try:
+                    g()
+                except Exception:
+                    raise AttributeError() from None
+            def g():
+                raise ValueError()
+        """)
+        excinfo = pytest.raises(AttributeError, mod.f)
+        r = excinfo.getrepr(style="long")
+        tw = TWMock()
+        r.toterminal(tw)
+        for line in tw.lines:
+            print(line)
+        assert tw.lines[0] == ""
+        assert tw.lines[1] == "    def f():"
+        assert tw.lines[2] == "        try:"
+        assert tw.lines[3] == "            g()"
+        assert tw.lines[4] == "        except Exception:"
+        assert tw.lines[5] == ">           raise AttributeError() from None"
+        assert tw.lines[6] == "E           AttributeError"
+        assert tw.lines[7] == ""
+        line = tw.get_write_msg(8)
+        assert line.endswith('mod.py')
+        assert tw.lines[9] == ":6: AttributeError"
+        assert len(tw.lines) == 10
+
+    @pytest.mark.skipif("sys.version_info[0] < 3")
     @pytest.mark.parametrize('reason, description', [
         ('cause', 'The above exception was the direct cause of the following exception:'),
         ('context', 'During handling of the above exception, another exception occurred:'),
