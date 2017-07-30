@@ -1,1 +1,0 @@
-All old-style specific behavior in current classes in the pytest's API is considered deprecated at this point and will be removed in a future release. This affects Python 2 users only and in rare situations.

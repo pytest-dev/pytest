@@ -108,14 +108,14 @@ You can ask for available builtin or project-custom
         The returned ``monkeypatch`` fixture provides these
         helper methods to modify objects, dictionaries or os.environ::
         
-        monkeypatch.setattr(obj, name, value, raising=True)
-        monkeypatch.delattr(obj, name, raising=True)
-        monkeypatch.setitem(mapping, name, value)
-        monkeypatch.delitem(obj, name, raising=True)
-        monkeypatch.setenv(name, value, prepend=False)
-        monkeypatch.delenv(name, value, raising=True)
-        monkeypatch.syspath_prepend(path)
-        monkeypatch.chdir(path)
+            monkeypatch.setattr(obj, name, value, raising=True)
+            monkeypatch.delattr(obj, name, raising=True)
+            monkeypatch.setitem(mapping, name, value)
+            monkeypatch.delitem(obj, name, raising=True)
+            monkeypatch.setenv(name, value, prepend=False)
+            monkeypatch.delenv(name, value, raising=True)
+            monkeypatch.syspath_prepend(path)
+            monkeypatch.chdir(path)
         
         All modifications will be undone after the requesting
         test function or fixture has finished. The ``raising``

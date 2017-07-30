@@ -195,7 +195,7 @@ list::
     $ pytest -q -rs test_strings.py
     s
     ======= short test summary info ========
-    SKIP [1] test_strings.py:1: got empty parameter set ['stringinput'], function test_valid_string at $REGENDOC_TMPDIR/test_strings.py:1
+    SKIP [1] test_strings.py:2: got empty parameter set ['stringinput'], function test_valid_string at $REGENDOC_TMPDIR/test_strings.py:1
     1 skipped in 0.12 seconds
 
 For further examples, you might want to look at :ref:`more

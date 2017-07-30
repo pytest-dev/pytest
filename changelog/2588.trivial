@@ -1,1 +1,0 @@
-Turn warnings into errors in pytest's own test suite in order to catch regressions due to deprecations more promptly.

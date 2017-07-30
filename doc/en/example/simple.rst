@@ -170,7 +170,7 @@ and when running it will see a skipped "slow" test::
     
     test_module.py .s
     ======= short test summary info ========
-    SKIP [1] test_module.py:13: need --runslow option to run
+    SKIP [1] test_module.py:14: need --runslow option to run
     
     ======= 1 passed, 1 skipped in 0.12 seconds ========
 

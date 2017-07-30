@@ -413,7 +413,7 @@ Running it results in some skips if we don't have all the python interpreters in
    . $ pytest -rs -q multipython.py
    sssssssssssssss.........sss.........sss.........
    ======= short test summary info ========
-   SKIP [21] $REGENDOC_TMPDIR/CWD/multipython.py:23: 'python2.6' not found
+   SKIP [21] $REGENDOC_TMPDIR/CWD/multipython.py:24: 'python2.6' not found
    27 passed, 21 skipped in 0.12 seconds
 
 Indirect parametrization of optional implementations/imports
@@ -467,7 +467,7 @@ If you run this with reporting for skips enabled::
     
     test_module.py .s
     ======= short test summary info ========
-    SKIP [1] $REGENDOC_TMPDIR/conftest.py:10: could not import 'opt2'
+    SKIP [1] $REGENDOC_TMPDIR/conftest.py:11: could not import 'opt2'
     
     ======= 1 passed, 1 skipped in 0.12 seconds ========
 

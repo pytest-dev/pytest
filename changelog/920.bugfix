@@ -1,1 +1,0 @@
-Fix non-determinism in order of fixture collection.  Adds new dependency (ordereddict) for Python 2.6.
