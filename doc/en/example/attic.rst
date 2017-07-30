@@ -17,7 +17,7 @@ example: specifying and selecting acceptance tests
 
     class AcceptFixture(object):
         def __init__(self, request):
-            if not request.config.option.acceptance:
+            if not request.config.getoption('acceptance'):
                 pytest.skip("specify -A to run acceptance tests")
             self.tmpdir = request.config.mktemp(request.function.__name__, numbered=True)
 

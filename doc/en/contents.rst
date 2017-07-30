@@ -38,6 +38,7 @@ Full pytest documentation
    bash-completion
 
    backwards-compatibility
+   historical-notes
    license
    contributing
    talks

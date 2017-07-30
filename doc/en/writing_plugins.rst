@@ -90,7 +90,7 @@ Here is how you might run it::
      pytest test_flat.py   # will not show "setting up"
      pytest a/test_sub.py  # will show "setting up"
 
-.. Note::
+.. note::
     If you have ``conftest.py`` files which do not reside in a
     python package directory (i.e. one containing an ``__init__.py``) then
     "import conftest" can be ambiguous because there might be other
@@ -331,11 +331,11 @@ string value of ``Hello World!`` if we do not supply a value or ``Hello
 
     @pytest.fixture
     def hello(request):
-        name = request.config.option.name
+        name = request.config.getoption('name')
 
         def _hello(name=None):
             if not name:
-                name = request.config.option.name
+                name = request.config.getoption('name')
             return "Hello {name}!".format(name=name)
 
         return _hello
