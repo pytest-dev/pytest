@@ -14,7 +14,8 @@ except ImportError:
     from UserDict import DictMixin as MappingMixin
 
 from _pytest.config import directory_arg, UsageError, hookimpl
-from _pytest.runner import collect_one_node, exit
+from _pytest.runner import collect_one_node
+from _pytest.outcomes import exit
 
 tracebackcutdir = py.path.local(_pytest.__file__).dirpath()
 

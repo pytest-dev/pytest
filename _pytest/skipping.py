@@ -8,7 +8,7 @@ import traceback
 import py
 from _pytest.config import hookimpl
 from _pytest.mark import MarkInfo, MarkDecorator
-from _pytest.runner import fail, skip
+from _pytest.outcomes import fail, skip, xfail, TEST_OUTCOME
 
 
 def pytest_addoption(parser):
@@ -34,7 +34,7 @@ def pytest_configure(config):
         def nop(*args, **kwargs):
             pass
 
-        nop.Exception = XFailed
+        nop.Exception = xfail.Exception
         setattr(pytest, "xfail", nop)
 
     config.addinivalue_line("markers",
@@ -58,19 +58,6 @@ def pytest_configure(config):
                             "raises, and if the test fails in other ways, it will be reported as "
                             "a true failure. See http://pytest.org/latest/skipping.html"
                             )
-
-
-class XFailed(fail.Exception):
-    """ raised from an explicit call to pytest.xfail() """
-
-
-def xfail(reason=""):
-    """ xfail an executing test or setup functions with the given reason."""
-    __tracebackhide__ = True
-    raise XFailed(reason)
-
-
-xfail.Exception = XFailed
 
 
 class MarkEvaluator:
@@ -98,7 +85,7 @@ class MarkEvaluator:
     def istrue(self):
         try:
             return self._istrue()
-        except Exception:
+        except TEST_OUTCOME:
             self.exc = sys.exc_info()
             if isinstance(self.exc[1], SyntaxError):
                 msg = [" " * (self.exc[1].offset + 4) + "^", ]

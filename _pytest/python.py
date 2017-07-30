@@ -23,7 +23,7 @@ from _pytest.compat import (
     get_real_func, getfslineno, safe_getattr,
     safe_str, getlocation, enum,
 )
-from _pytest.runner import fail
+from _pytest.outcomes import fail
 from _pytest.mark import transfer_markers
 
 cutdir1 = py.path.local(pluggy.__file__.rstrip("oc"))

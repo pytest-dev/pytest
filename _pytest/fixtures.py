@@ -16,7 +16,7 @@ from _pytest.compat import (
     getlocation, getfuncargnames,
     safe_getattr,
 )
-from _pytest.runner import fail
+from _pytest.outcomes import fail, TEST_OUTCOME
 from _pytest.compat import FuncargnamesCompatAttr
 
 if sys.version_info[:2] == (2, 6):
@@ -126,7 +126,7 @@ def getfixturemarker(obj):
     exceptions."""
     try:
         return getattr(obj, "_pytestfixturefunction", None)
-    except Exception:
+    except TEST_OUTCOME:
         # some objects raise errors like request (from flask import request)
         # we don't expect them to be fixture functions
         return None
@@ -816,7 +816,7 @@ def pytest_fixture_setup(fixturedef, request):
     my_cache_key = request.param_index
     try:
         result = call_fixture_func(fixturefunc, request, kwargs)
-    except Exception:
+    except TEST_OUTCOME:
         fixturedef.cached_result = (None, my_cache_key, sys.exc_info())
         raise
     fixturedef.cached_result = (result, my_cache_key, None)

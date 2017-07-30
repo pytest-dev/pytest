@@ -4,7 +4,7 @@ import sys
 import py
 
 from _pytest.compat import isclass, izip
-from _pytest.runner import fail
+from _pytest.outcomes import fail
 import _pytest._code
 
 # builtin pytest.approx helper
