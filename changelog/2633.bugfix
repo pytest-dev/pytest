@@ -1,0 +1,2 @@
+In some cases on windows stderr capturing may fail. Pytest now 
+attempts to recover from a capturing failure.
