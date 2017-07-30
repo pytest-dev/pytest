@@ -211,7 +211,8 @@ class CaptureFixture:
 
     @contextlib.contextmanager
     def disabled(self):
-        capmanager = self.request.config.pluginmanager.getplugin('capturemanager')
+        capmanager = self.request.config.pluginmanager.getplugin(
+            'capturemanager')
         capmanager.suspendcapture_item(self.request.node, "call", in_=True)
         try:
             yield
@@ -248,7 +249,10 @@ class EncodedFile(object):
     def write(self, obj):
         if isinstance(obj, unicode):
             obj = obj.encode(self.encoding, "replace")
-        self.buffer.write(obj)
+        try:
+            self.buffer.write(obj)
+        except OSError:
+            self.buffer = open(os.devnull, "wb+")
 
     def writelines(self, linelist):
         data = ''.join(linelist)
@@ -371,9 +375,14 @@ class FDCapture:
         self.syscapture.start()
 
     def snap(self):
-        f = self.tmpfile
-        f.seek(0)
-        res = f.read()
+        try:
+            f = self.tmpfile
+            f.seek(0)
+            res = f.read()
+        except OSError:
+            self.tmpfile = open(os.devnull, "r")
+            self.tmpfile_fd = self.tmpfile.fileno()
+            res = ''
         if res:
             enc = getattr(f, "encoding", None)
             if enc and isinstance(res, bytes):
@@ -398,7 +407,12 @@ class FDCapture:
 
     def resume(self):
         self.syscapture.resume()
-        os.dup2(self.tmpfile_fd, self.targetfd)
+        try:
+            os.dup2(self.tmpfile_fd, self.targetfd)
+        except OSError:
+            self.tmpfile = open(os.devnull, "r")
+            self.tmpfile_fd = self.tmpfile.fileno()
+            self.targetfd = open(os.devnull, "r").fileno()
 
     def writeorg(self, data):
         """ write to original file descriptor. """
