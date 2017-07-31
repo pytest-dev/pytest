@@ -19,7 +19,6 @@ unicode = py.builtin.text
 
 patchsysdict = {0: 'stdin', 1: 'stdout', 2: 'stderr'}
 
-
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group._addoption(
@@ -397,9 +396,9 @@ class FDCapture:
         seeked to position zero. """
         targetfd_save = self.__dict__.pop("targetfd_save")
         os.dup2(targetfd_save, self.targetfd)
-        os.close(targetfd_save)
+        # os.close(targetfd_save)
         self.syscapture.done()
-        self.tmpfile.close()
+        # self.tmpfile.close()
 
     def suspend(self):
         self.syscapture.suspend()
@@ -446,7 +445,7 @@ class SysCapture:
     def done(self):
         setattr(sys, self.name, self._old)
         del self._old
-        self.tmpfile.close()
+        # self.tmpfile.close()
 
     def suspend(self):
         setattr(sys, self.name, self._old)
