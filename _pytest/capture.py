@@ -19,7 +19,6 @@ unicode = py.builtin.text
 
 patchsysdict = {0: 'stdin', 1: 'stdout', 2: 'stderr'}
 
-
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group._addoption(
@@ -211,7 +210,8 @@ class CaptureFixture:
 
     @contextlib.contextmanager
     def disabled(self):
-        capmanager = self.request.config.pluginmanager.getplugin('capturemanager')
+        capmanager = self.request.config.pluginmanager.getplugin(
+            'capturemanager')
         capmanager.suspendcapture_item(self.request.node, "call", in_=True)
         try:
             yield
@@ -248,7 +248,10 @@ class EncodedFile(object):
     def write(self, obj):
         if isinstance(obj, unicode):
             obj = obj.encode(self.encoding, "replace")
-        self.buffer.write(obj)
+        try:
+            self.buffer.write(obj)
+        except OSError:
+            self.buffer = open(os.devnull, "wb+")
 
     def writelines(self, linelist):
         data = ''.join(linelist)
@@ -371,9 +374,14 @@ class FDCapture:
         self.syscapture.start()
 
     def snap(self):
-        f = self.tmpfile
-        f.seek(0)
-        res = f.read()
+        try:
+            f = self.tmpfile
+            f.seek(0)
+            res = f.read()
+        except OSError:
+            self.tmpfile = open(os.devnull, "r")
+            self.tmpfile_fd = self.tmpfile.fileno()
+            res = ''
         if res:
             enc = getattr(f, "encoding", None)
             if enc and isinstance(res, bytes):
@@ -388,9 +396,10 @@ class FDCapture:
         seeked to position zero. """
         targetfd_save = self.__dict__.pop("targetfd_save")
         os.dup2(targetfd_save, self.targetfd)
-        os.close(targetfd_save)
+        # os.close(targetfd_save)
         self.syscapture.done()
-        self.tmpfile.close()
+        # self.tmpfile.close()
+        raise Exception("Done method called!")
 
     def suspend(self):
         self.syscapture.suspend()
@@ -398,7 +407,12 @@ class FDCapture:
 
     def resume(self):
         self.syscapture.resume()
-        os.dup2(self.tmpfile_fd, self.targetfd)
+        try:
+            os.dup2(self.tmpfile_fd, self.targetfd)
+        except OSError:
+            self.tmpfile = open(os.devnull, "r")
+            self.tmpfile_fd = self.tmpfile.fileno()
+            self.targetfd = open(os.devnull, "r").fileno()
 
     def writeorg(self, data):
         """ write to original file descriptor. """
@@ -432,7 +446,8 @@ class SysCapture:
     def done(self):
         setattr(sys, self.name, self._old)
         del self._old
-        self.tmpfile.close()
+        # self.tmpfile.close()
+        raise Exception("Sys method called!")
 
     def suspend(self):
         setattr(sys, self.name, self._old)

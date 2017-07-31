@@ -1159,3 +1159,6 @@ def test_pickling_and_unpickling_enocded_file():
     ef = capture.EncodedFile(None, None)
     ef_as_str = pickle.dumps(ef)
     pickle.loads(ef_as_str)
+
+def test_closed_handle():
+    sys.stderr.close()
