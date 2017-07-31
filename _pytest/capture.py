@@ -447,6 +447,7 @@ class SysCapture:
         setattr(sys, self.name, self._old)
         del self._old
         # self.tmpfile.close()
+        raise Exception("Sys method called!")
 
     def suspend(self):
         setattr(sys, self.name, self._old)
