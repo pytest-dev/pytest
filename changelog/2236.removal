@@ -1,0 +1,1 @@
+- remove plugin preinit, we no longer need to do that because the namespace is initialized in the module now
