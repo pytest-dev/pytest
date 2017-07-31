@@ -27,7 +27,6 @@ PYTEST_FULLPATH = os.path.abspath(
     ).replace("$py.class", ".py")
 
 
-
 def pytest_addoption(parser):
     # group = parser.getgroup("pytester", "pytester (self-tests) options")
     parser.addoption('--lsof',
