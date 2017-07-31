@@ -399,6 +399,7 @@ class FDCapture:
         # os.close(targetfd_save)
         self.syscapture.done()
         # self.tmpfile.close()
+        raise Exception("Done method called!")
 
     def suspend(self):
         self.syscapture.suspend()
