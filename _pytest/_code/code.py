@@ -679,7 +679,7 @@ class FormattedExcinfo(object):
                     e = e.__cause__
                     excinfo = ExceptionInfo((type(e), e, e.__traceback__)) if e.__traceback__ else None
                     descr = 'The above exception was the direct cause of the following exception:'
-                elif e.__context__ is not None:
+                elif e.__context__ is not None and not getattr(e, '__suppress_context__', False):
                     e = e.__context__
                     excinfo = ExceptionInfo((type(e), e, e.__traceback__)) if e.__traceback__ else None
                     descr = 'During handling of the above exception, another exception occurred:'
