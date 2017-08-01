@@ -113,7 +113,7 @@ Bug Fixes
 - capture: ensure that EncodedFile.name is a string. (`#2555
   <https://github.com/pytest-dev/pytest/issues/2555>`_)
 
-- The options ```--fixtures`` and ```--fixtures-per-test`` will now keep
+- The options ``--fixtures`` and ``--fixtures-per-test`` will now keep
   indentation within docstrings. (`#2574 <https://github.com/pytest-
   dev/pytest/issues/2574>`_)
 
