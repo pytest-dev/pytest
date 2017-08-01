@@ -54,7 +54,7 @@ How to release pytest
    where PYPI_NAME is the name of pypi.python.org as configured in your ``~/.pypirc``
    file `for devpi <http://doc.devpi.net/latest/quickstart-releaseprocess.html?highlight=pypirc#devpi-push-releasing-to-an-external-index>`_.
 
-#. After a minor/major release, merge ``features`` into ``master`` and push (or open a PR).
+#. After a minor/major release, merge ``release-X.Y.Z`` into ``master`` and push (or open a PR).
 
 .. _devpi-cloud-test: https://github.com/obestwalter/devpi-cloud-test
 .. _AppVeyor: https://www.appveyor.com/
