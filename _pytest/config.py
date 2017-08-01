@@ -100,8 +100,6 @@ def directory_arg(path, optname):
     return path
 
 
-_preinit = []
-
 default_plugins = (
     "mark main terminal runner python fixtures debugging unittest capture skipping "
     "tmpdir monkeypatch recwarn pastebin helpconfig nose assertion "
@@ -113,14 +111,7 @@ builtin_plugins = set(default_plugins)
 builtin_plugins.add("pytester")
 
 
-def _preloadplugins():
-    assert not _preinit
-    _preinit.append(get_config())
-
-
 def get_config():
-    if _preinit:
-        return _preinit.pop(0)
     # subsequent calls to main will create a fresh instance
     pluginmanager = PytestPluginManager()
     config = Config(pluginmanager)

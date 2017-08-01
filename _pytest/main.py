@@ -83,15 +83,6 @@ def pytest_addoption(parser):
                     help="base temporary directory for this test run.")
 
 
-def pytest_namespace():
-    """keeping this one works around a deeper startup issue in pytest
-
-    i tried to find it for a while but the amount of time turned unsustainable,
-    so i put a hack in to revisit later
-    """
-    return {}
-
-
 def pytest_configure(config):
     __import__('pytest').config = config  # compatibiltiy
 
