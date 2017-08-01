@@ -1,1 +1,0 @@
-The options ```--fixtures`` and ```--fixtures-per-test`` will now keep indentation within docstrings.

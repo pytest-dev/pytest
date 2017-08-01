@@ -1,1 +1,0 @@
-Exceptions raised by ``pytest.fail``, ``pytest.skip`` and ``pytest.xfail`` now subclass BaseException, making them harder to be caught unintentionally by normal code.

@@ -494,7 +494,7 @@ then you will see two tests skipped and two executed tests as expected::
     
     test_plat.py s.s.
     ======= short test summary info ========
-    SKIP [2] $REGENDOC_TMPDIR/conftest.py:12: cannot run on platform linux
+    SKIP [2] $REGENDOC_TMPDIR/conftest.py:13: cannot run on platform linux
     
     ======= 2 passed, 2 skipped in 0.12 seconds ========
 

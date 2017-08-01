@@ -1,2 +1,0 @@
-``pytest.approx`` no longer supports ``>``, ``>=``, ``<`` and ``<=`` operators to avoid surprising/inconsistent
-behavior. See `the docs <https://docs.pytest.org/en/latest/builtin.html#pytest.approx>`_ for more information.

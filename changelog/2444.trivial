@@ -1,1 +1,0 @@
-Update help message for ``--strict`` to make it clear it only deals with unregistered markers, not warnings.

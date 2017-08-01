@@ -1,1 +1,0 @@
-Set ``stdin`` to a closed ``PIPE`` in ``pytester.py.Testdir.popen()`` for avoid unwanted interactive ``pdb``
