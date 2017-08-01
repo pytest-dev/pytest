@@ -7,6 +7,7 @@ import warnings
 import py
 from py._code.code import FormattedExcinfo
 
+import attr
 import _pytest
 from _pytest import nodes
 from _pytest._code.code import TerminalRepr
@@ -822,13 +823,21 @@ def pytest_fixture_setup(fixturedef, request):
     return result
 
 
-class FixtureFunctionMarker:
-    def __init__(self, scope, params, autouse=False, ids=None, name=None):
-        self.scope = scope
-        self.params = params
-        self.autouse = autouse
-        self.ids = ids
-        self.name = name
+def _ensure_immutable_ids(ids):
+    if ids is None:
+        return
+    if callable(ids):
+        return ids
+    return tuple(ids)
+
+
+@attr.s(frozen=True)
+class FixtureFunctionMarker(object):
+    scope = attr.ib()
+    params = attr.ib(convert=attr.converters.optional(tuple))
+    autouse = attr.ib(default=False)
+    ids = attr.ib(default=None, convert=_ensure_immutable_ids)
+    name = attr.ib(default=None)
 
     def __call__(self, function):
         if isclass(function):
