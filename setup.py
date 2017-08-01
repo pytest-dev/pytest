@@ -46,11 +46,12 @@ def main():
     install_requires = ['py>=1.4.33', 'setuptools']  # pluggy is vendored in _pytest.vendored_packages
     extras_require = {}
     if has_environment_marker_support():
-        extras_require[':python_version=="2.6"'] = ['argparse']
+        extras_require[':python_version=="2.6"'] = ['argparse', 'ordereddict']
         extras_require[':sys_platform=="win32"'] = ['colorama']
     else:
         if sys.version_info < (2, 7):
             install_requires.append('argparse')
+            install_requires.append('ordereddict')
         if sys.platform == 'win32':
             install_requires.append('colorama')
 

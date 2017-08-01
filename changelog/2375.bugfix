@@ -1,1 +1,0 @@
-Add missing ``encoding`` attribute to ``sys.std*`` streams when using ``capsys`` capture mode.

@@ -1289,8 +1289,9 @@ class TestMetafuncFunctionalAuto(object):
         assert output.count('preparing foo-3') == 1
 
 
+@pytest.mark.filterwarnings('ignore:Applying marks directly to parameters')
+@pytest.mark.issue308
 class TestMarkersWithParametrization(object):
-    pytestmark = pytest.mark.issue308
 
     def test_simple_mark(self, testdir):
         s = """

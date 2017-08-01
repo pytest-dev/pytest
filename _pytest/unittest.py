@@ -7,9 +7,9 @@ import traceback
 # for transferring markers
 import _pytest._code
 from _pytest.config import hookimpl
-from _pytest.runner import fail, skip
+from _pytest.outcomes import fail, skip, xfail
 from _pytest.python import transfer_markers, Class, Module, Function
-from _pytest.skipping import MarkEvaluator, xfail
+from _pytest.skipping import MarkEvaluator
 
 
 def pytest_pycollect_makeitem(collector, name, obj):

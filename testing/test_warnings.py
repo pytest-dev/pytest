@@ -33,6 +33,7 @@ def pyfile_with_warnings(testdir, request):
     })
 
 
+@pytest.mark.filterwarnings('always')
 def test_normal_flow(testdir, pyfile_with_warnings):
     """
     Check that the warnings section is displayed, containing test node ids followed by
@@ -54,6 +55,7 @@ def test_normal_flow(testdir, pyfile_with_warnings):
     assert result.stdout.str().count('test_normal_flow.py::test_func') == 1
 
 
+@pytest.mark.filterwarnings('always')
 def test_setup_teardown_warnings(testdir, pyfile_with_warnings):
     testdir.makepyfile('''
         import warnings
@@ -115,6 +117,7 @@ def test_ignore(testdir, pyfile_with_warnings, method):
 
 @pytest.mark.skipif(sys.version_info < (3, 0),
                     reason='warnings message is unicode is ok in python3')
+@pytest.mark.filterwarnings('always')
 def test_unicode(testdir, pyfile_with_warnings):
     testdir.makepyfile('''
         # -*- coding: utf8 -*-
@@ -152,6 +155,7 @@ def test_py2_unicode(testdir, pyfile_with_warnings):
             warnings.warn(u"测试")
             yield
 
+        @pytest.mark.filterwarnings('always')
         def test_func(fix):
             pass
     ''')
@@ -188,3 +192,32 @@ def test_works_with_filterwarnings(testdir):
     result.stdout.fnmatch_lines([
         '*== 1 passed in *',
     ])
+
+
+@pytest.mark.parametrize('default_config', ['ini', 'cmdline'])
+def test_filterwarnings_mark(testdir, default_config):
+    """
+    Test ``filterwarnings`` mark works and takes precedence over command line and ini options.
+    """
+    if default_config == 'ini':
+        testdir.makeini("""
+            [pytest]
+            filterwarnings = always
+        """)
+    testdir.makepyfile("""
+        import warnings
+        import pytest
+
+        @pytest.mark.filterwarnings('ignore::RuntimeWarning')
+        def test_ignore_runtime_warning():
+            warnings.warn(RuntimeWarning())
+
+        @pytest.mark.filterwarnings('error')
+        def test_warning_error():
+            warnings.warn(RuntimeWarning())
+
+        def test_show_warning():
+            warnings.warn(RuntimeWarning())
+    """)
+    result = testdir.runpytest('-W always' if default_config == 'cmdline' else '')
+    result.stdout.fnmatch_lines(['*= 1 failed, 2 passed, 1 warnings in *'])

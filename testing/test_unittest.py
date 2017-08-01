@@ -9,9 +9,9 @@ def test_simple_unittest(testdir):
         import unittest
         class MyTestCase(unittest.TestCase):
             def testpassing(self):
-                self.assertEquals('foo', 'foo')
+                self.assertEqual('foo', 'foo')
             def test_failing(self):
-                self.assertEquals('foo', 'bar')
+                self.assertEqual('foo', 'bar')
     """)
     reprec = testdir.inline_run(testpath)
     assert reprec.matchreport("testpassing").passed
@@ -23,10 +23,10 @@ def test_runTest_method(testdir):
         import unittest
         class MyTestCaseWithRunTest(unittest.TestCase):
             def runTest(self):
-                self.assertEquals('foo', 'foo')
+                self.assertEqual('foo', 'foo')
         class MyTestCaseWithoutRunTest(unittest.TestCase):
             def runTest(self):
-                self.assertEquals('foo', 'foo')
+                self.assertEqual('foo', 'foo')
             def test_something(self):
                 pass
         """)
@@ -59,7 +59,7 @@ def test_setup(testdir):
             def setup_method(self, method):
                 self.foo2 = 1
             def test_both(self):
-                self.assertEquals(1, self.foo)
+                self.assertEqual(1, self.foo)
                 assert self.foo2 == 1
             def teardown_method(self, method):
                 assert 0, "42"
@@ -136,7 +136,7 @@ def test_teardown(testdir):
                 self.l.append(None)
         class Second(unittest.TestCase):
             def test_check(self):
-                self.assertEquals(MyTestCase.l, [None])
+                self.assertEqual(MyTestCase.l, [None])
     """)
     reprec = testdir.inline_run(testpath)
     passed, skipped, failed = reprec.countoutcomes()
@@ -351,61 +351,12 @@ def test_module_level_pytestmark(testdir):
     reprec.assertoutcome(skipped=1)
 
 
-def test_trial_testcase_skip_property(testdir):
-    pytest.importorskip('twisted.trial.unittest')
-    testpath = testdir.makepyfile("""
-        from twisted.trial import unittest
-        class MyTestCase(unittest.TestCase):
-            skip = 'dont run'
-            def test_func(self):
-                pass
-        """)
-    reprec = testdir.inline_run(testpath, "-s")
-    reprec.assertoutcome(skipped=1)
-
-
-def test_trial_testfunction_skip_property(testdir):
-    pytest.importorskip('twisted.trial.unittest')
-    testpath = testdir.makepyfile("""
-        from twisted.trial import unittest
-        class MyTestCase(unittest.TestCase):
-            def test_func(self):
-                pass
-            test_func.skip = 'dont run'
-        """)
-    reprec = testdir.inline_run(testpath, "-s")
-    reprec.assertoutcome(skipped=1)
-
-
-def test_trial_testcase_todo_property(testdir):
-    pytest.importorskip('twisted.trial.unittest')
-    testpath = testdir.makepyfile("""
-        from twisted.trial import unittest
-        class MyTestCase(unittest.TestCase):
-            todo = 'dont run'
-            def test_func(self):
-                assert 0
-        """)
-    reprec = testdir.inline_run(testpath, "-s")
-    reprec.assertoutcome(skipped=1)
-
-
-def test_trial_testfunction_todo_property(testdir):
-    pytest.importorskip('twisted.trial.unittest')
-    testpath = testdir.makepyfile("""
-        from twisted.trial import unittest
-        class MyTestCase(unittest.TestCase):
-            def test_func(self):
-                assert 0
-            test_func.todo = 'dont run'
-        """)
-    reprec = testdir.inline_run(testpath, "-s")
-    reprec.assertoutcome(skipped=1)
-
-
 class TestTrialUnittest(object):
     def setup_class(cls):
         cls.ut = pytest.importorskip("twisted.trial.unittest")
+        # on windows trial uses a socket for a reactor and apparently doesn't close it properly
+        # https://twistedmatrix.com/trac/ticket/9227
+        cls.ignore_unclosed_socket_warning = ('-W', 'always')
 
     def test_trial_testcase_runtest_not_collected(self, testdir):
         testdir.makepyfile("""
@@ -415,7 +366,7 @@ class TestTrialUnittest(object):
                 def test_hello(self):
                     pass
         """)
-        reprec = testdir.inline_run()
+        reprec = testdir.inline_run(*self.ignore_unclosed_socket_warning)
         reprec.assertoutcome(passed=1)
         testdir.makepyfile("""
             from twisted.trial.unittest import TestCase
@@ -424,7 +375,7 @@ class TestTrialUnittest(object):
                 def runTest(self):
                     pass
         """)
-        reprec = testdir.inline_run()
+        reprec = testdir.inline_run(*self.ignore_unclosed_socket_warning)
         reprec.assertoutcome(passed=1)
 
     def test_trial_exceptions_with_skips(self, testdir):
@@ -462,7 +413,7 @@ class TestTrialUnittest(object):
         """)
         from _pytest.compat import _is_unittest_unexpected_success_a_failure
         should_fail = _is_unittest_unexpected_success_a_failure()
-        result = testdir.runpytest("-rxs")
+        result = testdir.runpytest("-rxs", *self.ignore_unclosed_socket_warning)
         result.stdout.fnmatch_lines_random([
             "*XFAIL*test_trial_todo*",
             "*trialselfskip*",
@@ -537,6 +488,50 @@ class TestTrialUnittest(object):
         child.expect("hellopdb")
         child.sendeof()
 
+    def test_trial_testcase_skip_property(self, testdir):
+        testpath = testdir.makepyfile("""
+            from twisted.trial import unittest
+            class MyTestCase(unittest.TestCase):
+                skip = 'dont run'
+                def test_func(self):
+                    pass
+            """)
+        reprec = testdir.inline_run(testpath, "-s")
+        reprec.assertoutcome(skipped=1)
+
+    def test_trial_testfunction_skip_property(self, testdir):
+        testpath = testdir.makepyfile("""
+            from twisted.trial import unittest
+            class MyTestCase(unittest.TestCase):
+                def test_func(self):
+                    pass
+                test_func.skip = 'dont run'
+            """)
+        reprec = testdir.inline_run(testpath, "-s")
+        reprec.assertoutcome(skipped=1)
+
+    def test_trial_testcase_todo_property(self, testdir):
+        testpath = testdir.makepyfile("""
+            from twisted.trial import unittest
+            class MyTestCase(unittest.TestCase):
+                todo = 'dont run'
+                def test_func(self):
+                    assert 0
+            """)
+        reprec = testdir.inline_run(testpath, "-s")
+        reprec.assertoutcome(skipped=1)
+
+    def test_trial_testfunction_todo_property(self, testdir):
+        testpath = testdir.makepyfile("""
+            from twisted.trial import unittest
+            class MyTestCase(unittest.TestCase):
+                def test_func(self):
+                    assert 0
+                test_func.todo = 'dont run'
+            """)
+        reprec = testdir.inline_run(testpath, "-s", *self.ignore_unclosed_socket_warning)
+        reprec.assertoutcome(skipped=1)
+
 
 def test_djangolike_testcase(testdir):
     # contributed from Morten Breekevold
@@ -598,7 +593,7 @@ def test_unittest_not_shown_in_traceback(testdir):
         class t(unittest.TestCase):
             def test_hello(self):
                 x = 3
-                self.assertEquals(x, 4)
+                self.assertEqual(x, 4)
     """)
     res = testdir.runpytest()
     assert "failUnlessEqual" not in res.stdout.str()

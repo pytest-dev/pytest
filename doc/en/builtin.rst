@@ -38,7 +38,7 @@ Examples at :ref:`assertraises`.
 Comparing floating point numbers
 --------------------------------
 
-.. autoclass:: approx
+.. autofunction:: approx
 
 Raising a specific test outcome
 --------------------------------------
@@ -47,11 +47,11 @@ You can use the following functions in your test, fixture or setup
 functions to force a certain test outcome.  Note that most often
 you can rather use declarative marks, see :ref:`skipping`.
 
-.. autofunction:: _pytest.runner.fail
-.. autofunction:: _pytest.runner.skip
-.. autofunction:: _pytest.runner.importorskip
-.. autofunction:: _pytest.skipping.xfail
-.. autofunction:: _pytest.runner.exit
+.. autofunction:: _pytest.outcomes.fail
+.. autofunction:: _pytest.outcomes.skip
+.. autofunction:: _pytest.outcomes.importorskip
+.. autofunction:: _pytest.outcomes.xfail
+.. autofunction:: _pytest.outcomes.exit
 
 Fixtures and requests
 -----------------------------------------------------
@@ -108,14 +108,14 @@ You can ask for available builtin or project-custom
         The returned ``monkeypatch`` fixture provides these
         helper methods to modify objects, dictionaries or os.environ::
         
-        monkeypatch.setattr(obj, name, value, raising=True)
-        monkeypatch.delattr(obj, name, raising=True)
-        monkeypatch.setitem(mapping, name, value)
-        monkeypatch.delitem(obj, name, raising=True)
-        monkeypatch.setenv(name, value, prepend=False)
-        monkeypatch.delenv(name, value, raising=True)
-        monkeypatch.syspath_prepend(path)
-        monkeypatch.chdir(path)
+            monkeypatch.setattr(obj, name, value, raising=True)
+            monkeypatch.delattr(obj, name, raising=True)
+            monkeypatch.setitem(mapping, name, value)
+            monkeypatch.delitem(obj, name, raising=True)
+            monkeypatch.setenv(name, value, prepend=False)
+            monkeypatch.delenv(name, value, raising=True)
+            monkeypatch.syspath_prepend(path)
+            monkeypatch.chdir(path)
         
         All modifications will be undone after the requesting
         test function or fixture has finished. The ``raising``

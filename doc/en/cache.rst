@@ -1,4 +1,6 @@
+.. _`cache_provider`:
 .. _cache:
+
 
 Cache: working with cross-testrun state
 =======================================
@@ -75,9 +77,9 @@ If you then run it with ``--lf``::
     $ pytest --lf
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
-    run-last-failure: rerun last 2 failures
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 50 items
+    run-last-failure: rerun previous 2 failures
     
     test_50.py FF
     
@@ -117,9 +119,9 @@ of ``FF`` and dots)::
     $ pytest --ff
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
-    run-last-failure: rerun last 2 failures first
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 50 items
+    run-last-failure: rerun previous 2 failures first
     
     test_50.py FF................................................
     

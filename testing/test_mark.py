@@ -3,7 +3,7 @@ import os
 import sys
 
 import pytest
-from _pytest.mark import MarkGenerator as Mark, ParameterSet
+from _pytest.mark import MarkGenerator as Mark, ParameterSet, transfer_markers
 
 
 class TestMark(object):
@@ -21,6 +21,19 @@ class TestMark(object):
     def test_pytest_mark_notcallable(self):
         mark = Mark()
         pytest.raises((AttributeError, TypeError), mark)
+
+    def test_mark_with_param(self):
+        def some_function(abc):
+            pass
+
+        class SomeClass(object):
+            pass
+
+        assert pytest.mark.fun(some_function) is some_function
+        assert pytest.mark.fun.with_args(some_function) is not some_function
+
+        assert pytest.mark.fun(SomeClass) is SomeClass
+        assert pytest.mark.fun.with_args(SomeClass) is not SomeClass
 
     def test_pytest_mark_name_starts_with_underscore(self):
         mark = Mark()
@@ -774,6 +787,28 @@ class TestKeywordSelection(object):
                   marks=[pytest.mark.xfail, pytest.mark.skip], id=None)),
 
 ])
+@pytest.mark.filterwarnings('ignore')
 def test_parameterset_extractfrom(argval, expected):
     extracted = ParameterSet.extract_from(argval)
     assert extracted == expected
+
+
+def test_legacy_transfer():
+
+    class FakeModule(object):
+        pytestmark = []
+
+    class FakeClass(object):
+        pytestmark = pytest.mark.nofun
+
+    @pytest.mark.fun
+    def fake_method(self):
+        pass
+
+    transfer_markers(fake_method, FakeClass, FakeModule)
+
+    # legacy marks transfer smeared
+    assert fake_method.nofun
+    assert fake_method.fun
+    # pristine marks dont transfer
+    assert fake_method.pytestmark == [pytest.mark.fun.mark]

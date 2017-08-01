@@ -16,15 +16,15 @@ from _pytest.freeze_support import freeze_includes
 from _pytest import __version__
 from _pytest.debugging import pytestPDB as __pytestPDB
 from _pytest.recwarn import warns, deprecated_call
-from _pytest.runner import fail, skip, importorskip, exit
+from _pytest.outcomes import fail, skip, importorskip, exit, xfail
 from _pytest.mark import MARK_GEN as mark, param
-from _pytest.skipping import xfail
 from _pytest.main import Item, Collector, File, Session
 from _pytest.fixtures import fillfixtures as _fillfuncargs
 from _pytest.python import (
-    raises, approx,
     Module, Class, Instance, Function, Generator,
 )
+
+from _pytest.python_api import approx, raises
 
 set_trace = __pytestPDB.set_trace
 

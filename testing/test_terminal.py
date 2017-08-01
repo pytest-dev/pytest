@@ -544,6 +544,23 @@ class TestTerminalFunctional(object):
         assert "===" not in s
         assert "passed" not in s
 
+    def test_report_collectionfinish_hook(self, testdir):
+        testdir.makeconftest("""
+            def pytest_report_collectionfinish(config, startdir, items):
+                return ['hello from hook: {0} items'.format(len(items))]
+        """)
+        testdir.makepyfile("""
+            import pytest
+            @pytest.mark.parametrize('i', range(3))
+            def test(i):
+                pass
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "collected 3 items",
+            "hello from hook: 3 items",
+        ])
+
 
 def test_fail_extra_reporting(testdir):
     testdir.makepyfile("def test_this(): assert 0")

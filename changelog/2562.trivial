@@ -1,1 +1,0 @@
-Emit warning about ``yield`` tests being deprecated only once per generator.

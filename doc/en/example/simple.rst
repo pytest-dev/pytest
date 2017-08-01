@@ -170,7 +170,7 @@ and when running it will see a skipped "slow" test::
     
     test_module.py .s
     ======= short test summary info ========
-    SKIP [1] test_module.py:13: need --runslow option to run
+    SKIP [1] test_module.py:14: need --runslow option to run
     
     ======= 1 passed, 1 skipped in 0.12 seconds ========
 
@@ -760,6 +760,47 @@ and run it::
 
 You'll see that the fixture finalizers could use the precise reporting
 information.
+
+``PYTEST_CURRENT_TEST`` environment variable
+--------------------------------------------
+
+.. versionadded:: 3.2
+
+Sometimes a test session might get stuck and there might be no easy way to figure out
+which test got stuck, for example if pytest was run in quiet mode (``-q``) or you don't have access to the console
+output. This is particularly a problem if the problem helps only sporadically, the famous "flaky" kind of tests.
+
+``pytest`` sets a ``PYTEST_CURRENT_TEST`` environment variable when running tests, which can be inspected
+by process monitoring utilities or libraries like `psutil <https://pypi.python.org/pypi/psutil>`_ to discover which
+test got stuck if necessary:
+
+.. code-block:: python
+
+    import psutil
+
+    for pid in psutil.pids():
+        environ = psutil.Process(pid).environ()
+        if 'PYTEST_CURRENT_TEST' in environ:
+            print(f'pytest process {pid} running: {environ["PYTEST_CURRENT_TEST"]}')
+
+During the test session pytest will set ``PYTEST_CURRENT_TEST`` to the current test
+:ref:`nodeid <nodeids>` and the current stage, which can be ``setup``, ``call``
+and ``teardown``.
+
+For example, when running a single test function named ``test_foo`` from ``foo_module.py``,
+``PYTEST_CURRENT_TEST`` will be set to:
+
+#. ``foo_module.py::test_foo (setup)``
+#. ``foo_module.py::test_foo (call)``
+#. ``foo_module.py::test_foo (teardown)``
+
+In that order.
+
+.. note::
+
+    The contents of ``PYTEST_CURRENT_TEST`` is meant to be human readable and the actual format
+    can be changed between releases (even bug fixes) so it shouldn't be relied on for scripting
+    or automation.
 
 Freezing pytest 
 ---------------

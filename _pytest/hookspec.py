@@ -337,13 +337,30 @@ def pytest_assertrepr_compare(config, op, left, right):
 
 
 def pytest_report_header(config, startdir):
-    """ return a string to be displayed as header info for terminal reporting.
+    """ return a string or list of strings to be displayed as header info for terminal reporting.
+
+    :param config: the pytest config object.
+    :param startdir: py.path object with the starting dir
 
     .. note::
 
         This function should be implemented only in plugins or ``conftest.py``
         files situated at the tests root directory due to how pytest
         :ref:`discovers plugins during startup <pluginorder>`.
+    """
+
+
+def pytest_report_collectionfinish(config, startdir, items):
+    """
+    .. versionadded:: 3.2
+
+    return a string or list of strings to be displayed after collection has finished successfully.
+
+    This strings will be displayed after the standard "collected X items" message.
+
+    :param config: the pytest config object.
+    :param startdir: py.path object with the starting dir
+    :param items: list of pytest items that are going to be executed; this list should not be modified.
     """
 
 

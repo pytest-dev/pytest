@@ -323,6 +323,9 @@ class TerminalReporter:
         self.write_line(msg)
         lines = self.config.hook.pytest_report_header(
             config=self.config, startdir=self.startdir)
+        self._write_report_lines_from_hooks(lines)
+
+    def _write_report_lines_from_hooks(self, lines):
         lines.reverse()
         for line in flatten(lines):
             self.write_line(line)
@@ -349,10 +352,9 @@ class TerminalReporter:
                     rep.toterminal(self._tw)
                 return 1
             return 0
-        if not self.showheader:
-            return
-        # for i, testarg in enumerate(self.config.args):
-        #    self.write_line("test path %d: %s" %(i+1, testarg))
+        lines = self.config.hook.pytest_report_collectionfinish(
+            config=self.config, startdir=self.startdir, items=session.items)
+        self._write_report_lines_from_hooks(lines)
 
     def _printcollecteditems(self, items):
         # to print out items and their parent collectors

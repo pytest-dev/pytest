@@ -1,4 +1,5 @@
 # encoding: utf-8
+import operator
 import sys
 import pytest
 import doctest
@@ -29,12 +30,20 @@ class TestApprox(object):
         if sys.version_info[:2] == (2, 6):
             tol1, tol2, infr = '???', '???', '???'
         assert repr(approx(1.0)) == '1.0 {pm} {tol1}'.format(pm=plus_minus, tol1=tol1)
-        assert repr(approx([1.0, 2.0])) == '1.0 {pm} {tol1}, 2.0 {pm} {tol2}'.format(
+        assert repr(approx([1.0, 2.0])) == 'approx([1.0 {pm} {tol1}, 2.0 {pm} {tol2}])'.format(
+            pm=plus_minus, tol1=tol1, tol2=tol2)
+        assert repr(approx((1.0, 2.0))) == 'approx((1.0 {pm} {tol1}, 2.0 {pm} {tol2}))'.format(
             pm=plus_minus, tol1=tol1, tol2=tol2)
         assert repr(approx(inf)) == 'inf'
         assert repr(approx(1.0, rel=nan)) == '1.0 {pm} ???'.format(pm=plus_minus)
         assert repr(approx(1.0, rel=inf)) == '1.0 {pm} {infr}'.format(pm=plus_minus, infr=infr)
         assert repr(approx(1.0j, rel=inf)) == '1j'
+
+        # Dictionaries aren't ordered, so we need to check both orders.
+        assert repr(approx({'a': 1.0, 'b': 2.0})) in (
+            "approx({{'a': 1.0 {pm} {tol1}, 'b': 2.0 {pm} {tol2}}})".format(pm=plus_minus, tol1=tol1, tol2=tol2),
+            "approx({{'b': 2.0 {pm} {tol2}, 'a': 1.0 {pm} {tol1}}})".format(pm=plus_minus, tol1=tol1, tol2=tol2),
+        )
 
     def test_operator_overloading(self):
         assert 1 == approx(1, rel=1e-6, abs=1e-12)
@@ -213,34 +222,51 @@ class TestApprox(object):
 
     def test_expecting_nan(self):
         examples = [
-            (nan, nan),
-            (-nan, -nan),
-            (nan, -nan),
-            (0.0, nan),
-            (inf, nan),
+            (eq, nan, nan),
+            (eq, -nan, -nan),
+            (eq, nan, -nan),
+            (ne, 0.0, nan),
+            (ne, inf, nan),
         ]
-        for a, x in examples:
-            # If there is a relative tolerance and the expected value is NaN,
-            # the actual tolerance is a NaN, which should be an error.
-            with pytest.raises(ValueError):
-                a != approx(x, rel=inf)
+        for op, a, x in examples:
+            # Nothing is equal to NaN by default.
+            assert a != approx(x)
 
-            # You can make comparisons against NaN by not specifying a relative
-            # tolerance, so only an absolute tolerance is calculated.
-            assert a != approx(x, abs=inf)
+            # If ``nan_ok=True``, then NaN is equal to NaN.
+            assert op(a, approx(x, nan_ok=True))
 
-    def test_expecting_sequence(self):
-        within_1e8 = [
-            (1e8 + 1e0, 1e8),
-            (1e0 + 1e-8, 1e0),
-            (1e-8 + 1e-16, 1e-8),
+    def test_int(self):
+        within_1e6 = [
+            (1000001, 1000000),
+            (-1000001, -1000000),
         ]
-        actual, expected = zip(*within_1e8)
-        assert actual == approx(expected, rel=5e-8, abs=0.0)
+        for a, x in within_1e6:
+            assert a == approx(x, rel=5e-6, abs=0)
+            assert a != approx(x, rel=5e-7, abs=0)
+            assert approx(x, rel=5e-6, abs=0) == a
+            assert approx(x, rel=5e-7, abs=0) != a
 
-    def test_expecting_sequence_wrong_len(self):
-        assert [1, 2] != approx([1])
-        assert [1, 2] != approx([1, 2, 3])
+    def test_decimal(self):
+        within_1e6 = [
+            (Decimal('1.000001'), Decimal('1.0')),
+            (Decimal('-1.000001'), Decimal('-1.0')),
+        ]
+        for a, x in within_1e6:
+            assert a == approx(x, rel=Decimal('5e-6'), abs=0)
+            assert a != approx(x, rel=Decimal('5e-7'), abs=0)
+            assert approx(x, rel=Decimal('5e-6'), abs=0) == a
+            assert approx(x, rel=Decimal('5e-7'), abs=0) != a
+
+    def test_fraction(self):
+        within_1e6 = [
+            (1 + Fraction(1, 1000000), Fraction(1)),
+            (-1 - Fraction(-1, 1000000), Fraction(-1)),
+        ]
+        for a, x in within_1e6:
+            assert a == approx(x, rel=5e-6, abs=0)
+            assert a != approx(x, rel=5e-7, abs=0)
+            assert approx(x, rel=5e-6, abs=0) == a
+            assert approx(x, rel=5e-7, abs=0) != a
 
     def test_complex(self):
         within_1e6 = [
@@ -252,33 +278,80 @@ class TestApprox(object):
         for a, x in within_1e6:
             assert a == approx(x, rel=5e-6, abs=0)
             assert a != approx(x, rel=5e-7, abs=0)
+            assert approx(x, rel=5e-6, abs=0) == a
+            assert approx(x, rel=5e-7, abs=0) != a
 
-    def test_int(self):
-        within_1e6 = [
-            (1000001, 1000000),
-            (-1000001, -1000000),
-        ]
-        for a, x in within_1e6:
-            assert a == approx(x, rel=5e-6, abs=0)
-            assert a != approx(x, rel=5e-7, abs=0)
+    def test_list(self):
+        actual = [1 + 1e-7, 2 + 1e-8]
+        expected = [1, 2]
 
-    def test_decimal(self):
-        within_1e6 = [
-            (Decimal('1.000001'), Decimal('1.0')),
-            (Decimal('-1.000001'), Decimal('-1.0')),
-        ]
-        for a, x in within_1e6:
-            assert a == approx(x, rel=Decimal('5e-6'), abs=0)
-            assert a != approx(x, rel=Decimal('5e-7'), abs=0)
+        # Return false if any element is outside the tolerance.
+        assert actual == approx(expected, rel=5e-7, abs=0)
+        assert actual != approx(expected, rel=5e-8, abs=0)
+        assert approx(expected, rel=5e-7, abs=0) == actual
+        assert approx(expected, rel=5e-8, abs=0) != actual
 
-    def test_fraction(self):
-        within_1e6 = [
-            (1 + Fraction(1, 1000000), Fraction(1)),
-            (-1 - Fraction(-1, 1000000), Fraction(-1)),
-        ]
-        for a, x in within_1e6:
-            assert a == approx(x, rel=5e-6, abs=0)
-            assert a != approx(x, rel=5e-7, abs=0)
+    def test_list_wrong_len(self):
+        assert [1, 2] != approx([1])
+        assert [1, 2] != approx([1, 2, 3])
+
+    def test_tuple(self):
+        actual = (1 + 1e-7, 2 + 1e-8)
+        expected = (1, 2)
+
+        # Return false if any element is outside the tolerance.
+        assert actual == approx(expected, rel=5e-7, abs=0)
+        assert actual != approx(expected, rel=5e-8, abs=0)
+        assert approx(expected, rel=5e-7, abs=0) == actual
+        assert approx(expected, rel=5e-8, abs=0) != actual
+
+    def test_tuple_wrong_len(self):
+        assert (1, 2) != approx((1,))
+        assert (1, 2) != approx((1, 2, 3))
+
+    def test_dict(self):
+        actual = {'a': 1 + 1e-7, 'b': 2 + 1e-8}
+        # Dictionaries became ordered in python3.6, so switch up the order here
+        # to make sure it doesn't matter.
+        expected = {'b': 2, 'a': 1}
+
+        # Return false if any element is outside the tolerance.
+        assert actual == approx(expected, rel=5e-7, abs=0)
+        assert actual != approx(expected, rel=5e-8, abs=0)
+        assert approx(expected, rel=5e-7, abs=0) == actual
+        assert approx(expected, rel=5e-8, abs=0) != actual
+
+    def test_dict_wrong_len(self):
+        assert {'a': 1, 'b': 2} != approx({'a': 1})
+        assert {'a': 1, 'b': 2} != approx({'a': 1, 'c': 2})
+        assert {'a': 1, 'b': 2} != approx({'a': 1, 'b': 2, 'c': 3})
+
+    def test_numpy_array(self):
+        np = pytest.importorskip('numpy')
+
+        actual = np.array([1 + 1e-7, 2 + 1e-8])
+        expected = np.array([1, 2])
+
+        # Return false if any element is outside the tolerance.
+        assert actual == approx(expected, rel=5e-7, abs=0)
+        assert actual != approx(expected, rel=5e-8, abs=0)
+        assert approx(expected, rel=5e-7, abs=0) == expected
+        assert approx(expected, rel=5e-8, abs=0) != actual
+
+        # Should be able to compare lists with numpy arrays.
+        assert list(actual) == approx(expected, rel=5e-7, abs=0)
+        assert list(actual) != approx(expected, rel=5e-8, abs=0)
+        assert actual == approx(list(expected), rel=5e-7, abs=0)
+        assert actual != approx(list(expected), rel=5e-8, abs=0)
+
+    def test_numpy_array_wrong_shape(self):
+        np = pytest.importorskip('numpy')
+
+        a12 = np.array([[1, 2]])
+        a21 = np.array([[1], [2]])
+
+        assert a12 != approx(a21)
+        assert a21 != approx(a12)
 
     def test_doctests(self):
         parser = doctest.DocTestParser()
@@ -310,3 +383,16 @@ class TestApprox(object):
             '*At index 0 diff: 3 != 4 * {0}'.format(expected),
             '=* 1 failed in *=',
         ])
+
+    @pytest.mark.parametrize('op', [
+        pytest.param(operator.le, id='<='),
+        pytest.param(operator.lt, id='<'),
+        pytest.param(operator.ge, id='>='),
+        pytest.param(operator.gt, id='>'),
+    ])
+    def test_comparison_operator_type_error(self, op):
+        """
+        pytest.approx should raise TypeError for operators other than == and != (#2003).
+        """
+        with pytest.raises(TypeError):
+            op(1, approx(1, rel=1e-6, abs=1e-12))

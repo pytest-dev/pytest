@@ -16,8 +16,13 @@ from _pytest.compat import (
     getlocation, getfuncargnames,
     safe_getattr,
 )
-from _pytest.runner import fail
+from _pytest.outcomes import fail, TEST_OUTCOME
 from _pytest.compat import FuncargnamesCompatAttr
+
+if sys.version_info[:2] == (2, 6):
+    from ordereddict import OrderedDict
+else:
+    from collections import OrderedDict
 
 
 def pytest_sessionstart(session):
@@ -121,7 +126,7 @@ def getfixturemarker(obj):
     exceptions."""
     try:
         return getattr(obj, "_pytestfixturefunction", None)
-    except Exception:
+    except TEST_OUTCOME:
         # some objects raise errors like request (from flask import request)
         # we don't expect them to be fixture functions
         return None
@@ -136,10 +141,10 @@ def get_parametrized_fixture_keys(item, scopenum):
     except AttributeError:
         pass
     else:
-        # cs.indictes.items() is random order of argnames but
-        # then again different functions (items) can change order of
-        # arguments so it doesn't matter much probably
-        for argname, param_index in cs.indices.items():
+        # cs.indices.items() is random order of argnames.  Need to
+        # sort this so that different calls to
+        # get_parametrized_fixture_keys will be deterministic.
+        for argname, param_index in sorted(cs.indices.items()):
             if cs._arg2scopenum[argname] != scopenum:
                 continue
             if scopenum == 0:    # session
@@ -161,7 +166,7 @@ def reorder_items(items):
     for scopenum in range(0, scopenum_function):
         argkeys_cache[scopenum] = d = {}
         for item in items:
-            keys = set(get_parametrized_fixture_keys(item, scopenum))
+            keys = OrderedDict.fromkeys(get_parametrized_fixture_keys(item, scopenum))
             if keys:
                 d[item] = keys
     return reorder_items_atscope(items, set(), argkeys_cache, 0)
@@ -196,9 +201,9 @@ def slice_items(items, ignore, scoped_argkeys_cache):
         for i, item in enumerate(it):
             argkeys = scoped_argkeys_cache.get(item)
             if argkeys is not None:
-                argkeys = argkeys.difference(ignore)
-                if argkeys:  # found a slicing key
-                    slicing_argkey = argkeys.pop()
+                newargkeys = OrderedDict.fromkeys(k for k in argkeys if k not in ignore)
+                if newargkeys:  # found a slicing key
+                    slicing_argkey, _ = newargkeys.popitem()
                     items_before = items[:i]
                     items_same = [item]
                     items_other = []
@@ -811,7 +816,7 @@ def pytest_fixture_setup(fixturedef, request):
     my_cache_key = request.param_index
     try:
         result = call_fixture_func(fixturefunc, request, kwargs)
-    except Exception:
+    except TEST_OUTCOME:
         fixturedef.cached_result = (None, my_cache_key, sys.exc_info())
         raise
     fixturedef.cached_result = (result, my_cache_key, None)
