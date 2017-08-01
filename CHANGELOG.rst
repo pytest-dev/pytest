@@ -24,8 +24,9 @@ Deprecations and Removals
   This affects Python 2 users only and in rare situations. (`#2147
   <https://github.com/pytest-dev/pytest/issues/2147>`_)
 
-- introduce deprecation warnings for legacy marks based parametersets (`#2427
-  <https://github.com/pytest-dev/pytest/issues/2427>`_)
+- A deprecation warning is now raised when using marks for parameters
+  in ``pytest.mark.parametrize``. Use ``pytest.param`` to apply marks to
+  parameters instead. (`#2427 <https://github.com/pytest-dev/pytest/issues/2427>`_)
 
 
 Features
@@ -52,12 +53,11 @@ Features
   sole argument to marks. (`#2540 <https://github.com/pytest-
   dev/pytest/issues/2540>`_)
 
-- New ``cache_dir`` ini option: sets a directory where stores content of cache
-  plugin. Default directory is ``.cache`` which is created in ``rootdir``.
-  Directory may be relative or absolute path. If setting relative path, then
-  directory is created relative to ``rootdir``. Additionally path may contain
-  environment variables, that will be expanded. (`#2543
-  <https://github.com/pytest-dev/pytest/issues/2543>`_)
+- New ``cache_dir`` ini option: sets the directory where the contents of the
+  cache plugin are stored. Directory may be relative or absolute path: if relative path, then
+  directory is created relative to ``rootdir``, otherwise it is used as is.
+  Additionally path may contain environment variables which are expanded during
+  runtime. (`#2543 <https://github.com/pytest-dev/pytest/issues/2543>`_)
 
 - Introduce the ``PYTEST_CURRENT_TEST`` environment variable that is set with
   the ``nodeid`` and stage (``setup``, ``call`` and ``teardown``) of the test
