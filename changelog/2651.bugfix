@@ -1,0 +1,1 @@
+Fix ``reportinfo`` for the default case of ``dtest=None``.
