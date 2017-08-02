@@ -6,6 +6,7 @@ import traceback
 import types
 import warnings
 
+import six
 import py
 # DON't import pytest here because it causes import cycle troubles
 import sys
@@ -158,7 +159,7 @@ def _prepareconfig(args=None, plugins=None):
     try:
         if plugins:
             for plugin in plugins:
-                if isinstance(plugin, py.builtin._basestring):
+                if isinstance(plugin, six.string_types):
                     pluginmanager.consider_pluginarg(plugin)
                 else:
                     pluginmanager.register(plugin)
@@ -430,7 +431,7 @@ class PytestPluginManager(PluginManager):
         # "terminal" or "capture".  Those plugins are registered under their
         # basename for historic purposes but must be imported with the
         # _pytest prefix.
-        assert isinstance(modname, (py.builtin.text, str)), "module name as text required, got %r" % modname
+        assert isinstance(modname, (six.text_type, str)), "module name as text required, got %r" % modname
         modname = str(modname)
         if self.get_plugin(modname) is not None:
             return
@@ -643,7 +644,7 @@ class Argument:
             pass
         else:
             # this might raise a keyerror as well, don't want to catch that
-            if isinstance(typ, py.builtin._basestring):
+            if isinstance(typ, six.string_types):
                 if typ == 'choice':
                     warnings.warn(
                         'type argument to addoption() is a string %r.'
@@ -956,7 +957,7 @@ class Config(object):
                                   )
         res = self.hook.pytest_internalerror(excrepr=excrepr,
                                              excinfo=excinfo)
-        if not py.builtin.any(res):
+        if not any(res):
             for line in str(excrepr).split("\n"):
                 sys.stderr.write("INTERNALERROR> %s\n" % line)
                 sys.stderr.flush()

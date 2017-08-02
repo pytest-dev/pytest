@@ -9,6 +9,7 @@ from _pytest.main import EXIT_OK, EXIT_TESTSFAILED, EXIT_INTERRUPTED, \
     EXIT_USAGEERROR, EXIT_NOTESTSCOLLECTED
 import pytest
 import py
+import six
 import sys
 import time
 import platform
@@ -174,8 +175,8 @@ class TerminalReporter:
         self._tw.write(content, **markup)
 
     def write_line(self, line, **markup):
-        if not py.builtin._istext(line):
-            line = py.builtin.text(line, errors="replace")
+        if not isinstance(line, six.text_type):
+            line = six.text_type(line, errors="replace")
         self.ensure_newline()
         self._tw.line(line, **markup)
 
@@ -194,7 +195,7 @@ class TerminalReporter:
         self._tw.line(msg, **kw)
 
     def pytest_internalerror(self, excrepr):
-        for line in py.builtin.text(excrepr).split("\n"):
+        for line in six.text_type(excrepr).split("\n"):
             self.write_line("INTERNALERROR> " + line)
         return 1
 

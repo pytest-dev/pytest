@@ -10,6 +10,7 @@ from textwrap import dedent
 from itertools import count
 
 import py
+import six
 from _pytest.mark import MarkerError
 from _pytest.config import hookimpl
 
@@ -613,7 +614,7 @@ class Generator(FunctionMixin, PyCollector):
         if not isinstance(obj, (tuple, list)):
             obj = (obj,)
         # explicit naming
-        if isinstance(obj[0], py.builtin._basestring):
+        if isinstance(obj[0], six.string_types):
             name = obj[0]
             obj = obj[1:]
         else:
@@ -725,7 +726,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         self.cls = cls
 
         self._calls = []
-        self._ids = py.builtin.set()
+        self._ids = set()
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs
 
     def parametrize(self, argnames, argvalues, indirect=False, ids=None,
@@ -827,7 +828,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
                 raise ValueError('%d tests specified with %d ids' % (
                                  len(parameters), len(ids)))
             for id_value in ids:
-                if id_value is not None and not isinstance(id_value, py.builtin._basestring):
+                if id_value is not None and not isinstance(id_value, six.string_types):
                     msg = 'ids must be list of strings, found: %s (type: %s)'
                     raise ValueError(msg % (saferepr(id_value), type(id_value).__name__))
         ids = idmaker(argnames, parameters, idfn, ids, self.config)

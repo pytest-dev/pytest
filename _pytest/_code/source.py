@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, generators, print_function
 
 from bisect import bisect_right
 import sys
+import six
 import inspect
 import tokenize
 import py
@@ -32,7 +33,7 @@ class Source(object):
                 partlines = part.lines
             elif isinstance(part, (tuple, list)):
                 partlines = [x.rstrip("\n") for x in part]
-            elif isinstance(part, py.builtin._basestring):
+            elif isinstance(part, six.string_types):
                 partlines = part.split('\n')
                 if rstrip:
                     while partlines:

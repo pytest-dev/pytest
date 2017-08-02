@@ -2,10 +2,10 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+import six
 import sys
 import traceback
 
-import py
 from _pytest.config import hookimpl
 from _pytest.mark import MarkInfo, MarkDecorator
 from _pytest.runner import fail, skip
@@ -133,7 +133,7 @@ class MarkEvaluator:
                         args = (kwargs['condition'],)
                     for expr in args:
                         self.expr = expr
-                        if isinstance(expr, py.builtin._basestring):
+                        if isinstance(expr, six.string_types):
                             d = self._getglobals()
                             result = cached_eval(self.item.config, expr, d)
                         else:

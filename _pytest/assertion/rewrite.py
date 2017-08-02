@@ -8,6 +8,7 @@ import imp
 import marshal
 import os
 import re
+import six
 import struct
 import sys
 import types
@@ -405,10 +406,10 @@ def _saferepr(obj):
 
     """
     repr = py.io.saferepr(obj)
-    if py.builtin._istext(repr):
-        t = py.builtin.text
+    if isinstance(repr, six.text_type):
+        t = six.text_type
     else:
-        t = py.builtin.bytes
+        t = six.binary_type
     return repr.replace(t("\n"), t("\\n"))
 
 
@@ -427,16 +428,16 @@ def _format_assertmsg(obj):
     # contains a newline it gets escaped, however if an object has a
     # .__repr__() which contains newlines it does not get escaped.
     # However in either case we want to preserve the newline.
-    if py.builtin._istext(obj) or py.builtin._isbytes(obj):
+    if isinstance(obj, six.text_type) or isinstance(obj, six.binary_type):
         s = obj
         is_repr = False
     else:
         s = py.io.saferepr(obj)
         is_repr = True
-    if py.builtin._istext(s):
-        t = py.builtin.text
+    if isinstance(s, six.text_type):
+        t = six.text_type
     else:
-        t = py.builtin.bytes
+        t = six.binary_type
     s = s.replace(t("\n"), t("\n~")).replace(t("%"), t("%%"))
     if is_repr:
         s = s.replace(t("\\n"), t("\n~"))
@@ -444,15 +445,15 @@ def _format_assertmsg(obj):
 
 
 def _should_repr_global_name(obj):
-    return not hasattr(obj, "__name__") and not py.builtin.callable(obj)
+    return not hasattr(obj, "__name__") and not callable(obj)
 
 
 def _format_boolop(explanations, is_or):
     explanation = "(" + (is_or and " or " or " and ").join(explanations) + ")"
-    if py.builtin._istext(explanation):
-        t = py.builtin.text
+    if isinstance(explanation, six.text_type):
+        t = six.text_type
     else:
-        t = py.builtin.bytes
+        t = six.binary_type
     return explanation.replace(t('%'), t('%%'))
 
 

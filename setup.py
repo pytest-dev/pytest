@@ -43,7 +43,7 @@ def has_environment_marker_support():
 
 
 def main():
-    install_requires = ['py>=1.4.33', 'setuptools']  # pluggy is vendored in _pytest.vendored_packages
+    install_requires = ['py>=1.4.33', 'six>=1.10.0','setuptools']  # pluggy is vendored in _pytest.vendored_packages
     extras_require = {}
     if has_environment_marker_support():
         extras_require[':python_version=="2.6"'] = ['argparse']

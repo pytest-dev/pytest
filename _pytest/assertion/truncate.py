@@ -7,7 +7,7 @@ Current default behaviour is to truncate assertion explanations at
 from __future__ import absolute_import, division, print_function
 import os
 
-import py
+import six
 
 
 DEFAULT_MAX_LINES = 8
@@ -74,8 +74,8 @@ def _truncate_explanation(input_lines, max_lines=None, max_chars=None):
         msg += ' ({0} lines hidden)'.format(truncated_line_count)
     msg += ", {0}" .format(USAGE_MSG)
     truncated_explanation.extend([
-        py.builtin._totext(""),
-        py.builtin._totext(msg),
+        six.text_type(""),
+        six.text_type(msg),
     ])
     return truncated_explanation
 

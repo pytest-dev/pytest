@@ -11,11 +11,10 @@ import io
 from io import UnsupportedOperation
 from tempfile import TemporaryFile
 
-import py
+import six
 import pytest
 from _pytest.compat import CaptureIO
 
-unicode = py.builtin.text
 
 patchsysdict = {0: 'stdin', 1: 'stdout', 2: 'stderr'}
 
@@ -246,7 +245,7 @@ class EncodedFile(object):
         self.encoding = encoding
 
     def write(self, obj):
-        if isinstance(obj, unicode):
+        if isinstance(obj, six.text_type):
             obj = obj.encode(self.encoding, "replace")
         self.buffer.write(obj)
 
@@ -377,7 +376,7 @@ class FDCapture:
         if res:
             enc = getattr(f, "encoding", None)
             if enc and isinstance(res, bytes):
-                res = py.builtin._totext(res, enc, "replace")
+                res = six.text_type(res, enc, "replace")
             f.truncate(0)
             f.seek(0)
             return res
@@ -402,7 +401,7 @@ class FDCapture:
 
     def writeorg(self, data):
         """ write to original file descriptor. """
-        if py.builtin._istext(data):
+        if isinstance(data, six.text_type):
             data = data.encode("utf8")  # XXX use encoding of original stream
         os.write(self.targetfd_save, data)
 

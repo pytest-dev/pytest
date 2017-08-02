@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 
 import functools
 import os
+import six
 import sys
 
 import _pytest
@@ -397,7 +398,7 @@ class Node(object):
         ``marker`` can be a string or pytest.mark.* instance.
         """
         from _pytest.mark import MarkDecorator, MARK_GEN
-        if isinstance(marker, py.builtin._basestring):
+        if isinstance(marker, six.string_types):
             marker = getattr(MARK_GEN, marker)
         elif not isinstance(marker, MarkDecorator):
             raise ValueError("is not a string or pytest.mark.* Marker")
