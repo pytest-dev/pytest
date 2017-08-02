@@ -400,7 +400,7 @@ class TestGeneralUsage(object):
         monkeypatch.setitem(sys.modules, 'myplugin', mod)
         assert pytest.main(args=[str(tmpdir)], plugins=['myplugin']) == 0
 
-    def test_parameterized_with_bytes_regex(self, testdir):
+    def test_parametrized_with_bytes_regex(self, testdir):
         p = testdir.makepyfile("""
             import re
             import pytest
@@ -413,6 +413,19 @@ class TestGeneralUsage(object):
         res.stdout.fnmatch_lines([
             '*1 passed*'
         ])
+
+    def test_parametrized_with_null_bytes(self, testdir):
+        """Test parametrization with values that contain null bytes and unicode characters (#2644)"""
+        p = testdir.makepyfile(u"""
+            # encoding: UTF-8
+            import pytest
+
+            @pytest.mark.parametrize("data", ["\\x00", u'ação'])
+            def test_foo(data):
+                assert data
+        """)
+        res = testdir.runpytest(p)
+        res.assert_outcomes(passed=2)
 
 
 class TestInvocationVariants(object):

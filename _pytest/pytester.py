@@ -381,13 +381,17 @@ class RunResult:
                     return d
         raise ValueError("Pytest terminal report not found")
 
-    def assert_outcomes(self, passed=0, skipped=0, failed=0):
+    def assert_outcomes(self, passed=0, skipped=0, failed=0, error=0):
         """ assert that the specified outcomes appear with the respective
         numbers (0 means it didn't occur) in the text output from a test run."""
         d = self.parseoutcomes()
-        assert passed == d.get("passed", 0)
-        assert skipped == d.get("skipped", 0)
-        assert failed == d.get("failed", 0)
+        obtained = {
+            'passed': d.get('passed', 0),
+            'skipped': d.get('skipped', 0),
+            'failed': d.get('failed', 0),
+            'error': d.get('error', 0),
+        }
+        assert obtained == dict(passed=passed, skipped=skipped, failed=failed, error=error)
 
 
 class Testdir:
