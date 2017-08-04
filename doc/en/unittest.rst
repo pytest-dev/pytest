@@ -5,14 +5,12 @@
 unittest.TestCase Support
 =========================
 
-.. _`unittest.py style`: https://docs.python.org/3/library/unittest.html
-
-``pytest`` supports running Python `unittest.py style`_ tests out of the box.
-It's meant for leveraging existing ``unittest``-style test suites
+``pytest`` supports running Python ``unittest``-based tests out of the box.
+It's meant for leveraging existing ``unittest``-based test suites
 to use pytest as a test runner and also allow to incrementally adapt
-the test suite to take full advantage of pytest features.
+the test suite to take full advantage of pytest's features.
 
-To run an existing ``unittest``-style test suite using ``pytest``, simply type::
+To run an existing ``unittest``-style test suite using ``pytest``, type::
 
     pytest tests
 
@@ -20,16 +18,28 @@ To run an existing ``unittest``-style test suite using ``pytest``, simply type::
 pytest will automatically collect ``unittest.TestCase`` subclasses and
 their ``test`` methods in ``test_*.py`` or ``*_test.py`` files.
 
-Almost all ``unittest`` features are supported, like ``@unittest.skip`` style decorators, ``setUp/tearDown``,
-``setUpClass/tearDownClass()``, etc (see :ref:`unittest-limitations`).
+Almost all ``unittest`` features are supported:
 
-Benefits
---------
+* ``@unittest.skip`` style decorators;
+* ``setUp/tearDown``;
+* ``setUpClass/tearDownClass()``;
 
-You can make use of several pytest features, most without changing any existing code:
+.. _`load_tests protocol`: https://docs.python.org/3/library/unittest.html#load-tests-protocol
+.. _`setUpModule/tearDownModule`: https://docs.python.org/3/library/unittest.html#setupmodule-and-teardownmodule
+.. _`subtests`: https://docs.python.org/3/library/unittest.html#distinguishing-test-iterations-using-subtests
 
-* Use :ref:`plain assert-statements <assert>` instead of ``self.assert*`` functions (`unittest2pytest
-  <https://pypi.python.org/pypi/unittest2pytest/>`__ is immensely helpful in this);
+Up to this point pytest does not have support for the following features:
+
+* `load_tests protocol`_;
+* `setUpModule/tearDownModule`_;
+* `subtests`_;
+
+Benefits out of the box
+-----------------------
+
+By running your test suite with pytest you can make use of several features,
+in most cases without having to modify existing code:
+
 * Obtain :ref:`more informative tracebacks <tbreportdemo>`;
 * :ref:`stdout and stderr <captures>` capturing;
 * :ref:`Test selection options <select-tests>` using ``-k`` and ``-m`` flags;
@@ -37,21 +47,8 @@ You can make use of several pytest features, most without changing any existing 
 * :ref:`--pdb <pdb-option>` command-line option for debugging on test failures
   (see :ref:`note <pdb-unittest-note>` below);
 * Distribute tests to multiple CPUs using the `pytest-xdist <http://pypi.python.org/pypi/pytest-xdist>`_ plugin;
-
-.. _unittest-limitations:
-
-Limitations
------------
-
-.. _`load_tests protocol`: https://docs.python.org/3/library/unittest.html#load-tests-protocol
-.. _`setUpModule/tearDownModule`: https://docs.python.org/3/library/unittest.html#setupmodule-and-teardownmodule
-.. _`subtests`: https://docs.python.org/3/library/unittest.html#distinguishing-test-iterations-using-subtests
-
-Pytest currently does not support the following ``unittest`` features:
-
-* `load_tests protocol`_;
-* `setUpModule/tearDownModule`_;
-* `subtests`_;
+* Use :ref:`plain assert-statements <assert>` instead of ``self.assert*`` functions (`unittest2pytest
+  <https://pypi.python.org/pypi/unittest2pytest/>`__ is immensely helpful in this);
 
 
 pytest features in ``unittest.TestCase`` subclasses
