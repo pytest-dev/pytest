@@ -7,6 +7,7 @@ import os
 import platform
 import re
 import subprocess
+import six
 import sys
 import time
 import traceback
@@ -482,8 +483,8 @@ class Testdir:
     def _makefile(self, ext, args, kwargs, encoding="utf-8"):
         items = list(kwargs.items())
         if args:
-            source = py.builtin._totext("\n").join(
-                map(py.builtin._totext, args)) + py.builtin._totext("\n")
+            source = six.text_type("\n").join(
+                map(six.text_type, args)) + six.text_type("\n")
             basename = self.request.function.__name__
             items.insert(0, (basename, source))
         ret = None
@@ -493,12 +494,12 @@ class Testdir:
             source = Source(value)
 
             def my_totext(s, encoding="utf-8"):
-                if py.builtin._isbytes(s):
-                    s = py.builtin._totext(s, encoding=encoding)
+                if isinstance(s, six.binary_type):
+                    s = six.text_type(s, encoding=encoding)
                 return s
 
             source_unicode = "\n".join([my_totext(line) for line in source.lines])
-            source = py.builtin._totext(source_unicode)
+            source = six.text_type(source_unicode)
             content = source.strip().encode(encoding)  # + "\n"
             # content = content.rstrip() + "\n"
             p.write(content, "wb")

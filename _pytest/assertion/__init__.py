@@ -2,8 +2,8 @@
 support for presenting detailed information in failing assertions.
 """
 from __future__ import absolute_import, division, print_function
-import py
 import sys
+import six
 
 from _pytest.assertion import util
 from _pytest.assertion import rewrite
@@ -126,7 +126,7 @@ def pytest_runtest_setup(item):
             if new_expl:
                 new_expl = truncate.truncate_if_required(new_expl, item)
                 new_expl = [line.replace("\n", "\\n") for line in new_expl]
-                res = py.builtin._totext("\n~").join(new_expl)
+                res = six.text_type("\n~").join(new_expl)
                 if item.config.getvalue("assertmode") == "rewrite":
                     res = res.replace("%", "%%")
                 return res

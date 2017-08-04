@@ -8,8 +8,6 @@ from _pytest.compat import _PY2, _PY3, PY35, safe_str
 import py
 builtin_repr = repr
 
-reprlib = py.builtin._tryimport('repr', 'reprlib')
-
 if _PY3:
     from traceback import format_exception_only
 else:
@@ -235,7 +233,7 @@ class TracebackEntry(object):
             except KeyError:
                 return False
 
-        if py.builtin.callable(tbh):
+        if callable(tbh):
             return tbh(None if self._excinfo is None else self._excinfo())
         else:
             return tbh
