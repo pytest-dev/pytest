@@ -10,6 +10,7 @@ By using the ``pytest.mark`` helper you can easily set
 metadata on your test functions. There are
 some builtin markers, for example:
 
+* :ref:`skip <skip>` - always skip a test function
 * :ref:`skipif <skipif>` - skip a test function if a certain condition is met
 * :ref:`xfail <xfail>` - produce an "expected failure" outcome if a certain
   condition is met
