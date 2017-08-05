@@ -40,5 +40,8 @@ install:
 
 build: false  # Not a C# project, build stuff at the test step instead.
 
+matrix:
+    fast_finish: true
+
 test_script:
   - call scripts\call-tox.bat
