@@ -1,4 +1,4 @@
-from __future__ import absolute_import, division, generators, print_function
+from __future__ import absolute_import, division, print_function
 
 from bisect import bisect_right
 import sys
@@ -159,7 +159,6 @@ class Source(object):
         return "\n".join(self.lines)
 
     def compile(self, filename=None, mode='exec',
-                flag=generators.compiler_flag,
                 dont_inherit=0, _genframe=None):
         """ return compiled code object. if filename is None
             invent an artificial filename which displays
@@ -177,7 +176,7 @@ class Source(object):
                 filename = base + '%r %s:%d>' % (filename, fn, lineno)
         source = "\n".join(self.lines) + '\n'
         try:
-            co = cpy_compile(source, filename, mode, flag)
+            co = cpy_compile(source, filename, mode)
         except SyntaxError:
             ex = sys.exc_info()[1]
             # re-represent syntax errors from parsing python strings
@@ -191,7 +190,7 @@ class Source(object):
             newex.text = ex.text
             raise newex
         else:
-            if flag & _AST_FLAG:
+            if _AST_FLAG:
                 return co
             lines = [(x + "\n") for x in self.lines]
             py.std.linecache.cache[filename] = (1, None, lines, filename)
@@ -202,7 +201,7 @@ class Source(object):
 #
 
 
-def compile_(source, filename=None, mode='exec', flags=generators.compiler_flag, dont_inherit=0):
+def compile_(source, filename=None, mode='exec', dont_inherit=0):
     """ compile the given source to a raw code object,
         and maintain an internal cache which allows later
         retrieval of the source code for the code object
@@ -210,10 +209,10 @@ def compile_(source, filename=None, mode='exec', flags=generators.compiler_flag,
     """
     if _ast is not None and isinstance(source, _ast.AST):
         # XXX should Source support having AST?
-        return cpy_compile(source, filename, mode, flags, dont_inherit)
+        return cpy_compile(source, filename, mode, dont_inherit)
     _genframe = sys._getframe(1)  # the caller
     s = Source(source)
-    co = s.compile(filename, mode, flags, _genframe=_genframe)
+    co = s.compile(filename, mode, _genframe=_genframe)
     return co
 
 
