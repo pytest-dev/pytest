@@ -3,7 +3,7 @@ import py
 import pytest
 
 import _pytest._code
-from _pytest.config import getcfg, get_common_ancestor, determine_setup
+from _pytest.config import getcfg, get_common_ancestor, determine_setup, _iter_rewritable_modules
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 
 
@@ -307,6 +307,16 @@ class TestConfigAPI(object):
             testdir.parseconfig('--confcutdir', testdir.tmpdir.join('inexistant'))
         config = testdir.parseconfig('--confcutdir', testdir.tmpdir.join('dir').ensure(dir=1))
         assert config.getoption('confcutdir') == str(testdir.tmpdir.join('dir'))
+
+    @pytest.mark.parametrize('names, expected', [
+        (['bar.py'], ['bar']),
+        (['foo', 'bar.py'], []),
+        (['foo', 'bar.pyc'], []),
+        (['foo', '__init__.py'], ['foo']),
+        (['foo', 'bar', '__init__.py'], []),
+    ])
+    def test_iter_rewritable_modules(self, names, expected):
+        assert list(_iter_rewritable_modules(['/'.join(names)])) == expected
 
 
 class TestConfigFromdictargs(object):
