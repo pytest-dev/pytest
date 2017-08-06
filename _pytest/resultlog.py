@@ -3,7 +3,6 @@ text file.
 """
 from __future__ import absolute_import, division, print_function
 
-import py
 import os
 
 
@@ -109,5 +108,5 @@ class ResultLog(object):
         reprcrash = getattr(excrepr, 'reprcrash', None)
         path = getattr(reprcrash, "path", None)
         if path is None:
-            path = "cwd:%s" % py.path.local()
+            path = "cwd:%s" % os.getcwd()
         self.write_log_entry(path, '!', str(excrepr))

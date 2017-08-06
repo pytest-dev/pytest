@@ -976,7 +976,7 @@ def show_fixtures_per_test(config):
 def _show_fixtures_per_test(config, session):
     import _pytest.config
     session.perform_collect()
-    curdir = py.path.local()
+    curdir = os.getcwd()
     tw = _pytest.config.create_terminal_writer(config)
     verbose = config.getvalue("verbose")
 
@@ -1034,7 +1034,7 @@ def showfixtures(config):
 def _showfixtures_main(config, session):
     import _pytest.config
     session.perform_collect()
-    curdir = py.path.local()
+    curdir = os.getcwd()
     tw = _pytest.config.create_terminal_writer(config)
     verbose = config.getvalue("verbose")
 

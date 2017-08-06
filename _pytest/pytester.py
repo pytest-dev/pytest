@@ -936,7 +936,7 @@ class Testdir:
         p1 = self.tmpdir.join("stdout")
         p2 = self.tmpdir.join("stderr")
         print("running:", ' '.join(cmdargs))
-        print("     in:", str(py.path.local()))
+        print("     in:", str(os.getcwd()))
         f1 = codecs.open(str(p1), "w", encoding="utf8")
         f2 = codecs.open(str(p2), "w", encoding="utf8")
         try:

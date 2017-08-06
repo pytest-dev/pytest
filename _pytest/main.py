@@ -575,7 +575,7 @@ class Session(FSCollector):
         self.shouldstop = False
         self.trace = config.trace.root.get("collection")
         self._norecursepatterns = config.getini("norecursedirs")
-        self.startdir = py.path.local()
+        self.startdir = os.getcwd()
         self.config.pluginmanager.register(self, name="session")
 
     def _makeid(self):
