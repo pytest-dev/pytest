@@ -300,7 +300,7 @@ class PytestPluginManager(PluginManager):
             been loaded, however, so common options will not confuse our logic
             here.
         """
-        current = py.path.local()
+        current = os.getcwd()
         self._confcutdir = current.join(namespace.confcutdir, abs=True) \
             if namespace.confcutdir else None
         self._noconftest = namespace.noconftest
@@ -988,7 +988,7 @@ class Config(object):
         self.rootdir, self.inifile, self.inicfg = r
         self._parser.extra_info['rootdir'] = self.rootdir
         self._parser.extra_info['inifile'] = self.inifile
-        self.invocation_dir = py.path.local()
+        self.invocation_dir = os.getcwd()
         self._parser.addini('addopts', 'extra command line options', 'args')
         self._parser.addini('minversion', 'minimally required pytest version')
         self._override_ini = ns.override_ini or ()
@@ -1254,7 +1254,7 @@ def getcfg(args, warnfunc=None):
     inibasenames = ["pytest.ini", "tox.ini", "setup.cfg"]
     args = [x for x in args if not str(x).startswith("-")]
     if not args:
-        args = [py.path.local()]
+        args = [os.getcwd()]
     for arg in args:
         arg = py.path.local(arg)
         for base in arg.parts(reverse=True):
@@ -1291,7 +1291,7 @@ def get_common_ancestor(paths):
                 if shared is not None:
                     common_ancestor = shared
     if common_ancestor is None:
-        common_ancestor = py.path.local()
+        common_ancestor = os.getcwd()
     elif common_ancestor.isfile():
         common_ancestor = common_ancestor.dirpath()
     return common_ancestor
@@ -1342,7 +1342,7 @@ def determine_setup(inifile, args, warnfunc=None):
             else:
                 rootdir, inifile, inicfg = getcfg(dirs, warnfunc=warnfunc)
                 if rootdir is None:
-                    rootdir = get_common_ancestor([py.path.local(), ancestor])
+                    rootdir = get_common_ancestor([os.getcwd(), ancestor])
                     is_fs_root = os.path.splitdrive(str(rootdir))[1] == os.sep
                     if is_fs_root:
                         rootdir = ancestor

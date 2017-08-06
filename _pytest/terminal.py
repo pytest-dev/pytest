@@ -134,7 +134,7 @@ class TerminalReporter:
         self._numcollected = 0
 
         self.stats = {}
-        self.startdir = py.path.local()
+        self.startdir = os.getcwd()
         if file is None:
             file = sys.stdout
         self._tw = self.writer = _pytest.config.create_terminal_writer(config,
