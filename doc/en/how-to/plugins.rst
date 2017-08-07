@@ -2,13 +2,12 @@
 .. _`extplugins`:
 .. _`using plugins`:
 
-Installing and Using plugins
-============================
+How to install and use plugins
+==============================
 
-This section talks about installing and using third party plugins.
 For writing your own plugins, please refer to :ref:`writing-plugins`.
 
-Installing a third party plugin can be easily done with ``pip``::
+Installing a third-party plugin can generally be done with ``pip``::
 
     pip install pytest-NAME
     pip uninstall pytest-NAME
@@ -78,9 +77,12 @@ You can require plugins in a test module or a conftest file like this::
 When the test module or conftest plugin is loaded the specified plugins
 will be loaded as well.
 
+::
+
     pytest_plugins = "myapp.testsupport.myplugin"
 
 which will import the specified module as a ``pytest`` plugin.
+
 
 .. _`findpluginname`:
 
@@ -95,6 +97,7 @@ environment you can type::
 and will get an extended test header which shows activated plugins
 and their names. It will also print local plugins aka
 :ref:`conftest.py <conftest>` files when they are loaded.
+
 
 .. _`cmdunregister`:
 
@@ -121,38 +124,3 @@ CI server), you can set ``PYTEST_ADDOPTS`` environment variable to
 ``-p no:name``.
 
 See :ref:`findpluginname` for how to obtain the name of a plugin.
-
-.. _`builtin plugins`:
-
-Pytest default plugin reference
--------------------------------
-
-
-You can find the source code for the following plugins
-in the `pytest repository <https://github.com/pytest-dev/pytest>`_.
-
-.. autosummary::
-
-    _pytest.assertion
-    _pytest.cacheprovider
-    _pytest.capture
-    _pytest.config
-    _pytest.doctest
-    _pytest.helpconfig
-    _pytest.junitxml
-    _pytest.mark
-    _pytest.monkeypatch
-    _pytest.nose
-    _pytest.pastebin
-    _pytest.debugging
-    _pytest.pytester
-    _pytest.python
-    _pytest.recwarn
-    _pytest.resultlog
-    _pytest.runner
-    _pytest.main
-    _pytest.skipping
-    _pytest.terminal
-    _pytest.tmpdir
-    _pytest.unittest
-

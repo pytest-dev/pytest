@@ -1,8 +1,8 @@
 
 .. _bash_completion:
 
-Setting up bash completion
-==========================
+How to set up bash completion
+=============================
 
 When using bash as your shell, ``pytest`` can use argcomplete
 (https://argcomplete.readthedocs.io/) for auto-completion.

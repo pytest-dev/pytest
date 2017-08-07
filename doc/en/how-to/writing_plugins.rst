@@ -1,8 +1,8 @@
 .. _plugins:
 .. _`writing-plugins`:
 
-Writing plugins
-===============
+How to write plugins
+====================
 
 It is easy to implement `local conftest plugins`_ for your own project
 or `pip-installable plugins`_ that can be used throughout many projects,

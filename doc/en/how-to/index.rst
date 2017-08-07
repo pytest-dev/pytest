@@ -6,9 +6,9 @@ How-to guides
 ..  toctree::
     :maxdepth: 2
 
-    bash-completion
-    plugins
-    writing_plugins
+    Set up Bash completetion <bash-completion>
+    Use plugins <plugins>
+    Write plugins <writing_plugins>
     assert
     usage
     existingtestsuite
