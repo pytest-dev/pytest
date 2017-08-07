@@ -7,6 +7,7 @@ SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = _build
 VENV          = env/bin/activate
+PORT		  = 8001
 
 
 # Internal variables.
@@ -166,3 +167,6 @@ install:
       "enchant must be installed in order for pyenchant (and therefore \n" \
 	  "spelling checks) to work. \n" \
 	  "--------------------------------------------------------------- \n"
+
+run:
+	. $(VENV); sphinx-autobuild . -a $(BUILDDIR)/html --host 0.0.0.0 --port $(PORT)

@@ -115,9 +115,9 @@ html_theme = 'flask'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {
-  'index_logo': None
-}
+# html_theme_options = {
+#   'index_logo': None
+# }
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
@@ -307,6 +307,19 @@ texinfo_documents = [
    'Programming',
    1),
 ]
+
+
+# on_rtd: whether we are on readthedocs.org
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+
+if not on_rtd:  # only import and set the theme if we're building docs locally
+    try:
+        import sphinx_rtd_theme
+    except ModuleNotFoundError:
+        html_theme = 'default'
+    else:
+        html_theme = 'sphinx_rtd_theme'
+        html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 
 # Example configuration for intersphinx: refer to the Python standard library.

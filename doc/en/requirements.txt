@@ -2,3 +2,5 @@
 # https://github.com/rtfd/readthedocs-sphinx-ext/issues/25
 sphinx
 pytest
+sphinx-autobuild
+sphinx_rtd_theme
