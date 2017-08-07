@@ -383,4 +383,4 @@ hook was invoked::
     *** test run reporting finishing
     
 
-.. include:: links.inc
+.. include:: /links.inc

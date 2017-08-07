@@ -3,7 +3,7 @@
 Running tests written for nose
 =======================================
 
-.. include:: links.inc
+.. include:: /links.inc
 
 ``pytest`` has basic support for running tests written for nose_.
 

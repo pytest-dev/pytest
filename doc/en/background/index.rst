@@ -1,6 +1,6 @@
-.. background:
+.. _background:
 
-Introduction
+Background
 ============
 
 ..  toctree::

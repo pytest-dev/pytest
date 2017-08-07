@@ -1,7 +1,7 @@
 python testing sprint June 20th-26th 2016
 ======================================================
 
-.. image:: ../img/freiburg2.jpg
+.. image:: /img/freiburg2.jpg
    :width: 400
 
 The pytest core group held the biggest sprint

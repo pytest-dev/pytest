@@ -27,4 +27,5 @@ How-to guides
     nose
     xunit_setup
     customize
-    s
+    setup
+    naming20

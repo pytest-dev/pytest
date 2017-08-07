@@ -1,90 +1,128 @@
-:orphan:
+.. raw:: html
+
+    <style>
+        .row {clear: both}
+
+        .column img {border: 1px solid black;}
+
+        @media only screen and (min-width: 1000px),
+               only screen and (min-width: 500px) and (max-width: 768px){
+
+            .column {
+                padding-left: 5px;
+                padding-right: 5px;
+                float: left;
+            }
+
+            .column2  {
+                width: 25%;
+            }
+        }
+        h2 {border-top: 1px solid black; padding-top: 1em}
+    </style>
+
 
 .. _features:
 
 pytest: helps you write better programs
 =======================================
 
+pytest is a better way to write automated tests in Python.
 
-The ``pytest`` framework makes it easy to write small tests, yet
-scales to support complex functional testing for applications and libraries.
+It makes it easy to write small tests and get started, and can scale to support complex functional
+testing for very extensive applications and libraries.
 
-An example of a simple test:
-
-.. code-block:: python
-
-    # content of test_sample.py
-    def inc(x):
-        return x + 1
-
-    def test_answer():
-        assert inc(3) == 5
+It's one of the most popular Python testing libraries, and enjoys an active, supportive developer
+community and an excellent ecosystem of plugins and associated tools.
 
 
-To execute it::
+Table of contents
+--------------------------
 
-    $ pytest
-    ======= test session starts ========
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 1 item
-    
-    test_sample.py F
-    
-    ======= FAILURES ========
-    _______ test_answer ________
-    
-        def test_answer():
-    >       assert inc(3) == 5
-    E       assert 4 == 5
-    E        +  where 4 = inc(3)
-    
-    test_sample.py:5: AssertionError
-    ======= 1 failed in 0.12 seconds ========
+.. rst-class:: clearfix row
 
-Due to ``pytest``'s detailed assertion introspection, only plain ``assert`` statements are used.
-See :ref:`Getting Started <getstarted>` for more examples.
+.. rst-class:: column column2
 
 
-Features
---------
+:ref:`Tutorial <introduction>`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- Detailed info on failing :ref:`assert statements <assert>` (no need to remember ``self.assert*`` names);
+Get started with a hands-on introduction to pytest for beginners
 
-- :ref:`Auto-discovery <test discovery>` of test modules and functions;
-
-- :ref:`Modular fixtures <fixture>` for managing small or parametrized long-lived test resources;
-
-- Can run :ref:`unittest <unittest>` (including trial) and :ref:`nose <noseintegration>` test suites out of the box;
-
-- Python2.6+, Python3.3+, PyPy-2.3, Jython-2.5 (untested);
-
-- Rich plugin architecture, with over 150+ :ref:`external plugins <extplugins>` and thriving community;
+.. rst-class:: column column2
 
 
-Documentation
--------------
+:ref:`How-to guides <how-to>`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Please see :ref:`Contents <toc>` for full documentation, including installation, tutorials and PDF documents.
-
-
-Bugs/Requests
--------------
-
-Please use the `GitHub issue tracker <https://github.com/pytest-dev/pytest/issues>`_ to submit bugs or request features.
+Guides and recipes for common problems and tasks
 
 
-Changelog
----------
+.. rst-class:: column column2
 
-Consult the :ref:`Changelog <changelog>` page for fixes and enhancements of each version.
+:ref:`Reference <reference>`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Technical reference - commands, modules, classes, methods
 
 
-License
--------
+.. rst-class:: column column2
 
-Copyright Holger Krekel and others, 2004-2017.
+:ref:`Background <background>`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Distributed under the terms of the `MIT`_ license, pytest is free and open source software.
+Explanation and discussion of key topics and concepts
 
-.. _`MIT`: https://github.com/pytest-dev/pytest/blob/master/LICENSE
+
+.. rst-class:: clearfix row
+
+pytest at a glance
+------------------
+
+- Detailed info on failing :ref:`assert statements <assert>` (no need to remember ``self.assert*``
+  names)
+- :ref:`Auto-discovery <test discovery>` of test modules and functions
+- :ref:`Modular fixtures <fixture>` for managing small or parametrized long-lived test resources
+- Can run :ref:`unittest <unittest>` (including trial) and :ref:`nose <noseintegration>` test
+  suites out of the box
+- Rich plugin architecture, with over 150+ :ref:`external plugins <extplugins>` and thriving
+  community
+- Python support: 2.6,2.7,3.3,3.4,3.5, Jython, PyPy-2.3
+- Platform support: Unix/Posix and Windows
+
+
+Key links
+^^^^^^^^^
+
+* `pytest on PyPI <http://pypi.python.org/pypi/pytest>`_
+* `pytest on GitHub <https://github.com/pytest-dev/pytest>`_
+* `this documentation as PDF <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
+* `this documentation as EPUB <http://media.readthedocs.org/epub/pytest/latest/pytest.epub>`_
+
+
+..  toctree::
+    :maxdepth: 1
+    :hidden:
+
+    introduction/index
+    how-to/index
+    reference/index
+    background/index
+
+
+About the pytest project
+------------------------
+
+..  toctree::
+    :maxdepth: 2
+
+    about/index
+
+
+Usage examples
+--------------
+
+..  toctree::
+    :maxdepth: 2
+
+    example/index

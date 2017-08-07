@@ -31,4 +31,4 @@ mucking about with sys.path to point your tests at local code.
 
 Also consider using :ref:`tox <use tox>`.
 
-.. include:: links.inc
+.. include:: /links.inc

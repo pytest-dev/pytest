@@ -23,7 +23,7 @@ Conventions for Python test discovery
   * ``test_`` prefixed test functions or methods outside of class
   * ``test_`` prefixed test functions or methods inside ``Test`` prefixed test classes (without an ``__init__`` method)
 
-For examples of how to customize your test discovery :doc:`example/pythoncollection`.
+For examples of how to customize your test discovery :ref:`pythoncollection`.
 
 Within Python modules, ``pytest`` also discovers tests using the standard
 :ref:`unittest.TestCase <unittest.TestCase>` subclassing technique.
@@ -296,4 +296,4 @@ using the ``--pytest-args`` or ``-a`` command-line option. For example::
 is equivalent to running ``pytest --durations=5``.
 
 
-.. include:: links.inc
+.. include:: /links.inc
