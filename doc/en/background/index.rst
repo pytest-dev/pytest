@@ -8,4 +8,6 @@ Background
 
     goodpractices
     faq
+    pythonpath
     backwards-compatibility
+    historical-notes
