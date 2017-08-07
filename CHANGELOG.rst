@@ -8,6 +8,30 @@
 
 .. towncrier release notes start
 
+Pytest 3.2.1 (2017-08-07)
+=========================
+
+Bug Fixes
+---------
+
+- Fixed small terminal glitch when collecting a single test item. (`#2579
+  <https://github.com/pytest-dev/pytest/issues/2579>`_)
+
+- Correctly consider ``/`` as the file separator to automatically mark plugin
+  files for rewrite on Windows. (`#2591 <https://github.com/pytest-
+  dev/pytest/issues/2591>`_)
+
+- Properly escape test names when setting ``PYTEST_CURRENT_TEST`` environment
+  variable. (`#2644 <https://github.com/pytest-dev/pytest/issues/2644>`_)
+
+
+Improved Documentation
+----------------------
+
+- Explicitly document which pytest features work with ``unittest``. (`#2626
+  <https://github.com/pytest-dev/pytest/issues/2626>`_)
+
+
 Pytest 3.2.0 (2017-07-30)
 =========================
 
