@@ -36,7 +36,7 @@ def pytest_addoption(parser):
 def pytest_load_initial_conftests(early_config, parser, args):
     ns = early_config.known_args_namespace
     if ns.capture == "fd":
-        _py36_windowsconsoleio_workaround()
+        _py36_windowsconsoleio_workaround(sys.stdout)
     _colorama_workaround()
     _readline_workaround()
     pluginmanager = early_config.pluginmanager
@@ -524,7 +524,7 @@ def _readline_workaround():
         pass
 
 
-def _py36_windowsconsoleio_workaround():
+def _py36_windowsconsoleio_workaround(stream):
     """
     Python 3.6 implemented unicode console handling for Windows. This works
     by reading/writing to the raw console handle using
@@ -541,13 +541,20 @@ def _py36_windowsconsoleio_workaround():
     also means a different handle by replicating the logic in
     "Py_lifecycle.c:initstdio/create_stdio".
 
+    :param stream: in practice ``sys.stdout`` or ``sys.stderr``, but given
+        here as parameter for unittesting purposes.
+
     See https://github.com/pytest-dev/py/issues/103
     """
     if not sys.platform.startswith('win32') or sys.version_info[:2] < (3, 6):
         return
 
-    buffered = hasattr(sys.stdout.buffer, 'raw')
-    raw_stdout = sys.stdout.buffer.raw if buffered else sys.stdout.buffer
+    # bail out if ``stream`` doesn't seem like a proper ``io`` stream (#2666)
+    if not hasattr(stream, 'buffer'):
+        return
+
+    buffered = hasattr(stream.buffer, 'raw')
+    raw_stdout = stream.buffer.raw if buffered else stream.buffer
 
     if not isinstance(raw_stdout, io._WindowsConsoleIO):
         return

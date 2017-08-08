@@ -1,0 +1,3 @@
+Fix error on Windows and Python 3.6+ when ``sys.stdout`` has been replaced with
+a stream-like object which does not implement the full ``io`` module buffer protocol. In particular this
+affects ``pytest-xdist`` users on the aforementioned platform.
