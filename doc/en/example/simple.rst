@@ -366,13 +366,13 @@ out which tests are the slowest. Let's make an artificial test suite:
     import time
 
     def test_funcfast():
-        pass
-
-    def test_funcslow1():
         time.sleep(0.1)
 
-    def test_funcslow2():
+    def test_funcslow1():
         time.sleep(0.2)
+
+    def test_funcslow2():
+        time.sleep(0.3)
 
 Now we can profile which test functions execute the slowest::
 
@@ -385,9 +385,9 @@ Now we can profile which test functions execute the slowest::
     test_some_are_slow.py ...
     
     ======= slowest 3 test durations ========
-    0.20s call     test_some_are_slow.py::test_funcslow2
-    0.10s call     test_some_are_slow.py::test_funcslow1
-    0.00s setup    test_some_are_slow.py::test_funcfast
+    0.30s call     test_some_are_slow.py::test_funcslow2
+    0.20s call     test_some_are_slow.py::test_funcslow1
+    0.10s call     test_some_are_slow.py::test_funcfast
     ======= 3 passed in 0.12 seconds ========
 
 incremental testing - test steps
