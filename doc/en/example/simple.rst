@@ -127,7 +127,7 @@ Control skipping of tests according to command line option
 .. regendoc:wipe
 
 Here is a ``conftest.py`` file adding a ``--runslow`` command
-line option to control skipping of ``slow`` marked tests:
+line option to control skipping of ``pytest.mark.slow`` marked tests:
 
 .. code-block:: python
 
@@ -136,7 +136,16 @@ line option to control skipping of ``slow`` marked tests:
     import pytest
     def pytest_addoption(parser):
         parser.addoption("--runslow", action="store_true",
-            help="run slow tests")
+                         default=False, help="run slow tests")
+
+    def pytest_collection_modifyitems(config, items):
+        if config.getoption("--runslow"):
+            # --runslow given in cli: do not skip slow tests
+            return
+        skip_slow = pytest.mark.skip(reason="need --runslow option to run")
+        for item in items:
+            if "slow" in item.keywords:
+                item.add_marker(skip_slow)
 
 We can now write a test module like this:
 
@@ -146,17 +155,11 @@ We can now write a test module like this:
     import pytest
 
 
-    slow = pytest.mark.skipif(
-        not pytest.config.getoption("--runslow"),
-        reason="need --runslow option to run"
-    )
-
-
     def test_func_fast():
         pass
 
 
-    @slow
+    @pytest.mark.slow
     def test_func_slow():
         pass
 
@@ -170,7 +173,7 @@ and when running it will see a skipped "slow" test::
     
     test_module.py .s
     ======= short test summary info ========
-    SKIP [1] test_module.py:14: need --runslow option to run
+    SKIP [1] test_module.py:8: need --runslow option to run
     
     ======= 1 passed, 1 skipped in 0.12 seconds ========
 
