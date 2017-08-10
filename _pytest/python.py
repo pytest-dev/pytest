@@ -645,14 +645,14 @@ class CallSpec2(object):
         self._globalid_args = set()
         self._globalparam = NOTSET
         self._arg2scopenum = {}  # used for sorting parametrized resources
-        self.keywords = {}
+        self.marks = []
         self.indices = {}
 
     def copy(self, metafunc):
         cs = CallSpec2(self.metafunc)
         cs.funcargs.update(self.funcargs)
         cs.params.update(self.params)
-        cs.keywords.update(self.keywords)
+        cs.marks.extend(self.marks)
         cs.indices.update(self.indices)
         cs._arg2scopenum.update(self._arg2scopenum)
         cs._idlist = list(self._idlist)
@@ -677,8 +677,8 @@ class CallSpec2(object):
     def id(self):
         return "-".join(map(str, filter(None, self._idlist)))
 
-    def setmulti(self, valtypes, argnames, valset, id, keywords, scopenum,
-                 param_index):
+    def setmulti2(self, valtypes, argnames, valset, id, marks, scopenum,
+                  param_index):
         for arg, val in zip(argnames, valset):
             self._checkargnotcontained(arg)
             valtype_for_arg = valtypes[arg]
@@ -686,7 +686,7 @@ class CallSpec2(object):
             self.indices[arg] = param_index
             self._arg2scopenum[arg] = scopenum
         self._idlist.append(id)
-        self.keywords.update(keywords)
+        self.marks.extend(marks)
 
     def setall(self, funcargs, id, param):
         for x in funcargs:
@@ -842,8 +842,8 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
                         'equal to the number of names ({1})'.format(
                             param.values, argnames))
                 newcallspec = callspec.copy(self)
-                newcallspec.setmulti(valtypes, argnames, param.values, a_id,
-                                     param.deprecated_arg_dict, scopenum, param_index)
+                newcallspec.setmulti2(valtypes, argnames, param.values, a_id,
+                                      param.marks, scopenum, param_index)
                 newcalls.append(newcallspec)
         self._calls = newcalls
 
@@ -1115,7 +1115,13 @@ class Function(FunctionMixin, main.Item, fixtures.FuncargnamesCompatAttr):
         self.keywords.update(self.obj.__dict__)
         if callspec:
             self.callspec = callspec
-            self.keywords.update(callspec.keywords)
+            # this is total hostile and a mess
+            # keywords are broken by design by now
+            # this will be redeemed later
+            for mark in callspec.marks:
+                # feel free to cry, this was broken for years before
+                # and keywords cant fix it per design
+                self.keywords[mark.name] = mark
         if keywords:
             self.keywords.update(keywords)
 

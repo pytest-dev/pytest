@@ -158,7 +158,7 @@ class TestMetafunc(object):
             pass
         metafunc = self.Metafunc(func)
         metafunc.parametrize("y", [])
-        assert 'skip' in metafunc._calls[0].keywords
+        assert 'skip' == metafunc._calls[0].marks[0].name
 
     def test_parametrize_with_userobjects(self):
         def func(x, y):
