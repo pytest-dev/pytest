@@ -36,7 +36,7 @@ install:
 
   - if "%TOXENV%" == "pypy" call scripts\install-pypy.bat
 
-  - C:\Python35\python -m pip install tox
+  - C:\Python35\python -m pip install --upgrade --pre tox
 
 build: false  # Not a C# project, build stuff at the test step instead.
 

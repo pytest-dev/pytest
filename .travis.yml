@@ -1,9 +1,10 @@
 sudo: false
 language: python
 python:
-    - '3.5'
+  - '3.5'
 # command to install dependencies
-install: "pip install -U tox"
+install:
+  - pip install --upgrade --pre tox
 # # command to run tests
 env:
   matrix:
