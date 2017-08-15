@@ -676,6 +676,7 @@ def test_skip_reasons_folding():
     ev1.longrepr = longrepr
 
     ev2 = X()
+    ev2.when = "execute"
     ev2.longrepr = longrepr
     ev2.skipped = True
 
@@ -709,6 +710,27 @@ def test_skipped_reasons_functional(testdir):
     result = testdir.runpytest('-rs')
     result.stdout.fnmatch_lines([
         "*SKIP*2*conftest.py:4: test",
+    ])
+    assert result.ret == 0
+
+
+def test_skipped_folding(testdir):
+    testdir.makepyfile(
+        test_one="""
+            import pytest
+            pytestmark = pytest.mark.skip("Folding")
+            def setup_function(func):
+                pass
+            def test_func():
+                pass
+            class TestClass(object):
+                def test_method(self):
+                    pass
+       """,
+    )
+    result = testdir.runpytest('-rs')
+    result.stdout.fnmatch_lines([
+        "*SKIP*2*test_one.py: Folding"
     ])
     assert result.ret == 0
 

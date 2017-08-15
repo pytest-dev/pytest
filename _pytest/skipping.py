@@ -345,6 +345,12 @@ def folded_skips(skipped):
     for event in skipped:
         key = event.longrepr
         assert len(key) == 3, (event, key)
+        keywords = getattr(event, 'keywords', {})
+        # folding reports with global pytestmark variable
+        # this is workaround, because for now we cannot identify the scope of a skip marker
+        # TODO: revisit after marks scope would be fixed
+        if event.when == 'setup' and 'skip' in keywords and 'pytestmark' not in keywords:
+            key = (key[0], None, key[2], )
         d.setdefault(key, []).append(event)
     l = []
     for key, events in d.items():
@@ -367,6 +373,11 @@ def show_skipped(terminalreporter, lines):
             for num, fspath, lineno, reason in fskips:
                 if reason.startswith("Skipped: "):
                     reason = reason[9:]
-                lines.append(
-                    "SKIP [%d] %s:%d: %s" %
-                    (num, fspath, lineno + 1, reason))
+                if lineno is not None:
+                    lines.append(
+                        "SKIP [%d] %s:%d: %s" %
+                        (num, fspath, lineno + 1, reason))
+                else:
+                    lines.append(
+                        "SKIP [%d] %s: %s" %
+                        (num, fspath, reason))
