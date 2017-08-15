@@ -28,10 +28,6 @@ GETFUNCARGVALUE = "use of getfuncargvalue is deprecated, use getfixturevalue"
 
 RESULT_LOG = '--result-log is deprecated and scheduled for removal in pytest 4.0'
 
-MARK_INFO_ATTRIBUTE = RemovedInPytest4Warning(
-    "MarkInfo objects are deprecated as they contain the merged marks"
-)
-
 MARK_PARAMETERSET_UNPACKING = RemovedInPytest4Warning(
     "Applying marks directly to parameters is deprecated,"
     " please use pytest.param(..., marks=...) instead.\n"
