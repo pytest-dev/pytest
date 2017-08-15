@@ -5,4 +5,4 @@ if "%TOXENV%" == "coveralls" (
         exit /b 0
     )
 )
-C:\Python35\python -m tox
+C:\Python36\python -m tox
