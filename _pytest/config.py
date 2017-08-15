@@ -636,7 +636,7 @@ class Argument:
                 'pytest now uses argparse. "%default" should be'
                 ' changed to "%(default)s" ',
                 DeprecationWarning,
-                stacklevel=3)
+                stacklevel=2)
         try:
             typ = attrs['type']
         except KeyError:
@@ -651,7 +651,7 @@ class Argument:
                         ' should be a type.'
                         ' (options: %s)' % (typ, names),
                         DeprecationWarning,
-                        stacklevel=3)
+                        stacklevel=2)
                     # argparse expects a type here take it from
                     # the type of the first element
                     attrs['type'] = type(attrs['choices'][0])
@@ -661,7 +661,7 @@ class Argument:
                         ' For parsearg this should be a type.'
                         ' (options: %s)' % (typ, names),
                         DeprecationWarning,
-                        stacklevel=3)
+                        stacklevel=2)
                     attrs['type'] = Argument._typ_map[typ]
                 # used in test_parseopt -> test_parse_defaultgetter
                 self.type = attrs['type']
