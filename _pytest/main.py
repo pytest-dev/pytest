@@ -306,7 +306,6 @@ class Node(object):
 
     def _getcustomclass(self, name):
         maybe_compatprop = getattr(type(self), name)
-        warnings.warn(str(maybe_compatprop), category=UserWarning)
         if isinstance(maybe_compatprop, _CompatProperty):
             return getattr(__import__('pytest'), name)
         else:
