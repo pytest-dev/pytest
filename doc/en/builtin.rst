@@ -112,10 +112,11 @@ You can ask for available builtin or project-custom
         Inject names into the doctest namespace.
     pytestconfig
         the pytest config object with access to command line opts.
-    record_xml_property
-        Add extra xml properties to the tag for the calling test.
-        The fixture is callable with ``(name, value)``, with value being automatically
-        xml-encoded.
+    record_property
+        Add an extra properties the calling test.
+        User properties become part of the test report and are available to the
+        configured reporters, like JUnit XML.
+        The fixture is callable with ``(name, value)``.
     record_xml_attribute
         Add extra xml attributes to the tag for the calling test.
         The fixture is callable with ``(name, value)``, with value being automatically
