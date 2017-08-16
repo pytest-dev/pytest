@@ -37,3 +37,18 @@ MARK_PARAMETERSET_UNPACKING = RemovedInPytest4Warning(
     " please use pytest.param(..., marks=...) instead.\n"
     "For more details, see: https://docs.pytest.org/en/latest/parametrize.html"
 )
+
+
+def node_customclass_warning(name):
+    return RemovedInPytest4Warning(
+        "use of node.{name} is deprecated, "
+        "use pytest_pycollect_makeitem(...) to create custom "
+        "collection nodes".format(name=name)
+    )
+
+
+def node_class_use_pytest_instead_warning(owner, name):
+    return RemovedInPytest4Warning(
+        "usage of {owner!r}.{name} is deprecated, "
+        "please use pytest.{name} instead".format(
+            name=name, owner=type(owner).__name__))
