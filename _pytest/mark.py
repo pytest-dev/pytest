@@ -63,7 +63,7 @@ class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
             argval = argval,
 
         if newmarks:
-            warnings.warn(MARK_PARAMETERSET_UNPACKING)
+            warnings.warn(MARK_PARAMETERSET_UNPACKING, stacklevel=2)
 
         return cls(argval, marks=newmarks, id=None)
 

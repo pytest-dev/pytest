@@ -919,7 +919,7 @@ def _idval(val, argname, idx, idfn, config=None):
             import warnings
             msg = "Raised while trying to determine id of parameter %s at position %d." % (argname, idx)
             msg += '\nUpdate your code as this will raise an error in pytest-4.0.'
-            warnings.warn(msg, DeprecationWarning)
+            warnings.warn(msg, DeprecationWarning, stacklevel=2)
         if s:
             return _ascii_escaped(s)
 
