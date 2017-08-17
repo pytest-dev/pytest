@@ -82,7 +82,10 @@ def num_mock_patch_args(function):
     return len(patchings)
 
 
-def getfuncargnames(function, startindex=None):
+def getfuncargnames(function, startindex=None, cls=None):
+    if startindex is None and cls is not None:
+        is_staticmethod = isinstance(cls.__dict__.get(function.__name__, None), staticmethod)
+        startindex = 0 if is_staticmethod else 1
     # XXX merge with main.py's varnames
     # assert not isclass(function)
     realfunction = function

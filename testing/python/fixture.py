@@ -29,9 +29,15 @@ def test_getfuncargnames():
         def f(self, arg1, arg2="hello"):
             pass
 
+        @staticmethod
+        def static(arg1, arg2):
+            pass
+
     assert fixtures.getfuncargnames(A().f) == ('arg1',)
     if sys.version_info < (3, 0):
         assert fixtures.getfuncargnames(A.f) == ('arg1',)
+
+    assert fixtures.getfuncargnames(A.static, cls=A) == ('arg1', 'arg2')
 
 
 class TestFillFixtures(object):
