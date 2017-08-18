@@ -595,6 +595,9 @@ class Generator(FunctionMixin, PyCollector):
         self._preservedparent = self.parent.obj
         l = []
         seen = {}
+
+        mk_function = self._getcustomclass("Function")
+
         for i, x in enumerate(self.obj()):
             name, call, args = self.getcallargs(x)
             if not callable(call):
@@ -606,7 +609,8 @@ class Generator(FunctionMixin, PyCollector):
             if name in seen:
                 raise ValueError("%r generated tests with non-unique name %r" % (self, name))
             seen[name] = True
-            l.append(self.Function(name, self, args=args, callobj=call))
+
+            l.append(mk_function(name, self, args=args, callobj=call))
         self.warn('C1', deprecated.YIELD_TESTS)
         return l
 

@@ -1204,7 +1204,8 @@ def test_collector_attributes(testdir):
          def test_hello():
             pass
     """)
-    result = testdir.runpytest()
+    result = testdir.runpytest(
+        '-W', "ignore::_pytest.deprecated.RemovedInPytest4Warning")
     result.stdout.fnmatch_lines([
         "*1 passed*",
     ])
@@ -1229,7 +1230,9 @@ def test_customize_through_attributes(testdir):
             def test_hello(self):
                 pass
     """)
-    result = testdir.runpytest("--collect-only")
+    result = testdir.runpytest(
+        "--collect-only",
+        '-W', "ignore::_pytest.deprecated.RemovedInPytest4Warning")
     result.stdout.fnmatch_lines([
         "*MyClass*",
         "*MyInstance*",
