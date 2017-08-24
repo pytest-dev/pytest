@@ -165,7 +165,7 @@ def _prepareconfig(args=None, plugins=None):
 
 class PytestPluginManager(PluginManager):
     """
-    Overwrites :py:class:`pluggy.PluginManager <_pytest.vendored_packages.pluggy.PluginManager>` to add pytest-specific
+    Overwrites :py:class:`pluggy.PluginManager <_pytest._pluggy.PluginManager>` to add pytest-specific
     functionality:
 
     * loading plugins from the command line, ``PYTEST_PLUGIN`` env variable and
@@ -203,7 +203,7 @@ class PytestPluginManager(PluginManager):
         """
         .. deprecated:: 2.8
 
-        Use :py:meth:`pluggy.PluginManager.add_hookspecs <_pytest.vendored_packages.pluggy.PluginManager.add_hookspecs>`
+        Use :py:meth:`pluggy.PluginManager.add_hookspecs <_pytest._pluggy.PluginManager.add_hookspecs>`
         instead.
         """
         warning = dict(code="I2",
