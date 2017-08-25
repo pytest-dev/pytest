@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function
 import collections
 import sys
 
-import _pytest._pluggy as pluggy
+import pluggy
 import _pytest._code
 import py
 import pytest

@@ -13,8 +13,7 @@ import six
 import sys
 import time
 import platform
-
-import _pytest._pluggy as pluggy
+import pluggy
 
 
 def pytest_addoption(parser):

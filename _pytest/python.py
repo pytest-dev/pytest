@@ -15,7 +15,7 @@ from _pytest.mark import MarkerError
 from _pytest.config import hookimpl
 
 import _pytest
-import _pytest._pluggy as pluggy
+import pluggy
 from _pytest import fixtures
 from _pytest import main
 from _pytest.compat import (
