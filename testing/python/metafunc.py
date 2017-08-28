@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import collections
 import re
 import sys
 
@@ -151,6 +152,41 @@ class TestMetafunc(object):
         pytest.raises(ValueError, lambda:
                       metafunc.parametrize(("x", "y"), [("abc", "def"),
                                                         ("ghi", "jkl")], ids=["one"]))
+
+    def test_parametrize_dict(self):
+        def func(x, y, z): pass
+        metafunc = self.Metafunc(func)
+
+        metafunc.parametrize("x,y", {'basic': [1, 1], 'advanced': [2, 2]})
+        metafunc.parametrize("z", ["abc", "def"])
+        ids = [call.id for call in metafunc._calls]
+        # we'll compare the sets because the order is not deterministic
+        assert set(ids) == set(["basic-abc", "basic-def", "advanced-abc", "advanced-def"])
+
+    def test_parametrize_ordereddict(self):
+        def func(x, y, z): pass
+        metafunc = self.Metafunc(func)
+
+        metafunc.parametrize(
+            "x,y", collections.OrderedDict([('basic', [1, 1]), ('advanced', [2, 2])]))
+        metafunc.parametrize(
+            "z", collections.OrderedDict([("abc", [1]), ("def", [2])]))
+        ids = [x.id for x in metafunc._calls]
+        assert ids == ["basic-abc", "basic-def", "advanced-abc", "advanced-def"]
+
+    def test_parametrize_dict_with_ids(self, testdir):
+        def func(x, y):
+            pass
+        metafunc = self.Metafunc(func)
+
+        with pytest.raises(ValueError) as excinfo:
+            metafunc.parametrize("x", {"a": 1, "b": 2}, ids=['basic'])
+        excinfo.match("got ids for parametrize with dictionary")
+
+        with pytest.raises(ValueError) as excinfo:
+            metafunc.parametrize(("x", "y"), {'a': ("abc", "def"),
+                                              'b': ("ghi", "jkl")}, ids=["a", "b"])
+        excinfo.match("got ids for parametrize with dictionary")
 
     @pytest.mark.issue510
     def test_parametrize_empty_list(self):

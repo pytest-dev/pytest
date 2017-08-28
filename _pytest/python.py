@@ -772,6 +772,14 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         from _pytest.mark import MARK_GEN, ParameterSet
         from py.io import saferepr
 
+        if isinstance(argvalues, dict):
+            if ids is not None:
+                fs, lineno = getfslineno(self.function)
+                raise ValueError("got ids for parametrize with dictionary for %s at %s:%d" % (
+                    self.function.__name__, fs, lineno)
+                )
+            argvalues, ids = list(argvalues.values()), list(argvalues.keys())
+
         if not isinstance(argnames, (tuple, list)):
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
             force_tuple = len(argnames) == 1
