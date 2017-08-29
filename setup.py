@@ -43,7 +43,7 @@ def has_environment_marker_support():
 
 
 def main():
-    install_requires = ['py>=1.4.33', 'six>=1.10.0','setuptools']  # pluggy is vendored in _pytest.vendored_packages
+    install_requires = ['py>=1.4.33', 'six>=1.10.0','setuptools', 'pluggy>=0.4.0,<0.5']
     extras_require = {}
     if has_environment_marker_support():
         extras_require[':python_version=="2.6"'] = ['argparse', 'ordereddict']
@@ -75,7 +75,7 @@ def main():
         setup_requires=['setuptools-scm'],
         install_requires=install_requires,
         extras_require=extras_require,
-        packages=['_pytest', '_pytest.assertion', '_pytest._code', '_pytest.vendored_packages'],
+        packages=['_pytest', '_pytest.assertion', '_pytest._code'],
         py_modules=['pytest'],
         zip_safe=False,
     )

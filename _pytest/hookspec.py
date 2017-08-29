@@ -1,6 +1,6 @@
 """ hook specifications for pytest plugins, invoked from main.py and builtin plugins.  """
 
-from _pytest._pluggy import HookspecMarker
+from pluggy import HookspecMarker
 
 hookspec = HookspecMarker("pytest")
 

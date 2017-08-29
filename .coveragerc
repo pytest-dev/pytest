@@ -4,4 +4,3 @@ omit =
     *standalonetemplate.py
     # oldinterpret could be removed, as it is no longer used in py26+
     *oldinterpret.py
-    vendored_packages
