@@ -1,3 +1,4 @@
+# coding: utf-8
 """
 terminal reporting of the full testing process.
 """
@@ -346,6 +347,26 @@ class TestFixtureReporting(object):
             "*ERROR at setup of test_nada*",
             "*setup_function(function):*",
             "*setup func*",
+            "*assert 0*",
+            "*1 error*",
+        ])
+        assert result.ret != 0
+
+    def test_setup_fixture_error_with_mixed_encoding(self, testdir):
+        testdir.makepyfile("""
+            def mixed_encoding(as_unicode, as_utf8):
+                assert 0
+            def setup_function(function):
+                mixed_encoding(u"'São Paulo'", "'S\xc3\xa3o Paulo'")
+            def test_nada():
+                pass
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*ERROR at setup of test_nada*",
+            "*setup_function(function):*",
+            "*as_unicode = \"'São Paulo'\", as_utf8 = \"'SÃ£o Paulo'\"*",
+            "*mixed_encoding(as_unicode, as_utf8):*",
             "*assert 0*",
             "*1 error*",
         ])
