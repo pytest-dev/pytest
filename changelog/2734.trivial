@@ -1,0 +1,1 @@
+- simplify ascii string escaping by using the backslashreplace error handler

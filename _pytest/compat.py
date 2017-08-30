@@ -121,7 +121,6 @@ if sys.version_info[:2] == (2, 6):
 
 
 if _PY3:
-    import codecs
     imap = map
     izip = zip
     STRING_TYPES = bytes, str
@@ -146,13 +145,7 @@ if _PY3:
 
         """
         if isinstance(val, bytes):
-            if val:
-                # source: http://goo.gl/bGsnwC
-                encoded_bytes, _ = codecs.escape_encode(val)
-                return encoded_bytes.decode('ascii')
-            else:
-                # empty bytes crashes codecs.escape_encode (#1087)
-                return ''
+            return val.decode('ascii', 'backslashreplace')
         else:
             return val.encode('unicode_escape').decode('ascii')
 else:
