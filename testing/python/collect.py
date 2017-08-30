@@ -809,10 +809,12 @@ class TestConftestCustomization(object):
     def test_customized_pymakemodule_issue205_subdir(self, testdir):
         b = testdir.mkdir("a").mkdir("b")
         b.join("conftest.py").write(_pytest._code.Source("""
-            def pytest_pycollect_makemodule(__multicall__):
-                mod = __multicall__.execute()
+            import pytest
+            @pytest.hookimpl(hookwrapper=True)
+            def pytest_pycollect_makemodule():
+                outcome = yield
+                mod = outcome.get_result()
                 mod.obj.hello = "world"
-                return mod
         """))
         b.join("test_module.py").write(_pytest._code.Source("""
             def test_hello():

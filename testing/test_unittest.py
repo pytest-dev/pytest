@@ -770,8 +770,10 @@ def test_no_teardown_if_setupclass_failed(testdir):
 
 def test_issue333_result_clearing(testdir):
     testdir.makeconftest("""
-        def pytest_runtest_call(__multicall__, item):
-            __multicall__.execute()
+        import pytest
+        @pytest.hookimpl(hookwrapper=True)
+        def pytest_runtest_call(item):
+            yield
             assert 0
     """)
     testdir.makepyfile("""

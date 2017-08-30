@@ -241,17 +241,6 @@ class PytestPluginManager(PluginManager):
                         "historic": hasattr(method, "historic")}
         return opts
 
-    def _verify_hook(self, hook, hookmethod):
-        super(PytestPluginManager, self)._verify_hook(hook, hookmethod)
-        if "__multicall__" in hookmethod.argnames:
-            fslineno = _pytest._code.getfslineno(hookmethod.function)
-            warning = dict(code="I1",
-                           fslocation=fslineno,
-                           nodeid=None,
-                           message="%r hook uses deprecated __multicall__ "
-                                   "argument" % (hook.name))
-            self._warn(warning)
-
     def register(self, plugin, name=None):
         ret = super(PytestPluginManager, self).register(plugin, name)
         if ret:
