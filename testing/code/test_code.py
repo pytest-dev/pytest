@@ -1,9 +1,11 @@
+# coding: utf-8
 from __future__ import absolute_import, division, print_function
 import sys
 
 import _pytest._code
 import py
 import pytest
+from test_excinfo import TWMock
 
 
 def test_ne():
@@ -172,3 +174,23 @@ class TestTracebackEntry(object):
         source = entry.getsource()
         assert len(source) == 6
         assert 'assert False' in source[5]
+
+
+class TestReprFuncArgs(object):
+
+    def test_not_raise_exception_with_mixed_encoding(self):
+        from _pytest._code.code import ReprFuncArgs
+
+        tw = TWMock()
+
+        args = [
+            ('unicode_string', u"São Paulo"),
+            ('utf8_string', 'S\xc3\xa3o Paulo'),
+        ]
+
+        r = ReprFuncArgs(args)
+        r.toterminal(tw)
+        if sys.version_info[0] >= 3:
+            assert tw.lines[0] == 'unicode_string = São Paulo, utf8_string = SÃ£o Paulo'
+        else:
+            assert tw.lines[0] == 'unicode_string = São Paulo, utf8_string = São Paulo'
