@@ -14,6 +14,8 @@ from fnmatch import fnmatch
 
 from weakref import WeakKeyDictionary
 
+import six
+
 from _pytest.capture import MultiCapture, SysCapture
 from _pytest._code import Source
 import py
@@ -486,29 +488,24 @@ class Testdir:
         if not hasattr(self, '_olddir'):
             self._olddir = old
 
-    def _makefile(self, ext, args, kwargs, encoding="utf-8"):
+    def _makefile(self, ext, args, kwargs, encoding='utf-8'):
         items = list(kwargs.items())
+
+        def to_text(s):
+            return s.decode(encoding) if isinstance(s, bytes) else six.text_type(s)
+
         if args:
-            source = py.builtin._totext("\n").join(
-                map(py.builtin._totext, args)) + py.builtin._totext("\n")
+            source = u"\n".join(to_text(x) for x in args)
             basename = self.request.function.__name__
             items.insert(0, (basename, source))
+
         ret = None
-        for name, value in items:
-            p = self.tmpdir.join(name).new(ext=ext)
+        for basename, value in items:
+            p = self.tmpdir.join(basename).new(ext=ext)
             p.dirpath().ensure_dir()
             source = Source(value)
-
-            def my_totext(s, encoding="utf-8"):
-                if py.builtin._isbytes(s):
-                    s = py.builtin._totext(s, encoding=encoding)
-                return s
-
-            source_unicode = "\n".join([my_totext(line) for line in source.lines])
-            source = py.builtin._totext(source_unicode)
-            content = source.strip().encode(encoding)  # + "\n"
-            # content = content.rstrip() + "\n"
-            p.write(content, "wb")
+            source = u"\n".join(to_text(line) for line in source.lines)
+            p.write(source.strip().encode(encoding), "wb")
             if ret is None:
                 ret = p
         return ret
