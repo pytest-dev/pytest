@@ -14,7 +14,6 @@ import _pytest._code
 import _pytest.hookspec  # the extension point definitions
 import _pytest.assertion
 from _pytest._pluggy import PluginManager, HookimplMarker, HookspecMarker
-from _pytest.compat import safe_str
 
 hookimpl = HookimplMarker("pytest")
 hookspec = HookspecMarker("pytest")
@@ -441,13 +440,8 @@ class PytestPluginManager(PluginManager):
         self.rewrite_hook.mark_rewrite(importspec)
         try:
             __import__(importspec)
-        except ImportError as e:
-            new_exc = ImportError('Error importing plugin "%s": %s' % (modname, safe_str(e.args[0])))
-            # copy over name and path attributes
-            for attr in ('name', 'path'):
-                if hasattr(e, attr):
-                    setattr(new_exc, attr, getattr(e, attr))
-            raise new_exc
+        except ImportError:
+            raise ImportError('Error importing plugin "%s"' % (modname)), None, sys.exc_info()[2]
         except Exception as e:
             import pytest
             if not hasattr(pytest, 'skip') or not isinstance(e, pytest.skip.Exception):
