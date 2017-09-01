@@ -480,29 +480,24 @@ class Testdir:
         if not hasattr(self, '_olddir'):
             self._olddir = old
 
-    def _makefile(self, ext, args, kwargs, encoding="utf-8"):
+    def _makefile(self, ext, args, kwargs, encoding='utf-8'):
         items = list(kwargs.items())
+
+        def to_text(s):
+            return s.decode(encoding) if isinstance(s, bytes) else six.text_type(s)
+
         if args:
-            source = six.text_type("\n").join(
-                map(six.text_type, args)) + six.text_type("\n")
+            source = u"\n".join(to_text(x) for x in args)
             basename = self.request.function.__name__
             items.insert(0, (basename, source))
+
         ret = None
-        for name, value in items:
-            p = self.tmpdir.join(name).new(ext=ext)
+        for basename, value in items:
+            p = self.tmpdir.join(basename).new(ext=ext)
             p.dirpath().ensure_dir()
             source = Source(value)
-
-            def my_totext(s, encoding="utf-8"):
-                if isinstance(s, six.binary_type):
-                    s = six.text_type(s, encoding=encoding)
-                return s
-
-            source_unicode = "\n".join([my_totext(line) for line in source.lines])
-            source = six.text_type(source_unicode)
-            content = source.strip().encode(encoding)  # + "\n"
-            # content = content.rstrip() + "\n"
-            p.write(content, "wb")
+            source = u"\n".join(to_text(line) for line in source.lines)
+            p.write(source.strip().encode(encoding), "wb")
             if ret is None:
                 ret = p
         return ret
