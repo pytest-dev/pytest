@@ -73,20 +73,20 @@ marked ``smtp`` fixture function.  Running the test looks like this::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
-    
+
     test_smtpsimple.py F
-    
+
     ======= FAILURES ========
     _______ test_ehlo ________
-    
+
     smtp = <smtplib.SMTP object at 0xdeadbeef>
-    
+
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
             assert response == 250
     >       assert 0 # for demo purposes
     E       assert 0
-    
+
     test_smtpsimple.py:11: AssertionError
     ======= 1 failed in 0.12 seconds ========
 
@@ -178,32 +178,32 @@ inspect what is going on and can now run the tests::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
-    
+
     test_module.py FF
-    
+
     ======= FAILURES ========
     _______ test_ehlo ________
-    
+
     smtp = <smtplib.SMTP object at 0xdeadbeef>
-    
+
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
             assert response == 250
             assert b"smtp.gmail.com" in msg
     >       assert 0  # for demo purposes
     E       assert 0
-    
+
     test_module.py:6: AssertionError
     _______ test_noop ________
-    
+
     smtp = <smtplib.SMTP object at 0xdeadbeef>
-    
+
         def test_noop(smtp):
             response, msg = smtp.noop()
             assert response == 250
     >       assert 0  # for demo purposes
     E       assert 0
-    
+
     test_module.py:11: AssertionError
     ======= 2 failed in 0.12 seconds ========
 
@@ -254,7 +254,7 @@ Let's execute it::
 
     $ pytest -s -q --tb=no
     FFteardown smtp
-    
+
     2 failed in 0.12 seconds
 
 We see that the ``smtp`` instance is finalized after the two
@@ -359,7 +359,7 @@ again, nothing much has changed::
 
     $ pytest -s -q --tb=no
     FFfinalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
-    
+
     2 failed in 0.12 seconds
 
 Let's quickly create another test module that actually sets the
@@ -427,51 +427,51 @@ So let's just do another run::
     FFFF
     ======= FAILURES ========
     _______ test_ehlo[smtp.gmail.com] ________
-    
+
     smtp = <smtplib.SMTP object at 0xdeadbeef>
-    
+
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
             assert response == 250
             assert b"smtp.gmail.com" in msg
     >       assert 0  # for demo purposes
     E       assert 0
-    
+
     test_module.py:6: AssertionError
     _______ test_noop[smtp.gmail.com] ________
-    
+
     smtp = <smtplib.SMTP object at 0xdeadbeef>
-    
+
         def test_noop(smtp):
             response, msg = smtp.noop()
             assert response == 250
     >       assert 0  # for demo purposes
     E       assert 0
-    
+
     test_module.py:11: AssertionError
     _______ test_ehlo[mail.python.org] ________
-    
+
     smtp = <smtplib.SMTP object at 0xdeadbeef>
-    
+
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
             assert response == 250
     >       assert b"smtp.gmail.com" in msg
     E       AssertionError: assert b'smtp.gmail.com' in b'mail.python.org\nPIPELINING\nSIZE 51200000\nETRN\nSTARTTLS\nAUTH DIGEST-MD5 NTLM CRAM-MD5\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8'
-    
+
     test_module.py:5: AssertionError
     -------------------------- Captured stdout setup ---------------------------
     finalizing <smtplib.SMTP object at 0xdeadbeef>
     _______ test_noop[mail.python.org] ________
-    
+
     smtp = <smtplib.SMTP object at 0xdeadbeef>
-    
+
         def test_noop(smtp):
             response, msg = smtp.noop()
             assert response == 250
     >       assert 0  # for demo purposes
     E       assert 0
-    
+
     test_module.py:11: AssertionError
     ------------------------- Captured stdout teardown -------------------------
     finalizing <smtplib.SMTP object at 0xdeadbeef>
@@ -492,11 +492,15 @@ with ``--collect-only`` will show the generated IDs.
 Numbers, strings, booleans and None will have their usual string
 representation used in the test ID. For other objects, pytest will
 make a string based on the argument name.  It is possible to customise
-the string used in a test ID for a certain fixture value by using the
-``ids`` keyword argument::
+the string used in a test ID for a certain fixture value, by declaring an attribute
+`pytest_id` in the object itself, or by using the ``ids`` keyword argument::
 
    # content of test_ids.py
    import pytest
+
+   class Cheese(object):
+       def __init__(self, name)
+           self.pytest_id = name
 
    @pytest.fixture(params=[0, 1], ids=["spam", "ham"])
    def a(request):
@@ -516,6 +520,10 @@ the string used in a test ID for a certain fixture value by using the
        return request.param
 
    def test_b(b):
+       pass
+
+   @pytest.fixture.parametrize('c', [Foo('gouda'), Foo('edam')])
+   def test_c(c):
        pass
 
 The above shows how ``ids`` can be either a list of strings to use or
@@ -538,12 +546,14 @@ Running the above tests results in the following test IDs being used::
      <Function 'test_a[ham]'>
      <Function 'test_b[eggs]'>
      <Function 'test_b[1]'>
+     <Function 'test_c[gouda]'>
+     <Function 'test_c[edam]'>
    <Module 'test_module.py'>
      <Function 'test_ehlo[smtp.gmail.com]'>
      <Function 'test_noop[smtp.gmail.com]'>
      <Function 'test_ehlo[mail.python.org]'>
      <Function 'test_noop[mail.python.org]'>
-   
+
    ======= no tests ran in 0.12 seconds ========
 
 .. _`interdependent fixtures`:
@@ -582,10 +592,10 @@ Here we declare an ``app`` fixture which receives the previously defined
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 2 items
-    
+
     test_appsetup.py::test_smtp_exists[smtp.gmail.com] PASSED
     test_appsetup.py::test_smtp_exists[mail.python.org] PASSED
-    
+
     ======= 2 passed in 0.12 seconds ========
 
 Due to the parametrization of ``smtp`` the test will run twice with two
@@ -651,26 +661,26 @@ Let's run the tests in verbose mode and with looking at the print-output::
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 8 items
-    
+
     test_module.py::test_0[1]   SETUP otherarg 1
       RUN test0 with otherarg 1
     PASSED  TEARDOWN otherarg 1
-    
+
     test_module.py::test_0[2]   SETUP otherarg 2
       RUN test0 with otherarg 2
     PASSED  TEARDOWN otherarg 2
-    
+
     test_module.py::test_1[mod1]   SETUP modarg mod1
       RUN test1 with modarg mod1
     PASSED
     test_module.py::test_2[1-mod1]   SETUP otherarg 1
       RUN test2 with otherarg 1 and modarg mod1
     PASSED  TEARDOWN otherarg 1
-    
+
     test_module.py::test_2[2-mod1]   SETUP otherarg 2
       RUN test2 with otherarg 2 and modarg mod1
     PASSED  TEARDOWN otherarg 2
-    
+
     test_module.py::test_1[mod2]   TEARDOWN modarg mod1
       SETUP modarg mod2
       RUN test1 with modarg mod2
@@ -678,13 +688,13 @@ Let's run the tests in verbose mode and with looking at the print-output::
     test_module.py::test_2[1-mod2]   SETUP otherarg 1
       RUN test2 with otherarg 1 and modarg mod2
     PASSED  TEARDOWN otherarg 1
-    
+
     test_module.py::test_2[2-mod2]   SETUP otherarg 2
       RUN test2 with otherarg 2 and modarg mod2
     PASSED  TEARDOWN otherarg 2
       TEARDOWN modarg mod2
-    
-    
+
+
     ======= 8 passed in 0.12 seconds ========
 
 You can see that the parametrized module-scoped ``modarg`` resource caused an
