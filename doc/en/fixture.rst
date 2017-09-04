@@ -492,11 +492,15 @@ with ``--collect-only`` will show the generated IDs.
 Numbers, strings, booleans and None will have their usual string
 representation used in the test ID. For other objects, pytest will
 make a string based on the argument name.  It is possible to customise
-the string used in a test ID for a certain fixture value by using the
-``ids`` keyword argument::
+the string used in a test ID for a certain fixture value, by declaring an attribute
+`pytest_id` in the object itself, or by using the ``ids`` keyword argument::
 
    # content of test_ids.py
    import pytest
+
+   class Cheese(object):
+       def __init__(self, name)
+           self.pytest_id = name
 
    @pytest.fixture(params=[0, 1], ids=["spam", "ham"])
    def a(request):
@@ -516,6 +520,10 @@ the string used in a test ID for a certain fixture value by using the
        return request.param
 
    def test_b(b):
+       pass
+
+   @pytest.fixture.parametrize('c', [Cheese('gouda'), Cheese('edam')])
+   def test_c(c):
        pass
 
 The above shows how ``ids`` can be either a list of strings to use or
@@ -538,6 +546,8 @@ Running the above tests results in the following test IDs being used::
      <Function 'test_a[ham]'>
      <Function 'test_b[eggs]'>
      <Function 'test_b[1]'>
+     <Function 'test_c[gouda]'>
+     <Function 'test_c[edam]'>
    <Module 'test_module.py'>
      <Function 'test_ehlo[smtp.gmail.com]'>
      <Function 'test_noop[smtp.gmail.com]'>
