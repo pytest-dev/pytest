@@ -281,7 +281,7 @@ class TestPrunetraceback(object):
                 outcome = yield
                 rep = outcome.get_result()
                 rep.headerlines += ["header1"]
-                outcome.set_result(rep)
+                outcome.force_result(rep)
         """)
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
