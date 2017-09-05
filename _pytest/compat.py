@@ -83,6 +83,11 @@ def num_mock_patch_args(function):
 
 
 def getfuncargnames(function, startindex=None, cls=None):
+    """
+    @RonnyPfannschmidt: This function should be refactored when we revisit fixtures. The
+    fixture mechanism should ask the node for the fixture names, and not try to obtain
+    directly from the function object well after collection has occurred.
+    """
     if startindex is None and cls is not None:
         is_staticmethod = isinstance(cls.__dict__.get(function.__name__, None), staticmethod)
         startindex = 0 if is_staticmethod else 1
