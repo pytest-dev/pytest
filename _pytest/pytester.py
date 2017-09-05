@@ -412,16 +412,8 @@ class Testdir:
     def __init__(self, request, tmpdir_factory):
         self.request = request
         self._mod_collections = WeakKeyDictionary()
-        # XXX remove duplication with tmpdir plugin
-        basetmp = tmpdir_factory.ensuretemp("testdir")
         name = request.function.__name__
-        for i in range(100):
-            try:
-                tmpdir = basetmp.mkdir(name + str(i))
-            except py.error.EEXIST:
-                continue
-            break
-        self.tmpdir = tmpdir
+        self.tmpdir = tmpdir_factory.mktemp(name, numbered=True)
         self.plugins = []
         self._savesyspath = (list(sys.path), list(sys.meta_path))
         self._savemodulekeys = set(sys.modules)
