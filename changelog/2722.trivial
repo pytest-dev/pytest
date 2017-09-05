@@ -1,0 +1,1 @@
+Set ``xfail_strict=True`` in pytest's own test suite to catch expected failures as soon as they start to pass.
