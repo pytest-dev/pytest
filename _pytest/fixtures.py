@@ -432,7 +432,8 @@ class FixtureRequest(FuncargnamesCompatAttr):
         from _pytest import deprecated
         warnings.warn(
             deprecated.GETFUNCARGVALUE,
-            DeprecationWarning)
+            DeprecationWarning,
+            stacklevel=2)
         return self.getfixturevalue(argname)
 
     def _get_active_fixturedef(self, argname):

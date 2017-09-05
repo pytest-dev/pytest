@@ -78,7 +78,7 @@ Features
 
 - Python2.6+, Python3.3+, PyPy-2.3, Jython-2.5 (untested);
 
-- Rich plugin architecture, with over 150+ `external plugins <http://docs.pytest.org/en/latest/plugins.html#installing-external-plugins-searching>`_ and thriving community;
+- Rich plugin architecture, with over 315+ `external plugins <http://plugincompat.herokuapp.com>`_ and thriving community;
 
 
 Documentation

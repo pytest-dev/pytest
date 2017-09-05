@@ -8,6 +8,36 @@
 
 .. towncrier release notes start
 
+Pytest 3.2.1 (2017-08-08)
+=========================
+
+Bug Fixes
+---------
+
+- Fixed small terminal glitch when collecting a single test item. (`#2579
+  <https://github.com/pytest-dev/pytest/issues/2579>`_)
+
+- Correctly consider ``/`` as the file separator to automatically mark plugin
+  files for rewrite on Windows. (`#2591 <https://github.com/pytest-
+  dev/pytest/issues/2591>`_)
+
+- Properly escape test names when setting ``PYTEST_CURRENT_TEST`` environment
+  variable. (`#2644 <https://github.com/pytest-dev/pytest/issues/2644>`_)
+
+- Fix error on Windows and Python 3.6+ when ``sys.stdout`` has been replaced
+  with a stream-like object which does not implement the full ``io`` module
+  buffer protocol. In particular this affects ``pytest-xdist`` users on the
+  aforementioned platform. (`#2666 <https://github.com/pytest-
+  dev/pytest/issues/2666>`_)
+
+
+Improved Documentation
+----------------------
+
+- Explicitly document which pytest features work with ``unittest``. (`#2626
+  <https://github.com/pytest-dev/pytest/issues/2626>`_)
+
+
 Pytest 3.2.0 (2017-07-30)
 =========================
 
@@ -113,7 +143,7 @@ Bug Fixes
 - capture: ensure that EncodedFile.name is a string. (`#2555
   <https://github.com/pytest-dev/pytest/issues/2555>`_)
 
-- The options ```--fixtures`` and ```--fixtures-per-test`` will now keep
+- The options ``--fixtures`` and ``--fixtures-per-test`` will now keep
   indentation within docstrings. (`#2574 <https://github.com/pytest-
   dev/pytest/issues/2574>`_)
 

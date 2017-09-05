@@ -78,4 +78,7 @@ def test_resultlog_is_deprecated(testdir):
             pass
     ''')
     result = testdir.runpytest('--result-log=%s' % testdir.tmpdir.join('result.log'))
-    result.stdout.fnmatch_lines(['*--result-log is deprecated and scheduled for removal in pytest 4.0*'])
+    result.stdout.fnmatch_lines([
+        '*--result-log is deprecated and scheduled for removal in pytest 4.0*',
+        '*See https://docs.pytest.org/*/usage.html#creating-resultlog-format-files for more information*',
+    ])

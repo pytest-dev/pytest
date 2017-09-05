@@ -214,6 +214,16 @@ class TestTerminal(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(['collected 1 item'])
 
+    def test_rewrite(self, testdir, monkeypatch):
+        config = testdir.parseconfig()
+        f = py.io.TextIO()
+        monkeypatch.setattr(f, 'isatty', lambda *args: True)
+        tr = TerminalReporter(config, f)
+        tr.writer.fullwidth = 10
+        tr.write('hello')
+        tr.rewrite('hey', erase=True)
+        assert f.getvalue() == 'hello' + '\r' + 'hey' + (7 * ' ')
+
 
 class TestCollectonly(object):
     def test_collectonly_basic(self, testdir):

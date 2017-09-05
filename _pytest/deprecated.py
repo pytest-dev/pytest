@@ -26,7 +26,10 @@ SETUP_CFG_PYTEST = '[pytest] section in setup.cfg files is deprecated, use [tool
 
 GETFUNCARGVALUE = "use of getfuncargvalue is deprecated, use getfixturevalue"
 
-RESULT_LOG = '--result-log is deprecated and scheduled for removal in pytest 4.0'
+RESULT_LOG = (
+    '--result-log is deprecated and scheduled for removal in pytest 4.0.\n'
+    'See https://docs.pytest.org/en/latest/usage.html#creating-resultlog-format-files for more information.'
+)
 
 MARK_INFO_ATTRIBUTE = RemovedInPytest4Warning(
     "MarkInfo objects are deprecated as they contain the merged marks"
