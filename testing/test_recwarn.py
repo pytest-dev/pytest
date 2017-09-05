@@ -289,20 +289,22 @@ class TestWarns(object):
         with pytest.warns(UserWarning, match=r'must be \d+$'):
             warnings.warn("value must be 42", UserWarning)
 
-        with pytest.raises(AssertionError, match='pattern not found'):
+        with pytest.raises(pytest.fail.Exception):
             with pytest.warns(UserWarning, match=r'must be \d+$'):
                 warnings.warn("this is not here", UserWarning)
 
-    def test_one_from_multiple_warns():
-        with warns(UserWarning, match=r'aaa'):
+        with pytest.raises(pytest.fail.Exception):
+            with pytest.warns(FutureWarning, match=r'must be \d+$'):
+                warnings.warn("value must be 42", UserWarning)
+
+    def test_one_from_multiple_warns(self):
+        with pytest.warns(UserWarning, match=r'aaa'):
             warnings.warn("cccccccccc", UserWarning)
             warnings.warn("bbbbbbbbbb", UserWarning)
             warnings.warn("aaaaaaaaaa", UserWarning)
 
-    def test_none_of_multiple_warns():
-        a, b, c = ('aaa', 'bbbbbbbbbb', 'cccccccccc')
-        expected_msg = "'{}' pattern not found in \['{}', '{}'\]".format(a, b, c)
-        with raises(AssertionError, match=expected_msg):
-            with warns(UserWarning, match=r'aaa'):
+    def test_none_of_multiple_warns(self):
+        with pytest.raises(pytest.fail.Exception):
+            with pytest.warns(UserWarning, match=r'aaa'):
                 warnings.warn("bbbbbbbbbb", UserWarning)
                 warnings.warn("cccccccccc", UserWarning)
