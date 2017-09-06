@@ -1,1 +1,0 @@
-In examples on working with custom markers, add examples demonstrating the usage of ``pytest.mark.MARKER_NAME.with_args`` in comparison with ``pytest.mark.MARKER_NAME.__call__``
