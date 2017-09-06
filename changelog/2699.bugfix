@@ -1,0 +1,1 @@
+Allow tests declared as ``@staticmethod`` to use fixtures.
