@@ -936,6 +936,8 @@ def _idval(val, argname, idx, idfn, config=None):
         return str(val)
     elif isinstance(val, REGEX_TYPE):
         return _ascii_escaped(val.pattern)
+    elif hasattr(val, 'pytest_id'):
+        return _ascii_escaped(val.pytest_id)
     elif enum is not None and isinstance(val, enum.Enum):
         return str(val)
     elif isclass(val) and hasattr(val, '__name__'):

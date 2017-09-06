@@ -294,6 +294,19 @@ class TestMetafunc(object):
         result = idmaker(("a", "b"), [pytest.param(e.one, e.two)])
         assert result == ["Foo.one-Foo.two"]
 
+    def test_idmaker_custom_instance_id(self):
+        from _pytest.python import idmaker
+
+        class Cheese(object):
+            def __init__(self, name):
+                self.pytest_id = name
+
+        a = Cheese('gouda')
+        b = Cheese('edam')
+
+        result = idmaker(("a", "b"), [pytest.param(a, b)])
+        assert result == ["gouda-edam"]
+
     @pytest.mark.issue351
     def test_idmaker_idfn(self):
         from _pytest.python import idmaker
