@@ -43,7 +43,11 @@ def has_environment_marker_support():
 
 
 def main():
-    install_requires = ['py>=1.4.33', 'six>=1.10.0','setuptools', 'pluggy>=0.4.0,<0.5']
+    install_requires = ['py>=1.4.33', 'six>=1.10.0', 'setuptools']
+    # if _PYTEST_SETUP_SKIP_PLUGGY_DEP is set, skip installing pluggy;
+    # used by tox.ini to test with pluggy master
+    if '_PYTEST_SETUP_SKIP_PLUGGY_DEP' not in os.environ:
+        install_requires.append('pluggy>=0.4.0,<0.5')
     extras_require = {}
     if has_environment_marker_support():
         extras_require[':python_version=="2.6"'] = ['argparse', 'ordereddict']

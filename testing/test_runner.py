@@ -637,12 +637,14 @@ def test_pytest_cmdline_main(testdir):
 
 def test_unicode_in_longrepr(testdir):
     testdir.makeconftest("""
-        import py
-        def pytest_runtest_makereport(__multicall__):
-            rep = __multicall__.execute()
+        # -*- coding: utf-8 -*-
+        import pytest
+        @pytest.hookimpl(hookwrapper=True)
+        def pytest_runtest_makereport():
+            outcome = yield
+            rep = outcome.get_result()
             if rep.when == "call":
-                rep.longrepr = py.builtin._totext("\\xc3\\xa4", "utf8")
-            return rep
+                rep.longrepr = u'ä'
     """)
     testdir.makepyfile("""
         def test_out():

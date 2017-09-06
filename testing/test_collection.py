@@ -276,10 +276,12 @@ class TestPrunetraceback(object):
         """)
         testdir.makeconftest("""
             import pytest
-            def pytest_make_collect_report(__multicall__):
-                rep = __multicall__.execute()
+            @pytest.hookimpl(hookwrapper=True)
+            def pytest_make_collect_report():
+                outcome = yield
+                rep = outcome.get_result()
                 rep.headerlines += ["header1"]
-                return rep
+                outcome.force_result(rep)
         """)
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
