@@ -122,7 +122,7 @@ want to distribute them along with your application::
             test_view.py
             ...
 
-In this scheme, it is easy to your run tests using the ``--pyargs`` option::
+In this scheme, it is easy to run your tests using the ``--pyargs`` option::
 
     pytest --pyargs mypkg
 
@@ -267,7 +267,7 @@ your own setuptools Test command for invoking pytest.
 
         def initialize_options(self):
             TestCommand.initialize_options(self)
-            self.pytest_args = []
+            self.pytest_args = ''
 
         def run_tests(self):
             import shlex

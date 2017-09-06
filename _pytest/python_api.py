@@ -493,7 +493,8 @@ def raises(expected_exception, *args, **kwargs):
            ...
            >>> assert exc_info.type == ValueError
 
-    Or you can use the keyword argument ``match`` to assert that the
+
+    Since version ``3.1`` you can use the keyword argument ``match`` to assert that the
     exception matches a text or regex::
 
         >>> with raises(ValueError, match='must be 0 or None'):
@@ -502,7 +503,12 @@ def raises(expected_exception, *args, **kwargs):
         >>> with raises(ValueError, match=r'must be \d+$'):
         ...     raise ValueError("value must be 42")
 
-    Or you can specify a callable by passing a to-be-called lambda::
+    **Legacy forms**
+
+    The forms below are fully supported but are discouraged for new code because the
+    context manager form is regarded as more readable and less error-prone.
+
+    It is possible to specify a callable by passing a to-be-called lambda::
 
         >>> raises(ZeroDivisionError, lambda: 1/0)
         <ExceptionInfo ...>
@@ -516,10 +522,13 @@ def raises(expected_exception, *args, **kwargs):
         >>> raises(ZeroDivisionError, f, x=0)
         <ExceptionInfo ...>
 
-    A third possibility is to use a string to be executed::
+    It is also possible to pass a string to be evaluated at runtime::
 
         >>> raises(ZeroDivisionError, "f(0)")
         <ExceptionInfo ...>
+
+    The string will be evaluated using the same ``locals()`` and ``globals()``
+    at the moment of the ``raises`` call.
 
     .. autoclass:: _pytest._code.ExceptionInfo
         :members:

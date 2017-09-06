@@ -41,6 +41,8 @@ Getting help on version, option names, environment variables
     pytest -h | --help # show help on command line and config file options
 
 
+.. _maxfail:
+
 Stopping after the first (or N) failures
 ---------------------------------------------------
 
@@ -48,6 +50,8 @@ To stop the testing process after the first (N) failures::
 
     pytest -x            # stop after first failure
     pytest --maxfail=2    # stop after two failures
+
+.. _select-tests:
 
 Specifying tests / selecting tests
 ---------------------------------------------------
@@ -134,6 +138,9 @@ This is very useful if the tests are taking too long and you interrupt them
 with Ctrl+C to find out where the tests are *hanging*. By default no output
 will be shown (because KeyboardInterrupt is caught by pytest). By using this
 option you make sure a trace is shown.
+
+
+.. _pdb-option:
 
 Dropping to PDB_ (Python Debugger) on failures
 -----------------------------------------------
@@ -303,6 +310,13 @@ Creating resultlog format files
 .. deprecated:: 3.0
 
     This option is rarely used and is scheduled for removal in 4.0.
+
+    An alternative for users which still need similar functionality is to use the
+    `pytest-tap <https://pypi.python.org/pypi/pytest-tap>`_ plugin which provides
+    a stream of test data.
+
+    If you have any concerns, please don't hesitate to
+    `open an issue <https://github.com/pytest-dev/pytest/issues>`_.
 
 To create plain-text machine-readable result files you can issue::
 

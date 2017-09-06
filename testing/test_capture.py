@@ -1140,6 +1140,23 @@ def test_error_attribute_issue555(testdir):
     reprec.assertoutcome(passed=1)
 
 
+@pytest.mark.skipif(not sys.platform.startswith('win') and sys.version_info[:2] >= (3, 6),
+                    reason='only py3.6+ on windows')
+def test_py36_windowsconsoleio_workaround_non_standard_streams():
+    """
+    Ensure _py36_windowsconsoleio_workaround function works with objects that
+    do not implement the full ``io``-based stream protocol, for example execnet channels (#2666).
+    """
+    from _pytest.capture import _py36_windowsconsoleio_workaround
+
+    class DummyStream:
+        def write(self, s):
+            pass
+
+    stream = DummyStream()
+    _py36_windowsconsoleio_workaround(stream)
+
+
 def test_dontreadfrominput_has_encoding(testdir):
     testdir.makepyfile("""
         import sys

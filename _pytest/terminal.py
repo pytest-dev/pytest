@@ -180,8 +180,22 @@ class TerminalReporter:
         self._tw.line(line, **markup)
 
     def rewrite(self, line, **markup):
+        """
+        Rewinds the terminal cursor to the beginning and writes the given line.
+
+        :kwarg erase: if True, will also add spaces until the full terminal width to ensure
+            previous lines are properly erased.
+
+        The rest of the keyword arguments are markup instructions.
+        """
+        erase = markup.pop('erase', False)
+        if erase:
+            fill_count = self._tw.fullwidth - len(line)
+            fill = ' ' * fill_count
+        else:
+            fill = ''
         line = str(line)
-        self._tw.write("\r" + line, **markup)
+        self._tw.write("\r" + line + fill, **markup)
 
     def write_sep(self, sep, title=None, **markup):
         self.ensure_newline()
@@ -292,12 +306,9 @@ class TerminalReporter:
         if skipped:
             line += " / %d skipped" % skipped
         if self.isatty:
+            self.rewrite(line, bold=True, erase=True)
             if final:
-                line += " \n"
-                # Rewrite with empty line so we will not see the artifact of
-                # previous write
-                self.rewrite('')
-            self.rewrite(line, bold=True)
+                self.write('\n')
         else:
             self.write_line(line)
 

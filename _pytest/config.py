@@ -862,6 +862,18 @@ notset = Notset()
 FILE_OR_DIR = 'file_or_dir'
 
 
+def _iter_rewritable_modules(package_files):
+    for fn in package_files:
+        is_simple_module = '/' not in fn and fn.endswith('.py')
+        is_package = fn.count('/') == 1 and fn.endswith('__init__.py')
+        if is_simple_module:
+            module_name, _ = os.path.splitext(fn)
+            yield module_name
+        elif is_package:
+            package_name = os.path.dirname(fn)
+            yield package_name
+
+
 class Config(object):
     """ access to configuration values, pluginmanager and plugin hooks.  """
 
@@ -1022,15 +1034,8 @@ class Config(object):
             for entry in entrypoint.dist._get_metadata(metadata)
         )
 
-        for fn in package_files:
-            is_simple_module = os.sep not in fn and fn.endswith('.py')
-            is_package = fn.count(os.sep) == 1 and fn.endswith('__init__.py')
-            if is_simple_module:
-                module_name, ext = os.path.splitext(fn)
-                hook.mark_rewrite(module_name)
-            elif is_package:
-                package_name = os.path.dirname(fn)
-                hook.mark_rewrite(package_name)
+        for name in _iter_rewritable_modules(package_files):
+            hook.mark_rewrite(name)
 
     def _warn_about_missing_assertion(self, mode):
         try:
@@ -1332,7 +1337,7 @@ def determine_setup(inifile, args, warnfunc=None):
                 rootdir, inifile, inicfg = getcfg(dirs, warnfunc=warnfunc)
                 if rootdir is None:
                     rootdir = get_common_ancestor([py.path.local(), ancestor])
-                    is_fs_root = os.path.splitdrive(str(rootdir))[1] == os.sep
+                    is_fs_root = os.path.splitdrive(str(rootdir))[1] == '/'
                     if is_fs_root:
                         rootdir = ancestor
     return rootdir, inifile, inicfg or {}

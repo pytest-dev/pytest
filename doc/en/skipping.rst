@@ -27,6 +27,7 @@ corresponding to the "short" letters shown in the test progress::
 (See :ref:`how to change command line options defaults`)
 
 .. _skipif:
+.. _skip:
 .. _`condition booleans`:
 
 Skipping test functions

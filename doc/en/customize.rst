@@ -230,13 +230,16 @@ Builtin configuration file options
 .. confval:: python_files
 
    One or more Glob-style file patterns determining which python files
-   are considered as test modules.
+   are considered as test modules. By default, pytest will consider
+   any file matching with ``test_*.py`` and ``*_test.py`` globs as a test
+   module.
 
 .. confval:: python_classes
 
    One or more name prefixes or glob-style patterns determining which classes
-   are considered for test collection. Here is an example of how to collect
-   tests from classes that end in ``Suite``:
+   are considered for test collection. By default, pytest will consider any
+   class prefixed with ``Test`` as a test collection.  Here is an example of how
+   to collect tests from classes that end in ``Suite``:
 
    .. code-block:: ini
 
@@ -251,7 +254,8 @@ Builtin configuration file options
 .. confval:: python_functions
 
    One or more name prefixes or glob-patterns determining which test functions
-   and methods are considered tests. Here is an example of how
+   and methods are considered tests. By default, pytest will consider any
+   function prefixed with ``test`` as a test.  Here is an example of how
    to collect test functions and methods that end in ``_test``:
 
    .. code-block:: ini
