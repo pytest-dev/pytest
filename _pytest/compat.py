@@ -7,6 +7,7 @@ import inspect
 import types
 import re
 import functools
+import codecs
 
 import py
 
@@ -122,11 +123,23 @@ if sys.version_info[:2] == (2, 6):
 
 
 if _PY3:
-    import codecs
     imap = map
     izip = zip
     STRING_TYPES = bytes, str
     UNICODE_TYPES = str,
+
+    if PY35:
+        def _bytes_to_ascii(val):
+            return val.decode('ascii', 'backslashreplace')
+    else:
+        def _bytes_to_ascii(val):
+            if val:
+                # source: http://goo.gl/bGsnwC
+                encoded_bytes, _ = codecs.escape_encode(val)
+                return encoded_bytes.decode('ascii')
+            else:
+                # empty bytes crashes codecs.escape_encode (#1087)
+                return ''
 
     def _ascii_escaped(val):
         """If val is pure ascii, returns it as a str().  Otherwise, escapes
@@ -147,13 +160,7 @@ if _PY3:
 
         """
         if isinstance(val, bytes):
-            if val:
-                # source: http://goo.gl/bGsnwC
-                encoded_bytes, _ = codecs.escape_encode(val)
-                return encoded_bytes.decode('ascii')
-            else:
-                # empty bytes crashes codecs.escape_encode (#1087)
-                return ''
+            return _bytes_to_ascii(val)
         else:
             return val.encode('unicode_escape').decode('ascii')
 else:
