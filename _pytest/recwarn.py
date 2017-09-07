@@ -100,6 +100,22 @@ def warns(expected_warning, *args, **kwargs):
 
         >>> with warns(RuntimeWarning):
         ...    warnings.warn("my warning", RuntimeWarning)
+
+    In the context manager form you may use the keyword argument ``match`` to assert
+    that the exception matches a text or regex::
+
+        >>> with warns(UserWarning, match='must be 0 or None'):
+        ...     warnings.warn("value must be 0 or None", UserWarning)
+
+        >>> with warns(UserWarning, match=r'must be \d+$'):
+        ...     warnings.warn("value must be 42", UserWarning)
+
+        >>> with warns(UserWarning, match=r'must be \d+$'):
+        ...     warnings.warn("this is not here", UserWarning)
+        Traceback (most recent call last):
+          ...
+        Failed: DID NOT WARN. No warnings of type ...UserWarning... was emitted...
+
     """
     match_expr = None
     if not args:
