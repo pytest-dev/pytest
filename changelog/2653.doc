@@ -1,1 +1,0 @@
-In one of the simple examples, use `pytest_collection_modifyitems()` to skip tests based on a command-line option, allowing its sharing while preventing a user error when acessing `pytest.config` before the argument parsing.

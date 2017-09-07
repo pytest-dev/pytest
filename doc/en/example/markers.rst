@@ -393,6 +393,7 @@ The ``--markers`` option always gives you a list of available markers::
     @pytest.mark.tryfirst: mark a hook implementation function such that the plugin machinery will try to call it first/as early as possible.
     
     @pytest.mark.trylast: mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible.
+    
 
 .. _`passing callables to custom markers`:
 
@@ -430,9 +431,9 @@ However, if there is a callable as the single positional argument with no keywor
 The output is as follows::
 
     $ pytest -q -s
-    Marker info name=my_marker args=(<function hello_world at 0x7f0b7b058bf8>,) kwars={}
+    Marker info name=my_marker args=(<function hello_world at 0xdeadbeef>,) kwars={}
     .
-    1 passed in 0.01 seconds
+    1 passed in 0.12 seconds
 
 We can see that the custom marker has its argument set extended with the function ``hello_world``. This is the key different between creating a custom marker as a callable, which invokes ``__call__`` behind the scenes, and using ``with_args``.
 
