@@ -284,3 +284,27 @@ class TestWarns(object):
         ''')
         result = testdir.runpytest()
         result.stdout.fnmatch_lines(['*2 passed in*'])
+
+    def test_match_regex(self):
+        with pytest.warns(UserWarning, match=r'must be \d+$'):
+            warnings.warn("value must be 42", UserWarning)
+
+        with pytest.raises(pytest.fail.Exception):
+            with pytest.warns(UserWarning, match=r'must be \d+$'):
+                warnings.warn("this is not here", UserWarning)
+
+        with pytest.raises(pytest.fail.Exception):
+            with pytest.warns(FutureWarning, match=r'must be \d+$'):
+                warnings.warn("value must be 42", UserWarning)
+
+    def test_one_from_multiple_warns(self):
+        with pytest.warns(UserWarning, match=r'aaa'):
+            warnings.warn("cccccccccc", UserWarning)
+            warnings.warn("bbbbbbbbbb", UserWarning)
+            warnings.warn("aaaaaaaaaa", UserWarning)
+
+    def test_none_of_multiple_warns(self):
+        with pytest.raises(pytest.fail.Exception):
+            with pytest.warns(UserWarning, match=r'aaa'):
+                warnings.warn("bbbbbbbbbb", UserWarning)
+                warnings.warn("cccccccccc", UserWarning)
