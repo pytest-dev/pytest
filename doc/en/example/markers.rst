@@ -395,6 +395,49 @@ The ``--markers`` option always gives you a list of available markers::
     @pytest.mark.trylast: mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible.
     
 
+.. _`passing callables to custom markers`:
+
+Passing a callable to custom markers
+--------------------------------------------
+
+.. regendoc:wipe
+
+Below is the config file that will be used in the next examples::
+
+    # content of conftest.py
+    import sys
+
+    def pytest_runtest_setup(item):
+        marker = item.get_marker('my_marker')
+        if marker is not None:
+            for info in marker:
+                print('Marker info name={} args={} kwars={}'.format(info.name, info.args, info.kwargs))
+                sys.stdout.flush()
+
+A custom marker can have its argument set, i.e. ``args`` and ``kwargs`` properties, defined by either invoking it as a callable or using ``pytest.mark.MARKER_NAME.with_args``. These two methods achieve the same effect most of the time.
+
+However, if there is a callable as the single positional argument with no keyword arguments, using the ``pytest.mark.MARKER_NAME(c)`` will not pass ``c`` as a positional argument but decorate ``c`` with the custom marker (see :ref:`MarkDecorator <mark>`). Fortunately, ``pytest.mark.MARKER_NAME.with_args`` comes to the rescue::
+
+    # content of test_custom_marker.py
+    import pytest
+
+    def hello_world(*args, **kwargs):
+        return 'Hello World'
+
+    @pytest.mark.my_marker.with_args(hello_world)
+    def test_with_args():
+        pass
+
+The output is as follows::
+
+    $ pytest -q -s
+    Marker info name=my_marker args=(<function hello_world at 0xdeadbeef>,) kwars={}
+    .
+    1 passed in 0.12 seconds
+
+We can see that the custom marker has its argument set extended with the function ``hello_world``. This is the key different between creating a custom marker as a callable, which invokes ``__call__`` behind the scenes, and using ``with_args``.
+
+
 Reading markers which were set from multiple places
 ----------------------------------------------------
 

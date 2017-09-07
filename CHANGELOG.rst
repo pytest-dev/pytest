@@ -8,6 +8,53 @@
 
 .. towncrier release notes start
 
+Pytest 3.2.2 (2017-09-06)
+=========================
+
+Bug Fixes
+---------
+
+- Calling the deprecated `request.getfuncargvalue()` now shows the source of
+  the call. (`#2681 <https://github.com/pytest-dev/pytest/issues/2681>`_)
+
+- Allow tests declared as ``@staticmethod`` to use fixtures. (`#2699
+  <https://github.com/pytest-dev/pytest/issues/2699>`_)
+
+- Fixed edge-case during collection: attributes which raised ``pytest.fail``
+  when accessed would abort the entire collection. (`#2707
+  <https://github.com/pytest-dev/pytest/issues/2707>`_)
+
+- Fix ``ReprFuncArgs`` with mixed unicode and UTF-8 args. (`#2731
+  <https://github.com/pytest-dev/pytest/issues/2731>`_)
+
+
+Improved Documentation
+----------------------
+
+- In examples on working with custom markers, add examples demonstrating the
+  usage of ``pytest.mark.MARKER_NAME.with_args`` in comparison with
+  ``pytest.mark.MARKER_NAME.__call__`` (`#2604
+  <https://github.com/pytest-dev/pytest/issues/2604>`_)
+
+- In one of the simple examples, use `pytest_collection_modifyitems()` to skip
+  tests based on a command-line option, allowing its sharing while preventing a
+  user error when acessing `pytest.config` before the argument parsing. (`#2653
+  <https://github.com/pytest-dev/pytest/issues/2653>`_)
+
+
+Trivial/Internal Changes
+------------------------
+
+- Fixed minor error in 'Good Practices/Manual Integration' code snippet.
+  (`#2691 <https://github.com/pytest-dev/pytest/issues/2691>`_)
+
+- Fixed typo in goodpractices.rst. (`#2721
+  <https://github.com/pytest-dev/pytest/issues/2721>`_)
+
+- Improve user guidance regarding ``--resultlog`` deprecation. (`#2739
+  <https://github.com/pytest-dev/pytest/issues/2739>`_)
+
+
 Pytest 3.2.1 (2017-08-08)
 =========================
 

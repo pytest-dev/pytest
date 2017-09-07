@@ -1,1 +1,0 @@
-Fixed edge-case during collection: attributes which raised ``pytest.fail`` when accessed would abort the entire collection.

@@ -957,11 +957,7 @@ class FixtureManager:
 
     def getfixtureinfo(self, node, func, cls, funcargs=True):
         if funcargs and not hasattr(node, "nofuncargs"):
-            if cls is not None:
-                startindex = 1
-            else:
-                startindex = None
-            argnames = getfuncargnames(func, startindex)
+            argnames = getfuncargnames(func, cls=cls)
         else:
             argnames = ()
         usefixtures = getattr(func, "usefixtures", None)

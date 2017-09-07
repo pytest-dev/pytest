@@ -147,11 +147,21 @@ class TestClass(object):
         ])
 
     def test_static_method(self, testdir):
+        """Support for collecting staticmethod tests (#2528, #2699)"""
         testdir.getmodulecol("""
+            import pytest
             class Test(object):
                 @staticmethod
                 def test_something():
                     pass
+
+                @pytest.fixture
+                def fix(self):
+                    return 1
+
+                @staticmethod
+                def test_fix(fix):
+                    assert fix == 1
         """)
         result = testdir.runpytest()
         if sys.version_info < (2, 7):
@@ -162,8 +172,8 @@ class TestClass(object):
             ])
         else:
             result.stdout.fnmatch_lines([
-                "*collected 1 item*",
-                "*1 passed in*",
+                "*collected 2 items*",
+                "*2 passed in*",
             ])
 
     def test_setup_teardown_class_as_classmethod(self, testdir):
