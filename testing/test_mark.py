@@ -812,3 +812,15 @@ def test_legacy_transfer():
     assert fake_method.fun
     # pristine marks dont transfer
     assert fake_method.pytestmark == [pytest.mark.fun.mark]
+
+
+class TestMarkDecorator(object):
+
+    @pytest.mark.parametrize('lhs, rhs, expected', [
+        (pytest.mark.foo(), pytest.mark.foo(), True),
+        (pytest.mark.foo(), pytest.mark.bar(), False),
+        (pytest.mark.foo(), 'bar', False),
+        ('foo', pytest.mark.bar(), False)
+    ])
+    def test__eq__(self, lhs, rhs, expected):
+        assert (lhs == rhs) == expected
