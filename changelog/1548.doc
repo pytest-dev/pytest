@@ -1,0 +1,1 @@
+Add note in ``parametrize.rst`` about calling ``metafunc.parametrize`` multiple times.
