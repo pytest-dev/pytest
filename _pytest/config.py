@@ -446,7 +446,7 @@ class PytestPluginManager(PluginManager):
             new_exc_message = 'Error importing plugin "%s": %s' % (modname, safe_str(e.args[0]))
 
             # Raising the original traceback with a more informative exception
-            if sys.version[0] = "3":
+            if sys.version[0] == "3":
                 raise new_exc_type(new_exc_message) from e
             else:
                 raise new_exc_type, new_exc_message, sys.exc_info()[2]
