@@ -1,0 +1,2 @@
+* remove the internal optional multi-typed attribute _evalskip
+  and replacce it with the boolean _skipped_by_mark

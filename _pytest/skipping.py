@@ -155,17 +155,17 @@ class MarkEvaluator:
 @hookimpl(tryfirst=True)
 def pytest_runtest_setup(item):
     # Check if skip or skipif are specified as pytest marks
-
+    item._skipped_by_mark = False
     skipif_info = item.keywords.get('skipif')
     if isinstance(skipif_info, (MarkInfo, MarkDecorator)):
         eval_skipif = MarkEvaluator(item, 'skipif')
         if eval_skipif.istrue():
-            item._evalskip = eval_skipif
+            item._skipped_by_mark = True
             skip(eval_skipif.getexplanation())
 
     skip_info = item.keywords.get('skip')
     if isinstance(skip_info, (MarkInfo, MarkDecorator)):
-        item._evalskip = True
+        item._skipped_by_mark = True
         if 'reason' in skip_info.kwargs:
             skip(skip_info.kwargs['reason'])
         elif skip_info.args:
@@ -212,7 +212,6 @@ def pytest_runtest_makereport(item, call):
     outcome = yield
     rep = outcome.get_result()
     evalxfail = getattr(item, '_evalxfail', None)
-    evalskip = getattr(item, '_evalskip', None)
     # unitttest special case, see setting of _unexpectedsuccess
     if hasattr(item, '_unexpectedsuccess') and rep.when == "call":
         from _pytest.compat import _is_unittest_unexpected_success_a_failure
@@ -248,7 +247,7 @@ def pytest_runtest_makereport(item, call):
             else:
                 rep.outcome = "passed"
                 rep.wasxfail = explanation
-    elif evalskip is not None and rep.skipped and type(rep.longrepr) is tuple:
+    elif item._skipped_by_mark and rep.skipped and type(rep.longrepr) is tuple:
         # skipped by mark.skipif; change the location of the failure
         # to point to the item definition, otherwise it will display
         # the location of where the skip exception was raised within pytest

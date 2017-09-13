@@ -133,7 +133,7 @@ class TestCaseFunction(Function):
         try:
             skip(reason)
         except skip.Exception:
-            self._evalskip = True
+            self._skipped_by_mark = True
             self._addexcinfo(sys.exc_info())
 
     def addExpectedFailure(self, testcase, rawexcinfo, reason=""):
