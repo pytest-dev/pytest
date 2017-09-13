@@ -391,7 +391,6 @@ def test_deindent():
     assert lines == ['', 'def f():', '    def g():', '        pass', '    ']
 
 
-@pytest.mark.xfail("sys.version_info[:3] < (2,7,0)")
 def test_source_of_class_at_eof_without_newline(tmpdir):
     # this test fails because the implicit inspect.getsource(A) below
     # does not return the "x = 1" last line.
