@@ -25,14 +25,15 @@ def pytest_addoption(parser):
 
     group = parser.getgroup('logging')
 
-    def add_option_ini(option, dest, default=None, **kwargs):
-        parser.addini(dest, default=default,
+    def add_option_ini(option, dest, default=None, type=None, **kwargs):
+        parser.addini(dest, default=default, type=type,
                       help='default value for ' + option)
         group.addoption(option, dest=dest, **kwargs)
 
     add_option_ini(
         '--no-print-logs',
         dest='log_print', action='store_const', const=False, default=True,
+        type='bool',
         help='disable printing caught logs on failed tests.')
     add_option_ini(
         '--log-level',
@@ -329,13 +330,7 @@ class LoggingPlugin(object):
         The formatter can be safely shared across all handlers so
         create a single one for the entire test session here.
         """
-        print_logs = get_option_ini(config, 'log_print')
-        if not isinstance(print_logs, bool):
-            if print_logs.lower() in ('true', 'yes', '1'):
-                print_logs = True
-            elif print_logs.lower() in ('false', 'no', '0'):
-                print_logs = False
-        self.print_logs = print_logs
+        self.print_logs = get_option_ini(config, 'log_print')
         self.formatter = logging.Formatter(
                 get_option_ini(config, 'log_format'),
                 get_option_ini(config, 'log_date_format'))
