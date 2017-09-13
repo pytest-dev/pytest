@@ -297,8 +297,8 @@ def get_actual_log_level(config, setting_name):
 
 
 def pytest_configure(config):
-    """Always register the log catcher plugin with py.test or tests can't
-    find the  fixture function.
+    """Always register the logging plugin with py.test or tests can't
+    find the fixture function.
     """
     log_cli_level = get_actual_log_level(config, 'log_cli_level')
     if log_cli_level is None:
