@@ -335,7 +335,7 @@ def pytest_configure(config):
             # No log_level was provided, default to WARNING
             log_file_level = logging.WARNING
         config._catchlog_log_file_level = log_file_level
-    config.pluginmanager.register(LoggingPlugin(config))
+    config.pluginmanager.register(LoggingPlugin(config), 'loggingp')
 
 
 class LoggingPlugin(object):
