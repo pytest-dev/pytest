@@ -344,7 +344,6 @@ class TestLoggingInteraction(object):
 
     def test_logging_initialized_in_test(self, testdir):
         p = testdir.makepyfile("""
-            import sys
             def test_something():
                 import logging
                 logging.basicConfig()
