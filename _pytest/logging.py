@@ -136,6 +136,22 @@ def catching_logs(handler, filter=None, formatter=None,
                 yield handler
 
 
+class LogCaptureHandler(logging.StreamHandler):
+    """A logging handler that stores log records and the log text."""
+
+    def __init__(self):
+        """Creates a new log handler."""
+
+        logging.StreamHandler.__init__(self, py.io.TextIO())
+        self.records = []
+
+    def emit(self, record):
+        """Keep the log records in a list in addition to the log text."""
+
+        self.records.append(record)
+        logging.StreamHandler.emit(self, record)
+
+
 class LogCaptureFixture(object):
     """Provides access and control of log capturing."""
 
@@ -410,26 +426,3 @@ class LoggingPlugin(object):
                     yield  # run all the tests
             else:
                 yield  # run all the tests
-
-
-class LogCaptureHandler(logging.StreamHandler):
-    """A logging handler that stores log records and the log text."""
-
-    def __init__(self):
-        """Creates a new log handler."""
-
-        logging.StreamHandler.__init__(self)
-        self.stream = py.io.TextIO()
-        self.records = []
-
-    def close(self):
-        """Close this log handler and its underlying stream."""
-
-        logging.StreamHandler.close(self)
-        self.stream.close()
-
-    def emit(self, record):
-        """Keep the log records in a list in addition to the log text."""
-
-        self.records.append(record)
-        logging.StreamHandler.emit(self, record)
