@@ -13,12 +13,6 @@ DEFAULT_LOG_FORMAT = '%(filename)-25s %(lineno)4d %(levelname)-8s %(message)s'
 DEFAULT_LOG_DATE_FORMAT = '%H:%M:%S'
 
 
-def add_option_ini(parser, option, dest, default=None, **kwargs):
-    parser.addini(dest, default=default,
-                  help='default value for ' + option)
-    parser.getgroup('catchlog').addoption(option, dest=dest, **kwargs)
-
-
 def get_option_ini(config, name):
     ret = config.getoption(name)  # 'default' arg won't work as expected
     if ret is None:
@@ -29,70 +23,57 @@ def get_option_ini(config, name):
 def pytest_addoption(parser):
     """Add options to control log capturing."""
 
-    group = parser.getgroup('catchlog', 'Log catching')
-    add_option_ini(parser,
+    group = parser.getgroup('logging')
+
+    def add_option_ini(option, dest, default=None, **kwargs):
+        parser.addini(dest, default=default,
+                      help='default value for ' + option)
+        group.addoption(option, dest=dest, **kwargs)
+
+    add_option_ini(
         '--no-print-logs',
         dest='log_print', action='store_const', const=False, default=True,
-        help='disable printing caught logs on failed tests.'
-    )
+        help='disable printing caught logs on failed tests.')
     add_option_ini(
-        parser,
         '--log-level',
         dest='log_level', default=None,
-        help='logging level used by the logging module'
-    )
-    add_option_ini(parser,
+        help='logging level used by the logging module')
+    add_option_ini(
         '--log-format',
         dest='log_format', default=DEFAULT_LOG_FORMAT,
-        help='log format as used by the logging module.'
-    )
-    add_option_ini(parser,
+        help='log format as used by the logging module.')
+    add_option_ini(
         '--log-date-format',
         dest='log_date_format', default=DEFAULT_LOG_DATE_FORMAT,
-        help='log date format as used by the logging module.'
-    )
+        help='log date format as used by the logging module.')
     add_option_ini(
-        parser,
         '--log-cli-level',
         dest='log_cli_level', default=None,
-        help='cli logging level.'
-    )
+        help='cli logging level.')
     add_option_ini(
-        parser,
         '--log-cli-format',
         dest='log_cli_format', default=None,
-        help='log format as used by the logging module.'
-    )
+        help='log format as used by the logging module.')
     add_option_ini(
-        parser,
         '--log-cli-date-format',
         dest='log_cli_date_format', default=None,
-        help='log date format as used by the logging module.'
-    )
+        help='log date format as used by the logging module.')
     add_option_ini(
-        parser,
         '--log-file',
         dest='log_file', default=None,
-        help='path to a file when logging will be written to.'
-    )
+        help='path to a file when logging will be written to.')
     add_option_ini(
-        parser,
         '--log-file-level',
         dest='log_file_level', default=None,
-        help='log file logging level.'
-    )
+        help='log file logging level.')
     add_option_ini(
-        parser,
         '--log-file-format',
         dest='log_file_format', default=DEFAULT_LOG_FORMAT,
-        help='log format as used by the logging module.'
-    )
+        help='log format as used by the logging module.')
     add_option_ini(
-        parser,
         '--log-file-date-format',
         dest='log_file_date_format', default=DEFAULT_LOG_DATE_FORMAT,
-        help='log date format as used by the logging module.'
-    )
+        help='log date format as used by the logging module.')
 
 
 def get_logger_obj(logger=None):
