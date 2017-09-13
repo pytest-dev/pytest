@@ -43,7 +43,7 @@ def has_environment_marker_support():
 
 
 def main():
-    install_requires = ['py>=1.4.33', 'six>=1.10.0', 'setuptools']
+    install_requires = ['py>=1.4.34', 'six>=1.10.0', 'setuptools']
     # if _PYTEST_SETUP_SKIP_PLUGGY_DEP is set, skip installing pluggy;
     # used by tox.ini to test with pluggy master
     if '_PYTEST_SETUP_SKIP_PLUGGY_DEP' not in os.environ:
