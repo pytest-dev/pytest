@@ -1,0 +1,1 @@
+Fix the bug where running pytest with "--pyargs" will result in Items with empty "parent.nodeid" if run from a different root directory.
