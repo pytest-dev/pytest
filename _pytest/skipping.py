@@ -60,21 +60,30 @@ def pytest_configure(config):
                             )
 
 
-class MarkEvaluator:
+class MarkEvaluator(object):
     def __init__(self, item, name):
         self.item = item
-        self.name = name
-
-    @property
-    def holder(self):
-        return self.item.keywords.get(self.name)
+        self._marks = None
+        self._mark = None
+        self._repr_name = name
 
     def __bool__(self):
-        return bool(self.holder)
+        self._marks = self._get_marks()
+        return bool(self._marks)
     __nonzero__ = __bool__
 
     def wasvalid(self):
         return not hasattr(self, 'exc')
+
+    def _get_marks(self):
+
+        keyword = self.item.keywords.get(self._repr_name)
+        if isinstance(keyword, MarkDecorator):
+            return [keyword.mark]
+        elif isinstance(keyword, MarkInfo):
+            return [x.combined for x in keyword]
+        else:
+            return []
 
     def invalidraise(self, exc):
         raises = self.get('raises')
@@ -95,7 +104,7 @@ class MarkEvaluator:
             fail("Error evaluating %r expression\n"
                  "    %s\n"
                  "%s"
-                 % (self.name, self.expr, "\n".join(msg)),
+                 % (self._repr_name, self.expr, "\n".join(msg)),
                  pytrace=False)
 
     def _getglobals(self):
@@ -107,40 +116,51 @@ class MarkEvaluator:
     def _istrue(self):
         if hasattr(self, 'result'):
             return self.result
-        if self.holder:
-            if self.holder.args or 'condition' in self.holder.kwargs:
-                self.result = False
-                # "holder" might be a MarkInfo or a MarkDecorator; only
-                # MarkInfo keeps track of all parameters it received in an
-                # _arglist attribute
-                marks = getattr(self.holder, '_marks', None) \
-                    or [self.holder.mark]
-                for _, args, kwargs in marks:
-                    if 'condition' in kwargs:
-                        args = (kwargs['condition'],)
-                    for expr in args:
+        self._marks = self._get_marks()
+
+        def needs_eval(mark):
+            return mark.args or 'condition' in mark.kwargs
+
+        if self._marks:
+            self.result = False
+            # "holder" might be a MarkInfo or a MarkDecorator; only
+            # MarkInfo keeps track of all parameters it received in an
+            # _arglist attribute
+            for mark in self._marks:
+                self._mark = mark
+                if 'condition' in mark.kwargs:
+                    args = (mark.kwargs['condition'],)
+                else:
+                    args = mark.args
+
+                for expr in args:
+                    self.expr = expr
+                    if isinstance(expr, six.string_types):
+                        d = self._getglobals()
+                        result = cached_eval(self.item.config, expr, d)
+                    else:
+                        if "reason" not in mark.kwargs:
+                            # XXX better be checked at collection time
+                            msg = "you need to specify reason=STRING " \
+                                  "when using booleans as conditions."
+                            fail(msg)
+                        result = bool(expr)
+                    if result:
+                        self.result = True
+                        self.reason = mark.kwargs.get('reason', None)
                         self.expr = expr
-                        if isinstance(expr, six.string_types):
-                            d = self._getglobals()
-                            result = cached_eval(self.item.config, expr, d)
-                        else:
-                            if "reason" not in kwargs:
-                                # XXX better be checked at collection time
-                                msg = "you need to specify reason=STRING " \
-                                      "when using booleans as conditions."
-                                fail(msg)
-                            result = bool(expr)
-                        if result:
-                            self.result = True
-                            self.reason = kwargs.get('reason', None)
-                            self.expr = expr
-                            return self.result
-            else:
-                self.result = True
-        return getattr(self, 'result', False)
+                        return self.result
+
+                if not args:   
+                    self.result = True
+                    self.reason = mark.kwargs.get('reason', None)
+                    return self.result
+        return False
 
     def get(self, attr, default=None):
-        return self.holder.kwargs.get(attr, default)
+        if self._mark is None:
+            return default
+        return self._mark.kwargs.get(attr, default)
 
     def getexplanation(self):
         expl = getattr(self, 'reason', None) or self.get('reason', None)
