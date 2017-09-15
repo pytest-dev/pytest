@@ -335,7 +335,7 @@ class LoggingPlugin(object):
             if log_cli_level is None:
                 # No log_level was provided, default to WARNING
                 log_cli_level = logging.WARNING
-        config.log_cli_level = log_cli_level
+        self.log_cli_level = log_cli_level
 
         self.print_logs = get_option_ini(config, 'log_print')
         self.formatter = logging.Formatter(
@@ -361,7 +361,7 @@ class LoggingPlugin(object):
             if log_file_level is None:
                 # No log_level was provided, default to WARNING
                 log_file_level = logging.WARNING
-            config.log_file_level = log_file_level
+            self.log_file_level = log_file_level
 
             log_file_format = get_option_ini(config, 'log_file_format')
             if not log_file_format:
@@ -418,10 +418,10 @@ class LoggingPlugin(object):
     def pytest_runtestloop(self, session):
         """Runs all collected test items."""
         with catching_logs(self.log_cli_handler,
-                           level=session.config.log_cli_level):
+                           level=self.log_cli_level):
             if self.log_file_handler is not None:
                 with catching_logs(self.log_file_handler,
-                                   level=session.config.log_file_level):
+                                   level=self.log_file_level):
                     yield  # run all the tests
             else:
                 yield  # run all the tests
