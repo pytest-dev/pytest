@@ -151,7 +151,7 @@ class MarkEvaluator(object):
                         self.expr = expr
                         return self.result
 
-                if not args:   
+                if not args:
                     self.result = True
                     self.reason = mark.kwargs.get('reason', None)
                     return self.result
