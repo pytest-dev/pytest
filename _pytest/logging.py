@@ -127,11 +127,9 @@ def catching_logs(handler, formatter=None,
         handler.setFormatter(formatter)
     handler.setLevel(level)
 
-    with closing(handler):
-        with logging_using_handler(handler, logger):
-            with logging_at_level(min(handler.level, logger.level), logger):
-
-                yield handler
+    with logging_using_handler(handler, logger):
+        with logging_at_level(min(handler.level, logger.level), logger):
+            yield handler
 
 
 class LogCaptureHandler(logging.StreamHandler):
@@ -421,8 +419,9 @@ class LoggingPlugin(object):
         """Runs all collected test items."""
         with self.live_logs:
             if self.log_file_handler is not None:
-                with catching_logs(self.log_file_handler,
-                                   level=self.log_file_level):
-                    yield  # run all the tests
+                with closing(self.log_file_handler):
+                    with catching_logs(self.log_file_handler,
+                                       level=self.log_file_level):
+                        yield  # run all the tests
             else:
                 yield  # run all the tests
