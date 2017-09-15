@@ -341,7 +341,8 @@ class LoggingPlugin(object):
         self.formatter = logging.Formatter(
                 get_option_ini(config, 'log_format'),
                 get_option_ini(config, 'log_date_format'))
-        self.log_cli_handler = logging.StreamHandler(sys.stderr)
+
+        log_cli_handler = logging.StreamHandler(sys.stderr)
         log_cli_format = get_option_ini(config, 'log_cli_format')
         if not log_cli_format:
             # No CLI specific format was provided, use log_format
@@ -353,7 +354,10 @@ class LoggingPlugin(object):
         log_cli_formatter = logging.Formatter(
                 log_cli_format,
                 datefmt=log_cli_date_format)
-        self.log_cli_handler.setFormatter(log_cli_formatter)
+        log_cli_handler.setFormatter(log_cli_formatter)
+        self.log_cli_handler = log_cli_handler  # needed for a single unittest
+        self.live_logs = catching_logs(log_cli_handler,
+                                       level=self.log_cli_level)
 
         log_file = get_option_ini(config, 'log_file')
         if log_file:
@@ -417,8 +421,7 @@ class LoggingPlugin(object):
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtestloop(self, session):
         """Runs all collected test items."""
-        with catching_logs(self.log_cli_handler,
-                           level=self.log_cli_level):
+        with self.live_logs:
             if self.log_file_handler is not None:
                 with catching_logs(self.log_file_handler,
                                    level=self.log_file_level):
