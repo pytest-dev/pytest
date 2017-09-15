@@ -314,22 +314,6 @@ def get_actual_log_level(config, setting_name):
 
 
 def pytest_configure(config):
-    log_cli_level = get_actual_log_level(config, 'log_cli_level')
-    if log_cli_level is None:
-        # No specific CLI logging level was provided, let's check
-        # log_level for a fallback
-        log_cli_level = get_actual_log_level(config, 'log_level')
-        if log_cli_level is None:
-            # No log_level was provided, default to WARNING
-            log_cli_level = logging.WARNING
-    config._catchlog_log_cli_level = log_cli_level
-    config._catchlog_log_file = get_option_ini(config, 'log_file')
-    if config._catchlog_log_file:
-        log_file_level = get_actual_log_level(config, 'log_file_level')
-        if log_file_level is None:
-            # No log_level was provided, default to WARNING
-            log_file_level = logging.WARNING
-        config._catchlog_log_file_level = log_file_level
     config.pluginmanager.register(LoggingPlugin(config), 'loggingp')
 
 
@@ -343,6 +327,16 @@ class LoggingPlugin(object):
         The formatter can be safely shared across all handlers so
         create a single one for the entire test session here.
         """
+        log_cli_level = get_actual_log_level(config, 'log_cli_level')
+        if log_cli_level is None:
+            # No specific CLI logging level was provided, let's check
+            # log_level for a fallback
+            log_cli_level = get_actual_log_level(config, 'log_level')
+            if log_cli_level is None:
+                # No log_level was provided, default to WARNING
+                log_cli_level = logging.WARNING
+        config._catchlog_log_cli_level = log_cli_level
+
         self.print_logs = get_option_ini(config, 'log_print')
         self.formatter = logging.Formatter(
                 get_option_ini(config, 'log_format'),
@@ -360,7 +354,15 @@ class LoggingPlugin(object):
                 log_cli_format,
                 datefmt=log_cli_date_format)
         self.log_cli_handler.setFormatter(log_cli_formatter)
-        if config._catchlog_log_file:
+
+        log_file = get_option_ini(config, 'log_file')
+        if log_file:
+            log_file_level = get_actual_log_level(config, 'log_file_level')
+            if log_file_level is None:
+                # No log_level was provided, default to WARNING
+                log_file_level = logging.WARNING
+            config._catchlog_log_file_level = log_file_level
+
             log_file_format = get_option_ini(config, 'log_file_format')
             if not log_file_format:
                 # No log file specific format was provided, use log_format
@@ -370,7 +372,7 @@ class LoggingPlugin(object):
                 # No log file specific date format was provided, use log_date_format
                 log_file_date_format = get_option_ini(config, 'log_date_format')
             self.log_file_handler = logging.FileHandler(
-                config._catchlog_log_file,
+                log_file,
                 # Each pytest runtests session will write to a clean logfile
                 mode='w',
             )
