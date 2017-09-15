@@ -5,6 +5,7 @@ import shlex
 import traceback
 import types
 import warnings
+import six
 
 import py
 # DON't import pytest here because it causes import cycle troubles
@@ -444,12 +445,10 @@ class PytestPluginManager(PluginManager):
         except ImportError as e:
             new_exc_type = ImportError
             new_exc_message = 'Error importing plugin "%s": %s' % (modname, safe_str(e.args[0]))
+            new_exc = new_exc_type(new_exc_message)
 
-            # Raising the original traceback with a more informative exception
-            if sys.version[0] == "3":
-                raise new_exc_type(new_exc_message) from e
-            else:
-                raise new_exc_type, new_exc_message, sys.exc_info()[2]
+            six.reraise(new_exc_type, new_exc, sys.exc_info()[2])
+
         except Exception as e:
             import pytest
             if not hasattr(pytest, 'skip') or not isinstance(e, pytest.skip.Exception):
