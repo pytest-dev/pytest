@@ -399,22 +399,22 @@ class LoggingPlugin(object):
                 log = log_handler.stream.getvalue().strip()
                 item.add_report_section(when, 'log', log)
 
-    @pytest.mark.hookwrapper
+    @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item):
         with self._runtest_for(item, 'setup'):
             yield
 
-    @pytest.mark.hookwrapper
+    @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_call(self, item):
         with self._runtest_for(item, 'call'):
             yield
 
-    @pytest.mark.hookwrapper
+    @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_teardown(self, item):
         with self._runtest_for(item, 'teardown'):
             yield
 
-    @pytest.mark.hookwrapper
+    @pytest.hookimpl(hookwrapper=True)
     def pytest_runtestloop(self, session):
         """Runs all collected test items."""
         with catching_logs(self.log_cli_handler,
