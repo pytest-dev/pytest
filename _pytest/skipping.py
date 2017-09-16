@@ -65,7 +65,7 @@ class MarkEvaluator(object):
         self.item = item
         self._marks = None
         self._mark = None
-        self._repr_name = name
+        self._mark_name = name
 
     def __bool__(self):
         self._marks = self._get_marks()
@@ -77,7 +77,7 @@ class MarkEvaluator(object):
 
     def _get_marks(self):
 
-        keyword = self.item.keywords.get(self._repr_name)
+        keyword = self.item.keywords.get(self._mark_name)
         if isinstance(keyword, MarkDecorator):
             return [keyword.mark]
         elif isinstance(keyword, MarkInfo):
@@ -104,7 +104,7 @@ class MarkEvaluator(object):
             fail("Error evaluating %r expression\n"
                  "    %s\n"
                  "%s"
-                 % (self._repr_name, self.expr, "\n".join(msg)),
+                 % (self._mark_name, self.expr, "\n".join(msg)),
                  pytrace=False)
 
     def _getglobals(self):
@@ -118,14 +118,8 @@ class MarkEvaluator(object):
             return self.result
         self._marks = self._get_marks()
 
-        def needs_eval(mark):
-            return mark.args or 'condition' in mark.kwargs
-
         if self._marks:
             self.result = False
-            # "holder" might be a MarkInfo or a MarkDecorator; only
-            # MarkInfo keeps track of all parameters it received in an
-            # _arglist attribute
             for mark in self._marks:
                 self._mark = mark
                 if 'condition' in mark.kwargs:
