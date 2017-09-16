@@ -216,7 +216,7 @@ def test_importplugin_error_message(testdir, pytestpm):
     testdir.syspathinsert(testdir.tmpdir)
     testdir.makepyfile(qwe="""
         # encoding: UTF-8
-        def test_traceback()
+        def test_traceback():
             raise ImportError(u'Not possible to import: ☺')
 
         test_traceback()
