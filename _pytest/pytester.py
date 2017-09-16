@@ -26,6 +26,11 @@ from _pytest.assertion.rewrite import AssertionRewritingHook
 PYTEST_FULLPATH = os.path.abspath(pytest.__file__.rstrip("oc")).replace("$py.class", ".py")
 
 
+IGNORE_PAM = [  # filenames added when obtaining details about the current user
+     u'/var/lib/sss/mc/passwd'
+]
+
+
 def pytest_addoption(parser):
     parser.addoption('--lsof',
                      action="store_true", dest="lsof", default=False,
@@ -66,6 +71,8 @@ class LsofFdLeakChecker(object):
                 fields = line.split('\0')
                 fd = fields[0][1:]
                 filename = fields[1][1:]
+                if filename in IGNORE_PAM:
+                    continue
                 if filename.startswith('/'):
                     open_files.append((fd, filename))
 
