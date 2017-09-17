@@ -562,7 +562,9 @@ class TestDoctests(object):
         assert reportinfo[1] == 1
 
     def test_doctest2_multiline_string(self, testdir):
-        p = testdir.maketxtfile(test_doctest2_multiline_string="""
+        import textwrap
+        p = testdir.maketxtfile(test_doctest2_multiline_string=textwrap.dedent(
+            """
             .. doctest::
 
                 >>> '''
@@ -570,14 +572,15 @@ class TestDoctests(object):
                     '''.strip()
                 'multiline strings are now kosher'
 
-                # >>> '''
-                #     double multiline string
-                #     '''.strip()
-                # ... '''
-                #     double multiline string
-                #     '''.strip()
-                # 'multiline strings are now kosher'
-        """)
+                >>> '''
+                    double multiline string
+                    '''.strip()
+                ...
+                >>> '''
+                    double multiline string
+                    '''.strip()
+                'double multiline string'
+            """).lstrip())
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines(['* 1 passed *'])
 
@@ -589,6 +592,52 @@ class TestDoctests(object):
                 >>>      4, 5, 6]
                 >>> print(len(x))
                 6
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines(['* 1 passed *'])
+
+    def test_doctest2_trycatch(self, testdir):
+        p = testdir.maketxtfile(test_doctest2_multiline_string="""
+            .. doctest::
+
+                # Old way
+                >>> try:
+                ...     print('foo')
+                ... except Exception as ex:
+                ...     print('baz')
+                ... else:
+                ...     print('bar')
+                foo
+                bar
+
+                # New way
+                >>> try:
+                >>>     print('foo')
+                >>> except Exception as ex:
+                >>>     print('baz')
+                >>> else:
+                >>>     print('bar')
+                foo
+                bar
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines(['* 1 passed *'])
+
+    def test_doctest2_functions(self, testdir):
+        p = testdir.maketxtfile(test_doctest2_multiline_string="""
+            .. doctest::
+
+                # Old way
+                >>> def func():
+                ...     print('we used to be slaves to regexes')
+                >>> func()
+                we used to be slaves to regexes
+
+                # New way
+                >>> def func():
+                >>>     print('but now we can write code like humans')
+                >>> func()
+                but now we can write code like humans
         """)
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines(['* 1 passed *'])

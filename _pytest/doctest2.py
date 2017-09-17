@@ -73,6 +73,7 @@ def testdata():
             ... foo = bar
         """)
 
+
     string = ub.codeblock(
         '''
         text-line-1
@@ -92,6 +93,23 @@ def testdata():
         text-line-after
         ''')
 
+    string = ub.codeblock(
+        """
+        >>> '''
+            multiline strings are now kosher
+            '''.strip()
+        'multiline strings are now kosher'
+
+        >>> '''
+            double multiline string
+            '''.strip()
+        ...
+        >>> '''
+            double multiline string
+            '''.strip()
+        'double multiline string'
+        """)
+
     import doctest
     import ubelt as ub
     self1 = doctest.DocTestParser()
@@ -102,7 +120,7 @@ def testdata():
         print('----')
         print(x)
         if not isinstance(o, str):
-            print(ub.repr2(o.__dict__))
+            print(ub.repr2(o.__dict__, sv=True))
             # print('o.source = {!r}'.format(o.source))
             # print('o.want = {!r}'.format(o.want))
         else:
