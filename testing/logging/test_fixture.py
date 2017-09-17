@@ -71,29 +71,3 @@ def test_clear(caplog):
     assert len(caplog.records)
     caplog.clear()
     assert not len(caplog.records)
-
-
-def test_special_warning_with_del_records_warning(testdir):
-    p1 = testdir.makepyfile("""
-        def test_del_records_inline(caplog):
-            del caplog.records()[:]
-    """)
-    result = testdir.runpytest_subprocess(p1)
-    result.stdout.fnmatch_lines([
-        "*'caplog.records()' syntax is deprecated,"
-        " use 'caplog.records' property (or caplog.clear()) instead",
-        "*1 *warnings*",
-    ])
-
-
-def test_warning_with_setLevel(testdir):
-    p1 = testdir.makepyfile("""
-        def test_inline(caplog):
-            caplog.setLevel(0)
-    """)
-    result = testdir.runpytest_subprocess(p1)
-    result.stdout.fnmatch_lines([
-        "*'caplog.setLevel()' is deprecated,"
-        " use 'caplog.set_level()' instead",
-        "*1 *warnings*",
-    ])

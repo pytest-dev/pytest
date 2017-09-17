@@ -2,7 +2,6 @@ from __future__ import absolute_import, division, print_function
 
 import logging
 from contextlib import closing, contextmanager
-import functools
 import sys
 
 import pytest
@@ -182,9 +181,11 @@ class LogCaptureFixture(object):
         logs. Specify a logger name to instead set the level of any
         logger.
         """
-
-        obj = logger and logging.getLogger(logger) or self.handler
-        obj.setLevel(level)
+        if logger is None:
+            logger = self.handler
+        else:
+            logger = logging.getLogger(logger)
+        logger.setLevel(level)
 
     @contextmanager
     def at_level(self, level, logger=None):
@@ -207,76 +208,6 @@ class LogCaptureFixture(object):
             logger.setLevel(orig_level)
 
 
-class CallablePropertyMixin(object):
-    """Backward compatibility for functions that became properties."""
-
-    @classmethod
-    def compat_property(cls, func):
-        if isinstance(func, property):
-            make_property = func.getter
-            func = func.fget
-        else:
-            make_property = property
-
-        @functools.wraps(func)
-        def getter(self):
-            naked_value = func(self)
-            ret = cls(naked_value)
-            ret._naked_value = naked_value
-            ret._warn_compat = self._warn_compat
-            ret._prop_name = func.__name__
-            return ret
-
-        return make_property(getter)
-
-    def __call__(self):
-        new = "'caplog.{0}' property".format(self._prop_name)
-        if self._prop_name == 'records':
-            new += ' (or caplog.clear())'
-        self._warn_compat(old="'caplog.{0}()' syntax".format(self._prop_name),
-                          new=new)
-        return self._naked_value  # to let legacy clients modify the object
-
-
-class CallableList(CallablePropertyMixin, list):
-    pass
-
-
-class CallableStr(CallablePropertyMixin, py.builtin.text):
-    pass
-
-
-class CompatLogCaptureFixture(LogCaptureFixture):
-    """Backward compatibility with pytest-capturelog."""
-
-    def _warn_compat(self, old, new):
-        self._item.warn(code='L1',
-                        message=("{0} is deprecated, use {1} instead"
-                                 .format(old, new)))
-
-    @CallableStr.compat_property
-    def text(self):
-        return super(CompatLogCaptureFixture, self).text
-
-    @CallableList.compat_property
-    def records(self):
-        return super(CompatLogCaptureFixture, self).records
-
-    @CallableList.compat_property
-    def record_tuples(self):
-        return super(CompatLogCaptureFixture, self).record_tuples
-
-    def setLevel(self, level, logger=None):
-        self._warn_compat(old="'caplog.setLevel()'",
-                          new="'caplog.set_level()'")
-        return self.set_level(level, logger)
-
-    def atLevel(self, level, logger=None):
-        self._warn_compat(old="'caplog.atLevel()'",
-                          new="'caplog.at_level()'")
-        return self.at_level(level, logger)
-
-
 @pytest.fixture
 def caplog(request):
     """Access and control log capturing.
@@ -287,7 +218,7 @@ def caplog(request):
     * caplog.records()       -> list of logging.LogRecord instances
     * caplog.record_tuples() -> list of (logger_name, level, message) tuples
     """
-    return CompatLogCaptureFixture(request.node)
+    return LogCaptureFixture(request.node)
 
 
 def get_actual_log_level(config, setting_name):
