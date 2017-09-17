@@ -582,6 +582,12 @@ class TestDoctests(object):
                     '''.strip())
                 Multiline can now be written without prefixes.
                 Editing them is much more natural.
+
+                # This is ok too
+                >>> print('''
+                >>> Just prefix everything with >>> and the doctest should work
+                >>> '''.strip())
+                Just prefix everything with >>> and the doctest should work
             """).lstrip())
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines(['* 1 passed *'])
