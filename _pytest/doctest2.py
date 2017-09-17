@@ -374,9 +374,12 @@ class DocTestParser2(doctest.DocTestParser):
                         04  >>> '''
                         05      multiline strings are now kosher
                         06      '''
-                        07  >>> a = b
-                        08  ... b = c
-                        09  ... c = d
+                        07  >>> '''
+                        08      this may throw a wrench in the workaround
+                        x9      '''
+                        10  >>> a = b
+                        11  ... b = c
+                        12  ... c = d
                         10  >>> '''
                         11      multiline strings are now kosher
                         12      '''
@@ -413,47 +416,61 @@ class DocTestParser2(doctest.DocTestParser):
 
                 # Strip indentation (and PS1 / PS2 from source)
                 norm_source_lines = [p[line_indent + 4:] for p in source_lines]
-                norm_want_lines = [p[line_indent:] for p in want_lines]
 
                 source_block = '\n'.join(norm_source_lines)
-
-                def itertwo(iterable, wrap=False):
-                    # it.tee may be slow, but works on all iterables
-                    import itertools as it
-                    import six
-                    iter1, iter2 = it.tee(iterable, 2)
-                    if wrap:
-                        iter2 = it.cycle(iter2)
-                    try:
-                        six.next(iter2)
-                    except StopIteration:
-                        return iter(())
-                    else:
-                        return zip(iter1, iter2)
-
                 # for compatibility we break down each source block into
                 # individual statements. (We need to remember to move PS2 lines
                 # in with the previous PS1 line)
                 import ast
                 pt = ast.parse(source_block)
-                # Note this is actually a Python bug: https://bugs.python.org/issue16806
-                # but its recently been patched https://github.com/python/cpython/pull/1800
-                # FIXME: STRINGS lineno is the line they END at, not where they
-                # begin.
-                # FIXME: need to figure out where the top of a multiline
-                # STRING is! This problem
                 ps1_linenos = [node.lineno - 1 for node in pt.body]
-                if True:
-                    # WORKAROUND FOR PYTHON ISSUE 16806
-                    # Ensure the lineno of multiline strings is at the begining
-                    # not the end.
+                NEED_16806_WORKAROUND = True
+                if NEED_16806_WORKAROUND:
+                    # WORKAROUND FOR PYTHON ISSUE 16806 (https://bugs.python.org/issue16806)
+                    # Issue causes lineno for multiline strings to give the
+                    # line they end on, not the line they start on.
+                    # Note: patch for this issue exists https://github.com/python/cpython/pull/1800
+                    #
+                    # Workaround:
+                    # Starting from the end look at consecutive pairs of
+                    # indices to inspect the statment it corresponds to.
+                    # (the first statment goes from ps1_linenos[-1] to the end
+                    # of the line list.
                     new_ps1_lines = []
-                    for a, b in itertwo(list(ps1_linenos) + [len(norm_source_lines)]):
+                    b = len(norm_source_lines)
+                    for a in ps1_linenos[::-1]:
+                        # the position of `b` is correct, but `a` may be wrong
+                        # is_balanced will be False iff `a` is wrong.
                         while not is_balanced(norm_source_lines[a:b]):
+                            # shift `a` down until it becomes correct
                             a -= 1
-                            assert a >= 0
+                        # push the new correct value back into the list
                         new_ps1_lines.append(a)
+                        # set the end position of the next string to be `a` ,
+                        # note, because this `a` is correct, the next `b` is
+                        # must also be correct.
+                        b = a
                     ps1_linenos = set(new_ps1_lines)
+                    # Proof of correctness:
+                    #     Check each group of lines in the range a:b We
+                    #     iteravely assign `a` to the start position (starting
+                    #     from the back of the `ps1_linenos` list) We must
+                    #     initially set `b` to be the number of lines.  We are
+                    #     garuenteed that `b` is correct (because the last
+                    #     statment must end on the last line), but `a` may be
+                    #     wrong. Therefore, we check if lines[a:b] are
+                    #     balanced, if not then this must be a bugged multiline
+                    #     string. We decrease `a` until the statment is
+                    #     balanced. This must be the true start of the
+                    #     multiline string. Now, we know a and b are valid
+                    #     positions. Push `a` onto a new list, then set `a=b`.
+                    #     Remove the processed statement, and set `a` to the
+                    #     new end of `ps1_linenos`. Now, by the same
+                    #     (inductive) argument, the "decreasing balanced check"
+                    #     will find the right value of a and b for this
+                    #     newline. This continues until all lines are procesed.
+                    #     The final result is we know the real starting
+                    #     position of every ps1_line.
                 ps2_linenos = {
                     x for x, p in enumerate(source_lines)
                     if p[line_indent:line_indent + 4] != '>>> '
@@ -473,6 +490,7 @@ class DocTestParser2(doctest.DocTestParser):
                 last = ps1_linenos[-1]
                 source = '\n'.join(norm_source_lines[last:])
                 # If `want` contains a traceback message, then extract it.
+                norm_want_lines = [p[line_indent:] for p in want_lines]
                 want = '\n'.join(norm_want_lines)
                 m = self._EXCEPTION_RE.match(want)
                 if m:

@@ -569,9 +569,17 @@ class TestDoctests(object):
                     multiline strings are now kosher
                     '''.strip()
                 'multiline strings are now kosher'
+
+                >>> '''
+                    double multiline string
+                    '''.strip()
+                ... '''
+                    double multiline string
+                    '''.strip()
+                'multiline strings are now kosher'
         """)
         result = testdir.runpytest(p)
-        result.stdout.fnmatch_lines(['* 1 passed *'])
+        result.stdout.fnmatch_lines(['* 2 passed *'])
 
     def test_doctest2_multiline_list(self, testdir):
         p = testdir.maketxtfile(test_doctest2_multiline_string="""
