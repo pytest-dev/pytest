@@ -350,9 +350,9 @@ class LoggingPlugin(object):
         log_cli_formatter = logging.Formatter(
                 log_cli_format,
                 datefmt=log_cli_date_format)
-        log_cli_handler.setFormatter(log_cli_formatter)
         self.log_cli_handler = log_cli_handler  # needed for a single unittest
         self.live_logs = catching_logs(log_cli_handler,
+                                       formatter=log_cli_formatter,
                                        level=self.log_cli_level)
 
         log_file = get_option_ini(config, 'log_file')
