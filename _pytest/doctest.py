@@ -184,7 +184,11 @@ class DoctestTextfile(pytest.Module):
                                      checker=_get_checker())
         _fix_spoof_python2(runner, encoding)
 
-        parser = doctest.DocTestParser()
+        from _pytest import doctest2  # NOQA
+        # DocTestParser = doctest.DocTestParser  # NOQA
+        DocTestParser = doctest2.DocTestParser2
+
+        parser = DocTestParser()
         test = parser.get_doctest(text, globs, name, filename, 0)
         if test.examples:
             yield DoctestItem(test.name, self, runner, test)
