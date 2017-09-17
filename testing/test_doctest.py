@@ -567,19 +567,21 @@ class TestDoctests(object):
             """
             .. doctest::
 
-                >>> '''
-                    multiline strings are now kosher
-                    '''.strip()
-                'multiline strings are now kosher'
+                # Old way
+                >>> print('''
+                ... It would be nice if we didnt have to deal with prefixes
+                ... in multiline strings.
+                ... '''.strip())
+                It would be nice if we didnt have to deal with prefixes
+                in multiline strings.
 
-                >>> '''
-                    double multiline string
-                    '''.strip()
-                ...
-                >>> '''
-                    double multiline string
-                    '''.strip()
-                'double multiline string'
+                # New way
+                >>> print('''
+                    Multiline can now be written without prefixes.
+                    Editing them is much more natural.
+                    '''.strip())
+                Multiline can now be written without prefixes.
+                Editing them is much more natural.
             """).lstrip())
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines(['* 1 passed *'])
