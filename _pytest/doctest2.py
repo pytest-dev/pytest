@@ -52,6 +52,16 @@ def testdata():
     self1 = doctest.DocTestParser()
     self2._label_lines(string)
 
+    string = ub.codeblock(
+        """
+        .. doctest::
+
+            >>> '''
+                multiline strings are now kosher
+                '''
+            multiline strings are now kosher
+        """)
+
     print('========')
     for x, o in enumerate(self2.parse(string, '')):
         print('----')
@@ -70,6 +80,16 @@ def testdata():
             print('o.want = {!r}'.format(o.want))
         else:
             print(o)
+
+    string = ub.codeblock(
+        """
+        .. doctest::
+
+            >>> '''
+                multiline strings are now kosher
+                '''
+            multiline strings are now kosher
+        """)
 
 
     string = ub.codeblock(
@@ -137,16 +157,32 @@ class DocTestParser2(doctest.DocTestParser):
 
             ''')
         >>> print(string)
-
     """
 
     def _label_lines(self, string):
         """
-        Move through states, keeping track of points where states change
-            text -> [text, source_part, source]
-            source_part -> [source_part, source]
-            source -> [source, source_part,  want, text]
-            want -> [want, text, source_part, source]
+        >>> from _pytest.doctest2 import *
+        >>> import textwrap
+        >>> self = DocTestParser2()
+        >>> # Having multiline strings in doctests can be nice
+        >>> string = textwrap.dedent(
+                '''
+                text
+                >>> items = ['also', 'nice', 'to', 'not', 'worry',
+                >>>          'about', '...', 'vs', '>>>']
+                ... print('but its still allowed')
+                but its still allowed
+
+                more text
+                ''').strip()
+        >>> self._label_lines(string)
+        [('text', 'text'),
+         ('dsrc', ">>> items = ['also', 'nice', 'to', 'not', 'worry', 'about',"),
+         ('dsrc', ">>>          'using', '...', 'instead', 'of', '>>>']"),
+         ('dsrc', "... print('but its still allowed')"),
+         ('want', 'but its still allowed'),
+         ('want', ''),
+         ('want', 'more text')]
         """
 
         def _complete_source(line, state_indent, line_iter):
@@ -180,7 +216,17 @@ class DocTestParser2(doctest.DocTestParser):
         # parse and differenatiate between doctest source and want statements.
         labeled_lines = []
         state_indent = 0
-        prev_state = 'text'
+
+        # states
+        TEXT = 'text'
+        DSRC = 'dsrc'
+        WANT = 'want'
+
+        # Move through states, keeping track of points where states change
+        #     text -> [text, dsrc]
+        #     dsrc -> [dsrc, want, text]
+        #     want -> [want, text, dsrc]
+        prev_state = TEXT
         curr_state = None
         line_iter = enumerate(string.splitlines())
         for linex, line in line_iter:
@@ -190,53 +236,56 @@ class DocTestParser2(doctest.DocTestParser):
             strip_line = line.strip()
 
             # Check prev_state transitions
-            if prev_state == 'text':
+            if prev_state == TEXT:
                 # text transitions to source whenever a PS1 line is encountered
                 # the PS1(>>>) can be at an arbitrary indentation
                 if strip_line.startswith('>>> '):
-                    curr_state = 'dsrc'
+                    curr_state = DSRC
                 else:
-                    curr_state = 'text'
-            elif prev_state == 'want':
+                    curr_state = TEXT
+            elif prev_state == WANT:
                 # blank lines terminate wants
                 if len(strip_line) == 0:
-                    curr_state = 'text'
+                    curr_state = TEXT
                 # source-inconsistent indentation terminates want
                 if line.strip().startswith('>>> '):
-                    curr_state = 'dsrc'
+                    curr_state = DSRC
                 elif line_indent < state_indent:
-                    curr_state = 'text'
+                    curr_state = TEXT
                 else:
-                    curr_state = 'want'
-            elif prev_state == 'dsrc':
+                    curr_state = WANT
+            elif prev_state == DSRC:
                 if len(strip_line) == 0 or line_indent < state_indent:
-                    curr_state = 'text'
+                    curr_state = TEXT
                 # allow source to continue with either PS1 or PS2
                 elif norm_line.startswith(('>>> ', '... ')):
-                    curr_state = 'dsrc'
+                    if strip_line == '...':
+                        curr_state = WANT
+                    else:
+                        curr_state = DSRC
                 else:
-                    curr_state = 'want'
+                    curr_state = WANT
 
             # Handle transitions
             if prev_state != curr_state:
                 # Handle start of new states
-                if curr_state == 'text':
+                if curr_state == TEXT:
                     state_indent = 0
-                if curr_state == 'dsrc':
+                if curr_state == DSRC:
                     # Start a new source
                     state_indent = line_indent
                     # renormalize line when indentation changes
                     norm_line = line[state_indent:]
 
             # continue current state
-            if curr_state == 'dsrc':
+            if curr_state == DSRC:
                 # source parts may consume more than one line
                 for part in _complete_source(line, state_indent, line_iter):
-                    labeled_lines.append(('dsrc', part))
-            elif curr_state == 'want':
-                labeled_lines.append(('want', line))
-            elif curr_state == 'text':
-                labeled_lines.append(('text', line))
+                    labeled_lines.append((DSRC, part))
+            elif curr_state == WANT:
+                labeled_lines.append((WANT, line))
+            elif curr_state == TEXT:
+                labeled_lines.append((TEXT, line))
             prev_state = curr_state
 
         return labeled_lines
@@ -286,8 +335,8 @@ class DocTestParser2(doctest.DocTestParser):
         output = []
         for chunk in grouped_output:
             if isinstance(chunk, tuple):
+                source_lines, want_lines = chunk
                 if False:
-                    want_lines = []
                     import ubelt as ub
                     source_lines = ub.codeblock(
                             '''
@@ -314,7 +363,49 @@ class DocTestParser2(doctest.DocTestParser):
                             ''').splitlines()
                     # source_lines = ['    >>> 1/0  # Byé']
                     # want_lines = ['    1']
-                source_lines, want_lines = chunk
+                    want_lines = []
+                    self = DocTestParser2()
+                    min_indent = 0
+                    source_lines = ub.codeblock(
+                        """
+                        01  >>> ['''
+                        02       pathological, but no problem''',
+                        03  >>>  2]
+                        04  >>> '''
+                        05      multiline strings are now kosher
+                        06      '''
+                        07  >>> a = b
+                        08  ... b = c
+                        09  ... c = d
+                        10  >>> '''
+                        11      multiline strings are now kosher
+                        12      '''
+                        13  >>> y = '''
+                        14      multiline strings are now kosher
+                        15      '''
+                        16  >>> ('''
+                        17      multiline strings are now kosher
+                        18      ''',)
+                        19  >>> ['''
+                        20      multiline strings are now kosher
+                        21      ''',]
+                        22  >>> '''
+                        23      multiline strings are now kosher
+                        24      '''
+                        """).splitlines()
+                    norm_source_lines = [p[8:] for p in source_lines]
+                    source_lines = ub.codeblock(
+                        """
+                        >>> '''
+                            multiline strings are now kosher
+                            '''
+                        """).splitlines()
+                    norm_source_lines = [p[4:] for p in source_lines]
+                    source_block = '\n'.join(norm_source_lines)
+                    import ast
+                    pt = ast.parse(source_block)
+                    for node in pt.body:
+                        print('{} {}'.format(type(node), ub.repr2(node.__dict__, nl=1)))
 
                 match = self._INDENT_RE.search(source_lines[0])
                 line_indent = 0 if match is None else (match.end() - match.start())
@@ -326,12 +417,43 @@ class DocTestParser2(doctest.DocTestParser):
 
                 source_block = '\n'.join(norm_source_lines)
 
+                def itertwo(iterable, wrap=False):
+                    # it.tee may be slow, but works on all iterables
+                    import itertools as it
+                    import six
+                    iter1, iter2 = it.tee(iterable, 2)
+                    if wrap:
+                        iter2 = it.cycle(iter2)
+                    try:
+                        six.next(iter2)
+                    except StopIteration:
+                        return iter(())
+                    else:
+                        return zip(iter1, iter2)
+
                 # for compatibility we break down each source block into
                 # individual statements. (We need to remember to move PS2 lines
                 # in with the previous PS1 line)
                 import ast
                 pt = ast.parse(source_block)
-                ps1_linenos = {node.lineno - 1 for node in pt.body}
+                # Note this is actually a Python bug: https://bugs.python.org/issue16806
+                # but its recently been patched https://github.com/python/cpython/pull/1800
+                # FIXME: STRINGS lineno is the line they END at, not where they
+                # begin.
+                # FIXME: need to figure out where the top of a multiline
+                # STRING is! This problem
+                ps1_linenos = [node.lineno - 1 for node in pt.body]
+                if True:
+                    # WORKAROUND FOR PYTHON ISSUE 16806
+                    # Ensure the lineno of multiline strings is at the begining
+                    # not the end.
+                    new_ps1_lines = []
+                    for a, b in itertwo(list(ps1_linenos) + [len(norm_source_lines)]):
+                        while not is_balanced(norm_source_lines[a:b]):
+                            a -= 1
+                            assert a >= 0
+                        new_ps1_lines.append(a)
+                    ps1_linenos = set(new_ps1_lines)
                 ps2_linenos = {
                     x for x, p in enumerate(source_lines)
                     if p[line_indent:line_indent + 4] != '>>> '

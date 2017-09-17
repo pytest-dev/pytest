@@ -561,6 +561,30 @@ class TestDoctests(object):
         reportinfo = items[0].reportinfo()
         assert reportinfo[1] == 1
 
+    def test_doctest2_multiline_string(self, testdir):
+        p = testdir.maketxtfile(test_doctest2_multiline_string="""
+            .. doctest::
+
+                >>> '''
+                    multiline strings are now kosher
+                    '''.strip()
+                'multiline strings are now kosher'
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines(['* 1 passed *'])
+
+    def test_doctest2_multiline_list(self, testdir):
+        p = testdir.maketxtfile(test_doctest2_multiline_string="""
+            .. doctest::
+
+                >>> x = [1, 2, 3,
+                >>>      4, 5, 6]
+                >>> print(len(x))
+                6
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines(['* 1 passed *'])
+
 
 class TestLiterals(object):
 
