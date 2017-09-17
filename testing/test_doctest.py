@@ -561,6 +561,95 @@ class TestDoctests(object):
         reportinfo = items[0].reportinfo()
         assert reportinfo[1] == 1
 
+    def test_doctest2_multiline_string(self, testdir):
+        import textwrap
+        p = testdir.maketxtfile(test_doctest2_multiline_string=textwrap.dedent(
+            """
+            .. doctest::
+
+                # Old way
+                >>> print('''
+                ... It would be nice if we didnt have to deal with prefixes
+                ... in multiline strings.
+                ... '''.strip())
+                It would be nice if we didnt have to deal with prefixes
+                in multiline strings.
+
+                # New way
+                >>> print('''
+                    Multiline can now be written without prefixes.
+                    Editing them is much more natural.
+                    '''.strip())
+                Multiline can now be written without prefixes.
+                Editing them is much more natural.
+
+                # This is ok too
+                >>> print('''
+                >>> Just prefix everything with >>> and the doctest should work
+                >>> '''.strip())
+                Just prefix everything with >>> and the doctest should work
+            """).lstrip())
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines(['* 1 passed *'])
+
+    def test_doctest2_multiline_list(self, testdir):
+        p = testdir.maketxtfile(test_doctest2_multiline_string="""
+            .. doctest::
+
+                >>> x = [1, 2, 3,
+                >>>      4, 5, 6]
+                >>> print(len(x))
+                6
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines(['* 1 passed *'])
+
+    def test_doctest2_trycatch(self, testdir):
+        p = testdir.maketxtfile(test_doctest2_multiline_string="""
+            .. doctest::
+
+                # Old way
+                >>> try:
+                ...     print('foo')
+                ... except Exception as ex:
+                ...     print('baz')
+                ... else:
+                ...     print('bar')
+                foo
+                bar
+
+                # New way
+                >>> try:
+                >>>     print('foo')
+                >>> except Exception as ex:
+                >>>     print('baz')
+                >>> else:
+                >>>     print('bar')
+                foo
+                bar
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines(['* 1 passed *'])
+
+    def test_doctest2_functions(self, testdir):
+        p = testdir.maketxtfile(test_doctest2_multiline_string="""
+            .. doctest::
+
+                # Old way
+                >>> def func():
+                ...     print('we used to be slaves to regexes')
+                >>> func()
+                we used to be slaves to regexes
+
+                # New way
+                >>> def func():
+                >>>     print('but now we can write code like humans')
+                >>> func()
+                but now we can write code like humans
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines(['* 1 passed *'])
+
 
 class TestLiterals(object):
 
