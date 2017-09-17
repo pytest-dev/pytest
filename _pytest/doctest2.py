@@ -1,4 +1,6 @@
 import doctest
+import itertools as it
+import ast
 import sys
 import tokenize
 
@@ -48,6 +50,7 @@ def testdata():
                 >>> 1/0  # Byé
                 1
         ''')
+    import doctest
     self2 = DocTestParser2()
     self1 = doctest.DocTestParser()
     self2._label_lines(string)
@@ -62,24 +65,58 @@ def testdata():
             multiline strings are now kosher
         """)
 
-    print('========')
+    string = ub.codeblock(
+        """
+        .. doctest::
+
+            >>> x = y
+            ... foo = bar
+        """)
+
+    string = ub.codeblock(
+        '''
+        text-line-1
+        text-line-2
+        text-line-3
+        text-line-4
+        text-line-5
+        text-line-6
+        text-line-7
+        text-line-8
+        text-line-9
+        text-line-10
+        text-line-11
+        >>> 1 + 1
+        3
+
+        text-line-after
+        ''')
+
+    import doctest
+    import ubelt as ub
+    self1 = doctest.DocTestParser()
+    self2 = DocTestParser2()
+    self2._label_lines(string)
+    print('\n==== PARSER2 ====')
     for x, o in enumerate(self2.parse(string, '')):
         print('----')
         print(x)
         if not isinstance(o, str):
-            print('o.source = {!r}'.format(o.source))
-            print('o.want = {!r}'.format(o.want))
+            print(ub.repr2(o.__dict__))
+            # print('o.source = {!r}'.format(o.source))
+            # print('o.want = {!r}'.format(o.want))
         else:
-            print(o)
-    print('========')
+            print('o = {!r}'.format(o))
+    print('\n==== PARSER1 ====')
     for x, o in enumerate(self1.parse(string, '')):
         print('----')
         print(x)
         if not isinstance(o, str):
-            print('o.source = {!r}'.format(o.source))
-            print('o.want = {!r}'.format(o.want))
+            print(ub.repr2(o.__dict__))
+            # print('o.source = {!r}'.format(o.source))
+            # print('o.want = {!r}'.format(o.want))
         else:
-            print(o)
+            print('o = {!r}'.format(o))
 
     string = ub.codeblock(
         """
@@ -91,7 +128,6 @@ def testdata():
             multiline strings are now kosher
         """)
 
-
     string = ub.codeblock(
         '''
         >>> import os
@@ -102,7 +138,6 @@ def testdata():
     self._label_lines(string)
     ex = self.parse(string, '')[0]
 
-    import doctest
     outputs = self2.parse(string, name='<string>')
     print('outputs = {!r}'.format(outputs))
     for o in outputs:
@@ -248,7 +283,7 @@ class DocTestParser2(doctest.DocTestParser):
                 if len(strip_line) == 0:
                     curr_state = TEXT
                 # source-inconsistent indentation terminates want
-                if line.strip().startswith('>>> '):
+                elif line.strip().startswith('>>> '):
                     curr_state = DSRC
                 elif line_indent < state_indent:
                     curr_state = TEXT
@@ -290,6 +325,9 @@ class DocTestParser2(doctest.DocTestParser):
 
         return labeled_lines
 
+    def _parse_example(self, m, name, lineno):
+        raise NotImplementedError('not needed in verion 2')
+
     def parse(self, string, name='<string>'):
         """
         Divide the given string into examples and intervening text,
@@ -310,7 +348,6 @@ class DocTestParser2(doctest.DocTestParser):
         # above, but functinoality is split for readability.
         prev_source = None
         grouped_output = []
-        import itertools as it
         for state, group in it.groupby(labeled_lines, lambda t: t[0]):
             block = [t[1] for t in group]
             if state == 'text':
@@ -336,79 +373,6 @@ class DocTestParser2(doctest.DocTestParser):
         for chunk in grouped_output:
             if isinstance(chunk, tuple):
                 source_lines, want_lines = chunk
-                if False:
-                    import ubelt as ub
-                    source_lines = ub.codeblock(
-                            '''
-                            >>> a = b; b = c
-                            >>> def foo():
-                            >>>     pass
-                            >>>     pass
-                            >>> try:
-                            >>>     a = b
-                            >>> except Exception as ex:
-                            >>>     pass
-                            >>> else:
-                            >>>     pass
-                            >>> class X:
-                            >>>     def foo():
-                            >>>         pass
-                            >>> e = f
-                            ... g = h
-                            ... print('foo')
-                            >>> one = """
-                                foobar
-                                """
-                            >>> two
-                            ''').splitlines()
-                    # source_lines = ['    >>> 1/0  # Byé']
-                    # want_lines = ['    1']
-                    want_lines = []
-                    self = DocTestParser2()
-                    min_indent = 0
-                    source_lines = ub.codeblock(
-                        """
-                        01  >>> ['''
-                        02       pathological, but no problem''',
-                        03  >>>  2]
-                        04  >>> '''
-                        05      multiline strings are now kosher
-                        06      '''
-                        07  >>> '''
-                        08      this may throw a wrench in the workaround
-                        x9      '''
-                        10  >>> a = b
-                        11  ... b = c
-                        12  ... c = d
-                        10  >>> '''
-                        11      multiline strings are now kosher
-                        12      '''
-                        13  >>> y = '''
-                        14      multiline strings are now kosher
-                        15      '''
-                        16  >>> ('''
-                        17      multiline strings are now kosher
-                        18      ''',)
-                        19  >>> ['''
-                        20      multiline strings are now kosher
-                        21      ''',]
-                        22  >>> '''
-                        23      multiline strings are now kosher
-                        24      '''
-                        """).splitlines()
-                    norm_source_lines = [p[8:] for p in source_lines]
-                    source_lines = ub.codeblock(
-                        """
-                        >>> '''
-                            multiline strings are now kosher
-                            '''
-                        """).splitlines()
-                    norm_source_lines = [p[4:] for p in source_lines]
-                    source_block = '\n'.join(norm_source_lines)
-                    import ast
-                    pt = ast.parse(source_block)
-                    for node in pt.body:
-                        print('{} {}'.format(type(node), ub.repr2(node.__dict__, nl=1)))
 
                 match = self._INDENT_RE.search(source_lines[0])
                 line_indent = 0 if match is None else (match.end() - match.start())
@@ -421,7 +385,6 @@ class DocTestParser2(doctest.DocTestParser):
                 # for compatibility we break down each source block into
                 # individual statements. (We need to remember to move PS2 lines
                 # in with the previous PS1 line)
-                import ast
                 pt = ast.parse(source_block)
                 ps1_linenos = [node.lineno - 1 for node in pt.body]
                 NEED_16806_WORKAROUND = True
@@ -522,7 +485,6 @@ def is_balanced(lines):
         bool : True if statment has balanced containers
 
     Doctest:
-        >>> from ubelt.meta.static_analysis import *  # NOQA
         >>> assert is_balanced(['print(foobar)'])
         >>> assert is_balanced(['foo = bar']) is True
         >>> assert is_balanced(['foo = (']) is False
@@ -549,62 +511,85 @@ def is_balanced(lines):
         return True
 
 
-def parse_src_want(string):
-    """
-    Breaks into sections of source code and result checks
+# if False:
+#     import ubelt as ub
+#     source_lines = ub.codeblock(
+#             '''
+#             >>> a = b; b = c
+#             >>> def foo():
+#             >>>     pass
+#             >>>     pass
+#             >>> try:
+#             >>>     a = b
+#             >>> except Exception as ex:
+#             >>>     pass
+#             >>> else:
+#             >>>     pass
+#             >>> class X:
+#             >>>     def foo():
+#             >>>         pass
+#             >>> e = f
+#             ... g = h
+#             ... print('foo')
+#             >>> one = """
+#                 foobar
+#                 """
+#             >>> two
+#             ''').splitlines()
+#     # source_lines = ['    >>> 1/0  # Byé']
+#     # want_lines = ['    1']
+#     want_lines = []
+#     self = DocTestParser2()
+#     min_indent = 0
+#     source_lines = ub.codeblock(
+#         """
+#         01  >>> ['''
+#         02       pathological, but no problem''',
+#         03  >>>  2]
+#         04  >>> '''
+#         05      multiline strings are now kosher
+#         06      '''
+#         07  >>> '''
+#         08      this may throw a wrench in the workaround
+#         x9      '''
+#         10  >>> a = b
+#         11  ... b = c
+#         12  ... c = d
+#         10  >>> '''
+#         11      multiline strings are now kosher
+#         12      '''
+#         13  >>> y = '''
+#         14      multiline strings are now kosher
+#         15      '''
+#         16  >>> ('''
+#         17      multiline strings are now kosher
+#         18      ''',)
+#         19  >>> ['''
+#         20      multiline strings are now kosher
+#         21      ''',]
+#         22  >>> '''
+#         23      multiline strings are now kosher
+#         24      '''
+#         """).splitlines()
+#     norm_source_lines = [p[8:] for p in source_lines]
+#     source_lines = ub.codeblock(
+#         """
+#         >>> '''
+#             multiline strings are now kosher
+#             '''
+#         """).splitlines()
+#     source_lines = ub.codeblock(
+#         """
+#         >>> '''
+#             multiline strings are now kosher
+#             '''
+#         ... '''
+#             multiline strings are now kosher
+#             '''
+#         """).splitlines()
+#     norm_source_lines = [p[4:] for p in source_lines]
+#     source_block = '\n'.join(norm_source_lines)
+#     pt = ast.parse(source_block)
+#     for node in pt.body:
+#         print('{} {}'.format(type(node), ub.repr2(node.__dict__, nl=1)))
 
-    Args:
-        string (str):
-
-    CommandLine:
-        python -m ubelt.util_test parse_src_want
-
-    References:
-        https://stackoverflow.com/questions/46061949/parse-until-expr-complete
-
-    Example:
-        >>> from ubelt.util_test import *  # NOQA
-        >>> from ubelt.meta import docscrape_google
-        >>> import inspect
-        >>> docstr = inspect.getdoc(parse_src_want)
-        >>> blocks = dict(docscrape_google.split_google_docblocks(docstr))
-        >>> string = blocks['Example']
-        >>> src, want = parse_src_want(string)
-        >>> 'I want to see this str'
-        I want to see this str
-
-    Example:
-        >>> from ubelt.util_test import *  # NOQA
-        >>> from ubelt.meta import docscrape_google
-        >>> import inspect
-        >>> docstr = inspect.getdoc(parse_src_want)
-        >>> blocks = dict(docscrape_google.split_google_docblocks(docstr))
-        >>> str = (
-            '''
-            TODO: be able to parse docstrings like this.
-            ''')
-        >>> print('Intermediate want')
-        Intermediate want
-        >>> string = blocks['Example']
-        >>> src, want = parse_src_want(string)
-        >>> 'I want to see this str'
-        I want to see this str
-    """
-    # parse and differenatiate between doctest source and want statements.
-    parsed = []
-    current = []
-    for linex, line in enumerate(string.splitlines()):
-        if not current and not line.startswith(('>>>', '...')):
-            parsed.append(('want', line))
-        else:
-            prefix = line[:4]
-            suffix = line[4:]
-            if prefix.strip() not in {'>>>', '...', ''}:  # nocover
-                raise SyntaxError(
-                    'Bad indentation in doctest on line {}: {!r}'.format(
-                        linex, line))
-            current.append(suffix)
-            if static.is_balanced(current):
-                statement = ('\n'.join(current))
-                parsed.append(('source', statement))
-                current = []
