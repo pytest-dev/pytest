@@ -88,19 +88,6 @@ def get_logger_obj(logger=None):
 
 
 @contextmanager
-def logging_at_level(level, logger=None):
-    """Context manager that sets the level for capturing of logs."""
-    logger = get_logger_obj(logger)
-
-    orig_level = logger.level
-    logger.setLevel(level)
-    try:
-        yield
-    finally:
-        logger.setLevel(orig_level)
-
-
-@contextmanager
 def logging_using_handler(handler, logger=None):
     """Context manager that safely registers a given handler."""
     logger = get_logger_obj(logger)
@@ -128,8 +115,12 @@ def catching_logs(handler, formatter=None,
     handler.setLevel(level)
 
     with logging_using_handler(handler, logger):
-        with logging_at_level(min(handler.level, logger.level), logger):
+        orig_level = logger.level
+        logger.setLevel(min(orig_level, level))
+        try:
             yield handler
+        finally:
+            logger.setLevel(orig_level)
 
 
 class LogCaptureHandler(logging.StreamHandler):
@@ -195,6 +186,7 @@ class LogCaptureFixture(object):
         obj = logger and logging.getLogger(logger) or self.handler
         obj.setLevel(level)
 
+    @contextmanager
     def at_level(self, level, logger=None):
         """Context manager that sets the level for capturing of logs.
 
@@ -202,9 +194,17 @@ class LogCaptureFixture(object):
         logs. Specify a logger name to instead set the level of any
         logger.
         """
+        if logger is None:
+            logger = self.handler
+        else:
+            logger = logging.getLogger(logger)
 
-        obj = logger and logging.getLogger(logger) or self.handler
-        return logging_at_level(level, obj)
+        orig_level = logger.level
+        logger.setLevel(level)
+        try:
+            yield
+        finally:
+            logger.setLevel(orig_level)
 
 
 class CallablePropertyMixin(object):
