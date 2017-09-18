@@ -326,7 +326,7 @@ class MarkDecorator:
         return self.name  # for backward-compat (2.4.1 had this attr)
 
     def __eq__(self, other):
-        return self.mark == other.mark
+        return self.mark == other.mark if isinstance(other, MarkDecorator) else False
 
     def __repr__(self):
         return "<MarkDecorator %r>" % (self.mark,)
