@@ -120,7 +120,7 @@ the following:
 - PyPI presence with a ``setup.py`` that contains a license, ``pytest-``
   prefixed name, version number, authors, short and long description.
 
-- a ``tox.ini`` for running tests using `tox <http://tox.testrun.org>`_.
+- a ``tox.ini`` for running tests using `tox <https://tox.readthedocs.io>`_.
 
 - a ``README.txt`` describing how to use the plugin and on which
   platforms it runs.
