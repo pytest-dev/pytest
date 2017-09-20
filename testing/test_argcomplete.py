@@ -82,7 +82,7 @@ class TestArgComplete(object):
         from _pytest._argcomplete import FastFilesCompleter
         ffc = FastFilesCompleter()
         fc = FilesCompleter()
-        for x in '/ /d /data qqq'.split():
+        for x in ['/', '/d', '/data', 'qqq', '']:
             assert equal_with_bash(x, ffc, fc, out=py.std.sys.stdout)
 
     @pytest.mark.skipif("sys.platform in ('win32', 'darwin')")

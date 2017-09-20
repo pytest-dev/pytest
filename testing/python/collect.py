@@ -841,7 +841,7 @@ class TestConftestCustomization(object):
             def pytest_pycollect_makeitem():
                 outcome = yield
                 if outcome.excinfo is None:
-                    result = outcome.result
+                    result = outcome.get_result()
                     if result:
                         for func in result:
                             func._some123 = "world"

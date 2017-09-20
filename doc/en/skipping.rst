@@ -54,7 +54,7 @@ by calling the ``pytest.skip(reason)`` function:
         if not valid_config():
             pytest.skip("unsupported configuration")
 
-The imperative method is useful when it is not possible to evaluate the skip condition 
+The imperative method is useful when it is not possible to evaluate the skip condition
 during import time.
 
 ``skipif``
@@ -73,7 +73,7 @@ when run on a Python3.3 interpreter::
         ...
 
 If the condition evaluates to ``True`` during collection, the test function will be skipped,
-with the specified reason appearing in the summary when using ``-rs``.  
+with the specified reason appearing in the summary when using ``-rs``.
 
 You can share ``skipif`` markers between modules.  Consider this test module::
 
@@ -117,6 +117,12 @@ You can use the ``skipif`` marker (as any other marker) on classes::
 
 If the condition is ``True``, this marker will produce a skip result for
 each of the test methods of that class.
+
+.. warning::
+
+   The use of ``skipif`` on classes that use inheritance is strongly
+   discouraged. `A Known bug <https://github.com/pytest-dev/pytest/issues/568>`_
+   in pytest's markers may cause unexpected behavior in super classes.
 
 If you want to skip all test functions of a module, you may use
 the ``pytestmark`` name on the global level:
@@ -305,12 +311,12 @@ Running it with the report-on-xfail option gives this output::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR/example, inifile:
     collected 7 items
-    
+
     xfail_demo.py xxxxxxx
     ======= short test summary info ========
     XFAIL xfail_demo.py::test_hello
     XFAIL xfail_demo.py::test_hello2
-      reason: [NOTRUN] 
+      reason: [NOTRUN]
     XFAIL xfail_demo.py::test_hello3
       condition: hasattr(os, 'sep')
     XFAIL xfail_demo.py::test_hello4
@@ -320,7 +326,7 @@ Running it with the report-on-xfail option gives this output::
     XFAIL xfail_demo.py::test_hello6
       reason: reason
     XFAIL xfail_demo.py::test_hello7
-    
+
     ======= 7 xfailed in 0.12 seconds ========
 
 .. _`skip/xfail with parametrize`:
@@ -346,5 +352,3 @@ test instances when using parametrize:
     ])
     def test_increment(n, expected):
         assert n + 1 == expected
-
-

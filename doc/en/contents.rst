@@ -41,6 +41,7 @@ Full pytest documentation
    historical-notes
    license
    contributing
+   development_guide
    talks
    projects
    faq

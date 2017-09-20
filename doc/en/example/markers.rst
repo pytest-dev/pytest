@@ -435,7 +435,7 @@ The output is as follows::
     .
     1 passed in 0.12 seconds
 
-We can see that the custom marker has its argument set extended with the function ``hello_world``. This is the key different between creating a custom marker as a callable, which invokes ``__call__`` behind the scenes, and using ``with_args``.
+We can see that the custom marker has its argument set extended with the function ``hello_world``. This is the key difference between creating a custom marker as a callable, which invokes ``__call__`` behind the scenes, and using ``with_args``.
 
 
 Reading markers which were set from multiple places

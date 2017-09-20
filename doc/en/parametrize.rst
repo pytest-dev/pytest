@@ -198,6 +198,10 @@ list::
     SKIP [1] test_strings.py:2: got empty parameter set ['stringinput'], function test_valid_string at $REGENDOC_TMPDIR/test_strings.py:1
     1 skipped in 0.12 seconds
 
+
+Note that when calling ``metafunc.parametrize`` multiple times with different parameter sets, all parameter names across 
+those sets cannot be duplicated, otherwise an error will be raised.
+
 For further examples, you might want to look at :ref:`more
 parametrization examples <paramexamples>`.
 
