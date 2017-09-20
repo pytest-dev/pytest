@@ -1,4 +1,4 @@
-If an exception happens while loading a plugin, PyTest no longer hides the original traceback.
+If an exception happens while loading a plugin, pytest no longer hides the original traceback.
 In python2 it will show the original traceback with a new message that explains in which plugin.
 In python3 it will show 2 canonized exceptions, the original exception while loading the plugin
 in addition to an exception that PyTest throws about loading a plugin.
