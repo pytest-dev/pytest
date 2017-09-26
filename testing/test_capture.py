@@ -517,6 +517,40 @@ class TestCaptureFixture(object):
         assert 'captured before' not in result.stdout.str()
         assert 'captured after' not in result.stdout.str()
 
+    @pytest.mark.parametrize('fixture', ['capsys', 'capfd'])
+    def test_fixture_use_by_other_fixtures(self, testdir, fixture):
+        """
+        Ensure that capsys and capfd can be used by other fixtures during setup and teardown.
+        """
+        testdir.makepyfile("""
+            from __future__ import print_function
+            import sys
+            import pytest
+
+            @pytest.fixture
+            def captured_print({fixture}):
+                print('stdout contents begin')
+                print('stderr contents begin', file=sys.stderr)
+                out, err = {fixture}.readouterr()
+
+                yield out, err
+
+                print('stdout contents end')
+                print('stderr contents end', file=sys.stderr)
+                out, err = {fixture}.readouterr()
+                assert out == 'stdout contents end\\n'
+                assert err == 'stderr contents end\\n'
+
+            def test_captured_print(captured_print):
+                out, err = captured_print
+                assert out == 'stdout contents begin\\n'
+                assert err == 'stderr contents begin\\n'
+        """.format(fixture=fixture))
+        result = testdir.runpytest_subprocess()
+        result.stdout.fnmatch_lines("*1 passed*")
+        assert 'stdout contents begin' not in result.stdout.str()
+        assert 'stderr contents begin' not in result.stdout.str()
+
 
 def test_setup_failure_does_not_kill_capturing(testdir):
     sub1 = testdir.mkpydir("sub1")

@@ -61,6 +61,18 @@ def pytest_load_initial_conftests(early_config, parser, args):
 
 
 class CaptureManager:
+    """
+    Capture plugin, manages that the appropriate capture method is enabled/disabled during collection and each
+    test phase (setup, call, teardown). After each of those points, the captured output is obtained and
+    attached to the collection/runtest report.
+
+    There are two levels of capture:
+    * global: which is enabled by default and can be suppressed by the ``-s`` option. This is always enabled/disabled
+      during collection and each test phase.
+    * fixture: when a test function or one of its fixture depend on the ``capsys`` or ``capfd`` fixtures. In this
+      case special handling is needed to ensure the fixtures take precedence over the global capture.
+    """
+
     def __init__(self, method):
         self._method = method
 
@@ -88,8 +100,9 @@ class CaptureManager:
     def resumecapture(self):
         self._capturing.resume_capturing()
 
-    def suspendcapture(self, in_=False):
-        self.deactivate_funcargs()
+    def suspendcapture(self, item=None, in_=False):
+        if item is not None:
+            self.deactivate_fixture(item)
         cap = getattr(self, "_capturing", None)
         if cap is not None:
             try:
@@ -98,16 +111,19 @@ class CaptureManager:
                 cap.suspend_capturing(in_=in_)
             return outerr
 
-    def activate_funcargs(self, pyfuncitem):
-        capfuncarg = pyfuncitem.__dict__.pop("_capfuncarg", None)
-        if capfuncarg is not None:
-            capfuncarg._start()
-            self._capfuncarg = capfuncarg
+    def activate_fixture(self, item):
+        """If the current item is using ``capsys`` or ``capfd``, activate them so they take precedence over
+        the global capture.
+        """
+        fixture = getattr(item, "_capture_fixture", None)
+        if fixture is not None:
+            fixture._start()
 
-    def deactivate_funcargs(self):
-        capfuncarg = self.__dict__.pop("_capfuncarg", None)
-        if capfuncarg is not None:
-            capfuncarg.close()
+    def deactivate_fixture(self, item):
+        """Deactivates the ``capsys`` or ``capfd`` fixture of this item, if any."""
+        fixture = getattr(item, "_capture_fixture", None)
+        if fixture is not None:
+            fixture.close()
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_make_collect_report(self, collector):
@@ -126,20 +142,25 @@ class CaptureManager:
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item):
         self.resumecapture()
+        # no need to activate a capture fixture because they activate themselves during creation; this
+        # only makes sense when a fixture uses a capture fixture, otherwise the capture fixture will
+        # be activated during pytest_runtest_call
         yield
         self.suspendcapture_item(item, "setup")
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_call(self, item):
         self.resumecapture()
-        self.activate_funcargs(item)
+        # it is important to activate this fixture during the call phase so it overwrites the "global"
+        # capture
+        self.activate_fixture(item)
         yield
-        # self.deactivate_funcargs() called from suspendcapture()
         self.suspendcapture_item(item, "call")
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_teardown(self, item):
         self.resumecapture()
+        self.activate_fixture(item)
         yield
         self.suspendcapture_item(item, "teardown")
 
@@ -152,7 +173,7 @@ class CaptureManager:
         self.reset_capturings()
 
     def suspendcapture_item(self, item, when, in_=False):
-        out, err = self.suspendcapture(in_=in_)
+        out, err = self.suspendcapture(item, in_=in_)
         item.add_report_section(when, "stdout", out)
         item.add_report_section(when, "stderr", err)
 
@@ -168,8 +189,8 @@ def capsys(request):
     """
     if "capfd" in request.fixturenames:
         raise request.raiseerror(error_capsysfderror)
-    request.node._capfuncarg = c = CaptureFixture(SysCapture, request)
-    return c
+    with _install_capture_fixture_on_item(request, SysCapture) as fixture:
+        yield fixture
 
 
 @pytest.fixture
@@ -181,9 +202,29 @@ def capfd(request):
     if "capsys" in request.fixturenames:
         request.raiseerror(error_capsysfderror)
     if not hasattr(os, 'dup'):
-        pytest.skip("capfd funcarg needs os.dup")
-    request.node._capfuncarg = c = CaptureFixture(FDCapture, request)
-    return c
+        pytest.skip("capfd fixture needs os.dup function which is not available in this system")
+    with _install_capture_fixture_on_item(request, FDCapture) as fixture:
+        yield fixture
+
+
+@contextlib.contextmanager
+def _install_capture_fixture_on_item(request, capture_class):
+    """
+    Context manager which creates a ``CaptureFixture`` instance and "installs" it on
+    the item/node of the given request. Used by ``capsys`` and ``capfd``.
+
+    The CaptureFixture is added as attribute of the item because it needs to accessed
+    by ``CaptureManager`` during its ``pytest_runtest_*`` hooks.
+    """
+    request.node._capture_fixture = fixture = CaptureFixture(capture_class, request)
+    capmanager = request.config.pluginmanager.getplugin('capturemanager')
+    # need to active this fixture right away in case it is being used by another fixture (setup phase)
+    # if this fixture is being used only by a test function (call phase), then we wouldn't need this
+    # activation, but it doesn't hurt
+    capmanager.activate_fixture(request.node)
+    yield fixture
+    fixture.close()
+    del request.node._capture_fixture
 
 
 class CaptureFixture:
