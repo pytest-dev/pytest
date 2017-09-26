@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 import logging
 from contextlib import closing, contextmanager
 import sys
+import six
 
 import pytest
 import py
@@ -12,12 +13,13 @@ DEFAULT_LOG_FORMAT = '%(filename)-25s %(lineno)4d %(levelname)-8s %(message)s'
 DEFAULT_LOG_DATE_FORMAT = '%H:%M:%S'
 
 
-def get_option_ini(config, name):
-    ret = config.getoption(name)  # 'default' arg won't work as expected
-    if ret is None:
-        ret = config.getini(name)
-    return ret
-
+def get_option_ini(config, *names):
+    for name in names:
+        ret = config.getoption(name)  # 'default' arg won't work as expected
+        if ret is None:
+            ret = config.getini(name)
+        if ret:
+            return ret
 
 def pytest_addoption(parser):
     """Add options to control log capturing."""
@@ -221,12 +223,19 @@ def caplog(request):
     return LogCaptureFixture(request.node)
 
 
-def get_actual_log_level(config, setting_name):
+def get_actual_log_level(config, *setting_names):
     """Return the actual logging level."""
-    log_level = get_option_ini(config, setting_name)
-    if not log_level:
+
+    for setting_name in setting_names:
+        log_level = config.getoption(setting_name)
+        if log_level is None:
+            log_level = config.getini(setting_name)
+        if log_level:
+            break
+    else:
         return
-    if isinstance(log_level, py.builtin.text):
+
+    if isinstance(log_level, six.string_types):
         log_level = log_level.upper()
     try:
         return int(getattr(logging, log_level, log_level))
@@ -254,15 +263,8 @@ class LoggingPlugin(object):
         The formatter can be safely shared across all handlers so
         create a single one for the entire test session here.
         """
-        log_cli_level = get_actual_log_level(config, 'log_cli_level')
-        if log_cli_level is None:
-            # No specific CLI logging level was provided, let's check
-            # log_level for a fallback
-            log_cli_level = get_actual_log_level(config, 'log_level')
-            if log_cli_level is None:
-                # No log_level was provided, default to WARNING
-                log_cli_level = logging.WARNING
-        self.log_cli_level = log_cli_level
+        self.log_cli_level = get_actual_log_level(
+            config, 'log_cli_level', 'log_level') or logging.WARNING
 
         self.print_logs = get_option_ini(config, 'log_print')
         self.formatter = logging.Formatter(
@@ -270,14 +272,10 @@ class LoggingPlugin(object):
                 get_option_ini(config, 'log_date_format'))
 
         log_cli_handler = logging.StreamHandler(sys.stderr)
-        log_cli_format = get_option_ini(config, 'log_cli_format')
-        if not log_cli_format:
-            # No CLI specific format was provided, use log_format
-            log_cli_format = get_option_ini(config, 'log_format')
-        log_cli_date_format = get_option_ini(config, 'log_cli_date_format')
-        if not log_cli_date_format:
-            # No CLI specific date format was provided, use log_date_format
-            log_cli_date_format = get_option_ini(config, 'log_date_format')
+        log_cli_format = get_option_ini(
+            config, 'log_cli_format', 'log_format')
+        log_cli_date_format = get_option_ini(
+            config, 'log_cli_date_format', 'log_date_format')
         log_cli_formatter = logging.Formatter(
                 log_cli_format,
                 datefmt=log_cli_date_format)
@@ -288,20 +286,13 @@ class LoggingPlugin(object):
 
         log_file = get_option_ini(config, 'log_file')
         if log_file:
-            log_file_level = get_actual_log_level(config, 'log_file_level')
-            if log_file_level is None:
-                # No log_level was provided, default to WARNING
-                log_file_level = logging.WARNING
-            self.log_file_level = log_file_level
+            self.log_file_level = get_actual_log_level(
+                config, 'log_file_level') or logging.WARNING
 
-            log_file_format = get_option_ini(config, 'log_file_format')
-            if not log_file_format:
-                # No log file specific format was provided, use log_format
-                log_file_format = get_option_ini(config, 'log_format')
-            log_file_date_format = get_option_ini(config, 'log_file_date_format')
-            if not log_file_date_format:
-                # No log file specific date format was provided, use log_date_format
-                log_file_date_format = get_option_ini(config, 'log_date_format')
+            log_file_format = get_option_ini(
+                config, 'log_file_format', 'log_format')
+            log_file_date_format = get_option_ini(
+                config, 'log_file_date_format', 'log_date_format')
             self.log_file_handler = logging.FileHandler(
                 log_file,
                 # Each pytest runtests session will write to a clean logfile
