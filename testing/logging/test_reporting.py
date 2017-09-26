@@ -147,7 +147,7 @@ def test_log_cli_default_level(testdir):
         import pytest
         import logging
         def test_log_cli(request):
-            plugin = request.config.pluginmanager.getplugin('loggingp')
+            plugin = request.config.pluginmanager.getplugin('logging-plugin')
             assert plugin.log_cli_handler.level == logging.WARNING
             logging.getLogger('catchlog').info("This log message won't be shown")
             logging.getLogger('catchlog').warning("This log message will be shown")
@@ -180,7 +180,7 @@ def test_log_cli_level(testdir):
         import pytest
         import logging
         def test_log_cli(request):
-            plugin = request.config.pluginmanager.getplugin('loggingp')
+            plugin = request.config.pluginmanager.getplugin('logging-plugin')
             assert plugin.log_cli_handler.level == logging.INFO
             logging.getLogger('catchlog').debug("This log message won't be shown")
             logging.getLogger('catchlog').info("This log message will be shown")
@@ -236,7 +236,7 @@ def test_log_cli_ini_level(testdir):
         import pytest
         import logging
         def test_log_cli(request):
-            plugin = request.config.pluginmanager.getplugin('loggingp')
+            plugin = request.config.pluginmanager.getplugin('logging-plugin')
             assert plugin.log_cli_handler.level == logging.INFO
             logging.getLogger('catchlog').debug("This log message won't be shown")
             logging.getLogger('catchlog').info("This log message will be shown")
@@ -269,7 +269,7 @@ def test_log_file_cli(testdir):
         import pytest
         import logging
         def test_log_file(request):
-            plugin = request.config.pluginmanager.getplugin('loggingp')
+            plugin = request.config.pluginmanager.getplugin('logging-plugin')
             assert plugin.log_file_handler.level == logging.WARNING
             logging.getLogger('catchlog').info("This log message won't be shown")
             logging.getLogger('catchlog').warning("This log message will be shown")
@@ -300,7 +300,7 @@ def test_log_file_cli_level(testdir):
         import pytest
         import logging
         def test_log_file(request):
-            plugin = request.config.pluginmanager.getplugin('loggingp')
+            plugin = request.config.pluginmanager.getplugin('logging-plugin')
             assert plugin.log_file_handler.level == logging.INFO
             logging.getLogger('catchlog').debug("This log message won't be shown")
             logging.getLogger('catchlog').info("This log message will be shown")
@@ -339,7 +339,7 @@ def test_log_file_ini(testdir):
         import pytest
         import logging
         def test_log_file(request):
-            plugin = request.config.pluginmanager.getplugin('loggingp')
+            plugin = request.config.pluginmanager.getplugin('logging-plugin')
             assert plugin.log_file_handler.level == logging.WARNING
             logging.getLogger('catchlog').info("This log message won't be shown")
             logging.getLogger('catchlog').warning("This log message will be shown")
@@ -375,7 +375,7 @@ def test_log_file_ini_level(testdir):
         import pytest
         import logging
         def test_log_file(request):
-            plugin = request.config.pluginmanager.getplugin('loggingp')
+            plugin = request.config.pluginmanager.getplugin('logging-plugin')
             assert plugin.log_file_handler.level == logging.INFO
             logging.getLogger('catchlog').debug("This log message won't be shown")
             logging.getLogger('catchlog').info("This log message will be shown")

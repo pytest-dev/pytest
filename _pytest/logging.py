@@ -240,7 +240,8 @@ def get_actual_log_level(config, *setting_names):
 
 
 def pytest_configure(config):
-    config.pluginmanager.register(LoggingPlugin(config), 'loggingp')
+    config.pluginmanager.register(LoggingPlugin(config),
+                                  'logging-plugin')
 
 
 class LoggingPlugin(object):
