@@ -27,9 +27,6 @@ Here is a little annotated list for some popular plugins:
   for `twisted <http://twistedmatrix.com>`_ apps, starting a reactor and
   processing deferreds from test functions.
 
-* `pytest-catchlog <http://pypi.python.org/pypi/pytest-catchlog>`_:
-  to capture and assert about messages from the logging module
-
 * `pytest-cov <http://pypi.python.org/pypi/pytest-cov>`_:
   coverage reporting, compatible with distributed testing
 
