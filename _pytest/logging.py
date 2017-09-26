@@ -78,20 +78,10 @@ def pytest_addoption(parser):
         help='log date format as used by the logging module.')
 
 
-def get_logger_obj(logger=None):
-    """Get a logger object that can be specified by its name, or passed as is.
-
-    Defaults to the root logger.
-    """
-    if logger is None or isinstance(logger, py.builtin._basestring):
-        logger = logging.getLogger(logger)
-    return logger
-
-
 @contextmanager
 def logging_using_handler(handler, logger=None):
     """Context manager that safely registers a given handler."""
-    logger = get_logger_obj(logger)
+    logger = logger or logging.getLogger(logger)
 
     if handler in logger.handlers:  # reentrancy
         # Adding the same handler twice would confuse logging system.
@@ -109,7 +99,7 @@ def logging_using_handler(handler, logger=None):
 def catching_logs(handler, formatter=None,
                   level=logging.NOTSET, logger=None):
     """Context manager that prepares the whole logging machinery properly."""
-    logger = get_logger_obj(logger)
+    logger = logger or logging.getLogger(logger)
 
     if formatter is not None:
         handler.setFormatter(formatter)
