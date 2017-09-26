@@ -78,23 +78,23 @@ class TestCaptureManager(object):
         old = sys.stdout, sys.stderr, sys.stdin
         try:
             capman = CaptureManager(method)
-            capman.init_capturings()
-            outerr = capman.suspendcapture()
+            capman.start_global_capturing()
+            outerr = capman.suspend_global_capture()
             assert outerr == ("", "")
-            outerr = capman.suspendcapture()
+            outerr = capman.suspend_global_capture()
             assert outerr == ("", "")
             print("hello")
-            out, err = capman.suspendcapture()
+            out, err = capman.suspend_global_capture()
             if method == "no":
                 assert old == (sys.stdout, sys.stderr, sys.stdin)
             else:
                 assert not out
-            capman.resumecapture()
+            capman.resume_global_capture()
             print("hello")
-            out, err = capman.suspendcapture()
+            out, err = capman.suspend_global_capture()
             if method != "no":
                 assert out == "hello\n"
-            capman.reset_capturings()
+            capman.stop_global_capturing()
         finally:
             capouter.stop_capturing()
 
@@ -103,9 +103,9 @@ class TestCaptureManager(object):
         capouter = StdCaptureFD()
         try:
             capman = CaptureManager("fd")
-            capman.init_capturings()
-            pytest.raises(AssertionError, "capman.init_capturings()")
-            capman.reset_capturings()
+            capman.start_global_capturing()
+            pytest.raises(AssertionError, "capman.start_global_capturing()")
+            capman.stop_global_capturing()
         finally:
             capouter.stop_capturing()
 

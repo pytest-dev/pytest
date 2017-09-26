@@ -43,7 +43,7 @@ def pytest_load_initial_conftests(early_config, parser, args):
     pluginmanager.register(capman, "capturemanager")
 
     # make sure that capturemanager is properly reset at final shutdown
-    early_config.add_cleanup(capman.reset_capturings)
+    early_config.add_cleanup(capman.stop_global_capturing)
 
     # make sure logging does not raise exceptions at the end
     def silence_logging_at_shutdown():
@@ -52,9 +52,9 @@ def pytest_load_initial_conftests(early_config, parser, args):
     early_config.add_cleanup(silence_logging_at_shutdown)
 
     # finally trigger conftest loading but while capturing (issue93)
-    capman.init_capturings()
+    capman.start_global_capturing()
     outcome = yield
-    out, err = capman.suspendcapture()
+    out, err = capman.suspend_global_capture()
     if outcome.excinfo is not None:
         sys.stdout.write(out)
         sys.stderr.write(err)
@@ -75,6 +75,7 @@ class CaptureManager:
 
     def __init__(self, method):
         self._method = method
+        self._global_capturing = None
 
     def _getcapture(self, method):
         if method == "fd":
@@ -86,24 +87,24 @@ class CaptureManager:
         else:
             raise ValueError("unknown capturing method: %r" % method)
 
-    def init_capturings(self):
-        assert not hasattr(self, "_capturing")
-        self._capturing = self._getcapture(self._method)
-        self._capturing.start_capturing()
+    def start_global_capturing(self):
+        assert self._global_capturing is None
+        self._global_capturing = self._getcapture(self._method)
+        self._global_capturing.start_capturing()
 
-    def reset_capturings(self):
-        cap = self.__dict__.pop("_capturing", None)
-        if cap is not None:
-            cap.pop_outerr_to_orig()
-            cap.stop_capturing()
+    def stop_global_capturing(self):
+        if self._global_capturing is not None:
+            self._global_capturing.pop_outerr_to_orig()
+            self._global_capturing.stop_capturing()
+            self._global_capturing = None
 
-    def resumecapture(self):
-        self._capturing.resume_capturing()
+    def resume_global_capture(self):
+        self._global_capturing.resume_capturing()
 
-    def suspendcapture(self, item=None, in_=False):
+    def suspend_global_capture(self, item=None, in_=False):
         if item is not None:
             self.deactivate_fixture(item)
-        cap = getattr(self, "_capturing", None)
+        cap = getattr(self, "_global_capturing", None)
         if cap is not None:
             try:
                 outerr = cap.readouterr()
@@ -128,9 +129,9 @@ class CaptureManager:
     @pytest.hookimpl(hookwrapper=True)
     def pytest_make_collect_report(self, collector):
         if isinstance(collector, pytest.File):
-            self.resumecapture()
+            self.resume_global_capture()
             outcome = yield
-            out, err = self.suspendcapture()
+            out, err = self.suspend_global_capture()
             rep = outcome.get_result()
             if out:
                 rep.sections.append(("Captured stdout", out))
@@ -141,39 +142,39 @@ class CaptureManager:
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item):
-        self.resumecapture()
+        self.resume_global_capture()
         # no need to activate a capture fixture because they activate themselves during creation; this
         # only makes sense when a fixture uses a capture fixture, otherwise the capture fixture will
         # be activated during pytest_runtest_call
         yield
-        self.suspendcapture_item(item, "setup")
+        self.suspend_capture_item(item, "setup")
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_call(self, item):
-        self.resumecapture()
+        self.resume_global_capture()
         # it is important to activate this fixture during the call phase so it overwrites the "global"
         # capture
         self.activate_fixture(item)
         yield
-        self.suspendcapture_item(item, "call")
+        self.suspend_capture_item(item, "call")
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_teardown(self, item):
-        self.resumecapture()
+        self.resume_global_capture()
         self.activate_fixture(item)
         yield
-        self.suspendcapture_item(item, "teardown")
+        self.suspend_capture_item(item, "teardown")
 
     @pytest.hookimpl(tryfirst=True)
     def pytest_keyboard_interrupt(self, excinfo):
-        self.reset_capturings()
+        self.stop_global_capturing()
 
     @pytest.hookimpl(tryfirst=True)
     def pytest_internalerror(self, excinfo):
-        self.reset_capturings()
+        self.stop_global_capturing()
 
-    def suspendcapture_item(self, item, when, in_=False):
-        out, err = self.suspendcapture(item, in_=in_)
+    def suspend_capture_item(self, item, when, in_=False):
+        out, err = self.suspend_global_capture(item, in_=in_)
         item.add_report_section(when, "stdout", out)
         item.add_report_section(when, "stderr", err)
 
@@ -252,11 +253,11 @@ class CaptureFixture:
     @contextlib.contextmanager
     def disabled(self):
         capmanager = self.request.config.pluginmanager.getplugin('capturemanager')
-        capmanager.suspendcapture_item(self.request.node, "call", in_=True)
+        capmanager.suspend_capture_item(self.request.node, "call", in_=True)
         try:
             yield
         finally:
-            capmanager.resumecapture()
+            capmanager.resume_global_capture()
 
 
 def safe_text_dupfile(f, mode, default_encoding="UTF8"):

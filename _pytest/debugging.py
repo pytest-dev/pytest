@@ -54,7 +54,7 @@ class pytestPDB:
         if cls._pluginmanager is not None:
             capman = cls._pluginmanager.getplugin("capturemanager")
             if capman:
-                capman.suspendcapture(in_=True)
+                capman.suspend_global_capture(in_=True)
             tw = _pytest.config.create_terminal_writer(cls._config)
             tw.line()
             tw.sep(">", "PDB set_trace (IO-capturing turned off)")
@@ -66,7 +66,7 @@ class PdbInvoke:
     def pytest_exception_interact(self, node, call, report):
         capman = node.config.pluginmanager.getplugin("capturemanager")
         if capman:
-            out, err = capman.suspendcapture(in_=True)
+            out, err = capman.suspend_global_capture(in_=True)
             sys.stdout.write(out)
             sys.stdout.write(err)
         _enter_pdb(node, call.excinfo, report)
