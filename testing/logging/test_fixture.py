@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
-import sys
 import logging
 
 
 logger = logging.getLogger(__name__)
 sublogger = logging.getLogger(__name__+'.baz')
-
-u = (lambda x: x.decode('utf-8')) if sys.version_info < (3,) else (lambda x: x)
 
 
 def test_fixture_help(testdir):
@@ -60,14 +57,14 @@ def test_record_tuples(caplog):
 
 
 def test_unicode(caplog):
-    logger.info(u('bū'))
+    logger.info(u'bū')
     assert caplog.records[0].levelname == 'INFO'
-    assert caplog.records[0].msg == u('bū')
-    assert u('bū') in caplog.text
+    assert caplog.records[0].msg == u'bū'
+    assert u'bū' in caplog.text
 
 
 def test_clear(caplog):
-    logger.info(u('bū'))
+    logger.info(u'bū')
     assert len(caplog.records)
     caplog.clear()
     assert not len(caplog.records)
