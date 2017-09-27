@@ -21,6 +21,7 @@ def get_option_ini(config, *names):
         if ret:
             return ret
 
+
 def pytest_addoption(parser):
     """Add options to control log capturing."""
 
