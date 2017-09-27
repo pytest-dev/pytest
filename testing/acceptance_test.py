@@ -630,10 +630,10 @@ class TestInvocationVariants(object):
         testdir.chdir()
         assert result.ret == 0
         result.stdout.fnmatch_lines([
-            "*test_hello.py::test_hello*PASSED",
-            "*test_hello.py::test_other*PASSED",
-            "*test_world.py::test_world*PASSED",
-            "*test_world.py::test_other*PASSED",
+            "*test_hello.py::test_hello*PASSED*",
+            "*test_hello.py::test_other*PASSED*",
+            "*test_world.py::test_world*PASSED*",
+            "*test_world.py::test_other*PASSED*",
             "*4 passed*"
         ])
 
@@ -641,7 +641,7 @@ class TestInvocationVariants(object):
         result = testdir.runpytest("--pyargs", "-v", "ns_pkg.world.test_world::test_other")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
-            "*test_world.py::test_other*PASSED",
+            "*test_world.py::test_other*PASSED*",
             "*1 passed*"
         ])
 

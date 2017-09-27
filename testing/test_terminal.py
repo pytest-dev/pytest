@@ -78,7 +78,7 @@ class TestTerminal(object):
             ])
         else:
             result.stdout.fnmatch_lines([
-                "*test_pass_skip_fail.py .sF"
+                "*test_pass_skip_fail.py .sF*"
             ])
         result.stdout.fnmatch_lines([
             "    def test_func():",
@@ -142,12 +142,12 @@ class TestTerminal(object):
         """)
         result = testdir.runpytest(p2)
         result.stdout.fnmatch_lines([
-            "*test_p2.py .",
+            "*test_p2.py .*",
             "*1 passed*",
         ])
         result = testdir.runpytest("-v", p2)
         result.stdout.fnmatch_lines([
-            "*test_p2.py::TestMore::test_p1* <- *test_p1.py*PASSED",
+            "*test_p2.py::TestMore::test_p1* <- *test_p1.py*PASSED*",
         ])
 
     def test_itemreport_directclasses_not_shown_as_subclasses(self, testdir):
@@ -431,7 +431,7 @@ class TestTerminalFunctional(object):
                                       )
         result = testdir.runpytest("-k", "test_two:", testpath)
         result.stdout.fnmatch_lines([
-            "*test_deselected.py ..",
+            "*test_deselected.py ..*",
             "=* 1 test*deselected *=",
         ])
         assert result.ret == 0
@@ -464,7 +464,7 @@ class TestTerminalFunctional(object):
         finally:
             old.chdir()
         result.stdout.fnmatch_lines([
-            "test_passes.py ..",
+            "test_passes.py ..*",
             "* 2 pass*",
         ])
         assert result.ret == 0
@@ -481,7 +481,7 @@ class TestTerminalFunctional(object):
             "platform %s -- Python %s*pytest-%s*py-%s*pluggy-%s" % (
                 py.std.sys.platform, verinfo,
                 pytest.__version__, py.__version__, pluggy.__version__),
-            "*test_header_trailer_info.py .",
+            "*test_header_trailer_info.py .*",
             "=* 1 passed*in *.[0-9][0-9] seconds *=",
         ])
         if pytest.config.pluginmanager.list_plugin_distinfo():
