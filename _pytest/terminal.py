@@ -5,15 +5,18 @@ This is a good source for looking at the various reporting hooks.
 from __future__ import absolute_import, division, print_function
 
 import itertools
-from _pytest.main import EXIT_OK, EXIT_TESTSFAILED, EXIT_INTERRUPTED, \
-    EXIT_USAGEERROR, EXIT_NOTESTSCOLLECTED
-import pytest
-import py
-import six
+import platform
 import sys
 import time
-import platform
+import warnings
+
+import py
+import six
+
 import pluggy
+import pytest
+from _pytest.main import EXIT_OK, EXIT_TESTSFAILED, EXIT_INTERRUPTED, \
+    EXIT_USAGEERROR, EXIT_NOTESTSCOLLECTED
 
 
 def pytest_addoption(parser):
@@ -136,12 +139,21 @@ class TerminalReporter:
         self.startdir = py.path.local()
         if file is None:
             file = sys.stdout
-        self._tw = self.writer = _pytest.config.create_terminal_writer(config,
-                                                                       file)
+        self._writer = _pytest.config.create_terminal_writer(config, file)
         self.currentfspath = None
         self.reportchars = getreportopt(config)
-        self.hasmarkup = self._tw.hasmarkup
+        self.hasmarkup = self.writer.hasmarkup
         self.isatty = file.isatty()
+
+    @property
+    def writer(self):
+        return self._writer
+
+    @property
+    def _tw(self):
+        warnings.warn(DeprecationWarning('TerminalReporter._tw is deprecated, use TerminalReporter.writer instead'),
+                      stacklevel=2)
+        return self.writer
 
     def hasopt(self, char):
         char = {'xfailed': 'x', 'skipped': 's'}.get(char, char)
@@ -152,32 +164,32 @@ class TerminalReporter:
         if fspath != self.currentfspath:
             self.currentfspath = fspath
             fspath = self.startdir.bestrelpath(fspath)
-            self._tw.line()
-            self._tw.write(fspath + " ")
-        self._tw.write(res)
+            self.writer.line()
+            self.writer.write(fspath + " ")
+        self.writer.write(res)
 
     def write_ensure_prefix(self, prefix, extra="", **kwargs):
         if self.currentfspath != prefix:
-            self._tw.line()
+            self.writer.line()
             self.currentfspath = prefix
-            self._tw.write(prefix)
+            self.writer.write(prefix)
         if extra:
-            self._tw.write(extra, **kwargs)
+            self.writer.write(extra, **kwargs)
             self.currentfspath = -2
 
     def ensure_newline(self):
         if self.currentfspath:
-            self._tw.line()
+            self.writer.line()
             self.currentfspath = None
 
     def write(self, content, **markup):
-        self._tw.write(content, **markup)
+        self.writer.write(content, **markup)
 
     def write_line(self, line, **markup):
         if not isinstance(line, six.text_type):
             line = six.text_type(line, errors="replace")
         self.ensure_newline()
-        self._tw.line(line, **markup)
+        self.writer.line(line, **markup)
 
     def rewrite(self, line, **markup):
         """
@@ -190,22 +202,22 @@ class TerminalReporter:
         """
         erase = markup.pop('erase', False)
         if erase:
-            fill_count = self._tw.fullwidth - len(line)
+            fill_count = self.writer.fullwidth - len(line)
             fill = ' ' * fill_count
         else:
             fill = ''
         line = str(line)
-        self._tw.write("\r" + line + fill, **markup)
+        self.writer.write("\r" + line + fill, **markup)
 
     def write_sep(self, sep, title=None, **markup):
         self.ensure_newline()
-        self._tw.sep(sep, title, **markup)
+        self.writer.sep(sep, title, **markup)
 
     def section(self, title, sep="=", **kw):
-        self._tw.sep(sep, title, **kw)
+        self.writer.sep(sep, title, **kw)
 
     def line(self, msg, **kw):
-        self._tw.line(msg, **kw)
+        self.writer.line(msg, **kw)
 
     def pytest_internalerror(self, excrepr):
         for line in six.text_type(excrepr).split("\n"):
@@ -252,7 +264,7 @@ class TerminalReporter:
             if not hasattr(rep, 'node') and self.showfspath:
                 self.write_fspath_result(rep.nodeid, letter)
             else:
-                self._tw.write(letter)
+                self.writer.write(letter)
         else:
             if isinstance(word, tuple):
                 word, markup = word
@@ -263,16 +275,18 @@ class TerminalReporter:
                     markup = {'red': True}
                 elif rep.skipped:
                     markup = {'yellow': True}
+                else:
+                    markup = {}
             line = self._locationline(rep.nodeid, *rep.location)
             if not hasattr(rep, 'node'):
                 self.write_ensure_prefix(line, word, **markup)
-                # self._tw.write(word, **markup)
+                # self.writer.write(word, **markup)
             else:
                 self.ensure_newline()
                 if hasattr(rep, 'node'):
-                    self._tw.write("[%s] " % rep.node.gateway.id)
-                self._tw.write(word, **markup)
-                self._tw.write(" " + line)
+                    self.writer.write("[%s] " % rep.node.gateway.id)
+                self.writer.write(word, **markup)
+                self.writer.write(" " + line)
                 self.currentfspath = -2
 
     def pytest_collection(self):
@@ -358,9 +372,9 @@ class TerminalReporter:
         if self.config.option.collectonly:
             self._printcollecteditems(session.items)
             if self.stats.get('failed'):
-                self._tw.sep("!", "collection failures")
+                self.writer.sep("!", "collection failures")
                 for rep in self.stats.get('failed'):
-                    rep.toterminal(self._tw)
+                    rep.toterminal(self.writer)
                 return 1
             return 0
         lines = self.config.hook.pytest_report_collectionfinish(
@@ -378,12 +392,12 @@ class TerminalReporter:
                     name = item.nodeid.split('::', 1)[0]
                     counts[name] = counts.get(name, 0) + 1
                 for name, count in sorted(counts.items()):
-                    self._tw.line("%s: %d" % (name, count))
+                    self.writer.line("%s: %d" % (name, count))
             else:
                 for item in items:
                     nodeid = item.nodeid
                     nodeid = nodeid.replace("::()::", "::")
-                    self._tw.line(nodeid)
+                    self.writer.line(nodeid)
             return
         stack = []
         indent = ""
@@ -398,13 +412,13 @@ class TerminalReporter:
                 # if col.name == "()":
                 #    continue
                 indent = (len(stack) - 1) * "  "
-                self._tw.line("%s%s" % (indent, col))
+                self.writer.line("%s%s" % (indent, col))
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_sessionfinish(self, exitstatus):
         outcome = yield
         outcome.get_result()
-        self._tw.line("")
+        self.writer.line("")
         summary_exit_codes = (
             EXIT_OK, EXIT_TESTSFAILED, EXIT_INTERRUPTED, EXIT_USAGEERROR,
             EXIT_NOTESTSCOLLECTED)
@@ -434,10 +448,10 @@ class TerminalReporter:
         self.write_sep("!", msg)
         if "KeyboardInterrupt" in msg:
             if self.config.option.fulltrace:
-                excrepr.toterminal(self._tw)
+                excrepr.toterminal(self.writer)
             else:
-                self._tw.line("to show a full traceback on KeyboardInterrupt use --fulltrace", yellow=True)
-                excrepr.reprcrash.toterminal(self._tw)
+                self.writer.line("to show a full traceback on KeyboardInterrupt use --fulltrace", yellow=True)
+                excrepr.reprcrash.toterminal(self.writer)
 
     def _locationline(self, nodeid, fspath, lineno, domain):
         def mkrel(nodeid):
@@ -493,14 +507,14 @@ class TerminalReporter:
             grouped = itertools.groupby(all_warnings, key=lambda wr: wr.get_location(self.config))
 
             self.write_sep("=", "warnings summary", yellow=True, bold=False)
-            for location, warnings in grouped:
-                self._tw.line(str(location) or '<undetermined location>')
-                for w in warnings:
+            for location, warning_records in grouped:
+                self.writer.line(str(location) or '<undetermined location>')
+                for w in warning_records:
                     lines = w.message.splitlines()
                     indented = '\n'.join('  ' + x for x in lines)
-                    self._tw.line(indented)
-                self._tw.line()
-            self._tw.line('-- Docs: http://doc.pytest.org/en/latest/warnings.html')
+                    self.writer.line(indented)
+                self.writer.line()
+            self.writer.line('-- Docs: http://doc.pytest.org/en/latest/warnings.html')
 
     def summary_passes(self):
         if self.config.option.tbstyle != "no":
@@ -517,10 +531,10 @@ class TerminalReporter:
     def print_teardown_sections(self, rep):
         for secname, content in rep.sections:
             if 'teardown' in secname:
-                self._tw.sep('-', secname)
+                self.writer.sep('-', secname)
                 if content[-1:] == "\n":
                     content = content[:-1]
-                self._tw.line(content)
+                self.writer.line(content)
 
     def summary_failures(self):
         if self.config.option.tbstyle != "no":
@@ -560,12 +574,12 @@ class TerminalReporter:
                 self._outrep_summary(rep)
 
     def _outrep_summary(self, rep):
-        rep.toterminal(self._tw)
+        rep.toterminal(self.writer)
         for secname, content in rep.sections:
-            self._tw.sep("-", secname)
+            self.writer.sep("-", secname)
             if content[-1:] == "\n":
                 content = content[:-1]
-            self._tw.line(content)
+            self.writer.line(content)
 
     def summary_stats(self):
         session_duration = time.time() - self._sessionstarttime
