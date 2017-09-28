@@ -522,11 +522,8 @@ class FSCollector(Collector):
 
     def _check_initialpaths_for_relpath(self):
         for initialpath in self.session._initialpaths:
-            parent_path = self.fspath
-            for _ in parent_path.parts():
-                if parent_path.samefile(initialpath):
-                    return self.fspath.relto(initialpath.dirname)
-                parent_path = parent_path.__class__(parent_path.dirname)
+            if self.fspath.common(initialpath) == initialpath:
+                return self.fspath.relto(initialpath.dirname)
 
     def _makeid(self):
         relpath = self.fspath.relto(self.config.rootdir)
