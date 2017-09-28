@@ -107,7 +107,7 @@ def pytest_cmdline_main(config):
 
 def showhelp(config):
     reporter = config.pluginmanager.get_plugin('terminalreporter')
-    tw = reporter._tw
+    tw = reporter.writer
     tw.write(config._parser.optparser.format_help())
     tw.line()
     tw.line()

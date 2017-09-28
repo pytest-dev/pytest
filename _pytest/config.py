@@ -931,7 +931,7 @@ class Config(object):
             fslocation=fslocation, nodeid=nodeid))
 
     def get_terminal_writer(self):
-        return self.pluginmanager.get_plugin("terminalreporter")._tw
+        return self.pluginmanager.get_plugin("terminalreporter").writer
 
     def pytest_cmdline_parse(self, pluginmanager, args):
         # REF1 assert self == pluginmanager.config, (self, pluginmanager.config)
