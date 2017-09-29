@@ -252,12 +252,14 @@ class CaptureFixture:
 
     @contextlib.contextmanager
     def disabled(self):
+        self._capture.suspend_capturing()
         capmanager = self.request.config.pluginmanager.getplugin('capturemanager')
-        capmanager.suspend_capture_item(self.request.node, "call", in_=True)
+        capmanager.suspend_global_capture(item=None, in_=False)
         try:
             yield
         finally:
             capmanager.resume_global_capture()
+            self._capture.resume_capturing()
 
 
 def safe_text_dupfile(f, mode, default_encoding="UTF8"):
