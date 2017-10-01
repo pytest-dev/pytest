@@ -1005,6 +1005,40 @@ def test_module_level_skip_error(testdir):
     )
 
 
+def test_module_level_skip_with_allow_module_level(testdir):
+    """
+    Verify that using pytest.skip(allow_module_level=True) is allowed
+    """
+    testdir.makepyfile("""
+        import pytest
+        pytest.skip("skip_module_level", allow_module_level=True)
+
+        def test_func():
+            assert 0
+    """)
+    result = testdir.runpytest("-rxs")
+    result.stdout.fnmatch_lines(
+        "*SKIP*skip_module_level"
+    )
+
+
+def test_invalid_skip_keyword_parameter(testdir):
+    """
+    Verify that using pytest.skip() with unknown parameter raises an error
+    """
+    testdir.makepyfile("""
+        import pytest
+        pytest.skip("skip_module_level", unknown=1)
+
+        def test_func():
+            assert 0
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        "*TypeError:*['unknown']*"
+    )
+
+
 def test_mark_xfail_item(testdir):
     # Ensure pytest.mark.xfail works with non-Python Item
     testdir.makeconftest("""
