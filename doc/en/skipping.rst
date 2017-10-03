@@ -57,11 +57,12 @@ by calling the ``pytest.skip(reason)`` function:
 It is also possible to skip the whole module using
 ``pytest.skip(reason, allow_module_level=True)`` at the module level:
 
-
 .. code-block:: python
 
-    if not enabled_platform_edge_cases():
-        pytest.skip("unsupported platform", allow_module_level=True)
+    import pytest
+
+    if not pytest.config.getoption("--custom-flag"):
+        pytest.skip("--custom-flag is missing, skipping tests", allow_module_level=True)
 
 The imperative method is useful when it is not possible to evaluate the skip condition
 during import time.
