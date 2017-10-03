@@ -69,13 +69,13 @@ def skip(msg="", **kwargs):
     dependencies.  See the pytest_skipping plugin for details.
 
     :kwarg bool allow_module_level: allows this function to be called at
-    module level, skipping the rest of the module. Default to False.
+        module level, skipping the rest of the module. Default to False.
     """
     __tracebackhide__ = True
     allow_module_level = kwargs.pop('allow_module_level', False)
     if kwargs:
         keys = [k for k in kwargs.keys()]
-        raise TypeError('unexpected keyworkd arguments: {}'.format(keys))
+        raise TypeError('unexpected keyword arguments: {0}'.format(keys))
     raise Skipped(msg=msg, allow_module_level=allow_module_level)
 
 
