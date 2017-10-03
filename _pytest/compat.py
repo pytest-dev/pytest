@@ -149,7 +149,7 @@ if _PY3:
                 # empty bytes crashes codecs.escape_encode (#1087)
                 return ''
 
-    def _ascii_escaped(val):
+    def ascii_escaped(val):
         """If val is pure ascii, returns it as a str().  Otherwise, escapes
         bytes objects into a sequence of escaped bytes:
 
@@ -177,7 +177,7 @@ else:
 
     from itertools import imap, izip  # NOQA
 
-    def _ascii_escaped(val):
+    def ascii_escaped(val):
         """In py2 bytes and str are the same type, so return if it's a bytes
         object, return it unchanged if it is a full ascii string,
         otherwise escape it into its binary form.

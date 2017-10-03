@@ -163,10 +163,30 @@ def test_py2_unicode(testdir, pyfile_with_warnings):
     result.stdout.fnmatch_lines([
         '*== %s ==*' % WARNINGS_SUMMARY_HEADER,
 
-        '*test_py2_unicode.py:8: UserWarning: \u6d4b\u8bd5',
+        '*test_py2_unicode.py:8: UserWarning: \\u6d4b\\u8bd5',
         '*warnings.warn(u"\u6d4b\u8bd5")',
         '*warnings.py:*: UnicodeWarning: Warning is using unicode non*',
         '* 1 passed, 2 warnings*',
+    ])
+
+
+def test_py2_unicode_ascii(testdir):
+    """Ensure that our warning about 'unicode warnings containing non-ascii messages'
+    does not trigger with ascii-convertible messages"""
+    testdir.makeini('[pytest]')
+    testdir.makepyfile('''
+        import pytest
+        import warnings
+
+        @pytest.mark.filterwarnings('always')
+        def test_func():
+            warnings.warn(u"hello")
+    ''')
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        '*== %s ==*' % WARNINGS_SUMMARY_HEADER,
+        '*warnings.warn(u"hello")',
+        '* 1 passed, 1 warnings in*'
     ])
 
 

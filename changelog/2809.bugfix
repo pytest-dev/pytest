@@ -1,0 +1,1 @@
+Pytest no longer complains about warnings with unicode messages being non-ascii compatible even for ascii-compatible messages. As a result of this, warnings with unicode messages are converted first to an ascii representation for safety.
