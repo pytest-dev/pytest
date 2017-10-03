@@ -1,1 +1,0 @@
-In help text of ``-k`` option, add example of using ``not`` to not select certain tests whose names match the provided expression.
