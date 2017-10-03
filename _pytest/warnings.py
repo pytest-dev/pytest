@@ -72,7 +72,7 @@ def catch_warnings_for_item(item):
             unicode_warning = False
 
             if compat._PY2 and any(isinstance(m, compat.UNICODE_TYPES) for m in warn_msg.args):
-                new_args = [m.encode('ascii', 'replace') for m in warn_msg.args]
+                new_args = [compat.ascii_escaped(m) for m in warn_msg.args]
                 unicode_warning = list(warn_msg.args) != new_args
                 warn_msg.args = new_args
 
