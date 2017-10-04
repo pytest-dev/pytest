@@ -663,7 +663,7 @@ def test_skipif_class(testdir):
 
 
 def test_skip_reasons_folding():
-    path = 'xyz'
+    path = "xyz"
     lineno = 3
     message = "justso"
     longrepr = (path, lineno, message)
@@ -680,10 +680,15 @@ def test_skip_reasons_folding():
     ev2.longrepr = longrepr
     ev2.skipped = True
 
-    l = folded_skips([ev1, ev2])
+    # ev3 might be a collection report
+    ev3 = X()
+    ev3.longrepr = longrepr
+    ev3.skipped = True
+
+    l = folded_skips([ev1, ev2, ev3])
     assert len(l) == 1
     num, fspath, lineno, reason = l[0]
-    assert num == 2
+    assert num == 3
     assert fspath == path
     assert lineno == lineno
     assert reason == message

@@ -349,7 +349,8 @@ def folded_skips(skipped):
         # folding reports with global pytestmark variable
         # this is workaround, because for now we cannot identify the scope of a skip marker
         # TODO: revisit after marks scope would be fixed
-        if event.when == 'setup' and 'skip' in keywords and 'pytestmark' not in keywords:
+        when = getattr(event, 'when', None)
+        if when == 'setup' and 'skip' in keywords and 'pytestmark' not in keywords:
             key = (key[0], None, key[2], )
         d.setdefault(key, []).append(event)
     l = []
