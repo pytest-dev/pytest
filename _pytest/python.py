@@ -980,50 +980,48 @@ def _show_fixtures_per_test(config, session):
     tw = _pytest.config.create_terminal_writer(config)
     verbose = config.getvalue("verbose")
 
-    def get_best_rel(func):
+    def get_best_relpath(func):
         loc = getlocation(func, curdir)
         return curdir.bestrelpath(loc)
 
     def write_fixture(fixture_def):
         argname = fixture_def.argname
-
         if verbose <= 0 and argname.startswith("_"):
             return
         if verbose > 0:
-            bestrel = get_best_rel(fixture_def.func)
+            bestrel = get_best_relpath(fixture_def.func)
             funcargspec = "{0} -- {1}".format(argname, bestrel)
         else:
             funcargspec = argname
         tw.line(funcargspec, green=True)
-
         fixture_doc = fixture_def.func.__doc__
-
         if fixture_doc:
             write_docstring(tw, fixture_doc)
         else:
             tw.line('    no docstring available', red=True)
 
     def write_item(item):
-        name2fixturedefs = item._fixtureinfo.name2fixturedefs
-
-        if not name2fixturedefs:
-            # The given test item does not use any fixtures
+        try:
+            info = item._fixtureinfo
+        except AttributeError:
+            # doctests items have no _fixtureinfo attribute
             return
-        bestrel = get_best_rel(item.function)
-
+        if not info.name2fixturedefs:
+            # this test item does not use any fixtures
+            return
         tw.line()
         tw.sep('-', 'fixtures used by {0}'.format(item.name))
-        tw.sep('-', '({0})'.format(bestrel))
-        for argname, fixture_defs in sorted(name2fixturedefs.items()):
-            assert fixture_defs is not None
-            if not fixture_defs:
+        tw.sep('-', '({0})'.format(get_best_relpath(item.function)))
+        # dict key not used in loop but needed for sorting
+        for _, fixturedefs in sorted(info.name2fixturedefs.items()):
+            assert fixturedefs is not None
+            if not fixturedefs:
                 continue
-            # The last fixture def item in the list is expected
-            # to be the one used by the test item
-            write_fixture(fixture_defs[-1])
+            # last item is expected to be the one used by the test item
+            write_fixture(fixturedefs[-1])
 
-    for item in session.items:
-        write_item(item)
+    for session_item in session.items:
+        write_item(session_item)
 
 
 def showfixtures(config):

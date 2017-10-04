@@ -8,6 +8,46 @@
 
 .. towncrier release notes start
 
+Pytest 3.2.3 (2017-10-03)
+=========================
+
+Bug Fixes
+---------
+
+- Fix crash in tab completion when no prefix is given. (`#2748
+  <https://github.com/pytest-dev/pytest/issues/2748>`_)
+
+- The equality checking function (``__eq__``) of ``MarkDecorator`` returns
+  ``False`` if one object is not an instance of ``MarkDecorator``. (`#2758
+  <https://github.com/pytest-dev/pytest/issues/2758>`_)
+
+- When running ``pytest --fixtures-per-test``: don't crash if an item has no
+  _fixtureinfo attribute (e.g. doctests) (`#2788
+  <https://github.com/pytest-dev/pytest/issues/2788>`_)
+
+
+Improved Documentation
+----------------------
+
+- In help text of ``-k`` option, add example of using ``not`` to not select
+  certain tests whose names match the provided expression. (`#1442
+  <https://github.com/pytest-dev/pytest/issues/1442>`_)
+
+- Add note in ``parametrize.rst`` about calling ``metafunc.parametrize``
+  multiple times. (`#1548 <https://github.com/pytest-dev/pytest/issues/1548>`_)
+
+
+Trivial/Internal Changes
+------------------------
+
+- Set ``xfail_strict=True`` in pytest's own test suite to catch expected
+  failures as soon as they start to pass. (`#2722
+  <https://github.com/pytest-dev/pytest/issues/2722>`_)
+
+- Fix typo in example of passing a callable to markers (in example/markers.rst)
+  (`#2765 <https://github.com/pytest-dev/pytest/issues/2765>`_)
+
+
 Pytest 3.2.2 (2017-09-06)
 =========================
 
