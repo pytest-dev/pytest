@@ -19,7 +19,7 @@ class TestDoctests(object):
         """)
 
         for x in (testdir.tmpdir, checkfile):
-            #print "checking that %s returns custom items" % (x,)
+            # print "checking that %s returns custom items" % (x,)
             items, reprec = testdir.inline_genitems(x)
             assert len(items) == 1
             assert isinstance(items[0], DoctestItem)
@@ -32,14 +32,14 @@ class TestDoctests(object):
         path = testdir.makepyfile(whatever="#")
         for p in (path, testdir.tmpdir):
             items, reprec = testdir.inline_genitems(p,
-                '--doctest-modules')
+                                                    '--doctest-modules')
             assert len(items) == 0
 
     def test_collect_module_single_modulelevel_doctest(self, testdir):
         path = testdir.makepyfile(whatever='""">>> pass"""')
         for p in (path, testdir.tmpdir):
             items, reprec = testdir.inline_genitems(p,
-                '--doctest-modules')
+                                                    '--doctest-modules')
             assert len(items) == 1
             assert isinstance(items[0], DoctestItem)
             assert isinstance(items[0].parent, DoctestModule)
@@ -52,7 +52,7 @@ class TestDoctests(object):
         """)
         for p in (path, testdir.tmpdir):
             items, reprec = testdir.inline_genitems(p,
-                '--doctest-modules')
+                                                    '--doctest-modules')
             assert len(items) == 2
             assert isinstance(items[0], DoctestItem)
             assert isinstance(items[1], DoctestItem)
@@ -77,7 +77,7 @@ class TestDoctests(object):
         """)
         for p in (path, testdir.tmpdir):
             items, reprec = testdir.inline_genitems(p,
-                '--doctest-modules')
+                                                    '--doctest-modules')
             assert len(items) == 2
             assert isinstance(items[0], DoctestItem)
             assert isinstance(items[1], DoctestItem)
@@ -135,9 +135,9 @@ class TestDoctests(object):
     @pytest.mark.parametrize(
         '   test_string,    encoding',
         [
-            (u'foo',         'ascii'),
-            (u'öäü',         'latin1'),
-            (u'öäü',         'utf-8')
+            (u'foo', 'ascii'),
+            (u'öäü', 'latin1'),
+            (u'öäü', 'utf-8')
         ]
     )
     def test_encoding(self, testdir, test_string, encoding):
@@ -293,7 +293,6 @@ class TestDoctests(object):
             "*    1",
             "*:5: DocTestFailure"
         ])
-
 
     def test_txtfile_failing(self, testdir):
         p = testdir.maketxtfile("""
@@ -535,7 +534,7 @@ class TestDoctests(object):
         p = testdir.makepyfile(test_unicode_doctest_module="""
             # -*- encoding: utf-8 -*-
             from __future__ import unicode_literals
-            
+
             def fix_bad_unicode(text):
                 '''
                     >>> print(fix_bad_unicode('Ãºnico'))
@@ -545,6 +544,22 @@ class TestDoctests(object):
         """)
         result = testdir.runpytest(p, '--doctest-modules')
         result.stdout.fnmatch_lines(['* 1 passed *'])
+
+    def test_reportinfo(self, testdir):
+        '''
+        Test case to make sure that DoctestItem.reportinfo() returns lineno.
+        '''
+        p = testdir.makepyfile(test_reportinfo="""
+            def foo(x):
+                '''
+                    >>> foo('a')
+                    'b'
+                '''
+                return 'c'
+        """)
+        items, reprec = testdir.inline_genitems(p, '--doctest-modules')
+        reportinfo = items[0].reportinfo()
+        assert reportinfo[1] == 1
 
 
 class TestLiterals(object):
@@ -932,4 +947,3 @@ class TestDoctestReportingOption(object):
         result.stderr.fnmatch_lines([
             "*error: argument --doctest-report: invalid choice: 'obviously_invalid_format' (choose from*"
         ])
-

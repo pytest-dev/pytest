@@ -49,7 +49,7 @@ Plugin discovery order at tool startup
 
   Note that pytest does not find ``conftest.py`` files in deeper nested
   sub directories at tool startup.  It is usually a good idea to keep
-  your conftest.py file in the top level test or project root directory.
+  your ``conftest.py`` file in the top level test or project root directory.
 
 * by recursively loading all plugins specified by the
   ``pytest_plugins`` variable in ``conftest.py`` files
@@ -90,14 +90,16 @@ Here is how you might run it::
      pytest test_flat.py   # will not show "setting up"
      pytest a/test_sub.py  # will show "setting up"
 
-.. Note::
+.. note::
     If you have ``conftest.py`` files which do not reside in a
     python package directory (i.e. one containing an ``__init__.py``) then
     "import conftest" can be ambiguous because there might be other
-    ``conftest.py`` files as well on your PYTHONPATH or ``sys.path``.
+    ``conftest.py`` files as well on your ``PYTHONPATH`` or ``sys.path``.
     It is thus good practice for projects to either put ``conftest.py``
     under a package scope or to never import anything from a
-    conftest.py file.
+    ``conftest.py`` file.
+
+    See also: :ref:`pythonpath`.
 
 
 Writing your own plugin
@@ -122,8 +124,8 @@ to extend and add functionality.
     for authoring plugins.
 
     The template provides an excellent starting point with a working plugin,
-    tests running with tox, comprehensive README and
-    entry-pointy already pre-configured.
+    tests running with tox, a comprehensive README file as well as a
+    pre-configured entry-point.
 
 Also consider :ref:`contributing your plugin to pytest-dev<submitplugin>`
 once it has some happy users other than yourself.
@@ -286,34 +288,101 @@ the ``--trace-config`` option.
 Testing plugins
 ---------------
 
-pytest comes with some facilities that you can enable for testing your
-plugin.  Given that you have an installed plugin you can enable the
-:py:class:`testdir <_pytest.pytester.Testdir>` fixture via specifying a
-command line option to include the pytester plugin (``-p pytester``) or
-by putting ``pytest_plugins = "pytester"`` into your test or
-``conftest.py`` file.  You then will have a ``testdir`` fixture which you
-can use like this::
+pytest comes with a plugin named ``pytester`` that helps you write tests for
+your plugin code. The plugin is disabled by default, so you will have to enable
+it before you can use it.
 
-    # content of test_myplugin.py
+You can do so by adding the following line to a ``conftest.py`` file in your
+testing directory:
 
-    pytest_plugins = "pytester"  # to get testdir fixture
+.. code-block:: python
 
-    def test_myplugin(testdir):
+    # content of conftest.py
+
+    pytest_plugins = ["pytester"]
+
+Alternatively you can invoke pytest with the ``-p pytester`` command line
+option.
+
+This will allow you to use the :py:class:`testdir <_pytest.pytester.Testdir>`
+fixture for testing your plugin code.
+
+Let's demonstrate what you can do with the plugin with an example. Imagine we
+developed a plugin that provides a fixture ``hello`` which yields a function
+and we can invoke this function with one optional parameter. It will return a
+string value of ``Hello World!`` if we do not supply a value or ``Hello
+{value}!`` if we do supply a string value.
+
+.. code-block:: python
+
+    # -*- coding: utf-8 -*-
+
+    import pytest
+
+    def pytest_addoption(parser):
+        group = parser.getgroup('helloworld')
+        group.addoption(
+            '--name',
+            action='store',
+            dest='name',
+            default='World',
+            help='Default "name" for hello().'
+        )
+
+    @pytest.fixture
+    def hello(request):
+        name = request.config.getoption('name')
+
+        def _hello(name=None):
+            if not name:
+                name = request.config.getoption('name')
+            return "Hello {name}!".format(name=name)
+
+        return _hello
+
+
+Now the ``testdir`` fixture provides a convenient API for creating temporary
+``conftest.py`` files and test files. It also allows us to run the tests and
+return a result object, with which we can assert the tests' outcomes.
+
+.. code-block:: python
+
+    def test_hello(testdir):
+        """Make sure that our plugin works."""
+
+        # create a temporary conftest.py file
+        testdir.makeconftest("""
+            import pytest
+
+            @pytest.fixture(params=[
+                "Brianna",
+                "Andreas",
+                "Floris",
+            ])
+            def name(request):
+                return request.param
+        """)
+
+        # create a temporary pytest test file
         testdir.makepyfile("""
-            def test_example():
-                pass
-        """)
-        result = testdir.runpytest("--verbose")
-        result.stdout.fnmatch_lines("""
-            test_example*
+            def test_hello_default(hello):
+                assert hello() == "Hello World!"
+
+            def test_hello_name(hello, name):
+                assert hello(name) == "Hello {0}!".format(name)
         """)
 
-Note that by default ``testdir.runpytest()`` will perform a pytest
-in-process.  You can pass the command line option ``--runpytest=subprocess``
-to have it happen in a subprocess.
+        # run all tests with pytest
+        result = testdir.runpytest()
 
-Also see the :py:class:`RunResult <_pytest.pytester.RunResult>` for more
-methods of the result object that you get from a call to ``runpytest``.
+        # check that all 4 tests passed
+        result.assert_outcomes(passed=4)
+
+
+For more information about the result object that ``runpytest()`` returns, and
+the methods that it provides please check out the :py:class:`RunResult
+<_pytest.pytester.RunResult>` documentation.
+
 
 .. _`writinghooks`:
 
@@ -575,6 +644,7 @@ Session related reporting hooks:
 .. autofunction:: pytest_collectreport
 .. autofunction:: pytest_deselected
 .. autofunction:: pytest_report_header
+.. autofunction:: pytest_report_collectionfinish
 .. autofunction:: pytest_report_teststatus
 .. autofunction:: pytest_terminal_summary
 .. autofunction:: pytest_fixture_setup

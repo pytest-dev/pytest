@@ -378,8 +378,8 @@ class LogXML(object):
             close_report = next(
                 (rep for rep in self.open_reports
                  if (rep.nodeid == report.nodeid and
-                      getattr(rep, "item_index", None) == report_ii and
-                      getattr(rep, "worker_id", None) == report_wid
+                     getattr(rep, "item_index", None) == report_ii and
+                     getattr(rep, "worker_id", None) == report_wid
                      )
                  ), None)
             if close_report:
@@ -444,9 +444,9 @@ class LogXML(object):
         """
         if self.global_properties:
             return Junit.properties(
-                    [
-                        Junit.property(name=name, value=value)
-                        for name, value in self.global_properties
-                    ]
+                [
+                    Junit.property(name=name, value=value)
+                    for name, value in self.global_properties
+                ]
             )
         return ''

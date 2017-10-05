@@ -5,6 +5,7 @@ import pytest
 
 from _pytest.tmpdir import tmpdir
 
+
 def test_funcarg(testdir):
     testdir.makepyfile("""
             def pytest_generate_tests(metafunc):
@@ -29,11 +30,13 @@ def test_funcarg(testdir):
     bn = p.basename.strip("0123456789")
     assert bn == "qwe__abc"
 
+
 def test_ensuretemp(recwarn):
     d1 = pytest.ensuretemp('hello')
     d2 = pytest.ensuretemp('hello')
     assert d1 == d2
     assert d1.check(dir=1)
+
 
 class TestTempdirHandler(object):
     def test_mktemp(self, testdir):
@@ -48,6 +51,7 @@ class TestTempdirHandler(object):
         tmp2 = t.mktemp("this")
         assert tmp2.relto(t.getbasetemp()).startswith("this")
         assert tmp2 != tmp
+
 
 class TestConfigTmpdir(object):
     def test_getbasetemp_custom_removes_old(self, testdir):
@@ -75,6 +79,7 @@ def test_basetemp(testdir):
     result = testdir.runpytest(p, '--basetemp=%s' % mytemp)
     assert result.ret == 0
     assert mytemp.join('hello').check()
+
 
 @pytest.mark.skipif(not hasattr(py.path.local, 'mksymlinkto'),
                     reason="symlink not available on this platform")

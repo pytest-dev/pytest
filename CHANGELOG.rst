@@ -8,6 +8,335 @@
 
 .. towncrier release notes start
 
+Pytest 3.2.3 (2017-10-03)
+=========================
+
+Bug Fixes
+---------
+
+- Fix crash in tab completion when no prefix is given. (`#2748
+  <https://github.com/pytest-dev/pytest/issues/2748>`_)
+
+- The equality checking function (``__eq__``) of ``MarkDecorator`` returns
+  ``False`` if one object is not an instance of ``MarkDecorator``. (`#2758
+  <https://github.com/pytest-dev/pytest/issues/2758>`_)
+
+- When running ``pytest --fixtures-per-test``: don't crash if an item has no
+  _fixtureinfo attribute (e.g. doctests) (`#2788
+  <https://github.com/pytest-dev/pytest/issues/2788>`_)
+
+
+Improved Documentation
+----------------------
+
+- In help text of ``-k`` option, add example of using ``not`` to not select
+  certain tests whose names match the provided expression. (`#1442
+  <https://github.com/pytest-dev/pytest/issues/1442>`_)
+
+- Add note in ``parametrize.rst`` about calling ``metafunc.parametrize``
+  multiple times. (`#1548 <https://github.com/pytest-dev/pytest/issues/1548>`_)
+
+
+Trivial/Internal Changes
+------------------------
+
+- Set ``xfail_strict=True`` in pytest's own test suite to catch expected
+  failures as soon as they start to pass. (`#2722
+  <https://github.com/pytest-dev/pytest/issues/2722>`_)
+
+- Fix typo in example of passing a callable to markers (in example/markers.rst)
+  (`#2765 <https://github.com/pytest-dev/pytest/issues/2765>`_)
+
+
+Pytest 3.2.2 (2017-09-06)
+=========================
+
+Bug Fixes
+---------
+
+- Calling the deprecated `request.getfuncargvalue()` now shows the source of
+  the call. (`#2681 <https://github.com/pytest-dev/pytest/issues/2681>`_)
+
+- Allow tests declared as ``@staticmethod`` to use fixtures. (`#2699
+  <https://github.com/pytest-dev/pytest/issues/2699>`_)
+
+- Fixed edge-case during collection: attributes which raised ``pytest.fail``
+  when accessed would abort the entire collection. (`#2707
+  <https://github.com/pytest-dev/pytest/issues/2707>`_)
+
+- Fix ``ReprFuncArgs`` with mixed unicode and UTF-8 args. (`#2731
+  <https://github.com/pytest-dev/pytest/issues/2731>`_)
+
+
+Improved Documentation
+----------------------
+
+- In examples on working with custom markers, add examples demonstrating the
+  usage of ``pytest.mark.MARKER_NAME.with_args`` in comparison with
+  ``pytest.mark.MARKER_NAME.__call__`` (`#2604
+  <https://github.com/pytest-dev/pytest/issues/2604>`_)
+
+- In one of the simple examples, use `pytest_collection_modifyitems()` to skip
+  tests based on a command-line option, allowing its sharing while preventing a
+  user error when acessing `pytest.config` before the argument parsing. (`#2653
+  <https://github.com/pytest-dev/pytest/issues/2653>`_)
+
+
+Trivial/Internal Changes
+------------------------
+
+- Fixed minor error in 'Good Practices/Manual Integration' code snippet.
+  (`#2691 <https://github.com/pytest-dev/pytest/issues/2691>`_)
+
+- Fixed typo in goodpractices.rst. (`#2721
+  <https://github.com/pytest-dev/pytest/issues/2721>`_)
+
+- Improve user guidance regarding ``--resultlog`` deprecation. (`#2739
+  <https://github.com/pytest-dev/pytest/issues/2739>`_)
+
+
+Pytest 3.2.1 (2017-08-08)
+=========================
+
+Bug Fixes
+---------
+
+- Fixed small terminal glitch when collecting a single test item. (`#2579
+  <https://github.com/pytest-dev/pytest/issues/2579>`_)
+
+- Correctly consider ``/`` as the file separator to automatically mark plugin
+  files for rewrite on Windows. (`#2591 <https://github.com/pytest-
+  dev/pytest/issues/2591>`_)
+
+- Properly escape test names when setting ``PYTEST_CURRENT_TEST`` environment
+  variable. (`#2644 <https://github.com/pytest-dev/pytest/issues/2644>`_)
+
+- Fix error on Windows and Python 3.6+ when ``sys.stdout`` has been replaced
+  with a stream-like object which does not implement the full ``io`` module
+  buffer protocol. In particular this affects ``pytest-xdist`` users on the
+  aforementioned platform. (`#2666 <https://github.com/pytest-
+  dev/pytest/issues/2666>`_)
+
+
+Improved Documentation
+----------------------
+
+- Explicitly document which pytest features work with ``unittest``. (`#2626
+  <https://github.com/pytest-dev/pytest/issues/2626>`_)
+
+
+Pytest 3.2.0 (2017-07-30)
+=========================
+
+Deprecations and Removals
+-------------------------
+
+- ``pytest.approx`` no longer supports ``>``, ``>=``, ``<`` and ``<=``
+  operators to avoid surprising/inconsistent behavior. See `the docs
+  <https://docs.pytest.org/en/latest/builtin.html#pytest.approx>`_ for more
+  information. (`#2003 <https://github.com/pytest-dev/pytest/issues/2003>`_)
+
+- All old-style specific behavior in current classes in the pytest's API is
+  considered deprecated at this point and will be removed in a future release.
+  This affects Python 2 users only and in rare situations. (`#2147
+  <https://github.com/pytest-dev/pytest/issues/2147>`_)
+
+- A deprecation warning is now raised when using marks for parameters
+  in ``pytest.mark.parametrize``. Use ``pytest.param`` to apply marks to
+  parameters instead. (`#2427 <https://github.com/pytest-dev/pytest/issues/2427>`_)
+
+
+Features
+--------
+
+- Add support for numpy arrays (and dicts) to approx. (`#1994
+  <https://github.com/pytest-dev/pytest/issues/1994>`_)
+
+- Now test function objects have a ``pytestmark`` attribute containing a list
+  of marks applied directly to the test function, as opposed to marks inherited
+  from parent classes or modules. (`#2516 <https://github.com/pytest-
+  dev/pytest/issues/2516>`_)
+
+- Collection ignores local virtualenvs by default; `--collect-in-virtualenv`
+  overrides this behavior. (`#2518 <https://github.com/pytest-
+  dev/pytest/issues/2518>`_)
+
+- Allow class methods decorated as ``@staticmethod`` to be candidates for
+  collection as a test function. (Only for Python 2.7 and above. Python 2.6
+  will still ignore static methods.) (`#2528 <https://github.com/pytest-
+  dev/pytest/issues/2528>`_)
+
+- Introduce ``mark.with_args`` in order to allow passing functions/classes as
+  sole argument to marks. (`#2540 <https://github.com/pytest-
+  dev/pytest/issues/2540>`_)
+
+- New ``cache_dir`` ini option: sets the directory where the contents of the
+  cache plugin are stored. Directory may be relative or absolute path: if relative path, then
+  directory is created relative to ``rootdir``, otherwise it is used as is.
+  Additionally path may contain environment variables which are expanded during
+  runtime. (`#2543 <https://github.com/pytest-dev/pytest/issues/2543>`_)
+
+- Introduce the ``PYTEST_CURRENT_TEST`` environment variable that is set with
+  the ``nodeid`` and stage (``setup``, ``call`` and ``teardown``) of the test
+  being currently executed. See the `documentation
+  <https://docs.pytest.org/en/latest/example/simple.html#pytest-current-test-
+  environment-variable>`_ for more info. (`#2583 <https://github.com/pytest-
+  dev/pytest/issues/2583>`_)
+
+- Introduced ``@pytest.mark.filterwarnings`` mark which allows overwriting the
+  warnings filter on a per test, class or module level. See the `docs
+  <https://docs.pytest.org/en/latest/warnings.html#pytest-mark-
+  filterwarnings>`_ for more information. (`#2598 <https://github.com/pytest-
+  dev/pytest/issues/2598>`_)
+
+- ``--last-failed`` now remembers forever when a test has failed and only
+  forgets it if it passes again. This makes it easy to fix a test suite by
+  selectively running files and fixing tests incrementally. (`#2621
+  <https://github.com/pytest-dev/pytest/issues/2621>`_)
+
+- New ``pytest_report_collectionfinish`` hook which allows plugins to add
+  messages to the terminal reporting after collection has been finished
+  successfully. (`#2622 <https://github.com/pytest-dev/pytest/issues/2622>`_)
+
+- Added support for `PEP-415's <https://www.python.org/dev/peps/pep-0415/>`_
+  ``Exception.__suppress_context__``. Now if a ``raise exception from None`` is
+  caught by pytest, pytest will no longer chain the context in the test report.
+  The behavior now matches Python's traceback behavior. (`#2631
+  <https://github.com/pytest-dev/pytest/issues/2631>`_)
+
+- Exceptions raised by ``pytest.fail``, ``pytest.skip`` and ``pytest.xfail``
+  now subclass BaseException, making them harder to be caught unintentionally
+  by normal code. (`#580 <https://github.com/pytest-dev/pytest/issues/580>`_)
+
+
+Bug Fixes
+---------
+
+- Set ``stdin`` to a closed ``PIPE`` in ``pytester.py.Testdir.popen()`` for
+  avoid unwanted interactive ``pdb`` (`#2023 <https://github.com/pytest-
+  dev/pytest/issues/2023>`_)
+
+- Add missing ``encoding`` attribute to ``sys.std*`` streams when using
+  ``capsys`` capture mode. (`#2375 <https://github.com/pytest-
+  dev/pytest/issues/2375>`_)
+
+- Fix terminal color changing to black on Windows if ``colorama`` is imported
+  in a ``conftest.py`` file. (`#2510 <https://github.com/pytest-
+  dev/pytest/issues/2510>`_)
+
+- Fix line number when reporting summary of skipped tests. (`#2548
+  <https://github.com/pytest-dev/pytest/issues/2548>`_)
+
+- capture: ensure that EncodedFile.name is a string. (`#2555
+  <https://github.com/pytest-dev/pytest/issues/2555>`_)
+
+- The options ``--fixtures`` and ``--fixtures-per-test`` will now keep
+  indentation within docstrings. (`#2574 <https://github.com/pytest-
+  dev/pytest/issues/2574>`_)
+
+- doctests line numbers are now reported correctly, fixing `pytest-sugar#122
+  <https://github.com/Frozenball/pytest-sugar/issues/122>`_. (`#2610
+  <https://github.com/pytest-dev/pytest/issues/2610>`_)
+
+- Fix non-determinism in order of fixture collection. Adds new dependency
+  (ordereddict) for Python 2.6. (`#920 <https://github.com/pytest-
+  dev/pytest/issues/920>`_)
+
+
+Improved Documentation
+----------------------
+
+- Clarify ``pytest_configure`` hook call order. (`#2539
+  <https://github.com/pytest-dev/pytest/issues/2539>`_)
+
+- Extend documentation for testing plugin code with the ``pytester`` plugin.
+  (`#971 <https://github.com/pytest-dev/pytest/issues/971>`_)
+
+
+Trivial/Internal Changes
+------------------------
+
+- Update help message for ``--strict`` to make it clear it only deals with
+  unregistered markers, not warnings. (`#2444 <https://github.com/pytest-
+  dev/pytest/issues/2444>`_)
+
+- Internal code move: move code for pytest.approx/pytest.raises to own files in
+  order to cut down the size of python.py (`#2489 <https://github.com/pytest-
+  dev/pytest/issues/2489>`_)
+
+- Renamed the utility function ``_pytest.compat._escape_strings`` to
+  ``_ascii_escaped`` to better communicate the function's purpose. (`#2533
+  <https://github.com/pytest-dev/pytest/issues/2533>`_)
+
+- Improve error message for CollectError with skip/skipif. (`#2546
+  <https://github.com/pytest-dev/pytest/issues/2546>`_)
+
+- Emit warning about ``yield`` tests being deprecated only once per generator.
+  (`#2562 <https://github.com/pytest-dev/pytest/issues/2562>`_)
+
+- Ensure final collected line doesn't include artifacts of previous write.
+  (`#2571 <https://github.com/pytest-dev/pytest/issues/2571>`_)
+
+- Fixed all flake8 errors and warnings. (`#2581 <https://github.com/pytest-
+  dev/pytest/issues/2581>`_)
+
+- Added ``fix-lint`` tox environment to run automatic pep8 fixes on the code.
+  (`#2582 <https://github.com/pytest-dev/pytest/issues/2582>`_)
+
+- Turn warnings into errors in pytest's own test suite in order to catch
+  regressions due to deprecations more promptly. (`#2588
+  <https://github.com/pytest-dev/pytest/issues/2588>`_)
+
+- Show multiple issue links in CHANGELOG entries. (`#2620
+  <https://github.com/pytest-dev/pytest/issues/2620>`_)
+
+
+Pytest 3.1.3 (2017-07-03)
+=========================
+
+Bug Fixes
+---------
+
+- Fix decode error in Python 2 for doctests in docstrings. (`#2434
+  <https://github.com/pytest-dev/pytest/issues/2434>`_)
+
+- Exceptions raised during teardown by finalizers are now suppressed until all
+  finalizers are called, with the initial exception reraised. (`#2440
+  <https://github.com/pytest-dev/pytest/issues/2440>`_)
+
+- Fix incorrect "collected items" report when specifying tests on the command-
+  line. (`#2464 <https://github.com/pytest-dev/pytest/issues/2464>`_)
+
+- ``deprecated_call`` in context-manager form now captures deprecation warnings
+  even if the same warning has already been raised. Also, ``deprecated_call``
+  will always produce the same error message (previously it would produce
+  different messages in context-manager vs. function-call mode). (`#2469
+  <https://github.com/pytest-dev/pytest/issues/2469>`_)
+
+- Fix issue where paths collected by pytest could have triple leading ``/``
+  characters. (`#2475 <https://github.com/pytest-dev/pytest/issues/2475>`_)
+
+- Fix internal error when trying to detect the start of a recursive traceback.
+  (`#2486 <https://github.com/pytest-dev/pytest/issues/2486>`_)
+
+
+Improved Documentation
+----------------------
+
+- Explicitly state for which hooks the calls stop after the first non-None
+  result. (`#2493 <https://github.com/pytest-dev/pytest/issues/2493>`_)
+
+
+Trivial/Internal Changes
+------------------------
+
+- Create invoke tasks for updating the vendored packages. (`#2474
+  <https://github.com/pytest-dev/pytest/issues/2474>`_)
+
+- Update copyright dates in LICENSE, README.rst and in the documentation.
+  (`#2499 <https://github.com/pytest-dev/pytest/issues/2499>`_)
+
+
 Pytest 3.1.2 (2017-06-08)
 =========================
 

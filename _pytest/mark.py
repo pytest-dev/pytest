@@ -2,13 +2,21 @@
 from __future__ import absolute_import, division, print_function
 
 import inspect
+import warnings
 from collections import namedtuple
 from operator import attrgetter
 from .compat import imap
+from .deprecated import MARK_PARAMETERSET_UNPACKING
 
 
-def alias(name):
-    return property(attrgetter(name), doc='alias for ' + name)
+def alias(name, warning=None):
+    getter = attrgetter(name)
+
+    def warned(self):
+        warnings.warn(warning, stacklevel=2)
+        return getter(self)
+
+    return property(getter if warning is None else warned, doc='alias for ' + name)
 
 
 class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
@@ -54,6 +62,9 @@ class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
         if legacy_force_tuple:
             argval = argval,
 
+        if newmarks:
+            warnings.warn(MARK_PARAMETERSET_UNPACKING)
+
         return cls(argval, marks=newmarks, id=None)
 
     @property
@@ -80,7 +91,8 @@ def pytest_addoption(parser):
              "where all names are substring-matched against test names "
              "and their parent classes. Example: -k 'test_method or test_"
              "other' matches all test functions and classes whose name "
-             "contains 'test_method' or 'test_other'. "
+             "contains 'test_method' or 'test_other', while -k 'not test_method' "
+             "matches those that don't contain 'test_method' in their names. "
              "Additionally keywords are matched to classes and functions "
              "containing extra names in their 'extra_keyword_matches' set, "
              "as well as functions which have names assigned directly to them."
@@ -155,6 +167,7 @@ def pytest_collection_modifyitems(items, config):
 class MarkMapping:
     """Provides a local mapping for markers where item access
     resolves to True if the marker is present. """
+
     def __init__(self, keywords):
         mymarks = set()
         for key, value in keywords.items():
@@ -170,6 +183,7 @@ class KeywordMapping:
     """Provides a local mapping for keywords.
     Given a list of names, map any substring of one of these names to True.
     """
+
     def __init__(self, names):
         self._names = names
 
@@ -243,7 +257,6 @@ class MarkGenerator:
     on the ``test_function`` object. """
     _config = None
 
-
     def __getattr__(self, name):
         if name[0] == "_":
             raise AttributeError("Marker name must NOT start with underscore")
@@ -269,6 +282,7 @@ class MarkGenerator:
 def istestfunc(func):
     return hasattr(func, "__call__") and \
         getattr(func, "__name__", "<lambda>") != "<lambda>"
+
 
 class MarkDecorator:
     """ A decorator for test functions and test classes.  When applied
@@ -303,6 +317,7 @@ class MarkDecorator:
     additional keyword or positional arguments.
 
     """
+
     def __init__(self, mark):
         assert isinstance(mark, Mark), repr(mark)
         self.mark = mark
@@ -313,13 +328,24 @@ class MarkDecorator:
 
     @property
     def markname(self):
-        return self.name # for backward-compat (2.4.1 had this attr)
+        return self.name  # for backward-compat (2.4.1 had this attr)
 
     def __eq__(self, other):
-        return self.mark == other.mark
+        return self.mark == other.mark if isinstance(other, MarkDecorator) else False
 
     def __repr__(self):
         return "<MarkDecorator %r>" % (self.mark,)
+
+    def with_args(self, *args, **kwargs):
+        """ return a MarkDecorator with extra arguments added
+
+        unlike call this can be used even if the sole argument is a callable/class
+
+        :return: MarkDecorator
+        """
+
+        mark = Mark(self.name, args, kwargs)
+        return self.__class__(self.mark.combined_with(mark))
 
     def __call__(self, *args, **kwargs):
         """ if passed a single callable argument: decorate it with mark info.
@@ -329,30 +355,49 @@ class MarkDecorator:
             is_class = inspect.isclass(func)
             if len(args) == 1 and (istestfunc(func) or is_class):
                 if is_class:
-                    if hasattr(func, 'pytestmark'):
-                        mark_list = func.pytestmark
-                        if not isinstance(mark_list, list):
-                            mark_list = [mark_list]
-                        # always work on a copy to avoid updating pytestmark
-                        # from a superclass by accident
-                        mark_list = mark_list + [self]
-                        func.pytestmark = mark_list
-                    else:
-                        func.pytestmark = [self]
+                    store_mark(func, self.mark)
                 else:
-                    holder = getattr(func, self.name, None)
-                    if holder is None:
-                        holder = MarkInfo(self.mark)
-                        setattr(func, self.name, holder)
-                    else:
-                        holder.add_mark(self.mark)
+                    store_legacy_markinfo(func, self.mark)
+                    store_mark(func, self.mark)
                 return func
-
-        mark = Mark(self.name, args, kwargs)
-        return self.__class__(self.mark.combined_with(mark))
+        return self.with_args(*args, **kwargs)
 
 
+def get_unpacked_marks(obj):
+    """
+    obtain the unpacked marks that are stored on a object
+    """
+    mark_list = getattr(obj, 'pytestmark', [])
 
+    if not isinstance(mark_list, list):
+        mark_list = [mark_list]
+    return [
+        getattr(mark, 'mark', mark)  # unpack MarkDecorator
+        for mark in mark_list
+    ]
+
+
+def store_mark(obj, mark):
+    """store a Mark on a object
+    this is used to implement the Mark declarations/decorators correctly
+    """
+    assert isinstance(mark, Mark), mark
+    # always reassign name to avoid updating pytestmark
+    # in a referene that was only borrowed
+    obj.pytestmark = get_unpacked_marks(obj) + [mark]
+
+
+def store_legacy_markinfo(func, mark):
+    """create the legacy MarkInfo objects and put them onto the function
+    """
+    if not isinstance(mark, Mark):
+        raise TypeError("got {mark!r} instead of a Mark".format(mark=mark))
+    holder = getattr(func, mark.name, None)
+    if holder is None:
+        holder = MarkInfo(mark)
+        setattr(func, mark.name, holder)
+    else:
+        holder.add_mark(mark)
 
 
 class Mark(namedtuple('Mark', 'name, args, kwargs')):
@@ -366,6 +411,7 @@ class Mark(namedtuple('Mark', 'name, args, kwargs')):
 
 class MarkInfo(object):
     """ Marking object created by :class:`MarkDecorator` instances. """
+
     def __init__(self, mark):
         assert isinstance(mark, Mark), repr(mark)
         self.combined = mark
@@ -389,3 +435,30 @@ class MarkInfo(object):
 
 
 MARK_GEN = MarkGenerator()
+
+
+def _marked(func, mark):
+    """ Returns True if :func: is already marked with :mark:, False otherwise.
+    This can happen if marker is applied to class and the test file is
+    invoked more than once.
+    """
+    try:
+        func_mark = getattr(func, mark.name)
+    except AttributeError:
+        return False
+    return mark.args == func_mark.args and mark.kwargs == func_mark.kwargs
+
+
+def transfer_markers(funcobj, cls, mod):
+    """
+    this function transfers class level markers and module level markers
+    into function level markinfo objects
+
+    this is the main reason why marks are so broken
+    the resolution will involve phasing out function level MarkInfo objects
+
+    """
+    for obj in (cls, mod):
+        for mark in get_unpacked_marks(obj):
+            if not _marked(funcobj, mark):
+                store_legacy_markinfo(funcobj, mark)

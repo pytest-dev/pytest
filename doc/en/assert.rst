@@ -28,7 +28,7 @@ you will see the return value of the function call::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 1 items
+    collected 1 item
     
     test_assert1.py F
     
@@ -119,9 +119,9 @@ exceptions your own code is deliberately raising, whereas using
 like documenting unfixed bugs (where the test describes what "should" happen)
 or bugs in dependencies.
 
-If you want to test that a regular expression matches on the string
-representation of an exception (like the ``TestCase.assertRaisesRegexp`` method
-from ``unittest``) you can use the ``ExceptionInfo.match`` method::
+Also, the context manager form accepts a ``match`` keyword parameter to test
+that a regular expression matches on the string representation of an exception
+(like the ``TestCase.assertRaisesRegexp`` method from ``unittest``)::
 
     import pytest
 
@@ -129,12 +129,11 @@ from ``unittest``) you can use the ``ExceptionInfo.match`` method::
         raise ValueError("Exception 123 raised")
 
     def test_match():
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError, match=r'.* 123 .*'):
             myfunc()
-        excinfo.match(r'.* 123 .*')
 
 The regexp parameter of the ``match`` method is matched with the ``re.search``
-function. So in the above example ``excinfo.match('123')`` would have worked as
+function. So in the above example ``match='123'`` would have worked as
 well.
 
 
@@ -172,7 +171,7 @@ if you run this module::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 1 items
+    collected 1 item
     
     test_assert2.py F
     

@@ -9,7 +9,8 @@ Installation and Getting Started
 
 **dependencies**: `py <http://pypi.python.org/pypi/py>`_,
 `colorama (Windows) <http://pypi.python.org/pypi/colorama>`_,
-`argparse (py26) <http://pypi.python.org/pypi/argparse>`_.
+`argparse (py26) <http://pypi.python.org/pypi/argparse>`_,
+`ordereddict (py26) <http://pypi.python.org/pypi/ordereddict>`_.
 
 **documentation as PDF**: `download latest <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
 
@@ -48,7 +49,7 @@ That's it. You can execute the test function now::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 1 items
+    collected 1 item
     
     test_sample.py F
     

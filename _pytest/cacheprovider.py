@@ -8,19 +8,30 @@ from __future__ import absolute_import, division, print_function
 import py
 import pytest
 import json
+import os
 from os.path import sep as _sep, altsep as _altsep
 
 
 class Cache(object):
     def __init__(self, config):
         self.config = config
-        self._cachedir = config.rootdir.join(".cache")
+        self._cachedir = Cache.cache_dir_from_config(config)
         self.trace = config.trace.root.get("cache")
         if config.getvalue("cacheclear"):
             self.trace("clearing cachedir")
             if self._cachedir.check():
                 self._cachedir.remove()
             self._cachedir.mkdir()
+
+    @staticmethod
+    def cache_dir_from_config(config):
+        cache_dir = config.getini("cache_dir")
+        cache_dir = os.path.expanduser(cache_dir)
+        cache_dir = os.path.expandvars(cache_dir)
+        if os.path.isabs(cache_dir):
+            return py.path.local(cache_dir)
+        else:
+            return config.rootdir.join(cache_dir)
 
     def makedir(self, name):
         """ return a directory path object with the given name.  If the
@@ -89,31 +100,31 @@ class Cache(object):
 
 class LFPlugin:
     """ Plugin which implements the --lf (run last-failing) option """
+
     def __init__(self, config):
         self.config = config
         active_keys = 'lf', 'failedfirst'
         self.active = any(config.getvalue(key) for key in active_keys)
-        if self.active:
-            self.lastfailed = config.cache.get("cache/lastfailed", {})
-        else:
-            self.lastfailed = {}
+        self.lastfailed = config.cache.get("cache/lastfailed", {})
+        self._previously_failed_count = None
 
-    def pytest_report_header(self):
+    def pytest_report_collectionfinish(self):
         if self.active:
-            if not self.lastfailed:
+            if not self._previously_failed_count:
                 mode = "run all (no recorded failures)"
             else:
-                mode = "rerun last %d failures%s" % (
-                    len(self.lastfailed),
-                    " first" if self.config.getvalue("failedfirst") else "")
+                noun = 'failure' if self._previously_failed_count == 1 else 'failures'
+                suffix = " first" if self.config.getvalue("failedfirst") else ""
+                mode = "rerun previous {count} {noun}{suffix}".format(
+                    count=self._previously_failed_count, suffix=suffix, noun=noun
+                )
             return "run-last-failure: %s" % mode
 
     def pytest_runtest_logreport(self, report):
-        if report.failed and "xfail" not in report.keywords:
+        if (report.when == 'call' and report.passed) or report.skipped:
+            self.lastfailed.pop(report.nodeid, None)
+        elif report.failed:
             self.lastfailed[report.nodeid] = True
-        elif not report.failed:
-            if report.when == "call":
-                self.lastfailed.pop(report.nodeid, None)
 
     def pytest_collectreport(self, report):
         passed = report.outcome in ('passed', 'skipped')
@@ -135,11 +146,12 @@ class LFPlugin:
                     previously_failed.append(item)
                 else:
                     previously_passed.append(item)
-            if not previously_failed and previously_passed:
+            self._previously_failed_count = len(previously_failed)
+            if not previously_failed:
                 # running a subset of all tests with recorded failures outside
                 # of the set of tests currently executing
-                pass
-            elif self.config.getvalue("lf"):
+                return
+            if self.config.getvalue("lf"):
                 items[:] = previously_failed
                 config.hook.pytest_deselected(items=previously_passed)
             else:
@@ -149,8 +161,9 @@ class LFPlugin:
         config = self.config
         if config.getvalue("cacheshow") or hasattr(config, "slaveinput"):
             return
-        prev_failed = config.cache.get("cache/lastfailed", None) is not None
-        if (session.testscollected and prev_failed) or self.lastfailed:
+
+        saved_lastfailed = config.cache.get("cache/lastfailed", {})
+        if saved_lastfailed != self.lastfailed:
             config.cache.set("cache/lastfailed", self.lastfailed)
 
 
@@ -171,13 +184,15 @@ def pytest_addoption(parser):
     group.addoption(
         '--cache-clear', action='store_true', dest="cacheclear",
         help="remove all cache contents at start of test run.")
+    parser.addini(
+        "cache_dir", default='.cache',
+        help="cache directory path.")
 
 
 def pytest_cmdline_main(config):
     if config.option.cacheshow:
         from _pytest.main import wrap_session
         return wrap_session(config, cacheshow)
-
 
 
 @pytest.hookimpl(tryfirst=True)
@@ -224,7 +239,7 @@ def cacheshow(config, session):
         val = config.cache.get(key, dummy)
         if val is dummy:
             tw.line("%s contains unreadable content, "
-                  "will be ignored" % key)
+                    "will be ignored" % key)
         else:
             tw.line("%s contains:" % key)
             stream = py.io.TextIO()
@@ -236,7 +251,7 @@ def cacheshow(config, session):
     if ddir.isdir() and ddir.listdir():
         tw.sep("-", "cache directories")
         for p in sorted(basedir.join("d").visit()):
-            #if p.check(dir=1):
+            # if p.check(dir=1):
             #    print("%s/" % p.relto(basedir))
             if p.isfile():
                 key = p.relto(basedir)

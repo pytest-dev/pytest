@@ -2,3 +2,4 @@ invoke
 tox
 gitpython
 towncrier
+wheel

@@ -600,6 +600,7 @@ class TestPython(object):
         assert "hello-stdout call" in systemout.toxml()
         assert "hello-stdout teardown" in systemout.toxml()
 
+
 def test_mangle_test_address():
     from _pytest.junitxml import mangle_test_address
     address = '::'.join(
@@ -760,10 +761,12 @@ def test_logxml_makedir(testdir):
     assert result.ret == 0
     assert testdir.tmpdir.join("path/to/results.xml").check()
 
+
 def test_logxml_check_isdir(testdir):
     """Give an error if --junit-xml is a directory (#2089)"""
     result = testdir.runpytest("--junit-xml=.")
     result.stderr.fnmatch_lines(["*--junitxml must be a filename*"])
+
 
 def test_escaped_parametrized_names_xml(testdir):
     testdir.makepyfile("""
@@ -1057,4 +1060,3 @@ def test_set_suite_name(testdir, suite_name):
     assert result.ret == 0
     node = dom.find_first_by_tag("testsuite")
     node.assert_attr(name=expected)
-

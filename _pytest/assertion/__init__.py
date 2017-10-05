@@ -25,7 +25,6 @@ def pytest_addoption(parser):
                             expression information.""")
 
 
-
 def register_assert_rewrite(*names):
     """Register one or more module names to be rewritten on import.
 

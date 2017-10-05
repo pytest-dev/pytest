@@ -80,7 +80,7 @@ class TestEvaluator(object):
                 %s
                 def test_func():
                     pass
-            """ % (lines[i], lines[(i+1) %2]))
+            """ % (lines[i], lines[(i + 1) % 2]))
             ev = MarkEvaluator(item, 'skipif')
             assert ev
             assert ev.istrue()
@@ -207,9 +207,9 @@ class TestXFail(object):
                 assert 0
         """)
         testdir.runpytest(p, '-v')
-        #result.stdout.fnmatch_lines([
+        # result.stdout.fnmatch_lines([
         #    "*HINT*use*-r*"
-        #])
+        # ])
 
     def test_xfail_not_run_xfail_reporting(self, testdir):
         p = testdir.makepyfile(test_one="""
@@ -349,7 +349,6 @@ class TestXFail(object):
         result.stdout.fnmatch_lines([
             "*1 xfailed*",
         ])
-
 
     @pytest.mark.parametrize('expected, actual, matchline',
                              [('TypeError', 'TypeError', "*1 xfailed*"),
@@ -576,11 +575,12 @@ class TestSkip(object):
             def test_hello():
                 pass
         """)
-        result = testdir.runpytest("-rs --strict")
+        result = testdir.runpytest("-rs")
         result.stdout.fnmatch_lines([
             "*unconditional skip*",
             "*1 skipped*",
         ])
+
 
 class TestSkipif(object):
     def test_skipif_conditional(self, testdir):
@@ -589,7 +589,7 @@ class TestSkipif(object):
             @pytest.mark.skipif("hasattr(os, 'sep')")
             def test_func():
                 pass
-        """) # noqa
+        """)  # noqa
         x = pytest.raises(pytest.skip.Exception, lambda:
                           pytest_runtest_setup(item))
         assert x.value.msg == "condition: hasattr(os, 'sep')"
@@ -640,7 +640,7 @@ def test_skip_not_report_default(testdir):
     """)
     result = testdir.runpytest(p, '-v')
     result.stdout.fnmatch_lines([
-        #"*HINT*use*-r*",
+        # "*HINT*use*-r*",
         "*1 skipped*",
     ])
 
@@ -687,6 +687,7 @@ def test_skip_reasons_folding():
     assert lineno == lineno
     assert reason == message
 
+
 def test_skipped_reasons_functional(testdir):
     testdir.makepyfile(
         test_one="""
@@ -699,7 +700,7 @@ def test_skipped_reasons_functional(testdir):
                 def test_method(self):
                     doskip()
        """,
-       conftest = """
+        conftest="""
             import pytest
             def doskip():
                 pytest.skip('test')
@@ -707,9 +708,10 @@ def test_skipped_reasons_functional(testdir):
     )
     result = testdir.runpytest('-rs')
     result.stdout.fnmatch_lines([
-        "*SKIP*2*conftest.py:3: test",
+        "*SKIP*2*conftest.py:4: test",
     ])
     assert result.ret == 0
+
 
 def test_reportchars(testdir):
     testdir.makepyfile("""
@@ -733,6 +735,7 @@ def test_reportchars(testdir):
         "SKIP*four*",
     ])
 
+
 def test_reportchars_error(testdir):
     testdir.makepyfile(
         conftest="""
@@ -747,6 +750,7 @@ def test_reportchars_error(testdir):
     result.stdout.fnmatch_lines([
         'ERROR*test_foo*',
     ])
+
 
 def test_reportchars_all(testdir):
     testdir.makepyfile("""
@@ -770,6 +774,7 @@ def test_reportchars_all(testdir):
         "XPASS*test_3*",
     ])
 
+
 def test_reportchars_all_error(testdir):
     testdir.makepyfile(
         conftest="""
@@ -784,6 +789,7 @@ def test_reportchars_all_error(testdir):
     result.stdout.fnmatch_lines([
         'ERROR*test_foo*',
     ])
+
 
 @pytest.mark.xfail("hasattr(sys, 'pypy_version_info')")
 def test_errors_in_xfail_skip_expressions(testdir):
@@ -816,6 +822,7 @@ def test_errors_in_xfail_skip_expressions(testdir):
         "*1 pass*2 error*",
     ])
 
+
 def test_xfail_skipif_with_globals(testdir):
     testdir.makepyfile("""
         import pytest
@@ -833,6 +840,7 @@ def test_xfail_skipif_with_globals(testdir):
         "*XFAIL*test_boolean*",
         "*x == 3*",
     ])
+
 
 def test_direct_gives_error(testdir):
     testdir.makepyfile("""
@@ -854,6 +862,7 @@ def test_default_markers(testdir):
         "*xfail(*condition, reason=None, run=True, raises=None, strict=False)*expected failure*",
     ])
 
+
 def test_xfail_test_setup_exception(testdir):
     testdir.makeconftest("""
             def pytest_runtest_setup():
@@ -869,6 +878,7 @@ def test_xfail_test_setup_exception(testdir):
     assert result.ret == 0
     assert 'xfailed' in result.stdout.str()
     assert 'xpassed' not in result.stdout.str()
+
 
 def test_imperativeskip_on_xfail_test(testdir):
     testdir.makepyfile("""
@@ -892,6 +902,7 @@ def test_imperativeskip_on_xfail_test(testdir):
         *SKIP*condition: True*
         *2 skipped*
     """)
+
 
 class TestBooleanCondition(object):
     def test_skipif(self, testdir):

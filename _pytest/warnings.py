@@ -39,8 +39,9 @@ def pytest_addoption(parser):
         '-W', '--pythonwarnings', action='append',
         help="set which warnings to report, see -W option of python itself.")
     parser.addini("filterwarnings", type="linelist",
-                  help="Each line specifies warning filter pattern which would be passed"
-                  "to warnings.filterwarnings. Process after -W and --pythonwarnings.")
+                  help="Each line specifies a pattern for "
+                  "warnings.filterwarnings. "
+                  "Processed after -W and --pythonwarnings.")
 
 
 @contextmanager
@@ -58,6 +59,11 @@ def catch_warnings_for_item(item):
 
         for arg in inifilters:
             _setoption(warnings, arg)
+
+        mark = item.get_marker('filterwarnings')
+        if mark:
+            for arg in mark.args:
+                warnings._setoption(arg)
 
         yield
 
@@ -78,7 +84,7 @@ def catch_warnings_for_item(item):
             if unicode_warning:
                 warnings.warn(
                     "Warning is using unicode non convertible to ascii, "
-                    "converting to a safe representation:\n  %s"  % msg,
+                    "converting to a safe representation:\n  %s" % msg,
                     UnicodeWarning)
 
 

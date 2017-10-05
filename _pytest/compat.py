@@ -10,8 +10,8 @@ import functools
 
 import py
 
-import  _pytest
-
+import _pytest
+from _pytest.outcomes import TEST_OUTCOME
 
 
 try:
@@ -59,7 +59,7 @@ def iscoroutinefunction(func):
     which in turns also initializes the "logging" module as side-effect (see issue #8).
     """
     return (getattr(func, '_is_coroutine', False) or
-           (hasattr(inspect, 'iscoroutinefunction') and inspect.iscoroutinefunction(func)))
+            (hasattr(inspect, 'iscoroutinefunction') and inspect.iscoroutinefunction(func)))
 
 
 def getlocation(function, curdir):
@@ -68,7 +68,7 @@ def getlocation(function, curdir):
     lineno = py.builtin._getcode(function).co_firstlineno
     if fn.relto(curdir):
         fn = fn.relto(curdir)
-    return "%s:%d" %(fn, lineno+1)
+    return "%s:%d" % (fn, lineno + 1)
 
 
 def num_mock_patch_args(function):
@@ -79,13 +79,21 @@ def num_mock_patch_args(function):
     mock = sys.modules.get("mock", sys.modules.get("unittest.mock", None))
     if mock is not None:
         return len([p for p in patchings
-                        if not p.attribute_name and p.new is mock.DEFAULT])
+                    if not p.attribute_name and p.new is mock.DEFAULT])
     return len(patchings)
 
 
-def getfuncargnames(function, startindex=None):
+def getfuncargnames(function, startindex=None, cls=None):
+    """
+    @RonnyPfannschmidt: This function should be refactored when we revisit fixtures. The
+    fixture mechanism should ask the node for the fixture names, and not try to obtain
+    directly from the function object well after collection has occurred.
+    """
+    if startindex is None and cls is not None:
+        is_staticmethod = isinstance(cls.__dict__.get(function.__name__, None), staticmethod)
+        startindex = 0 if is_staticmethod else 1
     # XXX merge with main.py's varnames
-    #assert not isclass(function)
+    # assert not isclass(function)
     realfunction = function
     while hasattr(realfunction, "__wrapped__"):
         realfunction = realfunction.__wrapped__
@@ -111,8 +119,7 @@ def getfuncargnames(function, startindex=None):
     return tuple(argnames[startindex:])
 
 
-
-if  sys.version_info[:2] == (2, 6):
+if sys.version_info[:2] == (2, 6):
     def isclass(object):
         """ Return true if the object is a class. Overrides inspect.isclass for
         python 2.6 because it will return True for objects which always return
@@ -125,10 +132,11 @@ if  sys.version_info[:2] == (2, 6):
 if _PY3:
     import codecs
     imap = map
+    izip = zip
     STRING_TYPES = bytes, str
     UNICODE_TYPES = str,
 
-    def _escape_strings(val):
+    def _ascii_escaped(val):
         """If val is pure ascii, returns it as a str().  Otherwise, escapes
         bytes objects into a sequence of escaped bytes:
 
@@ -160,9 +168,9 @@ else:
     STRING_TYPES = bytes, str, unicode
     UNICODE_TYPES = unicode,
 
-    from itertools import imap  # NOQA
+    from itertools import imap, izip  # NOQA
 
-    def _escape_strings(val):
+    def _ascii_escaped(val):
         """In py2 bytes and str are the same type, so return if it's a bytes
         object, return it unchanged if it is a full ascii string,
         otherwise escape it into its binary form.
@@ -222,14 +230,16 @@ def getimfunc(func):
 
 
 def safe_getattr(object, name, default):
-    """ Like getattr but return default upon any Exception.
+    """ Like getattr but return default upon any Exception or any OutcomeException.
 
     Attribute access can potentially fail for 'evil' Python objects.
     See issue #214.
+    It catches OutcomeException because of #2490 (issue #580), new outcomes are derived from BaseException
+    instead of Exception (for more details check #2707)
     """
     try:
         return getattr(object, name, default)
-    except Exception:
+    except TEST_OUTCOME:
         return default
 
 
@@ -283,7 +293,15 @@ def _setup_collect_fakemodule():
 
 
 if _PY2:
-    from py.io import TextIO as CaptureIO
+    # Without this the test_dupfile_on_textio will fail, otherwise CaptureIO could directly inherit from StringIO.
+    from py.io import TextIO
+
+    class CaptureIO(TextIO):
+
+        @property
+        def encoding(self):
+            return getattr(self, '_encoding', 'UTF-8')
+
 else:
     import io
 
@@ -296,6 +314,7 @@ else:
 
         def getvalue(self):
             return self.buffer.getvalue().decode('UTF-8')
+
 
 class FuncargnamesCompatAttr(object):
     """ helper class so that Metafunc, Function and FixtureRequest

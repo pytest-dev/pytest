@@ -283,6 +283,7 @@ class TestBinReprIntegration(object):
             "*test_check*PASS*",
         ])
 
+
 def callequal(left, right, verbose=False):
     config = mock_config()
     config.verbose = verbose
@@ -303,15 +304,15 @@ class TestAssert_reprcompare(object):
         assert '+ eggs' in diff
 
     def test_text_skipping(self):
-        lines = callequal('a'*50 + 'spam', 'a'*50 + 'eggs')
+        lines = callequal('a' * 50 + 'spam', 'a' * 50 + 'eggs')
         assert 'Skipping' in lines[1]
         for line in lines:
-            assert 'a'*50 not in line
+            assert 'a' * 50 not in line
 
     def test_text_skipping_verbose(self):
-        lines = callequal('a'*50 + 'spam', 'a'*50 + 'eggs', verbose=True)
-        assert '- ' + 'a'*50 + 'spam' in lines
-        assert '+ ' + 'a'*50 + 'eggs' in lines
+        lines = callequal('a' * 50 + 'spam', 'a' * 50 + 'eggs', verbose=True)
+        assert '- ' + 'a' * 50 + 'spam' in lines
+        assert '+ ' + 'a' * 50 + 'eggs' in lines
 
     def test_multiline_text_diff(self):
         left = 'foo\nspam\nbar'
@@ -437,9 +438,9 @@ class TestAssert_reprcompare(object):
         assert len(expl) > 1
 
     def test_list_tuples(self):
-        expl = callequal([], [(1,2)])
+        expl = callequal([], [(1, 2)])
         assert len(expl) > 1
-        expl = callequal([(1,2)], [])
+        expl = callequal([(1, 2)], [])
         assert len(expl) > 1
 
     def test_list_bad_repr(self):
@@ -609,7 +610,7 @@ class TestTruncateExplanation(object):
 
     def test_doesnt_truncate_at_when_input_is_5_lines_and_LT_max_chars(self):
         expl = ['a' * 100 for x in range(5)]
-        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8*80)
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
         assert result == expl
 
     def test_truncates_at_8_lines_when_given_list_of_empty_strings(self):
@@ -619,27 +620,27 @@ class TestTruncateExplanation(object):
         assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
         assert "43 lines hidden" in result[-1]
-        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG -1]
+        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG - 1]
         assert last_line_before_trunc_msg.endswith("...")
 
     def test_truncates_at_8_lines_when_first_8_lines_are_LT_max_chars(self):
         expl = ['a' for x in range(100)]
-        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8*80)
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
         assert result != expl
         assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
         assert "93 lines hidden" in result[-1]
-        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG -1]
+        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG - 1]
         assert last_line_before_trunc_msg.endswith("...")
 
     def test_truncates_at_8_lines_when_first_8_lines_are_EQ_max_chars(self):
         expl = ['a' * 80 for x in range(16)]
-        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8*80)
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
         assert result != expl
         assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
         assert "9 lines hidden" in result[-1]
-        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG -1]
+        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG - 1]
         assert last_line_before_trunc_msg.endswith("...")
 
     def test_truncates_at_4_lines_when_first_4_lines_are_GT_max_chars(self):
@@ -649,7 +650,7 @@ class TestTruncateExplanation(object):
         assert len(result) == 4 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
         assert "7 lines hidden" in result[-1]
-        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG -1]
+        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG - 1]
         assert last_line_before_trunc_msg.endswith("...")
 
     def test_truncates_at_1_line_when_first_line_is_GT_max_chars(self):
@@ -659,7 +660,7 @@ class TestTruncateExplanation(object):
         assert len(result) == 1 + self.LINES_IN_TRUNCATION_MSG
         assert "Full output truncated" in result[-1]
         assert "1000 lines hidden" in result[-1]
-        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG -1]
+        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG - 1]
         assert last_line_before_trunc_msg.endswith("...")
 
     def test_full_output_truncated(self, monkeypatch, testdir):
@@ -712,6 +713,7 @@ def test_python25_compile_issue257(testdir):
             *1 failed*
     """)
 
+
 def test_rewritten(testdir):
     testdir.makepyfile("""
         def test_rewritten():
@@ -719,10 +721,12 @@ def test_rewritten(testdir):
     """)
     assert testdir.runpytest().ret == 0
 
+
 def test_reprcompare_notin(mock_config):
     detail = plugin.pytest_assertrepr_compare(
         mock_config, 'not in', 'foo', 'aaafoobbb')[1:]
     assert detail == ["'foo' is contained here:", '  aaafoobbb', '?    +++']
+
 
 def test_pytest_assertrepr_compare_integration(testdir):
     testdir.makepyfile("""
@@ -739,6 +743,7 @@ def test_pytest_assertrepr_compare_integration(testdir):
         "*E*Extra items*left*",
         "*E*50*",
     ])
+
 
 def test_sequence_comparison_uses_repr(testdir):
     testdir.makepyfile("""
@@ -772,12 +777,12 @@ def test_assertrepr_loaded_per_dir(testdir):
     b_conftest.write('def pytest_assertrepr_compare(): return ["summary b"]')
     result = testdir.runpytest()
     result.stdout.fnmatch_lines([
-            '*def test_base():*',
-            '*E*assert 1 == 2*',
-            '*def test_a():*',
-            '*E*assert summary a*',
-            '*def test_b():*',
-            '*E*assert summary b*'])
+        '*def test_base():*',
+        '*E*assert 1 == 2*',
+        '*def test_a():*',
+        '*E*assert summary a*',
+        '*def test_b():*',
+        '*E*assert summary b*'])
 
 
 def test_assertion_options(testdir):
@@ -791,6 +796,7 @@ def test_assertion_options(testdir):
     result = testdir.runpytest_subprocess("--assert=plain")
     assert "3 == 4" not in result.stdout.str()
 
+
 def test_triple_quoted_string_issue113(testdir):
     testdir.makepyfile("""
         def test_hello():
@@ -801,6 +807,7 @@ def test_triple_quoted_string_issue113(testdir):
         "*1 failed*",
     ])
     assert 'SyntaxError' not in result.stdout.str()
+
 
 def test_traceback_failure(testdir):
     p1 = testdir.makepyfile("""
@@ -822,7 +829,7 @@ def test_traceback_failure(testdir):
         "",
         "*test_*.py:6: ",
         "_ _ _ *",
-        #"",
+        # "",
         "    def f(x):",
         ">       assert x == g()",
         "E       assert 3 == 2",
@@ -831,7 +838,7 @@ def test_traceback_failure(testdir):
         "*test_traceback_failure.py:4: AssertionError"
     ])
 
-    result = testdir.runpytest(p1) # "auto"
+    result = testdir.runpytest(p1)  # "auto"
     result.stdout.fnmatch_lines([
         "*test_traceback_failure.py F",
         "====* FAILURES *====",
@@ -881,7 +888,7 @@ def test_exception_handling_no_traceback(testdir):
     ])
 
 
-@pytest.mark.skipif("'__pypy__' in sys.builtin_module_names or sys.platform.startswith('java')" )
+@pytest.mark.skipif("'__pypy__' in sys.builtin_module_names or sys.platform.startswith('java')")
 def test_warn_missing(testdir):
     testdir.makepyfile("")
     result = testdir.run(sys.executable, "-OO", "-m", "pytest", "-h")
@@ -892,6 +899,7 @@ def test_warn_missing(testdir):
     result.stderr.fnmatch_lines([
         "*WARNING*assert statements are not executed*",
     ])
+
 
 def test_recursion_source_decode(testdir):
     testdir.makepyfile("""
@@ -907,6 +915,7 @@ def test_recursion_source_decode(testdir):
         <Module*>
     """)
 
+
 def test_AssertionError_message(testdir):
     testdir.makepyfile("""
         def test_hello():
@@ -919,6 +928,7 @@ def test_AssertionError_message(testdir):
         *assert 0, (x,y)*
         *AssertionError: (1, 2)*
     """)
+
 
 @pytest.mark.skipif(PY3, reason='This bug does not exist on PY3')
 def test_set_with_unsortable_elements():
@@ -956,6 +966,7 @@ def test_set_with_unsortable_elements():
     """).strip()
     assert '\n'.join(expl) == dedent
 
+
 def test_diff_newline_at_end(monkeypatch, testdir):
     testdir.makepyfile(r"""
         def test_diff():
@@ -970,6 +981,7 @@ def test_diff_newline_at_end(monkeypatch, testdir):
         *  ?     +
     """)
 
+
 def test_assert_tuple_warning(testdir):
     testdir.makepyfile("""
         def test_tuple():
@@ -981,6 +993,7 @@ def test_assert_tuple_warning(testdir):
         '*assertion is always true*',
     ])
 
+
 def test_assert_indirect_tuple_no_warning(testdir):
     testdir.makepyfile("""
         def test_tuple():
@@ -991,6 +1004,7 @@ def test_assert_indirect_tuple_no_warning(testdir):
     output = '\n'.join(result.stdout.lines)
     assert 'WR1' not in output
 
+
 def test_assert_with_unicode(monkeypatch, testdir):
     testdir.makepyfile(u"""
         # -*- coding: utf-8 -*-
@@ -1000,6 +1014,7 @@ def test_assert_with_unicode(monkeypatch, testdir):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(['*AssertionError*'])
 
+
 def test_raise_unprintable_assertion_error(testdir):
     testdir.makepyfile(r"""
         def test_raise_assertion_error():
@@ -1007,6 +1022,7 @@ def test_raise_unprintable_assertion_error(testdir):
     """)
     result = testdir.runpytest()
     result.stdout.fnmatch_lines([r">       raise AssertionError('\xff')", 'E       AssertionError: *'])
+
 
 def test_raise_assertion_error_raisin_repr(testdir):
     testdir.makepyfile(u"""
@@ -1018,6 +1034,7 @@ def test_raise_assertion_error_raisin_repr(testdir):
     """)
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(['E       AssertionError: <unprintable AssertionError object>'])
+
 
 def test_issue_1944(testdir):
     testdir.makepyfile("""

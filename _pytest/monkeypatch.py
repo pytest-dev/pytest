@@ -71,9 +71,9 @@ def annotated_getattr(obj, name, ann):
         obj = getattr(obj, name)
     except AttributeError:
         raise AttributeError(
-                '%r object at %s has no attribute %r' % (
-                    type(obj).__name__, ann, name
-                )
+            '%r object at %s has no attribute %r' % (
+                type(obj).__name__, ann, name
+            )
         )
     return obj
 

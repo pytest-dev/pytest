@@ -1,4 +1,0 @@
-``deprecated_call`` in context-manager form now captures deprecation warnings even if
-the same warning has already been raised. Also, ``deprecated_call`` will always produce
-the same error message (previously it would produce different messages in context-manager vs.
-function-call mode).

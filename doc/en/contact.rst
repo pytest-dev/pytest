@@ -19,9 +19,9 @@ Contact channels
 - `pytest-commit at python.org (mailing list)`_: for commits and new issues
 
 - :doc:`contribution guide <contributing>` for help on submitting pull
-  requests to bitbucket (including using git via gitifyhg).
+  requests to GitHub.
 
-- #pylib on irc.freenode.net IRC channel for random questions.
+- ``#pylib`` on irc.freenode.net IRC channel for random questions.
 
 - private mail to Holger.Krekel at gmail com if you want to communicate sensitive issues
 
@@ -46,6 +46,5 @@ Contact channels
 .. _`py-dev`:
 .. _`development mailing list`:
 .. _`pytest-dev at python.org (mailing list)`: http://mail.python.org/mailman/listinfo/pytest-dev
-.. _`py-svn`:
 .. _`pytest-commit at python.org (mailing list)`: http://mail.python.org/mailman/listinfo/pytest-commit
 

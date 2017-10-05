@@ -9,9 +9,9 @@ import tempfile
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting")
     group._addoption('--pastebin', metavar="mode",
-        action='store', dest="pastebin", default=None,
-        choices=['failed', 'all'],
-        help="send failed|all info to bpaste.net pastebin service.")
+                     action='store', dest="pastebin", default=None,
+                     choices=['failed', 'all'],
+                     help="send failed|all info to bpaste.net pastebin service.")
 
 
 @pytest.hookimpl(trylast=True)
@@ -97,4 +97,4 @@ def pytest_terminal_summary(terminalreporter):
             s = tw.stringio.getvalue()
             assert len(s)
             pastebinurl = create_new_paste(s)
-            tr.write_line("%s --> %s" %(msg, pastebinurl))
+            tr.write_line("%s --> %s" % (msg, pastebinurl))

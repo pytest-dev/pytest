@@ -1,9 +1,10 @@
 sudo: false
 language: python
 python:
-    - '3.5'
+  - '3.6'
 # command to install dependencies
-install: "pip install -U tox"
+install:
+  - pip install --upgrade --pre tox
 # # command to run tests
 env:
   matrix:
@@ -11,27 +12,33 @@ env:
     - TOXENV=coveralls
     # note: please use "tox --listenvs" to populate the build matrix below
     - TOXENV=linting
-    - TOXENV=py26
     - TOXENV=py27
-    - TOXENV=py33
     - TOXENV=py34
-    - TOXENV=py35
-    - TOXENV=pypy
+    - TOXENV=py36
     - TOXENV=py27-pexpect
     - TOXENV=py27-xdist
     - TOXENV=py27-trial
-    - TOXENV=py35-pexpect
-    - TOXENV=py35-xdist
-    - TOXENV=py35-trial
+    - TOXENV=py27-numpy
+    - TOXENV=py36-pexpect
+    - TOXENV=py36-xdist
+    - TOXENV=py36-trial
+    - TOXENV=py36-numpy
     - TOXENV=py27-nobyte
     - TOXENV=doctesting
-    - TOXENV=freeze
     - TOXENV=docs
 
 matrix:
   include:
-    - env: TOXENV=py36
-      python: '3.6'
+    - env: TOXENV=py26
+      python: '2.6'
+    - env: TOXENV=py33
+      python: '3.3'
+    - env: TOXENV=pypy
+      python: 'pypy-5.4'
+    - env: TOXENV=py35
+      python: '3.5'
+    - env: TOXENV=py35-freeze
+      python: '3.5'
     - env: TOXENV=py37
       python: 'nightly'
   allow_failures:

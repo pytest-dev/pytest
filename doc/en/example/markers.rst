@@ -69,7 +69,7 @@ tests based on their module, class, method, or function name::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collecting ... collected 5 items
+    collecting ... collected 1 item
     
     test_server.py::TestClass::test_method PASSED
     
@@ -82,7 +82,7 @@ You can also select on the class::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collecting ... collected 4 items
+    collecting ... collected 1 item
     
     test_server.py::TestClass::test_method PASSED
     
@@ -95,7 +95,7 @@ Or select multiple nodes::
   platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
   cachedir: .cache
   rootdir: $REGENDOC_TMPDIR, inifile:
-  collecting ... collected 8 items
+  collecting ... collected 2 items
   
   test_server.py::TestClass::test_method PASSED
   test_server.py::test_send_http PASSED
@@ -173,14 +173,18 @@ Or to select "http" and "quick" tests::
 
 .. note::
 
-    If you are using expressions such as "X and Y" then both X and Y
-    need to be simple non-keyword names.  For example, "pass" or "from"
-    will result in SyntaxErrors because "-k" evaluates the expression.
+    If you are using expressions such as ``"X and Y"`` then both ``X`` and ``Y``
+    need to be simple non-keyword names. For example, ``"pass"`` or ``"from"``
+    will result in SyntaxErrors because ``"-k"`` evaluates the expression using
+    Python's `eval`_ function.
 
-    However, if the "-k" argument is a simple string, no such restrictions
-    apply.  Also "-k 'not STRING'" has no restrictions.  You can also
-    specify numbers like "-k 1.3" to match tests which are parametrized
-    with the float "1.3".
+.. _`eval`: https://docs.python.org/3.6/library/functions.html#eval
+
+
+    However, if the ``"-k"`` argument is a simple string, no such restrictions
+    apply. Also ``"-k 'not STRING'"`` has no restrictions.  You can also
+    specify numbers like ``"-k 1.3"`` to match tests which are parametrized
+    with the float ``"1.3"``.
 
 Registering markers
 -------------------------------------
@@ -223,13 +227,12 @@ For an example on how to add and work with markers from a plugin, see
 
     It is recommended to explicitly register markers so that:
 
-    * there is one place in your test suite defining your markers
+    * There is one place in your test suite defining your markers
 
-    * asking for existing markers via ``pytest --markers`` gives good output
+    * Asking for existing markers via ``pytest --markers`` gives good output
 
-    * typos in function markers are treated as an error if you use
-      the ``--strict`` option. Future versions of ``pytest`` are probably
-      going to start treating non-registered markers as errors at some point.
+    * Typos in function markers are treated as an error if you use
+      the ``--strict`` option. 
 
 .. _`scoped-marking`:
 
@@ -354,7 +357,7 @@ the test needs::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 1 items
+    collected 1 item
     
     test_someenv.py s
     
@@ -366,7 +369,7 @@ and here is one that specifies exactly the environment needed::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 1 items
+    collected 1 item
     
     test_someenv.py .
     
@@ -391,6 +394,49 @@ The ``--markers`` option always gives you a list of available markers::
     
     @pytest.mark.trylast: mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible.
     
+
+.. _`passing callables to custom markers`:
+
+Passing a callable to custom markers
+--------------------------------------------
+
+.. regendoc:wipe
+
+Below is the config file that will be used in the next examples::
+
+    # content of conftest.py
+    import sys
+
+    def pytest_runtest_setup(item):
+        marker = item.get_marker('my_marker')
+        if marker is not None:
+            for info in marker:
+                print('Marker info name={} args={} kwars={}'.format(info.name, info.args, info.kwargs))
+                sys.stdout.flush()
+
+A custom marker can have its argument set, i.e. ``args`` and ``kwargs`` properties, defined by either invoking it as a callable or using ``pytest.mark.MARKER_NAME.with_args``. These two methods achieve the same effect most of the time.
+
+However, if there is a callable as the single positional argument with no keyword arguments, using the ``pytest.mark.MARKER_NAME(c)`` will not pass ``c`` as a positional argument but decorate ``c`` with the custom marker (see :ref:`MarkDecorator <mark>`). Fortunately, ``pytest.mark.MARKER_NAME.with_args`` comes to the rescue::
+
+    # content of test_custom_marker.py
+    import pytest
+
+    def hello_world(*args, **kwargs):
+        return 'Hello World'
+
+    @pytest.mark.my_marker.with_args(hello_world)
+    def test_with_args():
+        pass
+
+The output is as follows::
+
+    $ pytest -q -s
+    Marker info name=my_marker args=(<function hello_world at 0xdeadbeef>,) kwars={}
+    .
+    1 passed in 0.12 seconds
+
+We can see that the custom marker has its argument set extended with the function ``hello_world``. This is the key difference between creating a custom marker as a callable, which invokes ``__call__`` behind the scenes, and using ``with_args``.
+
 
 Reading markers which were set from multiple places
 ----------------------------------------------------
@@ -491,7 +537,7 @@ then you will see two tests skipped and two executed tests as expected::
     
     test_plat.py s.s.
     ======= short test summary info ========
-    SKIP [2] $REGENDOC_TMPDIR/conftest.py:12: cannot run on platform linux
+    SKIP [2] $REGENDOC_TMPDIR/conftest.py:13: cannot run on platform linux
     
     ======= 2 passed, 2 skipped in 0.12 seconds ========
 
