@@ -827,6 +827,10 @@ class FixtureFunctionMarker:
         if isclass(function):
             raise ValueError(
                     "class fixtures not supported (may be in the future)")
+        if getattr(function, "_pytestfixturefunction", False):
+            raise ValueError(
+                    "fixture is being applied more than once to the same function")
+
         function._pytestfixturefunction = self
         return function
 

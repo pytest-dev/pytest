@@ -1,0 +1,1 @@
+Now when @pytest.fixture is being applied to the same function ValueError is raised.
