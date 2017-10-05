@@ -18,6 +18,8 @@ from _pytest.compat import (
 )
 from _pytest.runner import fail
 from _pytest.compat import FuncargnamesCompatAttr
+import types
+import functools
 
 def pytest_sessionstart(session):
     import _pytest.python
@@ -815,6 +817,17 @@ def pytest_fixture_setup(fixturedef, request):
     return result
 
 
+def copy_func(f):
+    """Based on http://stackoverflow.com/a/6528148/190597 (Glenn Maynard)"""
+    g = types.FunctionType(f.__code__, f.__globals__, name=f.__name__,
+                           argdefs=f.__defaults__,
+                           closure=f.__closure__)
+    g = functools.update_wrapper(g, f)
+    g.__kwdefaults__ = f.__kwdefaults__
+    return g
+
+
+
 class FixtureFunctionMarker:
     def __init__(self, scope, params, autouse=False, ids=None, name=None):
         self.scope = scope
@@ -827,6 +840,9 @@ class FixtureFunctionMarker:
         if isclass(function):
             raise ValueError(
                     "class fixtures not supported (may be in the future)")
+        if getattr(function, "_pytestfixturefunction", False):
+            function = copy_func(function)
+
         function._pytestfixturefunction = self
         return function
 
