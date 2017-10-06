@@ -16,13 +16,17 @@ resource which is not available at the moment (for example a database).
 
 A **xfail** means that you expect a test to fail for some reason.
 A common example is a test for a feature not yet implemented, or a bug not yet fixed.
+When a test passes despite being expected to fail (marked with ``pytest.mark.xfail``),
+it's an **xpass** and will be reported in the test summary.
 
 ``pytest`` counts and lists *skip* and *xfail* tests separately. Detailed
 information about skipped/xfailed tests is not shown by default to avoid
 cluttering the output.  You can use the ``-r`` option to see details
 corresponding to the "short" letters shown in the test progress::
 
-    pytest -rxs  # show extra info on skips and xfails
+    pytest -rxXs  # show extra info on xfailed, xpassed, and skipped tests
+
+More details on the ``-r`` option can be found by running ``pytest -h``.
 
 (See :ref:`how to change command line options defaults`)
 
@@ -311,12 +315,12 @@ Running it with the report-on-xfail option gives this output::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR/example, inifile:
     collected 7 items
-    
+
     xfail_demo.py xxxxxxx
     ======= short test summary info ========
     XFAIL xfail_demo.py::test_hello
     XFAIL xfail_demo.py::test_hello2
-      reason: [NOTRUN] 
+      reason: [NOTRUN]
     XFAIL xfail_demo.py::test_hello3
       condition: hasattr(os, 'sep')
     XFAIL xfail_demo.py::test_hello4
@@ -326,7 +330,7 @@ Running it with the report-on-xfail option gives this output::
     XFAIL xfail_demo.py::test_hello6
       reason: reason
     XFAIL xfail_demo.py::test_hello7
-    
+
     ======= 7 xfailed in 0.12 seconds ========
 
 .. _`skip/xfail with parametrize`:
