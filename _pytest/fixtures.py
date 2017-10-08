@@ -1039,8 +1039,9 @@ class FixtureManager:
                 if fixturedef.params is not None:
                     parametrize_func = getattr(metafunc.function, 'parametrize', None)
                     func_params = getattr(parametrize_func, 'args', [[None]])
+                    func_kwargs = getattr(parametrize_func, 'kwargs', {})
                     # skip directly parametrized arguments
-                    if "argnames" in parametrize_func.kwargs:
+                    if "argnames" in func_kwargs:
                         argnames = parametrize_func.kwargs["argnames"]
                     else:
                         argnames = func_params[0]
