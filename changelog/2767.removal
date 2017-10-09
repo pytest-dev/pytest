@@ -1,2 +1,1 @@
-* remove the internal optional multi-typed attribute _evalskip
-  and replacce it with the boolean _skipped_by_mark
+Remove the internal multi-typed attribute ``Node._evalskip`` and replace it with the boolean ``Node._skipped_by_mark``.
