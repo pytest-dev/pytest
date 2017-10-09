@@ -10,9 +10,7 @@ environment:
   - TOXENV: "coveralls"
   # note: please use "tox --listenvs" to populate the build matrix below
   - TOXENV: "linting"
-  - TOXENV: "py26"
   - TOXENV: "py27"
-  - TOXENV: "py33"
   - TOXENV: "py34"
   - TOXENV: "py35"
   - TOXENV: "py36"
