@@ -34,7 +34,6 @@ else:
 PYC_EXT = ".py" + (__debug__ and "c" or "o")
 PYC_TAIL = "." + PYTEST_TAG + PYC_EXT
 
-REWRITE_NEWLINES = sys.version_info[:2] != (2, 7) and sys.version_info < (3, 2)
 ASCII_IS_DEFAULT_ENCODING = sys.version_info[0] < 3
 
 if sys.version_info >= (3, 5):
@@ -321,10 +320,6 @@ def _rewrite_test(config, fn):
                     return None, None
             finally:
                 del state._indecode
-    # On Python versions which are not 2.7 and less than or equal to 3.1, the
-    # parser expects *nix newlines.
-    if REWRITE_NEWLINES:
-        source = source.replace(RN, N) + N
     try:
         tree = ast.parse(source)
     except SyntaxError:

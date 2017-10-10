@@ -64,11 +64,11 @@ during import time.
 
 If you wish to skip something conditionally then you can use ``skipif`` instead.
 Here is an example of marking a test function to be skipped
-when run on a Python3.3 interpreter::
+when run on a Python3.6 interpreter::
 
     import sys
-    @pytest.mark.skipif(sys.version_info < (3,3),
-                        reason="requires python3.3")
+    @pytest.mark.skipif(sys.version_info < (3,6),
+                        reason="requires python3.6")
     def test_function():
         ...
 
@@ -250,8 +250,8 @@ You can change the default value of the ``strict`` parameter using the
 As with skipif_ you can also mark your expectation of a failure
 on a particular platform::
 
-    @pytest.mark.xfail(sys.version_info >= (3,3),
-                       reason="python3.3 api changes")
+    @pytest.mark.xfail(sys.version_info >= (3,6),
+                       reason="python3.6 api changes")
     def test_function():
         ...
 
@@ -311,12 +311,12 @@ Running it with the report-on-xfail option gives this output::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR/example, inifile:
     collected 7 items
-    
+
     xfail_demo.py xxxxxxx
     ======= short test summary info ========
     XFAIL xfail_demo.py::test_hello
     XFAIL xfail_demo.py::test_hello2
-      reason: [NOTRUN] 
+      reason: [NOTRUN]
     XFAIL xfail_demo.py::test_hello3
       condition: hasattr(os, 'sep')
     XFAIL xfail_demo.py::test_hello4
@@ -326,7 +326,7 @@ Running it with the report-on-xfail option gives this output::
     XFAIL xfail_demo.py::test_hello6
       reason: reason
     XFAIL xfail_demo.py::test_hello7
-    
+
     ======= 7 xfailed in 0.12 seconds ========
 
 .. _`skip/xfail with parametrize`:

@@ -4,9 +4,6 @@ needs argcomplete>=0.5.6 for python 3.2/3.3 (older versions fail
 to find the magic string, so _ARGCOMPLETE env. var is never set, and
 this does not need special code.
 
-argcomplete does not support python 2.5 (although the changes for that
-are minor).
-
 Function try_argcomplete(parser) should be called directly before
 the call to ArgumentParser.parse_args().
 

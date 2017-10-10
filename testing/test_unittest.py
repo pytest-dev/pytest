@@ -168,7 +168,6 @@ def test_teardown_issue1649(testdir):
         assert type(obj).__name__ != 'TestCaseObjectsShouldBeCleanedUp'
 
 
-@pytest.mark.skipif("sys.version_info < (2,7)")
 def test_unittest_skip_issue148(testdir):
     testpath = testdir.makepyfile("""
         import unittest
@@ -629,7 +628,6 @@ def test_unittest_typerror_traceback(testdir):
     assert result.ret == 1
 
 
-@pytest.mark.skipif("sys.version_info < (2,7)")
 @pytest.mark.parametrize('runner', ['pytest', 'unittest'])
 def test_unittest_expected_failure_for_failing_test_is_xfail(testdir, runner):
     script = testdir.makepyfile("""
@@ -656,7 +654,6 @@ def test_unittest_expected_failure_for_failing_test_is_xfail(testdir, runner):
     assert result.ret == 0
 
 
-@pytest.mark.skipif("sys.version_info < (2,7)")
 @pytest.mark.parametrize('runner', ['pytest', 'unittest'])
 def test_unittest_expected_failure_for_passing_test_is_fail(testdir, runner):
     script = testdir.makepyfile("""
@@ -787,7 +784,6 @@ def test_issue333_result_clearing(testdir):
     reprec.assertoutcome(failed=1)
 
 
-@pytest.mark.skipif("sys.version_info < (2,7)")
 def test_unittest_raise_skip_issue748(testdir):
     testdir.makepyfile(test_foo="""
         import unittest
@@ -803,7 +799,6 @@ def test_unittest_raise_skip_issue748(testdir):
     """)
 
 
-@pytest.mark.skipif("sys.version_info < (2,7)")
 def test_unittest_skip_issue1169(testdir):
     testdir.makepyfile(test_foo="""
         import unittest

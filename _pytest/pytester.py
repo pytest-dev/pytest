@@ -112,12 +112,9 @@ class LsofFdLeakChecker(object):
 # XXX copied from execnet's conftest.py - needs to be merged
 winpymap = {
     'python2.7': r'C:\Python27\python.exe',
-    'python2.6': r'C:\Python26\python.exe',
-    'python3.1': r'C:\Python31\python.exe',
-    'python3.2': r'C:\Python32\python.exe',
-    'python3.3': r'C:\Python33\python.exe',
     'python3.4': r'C:\Python34\python.exe',
     'python3.5': r'C:\Python35\python.exe',
+    'python3.6': r'C:\Python36\python.exe',
 }
 
 
@@ -143,8 +140,7 @@ def getexecutable(name, cache={}):
         return executable
 
 
-@pytest.fixture(params=['python2.6', 'python2.7', 'python3.3', "python3.4",
-                        'pypy', 'pypy3'])
+@pytest.fixture(params=['python2.7', 'python3.4', 'pypy', 'pypy3'])
 def anypython(request):
     name = request.param
     executable = getexecutable(name)

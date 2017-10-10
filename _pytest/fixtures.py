@@ -19,10 +19,7 @@ from _pytest.compat import (
 from _pytest.outcomes import fail, TEST_OUTCOME
 from _pytest.compat import FuncargnamesCompatAttr
 
-if sys.version_info[:2] == (2, 6):
-    from ordereddict import OrderedDict
-else:
-    from collections import OrderedDict
+from collections import OrderedDict
 
 
 def pytest_sessionstart(session):
