@@ -16,7 +16,7 @@ classifiers = [
     'Topic :: Utilities',
 ] + [
     ('Programming Language :: Python :: %s' % x)
-    for x in '2 2.6 2.7 3 3.3 3.4 3.5 3.6'.split()
+    for x in '2.7 3 3.4 3.5 3.6'.split()
 ]
 
 with open('README.rst') as fd:
@@ -50,12 +50,8 @@ def main():
         install_requires.append('pluggy>=0.4.0,<0.5')
     extras_require = {}
     if has_environment_marker_support():
-        extras_require[':python_version=="2.6"'] = ['argparse', 'ordereddict']
         extras_require[':sys_platform=="win32"'] = ['colorama']
     else:
-        if sys.version_info < (2, 7):
-            install_requires.append('argparse')
-            install_requires.append('ordereddict')
         if sys.platform == 'win32':
             install_requires.append('colorama')
 
@@ -69,9 +65,11 @@ def main():
         url='http://pytest.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
-        author='Holger Krekel, Bruno Oliveira, Ronny Pfannschmidt, Floris Bruynooghe, Brianna Laugher, Florian Bruhin and others',
-        entry_points={'console_scripts':
-                          ['pytest=pytest:main', 'py.test=pytest:main']},
+        author=(
+            'Holger Krekel, Bruno Oliveira, Ronny Pfannschmidt, '
+            'Floris Bruynooghe, Brianna Laugher, Florian Bruhin and others'),
+        entry_points={'console_scripts': [
+            'pytest=pytest:main', 'py.test=pytest:main']},
         classifiers=classifiers,
         keywords="test unittest",
         cmdclass={'test': PyTest},
@@ -87,10 +85,13 @@ def main():
 
 class PyTest(Command):
     user_options = []
+
     def initialize_options(self):
         pass
+
     def finalize_options(self):
         pass
+
     def run(self):
         import subprocess
         PPATH = [x for x in os.environ.get('PYTHONPATH', '').split(':') if x]

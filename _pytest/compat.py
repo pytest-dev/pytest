@@ -4,7 +4,6 @@ python version compatibility code
 from __future__ import absolute_import, division, print_function
 import sys
 import inspect
-import types
 import re
 import functools
 import codecs
@@ -120,16 +119,6 @@ def getfuncargnames(function, startindex=None, cls=None):
     return tuple(argnames[startindex:])
 
 
-if sys.version_info[:2] == (2, 6):
-    def isclass(object):
-        """ Return true if the object is a class. Overrides inspect.isclass for
-        python 2.6 because it will return True for objects which always return
-        something on __getattr__ calls (see #1035).
-        Backport of https://hg.python.org/cpython/rev/35bf8f7a8edc
-        """
-        return isinstance(object, (type, types.ClassType))
-
-
 if _PY3:
     imap = map
     izip = zip
@@ -230,10 +219,7 @@ def getimfunc(func):
     try:
         return func.__func__
     except AttributeError:
-        try:
-            return func.im_func
-        except AttributeError:
-            return func
+        return func
 
 
 def safe_getattr(object, name, default):
