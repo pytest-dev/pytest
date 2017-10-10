@@ -356,14 +356,20 @@ co_equal = compile('__recursioncache_locals_1 == __recursioncache_locals_2',
 
 
 class ExceptionInfo(object):
-    """ wraps sys.exc_info() objects and offers
-        help for navigating the traceback.
+    """Wraps ``sys.exc_info()`` triples and offers help navigating the traceback and accessing the exception
+    value and type.
+
+    When used with the context-manager form of ``pytest.raises``, make sure to access the ``ExceptionInfo`` object
+    outside the ``with`` block::
+
+        with pytest.raises(ValueError) as exc_info:
+            some_function()
+        assert str(exc_info.value) == 'validation error'
     """
     _striptext = ''
     _assert_start_repr = "AssertionError(u\'assert " if _PY2 else "AssertionError(\'assert "
 
     def __init__(self, tup=None, exprinfo=None):
-        import _pytest._code
         if tup is None:
             tup = sys.exc_info()
             if exprinfo is None and isinstance(tup[1], AssertionError):
@@ -372,29 +378,74 @@ class ExceptionInfo(object):
                     exprinfo = py.io.saferepr(tup[1])
                 if exprinfo and exprinfo.startswith(self._assert_start_repr):
                     self._striptext = 'AssertionError: '
-        self._excinfo = tup
-        #: the exception class
-        self.type = tup[0]
-        #: the exception instance
-        self.value = tup[1]
-        #: the exception raw traceback
-        self.tb = tup[2]
-        #: the exception type name
-        self.typename = self.type.__name__
-        #: the exception traceback (_pytest._code.Traceback instance)
-        self.traceback = _pytest._code.Traceback(self.tb, excinfo=ref(self))
+        self._set_exc_info(tup)
+
+    def _set_exc_info(self, exc_info):
+        """Sets the exc_info that this ``ExceptionInfo`` object wraps.
+
+        :param exc_info: triple returned by ``sys.exc_info``.
+        """
+        import _pytest._code
+        self._excinfo = exc_info
+        self.traceback = _pytest._code.Traceback(self.tb, excinfo=ref(self)) if exc_info[0] is not None else None
+
+    def _is_exc_info_set(self):
+        """
+        :return: True if this ``ExceptionInfo`` wraps an actual exception.
+        """
+        return self._excinfo[0] is not None
+
+    @property
+    def type(self):
+        """
+        :rtype: ``Exception`` class | ``None``
+        :return: the exception class or ``None`` if does not wrap an exception.
+        """
+        return self._excinfo[0] if self._is_exc_info_set() is not None else None
+
+    @property
+    def value(self):
+        """
+        :rtype: ``Exception`` | ``None``
+        :return: the exception instance or ``None`` if does not wrap an exception.
+        """
+        return self._excinfo[1] if self._is_exc_info_set() is not None else None
+
+    @property
+    def tb(self):
+        """
+        :rtype: ``traceback`` | ``None``
+        :return: the exception raw traceback or ``None`` if does not wrap an exception.
+        """
+        return self._excinfo[2] if self._is_exc_info_set() is not None else None
+
+    @property
+    def typename(self):
+        """
+        :rtype: ``str`` | ``None``
+        :return: the exception type name or ``None`` if does not wrap an exception.
+        """
+        return self.type.__name__ if self._is_exc_info_set() is not None else None
 
     def __repr__(self):
-        return "<ExceptionInfo %s tblen=%d>" % (self.typename, len(self.traceback))
+        if self._is_exc_info_set():
+            return "<ExceptionInfo %s tblen=%d>" % (self.typename, len(self.traceback))
+        else:
+            return ("<ExceptionInfo not initialized with an exception yet, "
+                    "access it outside pytest.raises()'s 'with' block>")
 
     def exconly(self, tryshort=False):
-        """ return the exception as a string
-
-            when 'tryshort' resolves to True, and the exception is a
-            _pytest._code._AssertionError, only the actual exception part of
-            the exception representation is returned (so 'AssertionError: ' is
-            removed from the beginning)
         """
+
+        :param bool tryshort: when ``True`` and the exception is an
+            ``AssertionError``, only the actual exception part of
+            the exception representation is returned (``'AssertionError: '`` is
+            removed from the beginning).
+        :rtype: str
+        :return: Return the exception as a string.
+        """
+        if not self._is_exc_info_set():
+            return repr(self)
         lines = format_exception_only(self.type, self.value)
         text = ''.join(lines)
         text = text.rstrip()
@@ -404,8 +455,10 @@ class ExceptionInfo(object):
         return text
 
     def errisinstance(self, exc):
-        """ return True if the exception is an instance of exc """
-        return isinstance(self.value, exc)
+        """
+        :rtype: bool
+        :return: ``True`` if the exception is an instance of exc """
+        return isinstance(self.value, exc) if self._is_exc_info_set() else False
 
     def _getreprcrash(self):
         exconly = self.exconly(tryshort=True)
@@ -415,13 +468,18 @@ class ExceptionInfo(object):
 
     def getrepr(self, showlocals=False, style="long",
                 abspath=False, tbfilter=True, funcargs=False):
-        """ return str()able representation of this exception info.
-            showlocals: show locals per traceback entry
-            style: long|short|no|native traceback style
-            tbfilter: hide entries (where __tracebackhide__ is true)
+        """Return str()able representation of this exception info.
 
-            in case of style==native, tbfilter and showlocals is ignored.
+        :param bool showlocals: show locals per traceback entry.
+        :param str style: ``"long"``|``"short"``|``"no"``|``"native"`` traceback style.
+        :param bool tbfilter: hide entries where ``__tracebackhide__`` local variable is ``True``.
+        :param bool abspath: if paths to modules should always be absolute.
+        :param bool funcargs: show a summary of the fixtures available in this scope.
+
+        In case of ``style=="native"``, ``tbfilter`` and ``showlocals`` are ignored.
         """
+        if not self._is_exc_info_set():
+            return repr(self)
         if style == 'native':
             return ReprExceptionInfo(ReprTracebackNative(
                 py.std.traceback.format_exception(
@@ -435,21 +493,31 @@ class ExceptionInfo(object):
         return fmt.repr_excinfo(self)
 
     def __str__(self):
+        if not self._is_exc_info_set():
+            return repr(self)
         entry = self.traceback[-1]
         loc = ReprFileLocation(entry.path, entry.lineno + 1, self.exconly())
         return str(loc)
 
     def __unicode__(self):
+        if not self._is_exc_info_set():
+            return repr(self)
         entry = self.traceback[-1]
         loc = ReprFileLocation(entry.path, entry.lineno + 1, self.exconly())
         return unicode(loc)
 
     def match(self, regexp):
         """
-        Match the regular expression 'regexp' on the string representation of
+        Match the regular expression ``regexp`` on the string representation of
         the exception. If it matches then True is returned (so that it is
-        possible to write 'assert excinfo.match()'). If it doesn't match an
-        AssertionError is raised.
+        possible to write ``assert excinfo.match()``). If it doesn't match an
+        AssertionError is raised. Example::
+
+            with pytest.raises(ValueError) as exc_info:
+                some_function(10)
+            assert exc_info.match(r'.* invalid: 10')
+
+        :param str|regex regexp: the string or regular expression object to match against the exception message.
         """
         __tracebackhide__ = True
         if not re.search(regexp, str(self.value)):
