@@ -164,17 +164,10 @@ class TestClass(object):
                     assert fix == 1
         """)
         result = testdir.runpytest()
-        if sys.version_info < (2, 7):
-            # in 2.6, the code to handle static methods doesn't work
-            result.stdout.fnmatch_lines([
-                "*collected 0 items*",
-                "*cannot collect static method*",
-            ])
-        else:
-            result.stdout.fnmatch_lines([
-                "*collected 2 items*",
-                "*2 passed in*",
-            ])
+        result.stdout.fnmatch_lines([
+            "*collected 2 items*",
+            "*2 passed in*",
+        ])
 
     def test_setup_teardown_class_as_classmethod(self, testdir):
         testdir.makepyfile(test_mod1="""

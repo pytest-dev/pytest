@@ -342,8 +342,6 @@ def get_statement_startend2(lineno, node):
 def getstatementrange_ast(lineno, source, assertion=False, astnode=None):
     if astnode is None:
         content = str(source)
-        if sys.version_info < (2, 7):
-            content += "\n"
         try:
             astnode = compile(content, "source", "exec", 1024)  # 1024 for AST
         except ValueError:
