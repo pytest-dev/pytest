@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function
 
 import functools
+import warnings
 import os
 import six
 import sys
@@ -14,6 +15,7 @@ try:
 except ImportError:
     from UserDict import DictMixin as MappingMixin
 
+from _pytest import deprecated
 from _pytest.config import directory_arg, UsageError, hookimpl
 from _pytest.runner import collect_one_node
 from _pytest.outcomes import exit
@@ -220,12 +222,8 @@ class _CompatProperty(object):
     def __get__(self, obj, owner):
         if obj is None:
             return self
-
-        # TODO: reenable in the features branch
-        # warnings.warn(
-        #     "usage of {owner!r}.{name} is deprecated, please use pytest.{name} instead".format(
-        #         name=self.name, owner=type(owner).__name__),
-        #     PendingDeprecationWarning, stacklevel=2)
+        warnings.warn(deprecated.node_class_use_pytest_instead_warning(
+            owner=owner, name=self.name), stacklevel=2)
         return getattr(__import__('pytest'), self.name)
 
 
@@ -312,10 +310,9 @@ class Node(object):
             return getattr(__import__('pytest'), name)
         else:
             cls = getattr(self, name)
-            # TODO: reenable in the features branch
-            # warnings.warn("use of node.%s is deprecated, "
-            #    "use pytest_pycollect_makeitem(...) to create custom "
-            #    "collection nodes" % name, category=DeprecationWarning)
+            # OPTIONAL TODO: find a way to show the definition location
+            # of the class that owns that attribute
+            warnings.warn(deprecated.node_customclass_warning(name))
         return cls
 
     def __repr__(self):

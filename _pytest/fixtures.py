@@ -18,7 +18,7 @@ from _pytest.compat import (
 )
 from _pytest.outcomes import fail, TEST_OUTCOME
 from _pytest.compat import FuncargnamesCompatAttr
-
+from _pytest.main import Node
 if sys.version_info[:2] == (2, 6):
     from ordereddict import OrderedDict
 else:
@@ -1060,6 +1060,10 @@ class FixtureManager:
             holderobj = node_or_obj.obj
             nodeid = node_or_obj.nodeid
         if holderobj in self._holderobjseen:
+            return
+        if isinstance(holderobj, Node):
+            # ignore internal plugin instances that are also nodes
+            # this is a massive wtf
             return
         self._holderobjseen.add(holderobj)
         autousenames = []
