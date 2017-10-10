@@ -1250,3 +1250,19 @@ def test_no_recursion_index_on_recursion_error():
             assert 'maximum recursion' in str(exc_info.getrepr())
     else:
         assert 0
+
+
+def test_exception_info_not_initialized():
+    """Tests the behavior of ExceptionInfo not initialized with an exception (#2795)."""
+    from _pytest._code.code import ExceptionInfo
+    exc_info = ExceptionInfo()
+    assert exc_info.type is None
+    assert exc_info.value is None
+    assert exc_info.tb is None
+    assert exc_info.traceback is None
+    assert 'ExceptionInfo not initialized' in str(exc_info)
+    assert 'ExceptionInfo not initialized' in repr(exc_info)
+    assert 'ExceptionInfo not initialized' in exc_info.getrepr()
+    assert not exc_info.errisinstance(ValueError())
+    if sys.version_info[0] == 2:
+        assert 'ExceptionInfo not initialized' in unicode(exc_info)

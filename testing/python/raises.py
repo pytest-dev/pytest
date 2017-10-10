@@ -132,3 +132,14 @@ class TestRaises(object):
         with pytest.raises(AssertionError, match=expr):
             with pytest.raises(ValueError, match=msg):
                 int('asdf', base=10)
+
+    def test_exc_info_not_initialized(self):
+        """Tests the behavior of ExceptionInfo while inside a 'with' block (#2795)."""
+        with pytest.raises(ValueError) as exc_info:
+            assert exc_info.type is None
+            assert exc_info.value is None
+            assert exc_info.tb is None
+            assert 'ExceptionInfo not initialized' in str(exc_info)
+            raise ValueError('some value error')
+
+        assert str(exc_info.value) == 'some value error'

@@ -1,0 +1,1 @@
+``ExceptionInfo`` objects returned by ``pytest.raises`` now issue a better error message if accessed within a ``with`` block.

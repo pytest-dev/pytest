@@ -602,7 +602,7 @@ class RaisesContext(object):
         self.excinfo = None
 
     def __enter__(self):
-        self.excinfo = object.__new__(_pytest._code.ExceptionInfo)
+        self.excinfo = _pytest._code.ExceptionInfo()
         return self.excinfo
 
     def __exit__(self, *tp):
@@ -616,7 +616,7 @@ class RaisesContext(object):
             if not isinstance(tp[1], BaseException):
                 exc_type, value, traceback = tp
                 tp = exc_type, exc_type(value), traceback
-        self.excinfo.__init__(tp)
+        self.excinfo._set_exc_info(tp)
         suppress_exception = issubclass(self.excinfo.type, self.expected_exception)
         if sys.version_info[0] == 2 and suppress_exception:
             sys.exc_clear()
