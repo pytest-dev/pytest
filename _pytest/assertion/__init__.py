@@ -2,8 +2,8 @@
 support for presenting detailed information in failing assertions.
 """
 from __future__ import absolute_import, division, print_function
-import py
 import sys
+import six
 
 from _pytest.assertion import util
 from _pytest.assertion import rewrite
@@ -23,7 +23,6 @@ def pytest_addoption(parser):
                             (the default) rewrites assert statements in
                             test modules on import to provide assert
                             expression information.""")
-
 
 
 def register_assert_rewrite(*names):
@@ -68,10 +67,8 @@ class AssertionState:
 
 def install_importhook(config):
     """Try to install the rewrite hook, raise SystemError if it fails."""
-    # Both Jython and CPython 2.6.0 have AST bugs that make the
-    # assertion rewriting hook malfunction.
-    if (sys.platform.startswith('java') or
-            sys.version_info[:3] == (2, 6, 0)):
+    # Jython has an AST bug that make the assertion rewriting hook malfunction.
+    if (sys.platform.startswith('java')):
         raise SystemError('rewrite not supported')
 
     config._assertstate = AssertionState(config, 'rewrite')
@@ -127,7 +124,7 @@ def pytest_runtest_setup(item):
             if new_expl:
                 new_expl = truncate.truncate_if_required(new_expl, item)
                 new_expl = [line.replace("\n", "\\n") for line in new_expl]
-                res = py.builtin._totext("\n~").join(new_expl)
+                res = six.text_type("\n~").join(new_expl)
                 if item.config.getvalue("assertmode") == "rewrite":
                     res = res.replace("%", "%%")
                 return res

@@ -1,7 +1,7 @@
 Installation and Getting Started
 ===================================
 
-**Pythons**: Python 2.6,2.7,3.3,3.4,3.5, Jython, PyPy-2.3
+**Pythons**: Python 2.7, 3.4, 3.5, 3.6, Jython, PyPy-2.3
 
 **Platforms**: Unix/Posix and Windows
 
@@ -9,7 +9,6 @@ Installation and Getting Started
 
 **dependencies**: `py <http://pypi.python.org/pypi/py>`_,
 `colorama (Windows) <http://pypi.python.org/pypi/colorama>`_,
-`argparse (py26) <http://pypi.python.org/pypi/argparse>`_.
 
 **documentation as PDF**: `download latest <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
 
@@ -48,18 +47,18 @@ That's it. You can execute the test function now::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 1 items
-    
+    collected 1 item
+
     test_sample.py F
-    
+
     ======= FAILURES ========
     _______ test_answer ________
-    
+
         def test_answer():
     >       assert func(3) == 5
     E       assert 4 == 5
     E        +  where 4 = func(3)
-    
+
     test_sample.py:5: AssertionError
     ======= 1 failed in 0.12 seconds ========
 
@@ -128,15 +127,15 @@ run the module by passing its filename::
     .F
     ======= FAILURES ========
     _______ TestClass.test_two ________
-    
+
     self = <test_class.TestClass object at 0xdeadbeef>
-    
+
         def test_two(self):
             x = "hello"
     >       assert hasattr(x, 'check')
     E       AssertionError: assert False
     E        +  where False = hasattr('hello', 'check')
-    
+
     test_class.py:8: AssertionError
     1 failed, 1 passed in 0.12 seconds
 
@@ -165,14 +164,14 @@ before performing the test function call.  Let's just run it::
     F
     ======= FAILURES ========
     _______ test_needsfiles ________
-    
+
     tmpdir = local('PYTEST_TMPDIR/test_needsfiles0')
-    
+
         def test_needsfiles(tmpdir):
             print (tmpdir)
     >       assert 0
     E       assert 0
-    
+
     test_tmpdir.py:3: AssertionError
     --------------------------- Captured stdout call ---------------------------
     PYTEST_TMPDIR/test_needsfiles0

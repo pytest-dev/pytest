@@ -27,18 +27,18 @@ To execute it::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 1 items
-    
+    collected 1 item
+
     test_sample.py F
-    
+
     ======= FAILURES ========
     _______ test_answer ________
-    
+
         def test_answer():
     >       assert inc(3) == 5
     E       assert 4 == 5
     E        +  where 4 = inc(3)
-    
+
     test_sample.py:5: AssertionError
     ======= 1 failed in 0.12 seconds ========
 
@@ -57,9 +57,9 @@ Features
 
 - Can run :ref:`unittest <unittest>` (including trial) and :ref:`nose <noseintegration>` test suites out of the box;
 
-- Python2.6+, Python3.3+, PyPy-2.3, Jython-2.5 (untested);
+- Python 2.7, Python 3.4+, PyPy 2.3, Jython 2.5 (untested);
 
-- Rich plugin architecture, with over 150+ :ref:`external plugins <extplugins>` and thriving community;
+- Rich plugin architecture, with over 315+ `external plugins <http://plugincompat.herokuapp.com>`_ and thriving community;
 
 
 Documentation

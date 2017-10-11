@@ -6,11 +6,13 @@ from __future__ import absolute_import, division, print_function
 import py
 import os
 
+
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "resultlog plugin options")
     group.addoption('--resultlog', '--result-log', action="store",
-        metavar="path", default=None,
-        help="DEPRECATED path for machine-readable result log.")
+                    metavar="path", default=None,
+                    help="DEPRECATED path for machine-readable result log.")
+
 
 def pytest_configure(config):
     resultlog = config.option.resultlog
@@ -19,12 +21,13 @@ def pytest_configure(config):
         dirname = os.path.dirname(os.path.abspath(resultlog))
         if not os.path.isdir(dirname):
             os.makedirs(dirname)
-        logfile = open(resultlog, 'w', 1) # line buffered
+        logfile = open(resultlog, 'w', 1)  # line buffered
         config._resultlog = ResultLog(config, logfile)
         config.pluginmanager.register(config._resultlog)
 
         from _pytest.deprecated import RESULT_LOG
         config.warn('C1', RESULT_LOG)
+
 
 def pytest_unconfigure(config):
     resultlog = getattr(config, '_resultlog', None)
@@ -32,6 +35,7 @@ def pytest_unconfigure(config):
         resultlog.logfile.close()
         del config._resultlog
         config.pluginmanager.unregister(resultlog)
+
 
 def generic_path(item):
     chain = item.listchain()
@@ -56,10 +60,11 @@ def generic_path(item):
         fspath = newfspath
     return ''.join(gpath)
 
+
 class ResultLog(object):
     def __init__(self, config, logfile):
         self.config = config
-        self.logfile = logfile # preferably line buffered
+        self.logfile = logfile  # preferably line buffered
 
     def write_log_entry(self, testpath, lettercode, longrepr):
         print("%s %s" % (lettercode, testpath), file=self.logfile)

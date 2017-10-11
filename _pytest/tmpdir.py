@@ -25,7 +25,7 @@ class TempdirFactory:
             provides an empty unique-per-test-invocation directory
             and is guaranteed to be empty.
         """
-        #py.log._apiwarn(">1.1", "use tmpdir function argument")
+        # py.log._apiwarn(">1.1", "use tmpdir function argument")
         return self.getbasetemp().ensure(string, dir=dir)
 
     def mktemp(self, basename, numbered=True):
@@ -38,7 +38,7 @@ class TempdirFactory:
             p = basetemp.mkdir(basename)
         else:
             p = py.path.local.make_numbered_dir(prefix=basename,
-                keep=0, rootdir=basetemp, lock_timeout=None)
+                                                keep=0, rootdir=basetemp, lock_timeout=None)
         self.trace("mktemp", p)
         return p
 

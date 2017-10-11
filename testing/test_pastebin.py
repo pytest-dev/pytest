@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 import sys
 import pytest
 
+
 class TestPasteCapture(object):
 
     @pytest.fixture
@@ -26,7 +27,7 @@ class TestPasteCapture(object):
         assert len(pastebinlist) == 1
         s = pastebinlist[0]
         assert s.find("def test_fail") != -1
-        assert reprec.countoutcomes() == [1,1,1]
+        assert reprec.countoutcomes() == [1, 1, 1]
 
     def test_all(self, testdir, pastebinlist):
         from _pytest.pytester import LineMatcher
@@ -40,7 +41,7 @@ class TestPasteCapture(object):
                 pytest.skip("")
         """)
         reprec = testdir.inline_run(testpath, "--pastebin=all", '-v')
-        assert reprec.countoutcomes() == [1,1,1]
+        assert reprec.countoutcomes() == [1, 1, 1]
         assert len(pastebinlist) == 1
         contents = pastebinlist[0].decode('utf-8')
         matcher = LineMatcher(contents.splitlines())
@@ -114,5 +115,3 @@ class TestPaste(object):
         assert 'lexer=%s' % lexer in data.decode()
         assert 'code=full-paste-contents' in data.decode()
         assert 'expiry=1week' in data.decode()
-
-

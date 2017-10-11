@@ -1,0 +1,1 @@
+``testdir`` now uses use the same method used by ``tmpdir`` to create its temporary directory. This changes the final structure of the ``testdir`` directory slightly, but should not affect usage in normal scenarios and avoids a number of potential problems.

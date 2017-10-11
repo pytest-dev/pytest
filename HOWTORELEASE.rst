@@ -1,5 +1,9 @@
-How to release pytest
---------------------------------------------
+Release Procedure
+-----------------
+
+Our current policy for releasing is to aim for a bugfix every few weeks and a minor release every 2-3 months. The idea
+is to get fixes and new features out instead of trying to cram a ton of features into a release and by consequence
+taking a lot of time to make a new one.
 
 .. important::
 
@@ -21,7 +25,7 @@ How to release pytest
 #. Generate docs, changelog, announcements and upload a package to
    your ``devpi`` staging server::
 
-     invoke generate.pre_release <VERSION> <DEVPI USER> --password <DEVPI PASSWORD>
+     invoke generate.pre-release <VERSION> <DEVPI USER> --password <DEVPI PASSWORD>
 
    If ``--password`` is not given, it is assumed the user is already logged in ``devpi``.
    If you don't have an account, please ask for one.
@@ -49,12 +53,12 @@ How to release pytest
 
 #. Publish to PyPI::
 
-      invoke generate.publish_release <VERSION> <DEVPI USER> <PYPI_NAME>
+      invoke generate.publish-release <VERSION> <DEVPI USER> <PYPI_NAME>
 
    where PYPI_NAME is the name of pypi.python.org as configured in your ``~/.pypirc``
    file `for devpi <http://doc.devpi.net/latest/quickstart-releaseprocess.html?highlight=pypirc#devpi-push-releasing-to-an-external-index>`_.
 
-#. After a minor/major release, merge ``features`` into ``master`` and push (or open a PR).
+#. After a minor/major release, merge ``release-X.Y.Z`` into ``master`` and push (or open a PR).
 
 .. _devpi-cloud-test: https://github.com/obestwalter/devpi-cloud-test
 .. _AppVeyor: https://www.appveyor.com/

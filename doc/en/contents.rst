@@ -31,14 +31,17 @@ Full pytest documentation
    plugins
    writing_plugins
 
-   example/index
    goodpractices
+   pythonpath
    customize
+   example/index
    bash-completion
 
    backwards-compatibility
+   historical-notes
    license
    contributing
+   development_guide
    talks
    projects
    faq

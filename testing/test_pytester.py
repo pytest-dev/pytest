@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 import pytest
 import os
@@ -64,6 +65,7 @@ def test_parseconfig(testdir):
     assert config2 != config1
     assert config1 != pytest.config
 
+
 def test_testdir_runs_with_plugin(testdir):
     testdir.makepyfile("""
         pytest_plugins = "pytester"
@@ -78,6 +80,7 @@ def make_holder():
     class apiclass(object):
         def pytest_xyz(self, arg):
             "x"
+
         def pytest_xyz_noarg(self):
             "x"
 
@@ -117,6 +120,17 @@ def test_makepyfile_unicode(testdir):
         unichr = chr
     testdir.makepyfile(unichr(0xfffd))
 
+
+def test_makepyfile_utf8(testdir):
+    """Ensure makepyfile accepts utf-8 bytes as input (#2738)"""
+    utf8_contents = u"""
+        def setup_function(function):
+            mixed_encoding = u'São Paulo'
+    """.encode('utf-8')
+    p = testdir.makepyfile(utf8_contents)
+    assert u"mixed_encoding = u'São Paulo'".encode('utf-8') in p.read('rb')
+
+
 def test_inline_run_clean_modules(testdir):
     test_mod = testdir.makepyfile("def test_foo(): assert True")
     result = testdir.inline_run(str(test_mod))
@@ -125,6 +139,7 @@ def test_inline_run_clean_modules(testdir):
     test_mod.write("def test_foo(): assert False")
     result2 = testdir.inline_run(str(test_mod))
     assert result2.ret == EXIT_TESTSFAILED
+
 
 def test_assert_outcomes_after_pytest_erro(testdir):
     testdir.makepyfile("def test_foo(): assert True")

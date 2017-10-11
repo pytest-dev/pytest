@@ -6,7 +6,8 @@ import warnings
 from collections import namedtuple
 from operator import attrgetter
 from .compat import imap
-from .deprecated import MARK_INFO_ATTRIBUTE, MARK_PARAMETERSET_UNPACKING
+from .deprecated import MARK_PARAMETERSET_UNPACKING
+
 
 def alias(name, warning=None):
     getter = attrgetter(name)
@@ -66,10 +67,6 @@ class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
 
         return cls(argval, marks=newmarks, id=None)
 
-    @property
-    def deprecated_arg_dict(self):
-        return dict((mark.name, mark) for mark in self.marks)
-
 
 class MarkerError(Exception):
 
@@ -90,7 +87,8 @@ def pytest_addoption(parser):
              "where all names are substring-matched against test names "
              "and their parent classes. Example: -k 'test_method or test_"
              "other' matches all test functions and classes whose name "
-             "contains 'test_method' or 'test_other'. "
+             "contains 'test_method' or 'test_other', while -k 'not test_method' "
+             "matches those that don't contain 'test_method' in their names. "
              "Additionally keywords are matched to classes and functions "
              "containing extra names in their 'extra_keyword_matches' set, "
              "as well as functions which have names assigned directly to them."
@@ -165,6 +163,7 @@ def pytest_collection_modifyitems(items, config):
 class MarkMapping:
     """Provides a local mapping for markers where item access
     resolves to True if the marker is present. """
+
     def __init__(self, keywords):
         mymarks = set()
         for key, value in keywords.items():
@@ -180,6 +179,7 @@ class KeywordMapping:
     """Provides a local mapping for keywords.
     Given a list of names, map any substring of one of these names to True.
     """
+
     def __init__(self, names):
         self._names = names
 
@@ -253,7 +253,6 @@ class MarkGenerator:
     on the ``test_function`` object. """
     _config = None
 
-
     def __getattr__(self, name):
         if name[0] == "_":
             raise AttributeError("Marker name must NOT start with underscore")
@@ -279,6 +278,7 @@ class MarkGenerator:
 def istestfunc(func):
     return hasattr(func, "__call__") and \
         getattr(func, "__name__", "<lambda>") != "<lambda>"
+
 
 class MarkDecorator:
     """ A decorator for test functions and test classes.  When applied
@@ -313,6 +313,7 @@ class MarkDecorator:
     additional keyword or positional arguments.
 
     """
+
     def __init__(self, mark):
         assert isinstance(mark, Mark), repr(mark)
         self.mark = mark
@@ -323,13 +324,24 @@ class MarkDecorator:
 
     @property
     def markname(self):
-        return self.name # for backward-compat (2.4.1 had this attr)
+        return self.name  # for backward-compat (2.4.1 had this attr)
 
     def __eq__(self, other):
-        return self.mark == other.mark
+        return self.mark == other.mark if isinstance(other, MarkDecorator) else False
 
     def __repr__(self):
         return "<MarkDecorator %r>" % (self.mark,)
+
+    def with_args(self, *args, **kwargs):
+        """ return a MarkDecorator with extra arguments added
+
+        unlike call this can be used even if the sole argument is a callable/class
+
+        :return: MarkDecorator
+        """
+
+        mark = Mark(self.name, args, kwargs)
+        return self.__class__(self.mark.combined_with(mark))
 
     def __call__(self, *args, **kwargs):
         """ if passed a single callable argument: decorate it with mark info.
@@ -344,9 +356,8 @@ class MarkDecorator:
                     store_legacy_markinfo(func, self.mark)
                     store_mark(func, self.mark)
                 return func
+        return self.with_args(*args, **kwargs)
 
-        mark = Mark(self.name, args, kwargs)
-        return self.__class__(self.mark.combined_with(mark))
 
 def get_unpacked_marks(obj):
     """
@@ -396,14 +407,15 @@ class Mark(namedtuple('Mark', 'name, args, kwargs')):
 
 class MarkInfo(object):
     """ Marking object created by :class:`MarkDecorator` instances. """
+
     def __init__(self, mark):
         assert isinstance(mark, Mark), repr(mark)
         self.combined = mark
         self._marks = [mark]
 
-    name = alias('combined.name', warning=MARK_INFO_ATTRIBUTE)
-    args = alias('combined.args', warning=MARK_INFO_ATTRIBUTE)
-    kwargs = alias('combined.kwargs', warning=MARK_INFO_ATTRIBUTE)
+    name = alias('combined.name')
+    args = alias('combined.args')
+    kwargs = alias('combined.kwargs')
 
     def __repr__(self):
         return "<MarkInfo {0!r}>".format(self.combined)

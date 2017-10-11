@@ -57,7 +57,7 @@ using it::
     @pytest.fixture
     def smtp():
         import smtplib
-        return smtplib.SMTP("smtp.gmail.com")
+        return smtplib.SMTP("smtp.gmail.com", 587, timeout=5)
 
     def test_ehlo(smtp):
         response, msg = smtp.ehlo()
@@ -72,21 +72,21 @@ marked ``smtp`` fixture function.  Running the test looks like this::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 1 items
-
+    collected 1 item
+    
     test_smtpsimple.py F
-
+    
     ======= FAILURES ========
     _______ test_ehlo ________
-
+    
     smtp = <smtplib.SMTP object at 0xdeadbeef>
-
+    
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
             assert response == 250
     >       assert 0 # for demo purposes
     E       assert 0
-
+    
     test_smtpsimple.py:11: AssertionError
     ======= 1 failed in 0.12 seconds ========
 
@@ -109,19 +109,13 @@ Note that if you misspell a function argument or want
 to use one that isn't available, you'll see an error
 with a list of available function arguments.
 
-.. Note::
+.. note::
 
     You can always issue::
 
         pytest --fixtures test_simplefactory.py
 
     to see available fixtures.
-
-    In versions prior to 2.3 there was no ``@pytest.fixture`` marker
-    and you had to use a magic ``pytest_funcarg__NAME`` prefix
-    for the fixture factory.  This remains and will remain supported
-    but is not anymore advertised as the primary means of declaring fixture
-    functions.
 
 Fixtures: a prime example of dependency injection
 ---------------------------------------------------
@@ -157,7 +151,7 @@ access the fixture function::
 
     @pytest.fixture(scope="module")
     def smtp():
-        return smtplib.SMTP("smtp.gmail.com")
+        return smtplib.SMTP("smtp.gmail.com", 587, timeout=5)
 
 The name of the fixture again is ``smtp`` and you can access its result by
 listing the name ``smtp`` as an input parameter in any test or fixture
@@ -184,32 +178,32 @@ inspect what is going on and can now run the tests::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
-
+    
     test_module.py FF
-
+    
     ======= FAILURES ========
     _______ test_ehlo ________
-
+    
     smtp = <smtplib.SMTP object at 0xdeadbeef>
-
+    
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
             assert response == 250
             assert b"smtp.gmail.com" in msg
     >       assert 0  # for demo purposes
     E       assert 0
-
+    
     test_module.py:6: AssertionError
     _______ test_noop ________
-
+    
     smtp = <smtplib.SMTP object at 0xdeadbeef>
-
+    
         def test_noop(smtp):
             response, msg = smtp.noop()
             assert response == 250
     >       assert 0  # for demo purposes
     E       assert 0
-
+    
     test_module.py:11: AssertionError
     ======= 2 failed in 0.12 seconds ========
 
@@ -247,7 +241,7 @@ the code after the *yield* statement serves as the teardown code:
 
     @pytest.fixture(scope="module")
     def smtp():
-        smtp = smtplib.SMTP("smtp.gmail.com")
+        smtp = smtplib.SMTP("smtp.gmail.com", 587, timeout=5)
         yield smtp  # provide the fixture value
         print("teardown smtp")
         smtp.close()
@@ -260,7 +254,7 @@ Let's execute it::
 
     $ pytest -s -q --tb=no
     FFteardown smtp
-
+    
     2 failed in 0.12 seconds
 
 We see that the ``smtp`` instance is finalized after the two
@@ -281,7 +275,7 @@ Note that we can also seamlessly use the ``yield`` syntax with ``with`` statemen
 
     @pytest.fixture(scope="module")
     def smtp():
-        with smtplib.SMTP("smtp.gmail.com") as smtp:
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=5) as smtp:
             yield smtp  # provide the fixture value
 
 
@@ -291,14 +285,6 @@ the ``with`` statement ends.
 
 Note that if an exception happens during the *setup* code (before the ``yield`` keyword), the
 *teardown* code (after the ``yield``) will not be called.
-
-
-.. note::
-    Prior to version 2.10, in order to use a ``yield`` statement to execute teardown code one
-    had to mark a fixture using the ``yield_fixture`` marker. From 2.10 onward, normal
-    fixtures can use ``yield`` directly so the ``yield_fixture`` decorator is no longer needed
-    and considered deprecated.
-
 
 An alternative option for executing *teardown* code is to
 make use of the ``addfinalizer`` method of the `request-context`_ object to register
@@ -314,7 +300,7 @@ Here's the ``smtp`` fixture changed to use ``addfinalizer`` for cleanup:
 
     @pytest.fixture(scope="module")
     def smtp(request):
-        smtp = smtplib.SMTP("smtp.gmail.com")
+        smtp = smtplib.SMTP("smtp.gmail.com", 587, timeout=5)
         def fin():
             print ("teardown smtp")
             smtp.close()
@@ -362,7 +348,7 @@ read an optional server URL from the test module which uses our fixture::
     @pytest.fixture(scope="module")
     def smtp(request):
         server = getattr(request.module, "smtpserver", "smtp.gmail.com")
-        smtp = smtplib.SMTP(server)
+        smtp = smtplib.SMTP(server, 587, timeout=5)
         yield smtp
         print ("finalizing %s (%s)" % (smtp, server))
         smtp.close()
@@ -373,7 +359,7 @@ again, nothing much has changed::
 
     $ pytest -s -q --tb=no
     FFfinalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
-
+    
     2 failed in 0.12 seconds
 
 Let's quickly create another test module that actually sets the
@@ -426,7 +412,7 @@ through the special :py:class:`request <FixtureRequest>` object::
     @pytest.fixture(scope="module",
                     params=["smtp.gmail.com", "mail.python.org"])
     def smtp(request):
-        smtp = smtplib.SMTP(request.param)
+        smtp = smtplib.SMTP(request.param, 587, timeout=5)
         yield smtp
         print ("finalizing %s" % smtp)
         smtp.close()
@@ -441,51 +427,51 @@ So let's just do another run::
     FFFF
     ======= FAILURES ========
     _______ test_ehlo[smtp.gmail.com] ________
-
+    
     smtp = <smtplib.SMTP object at 0xdeadbeef>
-
+    
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
             assert response == 250
             assert b"smtp.gmail.com" in msg
     >       assert 0  # for demo purposes
     E       assert 0
-
+    
     test_module.py:6: AssertionError
     _______ test_noop[smtp.gmail.com] ________
-
+    
     smtp = <smtplib.SMTP object at 0xdeadbeef>
-
+    
         def test_noop(smtp):
             response, msg = smtp.noop()
             assert response == 250
     >       assert 0  # for demo purposes
     E       assert 0
-
+    
     test_module.py:11: AssertionError
     _______ test_ehlo[mail.python.org] ________
-
+    
     smtp = <smtplib.SMTP object at 0xdeadbeef>
-
+    
         def test_ehlo(smtp):
             response, msg = smtp.ehlo()
             assert response == 250
     >       assert b"smtp.gmail.com" in msg
-    E       AssertionError: assert b'smtp.gmail.com' in b'mail.python.org\nSIZE 51200000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8'
-
+    E       AssertionError: assert b'smtp.gmail.com' in b'mail.python.org\nPIPELINING\nSIZE 51200000\nETRN\nSTARTTLS\nAUTH DIGEST-MD5 NTLM CRAM-MD5\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8'
+    
     test_module.py:5: AssertionError
     -------------------------- Captured stdout setup ---------------------------
     finalizing <smtplib.SMTP object at 0xdeadbeef>
     _______ test_noop[mail.python.org] ________
-
+    
     smtp = <smtplib.SMTP object at 0xdeadbeef>
-
+    
         def test_noop(smtp):
             response, msg = smtp.noop()
             assert response == 250
     >       assert 0  # for demo purposes
     E       assert 0
-
+    
     test_module.py:11: AssertionError
     ------------------------- Captured stdout teardown -------------------------
     finalizing <smtplib.SMTP object at 0xdeadbeef>
@@ -557,7 +543,7 @@ Running the above tests results in the following test IDs being used::
      <Function 'test_noop[smtp.gmail.com]'>
      <Function 'test_ehlo[mail.python.org]'>
      <Function 'test_noop[mail.python.org]'>
-
+   
    ======= no tests ran in 0.12 seconds ========
 
 .. _`interdependent fixtures`:
@@ -596,10 +582,10 @@ Here we declare an ``app`` fixture which receives the previously defined
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 2 items
-
+    
     test_appsetup.py::test_smtp_exists[smtp.gmail.com] PASSED
     test_appsetup.py::test_smtp_exists[mail.python.org] PASSED
-
+    
     ======= 2 passed in 0.12 seconds ========
 
 Due to the parametrization of ``smtp`` the test will run twice with two
@@ -665,26 +651,26 @@ Let's run the tests in verbose mode and with looking at the print-output::
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 8 items
-
+    
     test_module.py::test_0[1]   SETUP otherarg 1
       RUN test0 with otherarg 1
     PASSED  TEARDOWN otherarg 1
-
+    
     test_module.py::test_0[2]   SETUP otherarg 2
       RUN test0 with otherarg 2
     PASSED  TEARDOWN otherarg 2
-
+    
     test_module.py::test_1[mod1]   SETUP modarg mod1
       RUN test1 with modarg mod1
     PASSED
     test_module.py::test_2[1-mod1]   SETUP otherarg 1
       RUN test2 with otherarg 1 and modarg mod1
     PASSED  TEARDOWN otherarg 1
-
+    
     test_module.py::test_2[2-mod1]   SETUP otherarg 2
       RUN test2 with otherarg 2 and modarg mod1
     PASSED  TEARDOWN otherarg 2
-
+    
     test_module.py::test_1[mod2]   TEARDOWN modarg mod1
       SETUP modarg mod2
       RUN test1 with modarg mod2
@@ -692,13 +678,13 @@ Let's run the tests in verbose mode and with looking at the print-output::
     test_module.py::test_2[1-mod2]   SETUP otherarg 1
       RUN test2 with otherarg 1 and modarg mod2
     PASSED  TEARDOWN otherarg 1
-
+    
     test_module.py::test_2[2-mod2]   SETUP otherarg 2
       RUN test2 with otherarg 2 and modarg mod2
     PASSED  TEARDOWN otherarg 2
       TEARDOWN modarg mod2
-
-
+    
+    
     ======= 8 passed in 0.12 seconds ========
 
 You can see that the parametrized module-scoped ``modarg`` resource caused an

@@ -1,0 +1,1 @@
+Internal refactor: simplify ascii string escaping by using the backslashreplace error handler in newer Python 3 versions.

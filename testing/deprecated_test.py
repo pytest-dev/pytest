@@ -9,12 +9,16 @@ def test_yield_tests_deprecation(testdir):
         def test_gen():
             yield "m1", func1, 15, 3*5
             yield "m2", func1, 42, 6*7
+        def test_gen2():
+            for k in range(10):
+                yield func1, 1, 1
     """)
     result = testdir.runpytest('-ra')
     result.stdout.fnmatch_lines([
         '*yield tests are deprecated, and scheduled to be removed in pytest 4.0*',
         '*2 passed*',
     ])
+    assert result.stdout.str().count('yield tests are deprecated') == 2
 
 
 def test_funcarg_prefix_deprecation(testdir):
@@ -74,4 +78,7 @@ def test_resultlog_is_deprecated(testdir):
             pass
     ''')
     result = testdir.runpytest('--result-log=%s' % testdir.tmpdir.join('result.log'))
-    result.stdout.fnmatch_lines(['*--result-log is deprecated and scheduled for removal in pytest 4.0*'])
+    result.stdout.fnmatch_lines([
+        '*--result-log is deprecated and scheduled for removal in pytest 4.0*',
+        '*See https://docs.pytest.org/*/usage.html#creating-resultlog-format-files for more information*',
+    ])

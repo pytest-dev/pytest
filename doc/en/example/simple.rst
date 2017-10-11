@@ -127,7 +127,7 @@ Control skipping of tests according to command line option
 .. regendoc:wipe
 
 Here is a ``conftest.py`` file adding a ``--runslow`` command
-line option to control skipping of ``slow`` marked tests:
+line option to control skipping of ``pytest.mark.slow`` marked tests:
 
 .. code-block:: python
 
@@ -136,7 +136,16 @@ line option to control skipping of ``slow`` marked tests:
     import pytest
     def pytest_addoption(parser):
         parser.addoption("--runslow", action="store_true",
-            help="run slow tests")
+                         default=False, help="run slow tests")
+
+    def pytest_collection_modifyitems(config, items):
+        if config.getoption("--runslow"):
+            # --runslow given in cli: do not skip slow tests
+            return
+        skip_slow = pytest.mark.skip(reason="need --runslow option to run")
+        for item in items:
+            if "slow" in item.keywords:
+                item.add_marker(skip_slow)
 
 We can now write a test module like this:
 
@@ -146,17 +155,11 @@ We can now write a test module like this:
     import pytest
 
 
-    slow = pytest.mark.skipif(
-        not pytest.config.getoption("--runslow"),
-        reason="need --runslow option to run"
-    )
-
-
     def test_func_fast():
         pass
 
 
-    @slow
+    @pytest.mark.slow
     def test_func_slow():
         pass
 
@@ -170,7 +173,7 @@ and when running it will see a skipped "slow" test::
     
     test_module.py .s
     ======= short test summary info ========
-    SKIP [1] test_module.py:13: need --runslow option to run
+    SKIP [1] test_module.py:8: need --runslow option to run
     
     ======= 1 passed, 1 skipped in 0.12 seconds ========
 
@@ -363,13 +366,13 @@ out which tests are the slowest. Let's make an artificial test suite:
     import time
 
     def test_funcfast():
-        pass
-
-    def test_funcslow1():
         time.sleep(0.1)
 
-    def test_funcslow2():
+    def test_funcslow1():
         time.sleep(0.2)
+
+    def test_funcslow2():
+        time.sleep(0.3)
 
 Now we can profile which test functions execute the slowest::
 
@@ -382,9 +385,9 @@ Now we can profile which test functions execute the slowest::
     test_some_are_slow.py ...
     
     ======= slowest 3 test durations ========
-    0.20s call     test_some_are_slow.py::test_funcslow2
-    0.10s call     test_some_are_slow.py::test_funcslow1
-    0.00s setup    test_some_are_slow.py::test_funcfast
+    0.30s call     test_some_are_slow.py::test_funcslow2
+    0.20s call     test_some_are_slow.py::test_funcslow1
+    0.10s call     test_some_are_slow.py::test_funcfast
     ======= 3 passed in 0.12 seconds ========
 
 incremental testing - test steps
@@ -760,6 +763,47 @@ and run it::
 
 You'll see that the fixture finalizers could use the precise reporting
 information.
+
+``PYTEST_CURRENT_TEST`` environment variable
+--------------------------------------------
+
+.. versionadded:: 3.2
+
+Sometimes a test session might get stuck and there might be no easy way to figure out
+which test got stuck, for example if pytest was run in quiet mode (``-q``) or you don't have access to the console
+output. This is particularly a problem if the problem helps only sporadically, the famous "flaky" kind of tests.
+
+``pytest`` sets a ``PYTEST_CURRENT_TEST`` environment variable when running tests, which can be inspected
+by process monitoring utilities or libraries like `psutil <https://pypi.python.org/pypi/psutil>`_ to discover which
+test got stuck if necessary:
+
+.. code-block:: python
+
+    import psutil
+
+    for pid in psutil.pids():
+        environ = psutil.Process(pid).environ()
+        if 'PYTEST_CURRENT_TEST' in environ:
+            print(f'pytest process {pid} running: {environ["PYTEST_CURRENT_TEST"]}')
+
+During the test session pytest will set ``PYTEST_CURRENT_TEST`` to the current test
+:ref:`nodeid <nodeids>` and the current stage, which can be ``setup``, ``call``
+and ``teardown``.
+
+For example, when running a single test function named ``test_foo`` from ``foo_module.py``,
+``PYTEST_CURRENT_TEST`` will be set to:
+
+#. ``foo_module.py::test_foo (setup)``
+#. ``foo_module.py::test_foo (call)``
+#. ``foo_module.py::test_foo (teardown)``
+
+In that order.
+
+.. note::
+
+    The contents of ``PYTEST_CURRENT_TEST`` is meant to be human readable and the actual format
+    can be changed between releases (even bug fixes) so it shouldn't be relied on for scripting
+    or automation.
 
 Freezing pytest 
 ---------------

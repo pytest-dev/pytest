@@ -1,0 +1,1 @@
+Stop vendoring ``pluggy`` - we're missing out on it's latest changes for not much benefit

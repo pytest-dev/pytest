@@ -1,12 +1,13 @@
 from __future__ import absolute_import, division, print_function
 import sys
-
+import py
 import _pytest
 import pytest
 import os
 import shutil
 
 pytest_plugins = "pytester",
+
 
 class TestNewAPI(object):
     def test_config_cache_makedir(self, testdir):
@@ -87,6 +88,36 @@ class TestNewAPI(object):
         assert result.ret == 0
         result.stdout.fnmatch_lines(["*1 passed*"])
 
+    def test_custom_rel_cache_dir(self, testdir):
+        rel_cache_dir = os.path.join('custom_cache_dir', 'subdir')
+        testdir.makeini("""
+            [pytest]
+            cache_dir = {cache_dir}
+        """.format(cache_dir=rel_cache_dir))
+        testdir.makepyfile(test_errored='def test_error():\n    assert False')
+        testdir.runpytest()
+        assert testdir.tmpdir.join(rel_cache_dir).isdir()
+
+    def test_custom_abs_cache_dir(self, testdir, tmpdir_factory):
+        tmp = str(tmpdir_factory.mktemp('tmp'))
+        abs_cache_dir = os.path.join(tmp, 'custom_cache_dir')
+        testdir.makeini("""
+            [pytest]
+            cache_dir = {cache_dir}
+        """.format(cache_dir=abs_cache_dir))
+        testdir.makepyfile(test_errored='def test_error():\n    assert False')
+        testdir.runpytest()
+        assert py.path.local(abs_cache_dir).isdir()
+
+    def test_custom_cache_dir_with_env_var(self, testdir, monkeypatch):
+        monkeypatch.setenv('env_var', 'custom_cache_dir')
+        testdir.makeini("""
+            [pytest]
+            cache_dir = {cache_dir}
+        """.format(cache_dir='$env_var'))
+        testdir.makepyfile(test_errored='def test_error():\n    assert False')
+        testdir.runpytest()
+        assert testdir.tmpdir.join('custom_cache_dir').isdir()
 
 
 def test_cache_reportheader(testdir):
@@ -309,6 +340,73 @@ class TestLastFailed(object):
         result = testdir.runpytest()
         result.stdout.fnmatch_lines('*1 failed in*')
 
+    def test_terminal_report_lastfailed(self, testdir):
+        test_a = testdir.makepyfile(test_a="""
+            def test_a1():
+                pass
+            def test_a2():
+                pass
+        """)
+        test_b = testdir.makepyfile(test_b="""
+            def test_b1():
+                assert 0
+            def test_b2():
+                assert 0
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            'collected 4 items',
+            '*2 failed, 2 passed in*',
+        ])
+
+        result = testdir.runpytest('--lf')
+        result.stdout.fnmatch_lines([
+            'collected 4 items',
+            'run-last-failure: rerun previous 2 failures',
+            '*2 failed, 2 deselected in*',
+        ])
+
+        result = testdir.runpytest(test_a, '--lf')
+        result.stdout.fnmatch_lines([
+            'collected 2 items',
+            'run-last-failure: run all (no recorded failures)',
+            '*2 passed in*',
+        ])
+
+        result = testdir.runpytest(test_b, '--lf')
+        result.stdout.fnmatch_lines([
+            'collected 2 items',
+            'run-last-failure: rerun previous 2 failures',
+            '*2 failed in*',
+        ])
+
+        result = testdir.runpytest('test_b.py::test_b1', '--lf')
+        result.stdout.fnmatch_lines([
+            'collected 1 item',
+            'run-last-failure: rerun previous 1 failure',
+            '*1 failed in*',
+        ])
+
+    def test_terminal_report_failedfirst(self, testdir):
+        testdir.makepyfile(test_a="""
+            def test_a1():
+                assert 0
+            def test_a2():
+                pass
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            'collected 2 items',
+            '*1 failed, 1 passed in*',
+        ])
+
+        result = testdir.runpytest('--ff')
+        result.stdout.fnmatch_lines([
+            'collected 2 items',
+            'run-last-failure: rerun previous 1 failure first',
+            '*1 failed, 1 passed in*',
+        ])
+
     def test_lastfailed_collectfailure(self, testdir, monkeypatch):
 
         testdir.makepyfile(test_maybe="""
@@ -337,7 +435,6 @@ class TestLastFailed(object):
 
         lastfailed = rlf(fail_import=0, fail_run=1)
         assert list(lastfailed) == ['test_maybe.py::test_hello']
-
 
     def test_lastfailed_failure_subset(self, testdir, monkeypatch):
 
@@ -380,11 +477,9 @@ class TestLastFailed(object):
         result, lastfailed = rlf(fail_import=1, fail_run=0)
         assert sorted(list(lastfailed)) == ['test_maybe.py', 'test_maybe2.py']
 
-
         result, lastfailed = rlf(fail_import=0, fail_run=0,
                                  args=('test_maybe2.py',))
         assert list(lastfailed) == ['test_maybe.py']
-
 
         # edge case of test selection - even if we remember failures
         # from other tests we still need to run all tests if no test
@@ -409,3 +504,102 @@ class TestLastFailed(object):
         testdir.makepyfile(test_errored='def test_error():\n    assert False')
         testdir.runpytest('-q', '--lf')
         assert os.path.exists('.cache')
+
+    def test_xfail_not_considered_failure(self, testdir):
+        testdir.makepyfile('''
+            import pytest
+            @pytest.mark.xfail
+            def test():
+                assert 0
+        ''')
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines('*1 xfailed*')
+        assert self.get_cached_last_failed(testdir) == []
+
+    def test_xfail_strict_considered_failure(self, testdir):
+        testdir.makepyfile('''
+            import pytest
+            @pytest.mark.xfail(strict=True)
+            def test():
+                pass
+        ''')
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines('*1 failed*')
+        assert self.get_cached_last_failed(testdir) == ['test_xfail_strict_considered_failure.py::test']
+
+    @pytest.mark.parametrize('mark', ['mark.xfail', 'mark.skip'])
+    def test_failed_changed_to_xfail_or_skip(self, testdir, mark):
+        testdir.makepyfile('''
+            import pytest
+            def test():
+                assert 0
+        ''')
+        result = testdir.runpytest()
+        assert self.get_cached_last_failed(testdir) == ['test_failed_changed_to_xfail_or_skip.py::test']
+        assert result.ret == 1
+
+        testdir.makepyfile('''
+            import pytest
+            @pytest.{mark}
+            def test():
+                assert 0
+        '''.format(mark=mark))
+        result = testdir.runpytest()
+        assert result.ret == 0
+        assert self.get_cached_last_failed(testdir) == []
+        assert result.ret == 0
+
+    def get_cached_last_failed(self, testdir):
+        config = testdir.parseconfigure()
+        return sorted(config.cache.get("cache/lastfailed", {}))
+
+    def test_cache_cumulative(self, testdir):
+        """
+        Test workflow where user fixes errors gradually file by file using --lf.
+        """
+        # 1. initial run
+        test_bar = testdir.makepyfile(test_bar="""
+            def test_bar_1():
+                pass
+            def test_bar_2():
+                assert 0
+        """)
+        test_foo = testdir.makepyfile(test_foo="""
+            def test_foo_3():
+                pass
+            def test_foo_4():
+                assert 0
+        """)
+        testdir.runpytest()
+        assert self.get_cached_last_failed(testdir) == ['test_bar.py::test_bar_2', 'test_foo.py::test_foo_4']
+
+        # 2. fix test_bar_2, run only test_bar.py
+        testdir.makepyfile(test_bar="""
+            def test_bar_1():
+                pass
+            def test_bar_2():
+                pass
+        """)
+        result = testdir.runpytest(test_bar)
+        result.stdout.fnmatch_lines('*2 passed*')
+        # ensure cache does not forget that test_foo_4 failed once before
+        assert self.get_cached_last_failed(testdir) == ['test_foo.py::test_foo_4']
+
+        result = testdir.runpytest('--last-failed')
+        result.stdout.fnmatch_lines('*1 failed, 3 deselected*')
+        assert self.get_cached_last_failed(testdir) == ['test_foo.py::test_foo_4']
+
+        # 3. fix test_foo_4, run only test_foo.py
+        test_foo = testdir.makepyfile(test_foo="""
+            def test_foo_3():
+                pass
+            def test_foo_4():
+                pass
+        """)
+        result = testdir.runpytest(test_foo, '--last-failed')
+        result.stdout.fnmatch_lines('*1 passed, 1 deselected*')
+        assert self.get_cached_last_failed(testdir) == []
+
+        result = testdir.runpytest('--last-failed')
+        result.stdout.fnmatch_lines('*4 passed*')
+        assert self.get_cached_last_failed(testdir) == []

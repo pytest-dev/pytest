@@ -122,7 +122,7 @@ want to distribute them along with your application::
             test_view.py
             ...
 
-In this scheme, it is easy to your run tests using the ``--pyargs`` option::
+In this scheme, it is easy to run your tests using the ``--pyargs`` option::
 
     pytest --pyargs mypkg
 
@@ -249,15 +249,6 @@ by putting them into a ``[tool:pytest]`` section:
     python_files = testing/*/*.py
 
 
-.. note::
-    Prior to 3.0, the supported section name was ``[pytest]``. Due to how
-    this may collide with some distutils commands, the recommended
-    section name for ``setup.cfg`` files is now ``[tool:pytest]``.
-
-    Note that for ``pytest.ini`` and ``tox.ini`` files the section
-    name is ``[pytest]``.
-
-
 Manual Integration
 ^^^^^^^^^^^^^^^^^^
 
@@ -276,7 +267,7 @@ your own setuptools Test command for invoking pytest.
 
         def initialize_options(self):
             TestCommand.initialize_options(self)
-            self.pytest_args = []
+            self.pytest_args = ''
 
         def run_tests(self):
             import shlex

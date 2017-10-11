@@ -24,7 +24,7 @@ Running pytest now produces this output::
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 1 items
+    collected 1 item
     
     test_show_warnings.py .
     
@@ -77,6 +77,40 @@ is performed.
 Both ``-W`` command-line option and ``filterwarnings`` ini option are based on Python's own
 `-W option`_ and `warnings.simplefilter`_, so please refer to those sections in the Python
 documentation for other examples and advanced usage.
+
+``@pytest.mark.filterwarnings``
+-------------------------------
+
+.. versionadded:: 3.2
+
+You can use the ``@pytest.mark.filterwarnings`` to add warning filters to specific test items,
+allowing you to have finer control of which warnings should be captured at test, class or
+even module level:
+
+.. code-block:: python
+
+    import warnings
+
+    def api_v1():
+        warnings.warn(UserWarning("api v1, should use functions from v2"))
+        return 1
+
+    @pytest.mark.filterwarnings('ignore:api v1')
+    def test_one():
+        assert api_v1() == 1
+
+
+Filters applied using a mark take precedence over filters passed on the command line or configured
+by the ``filterwarnings`` ini option.
+
+You may apply a filter to all tests of a class by using the ``filterwarnings`` mark as a class
+decorator or to all tests in a module by setting the ``pytestmark`` variable:
+
+.. code-block:: python
+
+    # turns all warnings into errors for this module
+    pytestmark = @pytest.mark.filterwarnings('error')
+
 
 .. note::
 
@@ -134,7 +168,20 @@ which works in a similar manner to :ref:`raises <assertraises>`::
         with pytest.warns(UserWarning):
             warnings.warn("my warning", UserWarning)
 
-The test will fail if the warning in question is not raised.
+The test will fail if the warning in question is not raised. The keyword
+argument ``match`` to assert that the exception matches a text or regex::
+
+    >>> with warns(UserWarning, match='must be 0 or None'):
+    ...     warnings.warn("value must be 0 or None", UserWarning)
+
+    >>> with warns(UserWarning, match=r'must be \d+$'):
+    ...     warnings.warn("value must be 42", UserWarning)
+
+    >>> with warns(UserWarning, match=r'must be \d+$'):
+    ...     warnings.warn("this is not here", UserWarning)
+    Traceback (most recent call last):
+      ...
+    Failed: DID NOT WARN. No warnings of type ...UserWarning... was emitted...
 
 You can also call ``pytest.warns`` on a function or code string::
 

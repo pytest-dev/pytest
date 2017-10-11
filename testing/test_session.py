@@ -3,6 +3,7 @@ import pytest
 
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 
+
 class SessionTests(object):
     def test_basic_testitem_events(self, testdir):
         tfile = testdir.makepyfile("""
@@ -21,15 +22,18 @@ class SessionTests(object):
         assert len(skipped) == 0
         assert len(passed) == 1
         assert len(failed) == 3
-        end = lambda x: x.nodeid.split("::")[-1]
+
+        def end(x):
+            return x.nodeid.split("::")[-1]
+
         assert end(failed[0]) == "test_one_one"
         assert end(failed[1]) == "test_other"
         itemstarted = reprec.getcalls("pytest_itemcollected")
         assert len(itemstarted) == 4
         # XXX check for failing funcarg setup
-        #colreports = reprec.getcalls("pytest_collectreport")
-        #assert len(colreports) == 4
-        #assert colreports[1].report.failed
+        # colreports = reprec.getcalls("pytest_collectreport")
+        # assert len(colreports) == 4
+        # assert colreports[1].report.failed
 
     def test_nested_import_error(self, testdir):
         tfile = testdir.makepyfile("""
@@ -117,7 +121,7 @@ class SessionTests(object):
         passed, skipped, failed = reprec.listoutcomes()
         assert len(failed) == 1
         out = failed[0].longrepr.reprcrash.message
-        assert out.find("""[Exception("Ha Ha fooled you, I'm a broken repr().") raised in repr()]""") != -1 #'
+        assert out.find("""[Exception("Ha Ha fooled you, I'm a broken repr().") raised in repr()]""") != -1  # '
 
     def test_skip_file_by_conftest(self, testdir):
         testdir.makepyfile(conftest="""
@@ -134,6 +138,7 @@ class SessionTests(object):
         reports = reprec.getreports("pytest_collectreport")
         assert len(reports) == 1
         assert reports[0].skipped
+
 
 class TestNewSession(SessionTests):
 
@@ -186,7 +191,7 @@ class TestNewSession(SessionTests):
         started = reprec.getcalls("pytest_collectstart")
         finished = reprec.getreports("pytest_collectreport")
         assert len(started) == len(finished)
-        assert len(started) == 7 # XXX extra TopCollector
+        assert len(started) == 7  # XXX extra TopCollector
         colfail = [x for x in finished if x.failed]
         assert len(colfail) == 1
 
@@ -211,15 +216,17 @@ def test_plugin_specify(testdir):
     pytest.raises(ImportError, """
             testdir.parseconfig("-p", "nqweotexistent")
     """)
-    #pytest.raises(ImportError,
+    # pytest.raises(ImportError,
     #    "config.do_configure(config)"
-    #)
+    # )
+
 
 def test_plugin_already_exists(testdir):
     config = testdir.parseconfig("-p", "terminal")
     assert config.option.plugins == ['terminal']
     config._do_configure()
     config._ensure_unconfigure()
+
 
 def test_exclude(testdir):
     hellodir = testdir.mkdir("hello")
@@ -230,6 +237,7 @@ def test_exclude(testdir):
     result = testdir.runpytest("--ignore=hello", "--ignore=hello2")
     assert result.ret == 0
     result.stdout.fnmatch_lines(["*1 passed*"])
+
 
 def test_sessionfinish_with_start(testdir):
     testdir.makeconftest("""

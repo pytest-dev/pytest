@@ -1,28 +1,29 @@
 from __future__ import absolute_import, division, print_function
+
 import glob
 import os
 import py_compile
 import stat
 import sys
 import zipfile
-
 import py
 import pytest
-
-ast = pytest.importorskip("ast")
-if sys.platform.startswith("java"):
-    # XXX should be xfail
-    pytest.skip("assert rewrite does currently not work on jython")
 
 import _pytest._code
 from _pytest.assertion import util
 from _pytest.assertion.rewrite import rewrite_asserts, PYTEST_TAG, AssertionRewritingHook
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 
+ast = pytest.importorskip("ast")
+if sys.platform.startswith("java"):
+    # XXX should be xfail
+    pytest.skip("assert rewrite does currently not work on jython")
+
 
 def setup_module(mod):
     mod._old_reprcompare = util._reprcompare
     _pytest._code._reprcompare = None
+
 
 def teardown_module(mod):
     util._reprcompare = mod._old_reprcompare
@@ -33,6 +34,7 @@ def rewrite(src):
     tree = ast.parse(src)
     rewrite_asserts(tree)
     return tree
+
 
 def getmsg(f, extra_ns=None, must_pass=False):
     """Rewrite the assertions in f, run it, and get the failure message."""
@@ -118,12 +120,12 @@ class TestAssertionRewrite(object):
         def f():
             assert a_global  # noqa
 
-        assert getmsg(f, {"a_global" : False}) == "assert False"
+        assert getmsg(f, {"a_global": False}) == "assert False"
 
         def f():
             assert sys == 42
 
-        assert getmsg(f, {"sys" : sys}) == "assert sys == 42"
+        assert getmsg(f, {"sys": sys}) == "assert sys == 42"
 
         def f():
             assert cls == 42  # noqa
@@ -131,7 +133,7 @@ class TestAssertionRewrite(object):
         class X(object):
             pass
 
-        assert getmsg(f, {"cls" : X}) == "assert cls == 42"
+        assert getmsg(f, {"cls": X}) == "assert cls == 42"
 
     def test_assert_already_has_message(self):
         def f():
@@ -238,13 +240,13 @@ class TestAssertionRewrite(object):
         def f():
             assert x() and x()
 
-        assert getmsg(f, {"x" : x}) == """assert (False)
+        assert getmsg(f, {"x": x}) == """assert (False)
  +  where False = x()"""
 
         def f():
             assert False or x()
 
-        assert getmsg(f, {"x" : x}) == """assert (False or False)
+        assert getmsg(f, {"x": x}) == """assert (False or False)
  +  where False = x()"""
 
         def f():
@@ -255,7 +257,7 @@ class TestAssertionRewrite(object):
         def f():
             x = 1
             y = 2
-            assert x in {1 : None} and y in {}
+            assert x in {1: None} and y in {}
 
         assert getmsg(f) == "assert (1 in {1: None} and 2 in {})"
 
@@ -348,7 +350,7 @@ class TestAssertionRewrite(object):
         def g(a=42, *args, **kwargs):
             return False
 
-        ns = {"g" : g}
+        ns = {"g": g}
 
         def f():
             assert g()
@@ -389,7 +391,7 @@ class TestAssertionRewrite(object):
 
         def f():
             x = "a"
-            assert g(**{x : 2})
+            assert g(**{x: 2})
 
         assert getmsg(f, ns) == """assert False
  +  where False = g(**{'a': 2})"""
@@ -398,10 +400,10 @@ class TestAssertionRewrite(object):
         class X(object):
             g = 3
 
-        ns = {"x" : X}
+        ns = {"x": X}
 
         def f():
-            assert not x.g # noqa
+            assert not x.g  # noqa
 
         assert getmsg(f, ns) == """assert not 3
  +  where 3 = x.g"""
@@ -556,7 +558,7 @@ class TestRewriteOnImport(object):
     def test_readonly(self, testdir):
         sub = testdir.mkdir("testing")
         sub.join("test_readonly.py").write(
-        py.builtin._totext("""
+            py.builtin._totext("""
 def test_rewritten():
     assert "@py_builtins" in globals()
             """).encode("utf-8"), "wb")
@@ -609,7 +611,7 @@ def test_rewritten():
             def test_optimized():
                 "hello"
                 assert test_optimized.__doc__ is None"""
-        )
+                           )
         p = py.path.local.make_numbered_dir(prefix="runpytest-", keep=None,
                                             rootdir=testdir.tmpdir)
         tmp = "--basetemp=%s" % p
@@ -638,8 +640,8 @@ def test_rewritten():
         testdir.tmpdir.join("test_newlines.py").write(b, "wb")
         assert testdir.runpytest().ret == 0
 
-    @pytest.mark.skipif(sys.version_info < (3,3),
-            reason='packages without __init__.py not supported on python 2')
+    @pytest.mark.skipif(sys.version_info < (3, 4),
+                        reason='packages without __init__.py not supported on python 2')
     def test_package_without__init__py(self, testdir):
         pkg = testdir.mkdir('a_package_without_init_py')
         pkg.join('module.py').ensure()

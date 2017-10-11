@@ -4,8 +4,7 @@ from __future__ import absolute_import, division, print_function
 import os
 import sys
 import re
-
-from py.builtin import _basestring
+import six
 from _pytest.fixtures import fixture
 
 RE_IMPORT_ERROR_NAME = re.compile("^No module named (.*)$")
@@ -71,15 +70,15 @@ def annotated_getattr(obj, name, ann):
         obj = getattr(obj, name)
     except AttributeError:
         raise AttributeError(
-                '%r object at %s has no attribute %r' % (
-                    type(obj).__name__, ann, name
-                )
+            '%r object at %s has no attribute %r' % (
+                type(obj).__name__, ann, name
+            )
         )
     return obj
 
 
 def derive_importpath(import_path, raising):
-    if not isinstance(import_path, _basestring) or "." not in import_path:
+    if not isinstance(import_path, six.string_types) or "." not in import_path:
         raise TypeError("must be absolute import path string, not %r" %
                         (import_path,))
     module, attr = import_path.rsplit('.', 1)
@@ -125,7 +124,7 @@ class MonkeyPatch:
         import inspect
 
         if value is notset:
-            if not isinstance(target, _basestring):
+            if not isinstance(target, six.string_types):
                 raise TypeError("use setattr(target, name, value) or "
                                 "setattr(target, value) with target being a dotted "
                                 "import string")
@@ -155,7 +154,7 @@ class MonkeyPatch:
         """
         __tracebackhide__ = True
         if name is notset:
-            if not isinstance(target, _basestring):
+            if not isinstance(target, six.string_types):
                 raise TypeError("use delattr(target, name) or "
                                 "delattr(target) with target being a dotted "
                                 "import string")

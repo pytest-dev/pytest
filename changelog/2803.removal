@@ -1,0 +1,1 @@
+``TerminalReporter._tw`` has been deprecated in favor of ``TerminalReporter.writer`` and will be removed in a future version. Also, ``TerminalReporter.writer`` is now read-only.

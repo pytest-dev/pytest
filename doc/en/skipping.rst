@@ -27,6 +27,7 @@ corresponding to the "short" letters shown in the test progress::
 (See :ref:`how to change command line options defaults`)
 
 .. _skipif:
+.. _skip:
 .. _`condition booleans`:
 
 Skipping test functions
@@ -53,7 +54,7 @@ by calling the ``pytest.skip(reason)`` function:
         if not valid_config():
             pytest.skip("unsupported configuration")
 
-The imperative method is useful when it is not possible to evaluate the skip condition 
+The imperative method is useful when it is not possible to evaluate the skip condition
 during import time.
 
 ``skipif``
@@ -63,16 +64,16 @@ during import time.
 
 If you wish to skip something conditionally then you can use ``skipif`` instead.
 Here is an example of marking a test function to be skipped
-when run on a Python3.3 interpreter::
+when run on a Python3.6 interpreter::
 
     import sys
-    @pytest.mark.skipif(sys.version_info < (3,3),
-                        reason="requires python3.3")
+    @pytest.mark.skipif(sys.version_info < (3,6),
+                        reason="requires python3.6")
     def test_function():
         ...
 
 If the condition evaluates to ``True`` during collection, the test function will be skipped,
-with the specified reason appearing in the summary when using ``-rs``.  
+with the specified reason appearing in the summary when using ``-rs``.
 
 You can share ``skipif`` markers between modules.  Consider this test module::
 
@@ -116,6 +117,12 @@ You can use the ``skipif`` marker (as any other marker) on classes::
 
 If the condition is ``True``, this marker will produce a skip result for
 each of the test methods of that class.
+
+.. warning::
+
+   The use of ``skipif`` on classes that use inheritance is strongly
+   discouraged. `A Known bug <https://github.com/pytest-dev/pytest/issues/568>`_
+   in pytest's markers may cause unexpected behavior in super classes.
 
 If you want to skip all test functions of a module, you may use
 the ``pytestmark`` name on the global level:
@@ -243,8 +250,8 @@ You can change the default value of the ``strict`` parameter using the
 As with skipif_ you can also mark your expectation of a failure
 on a particular platform::
 
-    @pytest.mark.xfail(sys.version_info >= (3,3),
-                       reason="python3.3 api changes")
+    @pytest.mark.xfail(sys.version_info >= (3,6),
+                       reason="python3.6 api changes")
     def test_function():
         ...
 
@@ -304,12 +311,12 @@ Running it with the report-on-xfail option gives this output::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR/example, inifile:
     collected 7 items
-    
+
     xfail_demo.py xxxxxxx
     ======= short test summary info ========
     XFAIL xfail_demo.py::test_hello
     XFAIL xfail_demo.py::test_hello2
-      reason: [NOTRUN] 
+      reason: [NOTRUN]
     XFAIL xfail_demo.py::test_hello3
       condition: hasattr(os, 'sep')
     XFAIL xfail_demo.py::test_hello4
@@ -319,7 +326,7 @@ Running it with the report-on-xfail option gives this output::
     XFAIL xfail_demo.py::test_hello6
       reason: reason
     XFAIL xfail_demo.py::test_hello7
-    
+
     ======= 7 xfailed in 0.12 seconds ========
 
 .. _`skip/xfail with parametrize`:
@@ -345,66 +352,3 @@ test instances when using parametrize:
     ])
     def test_increment(n, expected):
         assert n + 1 == expected
-
-
-.. _string conditions:
-
-Conditions as strings instead of booleans
------------------------------------------
-
-Prior to pytest-2.4 the only way to specify skipif/xfail conditions was
-to use strings::
-
-    import sys
-    @pytest.mark.skipif("sys.version_info >= (3,3)")
-    def test_function():
-        ...
-
-During test function setup the skipif condition is evaluated by calling
-``eval('sys.version_info >= (3,0)', namespace)``.  The namespace contains
-all the module globals, and ``os`` and ``sys`` as a minimum.
-
-Since pytest-2.4 `condition booleans`_ are considered preferable
-because markers can then be freely imported between test modules.
-With strings you need to import not only the marker but all variables
-used by the marker, which violates encapsulation.
-
-The reason for specifying the condition as a string was that ``pytest`` can
-report a summary of skip conditions based purely on the condition string.
-With conditions as booleans you are required to specify a ``reason`` string.
-
-Note that string conditions will remain fully supported and you are free
-to use them if you have no need for cross-importing markers.
-
-The evaluation of a condition string in ``pytest.mark.skipif(conditionstring)``
-or ``pytest.mark.xfail(conditionstring)`` takes place in a namespace
-dictionary which is constructed as follows:
-
-* the namespace is initialized by putting the ``sys`` and ``os`` modules
-  and the pytest ``config`` object into it.
-
-* updated with the module globals of the test function for which the
-  expression is applied.
-
-The pytest ``config`` object allows you to skip based on a test
-configuration value which you might have added::
-
-    @pytest.mark.skipif("not config.getvalue('db')")
-    def test_function(...):
-        ...
-
-The equivalent with "boolean conditions" is::
-
-    @pytest.mark.skipif(not pytest.config.getvalue("db"),
-                        reason="--db was not specified")
-    def test_function(...):
-        pass
-
-.. note::
-
-    You cannot use ``pytest.config.getvalue()`` in code
-    imported before pytest's argument parsing takes place.  For example,
-    ``conftest.py`` files are imported before command line parsing and thus
-    ``config.getvalue()`` will not execute correctly.
-
-

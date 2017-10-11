@@ -2,19 +2,20 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+import six
 import sys
 import traceback
 
-import py
 from _pytest.config import hookimpl
 from _pytest.mark import MarkInfo, MarkDecorator
-from _pytest.runner import fail, skip
+from _pytest.outcomes import fail, skip, xfail, TEST_OUTCOME
+
 
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group.addoption('--runxfail',
-           action="store_true", dest="runxfail", default=False,
-           help="run tests even if they are marked xfail")
+                    action="store_true", dest="runxfail", default=False,
+                    help="run tests even if they are marked xfail")
 
     parser.addini("xfail_strict", "default for the strict parameter of xfail "
                                   "markers when not given explicitly (default: "
@@ -33,60 +34,56 @@ def pytest_configure(config):
         def nop(*args, **kwargs):
             pass
 
-        nop.Exception = XFailed
+        nop.Exception = xfail.Exception
         setattr(pytest, "xfail", nop)
 
     config.addinivalue_line("markers",
-        "skip(reason=None): skip the given test function with an optional reason. "
-        "Example: skip(reason=\"no way of currently testing this\") skips the "
-        "test."
-    )
+                            "skip(reason=None): skip the given test function with an optional reason. "
+                            "Example: skip(reason=\"no way of currently testing this\") skips the "
+                            "test."
+                            )
     config.addinivalue_line("markers",
-        "skipif(condition): skip the given test function if eval(condition) "
-        "results in a True value.  Evaluation happens within the "
-        "module global context. Example: skipif('sys.platform == \"win32\"') "
-        "skips the test if we are on the win32 platform. see "
-        "http://pytest.org/latest/skipping.html"
-    )
+                            "skipif(condition): skip the given test function if eval(condition) "
+                            "results in a True value.  Evaluation happens within the "
+                            "module global context. Example: skipif('sys.platform == \"win32\"') "
+                            "skips the test if we are on the win32 platform. see "
+                            "http://pytest.org/latest/skipping.html"
+                            )
     config.addinivalue_line("markers",
-        "xfail(condition, reason=None, run=True, raises=None, strict=False): "
-        "mark the test function as an expected failure if eval(condition) "
-        "has a True value. Optionally specify a reason for better reporting "
-        "and run=False if you don't even want to execute the test function. "
-        "If only specific exception(s) are expected, you can list them in "
-        "raises, and if the test fails in other ways, it will be reported as "
-        "a true failure. See http://pytest.org/latest/skipping.html"
-    )
+                            "xfail(condition, reason=None, run=True, raises=None, strict=False): "
+                            "mark the test function as an expected failure if eval(condition) "
+                            "has a True value. Optionally specify a reason for better reporting "
+                            "and run=False if you don't even want to execute the test function. "
+                            "If only specific exception(s) are expected, you can list them in "
+                            "raises, and if the test fails in other ways, it will be reported as "
+                            "a true failure. See http://pytest.org/latest/skipping.html"
+                            )
 
 
-class XFailed(fail.Exception):
-    """ raised from an explicit call to pytest.xfail() """
-
-
-def xfail(reason=""):
-    """ xfail an executing test or setup functions with the given reason."""
-    __tracebackhide__ = True
-    raise XFailed(reason)
-
-
-xfail.Exception = XFailed
-
-
-class MarkEvaluator:
+class MarkEvaluator(object):
     def __init__(self, item, name):
         self.item = item
-        self.name = name
-
-    @property
-    def holder(self):
-        return self.item.keywords.get(self.name)
+        self._marks = None
+        self._mark = None
+        self._mark_name = name
 
     def __bool__(self):
-        return bool(self.holder)
+        self._marks = self._get_marks()
+        return bool(self._marks)
     __nonzero__ = __bool__
 
     def wasvalid(self):
         return not hasattr(self, 'exc')
+
+    def _get_marks(self):
+
+        keyword = self.item.keywords.get(self._mark_name)
+        if isinstance(keyword, MarkDecorator):
+            return [keyword.mark]
+        elif isinstance(keyword, MarkInfo):
+            return [x.combined for x in keyword]
+        else:
+            return []
 
     def invalidraise(self, exc):
         raises = self.get('raises')
@@ -97,7 +94,7 @@ class MarkEvaluator:
     def istrue(self):
         try:
             return self._istrue()
-        except Exception:
+        except TEST_OUTCOME:
             self.exc = sys.exc_info()
             if isinstance(self.exc[1], SyntaxError):
                 msg = [" " * (self.exc[1].offset + 4) + "^", ]
@@ -107,7 +104,7 @@ class MarkEvaluator:
             fail("Error evaluating %r expression\n"
                  "    %s\n"
                  "%s"
-                 % (self.name, self.expr, "\n".join(msg)),
+                 % (self._mark_name, self.expr, "\n".join(msg)),
                  pytrace=False)
 
     def _getglobals(self):
@@ -119,40 +116,45 @@ class MarkEvaluator:
     def _istrue(self):
         if hasattr(self, 'result'):
             return self.result
-        if self.holder:
-            if self.holder.args or 'condition' in self.holder.kwargs:
-                self.result = False
-                # "holder" might be a MarkInfo or a MarkDecorator; only
-                # MarkInfo keeps track of all parameters it received in an
-                # _arglist attribute
-                marks = getattr(self.holder, '_marks', None) \
-                    or [self.holder.mark]
-                for _, args, kwargs in marks:
-                    if 'condition' in kwargs:
-                        args = (kwargs['condition'],)
-                    for expr in args:
+        self._marks = self._get_marks()
+
+        if self._marks:
+            self.result = False
+            for mark in self._marks:
+                self._mark = mark
+                if 'condition' in mark.kwargs:
+                    args = (mark.kwargs['condition'],)
+                else:
+                    args = mark.args
+
+                for expr in args:
+                    self.expr = expr
+                    if isinstance(expr, six.string_types):
+                        d = self._getglobals()
+                        result = cached_eval(self.item.config, expr, d)
+                    else:
+                        if "reason" not in mark.kwargs:
+                            # XXX better be checked at collection time
+                            msg = "you need to specify reason=STRING " \
+                                  "when using booleans as conditions."
+                            fail(msg)
+                        result = bool(expr)
+                    if result:
+                        self.result = True
+                        self.reason = mark.kwargs.get('reason', None)
                         self.expr = expr
-                        if isinstance(expr, py.builtin._basestring):
-                            d = self._getglobals()
-                            result = cached_eval(self.item.config, expr, d)
-                        else:
-                            if "reason" not in kwargs:
-                                # XXX better be checked at collection time
-                                msg = "you need to specify reason=STRING " \
-                                      "when using booleans as conditions."
-                                fail(msg)
-                            result = bool(expr)
-                        if result:
-                            self.result = True
-                            self.reason = kwargs.get('reason', None)
-                            self.expr = expr
-                            return self.result
-            else:
-                self.result = True
-        return getattr(self, 'result', False)
+                        return self.result
+
+                if not args:
+                    self.result = True
+                    self.reason = mark.kwargs.get('reason', None)
+                    return self.result
+        return False
 
     def get(self, attr, default=None):
-        return self.holder.kwargs.get(attr, default)
+        if self._mark is None:
+            return default
+        return self._mark.kwargs.get(attr, default)
 
     def getexplanation(self):
         expl = getattr(self, 'reason', None) or self.get('reason', None)
@@ -167,17 +169,17 @@ class MarkEvaluator:
 @hookimpl(tryfirst=True)
 def pytest_runtest_setup(item):
     # Check if skip or skipif are specified as pytest marks
-
+    item._skipped_by_mark = False
     skipif_info = item.keywords.get('skipif')
     if isinstance(skipif_info, (MarkInfo, MarkDecorator)):
         eval_skipif = MarkEvaluator(item, 'skipif')
         if eval_skipif.istrue():
-            item._evalskip = eval_skipif
+            item._skipped_by_mark = True
             skip(eval_skipif.getexplanation())
 
     skip_info = item.keywords.get('skip')
     if isinstance(skip_info, (MarkInfo, MarkDecorator)):
-        item._evalskip = True
+        item._skipped_by_mark = True
         if 'reason' in skip_info.kwargs:
             skip(skip_info.kwargs['reason'])
         elif skip_info.args:
@@ -224,7 +226,6 @@ def pytest_runtest_makereport(item, call):
     outcome = yield
     rep = outcome.get_result()
     evalxfail = getattr(item, '_evalxfail', None)
-    evalskip = getattr(item, '_evalskip', None)
     # unitttest special case, see setting of _unexpectedsuccess
     if hasattr(item, '_unexpectedsuccess') and rep.when == "call":
         from _pytest.compat import _is_unittest_unexpected_success_a_failure
@@ -243,7 +244,7 @@ def pytest_runtest_makereport(item, call):
         rep.wasxfail = "reason: " + call.excinfo.value.msg
         rep.outcome = "skipped"
     elif evalxfail and not rep.skipped and evalxfail.wasvalid() and \
-        evalxfail.istrue():
+            evalxfail.istrue():
         if call.excinfo:
             if evalxfail.invalidraise(call.excinfo.value):
                 rep.outcome = "failed"
@@ -260,7 +261,7 @@ def pytest_runtest_makereport(item, call):
             else:
                 rep.outcome = "passed"
                 rep.wasxfail = explanation
-    elif evalskip is not None and rep.skipped and type(rep.longrepr) is tuple:
+    elif item._skipped_by_mark and rep.skipped and type(rep.longrepr) is tuple:
         # skipped by mark.skipif; change the location of the failure
         # to point to the item definition, otherwise it will display
         # the location of where the skip exception was raised within pytest
@@ -269,6 +270,8 @@ def pytest_runtest_makereport(item, call):
         rep.longrepr = filename, line, reason
 
 # called by terminalreporter progress reporting
+
+
 def pytest_report_teststatus(report):
     if hasattr(report, "wasxfail"):
         if report.skipped:
@@ -277,10 +280,12 @@ def pytest_report_teststatus(report):
             return "xpassed", "X", ("XPASS", {'yellow': True})
 
 # called by the terminalreporter instance/plugin
+
+
 def pytest_terminal_summary(terminalreporter):
     tr = terminalreporter
     if not tr.reportchars:
-        #for name in "xfailed skipped failed xpassed":
+        # for name in "xfailed skipped failed xpassed":
         #    if not tr.stats.get(name, 0):
         #        tr.write_line("HINT: use '-r' option to see extra "
         #              "summary info about tests")
@@ -303,9 +308,9 @@ def pytest_terminal_summary(terminalreporter):
             show_simple(terminalreporter, lines, 'passed', "PASSED %s")
 
     if lines:
-        tr._tw.sep("=", "short test summary info")
+        tr.writer.sep("=", "short test summary info")
         for line in lines:
-            tr._tw.line(line)
+            tr.writer.line(line)
 
 
 def show_simple(terminalreporter, lines, stat, format):
@@ -353,6 +358,12 @@ def folded_skips(skipped):
     for event in skipped:
         key = event.longrepr
         assert len(key) == 3, (event, key)
+        keywords = getattr(event, 'keywords', {})
+        # folding reports with global pytestmark variable
+        # this is workaround, because for now we cannot identify the scope of a skip marker
+        # TODO: revisit after marks scope would be fixed
+        if event.when == 'setup' and 'skip' in keywords and 'pytestmark' not in keywords:
+            key = (key[0], None, key[2], )
         d.setdefault(key, []).append(event)
     l = []
     for key, events in d.items():
@@ -364,17 +375,22 @@ def show_skipped(terminalreporter, lines):
     tr = terminalreporter
     skipped = tr.stats.get('skipped', [])
     if skipped:
-        #if not tr.hasopt('skipped'):
+        # if not tr.hasopt('skipped'):
         #    tr.write_line(
         #        "%d skipped tests, specify -rs for more info" %
         #        len(skipped))
         #    return
         fskips = folded_skips(skipped)
         if fskips:
-            #tr.write_sep("_", "skipped test summary")
+            # tr.write_sep("_", "skipped test summary")
             for num, fspath, lineno, reason in fskips:
                 if reason.startswith("Skipped: "):
                     reason = reason[9:]
-                lines.append(
-                    "SKIP [%d] %s:%d: %s" %
-                    (num, fspath, lineno, reason))
+                if lineno is not None:
+                    lines.append(
+                        "SKIP [%d] %s:%d: %s" %
+                        (num, fspath, lineno + 1, reason))
+                else:
+                    lines.append(
+                        "SKIP [%d] %s: %s" %
+                        (num, fspath, reason))

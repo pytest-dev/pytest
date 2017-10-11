@@ -1,5 +1,5 @@
-Basic test configuration
-===================================
+Configuration
+=============
 
 Command line options and configuration file settings
 -----------------------------------------------------------------
@@ -15,17 +15,31 @@ which were registered by installed plugins.
 .. _rootdir:
 .. _inifiles:
 
-initialization: determining rootdir and inifile
+Initialization: determining rootdir and inifile
 -----------------------------------------------
 
 .. versionadded:: 2.7
 
-pytest determines a "rootdir" for each test run which depends on
+pytest determines a ``rootdir`` for each test run which depends on
 the command line arguments (specified test files, paths) and on
-the existence of inifiles.  The determined rootdir and ini-file are
-printed as part of the pytest header.  The rootdir is used for constructing
-"nodeids" during collection and may also be used by plugins to store
-project/testrun-specific information.
+the existence of *ini-files*.  The determined ``rootdir`` and *ini-file* are
+printed as part of the pytest header during startup.
+
+Here's a summary what ``pytest`` uses ``rootdir`` for:
+
+* Construct *nodeids* during collection; each test is assigned
+  a unique *nodeid* which is rooted at the ``rootdir`` and takes in account full path,
+  class name, function name and parametrization (if any).
+
+* Is used by plugins as a stable location to store project/test run specific information;
+  for example, the internal :ref:`cache <cache>` plugin creates a ``.cache`` subdirectory
+  in ``rootdir`` to store its cross-test run state.
+
+Important to emphasize that ``rootdir`` is **NOT** used to modify ``sys.path``/``PYTHONPATH`` or
+influence how modules are imported. See :ref:`pythonpath` for more details.
+
+Finding the ``rootdir``
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Here is the algorithm which finds the rootdir from ``args``:
 
@@ -112,15 +126,27 @@ progress output, you can write it into a configuration file:
     # content of pytest.ini
     # (or tox.ini or setup.cfg)
     [pytest]
-    addopts = -rsxX -q
+    addopts = -ra -q
 
-Alternatively, you can set a PYTEST_ADDOPTS environment variable to add command
+Alternatively, you can set a ``PYTEST_ADDOPTS`` environment variable to add command
 line options while the environment is in use::
 
-    export PYTEST_ADDOPTS="-rsxX -q"
+    export PYTEST_ADDOPTS="-v"
 
-From now on, running ``pytest`` will add the specified options.
+Here's how the command-line is built in the presence of ``addopts`` or the environment variable::
 
+    <pytest.ini:addopts> $PYTEST_ADDOTPS <extra command-line arguments>
+
+So if the user executes in the command-line::
+
+    pytest -m slow
+
+The actual command line executed is::
+
+    pytest -ra -q -v -m slow
+
+Note that as usual for other command-line applications, in case of conflicting options the last one wins, so the example
+above will show verbose output because ``-v`` overwrites ``-q``.
 
 
 Builtin configuration file options
@@ -171,7 +197,16 @@ Builtin configuration file options
         norecursedirs = .svn _build tmp*
 
    This would tell ``pytest`` to not look into typical subversion or
-   sphinx-build directories or into any ``tmp`` prefixed directory.
+   sphinx-build directories or into any ``tmp`` prefixed directory.  
+   
+   Additionally, ``pytest`` will attempt to intelligently identify and ignore a
+   virtualenv by the presence of an activation script.  Any directory deemed to
+   be the root of a virtual environment will not be considered during test
+   collection unless ``‑‑collect‑in‑virtualenv`` is given.  Note also that
+   ``norecursedirs`` takes precedence over ``‑‑collect‑in‑virtualenv``; e.g. if
+   you intend to run tests in a virtualenv with a base directory that matches
+   ``'.*'`` you *must* override ``norecursedirs`` in addition to using the
+   ``‑‑collect‑in‑virtualenv`` flag.
 
 .. confval:: testpaths
 
@@ -195,13 +230,16 @@ Builtin configuration file options
 .. confval:: python_files
 
    One or more Glob-style file patterns determining which python files
-   are considered as test modules.
+   are considered as test modules. By default, pytest will consider
+   any file matching with ``test_*.py`` and ``*_test.py`` globs as a test
+   module.
 
 .. confval:: python_classes
 
    One or more name prefixes or glob-style patterns determining which classes
-   are considered for test collection. Here is an example of how to collect
-   tests from classes that end in ``Suite``:
+   are considered for test collection. By default, pytest will consider any
+   class prefixed with ``Test`` as a test collection.  Here is an example of how
+   to collect tests from classes that end in ``Suite``:
 
    .. code-block:: ini
 
@@ -216,7 +254,8 @@ Builtin configuration file options
 .. confval:: python_functions
 
    One or more name prefixes or glob-patterns determining which test functions
-   and methods are considered tests. Here is an example of how
+   and methods are considered tests. By default, pytest will consider any
+   function prefixed with ``test`` as a test.  Here is an example of how
    to collect test functions and methods that end in ``_test``:
 
    .. code-block:: ini
@@ -262,3 +301,14 @@ Builtin configuration file options
 
    This tells pytest to ignore deprecation warnings and turn all other warnings
    into errors. For more information please refer to :ref:`warnings`.
+
+.. confval:: cache_dir
+
+   .. versionadded:: 3.2
+
+   Sets a directory where stores content of cache plugin. Default directory is
+   ``.cache`` which is created in :ref:`rootdir <rootdir>`. Directory may be
+   relative or absolute path. If setting relative path, then directory is created
+   relative to :ref:`rootdir <rootdir>`. Additionally path may contain environment
+   variables, that will be expanded. For more information about cache plugin
+   please refer to :ref:`cache_provider`.

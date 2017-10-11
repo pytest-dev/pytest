@@ -3,13 +3,254 @@ import sys
 
 import py
 
-from _pytest.compat import isclass
-from _pytest.runner import fail
+from _pytest.compat import isclass, izip
+from _pytest.outcomes import fail
 import _pytest._code
+
+
+def _cmp_raises_type_error(self, other):
+    """__cmp__ implementation which raises TypeError. Used
+    by Approx base classes to implement only == and != and raise a
+    TypeError for other comparisons.
+
+    Needed in Python 2 only, Python 3 all it takes is not implementing the
+    other operators at all.
+    """
+    __tracebackhide__ = True
+    raise TypeError('Comparison operators other than == and != not supported by approx objects')
+
+
 # builtin pytest.approx helper
 
 
-class approx(object):
+class ApproxBase(object):
+    """
+    Provide shared utilities for making approximate comparisons between numbers
+    or sequences of numbers.
+    """
+
+    def __init__(self, expected, rel=None, abs=None, nan_ok=False):
+        self.expected = expected
+        self.abs = abs
+        self.rel = rel
+        self.nan_ok = nan_ok
+
+    def __repr__(self):
+        raise NotImplementedError
+
+    def __eq__(self, actual):
+        return all(
+            a == self._approx_scalar(x)
+            for a, x in self._yield_comparisons(actual))
+
+    __hash__ = None
+
+    def __ne__(self, actual):
+        return not (actual == self)
+
+    if sys.version_info[0] == 2:
+        __cmp__ = _cmp_raises_type_error
+
+    def _approx_scalar(self, x):
+        return ApproxScalar(x, rel=self.rel, abs=self.abs, nan_ok=self.nan_ok)
+
+    def _yield_comparisons(self, actual):
+        """
+        Yield all the pairs of numbers to be compared.  This is used to
+        implement the `__eq__` method.
+        """
+        raise NotImplementedError
+
+
+class ApproxNumpy(ApproxBase):
+    """
+    Perform approximate comparisons for numpy arrays.
+    """
+
+    # Tell numpy to use our `__eq__` operator instead of its.
+    __array_priority__ = 100
+
+    def __repr__(self):
+        # It might be nice to rewrite this function to account for the
+        # shape of the array...
+        return "approx({0!r})".format(list(
+            self._approx_scalar(x) for x in self.expected))
+
+    if sys.version_info[0] == 2:
+        __cmp__ = _cmp_raises_type_error
+
+    def __eq__(self, actual):
+        import numpy as np
+
+        try:
+            actual = np.asarray(actual)
+        except:
+            raise TypeError("cannot compare '{0}' to numpy.ndarray".format(actual))
+
+        if actual.shape != self.expected.shape:
+            return False
+
+        return ApproxBase.__eq__(self, actual)
+
+    def _yield_comparisons(self, actual):
+        import numpy as np
+
+        # We can be sure that `actual` is a numpy array, because it's
+        # casted in `__eq__` before being passed to `ApproxBase.__eq__`,
+        # which is the only method that calls this one.
+        for i in np.ndindex(self.expected.shape):
+            yield actual[i], self.expected[i]
+
+
+class ApproxMapping(ApproxBase):
+    """
+    Perform approximate comparisons for mappings where the values are numbers
+    (the keys can be anything).
+    """
+
+    def __repr__(self):
+        return "approx({0!r})".format(dict(
+            (k, self._approx_scalar(v))
+            for k, v in self.expected.items()))
+
+    def __eq__(self, actual):
+        if set(actual.keys()) != set(self.expected.keys()):
+            return False
+
+        return ApproxBase.__eq__(self, actual)
+
+    def _yield_comparisons(self, actual):
+        for k in self.expected.keys():
+            yield actual[k], self.expected[k]
+
+
+class ApproxSequence(ApproxBase):
+    """
+    Perform approximate comparisons for sequences of numbers.
+    """
+
+    # Tell numpy to use our `__eq__` operator instead of its.
+    __array_priority__ = 100
+
+    def __repr__(self):
+        seq_type = type(self.expected)
+        if seq_type not in (tuple, list, set):
+            seq_type = list
+        return "approx({0!r})".format(seq_type(
+            self._approx_scalar(x) for x in self.expected))
+
+    def __eq__(self, actual):
+        if len(actual) != len(self.expected):
+            return False
+        return ApproxBase.__eq__(self, actual)
+
+    def _yield_comparisons(self, actual):
+        return izip(actual, self.expected)
+
+
+class ApproxScalar(ApproxBase):
+    """
+    Perform approximate comparisons for single numbers only.
+    """
+
+    def __repr__(self):
+        """
+        Return a string communicating both the expected value and the tolerance
+        for the comparison being made, e.g. '1.0 +- 1e-6'.  Use the unicode
+        plus/minus symbol if this is python3 (it's too hard to get right for
+        python2).
+        """
+        if isinstance(self.expected, complex):
+            return str(self.expected)
+
+        # Infinities aren't compared using tolerances, so don't show a
+        # tolerance.
+        if math.isinf(self.expected):
+            return str(self.expected)
+
+        # If a sensible tolerance can't be calculated, self.tolerance will
+        # raise a ValueError.  In this case, display '???'.
+        try:
+            vetted_tolerance = '{:.1e}'.format(self.tolerance)
+        except ValueError:
+            vetted_tolerance = '???'
+
+        if sys.version_info[0] == 2:
+            return '{0} +- {1}'.format(self.expected, vetted_tolerance)
+        else:
+            return u'{0} \u00b1 {1}'.format(self.expected, vetted_tolerance)
+
+    def __eq__(self, actual):
+        """
+        Return true if the given value is equal to the expected value within
+        the pre-specified tolerance.
+        """
+
+        # Short-circuit exact equality.
+        if actual == self.expected:
+            return True
+
+        # Allow the user to control whether NaNs are considered equal to each
+        # other or not.  The abs() calls are for compatibility with complex
+        # numbers.
+        if math.isnan(abs(self.expected)):
+            return self.nan_ok and math.isnan(abs(actual))
+
+        # Infinity shouldn't be approximately equal to anything but itself, but
+        # if there's a relative tolerance, it will be infinite and infinity
+        # will seem approximately equal to everything.  The equal-to-itself
+        # case would have been short circuited above, so here we can just
+        # return false if the expected value is infinite.  The abs() call is
+        # for compatibility with complex numbers.
+        if math.isinf(abs(self.expected)):
+            return False
+
+        # Return true if the two numbers are within the tolerance.
+        return abs(self.expected - actual) <= self.tolerance
+
+    __hash__ = None
+
+    @property
+    def tolerance(self):
+        """
+        Return the tolerance for the comparison.  This could be either an
+        absolute tolerance or a relative tolerance, depending on what the user
+        specified or which would be larger.
+        """
+        def set_default(x, default): return x if x is not None else default
+
+        # Figure out what the absolute tolerance should be.  ``self.abs`` is
+        # either None or a value specified by the user.
+        absolute_tolerance = set_default(self.abs, 1e-12)
+
+        if absolute_tolerance < 0:
+            raise ValueError("absolute tolerance can't be negative: {}".format(absolute_tolerance))
+        if math.isnan(absolute_tolerance):
+            raise ValueError("absolute tolerance can't be NaN.")
+
+        # If the user specified an absolute tolerance but not a relative one,
+        # just return the absolute tolerance.
+        if self.rel is None:
+            if self.abs is not None:
+                return absolute_tolerance
+
+        # Figure out what the relative tolerance should be.  ``self.rel`` is
+        # either None or a value specified by the user.  This is done after
+        # we've made sure the user didn't ask for an absolute tolerance only,
+        # because we don't want to raise errors about the relative tolerance if
+        # we aren't even going to use it.
+        relative_tolerance = set_default(self.rel, 1e-6) * abs(self.expected)
+
+        if relative_tolerance < 0:
+            raise ValueError("relative tolerance can't be negative: {}".format(absolute_tolerance))
+        if math.isnan(relative_tolerance):
+            raise ValueError("relative tolerance can't be NaN.")
+
+        # Return the larger of the relative and absolute tolerances.
+        return max(relative_tolerance, absolute_tolerance)
+
+
+def approx(expected, rel=None, abs=None, nan_ok=False):
     """
     Assert that two numbers (or two sets of numbers) are equal to each other
     within some tolerance.
@@ -45,9 +286,20 @@ class approx(object):
         >>> 0.1 + 0.2 == approx(0.3)
         True
 
-    The same syntax also works on sequences of numbers::
+    The same syntax also works for sequences of numbers::
 
         >>> (0.1 + 0.2, 0.2 + 0.4) == approx((0.3, 0.6))
+        True
+
+    Dictionary *values*::
+
+        >>> {'a': 0.1 + 0.2, 'b': 0.2 + 0.4} == approx({'a': 0.3, 'b': 0.6})
+        True
+
+    And ``numpy`` arrays::
+
+        >>> import numpy as np                                                          # doctest: +SKIP
+        >>> np.array([0.1, 0.2]) + np.array([0.2, 0.4]) == approx(np.array([0.3, 0.6])) # doctest: +SKIP
         True
 
     By default, ``approx`` considers numbers within a relative tolerance of
@@ -56,10 +308,14 @@ class approx(object):
     ``0.0``, because nothing but ``0.0`` itself is relatively close to ``0.0``.
     To handle this case less surprisingly, ``approx`` also considers numbers
     within an absolute tolerance of ``1e-12`` of its expected value to be
-    equal.  Infinite numbers are another special case.  They are only
-    considered equal to themselves, regardless of the relative tolerance.  Both
-    the relative and absolute tolerances can be changed by passing arguments to
-    the ``approx`` constructor::
+    equal.  Infinity and NaN are special cases.  Infinity is only considered
+    equal to itself, regardless of the relative tolerance.  NaN is not
+    considered equal to anything by default, but you can make it be equal to
+    itself by setting the ``nan_ok`` argument to True.  (This is meant to
+    facilitate comparing arrays that use NaN to mean "no data".)
+
+    Both the relative and absolute tolerances can be changed by passing
+    arguments to the ``approx`` constructor::
 
         >>> 1.0001 == approx(1)
         False
@@ -121,140 +377,72 @@ class approx(object):
       is asymmetric and you can think of ``b`` as the reference value.  In the
       special case that you explicitly specify an absolute tolerance but not a
       relative tolerance, only the absolute tolerance is considered.
+
+    .. warning::
+
+       .. versionchanged:: 3.2
+
+       In order to avoid inconsistent behavior, ``TypeError`` is
+       raised for ``>``, ``>=``, ``<`` and ``<=`` comparisons.
+       The example below illustrates the problem::
+
+           assert approx(0.1) > 0.1 + 1e-10  # calls approx(0.1).__gt__(0.1 + 1e-10)
+           assert 0.1 + 1e-10 > approx(0.1)  # calls approx(0.1).__lt__(0.1 + 1e-10)
+
+       In the second example one expects ``approx(0.1).__le__(0.1 + 1e-10)``
+       to be called. But instead, ``approx(0.1).__lt__(0.1 + 1e-10)`` is used to
+       comparison. This is because the call hierarchy of rich comparisons
+       follows a fixed behavior. `More information...`__
+
+       __ https://docs.python.org/3/reference/datamodel.html#object.__ge__
     """
 
-    def __init__(self, expected, rel=None, abs=None):
-        self.expected = expected
-        self.abs = abs
-        self.rel = rel
+    from collections import Mapping, Sequence
+    from _pytest.compat import STRING_TYPES as String
 
-    def __repr__(self):
-        return ', '.join(repr(x) for x in self.expected)
+    # Delegate the comparison to a class that knows how to deal with the type
+    # of the expected value (e.g. int, float, list, dict, numpy.array, etc).
+    #
+    # This architecture is really driven by the need to support numpy arrays.
+    # The only way to override `==` for arrays without requiring that approx be
+    # the left operand is to inherit the approx object from `numpy.ndarray`.
+    # But that can't be a general solution, because it requires (1) numpy to be
+    # installed and (2) the expected value to be a numpy array.  So the general
+    # solution is to delegate each type of expected value to a different class.
+    #
+    # This has the advantage that it made it easy to support mapping types
+    # (i.e. dict).  The old code accepted mapping types, but would only compare
+    # their keys, which is probably not what most people would expect.
 
-    def __eq__(self, actual):
-        from collections import Iterable
-        if not isinstance(actual, Iterable):
-            actual = [actual]
-        if len(actual) != len(self.expected):
-            return False
-        return all(a == x for a, x in zip(actual, self.expected))
+    if _is_numpy_array(expected):
+        cls = ApproxNumpy
+    elif isinstance(expected, Mapping):
+        cls = ApproxMapping
+    elif isinstance(expected, Sequence) and not isinstance(expected, String):
+        cls = ApproxSequence
+    else:
+        cls = ApproxScalar
 
-    __hash__ = None
-
-    def __ne__(self, actual):
-        return not (actual == self)
-
-    @property
-    def expected(self):
-        # Regardless of whether the user-specified expected value is a number
-        # or a sequence of numbers, return a list of ApproxNotIterable objects
-        # that can be compared against.
-        from collections import Iterable
-        approx_non_iter = lambda x: ApproxNonIterable(x, self.rel, self.abs)
-        if isinstance(self._expected, Iterable):
-            return [approx_non_iter(x) for x in self._expected]
-        else:
-            return [approx_non_iter(self._expected)]
-
-    @expected.setter
-    def expected(self, expected):
-        self._expected = expected
+    return cls(expected, rel, abs, nan_ok)
 
 
-class ApproxNonIterable(object):
+def _is_numpy_array(obj):
     """
-    Perform approximate comparisons for single numbers only.
-
-    In other words, the ``expected`` attribute for objects of this class must
-    be some sort of number.  This is in contrast to the ``approx`` class, where
-    the ``expected`` attribute can either be a number of a sequence of numbers.
-    This class is responsible for making comparisons, while ``approx`` is
-    responsible for abstracting the difference between numbers and sequences of
-    numbers.  Although this class can stand on its own, it's only meant to be
-    used within ``approx``.
+    Return true if the given object is a numpy array.  Make a special effort to
+    avoid importing numpy unless it's really necessary.
     """
+    import inspect
 
-    def __init__(self, expected, rel=None, abs=None):
-        self.expected = expected
-        self.abs = abs
-        self.rel = rel
+    for cls in inspect.getmro(type(obj)):
+        if cls.__module__ == 'numpy':
+            try:
+                import numpy as np
+                return isinstance(obj, np.ndarray)
+            except ImportError:
+                pass
 
-    def __repr__(self):
-        if isinstance(self.expected, complex):
-            return str(self.expected)
+    return False
 
-        # Infinities aren't compared using tolerances, so don't show a
-        # tolerance.
-        if math.isinf(self.expected):
-            return str(self.expected)
-
-        # If a sensible tolerance can't be calculated, self.tolerance will
-        # raise a ValueError.  In this case, display '???'.
-        try:
-            vetted_tolerance = '{:.1e}'.format(self.tolerance)
-        except ValueError:
-            vetted_tolerance = '???'
-
-        if sys.version_info[0] == 2:
-            return '{0} +- {1}'.format(self.expected, vetted_tolerance)
-        else:
-            return u'{0} \u00b1 {1}'.format(self.expected, vetted_tolerance)
-
-    def __eq__(self, actual):
-        # Short-circuit exact equality.
-        if actual == self.expected:
-            return True
-
-        # Infinity shouldn't be approximately equal to anything but itself, but
-        # if there's a relative tolerance, it will be infinite and infinity
-        # will seem approximately equal to everything.  The equal-to-itself
-        # case would have been short circuited above, so here we can just
-        # return false if the expected value is infinite.  The abs() call is
-        # for compatibility with complex numbers.
-        if math.isinf(abs(self.expected)):
-            return False
-
-        # Return true if the two numbers are within the tolerance.
-        return abs(self.expected - actual) <= self.tolerance
-
-    __hash__ = None
-
-    def __ne__(self, actual):
-        return not (actual == self)
-
-    @property
-    def tolerance(self):
-        set_default = lambda x, default: x if x is not None else default
-
-        # Figure out what the absolute tolerance should be.  ``self.abs`` is
-        # either None or a value specified by the user.
-        absolute_tolerance = set_default(self.abs, 1e-12)
-
-        if absolute_tolerance < 0:
-            raise ValueError("absolute tolerance can't be negative: {}".format(absolute_tolerance))
-        if math.isnan(absolute_tolerance):
-            raise ValueError("absolute tolerance can't be NaN.")
-
-        # If the user specified an absolute tolerance but not a relative one,
-        # just return the absolute tolerance.
-        if self.rel is None:
-            if self.abs is not None:
-                return absolute_tolerance
-
-        # Figure out what the relative tolerance should be.  ``self.rel`` is
-        # either None or a value specified by the user.  This is done after
-        # we've made sure the user didn't ask for an absolute tolerance only,
-        # because we don't want to raise errors about the relative tolerance if
-        # we aren't even going to use it.
-        relative_tolerance = set_default(self.rel, 1e-6) * abs(self.expected)
-
-        if relative_tolerance < 0:
-            raise ValueError("relative tolerance can't be negative: {}".format(absolute_tolerance))
-        if math.isnan(relative_tolerance):
-            raise ValueError("relative tolerance can't be NaN.")
-
-        # Return the larger of the relative and absolute tolerances.
-        return max(relative_tolerance, absolute_tolerance)
 
 # builtin pytest.raises helper
 
@@ -265,8 +453,7 @@ def raises(expected_exception, *args, **kwargs):
 
     This helper produces a ``ExceptionInfo()`` object (see below).
 
-    If using Python 2.5 or above, you may use this function as a
-    context manager::
+    You may use this function as a context manager::
 
         >>> with raises(ZeroDivisionError):
         ...    1/0
@@ -281,7 +468,6 @@ def raises(expected_exception, *args, **kwargs):
         Traceback (most recent call last):
           ...
         Failed: Expecting ZeroDivisionError
-
 
     .. note::
 
@@ -306,7 +492,8 @@ def raises(expected_exception, *args, **kwargs):
            ...
            >>> assert exc_info.type == ValueError
 
-    Or you can use the keyword argument ``match`` to assert that the
+
+    Since version ``3.1`` you can use the keyword argument ``match`` to assert that the
     exception matches a text or regex::
 
         >>> with raises(ValueError, match='must be 0 or None'):
@@ -315,8 +502,12 @@ def raises(expected_exception, *args, **kwargs):
         >>> with raises(ValueError, match=r'must be \d+$'):
         ...     raise ValueError("value must be 42")
 
+    **Legacy forms**
 
-    Or you can specify a callable by passing a to-be-called lambda::
+    The forms below are fully supported but are discouraged for new code because the
+    context manager form is regarded as more readable and less error-prone.
+
+    It is possible to specify a callable by passing a to-be-called lambda::
 
         >>> raises(ZeroDivisionError, lambda: 1/0)
         <ExceptionInfo ...>
@@ -330,10 +521,13 @@ def raises(expected_exception, *args, **kwargs):
         >>> raises(ZeroDivisionError, f, x=0)
         <ExceptionInfo ...>
 
-    A third possibility is to use a string to be executed::
+    It is also possible to pass a string to be evaluated at runtime::
 
         >>> raises(ZeroDivisionError, "f(0)")
         <ExceptionInfo ...>
+
+    The string will be evaluated using the same ``locals()`` and ``globals()``
+    at the moment of the ``raises`` call.
 
     .. autoclass:: _pytest._code.ExceptionInfo
         :members:
@@ -379,7 +573,7 @@ def raises(expected_exception, *args, **kwargs):
         frame = sys._getframe(1)
         loc = frame.f_locals.copy()
         loc.update(kwargs)
-        #print "raises frame scope: %r" % frame.f_locals
+        # print "raises frame scope: %r" % frame.f_locals
         try:
             code = _pytest._code.Source(code).compile()
             py.builtin.exec_(code, frame.f_globals, loc)
@@ -414,13 +608,6 @@ class RaisesContext(object):
         __tracebackhide__ = True
         if tp[0] is None:
             fail(self.message)
-        if sys.version_info < (2, 7):
-            # py26: on __exit__() exc_value often does not contain the
-            # exception value.
-            # http://bugs.python.org/issue7853
-            if not isinstance(tp[1], BaseException):
-                exc_type, value, traceback = tp
-                tp = exc_type, exc_type(value), traceback
         self.excinfo.__init__(tp)
         suppress_exception = issubclass(self.excinfo.type, self.expected_exception)
         if sys.version_info[0] == 2 and suppress_exception:
