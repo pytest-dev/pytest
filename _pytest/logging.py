@@ -24,7 +24,6 @@ def get_option_ini(config, *names):
 
 def pytest_addoption(parser):
     """Add options to control log capturing."""
-
     group = parser.getgroup('logging')
 
     def add_option_ini(option, dest, default=None, type=None, **kwargs):
@@ -120,13 +119,11 @@ class LogCaptureHandler(logging.StreamHandler):
 
     def __init__(self):
         """Creates a new log handler."""
-
         logging.StreamHandler.__init__(self, py.io.TextIO())
         self.records = []
 
     def emit(self, record):
         """Keep the log records in a list in addition to the log text."""
-
         self.records.append(record)
         logging.StreamHandler.emit(self, record)
 
@@ -260,8 +257,8 @@ class LoggingPlugin(object):
 
         self.print_logs = get_option_ini(config, 'log_print')
         self.formatter = logging.Formatter(
-                get_option_ini(config, 'log_format'),
-                get_option_ini(config, 'log_date_format'))
+            get_option_ini(config, 'log_format'),
+            get_option_ini(config, 'log_date_format'))
 
         log_cli_handler = logging.StreamHandler(sys.stderr)
         log_cli_format = get_option_ini(
@@ -269,8 +266,8 @@ class LoggingPlugin(object):
         log_cli_date_format = get_option_ini(
             config, 'log_cli_date_format', 'log_date_format')
         log_cli_formatter = logging.Formatter(
-                log_cli_format,
-                datefmt=log_cli_date_format)
+            log_cli_format,
+            datefmt=log_cli_date_format)
         self.log_cli_handler = log_cli_handler  # needed for a single unittest
         self.live_logs = catching_logs(log_cli_handler,
                                        formatter=log_cli_formatter,
@@ -288,11 +285,10 @@ class LoggingPlugin(object):
             self.log_file_handler = logging.FileHandler(
                 log_file,
                 # Each pytest runtests session will write to a clean logfile
-                mode='w',
-            )
+                mode='w')
             log_file_formatter = logging.Formatter(
-                    log_file_format,
-                    datefmt=log_file_date_format)
+                log_file_format,
+                datefmt=log_file_date_format)
             self.log_file_handler.setFormatter(log_file_formatter)
         else:
             self.log_file_handler = None
