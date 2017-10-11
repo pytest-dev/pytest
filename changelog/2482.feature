@@ -1,0 +1,1 @@
+Include new ``disable_test_id_escaping_and_forfeit_all_rights_to_community_support`` option to disable ascii-escaping in parametrized values. This may cause a series of problems and as the name makes clear, use at your own risk.
