@@ -342,26 +342,6 @@ class TestLoggingInteraction(object):
             # verify proper termination
             assert "closed" not in s
 
-    def test_logging_initialized_in_test(self, testdir):
-        p = testdir.makepyfile("""
-            import sys
-            def test_something():
-                # pytest does not import logging
-                assert 'logging' not in sys.modules
-                import logging
-                logging.basicConfig()
-                logging.warn("hello432")
-                assert 0
-        """)
-        result = testdir.runpytest_subprocess(
-            p, "--traceconfig",
-            "-p", "no:capturelog", "-p", "no:hypothesis", "-p", "no:hypothesispytest")
-        assert result.ret != 0
-        result.stdout.fnmatch_lines([
-            "*hello432*",
-        ])
-        assert 'operation on closed file' not in result.stderr.str()
-
     def test_conftestlogging_is_shown(self, testdir):
         testdir.makeconftest("""
                 import logging

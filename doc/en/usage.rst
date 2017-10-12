@@ -189,7 +189,6 @@ in your code and pytest automatically disables its output capture for that test:
   for test output occurring after you exit the interactive PDB_ tracing session
   and continue with the regular test run.
 
-
 .. _durations:
 
 Profiling test execution duration
