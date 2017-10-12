@@ -663,7 +663,7 @@ def test_skipif_class(testdir):
 
 
 def test_skip_reasons_folding():
-    path = 'xyz'
+    path = "xyz"
     lineno = 3
     message = "justso"
     longrepr = (path, lineno, message)
@@ -680,10 +680,15 @@ def test_skip_reasons_folding():
     ev2.longrepr = longrepr
     ev2.skipped = True
 
-    l = folded_skips([ev1, ev2])
+    # ev3 might be a collection report
+    ev3 = X()
+    ev3.longrepr = longrepr
+    ev3.skipped = True
+
+    l = folded_skips([ev1, ev2, ev3])
     assert len(l) == 1
     num, fspath, lineno, reason = l[0]
-    assert num == 2
+    assert num == 3
     assert fspath == path
     assert lineno == lineno
     assert reason == message
@@ -1002,6 +1007,40 @@ def test_module_level_skip_error(testdir):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(
         "*Using pytest.skip outside of a test is not allowed*"
+    )
+
+
+def test_module_level_skip_with_allow_module_level(testdir):
+    """
+    Verify that using pytest.skip(allow_module_level=True) is allowed
+    """
+    testdir.makepyfile("""
+        import pytest
+        pytest.skip("skip_module_level", allow_module_level=True)
+
+        def test_func():
+            assert 0
+    """)
+    result = testdir.runpytest("-rxs")
+    result.stdout.fnmatch_lines(
+        "*SKIP*skip_module_level"
+    )
+
+
+def test_invalid_skip_keyword_parameter(testdir):
+    """
+    Verify that using pytest.skip() with unknown parameter raises an error
+    """
+    testdir.makepyfile("""
+        import pytest
+        pytest.skip("skip_module_level", unknown=1)
+
+        def test_func():
+            assert 0
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(
+        "*TypeError:*['unknown']*"
     )
 
 

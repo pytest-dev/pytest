@@ -54,6 +54,16 @@ by calling the ``pytest.skip(reason)`` function:
         if not valid_config():
             pytest.skip("unsupported configuration")
 
+It is also possible to skip the whole module using
+``pytest.skip(reason, allow_module_level=True)`` at the module level:
+
+.. code-block:: python
+
+    import pytest
+
+    if not pytest.config.getoption("--custom-flag"):
+        pytest.skip("--custom-flag is missing, skipping tests", allow_module_level=True)
+
 The imperative method is useful when it is not possible to evaluate the skip condition
 during import time.
 
