@@ -59,8 +59,7 @@ def pytest_collect_file(path, parent):
 def _is_setup_py(config, path, parent):
     if path.basename != "setup.py":
         return False
-    with open(path.strpath, 'r') as f:
-        contents = f.read()
+    contents = path.read()
     return 'setuptools' in contents or 'distutils' in contents
 
 
