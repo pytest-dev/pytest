@@ -858,7 +858,7 @@ into a conftest.py file **without** using ``autouse``::
 
     # content of conftest.py
     @pytest.fixture
-    def transact(self, request, db):
+    def transact(request, db):
         db.begin()
         yield
         db.rollback()
