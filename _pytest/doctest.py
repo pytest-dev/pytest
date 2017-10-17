@@ -50,10 +50,17 @@ def pytest_addoption(parser):
 def pytest_collect_file(path, parent):
     config = parent.config
     if path.ext == ".py":
-        if config.option.doctestmodules:
+        if config.option.doctestmodules and not _is_setup_py(config, path, parent):
             return DoctestModule(path, parent)
     elif _is_doctest(config, path, parent):
         return DoctestTextfile(path, parent)
+
+
+def _is_setup_py(config, path, parent):
+    if path.basename != "setup.py":
+        return False
+    contents = path.read()
+    return 'setuptools' in contents or 'distutils' in contents
 
 
 def _is_doctest(config, path, parent):
