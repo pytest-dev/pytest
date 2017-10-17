@@ -383,7 +383,7 @@ def store_mark(obj, mark):
     """
     assert isinstance(mark, Mark), mark
     # always reassign name to avoid updating pytestmark
-    # in a referene that was only borrowed
+    # in a reference that was only borrowed
     obj.pytestmark = get_unpacked_marks(obj) + [mark]
 
 
