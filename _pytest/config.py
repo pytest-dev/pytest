@@ -1055,9 +1055,10 @@ class Config(object):
                                  "(are you using python -O?)\n")
 
     def _preparse(self, args, addopts=True):
-        self._initini(args)
         if addopts:
             args[:] = shlex.split(os.environ.get('PYTEST_ADDOPTS', '')) + args
+        self._initini(args)
+        if addopts:
             args[:] = self.getini("addopts") + args
         self._checkversion()
         self._consider_importhook(args)

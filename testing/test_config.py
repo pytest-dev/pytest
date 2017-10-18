@@ -843,3 +843,11 @@ class TestOverrideIniArgs(object):
             rootdir, inifile, inicfg = determine_setup(None, ['a/exist'])
             assert rootdir == tmpdir
             assert inifile is None
+
+    def test_addopts_before_initini(self, testdir, tmpdir, monkeypatch):
+        cache_dir = '.custom_cache'
+        monkeypatch.setenv('PYTEST_ADDOPTS', '-o cache_dir=%s' % cache_dir)
+        from _pytest.config import get_config
+        config = get_config()
+        config._preparse([], addopts=True)
+        assert config._override_ini == [['cache_dir=%s' % cache_dir]]
