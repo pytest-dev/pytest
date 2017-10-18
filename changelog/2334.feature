@@ -1,1 +1,1 @@
-Now when @pytest.fixture is being applied to the same function ValueError is raised.
+Now when ``@pytest.fixture`` is applied more than once to the same function a ``ValueError`` is raised. This buggy behavior would cause surprising problems and if was working for a test suite it was mostly by accident.
