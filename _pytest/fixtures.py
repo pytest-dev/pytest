@@ -728,8 +728,7 @@ class FixtureDef:
             where=baseid
         )
         self.params = params
-        startindex = unittest and 1 or None
-        self.argnames = getfuncargnames(func, startindex=startindex)
+        self.argnames = getfuncargnames(func, is_method=unittest)
         self.unittest = unittest
         self.ids = ids
         self._finalizer = []
