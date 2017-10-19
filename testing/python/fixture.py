@@ -2,7 +2,6 @@ from textwrap import dedent
 
 import _pytest._code
 import pytest
-import sys
 from _pytest.pytester import get_public_names
 from _pytest.fixtures import FixtureLookupError
 from _pytest import fixtures
