@@ -102,6 +102,8 @@ def wrap_session(config, doit):
             session.exitstatus = doit(config, session) or 0
         except UsageError:
             raise
+        except Failed:
+            session.exitstatus = EXIT_TESTSFAILED
         except KeyboardInterrupt:
             excinfo = _pytest._code.ExceptionInfo()
             if initstate < 2 and isinstance(excinfo.value, exit.Exception):
@@ -159,6 +161,8 @@ def pytest_runtestloop(session):
     for i, item in enumerate(session.items):
         nextitem = session.items[i + 1] if i + 1 < len(session.items) else None
         item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+        if session.shouldfail:
+            raise session.Failed(session.shouldfail)
         if session.shouldstop:
             raise session.Interrupted(session.shouldstop)
     return True
@@ -564,8 +568,13 @@ class Interrupted(KeyboardInterrupt):
     __module__ = 'builtins'  # for py3
 
 
+class Failed(Exception):
+    """ signals an stop as failed test run. """
+
+
 class Session(FSCollector):
     Interrupted = Interrupted
+    Failed = Failed
 
     def __init__(self, config):
         FSCollector.__init__(self, config.rootdir, parent=None,
@@ -573,6 +582,7 @@ class Session(FSCollector):
         self.testsfailed = 0
         self.testscollected = 0
         self.shouldstop = False
+        self.shouldfail = False
         self.trace = config.trace.root.get("collection")
         self._norecursepatterns = config.getini("norecursedirs")
         self.startdir = py.path.local()
@@ -583,6 +593,8 @@ class Session(FSCollector):
 
     @hookimpl(tryfirst=True)
     def pytest_collectstart(self):
+        if self.shouldfail:
+            raise self.Failed(self.shouldfail)
         if self.shouldstop:
             raise self.Interrupted(self.shouldstop)
 
@@ -592,7 +604,7 @@ class Session(FSCollector):
             self.testsfailed += 1
             maxfail = self.config.getvalue("maxfail")
             if maxfail and self.testsfailed >= maxfail:
-                self.shouldstop = "stopping after %d failures" % (
+                self.shouldfail = "stopping after %d failures" % (
                     self.testsfailed)
     pytest_collectreport = pytest_runtest_logreport
 

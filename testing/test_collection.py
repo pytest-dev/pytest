@@ -767,12 +767,11 @@ def test_exit_on_collection_with_maxfail_smaller_than_n_errors(testdir):
     testdir.makepyfile(**COLLECTION_ERROR_PY_FILES)
 
     res = testdir.runpytest("--maxfail=1")
-    assert res.ret == 2
+    assert res.ret == 1
 
     res.stdout.fnmatch_lines([
         "*ERROR collecting test_02_import_error.py*",
         "*No module named *asdfa*",
-        "*Interrupted: stopping after 1 failures*",
     ])
 
     assert 'test_03' not in res.stdout.str()
@@ -824,10 +823,9 @@ def test_continue_on_collection_errors_maxfail(testdir):
     testdir.makepyfile(**COLLECTION_ERROR_PY_FILES)
 
     res = testdir.runpytest("--continue-on-collection-errors", "--maxfail=3")
-    assert res.ret == 2
+    assert res.ret == 1
 
     res.stdout.fnmatch_lines([
         "collected 2 items / 2 errors",
-        "*Interrupted: stopping after 3 failures*",
         "*1 failed, 2 error*",
     ])

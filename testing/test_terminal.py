@@ -757,7 +757,6 @@ class TestGenericReporting(object):
         result.stdout.fnmatch_lines([
             "*def test_1():*",
             "*def test_2():*",
-            "*!! Interrupted: stopping after 2 failures*!!*",
             "*2 failed*",
         ])
 
