@@ -2,7 +2,6 @@ from textwrap import dedent
 
 import _pytest._code
 import pytest
-import sys
 from _pytest.pytester import get_public_names
 from _pytest.fixtures import FixtureLookupError
 from _pytest import fixtures
@@ -34,9 +33,6 @@ def test_getfuncargnames():
             pass
 
     assert fixtures.getfuncargnames(A().f) == ('arg1',)
-    if sys.version_info < (3, 0):
-        assert fixtures.getfuncargnames(A.f) == ('arg1',)
-
     assert fixtures.getfuncargnames(A.static, cls=A) == ('arg1', 'arg2')
 
 
@@ -2826,7 +2822,7 @@ class TestShowFixtures(object):
             import pytest
             class TestClass:
                 @pytest.fixture
-                def fixture1():
+                def fixture1(self):
                     """line1
                     line2
                         indented line

@@ -44,16 +44,19 @@ def has_environment_marker_support():
 
 def main():
     install_requires = ['py>=1.4.34', 'six>=1.10.0', 'setuptools']
+    extras_require = {}
     # if _PYTEST_SETUP_SKIP_PLUGGY_DEP is set, skip installing pluggy;
     # used by tox.ini to test with pluggy master
     if '_PYTEST_SETUP_SKIP_PLUGGY_DEP' not in os.environ:
         install_requires.append('pluggy>=0.4.0,<0.5')
-    extras_require = {}
     if has_environment_marker_support():
+        extras_require[':python_version<"3.0"'] = ['funcsigs']
         extras_require[':sys_platform=="win32"'] = ['colorama']
     else:
         if sys.platform == 'win32':
             install_requires.append('colorama')
+        if sys.version_info < (3, 0):
+            install_requires.append('funcsigs')
 
     setup(
         name='pytest',
