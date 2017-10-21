@@ -24,11 +24,8 @@ class MyDocTestRunner(doctest.DocTestRunner):
 class TestApprox(object):
 
     def test_repr_string(self):
-        # for some reason in Python 2.6 it is not displaying the tolerance representation correctly
         plus_minus = u'\u00b1' if sys.version_info[0] > 2 else u'+-'
         tol1, tol2, infr = '1.0e-06', '2.0e-06', 'inf'
-        if sys.version_info[:2] == (2, 6):
-            tol1, tol2, infr = '???', '???', '???'
         assert repr(approx(1.0)) == '1.0 {pm} {tol1}'.format(pm=plus_minus, tol1=tol1)
         assert repr(approx([1.0, 2.0])) == 'approx([1.0 {pm} {tol1}, 2.0 {pm} {tol2}])'.format(
             pm=plus_minus, tol1=tol1, tol2=tol2)
@@ -375,9 +372,6 @@ class TestApprox(object):
                 assert [3] == [pytest.approx(4)]
         """)
         expected = '4.0e-06'
-        # for some reason in Python 2.6 it is not displaying the tolerance representation correctly
-        if sys.version_info[:2] == (2, 6):
-            expected = '???'
         result = testdir.runpytest()
         result.stdout.fnmatch_lines([
             '*At index 0 diff: 3 != 4 * {0}'.format(expected),

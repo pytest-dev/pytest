@@ -1,0 +1,2 @@
+Internally change ``CallSpec2`` to have a list of marks instead of a broken mapping of keywords.
+This removes the keywords attribute of the internal ``CallSpec2`` class.

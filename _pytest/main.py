@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 
 import functools
 import os
+import six
 import sys
 
 import _pytest
@@ -83,15 +84,6 @@ def pytest_addoption(parser):
                     help="base temporary directory for this test run.")
 
 
-def pytest_namespace():
-    """keeping this one works around a deeper startup issue in pytest
-
-    i tried to find it for a while but the amount of time turned unsustainable,
-    so i put a hack in to revisit later
-    """
-    return {}
-
-
 def pytest_configure(config):
     __import__('pytest').config = config  # compatibiltiy
 
@@ -110,6 +102,8 @@ def wrap_session(config, doit):
             session.exitstatus = doit(config, session) or 0
         except UsageError:
             raise
+        except Failed:
+            session.exitstatus = EXIT_TESTSFAILED
         except KeyboardInterrupt:
             excinfo = _pytest._code.ExceptionInfo()
             if initstate < 2 and isinstance(excinfo.value, exit.Exception):
@@ -167,6 +161,8 @@ def pytest_runtestloop(session):
     for i, item in enumerate(session.items):
         nextitem = session.items[i + 1] if i + 1 < len(session.items) else None
         item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+        if session.shouldfail:
+            raise session.Failed(session.shouldfail)
         if session.shouldstop:
             raise session.Interrupted(session.shouldstop)
     return True
@@ -363,24 +359,6 @@ class Node(object):
     def teardown(self):
         pass
 
-    def _memoizedcall(self, attrname, function):
-        exattrname = "_ex_" + attrname
-        failure = getattr(self, exattrname, None)
-        if failure is not None:
-            py.builtin._reraise(failure[0], failure[1], failure[2])
-        if hasattr(self, attrname):
-            return getattr(self, attrname)
-        try:
-            res = function()
-        except py.builtin._sysex:
-            raise
-        except:
-            failure = sys.exc_info()
-            setattr(self, exattrname, failure)
-            raise
-        setattr(self, attrname, res)
-        return res
-
     def listchain(self):
         """ return list of all parent collectors up to self,
             starting from root of collection tree. """
@@ -398,7 +376,7 @@ class Node(object):
         ``marker`` can be a string or pytest.mark.* instance.
         """
         from _pytest.mark import MarkDecorator, MARK_GEN
-        if isinstance(marker, py.builtin._basestring):
+        if isinstance(marker, six.string_types):
             marker = getattr(MARK_GEN, marker)
         elif not isinstance(marker, MarkDecorator):
             raise ValueError("is not a string or pytest.mark.* Marker")
@@ -590,8 +568,13 @@ class Interrupted(KeyboardInterrupt):
     __module__ = 'builtins'  # for py3
 
 
+class Failed(Exception):
+    """ signals an stop as failed test run. """
+
+
 class Session(FSCollector):
     Interrupted = Interrupted
+    Failed = Failed
 
     def __init__(self, config):
         FSCollector.__init__(self, config.rootdir, parent=None,
@@ -599,6 +582,7 @@ class Session(FSCollector):
         self.testsfailed = 0
         self.testscollected = 0
         self.shouldstop = False
+        self.shouldfail = False
         self.trace = config.trace.root.get("collection")
         self._norecursepatterns = config.getini("norecursedirs")
         self.startdir = py.path.local()
@@ -609,6 +593,8 @@ class Session(FSCollector):
 
     @hookimpl(tryfirst=True)
     def pytest_collectstart(self):
+        if self.shouldfail:
+            raise self.Failed(self.shouldfail)
         if self.shouldstop:
             raise self.Interrupted(self.shouldstop)
 
@@ -618,7 +604,7 @@ class Session(FSCollector):
             self.testsfailed += 1
             maxfail = self.config.getvalue("maxfail")
             if maxfail and self.testsfailed >= maxfail:
-                self.shouldstop = "stopping after %d failures" % (
+                self.shouldfail = "stopping after %d failures" % (
                     self.testsfailed)
     pytest_collectreport = pytest_runtest_logreport
 

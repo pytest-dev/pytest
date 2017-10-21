@@ -155,23 +155,6 @@ class TestPytestPluginInteractions(object):
         ihook_b = session.gethookproxy(testdir.tmpdir.join('tests'))
         assert ihook_a is not ihook_b
 
-    def test_warn_on_deprecated_multicall(self, pytestpm):
-        warnings = []
-
-        class get_warnings(object):
-            def pytest_logwarning(self, message):
-                warnings.append(message)
-
-        class Plugin(object):
-            def pytest_configure(self, __multicall__):
-                pass
-
-        pytestpm.register(get_warnings())
-        before = list(warnings)
-        pytestpm.register(Plugin())
-        assert len(warnings) == len(before) + 1
-        assert "deprecated" in warnings[-1]
-
     def test_warn_on_deprecated_addhooks(self, pytestpm):
         warnings = []
 

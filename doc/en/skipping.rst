@@ -58,6 +58,16 @@ by calling the ``pytest.skip(reason)`` function:
         if not valid_config():
             pytest.skip("unsupported configuration")
 
+It is also possible to skip the whole module using
+``pytest.skip(reason, allow_module_level=True)`` at the module level:
+
+.. code-block:: python
+
+    import pytest
+
+    if not pytest.config.getoption("--custom-flag"):
+        pytest.skip("--custom-flag is missing, skipping tests", allow_module_level=True)
+
 The imperative method is useful when it is not possible to evaluate the skip condition
 during import time.
 
@@ -68,11 +78,11 @@ during import time.
 
 If you wish to skip something conditionally then you can use ``skipif`` instead.
 Here is an example of marking a test function to be skipped
-when run on a Python3.3 interpreter::
+when run on a Python3.6 interpreter::
 
     import sys
-    @pytest.mark.skipif(sys.version_info < (3,3),
-                        reason="requires python3.3")
+    @pytest.mark.skipif(sys.version_info < (3,6),
+                        reason="requires python3.6")
     def test_function():
         ...
 
@@ -254,8 +264,8 @@ You can change the default value of the ``strict`` parameter using the
 As with skipif_ you can also mark your expectation of a failure
 on a particular platform::
 
-    @pytest.mark.xfail(sys.version_info >= (3,3),
-                       reason="python3.3 api changes")
+    @pytest.mark.xfail(sys.version_info >= (3,6),
+                       reason="python3.6 api changes")
     def test_function():
         ...
 

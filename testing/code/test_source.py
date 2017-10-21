@@ -273,7 +273,6 @@ class TestSourceParsingAndCompiling(object):
         assert getstatement(2, source).lines == source.lines[2:3]
         assert getstatement(3, source).lines == source.lines[3:4]
 
-    @pytest.mark.skipif("sys.version_info < (2,6)")
     def test_getstatementrange_out_of_bounds_py3(self):
         source = Source("if xxx:\n   from .collections import something")
         r = source.getstatementrange(1)
@@ -283,7 +282,6 @@ class TestSourceParsingAndCompiling(object):
         source = Source(":")
         pytest.raises(SyntaxError, lambda: source.getstatementrange(0))
 
-    @pytest.mark.skipif("sys.version_info < (2,6)")
     def test_compile_to_ast(self):
         import ast
         source = Source("x = 4")

@@ -54,7 +54,7 @@ class pytestPDB:
         if cls._pluginmanager is not None:
             capman = cls._pluginmanager.getplugin("capturemanager")
             if capman:
-                capman.suspendcapture(in_=True)
+                capman.suspend_global_capture(in_=True)
             tw = _pytest.config.create_terminal_writer(cls._config)
             tw.line()
             tw.sep(">", "PDB set_trace (IO-capturing turned off)")
@@ -66,7 +66,7 @@ class PdbInvoke:
     def pytest_exception_interact(self, node, call, report):
         capman = node.config.pluginmanager.getplugin("capturemanager")
         if capman:
-            out, err = capman.suspendcapture(in_=True)
+            out, err = capman.suspend_global_capture(in_=True)
             sys.stdout.write(out)
             sys.stdout.write(err)
         _enter_pdb(node, call.excinfo, report)
@@ -83,7 +83,7 @@ def _enter_pdb(node, excinfo, rep):
     # XXX we re-use the TerminalReporter's terminalwriter
     # because this seems to avoid some encoding related troubles
     # for not completely clear reasons.
-    tw = node.config.pluginmanager.getplugin("terminalreporter")._tw
+    tw = node.config.pluginmanager.getplugin("terminalreporter").writer
     tw.line()
     tw.sep(">", "traceback")
     rep.toterminal(tw)

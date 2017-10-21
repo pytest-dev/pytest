@@ -67,10 +67,6 @@ class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
 
         return cls(argval, marks=newmarks, id=None)
 
-    @property
-    def deprecated_arg_dict(self):
-        return dict((mark.name, mark) for mark in self.marks)
-
 
 class MarkerError(Exception):
 

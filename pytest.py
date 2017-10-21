@@ -7,7 +7,7 @@ pytest: unit and functional testing with Python.
 # else we are imported
 
 from _pytest.config import (
-    main, UsageError, _preloadplugins, cmdline,
+    main, UsageError, cmdline,
     hookspec, hookimpl
 )
 from _pytest.fixtures import fixture, yield_fixture
@@ -74,5 +74,4 @@ if __name__ == '__main__':
 else:
 
     from _pytest.compat import _setup_collect_fakemodule
-    _preloadplugins()  # to populate pytest.* namespace so help(pytest) works
     _setup_collect_fakemodule()
