@@ -109,7 +109,7 @@ decorator or to all tests in a module by setting the ``pytestmark`` variable:
 .. code-block:: python
 
     # turns all warnings into errors for this module
-    pytestmark = @pytest.mark.filterwarnings('error')
+    pytestmark = pytest.mark.filterwarnings('error')
 
 
 .. note::
