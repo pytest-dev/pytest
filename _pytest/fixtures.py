@@ -1135,20 +1135,20 @@ class FixtureManager:
         """Split a nodeid into constituent 'parts'.
 
         Node IDs are strings, and can be things like:
-            '',
-            'testing/code',
+            ''
+            'testing/code'
             'testing/code/test_excinfo.py'
             'testing/code/test_excinfo.py::TestFormattedExcinfo::()'
 
+        Return values are lists e.g.
+            ['']
+            ['testing', 'code']
+            ['testing', 'code', test_excinfo.py']
+            ['testing', 'code', 'test_excinfo.py', 'TestFormattedExcinfo', '()']
         """
-        if nodeid == '':
-            return []
-        sep = py.path.local.sep
-        parts = nodeid.split(sep)
-        last_part = parts[-1]
-        if '::' in last_part:
-            # Replace single last element 'test_foo.py::Bar::()' with multiple elements 'test_foo.py', 'Bar', '()'
-            parts[-1:] = last_part.split("::")
+        parts = nodeid.split(py.path.local.sep)
+        # Replace single last element 'test_foo.py::Bar::()' with multiple elements 'test_foo.py', 'Bar', '()'
+        parts[-1:] = parts[-1].split("::")
         return parts
 
     @classmethod
