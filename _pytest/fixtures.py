@@ -1145,11 +1145,10 @@ class FixtureManager:
             return []
         sep = py.path.local.sep
         parts = nodeid.split(sep)
-        if parts:
-            last_part = parts[-1]
-            if '::' in last_part:
-                namespace_parts = last_part.split("::")
-                parts[-1:] = namespace_parts
+        last_part = parts[-1]
+        if '::' in last_part:
+            # Replace single last element 'test_foo.py::Bar::()' with multiple elements 'test_foo.py', 'Bar', '()'
+            parts[-1:] = last_part.split("::")
         return parts
 
     @classmethod
