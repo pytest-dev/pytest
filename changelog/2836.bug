@@ -1,3 +1,1 @@
-Attempted fix for https://github.com/pytest-dev/pytest/issues/2836
-
-Improves the handling of "nodeid"s to be more aware of path and class separators.
+Match fixture paths against actual path segments in order to avoid matching folders which share a prefix.

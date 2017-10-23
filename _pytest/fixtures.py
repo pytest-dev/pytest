@@ -1,12 +1,12 @@
 from __future__ import absolute_import, division, print_function
-import sys
-
-from py._code.code import FormattedExcinfo
-
-import py
-import warnings
 
 import inspect
+import sys
+import warnings
+
+import py
+from py._code.code import FormattedExcinfo
+
 import _pytest
 from _pytest._code.code import TerminalRepr
 from _pytest.compat import (
@@ -15,9 +15,11 @@ from _pytest.compat import (
     is_generator, isclass, getimfunc,
     getlocation, getfuncargnames,
     safe_getattr,
+    FuncargnamesCompatAttr,
 )
+from _pytest.nodes import ischildnode
 from _pytest.outcomes import fail, TEST_OUTCOME
-from _pytest.compat import FuncargnamesCompatAttr
+
 
 if sys.version_info[:2] == (2, 6):
     from ordereddict import OrderedDict
@@ -1130,40 +1132,7 @@ class FixtureManager:
         else:
             return tuple(self._matchfactories(fixturedefs, nodeid))
 
-    @classmethod
-    def _splitnode(cls, nodeid):
-        """Split a nodeid into constituent 'parts'.
-
-        Node IDs are strings, and can be things like:
-            ''
-            'testing/code'
-            'testing/code/test_excinfo.py'
-            'testing/code/test_excinfo.py::TestFormattedExcinfo::()'
-
-        Return values are lists e.g.
-            ['']
-            ['testing', 'code']
-            ['testing', 'code', 'test_excinfo.py']
-            ['testing', 'code', 'test_excinfo.py', 'TestFormattedExcinfo', '()']
-        """
-        parts = nodeid.split(py.path.local.sep)
-        # Replace single last element 'test_foo.py::Bar::()' with multiple elements 'test_foo.py', 'Bar', '()'
-        parts[-1:] = parts[-1].split("::")
-        return parts
-
-    @classmethod
-    def _ischildnode(cls, baseid, nodeid):
-        """Return True if the nodeid is a child node of the baseid.
-
-        E.g. 'foo/bar::Baz::()' is a child of 'foo', 'foo/bar' and 'foo/bar::Baz', but not of 'foo/blorp'
-        """
-        base_parts = cls._splitnode(baseid)
-        node_parts = cls._splitnode(nodeid)
-        if len(node_parts) < len(base_parts):
-            return False
-        return node_parts[:len(base_parts)] == base_parts
-
     def _matchfactories(self, fixturedefs, nodeid):
         for fixturedef in fixturedefs:
-            if self._ischildnode(fixturedef.baseid, nodeid):
+            if ischildnode(fixturedef.baseid, nodeid):
                 yield fixturedef

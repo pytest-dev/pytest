@@ -1,6 +1,6 @@
 import pytest
 
-from _pytest import fixtures
+from _pytest import nodes
 
 
 @pytest.mark.parametrize("baseid, nodeid, expected", (
@@ -13,6 +13,6 @@ from _pytest import fixtures
     ('foo/bar::TestBaz::()', 'foo/bar::TestBop::()', False),
     ('foo/bar', 'foo/bar::TestBop::()', True),
 ))
-def test_fixturemanager_ischildnode(baseid, nodeid, expected):
-    result = fixtures.FixtureManager._ischildnode(baseid, nodeid)
+def test_ischildnode(baseid, nodeid, expected):
+    result = nodes.ischildnode(baseid, nodeid)
     assert result is expected
