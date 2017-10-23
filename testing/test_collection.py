@@ -851,8 +851,8 @@ def test_fixture_scope_sibling_conftests(testdir):
     res = testdir.runpytest()
     assert res.ret == 1
 
-    # TODO Work out what this will really look like. Currently the retcode assertion above fails (as expected).
     res.stdout.fnmatch_lines([
-        "collected 2 items / 1 errors",
+        "*ERROR at setup of test_food*",
+        "E*fixture 'fix' not found",
         "*1 passed, 1 error*",
     ])
