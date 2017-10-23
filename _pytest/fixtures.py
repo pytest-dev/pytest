@@ -1130,7 +1130,41 @@ class FixtureManager:
         else:
             return tuple(self._matchfactories(fixturedefs, nodeid))
 
+    @classmethod
+    def _splitnode(cls, nodeid):
+        """Split a nodeid into constituent 'parts'.
+
+        Node IDs are strings, and can be things like:
+            '',
+            'testing/code',
+            'testing/code/test_excinfo.py'
+            'testing/code/test_excinfo.py::TestFormattedExcinfo::()'
+
+        """
+        if nodeid == '':
+            return []
+        sep = py.path.local.sep
+        parts = nodeid.split(sep)
+        if parts:
+            last_part = parts[-1]
+            if '::' in last_part:
+                namespace_parts = last_part.split("::")
+                parts[-1:] = namespace_parts
+        return parts
+
+    @classmethod
+    def _ischildnode(cls, baseid, nodeid):
+        """Return True if the nodeid is a child node of the baseid.
+
+        E.g. 'foo/bar::Baz::()' is a child of 'foo', 'foo/bar' and 'foo/bar::Baz', but not of 'foo/blorp'
+        """
+        base_parts = cls._splitnode(baseid)
+        node_parts = cls._splitnode(nodeid)
+        if len(node_parts) < len(base_parts):
+            return False
+        return node_parts[:len(base_parts)] == base_parts
+
     def _matchfactories(self, fixturedefs, nodeid):
         for fixturedef in fixturedefs:
-            if nodeid.startswith(fixturedef.baseid):
+            if self._ischildnode(fixturedef.baseid, nodeid):
                 yield fixturedef
