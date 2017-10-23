@@ -1143,7 +1143,7 @@ class FixtureManager:
         Return values are lists e.g.
             ['']
             ['testing', 'code']
-            ['testing', 'code', test_excinfo.py']
+            ['testing', 'code', 'test_excinfo.py']
             ['testing', 'code', 'test_excinfo.py', 'TestFormattedExcinfo', '()']
         """
         parts = nodeid.split(py.path.local.sep)
