@@ -169,6 +169,23 @@ def test_markers_option(testdir):
     ])
 
 
+def test_ini_markers_whitespace(testdir):
+    testdir.makeini("""
+        [pytest]
+        markers =
+            a1 : this is a whitespace marker
+    """)
+    testdir.makepyfile("""
+        import pytest
+
+        @pytest.mark.a1
+        def test_markers():
+            assert True
+    """)
+    rec = testdir.inline_run("--strict", "-m", "a1")
+    rec.assertoutcome(passed=1)
+
+
 def test_markers_option_with_plugin_in_current_dir(testdir):
     testdir.makeconftest('pytest_plugins = "flip_flop"')
     testdir.makepyfile(flip_flop="""\
