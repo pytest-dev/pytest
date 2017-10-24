@@ -13,6 +13,7 @@ import sys
 import time
 import platform
 
+from _pytest import nodes
 import _pytest._pluggy as pluggy
 
 
@@ -452,7 +453,7 @@ class TerminalReporter:
 
         if fspath:
             res = mkrel(nodeid).replace("::()", "")  # parens-normalization
-            if nodeid.split("::")[0] != fspath.replace("\\", "/"):
+            if nodeid.split("::")[0] != fspath.replace("\\", nodes.SEP):
                 res += " <- " + self.startdir.bestrelpath(fspath)
         else:
             res = "[location]"

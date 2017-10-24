@@ -8,6 +8,7 @@ import py
 from py._code.code import FormattedExcinfo
 
 import _pytest
+from _pytest import nodes
 from _pytest._code.code import TerminalRepr
 from _pytest.compat import (
     NOTSET, exc_clear, _format_args,
@@ -17,7 +18,6 @@ from _pytest.compat import (
     safe_getattr,
     FuncargnamesCompatAttr,
 )
-from _pytest.nodes import ischildnode
 from _pytest.outcomes import fail, TEST_OUTCOME
 
 
@@ -983,8 +983,8 @@ class FixtureManager:
             # by their test id)
             if p.basename.startswith("conftest.py"):
                 nodeid = p.dirpath().relto(self.config.rootdir)
-                if p.sep != "/":
-                    nodeid = nodeid.replace(p.sep, "/")
+                if p.sep != nodes.SEP:
+                    nodeid = nodeid.replace(p.sep, nodes.SEP)
         self.parsefactories(plugin, nodeid)
 
     def _getautousenames(self, nodeid):
@@ -1134,5 +1134,5 @@ class FixtureManager:
 
     def _matchfactories(self, fixturedefs, nodeid):
         for fixturedef in fixturedefs:
-            if ischildnode(fixturedef.baseid, nodeid):
+            if nodes.ischildnode(fixturedef.baseid, nodeid):
                 yield fixturedef

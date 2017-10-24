@@ -1,6 +1,9 @@
 import py
 
 
+SEP = "/"
+
+
 def _splitnode(nodeid):
     """Split a nodeid into constituent 'parts'.
 
@@ -19,7 +22,7 @@ def _splitnode(nodeid):
     if nodeid == '':
         # If there is no root node at all, return an empty list so the caller's logic can remain sane
         return []
-    parts = nodeid.split(py.path.local.sep)
+    parts = nodeid.split(SEP)
     # Replace single last element 'test_foo.py::Bar::()' with multiple elements 'test_foo.py', 'Bar', '()'
     parts[-1:] = parts[-1].split("::")
     return parts
