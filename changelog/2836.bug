@@ -1,0 +1,1 @@
+Match fixture paths against actual path segments in order to avoid matching folders which share a prefix.

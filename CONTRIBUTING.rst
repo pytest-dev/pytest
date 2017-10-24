@@ -177,7 +177,8 @@ Short version
 #. Write a ``changelog`` entry: ``changelog/2574.bugfix``, use issue id number
    and one of ``bugfix``, ``removal``, ``feature``, ``vendor``, ``doc`` or
    ``trivial`` for the issue type.
-#. Add yourself to ``AUTHORS`` file if not there yet, in alphabetical order.
+#. Unless your change is a trivial or a documentation fix (e.g., a typo or reword of a small section) please
+   add yourself to the ``AUTHORS`` file, in alphabetical order;
 
 
 Long version
