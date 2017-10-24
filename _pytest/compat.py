@@ -14,7 +14,6 @@ import py
 import _pytest
 from _pytest.outcomes import TEST_OUTCOME
 
-
 try:
     import enum
 except ImportError:  # pragma: no cover
@@ -110,11 +109,10 @@ def getfuncargnames(function, is_method=False, cls=None):
     # ordered mapping of parameter names to Parameter instances.  This
     # creates a tuple of the names of the parameters that don't have
     # defaults.
-    arg_names = tuple(
-        p.name for p in signature(function).parameters.values()
-        if (p.kind is Parameter.POSITIONAL_OR_KEYWORD
-            or p.kind is Parameter.KEYWORD_ONLY) and
-        p.default is Parameter.empty)
+    arg_names = tuple(p.name for p in signature(function).parameters.values()
+                      if (p.kind is Parameter.POSITIONAL_OR_KEYWORD or
+                          p.kind is Parameter.KEYWORD_ONLY) and
+                      p.default is Parameter.empty)
     # If this function should be treated as a bound method even though
     # it's passed as an unbound method or function, remove the first
     # parameter name.
@@ -172,8 +170,6 @@ if _PY3:
 else:
     STRING_TYPES = bytes, str, unicode
     UNICODE_TYPES = unicode,
-
-    from itertools import imap, izip  # NOQA
 
     def ascii_escaped(val):
         """In py2 bytes and str are the same type, so return if it's a bytes

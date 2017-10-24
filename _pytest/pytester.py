@@ -23,9 +23,7 @@ from _pytest.main import Session, EXIT_OK
 from _pytest.assertion.rewrite import AssertionRewritingHook
 
 
-PYTEST_FULLPATH = os.path.abspath(
-    pytest.__file__.rstrip("oc")
-    ).replace("$py.class", ".py")
+PYTEST_FULLPATH = os.path.abspath(pytest.__file__.rstrip("oc")).replace("$py.class", ".py")
 
 
 def pytest_addoption(parser):

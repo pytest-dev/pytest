@@ -3,7 +3,7 @@ import logging
 
 
 logger = logging.getLogger(__name__)
-sublogger = logging.getLogger(__name__+'.baz')
+sublogger = logging.getLogger(__name__ + '.baz')
 
 
 def test_fixture_help(testdir):
