@@ -199,12 +199,17 @@ def test_importplugin_error_message(testdir, pytestpm):
     testdir.syspathinsert(testdir.tmpdir)
     testdir.makepyfile(qwe="""
         # encoding: UTF-8
-        raise ImportError(u'Not possible to import: ☺')
+        def test_traceback():
+            raise ImportError(u'Not possible to import: ☺')
+        test_traceback()
     """)
     with pytest.raises(ImportError) as excinfo:
         pytestpm.import_plugin("qwe")
-    expected = '.*Error importing plugin "qwe": Not possible to import: .'
-    assert py.std.re.match(expected, str(excinfo.value))
+
+    expected_message = '.*Error importing plugin "qwe": Not possible to import: .'
+    expected_traceback = ".*in test_traceback"
+    assert py.std.re.match(expected_message, str(excinfo.value))
+    assert py.std.re.match(expected_traceback, str(excinfo.traceback[-1]))
 
 
 class TestPytestPluginManager(object):
