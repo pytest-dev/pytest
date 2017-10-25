@@ -5,7 +5,7 @@ import inspect
 import warnings
 from collections import namedtuple
 from operator import attrgetter
-from .compat import imap
+from six.moves import map
 from .deprecated import MARK_PARAMETERSET_UNPACKING
 
 
@@ -427,7 +427,7 @@ class MarkInfo(object):
 
     def __iter__(self):
         """ yield MarkInfo objects each relating to a marking-call. """
-        return imap(MarkInfo, self._marks)
+        return map(MarkInfo, self._marks)
 
 
 MARK_GEN = MarkGenerator()

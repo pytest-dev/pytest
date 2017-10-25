@@ -2,8 +2,9 @@ import math
 import sys
 
 import py
+from six.moves import zip
 
-from _pytest.compat import isclass, izip
+from _pytest.compat import isclass
 from _pytest.outcomes import fail
 import _pytest._code
 
@@ -145,7 +146,7 @@ class ApproxSequence(ApproxBase):
         return ApproxBase.__eq__(self, actual)
 
     def _yield_comparisons(self, actual):
-        return izip(actual, self.expected)
+        return zip(actual, self.expected)
 
 
 class ApproxScalar(ApproxBase):

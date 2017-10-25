@@ -127,8 +127,6 @@ def getfuncargnames(function, is_method=False, cls=None):
 
 
 if _PY3:
-    imap = map
-    izip = zip
     STRING_TYPES = bytes, str
     UNICODE_TYPES = str,
 
