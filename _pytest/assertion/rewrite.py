@@ -595,15 +595,17 @@ class AssertionRewriter(ast.NodeVisitor):
         # docstrings and __future__ imports.
         aliases = [ast.alias(py.builtin.builtins.__name__, "@py_builtins"),
                    ast.alias("_pytest.assertion.rewrite", "@pytest_ar")]
-        expect_docstring = True
+        doc = getattr(mod, "docstring", None)
+        expect_docstring = doc is None
+        if doc is not None and self.is_rewrite_disabled(doc):
+            return
         pos = 0
         lineno = 0
         for item in mod.body:
             if (expect_docstring and isinstance(item, ast.Expr) and
                     isinstance(item.value, ast.Str)):
                 doc = item.value.s
-                if "PYTEST_DONT_REWRITE" in doc:
-                    # The module has disabled assertion rewriting.
+                if self.is_rewrite_disabled(doc):
                     return
                 lineno += len(doc) - 1
                 expect_docstring = False
@@ -636,6 +638,9 @@ class AssertionRewriter(ast.NodeVisitor):
                       # asserts.
                       not isinstance(field, ast.expr)):
                     nodes.append(field)
+
+    def is_rewrite_disabled(self, docstring):
+        return "PYTEST_DONT_REWRITE" in docstring
 
     def variable(self):
         """Get a new variable."""

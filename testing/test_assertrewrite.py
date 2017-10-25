@@ -65,13 +65,15 @@ class TestAssertionRewrite(object):
     def test_place_initial_imports(self):
         s = """'Doc string'\nother = stuff"""
         m = rewrite(s)
-        assert isinstance(m.body[0], ast.Expr)
-        assert isinstance(m.body[0].value, ast.Str)
-        for imp in m.body[1:3]:
+        if sys.version_info < (3, 7):
+            assert isinstance(m.body[0], ast.Expr)
+            assert isinstance(m.body[0].value, ast.Str)
+            del m.body[0]
+        for imp in m.body[0:2]:
             assert isinstance(imp, ast.Import)
             assert imp.lineno == 2
             assert imp.col_offset == 0
-        assert isinstance(m.body[3], ast.Assign)
+        assert isinstance(m.body[2], ast.Assign)
         s = """from __future__ import with_statement\nother_stuff"""
         m = rewrite(s)
         assert isinstance(m.body[0], ast.ImportFrom)
@@ -82,14 +84,16 @@ class TestAssertionRewrite(object):
         assert isinstance(m.body[3], ast.Expr)
         s = """'doc string'\nfrom __future__ import with_statement\nother"""
         m = rewrite(s)
-        assert isinstance(m.body[0], ast.Expr)
-        assert isinstance(m.body[0].value, ast.Str)
-        assert isinstance(m.body[1], ast.ImportFrom)
-        for imp in m.body[2:4]:
+        if sys.version_info < (3, 7):
+            assert isinstance(m.body[0], ast.Expr)
+            assert isinstance(m.body[0].value, ast.Str)
+            del m.body[0]
+        assert isinstance(m.body[0], ast.ImportFrom)
+        for imp in m.body[1:3]:
             assert isinstance(imp, ast.Import)
             assert imp.lineno == 3
             assert imp.col_offset == 0
-        assert isinstance(m.body[4], ast.Expr)
+        assert isinstance(m.body[3], ast.Expr)
         s = """from . import relative\nother_stuff"""
         m = rewrite(s)
         for imp in m.body[0:2]:
@@ -101,10 +105,14 @@ class TestAssertionRewrite(object):
     def test_dont_rewrite(self):
         s = """'PYTEST_DONT_REWRITE'\nassert 14"""
         m = rewrite(s)
-        assert len(m.body) == 2
-        assert isinstance(m.body[0].value, ast.Str)
-        assert isinstance(m.body[1], ast.Assert)
-        assert m.body[1].msg is None
+        if sys.version_info < (3, 7):
+            assert len(m.body) == 2
+            assert isinstance(m.body[0], ast.Expr)
+            assert isinstance(m.body[0].value, ast.Str)
+            del m.body[0]
+        else:
+            assert len(m.body) == 1
+        assert m.body[0].msg is None
 
     def test_name(self):
         def f():
