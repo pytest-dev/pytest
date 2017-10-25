@@ -600,20 +600,21 @@ class AssertionRewriter(ast.NodeVisitor):
         if doc is not None and self.is_rewrite_disabled(doc):
             return
         pos = 0
-        lineno = 0
+        lineno = 1
         for item in mod.body:
             if (expect_docstring and isinstance(item, ast.Expr) and
                     isinstance(item.value, ast.Str)):
                 doc = item.value.s
                 if self.is_rewrite_disabled(doc):
                     return
-                lineno += len(doc) - 1
                 expect_docstring = False
             elif (not isinstance(item, ast.ImportFrom) or item.level > 0 or
                   item.module != "__future__"):
                 lineno = item.lineno
                 break
             pos += 1
+        else:
+            lineno = item.lineno
         imports = [ast.Import([alias], lineno=lineno, col_offset=0)
                    for alias in aliases]
         mod.body[pos:pos] = imports

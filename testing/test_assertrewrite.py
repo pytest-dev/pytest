@@ -82,6 +82,17 @@ class TestAssertionRewrite(object):
             assert imp.lineno == 2
             assert imp.col_offset == 0
         assert isinstance(m.body[3], ast.Expr)
+        s = """'doc string'\nfrom __future__ import with_statement"""
+        m = rewrite(s)
+        if sys.version_info < (3, 7):
+            assert isinstance(m.body[0], ast.Expr)
+            assert isinstance(m.body[0].value, ast.Str)
+            del m.body[0]
+        assert isinstance(m.body[0], ast.ImportFrom)
+        for imp in m.body[1:3]:
+            assert isinstance(imp, ast.Import)
+            assert imp.lineno == 2
+            assert imp.col_offset == 0
         s = """'doc string'\nfrom __future__ import with_statement\nother"""
         m = rewrite(s)
         if sys.version_info < (3, 7):
