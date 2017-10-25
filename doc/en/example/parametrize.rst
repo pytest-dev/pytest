@@ -350,7 +350,7 @@ Parametrizing test methods through per-class configuration
 .. _`unittest parametrizer`: https://github.com/testing-cabal/unittest-ext/blob/master/params.py
 
 
-Here is an example ``pytest_generate_function`` function implementing a
+Here is an example ``pytest_generate_tests`` function implementing a
 parametrization scheme similar to Michael Foord's `unittest
 parametrizer`_ but in a lot less code::
 

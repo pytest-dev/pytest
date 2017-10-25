@@ -5,7 +5,7 @@ import inspect
 import warnings
 from collections import namedtuple
 from operator import attrgetter
-from .compat import imap
+from six.moves import map
 from .deprecated import MARK_PARAMETERSET_UNPACKING
 
 
@@ -379,7 +379,7 @@ def store_mark(obj, mark):
     """
     assert isinstance(mark, Mark), mark
     # always reassign name to avoid updating pytestmark
-    # in a referene that was only borrowed
+    # in a reference that was only borrowed
     obj.pytestmark = get_unpacked_marks(obj) + [mark]
 
 
@@ -427,7 +427,7 @@ class MarkInfo(object):
 
     def __iter__(self):
         """ yield MarkInfo objects each relating to a marking-call. """
-        return imap(MarkInfo, self._marks)
+        return map(MarkInfo, self._marks)
 
 
 MARK_GEN = MarkGenerator()

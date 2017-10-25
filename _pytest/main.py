@@ -7,6 +7,7 @@ import six
 import sys
 
 import _pytest
+from _pytest import nodes
 import _pytest._code
 import py
 try:
@@ -15,8 +16,8 @@ except ImportError:
     from UserDict import DictMixin as MappingMixin
 
 from _pytest.config import directory_arg, UsageError, hookimpl
-from _pytest.runner import collect_one_node
 from _pytest.outcomes import exit
+from _pytest.runner import collect_one_node
 
 tracebackcutdir = py.path.local(_pytest.__file__).dirpath()
 
@@ -494,14 +495,14 @@ class FSCollector(Collector):
             rel = fspath.relto(parent.fspath)
             if rel:
                 name = rel
-            name = name.replace(os.sep, "/")
+            name = name.replace(os.sep, nodes.SEP)
         super(FSCollector, self).__init__(name, parent, config, session)
         self.fspath = fspath
 
     def _makeid(self):
         relpath = self.fspath.relto(self.config.rootdir)
-        if os.sep != "/":
-            relpath = relpath.replace(os.sep, "/")
+        if os.sep != nodes.SEP:
+            relpath = relpath.replace(os.sep, nodes.SEP)
         return relpath
 
 

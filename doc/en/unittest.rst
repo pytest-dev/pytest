@@ -233,3 +233,13 @@ was executed ahead of the ``test_method``.
     overwrite ``unittest.TestCase`` ``__call__`` or ``run``, they need to
     to overwrite ``debug`` in the same way  (this is also true for standard
     unittest).
+
+.. note::
+
+    Due to architectural differences between the two frameworks, setup and
+    teardown for ``unittest``-based tests is performed during the ``call`` phase
+    of testing instead of in ``pytest``'s standard ``setup`` and ``teardown``
+    stages. This can be important to understand in some situations, particularly
+    when reasoning about errors. For example, if a ``unittest``-based suite
+    exhibits errors during setup, ``pytest`` will report no errors during its
+    ``setup`` phase and will instead raise the error during ``call``.

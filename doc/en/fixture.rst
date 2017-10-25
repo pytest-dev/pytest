@@ -27,7 +27,7 @@ functions:
 * fixture management scales from simple unit to complex
   functional testing, allowing to parametrize fixtures and tests according
   to configuration and component options, or to re-use fixtures
-  across class, module or whole test session scopes.
+  across function, class, module or whole test session scopes.
 
 In addition, pytest continues to support :ref:`xunitsetup`.  You can mix
 both styles, moving incrementally from classic to new style, as you
@@ -129,8 +129,8 @@ functions take the role of the *injector* and test functions are the
 
 .. _smtpshared:
 
-Sharing a fixture across tests in a module (or class/session)
------------------------------------------------------------------
+Scope: Sharing a fixture across tests in a class, module or session
+-------------------------------------------------------------------
 
 .. regendoc:wipe
 
@@ -139,10 +139,12 @@ usually time-expensive to create.  Extending the previous example, we
 can add a ``scope='module'`` parameter to the
 :py:func:`@pytest.fixture <_pytest.python.fixture>` invocation
 to cause the decorated ``smtp`` fixture function to only be invoked once
-per test module.  Multiple test functions in a test module will thus
-each receive the same ``smtp`` fixture instance.  The next example puts
-the fixture function into a separate ``conftest.py`` file so
-that tests from multiple test modules in the directory can
+per test *module* (the default is to invoke once per test *function*).
+Multiple test functions in a test module will thus
+each receive the same ``smtp`` fixture instance, thus saving time.
+
+The next example puts the fixture function into a separate ``conftest.py`` file 
+so that tests from multiple test modules in the directory can
 access the fixture function::
 
     # content of conftest.py
@@ -222,6 +224,8 @@ instance, you can simply declare it:
     def smtp(...):
         # the returned fixture value will be shared for
         # all tests needing it
+
+Finally, the ``class`` scope will invoke the fixture once per test *class*.
 
 .. _`finalization`:
 
@@ -858,7 +862,7 @@ into a conftest.py file **without** using ``autouse``::
 
     # content of conftest.py
     @pytest.fixture
-    def transact(self, request, db):
+    def transact(request, db):
         db.begin()
         yield
         db.rollback()

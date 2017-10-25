@@ -232,7 +232,5 @@ class WarningsChecker(WarningsRecorder):
                     else:
                         fail("DID NOT WARN. No warnings of type {0} matching"
                              " ('{1}') was emitted. The list of emitted warnings"
-                             " is: {2}.".format(
-                                self.expected_warning,
-                                self.match_expr,
-                                [each.message for each in self]))
+                             " is: {2}.".format(self.expected_warning, self.match_expr,
+                                                [each.message for each in self]))

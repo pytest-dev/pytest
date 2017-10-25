@@ -342,6 +342,24 @@ def test_parametrized_collect_with_wrong_args(testdir):
     ])
 
 
+def test_parametrized_with_kwargs(testdir):
+    """Test collect parametrized func with wrong number of args."""
+    py_file = testdir.makepyfile("""
+        import pytest
+
+        @pytest.fixture(params=[1,2])
+        def a(request):
+            return request.param
+
+        @pytest.mark.parametrize(argnames='b', argvalues=[1, 2])
+        def test_func(a, b):
+            pass
+    """)
+
+    result = testdir.runpytest(py_file)
+    assert(result.ret == 0)
+
+
 class TestFunctional(object):
 
     def test_mark_per_function(self, testdir):

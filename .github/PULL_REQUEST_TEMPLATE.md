@@ -12,4 +12,4 @@ Here's a quick checklist that should be present in PRs:
 
 Unless your change is a trivial or a documentation fix (e.g.,  a typo or reword of a small section) please:
 
-- [ ] Add yourself to `AUTHORS`;
+- [ ] Add yourself to `AUTHORS`, in alphabetical order;

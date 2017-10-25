@@ -1,13 +1,14 @@
 from __future__ import absolute_import, division, print_function
-import sys
-
-from py._code.code import FormattedExcinfo
-
-import py
-import warnings
 
 import inspect
+import sys
+import warnings
+
+import py
+from py._code.code import FormattedExcinfo
+
 import _pytest
+from _pytest import nodes
 from _pytest._code.code import TerminalRepr
 from _pytest.compat import (
     NOTSET, exc_clear, _format_args,
@@ -15,9 +16,10 @@ from _pytest.compat import (
     is_generator, isclass, getimfunc,
     getlocation, getfuncargnames,
     safe_getattr,
+    FuncargnamesCompatAttr,
 )
 from _pytest.outcomes import fail, TEST_OUTCOME
-from _pytest.compat import FuncargnamesCompatAttr
+
 
 from collections import OrderedDict
 
@@ -977,8 +979,8 @@ class FixtureManager:
             # by their test id)
             if p.basename.startswith("conftest.py"):
                 nodeid = p.dirpath().relto(self.config.rootdir)
-                if p.sep != "/":
-                    nodeid = nodeid.replace(p.sep, "/")
+                if p.sep != nodes.SEP:
+                    nodeid = nodeid.replace(p.sep, nodes.SEP)
         self.parsefactories(plugin, nodeid)
 
     def _getautousenames(self, nodeid):
@@ -1033,9 +1035,14 @@ class FixtureManager:
             if faclist:
                 fixturedef = faclist[-1]
                 if fixturedef.params is not None:
-                    func_params = getattr(getattr(metafunc.function, 'parametrize', None), 'args', [[None]])
+                    parametrize_func = getattr(metafunc.function, 'parametrize', None)
+                    func_params = getattr(parametrize_func, 'args', [[None]])
+                    func_kwargs = getattr(parametrize_func, 'kwargs', {})
                     # skip directly parametrized arguments
-                    argnames = func_params[0]
+                    if "argnames" in func_kwargs:
+                        argnames = parametrize_func.kwargs["argnames"]
+                    else:
+                        argnames = func_params[0]
                     if not isinstance(argnames, (tuple, list)):
                         argnames = [x.strip() for x in argnames.split(",") if x.strip()]
                     if argname not in func_params and argname not in argnames:
@@ -1123,5 +1130,5 @@ class FixtureManager:
 
     def _matchfactories(self, fixturedefs, nodeid):
         for fixturedef in fixturedefs:
-            if nodeid.startswith(fixturedef.baseid):
+            if nodes.ischildnode(fixturedef.baseid, nodeid):
                 yield fixturedef
