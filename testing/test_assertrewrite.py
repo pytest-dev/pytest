@@ -65,6 +65,9 @@ class TestAssertionRewrite(object):
     def test_place_initial_imports(self):
         s = """'Doc string'\nother = stuff"""
         m = rewrite(s)
+        # Module docstrings in 3.7 are part of Module node, it's not in the body
+        # so we remove it so the following body items have the same indexes on 
+        # all Python versions
         if sys.version_info < (3, 7):
             assert isinstance(m.body[0], ast.Expr)
             assert isinstance(m.body[0].value, ast.Str)
