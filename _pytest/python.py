@@ -6,8 +6,10 @@ import inspect
 import sys
 import os
 import collections
+import warnings
 from textwrap import dedent
 from itertools import count
+
 
 import py
 import six
@@ -18,6 +20,7 @@ import _pytest
 import pluggy
 from _pytest import fixtures
 from _pytest import main
+from _pytest import deprecated
 from _pytest.compat import (
     isclass, isfunction, is_generator, ascii_escaped,
     REGEX_TYPE, STRING_TYPES, NoneType, NOTSET,
@@ -328,7 +331,7 @@ class PyCollector(PyobjMixin, main.Collector):
                 if name in seen:
                     continue
                 seen[name] = True
-                res = self.makeitem(name, obj)
+                res = self._makeitem(name, obj)
                 if res is None:
                     continue
                 if not isinstance(res, list):
@@ -338,6 +341,10 @@ class PyCollector(PyobjMixin, main.Collector):
         return l
 
     def makeitem(self, name, obj):
+        warnings.warn(deprecated.COLLECTOR_MAKEITEM, stacklevel=2)
+        self._makeitem(name, obj)
+
+    def _makeitem(self, name, obj):
         # assert self.ihook.fspath == self.fspath, self
         return self.ihook.pytest_pycollect_makeitem(
             collector=self, name=name, obj=obj)
