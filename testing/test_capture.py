@@ -922,6 +922,14 @@ class TestStdCapture(object):
             out, err = cap.readouterr()
         assert err == "error2"
 
+    def test_capture_results_accessible_by_attribute(self):
+        with self.getcapture() as cap:
+            sys.stdout.write("hello")
+            sys.stderr.write("world")
+            capture_result = cap.readouterr()
+        assert capture_result.out == "hello"
+        assert capture_result.err == "world"
+
     def test_capturing_readouterr_unicode(self):
         with self.getcapture() as cap:
             print("hx\xc4\x85\xc4\x87")
@@ -1081,6 +1089,14 @@ def test_using_capsys_fixture_works_with_sys_stdout_encoding(capsys):
     (out, err) = capsys.readouterr()
     assert out
     assert err == ''
+
+
+def test_capsys_results_accessible_by_attribute(capsys):
+    sys.stdout.write("spam")
+    sys.stderr.write("eggs")
+    capture_result = capsys.readouterr()
+    assert capture_result.out == "spam"
+    assert capture_result.err == "eggs"
 
 
 @needsosdup

@@ -4,6 +4,7 @@ per-test stdout/stderr capturing mechanism.
 """
 from __future__ import absolute_import, division, print_function
 
+import collections
 import contextlib
 import sys
 import os
@@ -306,6 +307,9 @@ class EncodedFile(object):
         return getattr(object.__getattribute__(self, "buffer"), name)
 
 
+CaptureResult = collections.namedtuple("CaptureResult", ["out", "err"])
+
+
 class MultiCapture(object):
     out = err = in_ = None
 
@@ -366,8 +370,8 @@ class MultiCapture(object):
 
     def readouterr(self):
         """ return snapshot unicode value of stdout/stderr capturings. """
-        return (self.out.snap() if self.out is not None else "",
-                self.err.snap() if self.err is not None else "")
+        return CaptureResult(self.out.snap() if self.out is not None else "",
+                             self.err.snap() if self.err is not None else "")
 
 
 class NoCapture:
