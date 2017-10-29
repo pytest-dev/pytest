@@ -120,7 +120,7 @@ class DoctestItem(pytest.Item):
                 lines = ["%03d %s" % (i + test.lineno + 1, x)
                          for (i, x) in enumerate(lines)]
                 # trim docstring error lines to 10
-                lines = lines[example.lineno - 9:example.lineno + 1]
+                lines = lines[max(example.lineno - 9, 0):example.lineno + 1]
             else:
                 lines = ['EXAMPLE LOCATION UNKNOWN, not showing all tests of that example']
                 indent = '>>>'
