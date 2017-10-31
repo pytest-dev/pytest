@@ -61,7 +61,7 @@ To execute it::
 Due to ``pytest``'s detailed assertion introspection, only plain ``assert`` statements are used. See `getting-started <http://docs.pytest.org/en/latest/getting-started.html#our-first-test-run>`_ for more examples.
 
 
-Features
+Features:
 --------
 
 - Detailed info on failing `assert statements <http://docs.pytest.org/en/latest/assert.html>`_ (no need to remember ``self.assert*`` names);
