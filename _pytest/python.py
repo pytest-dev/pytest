@@ -1100,6 +1100,7 @@ class Function(FunctionMixin, main.Item, fixtures.FuncargnamesCompatAttr):
     Python test function.
     """
     _genid = None
+    _parametrized_params = {}
 
     def __init__(self, name, parent, args=None, config=None,
                  callspec=None, callobj=NOTSET, keywords=None, session=None,
@@ -1149,6 +1150,8 @@ class Function(FunctionMixin, main.Item, fixtures.FuncargnamesCompatAttr):
                 self._genid = callspec.id
                 if hasattr(callspec, "param"):
                     self.param = callspec.param
+                if hasattr(callspec, "params"):
+                    self._parametrized_params = callspec.params.copy()
         self._request = fixtures.FixtureRequest(self)
 
     @property
