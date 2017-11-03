@@ -769,29 +769,11 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             to set a dynamic scope using test context or configuration.
         """
         from _pytest.fixtures import scope2index
-        from _pytest.mark import MARK_GEN, ParameterSet
+        from _pytest.mark import ParameterSet
         from py.io import saferepr
-
-        if not isinstance(argnames, (tuple, list)):
-            argnames = [x.strip() for x in argnames.split(",") if x.strip()]
-            force_tuple = len(argnames) == 1
-        else:
-            force_tuple = False
-        parameters = [
-            ParameterSet.extract_from(x, legacy_force_tuple=force_tuple)
-            for x in argvalues]
+        argnames, parameters = ParameterSet._for_parameterize(
+            argnames, argvalues, self.function)
         del argvalues
-
-        if not parameters:
-            fs, lineno = getfslineno(self.function)
-            reason = "got empty parameter set %r, function %s at %s:%d" % (
-                argnames, self.function.__name__, fs, lineno)
-            mark = MARK_GEN.skip(reason=reason)
-            parameters.append(ParameterSet(
-                values=(NOTSET,) * len(argnames),
-                marks=[mark],
-                id=None,
-            ))
 
         if scope is None:
             scope = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)
