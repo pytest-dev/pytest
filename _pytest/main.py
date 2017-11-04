@@ -118,7 +118,7 @@ def wrap_session(config, doit):
                     excinfo.typename, excinfo.value.msg))
             config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
             session.exitstatus = EXIT_INTERRUPTED
-        except:
+        except:  # noqa
             excinfo = _pytest._code.ExceptionInfo()
             config.notify_exception(excinfo, config.option)
             session.exitstatus = EXIT_INTERNALERROR
@@ -375,7 +375,7 @@ class Node(object):
             res = function()
         except py.builtin._sysex:
             raise
-        except:
+        except:  # noqa
             failure = sys.exc_info()
             setattr(self, exattrname, failure)
             raise

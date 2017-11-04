@@ -115,7 +115,7 @@ class TestCaseFunction(Function):
                     fail("".join(values), pytrace=False)
                 except (fail.Exception, KeyboardInterrupt):
                     raise
-                except:
+                except:  # noqa
                     fail("ERROR: Unknown Incompatible Exception "
                          "representation:\n%r" % (rawexcinfo,), pytrace=False)
             except KeyboardInterrupt:

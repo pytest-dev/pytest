@@ -244,7 +244,7 @@ class TestTraceback_f_g_h(object):
         def f(n):
             try:
                 do_stuff()
-            except:
+            except:  # noqa
                 reraise_me()
 
         excinfo = pytest.raises(RuntimeError, f, 8)
@@ -434,7 +434,7 @@ class TestFormattedExcinfo(object):
             exec(source.compile())
         except KeyboardInterrupt:
             raise
-        except:
+        except:  # noqa
             return _pytest._code.ExceptionInfo()
         assert 0, "did not raise"
 
@@ -1217,7 +1217,7 @@ def test_exception_repr_extraction_error_on_recursion():
 
     try:
         a(numpy_like())
-    except:
+    except:  # noqa
         from _pytest._code.code import ExceptionInfo
         from _pytest.pytester import LineMatcher
         exc_info = ExceptionInfo()
@@ -1241,7 +1241,7 @@ def test_no_recursion_index_on_recursion_error():
                 return getattr(self, '_' + attr)
 
         RecursionDepthError().trigger
-    except:
+    except:  # noqa
         from _pytest._code.code import ExceptionInfo
         exc_info = ExceptionInfo()
         if sys.version_info[:2] == (2, 6):

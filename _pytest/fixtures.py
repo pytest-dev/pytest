@@ -749,7 +749,7 @@ class FixtureDef:
                 try:
                     func = self._finalizer.pop()
                     func()
-                except:
+                except:  # noqa
                     exceptions.append(sys.exc_info())
             if exceptions:
                 e = exceptions[0]
