@@ -3,7 +3,7 @@
 .. _skipping:
 
 Skip and xfail: dealing with tests that cannot succeed
-=====================================================================
+======================================================
 
 You can mark test functions that cannot be run on certain platforms
 or that you expect to fail so pytest can deal with them accordingly and
@@ -150,6 +150,16 @@ If multiple ``skipif`` decorators are applied to a test function, it
 will be skipped if any of the skip conditions is true.
 
 .. _`whole class- or module level`: mark.html#scoped-marking
+
+
+Skipping files or directories
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Sometimes you may need to skip an entire file or directory, for example if the
+tests rely on Python version-specific features or contain code that you do not
+wish pytest to run. In this case, you must exclude the files and directories
+from collection. Refer to :ref:`customizing-test-collection` for more
+information.
 
 
 Skipping on a missing import dependency

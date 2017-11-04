@@ -293,8 +293,9 @@ class MarkGenerator:
             pass
         self._markers = l = set()
         for line in self._config.getini("markers"):
-            beginning = line.split(":", 1)
-            x = beginning[0].split("(", 1)[0]
+            marker, _ = line.split(":", 1)
+            marker = marker.rstrip()
+            x = marker.split("(", 1)[0]
             l.add(x)
         if name not in self._markers:
             raise AttributeError("%r not a registered marker" % (name,))
