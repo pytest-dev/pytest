@@ -40,3 +40,8 @@ MARK_PARAMETERSET_UNPACKING = RemovedInPytest4Warning(
     " please use pytest.param(..., marks=...) instead.\n"
     "For more details, see: https://docs.pytest.org/en/latest/parametrize.html"
 )
+
+COLLECTOR_MAKEITEM = RemovedInPytest4Warning(
+    "pycollector makeitem was removed "
+    "as it is an accidentially leaked internal api"
+)

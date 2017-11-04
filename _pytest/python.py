@@ -6,8 +6,10 @@ import inspect
 import sys
 import os
 import collections
+import warnings
 from textwrap import dedent
 from itertools import count
+
 
 import py
 import six
@@ -18,6 +20,7 @@ import _pytest
 import pluggy
 from _pytest import fixtures
 from _pytest import main
+from _pytest import deprecated
 from _pytest.compat import (
     isclass, isfunction, is_generator, ascii_escaped,
     REGEX_TYPE, STRING_TYPES, NoneType, NOTSET,
@@ -328,7 +331,7 @@ class PyCollector(PyobjMixin, main.Collector):
                 if name in seen:
                     continue
                 seen[name] = True
-                res = self.makeitem(name, obj)
+                res = self._makeitem(name, obj)
                 if res is None:
                     continue
                 if not isinstance(res, list):
@@ -338,6 +341,10 @@ class PyCollector(PyobjMixin, main.Collector):
         return l
 
     def makeitem(self, name, obj):
+        warnings.warn(deprecated.COLLECTOR_MAKEITEM, stacklevel=2)
+        self._makeitem(name, obj)
+
+    def _makeitem(self, name, obj):
         # assert self.ihook.fspath == self.fspath, self
         return self.ihook.pytest_pycollect_makeitem(
             collector=self, name=name, obj=obj)
@@ -769,29 +776,11 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             to set a dynamic scope using test context or configuration.
         """
         from _pytest.fixtures import scope2index
-        from _pytest.mark import MARK_GEN, ParameterSet
+        from _pytest.mark import ParameterSet
         from py.io import saferepr
-
-        if not isinstance(argnames, (tuple, list)):
-            argnames = [x.strip() for x in argnames.split(",") if x.strip()]
-            force_tuple = len(argnames) == 1
-        else:
-            force_tuple = False
-        parameters = [
-            ParameterSet.extract_from(x, legacy_force_tuple=force_tuple)
-            for x in argvalues]
+        argnames, parameters = ParameterSet._for_parameterize(
+            argnames, argvalues, self.function)
         del argvalues
-
-        if not parameters:
-            fs, lineno = getfslineno(self.function)
-            reason = "got empty parameter set %r, function %s at %s:%d" % (
-                argnames, self.function.__name__, fs, lineno)
-            mark = MARK_GEN.skip(reason=reason)
-            parameters.append(ParameterSet(
-                values=(NOTSET,) * len(argnames),
-                marks=[mark],
-                id=None,
-            ))
 
         if scope is None:
             scope = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)

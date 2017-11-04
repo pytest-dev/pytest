@@ -8,6 +8,7 @@ from collections import namedtuple
 from operator import attrgetter
 from six.moves import map
 from .deprecated import MARK_PARAMETERSET_UNPACKING
+from .compat import NOTSET, getfslineno
 
 
 def alias(name, warning=None):
@@ -67,6 +68,30 @@ class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
             warnings.warn(MARK_PARAMETERSET_UNPACKING)
 
         return cls(argval, marks=newmarks, id=None)
+
+    @classmethod
+    def _for_parameterize(cls, argnames, argvalues, function):
+        if not isinstance(argnames, (tuple, list)):
+            argnames = [x.strip() for x in argnames.split(",") if x.strip()]
+            force_tuple = len(argnames) == 1
+        else:
+            force_tuple = False
+        parameters = [
+            ParameterSet.extract_from(x, legacy_force_tuple=force_tuple)
+            for x in argvalues]
+        del argvalues
+
+        if not parameters:
+            fs, lineno = getfslineno(function)
+            reason = "got empty parameter set %r, function %s at %s:%d" % (
+                argnames, function.__name__, fs, lineno)
+            mark = MARK_GEN.skip(reason=reason)
+            parameters.append(ParameterSet(
+                values=(NOTSET,) * len(argnames),
+                marks=[mark],
+                id=None,
+            ))
+        return argnames, parameters
 
 
 class MarkerError(Exception):
@@ -273,8 +298,9 @@ class MarkGenerator:
             pass
         self._markers = l = set()
         for line in self._config.getini("markers"):
-            beginning = line.split(":", 1)
-            x = beginning[0].split("(", 1)[0]
+            marker, _ = line.split(":", 1)
+            marker = marker.rstrip()
+            x = marker.split("(", 1)[0]
             l.add(x)
         if name not in self._markers:
             raise AttributeError("%r not a registered marker" % (name,))
