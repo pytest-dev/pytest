@@ -155,8 +155,8 @@ class TestAccesses(object):
         assert len(self.source) == 4
 
     def test_iter(self):
-        l = [x for x in self.source]
-        assert len(l) == 4
+        values = [x for x in self.source]
+        assert len(values) == 4
 
 
 class TestSourceParsingAndCompiling(object):
@@ -331,8 +331,8 @@ def test_getstartingblock_singleline():
 
     x = A('x', 'y')
 
-    l = [i for i in x.source.lines if i.strip()]
-    assert len(l) == 1
+    values = [i for i in x.source.lines if i.strip()]
+    assert len(values) == 1
 
 
 def test_getline_finally():

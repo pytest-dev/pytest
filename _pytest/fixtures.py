@@ -460,13 +460,13 @@ class FixtureRequest(FuncargnamesCompatAttr):
 
     def _get_fixturestack(self):
         current = self
-        l = []
+        values = []
         while 1:
             fixturedef = getattr(current, "_fixturedef", None)
             if fixturedef is None:
-                l.reverse()
-                return l
-            l.append(fixturedef)
+                values.reverse()
+                return values
+            values.append(fixturedef)
             current = current._parent_request
 
     def _getfixturevalue(self, fixturedef):

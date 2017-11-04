@@ -77,8 +77,8 @@ def test_excinfo_getstatement():
     linenumbers = [_pytest._code.getrawcode(f).co_firstlineno - 1 + 4,
                    _pytest._code.getrawcode(f).co_firstlineno - 1 + 1,
                    _pytest._code.getrawcode(g).co_firstlineno - 1 + 1, ]
-    l = list(excinfo.traceback)
-    foundlinenumbers = [x.lineno for x in l]
+    values = list(excinfo.traceback)
+    foundlinenumbers = [x.lineno for x in values]
     assert foundlinenumbers == linenumbers
     # for x in info:
     #    print "%s:%d  %s" %(x.path.relto(root), x.lineno, x.statement)

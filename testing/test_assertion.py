@@ -229,9 +229,9 @@ class TestImportHookInstallation(object):
                     return pkg.helper.tool
             """,
             'pkg/other.py': """
-                l = [3, 2]
+                values = [3, 2]
                 def tool():
-                    assert l.pop() == 3
+                    assert values.pop() == 3
             """,
             'conftest.py': """
                 pytest_plugins = ['pkg.plugin']
@@ -248,7 +248,7 @@ class TestImportHookInstallation(object):
         result = testdir.runpytest_subprocess('--assert=rewrite')
         result.stdout.fnmatch_lines(['>*assert a == b*',
                                      'E*assert 2 == 3*',
-                                     '>*assert l.pop() == 3*',
+                                     '>*assert values.pop() == 3*',
                                      'E*AssertionError'])
 
     def test_register_assert_rewrite_checks_types(self):
@@ -263,13 +263,13 @@ class TestBinReprIntegration(object):
     def test_pytest_assertrepr_compare_called(self, testdir):
         testdir.makeconftest("""
             import pytest
-            l = []
+            values = []
             def pytest_assertrepr_compare(op, left, right):
-                l.append((op, left, right))
+                values.append((op, left, right))
 
             @pytest.fixture
             def list(request):
-                return l
+                return values
         """)
         testdir.makepyfile("""
             def test_hello():

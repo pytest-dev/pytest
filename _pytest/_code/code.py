@@ -338,16 +338,16 @@ class Traceback(list):
             # XXX needs a test
             key = entry.frame.code.path, id(entry.frame.code.raw), entry.lineno
             # print "checking for recursion at", key
-            l = cache.setdefault(key, [])
-            if l:
+            values = cache.setdefault(key, [])
+            if values:
                 f = entry.frame
                 loc = f.f_locals
-                for otherloc in l:
+                for otherloc in values:
                     if f.is_true(f.eval(co_equal,
                                         __recursioncache_locals_1=loc,
                                         __recursioncache_locals_2=otherloc)):
                         return i
-            l.append(entry.frame.f_locals)
+            values.append(entry.frame.f_locals)
         return None
 
 
