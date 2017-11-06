@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 
 import inspect
 import warnings
+import attr
 from collections import namedtuple
 from operator import attrgetter
 from six.moves import map
@@ -185,22 +186,26 @@ def pytest_collection_modifyitems(items, config):
         items[:] = remaining
 
 
-class MarkMapping:
+@attr.s
+class MarkMapping(object):
     """Provides a local mapping for markers where item access
     resolves to True if the marker is present. """
 
-    def __init__(self, keywords):
-        mymarks = set()
+    own_mark_names = attr.ib()
+
+    @classmethod
+    def from_keywords(cls, keywords):
+        mark_names = set()
         for key, value in keywords.items():
             if isinstance(value, MarkInfo) or isinstance(value, MarkDecorator):
-                mymarks.add(key)
-        self._mymarks = mymarks
+                mark_names.add(key)
+        return cls(mark_names)
 
     def __getitem__(self, name):
-        return name in self._mymarks
+        return name in self.own_mark_names
 
 
-class KeywordMapping:
+class KeywordMapping(object):
     """Provides a local mapping for keywords.
     Given a list of names, map any substring of one of these names to True.
     """
@@ -217,7 +222,7 @@ class KeywordMapping:
 
 def matchmark(colitem, markexpr):
     """Tries to match on any marker names, attached to the given colitem."""
-    return eval(markexpr, {}, MarkMapping(colitem.keywords))
+    return eval(markexpr, {}, MarkMapping.from_keywords(colitem.keywords))
 
 
 def matchkeyword(colitem, keywordexpr):
@@ -306,7 +311,21 @@ def istestfunc(func):
         getattr(func, "__name__", "<lambda>") != "<lambda>"
 
 
-class MarkDecorator:
+@attr.s(frozen=True)
+class Mark(object):
+    name = attr.ib()
+    args = attr.ib()
+    kwargs = attr.ib()
+
+    def combined_with(self, other):
+        assert self.name == other.name
+        return Mark(
+            self.name, self.args + other.args,
+            dict(self.kwargs, **other.kwargs))
+
+
+@attr.s
+class MarkDecorator(object):
     """ A decorator for test functions and test classes.  When applied
     it will create :class:`MarkInfo` objects which may be
     :ref:`retrieved by hooks as item keywords <excontrolskip>`.
@@ -340,9 +359,7 @@ class MarkDecorator:
 
     """
 
-    def __init__(self, mark):
-        assert isinstance(mark, Mark), repr(mark)
-        self.mark = mark
+    mark = attr.ib(validator=attr.validators.instance_of(Mark))
 
     name = alias('mark.name')
     args = alias('mark.args')
@@ -420,15 +437,6 @@ def store_legacy_markinfo(func, mark):
         setattr(func, mark.name, holder)
     else:
         holder.add_mark(mark)
-
-
-class Mark(namedtuple('Mark', 'name, args, kwargs')):
-
-    def combined_with(self, other):
-        assert self.name == other.name
-        return Mark(
-            self.name, self.args + other.args,
-            dict(self.kwargs, **other.kwargs))
 
 
 class MarkInfo(object):
