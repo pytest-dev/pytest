@@ -462,4 +462,9 @@ def transfer_markers(funcobj, cls, mod):
     for obj in (cls, mod):
         for mark in get_unpacked_marks(obj):
             if not _marked(funcobj, mark):
-                store_legacy_markinfo(funcobj, mark)
+                if funcobj.__name__ not in obj.__dict__:
+                    def _wrapper(*args, **kwargs):
+                        return funcobj(*args, **kwargs)
+                    setattr(obj, funcobj.__name__, _wrapper)
+                store_legacy_markinfo(getattr(obj, funcobj.__name__), mark)
+
