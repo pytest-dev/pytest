@@ -201,6 +201,9 @@ list::
 Note that when calling ``metafunc.parametrize`` multiple times with different parameter sets, all parameter names across 
 those sets cannot be duplicated, otherwise an error will be raised.
 
+More examples
+-------------
+
 For further examples, you might want to look at :ref:`more
 parametrization examples <paramexamples>`.
 
