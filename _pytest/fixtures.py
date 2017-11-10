@@ -27,10 +27,12 @@ from collections import OrderedDict
 
 def pytest_sessionstart(session):
     import _pytest.python
+
     scopename2class.update({
         'class': _pytest.python.Class,
         'module': _pytest.python.Module,
         'function': _pytest.main.Item,
+        'session': _pytest.main.Session,
     })
     session._fixturemanager = FixtureManager(session)
 
@@ -62,8 +64,6 @@ def scopeproperty(name=None, doc=None):
 def get_scope_node(node, scope):
     cls = scopename2class.get(scope)
     if cls is None:
-        if scope == "session":
-            return node.session
         raise ValueError("unknown scope")
     return node.getparent(cls)
 
