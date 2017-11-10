@@ -445,9 +445,9 @@ class TerminalReporter:
             line = self.config.cwd_relative_nodeid(nodeid)
             if domain and line.endswith(domain):
                 line = line[:-len(domain)]
-                l = domain.split("[")
-                l[0] = l[0].replace('.', '::')  # don't replace '.' in params
-                line += "[".join(l)
+                values = domain.split("[")
+                values[0] = values[0].replace('.', '::')  # don't replace '.' in params
+                line += "[".join(values)
             return line
         # collect_fspath comes from testid which has a "/"-normalized path
 
@@ -479,11 +479,11 @@ class TerminalReporter:
     # summaries for sessionfinish
     #
     def getreports(self, name):
-        l = []
+        values = []
         for x in self.stats.get(name, []):
             if not hasattr(x, '_pdbshown'):
-                l.append(x)
-        return l
+                values.append(x)
+        return values
 
     def summary_warnings(self):
         if self.hasopt("w"):
@@ -594,8 +594,8 @@ def repr_pythonversion(v=None):
         return str(v)
 
 
-def flatten(l):
-    for x in l:
+def flatten(values):
+    for x in values:
         if isinstance(x, (list, tuple)):
             for y in flatten(x):
                 yield y
@@ -636,7 +636,7 @@ def build_summary_stats_line(stats):
 
 
 def _plugin_nameversions(plugininfo):
-    l = []
+    values = []
     for plugin, dist in plugininfo:
         # gets us name and version!
         name = '{dist.project_name}-{dist.version}'.format(dist=dist)
@@ -645,6 +645,6 @@ def _plugin_nameversions(plugininfo):
             name = name[7:]
         # we decided to print python package names
         # they can have more than one plugin
-        if name not in l:
-            l.append(name)
-    return l
+        if name not in values:
+            values.append(name)
+    return values

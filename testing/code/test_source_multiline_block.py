@@ -22,5 +22,5 @@ def test_getstartingblock_multiline():
           ,
           'z')
 
-    l = [i for i in x.source.lines if i.strip()]
-    assert len(l) == 4
+    values = [i for i in x.source.lines if i.strip()]
+    assert len(values) == 4

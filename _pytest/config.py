@@ -1170,10 +1170,10 @@ class Config(object):
                 return []
         if type == "pathlist":
             dp = py.path.local(self.inicfg.config.path).dirpath()
-            l = []
+            values = []
             for relpath in shlex.split(value):
-                l.append(dp.join(relpath, abs=True))
-            return l
+                values.append(dp.join(relpath, abs=True))
+            return values
         elif type == "args":
             return shlex.split(value)
         elif type == "linelist":
@@ -1190,13 +1190,13 @@ class Config(object):
         except KeyError:
             return None
         modpath = py.path.local(mod.__file__).dirpath()
-        l = []
+        values = []
         for relroot in relroots:
             if not isinstance(relroot, py.path.local):
                 relroot = relroot.replace("/", py.path.local.sep)
                 relroot = modpath.join(relroot, abs=True)
-            l.append(relroot)
-        return l
+            values.append(relroot)
+        return values
 
     def _get_override_ini_value(self, name):
         value = None

@@ -84,7 +84,7 @@ class ApproxNumpy(ApproxBase):
 
         try:
             actual = np.asarray(actual)
-        except:
+        except:  # noqa
             raise TypeError("cannot compare '{0}' to numpy.ndarray".format(actual))
 
         if actual.shape != self.expected.shape:
