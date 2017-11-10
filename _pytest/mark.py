@@ -296,12 +296,12 @@ class MarkGenerator:
                 return
         except AttributeError:
             pass
-        self._markers = l = set()
+        self._markers = values = set()
         for line in self._config.getini("markers"):
             marker, _ = line.split(":", 1)
             marker = marker.rstrip()
             x = marker.split("(", 1)[0]
-            l.add(x)
+            values.add(x)
         if name not in self._markers:
             raise AttributeError("%r not a registered marker" % (name,))
 

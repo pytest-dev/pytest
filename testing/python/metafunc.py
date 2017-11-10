@@ -1071,21 +1071,21 @@ class TestMetafuncFunctional(object):
     def test_parametrize_scope_overrides(self, testdir, scope, length):
         testdir.makepyfile("""
             import pytest
-            l = []
+            values = []
             def pytest_generate_tests(metafunc):
                 if "arg" in metafunc.funcargnames:
                     metafunc.parametrize("arg", [1,2], indirect=True,
                                          scope=%r)
             @pytest.fixture
             def arg(request):
-                l.append(request.param)
+                values.append(request.param)
                 return request.param
             def test_hello(arg):
                 assert arg in (1,2)
             def test_world(arg):
                 assert arg in (1,2)
             def test_checklength():
-                assert len(l) == %d
+                assert len(values) == %d
         """ % (scope, length))
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=5)

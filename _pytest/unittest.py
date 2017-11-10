@@ -108,13 +108,13 @@ class TestCaseFunction(Function):
         except TypeError:
             try:
                 try:
-                    l = traceback.format_exception(*rawexcinfo)
-                    l.insert(0, "NOTE: Incompatible Exception Representation, "
-                                "displaying natively:\n\n")
-                    fail("".join(l), pytrace=False)
+                    values = traceback.format_exception(*rawexcinfo)
+                    values.insert(0, "NOTE: Incompatible Exception Representation, "
+                                  "displaying natively:\n\n")
+                    fail("".join(values), pytrace=False)
                 except (fail.Exception, KeyboardInterrupt):
                     raise
-                except:
+                except:  # noqa
                     fail("ERROR: Unknown Incompatible Exception "
                          "representation:\n%r" % (rawexcinfo,), pytrace=False)
             except KeyboardInterrupt:

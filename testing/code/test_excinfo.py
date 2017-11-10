@@ -76,8 +76,8 @@ def test_excinfo_getstatement():
     linenumbers = [_pytest._code.getrawcode(f).co_firstlineno - 1 + 4,
                    _pytest._code.getrawcode(f).co_firstlineno - 1 + 1,
                    _pytest._code.getrawcode(g).co_firstlineno - 1 + 1, ]
-    l = list(excinfo.traceback)
-    foundlinenumbers = [x.lineno for x in l]
+    values = list(excinfo.traceback)
+    foundlinenumbers = [x.lineno for x in values]
     assert foundlinenumbers == linenumbers
     # for x in info:
     #    print "%s:%d  %s" %(x.path.relto(root), x.lineno, x.statement)
@@ -243,7 +243,7 @@ class TestTraceback_f_g_h(object):
         def f(n):
             try:
                 do_stuff()
-            except:
+            except:  # noqa
                 reraise_me()
 
         excinfo = pytest.raises(RuntimeError, f, 8)
@@ -430,7 +430,7 @@ class TestFormattedExcinfo(object):
             exec(source.compile())
         except KeyboardInterrupt:
             raise
-        except:
+        except:  # noqa
             return _pytest._code.ExceptionInfo()
         assert 0, "did not raise"
 
@@ -1213,7 +1213,7 @@ def test_exception_repr_extraction_error_on_recursion():
 
     try:
         a(numpy_like())
-    except:
+    except:  # noqa
         from _pytest._code.code import ExceptionInfo
         from _pytest.pytester import LineMatcher
         exc_info = ExceptionInfo()
@@ -1237,7 +1237,7 @@ def test_no_recursion_index_on_recursion_error():
                 return getattr(self, '_' + attr)
 
         RecursionDepthError().trigger
-    except:
+    except:  # noqa
         from _pytest._code.code import ExceptionInfo
         exc_info = ExceptionInfo()
         assert 'maximum recursion' in str(exc_info.getrepr())

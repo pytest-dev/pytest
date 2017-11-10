@@ -73,19 +73,19 @@ def test_setup(testdir):
 
 def test_setUpModule(testdir):
     testpath = testdir.makepyfile("""
-        l = []
+        values = []
 
         def setUpModule():
-            l.append(1)
+            values.append(1)
 
         def tearDownModule():
-            del l[0]
+            del values[0]
 
         def test_hello():
-            assert l == [1]
+            assert values == [1]
 
         def test_world():
-            assert l == [1]
+            assert values == [1]
         """)
     result = testdir.runpytest(testpath)
     result.stdout.fnmatch_lines([
@@ -95,13 +95,13 @@ def test_setUpModule(testdir):
 
 def test_setUpModule_failing_no_teardown(testdir):
     testpath = testdir.makepyfile("""
-        l = []
+        values = []
 
         def setUpModule():
             0/0
 
         def tearDownModule():
-            l.append(1)
+            values.append(1)
 
         def test_hello():
             pass
@@ -109,7 +109,7 @@ def test_setUpModule_failing_no_teardown(testdir):
     reprec = testdir.inline_run(testpath)
     reprec.assertoutcome(passed=0, failed=1)
     call = reprec.getcalls("pytest_runtest_setup")[0]
-    assert not call.item.module.l
+    assert not call.item.module.values
 
 
 def test_new_instances(testdir):
@@ -129,14 +129,14 @@ def test_teardown(testdir):
     testpath = testdir.makepyfile("""
         import unittest
         class MyTestCase(unittest.TestCase):
-            l = []
+            values = []
             def test_one(self):
                 pass
             def tearDown(self):
-                self.l.append(None)
+                self.values.append(None)
         class Second(unittest.TestCase):
             def test_check(self):
-                self.assertEqual(MyTestCase.l, [None])
+                self.assertEqual(MyTestCase.values, [None])
     """)
     reprec = testdir.inline_run(testpath)
     passed, skipped, failed = reprec.countoutcomes()

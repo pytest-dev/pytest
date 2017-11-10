@@ -473,8 +473,8 @@ class TestAssertionRewrite(object):
     def test_len(self):
 
         def f():
-            l = list(range(10))
-            assert len(l) == 11
+            values = list(range(10))
+            assert len(values) == 11
 
         assert getmsg(f).startswith("""assert 10 == 11
  +  where 10 = len([""")

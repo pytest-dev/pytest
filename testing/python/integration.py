@@ -93,8 +93,8 @@ class TestMockDecoration(object):
         def f(x):
             pass
 
-        l = getfuncargnames(f)
-        assert l == ("x",)
+        values = getfuncargnames(f)
+        assert values == ("x",)
 
     def test_wrapped_getfuncargnames_patching(self):
         from _pytest.compat import getfuncargnames
@@ -110,8 +110,8 @@ class TestMockDecoration(object):
         def f(x, y, z):
             pass
 
-        l = getfuncargnames(f)
-        assert l == ("y", "z")
+        values = getfuncargnames(f)
+        assert values == ("y", "z")
 
     def test_unittest_mock(self, testdir):
         pytest.importorskip("unittest.mock")

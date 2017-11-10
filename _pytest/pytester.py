@@ -174,9 +174,9 @@ class PytestArg:
         return hookrecorder
 
 
-def get_public_names(l):
-    """Only return names from iterator l without a leading underscore."""
-    return [x for x in l if x[0] != "_"]
+def get_public_names(values):
+    """Only return names from iterator values without a leading underscore."""
+    return [x for x in values if x[0] != "_"]
 
 
 class ParsedCall:
@@ -250,9 +250,9 @@ class HookRecorder:
         pytest.fail("\n".join(lines))
 
     def getcall(self, name):
-        l = self.getcalls(name)
-        assert len(l) == 1, (name, l)
-        return l[0]
+        values = self.getcalls(name)
+        assert len(values) == 1, (name, values)
+        return values[0]
 
     # functionality for test reports
 
@@ -263,7 +263,7 @@ class HookRecorder:
     def matchreport(self, inamepart="",
                     names="pytest_runtest_logreport pytest_collectreport", when=None):
         """ return a testreport whose dotted import path matches """
-        l = []
+        values = []
         for rep in self.getreports(names=names):
             try:
                 if not when and rep.when != "call" and rep.passed:
@@ -274,14 +274,14 @@ class HookRecorder:
             if when and getattr(rep, 'when', None) != when:
                 continue
             if not inamepart or inamepart in rep.nodeid.split("::"):
-                l.append(rep)
-        if not l:
+                values.append(rep)
+        if not values:
             raise ValueError("could not find test report matching %r: "
                              "no test reports at all!" % (inamepart,))
-        if len(l) > 1:
+        if len(values) > 1:
             raise ValueError(
-                "found 2 or more testreports matching %r: %s" % (inamepart, l))
-        return l[0]
+                "found 2 or more testreports matching %r: %s" % (inamepart, values))
+        return values[0]
 
     def getfailures(self,
                     names='pytest_runtest_logreport pytest_collectreport'):
@@ -652,8 +652,8 @@ class Testdir:
 
         """
         p = self.makepyfile(source)
-        l = list(cmdlineargs) + [p]
-        return self.inline_run(*l)
+        values = list(cmdlineargs) + [p]
+        return self.inline_run(*values)
 
     def inline_genitems(self, *args):
         """Run ``pytest.main(['--collectonly'])`` in-process.

@@ -54,11 +54,11 @@ def _split_explanation(explanation):
     """
     raw_lines = (explanation or u('')).split('\n')
     lines = [raw_lines[0]]
-    for l in raw_lines[1:]:
-        if l and l[0] in ['{', '}', '~', '>']:
-            lines.append(l)
+    for values in raw_lines[1:]:
+        if values and values[0] in ['{', '}', '~', '>']:
+            lines.append(values)
         else:
-            lines[-1] += '\\n' + l
+            lines[-1] += '\\n' + values
     return lines
 
 
