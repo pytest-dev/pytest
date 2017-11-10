@@ -1,1 +1,0 @@
-Fix issue with @pytest.parametrize if argnames was specified as kwarg.
