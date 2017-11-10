@@ -235,5 +235,5 @@ file will be left out::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 0 items
-
+    
     ======= no tests ran in 0.12 seconds ========
