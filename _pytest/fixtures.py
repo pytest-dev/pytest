@@ -575,7 +575,6 @@ class SubRequest(FixtureRequest):
         self.param_index = param_index
         self.scope = scope
         self._fixturedef = fixturedef
-        self.addfinalizer = fixturedef.addfinalizer
         self._pyfuncitem = request._pyfuncitem
         self._fixture_values = request._fixture_values
         self._fixture_defs = request._fixture_defs
@@ -585,6 +584,9 @@ class SubRequest(FixtureRequest):
 
     def __repr__(self):
         return "<SubRequest %r for %r>" % (self.fixturename, self._pyfuncitem)
+
+    def addfinalizer(self, finalizer):
+        self._fixturedef.addfinalizer(finalizer)
 
 
 class ScopeMismatchError(Exception):
