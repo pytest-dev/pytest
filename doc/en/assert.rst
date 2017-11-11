@@ -209,8 +209,8 @@ the ``pytest_assertrepr_compare`` hook.
 .. autofunction:: _pytest.hookspec.pytest_assertrepr_compare
    :noindex:
 
-As an example consider adding the following hook in a conftest.py which
-provides an alternative explanation for ``Foo`` objects::
+As an example consider adding the following hook in a :ref:`conftest.py <conftest.py>` 
+file which provides an alternative explanation for ``Foo`` objects::
 
    # content of conftest.py
    from test_foocompare import Foo

@@ -91,7 +91,8 @@ def pytest_addoption(parser):
              "where all names are substring-matched against test names "
              "and their parent classes. Example: -k 'test_method or test_"
              "other' matches all test functions and classes whose name "
-             "contains 'test_method' or 'test_other'. "
+             "contains 'test_method' or 'test_other', while -k 'not test_method' "
+             "matches those that don't contain 'test_method' in their names. "
              "Additionally keywords are matched to classes and functions "
              "containing extra names in their 'extra_keyword_matches' set, "
              "as well as functions which have names assigned directly to them."
@@ -269,11 +270,12 @@ class MarkGenerator:
                 return
         except AttributeError:
             pass
-        self._markers = l = set()
+        self._markers = values = set()
         for line in self._config.getini("markers"):
-            beginning = line.split(":", 1)
-            x = beginning[0].split("(", 1)[0]
-            l.add(x)
+            marker, _ = line.split(":", 1)
+            marker = marker.rstrip()
+            x = marker.split("(", 1)[0]
+            values.add(x)
         if name not in self._markers:
             raise AttributeError("%r not a registered marker" % (name,))
 
@@ -382,7 +384,7 @@ def store_mark(obj, mark):
     """
     assert isinstance(mark, Mark), mark
     # always reassign name to avoid updating pytestmark
-    # in a referene that was only borrowed
+    # in a reference that was only borrowed
     obj.pytestmark = get_unpacked_marks(obj) + [mark]
 
 

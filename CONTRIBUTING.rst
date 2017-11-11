@@ -120,7 +120,7 @@ the following:
 - PyPI presence with a ``setup.py`` that contains a license, ``pytest-``
   prefixed name, version number, authors, short and long description.
 
-- a ``tox.ini`` for running tests using `tox <http://tox.testrun.org>`_.
+- a ``tox.ini`` for running tests using `tox <https://tox.readthedocs.io>`_.
 
 - a ``README.txt`` describing how to use the plugin and on which
   platforms it runs.
@@ -177,7 +177,8 @@ Short version
 #. Write a ``changelog`` entry: ``changelog/2574.bugfix``, use issue id number
    and one of ``bugfix``, ``removal``, ``feature``, ``vendor``, ``doc`` or
    ``trivial`` for the issue type.
-#. Add yourself to ``AUTHORS`` file if not there yet, in alphabetical order.
+#. Unless your change is a trivial or a documentation fix (e.g., a typo or reword of a small section) please
+   add yourself to the ``AUTHORS`` file, in alphabetical order;
 
 
 Long version

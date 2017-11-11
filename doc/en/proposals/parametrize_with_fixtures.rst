@@ -1,8 +1,13 @@
 :orphan:
 
-=========================
-Parametrize with fixtures
-=========================
+===================================
+PROPOSAL: Parametrize with fixtures
+===================================
+
+.. warning::
+
+    This document outlines a proposal around using fixtures as input
+    of parametrized tests or fixtures.
 
 Problem
 -------
@@ -108,8 +113,13 @@ the following values.
 Alternative approach
 --------------------
 
-A new helper function named ``fixture_request`` tells pytest to yield all
-parameters of a fixture.
+A new helper function named ``fixture_request`` would tell pytest to yield
+all parameters marked as a fixture.
+
+.. note::
+
+    The `pytest-lazy-fixture <https://pypi.python.org/pypi/pytest-lazy-fixture>`_ plugin implements a very
+    similar solution to the proposal below, make sure to check it out.
 
 .. code-block:: python
 

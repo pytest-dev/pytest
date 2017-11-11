@@ -135,3 +135,24 @@ def test_verbose_include_private_fixtures_and_loc(testdir):
         'arg3 -- test_verbose_include_private_fixtures_and_loc.py:3',
         '    arg3 from testmodule',
     ])
+
+
+def test_doctest_items(testdir):
+    testdir.makepyfile('''
+        def foo():
+            """
+            >>> 1 + 1
+            2
+            """
+    ''')
+    testdir.maketxtfile('''
+        >>> 1 + 1
+        2
+    ''')
+    result = testdir.runpytest("--fixtures-per-test", "--doctest-modules",
+                               "--doctest-glob=*.txt", "-v")
+    assert result.ret == 0
+
+    result.stdout.fnmatch_lines([
+        '*collected 2 items*',
+    ])

@@ -68,4 +68,9 @@ imported in the global import namespace.
 
 This is also discussed in details in :ref:`test discovery`.
 
+Invoking ``pytest`` versus ``python -m pytest``
+-----------------------------------------------
 
+Running pytest with ``python -m pytest [...]`` instead of ``pytest [...]`` yields nearly
+equivalent behaviour, except that the former call will add the current directory to ``sys.path``.
+See also :ref:`cmdline`.

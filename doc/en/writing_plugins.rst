@@ -57,9 +57,7 @@ Plugin discovery order at tool startup
 
 .. _`pytest/plugin`: http://bitbucket.org/pytest-dev/pytest/src/tip/pytest/plugin/
 .. _`conftest.py plugins`:
-.. _`conftest.py`:
 .. _`localplugin`:
-.. _`conftest`:
 .. _`local conftest plugins`:
 
 conftest.py: local per-directory plugins

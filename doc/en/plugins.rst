@@ -94,7 +94,7 @@ environment you can type::
 
 and will get an extended test header which shows activated plugins
 and their names. It will also print local plugins aka
-:ref:`conftest.py <conftest>` files when they are loaded.
+:ref:`conftest.py <conftest.py plugins>` files when they are loaded.
 
 .. _`cmdunregister`:
 
@@ -155,4 +155,3 @@ in the `pytest repository <https://github.com/pytest-dev/pytest>`_.
     _pytest.terminal
     _pytest.tmpdir
     _pytest.unittest
-

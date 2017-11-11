@@ -13,12 +13,12 @@ class TestSetupState(object):
     def test_setup(self, testdir):
         ss = runner.SetupState()
         item = testdir.getitem("def test_func(): pass")
-        l = [1]
+        values = [1]
         ss.prepare(item)
-        ss.addfinalizer(l.pop, colitem=item)
-        assert l
+        ss.addfinalizer(values.pop, colitem=item)
+        assert values
         ss._pop_and_teardown()
-        assert not l
+        assert not values
 
     def test_teardown_exact_stack_empty(self, testdir):
         item = testdir.getitem("def test_func(): pass")

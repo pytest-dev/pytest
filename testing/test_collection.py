@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 import pytest
 import py
 
+import _pytest._code
 from _pytest.main import Session, EXIT_NOTESTSCOLLECTED, _in_venv
 
 
@@ -702,9 +703,9 @@ class TestNodekeywords(object):
             def test_pass(): pass
             def test_fail(): assert 0
         """)
-        l = list(modcol.keywords)
-        assert modcol.name in l
-        for x in l:
+        values = list(modcol.keywords)
+        assert modcol.name in values
+        for x in values:
             assert not x.startswith("_")
         assert modcol.name in repr(modcol.keywords)
 
@@ -829,4 +830,29 @@ def test_continue_on_collection_errors_maxfail(testdir):
         "collected 2 items / 2 errors",
         "*Interrupted: stopping after 3 failures*",
         "*1 failed, 2 error*",
+    ])
+
+
+def test_fixture_scope_sibling_conftests(testdir):
+    """Regression test case for https://github.com/pytest-dev/pytest/issues/2836"""
+    foo_path = testdir.mkpydir("foo")
+    foo_path.join("conftest.py").write(_pytest._code.Source("""
+        import pytest
+        @pytest.fixture
+        def fix():
+            return 1
+    """))
+    foo_path.join("test_foo.py").write("def test_foo(fix): assert fix == 1")
+
+    # Tests in `food/` should not see the conftest fixture from `foo/`
+    food_path = testdir.mkpydir("food")
+    food_path.join("test_food.py").write("def test_food(fix): assert fix == 1")
+
+    res = testdir.runpytest()
+    assert res.ret == 1
+
+    res.stdout.fnmatch_lines([
+        "*ERROR at setup of test_food*",
+        "E*fixture 'fix' not found",
+        "*1 passed, 1 error*",
     ])

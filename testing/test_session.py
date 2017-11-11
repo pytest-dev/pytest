@@ -45,9 +45,9 @@ class SessionTests(object):
             a = 1
         """)
         reprec = testdir.inline_run(tfile)
-        l = reprec.getfailedcollections()
-        assert len(l) == 1
-        out = str(l[0].longrepr)
+        values = reprec.getfailedcollections()
+        assert len(values) == 1
+        out = str(values[0].longrepr)
         assert out.find('does_not_work') != -1
 
     def test_raises_output(self, testdir):
@@ -75,9 +75,9 @@ class SessionTests(object):
 
     def test_syntax_error_module(self, testdir):
         reprec = testdir.inline_runsource("this is really not python")
-        l = reprec.getfailedcollections()
-        assert len(l) == 1
-        out = str(l[0].longrepr)
+        values = reprec.getfailedcollections()
+        assert len(values) == 1
+        out = str(values[0].longrepr)
         assert out.find(str('not python')) != -1
 
     def test_exit_first_problem(self, testdir):
@@ -144,15 +144,15 @@ class TestNewSession(SessionTests):
 
     def test_order_of_execution(self, testdir):
         reprec = testdir.inline_runsource("""
-            l = []
+            values = []
             def test_1():
-                l.append(1)
+                values.append(1)
             def test_2():
-                l.append(2)
+                values.append(2)
             def test_3():
-                assert l == [1,2]
+                assert values == [1,2]
             class Testmygroup(object):
-                reslist = l
+                reslist = values
                 def test_1(self):
                     self.reslist.append(1)
                 def test_2(self):
@@ -242,13 +242,13 @@ def test_exclude(testdir):
 def test_sessionfinish_with_start(testdir):
     testdir.makeconftest("""
         import os
-        l = []
+        values = []
         def pytest_sessionstart():
-            l.append(os.getcwd())
+            values.append(os.getcwd())
             os.chdir("..")
 
         def pytest_sessionfinish():
-            assert l[0] == os.getcwd()
+            assert values[0] == os.getcwd()
 
     """)
     res = testdir.runpytest("--collect-only")

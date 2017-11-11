@@ -346,10 +346,10 @@ def folded_skips(skipped):
         key = event.longrepr
         assert len(key) == 3, (event, key)
         d.setdefault(key, []).append(event)
-    l = []
+    values = []
     for key, events in d.items():
-        l.append((len(events),) + key)
-    return l
+        values.append((len(events),) + key)
+    return values
 
 
 def show_skipped(terminalreporter, lines):

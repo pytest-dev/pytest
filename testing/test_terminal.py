@@ -24,12 +24,12 @@ class Option(object):
 
     @property
     def args(self):
-        l = []
+        values = []
         if self.verbose:
-            l.append('-v')
+            values.append('-v')
         if self.fulltrace:
-            l.append('--fulltrace')
-        return l
+            values.append('--fulltrace')
+        return values
 
 
 def pytest_generate_tests(metafunc):

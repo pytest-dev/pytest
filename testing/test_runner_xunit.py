@@ -39,20 +39,20 @@ def test_module_and_function_setup(testdir):
 
 def test_module_setup_failure_no_teardown(testdir):
     reprec = testdir.inline_runsource("""
-        l = []
+        values = []
         def setup_module(module):
-            l.append(1)
+            values.append(1)
             0/0
 
         def test_nothing():
             pass
 
         def teardown_module(module):
-            l.append(2)
+            values.append(2)
     """)
     reprec.assertoutcome(failed=1)
     calls = reprec.getcalls("pytest_runtest_setup")
-    assert calls[0].item.module.l == [1]
+    assert calls[0].item.module.values == [1]
 
 
 def test_setup_function_failure_no_teardown(testdir):

@@ -6,6 +6,7 @@ import os
 import sys
 
 import _pytest
+from _pytest import nodes
 import _pytest._code
 import py
 try:
@@ -14,8 +15,8 @@ except ImportError:
     from UserDict import DictMixin as MappingMixin
 
 from _pytest.config import directory_arg, UsageError, hookimpl
-from _pytest.runner import collect_one_node
 from _pytest.outcomes import exit
+from _pytest.runner import collect_one_node
 
 tracebackcutdir = py.path.local(_pytest.__file__).dirpath()
 
@@ -117,7 +118,7 @@ def wrap_session(config, doit):
                     excinfo.typename, excinfo.value.msg))
             config.hook.pytest_keyboard_interrupt(excinfo=excinfo)
             session.exitstatus = EXIT_INTERRUPTED
-        except:
+        except:  # noqa
             excinfo = _pytest._code.ExceptionInfo()
             config.notify_exception(excinfo, config.option)
             session.exitstatus = EXIT_INTERNALERROR
@@ -374,7 +375,7 @@ class Node(object):
             res = function()
         except py.builtin._sysex:
             raise
-        except:
+        except:  # noqa
             failure = sys.exc_info()
             setattr(self, exattrname, failure)
             raise
@@ -516,7 +517,7 @@ class FSCollector(Collector):
             rel = fspath.relto(parent.fspath)
             if rel:
                 name = rel
-            name = name.replace(os.sep, "/")
+            name = name.replace(os.sep, nodes.SEP)
         super(FSCollector, self).__init__(name, parent, config, session)
         self.fspath = fspath
 
@@ -527,10 +528,11 @@ class FSCollector(Collector):
 
     def _makeid(self):
         relpath = self.fspath.relto(self.config.rootdir)
+
         if not relpath:
             relpath = self._check_initialpaths_for_relpath()
-        if os.sep != "/":
-            relpath = relpath.replace(os.sep, "/")
+        if os.sep != nodes.SEP:
+            relpath = relpath.replace(os.sep, nodes.SEP)
         return relpath
 
 

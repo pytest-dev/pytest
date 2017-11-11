@@ -27,7 +27,7 @@ functions:
 * fixture management scales from simple unit to complex
   functional testing, allowing to parametrize fixtures and tests according
   to configuration and component options, or to re-use fixtures
-  across class, module or whole test session scopes.
+  across function, class, module or whole test session scopes.
 
 In addition, pytest continues to support :ref:`xunitsetup`.  You can mix
 both styles, moving incrementally from classic to new style, as you
@@ -127,10 +127,39 @@ It's a prime example of `dependency injection`_ where fixture
 functions take the role of the *injector* and test functions are the
 *consumers* of fixture objects.
 
+.. _`conftest.py`:
+.. _`conftest`:
+
+``conftest.py``: sharing fixture functions
+------------------------------------------
+
+If during implementing your tests you realize that you
+want to use a fixture function from multiple test files you can move it
+to a ``conftest.py`` file.
+You don't need to import the fixture you want to use in a test, it
+automatically gets discovered by pytest. The discovery of
+fixture functions starts at test classes, then test modules, then
+``conftest.py`` files and finally builtin and third party plugins.
+
+You can also use the ``conftest.py`` file to implement 
+:ref:`local per-directory plugins <conftest.py plugins>`.
+
+Sharing test data
+-----------------
+
+If you want to make test data from files available to your tests, a good way
+to do this is by loading these data in a fixture for use by your tests.
+This makes use of the automatic caching mechanisms of pytest.
+
+Another good approach is by adding the data files in the ``tests`` folder.
+There are also community plugins available to help managing this aspect of 
+testing, e.g. `pytest-datadir <https://github.com/gabrielcnr/pytest-datadir>`__ 
+and `pytest-datafiles <https://pypi.python.org/pypi/pytest-datafiles>`__. 
+
 .. _smtpshared:
 
-Sharing a fixture across tests in a module (or class/session)
------------------------------------------------------------------
+Scope: sharing a fixture instance across tests in a class, module or session
+----------------------------------------------------------------------------
 
 .. regendoc:wipe
 
@@ -139,10 +168,12 @@ usually time-expensive to create.  Extending the previous example, we
 can add a ``scope='module'`` parameter to the
 :py:func:`@pytest.fixture <_pytest.python.fixture>` invocation
 to cause the decorated ``smtp`` fixture function to only be invoked once
-per test module.  Multiple test functions in a test module will thus
-each receive the same ``smtp`` fixture instance.  The next example puts
-the fixture function into a separate ``conftest.py`` file so
-that tests from multiple test modules in the directory can
+per test *module* (the default is to invoke once per test *function*).
+Multiple test functions in a test module will thus
+each receive the same ``smtp`` fixture instance, thus saving time.
+
+The next example puts the fixture function into a separate ``conftest.py`` file 
+so that tests from multiple test modules in the directory can
 access the fixture function::
 
     # content of conftest.py
@@ -222,6 +253,8 @@ instance, you can simply declare it:
     def smtp(...):
         # the returned fixture value will be shared for
         # all tests needing it
+
+Finally, the ``class`` scope will invoke the fixture once per test *class*.
 
 .. _`finalization`:
 
@@ -858,7 +891,7 @@ into a conftest.py file **without** using ``autouse``::
 
     # content of conftest.py
     @pytest.fixture
-    def transact(self, request, db):
+    def transact(request, db):
         db.begin()
         yield
         db.rollback()
@@ -873,17 +906,6 @@ and then e.g. have a TestClass using it by declaring the need::
 All test methods in this TestClass will use the transaction fixture while
 other test classes or functions in the module will not use it unless
 they also add a ``transact`` reference.
-
-
-Shifting (visibility of) fixture functions
-----------------------------------------------------
-
-If during implementing your tests you realize that you
-want to use a fixture function from multiple test files you can move it
-to a :ref:`conftest.py <conftest.py>` file or even separately installable
-:ref:`plugins <plugins>` without changing test code.  The discovery of
-fixtures functions starts at test classes, then test modules, then
-``conftest.py`` files and finally builtin and third party plugins.
 
 Overriding fixtures on various levels
 -------------------------------------

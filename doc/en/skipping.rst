@@ -3,7 +3,7 @@
 .. _skipping:
 
 Skip and xfail: dealing with tests that cannot succeed
-=====================================================================
+======================================================
 
 You can mark test functions that cannot be run on certain platforms
 or that you expect to fail so pytest can deal with them accordingly and
@@ -16,13 +16,17 @@ resource which is not available at the moment (for example a database).
 
 A **xfail** means that you expect a test to fail for some reason.
 A common example is a test for a feature not yet implemented, or a bug not yet fixed.
+When a test passes despite being expected to fail (marked with ``pytest.mark.xfail``),
+it's an **xpass** and will be reported in the test summary.
 
 ``pytest`` counts and lists *skip* and *xfail* tests separately. Detailed
 information about skipped/xfailed tests is not shown by default to avoid
 cluttering the output.  You can use the ``-r`` option to see details
 corresponding to the "short" letters shown in the test progress::
 
-    pytest -rxs  # show extra info on skips and xfails
+    pytest -rxXs  # show extra info on xfailed, xpassed, and skipped tests
+
+More details on the ``-r`` option can be found by running ``pytest -h``.
 
 (See :ref:`how to change command line options defaults`)
 
@@ -136,6 +140,16 @@ If multiple ``skipif`` decorators are applied to a test function, it
 will be skipped if any of the skip conditions is true.
 
 .. _`whole class- or module level`: mark.html#scoped-marking
+
+
+Skipping files or directories
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Sometimes you may need to skip an entire file or directory, for example if the
+tests rely on Python version-specific features or contain code that you do not
+wish pytest to run. In this case, you must exclude the files and directories
+from collection. Refer to :ref:`customizing-test-collection` for more
+information.
 
 
 Skipping on a missing import dependency

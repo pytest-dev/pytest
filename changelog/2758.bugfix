@@ -1,1 +1,0 @@
-The equality checking function (``__eq__``) of ``MarkDecorator`` returns ``False`` if one object is not an instance of ``MarkDecorator``.

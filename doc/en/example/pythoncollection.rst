@@ -175,21 +175,23 @@ You can always peek at the collection tree without running tests like this::
     
     ======= no tests ran in 0.12 seconds ========
 
-customizing test collection to find all .py files
----------------------------------------------------------
+.. _customizing-test-collection:
+
+Customizing test collection
+---------------------------
 
 .. regendoc:wipe
 
-You can easily instruct ``pytest`` to discover tests from every python file::
-
+You can easily instruct ``pytest`` to discover tests from every Python file::
 
     # content of pytest.ini
     [pytest]
     python_files = *.py
 
-However, many projects will have a ``setup.py`` which they don't want to be imported. Moreover, there may files only importable by a specific python version.
-For such cases you can dynamically define files to be ignored by listing
-them in a ``conftest.py`` file::
+However, many projects will have a ``setup.py`` which they don't want to be
+imported. Moreover, there may files only importable by a specific python
+version. For such cases you can dynamically define files to be ignored by
+listing them in a ``conftest.py`` file::
 
     # content of conftest.py
     import sys
@@ -198,7 +200,7 @@ them in a ``conftest.py`` file::
     if sys.version_info[0] > 2:
         collect_ignore.append("pkg/module_py2.py")
 
-And then if you have a module file like this::
+and then if you have a module file like this::
 
     # content of pkg/module_py2.py
     def test_only_on_python2():
@@ -207,13 +209,13 @@ And then if you have a module file like this::
         except Exception, e:
             pass
 
-and a setup.py dummy file like this::
+and a ``setup.py`` dummy file like this::
 
     # content of setup.py
     0/0  # will raise exception if imported
 
-then a pytest run on Python2 will find the one test and will leave out the
-setup.py file::
+If you run with a Python 2 interpreter then you will find the one test and will
+leave out the ``setup.py`` file::
 
     #$ pytest --collect-only
     ====== test session starts ======
@@ -225,13 +227,13 @@ setup.py file::
 
     ====== no tests ran in 0.04 seconds ======
 
-If you run with a Python3 interpreter both the one test and the setup.py file
-will be left out::
+If you run with a Python 3 interpreter both the one test and the ``setup.py``
+file will be left out::
 
     $ pytest --collect-only
     ======= test session starts ========
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 0 items
-    
+
     ======= no tests ran in 0.12 seconds ========

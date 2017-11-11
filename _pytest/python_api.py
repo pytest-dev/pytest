@@ -84,7 +84,7 @@ class ApproxNumpy(ApproxBase):
 
         try:
             actual = np.asarray(actual)
-        except:
+        except:  # noqa
             raise TypeError("cannot compare '{0}' to numpy.ndarray".format(actual))
 
         if actual.shape != self.expected.shape:
@@ -217,7 +217,8 @@ class ApproxScalar(ApproxBase):
         absolute tolerance or a relative tolerance, depending on what the user
         specified or which would be larger.
         """
-        def set_default(x, default): return x if x is not None else default
+        def set_default(x, default):
+            return x if x is not None else default
 
         # Figure out what the absolute tolerance should be.  ``self.abs`` is
         # either None or a value specified by the user.
