@@ -30,10 +30,10 @@ class TestWarningsRecorderChecker(object):
             assert len(rec.list) == 2
             warn = rec.pop()
             assert str(warn.message) == "hello"
-            l = rec.list
+            values = rec.list
             rec.clear()
             assert len(rec.list) == 0
-            assert l is rec.list
+            assert values is rec.list
             pytest.raises(AssertionError, "rec.pop()")
 
     def test_typechecking(self):

@@ -210,7 +210,7 @@ class AssertionRewritingHook(object):
             mod.__cached__ = pyc
             mod.__loader__ = self
             py.builtin.exec_(co, mod.__dict__)
-        except:
+        except:  # noqa
             if name in sys.modules:
                 del sys.modules[name]
             raise

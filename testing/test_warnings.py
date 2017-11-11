@@ -144,6 +144,8 @@ def test_unicode(testdir, pyfile_with_warnings):
 @pytest.mark.skipif(sys.version_info >= (3, 0),
                     reason='warnings message is broken as it is not str instance')
 def test_py2_unicode(testdir, pyfile_with_warnings):
+    if getattr(sys, "pypy_version_info", ())[:2] == (5, 9) and sys.platform.startswith('win'):
+        pytest.xfail("fails with unicode error on PyPy2 5.9 and Windows (#2905)")
     testdir.makepyfile('''
         # -*- coding: utf8 -*-
         import warnings

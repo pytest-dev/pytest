@@ -197,7 +197,7 @@ class CallInfo:
         except KeyboardInterrupt:
             self.stop = time()
             raise
-        except:
+        except:  # noqa
             self.excinfo = ExceptionInfo()
         self.stop = time()
 

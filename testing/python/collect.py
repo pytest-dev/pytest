@@ -868,11 +868,11 @@ class TestConftestCustomization(object):
 
     def test_makeitem_non_underscore(self, testdir, monkeypatch):
         modcol = testdir.getmodulecol("def _hello(): pass")
-        l = []
+        values = []
         monkeypatch.setattr(pytest.Module, 'makeitem',
-                            lambda self, name, obj: l.append(name))
-        l = modcol.collect()
-        assert '_hello' not in l
+                            lambda self, name, obj: values.append(name))
+        values = modcol.collect()
+        assert '_hello' not in values
 
     def test_issue2369_collect_module_fileext(self, testdir):
         """Ensure we can collect files with weird file extensions as Python

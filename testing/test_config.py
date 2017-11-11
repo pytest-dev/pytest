@@ -123,11 +123,11 @@ class TestConfigCmdlineParsing(object):
 class TestConfigAPI(object):
     def test_config_trace(self, testdir):
         config = testdir.parseconfig()
-        l = []
-        config.trace.root.setwriter(l.append)
+        values = []
+        config.trace.root.setwriter(values.append)
         config.trace("hello")
-        assert len(l) == 1
-        assert l[0] == "hello [config]\n"
+        assert len(values) == 1
+        assert values[0] == "hello [config]\n"
 
     def test_config_getoption(self, testdir):
         testdir.makeconftest("""
@@ -209,10 +209,10 @@ class TestConfigAPI(object):
             paths=hello world/sub.py
         """)
         config = testdir.parseconfig()
-        l = config.getini("paths")
-        assert len(l) == 2
-        assert l[0] == p.dirpath('hello')
-        assert l[1] == p.dirpath('world/sub.py')
+        values = config.getini("paths")
+        assert len(values) == 2
+        assert values[0] == p.dirpath('hello')
+        assert values[1] == p.dirpath('world/sub.py')
         pytest.raises(ValueError, config.getini, 'other')
 
     def test_addini_args(self, testdir):
@@ -226,11 +226,11 @@ class TestConfigAPI(object):
             args=123 "123 hello" "this"
         """)
         config = testdir.parseconfig()
-        l = config.getini("args")
-        assert len(l) == 3
-        assert l == ["123", "123 hello", "this"]
-        l = config.getini("a2")
-        assert l == list("123")
+        values = config.getini("args")
+        assert len(values) == 3
+        assert values == ["123", "123 hello", "this"]
+        values = config.getini("a2")
+        assert values == list("123")
 
     def test_addini_linelist(self, testdir):
         testdir.makeconftest("""
@@ -244,11 +244,11 @@ class TestConfigAPI(object):
                 second line
         """)
         config = testdir.parseconfig()
-        l = config.getini("xy")
-        assert len(l) == 2
-        assert l == ["123 345", "second line"]
-        l = config.getini("a2")
-        assert l == []
+        values = config.getini("xy")
+        assert len(values) == 2
+        assert values == ["123 345", "second line"]
+        values = config.getini("a2")
+        assert values == []
 
     @pytest.mark.parametrize('str_val, bool_val',
                              [('True', True), ('no', False), ('no-ini', True)])
@@ -275,13 +275,13 @@ class TestConfigAPI(object):
             xy= 123
         """)
         config = testdir.parseconfig()
-        l = config.getini("xy")
-        assert len(l) == 1
-        assert l == ["123"]
+        values = config.getini("xy")
+        assert len(values) == 1
+        assert values == ["123"]
         config.addinivalue_line("xy", "456")
-        l = config.getini("xy")
-        assert len(l) == 2
-        assert l == ["123", "456"]
+        values = config.getini("xy")
+        assert len(values) == 2
+        assert values == ["123", "456"]
 
     def test_addinivalue_line_new(self, testdir):
         testdir.makeconftest("""
@@ -291,13 +291,13 @@ class TestConfigAPI(object):
         config = testdir.parseconfig()
         assert not config.getini("xy")
         config.addinivalue_line("xy", "456")
-        l = config.getini("xy")
-        assert len(l) == 1
-        assert l == ["456"]
+        values = config.getini("xy")
+        assert len(values) == 1
+        assert values == ["456"]
         config.addinivalue_line("xy", "123")
-        l = config.getini("xy")
-        assert len(l) == 2
-        assert l == ["456", "123"]
+        values = config.getini("xy")
+        assert len(values) == 2
+        assert values == ["456", "123"]
 
     def test_confcutdir_check_isdir(self, testdir):
         """Give an error if --confcutdir is not a valid directory (#2078)"""
@@ -596,13 +596,13 @@ def test_load_initial_conftest_last_ordering(testdir):
     m = My()
     pm.register(m)
     hc = pm.hook.pytest_load_initial_conftests
-    l = hc._nonwrappers + hc._wrappers
+    values = hc._nonwrappers + hc._wrappers
     expected = [
         "_pytest.config",
         'test_config',
         '_pytest.capture',
     ]
-    assert [x.function.__module__ for x in l] == expected
+    assert [x.function.__module__ for x in values] == expected
 
 
 def test_get_plugin_specs_as_list():
@@ -623,17 +623,17 @@ def test_get_plugin_specs_as_list():
 class TestWarning(object):
     def test_warn_config(self, testdir):
         testdir.makeconftest("""
-            l = []
+            values = []
             def pytest_configure(config):
                 config.warn("C1", "hello")
             def pytest_logwarning(code, message):
                 if message == "hello" and code == "C1":
-                    l.append(1)
+                    values.append(1)
         """)
         testdir.makepyfile("""
             def test_proper(pytestconfig):
                 import conftest
-                assert conftest.l == [1]
+                assert conftest.values == [1]
         """)
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)

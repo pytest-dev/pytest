@@ -325,7 +325,7 @@ class PyCollector(PyobjMixin, main.Collector):
         for basecls in inspect.getmro(self.obj.__class__):
             dicts.append(basecls.__dict__)
         seen = {}
-        l = []
+        values = []
         for dic in dicts:
             for name, obj in list(dic.items()):
                 if name in seen:
@@ -336,9 +336,9 @@ class PyCollector(PyobjMixin, main.Collector):
                     continue
                 if not isinstance(res, list):
                     res = [res]
-                l.extend(res)
-        l.sort(key=lambda item: item.reportinfo()[:2])
-        return l
+                values.extend(res)
+        values.sort(key=lambda item: item.reportinfo()[:2])
+        return values
 
     def makeitem(self, name, obj):
         warnings.warn(deprecated.COLLECTOR_MAKEITEM, stacklevel=2)
@@ -600,7 +600,7 @@ class Generator(FunctionMixin, PyCollector):
         self.session._setupstate.prepare(self)
         # see FunctionMixin.setup and test_setupstate_is_preserved_134
         self._preservedparent = self.parent.obj
-        l = []
+        values = []
         seen = {}
         for i, x in enumerate(self.obj()):
             name, call, args = self.getcallargs(x)
@@ -613,9 +613,9 @@ class Generator(FunctionMixin, PyCollector):
             if name in seen:
                 raise ValueError("%r generated tests with non-unique name %r" % (self, name))
             seen[name] = True
-            l.append(self.Function(name, self, args=args, callobj=call))
+            values.append(self.Function(name, self, args=args, callobj=call))
         self.warn('C1', deprecated.YIELD_TESTS)
-        return l
+        return values
 
     def getcallargs(self, obj):
         if not isinstance(obj, (tuple, list)):

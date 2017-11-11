@@ -704,9 +704,9 @@ class TestNodekeywords(object):
             def test_pass(): pass
             def test_fail(): assert 0
         """)
-        l = list(modcol.keywords)
-        assert modcol.name in l
-        for x in l:
+        values = list(modcol.keywords)
+        assert modcol.name in values
+        for x in values:
             assert not x.startswith("_")
         assert modcol.name in repr(modcol.keywords)
 

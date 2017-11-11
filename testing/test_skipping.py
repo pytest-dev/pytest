@@ -685,9 +685,9 @@ def test_skip_reasons_folding():
     ev3.longrepr = longrepr
     ev3.skipped = True
 
-    l = folded_skips([ev1, ev2, ev3])
-    assert len(l) == 1
-    num, fspath, lineno, reason = l[0]
+    values = folded_skips([ev1, ev2, ev3])
+    assert len(values) == 1
+    num, fspath, lineno, reason = values[0]
     assert num == 3
     assert fspath == path
     assert lineno == lineno

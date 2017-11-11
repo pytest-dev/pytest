@@ -366,10 +366,10 @@ def folded_skips(skipped):
         if when == 'setup' and 'skip' in keywords and 'pytestmark' not in keywords:
             key = (key[0], None, key[2], )
         d.setdefault(key, []).append(event)
-    l = []
+    values = []
     for key, events in d.items():
-        l.append((len(events),) + key)
-    return l
+        values.append((len(events),) + key)
+    return values
 
 
 def show_skipped(terminalreporter, lines):
