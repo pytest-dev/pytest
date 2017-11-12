@@ -1,0 +1,1 @@
+``pytest_fixture_setup`` and ``pytest_fixture_post_finalizer`` hooks are now called for all ``conftest.py`` files.
