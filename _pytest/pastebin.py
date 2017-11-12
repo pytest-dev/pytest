@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function
 
 import pytest
+import six
 import sys
 import tempfile
 
@@ -16,7 +17,6 @@ def pytest_addoption(parser):
 
 @pytest.hookimpl(trylast=True)
 def pytest_configure(config):
-    import py
     if config.option.pastebin == "all":
         tr = config.pluginmanager.getplugin('terminalreporter')
         # if no terminal reporter plugin is present, nothing we can do here;
@@ -25,15 +25,15 @@ def pytest_configure(config):
         if tr is not None:
             # pastebin file will be utf-8 encoded binary file
             config._pastebinfile = tempfile.TemporaryFile('w+b')
-            oldwrite = tr._tw.write
+            oldwrite = tr.writer.write
 
             def tee_write(s, **kwargs):
                 oldwrite(s, **kwargs)
-                if py.builtin._istext(s):
+                if isinstance(s, six.text_type):
                     s = s.encode('utf-8')
                 config._pastebinfile.write(s)
 
-            tr._tw.write = tee_write
+            tr.writer.write = tee_write
 
 
 def pytest_unconfigure(config):
@@ -45,7 +45,7 @@ def pytest_unconfigure(config):
         del config._pastebinfile
         # undo our patching in the terminal reporter
         tr = config.pluginmanager.getplugin('terminalreporter')
-        del tr._tw.__dict__['write']
+        del tr.writer.__dict__['write']
         # write summary
         tr.write_sep("=", "Sending information to Paste Service")
         pastebinurl = create_new_paste(sessionlog)

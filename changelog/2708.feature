@@ -1,0 +1,1 @@
+Match ``warns`` signature to ``raises`` by adding ``match`` keyworkd.

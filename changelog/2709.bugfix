@@ -1,0 +1,1 @@
+``capsys`` and ``capfd`` can now be used by other fixtures.

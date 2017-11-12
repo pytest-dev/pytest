@@ -344,7 +344,7 @@ class TestGeneralUsage(object):
         Importing a module that didn't exist, even if the ImportError was
         gracefully handled, would make our test crash.
 
-        Use recwarn here to silence this warning in Python 2.6 and 2.7:
+        Use recwarn here to silence this warning in Python 2.7:
             ImportWarning: Not importing directory '...\not_a_package': missing __init__.py
         """
         testdir.mkdir('not_a_package')

@@ -8,6 +8,7 @@ import functools
 import py
 from py._code.code import FormattedExcinfo
 
+import attr
 import _pytest
 from _pytest import nodes
 from _pytest._code.code import TerminalRepr
@@ -22,18 +23,17 @@ from _pytest.compat import (
 from _pytest.outcomes import fail, TEST_OUTCOME
 
 
-if sys.version_info[:2] == (2, 6):
-    from ordereddict import OrderedDict
-else:
-    from collections import OrderedDict
+from collections import OrderedDict
 
 
 def pytest_sessionstart(session):
     import _pytest.python
+
     scopename2class.update({
         'class': _pytest.python.Class,
         'module': _pytest.python.Module,
         'function': _pytest.main.Item,
+        'session': _pytest.main.Session,
     })
     session._fixturemanager = FixtureManager(session)
 
@@ -65,8 +65,6 @@ def scopeproperty(name=None, doc=None):
 def get_scope_node(node, scope):
     cls = scopename2class.get(scope)
     if cls is None:
-        if scope == "session":
-            return node.session
         raise ValueError("unknown scope")
     return node.getparent(cls)
 
@@ -736,8 +734,7 @@ class FixtureDef:
             where=baseid
         )
         self.params = params
-        startindex = unittest and 1 or None
-        self.argnames = getfuncargnames(func, startindex=startindex)
+        self.argnames = getfuncargnames(func, is_method=unittest)
         self.unittest = unittest
         self.ids = ids
         self._finalizer = []
@@ -831,13 +828,21 @@ def pytest_fixture_setup(fixturedef, request):
     return result
 
 
-class FixtureFunctionMarker:
-    def __init__(self, scope, params, autouse=False, ids=None, name=None):
-        self.scope = scope
-        self.params = params
-        self.autouse = autouse
-        self.ids = ids
-        self.name = name
+def _ensure_immutable_ids(ids):
+    if ids is None:
+        return
+    if callable(ids):
+        return ids
+    return tuple(ids)
+
+
+@attr.s(frozen=True)
+class FixtureFunctionMarker(object):
+    scope = attr.ib()
+    params = attr.ib(convert=attr.converters.optional(tuple))
+    autouse = attr.ib(default=False)
+    ids = attr.ib(default=None, convert=_ensure_immutable_ids)
+    name = attr.ib(default=None)
 
     def __call__(self, function):
         if isclass(function):

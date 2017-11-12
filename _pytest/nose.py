@@ -3,7 +3,6 @@ from __future__ import absolute_import, division, print_function
 
 import sys
 
-import py
 from _pytest import unittest, runner, python
 from _pytest.config import hookimpl
 
@@ -66,7 +65,7 @@ def is_potential_nosetest(item):
 def call_optional(obj, name):
     method = getattr(obj, name, None)
     isfixture = hasattr(method, "_pytestfixturefunction")
-    if method is not None and not isfixture and py.builtin.callable(method):
+    if method is not None and not isfixture and callable(method):
         # If there's any problems allow the exception to raise rather than
         # silently ignoring them
         method()

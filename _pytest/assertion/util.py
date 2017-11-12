@@ -4,13 +4,14 @@ import pprint
 
 import _pytest._code
 import py
+import six
 try:
     from collections import Sequence
 except ImportError:
     Sequence = list
 
 
-u = py.builtin._totext
+u = six.text_type
 
 # The _reprcompare attribute on the util module is used by the new assertion
 # interpretation code and assertion rewriter to detect this plugin was
@@ -174,9 +175,9 @@ def _diff_text(left, right, verbose=False):
     """
     from difflib import ndiff
     explanation = []
-    if isinstance(left, py.builtin.bytes):
+    if isinstance(left, six.binary_type):
         left = u(repr(left)[1:-1]).replace(r'\n', '\n')
-    if isinstance(right, py.builtin.bytes):
+    if isinstance(right, six.binary_type):
         right = u(repr(right)[1:-1]).replace(r'\n', '\n')
     if not verbose:
         i = 0  # just in case left or right has zero length

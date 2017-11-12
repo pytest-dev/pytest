@@ -19,20 +19,18 @@ env:
     - TOXENV=py27-xdist
     - TOXENV=py27-trial
     - TOXENV=py27-numpy
+    - TOXENV=py27-pluggymaster
     - TOXENV=py36-pexpect
     - TOXENV=py36-xdist
     - TOXENV=py36-trial
     - TOXENV=py36-numpy
+    - TOXENV=py36-pluggymaster
     - TOXENV=py27-nobyte
     - TOXENV=doctesting
     - TOXENV=docs
 
 matrix:
   include:
-    - env: TOXENV=py26
-      python: '2.6'
-    - env: TOXENV=py33
-      python: '3.3'
     - env: TOXENV=pypy
       python: 'pypy-5.4'
     - env: TOXENV=py35

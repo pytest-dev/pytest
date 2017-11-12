@@ -277,10 +277,12 @@ class TestPrunetraceback(object):
         """)
         testdir.makeconftest("""
             import pytest
-            def pytest_make_collect_report(__multicall__):
-                rep = __multicall__.execute()
+            @pytest.hookimpl(hookwrapper=True)
+            def pytest_make_collect_report():
+                outcome = yield
+                rep = outcome.get_result()
                 rep.headerlines += ["header1"]
-                return rep
+                outcome.force_result(rep)
         """)
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
@@ -570,7 +572,6 @@ class Test_getinitialnodes(object):
         col = testdir.getnode(config, x)
         assert isinstance(col, pytest.Module)
         assert col.name == 'x.py'
-        assert col.parent.name == testdir.tmpdir.basename
         assert col.parent.parent is None
         for col in col.listchain():
             assert col.config is config
@@ -767,12 +768,11 @@ def test_exit_on_collection_with_maxfail_smaller_than_n_errors(testdir):
     testdir.makepyfile(**COLLECTION_ERROR_PY_FILES)
 
     res = testdir.runpytest("--maxfail=1")
-    assert res.ret == 2
+    assert res.ret == 1
 
     res.stdout.fnmatch_lines([
         "*ERROR collecting test_02_import_error.py*",
         "*No module named *asdfa*",
-        "*Interrupted: stopping after 1 failures*",
     ])
 
     assert 'test_03' not in res.stdout.str()
@@ -824,11 +824,10 @@ def test_continue_on_collection_errors_maxfail(testdir):
     testdir.makepyfile(**COLLECTION_ERROR_PY_FILES)
 
     res = testdir.runpytest("--continue-on-collection-errors", "--maxfail=3")
-    assert res.ret == 2
+    assert res.ret == 1
 
     res.stdout.fnmatch_lines([
         "collected 2 items / 2 errors",
-        "*Interrupted: stopping after 3 failures*",
         "*1 failed, 2 error*",
     ])
 
