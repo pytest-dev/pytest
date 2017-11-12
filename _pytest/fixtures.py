@@ -1,14 +1,15 @@
 from __future__ import absolute_import, division, print_function
 
+import functools
 import inspect
 import sys
 import warnings
+from collections import OrderedDict
 
-import functools
+import attr
 import py
 from py._code.code import FormattedExcinfo
 
-import attr
 import _pytest
 from _pytest import nodes
 from _pytest._code.code import TerminalRepr
@@ -21,9 +22,6 @@ from _pytest.compat import (
     FuncargnamesCompatAttr,
 )
 from _pytest.outcomes import fail, TEST_OUTCOME
-
-
-from collections import OrderedDict
 
 
 def pytest_sessionstart(session):
@@ -737,17 +735,17 @@ class FixtureDef:
         self.argnames = getfuncargnames(func, is_method=unittest)
         self.unittest = unittest
         self.ids = ids
-        self._finalizer = []
+        self._finalizers = []
 
     def addfinalizer(self, finalizer):
-        self._finalizer.append(finalizer)
+        self._finalizers.append(finalizer)
 
     def finish(self, request):
         exceptions = []
         try:
-            while self._finalizer:
+            while self._finalizers:
                 try:
-                    func = self._finalizer.pop()
+                    func = self._finalizers.pop()
                     func()
                 except:  # noqa
                     exceptions.append(sys.exc_info())
@@ -765,7 +763,7 @@ class FixtureDef:
             # keep instances alive
             if hasattr(self, "cached_result"):
                 del self.cached_result
-            self._finalizer = []
+            self._finalizers = []
 
     def execute(self, request):
         # get required arguments and register our own finish()
