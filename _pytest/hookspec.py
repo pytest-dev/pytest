@@ -296,7 +296,7 @@ def pytest_fixture_setup(fixturedef, request):
     Stops at first non-None result, see :ref:`firstresult` """
 
 
-def pytest_fixture_post_finalizer(fixturedef):
+def pytest_fixture_post_finalizer(fixturedef, request):
     """ called after fixture teardown, but before the cache is cleared so
     the fixture result cache ``fixturedef.cached_result`` can
     still be accessed."""

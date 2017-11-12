@@ -4,6 +4,7 @@ import inspect
 import sys
 import warnings
 
+import functools
 import py
 from py._code.code import FormattedExcinfo
 
@@ -521,7 +522,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
             val = fixturedef.execute(request=subrequest)
         finally:
             # if fixture function failed it might have registered finalizers
-            self.session._setupstate.addfinalizer(fixturedef.finish,
+            self.session._setupstate.addfinalizer(functools.partial(fixturedef.finish, request=subrequest),
                                                   subrequest.node)
         return val
 
@@ -744,7 +745,7 @@ class FixtureDef:
     def addfinalizer(self, finalizer):
         self._finalizer.append(finalizer)
 
-    def finish(self):
+    def finish(self, request):
         exceptions = []
         try:
             while self._finalizer:
@@ -759,10 +760,12 @@ class FixtureDef:
                 py.builtin._reraise(*e)
 
         finally:
-            hook = self._fixturemanager.session.config.hook
-            hook.pytest_fixture_post_finalizer(fixturedef=self)
+            hook = self._fixturemanager.session.gethookproxy(request.node.fspath)
+            hook.pytest_fixture_post_finalizer(fixturedef=self, request=request)
             # even if finalization fails, we invalidate
-            # the cached fixture value
+            # the cached fixture value and remove
+            # all finalizers because they may be bound methods which will
+            # keep instances alive
             if hasattr(self, "cached_result"):
                 del self.cached_result
 
@@ -772,7 +775,7 @@ class FixtureDef:
         for argname in self.argnames:
             fixturedef = request._get_active_fixturedef(argname)
             if argname != "request":
-                fixturedef.addfinalizer(self.finish)
+                fixturedef.addfinalizer(functools.partial(self.finish, request=request))
 
         my_cache_key = request.param_index
         cached_result = getattr(self, "cached_result", None)
@@ -788,9 +791,7 @@ class FixtureDef:
             self.finish()
             assert not hasattr(self, "cached_result")
 
-        hook = self._fixturemanager.session.gethookproxy(
-            request._pyfuncitem.fspath
-        )
+        hook = self._fixturemanager.session.gethookproxy(request.node.fspath)
         return hook.pytest_fixture_setup(fixturedef=self, request=request)
 
     def __repr__(self):

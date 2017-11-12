@@ -3127,49 +3127,41 @@ class TestParameterizedSubRequest(object):
             """.format(fixfile.strpath, testfile.basename))
 
 
-def test_pytest_fixture_setup_hook(testdir):
+def test_pytest_fixture_setup_and_post_finalizer_hook(testdir):
     testdir.makeconftest("""
-        import pytest
-
-        def pytest_fixture_setup():
-            print('pytest_fixture_setup hook called')
+        from __future__ import print_function
+        def pytest_fixture_setup(fixturedef, request):
+            print('ROOT setup hook called for {0} from {1}'.format(fixturedef.argname, request.node.name))
+        def pytest_fixture_post_finalizer(fixturedef, request):
+            print('ROOT finalizer hook called for {0} from {1}'.format(fixturedef.argname, request.node.name))
     """)
-    testdir.makepyfile("""
-        import pytest
+    testdir.makepyfile(**{
+        'tests/conftest.py': """
+            from __future__ import print_function
+            def pytest_fixture_setup(fixturedef, request):
+                print('TESTS setup hook called for {0} from {1}'.format(fixturedef.argname, request.node.name))
+            def pytest_fixture_post_finalizer(fixturedef, request):
+                print('TESTS finalizer hook called for {0} from {1}'.format(fixturedef.argname, request.node.name))
+        """,
+        'tests/test_hooks.py': """
+            from __future__ import print_function
+            import pytest
 
-        @pytest.fixture()
-        def some():
-            return 'some'
+            @pytest.fixture()
+            def my_fixture():
+                return 'some'
 
-        def test_func(some):
-            assert some == 'some'
-    """)
+            def test_func(my_fixture):
+                print('TEST test_func')
+                assert my_fixture == 'some'
+        """
+    })
     result = testdir.runpytest("-s")
     assert result.ret == 0
     result.stdout.fnmatch_lines([
-        "*pytest_fixture_setup hook called*",
-    ])
-
-
-def test_pytest_fixture_post_finalizer_hook(testdir):
-    testdir.makeconftest("""
-        import pytest
-
-        def pytest_fixture_post_finalizer():
-            print('pytest_fixture_post_finalizer hook called')
-    """)
-    testdir.makepyfile("""
-        import pytest
-
-        @pytest.fixture()
-        def some():
-            return 'some'
-
-        def test_func(some):
-            assert some == 'some'
-    """)
-    result = testdir.runpytest("-s")
-    assert result.ret == 0
-    result.stdout.fnmatch_lines([
-        "*pytest_fixture_post_finalizer hook called*",
+        "*TESTS setup hook called for my_fixture from test_func*",
+        "*ROOT setup hook called for my_fixture from test_func*",
+        "*TEST test_func*",
+        "*TESTS finalizer hook called for my_fixture from test_func*",
+        "*ROOT finalizer hook called for my_fixture from test_func*",
     ])
