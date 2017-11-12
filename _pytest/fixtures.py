@@ -1,13 +1,15 @@
 from __future__ import absolute_import, division, print_function
 
+import functools
 import inspect
 import sys
 import warnings
+from collections import OrderedDict
 
+import attr
 import py
 from py._code.code import FormattedExcinfo
 
-import attr
 import _pytest
 from _pytest import nodes
 from _pytest._code.code import TerminalRepr
@@ -20,9 +22,6 @@ from _pytest.compat import (
     FuncargnamesCompatAttr,
 )
 from _pytest.outcomes import fail, TEST_OUTCOME
-
-
-from collections import OrderedDict
 
 
 def pytest_sessionstart(session):
@@ -519,7 +518,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
             val = fixturedef.execute(request=subrequest)
         finally:
             # if fixture function failed it might have registered finalizers
-            self.session._setupstate.addfinalizer(fixturedef.finish,
+            self.session._setupstate.addfinalizer(functools.partial(fixturedef.finish, request=subrequest),
                                                   subrequest.node)
         return val
 
@@ -573,7 +572,6 @@ class SubRequest(FixtureRequest):
         self.param_index = param_index
         self.scope = scope
         self._fixturedef = fixturedef
-        self.addfinalizer = fixturedef.addfinalizer
         self._pyfuncitem = request._pyfuncitem
         self._fixture_values = request._fixture_values
         self._fixture_defs = request._fixture_defs
@@ -583,6 +581,9 @@ class SubRequest(FixtureRequest):
 
     def __repr__(self):
         return "<SubRequest %r for %r>" % (self.fixturename, self._pyfuncitem)
+
+    def addfinalizer(self, finalizer):
+        self._fixturedef.addfinalizer(finalizer)
 
 
 class ScopeMismatchError(Exception):
@@ -734,17 +735,17 @@ class FixtureDef:
         self.argnames = getfuncargnames(func, is_method=unittest)
         self.unittest = unittest
         self.ids = ids
-        self._finalizer = []
+        self._finalizers = []
 
     def addfinalizer(self, finalizer):
-        self._finalizer.append(finalizer)
+        self._finalizers.append(finalizer)
 
-    def finish(self):
+    def finish(self, request):
         exceptions = []
         try:
-            while self._finalizer:
+            while self._finalizers:
                 try:
-                    func = self._finalizer.pop()
+                    func = self._finalizers.pop()
                     func()
                 except:  # noqa
                     exceptions.append(sys.exc_info())
@@ -754,12 +755,15 @@ class FixtureDef:
                 py.builtin._reraise(*e)
 
         finally:
-            ihook = self._fixturemanager.session.ihook
-            ihook.pytest_fixture_post_finalizer(fixturedef=self)
+            hook = self._fixturemanager.session.gethookproxy(request.node.fspath)
+            hook.pytest_fixture_post_finalizer(fixturedef=self, request=request)
             # even if finalization fails, we invalidate
-            # the cached fixture value
+            # the cached fixture value and remove
+            # all finalizers because they may be bound methods which will
+            # keep instances alive
             if hasattr(self, "cached_result"):
                 del self.cached_result
+            self._finalizers = []
 
     def execute(self, request):
         # get required arguments and register our own finish()
@@ -767,7 +771,7 @@ class FixtureDef:
         for argname in self.argnames:
             fixturedef = request._get_active_fixturedef(argname)
             if argname != "request":
-                fixturedef.addfinalizer(self.finish)
+                fixturedef.addfinalizer(functools.partial(self.finish, request=request))
 
         my_cache_key = request.param_index
         cached_result = getattr(self, "cached_result", None)
@@ -780,11 +784,11 @@ class FixtureDef:
                     return result
             # we have a previous but differently parametrized fixture instance
             # so we need to tear it down before creating a new one
-            self.finish()
+            self.finish(request)
             assert not hasattr(self, "cached_result")
 
-        ihook = self._fixturemanager.session.ihook
-        return ihook.pytest_fixture_setup(fixturedef=self, request=request)
+        hook = self._fixturemanager.session.gethookproxy(request.node.fspath)
+        return hook.pytest_fixture_setup(fixturedef=self, request=request)
 
     def __repr__(self):
         return ("<FixtureDef name=%r scope=%r baseid=%r >" %

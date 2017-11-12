@@ -56,11 +56,6 @@ def pytest_sessionfinish(session):
     session._setupstate.teardown_all()
 
 
-class NodeInfo:
-    def __init__(self, location):
-        self.location = location
-
-
 def pytest_runtest_protocol(item, nextitem):
     item.ihook.pytest_runtest_logstart(
         nodeid=item.nodeid, location=item.location,

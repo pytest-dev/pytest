@@ -624,8 +624,10 @@ class TestInvocationVariants(object):
         for p in search_path:
             monkeypatch.syspath_prepend(p)
 
+        os.chdir('world')
         # mixed module and filenames:
-        result = testdir.runpytest("--pyargs", "-v", "ns_pkg.hello", "world/ns_pkg")
+        result = testdir.runpytest("--pyargs", "-v", "ns_pkg.hello", "ns_pkg/world")
+        testdir.chdir()
         assert result.ret == 0
         result.stdout.fnmatch_lines([
             "*test_hello.py::test_hello*PASSED",
