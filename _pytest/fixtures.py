@@ -785,7 +785,7 @@ class FixtureDef:
                     return result
             # we have a previous but differently parametrized fixture instance
             # so we need to tear it down before creating a new one
-            self.finish()
+            self.finish(request)
             assert not hasattr(self, "cached_result")
 
         hook = self._fixturemanager.session.gethookproxy(request.node.fspath)
