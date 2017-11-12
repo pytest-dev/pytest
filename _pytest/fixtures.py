@@ -765,6 +765,7 @@ class FixtureDef:
             # keep instances alive
             if hasattr(self, "cached_result"):
                 del self.cached_result
+            self._finalizer = []
 
     def execute(self, request):
         # get required arguments and register our own finish()
