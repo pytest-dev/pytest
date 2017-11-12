@@ -521,8 +521,16 @@ class FSCollector(Collector):
         super(FSCollector, self).__init__(name, parent, config, session)
         self.fspath = fspath
 
+    def _check_initialpaths_for_relpath(self):
+        for initialpath in self.session._initialpaths:
+            if self.fspath.common(initialpath) == initialpath:
+                return self.fspath.relto(initialpath.dirname)
+
     def _makeid(self):
         relpath = self.fspath.relto(self.config.rootdir)
+
+        if not relpath:
+            relpath = self._check_initialpaths_for_relpath()
         if os.sep != nodes.SEP:
             relpath = relpath.replace(os.sep, nodes.SEP)
         return relpath
