@@ -113,8 +113,8 @@ directory with the above conftest.py::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 0 items
     
     ======= no tests ran in 0.12 seconds ========
@@ -127,7 +127,7 @@ Control skipping of tests according to command line option
 .. regendoc:wipe
 
 Here is a ``conftest.py`` file adding a ``--runslow`` command
-line option to control skipping of ``slow`` marked tests:
+line option to control skipping of ``pytest.mark.slow`` marked tests:
 
 .. code-block:: python
 
@@ -136,7 +136,16 @@ line option to control skipping of ``slow`` marked tests:
     import pytest
     def pytest_addoption(parser):
         parser.addoption("--runslow", action="store_true",
-            help="run slow tests")
+                         default=False, help="run slow tests")
+
+    def pytest_collection_modifyitems(config, items):
+        if config.getoption("--runslow"):
+            # --runslow given in cli: do not skip slow tests
+            return
+        skip_slow = pytest.mark.skip(reason="need --runslow option to run")
+        for item in items:
+            if "slow" in item.keywords:
+                item.add_marker(skip_slow)
 
 We can now write a test module like this:
 
@@ -146,17 +155,11 @@ We can now write a test module like this:
     import pytest
 
 
-    slow = pytest.mark.skipif(
-        not pytest.config.getoption("--runslow"),
-        reason="need --runslow option to run"
-    )
-
-
     def test_func_fast():
         pass
 
 
-    @slow
+    @pytest.mark.slow
     def test_func_slow():
         pass
 
@@ -164,13 +167,13 @@ and when running it will see a skipped "slow" test::
 
     $ pytest -rs    # "-rs" means report details on the little 's'
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     
     test_module.py .s
     ======= short test summary info ========
-    SKIP [1] test_module.py:13: need --runslow option to run
+    SKIP [1] test_module.py:8: need --runslow option to run
     
     ======= 1 passed, 1 skipped in 0.12 seconds ========
 
@@ -178,8 +181,8 @@ Or run it including the ``slow`` marked test::
 
     $ pytest --runslow
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     
     test_module.py ..
@@ -269,6 +272,7 @@ running from a test you can do something like this:
         sys._called_from_test = True
 
     def pytest_unconfigure(config):
+        import sys
         del sys._called_from_test
 
 and then check for the ``sys._called_from_test`` flag:
@@ -302,9 +306,9 @@ which will add the string to the test header accordingly::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     project deps: mylib-1.1
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 0 items
     
     ======= no tests ran in 0.12 seconds ========
@@ -327,11 +331,11 @@ which will add info only when run with "--v"::
 
     $ pytest -v
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     info1: did you know that ...
     did you?
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 0 items
     
     ======= no tests ran in 0.12 seconds ========
@@ -340,8 +344,8 @@ and nothing when run plainly::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 0 items
     
     ======= no tests ran in 0.12 seconds ========
@@ -362,28 +366,28 @@ out which tests are the slowest. Let's make an artificial test suite:
     import time
 
     def test_funcfast():
-        pass
-
-    def test_funcslow1():
         time.sleep(0.1)
 
-    def test_funcslow2():
+    def test_funcslow1():
         time.sleep(0.2)
+
+    def test_funcslow2():
+        time.sleep(0.3)
 
 Now we can profile which test functions execute the slowest::
 
     $ pytest --durations=3
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 3 items
     
     test_some_are_slow.py ...
     
     ======= slowest 3 test durations ========
-    0.20s call     test_some_are_slow.py::test_funcslow2
-    0.10s call     test_some_are_slow.py::test_funcslow1
-    0.00s setup    test_some_are_slow.py::test_funcfast
+    0.30s call     test_some_are_slow.py::test_funcslow2
+    0.20s call     test_some_are_slow.py::test_funcslow1
+    0.10s call     test_some_are_slow.py::test_funcfast
     ======= 3 passed in 0.12 seconds ========
 
 incremental testing - test steps
@@ -425,7 +429,7 @@ tests in a class.  Here is a test module example:
     import pytest
 
     @pytest.mark.incremental
-    class TestUserHandling:
+    class TestUserHandling(object):
         def test_login(self):
             pass
         def test_modification(self):
@@ -440,8 +444,8 @@ If we run this::
 
     $ pytest -rx
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
     
     test_step.py .Fx.
@@ -476,14 +480,14 @@ concept.  It's however recommended to have explicit fixture references in your
 tests or test classes rather than relying on implicitly executing
 setup/teardown functions, especially if they are far away from the actual tests.
 
-Here is a an example for making a ``db`` fixture available in a directory:
+Here is an example for making a ``db`` fixture available in a directory:
 
 .. code-block:: python
 
     # content of a/conftest.py
     import pytest
 
-    class DB:
+    class DB(object):
         pass
 
     @pytest.fixture(scope="session")
@@ -519,8 +523,8 @@ We can run this::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 7 items
     
     test_step.py .Fx.
@@ -585,7 +589,7 @@ environment you can implement a hook that gets called when the test
 "report" object is about to be created.  Here we write out all failing
 test calls and also access a fixture (if it was used by the test) in
 case you want to query/look at it during your post processing.  In our
-case we just write some informations out to a ``failures`` file:
+case we just write some information out to a ``failures`` file:
 
 .. code-block:: python
 
@@ -627,8 +631,8 @@ and run them::
 
     $ pytest test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     
     test_module.py FF
@@ -678,7 +682,7 @@ here is a little example implemented via a local plugin:
         outcome = yield
         rep = outcome.get_result()
 
-        # set an report attribute for each phase of a call, which can
+        # set a report attribute for each phase of a call, which can
         # be "setup", "call", "teardown"
 
         setattr(item, "rep_" + rep.when, rep)
@@ -721,8 +725,8 @@ and run it::
 
     $ pytest -s test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 3 items
     
     test_module.py Esetting up a test failed! test_module.py::test_setup_fails
@@ -759,6 +763,47 @@ and run it::
 
 You'll see that the fixture finalizers could use the precise reporting
 information.
+
+``PYTEST_CURRENT_TEST`` environment variable
+--------------------------------------------
+
+.. versionadded:: 3.2
+
+Sometimes a test session might get stuck and there might be no easy way to figure out
+which test got stuck, for example if pytest was run in quiet mode (``-q``) or you don't have access to the console
+output. This is particularly a problem if the problem helps only sporadically, the famous "flaky" kind of tests.
+
+``pytest`` sets a ``PYTEST_CURRENT_TEST`` environment variable when running tests, which can be inspected
+by process monitoring utilities or libraries like `psutil <https://pypi.python.org/pypi/psutil>`_ to discover which
+test got stuck if necessary:
+
+.. code-block:: python
+
+    import psutil
+
+    for pid in psutil.pids():
+        environ = psutil.Process(pid).environ()
+        if 'PYTEST_CURRENT_TEST' in environ:
+            print(f'pytest process {pid} running: {environ["PYTEST_CURRENT_TEST"]}')
+
+During the test session pytest will set ``PYTEST_CURRENT_TEST`` to the current test
+:ref:`nodeid <nodeids>` and the current stage, which can be ``setup``, ``call``
+and ``teardown``.
+
+For example, when running a single test function named ``test_foo`` from ``foo_module.py``,
+``PYTEST_CURRENT_TEST`` will be set to:
+
+#. ``foo_module.py::test_foo (setup)``
+#. ``foo_module.py::test_foo (call)``
+#. ``foo_module.py::test_foo (teardown)``
+
+In that order.
+
+.. note::
+
+    The contents of ``PYTEST_CURRENT_TEST`` is meant to be human readable and the actual format
+    can be changed between releases (even bug fixes) so it shouldn't be relied on for scripting
+    or automation.
 
 Freezing pytest 
 ---------------

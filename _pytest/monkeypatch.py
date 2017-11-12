@@ -1,17 +1,18 @@
 """ monkeypatching and mocking functionality.  """
+from __future__ import absolute_import, division, print_function
 
-import os, sys
+import os
+import sys
 import re
 
 from py.builtin import _basestring
-
-import pytest
+from _pytest.fixtures import fixture
 
 RE_IMPORT_ERROR_NAME = re.compile("^No module named (.*)$")
 
 
-@pytest.fixture
-def monkeypatch(request):
+@fixture
+def monkeypatch():
     """The returned ``monkeypatch`` fixture provides these
     helper methods to modify objects, dictionaries or os.environ::
 
@@ -30,8 +31,8 @@ def monkeypatch(request):
     will be raised if the set/deletion operation has no target.
     """
     mpatch = MonkeyPatch()
-    request.addfinalizer(mpatch.undo)
-    return mpatch
+    yield mpatch
+    mpatch.undo()
 
 
 def resolve(name):
@@ -70,9 +71,9 @@ def annotated_getattr(obj, name, ann):
         obj = getattr(obj, name)
     except AttributeError:
         raise AttributeError(
-                '%r object at %s has no attribute %r' % (
-                    type(obj).__name__, ann, name
-                )
+            '%r object at %s has no attribute %r' % (
+                type(obj).__name__, ann, name
+            )
         )
     return obj
 

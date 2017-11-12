@@ -1,14 +1,17 @@
-from __future__ import with_statement
+from __future__ import absolute_import, division, print_function
 import sys
 import os
-import py, pytest
+import py
+import pytest
 from _pytest import config as parseopt
+
 
 @pytest.fixture
 def parser():
     return parseopt.Parser()
 
-class TestParser:
+
+class TestParser(object):
     def test_no_help_by_default(self, capsys):
         parser = parseopt.Parser(usage="xyz")
         pytest.raises(SystemExit, lambda: parser.parse(["-h"]))
@@ -34,15 +37,16 @@ class TestParser:
         )
 
     def test_argument_type(self):
-        argument = parseopt.Argument('-t', dest='abc', type='int')
+        argument = parseopt.Argument('-t', dest='abc', type=int)
         assert argument.type is int
-        argument = parseopt.Argument('-t', dest='abc', type='string')
+        argument = parseopt.Argument('-t', dest='abc', type=str)
         assert argument.type is str
         argument = parseopt.Argument('-t', dest='abc', type=float)
         assert argument.type is float
-        with pytest.raises(KeyError):
-            argument = parseopt.Argument('-t', dest='abc', type='choice')
-        argument = parseopt.Argument('-t', dest='abc', type='choice',
+        with pytest.warns(DeprecationWarning):
+            with pytest.raises(KeyError):
+                argument = parseopt.Argument('-t', dest='abc', type='choice')
+        argument = parseopt.Argument('-t', dest='abc', type=str,
                                      choices=['red', 'blue'])
         assert argument.type is str
 
@@ -139,7 +143,7 @@ class TestParser:
         parser.addoption("--hello", dest="hello", action="store")
         parser.addoption("--world", dest="world", default=42)
 
-        class A:
+        class A(object):
             pass
 
         option = A()
@@ -160,12 +164,12 @@ class TestParser:
         assert getattr(args, parseopt.FILE_OR_DIR) == ['4', '2']
         args = parser.parse(['-R', '-S', '4', '2', '-R'])
         assert getattr(args, parseopt.FILE_OR_DIR) == ['4', '2']
-        assert args.R == True
-        assert args.S == False
+        assert args.R is True
+        assert args.S is False
         args = parser.parse(['-R', '4', '-S', '2'])
         assert getattr(args, parseopt.FILE_OR_DIR) == ['4', '2']
-        assert args.R == True
-        assert args.S == False
+        assert args.R is True
+        assert args.S is False
 
     def test_parse_defaultgetter(self):
         def defaultget(option):
@@ -176,8 +180,8 @@ class TestParser:
             elif option.type is str:
                 option.default = "world"
         parser = parseopt.Parser(processopt=defaultget)
-        parser.addoption("--this", dest="this", type="int", action="store")
-        parser.addoption("--hello", dest="hello", type="string", action="store")
+        parser.addoption("--this", dest="this", type=int, action="store")
+        parser.addoption("--hello", dest="hello", type=str, action="store")
         parser.addoption("--no", dest="no", action="store_true")
         option = parser.parse([])
         assert option.hello == "world"
@@ -187,7 +191,7 @@ class TestParser:
     def test_drop_short_helper(self):
         parser = py.std.argparse.ArgumentParser(formatter_class=parseopt.DropShorterLongHelpFormatter)
         parser.add_argument('-t', '--twoword', '--duo', '--two-word', '--two',
-                             help='foo').map_long_option = {'two': 'two-word'}
+                            help='foo').map_long_option = {'two': 'two-word'}
         # throws error on --deux only!
         parser.add_argument('-d', '--deuxmots', '--deux-mots',
                             action='store_true', help='foo').map_long_option = {'deux': 'deux-mots'}
@@ -237,18 +241,18 @@ class TestParser:
         assert args.file_or_dir == ['abcd']
 
     def test_drop_short_help0(self, parser, capsys):
-        parser.addoption('--func-args', '--doit', help = 'foo',
+        parser.addoption('--func-args', '--doit', help='foo',
                          action='store_true')
         parser.parse([])
         help = parser.optparser.format_help()
-        assert '--func-args, --doit  foo' in  help
+        assert '--func-args, --doit  foo' in help
 
     # testing would be more helpful with all help generated
     def test_drop_short_help1(self, parser, capsys):
         group = parser.getgroup("general")
         group.addoption('--doit', '--func-args', action='store_true', help='foo')
         group._addoption("-h", "--help", action="store_true", dest="help",
-                help="show help message and configuration info")
+                         help="show help message and configuration info")
         parser.parse(['-h'])
         help = parser.optparser.format_help()
         assert '-doit, --func-args  foo' in help
@@ -272,7 +276,7 @@ def test_argcomplete(testdir, monkeypatch):
     script = str(testdir.tmpdir.join("test_argcomplete"))
     pytest_bin = sys.argv[0]
     if "pytest" not in os.path.basename(pytest_bin):
-        pytest.skip("need to be run with pytest executable, not %s" %(pytest_bin,))
+        pytest.skip("need to be run with pytest executable, not %s" % (pytest_bin,))
 
     with open(str(script), 'w') as fp:
         # redirect output from argcomplete to stdin and stderr is not trivial
@@ -283,7 +287,7 @@ def test_argcomplete(testdir, monkeypatch):
     # to handle a keyword argument env that replaces os.environ in popen or
     # extends the copy, advantage: could not forget to restore
     monkeypatch.setenv('_ARGCOMPLETE', "1")
-    monkeypatch.setenv('_ARGCOMPLETE_IFS',"\x0b")
+    monkeypatch.setenv('_ARGCOMPLETE_IFS', "\x0b")
     monkeypatch.setenv('COMP_WORDBREAKS', ' \\t\\n"\\\'><=;|&(:')
 
     arg = '--fu'
@@ -296,12 +300,12 @@ def test_argcomplete(testdir, monkeypatch):
     elif not result.stdout.str():
         pytest.skip("bash provided no output, argcomplete not available?")
     else:
-        if py.std.sys.version_info < (2,7):
+        if py.std.sys.version_info < (2, 7):
             result.stdout.lines = result.stdout.lines[0].split('\x0b')
             result.stdout.fnmatch_lines(["--funcargs", "--fulltrace"])
         else:
             result.stdout.fnmatch_lines(["--funcargs", "--fulltrace"])
-    if py.std.sys.version_info < (2,7):
+    if py.std.sys.version_info < (2, 7):
         return
     os.mkdir('test_argcomplete.d')
     arg = 'test_argc'

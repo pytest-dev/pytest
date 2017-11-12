@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import, division, print_function
 import sys
 import textwrap
 
@@ -6,6 +7,7 @@ import _pytest.assertion as plugin
 import py
 import pytest
 from _pytest.assertion import util
+from _pytest.assertion import truncate
 
 PY3 = sys.version_info >= (3, 0)
 
@@ -24,7 +26,7 @@ def mock_config():
     return Config()
 
 
-class TestImportHookInstallation:
+class TestImportHookInstallation(object):
 
     @pytest.mark.parametrize('initial_conftest', [True, False])
     @pytest.mark.parametrize('mode', ['plain', 'rewrite'])
@@ -57,6 +59,23 @@ class TestImportHookInstallation:
         else:
             assert 0
         result.stdout.fnmatch_lines([expected])
+
+    def test_rewrite_assertions_pytester_plugin(self, testdir):
+        """
+        Assertions in the pytester plugin must also benefit from assertion
+        rewriting (#1920).
+        """
+        testdir.makepyfile("""
+            pytest_plugins = ['pytester']
+            def test_dummy_failure(testdir):  # how meta!
+                testdir.makepyfile('def test(): assert 0')
+                r = testdir.inline_run()
+                r.assertoutcome(passed=1)
+        """)
+        result = testdir.runpytest_subprocess()
+        result.stdout.fnmatch_lines([
+            '*assert 1 == 0*',
+        ])
 
     @pytest.mark.parametrize('mode', ['plain', 'rewrite'])
     def test_pytest_plugins_rewrite(self, testdir, mode):
@@ -141,7 +160,7 @@ class TestImportHookInstallation:
 
             plugin_state = "{plugin_state}"
 
-            class DummyDistInfo:
+            class DummyDistInfo(object):
                 project_name = 'spam'
                 version = '1.0'
 
@@ -156,7 +175,7 @@ class TestImportHookInstallation:
                                 'hampkg/__init__.py']
                     return []
 
-            class DummyEntryPoint:
+            class DummyEntryPoint(object):
                 name = 'spam'
                 module_name = 'spam.py'
                 attrs = ()
@@ -210,9 +229,9 @@ class TestImportHookInstallation:
                     return pkg.helper.tool
             """,
             'pkg/other.py': """
-                l = [3, 2]
+                values = [3, 2]
                 def tool():
-                    assert l.pop() == 3
+                    assert values.pop() == 3
             """,
             'conftest.py': """
                 pytest_plugins = ['pkg.plugin']
@@ -229,7 +248,7 @@ class TestImportHookInstallation:
         result = testdir.runpytest_subprocess('--assert=rewrite')
         result.stdout.fnmatch_lines(['>*assert a == b*',
                                      'E*assert 2 == 3*',
-                                     '>*assert l.pop() == 3*',
+                                     '>*assert values.pop() == 3*',
                                      'E*AssertionError'])
 
     def test_register_assert_rewrite_checks_types(self):
@@ -239,18 +258,18 @@ class TestImportHookInstallation:
                                        'pytest_tests_internal_non_existing2')
 
 
-class TestBinReprIntegration:
+class TestBinReprIntegration(object):
 
     def test_pytest_assertrepr_compare_called(self, testdir):
         testdir.makeconftest("""
             import pytest
-            l = []
+            values = []
             def pytest_assertrepr_compare(op, left, right):
-                l.append((op, left, right))
+                values.append((op, left, right))
 
             @pytest.fixture
             def list(request):
-                return l
+                return values
         """)
         testdir.makepyfile("""
             def test_hello():
@@ -264,13 +283,14 @@ class TestBinReprIntegration:
             "*test_check*PASS*",
         ])
 
+
 def callequal(left, right, verbose=False):
     config = mock_config()
     config.verbose = verbose
     return plugin.pytest_assertrepr_compare(config, '==', left, right)
 
 
-class TestAssert_reprcompare:
+class TestAssert_reprcompare(object):
     def test_different_types(self):
         assert callequal([0, 1], 'foo') is None
 
@@ -284,15 +304,15 @@ class TestAssert_reprcompare:
         assert '+ eggs' in diff
 
     def test_text_skipping(self):
-        lines = callequal('a'*50 + 'spam', 'a'*50 + 'eggs')
+        lines = callequal('a' * 50 + 'spam', 'a' * 50 + 'eggs')
         assert 'Skipping' in lines[1]
         for line in lines:
-            assert 'a'*50 not in line
+            assert 'a' * 50 not in line
 
     def test_text_skipping_verbose(self):
-        lines = callequal('a'*50 + 'spam', 'a'*50 + 'eggs', verbose=True)
-        assert '- ' + 'a'*50 + 'spam' in lines
-        assert '+ ' + 'a'*50 + 'eggs' in lines
+        lines = callequal('a' * 50 + 'spam', 'a' * 50 + 'eggs', verbose=True)
+        assert '- ' + 'a' * 50 + 'spam' in lines
+        assert '+ ' + 'a' * 50 + 'eggs' in lines
 
     def test_multiline_text_diff(self):
         left = 'foo\nspam\nbar'
@@ -347,7 +367,7 @@ class TestAssert_reprcompare:
         expl = '\n'.join(callequal(left, right, verbose=True))
         assert expl.endswith(textwrap.dedent(expected).strip())
 
-    def test_list_different_lenghts(self):
+    def test_list_different_lengths(self):
         expl = callequal([0, 1], [0, 1, 2])
         assert len(expl) > 1
         expl = callequal([0, 1, 2], [0, 1])
@@ -364,8 +384,16 @@ class TestAssert_reprcompare:
         for line in lines[1:]:
             assert 'b' not in line
 
-    def test_dict_omitting_verbose(self):
-        lines = callequal({'a': 0, 'b': 1}, {'a': 1, 'b': 1}, verbose=True)
+    def test_dict_omitting_with_verbosity_1(self):
+        """ Ensure differing items are visible for verbosity=1 (#1512) """
+        lines = callequal({'a': 0, 'b': 1}, {'a': 1, 'b': 1}, verbose=1)
+        assert lines[1].startswith('Omitting 1 identical item')
+        assert lines[2].startswith('Differing items')
+        assert lines[3] == "{'a': 0} != {'a': 1}"
+        assert 'Common items' not in lines
+
+    def test_dict_omitting_with_verbosity_2(self):
+        lines = callequal({'a': 0, 'b': 1}, {'a': 1, 'b': 1}, verbose=2)
         assert lines[1].startswith('Common items:')
         assert 'Omitting' not in lines[1]
         assert lines[2] == "{'b': 1}"
@@ -410,13 +438,13 @@ class TestAssert_reprcompare:
         assert len(expl) > 1
 
     def test_list_tuples(self):
-        expl = callequal([], [(1,2)])
+        expl = callequal([], [(1, 2)])
         assert len(expl) > 1
-        expl = callequal([(1,2)], [])
+        expl = callequal([(1, 2)], [])
         assert len(expl) > 1
 
     def test_list_bad_repr(self):
-        class A:
+        class A(object):
             def __repr__(self):
                 raise ValueError(42)
         expl = callequal([], [A()])
@@ -475,7 +503,7 @@ class TestAssert_reprcompare:
         assert msg
 
 
-class TestFormatExplanation:
+class TestFormatExplanation(object):
 
     def test_special_chars_full(self, testdir):
         # Issue 453, for the bug this would raise IndexError
@@ -567,6 +595,111 @@ class TestFormatExplanation:
         assert util.format_explanation(expl) == res
 
 
+class TestTruncateExplanation(object):
+
+    """ Confirm assertion output is truncated as expected """
+
+    # The number of lines in the truncation explanation message. Used
+    # to calculate that results have the expected length.
+    LINES_IN_TRUNCATION_MSG = 2
+
+    def test_doesnt_truncate_when_input_is_empty_list(self):
+        expl = []
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=100)
+        assert result == expl
+
+    def test_doesnt_truncate_at_when_input_is_5_lines_and_LT_max_chars(self):
+        expl = ['a' * 100 for x in range(5)]
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
+        assert result == expl
+
+    def test_truncates_at_8_lines_when_given_list_of_empty_strings(self):
+        expl = ['' for x in range(50)]
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=100)
+        assert result != expl
+        assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
+        assert "Full output truncated" in result[-1]
+        assert "43 lines hidden" in result[-1]
+        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG - 1]
+        assert last_line_before_trunc_msg.endswith("...")
+
+    def test_truncates_at_8_lines_when_first_8_lines_are_LT_max_chars(self):
+        expl = ['a' for x in range(100)]
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
+        assert result != expl
+        assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
+        assert "Full output truncated" in result[-1]
+        assert "93 lines hidden" in result[-1]
+        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG - 1]
+        assert last_line_before_trunc_msg.endswith("...")
+
+    def test_truncates_at_8_lines_when_first_8_lines_are_EQ_max_chars(self):
+        expl = ['a' * 80 for x in range(16)]
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=8 * 80)
+        assert result != expl
+        assert len(result) == 8 + self.LINES_IN_TRUNCATION_MSG
+        assert "Full output truncated" in result[-1]
+        assert "9 lines hidden" in result[-1]
+        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG - 1]
+        assert last_line_before_trunc_msg.endswith("...")
+
+    def test_truncates_at_4_lines_when_first_4_lines_are_GT_max_chars(self):
+        expl = ['a' * 250 for x in range(10)]
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=999)
+        assert result != expl
+        assert len(result) == 4 + self.LINES_IN_TRUNCATION_MSG
+        assert "Full output truncated" in result[-1]
+        assert "7 lines hidden" in result[-1]
+        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG - 1]
+        assert last_line_before_trunc_msg.endswith("...")
+
+    def test_truncates_at_1_line_when_first_line_is_GT_max_chars(self):
+        expl = ['a' * 250 for x in range(1000)]
+        result = truncate._truncate_explanation(expl, max_lines=8, max_chars=100)
+        assert result != expl
+        assert len(result) == 1 + self.LINES_IN_TRUNCATION_MSG
+        assert "Full output truncated" in result[-1]
+        assert "1000 lines hidden" in result[-1]
+        last_line_before_trunc_msg = result[- self.LINES_IN_TRUNCATION_MSG - 1]
+        assert last_line_before_trunc_msg.endswith("...")
+
+    def test_full_output_truncated(self, monkeypatch, testdir):
+        """ Test against full runpytest() output. """
+
+        line_count = 7
+        line_len = 100
+        expected_truncated_lines = 2
+        testdir.makepyfile(r"""
+            def test_many_lines():
+                a = list([str(i)[0] * %d for i in range(%d)])
+                b = a[::2]
+                a = '\n'.join(map(str, a))
+                b = '\n'.join(map(str, b))
+                assert a == b
+        """ % (line_len, line_count))
+        monkeypatch.delenv('CI', raising=False)
+
+        result = testdir.runpytest()
+        # without -vv, truncate the message showing a few diff lines only
+        result.stdout.fnmatch_lines([
+            "*- 1*",
+            "*- 3*",
+            "*- 5*",
+            "*truncated (%d lines hidden)*use*-vv*" % expected_truncated_lines,
+        ])
+
+        result = testdir.runpytest('-vv')
+        result.stdout.fnmatch_lines([
+            "* 6*",
+        ])
+
+        monkeypatch.setenv('CI', '1')
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "* 6*",
+        ])
+
+
 def test_python25_compile_issue257(testdir):
     testdir.makepyfile("""
         def test_rewritten():
@@ -580,6 +713,7 @@ def test_python25_compile_issue257(testdir):
             *1 failed*
     """)
 
+
 def test_rewritten(testdir):
     testdir.makepyfile("""
         def test_rewritten():
@@ -587,10 +721,12 @@ def test_rewritten(testdir):
     """)
     assert testdir.runpytest().ret == 0
 
+
 def test_reprcompare_notin(mock_config):
     detail = plugin.pytest_assertrepr_compare(
         mock_config, 'not in', 'foo', 'aaafoobbb')[1:]
     assert detail == ["'foo' is contained here:", '  aaafoobbb', '?    +++']
+
 
 def test_pytest_assertrepr_compare_integration(testdir):
     testdir.makepyfile("""
@@ -607,6 +743,7 @@ def test_pytest_assertrepr_compare_integration(testdir):
         "*E*Extra items*left*",
         "*E*50*",
     ])
+
 
 def test_sequence_comparison_uses_repr(testdir):
     testdir.makepyfile("""
@@ -626,40 +763,6 @@ def test_sequence_comparison_uses_repr(testdir):
     ])
 
 
-def test_assert_compare_truncate_longmessage(monkeypatch, testdir):
-    testdir.makepyfile(r"""
-        def test_long():
-            a = list(range(200))
-            b = a[::2]
-            a = '\n'.join(map(str, a))
-            b = '\n'.join(map(str, b))
-            assert a == b
-    """)
-    monkeypatch.delenv('CI', raising=False)
-
-    result = testdir.runpytest()
-    # without -vv, truncate the message showing a few diff lines only
-    result.stdout.fnmatch_lines([
-        "*- 1",
-        "*- 3",
-        "*- 5",
-        "*- 7",
-        "*truncated (193 more lines)*use*-vv*",
-    ])
-
-
-    result = testdir.runpytest('-vv')
-    result.stdout.fnmatch_lines([
-        "*- 197",
-    ])
-
-    monkeypatch.setenv('CI', '1')
-    result = testdir.runpytest()
-    result.stdout.fnmatch_lines([
-        "*- 197",
-    ])
-
-
 def test_assertrepr_loaded_per_dir(testdir):
     testdir.makepyfile(test_base=['def test_base(): assert 1 == 2'])
     a = testdir.mkdir('a')
@@ -674,12 +777,12 @@ def test_assertrepr_loaded_per_dir(testdir):
     b_conftest.write('def pytest_assertrepr_compare(): return ["summary b"]')
     result = testdir.runpytest()
     result.stdout.fnmatch_lines([
-            '*def test_base():*',
-            '*E*assert 1 == 2*',
-            '*def test_a():*',
-            '*E*assert summary a*',
-            '*def test_b():*',
-            '*E*assert summary b*'])
+        '*def test_base():*',
+        '*E*assert 1 == 2*',
+        '*def test_a():*',
+        '*E*assert summary a*',
+        '*def test_b():*',
+        '*E*assert summary b*'])
 
 
 def test_assertion_options(testdir):
@@ -693,6 +796,7 @@ def test_assertion_options(testdir):
     result = testdir.runpytest_subprocess("--assert=plain")
     assert "3 == 4" not in result.stdout.str()
 
+
 def test_triple_quoted_string_issue113(testdir):
     testdir.makepyfile("""
         def test_hello():
@@ -703,6 +807,7 @@ def test_triple_quoted_string_issue113(testdir):
         "*1 failed*",
     ])
     assert 'SyntaxError' not in result.stdout.str()
+
 
 def test_traceback_failure(testdir):
     p1 = testdir.makepyfile("""
@@ -724,7 +829,7 @@ def test_traceback_failure(testdir):
         "",
         "*test_*.py:6: ",
         "_ _ _ *",
-        #"",
+        # "",
         "    def f(x):",
         ">       assert x == g()",
         "E       assert 3 == 2",
@@ -733,7 +838,7 @@ def test_traceback_failure(testdir):
         "*test_traceback_failure.py:4: AssertionError"
     ])
 
-    result = testdir.runpytest(p1) # "auto"
+    result = testdir.runpytest(p1)  # "auto"
     result.stdout.fnmatch_lines([
         "*test_traceback_failure.py F",
         "====* FAILURES *====",
@@ -783,7 +888,7 @@ def test_exception_handling_no_traceback(testdir):
     ])
 
 
-@pytest.mark.skipif("'__pypy__' in sys.builtin_module_names or sys.platform.startswith('java')" )
+@pytest.mark.skipif("'__pypy__' in sys.builtin_module_names or sys.platform.startswith('java')")
 def test_warn_missing(testdir):
     testdir.makepyfile("")
     result = testdir.run(sys.executable, "-OO", "-m", "pytest", "-h")
@@ -794,6 +899,7 @@ def test_warn_missing(testdir):
     result.stderr.fnmatch_lines([
         "*WARNING*assert statements are not executed*",
     ])
+
 
 def test_recursion_source_decode(testdir):
     testdir.makepyfile("""
@@ -809,6 +915,7 @@ def test_recursion_source_decode(testdir):
         <Module*>
     """)
 
+
 def test_AssertionError_message(testdir):
     testdir.makepyfile("""
         def test_hello():
@@ -821,6 +928,7 @@ def test_AssertionError_message(testdir):
         *assert 0, (x,y)*
         *AssertionError: (1, 2)*
     """)
+
 
 @pytest.mark.skipif(PY3, reason='This bug does not exist on PY3')
 def test_set_with_unsortable_elements():
@@ -858,6 +966,7 @@ def test_set_with_unsortable_elements():
     """).strip()
     assert '\n'.join(expl) == dedent
 
+
 def test_diff_newline_at_end(monkeypatch, testdir):
     testdir.makepyfile(r"""
         def test_diff():
@@ -872,13 +981,18 @@ def test_diff_newline_at_end(monkeypatch, testdir):
         *  ?     +
     """)
 
+
 def test_assert_tuple_warning(testdir):
     testdir.makepyfile("""
         def test_tuple():
             assert(False, 'you shall not pass')
     """)
     result = testdir.runpytest('-rw')
-    result.stdout.fnmatch_lines('WR1*:2 assertion is always true*')
+    result.stdout.fnmatch_lines([
+        '*test_assert_tuple_warning.py:2',
+        '*assertion is always true*',
+    ])
+
 
 def test_assert_indirect_tuple_no_warning(testdir):
     testdir.makepyfile("""
@@ -890,6 +1004,7 @@ def test_assert_indirect_tuple_no_warning(testdir):
     output = '\n'.join(result.stdout.lines)
     assert 'WR1' not in output
 
+
 def test_assert_with_unicode(monkeypatch, testdir):
     testdir.makepyfile(u"""
         # -*- coding: utf-8 -*-
@@ -898,6 +1013,28 @@ def test_assert_with_unicode(monkeypatch, testdir):
     """)
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(['*AssertionError*'])
+
+
+def test_raise_unprintable_assertion_error(testdir):
+    testdir.makepyfile(r"""
+        def test_raise_assertion_error():
+            raise AssertionError('\xff')
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([r">       raise AssertionError('\xff')", 'E       AssertionError: *'])
+
+
+def test_raise_assertion_error_raisin_repr(testdir):
+    testdir.makepyfile(u"""
+        class RaisingRepr(object):
+            def __repr__(self):
+                raise Exception()
+        def test_raising_repr():
+            raise AssertionError(RaisingRepr())
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(['E       AssertionError: <unprintable AssertionError object>'])
+
 
 def test_issue_1944(testdir):
     testdir.makepyfile("""
@@ -909,4 +1046,3 @@ def test_issue_1944(testdir):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*1 error*"])
     assert "AttributeError: 'Module' object has no attribute '_obj'" not in result.stdout.str()
-

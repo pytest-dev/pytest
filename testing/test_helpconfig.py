@@ -1,10 +1,12 @@
+from __future__ import absolute_import, division, print_function
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 import pytest
+
 
 def test_version(testdir, pytestconfig):
     result = testdir.runpytest("--version")
     assert result.ret == 0
-    #p = py.path.local(py.__file__).dirpath()
+    # p = py.path.local(py.__file__).dirpath()
     result.stderr.fnmatch_lines([
         '*pytest*%s*imported from*' % (pytest.__version__, )
     ])
@@ -13,6 +15,7 @@ def test_version(testdir, pytestconfig):
             "*setuptools registered plugins:",
             "*at*",
         ])
+
 
 def test_help(testdir):
     result = testdir.runpytest("--help")
@@ -25,6 +28,7 @@ def test_help(testdir):
         *to see*fixtures*pytest --fixtures*
     """)
 
+
 def test_hookvalidation_unknown(testdir):
     testdir.makeconftest("""
         def pytest_hello(xyz):
@@ -32,9 +36,10 @@ def test_hookvalidation_unknown(testdir):
     """)
     result = testdir.runpytest()
     assert result.ret != 0
-    result.stderr.fnmatch_lines([
+    result.stdout.fnmatch_lines([
         '*unknown hook*pytest_hello*'
     ])
+
 
 def test_hookvalidation_optional(testdir):
     testdir.makeconftest("""
@@ -46,6 +51,7 @@ def test_hookvalidation_optional(testdir):
     result = testdir.runpytest()
     assert result.ret == EXIT_NOTESTSCOLLECTED
 
+
 def test_traceconfig(testdir):
     result = testdir.runpytest("--traceconfig")
     result.stdout.fnmatch_lines([
@@ -53,11 +59,13 @@ def test_traceconfig(testdir):
         "*active plugins*",
     ])
 
+
 def test_debug(testdir, monkeypatch):
     result = testdir.runpytest_subprocess("--debug")
     assert result.ret == EXIT_NOTESTSCOLLECTED
     p = testdir.tmpdir.join("pytestdebug.log")
     assert "pytest_sessionstart" in p.read()
+
 
 def test_PYTEST_DEBUG(testdir, monkeypatch):
     monkeypatch.setenv("PYTEST_DEBUG", "1")

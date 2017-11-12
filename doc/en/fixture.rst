@@ -11,7 +11,7 @@ pytest fixtures: explicit, modular, scalable
 
 .. _`xUnit`: http://en.wikipedia.org/wiki/XUnit
 .. _`purpose of test fixtures`: http://en.wikipedia.org/wiki/Test_fixture#Software
-.. _`Dependency injection`: http://en.wikipedia.org/wiki/Dependency_injection#Definition
+.. _`Dependency injection`: http://en.wikipedia.org/wiki/Dependency_injection
 
 The `purpose of test fixtures`_ is to provide a fixed baseline
 upon which tests can reliably and repeatedly execute.   pytest fixtures
@@ -27,7 +27,7 @@ functions:
 * fixture management scales from simple unit to complex
   functional testing, allowing to parametrize fixtures and tests according
   to configuration and component options, or to re-use fixtures
-  across class, module or whole test session scopes.
+  across function, class, module or whole test session scopes.
 
 In addition, pytest continues to support :ref:`xunitsetup`.  You can mix
 both styles, moving incrementally from classic to new style, as you
@@ -57,7 +57,7 @@ using it::
     @pytest.fixture
     def smtp():
         import smtplib
-        return smtplib.SMTP("smtp.gmail.com")
+        return smtplib.SMTP("smtp.gmail.com", 587, timeout=5)
 
     def test_ehlo(smtp):
         response, msg = smtp.ehlo()
@@ -70,9 +70,9 @@ marked ``smtp`` fixture function.  Running the test looks like this::
 
     $ pytest test_smtpsimple.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
-    collected 1 items
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 1 item
     
     test_smtpsimple.py F
     
@@ -109,7 +109,7 @@ Note that if you misspell a function argument or want
 to use one that isn't available, you'll see an error
 with a list of available function arguments.
 
-.. Note::
+.. note::
 
     You can always issue::
 
@@ -117,33 +117,49 @@ with a list of available function arguments.
 
     to see available fixtures.
 
-    In versions prior to 2.3 there was no ``@pytest.fixture`` marker
-    and you had to use a magic ``pytest_funcarg__NAME`` prefix
-    for the fixture factory.  This remains and will remain supported
-    but is not anymore advertised as the primary means of declaring fixture
-    functions.
-
-"Funcargs" a prime example of dependency injection
+Fixtures: a prime example of dependency injection
 ---------------------------------------------------
 
-When injecting fixtures to test functions, pytest-2.0 introduced the
-term "funcargs" or "funcarg mechanism" which continues to be present
-also in docs today.  It now refers to the specific case of injecting
-fixture values as arguments to test functions.  With pytest-2.3 there are
-more possibilities to use fixtures but "funcargs" remain as the main way
-as they allow to directly state the dependencies of a test function.
-
-As the following examples show in more detail, funcargs allow test
-functions to easily receive and work against specific pre-initialized
-application objects without having to care about import/setup/cleanup
-details.  It's a prime example of `dependency injection`_ where fixture
+Fixtures allow test functions to easily receive and work
+against specific pre-initialized application objects without having
+to care about import/setup/cleanup details.
+It's a prime example of `dependency injection`_ where fixture
 functions take the role of the *injector* and test functions are the
 *consumers* of fixture objects.
 
+.. _`conftest.py`:
+.. _`conftest`:
+
+``conftest.py``: sharing fixture functions
+------------------------------------------
+
+If during implementing your tests you realize that you
+want to use a fixture function from multiple test files you can move it
+to a ``conftest.py`` file.
+You don't need to import the fixture you want to use in a test, it
+automatically gets discovered by pytest. The discovery of
+fixture functions starts at test classes, then test modules, then
+``conftest.py`` files and finally builtin and third party plugins.
+
+You can also use the ``conftest.py`` file to implement 
+:ref:`local per-directory plugins <conftest.py plugins>`.
+
+Sharing test data
+-----------------
+
+If you want to make test data from files available to your tests, a good way
+to do this is by loading these data in a fixture for use by your tests.
+This makes use of the automatic caching mechanisms of pytest.
+
+Another good approach is by adding the data files in the ``tests`` folder.
+There are also community plugins available to help managing this aspect of 
+testing, e.g. `pytest-datadir <https://github.com/gabrielcnr/pytest-datadir>`__ 
+and `pytest-datafiles <https://pypi.python.org/pypi/pytest-datafiles>`__. 
+
 .. _smtpshared:
 
-Sharing a fixture across tests in a module (or class/session)
------------------------------------------------------------------
+Scope: sharing a fixture instance across tests in a class, module or session
+----------------------------------------------------------------------------
 
 .. regendoc:wipe
 
@@ -152,10 +168,12 @@ usually time-expensive to create.  Extending the previous example, we
 can add a ``scope='module'`` parameter to the
 :py:func:`@pytest.fixture <_pytest.python.fixture>` invocation
 to cause the decorated ``smtp`` fixture function to only be invoked once
-per test module.  Multiple test functions in a test module will thus
-each receive the same ``smtp`` fixture instance.  The next example puts
-the fixture function into a separate ``conftest.py`` file so
-that tests from multiple test modules in the directory can
+per test *module* (the default is to invoke once per test *function*).
+Multiple test functions in a test module will thus
+each receive the same ``smtp`` fixture instance, thus saving time.
+
+The next example puts the fixture function into a separate ``conftest.py`` file 
+so that tests from multiple test modules in the directory can
 access the fixture function::
 
     # content of conftest.py
@@ -164,7 +182,7 @@ access the fixture function::
 
     @pytest.fixture(scope="module")
     def smtp():
-        return smtplib.SMTP("smtp.gmail.com")
+        return smtplib.SMTP("smtp.gmail.com", 587, timeout=5)
 
 The name of the fixture again is ``smtp`` and you can access its result by
 listing the name ``smtp`` as an input parameter in any test or fixture
@@ -176,7 +194,7 @@ function (in or below the directory where ``conftest.py`` is located)::
         response, msg = smtp.ehlo()
         assert response == 250
         assert b"smtp.gmail.com" in msg
-        assert 0  # for demo purposes   
+        assert 0  # for demo purposes
 
     def test_noop(smtp):
         response, msg = smtp.noop()
@@ -188,8 +206,8 @@ inspect what is going on and can now run the tests::
 
     $ pytest test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     
     test_module.py FF
@@ -236,6 +254,8 @@ instance, you can simply declare it:
         # the returned fixture value will be shared for
         # all tests needing it
 
+Finally, the ``class`` scope will invoke the fixture once per test *class*.
+
 .. _`finalization`:
 
 Fixture finalization / executing teardown code
@@ -243,7 +263,9 @@ Fixture finalization / executing teardown code
 
 pytest supports execution of fixture specific finalization code
 when the fixture goes out of scope.  By using a ``yield`` statement instead of ``return``, all
-the code after the *yield* statement serves as the teardown code.::
+the code after the *yield* statement serves as the teardown code:
+
+.. code-block:: python
 
     # content of conftest.py
 
@@ -251,8 +273,8 @@ the code after the *yield* statement serves as the teardown code.::
     import pytest
 
     @pytest.fixture(scope="module")
-    def smtp(request):
-        smtp = smtplib.SMTP("smtp.gmail.com")
+    def smtp():
+        smtp = smtplib.SMTP("smtp.gmail.com", 587, timeout=5)
         yield smtp  # provide the fixture value
         print("teardown smtp")
         smtp.close()
@@ -275,54 +297,72 @@ occur around each single test.  In either case the test
 module itself does not need to change or know about these details
 of fixture setup.
 
-Note that we can also seamlessly use the ``yield`` syntax with ``with`` statements::
+Note that we can also seamlessly use the ``yield`` syntax with ``with`` statements:
+
+.. code-block:: python
 
     # content of test_yield2.py
 
+    import smtplib
     import pytest
 
-    @pytest.fixture
-    def passwd():
-        with open("/etc/passwd") as f:
-            yield f.readlines()
+    @pytest.fixture(scope="module")
+    def smtp():
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=5) as smtp:
+            yield smtp  # provide the fixture value
 
-    def test_has_lines(passwd):
-        assert len(passwd) >= 1
 
-The file ``f`` will be closed after the test finished execution
-because the Python ``file`` object supports finalization when
+The ``smtp`` connection will be closed after the test finished execution
+because the ``smtp`` object automatically closes when
 the ``with`` statement ends.
 
+Note that if an exception happens during the *setup* code (before the ``yield`` keyword), the
+*teardown* code (after the ``yield``) will not be called.
 
-.. note::
-    Prior to version 2.10, in order to use a ``yield`` statement to execute teardown code one
-    had to mark a fixture using the ``yield_fixture`` marker. From 2.10 onward, normal
-    fixtures can use ``yield`` directly so the ``yield_fixture`` decorator is no longer needed
-    and considered deprecated.
+An alternative option for executing *teardown* code is to
+make use of the ``addfinalizer`` method of the `request-context`_ object to register
+finalization functions.
 
-.. note::
-    As historical note, another way to write teardown code is
-    by accepting a ``request`` object into your fixture function and can call its
-    ``request.addfinalizer`` one or multiple times::
+Here's the ``smtp`` fixture changed to use ``addfinalizer`` for cleanup:
 
-        # content of conftest.py
+.. code-block:: python
 
-        import smtplib
-        import pytest
+    # content of conftest.py
+    import smtplib
+    import pytest
 
-        @pytest.fixture(scope="module")
-        def smtp(request):
-            smtp = smtplib.SMTP("smtp.gmail.com")
-            def fin():
-                print ("teardown smtp")
-                smtp.close()
-            request.addfinalizer(fin)
-            return smtp  # provide the fixture value
+    @pytest.fixture(scope="module")
+    def smtp(request):
+        smtp = smtplib.SMTP("smtp.gmail.com", 587, timeout=5)
+        def fin():
+            print ("teardown smtp")
+            smtp.close()
+        request.addfinalizer(fin)
+        return smtp  # provide the fixture value
 
-    The ``fin`` function will execute when the last test in the module has finished execution.
 
-    This method is still fully supported, but ``yield`` is recommended from 2.10 onward because
-    it is considered simpler and better describes the natural code flow.
+Both ``yield`` and ``addfinalizer`` methods work similarly by calling their code after the test
+ends, but ``addfinalizer`` has two key differences over ``yield``:
+
+1. It is possible to register multiple finalizer functions.
+
+2. Finalizers will always be called regardless if the fixture *setup* code raises an exception.
+   This is handy to properly close all resources created by a fixture even if one of them
+   fails to be created/acquired::
+
+        @pytest.fixture
+        def equipments(request):
+            r = []
+            for port in ('C1', 'C3', 'C28'):
+                equip = connect(port)
+                request.addfinalizer(equip.disconnect)
+                r.append(equip)
+            return r
+
+   In the example above, if ``"C28"`` fails with an exception, ``"C1"`` and ``"C3"`` will still
+   be properly closed. Of course, if an exception happens before the finalize function is
+   registered then it will not be executed.
+
 
 .. _`request-context`:
 
@@ -341,7 +381,7 @@ read an optional server URL from the test module which uses our fixture::
     @pytest.fixture(scope="module")
     def smtp(request):
         server = getattr(request.module, "smtpserver", "smtp.gmail.com")
-        smtp = smtplib.SMTP(server)
+        smtp = smtplib.SMTP(server, 587, timeout=5)
         yield smtp
         print ("finalizing %s (%s)" % (smtp, server))
         smtp.close()
@@ -352,8 +392,8 @@ again, nothing much has changed::
 
     $ pytest -s -q --tb=no
     FFfinalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
-    .
-    2 failed, 1 passed in 0.12 seconds
+    
+    2 failed in 0.12 seconds
 
 Let's quickly create another test module that actually sets the
 server URL in its module namespace::
@@ -405,7 +445,7 @@ through the special :py:class:`request <FixtureRequest>` object::
     @pytest.fixture(scope="module",
                     params=["smtp.gmail.com", "mail.python.org"])
     def smtp(request):
-        smtp = smtplib.SMTP(request.param)
+        smtp = smtplib.SMTP(request.param, 587, timeout=5)
         yield smtp
         print ("finalizing %s" % smtp)
         smtp.close()
@@ -450,7 +490,7 @@ So let's just do another run::
             response, msg = smtp.ehlo()
             assert response == 250
     >       assert b"smtp.gmail.com" in msg
-    E       assert b'smtp.gmail.com' in b'mail.python.org\nSIZE 51200000\nETRN\nSTARTTLS\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8'
+    E       AssertionError: assert b'smtp.gmail.com' in b'mail.python.org\nPIPELINING\nSIZE 51200000\nETRN\nSTARTTLS\nAUTH DIGEST-MD5 NTLM CRAM-MD5\nENHANCEDSTATUSCODES\n8BITMIME\nDSN\nSMTPUTF8'
     
     test_module.py:5: AssertionError
     -------------------------- Captured stdout setup ---------------------------
@@ -520,9 +560,9 @@ Running the above tests results in the following test IDs being used::
 
    $ pytest --collect-only
    ======= test session starts ========
-   platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-   rootdir: $REGENDOC_TMPDIR, inifile: 
-   collected 11 items
+   platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+   rootdir: $REGENDOC_TMPDIR, inifile:
+   collected 10 items
    <Module 'test_anothersmtp.py'>
      <Function 'test_showhelo[smtp.gmail.com]'>
      <Function 'test_showhelo[mail.python.org]'>
@@ -536,8 +576,6 @@ Running the above tests results in the following test IDs being used::
      <Function 'test_noop[smtp.gmail.com]'>
      <Function 'test_ehlo[mail.python.org]'>
      <Function 'test_noop[mail.python.org]'>
-   <Module 'test_yield2.py'>
-     <Function 'test_has_lines'>
    
    ======= no tests ran in 0.12 seconds ========
 
@@ -557,7 +595,7 @@ and instantiate an object ``app`` where we stick the already defined
 
     import pytest
 
-    class App:
+    class App(object):
         def __init__(self, smtp):
             self.smtp = smtp
 
@@ -573,9 +611,9 @@ Here we declare an ``app`` fixture which receives the previously defined
 
     $ pytest -v test_appsetup.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 2 items
     
     test_appsetup.py::test_smtp_exists[smtp.gmail.com] PASSED
@@ -642,9 +680,9 @@ Let's run the tests in verbose mode and with looking at the print-output::
 
     $ pytest -v -s test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 8 items
     
     test_module.py::test_0[1]   SETUP otherarg 1
@@ -728,7 +766,7 @@ and declare its use in a test module via a ``usefixtures`` marker::
     import pytest
 
     @pytest.mark.usefixtures("cleandir")
-    class TestDirectoryInit:
+    class TestDirectoryInit(object):
         def test_cwd_starts_empty(self):
             assert os.listdir(os.getcwd()) == []
             with open("myfile", "w") as f:
@@ -781,8 +819,8 @@ Autouse fixtures (xUnit setup on steroids)
 .. regendoc:wipe
 
 Occasionally, you may want to have fixtures get invoked automatically
-without a `usefixtures`_ or `funcargs`_ reference.   As a practical
-example, suppose we have a database fixture which has a
+without declaring a function argument explicitly or a `usefixtures`_ decorator.
+As a practical example, suppose we have a database fixture which has a
 begin/rollback/commit architecture and we want to automatically surround
 each test method by a transaction and a rollback.  Here is a dummy
 self-contained implementation of this idea::
@@ -791,7 +829,7 @@ self-contained implementation of this idea::
 
     import pytest
 
-    class DB:
+    class DB(object):
         def __init__(self):
             self.intransaction = []
         def begin(self, name):
@@ -803,7 +841,7 @@ self-contained implementation of this idea::
     def db():
         return DB()
 
-    class TestClass:
+    class TestClass(object):
         @pytest.fixture(autouse=True)
         def transact(self, request, db):
             db.begin(request.function.__name__)
@@ -853,7 +891,7 @@ into a conftest.py file **without** using ``autouse``::
 
     # content of conftest.py
     @pytest.fixture
-    def transact(self, request, db):
+    def transact(request, db):
         db.begin()
         yield
         db.rollback()
@@ -861,24 +899,13 @@ into a conftest.py file **without** using ``autouse``::
 and then e.g. have a TestClass using it by declaring the need::
 
     @pytest.mark.usefixtures("transact")
-    class TestClass:
+    class TestClass(object):
         def test_method1(self):
             ...
 
 All test methods in this TestClass will use the transaction fixture while
 other test classes or functions in the module will not use it unless
 they also add a ``transact`` reference.
-
-
-Shifting (visibility of) fixture functions
-----------------------------------------------------
-
-If during implementing your tests you realize that you
-want to use a fixture function from multiple test files you can move it
-to a :ref:`conftest.py <conftest.py>` file or even separately installable
-:ref:`plugins <plugins>` without changing test code.  The discovery of
-fixtures functions starts at test classes, then test modules, then
-``conftest.py`` files and finally builtin and third party plugins.
 
 Overriding fixtures on various levels
 -------------------------------------
@@ -1002,7 +1029,7 @@ Given the tests file structure is:
 
             @pytest.mark.parametrize('username', ['directly-overridden-username-other'])
             def test_username_other(other_username):
-                assert username == 'other-directly-overridden-username-other'
+                assert other_username == 'other-directly-overridden-username-other'
 
 In the example above, a fixture value is overridden by the test parameter value. Note that the value of the fixture
 can be overridden this way even if the test doesn't use it directly (doesn't mention it in the function prototype).

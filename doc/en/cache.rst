@@ -1,15 +1,11 @@
+.. _`cache_provider`:
+.. _cache:
+
+
 Cache: working with cross-testrun state
 =======================================
 
 .. versionadded:: 2.8
-
-.. warning::
-
-  The functionality of this core plugin was previously distributed
-  as a third party plugin named ``pytest-cache``.  The core plugin
-  is compatible regarding command line options and API usage except that you
-  can only store/receive data between test runs that is json-serializable.
-
 
 Usage
 ---------
@@ -80,10 +76,10 @@ If you then run it with ``--lf``::
 
     $ pytest --lf
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    run-last-failure: rerun last 2 failures
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 50 items
+    run-last-failure: rerun previous 2 failures
     
     test_50.py FF
     
@@ -122,10 +118,10 @@ of ``FF`` and dots)::
 
     $ pytest --ff
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    run-last-failure: rerun last 2 failures first
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 50 items
+    run-last-failure: rerun previous 2 failures first
     
     test_50.py FF................................................
     
@@ -227,14 +223,14 @@ You can always peek at the content of the cache using the
 
     $ py.test --cache-show
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
     cachedir: $REGENDOC_TMPDIR/.cache
     ------------------------------- cache values -------------------------------
-    example/value contains:
-      42
     cache/lastfailed contains:
       {'test_caching.py::test_function': True}
+    example/value contains:
+      42
     
     ======= no tests ran in 0.12 seconds ========
 
@@ -246,7 +242,7 @@ by adding the ``--cache-clear`` option like this::
 
     pytest --cache-clear
 
-This is recommended for invocations from Continous Integration
+This is recommended for invocations from Continuous Integration
 servers where isolation and correctness is more important
 than speed.
 

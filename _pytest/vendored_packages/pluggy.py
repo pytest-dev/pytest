@@ -540,7 +540,7 @@ class PluginManager(object):
         of HookImpl instances and the keyword arguments for the hook call.
 
         ``after(outcome, hook_name, hook_impls, kwargs)`` receives the
-        same arguments as ``before`` but also a :py:class:`_CallOutcome`` object
+        same arguments as ``before`` but also a :py:class:`_CallOutcome <_pytest.vendored_packages.pluggy._CallOutcome>` object
         which represents the result of the overall hook call.
         """
         return _TracedHookExecution(self, before, after).undo

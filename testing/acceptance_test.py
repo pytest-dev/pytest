@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import, division, print_function
 import os
 import sys
 
@@ -8,7 +9,7 @@ import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED, EXIT_USAGEERROR
 
 
-class TestGeneralUsage:
+class TestGeneralUsage(object):
     def test_config_error(self, testdir):
         testdir.makeconftest("""
             def pytest_configure(config):
@@ -73,13 +74,12 @@ class TestGeneralUsage:
                 print("---unconfigure")
         """)
         result = testdir.runpytest("-s", "asd")
-        assert result.ret == 4 # EXIT_USAGEERROR
+        assert result.ret == 4  # EXIT_USAGEERROR
         result.stderr.fnmatch_lines(["ERROR: file not found*asd"])
         result.stdout.fnmatch_lines([
             "*---configure",
             "*---unconfigure",
         ])
-
 
     def test_config_preparse_plugin_option(self, testdir):
         testdir.makepyfile(pytest_xyz="""
@@ -118,7 +118,7 @@ class TestGeneralUsage:
         testdir.makepyfile(import_fails="import does_not_work")
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
-            #XXX on jython this fails:  ">   import import_fails",
+            # XXX on jython this fails:  ">   import import_fails",
             "ImportError while importing test module*",
             "*No module named *does_not_work*",
         ])
@@ -130,7 +130,7 @@ class TestGeneralUsage:
         result = testdir.runpytest(p1, p2)
         assert result.ret
         result.stderr.fnmatch_lines([
-            "*ERROR: not found:*%s" %(p2.basename,)
+            "*ERROR: not found:*%s" % (p2.basename,)
         ])
 
     def test_issue486_better_reporting_on_conftest_load_failure(self, testdir):
@@ -145,7 +145,6 @@ class TestGeneralUsage:
         result.stderr.fnmatch_lines("""
             *ERROR*could not load*conftest.py*
         """)
-
 
     def test_early_skip(self, testdir):
         testdir.mkdir("xyz")
@@ -254,7 +253,7 @@ class TestGeneralUsage:
                 if path.basename.startswith("conftest"):
                     return MyCollector(path, parent)
         """)
-        result = testdir.runpytest(c.basename+"::"+"xyz")
+        result = testdir.runpytest(c.basename + "::" + "xyz")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
             "*1 pass*",
@@ -309,15 +308,15 @@ class TestGeneralUsage:
                 x
         """)
         result = testdir.runpytest()
-        assert result.ret == 3 # internal error
+        assert result.ret == 3  # internal error
         result.stderr.fnmatch_lines([
             "INTERNAL*pytest_configure*",
             "INTERNAL*x*",
         ])
         assert 'sessionstarttime' not in result.stderr.str()
 
-    @pytest.mark.parametrize('lookfor', ['test_fun.py', 'test_fun.py::test_a'])
-    def test_issue134_report_syntaxerror_when_collecting_member(self, testdir, lookfor):
+    @pytest.mark.parametrize('lookfor', ['test_fun.py::test_a'])
+    def test_issue134_report_error_when_collecting_member(self, testdir, lookfor):
         testdir.makepyfile(test_fun="""
             def test_a():
                 pass
@@ -338,10 +337,16 @@ class TestGeneralUsage:
             "*ERROR*test_b.py::b*",
         ])
 
+    @pytest.mark.usefixtures('recwarn')
     def test_namespace_import_doesnt_confuse_import_hook(self, testdir):
-        # Ref #383. Python 3.3's namespace package messed with our import hooks
-        # Importing a module that didn't exist, even if the ImportError was
-        # gracefully handled, would make our test crash.
+        """
+        Ref #383. Python 3.3's namespace package messed with our import hooks
+        Importing a module that didn't exist, even if the ImportError was
+        gracefully handled, would make our test crash.
+
+        Use recwarn here to silence this warning in Python 2.6 and 2.7:
+            ImportWarning: Not importing directory '...\not_a_package': missing __init__.py
+        """
         testdir.mkdir('not_a_package')
         p = testdir.makepyfile("""
             try:
@@ -395,7 +400,7 @@ class TestGeneralUsage:
         monkeypatch.setitem(sys.modules, 'myplugin', mod)
         assert pytest.main(args=[str(tmpdir)], plugins=['myplugin']) == 0
 
-    def test_parameterized_with_bytes_regex(self, testdir):
+    def test_parametrized_with_bytes_regex(self, testdir):
         p = testdir.makepyfile("""
             import re
             import pytest
@@ -403,14 +408,27 @@ class TestGeneralUsage:
             def test_stuff(r):
                 pass
         """
-        )
+                               )
         res = testdir.runpytest(p)
         res.stdout.fnmatch_lines([
             '*1 passed*'
         ])
 
+    def test_parametrized_with_null_bytes(self, testdir):
+        """Test parametrization with values that contain null bytes and unicode characters (#2644)"""
+        p = testdir.makepyfile(u"""
+            # encoding: UTF-8
+            import pytest
 
-class TestInvocationVariants:
+            @pytest.mark.parametrize("data", ["\\x00", u'ação'])
+            def test_foo(data):
+                assert data
+        """)
+        res = testdir.runpytest(p)
+        res.assert_outcomes(passed=2)
+
+
+class TestInvocationVariants(object):
     def test_earlyinit(self, testdir):
         p = testdir.makepyfile("""
             import pytest
@@ -433,8 +451,8 @@ class TestInvocationVariants:
             #collect
             #cmdline
             #Item
-            #assert collect.Item is Item
-            #assert collect.Collector is Collector
+            # assert collect.Item is Item
+            # assert collect.Collector is Collector
             main
             skip
             xfail
@@ -502,7 +520,7 @@ class TestInvocationVariants:
         out, err = capsys.readouterr()
 
     def test_invoke_plugin_api(self, testdir, capsys):
-        class MyPlugin:
+        class MyPlugin(object):
             def pytest_addoption(self, parser):
                 parser.addoption("--myopt")
 
@@ -523,6 +541,7 @@ class TestInvocationVariants:
         ])
 
     def test_cmdline_python_package(self, testdir, monkeypatch):
+        import warnings
         monkeypatch.delenv('PYTHONDONTWRITEBYTECODE', False)
         path = testdir.mkpydir("tpkg")
         path.join("test_hello.py").write("def test_hello(): pass")
@@ -545,7 +564,11 @@ class TestInvocationVariants:
             return what
         empty_package = testdir.mkpydir("empty_package")
         monkeypatch.setenv('PYTHONPATH', join_pythonpath(empty_package))
-        result = testdir.runpytest("--pyargs", ".")
+        # the path which is not a package raises a warning on pypy;
+        # no idea why only pypy and not normal python warn about it here
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', ImportWarning)
+            result = testdir.runpytest("--pyargs", ".")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
             "*2 passed*"
@@ -601,8 +624,10 @@ class TestInvocationVariants:
         for p in search_path:
             monkeypatch.syspath_prepend(p)
 
+        os.chdir('world')
         # mixed module and filenames:
-        result = testdir.runpytest("--pyargs", "-v", "ns_pkg.hello", "world/ns_pkg")
+        result = testdir.runpytest("--pyargs", "-v", "ns_pkg.hello", "ns_pkg/world")
+        testdir.chdir()
         assert result.ret == 0
         result.stdout.fnmatch_lines([
             "*test_hello.py::test_hello*PASSED",
@@ -664,13 +689,12 @@ class TestInvocationVariants:
         import _pytest.config
         assert type(_pytest.config.get_plugin_manager()) is _pytest.config.PytestPluginManager
 
-
     def test_has_plugin(self, request):
         """Test hasplugin function of the plugin manager (#932)."""
         assert request.config.pluginmanager.hasplugin('python')
 
 
-class TestDurations:
+class TestDurations(object):
     source = """
         import time
         frag = 0.002
@@ -707,12 +731,12 @@ class TestDurations:
         result = testdir.runpytest("--durations=0")
         assert result.ret == 0
         for x in "123":
-            for y in 'call',: #'setup', 'call', 'teardown':
+            for y in 'call', :  # 'setup', 'call', 'teardown':
                 for line in result.stdout.lines:
                     if ("test_%s" % x) in line and y in line:
                         break
                 else:
-                    raise AssertionError("not found %s %s" % (x,y))
+                    raise AssertionError("not found %s %s" % (x, y))
 
     def test_with_deselected(self, testdir):
         testdir.makepyfile(self.source)
@@ -741,7 +765,7 @@ class TestDurations:
         assert result.ret == 0
 
 
-class TestDurationWithFixture:
+class TestDurationWithFixture(object):
     source = """
         import time
         frag = 0.001
@@ -752,6 +776,7 @@ class TestDurationWithFixture:
         def test_2():
             time.sleep(frag)
     """
+
     def test_setup_function(self, testdir):
         testdir.makepyfile(self.source)
         result = testdir.runpytest("--durations=10")
@@ -781,3 +806,45 @@ def test_zipimport_hook(testdir, tmpdir):
     assert result.ret == 0
     result.stderr.fnmatch_lines(['*not found*foo*'])
     assert 'INTERNALERROR>' not in result.stdout.str()
+
+
+def test_import_plugin_unicode_name(testdir):
+    testdir.makepyfile(
+        myplugin='',
+    )
+    testdir.makepyfile("""
+        def test(): pass
+    """)
+    testdir.makeconftest("""
+        pytest_plugins = [u'myplugin']
+    """)
+    r = testdir.runpytest()
+    assert r.ret == 0
+
+
+def test_deferred_hook_checking(testdir):
+    """
+    Check hooks as late as possible (#1821).
+    """
+    testdir.syspathinsert()
+    testdir.makepyfile(**{
+        'plugin.py': """
+        class Hooks:
+            def pytest_my_hook(self, config):
+                pass
+
+        def pytest_configure(config):
+            config.pluginmanager.add_hookspecs(Hooks)
+        """,
+        'conftest.py': """
+            pytest_plugins = ['plugin']
+            def pytest_my_hook(config):
+                return 40
+        """,
+        'test_foo.py': """
+            def test(request):
+                assert request.config.hook.pytest_my_hook(config=request.config) == [40]
+        """
+    })
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(['* 1 passed *'])

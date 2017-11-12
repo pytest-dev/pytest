@@ -36,7 +36,7 @@ Now we add a test configuration like this::
 
     def pytest_generate_tests(metafunc):
         if 'param1' in metafunc.fixturenames:
-            if metafunc.config.option.all:
+            if metafunc.config.getoption('all'):
                 end = 5
             else:
                 end = 2
@@ -116,6 +116,15 @@ the argument name::
         diff = a - b
         assert diff == expected
 
+    @pytest.mark.parametrize("a,b,expected", [
+        pytest.param(datetime(2001, 12, 12), datetime(2001, 12, 11),
+                     timedelta(1), id='forward'),
+        pytest.param(datetime(2001, 12, 11), datetime(2001, 12, 12),
+                     timedelta(-1), id='backward'),
+    ])
+    def test_timedistance_v3(a, b, expected):
+        diff = a - b
+        assert diff == expected
 
 In ``test_timedistance_v0``, we let pytest generate the test IDs.
 
@@ -130,9 +139,9 @@ objects, they are still using the default pytest representation::
 
     $ pytest test_time.py --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
-    collected 6 items
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 8 items
     <Module 'test_time.py'>
       <Function 'test_timedistance_v0[a0-b0-expected0]'>
       <Function 'test_timedistance_v0[a1-b1-expected1]'>
@@ -140,8 +149,13 @@ objects, they are still using the default pytest representation::
       <Function 'test_timedistance_v1[backward]'>
       <Function 'test_timedistance_v2[20011212-20011211-expected0]'>
       <Function 'test_timedistance_v2[20011211-20011212-expected1]'>
+      <Function 'test_timedistance_v3[forward]'>
+      <Function 'test_timedistance_v3[backward]'>
     
     ======= no tests ran in 0.12 seconds ========
+
+In ``test_timedistance_v3``, we used ``pytest.param`` to specify the test IDs
+together with the actual data, instead of listing them separately.
 
 A quick port of "testscenarios"
 ------------------------------------
@@ -168,7 +182,7 @@ only have to work a bit to construct the correct arguments for pytest's
     scenario1 = ('basic', {'attribute': 'value'})
     scenario2 = ('advanced', {'attribute': 'value2'})
 
-    class TestSampleWithScenarios:
+    class TestSampleWithScenarios(object):
         scenarios = [scenario1, scenario2]
 
         def test_demo1(self, attribute):
@@ -181,8 +195,8 @@ this is a fully self-contained example which you can run with::
 
     $ pytest test_scenarios.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
     
     test_scenarios.py ....
@@ -194,8 +208,8 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
 
     $ pytest --collect-only test_scenarios.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
     <Module 'test_scenarios.py'>
       <Class 'TestSampleWithScenarios'>
@@ -241,9 +255,9 @@ creates a database object for the actual test invocations::
         if 'db' in metafunc.fixturenames:
             metafunc.parametrize("db", ['d1', 'd2'], indirect=True)
 
-    class DB1:
+    class DB1(object):
         "one database object"
-    class DB2:
+    class DB2(object):
         "alternative database object"
 
     @pytest.fixture
@@ -259,8 +273,8 @@ Let's first see how it looks like at collection time::
 
     $ pytest test_backends.py --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     <Module 'test_backends.py'>
       <Function 'test_db_initialized[d1]'>
@@ -320,9 +334,9 @@ The result of this test will be successful::
 
     $ pytest test_indirect_list.py --collect-only
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
-    collected 1 items
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 1 item
     <Module 'test_indirect_list.py'>
       <Function 'test_indirect[a-b]'>
     
@@ -336,7 +350,7 @@ Parametrizing test methods through per-class configuration
 .. _`unittest parametrizer`: https://github.com/testing-cabal/unittest-ext/blob/master/params.py
 
 
-Here is an example ``pytest_generate_function`` function implementing a
+Here is an example ``pytest_generate_tests`` function implementing a
 parametrization scheme similar to Michael Foord's `unittest
 parametrizer`_ but in a lot less code::
 
@@ -350,7 +364,7 @@ parametrizer`_ but in a lot less code::
         metafunc.parametrize(argnames, [[funcargs[name] for name in argnames]
                 for funcargs in funcarglist])
 
-    class TestClass:
+    class TestClass(object):
         # a map specifying multiple argument sets for a test method
         params = {
             'test_equals': [dict(a=1, b=2), dict(a=3, b=3), ],
@@ -399,7 +413,7 @@ Running it results in some skips if we don't have all the python interpreters in
    . $ pytest -rs -q multipython.py
    sssssssssssssss.........sss.........sss.........
    ======= short test summary info ========
-   SKIP [21] $REGENDOC_TMPDIR/CWD/multipython.py:23: 'python2.6' not found
+   SKIP [21] $REGENDOC_TMPDIR/CWD/multipython.py:24: 'python2.6' not found
    27 passed, 21 skipped in 0.12 seconds
 
 Indirect parametrization of optional implementations/imports
@@ -447,13 +461,13 @@ If you run this with reporting for skips enabled::
 
     $ pytest -rs test_module.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     
     test_module.py .s
     ======= short test summary info ========
-    SKIP [1] $REGENDOC_TMPDIR/conftest.py:10: could not import 'opt2'
+    SKIP [1] $REGENDOC_TMPDIR/conftest.py:11: could not import 'opt2'
     
     ======= 1 passed, 1 skipped in 0.12 seconds ========
 
@@ -471,4 +485,54 @@ of our ``test_func1`` was skipped.  A few notes:
   values as well.
 
 
+Set marks or test ID for individual parametrized test
+--------------------------------------------------------------------
 
+Use ``pytest.param`` to apply marks or set test ID to individual parametrized test.
+For example::
+
+    # content of test_pytest_param_example.py
+    import pytest
+    @pytest.mark.parametrize('test_input,expected', [
+        ('3+5', 8),
+        pytest.param('1+7', 8,
+                     marks=pytest.mark.basic),
+        pytest.param('2+4', 6,
+                     marks=pytest.mark.basic,
+                     id='basic_2+4'),
+        pytest.param('6*9', 42,
+                     marks=[pytest.mark.basic, pytest.mark.xfail],
+                     id='basic_6*9'),
+    ])
+    def test_eval(test_input, expected):
+        assert eval(test_input) == expected
+    
+In this example, we have 4 parametrized tests. Except for the first test,
+we mark the rest three parametrized tests with the custom marker ``basic``,
+and for the fourth test we also use the built-in mark ``xfail`` to indicate this 
+test is expected to fail. For explicitness, we set test ids for some tests.
+
+Then run ``pytest`` with verbose mode and with only the ``basic`` marker::
+
+    pytest -v -m basic
+    ============================================ test session starts =============================================
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 4 items
+
+    test_pytest_param_example.py::test_eval[1+7-8] PASSED
+    test_pytest_param_example.py::test_eval[basic_2+4] PASSED
+    test_pytest_param_example.py::test_eval[basic_6*9] xfail
+    ========================================== short test summary info ===========================================
+    XFAIL test_pytest_param_example.py::test_eval[basic_6*9]
+
+    ============================================= 1 tests deselected =============================================
+
+As the result:
+
+- Four tests were collected
+- One test was deselected because it doesn't have the ``basic`` mark.
+- Three tests with the ``basic`` mark was selected.
+- The test ``test_eval[1+7-8]`` passed, but the name is autogenerated and confusing.
+- The test ``test_eval[basic_2+4]`` passed.
+- The test ``test_eval[basic_6*9]`` was expected to fail and did fail.

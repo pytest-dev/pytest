@@ -1,8 +1,11 @@
+# coding: utf-8
+from __future__ import absolute_import, division, print_function
 import sys
 
 import _pytest._code
 import py
 import pytest
+from test_excinfo import TWMock
 
 
 def test_ne():
@@ -10,6 +13,7 @@ def test_ne():
     assert code1 == code1
     code2 = _pytest._code.Code(compile('foo = "baz"', '', 'exec'))
     assert code2 != code1
+
 
 def test_code_gives_back_name_for_not_existing_file():
     name = 'abc-123'
@@ -19,8 +23,9 @@ def test_code_gives_back_name_for_not_existing_file():
     assert str(code.path) == name
     assert code.fullsource is None
 
+
 def test_code_with_class():
-    class A:
+    class A(object):
         pass
     pytest.raises(TypeError, "_pytest._code.Code(A)")
 
@@ -29,10 +34,12 @@ if True:
     def x():
         pass
 
+
 def test_code_fullsource():
     code = _pytest._code.Code(x)
     full = code.fullsource
     assert 'test_code_fullsource()' in str(full)
+
 
 def test_code_source():
     code = _pytest._code.Code(x)
@@ -41,6 +48,7 @@ def test_code_source():
     pass"""
     assert str(src) == expected
 
+
 def test_frame_getsourcelineno_myself():
     def func():
         return sys._getframe(0)
@@ -48,6 +56,7 @@ def test_frame_getsourcelineno_myself():
     f = _pytest._code.Frame(f)
     source, lineno = f.code.fullsource, f.lineno
     assert source[lineno].startswith("        return sys._getframe(0)")
+
 
 def test_getstatement_empty_fullsource():
     def func():
@@ -60,6 +69,7 @@ def test_getstatement_empty_fullsource():
         assert f.statement == _pytest._code.Source("")
     finally:
         f.code.__class__.fullsource = prop
+
 
 def test_code_from_func():
     co = _pytest._code.Code(test_frame_getsourcelineno_myself)
@@ -90,6 +100,7 @@ def test_unicode_handling_syntax_error():
     str(excinfo)
     if sys.version_info[0] < 3:
         unicode(excinfo)
+
 
 def test_code_getargs():
     def f1(x):
@@ -136,26 +147,50 @@ def test_frame_getargs():
                                      ('z', {'c': 'd'})]
 
 
-class TestExceptionInfo:
+class TestExceptionInfo(object):
 
     def test_bad_getsource(self):
         try:
-            if False: pass
-            else: assert False
+            if False:
+                pass
+            else:
+                assert False
         except AssertionError:
             exci = _pytest._code.ExceptionInfo()
         assert exci.getrepr()
 
 
-class TestTracebackEntry:
+class TestTracebackEntry(object):
 
     def test_getsource(self):
         try:
-            if False: pass
-            else: assert False
+            if False:
+                pass
+            else:
+                assert False
         except AssertionError:
             exci = _pytest._code.ExceptionInfo()
         entry = exci.traceback[0]
         source = entry.getsource()
-        assert len(source) == 4
-        assert 'else: assert False' in source[3]
+        assert len(source) == 6
+        assert 'assert False' in source[5]
+
+
+class TestReprFuncArgs(object):
+
+    def test_not_raise_exception_with_mixed_encoding(self):
+        from _pytest._code.code import ReprFuncArgs
+
+        tw = TWMock()
+
+        args = [
+            ('unicode_string', u"São Paulo"),
+            ('utf8_string', 'S\xc3\xa3o Paulo'),
+        ]
+
+        r = ReprFuncArgs(args)
+        r.toterminal(tw)
+        if sys.version_info[0] >= 3:
+            assert tw.lines[0] == 'unicode_string = São Paulo, utf8_string = SÃ£o Paulo'
+        else:
+            assert tw.lines[0] == 'unicode_string = São Paulo, utf8_string = São Paulo'

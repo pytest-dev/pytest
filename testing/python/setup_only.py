@@ -187,7 +187,7 @@ def test_dynamic_fixture_request(testdir):
             pass
         @pytest.fixture()
         def dependent_fixture(request):
-            request.getfuncargvalue('dynamically_requested_fixture')
+            request.getfixturevalue('dynamically_requested_fixture')
         def test_dyn(dependent_fixture):
             pass
     ''')

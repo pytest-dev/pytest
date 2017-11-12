@@ -1,8 +1,12 @@
-import pytest, py
+from __future__ import absolute_import, division, print_function
+import pytest
+import py
 
-from _pytest.main import Session, EXIT_NOTESTSCOLLECTED
+import _pytest._code
+from _pytest.main import Session, EXIT_NOTESTSCOLLECTED, _in_venv
 
-class TestCollector:
+
+class TestCollector(object):
     def test_collect_versus_item(self):
         from pytest import Collector, Item
         assert not issubclass(Collector, Item)
@@ -41,16 +45,16 @@ class TestCollector:
         assert not (fn1 == fn3)
         assert fn1 != fn3
 
-        for fn in fn1,fn2,fn3:
+        for fn in fn1, fn2, fn3:
             assert fn != 3
             assert fn != modcol
-            assert fn != [1,2,3]
-            assert [1,2,3] != fn
+            assert fn != [1, 2, 3]
+            assert [1, 2, 3] != fn
             assert modcol != fn
 
     def test_getparent(self, testdir):
         modcol = testdir.getmodulecol("""
-            class TestClass:
+            class TestClass(object):
                  def test_foo():
                      pass
         """)
@@ -66,7 +70,6 @@ class TestCollector:
 
         parent = fn.getparent(pytest.Class)
         assert parent is cls
-
 
     def test_getcustomfile_roundtrip(self, testdir):
         hello = testdir.makefile(".xxx", hello="world")
@@ -85,7 +88,24 @@ class TestCollector:
         assert len(nodes) == 1
         assert isinstance(nodes[0], pytest.File)
 
-class TestCollectFS:
+    def test_can_skip_class_with_test_attr(self, testdir):
+        """Assure test class is skipped when using `__test__=False` (See #2007)."""
+        testdir.makepyfile("""
+            class TestFoo(object):
+                __test__ = False
+                def __init__(self):
+                    pass
+                def test_foo():
+                    assert True
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            'collected 0 items',
+            '*no tests ran in*',
+        ])
+
+
+class TestCollectFS(object):
     def test_ignored_certain_directories(self, testdir):
         tmpdir = testdir.tmpdir
         tmpdir.ensure("build", 'test_notfound.py')
@@ -103,6 +123,53 @@ class TestCollectFS:
         s = result.stdout.str()
         assert "test_notfound" not in s
         assert "test_found" in s
+
+    @pytest.mark.parametrize('fname',
+                             ("activate", "activate.csh", "activate.fish",
+                              "Activate", "Activate.bat", "Activate.ps1"))
+    def test_ignored_virtualenvs(self, testdir, fname):
+        bindir = "Scripts" if py.std.sys.platform.startswith("win") else "bin"
+        testdir.tmpdir.ensure("virtual", bindir, fname)
+        testfile = testdir.tmpdir.ensure("virtual", "test_invenv.py")
+        testfile.write("def test_hello(): pass")
+
+        # by default, ignore tests inside a virtualenv
+        result = testdir.runpytest()
+        assert "test_invenv" not in result.stdout.str()
+        # allow test collection if user insists
+        result = testdir.runpytest("--collect-in-virtualenv")
+        assert "test_invenv" in result.stdout.str()
+        # allow test collection if user directly passes in the directory
+        result = testdir.runpytest("virtual")
+        assert "test_invenv" in result.stdout.str()
+
+    @pytest.mark.parametrize('fname',
+                             ("activate", "activate.csh", "activate.fish",
+                              "Activate", "Activate.bat", "Activate.ps1"))
+    def test_ignored_virtualenvs_norecursedirs_precedence(self, testdir, fname):
+        bindir = "Scripts" if py.std.sys.platform.startswith("win") else "bin"
+        # norecursedirs takes priority
+        testdir.tmpdir.ensure(".virtual", bindir, fname)
+        testfile = testdir.tmpdir.ensure(".virtual", "test_invenv.py")
+        testfile.write("def test_hello(): pass")
+        result = testdir.runpytest("--collect-in-virtualenv")
+        assert "test_invenv" not in result.stdout.str()
+        # ...unless the virtualenv is explicitly given on the CLI
+        result = testdir.runpytest("--collect-in-virtualenv", ".virtual")
+        assert "test_invenv" in result.stdout.str()
+
+    @pytest.mark.parametrize('fname',
+                             ("activate", "activate.csh", "activate.fish",
+                              "Activate", "Activate.bat", "Activate.ps1"))
+    def test__in_venv(self, testdir, fname):
+        """Directly test the virtual env detection function"""
+        bindir = "Scripts" if py.std.sys.platform.startswith("win") else "bin"
+        # no bin/activate, not a virtualenv
+        base_path = testdir.tmpdir.mkdir('venv')
+        assert _in_venv(base_path) is False
+        # with bin/activate, totally a virtualenv
+        base_path.ensure(bindir, fname)
+        assert _in_venv(base_path) is True
 
     def test_custom_norecursedirs(self, testdir):
         testdir.makeini("""
@@ -147,11 +214,11 @@ class TestCollectFS:
             assert [x.name for x in items] == ['test_%s' % dirname]
 
 
-class TestCollectPluginHookRelay:
+class TestCollectPluginHookRelay(object):
     def test_pytest_collect_file(self, testdir):
         wascalled = []
 
-        class Plugin:
+        class Plugin(object):
             def pytest_collect_file(self, path, parent):
                 if not path.basename.startswith("."):
                     # Ignore hidden files, e.g. .testmondata.
@@ -165,7 +232,7 @@ class TestCollectPluginHookRelay:
     def test_pytest_collect_directory(self, testdir):
         wascalled = []
 
-        class Plugin:
+        class Plugin(object):
             def pytest_collect_directory(self, path, parent):
                 wascalled.append(path.basename)
 
@@ -176,7 +243,7 @@ class TestCollectPluginHookRelay:
         assert "world" in wascalled
 
 
-class TestPrunetraceback:
+class TestPrunetraceback(object):
 
     def test_custom_repr_failure(self, testdir):
         p = testdir.makepyfile("""
@@ -222,7 +289,7 @@ class TestPrunetraceback:
         ])
 
 
-class TestCustomConftests:
+class TestCustomConftests(object):
     def test_ignore_collect_path(self, testdir):
         testdir.makeconftest("""
             def pytest_ignore_collect(path, config):
@@ -317,7 +384,8 @@ class TestCustomConftests:
             "*test_x*"
         ])
 
-class TestSession:
+
+class TestSession(object):
     def test_parsearg(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
         subdir = testdir.mkdir("sub")
@@ -330,11 +398,11 @@ class TestSession:
         assert rcol.fspath == subdir
         parts = rcol._parsearg(p.basename)
 
-        assert parts[0] ==  target
+        assert parts[0] == target
         assert len(parts) == 1
         parts = rcol._parsearg(p.basename + "::test_func")
-        assert parts[0] ==  target
-        assert parts[1] ==  "test_func"
+        assert parts[0] == target
+        assert parts[1] == "test_func"
         assert len(parts) == 2
 
     def test_collect_topdir(self, testdir):
@@ -345,13 +413,18 @@ class TestSession:
         topdir = testdir.tmpdir
         rcol = Session(config)
         assert topdir == rcol.fspath
-        #rootid = rcol.nodeid
-        #root2 = rcol.perform_collect([rcol.nodeid], genitems=False)[0]
-        #assert root2 == rcol, rootid
+        # rootid = rcol.nodeid
+        # root2 = rcol.perform_collect([rcol.nodeid], genitems=False)[0]
+        # assert root2 == rcol, rootid
         colitems = rcol.perform_collect([rcol.nodeid], genitems=False)
         assert len(colitems) == 1
         assert colitems[0].fspath == p
 
+    def get_reported_items(self, hookrec):
+        """Return pytest.Item instances reported by the pytest_collectreport hook"""
+        calls = hookrec.getcalls('pytest_collectreport')
+        return [x for call in calls for x in call.report.result
+                if isinstance(x, pytest.Item)]
 
     def test_collect_protocol_single_function(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
@@ -369,13 +442,14 @@ class TestSession:
             ("pytest_collectstart", "collector.fspath == p"),
             ("pytest_make_collect_report", "collector.fspath == p"),
             ("pytest_pycollect_makeitem", "name == 'test_func'"),
-            ("pytest_collectreport", "report.nodeid.startswith(p.basename)"),
-            ("pytest_collectreport", "report.nodeid == ''")
+            ("pytest_collectreport", "report.result[0].name == 'test_func'"),
         ])
+        # ensure we are reporting the collection of the single test item (#2464)
+        assert [x.name for x in self.get_reported_items(hookrec)] == ['test_func']
 
     def test_collect_protocol_method(self, testdir):
         p = testdir.makepyfile("""
-            class TestClass:
+            class TestClass(object):
                 def test_method(self):
                     pass
         """)
@@ -390,6 +464,8 @@ class TestSession:
             assert items[0].name == "test_method"
             newid = items[0].nodeid
             assert newid == normid
+            # ensure we are reporting the collection of the single test item (#2464)
+            assert [x.name for x in self.get_reported_items(hookrec)] == ['test_method']
 
     def test_collect_custom_nodes_multi_id(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
@@ -419,9 +495,8 @@ class TestSession:
                 "collector.__class__.__name__ == 'Module'"),
             ("pytest_pycollect_makeitem", "name == 'test_func'"),
             ("pytest_collectreport", "report.nodeid.startswith(p.basename)"),
-            #("pytest_collectreport",
-            #    "report.fspath == %r" % str(rcol.fspath)),
         ])
+        assert len(self.get_reported_items(hookrec)) == 2
 
     def test_collect_subdir_event_ordering(self, testdir):
         p = testdir.makepyfile("def test_func(): pass")
@@ -436,7 +511,7 @@ class TestSession:
             ("pytest_collectstart", "collector.fspath == test_aaa"),
             ("pytest_pycollect_makeitem", "name == 'test_func'"),
             ("pytest_collectreport",
-                    "report.nodeid.startswith('aaa/test_aaa.py')"),
+             "report.nodeid.startswith('aaa/test_aaa.py')"),
         ])
 
     def test_collect_two_commandline_args(self, testdir):
@@ -474,17 +549,20 @@ class TestSession:
 
     def test_find_byid_without_instance_parents(self, testdir):
         p = testdir.makepyfile("""
-            class TestClass:
+            class TestClass(object):
                 def test_method(self):
                     pass
         """)
-        arg = p.basename + ("::TestClass::test_method")
+        arg = p.basename + "::TestClass::test_method"
         items, hookrec = testdir.inline_genitems(arg)
         assert len(items) == 1
         item, = items
         assert item.nodeid.endswith("TestClass::()::test_method")
+        # ensure we are reporting the collection of the single test item (#2464)
+        assert [x.name for x in self.get_reported_items(hookrec)] == ['test_method']
 
-class Test_getinitialnodes:
+
+class Test_getinitialnodes(object):
     def test_global_file(self, testdir, tmpdir):
         x = tmpdir.ensure("x.py")
         with tmpdir.as_cwd():
@@ -511,7 +589,8 @@ class Test_getinitialnodes:
         for col in col.listchain():
             assert col.config is config
 
-class Test_genitems:
+
+class Test_genitems(object):
     def test_check_collect_hashes(self, testdir):
         p = testdir.makepyfile("""
             def test_1():
@@ -534,7 +613,7 @@ class Test_genitems:
             def testone():
                 pass
 
-            class TestX:
+            class TestX(object):
                 def testmethod_one(self):
                     pass
 
@@ -567,11 +646,11 @@ class Test_genitems:
             python_functions = *_test test
         """)
         p = testdir.makepyfile('''
-            class MyTestSuite:
+            class MyTestSuite(object):
                 def x_test(self):
                     pass
 
-            class TestCase:
+            class TestCase(object):
                 def test_y(self):
                     pass
         ''')
@@ -586,7 +665,7 @@ def test_matchnodes_two_collections_same_file(testdir):
         def pytest_configure(config):
             config.pluginmanager.register(Plugin2())
 
-        class Plugin2:
+        class Plugin2(object):
             def pytest_collect_file(self, path, parent):
                 if path.ext == ".abc":
                     return MyFile2(path, parent)
@@ -618,15 +697,15 @@ def test_matchnodes_two_collections_same_file(testdir):
     ])
 
 
-class TestNodekeywords:
+class TestNodekeywords(object):
     def test_no_under(self, testdir):
         modcol = testdir.getmodulecol("""
             def test_pass(): pass
             def test_fail(): assert 0
         """)
-        l = list(modcol.keywords)
-        assert modcol.name in l
-        for x in l:
+        values = list(modcol.keywords)
+        assert modcol.name in values
+        for x in values:
             assert not x.startswith("_")
         assert modcol.name in repr(modcol.keywords)
 
@@ -662,6 +741,7 @@ COLLECTION_ERROR_PY_FILES = dict(
             assert True
     """,
 )
+
 
 def test_exit_on_collection_error(testdir):
     """Verify that all collection errors are collected and no tests executed"""
@@ -750,4 +830,29 @@ def test_continue_on_collection_errors_maxfail(testdir):
         "collected 2 items / 2 errors",
         "*Interrupted: stopping after 3 failures*",
         "*1 failed, 2 error*",
+    ])
+
+
+def test_fixture_scope_sibling_conftests(testdir):
+    """Regression test case for https://github.com/pytest-dev/pytest/issues/2836"""
+    foo_path = testdir.mkpydir("foo")
+    foo_path.join("conftest.py").write(_pytest._code.Source("""
+        import pytest
+        @pytest.fixture
+        def fix():
+            return 1
+    """))
+    foo_path.join("test_foo.py").write("def test_foo(fix): assert fix == 1")
+
+    # Tests in `food/` should not see the conftest fixture from `foo/`
+    food_path = testdir.mkpydir("food")
+    food_path.join("test_food.py").write("def test_food(fix): assert fix == 1")
+
+    res = testdir.runpytest()
+    assert res.ret == 1
+
+    res.stdout.fnmatch_lines([
+        "*ERROR at setup of test_food*",
+        "E*fixture 'fix' not found",
+        "*1 passed, 1 error*",
     ])

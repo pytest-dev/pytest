@@ -89,7 +89,7 @@ Changes between 2.2.4 and 2.3.0
 
 - fix issue128: show captured output when capsys/capfd are used
 
-- fix issue179: propperly show the dependency chain of factories
+- fix issue179: properly show the dependency chain of factories
 
 - pluginmanager.register(...) now raises ValueError if the
   plugin has been already registered or the name is taken
@@ -130,5 +130,5 @@ Changes between 2.2.4 and 2.3.0
 
   - don't show deselected reason line if there is none
 
-  - py.test -vv will show all of assert comparisations instead of truncating
+  - py.test -vv will show all of assert comparisons instead of truncating
 

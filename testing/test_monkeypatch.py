@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 import os
 import sys
 import textwrap
@@ -7,20 +8,16 @@ from _pytest.monkeypatch import MonkeyPatch
 
 
 @pytest.fixture
-def mp(request):
+def mp():
     cwd = os.getcwd()
     sys_path = list(sys.path)
-
-    def cleanup():
-        sys.path[:] = sys_path
-        os.chdir(cwd)
-
-    request.addfinalizer(cleanup)
-    return MonkeyPatch()
+    yield MonkeyPatch()
+    sys.path[:] = sys_path
+    os.chdir(cwd)
 
 
 def test_setattr():
-    class A:
+    class A(object):
         x = 1
 
     monkeypatch = MonkeyPatch()
@@ -43,7 +40,7 @@ def test_setattr():
     assert A.x == 5
 
 
-class TestSetattrWithImportPath:
+class TestSetattrWithImportPath(object):
     def test_string_expression(self, monkeypatch):
         monkeypatch.setattr("os.path.abspath", lambda x: "hello2")
         assert os.path.abspath("123") == "hello2"
@@ -83,7 +80,7 @@ class TestSetattrWithImportPath:
 
 
 def test_delattr():
-    class A:
+    class A(object):
         x = 1
 
     monkeypatch = MonkeyPatch()
@@ -298,7 +295,7 @@ class SampleNewInherit(SampleNew):
     pass
 
 
-class SampleOld:
+class SampleOld(object):
     # oldstyle on python2
     @staticmethod
     def hello():
@@ -322,12 +319,11 @@ def test_issue156_undo_staticmethod(Sample):
     monkeypatch.undo()
     assert Sample.hello()
 
+
 def test_issue1338_name_resolving():
     pytest.importorskip('requests')
     monkeypatch = MonkeyPatch()
     try:
-         monkeypatch.delattr('requests.sessions.Session.request')
+        monkeypatch.delattr('requests.sessions.Session.request')
     finally:
         monkeypatch.undo()
-
-

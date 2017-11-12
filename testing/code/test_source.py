@@ -1,6 +1,7 @@
 # flake8: noqa
 # disable flake check on this file because some constructs are strange
 # or redundant on purpose and can't be disable on a line-by-line basis
+from __future__ import absolute_import, division, print_function
 import sys
 
 import _pytest._code
@@ -15,6 +16,7 @@ else:
     astonly = pytest.mark.xfail("True", reason="only works with AST-compile")
 
 failsonjython = pytest.mark.xfail("sys.platform.startswith('java')")
+
 
 def test_source_str_function():
     x = Source("3")
@@ -33,6 +35,7 @@ def test_source_str_function():
     """, rstrip=True)
     assert str(x) == "\n3"
 
+
 def test_unicode():
     try:
         unicode
@@ -44,22 +47,26 @@ def test_unicode():
     val = eval(co)
     assert isinstance(val, unicode)
 
+
 def test_source_from_function():
     source = _pytest._code.Source(test_source_str_function)
     assert str(source).startswith('def test_source_str_function():')
 
+
 def test_source_from_method():
-    class TestClass:
+    class TestClass(object):
         def test_method(self):
             pass
     source = _pytest._code.Source(TestClass().test_method)
     assert source.lines == ["def test_method(self):",
                             "    pass"]
 
+
 def test_source_from_lines():
     lines = ["a \n", "b\n", "c"]
     source = _pytest._code.Source(lines)
     assert source.lines == ['a ', 'b', 'c']
+
 
 def test_source_from_inner_function():
     def f():
@@ -69,6 +76,7 @@ def test_source_from_inner_function():
     source = _pytest._code.Source(f)
     assert str(source).startswith('def f():')
 
+
 def test_source_putaround_simple():
     source = Source("raise ValueError")
     source = source.putaround(
@@ -77,13 +85,14 @@ def test_source_putaround_simple():
             x = 42
         else:
             x = 23""")
-    assert str(source)=="""\
+    assert str(source) == """\
 try:
     raise ValueError
 except ValueError:
     x = 42
 else:
     x = 23"""
+
 
 def test_source_putaround():
     source = Source()
@@ -93,11 +102,13 @@ def test_source_putaround():
     """)
     assert str(source).strip() == "if 1:\n    x=1"
 
+
 def test_source_strips():
     source = Source("")
     assert source == Source()
     assert str(source) == ''
     assert source.strip() == source
+
 
 def test_source_strip_multiline():
     source = Source()
@@ -105,11 +116,13 @@ def test_source_strip_multiline():
     source2 = source.strip()
     assert source2.lines == [" hello"]
 
+
 def test_syntaxerror_rerepresentation():
     ex = pytest.raises(SyntaxError, _pytest._code.compile, 'xyz xyz')
     assert ex.value.lineno == 1
-    assert ex.value.offset in (4,7) # XXX pypy/jython versus cpython?
+    assert ex.value.offset in (4, 7)  # XXX pypy/jython versus cpython?
     assert ex.value.text.strip(), 'x x'
+
 
 def test_isparseable():
     assert Source("hello").isparseable()
@@ -119,13 +132,15 @@ def test_isparseable():
     assert not Source(" \nif 1:\npass").isparseable()
     assert not Source(chr(0)).isparseable()
 
-class TestAccesses:
+
+class TestAccesses(object):
     source = Source("""\
         def f(x):
             pass
         def g(x):
             pass
     """)
+
     def test_getrange(self):
         x = self.source[0:2]
         assert x.isparseable()
@@ -140,10 +155,11 @@ class TestAccesses:
         assert len(self.source) == 4
 
     def test_iter(self):
-        l = [x for x in self.source]
-        assert len(l) == 4
+        values = [x for x in self.source]
+        assert len(values) == 4
 
-class TestSourceParsingAndCompiling:
+
+class TestSourceParsingAndCompiling(object):
     source = Source("""\
         def f(x):
             assert (x ==
@@ -154,12 +170,12 @@ class TestSourceParsingAndCompiling:
     def test_compile(self):
         co = _pytest._code.compile("x=3")
         d = {}
-        exec (co, d)
+        exec(co, d)
         assert d['x'] == 3
 
     def test_compile_and_getsource_simple(self):
         co = _pytest._code.compile("x=3")
-        exec (co)
+        exec(co)
         source = _pytest._code.Source(co)
         assert str(source) == "x=3"
 
@@ -180,16 +196,16 @@ class TestSourceParsingAndCompiling:
         assert 'ValueError' in source2
 
     def test_getstatement(self):
-        #print str(self.source)
+        # print str(self.source)
         ass = str(self.source[1:])
         for i in range(1, 4):
-            #print "trying start in line %r" % self.source[i]
+            # print "trying start in line %r" % self.source[i]
             s = self.source.getstatement(i)
             #x = s.deindent()
             assert str(s) == ass
 
     def test_getstatementrange_triple_quoted(self):
-        #print str(self.source)
+        # print str(self.source)
         source = Source("""hello('''
         ''')""")
         s = source.getstatement(0)
@@ -210,12 +226,12 @@ class TestSourceParsingAndCompiling:
         """)
         assert len(source) == 7
         # check all lineno's that could occur in a traceback
-        #assert source.getstatementrange(0) == (0, 7)
-        #assert source.getstatementrange(1) == (1, 5)
+        # assert source.getstatementrange(0) == (0, 7)
+        # assert source.getstatementrange(1) == (1, 5)
         assert source.getstatementrange(2) == (2, 3)
         assert source.getstatementrange(3) == (3, 4)
         assert source.getstatementrange(4) == (4, 5)
-        #assert source.getstatementrange(5) == (0, 7)
+        # assert source.getstatementrange(5) == (0, 7)
         assert source.getstatementrange(6) == (6, 7)
 
     def test_getstatementrange_bug(self):
@@ -261,7 +277,7 @@ class TestSourceParsingAndCompiling:
     def test_getstatementrange_out_of_bounds_py3(self):
         source = Source("if xxx:\n   from .collections import something")
         r = source.getstatementrange(1)
-        assert r == (1,2)
+        assert r == (1, 2)
 
     def test_getstatementrange_with_syntaxerror_issue7(self):
         source = Source(":")
@@ -282,7 +298,7 @@ class TestSourceParsingAndCompiling:
         excinfo = pytest.raises(AssertionError, "f(6)")
         frame = excinfo.traceback[-1].frame
         stmt = frame.code.fullsource.getstatement(frame.lineno)
-        #print "block", str(block)
+        # print "block", str(block)
         assert str(stmt).strip().startswith('assert')
 
     @pytest.mark.parametrize('name', ['', None, 'my'])
@@ -290,9 +306,9 @@ class TestSourceParsingAndCompiling:
         def check(comp, name):
             co = comp(self.source, name)
             if not name:
-                expected = "codegen %s:%d>" %(mypath, mylineno+2+2)
+                expected = "codegen %s:%d>" % (mypath, mylineno + 2 + 2)
             else:
-                expected = "codegen %r %s:%d>" % (name, mypath, mylineno+2+2)
+                expected = "codegen %r %s:%d>" % (name, mypath, mylineno + 2 + 2)
             fn = co.co_filename
             assert fn.endswith(expected)
 
@@ -306,30 +322,18 @@ class TestSourceParsingAndCompiling:
     def test_offsetless_synerr(self):
         pytest.raises(SyntaxError, _pytest._code.compile, "lambda a,a: 0", mode='eval')
 
+
 def test_getstartingblock_singleline():
-    class A:
+    class A(object):
         def __init__(self, *args):
             frame = sys._getframe(1)
             self.source = _pytest._code.Frame(frame).statement
 
     x = A('x', 'y')
 
-    l = [i for i in x.source.lines if i.strip()]
-    assert len(l) == 1
+    values = [i for i in x.source.lines if i.strip()]
+    assert len(values) == 1
 
-def test_getstartingblock_multiline():
-    class A:
-        def __init__(self, *args):
-            frame = sys._getframe(1)
-            self.source = _pytest._code.Frame(frame).statement
-
-    x = A('x',
-          'y' \
-          ,
-          'z')
-
-    l = [i for i in x.source.lines if i.strip()]
-    assert len(l) == 4
 
 def test_getline_finally():
     def c(): pass
@@ -343,6 +347,7 @@ def test_getline_finally():
     """)
     source = excinfo.traceback[-1].statement
     assert str(source).strip() == 'c(1)'
+
 
 def test_getfuncsource_dynamic():
     source = """
@@ -385,7 +390,7 @@ def test_deindent():
     lines = deindent(source.splitlines())
     assert lines == ['', 'def f():', '    def g():', '        pass', '    ']
 
-@pytest.mark.xfail("sys.version_info[:3] < (2,7,0)")
+
 def test_source_of_class_at_eof_without_newline(tmpdir):
     # this test fails because the implicit inspect.getsource(A) below
     # does not return the "x = 1" last line.
@@ -399,9 +404,11 @@ def test_source_of_class_at_eof_without_newline(tmpdir):
     s2 = _pytest._code.Source(tmpdir.join("a.py").pyimport().A)
     assert str(source).strip() == str(s2).strip()
 
+
 if True:
     def x():
         pass
+
 
 def test_getsource_fallback():
     from _pytest._code.source import getsource
@@ -410,6 +417,7 @@ def test_getsource_fallback():
     src = getsource(x)
     assert src == expected
 
+
 def test_idem_compile_and_getsource():
     from _pytest._code.source import getsource
     expected = "def x(): pass"
@@ -417,11 +425,13 @@ def test_idem_compile_and_getsource():
     src = getsource(co)
     assert src == expected
 
+
 def test_findsource_fallback():
     from _pytest._code.source import findsource
     src, lineno = findsource(x)
     assert 'test_findsource_simple' in str(src)
     assert src[lineno] == '    def x():'
+
 
 def test_findsource():
     from _pytest._code.source import findsource
@@ -449,7 +459,7 @@ def test_getfslineno():
     fspath, lineno = getfslineno(f)
 
     assert fspath.basename == "test_source.py"
-    assert lineno == _pytest._code.getrawcode(f).co_firstlineno - 1 # see findsource
+    assert lineno == _pytest._code.getrawcode(f).co_firstlineno - 1  # see findsource
 
     class A(object):
         pass
@@ -461,16 +471,19 @@ def test_getfslineno():
     assert lineno == A_lineno
 
     assert getfslineno(3) == ("", -1)
-    class B:
+
+    class B(object):
         pass
     B.__name__ = "B2"
     assert getfslineno(B)[1] == -1
 
+
 def test_code_of_object_instance_with_call():
-    class A:
+    class A(object):
         pass
     pytest.raises(TypeError, lambda: _pytest._code.Source(A()))
-    class WithCall:
+
+    class WithCall(object):
         def __call__(self):
             pass
 
@@ -489,9 +502,11 @@ def getstatement(lineno, source):
     ast, start, end = getstatementrange_ast(lineno, source)
     return source[start:end]
 
+
 def test_oneline():
     source = getstatement(0, "raise ValueError")
     assert str(source) == "raise ValueError"
+
 
 def test_comment_and_no_newline_at_end():
     from _pytest._code.source import getstatementrange_ast
@@ -501,9 +516,11 @@ def test_comment_and_no_newline_at_end():
     ast, start, end = getstatementrange_ast(1, source)
     assert end == 2
 
+
 def test_oneline_and_comment():
     source = getstatement(0, "raise ValueError\n#hello")
     assert str(source) == "raise ValueError"
+
 
 @pytest.mark.xfail(hasattr(sys, "pypy_version_info"),
                    reason='does not work on pypy')
@@ -520,28 +537,32 @@ def test_comments():
 comment 4
 """
 '''
-    for line in range(2,6):
+    for line in range(2, 6):
         assert str(getstatement(line, source)) == '    x = 1'
-    for line in range(6,10):
+    for line in range(6, 10):
         assert str(getstatement(line, source)) == '    assert False'
     assert str(getstatement(10, source)) == '"""'
+
 
 def test_comment_in_statement():
     source = '''test(foo=1,
     # comment 1
     bar=2)
 '''
-    for line in range(1,3):
+    for line in range(1, 3):
         assert str(getstatement(line, source)) == \
-               'test(foo=1,\n    # comment 1\n    bar=2)'
+            'test(foo=1,\n    # comment 1\n    bar=2)'
+
 
 def test_single_line_else():
     source = getstatement(1, "if False: 2\nelse: 3")
     assert str(source) == "else: 3"
 
+
 def test_single_line_finally():
     source = getstatement(1, "try: 1\nfinally: 3")
     assert str(source) == "finally: 3"
+
 
 def test_issue55():
     source = ('def round_trip(dinp):\n  assert 1 == dinp\n'
@@ -559,7 +580,8 @@ x = 3
 """)
     assert str(source) == "raise ValueError(\n    23\n)"
 
-class TestTry:
+
+class TestTry(object):
     pytestmark = astonly
     source = """\
 try:
@@ -586,7 +608,8 @@ else:
         source = getstatement(5, self.source)
         assert str(source) == "    raise KeyError()"
 
-class TestTryFinally:
+
+class TestTryFinally(object):
     source = """\
 try:
     raise ValueError
@@ -603,8 +626,7 @@ finally:
         assert str(source) == "    raise IndexError(1)"
 
 
-
-class TestIf:
+class TestIf(object):
     pytestmark = astonly
     source = """\
 if 1:
@@ -631,12 +653,14 @@ else:
         source = getstatement(5, self.source)
         assert str(source) == "    y = 7"
 
+
 def test_semicolon():
     s = """\
 hello ; pytest.skip()
 """
     source = getstatement(0, s)
     assert str(source) == s.strip()
+
 
 def test_def_online():
     s = """\
@@ -647,6 +671,7 @@ def something():
 """
     source = getstatement(0, s)
     assert str(source) == "def func(): raise ValueError(42)"
+
 
 def XXX_test_expression_multiline():
     source = """\

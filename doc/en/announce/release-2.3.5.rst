@@ -44,11 +44,11 @@ Changes between 2.3.4 and 2.3.5
   (thanks Adam Goucher)
 
 - Issue 265 - integrate nose setup/teardown with setupstate
-  so it doesnt try to teardown if it did not setup
+  so it doesn't try to teardown if it did not setup
 
-- issue 271 - dont write junitxml on slave nodes
+- issue 271 - don't write junitxml on slave nodes
 
-- Issue 274 - dont try to show full doctest example
+- Issue 274 - don't try to show full doctest example
   when doctest does not know the example location
 
 - issue 280 - disable assertion rewriting on buggy CPython 2.6.0
@@ -84,7 +84,7 @@ Changes between 2.3.4 and 2.3.5
 - allow to specify prefixes starting with "_" when 
   customizing python_functions test discovery. (thanks Graham Horler)
 
-- improve PYTEST_DEBUG tracing output by puting
+- improve PYTEST_DEBUG tracing output by putting
   extra data on a new lines with additional indent
 
 - ensure OutcomeExceptions like skip/fail have initialized exception attributes

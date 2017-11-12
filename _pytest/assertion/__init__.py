@@ -1,12 +1,13 @@
 """
 support for presenting detailed information in failing assertions.
 """
+from __future__ import absolute_import, division, print_function
 import py
-import os
 import sys
 
 from _pytest.assertion import util
 from _pytest.assertion import rewrite
+from _pytest.assertion import truncate
 
 
 def pytest_addoption(parser):
@@ -22,10 +23,6 @@ def pytest_addoption(parser):
                             (the default) rewrites assert statements in
                             test modules on import to provide assert
                             expression information.""")
-
-
-def pytest_namespace():
-    return {'register_assert_rewrite': register_assert_rewrite}
 
 
 def register_assert_rewrite(*names):
@@ -100,12 +97,6 @@ def pytest_collection(session):
             assertstate.hook.set_session(session)
 
 
-def _running_on_ci():
-    """Check if we're currently running on a CI system."""
-    env_vars = ['CI', 'BUILD_NUMBER']
-    return any(var in os.environ for var in env_vars)
-
-
 def pytest_runtest_setup(item):
     """Setup the pytest_assertrepr_compare hook
 
@@ -119,8 +110,8 @@ def pytest_runtest_setup(item):
 
         This uses the first result from the hook and then ensures the
         following:
-        * Overly verbose explanations are dropped unless -vv was used or
-          running on a CI.
+        * Overly verbose explanations are truncated unless configured otherwise
+          (eg. if running in verbose mode).
         * Embedded newlines are escaped to help util.format_explanation()
           later.
         * If the rewrite mode is used embedded %-characters are replaced
@@ -133,14 +124,7 @@ def pytest_runtest_setup(item):
             config=item.config, op=op, left=left, right=right)
         for new_expl in hook_result:
             if new_expl:
-                if (sum(len(p) for p in new_expl[1:]) > 80*8 and
-                        item.config.option.verbose < 2 and
-                        not _running_on_ci()):
-                    show_max = 10
-                    truncated_lines = len(new_expl) - show_max
-                    new_expl[show_max:] = [py.builtin._totext(
-                        'Detailed information truncated (%d more lines)'
-                        ', use "-vv" to show' % truncated_lines)]
+                new_expl = truncate.truncate_if_required(new_expl, item)
                 new_expl = [line.replace("\n", "\\n") for line in new_expl]
                 res = py.builtin._totext("\n~").join(new_expl)
                 if item.config.getvalue("assertmode") == "rewrite":

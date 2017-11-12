@@ -25,9 +25,9 @@ To execute it::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
-    collected 1 items
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 1 item
     
     test_sample.py F
     
@@ -59,7 +59,7 @@ Features
 
 - Python2.6+, Python3.3+, PyPy-2.3, Jython-2.5 (untested);
 
-- Rich plugin architecture, with over 150+ :ref:`external plugins <extplugins>` and thriving community;
+- Rich plugin architecture, with over 315+ `external plugins <http://plugincompat.herokuapp.com>`_ and thriving community;
 
 
 Documentation
@@ -83,7 +83,7 @@ Consult the :ref:`Changelog <changelog>` page for fixes and enhancements of each
 License
 -------
 
-Copyright Holger Krekel and others, 2004-2016.
+Copyright Holger Krekel and others, 2004-2017.
 
 Distributed under the terms of the `MIT`_ license, pytest is free and open source software.
 

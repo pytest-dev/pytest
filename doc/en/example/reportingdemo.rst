@@ -11,8 +11,8 @@ get on the terminal - we are working on that)::
 
     assertion $ pytest failure_demo.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR/assertion, inifile: 
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR/assertion, inifile:
     collected 42 items
     
     failure_demo.py FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
@@ -81,7 +81,7 @@ get on the terminal - we are working on that)::
     
         def test_eq_text(self):
     >       assert 'spam' == 'eggs'
-    E       assert 'spam' == 'eggs'
+    E       AssertionError: assert 'spam' == 'eggs'
     E         - spam
     E         + eggs
     
@@ -92,7 +92,7 @@ get on the terminal - we are working on that)::
     
         def test_eq_similar_text(self):
     >       assert 'foo 1 bar' == 'foo 2 bar'
-    E       assert 'foo 1 bar' == 'foo 2 bar'
+    E       AssertionError: assert 'foo 1 bar' == 'foo 2 bar'
     E         - foo 1 bar
     E         ?     ^
     E         + foo 2 bar
@@ -105,7 +105,7 @@ get on the terminal - we are working on that)::
     
         def test_eq_multiline_text(self):
     >       assert 'foo\nspam\nbar' == 'foo\neggs\nbar'
-    E       assert 'foo\nspam\nbar' == 'foo\neggs\nbar'
+    E       AssertionError: assert 'foo\nspam\nbar' == 'foo\neggs\nbar'
     E           foo
     E         - spam
     E         + eggs
@@ -120,7 +120,7 @@ get on the terminal - we are working on that)::
             a = '1'*100 + 'a' + '2'*100
             b = '1'*100 + 'b' + '2'*100
     >       assert a == b
-    E       assert '111111111111...2222222222222' == '1111111111111...2222222222222'
+    E       AssertionError: assert '111111111111...2222222222222' == '1111111111111...2222222222222'
     E         Skipping 90 identical leading characters in diff, use -v to show
     E         Skipping 91 identical trailing characters in diff, use -v to show
     E         - 1111111111a222222222
@@ -137,20 +137,16 @@ get on the terminal - we are working on that)::
             a = '1\n'*100 + 'a' + '2\n'*100
             b = '1\n'*100 + 'b' + '2\n'*100
     >       assert a == b
-    E       assert '1\n1\n1\n1\n...n2\n2\n2\n2\n' == '1\n1\n1\n1\n1...n2\n2\n2\n2\n'
+    E       AssertionError: assert '1\n1\n1\n1\n...n2\n2\n2\n2\n' == '1\n1\n1\n1\n1...n2\n2\n2\n2\n'
     E         Skipping 190 identical leading characters in diff, use -v to show
     E         Skipping 191 identical trailing characters in diff, use -v to show
     E           1
     E           1
     E           1
     E           1
-    E           1
-    E         - a2
-    E         + b2
-    E           2
-    E           2
-    E           2
-    E           2
+    E           1...
+    E         
+    E         ...Full output truncated (7 lines hidden), use '-vv' to show
     
     failure_demo.py:59: AssertionError
     _______ TestSpecialisedExplanations.test_eq_list ________
@@ -183,15 +179,16 @@ get on the terminal - we are working on that)::
     
         def test_eq_dict(self):
     >       assert {'a': 0, 'b': 1, 'c': 0} == {'a': 0, 'b': 2, 'd': 0}
-    E       assert {'a': 0, 'b': 1, 'c': 0} == {'a': 0, 'b': 2, 'd': 0}
-    E         Omitting 1 identical items, use -v to show
+    E       AssertionError: assert {'a': 0, 'b': 1, 'c': 0} == {'a': 0, 'b': 2, 'd': 0}
+    E         Omitting 1 identical items, use -vv to show
     E         Differing items:
     E         {'b': 1} != {'b': 2}
     E         Left contains more items:
     E         {'c': 0}
     E         Right contains more items:
-    E         {'d': 0}
-    E         Use -v to get the full diff
+    E         {'d': 0}...
+    E         
+    E         ...Full output truncated (2 lines hidden), use '-vv' to show
     
     failure_demo.py:70: AssertionError
     _______ TestSpecialisedExplanations.test_eq_set ________
@@ -200,15 +197,16 @@ get on the terminal - we are working on that)::
     
         def test_eq_set(self):
     >       assert set([0, 10, 11, 12]) == set([0, 20, 21])
-    E       assert {0, 10, 11, 12} == {0, 20, 21}
+    E       AssertionError: assert {0, 10, 11, 12} == {0, 20, 21}
     E         Extra items in the left set:
     E         10
     E         11
     E         12
     E         Extra items in the right set:
     E         20
-    E         21
-    E         Use -v to get the full diff
+    E         21...
+    E         
+    E         ...Full output truncated (2 lines hidden), use '-vv' to show
     
     failure_demo.py:73: AssertionError
     _______ TestSpecialisedExplanations.test_eq_longer_list ________
@@ -238,15 +236,16 @@ get on the terminal - we are working on that)::
         def test_not_in_text_multiline(self):
             text = 'some multiline\ntext\nwhich\nincludes foo\nand a\ntail'
     >       assert 'foo' not in text
-    E       assert 'foo' not in 'some multiline\ntext\nw...ncludes foo\nand a\ntail'
+    E       AssertionError: assert 'foo' not in 'some multiline\ntext\nw...ncludes foo\nand a\ntail'
     E         'foo' is contained here:
     E           some multiline
     E           text
     E           which
     E           includes foo
     E         ?          +++
-    E           and a
-    E           tail
+    E           and a...
+    E         
+    E         ...Full output truncated (2 lines hidden), use '-vv' to show
     
     failure_demo.py:83: AssertionError
     _______ TestSpecialisedExplanations.test_not_in_text_single ________
@@ -256,7 +255,7 @@ get on the terminal - we are working on that)::
         def test_not_in_text_single(self):
             text = 'single foo line'
     >       assert 'foo' not in text
-    E       assert 'foo' not in 'single foo line'
+    E       AssertionError: assert 'foo' not in 'single foo line'
     E         'foo' is contained here:
     E           single foo line
     E         ?        +++
@@ -269,7 +268,7 @@ get on the terminal - we are working on that)::
         def test_not_in_text_single_long(self):
             text = 'head ' * 50 + 'foo ' + 'tail ' * 20
     >       assert 'foo' not in text
-    E       assert 'foo' not in 'head head head head hea...ail tail tail tail tail '
+    E       AssertionError: assert 'foo' not in 'head head head head hea...ail tail tail tail tail '
     E         'foo' is contained here:
     E           head head foo tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail 
     E         ?           +++
@@ -282,7 +281,7 @@ get on the terminal - we are working on that)::
         def test_not_in_text_single_long_term(self):
             text = 'head ' * 50 + 'f'*70 + 'tail ' * 20
     >       assert 'f'*70 not in text
-    E       assert 'fffffffffff...ffffffffffff' not in 'head head he...l tail tail '
+    E       AssertionError: assert 'fffffffffff...ffffffffffff' not in 'head head he...l tail tail '
     E         'ffffffffffffffffff...fffffffffffffffffff' is contained here:
     E           head head fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffftail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail tail 
     E         ?           ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -305,7 +304,7 @@ get on the terminal - we are working on that)::
             class Foo(object):
                 b = 1
     >       assert Foo().b == 2
-    E       assert 1 == 2
+    E       AssertionError: assert 1 == 2
     E        +  where 1 = <failure_demo.test_attribute_instance.<locals>.Foo object at 0xdeadbeef>.b
     E        +    where <failure_demo.test_attribute_instance.<locals>.Foo object at 0xdeadbeef> = <class 'failure_demo.test_attribute_instance.<locals>.Foo'>()
     
@@ -338,7 +337,7 @@ get on the terminal - we are working on that)::
             class Bar(object):
                 b = 2
     >       assert Foo().b == Bar().b
-    E       assert 1 == 2
+    E       AssertionError: assert 1 == 2
     E        +  where 1 = <failure_demo.test_attribute_multiple.<locals>.Foo object at 0xdeadbeef>.b
     E        +    where <failure_demo.test_attribute_multiple.<locals>.Foo object at 0xdeadbeef> = <class 'failure_demo.test_attribute_multiple.<locals>.Foo'>()
     E        +  and   2 = <failure_demo.test_attribute_multiple.<locals>.Bar object at 0xdeadbeef>.b
@@ -359,7 +358,7 @@ get on the terminal - we are working on that)::
     >   int(s)
     E   ValueError: invalid literal for int() with base 10: 'qwe'
     
-    <0-codegen $PYTHON_PREFIX/lib/python3.5/site-packages/_pytest/python.py:1207>:1: ValueError
+    <0-codegen $PYTHON_PREFIX/lib/python3.5/site-packages/_pytest/python_api.py:579>:1: ValueError
     _______ TestRaises.test_raises_doesnt ________
     
     self = <failure_demo.TestRaises object at 0xdeadbeef>
@@ -480,7 +479,7 @@ get on the terminal - we are working on that)::
             s = "123"
             g = "456"
     >       assert s.startswith(g)
-    E       assert False
+    E       AssertionError: assert False
     E        +  where False = <built-in method startswith of str object at 0xdeadbeef>('456')
     E        +    where <built-in method startswith of str object at 0xdeadbeef> = '123'.startswith
     
@@ -495,7 +494,7 @@ get on the terminal - we are working on that)::
             def g():
                 return "456"
     >       assert f().startswith(g())
-    E       assert False
+    E       AssertionError: assert False
     E        +  where False = <built-in method startswith of str object at 0xdeadbeef>('456')
     E        +    where <built-in method startswith of str object at 0xdeadbeef> = '123'.startswith
     E        +      where '123' = <function TestMoreErrors.test_startswith_nested.<locals>.f at 0xdeadbeef>()
@@ -550,7 +549,7 @@ get on the terminal - we are working on that)::
     self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef>
     
         def test_single_line(self):
-            class A:
+            class A(object):
                 a = 1
             b = 2
     >       assert A.a == b, "A.a appears not to be b"
@@ -564,7 +563,7 @@ get on the terminal - we are working on that)::
     self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef>
     
         def test_multiline(self):
-            class A:
+            class A(object):
                 a = 1
             b = 2
     >       assert A.a == b, "A.a appears not to be b\n" \
@@ -581,7 +580,7 @@ get on the terminal - we are working on that)::
     self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef>
     
         def test_custom_repr(self):
-            class JSON:
+            class JSON(object):
                 a = 1
                 def __repr__(self):
                     return "This is JSON\n{\n  'foo': 'bar'\n}"

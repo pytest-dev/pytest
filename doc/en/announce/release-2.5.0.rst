@@ -70,7 +70,7 @@ holger krekel
   to problems for more than >966 non-function scoped parameters).
 
 - fix issue290 - there is preliminary support now for parametrizing
-  with repeated same values (sometimes useful to to test if calling 
+  with repeated same values (sometimes useful to test if calling 
   a second time works as with the first time).
 
 - close issue240 - document precisely how pytest module importing
@@ -149,7 +149,7 @@ holger krekel
 
   would not work correctly because pytest assumes @pytest.mark.some 
   gets a function to be decorated already.  We now at least detect if this 
-  arg is an lambda and thus the example will work.  Thanks Alex Gaynor
+  arg is a lambda and thus the example will work.  Thanks Alex Gaynor
   for bringing it up.
 
 - xfail a test on pypy that checks wrong encoding/ascii (pypy does

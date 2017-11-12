@@ -16,8 +16,20 @@ You can invoke testing through the Python interpreter from the command line::
 
     python -m pytest [...]
 
-This is equivalent to invoking the command line script ``pytest [...]``
-directly.
+This is almost equivalent to invoking the command line script ``pytest [...]``
+directly, except that calling via ``python`` will also add the current directory to ``sys.path``.
+
+Possible exit codes
+--------------------------------------------------------------
+
+Running ``pytest`` can result in six different exit codes:
+
+:Exit code 0: All tests were collected and passed successfully
+:Exit code 1: Tests were collected and run but some of the tests failed
+:Exit code 2: Test execution was interrupted by the user
+:Exit code 3: Internal error happened while executing tests
+:Exit code 4: pytest command line usage error
+:Exit code 5: No tests were collected
 
 Getting help on version, option names, environment variables
 --------------------------------------------------------------
@@ -29,6 +41,8 @@ Getting help on version, option names, environment variables
     pytest -h | --help # show help on command line and config file options
 
 
+.. _maxfail:
+
 Stopping after the first (or N) failures
 ---------------------------------------------------
 
@@ -37,26 +51,69 @@ To stop the testing process after the first (N) failures::
     pytest -x            # stop after first failure
     pytest --maxfail=2    # stop after two failures
 
+.. _select-tests:
+
 Specifying tests / selecting tests
 ---------------------------------------------------
 
-Several test run options::
+Pytest supports several ways to run and select tests from the command-line.
 
-    pytest test_mod.py   # run tests in module
-    pytest somepath      # run all tests below somepath
-    pytest -k stringexpr # only run tests with names that match the
-                          # "string expression", e.g. "MyClass and not method"
-                          # will select TestMyClass.test_something
-                          # but not TestMyClass.test_method_simple
-    pytest test_mod.py::test_func  # only run tests that match the "node ID",
-                                    # e.g "test_mod.py::test_func" will select
-                                    # only test_func in test_mod.py
-    pytest test_mod.py::TestClass::test_method  # run a single method in
-                                                 # a single class
+**Run tests in a module**
 
-Import 'pkg' and use its filesystem location to find and run tests::
+::
 
-    pytest --pyargs pkg # run all tests found below directory of pkg
+    pytest test_mod.py
+
+**Run tests in a directory**
+
+::
+
+    pytest testing/
+
+**Run tests by keyword expressions**
+
+::
+
+    pytest -k "MyClass and not method"
+
+This will run tests which contain names that match the given *string expression*, which can
+include Python operators that use filenames, class names and function names as variables.
+The example above will run ``TestMyClass.test_something``  but not ``TestMyClass.test_method_simple``.
+
+.. _nodeids:
+
+**Run tests by node ids**
+
+Each collected test is assigned a unique ``nodeid`` which consist of the module filename followed
+by specifiers like class names, function names and parameters from parametrization, separated by ``::`` characters.
+
+To run a specific test within a module::
+
+    pytest test_mod.py::test_func
+
+
+Another example specifying a test method in the command line::
+
+    pytest test_mod.py::TestClass::test_method
+
+**Run tests by marker expressions**
+
+::
+
+    pytest -m slow
+
+Will run all tests which are decorated with the ``@pytest.mark.slow`` decorator.
+
+For more information see :ref:`marks <mark>`.
+
+**Run tests from packages**
+
+::
+
+    pytest --pyargs pkg.testing
+     
+This will import ``pkg.testing`` and use its filesystem location to find and run tests from.
+    
 
 Modifying Python traceback printing
 ----------------------------------------------
@@ -76,11 +133,14 @@ Examples for modifying traceback printing::
 
 The ``--full-trace`` causes very long traces to be printed on error (longer
 than ``--tb=long``). It also ensures that a stack trace is printed on
-**KeyboardInterrrupt** (Ctrl+C).
+**KeyboardInterrupt** (Ctrl+C).
 This is very useful if the tests are taking too long and you interrupt them
 with Ctrl+C to find out where the tests are *hanging*. By default no output
 will be shown (because KeyboardInterrupt is caught by pytest). By using this
 option you make sure a trace is shown.
+
+
+.. _pdb-option:
 
 Dropping to PDB_ (Python Debugger) on failures
 -----------------------------------------------
@@ -111,22 +171,15 @@ for example::
     >>> sys.last_value
     AssertionError('assert result == "ok"',)
 
-Setting a breakpoint / aka ``set_trace()``
-----------------------------------------------------
+.. _breakpoints:
 
-If you want to set a breakpoint and enter the ``pdb.set_trace()`` you
-can use a helper::
+Setting breakpoints
+-------------------
 
-    import pytest
-    def test_function():
-        ...
-        pytest.set_trace()    # invoke PDB debugger and tracing
+.. versionadded: 2.4.0
 
-.. versionadded: 2.0.0
-
-Prior to pytest version 2.0.0 you could only enter PDB_ tracing if you disabled
-capturing on the command line via ``pytest -s``. In later versions, pytest
-automatically disables its output capture when you enter PDB_ tracing:
+To set a breakpoint in your code use the native Python ``import pdb;pdb.set_trace()`` call
+in your code and pytest automatically disables its output capture for that test:
 
 * Output capture in other tests is not affected.
 * Any prior test output that has already been captured and will be processed as
@@ -136,12 +189,6 @@ automatically disables its output capture when you enter PDB_ tracing:
   for test output occurring after you exit the interactive PDB_ tracing session
   and continue with the regular test run.
 
-.. versionadded: 2.4.0
-
-Since pytest version 2.4.0 you can also use the native Python
-``import pdb;pdb.set_trace()`` call to enter PDB_ tracing without having to use
-the ``pytest.set_trace()`` wrapper or explicitly disable pytest's output
-capturing via ``pytest -s``.
 
 .. _durations:
 
@@ -164,6 +211,15 @@ integration servers, use this invocation::
     pytest --junitxml=path
 
 to create an XML file at ``path``.
+
+.. versionadded:: 3.1
+
+To set the name of the root test suite xml item, you can configure the ``junit_suite_name`` option in your config file:
+
+.. code-block:: ini
+
+    [pytest]
+    junit_suite_name = my_suite
 
 record_xml_property
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -192,7 +248,7 @@ This will add an extra property ``example_key="1"`` to the generated
 
 .. warning::
 
-    This is an experimental feature, and its interface might be replaced
+    ``record_xml_property`` is an experimental feature, and its interface might be replaced
     by something more powerful and general in future versions. The
     functionality per-se will be kept, however.
 
@@ -226,7 +282,7 @@ to all testcases you can use ``LogXML.add_global_properties``
     def start_and_prepare_env():
         pass
 
-    class TestMe:
+    class TestMe(object):
         def test_foo(self):
             assert True
 
@@ -254,6 +310,13 @@ Creating resultlog format files
 .. deprecated:: 3.0
 
     This option is rarely used and is scheduled for removal in 4.0.
+
+    An alternative for users which still need similar functionality is to use the
+    `pytest-tap <https://pypi.python.org/pypi/pytest-tap>`_ plugin which provides
+    a stream of test data.
+
+    If you have any concerns, please don't hesitate to
+    `open an issue <https://github.com/pytest-dev/pytest/issues>`_.
 
 To create plain-text machine-readable result files you can issue::
 
@@ -314,7 +377,7 @@ You can specify additional plugins to ``pytest.main``::
 
     # content of myinvoke.py
     import pytest
-    class MyPlugin:
+    class MyPlugin(object):
         def pytest_sessionfinish(self):
             print("*** test run reporting finishing")
 

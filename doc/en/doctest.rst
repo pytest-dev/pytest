@@ -11,6 +11,19 @@ can change the pattern by issuing::
 on the command line. Since version ``2.9``, ``--doctest-glob``
 can be given multiple times in the command-line.
 
+.. versionadded:: 3.1
+
+    You can specify the encoding that will be used for those doctest files
+    using the ``doctest_encoding`` ini option:
+
+    .. code-block:: ini
+
+        # content of pytest.ini
+        [pytest]
+        doctest_encoding = latin1
+
+    The default encoding is UTF-8.
+
 You can also trigger running of doctests
 from docstrings in all python modules (including regular
 python test modules)::
@@ -49,9 +62,9 @@ then you can just invoke ``pytest`` without command line options::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
-    collected 1 items
+    collected 1 item
     
     mymodule.py .
     

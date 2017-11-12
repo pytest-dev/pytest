@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function
 import sys
 import platform
 
@@ -9,11 +10,30 @@ def runpdb_and_get_report(testdir, source):
     p = testdir.makepyfile(source)
     result = testdir.runpytest_inprocess("--pdb", p)
     reports = result.reprec.getreports("pytest_runtest_logreport")
-    assert len(reports) == 3, reports # setup/call/teardown
+    assert len(reports) == 3, reports  # setup/call/teardown
     return reports[1]
 
 
-class TestPDB:
+@pytest.fixture
+def custom_pdb_calls():
+    called = []
+
+    # install dummy debugger class and track which methods were called on it
+    class _CustomPdb(object):
+        def __init__(self, *args, **kwargs):
+            called.append("init")
+
+        def reset(self):
+            called.append("reset")
+
+        def interaction(self, *args):
+            called.append("interaction")
+
+    _pytest._CustomPdb = _CustomPdb
+    return called
+
+
+class TestPDB(object):
 
     @pytest.fixture
     def pdblist(self, request):
@@ -106,6 +126,21 @@ class TestPDB:
         assert 'debug.me' in rest
         self.flush(child)
 
+    def test_pdb_unittest_skip(self, testdir):
+        """Test for issue #2137"""
+        p1 = testdir.makepyfile("""
+            import unittest
+            @unittest.skipIf(True, 'Skipping also with pdb active')
+            class MyTestCase(unittest.TestCase):
+                def test_one(self):
+                    assert 0
+        """)
+        child = testdir.spawn_pytest("-rs --pdb %s" % p1)
+        child.expect('Skipping also with pdb active')
+        child.expect('1 skipped in')
+        child.sendeof()
+        self.flush(child)
+
     def test_pdb_interaction_capture(self, testdir):
         p1 = testdir.makepyfile("""
             def test_1():
@@ -145,7 +180,7 @@ class TestPDB:
             xxx
         """)
         child = testdir.spawn_pytest("--pdb %s" % p1)
-        #child.expect(".*import pytest.*")
+        # child.expect(".*import pytest.*")
         child.expect("(Pdb)")
         child.sendeof()
         child.expect("1 error")
@@ -158,7 +193,7 @@ class TestPDB:
         """)
         p1 = testdir.makepyfile("def test_func(): pass")
         child = testdir.spawn_pytest("--pdb %s" % p1)
-        #child.expect(".*import pytest.*")
+        # child.expect(".*import pytest.*")
         child.expect("(Pdb)")
         child.sendeof()
         self.flush(child)
@@ -180,7 +215,7 @@ class TestPDB:
         rest = child.read().decode("utf-8")
         assert "1 failed" in rest
         assert "def test_1" in rest
-        assert "hello17" in rest # out is captured
+        assert "hello17" in rest  # out is captured
         self.flush(child)
 
     def test_pdb_set_trace_interception(self, testdir):
@@ -273,8 +308,8 @@ class TestPDB:
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
         assert "def test_1" in rest
-        assert "hello17" in rest # out is captured
-        assert "hello18" in rest # out is captured
+        assert "hello17" in rest  # out is captured
+        assert "hello18" in rest  # out is captured
         self.flush(child)
 
     def test_pdb_used_outside_test(self, testdir):
@@ -283,7 +318,7 @@ class TestPDB:
             pytest.set_trace()
             x = 5
         """)
-        child = testdir.spawn("%s %s" %(sys.executable, p1))
+        child = testdir.spawn("%s %s" % (sys.executable, p1))
         child.expect("x = 5")
         child.sendeof()
         self.flush(child)
@@ -331,22 +366,17 @@ class TestPDB:
         child.sendeof()
         self.flush(child)
 
-    def test_pdb_custom_cls(self, testdir):
-        called = []
+    def test_pdb_custom_cls(self, testdir, custom_pdb_calls):
+        p1 = testdir.makepyfile("""xxx """)
+        result = testdir.runpytest_inprocess(
+            "--pdb", "--pdbcls=_pytest:_CustomPdb", p1)
+        result.stdout.fnmatch_lines([
+            "*NameError*xxx*",
+            "*1 error*",
+        ])
+        assert custom_pdb_calls == ["init", "reset", "interaction"]
 
-        # install dummy debugger class and track which methods were called on it
-        class _CustomPdb:
-            def __init__(self, *args, **kwargs):
-                called.append("init")
-
-            def reset(self):
-                called.append("reset")
-
-            def interaction(self, *args):
-                called.append("interaction")
-
-        _pytest._CustomPdb = _CustomPdb
-
+    def test_pdb_custom_cls_without_pdb(self, testdir, custom_pdb_calls):
         p1 = testdir.makepyfile("""xxx """)
         result = testdir.runpytest_inprocess(
             "--pdbcls=_pytest:_CustomPdb", p1)
@@ -354,4 +384,23 @@ class TestPDB:
             "*NameError*xxx*",
             "*1 error*",
         ])
-        assert called == ["init", "reset", "interaction"]
+        assert custom_pdb_calls == []
+
+    def test_pdb_custom_cls_with_settrace(self, testdir, monkeypatch):
+        testdir.makepyfile(custom_pdb="""
+            class CustomPdb(object):
+                def set_trace(*args, **kwargs):
+                    print 'custom set_trace>'
+         """)
+        p1 = testdir.makepyfile("""
+            import pytest
+
+            def test_foo():
+                pytest.set_trace()
+        """)
+        monkeypatch.setenv('PYTHONPATH', str(testdir.tmpdir))
+        child = testdir.spawn_pytest("--pdbcls=custom_pdb:CustomPdb %s" % str(p1))
+
+        child.expect('custom set_trace>')
+        if child.isalive():
+            child.wait()

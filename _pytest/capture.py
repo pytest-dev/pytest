@@ -2,17 +2,19 @@
 per-test stdout/stderr capturing mechanism.
 
 """
-from __future__ import with_statement
+from __future__ import absolute_import, division, print_function
 
 import contextlib
 import sys
 import os
+import io
+from io import UnsupportedOperation
 from tempfile import TemporaryFile
 
 import py
 import pytest
+from _pytest.compat import CaptureIO
 
-from py.io import TextIO
 unicode = py.builtin.text
 
 patchsysdict = {0: 'stdin', 1: 'stdout', 2: 'stderr'}
@@ -32,8 +34,11 @@ def pytest_addoption(parser):
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_load_initial_conftests(early_config, parser, args):
-    _readline_workaround()
     ns = early_config.known_args_namespace
+    if ns.capture == "fd":
+        _py36_windowsconsoleio_workaround(sys.stdout)
+    _colorama_workaround()
+    _readline_workaround()
     pluginmanager = early_config.pluginmanager
     capman = CaptureManager(ns.capture)
     pluginmanager.register(capman, "capturemanager")
@@ -130,7 +135,7 @@ class CaptureManager:
         self.resumecapture()
         self.activate_funcargs(item)
         yield
-        #self.deactivate_funcargs() called from suspendcapture()
+        # self.deactivate_funcargs() called from suspendcapture()
         self.suspendcapture_item(item, "call")
 
     @pytest.hookimpl(hookwrapper=True)
@@ -166,6 +171,7 @@ def capsys(request):
         raise request.raiseerror(error_capsysfderror)
     request.node._capfuncarg = c = CaptureFixture(SysCapture, request)
     return c
+
 
 @pytest.fixture
 def capfd(request):
@@ -234,6 +240,7 @@ def safe_text_dupfile(f, mode, default_encoding="UTF8"):
 
 class EncodedFile(object):
     errors = "strict"  # possibly needed by py3 code (issue555)
+
     def __init__(self, buffer, encoding):
         self.buffer = buffer
         self.encoding = encoding
@@ -246,6 +253,11 @@ class EncodedFile(object):
     def writelines(self, linelist):
         data = ''.join(linelist)
         self.write(data)
+
+    @property
+    def name(self):
+        """Ensure that file.name is a string."""
+        return repr(self.buffer)
 
     def __getattr__(self, name):
         return getattr(object.__getattribute__(self, "buffer"), name)
@@ -314,8 +326,10 @@ class MultiCapture(object):
         return (self.out.snap() if self.out is not None else "",
                 self.err.snap() if self.err is not None else "")
 
+
 class NoCapture:
     __init__ = start = done = suspend = resume = lambda *args: None
+
 
 class FDCapture:
     """ Capture IO to/from a given os-level filedescriptor. """
@@ -389,7 +403,7 @@ class FDCapture:
     def writeorg(self, data):
         """ write to original file descriptor. """
         if py.builtin._istext(data):
-            data = data.encode("utf8") # XXX use encoding of original stream
+            data = data.encode("utf8")  # XXX use encoding of original stream
         os.write(self.targetfd_save, data)
 
 
@@ -402,7 +416,7 @@ class SysCapture:
             if name == "stdin":
                 tmpfile = DontReadFromInput()
             else:
-                tmpfile = TextIO()
+                tmpfile = CaptureIO()
         self.tmpfile = tmpfile
 
     def start(self):
@@ -448,7 +462,8 @@ class DontReadFromInput:
     __iter__ = read
 
     def fileno(self):
-        raise ValueError("redirected Stdin is pseudofile, has no fileno()")
+        raise UnsupportedOperation("redirected stdin is pseudofile, "
+                                   "has no fileno()")
 
     def isatty(self):
         return False
@@ -458,10 +473,28 @@ class DontReadFromInput:
 
     @property
     def buffer(self):
-        if sys.version_info >= (3,0):
+        if sys.version_info >= (3, 0):
             return self
         else:
             raise AttributeError('redirected stdin has no attribute buffer')
+
+
+def _colorama_workaround():
+    """
+    Ensure colorama is imported so that it attaches to the correct stdio
+    handles on Windows.
+
+    colorama uses the terminal on import time. So if something does the
+    first import of colorama while I/O capture is active, colorama will
+    fail in various ways.
+    """
+
+    if not sys.platform.startswith('win32'):
+        return
+    try:
+        import colorama  # noqa
+    except ImportError:
+        pass
 
 
 def _readline_workaround():
@@ -489,3 +522,56 @@ def _readline_workaround():
         import readline  # noqa
     except ImportError:
         pass
+
+
+def _py36_windowsconsoleio_workaround(stream):
+    """
+    Python 3.6 implemented unicode console handling for Windows. This works
+    by reading/writing to the raw console handle using
+    ``{Read,Write}ConsoleW``.
+
+    The problem is that we are going to ``dup2`` over the stdio file
+    descriptors when doing ``FDCapture`` and this will ``CloseHandle`` the
+    handles used by Python to write to the console. Though there is still some
+    weirdness and the console handle seems to only be closed randomly and not
+    on the first call to ``CloseHandle``, or maybe it gets reopened with the
+    same handle value when we suspend capturing.
+
+    The workaround in this case will reopen stdio with a different fd which
+    also means a different handle by replicating the logic in
+    "Py_lifecycle.c:initstdio/create_stdio".
+
+    :param stream: in practice ``sys.stdout`` or ``sys.stderr``, but given
+        here as parameter for unittesting purposes.
+
+    See https://github.com/pytest-dev/py/issues/103
+    """
+    if not sys.platform.startswith('win32') or sys.version_info[:2] < (3, 6):
+        return
+
+    # bail out if ``stream`` doesn't seem like a proper ``io`` stream (#2666)
+    if not hasattr(stream, 'buffer'):
+        return
+
+    buffered = hasattr(stream.buffer, 'raw')
+    raw_stdout = stream.buffer.raw if buffered else stream.buffer
+
+    if not isinstance(raw_stdout, io._WindowsConsoleIO):
+        return
+
+    def _reopen_stdio(f, mode):
+        if not buffered and mode[0] == 'w':
+            buffering = 0
+        else:
+            buffering = -1
+
+        return io.TextIOWrapper(
+            open(os.dup(f.fileno()), mode, buffering),
+            f.encoding,
+            f.errors,
+            f.newlines,
+            f.line_buffering)
+
+    sys.__stdin__ = sys.stdin = _reopen_stdio(sys.stdin, 'rb')
+    sys.__stdout__ = sys.stdout = _reopen_stdio(sys.stdout, 'wb')
+    sys.__stderr__ = sys.stderr = _reopen_stdio(sys.stderr, 'wb')

@@ -6,13 +6,20 @@
 ------
 
 .. image:: https://img.shields.io/pypi/v/pytest.svg
-   :target: https://pypi.python.org/pypi/pytest
+    :target: https://pypi.python.org/pypi/pytest
+
+.. image:: https://anaconda.org/conda-forge/pytest/badges/version.svg
+    :target: https://anaconda.org/conda-forge/pytest
+
 .. image:: https://img.shields.io/pypi/pyversions/pytest.svg
-  :target: https://pypi.python.org/pypi/pytest
+    :target: https://pypi.python.org/pypi/pytest
+
 .. image:: https://img.shields.io/coveralls/pytest-dev/pytest/master.svg
-   :target: https://coveralls.io/r/pytest-dev/pytest
+    :target: https://coveralls.io/r/pytest-dev/pytest
+
 .. image:: https://travis-ci.org/pytest-dev/pytest.svg?branch=master
     :target: https://travis-ci.org/pytest-dev/pytest
+
 .. image:: https://ci.appveyor.com/api/projects/status/mrgbjaua7t33pg6b?svg=true
     :target: https://ci.appveyor.com/project/pytestbot/pytest
 
@@ -34,7 +41,7 @@ An example of a simple test:
 To execute it::
 
     $ pytest
-    ============================= test session starts =============================    
+    ============================= test session starts =============================
     collected 1 items
 
     test_sample.py F
@@ -71,7 +78,7 @@ Features
 
 - Python2.6+, Python3.3+, PyPy-2.3, Jython-2.5 (untested);
 
-- Rich plugin architecture, with over 150+ `external plugins <http://docs.pytest.org/en/latest/plugins.html#installing-external-plugins-searching>`_ and thriving community;
+- Rich plugin architecture, with over 315+ `external plugins <http://plugincompat.herokuapp.com>`_ and thriving community;
 
 
 Documentation
@@ -95,7 +102,7 @@ Consult the `Changelog <http://docs.pytest.org/en/latest/changelog.html>`__ page
 License
 -------
 
-Copyright Holger Krekel and others, 2004-2016.
+Copyright Holger Krekel and others, 2004-2017.
 
 Distributed under the terms of the `MIT`_ license, pytest is free and open source software.
 

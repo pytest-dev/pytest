@@ -1,10 +1,13 @@
 # encoding: utf-8
+from __future__ import absolute_import, division, print_function
 import sys
 import _pytest._code
+from _pytest.compat import MODULE_NOT_FOUND_ERROR
 from _pytest.doctest import DoctestItem, DoctestModule, DoctestTextfile
 import pytest
 
-class TestDoctests:
+
+class TestDoctests(object):
 
     def test_collect_testtextfile(self, testdir):
         w = testdir.maketxtfile(whatever="")
@@ -16,7 +19,7 @@ class TestDoctests:
         """)
 
         for x in (testdir.tmpdir, checkfile):
-            #print "checking that %s returns custom items" % (x,)
+            # print "checking that %s returns custom items" % (x,)
             items, reprec = testdir.inline_genitems(x)
             assert len(items) == 1
             assert isinstance(items[0], DoctestItem)
@@ -29,14 +32,14 @@ class TestDoctests:
         path = testdir.makepyfile(whatever="#")
         for p in (path, testdir.tmpdir):
             items, reprec = testdir.inline_genitems(p,
-                '--doctest-modules')
+                                                    '--doctest-modules')
             assert len(items) == 0
 
     def test_collect_module_single_modulelevel_doctest(self, testdir):
         path = testdir.makepyfile(whatever='""">>> pass"""')
         for p in (path, testdir.tmpdir):
             items, reprec = testdir.inline_genitems(p,
-                '--doctest-modules')
+                                                    '--doctest-modules')
             assert len(items) == 1
             assert isinstance(items[0], DoctestItem)
             assert isinstance(items[0].parent, DoctestModule)
@@ -49,7 +52,7 @@ class TestDoctests:
         """)
         for p in (path, testdir.tmpdir):
             items, reprec = testdir.inline_genitems(p,
-                '--doctest-modules')
+                                                    '--doctest-modules')
             assert len(items) == 2
             assert isinstance(items[0], DoctestItem)
             assert isinstance(items[1], DoctestItem)
@@ -74,7 +77,7 @@ class TestDoctests:
         """)
         for p in (path, testdir.tmpdir):
             items, reprec = testdir.inline_genitems(p,
-                '--doctest-modules')
+                                                    '--doctest-modules')
             assert len(items) == 2
             assert isinstance(items[0], DoctestItem)
             assert isinstance(items[1], DoctestItem)
@@ -129,6 +132,33 @@ class TestDoctests:
             '*1 passed*',
         ])
 
+    @pytest.mark.parametrize(
+        '   test_string,    encoding',
+        [
+            (u'foo', 'ascii'),
+            (u'öäü', 'latin1'),
+            (u'öäü', 'utf-8')
+        ]
+    )
+    def test_encoding(self, testdir, test_string, encoding):
+        """Test support for doctest_encoding ini option.
+        """
+        testdir.makeini("""
+            [pytest]
+            doctest_encoding={0}
+        """.format(encoding))
+        doctest = u"""
+            >>> u"{0}"
+            {1}
+        """.format(test_string, repr(test_string))
+        testdir._makefile(".txt", [doctest], {}, encoding=encoding)
+
+        result = testdir.runpytest()
+
+        result.stdout.fnmatch_lines([
+            '*1 passed*',
+        ])
+
     def test_doctest_unexpected_exception(self, testdir):
         testdir.maketxtfile("""
             >>> i = 0
@@ -143,7 +173,7 @@ class TestDoctests:
             "*UNEXPECTED*ZeroDivision*",
         ])
 
-    def test_docstring_context_around_error(self, testdir):
+    def test_docstring_partial_context_around_error(self, testdir):
         """Test that we show some context before the actual line of a failing
         doctest.
         """
@@ -169,7 +199,7 @@ class TestDoctests:
         ''')
         result = testdir.runpytest('--doctest-modules')
         result.stdout.fnmatch_lines([
-            '*docstring_context_around_error*',
+            '*docstring_partial_context_around_error*',
             '005*text-line-3',
             '006*text-line-4',
             '013*text-line-11',
@@ -182,6 +212,32 @@ class TestDoctests:
         # lines below should be trimmed out
         assert 'text-line-2' not in result.stdout.str()
         assert 'text-line-after' not in result.stdout.str()
+
+    def test_docstring_full_context_around_error(self, testdir):
+        """Test that we show the whole context before the actual line of a failing
+        doctest, provided that the context is up to 10 lines long.
+        """
+        testdir.makepyfile('''
+            def foo():
+                """
+                text-line-1
+                text-line-2
+
+                >>> 1 + 1
+                3
+                """
+        ''')
+        result = testdir.runpytest('--doctest-modules')
+        result.stdout.fnmatch_lines([
+            '*docstring_full_context_around_error*',
+            '003*text-line-1',
+            '004*text-line-2',
+            '006*>>> 1 + 1',
+            'Expected:',
+            '    3',
+            'Got:',
+            '    2',
+        ])
 
     def test_doctest_linedata_missing(self, testdir):
         testdir.tmpdir.join('hello.py').write(_pytest._code.Source("""
@@ -211,8 +267,8 @@ class TestDoctests:
         # doctest is never executed because of error during hello.py collection
         result.stdout.fnmatch_lines([
             "*>>> import asdals*",
-            "*UNEXPECTED*ImportError*",
-            "ImportError: No module named *asdal*",
+            "*UNEXPECTED*{e}*".format(e=MODULE_NOT_FOUND_ERROR),
+            "{e}: No module named *asdal*".format(e=MODULE_NOT_FOUND_ERROR),
         ])
 
     def test_doctest_unex_importerror_with_module(self, testdir):
@@ -227,7 +283,7 @@ class TestDoctests:
         # doctest is never executed because of error during hello.py collection
         result.stdout.fnmatch_lines([
             "*ERROR collecting hello.py*",
-            "*ImportError: No module named *asdals*",
+            "*{e}: No module named *asdals*".format(e=MODULE_NOT_FOUND_ERROR),
             "*Interrupted: 1 errors during collection*",
         ])
 
@@ -263,7 +319,6 @@ class TestDoctests:
             "*    1",
             "*:5: DocTestFailure"
         ])
-
 
     def test_txtfile_failing(self, testdir):
         p = testdir.maketxtfile("""
@@ -349,7 +404,7 @@ class TestDoctests:
 
     def test_doctestmodule_two_tests_one_fail(self, testdir):
         p = testdir.makepyfile("""
-            class MyClass:
+            class MyClass(object):
                 def bad_meth(self):
                     '''
                     >>> magic = 42
@@ -372,7 +427,7 @@ class TestDoctests:
             doctest_optionflags = ELLIPSIS NORMALIZE_WHITESPACE
         """)
         p = testdir.makepyfile("""
-            class MyClass:
+            class MyClass(object):
                 '''
                 >>> a = "foo    "
                 >>> print(a)
@@ -389,7 +444,7 @@ class TestDoctests:
             doctest_optionflags = ELLIPSIS
         """)
         p = testdir.makepyfile("""
-            class MyClass:
+            class MyClass(object):
                 '''
                 >>> a = "foo    "
                 >>> print(a)
@@ -475,8 +530,65 @@ class TestDoctests:
                                     "--junit-xml=junit.xml")
         reprec.assertoutcome(failed=1)
 
+    def test_unicode_doctest(self, testdir):
+        """
+        Test case for issue 2434: DecodeError on Python 2 when doctest contains non-ascii
+        characters.
+        """
+        p = testdir.maketxtfile(test_unicode_doctest="""
+            .. doctest::
 
-class TestLiterals:
+                >>> print(
+                ...    "Hi\\n\\nByé")
+                Hi
+                ...
+                Byé
+                >>> 1/0  # Byé
+                1
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([
+            '*UNEXPECTED EXCEPTION: ZeroDivisionError*',
+            '*1 failed*',
+        ])
+
+    def test_unicode_doctest_module(self, testdir):
+        """
+        Test case for issue 2434: DecodeError on Python 2 when doctest docstring
+        contains non-ascii characters.
+        """
+        p = testdir.makepyfile(test_unicode_doctest_module="""
+            # -*- encoding: utf-8 -*-
+            from __future__ import unicode_literals
+
+            def fix_bad_unicode(text):
+                '''
+                    >>> print(fix_bad_unicode('Ãºnico'))
+                    único
+                '''
+                return "único"
+        """)
+        result = testdir.runpytest(p, '--doctest-modules')
+        result.stdout.fnmatch_lines(['* 1 passed *'])
+
+    def test_reportinfo(self, testdir):
+        '''
+        Test case to make sure that DoctestItem.reportinfo() returns lineno.
+        '''
+        p = testdir.makepyfile(test_reportinfo="""
+            def foo(x):
+                '''
+                    >>> foo('a')
+                    'b'
+                '''
+                return 'c'
+        """)
+        items, reprec = testdir.inline_genitems(p, '--doctest-modules')
+        reportinfo = items[0].reportinfo()
+        assert reportinfo[1] == 1
+
+
+class TestLiterals(object):
 
     @pytest.mark.parametrize('config_mode', ['ini', 'comment'])
     def test_allow_unicode(self, testdir, config_mode):
@@ -563,7 +675,7 @@ class TestLiterals:
         reprec.assertoutcome(passed=passed, failed=int(not passed))
 
 
-class TestDoctestSkips:
+class TestDoctestSkips(object):
     """
     If all examples in a doctest are skipped due to the SKIP option, then
     the tests should be SKIPPED rather than PASSED. (#957)
@@ -617,7 +729,7 @@ class TestDoctestSkips:
         reprec.assertoutcome(passed=0, skipped=0)
 
 
-class TestDoctestAutoUseFixtures:
+class TestDoctestAutoUseFixtures(object):
 
     SCOPES = ['module', 'session', 'class', 'function']
 
@@ -736,7 +848,7 @@ class TestDoctestAutoUseFixtures:
         result.stdout.fnmatch_lines(['*=== 1 passed in *'])
 
 
-class TestDoctestNamespaceFixture:
+class TestDoctestNamespaceFixture(object):
 
     SCOPES = ['module', 'session', 'class', 'function']
 
@@ -786,7 +898,7 @@ class TestDoctestNamespaceFixture:
         reprec.assertoutcome(passed=1)
 
 
-class TestDoctestReportingOption:
+class TestDoctestReportingOption(object):
     def _run_doctest_report(self, testdir, format):
         testdir.makepyfile("""
             def foo():
@@ -861,4 +973,3 @@ class TestDoctestReportingOption:
         result.stderr.fnmatch_lines([
             "*error: argument --doctest-report: invalid choice: 'obviously_invalid_format' (choose from*"
         ])
-

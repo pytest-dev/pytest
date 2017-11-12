@@ -1,7 +1,7 @@
 Installation and Getting Started
 ===================================
 
-**Pythons**: Python 2.6,2.7,3.3,3.4,3.5, Jython, PyPy-2.3
+**Pythons**: Python 2.6,2.7,3.3,3.4,3.5,3.6 Jython, PyPy-2.3
 
 **Platforms**: Unix/Posix and Windows
 
@@ -9,7 +9,8 @@ Installation and Getting Started
 
 **dependencies**: `py <http://pypi.python.org/pypi/py>`_,
 `colorama (Windows) <http://pypi.python.org/pypi/colorama>`_,
-`argparse (py26) <http://pypi.python.org/pypi/argparse>`_.
+`argparse (py26) <http://pypi.python.org/pypi/argparse>`_,
+`ordereddict (py26) <http://pypi.python.org/pypi/ordereddict>`_.
 
 **documentation as PDF**: `download latest <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
 
@@ -26,7 +27,7 @@ Installation::
 To check your installation has installed the correct version::
 
     $ pytest --version
-    This is pytest version 3.0.5, imported from $PYTHON_PREFIX/lib/python3.5/site-packages/pytest.py
+    This is pytest version 3.x.y, imported from $PYTHON_PREFIX/lib/python3.5/site-packages/pytest.py
 
 .. _`simpletest`:
 
@@ -46,9 +47,9 @@ That's it. You can execute the test function now::
 
     $ pytest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
-    collected 1 items
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 1 item
     
     test_sample.py F
     
@@ -111,7 +112,7 @@ to group tests logically, in classes and modules.  Let's write a class
 containing two tests::
 
     # content of test_class.py
-    class TestClass:
+    class TestClass(object):
         def test_one(self):
             x = "this"
             assert 'h' in x
@@ -134,7 +135,7 @@ run the module by passing its filename::
         def test_two(self):
             x = "hello"
     >       assert hasattr(x, 'check')
-    E       assert False
+    E       AssertionError: assert False
     E        +  where False = hasattr('hello', 'check')
     
     test_class.py:8: AssertionError
@@ -192,6 +193,7 @@ Here are a few suggestions where to go next:
 
 * :ref:`cmdline` for command line invocation examples
 * :ref:`good practices <goodpractices>` for virtualenv, test layout
+* :ref:`existingtestsuite` for working with pre-existing tests
 * :ref:`fixtures` for providing a functional baseline to your tests
 * :ref:`plugins` managing and writing plugins
 

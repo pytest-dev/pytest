@@ -1,8 +1,10 @@
 # encoding: utf-8
+from __future__ import absolute_import, division, print_function
 import sys
 import pytest
 
-class TestPasteCapture:
+
+class TestPasteCapture(object):
 
     @pytest.fixture
     def pastebinlist(self, monkeypatch, request):
@@ -25,7 +27,7 @@ class TestPasteCapture:
         assert len(pastebinlist) == 1
         s = pastebinlist[0]
         assert s.find("def test_fail") != -1
-        assert reprec.countoutcomes() == [1,1,1]
+        assert reprec.countoutcomes() == [1, 1, 1]
 
     def test_all(self, testdir, pastebinlist):
         from _pytest.pytester import LineMatcher
@@ -39,7 +41,7 @@ class TestPasteCapture:
                 pytest.skip("")
         """)
         reprec = testdir.inline_run(testpath, "--pastebin=all", '-v')
-        assert reprec.countoutcomes() == [1,1,1]
+        assert reprec.countoutcomes() == [1, 1, 1]
         assert len(pastebinlist) == 1
         contents = pastebinlist[0].decode('utf-8')
         matcher = LineMatcher(contents.splitlines())
@@ -71,7 +73,7 @@ class TestPasteCapture:
         ])
 
 
-class TestPaste:
+class TestPaste(object):
 
     @pytest.fixture
     def pastebin(self, request):
@@ -88,7 +90,7 @@ class TestPaste:
         def mocked(url, data):
             calls.append((url, data))
 
-            class DummyFile:
+            class DummyFile(object):
                 def read(self):
                     # part of html of a normal response
                     return b'View <a href="/raw/3c0c6750bd">raw</a>.'
@@ -113,5 +115,3 @@ class TestPaste:
         assert 'lexer=%s' % lexer in data.decode()
         assert 'code=full-paste-contents' in data.decode()
         assert 'expiry=1week' in data.decode()
-
-

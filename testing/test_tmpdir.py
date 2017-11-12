@@ -1,8 +1,10 @@
+from __future__ import absolute_import, division, print_function
 import sys
 import py
 import pytest
 
 from _pytest.tmpdir import tmpdir
+
 
 def test_funcarg(testdir):
     testdir.makepyfile("""
@@ -28,13 +30,15 @@ def test_funcarg(testdir):
     bn = p.basename.strip("0123456789")
     assert bn == "qwe__abc"
 
+
 def test_ensuretemp(recwarn):
     d1 = pytest.ensuretemp('hello')
     d2 = pytest.ensuretemp('hello')
     assert d1 == d2
     assert d1.check(dir=1)
 
-class TestTempdirHandler:
+
+class TestTempdirHandler(object):
     def test_mktemp(self, testdir):
         from _pytest.tmpdir import TempdirFactory
         config = testdir.parseconfig()
@@ -48,7 +52,8 @@ class TestTempdirHandler:
         assert tmp2.relto(t.getbasetemp()).startswith("this")
         assert tmp2 != tmp
 
-class TestConfigTmpdir:
+
+class TestConfigTmpdir(object):
     def test_getbasetemp_custom_removes_old(self, testdir):
         mytemp = testdir.tmpdir.join("xyz")
         p = testdir.makepyfile("""
@@ -74,6 +79,7 @@ def test_basetemp(testdir):
     result = testdir.runpytest(p, '--basetemp=%s' % mytemp)
     assert result.ret == 0
     assert mytemp.join('hello').check()
+
 
 @pytest.mark.skipif(not hasattr(py.path.local, 'mksymlinkto'),
                     reason="symlink not available on this platform")

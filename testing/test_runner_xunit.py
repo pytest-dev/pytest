@@ -1,6 +1,8 @@
-#
-# test correct setup/teardowns at
-# module, class, and instance level
+"""
+ test correct setup/teardowns at
+ module, class, and instance level
+"""
+from __future__ import absolute_import, division, print_function
 import pytest
 
 
@@ -24,7 +26,7 @@ def test_module_and_function_setup(testdir):
             assert modlevel[0] == 42
             assert test_modlevel.answer == 17
 
-        class TestFromClass:
+        class TestFromClass(object):
             def test_module(self):
                 assert modlevel[0] == 42
                 assert not hasattr(test_modlevel, 'answer')
@@ -34,22 +36,24 @@ def test_module_and_function_setup(testdir):
     rep = reprec.matchreport("test_module")
     assert rep.passed
 
+
 def test_module_setup_failure_no_teardown(testdir):
     reprec = testdir.inline_runsource("""
-        l = []
+        values = []
         def setup_module(module):
-            l.append(1)
+            values.append(1)
             0/0
 
         def test_nothing():
             pass
 
         def teardown_module(module):
-            l.append(2)
+            values.append(2)
     """)
     reprec.assertoutcome(failed=1)
     calls = reprec.getcalls("pytest_runtest_setup")
-    assert calls[0].item.module.l == [1]
+    assert calls[0].item.module.values == [1]
+
 
 def test_setup_function_failure_no_teardown(testdir):
     reprec = testdir.inline_runsource("""
@@ -67,9 +71,10 @@ def test_setup_function_failure_no_teardown(testdir):
     calls = reprec.getcalls("pytest_runtest_setup")
     assert calls[0].item.module.modlevel == [1]
 
+
 def test_class_setup(testdir):
     reprec = testdir.inline_runsource("""
-        class TestSimpleClassSetup:
+        class TestSimpleClassSetup(object):
             clslevel = []
             def setup_class(cls):
                 cls.clslevel.append(23)
@@ -88,11 +93,12 @@ def test_class_setup(testdir):
             assert not TestSimpleClassSetup.clslevel
             assert not TestInheritedClassSetupStillWorks.clslevel
     """)
-    reprec.assertoutcome(passed=1+2+1)
+    reprec.assertoutcome(passed=1 + 2 + 1)
+
 
 def test_class_setup_failure_no_teardown(testdir):
     reprec = testdir.inline_runsource("""
-        class TestSimpleClassSetup:
+        class TestSimpleClassSetup(object):
             clslevel = []
             def setup_class(cls):
                 0/0
@@ -108,9 +114,10 @@ def test_class_setup_failure_no_teardown(testdir):
     """)
     reprec.assertoutcome(failed=1, passed=1)
 
+
 def test_method_setup(testdir):
     reprec = testdir.inline_runsource("""
-        class TestSetupMethod:
+        class TestSetupMethod(object):
             def setup_method(self, meth):
                 self.methsetup = meth
             def teardown_method(self, meth):
@@ -124,9 +131,10 @@ def test_method_setup(testdir):
     """)
     reprec.assertoutcome(passed=2)
 
+
 def test_method_setup_failure_no_teardown(testdir):
     reprec = testdir.inline_runsource("""
-        class TestMethodSetup:
+        class TestMethodSetup(object):
             clslevel = []
             def setup_method(self, method):
                 self.clslevel.append(1)
@@ -143,9 +151,10 @@ def test_method_setup_failure_no_teardown(testdir):
     """)
     reprec.assertoutcome(failed=1, passed=1)
 
+
 def test_method_generator_setup(testdir):
     reprec = testdir.inline_runsource("""
-        class TestSetupTeardownOnInstance:
+        class TestSetupTeardownOnInstance(object):
             def setup_class(cls):
                 cls.classsetup = True
 
@@ -164,6 +173,7 @@ def test_method_generator_setup(testdir):
                 assert value == 5
     """)
     reprec.assertoutcome(passed=1, failed=1)
+
 
 def test_func_generator_setup(testdir):
     reprec = testdir.inline_runsource("""
@@ -193,9 +203,10 @@ def test_func_generator_setup(testdir):
     rep = reprec.matchreport("test_one", names="pytest_runtest_logreport")
     assert rep.passed
 
+
 def test_method_setup_uses_fresh_instances(testdir):
     reprec = testdir.inline_runsource("""
-        class TestSelfState1:
+        class TestSelfState1(object):
             memory = []
             def test_hello(self):
                 self.memory.append(self)
@@ -204,6 +215,7 @@ def test_method_setup_uses_fresh_instances(testdir):
                 assert self != self.memory[0]
     """)
     reprec.assertoutcome(passed=2, failed=0)
+
 
 def test_setup_that_skips_calledagain(testdir):
     p = testdir.makepyfile("""
@@ -218,6 +230,7 @@ def test_setup_that_skips_calledagain(testdir):
     reprec = testdir.inline_run(p)
     reprec.assertoutcome(skipped=2)
 
+
 def test_setup_fails_again_on_all_tests(testdir):
     p = testdir.makepyfile("""
         import pytest
@@ -230,6 +243,7 @@ def test_setup_fails_again_on_all_tests(testdir):
     """)
     reprec = testdir.inline_run(p)
     reprec.assertoutcome(failed=2)
+
 
 def test_setup_funcarg_setup_when_outer_scope_fails(testdir):
     p = testdir.makepyfile("""
@@ -276,7 +290,7 @@ def test_setup_teardown_function_level_with_optional_argument(testdir, monkeypat
         def test_function_1(): pass
         def test_function_2(): pass
 
-        class Test:
+        class Test(object):
             def setup_method(self, {arg}): trace('setup_method')
             def teardown_method(self, {arg}): trace('teardown_method')
 

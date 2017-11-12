@@ -1,4 +1,5 @@
 """Utilities for assertion debugging"""
+from __future__ import absolute_import, division, print_function
 import pprint
 
 import _pytest._code
@@ -8,7 +9,7 @@ try:
 except ImportError:
     Sequence = list
 
-BuiltinAssertionError = py.builtin.builtins.AssertionError
+
 u = py.builtin._totext
 
 # The _reprcompare attribute on the util module is used by the new assertion
@@ -52,11 +53,11 @@ def _split_explanation(explanation):
     """
     raw_lines = (explanation or u('')).split('\n')
     lines = [raw_lines[0]]
-    for l in raw_lines[1:]:
-        if l and l[0] in ['{', '}', '~', '>']:
-            lines.append(l)
+    for values in raw_lines[1:]:
+        if values and values[0] in ['{', '}', '~', '>']:
+            lines.append(values)
         else:
-            lines[-1] += '\\n' + l
+            lines[-1] += '\\n' + values
     return lines
 
 
@@ -81,7 +82,7 @@ def _format_lines(lines):
             stack.append(len(result))
             stackcnt[-1] += 1
             stackcnt.append(0)
-            result.append(u(' +') + u('  ')*(len(stack)-1) + s + line[1:])
+            result.append(u(' +') + u('  ') * (len(stack) - 1) + s + line[1:])
         elif line.startswith('}'):
             stack.pop()
             stackcnt.pop()
@@ -90,7 +91,7 @@ def _format_lines(lines):
             assert line[0] in ['~', '>']
             stack[-1] += 1
             indent = len(stack) if line.startswith('~') else len(stack) - 1
-            result.append(u('  ')*indent + line[1:])
+            result.append(u('  ') * indent + line[1:])
     assert len(stack) == 1
     return result
 
@@ -105,16 +106,22 @@ except NameError:
 def assertrepr_compare(config, op, left, right):
     """Return specialised explanations for some operators/operands"""
     width = 80 - 15 - len(op) - 2  # 15 chars indentation, 1 space around op
-    left_repr = py.io.saferepr(left, maxsize=int(width//2))
-    right_repr = py.io.saferepr(right, maxsize=width-len(left_repr))
+    left_repr = py.io.saferepr(left, maxsize=int(width // 2))
+    right_repr = py.io.saferepr(right, maxsize=width - len(left_repr))
 
     summary = u('%s %s %s') % (ecu(left_repr), op, ecu(right_repr))
 
-    issequence = lambda x: (isinstance(x, (list, tuple, Sequence)) and
-                            not isinstance(x, basestring))
-    istext = lambda x: isinstance(x, basestring)
-    isdict = lambda x: isinstance(x, dict)
-    isset = lambda x: isinstance(x, (set, frozenset))
+    def issequence(x):
+        return (isinstance(x, (list, tuple, Sequence)) and not isinstance(x, basestring))
+
+    def istext(x):
+        return isinstance(x, basestring)
+
+    def isdict(x):
+        return isinstance(x, dict)
+
+    def isset(x):
+        return isinstance(x, (set, frozenset))
 
     def isiterable(obj):
         try:
@@ -256,8 +263,8 @@ def _compare_eq_dict(left, right, verbose=False):
     explanation = []
     common = set(left).intersection(set(right))
     same = dict((k, left[k]) for k in common if left[k] == right[k])
-    if same and not verbose:
-        explanation += [u('Omitting %s identical items, use -v to show') %
+    if same and verbose < 2:
+        explanation += [u('Omitting %s identical items, use -vv to show') %
                         len(same)]
     elif same:
         explanation += [u('Common items:')]
@@ -284,7 +291,7 @@ def _compare_eq_dict(left, right, verbose=False):
 def _notin_text(term, text, verbose=False):
     index = text.find(term)
     head = text[:index]
-    tail = text[index+len(term):]
+    tail = text[index + len(term):]
     correct_text = head + tail
     diff = _diff_text(correct_text, text, verbose)
     newdiff = [u('%s is contained here:') % py.io.saferepr(term, maxsize=42)]

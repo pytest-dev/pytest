@@ -21,7 +21,7 @@ You can "mark" a test function with custom metadata like this::
         pass
     def test_another():
         pass
-    class TestClass:
+    class TestClass(object):
         def test_method(self):
             pass
 
@@ -31,9 +31,9 @@ You can then restrict a test run to only run tests marked with ``webtest``::
 
     $ pytest -v -m webtest
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items
     
     test_server.py::test_send_http PASSED
@@ -45,9 +45,9 @@ Or the inverse, running all tests except the webtest ones::
 
     $ pytest -v -m "not webtest"
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items
     
     test_server.py::test_something_quick PASSED
@@ -66,10 +66,10 @@ tests based on their module, class, method, or function name::
 
     $ pytest -v test_server.py::TestClass::test_method
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
-    rootdir: $REGENDOC_TMPDIR, inifile: 
-    collecting ... collected 5 items
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collecting ... collected 1 item
     
     test_server.py::TestClass::test_method PASSED
     
@@ -79,10 +79,10 @@ You can also select on the class::
 
     $ pytest -v test_server.py::TestClass
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
-    rootdir: $REGENDOC_TMPDIR, inifile: 
-    collecting ... collected 4 items
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collecting ... collected 1 item
     
     test_server.py::TestClass::test_method PASSED
     
@@ -92,10 +92,10 @@ Or select multiple nodes::
 
   $ pytest -v test_server.py::TestClass test_server.py::test_send_http
   ======= test session starts ========
-  platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+  platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
   cachedir: .cache
-  rootdir: $REGENDOC_TMPDIR, inifile: 
-  collecting ... collected 8 items
+  rootdir: $REGENDOC_TMPDIR, inifile:
+  collecting ... collected 2 items
   
   test_server.py::TestClass::test_method PASSED
   test_server.py::test_send_http PASSED
@@ -130,9 +130,9 @@ select tests based on their names::
 
     $ pytest -v -k http  # running with the above defined example module
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items
     
     test_server.py::test_send_http PASSED
@@ -144,9 +144,9 @@ And you can also run all tests except the ones that match the keyword::
 
     $ pytest -k "not send_http" -v
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items
     
     test_server.py::test_something_quick PASSED
@@ -160,9 +160,9 @@ Or to select "http" and "quick" tests::
 
     $ pytest -k "http or quick" -v
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0 -- $PYTHON_PREFIX/bin/python3.5
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items
     
     test_server.py::test_send_http PASSED
@@ -173,14 +173,18 @@ Or to select "http" and "quick" tests::
 
 .. note::
 
-    If you are using expressions such as "X and Y" then both X and Y
-    need to be simple non-keyword names.  For example, "pass" or "from"
-    will result in SyntaxErrors because "-k" evaluates the expression.
+    If you are using expressions such as ``"X and Y"`` then both ``X`` and ``Y``
+    need to be simple non-keyword names. For example, ``"pass"`` or ``"from"``
+    will result in SyntaxErrors because ``"-k"`` evaluates the expression using
+    Python's `eval`_ function.
 
-    However, if the "-k" argument is a simple string, no such restrictions
-    apply.  Also "-k 'not STRING'" has no restrictions.  You can also
-    specify numbers like "-k 1.3" to match tests which are parametrized
-    with the float "1.3".
+.. _`eval`: https://docs.python.org/3.6/library/functions.html#eval
+
+
+    However, if the ``"-k"`` argument is a simple string, no such restrictions
+    apply. Also ``"-k 'not STRING'"`` has no restrictions.  You can also
+    specify numbers like ``"-k 1.3"`` to match tests which are parametrized
+    with the float ``"1.3"``.
 
 Registering markers
 -------------------------------------
@@ -205,7 +209,7 @@ You can ask which markers exist for your test suite - the list includes our just
     
     @pytest.mark.skipif(condition): skip the given test function if eval(condition) results in a True value.  Evaluation happens within the module global context. Example: skipif('sys.platform == "win32"') skips the test if we are on the win32 platform. see http://pytest.org/latest/skipping.html
     
-    @pytest.mark.xfail(condition, reason=None, run=True, raises=None, strict=False): mark the the test function as an expected failure if eval(condition) has a True value. Optionally specify a reason for better reporting and run=False if you don't even want to execute the test function. If only specific exception(s) are expected, you can list them in raises, and if the test fails in other ways, it will be reported as a true failure. See http://pytest.org/latest/skipping.html
+    @pytest.mark.xfail(condition, reason=None, run=True, raises=None, strict=False): mark the test function as an expected failure if eval(condition) has a True value. Optionally specify a reason for better reporting and run=False if you don't even want to execute the test function. If only specific exception(s) are expected, you can list them in raises, and if the test fails in other ways, it will be reported as a true failure. See http://pytest.org/latest/skipping.html
     
     @pytest.mark.parametrize(argnames, argvalues): call a test function multiple times passing in different arguments in turn. argvalues generally needs to be a list of values if argnames specifies only one name or a list of tuples of values if argnames specifies multiple names. Example: @parametrize('arg1', [1,2]) would lead to two calls of the decorated test function, one with arg1=1 and another with arg1=2.see http://pytest.org/latest/parametrize.html for more info and examples.
     
@@ -223,13 +227,12 @@ For an example on how to add and work with markers from a plugin, see
 
     It is recommended to explicitly register markers so that:
 
-    * there is one place in your test suite defining your markers
+    * There is one place in your test suite defining your markers
 
-    * asking for existing markers via ``pytest --markers`` gives good output
+    * Asking for existing markers via ``pytest --markers`` gives good output
 
-    * typos in function markers are treated as an error if you use
-      the ``--strict`` option. Future versions of ``pytest`` are probably
-      going to start treating non-registered markers as errors at some point.
+    * Typos in function markers are treated as an error if you use
+      the ``--strict`` option. 
 
 .. _`scoped-marking`:
 
@@ -242,7 +245,7 @@ its test methods::
     # content of test_mark_classlevel.py
     import pytest
     @pytest.mark.webtest
-    class TestClass:
+    class TestClass(object):
         def test_startup(self):
             pass
         def test_startup_and_more(self):
@@ -256,14 +259,14 @@ To remain backward-compatible with Python 2.4 you can also set a
 
     import pytest
 
-    class TestClass:
+    class TestClass(object):
         pytestmark = pytest.mark.webtest
 
 or if you need to use multiple markers you can use a list::
 
     import pytest
 
-    class TestClass:
+    class TestClass(object):
         pytestmark = [pytest.mark.webtest, pytest.mark.slowtest]
 
 You can also set a module level marker::
@@ -352,9 +355,9 @@ the test needs::
 
     $ pytest -E stage2
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
-    collected 1 items
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 1 item
     
     test_someenv.py s
     
@@ -364,9 +367,9 @@ and here is one that specifies exactly the environment needed::
 
     $ pytest -E stage1
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
-    collected 1 items
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 1 item
     
     test_someenv.py .
     
@@ -381,7 +384,7 @@ The ``--markers`` option always gives you a list of available markers::
     
     @pytest.mark.skipif(condition): skip the given test function if eval(condition) results in a True value.  Evaluation happens within the module global context. Example: skipif('sys.platform == "win32"') skips the test if we are on the win32 platform. see http://pytest.org/latest/skipping.html
     
-    @pytest.mark.xfail(condition, reason=None, run=True, raises=None, strict=False): mark the the test function as an expected failure if eval(condition) has a True value. Optionally specify a reason for better reporting and run=False if you don't even want to execute the test function. If only specific exception(s) are expected, you can list them in raises, and if the test fails in other ways, it will be reported as a true failure. See http://pytest.org/latest/skipping.html
+    @pytest.mark.xfail(condition, reason=None, run=True, raises=None, strict=False): mark the test function as an expected failure if eval(condition) has a True value. Optionally specify a reason for better reporting and run=False if you don't even want to execute the test function. If only specific exception(s) are expected, you can list them in raises, and if the test fails in other ways, it will be reported as a true failure. See http://pytest.org/latest/skipping.html
     
     @pytest.mark.parametrize(argnames, argvalues): call a test function multiple times passing in different arguments in turn. argvalues generally needs to be a list of values if argnames specifies only one name or a list of tuples of values if argnames specifies multiple names. Example: @parametrize('arg1', [1,2]) would lead to two calls of the decorated test function, one with arg1=1 and another with arg1=2.see http://pytest.org/latest/parametrize.html for more info and examples.
     
@@ -391,6 +394,49 @@ The ``--markers`` option always gives you a list of available markers::
     
     @pytest.mark.trylast: mark a hook implementation function such that the plugin machinery will try to call it last/as late as possible.
     
+
+.. _`passing callables to custom markers`:
+
+Passing a callable to custom markers
+--------------------------------------------
+
+.. regendoc:wipe
+
+Below is the config file that will be used in the next examples::
+
+    # content of conftest.py
+    import sys
+
+    def pytest_runtest_setup(item):
+        marker = item.get_marker('my_marker')
+        if marker is not None:
+            for info in marker:
+                print('Marker info name={} args={} kwars={}'.format(info.name, info.args, info.kwargs))
+                sys.stdout.flush()
+
+A custom marker can have its argument set, i.e. ``args`` and ``kwargs`` properties, defined by either invoking it as a callable or using ``pytest.mark.MARKER_NAME.with_args``. These two methods achieve the same effect most of the time.
+
+However, if there is a callable as the single positional argument with no keyword arguments, using the ``pytest.mark.MARKER_NAME(c)`` will not pass ``c`` as a positional argument but decorate ``c`` with the custom marker (see :ref:`MarkDecorator <mark>`). Fortunately, ``pytest.mark.MARKER_NAME.with_args`` comes to the rescue::
+
+    # content of test_custom_marker.py
+    import pytest
+
+    def hello_world(*args, **kwargs):
+        return 'Hello World'
+
+    @pytest.mark.my_marker.with_args(hello_world)
+    def test_with_args():
+        pass
+
+The output is as follows::
+
+    $ pytest -q -s
+    Marker info name=my_marker args=(<function hello_world at 0xdeadbeef>,) kwars={}
+    .
+    1 passed in 0.12 seconds
+
+We can see that the custom marker has its argument set extended with the function ``hello_world``. This is the key difference between creating a custom marker as a callable, which invokes ``__call__`` behind the scenes, and using ``with_args``.
+
 
 Reading markers which were set from multiple places
 ----------------------------------------------------
@@ -407,7 +453,7 @@ code you can read over all such settings.  Example::
     pytestmark = pytest.mark.glob("module", x=1)
 
     @pytest.mark.glob("class", x=2)
-    class TestClass:
+    class TestClass(object):
         @pytest.mark.glob("function", x=3)
         def test_something(self):
             pass
@@ -450,7 +496,7 @@ for your particular platform, you could use the following plugin::
     import sys
     import pytest
 
-    ALL = set("darwin linux2 win32".split())
+    ALL = set("darwin linux win32".split())
 
     def pytest_runtest_setup(item):
         if isinstance(item, item.Function):
@@ -470,7 +516,7 @@ Let's do a little test file to show how this looks like::
     def test_if_apple_is_evil():
         pass
 
-    @pytest.mark.linux2
+    @pytest.mark.linux
     def test_if_linux_works():
         pass
 
@@ -481,32 +527,32 @@ Let's do a little test file to show how this looks like::
     def test_runs_everywhere():
         pass
 
-then you will see two test skipped and two executed tests as expected::
+then you will see two tests skipped and two executed tests as expected::
 
     $ pytest -rs # this option reports skip reasons
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
     
-    test_plat.py sss.
+    test_plat.py s.s.
     ======= short test summary info ========
-    SKIP [3] $REGENDOC_TMPDIR/conftest.py:12: cannot run on platform linux
+    SKIP [2] $REGENDOC_TMPDIR/conftest.py:13: cannot run on platform linux
     
-    ======= 1 passed, 3 skipped in 0.12 seconds ========
+    ======= 2 passed, 2 skipped in 0.12 seconds ========
 
 Note that if you specify a platform via the marker-command line option like this::
 
-    $ pytest -m linux2
+    $ pytest -m linux
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
     
-    test_plat.py s
+    test_plat.py .
     
     ======= 3 tests deselected ========
-    ======= 1 skipped, 3 deselected in 0.12 seconds ========
+    ======= 1 passed, 3 deselected in 0.12 seconds ========
 
 then the unmarked-tests will not be run.  It is thus a way to restrict the run to the specific tests.
 
@@ -551,8 +597,8 @@ We can now use the ``-m option`` to select one set::
 
   $ pytest -m interface --tb=short
   ======= test session starts ========
-  platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-  rootdir: $REGENDOC_TMPDIR, inifile: 
+  platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+  rootdir: $REGENDOC_TMPDIR, inifile:
   collected 4 items
   
   test_module.py FF
@@ -573,8 +619,8 @@ or to select both "event" and "interface" tests::
 
   $ pytest -m "interface or event" --tb=short
   ======= test session starts ========
-  platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-  rootdir: $REGENDOC_TMPDIR, inifile: 
+  platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+  rootdir: $REGENDOC_TMPDIR, inifile:
   collected 4 items
   
   test_module.py FFF

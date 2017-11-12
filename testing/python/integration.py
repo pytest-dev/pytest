@@ -3,8 +3,8 @@ from _pytest import python
 from _pytest import runner
 
 
-class TestOEJSKITSpecials:
-    def test_funcarg_non_pycollectobj(self, testdir): # rough jstests usage
+class TestOEJSKITSpecials(object):
+    def test_funcarg_non_pycollectobj(self, testdir):  # rough jstests usage
         testdir.makeconftest("""
             import pytest
             def pytest_pycollect_makeitem(collector, name, obj):
@@ -19,7 +19,7 @@ class TestOEJSKITSpecials:
             @pytest.fixture
             def arg1(request):
                 return 42
-            class MyClass:
+            class MyClass(object):
                 pass
         """)
         # this hook finds funcarg factories
@@ -30,7 +30,7 @@ class TestOEJSKITSpecials:
         pytest._fillfuncargs(clscol)
         assert clscol.funcargs['arg1'] == 42
 
-    def test_autouse_fixture(self, testdir): # rough jstests usage
+    def test_autouse_fixture(self, testdir):  # rough jstests usage
         testdir.makeconftest("""
             import pytest
             def pytest_pycollect_makeitem(collector, name, obj):
@@ -48,7 +48,7 @@ class TestOEJSKITSpecials:
             @pytest.fixture
             def arg1(request):
                 return 42
-            class MyClass:
+            class MyClass(object):
                 pass
         """)
         # this hook finds funcarg factories
@@ -76,7 +76,8 @@ def test_wrapped_getfslineno():
     fs2, lineno2 = python.getfslineno(wrap)
     assert lineno > lineno2, "getfslineno does not unwrap correctly"
 
-class TestMockDecoration:
+
+class TestMockDecoration(object):
     def test_wrapped_getfuncargnames(self):
         from _pytest.compat import getfuncargnames
 
@@ -92,8 +93,8 @@ class TestMockDecoration:
         def f(x):
             pass
 
-        l = getfuncargnames(f)
-        assert l == ("x",)
+        values = getfuncargnames(f)
+        assert values == ("x",)
 
     def test_wrapped_getfuncargnames_patching(self):
         from _pytest.compat import getfuncargnames
@@ -109,8 +110,8 @@ class TestMockDecoration:
         def f(x, y, z):
             pass
 
-        l = getfuncargnames(f)
-        assert l == ("y", "z")
+        values = getfuncargnames(f)
+        assert values == ("y", "z")
 
     def test_unittest_mock(self, testdir):
         pytest.importorskip("unittest.mock")
@@ -173,7 +174,7 @@ class TestMockDecoration:
         reprec.assertoutcome(passed=2)
         calls = reprec.getcalls("pytest_runtest_logreport")
         funcnames = [call.report.location[2] for call in calls
-                        if call.report.when == "call"]
+                     if call.report.when == "call"]
         assert funcnames == ["T.test_hello", "test_someting"]
 
     def test_mock_sorting(self, testdir):
@@ -207,7 +208,7 @@ class TestMockDecoration:
             @patch('os.getcwd')
             @patch('os.path')
             @mark.slow
-            class TestSimple:
+            class TestSimple(object):
                 def test_simple_thing(self, mock_path, mock_getcwd):
                     pass
         """)
@@ -215,7 +216,7 @@ class TestMockDecoration:
         reprec.assertoutcome(passed=1)
 
 
-class TestReRunTests:
+class TestReRunTests(object):
     def test_rerun(self, testdir):
         testdir.makeconftest("""
             from _pytest.runner import runtestprotocol
@@ -246,12 +247,13 @@ class TestReRunTests:
             *2 passed*
         """)
 
+
 def test_pytestconfig_is_session_scoped():
     from _pytest.fixtures import pytestconfig
     assert pytestconfig._pytestfixturefunction.scope == "session"
 
 
-class TestNoselikeTestAttribute:
+class TestNoselikeTestAttribute(object):
     def test_module_with_global_test(self, testdir):
         testdir.makepyfile("""
             __test__ = False
@@ -270,7 +272,7 @@ class TestNoselikeTestAttribute:
                 pass
             test_func.__test__ = False
 
-            class TestSome:
+            class TestSome(object):
                 __test__ = False
                 def test_method(self):
                     pass
@@ -328,7 +330,7 @@ class TestNoselikeTestAttribute:
 
 
 @pytest.mark.issue351
-class TestParameterize:
+class TestParameterize(object):
 
     def test_idfn_marker(self, testdir):
         testdir.makepyfile("""

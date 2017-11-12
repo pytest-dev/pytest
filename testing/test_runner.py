@@ -1,23 +1,24 @@
 # -*- coding: utf-8 -*-
-from __future__ import with_statement
+from __future__ import absolute_import, division, print_function
 
 import _pytest._code
 import os
 import py
 import pytest
 import sys
-from _pytest import runner, main
+from _pytest import runner, main, outcomes
 
-class TestSetupState:
+
+class TestSetupState(object):
     def test_setup(self, testdir):
         ss = runner.SetupState()
         item = testdir.getitem("def test_func(): pass")
-        l = [1]
+        values = [1]
         ss.prepare(item)
-        ss.addfinalizer(l.pop, colitem=item)
-        assert l
+        ss.addfinalizer(values.pop, colitem=item)
+        assert values
         ss._pop_and_teardown()
-        assert not l
+        assert not values
 
     def test_teardown_exact_stack_empty(self, testdir):
         item = testdir.getitem("def test_func(): pass")
@@ -31,7 +32,7 @@ class TestSetupState:
             def setup_module(mod):
                 raise ValueError(42)
             def test_func(): pass
-        """) # noqa
+        """)  # noqa
         ss = runner.SetupState()
         pytest.raises(ValueError, lambda: ss.prepare(item))
         pytest.raises(ValueError, lambda: ss.prepare(item))
@@ -39,11 +40,14 @@ class TestSetupState:
     def test_teardown_multiple_one_fails(self, testdir):
         r = []
 
-        def fin1(): r.append('fin1')
+        def fin1():
+            r.append('fin1')
 
-        def fin2(): raise Exception('oops')
+        def fin2():
+            raise Exception('oops')
 
-        def fin3(): r.append('fin3')
+        def fin3():
+            r.append('fin3')
 
         item = testdir.getitem("def test_func(): pass")
         ss = runner.SetupState()
@@ -58,9 +62,11 @@ class TestSetupState:
     def test_teardown_multiple_fail(self, testdir):
         # Ensure the first exception is the one which is re-raised.
         # Ideally both would be reported however.
-        def fin1(): raise Exception('oops1')
+        def fin1():
+            raise Exception('oops1')
 
-        def fin2(): raise Exception('oops2')
+        def fin2():
+            raise Exception('oops2')
 
         item = testdir.getitem("def test_func(): pass")
         ss = runner.SetupState()
@@ -71,7 +77,7 @@ class TestSetupState:
         assert err.value.args == ('oops2',)
 
 
-class BaseFunctionalTests:
+class BaseFunctionalTests(object):
     def test_passfunction(self, testdir):
         reports = testdir.runitem("""
             def test_func():
@@ -94,7 +100,7 @@ class BaseFunctionalTests:
         assert rep.failed
         assert rep.when == "call"
         assert rep.outcome == "failed"
-        #assert isinstance(rep.longrepr, ReprExceptionInfo)
+        # assert isinstance(rep.longrepr, ReprExceptionInfo)
 
     def test_skipfunction(self, testdir):
         reports = testdir.runitem("""
@@ -107,12 +113,12 @@ class BaseFunctionalTests:
         assert not rep.passed
         assert rep.skipped
         assert rep.outcome == "skipped"
-        #assert rep.skipped.when == "call"
-        #assert rep.skipped.when == "call"
-        #assert rep.skipped == "%sreason == "hello"
-        #assert rep.skipped.location.lineno == 3
-        #assert rep.skipped.location.path
-        #assert not rep.skipped.failurerepr
+        # assert rep.skipped.when == "call"
+        # assert rep.skipped.when == "call"
+        # assert rep.skipped == "%sreason == "hello"
+        # assert rep.skipped.location.lineno == 3
+        # assert rep.skipped.location.path
+        # assert not rep.skipped.failurerepr
 
     def test_skip_in_setup_function(self, testdir):
         reports = testdir.runitem("""
@@ -127,11 +133,11 @@ class BaseFunctionalTests:
         assert not rep.failed
         assert not rep.passed
         assert rep.skipped
-        #assert rep.skipped.reason == "hello"
-        #assert rep.skipped.location.lineno == 3
-        #assert rep.skipped.location.lineno == 3
+        # assert rep.skipped.reason == "hello"
+        # assert rep.skipped.location.lineno == 3
+        # assert rep.skipped.location.lineno == 3
         assert len(reports) == 2
-        assert reports[1].passed # teardown
+        assert reports[1].passed  # teardown
 
     def test_failure_in_setup_function(self, testdir):
         reports = testdir.runitem("""
@@ -163,8 +169,8 @@ class BaseFunctionalTests:
         assert not rep.passed
         assert rep.failed
         assert rep.when == "teardown"
-        #assert rep.longrepr.reprcrash.lineno == 3
-        #assert rep.longrepr.reprtraceback.reprentries
+        # assert rep.longrepr.reprcrash.lineno == 3
+        # assert rep.longrepr.reprtraceback.reprentries
 
     def test_custom_failure_repr(self, testdir):
         testdir.makepyfile(conftest="""
@@ -182,10 +188,10 @@ class BaseFunctionalTests:
         assert not rep.skipped
         assert not rep.passed
         assert rep.failed
-        #assert rep.outcome.when == "call"
-        #assert rep.failed.where.lineno == 3
-        #assert rep.failed.where.path.basename == "test_func.py"
-        #assert rep.failed.failurerepr == "hello"
+        # assert rep.outcome.when == "call"
+        # assert rep.failed.where.lineno == 3
+        # assert rep.failed.where.path.basename == "test_func.py"
+        # assert rep.failed.failurerepr == "hello"
 
     def test_teardown_final_returncode(self, testdir):
         rec = testdir.inline_runsource("""
@@ -200,7 +206,7 @@ class BaseFunctionalTests:
         rec = testdir.inline_runsource("""
             import pytest
 
-            class TestClass:
+            class TestClass(object):
                 def test_method(self):
                     pass
                 def teardown_class(cls):
@@ -220,14 +226,14 @@ class BaseFunctionalTests:
                 raise ValueError(42)
         """)
         reps = rec.getreports("pytest_runtest_logreport")
-        print (reps)
+        print(reps)
         for i in range(2):
             assert reps[i].nodeid.endswith("test_method")
             assert reps[i].passed
         assert reps[2].when == "teardown"
         assert reps[2].failed
         assert len(reps) == 6
-        for i in range(3,5):
+        for i in range(3, 5):
             assert reps[i].nodeid.endswith("test_func")
             assert reps[i].passed
         assert reps[5].when == "teardown"
@@ -239,7 +245,7 @@ class BaseFunctionalTests:
         rec = testdir.inline_runsource("""
             import pytest
 
-            class TestClass:
+            class TestClass(object):
                 def teardown_method(self, x, y, z):
                     pass
 
@@ -247,7 +253,7 @@ class BaseFunctionalTests:
                     assert True
         """)
         reps = rec.getreports("pytest_runtest_logreport")
-        print (reps)
+        print(reps)
         assert len(reps) == 3
         #
         assert reps[0].nodeid.endswith("test_method")
@@ -262,11 +268,11 @@ class BaseFunctionalTests:
         assert reps[2].failed
         assert reps[2].when == "teardown"
         assert reps[2].longrepr.reprcrash.message in (
-                # python3 error
-                "TypeError: teardown_method() missing 2 required positional arguments: 'y' and 'z'",
-                # python2 error
-                'TypeError: teardown_method() takes exactly 4 arguments (2 given)'
-                )
+            # python3 error
+            "TypeError: teardown_method() missing 2 required positional arguments: 'y' and 'z'",
+            # python2 error
+            'TypeError: teardown_method() takes exactly 4 arguments (2 given)'
+        )
 
     def test_failure_in_setup_function_ignores_custom_repr(self, testdir):
         testdir.makepyfile(conftest="""
@@ -287,10 +293,10 @@ class BaseFunctionalTests:
         assert not rep.skipped
         assert not rep.passed
         assert rep.failed
-        #assert rep.outcome.when == "setup"
-        #assert rep.outcome.where.lineno == 3
-        #assert rep.outcome.where.path.basename == "test_func.py"
-        #assert instanace(rep.failed.failurerepr, PythonFailureRepr)
+        # assert rep.outcome.when == "setup"
+        # assert rep.outcome.where.lineno == 3
+        # assert rep.outcome.where.path.basename == "test_func.py"
+        # assert instanace(rep.failed.failurerepr, PythonFailureRepr)
 
     def test_systemexit_does_not_bail_out(self, testdir):
         try:
@@ -316,6 +322,7 @@ class BaseFunctionalTests:
         else:
             pytest.fail("did not raise")
 
+
 class TestExecutionNonForked(BaseFunctionalTests):
     def getrunner(self):
         def f(item):
@@ -332,6 +339,7 @@ class TestExecutionNonForked(BaseFunctionalTests):
             pass
         else:
             pytest.fail("did not raise")
+
 
 class TestExecutionForked(BaseFunctionalTests):
     pytestmark = pytest.mark.skipif("not hasattr(os, 'fork')")
@@ -351,12 +359,13 @@ class TestExecutionForked(BaseFunctionalTests):
         assert rep.failed
         assert rep.when == "???"
 
-class TestSessionReports:
+
+class TestSessionReports(object):
     def test_collect_result(self, testdir):
         col = testdir.getmodulecol("""
             def test_func1():
                 pass
-            class TestClass:
+            class TestClass(object):
                 pass
         """)
         rep = runner.collect_one_node(col)
@@ -380,6 +389,7 @@ reporttypes = [
     runner.CollectReport,
 ]
 
+
 @pytest.mark.parametrize('reporttype', reporttypes, ids=[x.__name__ for x in reporttypes])
 def test_report_extra_parameters(reporttype):
     if hasattr(py.std.inspect, 'signature'):
@@ -390,12 +400,13 @@ def test_report_extra_parameters(reporttype):
     report = reporttype(newthing=1, **basekw)
     assert report.newthing == 1
 
+
 def test_callinfo():
     ci = runner.CallInfo(lambda: 0, '123')
     assert ci.when == "123"
     assert ci.result == 0
     assert "result" in repr(ci)
-    ci = runner.CallInfo(lambda: 0/0, '123')
+    ci = runner.CallInfo(lambda: 0 / 0, '123')
     assert ci.when == "123"
     assert not hasattr(ci, 'result')
     assert ci.excinfo
@@ -403,13 +414,15 @@ def test_callinfo():
 
 # design question: do we want general hooks in python files?
 # then something like the following functional tests makes sense
+
+
 @pytest.mark.xfail
 def test_runtest_in_module_ordering(testdir):
     p1 = testdir.makepyfile("""
         import pytest
         def pytest_runtest_setup(item): # runs after class-level!
             item.function.mylist.append("module")
-        class TestClass:
+        class TestClass(object):
             def pytest_runtest_setup(self, item):
                 assert not hasattr(item.function, 'mylist')
                 item.function.mylist = ['class']
@@ -436,8 +449,17 @@ def test_runtest_in_module_ordering(testdir):
 
 
 def test_outcomeexception_exceptionattributes():
-    outcome = runner.OutcomeException('test')
+    outcome = outcomes.OutcomeException('test')
     assert outcome.args[0] == outcome.msg
+
+
+def test_outcomeexception_passes_except_Exception():
+    with pytest.raises(outcomes.OutcomeException):
+        try:
+            raise outcomes.OutcomeException('test')
+        except Exception:
+            pass
+
 
 def test_pytest_exit():
     try:
@@ -446,6 +468,7 @@ def test_pytest_exit():
         excinfo = _pytest._code.ExceptionInfo()
         assert excinfo.errisinstance(KeyboardInterrupt)
 
+
 def test_pytest_fail():
     try:
         pytest.fail("hello")
@@ -453,6 +476,7 @@ def test_pytest_fail():
         excinfo = _pytest._code.ExceptionInfo()
         s = excinfo.exconly(tryshort=True)
         assert s.startswith("Failed")
+
 
 def test_pytest_exit_msg(testdir):
     testdir.makeconftest("""
@@ -465,6 +489,7 @@ def test_pytest_exit_msg(testdir):
     result.stderr.fnmatch_lines([
         "Exit: oh noes",
     ])
+
 
 def test_pytest_fail_notrace(testdir):
     testdir.makepyfile("""
@@ -513,12 +538,12 @@ def test_pytest_no_tests_collected_exit_status(testdir):
             assert 1
     """)
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines('*collected 1 items*')
+    result.stdout.fnmatch_lines('*collected 1 item*')
     result.stdout.fnmatch_lines('*1 passed*')
     assert result.ret == main.EXIT_OK
 
     result = testdir.runpytest('-k nonmatch')
-    result.stdout.fnmatch_lines('*collected 1 items*')
+    result.stdout.fnmatch_lines('*collected 1 item*')
     result.stdout.fnmatch_lines('*1 deselected*')
     assert result.ret == main.EXIT_NOTESTSCOLLECTED
 
@@ -531,6 +556,7 @@ def test_exception_printing_skip():
         s = excinfo.exconly(tryshort=True)
         assert s.startswith("Skipped")
 
+
 def test_importorskip(monkeypatch):
     importorskip = pytest.importorskip
 
@@ -540,8 +566,8 @@ def test_importorskip(monkeypatch):
     try:
         sys = importorskip("sys")  # noqa
         assert sys == py.std.sys
-        #path = pytest.importorskip("os.path")
-        #assert path == py.std.os.path
+        # path = pytest.importorskip("os.path")
+        # assert path == py.std.os.path
         excinfo = pytest.raises(pytest.skip.Exception, f)
         path = py.path.local(excinfo.getrepr().reprcrash.path)
         # check that importorskip reports the actual call
@@ -561,9 +587,11 @@ def test_importorskip(monkeypatch):
         print(_pytest._code.ExceptionInfo())
         pytest.fail("spurious skip")
 
+
 def test_importorskip_imports_last_module_part():
     ospath = pytest.importorskip("os.path")
     assert os.path == ospath
+
 
 def test_importorskip_dev_module(monkeypatch):
     try:
@@ -680,7 +708,9 @@ def test_store_except_info_on_eror():
     sys.last_traceback and friends.
     """
     # Simulate item that raises a specific exception
-    class ItemThatRaises:
+    class ItemThatRaises(object):
+        nodeid = 'item_that_raises'
+
         def runtest(self):
             raise IndexError('TEST')
     try:
@@ -693,7 +723,32 @@ def test_store_except_info_on_eror():
     assert sys.last_traceback
 
 
-class TestReportContents:
+def test_current_test_env_var(testdir, monkeypatch):
+    pytest_current_test_vars = []
+    monkeypatch.setattr(sys, 'pytest_current_test_vars', pytest_current_test_vars, raising=False)
+    testdir.makepyfile('''
+        import pytest
+        import sys
+        import os
+
+        @pytest.fixture
+        def fix():
+            sys.pytest_current_test_vars.append(('setup', os.environ['PYTEST_CURRENT_TEST']))
+            yield
+            sys.pytest_current_test_vars.append(('teardown', os.environ['PYTEST_CURRENT_TEST']))
+
+        def test(fix):
+            sys.pytest_current_test_vars.append(('call', os.environ['PYTEST_CURRENT_TEST']))
+    ''')
+    result = testdir.runpytest_inprocess()
+    assert result.ret == 0
+    test_id = 'test_current_test_env_var.py::test'
+    assert pytest_current_test_vars == [
+        ('setup', test_id + ' (setup)'), ('call', test_id + ' (call)'), ('teardown', test_id + ' (teardown)')]
+    assert 'PYTEST_CURRENT_TEST' not in os.environ
+
+
+class TestReportContents(object):
     """
     Test user-level API of ``TestReport`` objects.
     """
@@ -754,5 +809,3 @@ class TestReportContents:
         rep = reports[1]
         assert rep.capstdout == ''
         assert rep.capstderr == ''
-
-

@@ -1,39 +1,51 @@
 sudo: false
 language: python
 python:
-    - '3.5'
+  - '3.6'
 # command to install dependencies
-install: "pip install -U tox"
+install:
+  - pip install --upgrade --pre tox
 # # command to run tests
 env:
   matrix:
     # coveralls is not listed in tox's envlist, but should run in travis
-    - TESTENV=coveralls
+    - TOXENV=coveralls
     # note: please use "tox --listenvs" to populate the build matrix below
-    - TESTENV=linting
-    - TESTENV=py26
-    - TESTENV=py27
-    - TESTENV=py33
-    - TESTENV=py34
-    - TESTENV=py35
-    - TESTENV=pypy
-    - TESTENV=py27-pexpect
-    - TESTENV=py27-xdist
-    - TESTENV=py27-trial
-    - TESTENV=py35-pexpect
-    - TESTENV=py35-xdist
-    - TESTENV=py35-trial
-    - TESTENV=py27-nobyte
-    - TESTENV=doctesting
-    - TESTENV=freeze
-    - TESTENV=docs
+    - TOXENV=linting
+    - TOXENV=py27
+    - TOXENV=py34
+    - TOXENV=py36
+    - TOXENV=py27-pexpect
+    - TOXENV=py27-xdist
+    - TOXENV=py27-trial
+    - TOXENV=py27-numpy
+    - TOXENV=py36-pexpect
+    - TOXENV=py36-xdist
+    - TOXENV=py36-trial
+    - TOXENV=py36-numpy
+    - TOXENV=py27-nobyte
+    - TOXENV=doctesting
+    - TOXENV=docs
 
 matrix:
+  include:
+    - env: TOXENV=py26
+      python: '2.6'
+    - env: TOXENV=py33
+      python: '3.3'
+    - env: TOXENV=pypy
+      python: 'pypy-5.4'
+    - env: TOXENV=py35
+      python: '3.5'
+    - env: TOXENV=py35-freeze
+      python: '3.5'
+    - env: TOXENV=py37
+      python: 'nightly'
   allow_failures:
-    # py35-trial failing on Linux: #1989
-    - env: TESTENV=py35-trial
+    - env: TOXENV=py37
+      python: 'nightly'
 
-script: tox --recreate -e $TESTENV
+script: tox --recreate
 
 notifications:
   irc:

@@ -1,31 +1,26 @@
-import os, sys
+import os
+import sys
 import setuptools
 import pkg_resources
 from setuptools import setup, Command
 
-classifiers = ['Development Status :: 6 - Mature',
-               'Intended Audience :: Developers',
-               'License :: OSI Approved :: MIT License',
-               'Operating System :: POSIX',
-               'Operating System :: Microsoft :: Windows',
-               'Operating System :: MacOS :: MacOS X',
-               'Topic :: Software Development :: Testing',
-               'Topic :: Software Development :: Libraries',
-               'Topic :: Utilities'] + [
-              ('Programming Language :: Python :: %s' % x) for x in
-                  '2 2.6 2.7 3 3.3 3.4 3.5'.split()]
+classifiers = [
+    'Development Status :: 6 - Mature',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: POSIX',
+    'Operating System :: Microsoft :: Windows',
+    'Operating System :: MacOS :: MacOS X',
+    'Topic :: Software Development :: Testing',
+    'Topic :: Software Development :: Libraries',
+    'Topic :: Utilities',
+] + [
+    ('Programming Language :: Python :: %s' % x)
+    for x in '2 2.6 2.7 3 3.3 3.4 3.5 3.6'.split()
+]
 
 with open('README.rst') as fd:
     long_description = fd.read()
-
-def get_version():
-    p = os.path.join(os.path.dirname(
-                     os.path.abspath(__file__)), "_pytest", "__init__.py")
-    with open(p) as f:
-        for line in f.readlines():
-            if "__version__" in line:
-                return line.strip().split("=")[-1].strip(" '")
-    raise ValueError("could not read version")
 
 
 def has_environment_marker_support():
@@ -48,14 +43,15 @@ def has_environment_marker_support():
 
 
 def main():
-    install_requires = ['py>=1.4.29']  # pluggy is vendored in _pytest.vendored_packages
+    install_requires = ['py>=1.4.33', 'setuptools']  # pluggy is vendored in _pytest.vendored_packages
     extras_require = {}
     if has_environment_marker_support():
-        extras_require[':python_version=="2.6"'] = ['argparse']
+        extras_require[':python_version=="2.6"'] = ['argparse', 'ordereddict']
         extras_require[':sys_platform=="win32"'] = ['colorama']
     else:
         if sys.version_info < (2, 7):
             install_requires.append('argparse')
+            install_requires.append('ordereddict')
         if sys.platform == 'win32':
             install_requires.append('colorama')
 
@@ -63,18 +59,20 @@ def main():
         name='pytest',
         description='pytest: simple powerful testing with Python',
         long_description=long_description,
-        version=get_version(),
+        use_scm_version={
+            'write_to': '_pytest/_version.py',
+        },
         url='http://pytest.org',
         license='MIT license',
         platforms=['unix', 'linux', 'osx', 'cygwin', 'win32'],
         author='Holger Krekel, Bruno Oliveira, Ronny Pfannschmidt, Floris Bruynooghe, Brianna Laugher, Florian Bruhin and others',
-        author_email='holger at merlinux.eu',
         entry_points={'console_scripts':
                           ['pytest=pytest:main', 'py.test=pytest:main']},
         classifiers=classifiers,
         keywords="test unittest",
         cmdclass={'test': PyTest},
         # the following should be enabled for release
+        setup_requires=['setuptools-scm'],
         install_requires=install_requires,
         extras_require=extras_require,
         packages=['_pytest', '_pytest.assertion', '_pytest._code', '_pytest.vendored_packages'],

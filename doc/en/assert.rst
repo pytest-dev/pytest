@@ -26,9 +26,9 @@ you will see the return value of the function call::
 
     $ pytest test_assert1.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
-    collected 1 items
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 1 item
     
     test_assert1.py F
     
@@ -119,9 +119,9 @@ exceptions your own code is deliberately raising, whereas using
 like documenting unfixed bugs (where the test describes what "should" happen)
 or bugs in dependencies.
 
-If you want to test that a regular expression matches on the string
-representation of an exception (like the ``TestCase.assertRaisesRegexp`` method
-from ``unittest``) you can use the ``ExceptionInfo.match`` method::
+Also, the context manager form accepts a ``match`` keyword parameter to test
+that a regular expression matches on the string representation of an exception
+(like the ``TestCase.assertRaisesRegexp`` method from ``unittest``)::
 
     import pytest
 
@@ -129,12 +129,11 @@ from ``unittest``) you can use the ``ExceptionInfo.match`` method::
         raise ValueError("Exception 123 raised")
 
     def test_match():
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError, match=r'.* 123 .*'):
             myfunc()
-        excinfo.match(r'.* 123 .*')
 
 The regexp parameter of the ``match`` method is matched with the ``re.search``
-function. So in the above example ``excinfo.match('123')`` would have worked as
+function. So in the above example ``match='123'`` would have worked as
 well.
 
 
@@ -170,9 +169,9 @@ if you run this module::
 
     $ pytest test_assert2.py
     ======= test session starts ========
-    platform linux -- Python 3.5.2, pytest-3.0.5, py-1.4.31, pluggy-0.4.0
-    rootdir: $REGENDOC_TMPDIR, inifile: 
-    collected 1 items
+    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
+    rootdir: $REGENDOC_TMPDIR, inifile:
+    collected 1 item
     
     test_assert2.py F
     
@@ -183,7 +182,7 @@ if you run this module::
             set1 = set("1308")
             set2 = set("8035")
     >       assert set1 == set2
-    E       assert {'0', '1', '3', '8'} == {'0', '3', '5', '8'}
+    E       AssertionError: assert {'0', '1', '3', '8'} == {'0', '3', '5', '8'}
     E         Extra items in the left set:
     E         '1'
     E         Extra items in the right set:
@@ -210,8 +209,8 @@ the ``pytest_assertrepr_compare`` hook.
 .. autofunction:: _pytest.hookspec.pytest_assertrepr_compare
    :noindex:
 
-As an example consider adding the following hook in a conftest.py which
-provides an alternative explanation for ``Foo`` objects::
+As an example consider adding the following hook in a :ref:`conftest.py <conftest.py>` 
+file which provides an alternative explanation for ``Foo`` objects::
 
    # content of conftest.py
    from test_foocompare import Foo
@@ -223,7 +222,7 @@ provides an alternative explanation for ``Foo`` objects::
 now, given this test module::
 
    # content of test_foocompare.py
-   class Foo:
+   class Foo(object):
        def __init__(self, val):
            self.val = val
 
@@ -262,50 +261,29 @@ Advanced assertion introspection
 .. versionadded:: 2.1
 
 
-Reporting details about a failing assertion is achieved either by rewriting
-assert statements before they are run or re-evaluating the assert expression and
-recording the intermediate values. Which technique is used depends on the
-location of the assert, ``pytest`` configuration, and Python version being used
-to run ``pytest``.
-
-By default, ``pytest`` rewrites assert statements in test modules.
-Rewritten assert statements put introspection information into the assertion failure message.
-``pytest`` only rewrites test modules directly discovered by its test collection process, so
-asserts in supporting modules which are not themselves test modules will not be
-rewritten.
+Reporting details about a failing assertion is achieved by rewriting assert
+statements before they are run.  Rewritten assert statements put introspection
+information into the assertion failure message.  ``pytest`` only rewrites test
+modules directly discovered by its test collection process, so asserts in
+supporting modules which are not themselves test modules will not be rewritten.
 
 .. note::
 
-   ``pytest`` rewrites test modules on import. It does this by using an import
-   hook to write a new pyc files. Most of the time this works transparently.
+   ``pytest`` rewrites test modules on import by using an import
+   hook to write new ``pyc`` files. Most of the time this works transparently.
    However, if you are messing with import yourself, the import hook may
-   interfere. If this is the case, simply use ``--assert=reinterp`` or
-   ``--assert=plain``. Additionally, rewriting will fail silently if it cannot
-   write new pycs, i.e. in a read-only filesystem or a zipfile.
+   interfere.
 
-If an assert statement has not been rewritten or the Python version is less than
-2.6, ``pytest`` falls back on assert reinterpretation. In assert
-reinterpretation, ``pytest`` walks the frame of the function containing the
-assert statement to discover sub-expression results of the failing assert
-statement. You can force ``pytest`` to always use assertion reinterpretation by
-passing the ``--assert=reinterp`` option.
+   If this is the case you have two options:
 
-Assert reinterpretation has a caveat not present with assert rewriting: If
-evaluating the assert expression has side effects you may get a warning that the
-intermediate values could not be determined safely.  A common example of this
-issue is an assertion which reads from a file::
+   * Disable rewriting for a specific module by adding the string
+     ``PYTEST_DONT_REWRITE`` to its docstring.
 
-        assert f.read() != '...'
+   * Disable rewriting for all modules by using ``--assert=plain``.
 
-If this assertion fails then the re-evaluation will probably succeed!
-This is because ``f.read()`` will return an empty string when it is
-called the second time during the re-evaluation.  However, it is
-easy to rewrite the assertion and avoid any trouble::
+   Additionally, rewriting will fail silently if it cannot write new ``.pyc`` files,
+   i.e. in a read-only filesystem or a zipfile.
 
-        content = f.read()
-        assert content != '...'
-
-All assert introspection can be turned off by passing ``--assert=plain``.
 
 For further information, Benjamin Peterson wrote up `Behind the scenes of pytest's new assertion rewriting <http://pybites.blogspot.com/2011/07/behind-scenes-of-pytests-new-assertion.html>`_.
 
@@ -317,4 +295,5 @@ For further information, Benjamin Peterson wrote up `Behind the scenes of pytest
    ``--nomagic``.
 
 .. versionchanged:: 3.0
-   Removes the ``--no-assert`` and``--nomagic`` options.
+   Removes the ``--no-assert`` and ``--nomagic`` options.
+   Removes the ``--assert=reinterp`` option.
