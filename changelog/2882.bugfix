@@ -1,1 +1,0 @@
-Show full context of doctest source in the pytest output, if the lineno of failed example in the docstring is < 9.
