@@ -1,1 +1,0 @@
-Add documentation about the ``python -m pytest`` invocation adding the current directory to sys.path.
