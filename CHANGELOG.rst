@@ -14,17 +14,17 @@ Pytest 3.2.4 (2017-11-13)
 Bug Fixes
 ---------
 
-- Fix the bug where running pytest with "--pyargs" will result in Items with
-  empty "parent.nodeid" if run from a different root directory. (`#2775
+- Fix the bug where running with ``--pyargs`` will result in items with
+  empty ``parent.nodeid`` if run from a different root directory. (`#2775
   <https://github.com/pytest-dev/pytest/issues/2775>`_)
 
-- Fix issue with @pytest.parametrize if argnames was specified as kwarg.
+- Fix issue with ``@pytest.parametrize`` if argnames was specified as keyword arguments.
   (`#2819 <https://github.com/pytest-dev/pytest/issues/2819>`_)
 
 - Strip whitespace from marker names when reading them from INI config. (`#2856
   <https://github.com/pytest-dev/pytest/issues/2856>`_)
 
-- Show full context of doctest source in the pytest output, if the lineno of
+- Show full context of doctest source in the pytest output, if the line number of
   failed example in the docstring is < 9. (`#2882
   <https://github.com/pytest-dev/pytest/issues/2882>`_)
 
