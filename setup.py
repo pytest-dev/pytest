@@ -45,7 +45,7 @@ def has_environment_marker_support():
 def main():
     extras_require = {}
     install_requires = [
-        'py>=1.4.33,<1.5',
+        'py>=1.5.0',
         'six>=1.10.0',
         'setuptools',
         'attrs>=17.2.0',
