@@ -180,17 +180,29 @@ class CaptureManager:
         item.add_report_section(when, "stderr", err)
 
 
-error_capsysfderror = "cannot use capsys and capfd at the same time"
+capture_fixtures = {'capfd', 'capfdbinary', 'capsys'}
+
+
+def _ensure_only_one_capture_fixture(request, name):
+    fixtures = set(request.fixturenames) & capture_fixtures - set((name,))
+    if fixtures:
+        fixtures = sorted(fixtures)
+        fixtures = fixtures[0] if len(fixtures) == 1 else fixtures
+        raise request.raiseerror(
+            "cannot use {0} and {1} at the same time".format(
+                fixtures, name,
+            ),
+        )
 
 
 @pytest.fixture
 def capsys(request):
     """Enable capturing of writes to sys.stdout/sys.stderr and make
     captured output available via ``capsys.readouterr()`` method calls
-    which return a ``(out, err)`` tuple.
+    which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be ``text``
+    objects.
     """
-    if "capfd" in request.fixturenames:
-        raise request.raiseerror(error_capsysfderror)
+    _ensure_only_one_capture_fixture(request, 'capsys')
     with _install_capture_fixture_on_item(request, SysCapture) as fixture:
         yield fixture
 
@@ -199,13 +211,27 @@ def capsys(request):
 def capfd(request):
     """Enable capturing of writes to file descriptors 1 and 2 and make
     captured output available via ``capfd.readouterr()`` method calls
-    which return a ``(out, err)`` tuple.
+    which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be ``text``
+    objects.
     """
-    if "capsys" in request.fixturenames:
-        request.raiseerror(error_capsysfderror)
+    _ensure_only_one_capture_fixture(request, 'capfd')
     if not hasattr(os, 'dup'):
         pytest.skip("capfd fixture needs os.dup function which is not available in this system")
     with _install_capture_fixture_on_item(request, FDCapture) as fixture:
+        yield fixture
+
+
+@pytest.fixture
+def capfdbinary(request):
+    """Enable capturing of write to file descriptors 1 and 2 and make
+    captured output available via ``capfdbinary.readouterr`` method calls
+    which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be
+    ``bytes`` objects.
+    """
+    _ensure_only_one_capture_fixture(request, 'capfdbinary')
+    if not hasattr(os, 'dup'):
+        pytest.skip("capfdbinary fixture needs os.dup function which is not available in this system")
+    with _install_capture_fixture_on_item(request, FDCaptureBinary) as fixture:
         yield fixture
 
 
@@ -378,8 +404,11 @@ class NoCapture:
     __init__ = start = done = suspend = resume = lambda *args: None
 
 
-class FDCapture:
-    """ Capture IO to/from a given os-level filedescriptor. """
+class FDCaptureBinary:
+    """Capture IO to/from a given os-level filedescriptor.
+
+    snap() produces `bytes`
+    """
 
     def __init__(self, targetfd, tmpfile=None):
         self.targetfd = targetfd
@@ -418,17 +447,11 @@ class FDCapture:
         self.syscapture.start()
 
     def snap(self):
-        f = self.tmpfile
-        f.seek(0)
-        res = f.read()
-        if res:
-            enc = getattr(f, "encoding", None)
-            if enc and isinstance(res, bytes):
-                res = six.text_type(res, enc, "replace")
-            f.truncate(0)
-            f.seek(0)
-            return res
-        return ''
+        self.tmpfile.seek(0)
+        res = self.tmpfile.read()
+        self.tmpfile.seek(0)
+        self.tmpfile.truncate()
+        return res
 
     def done(self):
         """ stop capturing, restore streams, return original capture file,
@@ -452,6 +475,19 @@ class FDCapture:
         if isinstance(data, six.text_type):
             data = data.encode("utf8")  # XXX use encoding of original stream
         os.write(self.targetfd_save, data)
+
+
+class FDCapture(FDCaptureBinary):
+    """Capture IO to/from a given os-level filedescriptor.
+
+    snap() produces text
+    """
+    def snap(self):
+        res = FDCaptureBinary.snap(self)
+        enc = getattr(self.tmpfile, "encoding", None)
+        if enc and isinstance(res, bytes):
+            res = six.text_type(res, enc, "replace")
+        return res
 
 
 class SysCapture:

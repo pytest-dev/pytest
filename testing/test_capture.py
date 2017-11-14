@@ -398,7 +398,7 @@ class TestCaptureFixture(object):
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
             "*ERROR*setup*test_one*",
-            "E*capsys*capfd*same*time*",
+            "E*capfd*capsys*same*time*",
             "*ERROR*setup*test_two*",
             "E*capsys*capfd*same*time*",
             "*2 error*"])
@@ -418,9 +418,20 @@ class TestCaptureFixture(object):
             "*test_one*",
             "*capsys*capfd*same*time*",
             "*test_two*",
-            "*capsys*capfd*same*time*",
+            "*capfd*capsys*same*time*",
             "*2 failed in*",
         ])
+
+    def test_capsyscapfdbinary(self, testdir):
+        p = testdir.makepyfile("""
+            def test_one(capsys, capfdbinary):
+                pass
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([
+            "*ERROR*setup*test_one*",
+            "E*capfdbinary*capsys*same*time*",
+            "*1 error*"])
 
     @pytest.mark.parametrize("method", ["sys", "fd"])
     def test_capture_is_represented_on_failure_issue128(self, testdir, method):
@@ -443,6 +454,19 @@ class TestCaptureFixture(object):
                 out, err = capfd.readouterr()
                 assert out.startswith("42")
                 capfd.close()
+        """)
+        reprec.assertoutcome(passed=1)
+
+    @needsosdup
+    def test_capfdbinary(self, testdir):
+        reprec = testdir.inline_runsource("""
+            def test_hello(capfdbinary):
+                import os
+                # some likely un-decodable bytes
+                os.write(1, b'\\xfe\\x98\\x20')
+                out, err = capfdbinary.readouterr()
+                assert out == b'\\xfe\\x98\\x20'
+                assert err == b''
         """)
         reprec.assertoutcome(passed=1)
 
