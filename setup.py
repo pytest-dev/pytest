@@ -83,6 +83,7 @@ def main():
         cmdclass={'test': PyTest},
         # the following should be enabled for release
         setup_requires=['setuptools-scm'],
+        python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
         install_requires=install_requires,
         extras_require=extras_require,
         packages=['_pytest', '_pytest.assertion', '_pytest._code'],
