@@ -8,6 +8,17 @@
 
 .. towncrier release notes start
 
+Pytest 3.2.5 (2017-11-15)
+=========================
+
+Bug Fixes
+---------
+
+- Remove ``py<1.5`` restriction from ``pytest`` as this can cause version
+  conflicts in some installations. (`#2926
+  <https://github.com/pytest-dev/pytest/issues/2926>`_)
+
+
 Pytest 3.2.4 (2017-11-13)
 =========================
 

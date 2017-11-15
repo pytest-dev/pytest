@@ -1,1 +1,0 @@
-Remove ``py<1.5`` restriction from ``pytest`` as this can cause version conflicts in some installations.
