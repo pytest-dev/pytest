@@ -28,6 +28,8 @@ Bug Fixes
   failed example in the docstring is < 9. (`#2882
   <https://github.com/pytest-dev/pytest/issues/2882>`_)
 
+- Match fixture paths against actual path segments in order to avoid matching folders which share a prefix.
+  (`#2836 <https://github.com/pytest-dev/pytest/issues/2836>`_)
 
 Improved Documentation
 ----------------------
