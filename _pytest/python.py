@@ -837,9 +837,13 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         self._calls = newcalls
 
     def addcall(self, funcargs=None, id=NOTSET, param=NOTSET):
-        """ (deprecated, use parametrize) Add a new call to the underlying
-        test function during the collection phase of a test run.  Note that
-        request.addcall() is called during the test collection phase prior and
+        """ Add a new call to the underlying test function during the collection phase of a test run.
+
+        .. deprecated:: 3.3
+
+            Use :meth:`parametrize` instead.
+
+        Note that request.addcall() is called during the test collection phase prior and
         independently to actual test execution.  You should only use addcall()
         if you need to specify multiple arguments of a test function.
 
@@ -852,6 +856,8 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         :arg param: a parameter which will be exposed to a later fixture function
             invocation through the ``request.param`` attribute.
         """
+        if self.config:
+            self.config.warn('C1', message=deprecated.METAFUNC_ADD_CALL, fslocation=None)
         assert funcargs is None or isinstance(funcargs, dict)
         if funcargs is not None:
             for name in funcargs:

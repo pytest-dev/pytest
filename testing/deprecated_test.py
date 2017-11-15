@@ -82,3 +82,20 @@ def test_resultlog_is_deprecated(testdir):
         '*--result-log is deprecated and scheduled for removal in pytest 4.0*',
         '*See https://docs.pytest.org/*/usage.html#creating-resultlog-format-files for more information*',
     ])
+
+
+@pytest.mark.filterwarnings('always:Metafunc.addcall is deprecated')
+def test_metafunc_addcall_deprecated(testdir):
+    testdir.makepyfile("""
+        def pytest_generate_tests(metafunc):
+            metafunc.addcall({'i': 1})
+            metafunc.addcall({'i': 2})
+        def test_func(i):
+            pass
+    """)
+    res = testdir.runpytest('-s')
+    assert res.ret == 0
+    res.stdout.fnmatch_lines([
+        "*Metafunc.addcall is deprecated*",
+        "*2 passed, 2 warnings*",
+    ])
