@@ -452,7 +452,7 @@ hook wrappers and passes the same arguments as to the regular hooks.
 
 At the yield point of the hook wrapper pytest will execute the next hook
 implementations and return their result to the yield point in the form of
-a :py:class:`CallOutcome <pluggy._CallOutcome>` instance which encapsulates a result or
+a :py:class:`Result <pluggy._Result>` instance which encapsulates a result or
 exception info.  The yield point itself will thus typically not raise
 exceptions (unless there are bugs).
 
@@ -517,7 +517,7 @@ Here is the order of execution:
    Plugin1).
 
 4. Plugin3's pytest_collection_modifyitems then executing the code after the yield
-   point.  The yield receives a :py:class:`CallOutcome <pluggy._CallOutcome>` instance which encapsulates
+   point.  The yield receives a :py:class:`Result <pluggy._Result>` instance which encapsulates
    the result from calling the non-wrappers.  Wrappers shall not modify the result.
 
 It's possible to use ``tryfirst`` and ``trylast`` also in conjunction with
@@ -714,7 +714,7 @@ Reference of objects involved in hooks
     :members:
     :inherited-members:
 
-.. autoclass:: pluggy._CallOutcome()
+.. autoclass:: pluggy._Result
     :members:
 
 .. autofunction:: _pytest.config.get_plugin_manager()
