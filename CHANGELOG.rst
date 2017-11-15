@@ -8,6 +8,53 @@
 
 .. towncrier release notes start
 
+Pytest 3.2.4 (2017-11-13)
+=========================
+
+Bug Fixes
+---------
+
+- Fix the bug where running with ``--pyargs`` will result in items with
+  empty ``parent.nodeid`` if run from a different root directory. (`#2775
+  <https://github.com/pytest-dev/pytest/issues/2775>`_)
+
+- Fix issue with ``@pytest.parametrize`` if argnames was specified as keyword arguments.
+  (`#2819 <https://github.com/pytest-dev/pytest/issues/2819>`_)
+
+- Strip whitespace from marker names when reading them from INI config. (`#2856
+  <https://github.com/pytest-dev/pytest/issues/2856>`_)
+
+- Show full context of doctest source in the pytest output, if the line number of
+  failed example in the docstring is < 9. (`#2882
+  <https://github.com/pytest-dev/pytest/issues/2882>`_)
+
+
+Improved Documentation
+----------------------
+
+- Introduce a dedicated section about conftest.py. (`#1505
+  <https://github.com/pytest-dev/pytest/issues/1505>`_)
+
+- Explicitly mention ``xpass`` in the documentation of ``xfail``. (`#1997
+  <https://github.com/pytest-dev/pytest/issues/1997>`_)
+
+- Append example for pytest.param in the example/parametrize document. (`#2658
+  <https://github.com/pytest-dev/pytest/issues/2658>`_)
+
+- Clarify language of proposal for fixtures parameters (`#2893
+  <https://github.com/pytest-dev/pytest/issues/2893>`_)
+
+- List python 3.6 in the documented supported versions in the getting started
+  document. (`#2903 <https://github.com/pytest-dev/pytest/issues/2903>`_)
+
+- Clarify the documentation of available fixture scopes. (`#538
+  <https://github.com/pytest-dev/pytest/issues/538>`_)
+
+- Add documentation about the ``python -m pytest`` invocation adding the
+  current directory to sys.path. (`#911
+  <https://github.com/pytest-dev/pytest/issues/911>`_)
+
+
 Pytest 3.2.3 (2017-10-03)
 =========================
 
