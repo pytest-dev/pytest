@@ -45,3 +45,8 @@ COLLECTOR_MAKEITEM = RemovedInPytest4Warning(
     "pycollector makeitem was removed "
     "as it is an accidentially leaked internal api"
 )
+
+METAFUNC_ADD_CALL = (
+    "Metafunc.addcall is deprecated and scheduled to be removed in pytest 4.0.\n"
+    "Please use Metafunc.parametrize instead."
+)
