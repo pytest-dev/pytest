@@ -85,9 +85,9 @@ of the failing function and hide the other one::
 Accessing captured output from a test function
 ---------------------------------------------------
 
-The ``capsys`` and ``capfd`` fixtures allow to access stdout/stderr
-output created during test execution.  Here is an example test function
-that performs some output related checks:
+The ``capsys``, ``capfd``, and ``capfdbinary`` fixtures allow access to
+stdout/stderr output created during test execution.  Here is an example test
+function that performs some output related checks:
 
 .. code-block:: python
 
@@ -110,10 +110,16 @@ output streams and also interacts well with pytest's
 own per-test capturing.
 
 If you want to capture on filedescriptor level you can use
-the ``capfd`` function argument which offers the exact
+the ``capfd`` fixture which offers the exact
 same interface but allows to also capture output from
 libraries or subprocesses that directly write to operating
 system level output streams (FD1 and FD2).
+
+.. versionadded:: 3.3
+
+If the code under test writes non-textual data, you can capture this using
+the ``capfdbinary`` fixture which instead returns ``bytes`` from
+the ``readouterr`` method.
 
 
 .. versionadded:: 3.0
