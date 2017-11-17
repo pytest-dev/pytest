@@ -470,6 +470,38 @@ class TestCaptureFixture(object):
         """)
         reprec.assertoutcome(passed=1)
 
+    @pytest.mark.skipif(
+        sys.version_info < (3,),
+        reason='only have capsysbinary in python 3',
+    )
+    def test_capsysbinary(self, testdir):
+        reprec = testdir.inline_runsource("""
+            def test_hello(capsysbinary):
+                import sys
+                # some likely un-decodable bytes
+                sys.stdout.buffer.write(b'\\xfe\\x98\\x20')
+                out, err = capsysbinary.readouterr()
+                assert out == b'\\xfe\\x98\\x20'
+                assert err == b''
+        """)
+        reprec.assertoutcome(passed=1)
+
+    @pytest.mark.skipif(
+        sys.version_info >= (3,),
+        reason='only have capsysbinary in python 3',
+    )
+    def test_capsysbinary_forbidden_in_python2(self, testdir):
+        testdir.makepyfile("""
+            def test_hello(capsysbinary):
+                pass
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*test_hello*",
+            "*capsysbinary is only supported on python 3*",
+            "*1 error in*",
+        ])
+
     def test_partial_setup_failure(self, testdir):
         p = testdir.makepyfile("""
             def test_hello(capsys, missingarg):
@@ -1233,7 +1265,7 @@ def test_dontreadfrominput_has_encoding(testdir):
     reprec.assertoutcome(passed=1)
 
 
-def test_pickling_and_unpickling_enocded_file():
+def test_pickling_and_unpickling_encoded_file():
     # See https://bitbucket.org/pytest-dev/pytest/pull-request/194
     # pickle.loads() raises infinite recursion if
     # EncodedFile.__getattr__ is not implemented properly

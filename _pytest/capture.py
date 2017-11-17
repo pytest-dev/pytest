@@ -180,7 +180,7 @@ class CaptureManager:
         item.add_report_section(when, "stderr", err)
 
 
-capture_fixtures = {'capfd', 'capfdbinary', 'capsys'}
+capture_fixtures = {'capfd', 'capfdbinary', 'capsys', 'capsysbinary'}
 
 
 def _ensure_only_one_capture_fixture(request, name):
@@ -204,6 +204,22 @@ def capsys(request):
     """
     _ensure_only_one_capture_fixture(request, 'capsys')
     with _install_capture_fixture_on_item(request, SysCapture) as fixture:
+        yield fixture
+
+
+@pytest.fixture
+def capsysbinary(request):
+    """Enable capturing of writes to sys.stdout/sys.stderr and make
+    captured output available via ``capsys.readouterr()`` method calls
+    which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be ``bytes``
+    objects.
+    """
+    _ensure_only_one_capture_fixture(request, 'capsysbinary')
+    # Currently, the implementation uses the python3 specific `.buffer`
+    # property of CaptureIO.
+    if sys.version_info < (3,):
+        raise request.raiseerror('capsysbinary is only supported on python 3')
+    with _install_capture_fixture_on_item(request, SysCaptureBinary) as fixture:
         yield fixture
 
 
@@ -506,10 +522,9 @@ class SysCapture:
         setattr(sys, self.name, self.tmpfile)
 
     def snap(self):
-        f = self.tmpfile
-        res = f.getvalue()
-        f.truncate(0)
-        f.seek(0)
+        res = self.tmpfile.getvalue()
+        self.tmpfile.seek(0)
+        self.tmpfile.truncate()
         return res
 
     def done(self):
@@ -526,6 +541,14 @@ class SysCapture:
     def writeorg(self, data):
         self._old.write(data)
         self._old.flush()
+
+
+class SysCaptureBinary(SysCapture):
+    def snap(self):
+        res = self.tmpfile.buffer.getvalue()
+        self.tmpfile.seek(0)
+        self.tmpfile.truncate()
+        return res
 
 
 class DontReadFromInput:
