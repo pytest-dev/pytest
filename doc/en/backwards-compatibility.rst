@@ -19,8 +19,12 @@ This page lists deprecated features and when we plan to remove them. It is impor
 
 Following our deprecation policy, we should aim to keep features for *at least* two minor versions after it was considered deprecated.
 
+
+Future Releases
+~~~~~~~~~~~~~~~
+
 3.4
-~~~
+^^^
 
 **Old style classes**
 
@@ -29,7 +33,7 @@ Issue: `#2147 <https://github.com/pytest-dev/pytest/issues/2147>`_.
 Deprecated in ``3.2``.
 
 4.0
-~~~
+^^^
 
 **Yield tests**
 
@@ -74,3 +78,21 @@ Deprecated in ``3.1``.
 Use ``[tool:pytest]`` instead for compatibility with other tools.
 
 Deprecated in ``3.0``.
+
+Past Releases
+~~~~~~~~~~~~~
+
+3.0
+^^^
+
+* The following deprecated commandline options were removed:
+
+  * ``--genscript``: no longer supported;
+  * ``--no-assert``: use ``--assert=plain`` instead;
+  * ``--nomagic``: use ``--assert=plain`` instead;
+  * ``--report``: use ``-r`` instead;
+
+* Removed all ``py.test-X*`` entry points. The versioned, suffixed entry points
+  were never documented and a leftover from a pre-virtualenv era. These entry
+  points also created broken entry points in wheels, so removing them also
+  removes a source of confusion for users.
