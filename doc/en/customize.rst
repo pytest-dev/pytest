@@ -312,3 +312,22 @@ Builtin configuration file options
    relative to :ref:`rootdir <rootdir>`. Additionally path may contain environment
    variables, that will be expanded. For more information about cache plugin
    please refer to :ref:`cache_provider`.
+
+
+.. confval:: console_output_style
+
+   .. versionadded:: 3.3
+
+   Sets the console output style while running tests:
+
+   * ``classic``: classic pytest output.
+   * ``progress``: like classic pytest output, but with a progress indicator.
+
+   The default is ``progress``, but you can fallback to ``classic`` if you prefer or
+   the new mode is causing unexpected problems:
+
+   .. code-block:: ini
+
+        # content of pytest.ini
+        [pytest]
+        console_output_style = classic

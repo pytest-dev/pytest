@@ -964,3 +964,58 @@ def test_no_trailing_whitespace_after_inifile_word(testdir):
     testdir.makeini('[pytest]')
     result = testdir.runpytest('')
     assert 'inifile: tox.ini\n' in result.stdout.str()
+
+
+class TestProgress:
+
+    @pytest.fixture
+    def many_tests_file(self, testdir):
+        testdir.makepyfile(
+            test_bar="""
+                import pytest
+                @pytest.mark.parametrize('i', range(10))
+                def test_bar(i): pass
+            """,
+            test_foo="""
+                import pytest
+                @pytest.mark.parametrize('i', range(5))
+                def test_foo(i): pass
+            """,
+            test_foobar="""
+                import pytest
+                @pytest.mark.parametrize('i', range(5))
+                def test_foobar(i): pass
+            """,
+        )
+
+    def test_normal(self, many_tests_file, testdir):
+        output = testdir.runpytest()
+        output.stdout.re_match_lines([
+            r'test_bar.py \.\.\.\.\.\.\.\.\.\. \s+ \[ 50%\]',
+            r'test_foo.py \.\.\.\.\. \s+ \[ 75%\]',
+            r'test_foobar.py \.\.\.\.\. \s+ \[100%\]',
+        ])
+
+    def test_verbose(self, many_tests_file, testdir):
+        output = testdir.runpytest('-v')
+        output.stdout.re_match_lines([
+            r'test_bar.py::test_bar\[0\] PASSED \s+ \[  5%\]',
+            r'test_foo.py::test_foo\[4\] PASSED \s+ \[ 75%\]',
+            r'test_foobar.py::test_foobar\[4\] PASSED \s+ \[100%\]',
+        ])
+
+    def test_xdist_normal(self, many_tests_file, testdir):
+        pytest.importorskip('xdist')
+        output = testdir.runpytest('-n2')
+        output.stdout.re_match_lines([
+            r'\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\. \s+ \[100%\]',
+        ])
+
+    def test_xdist_verbose(self, many_tests_file, testdir):
+        pytest.importorskip('xdist')
+        output = testdir.runpytest('-n2', '-v')
+        output.stdout.re_match_lines_random([
+            r'\[gw\d\] \[\s*\d+%\] PASSED test_bar.py::test_bar\[1\]',
+            r'\[gw\d\] \[\s*\d+%\] PASSED test_foo.py::test_foo\[1\]',
+            r'\[gw\d\] \[\s*\d+%\] PASSED test_foobar.py::test_foobar\[1\]',
+        ])

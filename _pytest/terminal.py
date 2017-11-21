@@ -52,7 +52,7 @@ def pytest_addoption(parser):
                      help="color terminal output (yes/no/auto).")
 
     parser.addini("console_output_style",
-                  help="console output: classic or with additional progress information.",
+                  help="console output: classic or with additional progress information (classic|progress).",
                   default='progress')
 
 
@@ -300,7 +300,10 @@ class TerminalReporter:
             else:
                 self.ensure_newline()
                 self.writer.write("[%s]" % rep.node.gateway.id)
-                self.writer.write(self._get_progress_information_message() + " ", cyan=True)
+                if self._show_progress_info:
+                    self.writer.write(self._get_progress_information_message() + " ", cyan=True)
+                else:
+                    self.writer.write(' ')
                 self.writer.write(word, **markup)
                 self.writer.write(" " + line)
                 self.currentfspath = -2
