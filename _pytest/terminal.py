@@ -299,8 +299,8 @@ class TerminalReporter:
                 self.write_ensure_prefix(line, word, **markup)
             else:
                 self.ensure_newline()
-                if running_xdist:
-                    self.writer.write("[%s] " % rep.node.gateway.id)
+                self.writer.write("[%s]" % rep.node.gateway.id)
+                self.writer.write(self._get_progress_information_message() + " ", cyan=True)
                 self.writer.write(word, **markup)
                 self.writer.write(" " + line)
                 self.currentfspath = -2
