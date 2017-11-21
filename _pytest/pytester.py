@@ -1077,6 +1077,23 @@ class LineMatcher:
         return lines2
 
     def fnmatch_lines_random(self, lines2):
+        """Check lines exist in the output using ``fnmatch.fnmatch``, in any order.
+
+        The argument is a list of lines which have to occur in the
+        output, in any order.
+        """
+        self._match_lines_random(lines2, fnmatch)
+
+    def re_match_lines_random(self, lines2):
+        """Check lines exist in the output.
+
+        The argument is a list of lines which have to occur in the
+        output, in any order.  Each line can contain glob whildcards.
+
+        """
+        self._match_lines_random(lines2, lambda name, pat: re.match(pat, name))
+
+    def _match_lines_random(self, lines2, match_func):
         """Check lines exist in the output.
 
         The argument is a list of lines which have to occur in the
@@ -1086,7 +1103,7 @@ class LineMatcher:
         lines2 = self._getlines(lines2)
         for line in lines2:
             for x in self.lines:
-                if line == x or fnmatch(x, line):
+                if line == x or match_func(x, line):
                     self._log("matched: ", repr(line))
                     break
             else:
@@ -1111,13 +1128,37 @@ class LineMatcher:
         return '\n'.join(self._log_output)
 
     def fnmatch_lines(self, lines2):
-        """Search the text for matching lines.
+        """Search captured text for matching lines using ``fnmatch.fnmatch``.
 
         The argument is a list of lines which have to match and can
-        use glob wildcards.  If they do not match an pytest.fail() is
+        use glob wildcards.  If they do not match a pytest.fail() is
         called.  The matches and non-matches are also printed on
         stdout.
 
+        """
+        self._match_lines(lines2, fnmatch, 'fnmatch')
+
+    def re_match_lines(self, lines2):
+        """Search captured text for matching lines using ``re.match``.
+
+        The argument is a list of lines which have to match using ``re.match``.
+        If they do not match a pytest.fail() is called.
+
+        The matches and non-matches are also printed on
+        stdout.
+        """
+        self._match_lines(lines2, lambda name, pat: re.match(pat, name), 're.match')
+
+    def _match_lines(self, lines2, match_func, match_nickname):
+        """Underlying implementation of ``fnmatch_lines`` and ``re_match_lines``.
+
+        :param list[str] lines2: list of string patterns to match. The actual format depends on
+            ``match_func``.
+        :param match_func: a callable ``match_func(line, pattern)`` where line is the captured
+            line from stdout/stderr and pattern is the matching pattern.
+
+        :param str match_nickname: the nickname for the match function that will be logged
+            to stdout when a match occurs.
         """
         lines2 = self._getlines(lines2)
         lines1 = self.lines[:]
@@ -1131,8 +1172,8 @@ class LineMatcher:
                 if line == nextline:
                     self._log("exact match:", repr(line))
                     break
-                elif fnmatch(nextline, line):
-                    self._log("fnmatch:", repr(line))
+                elif match_func(nextline, line):
+                    self._log("%s:" % match_nickname, repr(line))
                     self._log("   with:", repr(nextline))
                     break
                 else:
