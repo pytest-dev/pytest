@@ -161,11 +161,13 @@ def test_markers_option(testdir):
         markers =
             a1: this is a webtest marker
             a1some: another marker
+            nodescription
     """)
     result = testdir.runpytest("--markers", )
     result.stdout.fnmatch_lines([
         "*a1*this is a webtest*",
         "*a1some*another marker",
+        "*nodescription*",
     ])
 
 
@@ -184,6 +186,21 @@ def test_ini_markers_whitespace(testdir):
     """)
     rec = testdir.inline_run("--strict", "-m", "a1")
     rec.assertoutcome(passed=1)
+
+
+def test_marker_without_description(testdir):
+    testdir.makefile(".cfg", setup="""
+        [tool:pytest]
+        markers=slow
+    """)
+    testdir.makeconftest("""
+        import pytest
+        pytest.mark.xfail('FAIL')
+    """)
+    ftdir = testdir.mkdir("ft1_dummy")
+    testdir.tmpdir.join("conftest.py").move(ftdir.join("conftest.py"))
+    rec = testdir.runpytest_subprocess("--strict")
+    rec.assert_outcomes()
 
 
 def test_markers_option_with_plugin_in_current_dir(testdir):
