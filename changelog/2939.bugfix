@@ -1,0 +1,1 @@
+Fix issue in assertion rewriting which could lead it to rewrite modules which should not be rewritten.
