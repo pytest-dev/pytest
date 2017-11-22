@@ -991,9 +991,9 @@ class TestProgress:
     def test_normal(self, many_tests_file, testdir):
         output = testdir.runpytest()
         output.stdout.re_match_lines([
-            r'test_bar.py \.\.\.\.\.\.\.\.\.\. \s+ \[ 50%\]',
-            r'test_foo.py \.\.\.\.\. \s+ \[ 75%\]',
-            r'test_foobar.py \.\.\.\.\. \s+ \[100%\]',
+            r'test_bar.py \.{10} \s+ \[ 50%\]',
+            r'test_foo.py \.{5} \s+ \[ 75%\]',
+            r'test_foobar.py \.{5} \s+ \[100%\]',
         ])
 
     def test_verbose(self, many_tests_file, testdir):
@@ -1008,7 +1008,7 @@ class TestProgress:
         pytest.importorskip('xdist')
         output = testdir.runpytest('-n2')
         output.stdout.re_match_lines([
-            r'\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\.\. \s+ \[100%\]',
+            r'\.{20} \s+ \[100%\]',
         ])
 
     def test_xdist_verbose(self, many_tests_file, testdir):
