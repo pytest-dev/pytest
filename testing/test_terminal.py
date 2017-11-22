@@ -222,7 +222,7 @@ class TestTerminal(object):
         tr.writer.fullwidth = 10
         tr.write('hello')
         tr.rewrite('hey', erase=True)
-        assert f.getvalue() == 'hello' + '\r' + 'hey' + (7 * ' ')
+        assert f.getvalue() == 'hello' + '\r' + 'hey' + (6 * ' ')
 
 
 class TestCollectonly(object):

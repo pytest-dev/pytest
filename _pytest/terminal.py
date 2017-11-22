@@ -214,7 +214,7 @@ class TerminalReporter:
         """
         erase = markup.pop('erase', False)
         if erase:
-            fill_count = self.writer.fullwidth - len(line)
+            fill_count = self.writer.fullwidth - len(line) - 1
             fill = ' ' * fill_count
         else:
             fill = ''
