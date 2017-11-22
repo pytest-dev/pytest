@@ -1085,10 +1085,10 @@ class LineMatcher:
         self._match_lines_random(lines2, fnmatch)
 
     def re_match_lines_random(self, lines2):
-        """Check lines exist in the output.
+        """Check lines exist in the output using ``re.match``, in any order.
 
         The argument is a list of lines which have to occur in the
-        output, in any order.  Each line can contain glob whildcards.
+        output, in any order.
 
         """
         self._match_lines_random(lines2, lambda name, pat: re.match(pat, name))
