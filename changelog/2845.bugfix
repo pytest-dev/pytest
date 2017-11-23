@@ -1,1 +1,0 @@
-Change return value of pytest command when ``--maxfail`` is reached from ``2`` (interrupted) to ``1`` (failed).

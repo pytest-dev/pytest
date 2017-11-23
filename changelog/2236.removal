@@ -1,1 +1,0 @@
-- Remove internal ``_preloadplugins()`` function. This removal is part of the ``pytest_namespace()`` hook deprecation.

@@ -1,1 +1,0 @@
-Calls to ``Metafunc.addcall`` now emit a deprecation warning. This function is scheduled to be removed in ``pytest-4.0``.

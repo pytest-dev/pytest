@@ -1,1 +1,0 @@
-Report only once tests with global ``pytestmark`` variable.

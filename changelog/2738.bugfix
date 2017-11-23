@@ -1,1 +1,0 @@
-Internal ``pytester`` plugin properly encodes ``bytes`` arguments to ``utf-8``.

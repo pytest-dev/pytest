@@ -1,1 +1,0 @@
-Pytest no longer supports Python **2.6** and **3.3**. Those Python versions are EOL for some time now and incurr maintanance and compatibility costs on the pytest core team, and following up with the rest of the community we decided that they will no longer be supported starting on this version. Users which still require those versions should pin pytest to ``<3.3``.
