@@ -8,6 +8,17 @@
 
 .. towncrier release notes start
 
+Pytest 3.2.5 (2017-11-15)
+=========================
+
+Bug Fixes
+---------
+
+- Remove ``py<1.5`` restriction from ``pytest`` as this can cause version
+  conflicts in some installations. (`#2926
+  <https://github.com/pytest-dev/pytest/issues/2926>`_)
+
+
 Pytest 3.2.4 (2017-11-13)
 =========================
 
@@ -28,6 +39,8 @@ Bug Fixes
   failed example in the docstring is < 9. (`#2882
   <https://github.com/pytest-dev/pytest/issues/2882>`_)
 
+- Match fixture paths against actual path segments in order to avoid matching folders which share a prefix.
+  (`#2836 <https://github.com/pytest-dev/pytest/issues/2836>`_)
 
 Improved Documentation
 ----------------------
