@@ -13,8 +13,6 @@ PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
 REGENDOC_ARGS := \
-	--normalize "/={8,} (.*) ={8,}/======= \1 ========/" \
-	--normalize "/_{8,} (.*) _{8,}/_______ \1 ________/" \
 	--normalize "/in \d+.\d+ seconds/in 0.12 seconds/" \
 	--normalize "@/tmp/pytest-of-.*/pytest-\d+@PYTEST_TMPDIR@" \
 	--normalize "@pytest-(\d+)\\.[^ ,]+@pytest-\1.x.y@" \

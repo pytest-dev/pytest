@@ -63,15 +63,15 @@ and running this module will show you precisely the output
 of the failing function and hide the other one::
 
     $ pytest
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     
-    test_module.py .F
+    test_module.py .F                                                    [100%]
     
-    ======= FAILURES ========
-    _______ test_func2 ________
+    ================================= FAILURES =================================
+    ________________________________ test_func2 ________________________________
     
         def test_func2():
     >       assert False
@@ -80,7 +80,7 @@ of the failing function and hide the other one::
     test_module.py:9: AssertionError
     -------------------------- Captured stdout setup ---------------------------
     setting up <function test_func2 at 0xdeadbeef>
-    ======= 1 failed, 1 passed in 0.12 seconds ========
+    ==================== 1 failed, 1 passed in 0.12 seconds ====================
 
 Accessing captured output from a test function
 ---------------------------------------------------

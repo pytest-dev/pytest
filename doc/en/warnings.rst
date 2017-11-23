@@ -21,20 +21,20 @@ and displays them at the end of the session::
 Running pytest now produces this output::
 
     $ pytest test_show_warnings.py
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
     
-    test_show_warnings.py .
+    test_show_warnings.py .                                              [100%]
     
-    ======= warnings summary ========
+    ============================= warnings summary =============================
     test_show_warnings.py::test_one
       $REGENDOC_TMPDIR/test_show_warnings.py:4: UserWarning: api v1, should use functions from v2
         warnings.warn(UserWarning("api v1, should use functions from v2"))
     
     -- Docs: http://doc.pytest.org/en/latest/warnings.html
-    ======= 1 passed, 1 warnings in 0.12 seconds ========
+    =================== 1 passed, 1 warnings in 0.12 seconds ===================
 
 Pytest by default catches all warnings except for ``DeprecationWarning`` and ``PendingDeprecationWarning``.
 
@@ -42,9 +42,9 @@ The ``-W`` flag can be passed to control which warnings will be displayed or eve
 them into errors::
 
     $ pytest -q test_show_warnings.py -W error::UserWarning
-    F
-    ======= FAILURES ========
-    _______ test_one ________
+    F                                                                    [100%]
+    ================================= FAILURES =================================
+    _________________________________ test_one _________________________________
     
         def test_one():
     >       assert api_v1() == 1

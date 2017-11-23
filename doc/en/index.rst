@@ -24,23 +24,23 @@ An example of a simple test:
 To execute it::
 
     $ pytest
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
-
-    test_sample.py F
-
-    ======= FAILURES ========
-    _______ test_answer ________
-
+    
+    test_sample.py F                                                     [100%]
+    
+    ================================= FAILURES =================================
+    _______________________________ test_answer ________________________________
+    
         def test_answer():
     >       assert inc(3) == 5
     E       assert 4 == 5
     E        +  where 4 = inc(3)
-
+    
     test_sample.py:5: AssertionError
-    ======= 1 failed in 0.12 seconds ========
+    ========================= 1 failed in 0.12 seconds =========================
 
 Due to ``pytest``'s detailed assertion introspection, only plain ``assert`` statements are used.
 See :ref:`Getting Started <getstarted>` for more examples.

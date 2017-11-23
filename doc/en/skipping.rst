@@ -331,13 +331,13 @@ Here is a simple test file with the several usages:
 Running it with the report-on-xfail option gives this output::
 
     example $ pytest -rx xfail_demo.py
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR/example, inifile:
     collected 7 items
     
-    xfail_demo.py xxxxxxx
-    ======= short test summary info ========
+    xfail_demo.py xxxxxxx                                                [100%]
+    ========================= short test summary info ==========================
     XFAIL xfail_demo.py::test_hello
     XFAIL xfail_demo.py::test_hello2
       reason: [NOTRUN] 
@@ -351,7 +351,7 @@ Running it with the report-on-xfail option gives this output::
       reason: reason
     XFAIL xfail_demo.py::test_hello7
     
-    ======= 7 xfailed in 0.12 seconds ========
+    ======================== 7 xfailed in 0.12 seconds =========================
 
 .. _`skip/xfail with parametrize`:
 
