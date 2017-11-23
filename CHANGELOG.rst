@@ -14,7 +14,7 @@ Pytest 3.3.0 (2017-11-23)
 Deprecations and Removals
 -------------------------
 
-- - Remove internal ``_preloadplugins()`` function. This removal is part of the
+- Remove internal ``_preloadplugins()`` function. This removal is part of the
   ``pytest_namespace()`` hook deprecation. (`#2236
   <https://github.com/pytest-dev/pytest/issues/2236>`_)
 
@@ -71,7 +71,7 @@ Features
   in ``pytest.ini``, the command line and also during individual tests using
   markers. Also, a ``caplog`` fixture is available that enables users to test
   the captured log during specific tests (similar to ``capsys`` for example).
-  For more information, please see the `docs
+  For more information, please see the `logging docs
   <https://docs.pytest.org/en/latest/logging.html>`_. This feature was
   introduced by merging the popular `pytest-catchlog
   <https://pypi.org/project/pytest-catchlog/>`_ plugin, thanks to `Thomas Hisch
@@ -165,7 +165,7 @@ Trivial/Internal Changes
   backslashreplace error handler in newer Python 3 versions. (`#2734
   <https://github.com/pytest-dev/pytest/issues/2734>`_)
 
-- * remove unnecessary mark evaluator in unittest plugin (`#2767
+- Remove unnecessary mark evaluator in unittest plugin (`#2767
   <https://github.com/pytest-dev/pytest/issues/2767>`_)
 
 - Calls to ``Metafunc.addcall`` now emit a deprecation warning. This function
@@ -367,7 +367,7 @@ Deprecations and Removals
 -------------------------
 
 - ``pytest.approx`` no longer supports ``>``, ``>=``, ``<`` and ``<=``
-  operators to avoid surprising/inconsistent behavior. See `the docs
+  operators to avoid surprising/inconsistent behavior. See `the approx docs
   <https://docs.pytest.org/en/latest/builtin.html#pytest.approx>`_ for more
   information. (`#2003 <https://github.com/pytest-dev/pytest/issues/2003>`_)
 
