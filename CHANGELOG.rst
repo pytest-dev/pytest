@@ -31,11 +31,6 @@ Deprecations and Removals
   with the boolean ``Node._skipped_by_mark``. (`#2767
   <https://github.com/pytest-dev/pytest/issues/2767>`_)
 
-- ``TerminalReporter._tw`` has been deprecated in favor of
-  ``TerminalReporter.writer`` and will be removed in a future version. Also,
-  ``TerminalReporter.writer`` is now read-only. (`#2803
-  <https://github.com/pytest-dev/pytest/issues/2803>`_)
-
 - Pytest no longer supports Python **2.6** and **3.3**. Those Python versions
   are EOL for some time now and incurr maintanance and compatibility costs on
   the pytest core team, and following up with the rest of the community we

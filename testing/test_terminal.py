@@ -219,7 +219,7 @@ class TestTerminal(object):
         f = py.io.TextIO()
         monkeypatch.setattr(f, 'isatty', lambda *args: True)
         tr = TerminalReporter(config, f)
-        tr.writer.fullwidth = 10
+        tr._tw.fullwidth = 10
         tr.write('hello')
         tr.rewrite('hey', erase=True)
         assert f.getvalue() == 'hello' + '\r' + 'hey' + (6 * ' ')
