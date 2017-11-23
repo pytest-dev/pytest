@@ -41,9 +41,9 @@ provide the ``cmdopt`` through a :ref:`fixture function <fixture function>`:
 Let's run this without supplying our new option::
 
     $ pytest -q test_sample.py
-    F
-    ======= FAILURES ========
-    _______ test_answer ________
+    F                                                                    [100%]
+    ================================= FAILURES =================================
+    _______________________________ test_answer ________________________________
     
     cmdopt = 'type1'
     
@@ -63,9 +63,9 @@ Let's run this without supplying our new option::
 And now with supplying a command line option::
 
     $ pytest -q --cmdopt=type2
-    F
-    ======= FAILURES ========
-    _______ test_answer ________
+    F                                                                    [100%]
+    ================================= FAILURES =================================
+    _______________________________ test_answer ________________________________
     
     cmdopt = 'type2'
     
@@ -112,12 +112,12 @@ of subprocesses close to your CPU. Running in an empty
 directory with the above conftest.py::
 
     $ pytest
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 0 items
     
-    ======= no tests ran in 0.12 seconds ========
+    ======================= no tests ran in 0.12 seconds =======================
 
 .. _`excontrolskip`:
 
@@ -166,28 +166,28 @@ We can now write a test module like this:
 and when running it will see a skipped "slow" test::
 
     $ pytest -rs    # "-rs" means report details on the little 's'
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     
-    test_module.py .s
-    ======= short test summary info ========
+    test_module.py .s                                                    [100%]
+    ========================= short test summary info ==========================
     SKIP [1] test_module.py:8: need --runslow option to run
     
-    ======= 1 passed, 1 skipped in 0.12 seconds ========
+    =================== 1 passed, 1 skipped in 0.12 seconds ====================
 
 Or run it including the ``slow`` marked test::
 
     $ pytest --runslow
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     
-    test_module.py ..
+    test_module.py ..                                                    [100%]
     
-    ======= 2 passed in 0.12 seconds ========
+    ========================= 2 passed in 0.12 seconds =========================
 
 Writing well integrated assertion helpers
 --------------------------------------------------
@@ -218,9 +218,9 @@ unless the ``--full-trace`` command line option is specified.
 Let's run our little function::
 
     $ pytest -q test_checkconfig.py
-    F
-    ======= FAILURES ========
-    _______ test_something ________
+    F                                                                    [100%]
+    ================================= FAILURES =================================
+    ______________________________ test_something ______________________________
     
         def test_something():
     >       checkconfig(42)
@@ -305,13 +305,13 @@ It's easy to present extra information in a ``pytest`` run:
 which will add the string to the test header accordingly::
 
     $ pytest
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     project deps: mylib-1.1
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 0 items
     
-    ======= no tests ran in 0.12 seconds ========
+    ======================= no tests ran in 0.12 seconds =======================
 
 .. regendoc:wipe
 
@@ -330,7 +330,7 @@ display more information if applicable:
 which will add info only when run with "--v"::
 
     $ pytest -v
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     info1: did you know that ...
@@ -338,17 +338,17 @@ which will add info only when run with "--v"::
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 0 items
     
-    ======= no tests ran in 0.12 seconds ========
+    ======================= no tests ran in 0.12 seconds =======================
 
 and nothing when run plainly::
 
     $ pytest
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 0 items
     
-    ======= no tests ran in 0.12 seconds ========
+    ======================= no tests ran in 0.12 seconds =======================
 
 profiling test duration
 --------------------------
@@ -377,18 +377,18 @@ out which tests are the slowest. Let's make an artificial test suite:
 Now we can profile which test functions execute the slowest::
 
     $ pytest --durations=3
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 3 items
     
-    test_some_are_slow.py ...
+    test_some_are_slow.py ...                                            [100%]
     
-    ======= slowest 3 test durations ========
+    ========================= slowest 3 test durations =========================
     0.30s call     test_some_are_slow.py::test_funcslow2
     0.20s call     test_some_are_slow.py::test_funcslow1
     0.10s call     test_some_are_slow.py::test_funcfast
-    ======= 3 passed in 0.12 seconds ========
+    ========================= 3 passed in 0.12 seconds =========================
 
 incremental testing - test steps
 ---------------------------------------------------
@@ -443,18 +443,18 @@ tests in a class.  Here is a test module example:
 If we run this::
 
     $ pytest -rx
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
     
-    test_step.py .Fx.
-    ======= short test summary info ========
+    test_step.py .Fx.                                                    [100%]
+    ========================= short test summary info ==========================
     XFAIL test_step.py::TestUserHandling::()::test_deletion
       reason: previous test failed (test_modification)
     
-    ======= FAILURES ========
-    _______ TestUserHandling.test_modification ________
+    ================================= FAILURES =================================
+    ____________________ TestUserHandling.test_modification ____________________
     
     self = <test_step.TestUserHandling object at 0xdeadbeef>
     
@@ -463,7 +463,7 @@ If we run this::
     E       assert 0
     
     test_step.py:9: AssertionError
-    ======= 1 failed, 2 passed, 1 xfailed in 0.12 seconds ========
+    ============== 1 failed, 2 passed, 1 xfailed in 0.12 seconds ===============
 
 We'll see that ``test_deletion`` was not executed because ``test_modification``
 failed.  It is reported as an "expected failure".
@@ -522,27 +522,27 @@ the ``db`` fixture:
 We can run this::
 
     $ pytest
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 7 items
     
-    test_step.py .Fx.
-    a/test_db.py F
-    a/test_db2.py F
-    b/test_error.py E
+    test_step.py .Fx.                                                    [ 57%]
+    a/test_db.py F                                                       [ 71%]
+    a/test_db2.py F                                                      [ 85%]
+    b/test_error.py E                                                    [100%]
     
-    ======= ERRORS ========
-    _______ ERROR at setup of test_root ________
+    ================================== ERRORS ==================================
+    _______________________ ERROR at setup of test_root ________________________
     file $REGENDOC_TMPDIR/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
     E       fixture 'db' not found
-    >       available fixtures: cache, capfd, capsys, doctest_namespace, monkeypatch, pytestconfig, record_xml_property, recwarn, tmpdir, tmpdir_factory
+    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, monkeypatch, pytestconfig, record_xml_property, recwarn, tmpdir, tmpdir_factory
     >       use 'pytest --fixtures [testpath]' for help on them.
     
     $REGENDOC_TMPDIR/b/test_error.py:1
-    ======= FAILURES ========
-    _______ TestUserHandling.test_modification ________
+    ================================= FAILURES =================================
+    ____________________ TestUserHandling.test_modification ____________________
     
     self = <test_step.TestUserHandling object at 0xdeadbeef>
     
@@ -551,7 +551,7 @@ We can run this::
     E       assert 0
     
     test_step.py:9: AssertionError
-    _______ test_a1 ________
+    _________________________________ test_a1 __________________________________
     
     db = <conftest.DB object at 0xdeadbeef>
     
@@ -561,7 +561,7 @@ We can run this::
     E       assert 0
     
     a/test_db.py:2: AssertionError
-    _______ test_a2 ________
+    _________________________________ test_a2 __________________________________
     
     db = <conftest.DB object at 0xdeadbeef>
     
@@ -571,7 +571,7 @@ We can run this::
     E       assert 0
     
     a/test_db2.py:2: AssertionError
-    ======= 3 failed, 2 passed, 1 xfailed, 1 error in 0.12 seconds ========
+    ========== 3 failed, 2 passed, 1 xfailed, 1 error in 0.12 seconds ==========
 
 The two test modules in the ``a`` directory see the same ``db`` fixture instance
 while the one test in the sister-directory ``b`` doesn't see it.  We could of course
@@ -630,15 +630,15 @@ if you then have failing tests:
 and run them::
 
     $ pytest test_module.py
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     
-    test_module.py FF
+    test_module.py FF                                                    [100%]
     
-    ======= FAILURES ========
-    _______ test_fail1 ________
+    ================================= FAILURES =================================
+    ________________________________ test_fail1 ________________________________
     
     tmpdir = local('PYTEST_TMPDIR/test_fail10')
     
@@ -647,14 +647,14 @@ and run them::
     E       assert 0
     
     test_module.py:2: AssertionError
-    _______ test_fail2 ________
+    ________________________________ test_fail2 ________________________________
     
         def test_fail2():
     >       assert 0
     E       assert 0
     
     test_module.py:4: AssertionError
-    ======= 2 failed in 0.12 seconds ========
+    ========================= 2 failed in 0.12 seconds =========================
 
 you will have a "failures" file which contains the failing test ids::
 
@@ -724,17 +724,17 @@ if you then have failing tests:
 and run it::
 
     $ pytest -s test_module.py
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 3 items
     
     test_module.py Esetting up a test failed! test_module.py::test_setup_fails
     Fexecuting test failed test_module.py::test_call_fails
-    F
+    F                                                   [100%]
     
-    ======= ERRORS ========
-    _______ ERROR at setup of test_setup_fails ________
+    ================================== ERRORS ==================================
+    ____________________ ERROR at setup of test_setup_fails ____________________
     
         @pytest.fixture
         def other():
@@ -742,8 +742,8 @@ and run it::
     E       assert 0
     
     test_module.py:6: AssertionError
-    ======= FAILURES ========
-    _______ test_call_fails ________
+    ================================= FAILURES =================================
+    _____________________________ test_call_fails ______________________________
     
     something = None
     
@@ -752,14 +752,14 @@ and run it::
     E       assert 0
     
     test_module.py:12: AssertionError
-    _______ test_fail2 ________
+    ________________________________ test_fail2 ________________________________
     
         def test_fail2():
     >       assert 0
     E       assert 0
     
     test_module.py:15: AssertionError
-    ======= 2 failed, 1 error in 0.12 seconds ========
+    ==================== 2 failed, 1 error in 0.12 seconds =====================
 
 You'll see that the fixture finalizers could use the precise reporting
 information.

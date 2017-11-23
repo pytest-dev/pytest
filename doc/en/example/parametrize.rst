@@ -45,16 +45,16 @@ Now we add a test configuration like this::
 This means that we only run 2 tests if we do not pass ``--all``::
 
     $ pytest -q test_compute.py
-    ..
+    ..                                                                   [100%]
     2 passed in 0.12 seconds
 
 We run only two computations, so we see two dots.
 let's run the full monty::
 
     $ pytest -q --all
-    ....F
-    ======= FAILURES ========
-    _______ test_compute[4] ________
+    ....F                                                                [100%]
+    ================================= FAILURES =================================
+    _____________________________ test_compute[4] ______________________________
     
     param1 = 4
     
@@ -138,7 +138,7 @@ objects, they are still using the default pytest representation::
 
 
     $ pytest test_time.py --collect-only
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 8 items
@@ -152,7 +152,7 @@ objects, they are still using the default pytest representation::
       <Function 'test_timedistance_v3[forward]'>
       <Function 'test_timedistance_v3[backward]'>
     
-    ======= no tests ran in 0.12 seconds ========
+    ======================= no tests ran in 0.12 seconds =======================
 
 In ``test_timedistance_v3``, we used ``pytest.param`` to specify the test IDs
 together with the actual data, instead of listing them separately.
@@ -194,20 +194,20 @@ only have to work a bit to construct the correct arguments for pytest's
 this is a fully self-contained example which you can run with::
 
     $ pytest test_scenarios.py
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
     
-    test_scenarios.py ....
+    test_scenarios.py ....                                               [100%]
     
-    ======= 4 passed in 0.12 seconds ========
+    ========================= 4 passed in 0.12 seconds =========================
 
 If you just collect tests you'll also nicely see 'advanced' and 'basic' as variants for the test function::
 
 
     $ pytest --collect-only test_scenarios.py
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
@@ -219,7 +219,7 @@ If you just collect tests you'll also nicely see 'advanced' and 'basic' as varia
           <Function 'test_demo1[advanced]'>
           <Function 'test_demo2[advanced]'>
     
-    ======= no tests ran in 0.12 seconds ========
+    ======================= no tests ran in 0.12 seconds =======================
 
 Note that we told ``metafunc.parametrize()`` that your scenario values
 should be considered class-scoped.  With pytest-2.3 this leads to a
@@ -272,7 +272,7 @@ creates a database object for the actual test invocations::
 Let's first see how it looks like at collection time::
 
     $ pytest test_backends.py --collect-only
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
@@ -280,14 +280,14 @@ Let's first see how it looks like at collection time::
       <Function 'test_db_initialized[d1]'>
       <Function 'test_db_initialized[d2]'>
     
-    ======= no tests ran in 0.12 seconds ========
+    ======================= no tests ran in 0.12 seconds =======================
 
 And then when we run the test::
 
     $ pytest -q test_backends.py
-    .F
-    ======= FAILURES ========
-    _______ test_db_initialized[d2] ________
+    .F                                                                   [100%]
+    ================================= FAILURES =================================
+    _________________________ test_db_initialized[d2] __________________________
     
     db = <conftest.DB2 object at 0xdeadbeef>
     
@@ -333,14 +333,14 @@ will be passed to respective fixture function::
 The result of this test will be successful::
 
     $ pytest test_indirect_list.py --collect-only
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
     <Module 'test_indirect_list.py'>
       <Function 'test_indirect[a-b]'>
     
-    ======= no tests ran in 0.12 seconds ========
+    ======================= no tests ran in 0.12 seconds =======================
 
 .. regendoc:wipe
 
@@ -381,9 +381,9 @@ Our test generator looks up a class-level definition which specifies which
 argument sets to use for each test function.  Let's run it::
 
     $ pytest -q
-    F..
-    ======= FAILURES ========
-    _______ TestClass.test_equals[1-2] ________
+    F..                                                                  [100%]
+    ================================= FAILURES =================================
+    ________________________ TestClass.test_equals[1-2] ________________________
     
     self = <test_parametrize.TestClass object at 0xdeadbeef>, a = 1, b = 2
     
@@ -411,10 +411,11 @@ is to be run with different sets of arguments for its three arguments:
 Running it results in some skips if we don't have all the python interpreters installed and otherwise runs all combinations (5 interpreters times 5 interpreters times 3 objects to serialize/deserialize)::
 
    . $ pytest -rs -q multipython.py
-   sssssssssssssss.........sss.........sss.........
-   ======= short test summary info ========
-   SKIP [21] $REGENDOC_TMPDIR/CWD/multipython.py:24: 'python2.6' not found
-   27 passed, 21 skipped in 0.12 seconds
+   ssssssssssssssssssssssss...                                          [100%]
+   ========================= short test summary info ==========================
+   SKIP [12] $REGENDOC_TMPDIR/CWD/multipython.py:24: 'python2.7' not found
+   SKIP [12] $REGENDOC_TMPDIR/CWD/multipython.py:24: 'python3.4' not found
+   3 passed, 24 skipped in 0.12 seconds
 
 Indirect parametrization of optional implementations/imports
 --------------------------------------------------------------------
@@ -460,16 +461,16 @@ And finally a little test module::
 If you run this with reporting for skips enabled::
 
     $ pytest -rs test_module.py
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     
-    test_module.py .s
-    ======= short test summary info ========
+    test_module.py .s                                                    [100%]
+    ========================= short test summary info ==========================
     SKIP [1] $REGENDOC_TMPDIR/conftest.py:11: could not import 'opt2'
     
-    ======= 1 passed, 1 skipped in 0.12 seconds ========
+    =================== 1 passed, 1 skipped in 0.12 seconds ====================
 
 You'll see that we don't have a ``opt2`` module and thus the second test run
 of our ``test_func1`` was skipped.  A few notes:

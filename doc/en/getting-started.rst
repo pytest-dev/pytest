@@ -44,23 +44,23 @@ Let's create a first test file with a simple test function::
 That's it. You can execute the test function now::
 
     $ pytest
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
-
-    test_sample.py F
-
-    ======= FAILURES ========
-    _______ test_answer ________
-
+    
+    test_sample.py F                                                     [100%]
+    
+    ================================= FAILURES =================================
+    _______________________________ test_answer ________________________________
+    
         def test_answer():
     >       assert func(3) == 5
     E       assert 4 == 5
     E        +  where 4 = func(3)
-
+    
     test_sample.py:5: AssertionError
-    ======= 1 failed in 0.12 seconds ========
+    ========================= 1 failed in 0.12 seconds =========================
 
 We got a failure report because our little ``func(3)`` call did not return ``5``.
 
@@ -99,7 +99,7 @@ use the ``raises`` helper::
 Running it with, this time in "quiet" reporting mode::
 
     $ pytest -q test_sysexit.py
-    .
+    .                                                                    [100%]
     1 passed in 0.12 seconds
 
 Grouping multiple tests in a class
@@ -124,18 +124,18 @@ There is no need to subclass anything.  We can simply
 run the module by passing its filename::
 
     $ pytest -q test_class.py
-    .F
-    ======= FAILURES ========
-    _______ TestClass.test_two ________
-
+    .F                                                                   [100%]
+    ================================= FAILURES =================================
+    ____________________________ TestClass.test_two ____________________________
+    
     self = <test_class.TestClass object at 0xdeadbeef>
-
+    
         def test_two(self):
             x = "hello"
     >       assert hasattr(x, 'check')
     E       AssertionError: assert False
     E        +  where False = hasattr('hello', 'check')
-
+    
     test_class.py:8: AssertionError
     1 failed, 1 passed in 0.12 seconds
 
@@ -161,17 +161,17 @@ We list the name ``tmpdir`` in the test function signature and
 before performing the test function call.  Let's just run it::
 
     $ pytest -q test_tmpdir.py
-    F
-    ======= FAILURES ========
-    _______ test_needsfiles ________
-
+    F                                                                    [100%]
+    ================================= FAILURES =================================
+    _____________________________ test_needsfiles ______________________________
+    
     tmpdir = local('PYTEST_TMPDIR/test_needsfiles0')
-
+    
         def test_needsfiles(tmpdir):
             print (tmpdir)
     >       assert 0
     E       assert 0
-
+    
     test_tmpdir.py:3: AssertionError
     --------------------------- Captured stdout call ---------------------------
     PYTEST_TMPDIR/test_needsfiles0
