@@ -266,7 +266,7 @@ class TestPerTestCapturing(object):
         """)
         result = testdir.runpytest(p1)
         result.stdout.fnmatch_lines([
-            "*test_capturing_outerr.py .F",
+            "*test_capturing_outerr.py .F*",
             "====* FAILURES *====",
             "____*____",
             "*test_capturing_outerr.py:8: ValueError",

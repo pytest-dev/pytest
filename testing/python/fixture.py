@@ -2119,6 +2119,10 @@ class TestFixtureMarker(object):
         assert values == [1, 1, 2, 2]
 
     def test_module_parametrized_ordering(self, testdir):
+        testdir.makeini("""
+            [pytest]
+            console_output_style=classic
+        """)
         testdir.makeconftest("""
             import pytest
 
@@ -2165,6 +2169,10 @@ class TestFixtureMarker(object):
         """)
 
     def test_class_ordering(self, testdir):
+        testdir.makeini("""
+            [pytest]
+            console_output_style=classic
+        """)
         testdir.makeconftest("""
             import pytest
 
