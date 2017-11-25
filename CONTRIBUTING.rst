@@ -49,7 +49,7 @@ Fix bugs
 --------
 
 Look through the GitHub issues for bugs.  Here is a filter you can use:
-https://github.com/pytest-dev/pytest/labels/bug
+https://github.com/pytest-dev/pytest/labels/type%3A%20bug
 
 :ref:`Talk <contact>` to developers to find out how you can fix specific bugs.
 
