@@ -14,6 +14,13 @@ Pytest 3.3.0 (2017-11-23)
 Deprecations and Removals
 -------------------------
 
+- Pytest no longer supports Python **2.6** and **3.3**. Those Python versions
+  are EOL for some time now and incurr maintenance and compatibility costs on
+  the pytest core team, and following up with the rest of the community we
+  decided that they will no longer be supported starting on this version. Users
+  which still require those versions should pin pytest to ``<3.3``. (`#2812
+  <https://github.com/pytest-dev/pytest/issues/2812>`_)
+
 - Remove internal ``_preloadplugins()`` function. This removal is part of the
   ``pytest_namespace()`` hook deprecation. (`#2236
   <https://github.com/pytest-dev/pytest/issues/2236>`_)
@@ -30,14 +37,6 @@ Deprecations and Removals
 - Remove the internal multi-typed attribute ``Node._evalskip`` and replace it
   with the boolean ``Node._skipped_by_mark``. (`#2767
   <https://github.com/pytest-dev/pytest/issues/2767>`_)
-
-- Pytest no longer supports Python **2.6** and **3.3**. Those Python versions
-  are EOL for some time now and incurr maintanance and compatibility costs on
-  the pytest core team, and following up with the rest of the community we
-  decided that they will no longer be supported starting on this version. Users
-  which still require those versions should pin pytest to ``<3.3``. (`#2812
-  <https://github.com/pytest-dev/pytest/issues/2812>`_)
-
 
 Features
 --------
@@ -58,7 +57,7 @@ Features
   previous output style can be set by setting the new ``console_output_style``
   to ``classic``. (`#2657 <https://github.com/pytest-dev/pytest/issues/2657>`_)
 
-- Match ``warns`` signature to ``raises`` by adding ``match`` keyworkd. (`#2708
+- Match ``warns`` signature to ``raises`` by adding ``match`` keyword. (`#2708
   <https://github.com/pytest-dev/pytest/issues/2708>`_)
 
 - Pytest now captures and displays output from the standard `logging` module.
@@ -153,7 +152,7 @@ Trivial/Internal Changes
 - Refactored internal Python 2/3 compatibility code to use ``six``. (`#2642
   <https://github.com/pytest-dev/pytest/issues/2642>`_)
 
-- Stop vendoring ``pluggy`` - we're missing out on it's latest changes for not
+- Stop vendoring ``pluggy`` - we're missing out on its latest changes for not
   much benefit (`#2719 <https://github.com/pytest-dev/pytest/issues/2719>`_)
 
 - Internal refactor: simplify ascii string escaping by using the
