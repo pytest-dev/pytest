@@ -712,7 +712,7 @@ class Testdir:
         # When running py.test inline any plugins active in the main
         # test process are already imported.  So this disables the
         # warning which will trigger to say they can no longer be
-        # re-written, which is fine as they are already re-written.
+        # rewritten, which is fine as they are already rewritten.
         orig_warn = AssertionRewritingHook._warn_already_imported
 
         def revert():

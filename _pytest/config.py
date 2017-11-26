@@ -1014,10 +1014,10 @@ class Config(object):
         self._override_ini = ns.override_ini or ()
 
     def _consider_importhook(self, args):
-        """Install the PEP 302 import hook if using assertion re-writing.
+        """Install the PEP 302 import hook if using assertion rewriting.
 
         Needs to parse the --assert=<mode> option from the commandline
-        and find all the installed plugins to mark them for re-writing
+        and find all the installed plugins to mark them for rewriting
         by the importhook.
         """
         ns, unknown_args = self._parser.parse_known_and_unknown_args(args)

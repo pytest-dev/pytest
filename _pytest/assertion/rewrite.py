@@ -175,10 +175,10 @@ class AssertionRewritingHook(object):
         return False
 
     def mark_rewrite(self, *names):
-        """Mark import names as needing to be re-written.
+        """Mark import names as needing to be rewritten.
 
         The named module or package as well as any nested modules will
-        be re-written on import.
+        be rewritten on import.
         """
         already_imported = set(names).intersection(set(sys.modules))
         if already_imported:
@@ -190,7 +190,7 @@ class AssertionRewritingHook(object):
     def _warn_already_imported(self, name):
         self.config.warn(
             'P1',
-            'Module already imported so can not be re-written: %s' % name)
+            'Module already imported so cannot be rewritten: %s' % name)
 
     def load_module(self, name):
         # If there is an existing module object named 'fullname' in
@@ -533,7 +533,7 @@ class AssertionRewriter(ast.NodeVisitor):
     """Assertion rewriting implementation.
 
     The main entrypoint is to call .run() with an ast.Module instance,
-    this will then find all the assert statements and re-write them to
+    this will then find all the assert statements and rewrite them to
     provide intermediate values and a detailed assertion error.  See
     http://pybites.blogspot.be/2011/07/behind-scenes-of-pytests-new-assertion.html
     for an overview of how this works.
@@ -542,7 +542,7 @@ class AssertionRewriter(ast.NodeVisitor):
     statements in an ast.Module and for each ast.Assert statement it
     finds call .visit() with it.  Then .visit_Assert() takes over and
     is responsible for creating new ast statements to replace the
-    original assert statement: it re-writes the test of an assertion
+    original assert statement: it rewrites the test of an assertion
     to provide intermediate values and replace it with an if statement
     which raises an assertion error with a detailed explanation in
     case the expression is false.
@@ -726,7 +726,7 @@ class AssertionRewriter(ast.NodeVisitor):
     def visit_Assert(self, assert_):
         """Return the AST statements to replace the ast.Assert instance.
 
-        This re-writes the test of an assertion to provide
+        This rewrites the test of an assertion to provide
         intermediate values and replace it with an if statement which
         raises an assertion error with a detailed explanation in case
         the expression is false.
