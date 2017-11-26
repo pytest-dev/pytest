@@ -184,16 +184,16 @@ statements and the detailed introspection of expressions upon
 assertion failures.  This is provided by "assertion rewriting" which
 modifies the parsed AST before it gets compiled to bytecode.  This is
 done via a :pep:`302` import hook which gets installed early on when
-``pytest`` starts up and will perform this re-writing when modules get
+``pytest`` starts up and will perform this rewriting when modules get
 imported.  However since we do not want to test different bytecode
-then you will run in production this hook only re-writes test modules
+then you will run in production this hook only rewrites test modules
 themselves as well as any modules which are part of plugins.  Any
-other imported module will not be re-written and normal assertion
+other imported module will not be rewritten and normal assertion
 behaviour will happen.
 
 If you have assertion helpers in other modules where you would need
 assertion rewriting to be enabled you need to ask ``pytest``
-explicitly to re-write this module before it gets imported.
+explicitly to rewrite this module before it gets imported.
 
 .. autofunction:: pytest.register_assert_rewrite
 
@@ -216,10 +216,10 @@ With the following typical ``setup.py`` extract:
       ...
    )
 
-In this case only ``pytest_foo/plugin.py`` will be re-written.  If the
+In this case only ``pytest_foo/plugin.py`` will be rewritten.  If the
 helper module also contains assert statements which need to be
-re-written it needs to be marked as such, before it gets imported.
-This is easiest by marking it for re-writing inside the
+rewritten it needs to be marked as such, before it gets imported.
+This is easiest by marking it for rewriting inside the
 ``__init__.py`` module, which will always be imported first when a
 module inside a package is imported.  This way ``plugin.py`` can still
 import ``helper.py`` normally.  The contents of
@@ -263,7 +263,7 @@ for assertion rewriting (see :func:`pytest.register_assert_rewrite`).
 However for this to have any effect the module must not be
 imported already; if it was already imported at the time the
 ``pytest_plugins`` statement is processed, a warning will result and
-assertions inside the plugin will not be re-written.  To fix this you
+assertions inside the plugin will not be rewritten.  To fix this you
 can either call :func:`pytest.register_assert_rewrite` yourself before
 the module is imported, or you can arrange the code to delay the
 importing until after the plugin is registered.

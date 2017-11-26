@@ -151,7 +151,7 @@ class TestImportHookInstallation(object):
     @pytest.mark.parametrize('plugin_state', ['development', 'installed'])
     def test_installed_plugin_rewrite(self, testdir, mode, plugin_state):
         # Make sure the hook is installed early enough so that plugins
-        # installed via setuptools are re-written.
+        # installed via setuptools are rewritten.
         testdir.tmpdir.join('hampkg').ensure(dir=1)
         contents = {
             'hampkg/__init__.py': """
