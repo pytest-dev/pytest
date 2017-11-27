@@ -168,7 +168,7 @@ class AssertionRewritingHook(object):
                 return True
 
         for marked in self._must_rewrite:
-            if name.startswith(marked):
+            if name == marked or name.startswith(marked + '.'):
                 state.trace("matched marked file %r (from %r)" % (name, marked))
                 return True
 

@@ -129,6 +129,24 @@ class TestImportHookInstallation(object):
         result = testdir.runpytest_subprocess('--assert=rewrite')
         assert result.ret == 0
 
+    def test_pytest_plugins_rewrite_module_names_correctly(self, testdir):
+        """Test that we match files correctly when they are marked for rewriting (#2939)."""
+        contents = {
+            'conftest.py': """
+                pytest_plugins = "ham"
+            """,
+            'ham.py': "",
+            'hamster.py': "",
+            'test_foo.py': """
+                def test_foo(pytestconfig):
+                    assert pytestconfig.pluginmanager.rewrite_hook.find_module('ham') is not None
+                    assert pytestconfig.pluginmanager.rewrite_hook.find_module('hamster') is None
+            """,
+        }
+        testdir.makepyfile(**contents)
+        result = testdir.runpytest_subprocess('--assert=rewrite')
+        assert result.ret == 0
+
     @pytest.mark.parametrize('mode', ['plain', 'rewrite'])
     @pytest.mark.parametrize('plugin_state', ['development', 'installed'])
     def test_installed_plugin_rewrite(self, testdir, mode, plugin_state):

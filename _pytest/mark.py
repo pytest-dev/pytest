@@ -141,7 +141,9 @@ def pytest_cmdline_main(config):
         config._do_configure()
         tw = _pytest.config.create_terminal_writer(config)
         for line in config.getini("markers"):
-            name, rest = line.split(":", 1)
+            parts = line.split(":", 1)
+            name = parts[0]
+            rest = parts[1] if len(parts) == 2 else ''
             tw.write("@pytest.mark.%s:" % name, bold=True)
             tw.line(rest)
             tw.line()
@@ -298,7 +300,7 @@ class MarkGenerator:
             pass
         self._markers = values = set()
         for line in self._config.getini("markers"):
-            marker, _ = line.split(":", 1)
+            marker = line.split(":", 1)[0]
             marker = marker.rstrip()
             x = marker.split("(", 1)[0]
             values.add(x)

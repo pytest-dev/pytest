@@ -99,3 +99,16 @@ def test_metafunc_addcall_deprecated(testdir):
         "*Metafunc.addcall is deprecated*",
         "*2 passed, 2 warnings*",
     ])
+
+
+def test_pytest_catchlog_deprecated(testdir):
+    testdir.makepyfile("""
+        def test_func(pytestconfig):
+            pytestconfig.pluginmanager.register(None, 'pytest_catchlog')
+    """)
+    res = testdir.runpytest()
+    assert res.ret == 0
+    res.stdout.fnmatch_lines([
+        "*pytest-catchlog plugin has been merged into the core*",
+        "*1 passed, 1 warnings*",
+    ])

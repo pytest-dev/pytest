@@ -83,7 +83,7 @@ def _enter_pdb(node, excinfo, rep):
     # XXX we re-use the TerminalReporter's terminalwriter
     # because this seems to avoid some encoding related troubles
     # for not completely clear reasons.
-    tw = node.config.pluginmanager.getplugin("terminalreporter").writer
+    tw = node.config.pluginmanager.getplugin("terminalreporter")._tw
     tw.line()
     tw.sep(">", "traceback")
     rep.toterminal(tw)

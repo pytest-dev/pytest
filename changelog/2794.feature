@@ -1,3 +1,0 @@
-Pytest now captures and displays output from the standard `logging` module. The user can control the logging level to be captured by specifying options in ``pytest.ini``, the command line and also during individual tests using markers. Also, a ``caplog`` fixture is available that enables users to test the captured log during specific tests (similar to ``capsys`` for example). For more information, please see the `docs <https://docs.pytest.org/en/latest/logging.html>`_.
-
-This feature was introduced by merging the popular `pytest-catchlog <https://pypi.org/project/pytest-catchlog/>`_ plugin, thanks to `Thomas Hisch <https://github.com/thisch>`_. Be advised that during the merging the backward compatibility interface with the defunct ``pytest-capturelog`` has been dropped.

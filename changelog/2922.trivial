@@ -1,1 +1,0 @@
-Configure ``pytest`` to prevent pip from installing pytest in unsupported Python versions.

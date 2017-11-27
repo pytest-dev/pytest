@@ -1,1 +1,0 @@
-Resume output capturing after ``capsys/capfd.disabled()`` context manager.

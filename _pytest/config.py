@@ -242,6 +242,10 @@ class PytestPluginManager(PluginManager):
         return opts
 
     def register(self, plugin, name=None):
+        if name == 'pytest_catchlog':
+            self._warn('pytest-catchlog plugin has been merged into the core, '
+                       'please remove it from your requirements.')
+            return
         ret = super(PytestPluginManager, self).register(plugin, name)
         if ret:
             self.hook.pytest_plugin_registered.call_historic(
@@ -931,7 +935,7 @@ class Config(object):
             fslocation=fslocation, nodeid=nodeid))
 
     def get_terminal_writer(self):
-        return self.pluginmanager.get_plugin("terminalreporter").writer
+        return self.pluginmanager.get_plugin("terminalreporter")._tw
 
     def pytest_cmdline_parse(self, pluginmanager, args):
         # REF1 assert self == pluginmanager.config, (self, pluginmanager.config)
