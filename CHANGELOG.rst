@@ -22,8 +22,8 @@ Deprecations and Removals
   <https://github.com/pytest-dev/pytest/issues/2812>`_)
 
 - Remove internal ``_preloadplugins()`` function. This removal is part of the
-  ``pytest_namespace()`` hook deprecation. (`#2236
-  <https://github.com/pytest-dev/pytest/issues/2236>`_)
+  ``pytest_namespace()`` hook deprecation. (`#2636
+  <https://github.com/pytest-dev/pytest/issues/2636>`_)
 
 - Internally change ``CallSpec2`` to have a list of marks instead of a broken
   mapping of keywords. This removes the keywords attribute of the internal
