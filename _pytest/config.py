@@ -6,6 +6,7 @@ import traceback
 import types
 import warnings
 
+import six
 import py
 # DON't import pytest here because it causes import cycle troubles
 import sys
@@ -13,7 +14,7 @@ import os
 import _pytest._code
 import _pytest.hookspec  # the extension point definitions
 import _pytest.assertion
-from _pytest._pluggy import PluginManager, HookimplMarker, HookspecMarker
+from pluggy import PluginManager, HookimplMarker, HookspecMarker
 from _pytest.compat import safe_str
 
 hookimpl = HookimplMarker("pytest")
@@ -100,27 +101,18 @@ def directory_arg(path, optname):
     return path
 
 
-_preinit = []
-
 default_plugins = (
     "mark main terminal runner python fixtures debugging unittest capture skipping "
     "tmpdir monkeypatch recwarn pastebin helpconfig nose assertion "
     "junitxml resultlog doctest cacheprovider freeze_support "
-    "setuponly setupplan warnings").split()
+    "setuponly setupplan warnings logging").split()
 
 
 builtin_plugins = set(default_plugins)
 builtin_plugins.add("pytester")
 
 
-def _preloadplugins():
-    assert not _preinit
-    _preinit.append(get_config())
-
-
 def get_config():
-    if _preinit:
-        return _preinit.pop(0)
     # subsequent calls to main will create a fresh instance
     pluginmanager = PytestPluginManager()
     config = Config(pluginmanager)
@@ -158,7 +150,7 @@ def _prepareconfig(args=None, plugins=None):
     try:
         if plugins:
             for plugin in plugins:
-                if isinstance(plugin, py.builtin._basestring):
+                if isinstance(plugin, six.string_types):
                     pluginmanager.consider_pluginarg(plugin)
                 else:
                     pluginmanager.register(plugin)
@@ -173,7 +165,7 @@ def _prepareconfig(args=None, plugins=None):
 
 class PytestPluginManager(PluginManager):
     """
-    Overwrites :py:class:`pluggy.PluginManager <_pytest.vendored_packages.pluggy.PluginManager>` to add pytest-specific
+    Overwrites :py:class:`pluggy.PluginManager <pluggy.PluginManager>` to add pytest-specific
     functionality:
 
     * loading plugins from the command line, ``PYTEST_PLUGIN`` env variable and
@@ -211,7 +203,7 @@ class PytestPluginManager(PluginManager):
         """
         .. deprecated:: 2.8
 
-        Use :py:meth:`pluggy.PluginManager.add_hookspecs <_pytest.vendored_packages.pluggy.PluginManager.add_hookspecs>`
+        Use :py:meth:`pluggy.PluginManager.add_hookspecs <PluginManager.add_hookspecs>`
         instead.
         """
         warning = dict(code="I2",
@@ -249,18 +241,11 @@ class PytestPluginManager(PluginManager):
                         "historic": hasattr(method, "historic")}
         return opts
 
-    def _verify_hook(self, hook, hookmethod):
-        super(PytestPluginManager, self)._verify_hook(hook, hookmethod)
-        if "__multicall__" in hookmethod.argnames:
-            fslineno = _pytest._code.getfslineno(hookmethod.function)
-            warning = dict(code="I1",
-                           fslocation=fslineno,
-                           nodeid=None,
-                           message="%r hook uses deprecated __multicall__ "
-                                   "argument" % (hook.name))
-            self._warn(warning)
-
     def register(self, plugin, name=None):
+        if name == 'pytest_catchlog':
+            self._warn('pytest-catchlog plugin has been merged into the core, '
+                       'please remove it from your requirements.')
+            return
         ret = super(PytestPluginManager, self).register(plugin, name)
         if ret:
             self.hook.pytest_plugin_registered.call_historic(
@@ -430,7 +415,7 @@ class PytestPluginManager(PluginManager):
         # "terminal" or "capture".  Those plugins are registered under their
         # basename for historic purposes but must be imported with the
         # _pytest prefix.
-        assert isinstance(modname, (py.builtin.text, str)), "module name as text required, got %r" % modname
+        assert isinstance(modname, (six.text_type, str)), "module name as text required, got %r" % modname
         modname = str(modname)
         if self.get_plugin(modname) is not None:
             return
@@ -442,12 +427,12 @@ class PytestPluginManager(PluginManager):
         try:
             __import__(importspec)
         except ImportError as e:
-            new_exc = ImportError('Error importing plugin "%s": %s' % (modname, safe_str(e.args[0])))
-            # copy over name and path attributes
-            for attr in ('name', 'path'):
-                if hasattr(e, attr):
-                    setattr(new_exc, attr, getattr(e, attr))
-            raise new_exc
+            new_exc_type = ImportError
+            new_exc_message = 'Error importing plugin "%s": %s' % (modname, safe_str(e.args[0]))
+            new_exc = new_exc_type(new_exc_message)
+
+            six.reraise(new_exc_type, new_exc, sys.exc_info()[2])
+
         except Exception as e:
             import pytest
             if not hasattr(pytest, 'skip') or not isinstance(e, pytest.skip.Exception):
@@ -643,7 +628,7 @@ class Argument:
             pass
         else:
             # this might raise a keyerror as well, don't want to catch that
-            if isinstance(typ, py.builtin._basestring):
+            if isinstance(typ, six.string_types):
                 if typ == 'choice':
                     warnings.warn(
                         'type argument to addoption() is a string %r.'
@@ -968,7 +953,7 @@ class Config(object):
                                   )
         res = self.hook.pytest_internalerror(excrepr=excrepr,
                                              excinfo=excinfo)
-        if not py.builtin.any(res):
+        if not any(res):
             for line in str(excrepr).split("\n"):
                 sys.stderr.write("INTERNALERROR> %s\n" % line)
                 sys.stderr.flush()
@@ -1074,9 +1059,10 @@ class Config(object):
                                  "(are you using python -O?)\n")
 
     def _preparse(self, args, addopts=True):
-        self._initini(args)
         if addopts:
             args[:] = shlex.split(os.environ.get('PYTEST_ADDOPTS', '')) + args
+        self._initini(args)
+        if addopts:
             args[:] = self.getini("addopts") + args
         self._checkversion()
         self._consider_importhook(args)

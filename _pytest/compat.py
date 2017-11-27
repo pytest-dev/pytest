@@ -2,17 +2,17 @@
 python version compatibility code
 """
 from __future__ import absolute_import, division, print_function
-import sys
-import inspect
-import types
-import re
+
+import codecs
 import functools
+import inspect
+import re
+import sys
 
 import py
 
 import _pytest
 from _pytest.outcomes import TEST_OUTCOME
-
 
 try:
     import enum
@@ -25,6 +25,12 @@ _PY3 = sys.version_info > (3, 0)
 _PY2 = not _PY3
 
 
+if _PY3:
+    from inspect import signature, Parameter as Parameter
+else:
+    from funcsigs import signature, Parameter as Parameter
+
+
 NoneType = type(None)
 NOTSET = object()
 
@@ -32,12 +38,10 @@ PY35 = sys.version_info[:2] >= (3, 5)
 PY36 = sys.version_info[:2] >= (3, 6)
 MODULE_NOT_FOUND_ERROR = 'ModuleNotFoundError' if PY36 else 'ImportError'
 
-if hasattr(inspect, 'signature'):
-    def _format_args(func):
-        return str(inspect.signature(func))
-else:
-    def _format_args(func):
-        return inspect.formatargspec(*inspect.getargspec(func))
+
+def _format_args(func):
+    return str(signature(func))
+
 
 isfunction = inspect.isfunction
 isclass = inspect.isclass
@@ -63,7 +67,6 @@ def iscoroutinefunction(func):
 
 
 def getlocation(function, curdir):
-    import inspect
     fn = py.path.local(inspect.getfile(function))
     lineno = py.builtin._getcode(function).co_firstlineno
     if fn.relto(curdir):
@@ -83,60 +86,64 @@ def num_mock_patch_args(function):
     return len(patchings)
 
 
-def getfuncargnames(function, startindex=None, cls=None):
-    """
-    @RonnyPfannschmidt: This function should be refactored when we revisit fixtures. The
-    fixture mechanism should ask the node for the fixture names, and not try to obtain
-    directly from the function object well after collection has occurred.
-    """
-    if startindex is None and cls is not None:
-        is_staticmethod = isinstance(cls.__dict__.get(function.__name__, None), staticmethod)
-        startindex = 0 if is_staticmethod else 1
-    # XXX merge with main.py's varnames
-    # assert not isclass(function)
-    realfunction = function
-    while hasattr(realfunction, "__wrapped__"):
-        realfunction = realfunction.__wrapped__
-    if startindex is None:
-        startindex = inspect.ismethod(function) and 1 or 0
-    if realfunction != function:
-        startindex += num_mock_patch_args(function)
-        function = realfunction
-    if isinstance(function, functools.partial):
-        argnames = inspect.getargs(_pytest._code.getrawcode(function.func))[0]
-        partial = function
-        argnames = argnames[len(partial.args):]
-        if partial.keywords:
-            for kw in partial.keywords:
-                argnames.remove(kw)
-    else:
-        argnames = inspect.getargs(_pytest._code.getrawcode(function))[0]
-    defaults = getattr(function, 'func_defaults',
-                       getattr(function, '__defaults__', None)) or ()
-    numdefaults = len(defaults)
-    if numdefaults:
-        return tuple(argnames[startindex:-numdefaults])
-    return tuple(argnames[startindex:])
+def getfuncargnames(function, is_method=False, cls=None):
+    """Returns the names of a function's mandatory arguments.
 
+    This should return the names of all function arguments that:
+        * Aren't bound to an instance or type as in instance or class methods.
+        * Don't have default values.
+        * Aren't bound with functools.partial.
+        * Aren't replaced with mocks.
 
-if sys.version_info[:2] == (2, 6):
-    def isclass(object):
-        """ Return true if the object is a class. Overrides inspect.isclass for
-        python 2.6 because it will return True for objects which always return
-        something on __getattr__ calls (see #1035).
-        Backport of https://hg.python.org/cpython/rev/35bf8f7a8edc
-        """
-        return isinstance(object, (type, types.ClassType))
+    The is_method and cls arguments indicate that the function should
+    be treated as a bound method even though it's not unless, only in
+    the case of cls, the function is a static method.
+
+    @RonnyPfannschmidt: This function should be refactored when we
+    revisit fixtures. The fixture mechanism should ask the node for
+    the fixture names, and not try to obtain directly from the
+    function object well after collection has occurred.
+
+    """
+    # The parameters attribute of a Signature object contains an
+    # ordered mapping of parameter names to Parameter instances.  This
+    # creates a tuple of the names of the parameters that don't have
+    # defaults.
+    arg_names = tuple(p.name for p in signature(function).parameters.values()
+                      if (p.kind is Parameter.POSITIONAL_OR_KEYWORD or
+                          p.kind is Parameter.KEYWORD_ONLY) and
+                      p.default is Parameter.empty)
+    # If this function should be treated as a bound method even though
+    # it's passed as an unbound method or function, remove the first
+    # parameter name.
+    if (is_method or
+        (cls and not isinstance(cls.__dict__.get(function.__name__, None),
+                                staticmethod))):
+        arg_names = arg_names[1:]
+    # Remove any names that will be replaced with mocks.
+    if hasattr(function, "__wrapped__"):
+        arg_names = arg_names[num_mock_patch_args(function):]
+    return arg_names
 
 
 if _PY3:
-    import codecs
-    imap = map
-    izip = zip
     STRING_TYPES = bytes, str
     UNICODE_TYPES = str,
 
-    def _ascii_escaped(val):
+    if PY35:
+        def _bytes_to_ascii(val):
+            return val.decode('ascii', 'backslashreplace')
+    else:
+        def _bytes_to_ascii(val):
+            if val:
+                # source: http://goo.gl/bGsnwC
+                encoded_bytes, _ = codecs.escape_encode(val)
+                return encoded_bytes.decode('ascii')
+            else:
+                # empty bytes crashes codecs.escape_encode (#1087)
+                return ''
+
+    def ascii_escaped(val):
         """If val is pure ascii, returns it as a str().  Otherwise, escapes
         bytes objects into a sequence of escaped bytes:
 
@@ -155,22 +162,14 @@ if _PY3:
 
         """
         if isinstance(val, bytes):
-            if val:
-                # source: http://goo.gl/bGsnwC
-                encoded_bytes, _ = codecs.escape_encode(val)
-                return encoded_bytes.decode('ascii')
-            else:
-                # empty bytes crashes codecs.escape_encode (#1087)
-                return ''
+            return _bytes_to_ascii(val)
         else:
             return val.encode('unicode_escape').decode('ascii')
 else:
     STRING_TYPES = bytes, str, unicode
     UNICODE_TYPES = unicode,
 
-    from itertools import imap, izip  # NOQA
-
-    def _ascii_escaped(val):
+    def ascii_escaped(val):
         """In py2 bytes and str are the same type, so return if it's a bytes
         object, return it unchanged if it is a full ascii string,
         otherwise escape it into its binary form.
@@ -223,10 +222,7 @@ def getimfunc(func):
     try:
         return func.__func__
     except AttributeError:
-        try:
-            return func.im_func
-        except AttributeError:
-            return func
+        return func
 
 
 def safe_getattr(object, name, default):

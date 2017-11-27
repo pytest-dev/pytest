@@ -30,32 +30,32 @@ You can "mark" a test function with custom metadata like this::
 You can then restrict a test run to only run tests marked with ``webtest``::
 
     $ pytest -v -m webtest
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items
     
-    test_server.py::test_send_http PASSED
+    test_server.py::test_send_http PASSED                                [100%]
     
-    ======= 3 tests deselected ========
-    ======= 1 passed, 3 deselected in 0.12 seconds ========
+    ============================ 3 tests deselected ============================
+    ================== 1 passed, 3 deselected in 0.12 seconds ==================
 
 Or the inverse, running all tests except the webtest ones::
 
     $ pytest -v -m "not webtest"
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items
     
-    test_server.py::test_something_quick PASSED
-    test_server.py::test_another PASSED
-    test_server.py::TestClass::test_method PASSED
+    test_server.py::test_something_quick PASSED                          [ 33%]
+    test_server.py::test_another PASSED                                  [ 66%]
+    test_server.py::TestClass::test_method PASSED                        [100%]
     
-    ======= 1 tests deselected ========
-    ======= 3 passed, 1 deselected in 0.12 seconds ========
+    ============================ 1 tests deselected ============================
+    ================== 3 passed, 1 deselected in 0.12 seconds ==================
 
 Selecting tests based on their node ID
 --------------------------------------
@@ -65,42 +65,42 @@ arguments to select only specified tests. This makes it easy to select
 tests based on their module, class, method, or function name::
 
     $ pytest -v test_server.py::TestClass::test_method
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 1 item
     
-    test_server.py::TestClass::test_method PASSED
+    test_server.py::TestClass::test_method PASSED                        [100%]
     
-    ======= 1 passed in 0.12 seconds ========
+    ========================= 1 passed in 0.12 seconds =========================
 
 You can also select on the class::
 
     $ pytest -v test_server.py::TestClass
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 1 item
     
-    test_server.py::TestClass::test_method PASSED
+    test_server.py::TestClass::test_method PASSED                        [100%]
     
-    ======= 1 passed in 0.12 seconds ========
+    ========================= 1 passed in 0.12 seconds =========================
 
 Or select multiple nodes::
 
   $ pytest -v test_server.py::TestClass test_server.py::test_send_http
-  ======= test session starts ========
+  =========================== test session starts ============================
   platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
   cachedir: .cache
   rootdir: $REGENDOC_TMPDIR, inifile:
   collecting ... collected 2 items
   
-  test_server.py::TestClass::test_method PASSED
-  test_server.py::test_send_http PASSED
+  test_server.py::TestClass::test_method PASSED                        [ 50%]
+  test_server.py::test_send_http PASSED                                [100%]
   
-  ======= 2 passed in 0.12 seconds ========
+  ========================= 2 passed in 0.12 seconds =========================
 
 .. _node-id:
 
@@ -129,47 +129,47 @@ exact match on markers that ``-m`` provides.  This makes it easy to
 select tests based on their names::
 
     $ pytest -v -k http  # running with the above defined example module
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items
     
-    test_server.py::test_send_http PASSED
+    test_server.py::test_send_http PASSED                                [100%]
     
-    ======= 3 tests deselected ========
-    ======= 1 passed, 3 deselected in 0.12 seconds ========
+    ============================ 3 tests deselected ============================
+    ================== 1 passed, 3 deselected in 0.12 seconds ==================
 
 And you can also run all tests except the ones that match the keyword::
 
     $ pytest -k "not send_http" -v
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items
     
-    test_server.py::test_something_quick PASSED
-    test_server.py::test_another PASSED
-    test_server.py::TestClass::test_method PASSED
+    test_server.py::test_something_quick PASSED                          [ 33%]
+    test_server.py::test_another PASSED                                  [ 66%]
+    test_server.py::TestClass::test_method PASSED                        [100%]
     
-    ======= 1 tests deselected ========
-    ======= 3 passed, 1 deselected in 0.12 seconds ========
+    ============================ 1 tests deselected ============================
+    ================== 3 passed, 1 deselected in 0.12 seconds ==================
 
 Or to select "http" and "quick" tests::
 
     $ pytest -k "http or quick" -v
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items
     
-    test_server.py::test_send_http PASSED
-    test_server.py::test_something_quick PASSED
+    test_server.py::test_send_http PASSED                                [ 50%]
+    test_server.py::test_something_quick PASSED                          [100%]
     
-    ======= 2 tests deselected ========
-    ======= 2 passed, 2 deselected in 0.12 seconds ========
+    ============================ 2 tests deselected ============================
+    ================== 2 passed, 2 deselected in 0.12 seconds ==================
 
 .. note::
 
@@ -354,26 +354,26 @@ and an example invocations specifying a different environment than what
 the test needs::
 
     $ pytest -E stage2
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
     
-    test_someenv.py s
+    test_someenv.py s                                                    [100%]
     
-    ======= 1 skipped in 0.12 seconds ========
+    ======================== 1 skipped in 0.12 seconds =========================
 
 and here is one that specifies exactly the environment needed::
 
     $ pytest -E stage1
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
     
-    test_someenv.py .
+    test_someenv.py .                                                    [100%]
     
-    ======= 1 passed in 0.12 seconds ========
+    ========================= 1 passed in 0.12 seconds =========================
 
 The ``--markers`` option always gives you a list of available markers::
 
@@ -432,7 +432,7 @@ The output is as follows::
 
     $ pytest -q -s
     Marker info name=my_marker args=(<function hello_world at 0xdeadbeef>,) kwars={}
-    .
+    .                                                                    [100%]
     1 passed in 0.12 seconds
 
 We can see that the custom marker has its argument set extended with the function ``hello_world``. This is the key difference between creating a custom marker as a callable, which invokes ``__call__`` behind the scenes, and using ``with_args``.
@@ -477,7 +477,7 @@ Let's run this without capturing output and see what we get::
     glob args=('function',) kwargs={'x': 3}
     glob args=('class',) kwargs={'x': 2}
     glob args=('module',) kwargs={'x': 1}
-    .
+    .                                                                    [100%]
     1 passed in 0.12 seconds
 
 marking platform specific tests with pytest
@@ -530,29 +530,29 @@ Let's do a little test file to show how this looks like::
 then you will see two tests skipped and two executed tests as expected::
 
     $ pytest -rs # this option reports skip reasons
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
     
-    test_plat.py s.s.
-    ======= short test summary info ========
+    test_plat.py s.s.                                                    [100%]
+    ========================= short test summary info ==========================
     SKIP [2] $REGENDOC_TMPDIR/conftest.py:13: cannot run on platform linux
     
-    ======= 2 passed, 2 skipped in 0.12 seconds ========
+    =================== 2 passed, 2 skipped in 0.12 seconds ====================
 
 Note that if you specify a platform via the marker-command line option like this::
 
     $ pytest -m linux
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 4 items
     
-    test_plat.py .
+    test_plat.py .                                                       [100%]
     
-    ======= 3 tests deselected ========
-    ======= 1 passed, 3 deselected in 0.12 seconds ========
+    ============================ 3 tests deselected ============================
+    ================== 1 passed, 3 deselected in 0.12 seconds ==================
 
 then the unmarked-tests will not be run.  It is thus a way to restrict the run to the specific tests.
 
@@ -596,47 +596,47 @@ We want to dynamically define two markers and can do it in a
 We can now use the ``-m option`` to select one set::
 
   $ pytest -m interface --tb=short
-  ======= test session starts ========
+  =========================== test session starts ============================
   platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
   rootdir: $REGENDOC_TMPDIR, inifile:
   collected 4 items
   
-  test_module.py FF
+  test_module.py FF                                                    [100%]
   
-  ======= FAILURES ========
-  _______ test_interface_simple ________
+  ================================= FAILURES =================================
+  __________________________ test_interface_simple ___________________________
   test_module.py:3: in test_interface_simple
       assert 0
   E   assert 0
-  _______ test_interface_complex ________
+  __________________________ test_interface_complex __________________________
   test_module.py:6: in test_interface_complex
       assert 0
   E   assert 0
-  ======= 2 tests deselected ========
-  ======= 2 failed, 2 deselected in 0.12 seconds ========
+  ============================ 2 tests deselected ============================
+  ================== 2 failed, 2 deselected in 0.12 seconds ==================
 
 or to select both "event" and "interface" tests::
 
   $ pytest -m "interface or event" --tb=short
-  ======= test session starts ========
+  =========================== test session starts ============================
   platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
   rootdir: $REGENDOC_TMPDIR, inifile:
   collected 4 items
   
-  test_module.py FFF
+  test_module.py FFF                                                   [100%]
   
-  ======= FAILURES ========
-  _______ test_interface_simple ________
+  ================================= FAILURES =================================
+  __________________________ test_interface_simple ___________________________
   test_module.py:3: in test_interface_simple
       assert 0
   E   assert 0
-  _______ test_interface_complex ________
+  __________________________ test_interface_complex __________________________
   test_module.py:6: in test_interface_complex
       assert 0
   E   assert 0
-  _______ test_event_simple ________
+  ____________________________ test_event_simple _____________________________
   test_module.py:9: in test_event_simple
       assert 0
   E   assert 0
-  ======= 1 tests deselected ========
-  ======= 3 failed, 1 deselected in 0.12 seconds ========
+  ============================ 1 tests deselected ============================
+  ================== 3 failed, 1 deselected in 0.12 seconds ==================

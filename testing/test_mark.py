@@ -593,7 +593,7 @@ class TestFunctional(object):
                 request.applymarker(pytest.mark.hello)
             def pytest_terminal_summary(terminalreporter):
                 values = terminalreporter.stats['passed']
-                terminalreporter.writer.line("keyword: %s" % values[0].keywords)
+                terminalreporter._tw.line("keyword: %s" % values[0].keywords)
         """)
         testdir.makepyfile("""
             def test_func(arg):

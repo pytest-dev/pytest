@@ -30,6 +30,7 @@ Full pytest documentation
    xunit_setup
    plugins
    writing_plugins
+   logging
 
    goodpractices
    pythonpath

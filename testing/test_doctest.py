@@ -587,6 +587,34 @@ class TestDoctests(object):
         reportinfo = items[0].reportinfo()
         assert reportinfo[1] == 1
 
+    def test_valid_setup_py(self, testdir):
+        '''
+        Test to make sure that pytest ignores valid setup.py files when ran
+        with --doctest-modules
+        '''
+        p = testdir.makepyfile(setup="""
+            from setuptools import setup, find_packages
+            setup(name='sample',
+                  version='0.0',
+                  description='description',
+                  packages=find_packages()
+            )
+        """)
+        result = testdir.runpytest(p, '--doctest-modules')
+        result.stdout.fnmatch_lines(['*collected 0 items*'])
+
+    def test_invalid_setup_py(self, testdir):
+        '''
+        Test to make sure that pytest reads setup.py files that are not used
+        for python packages when ran with --doctest-modules
+        '''
+        p = testdir.makepyfile(setup="""
+            def test_foo():
+                return 'bar'
+        """)
+        result = testdir.runpytest(p, '--doctest-modules')
+        result.stdout.fnmatch_lines(['*collected 1 item*'])
+
 
 class TestLiterals(object):
 

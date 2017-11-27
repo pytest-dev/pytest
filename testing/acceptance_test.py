@@ -344,7 +344,7 @@ class TestGeneralUsage(object):
         Importing a module that didn't exist, even if the ImportError was
         gracefully handled, would make our test crash.
 
-        Use recwarn here to silence this warning in Python 2.6 and 2.7:
+        Use recwarn here to silence this warning in Python 2.7:
             ImportWarning: Not importing directory '...\not_a_package': missing __init__.py
         """
         testdir.mkdir('not_a_package')
@@ -630,10 +630,10 @@ class TestInvocationVariants(object):
         testdir.chdir()
         assert result.ret == 0
         result.stdout.fnmatch_lines([
-            "*test_hello.py::test_hello*PASSED",
-            "*test_hello.py::test_other*PASSED",
-            "*test_world.py::test_world*PASSED",
-            "*test_world.py::test_other*PASSED",
+            "*test_hello.py::test_hello*PASSED*",
+            "*test_hello.py::test_other*PASSED*",
+            "*test_world.py::test_world*PASSED*",
+            "*test_world.py::test_other*PASSED*",
             "*4 passed*"
         ])
 
@@ -641,7 +641,7 @@ class TestInvocationVariants(object):
         result = testdir.runpytest("--pyargs", "-v", "ns_pkg.world.test_world::test_other")
         assert result.ret == 0
         result.stdout.fnmatch_lines([
-            "*test_world.py::test_other*PASSED",
+            "*test_world.py::test_other*PASSED*",
             "*1 passed*"
         ])
 

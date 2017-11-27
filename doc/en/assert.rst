@@ -25,15 +25,15 @@ to assert that your function returns a certain value. If this assertion fails
 you will see the return value of the function call::
 
     $ pytest test_assert1.py
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
     
-    test_assert1.py F
+    test_assert1.py F                                                    [100%]
     
-    ======= FAILURES ========
-    _______ test_function ________
+    ================================= FAILURES =================================
+    ______________________________ test_function _______________________________
     
         def test_function():
     >       assert f() == 4
@@ -41,7 +41,7 @@ you will see the return value of the function call::
     E        +  where 3 = f()
     
     test_assert1.py:5: AssertionError
-    ======= 1 failed in 0.12 seconds ========
+    ========================= 1 failed in 0.12 seconds =========================
 
 ``pytest`` has support for showing the values of the most common subexpressions
 including calls, attributes, comparisons, and binary and unary
@@ -168,15 +168,15 @@ when it encounters comparisons.  For example::
 if you run this module::
 
     $ pytest test_assert2.py
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
     
-    test_assert2.py F
+    test_assert2.py F                                                    [100%]
     
-    ======= FAILURES ========
-    _______ test_set_comparison ________
+    ================================= FAILURES =================================
+    ___________________________ test_set_comparison ____________________________
     
         def test_set_comparison():
             set1 = set("1308")
@@ -190,7 +190,7 @@ if you run this module::
     E         Use -v to get the full diff
     
     test_assert2.py:5: AssertionError
-    ======= 1 failed in 0.12 seconds ========
+    ========================= 1 failed in 0.12 seconds =========================
 
 Special comparisons are done for a number of cases:
 
@@ -238,9 +238,9 @@ you can run the test module and get the custom output defined in
 the conftest file::
 
    $ pytest -q test_foocompare.py
-   F
-   ======= FAILURES ========
-   _______ test_compare ________
+   F                                                                    [100%]
+   ================================= FAILURES =================================
+   _______________________________ test_compare _______________________________
    
        def test_compare():
            f1 = Foo(1)

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 
-import sys
 import operator
 import _pytest
 import py
@@ -345,10 +344,7 @@ def test_excinfo_no_sourcecode():
     except ValueError:
         excinfo = _pytest._code.ExceptionInfo()
     s = str(excinfo.traceback[-1])
-    if py.std.sys.version_info < (2, 5):
-        assert s == "  File '<string>':1 in ?\n  ???\n"
-    else:
-        assert s == "  File '<string>':1 in <module>\n  ???\n"
+    assert s == "  File '<string>':1 in <module>\n  ???\n"
 
 
 def test_excinfo_no_python_sourcecode(tmpdir):
@@ -1244,9 +1240,6 @@ def test_no_recursion_index_on_recursion_error():
     except:  # noqa
         from _pytest._code.code import ExceptionInfo
         exc_info = ExceptionInfo()
-        if sys.version_info[:2] == (2, 6):
-            assert "'RecursionDepthError' object has no attribute '___" in str(exc_info.getrepr())
-        else:
-            assert 'maximum recursion' in str(exc_info.getrepr())
+        assert 'maximum recursion' in str(exc_info.getrepr())
     else:
         assert 0

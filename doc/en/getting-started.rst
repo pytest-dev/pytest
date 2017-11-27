@@ -1,7 +1,7 @@
 Installation and Getting Started
 ===================================
 
-**Pythons**: Python 2.6,2.7,3.3,3.4,3.5,3.6 Jython, PyPy-2.3
+**Pythons**: Python 2.7, 3.4, 3.5, 3.6, Jython, PyPy-2.3
 
 **Platforms**: Unix/Posix and Windows
 
@@ -9,8 +9,6 @@ Installation and Getting Started
 
 **dependencies**: `py <http://pypi.python.org/pypi/py>`_,
 `colorama (Windows) <http://pypi.python.org/pypi/colorama>`_,
-`argparse (py26) <http://pypi.python.org/pypi/argparse>`_,
-`ordereddict (py26) <http://pypi.python.org/pypi/ordereddict>`_.
 
 **documentation as PDF**: `download latest <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
 
@@ -46,15 +44,15 @@ Let's create a first test file with a simple test function::
 That's it. You can execute the test function now::
 
     $ pytest
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
     
-    test_sample.py F
+    test_sample.py F                                                     [100%]
     
-    ======= FAILURES ========
-    _______ test_answer ________
+    ================================= FAILURES =================================
+    _______________________________ test_answer ________________________________
     
         def test_answer():
     >       assert func(3) == 5
@@ -62,7 +60,7 @@ That's it. You can execute the test function now::
     E        +  where 4 = func(3)
     
     test_sample.py:5: AssertionError
-    ======= 1 failed in 0.12 seconds ========
+    ========================= 1 failed in 0.12 seconds =========================
 
 We got a failure report because our little ``func(3)`` call did not return ``5``.
 
@@ -101,7 +99,7 @@ use the ``raises`` helper::
 Running it with, this time in "quiet" reporting mode::
 
     $ pytest -q test_sysexit.py
-    .
+    .                                                                    [100%]
     1 passed in 0.12 seconds
 
 Grouping multiple tests in a class
@@ -126,9 +124,9 @@ There is no need to subclass anything.  We can simply
 run the module by passing its filename::
 
     $ pytest -q test_class.py
-    .F
-    ======= FAILURES ========
-    _______ TestClass.test_two ________
+    .F                                                                   [100%]
+    ================================= FAILURES =================================
+    ____________________________ TestClass.test_two ____________________________
     
     self = <test_class.TestClass object at 0xdeadbeef>
     
@@ -163,9 +161,9 @@ We list the name ``tmpdir`` in the test function signature and
 before performing the test function call.  Let's just run it::
 
     $ pytest -q test_tmpdir.py
-    F
-    ======= FAILURES ========
-    _______ test_needsfiles ________
+    F                                                                    [100%]
+    ================================= FAILURES =================================
+    _____________________________ test_needsfiles ______________________________
     
     tmpdir = local('PYTEST_TMPDIR/test_needsfiles0')
     

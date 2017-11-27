@@ -300,13 +300,7 @@ def test_argcomplete(testdir, monkeypatch):
     elif not result.stdout.str():
         pytest.skip("bash provided no output, argcomplete not available?")
     else:
-        if py.std.sys.version_info < (2, 7):
-            result.stdout.lines = result.stdout.lines[0].split('\x0b')
-            result.stdout.fnmatch_lines(["--funcargs", "--fulltrace"])
-        else:
-            result.stdout.fnmatch_lines(["--funcargs", "--fulltrace"])
-    if py.std.sys.version_info < (2, 7):
-        return
+        result.stdout.fnmatch_lines(["--funcargs", "--fulltrace"])
     os.mkdir('test_argcomplete.d')
     arg = 'test_argc'
     monkeypatch.setenv('COMP_LINE', "pytest " + arg)

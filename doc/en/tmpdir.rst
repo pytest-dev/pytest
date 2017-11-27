@@ -28,15 +28,15 @@ Running this would result in a passed test except for the last
 ``assert 0`` line which we use to look at values::
 
     $ pytest test_tmpdir.py
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
     
-    test_tmpdir.py F
+    test_tmpdir.py F                                                     [100%]
     
-    ======= FAILURES ========
-    _______ test_create_file ________
+    ================================= FAILURES =================================
+    _____________________________ test_create_file _____________________________
     
     tmpdir = local('PYTEST_TMPDIR/test_create_file0')
     
@@ -49,7 +49,7 @@ Running this would result in a passed test except for the last
     E       assert 0
     
     test_tmpdir.py:7: AssertionError
-    ======= 1 failed in 0.12 seconds ========
+    ========================= 1 failed in 0.12 seconds =========================
 
 The 'tmpdir_factory' fixture
 ----------------------------

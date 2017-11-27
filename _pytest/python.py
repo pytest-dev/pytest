@@ -6,19 +6,23 @@ import inspect
 import sys
 import os
 import collections
+import warnings
 from textwrap import dedent
 from itertools import count
 
+
 import py
+import six
 from _pytest.mark import MarkerError
 from _pytest.config import hookimpl
 
 import _pytest
-import _pytest._pluggy as pluggy
+import pluggy
 from _pytest import fixtures
 from _pytest import main
+from _pytest import deprecated
 from _pytest.compat import (
-    isclass, isfunction, is_generator, _ascii_escaped,
+    isclass, isfunction, is_generator, ascii_escaped,
     REGEX_TYPE, STRING_TYPES, NoneType, NOTSET,
     get_real_func, getfslineno, safe_getattr,
     safe_str, getlocation, enum,
@@ -327,7 +331,7 @@ class PyCollector(PyobjMixin, main.Collector):
                 if name in seen:
                     continue
                 seen[name] = True
-                res = self.makeitem(name, obj)
+                res = self._makeitem(name, obj)
                 if res is None:
                     continue
                 if not isinstance(res, list):
@@ -337,6 +341,10 @@ class PyCollector(PyobjMixin, main.Collector):
         return values
 
     def makeitem(self, name, obj):
+        warnings.warn(deprecated.COLLECTOR_MAKEITEM, stacklevel=2)
+        self._makeitem(name, obj)
+
+    def _makeitem(self, name, obj):
         # assert self.ihook.fspath == self.fspath, self
         return self.ihook.pytest_pycollect_makeitem(
             collector=self, name=name, obj=obj)
@@ -613,7 +621,7 @@ class Generator(FunctionMixin, PyCollector):
         if not isinstance(obj, (tuple, list)):
             obj = (obj,)
         # explicit naming
-        if isinstance(obj[0], py.builtin._basestring):
+        if isinstance(obj[0], six.string_types):
             name = obj[0]
             obj = obj[1:]
         else:
@@ -644,14 +652,14 @@ class CallSpec2(object):
         self._globalid_args = set()
         self._globalparam = NOTSET
         self._arg2scopenum = {}  # used for sorting parametrized resources
-        self.keywords = {}
+        self.marks = []
         self.indices = {}
 
     def copy(self, metafunc):
         cs = CallSpec2(self.metafunc)
         cs.funcargs.update(self.funcargs)
         cs.params.update(self.params)
-        cs.keywords.update(self.keywords)
+        cs.marks.extend(self.marks)
         cs.indices.update(self.indices)
         cs._arg2scopenum.update(self._arg2scopenum)
         cs._idlist = list(self._idlist)
@@ -676,8 +684,8 @@ class CallSpec2(object):
     def id(self):
         return "-".join(map(str, filter(None, self._idlist)))
 
-    def setmulti(self, valtypes, argnames, valset, id, keywords, scopenum,
-                 param_index):
+    def setmulti2(self, valtypes, argnames, valset, id, marks, scopenum,
+                  param_index):
         for arg, val in zip(argnames, valset):
             self._checkargnotcontained(arg)
             valtype_for_arg = valtypes[arg]
@@ -685,7 +693,7 @@ class CallSpec2(object):
             self.indices[arg] = param_index
             self._arg2scopenum[arg] = scopenum
         self._idlist.append(id)
-        self.keywords.update(keywords)
+        self.marks.extend(marks)
 
     def setall(self, funcargs, id, param):
         for x in funcargs:
@@ -725,7 +733,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         self.cls = cls
 
         self._calls = []
-        self._ids = py.builtin.set()
+        self._ids = set()
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs
 
     def parametrize(self, argnames, argvalues, indirect=False, ids=None,
@@ -768,29 +776,11 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
             to set a dynamic scope using test context or configuration.
         """
         from _pytest.fixtures import scope2index
-        from _pytest.mark import MARK_GEN, ParameterSet
+        from _pytest.mark import ParameterSet
         from py.io import saferepr
-
-        if not isinstance(argnames, (tuple, list)):
-            argnames = [x.strip() for x in argnames.split(",") if x.strip()]
-            force_tuple = len(argnames) == 1
-        else:
-            force_tuple = False
-        parameters = [
-            ParameterSet.extract_from(x, legacy_force_tuple=force_tuple)
-            for x in argvalues]
+        argnames, parameters = ParameterSet._for_parameterize(
+            argnames, argvalues, self.function)
         del argvalues
-
-        if not parameters:
-            fs, lineno = getfslineno(self.function)
-            reason = "got empty parameter set %r, function %s at %s:%d" % (
-                argnames, self.function.__name__, fs, lineno)
-            mark = MARK_GEN.skip(reason=reason)
-            parameters.append(ParameterSet(
-                values=(NOTSET,) * len(argnames),
-                marks=[mark],
-                id=None,
-            ))
 
         if scope is None:
             scope = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)
@@ -827,7 +817,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
                 raise ValueError('%d tests specified with %d ids' % (
                                  len(parameters), len(ids)))
             for id_value in ids:
-                if id_value is not None and not isinstance(id_value, py.builtin._basestring):
+                if id_value is not None and not isinstance(id_value, six.string_types):
                     msg = 'ids must be list of strings, found: %s (type: %s)'
                     raise ValueError(msg % (saferepr(id_value), type(id_value).__name__))
         ids = idmaker(argnames, parameters, idfn, ids, self.config)
@@ -841,15 +831,19 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
                         'equal to the number of names ({1})'.format(
                             param.values, argnames))
                 newcallspec = callspec.copy(self)
-                newcallspec.setmulti(valtypes, argnames, param.values, a_id,
-                                     param.deprecated_arg_dict, scopenum, param_index)
+                newcallspec.setmulti2(valtypes, argnames, param.values, a_id,
+                                      param.marks, scopenum, param_index)
                 newcalls.append(newcallspec)
         self._calls = newcalls
 
     def addcall(self, funcargs=None, id=NOTSET, param=NOTSET):
-        """ (deprecated, use parametrize) Add a new call to the underlying
-        test function during the collection phase of a test run.  Note that
-        request.addcall() is called during the test collection phase prior and
+        """ Add a new call to the underlying test function during the collection phase of a test run.
+
+        .. deprecated:: 3.3
+
+            Use :meth:`parametrize` instead.
+
+        Note that request.addcall() is called during the test collection phase prior and
         independently to actual test execution.  You should only use addcall()
         if you need to specify multiple arguments of a test function.
 
@@ -862,6 +856,8 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         :arg param: a parameter which will be exposed to a later fixture function
             invocation through the ``request.param`` attribute.
         """
+        if self.config:
+            self.config.warn('C1', message=deprecated.METAFUNC_ADD_CALL, fslocation=None)
         assert funcargs is None or isinstance(funcargs, dict)
         if funcargs is not None:
             for name in funcargs:
@@ -921,7 +917,7 @@ def _idval(val, argname, idx, idfn, config=None):
             msg += '\nUpdate your code as this will raise an error in pytest-4.0.'
             warnings.warn(msg, DeprecationWarning)
         if s:
-            return _ascii_escaped(s)
+            return ascii_escaped(s)
 
     if config:
         hook_id = config.hook.pytest_make_parametrize_id(
@@ -930,11 +926,11 @@ def _idval(val, argname, idx, idfn, config=None):
             return hook_id
 
     if isinstance(val, STRING_TYPES):
-        return _ascii_escaped(val)
+        return ascii_escaped(val)
     elif isinstance(val, (float, int, bool, NoneType)):
         return str(val)
     elif isinstance(val, REGEX_TYPE):
-        return _ascii_escaped(val.pattern)
+        return ascii_escaped(val.pattern)
     elif enum is not None and isinstance(val, enum.Enum):
         return str(val)
     elif isclass(val) and hasattr(val, '__name__'):
@@ -950,7 +946,7 @@ def _idvalset(idx, parameterset, argnames, idfn, ids, config=None):
                    for val, argname in zip(parameterset.values, argnames)]
         return "-".join(this_id)
     else:
-        return _ascii_escaped(ids[idx])
+        return ascii_escaped(ids[idx])
 
 
 def idmaker(argnames, parametersets, idfn=None, ids=None, config=None):
@@ -1112,7 +1108,13 @@ class Function(FunctionMixin, main.Item, fixtures.FuncargnamesCompatAttr):
         self.keywords.update(self.obj.__dict__)
         if callspec:
             self.callspec = callspec
-            self.keywords.update(callspec.keywords)
+            # this is total hostile and a mess
+            # keywords are broken by design by now
+            # this will be redeemed later
+            for mark in callspec.marks:
+                # feel free to cry, this was broken for years before
+                # and keywords cant fix it per design
+                self.keywords[mark.name] = mark
         if keywords:
             self.keywords.update(keywords)
 

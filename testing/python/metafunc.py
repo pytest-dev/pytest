@@ -158,7 +158,7 @@ class TestMetafunc(object):
             pass
         metafunc = self.Metafunc(func)
         metafunc.parametrize("y", [])
-        assert 'skip' in metafunc._calls[0].keywords
+        assert 'skip' == metafunc._calls[0].marks[0].name
 
     def test_parametrize_with_userobjects(self):
         def func(x, y):
@@ -960,6 +960,10 @@ class TestMetafuncFunctional(object):
         ])
 
     def test_parametrize_with_ids(self, testdir):
+        testdir.makeini("""
+            [pytest]
+            console_output_style=classic
+        """)
         testdir.makepyfile("""
             import pytest
             def pytest_generate_tests(metafunc):
@@ -1005,9 +1009,9 @@ class TestMetafuncFunctional(object):
         result = testdir.runpytest("-v")
         assert result.ret == 1
         result.stdout.fnmatch_lines_random([
-            "*test_function*basic*PASSED",
-            "*test_function*1-1*PASSED",
-            "*test_function*advanced*FAILED",
+            "*test_function*basic*PASSED*",
+            "*test_function*1-1*PASSED*",
+            "*test_function*advanced*FAILED*",
         ])
 
     def test_fixture_parametrized_empty_ids(self, testdir):
@@ -1062,8 +1066,8 @@ class TestMetafuncFunctional(object):
         result = testdir.runpytest("-v")
         assert result.ret == 1
         result.stdout.fnmatch_lines_random([
-            "*test_function*a0*PASSED",
-            "*test_function*a1*FAILED"
+            "*test_function*a0*PASSED*",
+            "*test_function*a1*FAILED*"
         ])
 
     @pytest.mark.parametrize(("scope", "length"),

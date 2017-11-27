@@ -2,8 +2,9 @@ import math
 import sys
 
 import py
+from six.moves import zip
 
-from _pytest.compat import isclass, izip
+from _pytest.compat import isclass
 from _pytest.outcomes import fail
 import _pytest._code
 
@@ -145,7 +146,7 @@ class ApproxSequence(ApproxBase):
         return ApproxBase.__eq__(self, actual)
 
     def _yield_comparisons(self, actual):
-        return izip(actual, self.expected)
+        return zip(actual, self.expected)
 
 
 class ApproxScalar(ApproxBase):
@@ -454,8 +455,7 @@ def raises(expected_exception, *args, **kwargs):
 
     This helper produces a ``ExceptionInfo()`` object (see below).
 
-    If using Python 2.5 or above, you may use this function as a
-    context manager::
+    You may use this function as a context manager::
 
         >>> with raises(ZeroDivisionError):
         ...    1/0
@@ -610,13 +610,6 @@ class RaisesContext(object):
         __tracebackhide__ = True
         if tp[0] is None:
             fail(self.message)
-        if sys.version_info < (2, 7):
-            # py26: on __exit__() exc_value often does not contain the
-            # exception value.
-            # http://bugs.python.org/issue7853
-            if not isinstance(tp[1], BaseException):
-                exc_type, value, traceback = tp
-                tp = exc_type, exc_type(value), traceback
         self.excinfo.__init__(tp)
         suppress_exception = issubclass(self.excinfo.type, self.expected_exception)
         if sys.version_info[0] == 2 and suppress_exception:

@@ -9,7 +9,6 @@ import _pytest._code
 from _pytest.config import hookimpl
 from _pytest.outcomes import fail, skip, xfail
 from _pytest.python import transfer_markers, Class, Module, Function
-from _pytest.skipping import MarkEvaluator
 
 
 def pytest_pycollect_makeitem(collector, name, obj):
@@ -134,8 +133,7 @@ class TestCaseFunction(Function):
         try:
             skip(reason)
         except skip.Exception:
-            self._evalskip = MarkEvaluator(self, 'SkipTest')
-            self._evalskip.result = True
+            self._skipped_by_mark = True
             self._addexcinfo(sys.exc_info())
 
     def addExpectedFailure(self, testcase, rawexcinfo, reason=""):

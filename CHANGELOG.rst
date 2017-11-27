@@ -8,6 +8,175 @@
 
 .. towncrier release notes start
 
+Pytest 3.3.0 (2017-11-23)
+=========================
+
+Deprecations and Removals
+-------------------------
+
+- Pytest no longer supports Python **2.6** and **3.3**. Those Python versions
+  are EOL for some time now and incur maintenance and compatibility costs on
+  the pytest core team, and following up with the rest of the community we
+  decided that they will no longer be supported starting on this version. Users
+  which still require those versions should pin pytest to ``<3.3``. (`#2812
+  <https://github.com/pytest-dev/pytest/issues/2812>`_)
+
+- Remove internal ``_preloadplugins()`` function. This removal is part of the
+  ``pytest_namespace()`` hook deprecation. (`#2236
+  <https://github.com/pytest-dev/pytest/issues/2236>`_)
+
+- Internally change ``CallSpec2`` to have a list of marks instead of a broken
+  mapping of keywords. This removes the keywords attribute of the internal
+  ``CallSpec2`` class. (`#2672
+  <https://github.com/pytest-dev/pytest/issues/2672>`_)
+
+- Remove ParameterSet.deprecated_arg_dict - its not a public api and the lack
+  of the underscore was a naming error. (`#2675
+  <https://github.com/pytest-dev/pytest/issues/2675>`_)
+
+- Remove the internal multi-typed attribute ``Node._evalskip`` and replace it
+  with the boolean ``Node._skipped_by_mark``. (`#2767
+  <https://github.com/pytest-dev/pytest/issues/2767>`_)
+
+Features
+--------
+
+- ``pytest_fixture_post_finalizer`` hook can now receive a ``request``
+  argument. (`#2124 <https://github.com/pytest-dev/pytest/issues/2124>`_)
+
+- Replace the old introspection code in compat.py that determines the available
+  arguments of fixtures with inspect.signature on Python 3 and
+  funcsigs.signature on Python 2. This should respect ``__signature__``
+  declarations on functions. (`#2267
+  <https://github.com/pytest-dev/pytest/issues/2267>`_)
+
+- Report tests with global ``pytestmark`` variable only once. (`#2549
+  <https://github.com/pytest-dev/pytest/issues/2549>`_)
+
+- Now pytest displays the total progress percentage while running tests. The
+  previous output style can be set by configuring the ``console_output_style``
+  setting to ``classic``. (`#2657 <https://github.com/pytest-dev/pytest/issues/2657>`_)
+
+- Match ``warns`` signature to ``raises`` by adding ``match`` keyword. (`#2708
+  <https://github.com/pytest-dev/pytest/issues/2708>`_)
+
+- Pytest now captures and displays output from the standard `logging` module.
+  The user can control the logging level to be captured by specifying options
+  in ``pytest.ini``, the command line and also during individual tests using
+  markers. Also, a ``caplog`` fixture is available that enables users to test
+  the captured log during specific tests (similar to ``capsys`` for example).
+  For more information, please see the `logging docs
+  <https://docs.pytest.org/en/latest/logging.html>`_. This feature was
+  introduced by merging the popular `pytest-catchlog
+  <https://pypi.org/project/pytest-catchlog/>`_ plugin, thanks to `Thomas Hisch
+  <https://github.com/thisch>`_. Be advised that during the merging the
+  backward compatibility interface with the defunct ``pytest-capturelog`` has
+  been dropped. (`#2794 <https://github.com/pytest-dev/pytest/issues/2794>`_)
+
+- Add ``allow_module_level`` kwarg to ``pytest.skip()``, enabling to skip the
+  whole module. (`#2808 <https://github.com/pytest-dev/pytest/issues/2808>`_)
+
+- Allow setting ``file_or_dir``, ``-c``, and ``-o`` in PYTEST_ADDOPTS. (`#2824
+  <https://github.com/pytest-dev/pytest/issues/2824>`_)
+
+- Return stdout/stderr capture results as a ``namedtuple``, so ``out`` and
+  ``err`` can be accessed by attribute. (`#2879
+  <https://github.com/pytest-dev/pytest/issues/2879>`_)
+
+- Add ``capfdbinary``, a version of ``capfd`` which returns bytes from
+  ``readouterr()``. (`#2923
+  <https://github.com/pytest-dev/pytest/issues/2923>`_)
+
+- Add ``capsysbinary`` a version of ``capsys`` which returns bytes from
+  ``readouterr()``. (`#2934
+  <https://github.com/pytest-dev/pytest/issues/2934>`_)
+
+- Implement feature to skip ``setup.py`` files when run with
+  ``--doctest-modules``. (`#502
+  <https://github.com/pytest-dev/pytest/issues/502>`_)
+
+
+Bug Fixes
+---------
+
+- Resume output capturing after ``capsys/capfd.disabled()`` context manager.
+  (`#1993 <https://github.com/pytest-dev/pytest/issues/1993>`_)
+
+- ``pytest_fixture_setup`` and ``pytest_fixture_post_finalizer`` hooks are now
+  called for all ``conftest.py`` files. (`#2124
+  <https://github.com/pytest-dev/pytest/issues/2124>`_)
+
+- If an exception happens while loading a plugin, pytest no longer hides the
+  original traceback. In python2 it will show the original traceback with a new
+  message that explains in which plugin. In python3 it will show 2 canonized
+  exceptions, the original exception while loading the plugin in addition to an
+  exception that PyTest throws about loading a plugin. (`#2491
+  <https://github.com/pytest-dev/pytest/issues/2491>`_)
+
+- ``capsys`` and ``capfd`` can now be used by other fixtures. (`#2709
+  <https://github.com/pytest-dev/pytest/issues/2709>`_)
+
+- Internal ``pytester`` plugin properly encodes ``bytes`` arguments to
+  ``utf-8``. (`#2738 <https://github.com/pytest-dev/pytest/issues/2738>`_)
+
+- ``testdir`` now uses use the same method used by ``tmpdir`` to create its
+  temporary directory. This changes the final structure of the ``testdir``
+  directory slightly, but should not affect usage in normal scenarios and
+  avoids a number of potential problems. (`#2751
+  <https://github.com/pytest-dev/pytest/issues/2751>`_)
+
+- Pytest no longer complains about warnings with unicode messages being
+  non-ascii compatible even for ascii-compatible messages. As a result of this,
+  warnings with unicode messages are converted first to an ascii representation
+  for safety. (`#2809 <https://github.com/pytest-dev/pytest/issues/2809>`_)
+
+- Change return value of pytest command when ``--maxfail`` is reached from
+  ``2`` (interrupted) to ``1`` (failed). (`#2845
+  <https://github.com/pytest-dev/pytest/issues/2845>`_)
+
+- Fix issue in assertion rewriting which could lead it to rewrite modules which
+  should not be rewritten. (`#2939
+  <https://github.com/pytest-dev/pytest/issues/2939>`_)
+
+- Handle marks without description in ``pytest.ini``. (`#2942
+  <https://github.com/pytest-dev/pytest/issues/2942>`_)
+
+
+Trivial/Internal Changes
+------------------------
+
+- pytest now depends on `attrs <https://pypi.org/project/attrs/>`_ for internal
+  structures to ease code maintainability. (`#2641
+  <https://github.com/pytest-dev/pytest/issues/2641>`_)
+
+- Refactored internal Python 2/3 compatibility code to use ``six``. (`#2642
+  <https://github.com/pytest-dev/pytest/issues/2642>`_)
+
+- Stop vendoring ``pluggy`` - we're missing out on its latest changes for not
+  much benefit (`#2719 <https://github.com/pytest-dev/pytest/issues/2719>`_)
+
+- Internal refactor: simplify ascii string escaping by using the
+  backslashreplace error handler in newer Python 3 versions. (`#2734
+  <https://github.com/pytest-dev/pytest/issues/2734>`_)
+
+- Remove unnecessary mark evaluator in unittest plugin (`#2767
+  <https://github.com/pytest-dev/pytest/issues/2767>`_)
+
+- Calls to ``Metafunc.addcall`` now emit a deprecation warning. This function
+  is scheduled to be removed in ``pytest-4.0``. (`#2876
+  <https://github.com/pytest-dev/pytest/issues/2876>`_)
+
+- Internal move of the parameterset extraction to a more maintainable place.
+  (`#2877 <https://github.com/pytest-dev/pytest/issues/2877>`_)
+
+- Internal refactoring to simplify scope node lookup. (`#2910
+  <https://github.com/pytest-dev/pytest/issues/2910>`_)
+
+- Configure ``pytest`` to prevent pip from installing pytest in unsupported
+  Python versions. (`#2922
+  <https://github.com/pytest-dev/pytest/issues/2922>`_)
+
+
 Pytest 3.2.5 (2017-11-15)
 =========================
 
@@ -192,7 +361,7 @@ Deprecations and Removals
 -------------------------
 
 - ``pytest.approx`` no longer supports ``>``, ``>=``, ``<`` and ``<=``
-  operators to avoid surprising/inconsistent behavior. See `the docs
+  operators to avoid surprising/inconsistent behavior. See `the approx docs
   <https://docs.pytest.org/en/latest/builtin.html#pytest.approx>`_ for more
   information. (`#2003 <https://github.com/pytest-dev/pytest/issues/2003>`_)
 

@@ -62,14 +62,21 @@ def exit(msg):
 exit.Exception = Exit
 
 
-def skip(msg=""):
+def skip(msg="", **kwargs):
     """ skip an executing test with the given message.  Note: it's usually
     better to use the pytest.mark.skipif marker to declare a test to be
     skipped under certain conditions like mismatching platforms or
     dependencies.  See the pytest_skipping plugin for details.
+
+    :kwarg bool allow_module_level: allows this function to be called at
+        module level, skipping the rest of the module. Default to False.
     """
     __tracebackhide__ = True
-    raise Skipped(msg=msg)
+    allow_module_level = kwargs.pop('allow_module_level', False)
+    if kwargs:
+        keys = [k for k in kwargs.keys()]
+        raise TypeError('unexpected keyword arguments: {0}'.format(keys))
+    raise Skipped(msg=msg, allow_module_level=allow_module_level)
 
 
 skip.Exception = Skipped

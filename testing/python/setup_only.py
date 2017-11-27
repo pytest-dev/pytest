@@ -238,6 +238,6 @@ def test_show_fixtures_and_execute_test(testdir):
 
     result.stdout.fnmatch_lines([
         '*SETUP    F arg*',
-        '*test_arg (fixtures used: arg)F',
+        '*test_arg (fixtures used: arg)F*',
         '*TEARDOWN F arg*',
     ])

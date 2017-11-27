@@ -116,7 +116,7 @@ that match ``*_check``.  For example, if we have::
 then the test collection looks like this::
 
     $ pytest --collect-only
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 2 items
@@ -126,7 +126,7 @@ then the test collection looks like this::
           <Function 'simple_check'>
           <Function 'complex_check'>
     
-    ======= no tests ran in 0.12 seconds ========
+    ======================= no tests ran in 0.12 seconds =======================
 
 .. note::
 
@@ -162,7 +162,7 @@ Finding out what is collected
 You can always peek at the collection tree without running tests like this::
 
     . $ pytest --collect-only pythoncollection.py
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 3 items
@@ -173,7 +173,7 @@ You can always peek at the collection tree without running tests like this::
           <Function 'test_method'>
           <Function 'test_anothermethod'>
     
-    ======= no tests ran in 0.12 seconds ========
+    ======================= no tests ran in 0.12 seconds =======================
 
 .. _customizing-test-collection:
 
@@ -231,9 +231,9 @@ If you run with a Python 3 interpreter both the one test and the ``setup.py``
 file will be left out::
 
     $ pytest --collect-only
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile: pytest.ini
     collected 0 items
     
-    ======= no tests ran in 0.12 seconds ========
+    ======================= no tests ran in 0.12 seconds =======================

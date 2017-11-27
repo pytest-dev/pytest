@@ -78,23 +78,23 @@ class TestCaptureManager(object):
         old = sys.stdout, sys.stderr, sys.stdin
         try:
             capman = CaptureManager(method)
-            capman.init_capturings()
-            outerr = capman.suspendcapture()
+            capman.start_global_capturing()
+            outerr = capman.suspend_global_capture()
             assert outerr == ("", "")
-            outerr = capman.suspendcapture()
+            outerr = capman.suspend_global_capture()
             assert outerr == ("", "")
             print("hello")
-            out, err = capman.suspendcapture()
+            out, err = capman.suspend_global_capture()
             if method == "no":
                 assert old == (sys.stdout, sys.stderr, sys.stdin)
             else:
                 assert not out
-            capman.resumecapture()
+            capman.resume_global_capture()
             print("hello")
-            out, err = capman.suspendcapture()
+            out, err = capman.suspend_global_capture()
             if method != "no":
                 assert out == "hello\n"
-            capman.reset_capturings()
+            capman.stop_global_capturing()
         finally:
             capouter.stop_capturing()
 
@@ -103,9 +103,9 @@ class TestCaptureManager(object):
         capouter = StdCaptureFD()
         try:
             capman = CaptureManager("fd")
-            capman.init_capturings()
-            pytest.raises(AssertionError, "capman.init_capturings()")
-            capman.reset_capturings()
+            capman.start_global_capturing()
+            pytest.raises(AssertionError, "capman.start_global_capturing()")
+            capman.stop_global_capturing()
         finally:
             capouter.stop_capturing()
 
@@ -266,7 +266,7 @@ class TestPerTestCapturing(object):
         """)
         result = testdir.runpytest(p1)
         result.stdout.fnmatch_lines([
-            "*test_capturing_outerr.py .F",
+            "*test_capturing_outerr.py .F*",
             "====* FAILURES *====",
             "____*____",
             "*test_capturing_outerr.py:8: ValueError",
@@ -342,26 +342,6 @@ class TestLoggingInteraction(object):
             # verify proper termination
             assert "closed" not in s
 
-    def test_logging_initialized_in_test(self, testdir):
-        p = testdir.makepyfile("""
-            import sys
-            def test_something():
-                # pytest does not import logging
-                assert 'logging' not in sys.modules
-                import logging
-                logging.basicConfig()
-                logging.warn("hello432")
-                assert 0
-        """)
-        result = testdir.runpytest_subprocess(
-            p, "--traceconfig",
-            "-p", "no:capturelog", "-p", "no:hypothesis", "-p", "no:hypothesispytest")
-        assert result.ret != 0
-        result.stdout.fnmatch_lines([
-            "*hello432*",
-        ])
-        assert 'operation on closed file' not in result.stderr.str()
-
     def test_conftestlogging_is_shown(self, testdir):
         testdir.makeconftest("""
                 import logging
@@ -418,7 +398,7 @@ class TestCaptureFixture(object):
         result = testdir.runpytest(p)
         result.stdout.fnmatch_lines([
             "*ERROR*setup*test_one*",
-            "E*capsys*capfd*same*time*",
+            "E*capfd*capsys*same*time*",
             "*ERROR*setup*test_two*",
             "E*capsys*capfd*same*time*",
             "*2 error*"])
@@ -438,9 +418,20 @@ class TestCaptureFixture(object):
             "*test_one*",
             "*capsys*capfd*same*time*",
             "*test_two*",
-            "*capsys*capfd*same*time*",
+            "*capfd*capsys*same*time*",
             "*2 failed in*",
         ])
+
+    def test_capsyscapfdbinary(self, testdir):
+        p = testdir.makepyfile("""
+            def test_one(capsys, capfdbinary):
+                pass
+        """)
+        result = testdir.runpytest(p)
+        result.stdout.fnmatch_lines([
+            "*ERROR*setup*test_one*",
+            "E*capfdbinary*capsys*same*time*",
+            "*1 error*"])
 
     @pytest.mark.parametrize("method", ["sys", "fd"])
     def test_capture_is_represented_on_failure_issue128(self, testdir, method):
@@ -465,6 +456,51 @@ class TestCaptureFixture(object):
                 capfd.close()
         """)
         reprec.assertoutcome(passed=1)
+
+    @needsosdup
+    def test_capfdbinary(self, testdir):
+        reprec = testdir.inline_runsource("""
+            def test_hello(capfdbinary):
+                import os
+                # some likely un-decodable bytes
+                os.write(1, b'\\xfe\\x98\\x20')
+                out, err = capfdbinary.readouterr()
+                assert out == b'\\xfe\\x98\\x20'
+                assert err == b''
+        """)
+        reprec.assertoutcome(passed=1)
+
+    @pytest.mark.skipif(
+        sys.version_info < (3,),
+        reason='only have capsysbinary in python 3',
+    )
+    def test_capsysbinary(self, testdir):
+        reprec = testdir.inline_runsource("""
+            def test_hello(capsysbinary):
+                import sys
+                # some likely un-decodable bytes
+                sys.stdout.buffer.write(b'\\xfe\\x98\\x20')
+                out, err = capsysbinary.readouterr()
+                assert out == b'\\xfe\\x98\\x20'
+                assert err == b''
+        """)
+        reprec.assertoutcome(passed=1)
+
+    @pytest.mark.skipif(
+        sys.version_info >= (3,),
+        reason='only have capsysbinary in python 3',
+    )
+    def test_capsysbinary_forbidden_in_python2(self, testdir):
+        testdir.makepyfile("""
+            def test_hello(capsysbinary):
+                pass
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            "*test_hello*",
+            "*capsysbinary is only supported on python 3*",
+            "*1 error in*",
+        ])
 
     def test_partial_setup_failure(self, testdir):
         p = testdir.makepyfile("""
@@ -502,20 +538,64 @@ class TestCaptureFixture(object):
         assert 'closed' not in result.stderr.str()
 
     @pytest.mark.parametrize('fixture', ['capsys', 'capfd'])
-    def test_disabled_capture_fixture(self, testdir, fixture):
+    @pytest.mark.parametrize('no_capture', [True, False])
+    def test_disabled_capture_fixture(self, testdir, fixture, no_capture):
         testdir.makepyfile("""
             def test_disabled({fixture}):
                 print('captured before')
                 with {fixture}.disabled():
                     print('while capture is disabled')
                 print('captured after')
+                assert {fixture}.readouterr() == ('captured before\\ncaptured after\\n', '')
+
+            def test_normal():
+                print('test_normal executed')
         """.format(fixture=fixture))
-        result = testdir.runpytest_subprocess()
+        args = ('-s',) if no_capture else ()
+        result = testdir.runpytest_subprocess(*args)
         result.stdout.fnmatch_lines("""
             *while capture is disabled*
         """)
         assert 'captured before' not in result.stdout.str()
         assert 'captured after' not in result.stdout.str()
+        if no_capture:
+            assert 'test_normal executed' in result.stdout.str()
+        else:
+            assert 'test_normal executed' not in result.stdout.str()
+
+    @pytest.mark.parametrize('fixture', ['capsys', 'capfd'])
+    def test_fixture_use_by_other_fixtures(self, testdir, fixture):
+        """
+        Ensure that capsys and capfd can be used by other fixtures during setup and teardown.
+        """
+        testdir.makepyfile("""
+            from __future__ import print_function
+            import sys
+            import pytest
+
+            @pytest.fixture
+            def captured_print({fixture}):
+                print('stdout contents begin')
+                print('stderr contents begin', file=sys.stderr)
+                out, err = {fixture}.readouterr()
+
+                yield out, err
+
+                print('stdout contents end')
+                print('stderr contents end', file=sys.stderr)
+                out, err = {fixture}.readouterr()
+                assert out == 'stdout contents end\\n'
+                assert err == 'stderr contents end\\n'
+
+            def test_captured_print(captured_print):
+                out, err = captured_print
+                assert out == 'stdout contents begin\\n'
+                assert err == 'stderr contents begin\\n'
+        """.format(fixture=fixture))
+        result = testdir.runpytest_subprocess()
+        result.stdout.fnmatch_lines("*1 passed*")
+        assert 'stdout contents begin' not in result.stdout.str()
+        assert 'stderr contents begin' not in result.stdout.str()
 
 
 def test_setup_failure_does_not_kill_capturing(testdir):
@@ -898,6 +978,14 @@ class TestStdCapture(object):
             out, err = cap.readouterr()
         assert err == "error2"
 
+    def test_capture_results_accessible_by_attribute(self):
+        with self.getcapture() as cap:
+            sys.stdout.write("hello")
+            sys.stderr.write("world")
+            capture_result = cap.readouterr()
+        assert capture_result.out == "hello"
+        assert capture_result.err == "world"
+
     def test_capturing_readouterr_unicode(self):
         with self.getcapture() as cap:
             print("hx\xc4\x85\xc4\x87")
@@ -1059,6 +1147,14 @@ def test_using_capsys_fixture_works_with_sys_stdout_encoding(capsys):
     assert err == ''
 
 
+def test_capsys_results_accessible_by_attribute(capsys):
+    sys.stdout.write("spam")
+    sys.stderr.write("eggs")
+    capture_result = capsys.readouterr()
+    assert capture_result.out == "spam"
+    assert capture_result.err == "eggs"
+
+
 @needsosdup
 @pytest.mark.parametrize('use', [True, False])
 def test_fdcapture_tmpfile_remains_the_same(tmpfile, use):
@@ -1169,7 +1265,7 @@ def test_dontreadfrominput_has_encoding(testdir):
     reprec.assertoutcome(passed=1)
 
 
-def test_pickling_and_unpickling_enocded_file():
+def test_pickling_and_unpickling_encoded_file():
     # See https://bitbucket.org/pytest-dev/pytest/pull-request/194
     # pickle.loads() raises infinite recursion if
     # EncodedFile.__getattr__ is not implemented properly

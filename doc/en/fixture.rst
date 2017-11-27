@@ -69,15 +69,15 @@ will discover and call the :py:func:`@pytest.fixture <_pytest.python.fixture>`
 marked ``smtp`` fixture function.  Running the test looks like this::
 
     $ pytest test_smtpsimple.py
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
     
-    test_smtpsimple.py F
+    test_smtpsimple.py F                                                 [100%]
     
-    ======= FAILURES ========
-    _______ test_ehlo ________
+    ================================= FAILURES =================================
+    ________________________________ test_ehlo _________________________________
     
     smtp = <smtplib.SMTP object at 0xdeadbeef>
     
@@ -88,7 +88,7 @@ marked ``smtp`` fixture function.  Running the test looks like this::
     E       assert 0
     
     test_smtpsimple.py:11: AssertionError
-    ======= 1 failed in 0.12 seconds ========
+    ========================= 1 failed in 0.12 seconds =========================
 
 In the failure traceback we see that the test function was called with a
 ``smtp`` argument, the ``smtplib.SMTP()`` instance created by the fixture
@@ -205,15 +205,15 @@ We deliberately insert failing ``assert 0`` statements in order to
 inspect what is going on and can now run the tests::
 
     $ pytest test_module.py
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 2 items
     
-    test_module.py FF
+    test_module.py FF                                                    [100%]
     
-    ======= FAILURES ========
-    _______ test_ehlo ________
+    ================================= FAILURES =================================
+    ________________________________ test_ehlo _________________________________
     
     smtp = <smtplib.SMTP object at 0xdeadbeef>
     
@@ -225,7 +225,7 @@ inspect what is going on and can now run the tests::
     E       assert 0
     
     test_module.py:6: AssertionError
-    _______ test_noop ________
+    ________________________________ test_noop _________________________________
     
     smtp = <smtplib.SMTP object at 0xdeadbeef>
     
@@ -236,7 +236,7 @@ inspect what is going on and can now run the tests::
     E       assert 0
     
     test_module.py:11: AssertionError
-    ======= 2 failed in 0.12 seconds ========
+    ========================= 2 failed in 0.12 seconds =========================
 
 You see the two ``assert 0`` failing and more importantly you can also see
 that the same (module-scoped) ``smtp`` object was passed into the two
@@ -286,7 +286,7 @@ tests.
 Let's execute it::
 
     $ pytest -s -q --tb=no
-    FFteardown smtp
+    FF                                                                   [100%]teardown smtp
     
     2 failed in 0.12 seconds
 
@@ -391,7 +391,7 @@ We use the ``request.module`` attribute to optionally obtain an
 again, nothing much has changed::
 
     $ pytest -s -q --tb=no
-    FFfinalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
+    FF                                                                   [100%]finalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
     
     2 failed in 0.12 seconds
 
@@ -408,9 +408,9 @@ server URL in its module namespace::
 Running it::
 
     $ pytest -qq --tb=short test_anothersmtp.py
-    F
-    ======= FAILURES ========
-    _______ test_showhelo ________
+    F                                                                    [100%]
+    ================================= FAILURES =================================
+    ______________________________ test_showhelo _______________________________
     test_anothersmtp.py:5: in test_showhelo
         assert 0, smtp.helo()
     E   AssertionError: (250, b'mail.python.org')
@@ -457,9 +457,9 @@ a value via ``request.param``.  No test function code needs to change.
 So let's just do another run::
 
     $ pytest -q test_module.py
-    FFFF
-    ======= FAILURES ========
-    _______ test_ehlo[smtp.gmail.com] ________
+    FFFF                                                                 [100%]
+    ================================= FAILURES =================================
+    ________________________ test_ehlo[smtp.gmail.com] _________________________
     
     smtp = <smtplib.SMTP object at 0xdeadbeef>
     
@@ -471,7 +471,7 @@ So let's just do another run::
     E       assert 0
     
     test_module.py:6: AssertionError
-    _______ test_noop[smtp.gmail.com] ________
+    ________________________ test_noop[smtp.gmail.com] _________________________
     
     smtp = <smtplib.SMTP object at 0xdeadbeef>
     
@@ -482,7 +482,7 @@ So let's just do another run::
     E       assert 0
     
     test_module.py:11: AssertionError
-    _______ test_ehlo[mail.python.org] ________
+    ________________________ test_ehlo[mail.python.org] ________________________
     
     smtp = <smtplib.SMTP object at 0xdeadbeef>
     
@@ -495,7 +495,7 @@ So let's just do another run::
     test_module.py:5: AssertionError
     -------------------------- Captured stdout setup ---------------------------
     finalizing <smtplib.SMTP object at 0xdeadbeef>
-    _______ test_noop[mail.python.org] ________
+    ________________________ test_noop[mail.python.org] ________________________
     
     smtp = <smtplib.SMTP object at 0xdeadbeef>
     
@@ -559,7 +559,7 @@ return ``None`` then pytest's auto-generated ID will be used.
 Running the above tests results in the following test IDs being used::
 
    $ pytest --collect-only
-   ======= test session starts ========
+   =========================== test session starts ============================
    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
    rootdir: $REGENDOC_TMPDIR, inifile:
    collected 10 items
@@ -577,7 +577,7 @@ Running the above tests results in the following test IDs being used::
      <Function 'test_ehlo[mail.python.org]'>
      <Function 'test_noop[mail.python.org]'>
    
-   ======= no tests ran in 0.12 seconds ========
+   ======================= no tests ran in 0.12 seconds =======================
 
 .. _`interdependent fixtures`:
 
@@ -610,16 +610,16 @@ Here we declare an ``app`` fixture which receives the previously defined
 ``smtp`` fixture and instantiates an ``App`` object with it.  Let's run it::
 
     $ pytest -v test_appsetup.py
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 2 items
     
-    test_appsetup.py::test_smtp_exists[smtp.gmail.com] PASSED
-    test_appsetup.py::test_smtp_exists[mail.python.org] PASSED
+    test_appsetup.py::test_smtp_exists[smtp.gmail.com] PASSED            [ 50%]
+    test_appsetup.py::test_smtp_exists[mail.python.org] PASSED           [100%]
     
-    ======= 2 passed in 0.12 seconds ========
+    ========================= 2 passed in 0.12 seconds =========================
 
 Due to the parametrization of ``smtp`` the test will run twice with two
 different ``App`` instances and respective smtp servers.  There is no
@@ -679,7 +679,7 @@ to show the setup/teardown flow::
 Let's run the tests in verbose mode and with looking at the print-output::
 
     $ pytest -v -s test_module.py
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .cache
     rootdir: $REGENDOC_TMPDIR, inifile:
@@ -687,38 +687,38 @@ Let's run the tests in verbose mode and with looking at the print-output::
     
     test_module.py::test_0[1]   SETUP otherarg 1
       RUN test0 with otherarg 1
-    PASSED  TEARDOWN otherarg 1
+    PASSED                                     [ 12%]  TEARDOWN otherarg 1
     
     test_module.py::test_0[2]   SETUP otherarg 2
       RUN test0 with otherarg 2
-    PASSED  TEARDOWN otherarg 2
+    PASSED                                     [ 25%]  TEARDOWN otherarg 2
     
     test_module.py::test_1[mod1]   SETUP modarg mod1
       RUN test1 with modarg mod1
-    PASSED
+    PASSED                                  [ 37%]
     test_module.py::test_2[1-mod1]   SETUP otherarg 1
       RUN test2 with otherarg 1 and modarg mod1
-    PASSED  TEARDOWN otherarg 1
+    PASSED                                [ 50%]  TEARDOWN otherarg 1
     
     test_module.py::test_2[2-mod1]   SETUP otherarg 2
       RUN test2 with otherarg 2 and modarg mod1
-    PASSED  TEARDOWN otherarg 2
+    PASSED                                [ 62%]  TEARDOWN otherarg 2
     
     test_module.py::test_1[mod2]   TEARDOWN modarg mod1
       SETUP modarg mod2
       RUN test1 with modarg mod2
-    PASSED
+    PASSED                                  [ 75%]
     test_module.py::test_2[1-mod2]   SETUP otherarg 1
       RUN test2 with otherarg 1 and modarg mod2
-    PASSED  TEARDOWN otherarg 1
+    PASSED                                [ 87%]  TEARDOWN otherarg 1
     
     test_module.py::test_2[2-mod2]   SETUP otherarg 2
       RUN test2 with otherarg 2 and modarg mod2
-    PASSED  TEARDOWN otherarg 2
+    PASSED                                [100%]  TEARDOWN otherarg 2
       TEARDOWN modarg mod2
     
     
-    ======= 8 passed in 0.12 seconds ========
+    ========================= 8 passed in 0.12 seconds =========================
 
 You can see that the parametrized module-scoped ``modarg`` resource caused an
 ordering of test execution that lead to the fewest possible "active" resources.
@@ -781,7 +781,7 @@ you specified a "cleandir" function argument to each of them.  Let's run it
 to verify our fixture is activated and the tests pass::
 
     $ pytest -q
-    ..
+    ..                                                                   [100%]
     2 passed in 0.12 seconds
 
 You can specify multiple fixtures like this:
@@ -862,7 +862,7 @@ class-level ``usefixtures`` decorator.
 If we run it, we get two passing tests::
 
     $ pytest -q
-    ..
+    ..                                                                   [100%]
     2 passed in 0.12 seconds
 
 Here is how autouse fixtures work in other scopes:

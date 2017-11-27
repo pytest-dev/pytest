@@ -7,6 +7,7 @@ import os
 import platform
 import re
 import subprocess
+import six
 import sys
 import time
 import traceback
@@ -22,6 +23,9 @@ from _pytest.main import Session, EXIT_OK
 from _pytest.assertion.rewrite import AssertionRewritingHook
 
 
+PYTEST_FULLPATH = os.path.abspath(pytest.__file__.rstrip("oc")).replace("$py.class", ".py")
+
+
 def pytest_addoption(parser):
     # group = parser.getgroup("pytester", "pytester (self-tests) options")
     parser.addoption('--lsof',
@@ -35,14 +39,6 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-    # This might be called multiple times. Only take the first.
-    global _pytest_fullpath
-    try:
-        _pytest_fullpath
-    except NameError:
-        _pytest_fullpath = os.path.abspath(pytest.__file__.rstrip("oc"))
-        _pytest_fullpath = _pytest_fullpath.replace("$py.class", ".py")
-
     if config.getvalue("lsof"):
         checker = LsofFdLeakChecker()
         if checker.matching_platform():
@@ -114,12 +110,9 @@ class LsofFdLeakChecker(object):
 # XXX copied from execnet's conftest.py - needs to be merged
 winpymap = {
     'python2.7': r'C:\Python27\python.exe',
-    'python2.6': r'C:\Python26\python.exe',
-    'python3.1': r'C:\Python31\python.exe',
-    'python3.2': r'C:\Python32\python.exe',
-    'python3.3': r'C:\Python33\python.exe',
     'python3.4': r'C:\Python34\python.exe',
     'python3.5': r'C:\Python35\python.exe',
+    'python3.6': r'C:\Python36\python.exe',
 }
 
 
@@ -145,8 +138,7 @@ def getexecutable(name, cache={}):
         return executable
 
 
-@pytest.fixture(params=['python2.6', 'python2.7', 'python3.3', "python3.4",
-                        'pypy', 'pypy3'])
+@pytest.fixture(params=['python2.7', 'python3.4', 'pypy', 'pypy3'])
 def anypython(request):
     name = request.param
     executable = getexecutable(name)
@@ -418,16 +410,8 @@ class Testdir:
     def __init__(self, request, tmpdir_factory):
         self.request = request
         self._mod_collections = WeakKeyDictionary()
-        # XXX remove duplication with tmpdir plugin
-        basetmp = tmpdir_factory.ensuretemp("testdir")
         name = request.function.__name__
-        for i in range(100):
-            try:
-                tmpdir = basetmp.mkdir(name + str(i))
-            except py.error.EEXIST:
-                continue
-            break
-        self.tmpdir = tmpdir
+        self.tmpdir = tmpdir_factory.mktemp(name, numbered=True)
         self.plugins = []
         self._savesyspath = (list(sys.path), list(sys.meta_path))
         self._savemodulekeys = set(sys.modules)
@@ -486,29 +470,24 @@ class Testdir:
         if not hasattr(self, '_olddir'):
             self._olddir = old
 
-    def _makefile(self, ext, args, kwargs, encoding="utf-8"):
+    def _makefile(self, ext, args, kwargs, encoding='utf-8'):
         items = list(kwargs.items())
+
+        def to_text(s):
+            return s.decode(encoding) if isinstance(s, bytes) else six.text_type(s)
+
         if args:
-            source = py.builtin._totext("\n").join(
-                map(py.builtin._totext, args)) + py.builtin._totext("\n")
+            source = u"\n".join(to_text(x) for x in args)
             basename = self.request.function.__name__
             items.insert(0, (basename, source))
+
         ret = None
-        for name, value in items:
-            p = self.tmpdir.join(name).new(ext=ext)
+        for basename, value in items:
+            p = self.tmpdir.join(basename).new(ext=ext)
             p.dirpath().ensure_dir()
             source = Source(value)
-
-            def my_totext(s, encoding="utf-8"):
-                if py.builtin._isbytes(s):
-                    s = py.builtin._totext(s, encoding=encoding)
-                return s
-
-            source_unicode = "\n".join([my_totext(line) for line in source.lines])
-            source = py.builtin._totext(source_unicode)
-            content = source.strip().encode(encoding)  # + "\n"
-            # content = content.rstrip() + "\n"
-            p.write(content, "wb")
+            source = u"\n".join(to_text(line) for line in source.lines)
+            p.write(source.strip().encode(encoding), "wb")
             if ret is None:
                 ret = p
         return ret
@@ -975,7 +954,7 @@ class Testdir:
     def _getpytestargs(self):
         # we cannot use "(sys.executable,script)"
         # because on windows the script is e.g. a pytest.exe
-        return (sys.executable, _pytest_fullpath,)  # noqa
+        return (sys.executable, PYTEST_FULLPATH) # noqa
 
     def runpython(self, script):
         """Run a python script using sys.executable as interpreter.
@@ -1098,6 +1077,23 @@ class LineMatcher:
         return lines2
 
     def fnmatch_lines_random(self, lines2):
+        """Check lines exist in the output using ``fnmatch.fnmatch``, in any order.
+
+        The argument is a list of lines which have to occur in the
+        output, in any order.
+        """
+        self._match_lines_random(lines2, fnmatch)
+
+    def re_match_lines_random(self, lines2):
+        """Check lines exist in the output using ``re.match``, in any order.
+
+        The argument is a list of lines which have to occur in the
+        output, in any order.
+
+        """
+        self._match_lines_random(lines2, lambda name, pat: re.match(pat, name))
+
+    def _match_lines_random(self, lines2, match_func):
         """Check lines exist in the output.
 
         The argument is a list of lines which have to occur in the
@@ -1107,7 +1103,7 @@ class LineMatcher:
         lines2 = self._getlines(lines2)
         for line in lines2:
             for x in self.lines:
-                if line == x or fnmatch(x, line):
+                if line == x or match_func(x, line):
                     self._log("matched: ", repr(line))
                     break
             else:
@@ -1132,13 +1128,37 @@ class LineMatcher:
         return '\n'.join(self._log_output)
 
     def fnmatch_lines(self, lines2):
-        """Search the text for matching lines.
+        """Search captured text for matching lines using ``fnmatch.fnmatch``.
 
         The argument is a list of lines which have to match and can
-        use glob wildcards.  If they do not match an pytest.fail() is
+        use glob wildcards.  If they do not match a pytest.fail() is
         called.  The matches and non-matches are also printed on
         stdout.
 
+        """
+        self._match_lines(lines2, fnmatch, 'fnmatch')
+
+    def re_match_lines(self, lines2):
+        """Search captured text for matching lines using ``re.match``.
+
+        The argument is a list of lines which have to match using ``re.match``.
+        If they do not match a pytest.fail() is called.
+
+        The matches and non-matches are also printed on
+        stdout.
+        """
+        self._match_lines(lines2, lambda name, pat: re.match(pat, name), 're.match')
+
+    def _match_lines(self, lines2, match_func, match_nickname):
+        """Underlying implementation of ``fnmatch_lines`` and ``re_match_lines``.
+
+        :param list[str] lines2: list of string patterns to match. The actual format depends on
+            ``match_func``.
+        :param match_func: a callable ``match_func(line, pattern)`` where line is the captured
+            line from stdout/stderr and pattern is the matching pattern.
+
+        :param str match_nickname: the nickname for the match function that will be logged
+            to stdout when a match occurs.
         """
         lines2 = self._getlines(lines2)
         lines1 = self.lines[:]
@@ -1152,8 +1172,8 @@ class LineMatcher:
                 if line == nextline:
                     self._log("exact match:", repr(line))
                     break
-                elif fnmatch(nextline, line):
-                    self._log("fnmatch:", repr(line))
+                elif match_func(nextline, line):
+                    self._log("%s:" % match_nickname, repr(line))
                     self._log("   with:", repr(nextline))
                     break
                 else:

@@ -5,16 +5,18 @@ This is a good source for looking at the various reporting hooks.
 from __future__ import absolute_import, division, print_function
 
 import itertools
-from _pytest.main import EXIT_OK, EXIT_TESTSFAILED, EXIT_INTERRUPTED, \
-    EXIT_USAGEERROR, EXIT_NOTESTSCOLLECTED
-import pytest
-import py
+import platform
 import sys
 import time
-import platform
 
+import pluggy
+import py
+import six
+
+import pytest
 from _pytest import nodes
-import _pytest._pluggy as pluggy
+from _pytest.main import EXIT_OK, EXIT_TESTSFAILED, EXIT_INTERRUPTED, \
+    EXIT_USAGEERROR, EXIT_NOTESTSCOLLECTED
 
 
 def pytest_addoption(parser):
@@ -47,6 +49,10 @@ def pytest_addoption(parser):
                      action="store", dest="color", default='auto',
                      choices=['yes', 'no', 'auto'],
                      help="color terminal output (yes/no/auto).")
+
+    parser.addini("console_output_style",
+                  help="console output: classic or with additional progress information (classic|progress).",
+                  default='progress')
 
 
 def pytest_configure(config):
@@ -132,17 +138,20 @@ class TerminalReporter:
         self.showfspath = self.verbosity >= 0
         self.showlongtestinfo = self.verbosity > 0
         self._numcollected = 0
+        self._session = None
 
         self.stats = {}
         self.startdir = py.path.local()
         if file is None:
             file = sys.stdout
-        self._tw = self.writer = _pytest.config.create_terminal_writer(config,
-                                                                       file)
+        self._tw = _pytest.config.create_terminal_writer(config, file)
+        self._screen_width = self._tw.fullwidth
         self.currentfspath = None
         self.reportchars = getreportopt(config)
         self.hasmarkup = self._tw.hasmarkup
         self.isatty = file.isatty()
+        self._progress_items_reported = 0
+        self._show_progress_info = self.config.getini('console_output_style') == 'progress'
 
     def hasopt(self, char):
         char = {'xfailed': 'x', 'skipped': 's'}.get(char, char)
@@ -151,6 +160,8 @@ class TerminalReporter:
     def write_fspath_result(self, nodeid, res):
         fspath = self.config.rootdir.join(nodeid.split("::")[0])
         if fspath != self.currentfspath:
+            if self.currentfspath is not None:
+                self._write_progress_information_filling_space()
             self.currentfspath = fspath
             fspath = self.startdir.bestrelpath(fspath)
             self._tw.line()
@@ -165,6 +176,7 @@ class TerminalReporter:
         if extra:
             self._tw.write(extra, **kwargs)
             self.currentfspath = -2
+            self._write_progress_information_filling_space()
 
     def ensure_newline(self):
         if self.currentfspath:
@@ -175,8 +187,8 @@ class TerminalReporter:
         self._tw.write(content, **markup)
 
     def write_line(self, line, **markup):
-        if not py.builtin._istext(line):
-            line = py.builtin.text(line, errors="replace")
+        if not isinstance(line, six.text_type):
+            line = six.text_type(line, errors="replace")
         self.ensure_newline()
         self._tw.line(line, **markup)
 
@@ -191,7 +203,7 @@ class TerminalReporter:
         """
         erase = markup.pop('erase', False)
         if erase:
-            fill_count = self._tw.fullwidth - len(line)
+            fill_count = self._tw.fullwidth - len(line) - 1
             fill = ' ' * fill_count
         else:
             fill = ''
@@ -209,7 +221,7 @@ class TerminalReporter:
         self._tw.line(msg, **kw)
 
     def pytest_internalerror(self, excrepr):
-        for line in py.builtin.text(excrepr).split("\n"):
+        for line in six.text_type(excrepr).split("\n"):
             self.write_line("INTERNALERROR> " + line)
         return 1
 
@@ -244,37 +256,72 @@ class TerminalReporter:
         rep = report
         res = self.config.hook.pytest_report_teststatus(report=rep)
         cat, letter, word = res
+        if isinstance(word, tuple):
+            word, markup = word
+        else:
+            markup = None
         self.stats.setdefault(cat, []).append(rep)
         self._tests_ran = True
         if not letter and not word:
             # probably passed setup/teardown
             return
+        running_xdist = hasattr(rep, 'node')
+        self._progress_items_reported += 1
         if self.verbosity <= 0:
-            if not hasattr(rep, 'node') and self.showfspath:
+            if not running_xdist and self.showfspath:
                 self.write_fspath_result(rep.nodeid, letter)
             else:
                 self._tw.write(letter)
+            self._write_progress_if_past_edge()
         else:
-            if isinstance(word, tuple):
-                word, markup = word
-            else:
+            if markup is None:
                 if rep.passed:
                     markup = {'green': True}
                 elif rep.failed:
                     markup = {'red': True}
                 elif rep.skipped:
                     markup = {'yellow': True}
+                else:
+                    markup = {}
             line = self._locationline(rep.nodeid, *rep.location)
-            if not hasattr(rep, 'node'):
+            if not running_xdist:
                 self.write_ensure_prefix(line, word, **markup)
-                # self._tw.write(word, **markup)
             else:
                 self.ensure_newline()
-                if hasattr(rep, 'node'):
-                    self._tw.write("[%s] " % rep.node.gateway.id)
+                self._tw.write("[%s]" % rep.node.gateway.id)
+                if self._show_progress_info:
+                    self._tw.write(self._get_progress_information_message() + " ", cyan=True)
+                else:
+                    self._tw.write(' ')
                 self._tw.write(word, **markup)
                 self._tw.write(" " + line)
                 self.currentfspath = -2
+
+    def _write_progress_if_past_edge(self):
+        if not self._show_progress_info:
+            return
+        last_item = self._progress_items_reported == self._session.testscollected
+        if last_item:
+            self._write_progress_information_filling_space()
+            return
+
+        past_edge = self._tw.chars_on_current_line + self._PROGRESS_LENGTH + 1 >= self._screen_width
+        if past_edge:
+            msg = self._get_progress_information_message()
+            self._tw.write(msg + '\n', cyan=True)
+
+    _PROGRESS_LENGTH = len(' [100%]')
+
+    def _get_progress_information_message(self):
+        progress = self._progress_items_reported * 100 // self._session.testscollected
+        return ' [{:3d}%]'.format(progress)
+
+    def _write_progress_information_filling_space(self):
+        if not self._show_progress_info:
+            return
+        msg = self._get_progress_information_message()
+        fill = ' ' * (self._tw.fullwidth - self._tw.chars_on_current_line - len(msg) - 1)
+        self.write(fill + msg, cyan=True)
 
     def pytest_collection(self):
         if not self.isatty and self.config.option.verbose >= 1:
@@ -318,6 +365,7 @@ class TerminalReporter:
 
     @pytest.hookimpl(trylast=True)
     def pytest_sessionstart(self, session):
+        self._session = session
         self._sessionstarttime = time.time()
         if not self.showheader:
             return
@@ -494,9 +542,9 @@ class TerminalReporter:
             grouped = itertools.groupby(all_warnings, key=lambda wr: wr.get_location(self.config))
 
             self.write_sep("=", "warnings summary", yellow=True, bold=False)
-            for location, warnings in grouped:
+            for location, warning_records in grouped:
                 self._tw.line(str(location) or '<undetermined location>')
-                for w in warnings:
+                for w in warning_records:
                     lines = w.message.splitlines()
                     indented = '\n'.join('  ' + x for x in lines)
                     self._tw.line(indented)

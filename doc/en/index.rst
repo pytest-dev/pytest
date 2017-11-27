@@ -24,15 +24,15 @@ An example of a simple test:
 To execute it::
 
     $ pytest
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 1 item
     
-    test_sample.py F
+    test_sample.py F                                                     [100%]
     
-    ======= FAILURES ========
-    _______ test_answer ________
+    ================================= FAILURES =================================
+    _______________________________ test_answer ________________________________
     
         def test_answer():
     >       assert inc(3) == 5
@@ -40,7 +40,7 @@ To execute it::
     E        +  where 4 = inc(3)
     
     test_sample.py:5: AssertionError
-    ======= 1 failed in 0.12 seconds ========
+    ========================= 1 failed in 0.12 seconds =========================
 
 Due to ``pytest``'s detailed assertion introspection, only plain ``assert`` statements are used.
 See :ref:`Getting Started <getstarted>` for more examples.
@@ -57,7 +57,7 @@ Features
 
 - Can run :ref:`unittest <unittest>` (including trial) and :ref:`nose <noseintegration>` test suites out of the box;
 
-- Python2.6+, Python3.3+, PyPy-2.3, Jython-2.5 (untested);
+- Python 2.7, Python 3.4+, PyPy 2.3, Jython 2.5 (untested);
 
 - Rich plugin architecture, with over 315+ `external plugins <http://plugincompat.herokuapp.com>`_ and thriving community;
 

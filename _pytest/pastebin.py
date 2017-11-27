@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function
 
 import pytest
+import six
 import sys
 import tempfile
 
@@ -16,7 +17,6 @@ def pytest_addoption(parser):
 
 @pytest.hookimpl(trylast=True)
 def pytest_configure(config):
-    import py
     if config.option.pastebin == "all":
         tr = config.pluginmanager.getplugin('terminalreporter')
         # if no terminal reporter plugin is present, nothing we can do here;
@@ -29,7 +29,7 @@ def pytest_configure(config):
 
             def tee_write(s, **kwargs):
                 oldwrite(s, **kwargs)
-                if py.builtin._istext(s):
+                if isinstance(s, six.text_type):
                     s = s.encode('utf-8')
                 config._pastebinfile.write(s)
 

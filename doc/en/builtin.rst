@@ -91,11 +91,23 @@ You can ask for available builtin or project-custom
     capsys
         Enable capturing of writes to sys.stdout/sys.stderr and make
         captured output available via ``capsys.readouterr()`` method calls
-        which return a ``(out, err)`` tuple.
+        which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be ``text``
+        objects.
+    capsysbinary
+        Enable capturing of writes to sys.stdout/sys.stderr and make
+        captured output available via ``capsys.readouterr()`` method calls
+        which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be ``bytes``
+        objects.
     capfd
         Enable capturing of writes to file descriptors 1 and 2 and make
         captured output available via ``capfd.readouterr()`` method calls
-        which return a ``(out, err)`` tuple.
+        which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be ``text``
+        objects.
+    capfdbinary
+        Enable capturing of write to file descriptors 1 and 2 and make
+        captured output available via ``capfdbinary.readouterr`` method calls
+        which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be
+        ``bytes`` objects.
     doctest_namespace
         Inject names into the doctest namespace.
     pytestconfig
@@ -104,6 +116,14 @@ You can ask for available builtin or project-custom
         Add extra xml properties to the tag for the calling test.
         The fixture is callable with ``(name, value)``, with value being automatically
         xml-encoded.
+    caplog
+        Access and control log capturing.
+        
+        Captured logs are available through the following methods::
+        
+        * caplog.text()          -> string containing formatted log output
+        * caplog.records()       -> list of logging.LogRecord instances
+        * caplog.record_tuples() -> list of (logger_name, level, message) tuples
     monkeypatch
         The returned ``monkeypatch`` fixture provides these
         helper methods to modify objects, dictionaries or os.environ::

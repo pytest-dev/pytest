@@ -53,15 +53,15 @@ tuples so that the ``test_eval`` function will run three times using
 them in turn::
 
     $ pytest
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 3 items
     
-    test_expectation.py ..F
+    test_expectation.py ..F                                              [100%]
     
-    ======= FAILURES ========
-    _______ test_eval[6*9-42] ________
+    ================================= FAILURES =================================
+    ____________________________ test_eval[6*9-42] _____________________________
     
     test_input = '6*9', expected = 42
     
@@ -76,7 +76,7 @@ them in turn::
     E        +  where 54 = eval('6*9')
     
     test_expectation.py:8: AssertionError
-    ======= 1 failed, 2 passed in 0.12 seconds ========
+    ==================== 1 failed, 2 passed in 0.12 seconds ====================
 
 As designed in this example, only one pair of input/output values fails
 the simple test function.  And as usual with test function arguments,
@@ -102,14 +102,14 @@ for example with the builtin ``mark.xfail``::
 Let's run this::
 
     $ pytest
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 3 items
     
-    test_expectation.py ..x
+    test_expectation.py ..x                                              [100%]
     
-    ======= 2 passed, 1 xfailed in 0.12 seconds ========
+    =================== 2 passed, 1 xfailed in 0.12 seconds ====================
 
 The one parameter set which caused a failure previously now
 shows up as an "xfailed (expected to fail)" test.
@@ -165,15 +165,15 @@ command line option and the parametrization of our test function::
 If we now pass two stringinput values, our test will run twice::
 
     $ pytest -q --stringinput="hello" --stringinput="world" test_strings.py
-    ..
+    ..                                                                   [100%]
     2 passed in 0.12 seconds
 
 Let's also run with a stringinput that will lead to a failing test::
 
     $ pytest -q --stringinput="!" test_strings.py
-    F
-    ======= FAILURES ========
-    _______ test_valid_string[!] ________
+    F                                                                    [100%]
+    ================================= FAILURES =================================
+    ___________________________ test_valid_string[!] ___________________________
     
     stringinput = '!'
     
@@ -193,9 +193,9 @@ If you don't specify a stringinput it will be skipped because
 list::
 
     $ pytest -q -rs test_strings.py
-    s
-    ======= short test summary info ========
-    SKIP [1] test_strings.py:2: got empty parameter set ['stringinput'], function test_valid_string at $REGENDOC_TMPDIR/test_strings.py:1
+    s                                                                    [100%]
+    ========================= short test summary info ==========================
+    SKIP [1] test_strings.py: got empty parameter set ['stringinput'], function test_valid_string at $REGENDOC_TMPDIR/test_strings.py:1
     1 skipped in 0.12 seconds
 
 Note that when calling ``metafunc.parametrize`` multiple times with different parameter sets, all parameter names across 

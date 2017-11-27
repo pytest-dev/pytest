@@ -46,9 +46,9 @@ First, let's create 50 test invocation of which only 2 fail::
 If you run this for the first time you will see two failures::
 
     $ pytest -q
-    .................F.......F........................
-    ======= FAILURES ========
-    _______ test_num[17] ________
+    .................F.......F........................                   [100%]
+    ================================= FAILURES =================================
+    _______________________________ test_num[17] _______________________________
     
     i = 17
     
@@ -59,7 +59,7 @@ If you run this for the first time you will see two failures::
     E          Failed: bad luck
     
     test_50.py:6: Failed
-    _______ test_num[25] ________
+    _______________________________ test_num[25] _______________________________
     
     i = 25
     
@@ -75,16 +75,16 @@ If you run this for the first time you will see two failures::
 If you then run it with ``--lf``::
 
     $ pytest --lf
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 50 items
     run-last-failure: rerun previous 2 failures
     
-    test_50.py FF
+    test_50.py FF                                                        [100%]
     
-    ======= FAILURES ========
-    _______ test_num[17] ________
+    ================================= FAILURES =================================
+    _______________________________ test_num[17] _______________________________
     
     i = 17
     
@@ -95,7 +95,7 @@ If you then run it with ``--lf``::
     E          Failed: bad luck
     
     test_50.py:6: Failed
-    _______ test_num[25] ________
+    _______________________________ test_num[25] _______________________________
     
     i = 25
     
@@ -106,8 +106,8 @@ If you then run it with ``--lf``::
     E          Failed: bad luck
     
     test_50.py:6: Failed
-    ======= 48 tests deselected ========
-    ======= 2 failed, 48 deselected in 0.12 seconds ========
+    =========================== 48 tests deselected ============================
+    ================= 2 failed, 48 deselected in 0.12 seconds ==================
 
 You have run only the two failing test from the last run, while 48 tests have
 not been run ("deselected").
@@ -117,16 +117,16 @@ previous failures will be executed first (as can be seen from the series
 of ``FF`` and dots)::
 
     $ pytest --ff
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     collected 50 items
     run-last-failure: rerun previous 2 failures first
     
-    test_50.py FF................................................
+    test_50.py FF................................................        [100%]
     
-    ======= FAILURES ========
-    _______ test_num[17] ________
+    ================================= FAILURES =================================
+    _______________________________ test_num[17] _______________________________
     
     i = 17
     
@@ -137,7 +137,7 @@ of ``FF`` and dots)::
     E          Failed: bad luck
     
     test_50.py:6: Failed
-    _______ test_num[25] ________
+    _______________________________ test_num[25] _______________________________
     
     i = 25
     
@@ -148,7 +148,7 @@ of ``FF`` and dots)::
     E          Failed: bad luck
     
     test_50.py:6: Failed
-    ======= 2 failed, 48 passed in 0.12 seconds ========
+    =================== 2 failed, 48 passed in 0.12 seconds ====================
 
 .. _`config.cache`:
 
@@ -182,9 +182,9 @@ If you run this command once, it will take a while because
 of the sleep::
 
     $ pytest -q
-    F
-    ======= FAILURES ========
-    _______ test_function ________
+    F                                                                    [100%]
+    ================================= FAILURES =================================
+    ______________________________ test_function _______________________________
     
     mydata = 42
     
@@ -199,9 +199,9 @@ If you run it a second time the value will be retrieved from
 the cache and this will be quick::
 
     $ pytest -q
-    F
-    ======= FAILURES ========
-    _______ test_function ________
+    F                                                                    [100%]
+    ================================= FAILURES =================================
+    ______________________________ test_function _______________________________
     
     mydata = 42
     
@@ -222,7 +222,7 @@ You can always peek at the content of the cache using the
 ``--cache-show`` command line option::
 
     $ py.test --cache-show
-    ======= test session starts ========
+    =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
     cachedir: $REGENDOC_TMPDIR/.cache
@@ -232,7 +232,7 @@ You can always peek at the content of the cache using the
     example/value contains:
       42
     
-    ======= no tests ran in 0.12 seconds ========
+    ======================= no tests ran in 0.12 seconds =======================
 
 Clearing Cache content
 -------------------------------

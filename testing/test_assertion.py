@@ -838,7 +838,7 @@ def test_traceback_failure(testdir):
     """)
     result = testdir.runpytest(p1, "--tb=long")
     result.stdout.fnmatch_lines([
-        "*test_traceback_failure.py F",
+        "*test_traceback_failure.py F*",
         "====* FAILURES *====",
         "____*____",
         "",
@@ -858,7 +858,7 @@ def test_traceback_failure(testdir):
 
     result = testdir.runpytest(p1)  # "auto"
     result.stdout.fnmatch_lines([
-        "*test_traceback_failure.py F",
+        "*test_traceback_failure.py F*",
         "====* FAILURES *====",
         "____*____",
         "",
