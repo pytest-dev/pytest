@@ -15,7 +15,7 @@ Deprecations and Removals
 -------------------------
 
 - Pytest no longer supports Python **2.6** and **3.3**. Those Python versions
-  are EOL for some time now and incurr maintenance and compatibility costs on
+  are EOL for some time now and incur maintenance and compatibility costs on
   the pytest core team, and following up with the rest of the community we
   decided that they will no longer be supported starting on this version. Users
   which still require those versions should pin pytest to ``<3.3``. (`#2812
@@ -30,7 +30,7 @@ Deprecations and Removals
   ``CallSpec2`` class. (`#2672
   <https://github.com/pytest-dev/pytest/issues/2672>`_)
 
-- remove ParameterSet.deprecated_arg_dict - its not a public api and the lack
+- Remove ParameterSet.deprecated_arg_dict - its not a public api and the lack
   of the underscore was a naming error. (`#2675
   <https://github.com/pytest-dev/pytest/issues/2675>`_)
 
@@ -46,16 +46,16 @@ Features
 
 - Replace the old introspection code in compat.py that determines the available
   arguments of fixtures with inspect.signature on Python 3 and
-  funcsigs.signature on Python 2. This should respect __signature__
+  funcsigs.signature on Python 2. This should respect ``__signature__``
   declarations on functions. (`#2267
   <https://github.com/pytest-dev/pytest/issues/2267>`_)
 
-- Report only once tests with global ``pytestmark`` variable. (`#2549
+- Report tests with global ``pytestmark`` variable only once. (`#2549
   <https://github.com/pytest-dev/pytest/issues/2549>`_)
 
 - Now pytest displays the total progress percentage while running tests. The
-  previous output style can be set by setting the new ``console_output_style``
-  to ``classic``. (`#2657 <https://github.com/pytest-dev/pytest/issues/2657>`_)
+  previous output style can be set by configuring the ``console_output_style``
+  setting to ``classic``. (`#2657 <https://github.com/pytest-dev/pytest/issues/2657>`_)
 
 - Match ``warns`` signature to ``raises`` by adding ``match`` keyword. (`#2708
   <https://github.com/pytest-dev/pytest/issues/2708>`_)
@@ -83,7 +83,7 @@ Features
   ``err`` can be accessed by attribute. (`#2879
   <https://github.com/pytest-dev/pytest/issues/2879>`_)
 
-- Add ``capfdbinary`` a version of ``capfd`` which returns bytes from
+- Add ``capfdbinary``, a version of ``capfd`` which returns bytes from
   ``readouterr()``. (`#2923
   <https://github.com/pytest-dev/pytest/issues/2923>`_)
 
@@ -91,7 +91,7 @@ Features
   ``readouterr()``. (`#2934
   <https://github.com/pytest-dev/pytest/issues/2934>`_)
 
-- Implement feature to skip ``setup.py`` files when ran with
+- Implement feature to skip ``setup.py`` files when run with
   ``--doctest-modules``. (`#502
   <https://github.com/pytest-dev/pytest/issues/502>`_)
 

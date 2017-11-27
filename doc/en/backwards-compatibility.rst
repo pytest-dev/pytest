@@ -96,3 +96,10 @@ Past Releases
   were never documented and a leftover from a pre-virtualenv era. These entry
   points also created broken entry points in wheels, so removing them also
   removes a source of confusion for users.
+
+
+
+3.3
+^^^
+
+* Dropped support for EOL Python 2.6 and 3.3.
