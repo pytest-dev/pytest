@@ -243,3 +243,16 @@ def test_filterwarnings_mark(testdir, default_config):
     """)
     result = testdir.runpytest('-W always' if default_config == 'cmdline' else '')
     result.stdout.fnmatch_lines(['*= 1 failed, 2 passed, 1 warnings in *'])
+
+
+def test_non_string_warning_argument(testdir):
+    """Non-str argument passed to warning breaks pytest (#2956)"""
+    testdir.makepyfile("""
+        import warnings
+        import pytest
+
+        def test():
+            warnings.warn(UserWarning(1, u'foo'))
+    """)
+    result = testdir.runpytest('-W', 'always')
+    result.stdout.fnmatch_lines(['*= 1 passed, 1 warnings in *'])
