@@ -460,8 +460,11 @@ def test_setuptools_importerror_issue1479(testdir, monkeypatch):
         testdir.parseconfig()
 
 
-def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch):
+@pytest.mark.parametrize('block_it', [True, False])
+def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch, block_it):
     pkg_resources = pytest.importorskip("pkg_resources")
+
+    plugin_module_placeholder = object()
 
     def my_iter(name):
         assert name == "pytest11"
@@ -478,14 +481,19 @@ def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch):
             dist = Dist()
 
             def load(self):
-                assert 0, "should not arrive here"
+                return plugin_module_placeholder
 
         return iter([EntryPoint()])
 
     monkeypatch.setattr(pkg_resources, 'iter_entry_points', my_iter)
-    config = testdir.parseconfig("-p", "no:mytestplugin")
+    args = ("-p", "no:mytestplugin") if block_it else ()
+    config = testdir.parseconfig(*args)
     config.pluginmanager.import_plugin("mytestplugin")
-    assert "mytestplugin" not in sys.modules
+    if block_it:
+        assert "mytestplugin" not in sys.modules
+        assert config.pluginmanager.get_plugin('mytestplugin') is None
+    else:
+        assert config.pluginmanager.get_plugin('mytestplugin') is plugin_module_placeholder
 
 
 def test_cmdline_processargs_simple(testdir):
