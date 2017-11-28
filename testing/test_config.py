@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division, print_function
+import sys
 import py
 import pytest
 
@@ -483,8 +484,11 @@ def test_plugin_preparse_prevents_setuptools_loading(testdir, monkeypatch):
 
     monkeypatch.setattr(pkg_resources, 'iter_entry_points', my_iter)
     config = testdir.parseconfig("-p", "no:mytestplugin")
-    plugin = config.pluginmanager.getplugin("mytestplugin")
-    assert plugin is None
+    config.pluginmanager.import_plugin("mytestplugin")
+    #from _pytest.config import get_config
+    #pm = get_config().pluginmanager
+    #pm.import_plugin("mytestplugin")
+    assert "mytestplugin" not in sys.modules
 
 
 def test_cmdline_processargs_simple(testdir):
