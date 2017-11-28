@@ -80,7 +80,7 @@ Features
   <https://github.com/pytest-dev/pytest/issues/2824>`_)
 
 - Return stdout/stderr capture results as a ``namedtuple``, so ``out`` and
-  ``err`` can be accessed by attribute. (`#2879
+  ``err`` can be accessed by attribute. (`#2879
   <https://github.com/pytest-dev/pytest/issues/2879>`_)
 
 - Add ``capfdbinary``, a version of ``capfd`` which returns bytes from
