@@ -417,7 +417,7 @@ class PytestPluginManager(PluginManager):
         # _pytest prefix.
         assert isinstance(modname, (six.text_type, str)), "module name as text required, got %r" % modname
         modname = str(modname)
-        if self.get_plugin(modname) is not None:
+        if self.is_blocked(modname) or self.get_plugin(modname) is not None:
             return
         if modname in builtin_plugins:
             importspec = "_pytest." + modname
