@@ -7,7 +7,6 @@ import sys
 from time import time
 
 import py
-from _pytest.compat import _PY2
 from _pytest._code.code import TerminalRepr, ExceptionInfo
 from _pytest.outcomes import skip, Skipped, TEST_OUTCOME
 
@@ -131,9 +130,8 @@ def _update_current_test_var(item, when):
     var_name = 'PYTEST_CURRENT_TEST'
     if when:
         value = '{0} ({1})'.format(item.nodeid, when)
-        if _PY2:
-            # python 2 doesn't like null bytes on environment variables (see #2644)
-            value = value.replace('\x00', '(null)')
+        # don't allow null bytes on environment variables (see #2644, #2957)
+        value = value.replace('\x00', '(null)')
         os.environ[var_name] = value
     else:
         os.environ.pop(var_name)
