@@ -313,8 +313,11 @@ class TerminalReporter:
     _PROGRESS_LENGTH = len(' [100%]')
 
     def _get_progress_information_message(self):
-        progress = self._progress_items_reported * 100 // self._session.testscollected
-        return ' [{:3d}%]'.format(progress)
+        collected = self._session.testscollected
+        if collected:
+            progress = self._progress_items_reported * 100 // collected
+            return ' [{:3d}%]'.format(progress)
+        return ' [100%]'
 
     def _write_progress_information_filling_space(self):
         if not self._show_progress_info:
