@@ -988,6 +988,24 @@ class TestProgress:
             """,
         )
 
+    def test_zero_tests_collected(self, testdir):
+        """Some plugins (testmon for example) might issue pytest_runtest_logreport without any tests being
+        actually collected (#2971)."""
+        testdir.makeconftest("""
+        def pytest_collection_modifyitems(items, config):
+            from _pytest.runner import CollectReport
+            for node_id in ('nodeid1', 'nodeid2'):
+                rep = CollectReport(node_id, 'passed', None, None)
+                rep.when = 'passed'
+                rep.duration = 0.1
+                config.hook.pytest_runtest_logreport(report=rep)
+        """)
+        output = testdir.runpytest()
+        assert 'ZeroDivisionError' not in output.stdout.str()
+        output.stdout.fnmatch_lines([
+            '=* 2 passed in *=',
+        ])
+
     def test_normal(self, many_tests_file, testdir):
         output = testdir.runpytest()
         output.stdout.re_match_lines([
