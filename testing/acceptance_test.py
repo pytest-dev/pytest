@@ -415,17 +415,17 @@ class TestGeneralUsage(object):
         ])
 
     def test_parametrized_with_null_bytes(self, testdir):
-        """Test parametrization with values that contain null bytes and unicode characters (#2644)"""
+        """Test parametrization with values that contain null bytes and unicode characters (#2644, #2957)"""
         p = testdir.makepyfile(u"""
             # encoding: UTF-8
             import pytest
 
-            @pytest.mark.parametrize("data", ["\\x00", u'ação'])
+            @pytest.mark.parametrize("data", [b"\\x00", "\\x00", u'ação'])
             def test_foo(data):
                 assert data
         """)
         res = testdir.runpytest(p)
-        res.assert_outcomes(passed=2)
+        res.assert_outcomes(passed=3)
 
 
 class TestInvocationVariants(object):
