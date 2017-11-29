@@ -933,7 +933,7 @@ def _idval(val, argname, idx, idfn, config=None):
         return ascii_escaped(val.pattern)
     elif enum is not None and isinstance(val, enum.Enum):
         return str(val)
-    elif isclass(val) and hasattr(val, '__name__'):
+    elif (isclass(val) or isfunction(val)) and hasattr(val, '__name__'):
         return val.__name__
     return str(argname) + str(idx)
 
