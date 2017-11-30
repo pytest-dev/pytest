@@ -1,0 +1,1 @@
+Change parametrized automatic test id generation to use the ``__name__`` attribute of functions instead of the fallback argument name plus counter.
