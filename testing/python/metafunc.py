@@ -240,8 +240,13 @@ class TestMetafunc(object):
         values that are classes or functions: their __name__.
         """
         from _pytest.python import _idval
-        class TestClass: pass
-        def test_function(): pass
+
+        class TestClass:
+            pass
+
+        def test_function():
+            pass
+
         values = [
             (TestClass, "TestClass"),
             (test_function, "test_function"),
