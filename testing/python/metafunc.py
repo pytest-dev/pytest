@@ -235,6 +235,20 @@ class TestMetafunc(object):
         for val, expected in values:
             assert _idval(val, 'a', 6, None) == expected
 
+    def test_class_or_function_idval(self):
+        """unittest for the expected behavior to obtain ids for parametrized
+        values that are classes or functions: their __name__.
+        """
+        from _pytest.python import _idval
+        class TestClass: pass
+        def test_function(): pass
+        values = [
+            (TestClass, "TestClass"),
+            (test_function, "test_function"),
+        ]
+        for val, expected in values:
+            assert _idval(val, 'a', 6, None) == expected
+
     @pytest.mark.issue250
     def test_idmaker_autoname(self):
         from _pytest.python import idmaker
