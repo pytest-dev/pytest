@@ -101,6 +101,19 @@ def test_metafunc_addcall_deprecated(testdir):
     ])
 
 
+def test_terminal_reporter_writer_attr(pytestconfig):
+    """Check that TerminalReporter._tw is also available as 'writer' (#2984)
+    This attribute is planned to be deprecated in 3.4.
+    """
+    try:
+        import xdist  # noqa
+        pytest.skip('xdist workers disable the terminal reporter plugin')
+    except ImportError:
+        pass
+    terminal_reporter = pytestconfig.pluginmanager.get_plugin('terminalreporter')
+    assert terminal_reporter.writer is terminal_reporter._tw
+
+
 def test_pytest_catchlog_deprecated(testdir):
     testdir.makepyfile("""
         def test_func(pytestconfig):
