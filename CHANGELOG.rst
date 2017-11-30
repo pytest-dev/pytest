@@ -38,6 +38,14 @@ Deprecations and Removals
   with the boolean ``Node._skipped_by_mark``. (`#2767
   <https://github.com/pytest-dev/pytest/issues/2767>`_)
 
+- The ``params`` list passed to ``pytest.fixture`` is now for
+  all effects considered immutable and frozen at the moment of the ``pytest.fixture``
+  call. Previously the list could be changed before the first invocation of the fixture
+  allowing for a form of dynamic parametrization (for example, updated from command-line options),
+  but this was an unwanted implementation detail which complicated the internals and prevented
+  some internal cleanup. See issue `#2959 <https://github.com/pytest-dev/pytest/issues/2959>`_
+  for details and a recommended workaround.
+
 Features
 --------
 
