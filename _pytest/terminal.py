@@ -8,6 +8,7 @@ import itertools
 import platform
 import sys
 import time
+import warnings
 
 import pluggy
 import py
@@ -15,6 +16,7 @@ import six
 
 import pytest
 from _pytest import nodes
+from _pytest.deprecated import TERMINAL_REPORTER_WARNING
 from _pytest.main import EXIT_OK, EXIT_TESTSFAILED, EXIT_INTERRUPTED, \
     EXIT_USAGEERROR, EXIT_NOTESTSCOLLECTED
 
@@ -145,8 +147,6 @@ class TerminalReporter:
         if file is None:
             file = sys.stdout
         self._tw = _pytest.config.create_terminal_writer(config, file)
-        # self.writer will be deprecated in pytest-3.4
-        self.writer = self._tw
         self._screen_width = self._tw.fullwidth
         self.currentfspath = None
         self.reportchars = getreportopt(config)
@@ -154,6 +154,16 @@ class TerminalReporter:
         self.isatty = file.isatty()
         self._progress_items_reported = 0
         self._show_progress_info = self.config.getini('console_output_style') == 'progress'
+
+    @property
+    def writer(self):
+        warnings.warn(TERMINAL_REPORTER_WARNING, stacklevel=2)
+        return self._tw
+
+    @writer.setter
+    def writer(self, writer):
+        warnings.warn(TERMINAL_REPORTER_WARNING, stacklevel=2)
+        self._tw = writer
 
     def hasopt(self, char):
         char = {'xfailed': 'x', 'skipped': 's'}.get(char, char)

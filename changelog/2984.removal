@@ -1,0 +1,1 @@
+``TerminalReporter.writer`` has been deprecated and will be removed in a future release. This attribute is an internal API which was not meant to be exposed as public, if needed use the functions of ``TerminalReporter`` directly.

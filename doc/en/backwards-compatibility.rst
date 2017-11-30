@@ -79,6 +79,10 @@ Use ``[tool:pytest]`` instead for compatibility with other tools.
 
 Deprecated in ``3.0``.
 
+**TerminalReporter.writer**
+
+This attribute was never meant to be part of the public API and has been deprecated in ``3.4``.
+
 Past Releases
 ~~~~~~~~~~~~~
 
