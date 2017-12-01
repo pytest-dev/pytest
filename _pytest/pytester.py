@@ -390,6 +390,35 @@ class RunResult:
         assert obtained == dict(passed=passed, skipped=skipped, failed=failed, error=error)
 
 
+class CwdSnapshot:
+    def __init__(self):
+        self.__saved = os.getcwd()
+
+    def restore(self):
+        os.chdir(self.__saved)
+
+
+class SysModulesSnapshot:
+    def __init__(self, preserve=None):
+        self.__preserve = preserve
+        self.__saved = dict(sys.modules)
+
+    def restore(self):
+        if self.__preserve:
+            self.__saved.update(
+                (k, m) for k, m in sys.modules.items() if self.__preserve(k))
+        sys.modules.clear()
+        sys.modules.update(self.__saved)
+
+
+class SysPathsSnapshot:
+    def __init__(self):
+        self.__saved = list(sys.path), list(sys.meta_path)
+
+    def restore(self):
+        sys.path[:], sys.meta_path[:] = self.__saved
+
+
 class Testdir:
     """Temporary test directory with tools to test/run pytest itself.
 
@@ -414,9 +443,10 @@ class Testdir:
         name = request.function.__name__
         self.tmpdir = tmpdir_factory.mktemp(name, numbered=True)
         self.plugins = []
-        self._savesyspath = (list(sys.path), list(sys.meta_path))
-        self._savemodulekeys = set(sys.modules)
-        self.chdir()  # always chdir
+        self._cwd_snapshot = CwdSnapshot()
+        self._sys_path_snapshot = SysPathsSnapshot()
+        self._sys_modules_snapshot = self.__take_sys_modules_snapshot()
+        self.chdir()
         self.request.addfinalizer(self.finalize)
         method = self.request.config.getoption("--runpytest")
         if method == "inprocess":
@@ -435,23 +465,20 @@ class Testdir:
         it can be looked at after the test run has finished.
 
         """
-        sys.path[:], sys.meta_path[:] = self._savesyspath
-        if hasattr(self, '_olddir'):
-            self._olddir.chdir()
-        self.delete_loaded_modules()
+        self._sys_modules_snapshot.restore()
+        self._sys_path_snapshot.restore()
+        self._cwd_snapshot.restore()
+
+    def __take_sys_modules_snapshot(self):
+        # some zope modules used by twisted-related tests keep internal state
+        # and can't be deleted; we had some trouble in the past with
+        # `zope.interface` for example
+        def preserve_module(name):
+            return name.startswith("zope")
+        return SysModulesSnapshot(preserve=preserve_module)
 
     def delete_loaded_modules(self):
-        """Delete modules that have been loaded during a test.
-
-        This allows the interpreter to catch module changes in case
-        the module is re-imported.
-        """
-        for name in set(sys.modules).difference(self._savemodulekeys):
-            # some zope modules used by twisted-related tests keeps internal
-            # state and can't be deleted; we had some trouble in the past
-            # with zope.interface for example
-            if not name.startswith("zope"):
-                del sys.modules[name]
+        self._sys_modules_snapshot.restore()
 
     def make_hook_recorder(self, pluginmanager):
         """Create a new :py:class:`HookRecorder` for a PluginManager."""
@@ -466,9 +493,7 @@ class Testdir:
         This is done automatically upon instantiation.
 
         """
-        old = self.tmpdir.chdir()
-        if not hasattr(self, '_olddir'):
-            self._olddir = old
+        self.tmpdir.chdir()
 
     def _makefile(self, ext, args, kwargs, encoding='utf-8'):
         items = list(kwargs.items())
