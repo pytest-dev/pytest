@@ -84,7 +84,7 @@ def test_conftest_in_nonpkg_with_init(tmpdir):
 
 def test_doubledash_considered(testdir):
     conf = testdir.mkdir("--option")
-    conf.join("conftest.py").ensure()
+    conf.ensure("conftest.py")
     conftest = PytestPluginManager()
     conftest_setinitial(conftest, [conf.basename, conf.basename])
     values = conftest._getconftestmodules(conf)

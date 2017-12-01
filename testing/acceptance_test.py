@@ -215,8 +215,8 @@ class TestGeneralUsage(object):
         assert not result.ret
 
     def test_issue109_sibling_conftests_not_loaded(self, testdir):
-        sub1 = testdir.tmpdir.mkdir("sub1")
-        sub2 = testdir.tmpdir.mkdir("sub2")
+        sub1 = testdir.mkdir("sub1")
+        sub2 = testdir.mkdir("sub2")
         sub1.join("conftest.py").write("assert 0")
         result = testdir.runpytest(sub2)
         assert result.ret == EXIT_NOTESTSCOLLECTED
