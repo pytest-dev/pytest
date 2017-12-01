@@ -145,6 +145,8 @@ class TerminalReporter:
         if file is None:
             file = sys.stdout
         self._tw = _pytest.config.create_terminal_writer(config, file)
+        # self.writer will be deprecated in pytest-3.4
+        self.writer = self._tw
         self._screen_width = self._tw.fullwidth
         self.currentfspath = None
         self.reportchars = getreportopt(config)
