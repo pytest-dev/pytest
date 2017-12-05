@@ -114,14 +114,15 @@ def test_terminal_reporter_writer_attr(pytestconfig):
     assert terminal_reporter.writer is terminal_reporter._tw
 
 
-def test_pytest_catchlog_deprecated(testdir):
+@pytest.mark.parametrize('plugin', ['catchlog', 'capturelog'])
+def test_pytest_catchlog_deprecated(testdir, plugin):
     testdir.makepyfile("""
         def test_func(pytestconfig):
-            pytestconfig.pluginmanager.register(None, 'pytest_catchlog')
-    """)
+            pytestconfig.pluginmanager.register(None, 'pytest_{0}')
+    """.format(plugin))
     res = testdir.runpytest()
     assert res.ret == 0
     res.stdout.fnmatch_lines([
-        "*pytest-catchlog plugin has been merged into the core*",
+        "*pytest-*log plugin has been merged into the core*",
         "*1 passed, 1 warnings*",
     ])
