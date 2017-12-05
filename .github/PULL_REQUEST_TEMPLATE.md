@@ -3,7 +3,7 @@ Thanks for submitting a PR, your contribution is really appreciated!
 Here's a quick checklist that should be present in PRs:
 
 - [ ] Add a new news fragment into the changelog folder
-  * name it `$issue_id.$type` for example (588.bug)
+  * name it `$issue_id.$type` for example (588.bugfix)
   * if you don't have an issue_id change it to the pr id after creating the pr
   * ensure type is one of `removal`, `feature`, `bugfix`, `vendor`, `doc` or `trivial`
   * Make sure to use full sentences with correct case and punctuation, for example: "Fix issue with non-ascii contents in doctest text files."
