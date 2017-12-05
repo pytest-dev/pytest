@@ -1,1 +1,0 @@
-The pytest-capturelog plugin is now also blacklisted, avoiding errors when running pytest with it still installed.
