@@ -101,14 +101,28 @@ def test_metafunc_addcall_deprecated(testdir):
     ])
 
 
-def test_pytest_catchlog_deprecated(testdir):
+def test_terminal_reporter_writer_attr(pytestconfig):
+    """Check that TerminalReporter._tw is also available as 'writer' (#2984)
+    This attribute is planned to be deprecated in 3.4.
+    """
+    try:
+        import xdist  # noqa
+        pytest.skip('xdist workers disable the terminal reporter plugin')
+    except ImportError:
+        pass
+    terminal_reporter = pytestconfig.pluginmanager.get_plugin('terminalreporter')
+    assert terminal_reporter.writer is terminal_reporter._tw
+
+
+@pytest.mark.parametrize('plugin', ['catchlog', 'capturelog'])
+def test_pytest_catchlog_deprecated(testdir, plugin):
     testdir.makepyfile("""
         def test_func(pytestconfig):
-            pytestconfig.pluginmanager.register(None, 'pytest_catchlog')
-    """)
+            pytestconfig.pluginmanager.register(None, 'pytest_{0}')
+    """.format(plugin))
     res = testdir.runpytest()
     assert res.ret == 0
     res.stdout.fnmatch_lines([
-        "*pytest-catchlog plugin has been merged into the core*",
+        "*pytest-*log plugin has been merged into the core*",
         "*1 passed, 1 warnings*",
     ])

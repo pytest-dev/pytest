@@ -8,6 +8,48 @@
 
 .. towncrier release notes start
 
+Pytest 3.3.1 (2017-12-05)
+=========================
+
+Bug Fixes
+---------
+
+- Fix issue about ``-p no:<plugin>`` having no effect. (`#2920
+  <https://github.com/pytest-dev/pytest/issues/2920>`_)
+
+- Fix regression with warnings that contained non-strings in their arguments in
+  Python 2. (`#2956 <https://github.com/pytest-dev/pytest/issues/2956>`_)
+
+- Always escape null bytes when setting ``PYTEST_CURRENT_TEST``. (`#2957
+  <https://github.com/pytest-dev/pytest/issues/2957>`_)
+
+- Fix ``ZeroDivisionError`` when using the ``testmon`` plugin when no tests
+  were actually collected. (`#2971
+  <https://github.com/pytest-dev/pytest/issues/2971>`_)
+
+- Bring back ``TerminalReporter.writer`` as an alias to
+  ``TerminalReporter._tw``. This alias was removed by accident in the ``3.3.0``
+  release. (`#2984 <https://github.com/pytest-dev/pytest/issues/2984>`_)
+
+- The ``pytest-capturelog`` plugin is now also blacklisted, avoiding errors when
+  running pytest with it still installed. (`#3004
+  <https://github.com/pytest-dev/pytest/issues/3004>`_)
+
+
+Improved Documentation
+----------------------
+
+- Fix broken link to plugin ``pytest-localserver``. (`#2963
+  <https://github.com/pytest-dev/pytest/issues/2963>`_)
+
+
+Trivial/Internal Changes
+------------------------
+
+- Update github "bugs" link in ``CONTRIBUTING.rst`` (`#2949
+  <https://github.com/pytest-dev/pytest/issues/2949>`_)
+
+
 Pytest 3.3.0 (2017-11-23)
 =========================
 
@@ -37,6 +79,14 @@ Deprecations and Removals
 - Remove the internal multi-typed attribute ``Node._evalskip`` and replace it
   with the boolean ``Node._skipped_by_mark``. (`#2767
   <https://github.com/pytest-dev/pytest/issues/2767>`_)
+
+- The ``params`` list passed to ``pytest.fixture`` is now for
+  all effects considered immutable and frozen at the moment of the ``pytest.fixture``
+  call. Previously the list could be changed before the first invocation of the fixture
+  allowing for a form of dynamic parametrization (for example, updated from command-line options),
+  but this was an unwanted implementation detail which complicated the internals and prevented
+  some internal cleanup. See issue `#2959 <https://github.com/pytest-dev/pytest/issues/2959>`_
+  for details and a recommended workaround.
 
 Features
 --------

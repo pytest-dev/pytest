@@ -242,9 +242,10 @@ class PytestPluginManager(PluginManager):
         return opts
 
     def register(self, plugin, name=None):
-        if name == 'pytest_catchlog':
-            self._warn('pytest-catchlog plugin has been merged into the core, '
-                       'please remove it from your requirements.')
+        if name in ['pytest_catchlog', 'pytest_capturelog']:
+            self._warn('{0} plugin has been merged into the core, '
+                       'please remove it from your requirements.'.format(
+                           name.replace('_', '-')))
             return
         ret = super(PytestPluginManager, self).register(plugin, name)
         if ret:

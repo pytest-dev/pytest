@@ -145,6 +145,8 @@ class TerminalReporter:
         if file is None:
             file = sys.stdout
         self._tw = _pytest.config.create_terminal_writer(config, file)
+        # self.writer will be deprecated in pytest-3.4
+        self.writer = self._tw
         self._screen_width = self._tw.fullwidth
         self.currentfspath = None
         self.reportchars = getreportopt(config)
@@ -313,8 +315,11 @@ class TerminalReporter:
     _PROGRESS_LENGTH = len(' [100%]')
 
     def _get_progress_information_message(self):
-        progress = self._progress_items_reported * 100 // self._session.testscollected
-        return ' [{:3d}%]'.format(progress)
+        collected = self._session.testscollected
+        if collected:
+            progress = self._progress_items_reported * 100 // collected
+            return ' [{:3d}%]'.format(progress)
+        return ' [100%]'
 
     def _write_progress_information_filling_space(self):
         if not self._show_progress_info:

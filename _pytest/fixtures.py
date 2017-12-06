@@ -553,7 +553,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         if node is None and scope == "class":
             # fallback to function item itself
             node = self._pyfuncitem
-        assert node
+        assert node, 'Could not obtain a node for scope "{}" for function {!r}'.format(scope, self._pyfuncitem)
         return node
 
     def __repr__(self):
