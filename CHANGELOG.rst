@@ -31,7 +31,7 @@ Bug Fixes
   ``TerminalReporter._tw``. This alias was removed by accident in the ``3.3.0``
   release. (`#2984 <https://github.com/pytest-dev/pytest/issues/2984>`_)
 
-- The pytest-capturelog plugin is now also blacklisted, avoiding errors when
+- The ``pytest-capturelog`` plugin is now also blacklisted, avoiding errors when
   running pytest with it still installed. (`#3004
   <https://github.com/pytest-dev/pytest/issues/3004>`_)
 
@@ -39,14 +39,14 @@ Bug Fixes
 Improved Documentation
 ----------------------
 
-- Fix broken link to plugin pytest-localserver. (`#2963
+- Fix broken link to plugin ``pytest-localserver``. (`#2963
   <https://github.com/pytest-dev/pytest/issues/2963>`_)
 
 
 Trivial/Internal Changes
 ------------------------
 
-- Update github "bugs" link in CONTRIBUTING.rst (`#2949
+- Update github "bugs" link in ``CONTRIBUTING.rst`` (`#2949
   <https://github.com/pytest-dev/pytest/issues/2949>`_)
 
 
