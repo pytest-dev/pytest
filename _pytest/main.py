@@ -729,6 +729,25 @@ class Session(FSCollector):
 
         """
         import pkgutil
+
+        if six.PY2:  # python 3.4+ uses importlib instead
+            def find_module_patched(self, fullname, path=None):
+                subname = fullname.split(".")[-1]
+                if subname != fullname and self.path is None:
+                    return None
+                if self.path is None:
+                    path = None
+                else:
+                    path = [self.path]
+                try:
+                    file, filename, etc = pkgutil.imp.find_module(subname,
+                                                                  path)
+                except ImportError:
+                    return None
+                return pkgutil.ImpLoader(fullname, file, filename, etc)
+
+            pkgutil.ImpImporter.find_module = find_module_patched
+
         try:
             loader = pkgutil.find_loader(x)
         except ImportError:
