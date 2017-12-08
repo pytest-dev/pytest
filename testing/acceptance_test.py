@@ -603,11 +603,11 @@ class TestInvocationVariants(object):
         # The structure of the test directory is now:
         # .
         # ├── hello
-        # │   └── ns_pkg
-        # │       ├── __init__.py
-        # │       └── hello
-        # │           ├── __init__.py
-        # │           └── test_hello.py
+        # │   └── ns_pkg
+        # │       ├── __init__.py
+        # │       └── hello
+        # │           ├── __init__.py
+        # │           └── test_hello.py
         # └── world
         #     └── ns_pkg
         #         ├── __init__.py
