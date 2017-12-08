@@ -27,7 +27,6 @@ PYTEST_FULLPATH = os.path.abspath(pytest.__file__.rstrip("oc")).replace("$py.cla
 
 
 def pytest_addoption(parser):
-    # group = parser.getgroup("pytester", "pytester (self-tests) options")
     parser.addoption('--lsof',
                      action="store_true", dest="lsof", default=False,
                      help=("run FD checks if lsof is available"))
@@ -977,12 +976,6 @@ class Testdir:
         p = py.path.local.make_numbered_dir(prefix="runpytest-",
                                             keep=None, rootdir=self.tmpdir)
         args = ('--basetemp=%s' % p, ) + args
-        # for x in args:
-        #    if '--confcutdir' in str(x):
-        #        break
-        # else:
-        #    pass
-        #    args = ('--confcutdir=.',) + args
         plugins = [x for x in self.plugins if isinstance(x, str)]
         if plugins:
             args = ('-p', plugins[0]) + args
