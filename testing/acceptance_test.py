@@ -535,7 +535,7 @@ class TestInvocationVariants(object):
         path = testdir.mkpydir("tpkg")
         path.join("test_hello.py").write('raise ImportError')
 
-        result = testdir.runpytest_subprocess("--pyargs", "tpkg.test_hello")
+        result = testdir.runpytest("--pyargs", "tpkg.test_hello", syspathinsert=True)
         assert result.ret != 0
 
         result.stdout.fnmatch_lines([
@@ -553,7 +553,7 @@ class TestInvocationVariants(object):
         result.stdout.fnmatch_lines([
             "*2 passed*"
         ])
-        result = testdir.runpytest("--pyargs", "tpkg.test_hello")
+        result = testdir.runpytest("--pyargs", "tpkg.test_hello", syspathinsert=True)
         assert result.ret == 0
         result.stdout.fnmatch_lines([
             "*1 passed*"
@@ -577,7 +577,7 @@ class TestInvocationVariants(object):
         ])
 
         monkeypatch.setenv('PYTHONPATH', join_pythonpath(testdir))
-        result = testdir.runpytest("--pyargs", "tpkg.test_missing")
+        result = testdir.runpytest("--pyargs", "tpkg.test_missing", syspathinsert=True)
         assert result.ret != 0
         result.stderr.fnmatch_lines([
             "*not*found*test_missing*",
