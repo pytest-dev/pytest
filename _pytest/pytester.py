@@ -32,7 +32,7 @@ def pytest_addoption(parser):
                      help=("run FD checks if lsof is available"))
 
     parser.addoption('--runpytest', default="inprocess", dest="runpytest",
-                     choices=("inprocess", "subprocess", ),
+                     choices=("inprocess", "subprocess"),
                      help=("run pytest sub runs in tests using an 'inprocess' "
                            "or 'subprocess' (python -m main) method"))
 
@@ -975,7 +975,7 @@ class Testdir:
         """
         p = py.path.local.make_numbered_dir(prefix="runpytest-",
                                             keep=None, rootdir=self.tmpdir)
-        args = ('--basetemp=%s' % p, ) + args
+        args = ('--basetemp=%s' % p,) + args
         plugins = [x for x in self.plugins if isinstance(x, str)]
         if plugins:
             args = ('-p', plugins[0]) + args
