@@ -92,14 +92,14 @@ an example test function that performs some output related checks:
 .. code-block:: python
 
     def test_myoutput(capsys): # or use "capfd" for fd-level
-        print ("hello")
+        print("hello")
         sys.stderr.write("world\n")
-        out, err = capsys.readouterr()
-        assert out == "hello\n"
-        assert err == "world\n"
-        print ("next")
-        out, err = capsys.readouterr()
-        assert out == "next\n"
+        captured = capsys.readouterr()
+        assert captured.out == "hello\n"
+        assert captured.err == "world\n"
+        print("next")
+        captured = capsys.readouterr()
+        assert captured.out == "next\n"
 
 The ``readouterr()`` call snapshots the output so far -
 and capturing will be continued.  After the test
@@ -114,6 +114,10 @@ the ``capfd`` fixture which offers the exact
 same interface but allows to also capture output from
 libraries or subprocesses that directly write to operating
 system level output streams (FD1 and FD2).
+
+.. versionadded:: 3.3
+
+The return value from ``readouterr`` changed to a ``namedtuple`` with two attributes, ``out`` and ``err``.
 
 .. versionadded:: 3.3
 
