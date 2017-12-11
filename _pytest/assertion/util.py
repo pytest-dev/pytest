@@ -5,11 +5,7 @@ import pprint
 import _pytest._code
 import py
 import six
-try:
-    from collections import Sequence
-except ImportError:
-    Sequence = list
-
+from collections import Sequence
 
 u = six.text_type
 
