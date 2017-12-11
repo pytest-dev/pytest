@@ -109,7 +109,7 @@ def assertrepr_compare(config, op, left, right):
     summary = u('%s %s %s') % (ecu(left_repr), op, ecu(right_repr))
 
     def issequence(x):
-        return (isinstance(x, (list, tuple, Sequence)) and not isinstance(x, basestring))
+        return isinstance(x, Sequence) and not isinstance(x, basestring)
 
     def istext(x):
         return isinstance(x, basestring)
