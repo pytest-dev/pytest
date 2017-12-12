@@ -141,7 +141,7 @@ def test_inline_run_clean_modules(testdir):
     assert result2.ret == EXIT_TESTSFAILED
 
 
-def test_assert_outcomes_after_pytest_erro(testdir):
+def test_assert_outcomes_after_pytest_error(testdir):
     testdir.makepyfile("def test_foo(): assert True")
 
     result = testdir.runpytest('--unexpected-argument')

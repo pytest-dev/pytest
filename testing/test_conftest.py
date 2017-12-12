@@ -84,7 +84,7 @@ def test_conftest_in_nonpkg_with_init(tmpdir):
 
 def test_doubledash_considered(testdir):
     conf = testdir.mkdir("--option")
-    conf.join("conftest.py").ensure()
+    conf.ensure("conftest.py")
     conftest = PytestPluginManager()
     conftest_setinitial(conftest, [conf.basename, conf.basename])
     values = conftest._getconftestmodules(conf)
@@ -270,11 +270,7 @@ def test_conftest_found_with_double_dash(testdir):
             parser.addoption("--hello-world", action="store_true")
     """))
     p = sub.join("test_hello.py")
-    p.write(py.std.textwrap.dedent("""
-        import pytest
-        def test_hello(found):
-            assert found == 1
-    """))
+    p.write("def test_hello(): pass")
     result = testdir.runpytest(str(p) + "::test_hello", "-h")
     result.stdout.fnmatch_lines("""
         *--hello-world*

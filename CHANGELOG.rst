@@ -157,10 +157,10 @@ Bug Fixes
   <https://github.com/pytest-dev/pytest/issues/2124>`_)
 
 - If an exception happens while loading a plugin, pytest no longer hides the
-  original traceback. In python2 it will show the original traceback with a new
-  message that explains in which plugin. In python3 it will show 2 canonized
+  original traceback. In Python 2 it will show the original traceback with a new
+  message that explains in which plugin. In Python 3 it will show 2 canonized
   exceptions, the original exception while loading the plugin in addition to an
-  exception that PyTest throws about loading a plugin. (`#2491
+  exception that pytest throws about loading a plugin. (`#2491
   <https://github.com/pytest-dev/pytest/issues/2491>`_)
 
 - ``capsys`` and ``capfd`` can now be used by other fixtures. (`#2709

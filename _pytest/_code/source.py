@@ -1,19 +1,15 @@
 from __future__ import absolute_import, division, generators, print_function
 
+import ast
+from ast import PyCF_ONLY_AST as _AST_FLAG
 from bisect import bisect_right
 import sys
 import six
 import inspect
 import tokenize
 import py
-cpy_compile = compile
 
-try:
-    import _ast
-    from _ast import PyCF_ONLY_AST as _AST_FLAG
-except ImportError:
-    _AST_FLAG = 0
-    _ast = None
+cpy_compile = compile
 
 
 class Source(object):
@@ -209,7 +205,7 @@ def compile_(source, filename=None, mode='exec', flags=generators.compiler_flag,
         retrieval of the source code for the code object
         and any recursively created code objects.
     """
-    if _ast is not None and isinstance(source, _ast.AST):
+    if isinstance(source, ast.AST):
         # XXX should Source support having AST?
         return cpy_compile(source, filename, mode, flags, dont_inherit)
     _genframe = sys._getframe(1)  # the caller
@@ -322,7 +318,7 @@ def get_statement_startend2(lineno, node):
     # AST's line numbers start indexing at 1
     values = []
     for x in ast.walk(node):
-        if isinstance(x, _ast.stmt) or isinstance(x, _ast.ExceptHandler):
+        if isinstance(x, ast.stmt) or isinstance(x, ast.ExceptHandler):
             values.append(x.lineno - 1)
             for name in "finalbody", "orelse":
                 val = getattr(x, name, None)

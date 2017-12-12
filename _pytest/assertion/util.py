@@ -5,11 +5,7 @@ import pprint
 import _pytest._code
 import py
 import six
-try:
-    from collections import Sequence
-except ImportError:
-    Sequence = list
-
+from collections import Sequence
 
 u = six.text_type
 
@@ -113,7 +109,7 @@ def assertrepr_compare(config, op, left, right):
     summary = u('%s %s %s') % (ecu(left_repr), op, ecu(right_repr))
 
     def issequence(x):
-        return (isinstance(x, (list, tuple, Sequence)) and not isinstance(x, basestring))
+        return isinstance(x, Sequence) and not isinstance(x, basestring)
 
     def istext(x):
         return isinstance(x, basestring)
