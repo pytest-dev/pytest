@@ -8,13 +8,10 @@ import _pytest._code
 import py
 import pytest
 from _pytest._code import Source
-from _pytest._code.source import _ast
+from _pytest._code.source import ast
 
-if _ast is not None:
-    astonly = pytest.mark.nothing
-else:
-    astonly = pytest.mark.xfail("True", reason="only works with AST-compile")
 
+astonly = pytest.mark.nothing
 failsonjython = pytest.mark.xfail("sys.platform.startswith('java')")
 
 
