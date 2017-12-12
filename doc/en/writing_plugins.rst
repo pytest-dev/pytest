@@ -616,6 +616,7 @@ Collection hooks
 
 ``pytest`` calls the following hooks for collecting files and directories:
 
+.. autofunction:: pytest_collection
 .. autofunction:: pytest_ignore_collect
 .. autofunction:: pytest_collect_directory
 .. autofunction:: pytest_collect_file
@@ -684,6 +685,14 @@ Reference of objects involved in hooks
     :members:
 
 .. autoclass:: _pytest.main.Collector()
+    :members:
+    :show-inheritance:
+
+.. autoclass:: _pytest.main.FSCollector()
+    :members:
+    :show-inheritance:
+
+.. autoclass:: _pytest.main.Session()
     :members:
     :show-inheritance:
 
