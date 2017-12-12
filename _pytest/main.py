@@ -1,8 +1,10 @@
 """ core implementation of testing process: init, session, runtest loop. """
 from __future__ import absolute_import, division, print_function
 
+import contextlib
 import functools
 import os
+import pkgutil
 import six
 import sys
 
@@ -728,28 +730,48 @@ class Session(FSCollector):
         """Convert a dotted module name to path.
 
         """
-        import pkgutil
+        @contextlib.contextmanager
+        def _patched_find_module():
+            """Patch bug in pkgutil.ImpImporter.find_module
 
-        if six.PY2:  # python 3.4+ uses importlib instead
-            def find_module_patched(self, fullname, path=None):
-                subname = fullname.split(".")[-1]
-                if subname != fullname and self.path is None:
-                    return None
-                if self.path is None:
-                    path = None
-                else:
-                    path = [self.path]
+            When using pkgutil.find_loader on python<3.4 it removes symlinks
+            from the path due to a call to os.path.realpath. This is not consistent
+            with actually doing the import (in these versions, pkgutil and __import__
+            did not share the same underlying code). This can break conftest
+            discovery for pytest where symlinks are involved.
+
+            The only supported python<3.4 by pytest is python 2.7.
+            """
+            if six.PY2:  # python 3.4+ uses importlib instead
+                def find_module_patched(self, fullname, path=None):
+                    # Note: we ignore 'path' argument since it is only used via meta_path
+                    subname = fullname.split(".")[-1]
+                    if subname != fullname and self.path is None:
+                        return None
+                    if self.path is None:
+                        path = None
+                    else:
+                        # original: path = [os.path.realpath(self.path)]
+                        path = [self.path]
+                    try:
+                        file, filename, etc = pkgutil.imp.find_module(subname,
+                                                                      path)
+                    except ImportError:
+                        return None
+                    return pkgutil.ImpLoader(fullname, file, filename, etc)
+
+                old_find_module = pkgutil.ImpImporter.find_module
+                pkgutil.ImpImporter.find_module = find_module_patched
                 try:
-                    file, filename, etc = pkgutil.imp.find_module(subname,
-                                                                  path)
-                except ImportError:
-                    return None
-                return pkgutil.ImpLoader(fullname, file, filename, etc)
-
-            pkgutil.ImpImporter.find_module = find_module_patched
+                    yield
+                finally:
+                    pkgutil.ImpImporter.find_module = old_find_module
+            else:
+                yield
 
         try:
-            loader = pkgutil.find_loader(x)
+            with _patched_find_module():
+                loader = pkgutil.find_loader(x)
         except ImportError:
             return x
         if loader is None:
@@ -757,7 +779,8 @@ class Session(FSCollector):
         # This method is sometimes invoked when AssertionRewritingHook, which
         # does not define a get_filename method, is already in place:
         try:
-            path = loader.get_filename(x)
+            with _patched_find_module():
+                path = loader.get_filename(x)
         except AttributeError:
             # Retrieve path from AssertionRewritingHook:
             path = loader.modules[x][0].co_filename
