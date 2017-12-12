@@ -681,17 +681,17 @@ class TestInvocationVariants(object):
         # The structure of the test directory is now:
         # .
         # ├── local
-        # │   └── lib -> ../world
+        # │   └── lib -> ../lib
         # └── lib
         #     └── foo
         #         ├── __init__.py
         #         └── bar
         #             ├── __init__.py
         #             ├── conftest.py
-        #             └── test_world.py
+        #             └── test_bar.py
 
         def join_pythonpath(*dirs):
-            cur = py.std.os.environ.get('PYTHONPATH')
+            cur = os.getenv('PYTHONPATH')
             if cur:
                 dirs += (cur,)
             return os.pathsep.join(str(p) for p in dirs)
