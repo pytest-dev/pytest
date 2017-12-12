@@ -208,6 +208,46 @@ def pytest_ignore_collect(path, config):
     return False
 
 
+@contextlib.contextmanager
+def _patched_find_module():
+    """Patch bug in pkgutil.ImpImporter.find_module
+
+    When using pkgutil.find_loader on python<3.4 it removes symlinks
+    from the path due to a call to os.path.realpath. This is not consistent
+    with actually doing the import (in these versions, pkgutil and __import__
+    did not share the same underlying code). This can break conftest
+    discovery for pytest where symlinks are involved.
+
+    The only supported python<3.4 by pytest is python 2.7.
+    """
+    if six.PY2:  # python 3.4+ uses importlib instead
+        def find_module_patched(self, fullname, path=None):
+            # Note: we ignore 'path' argument since it is only used via meta_path
+            subname = fullname.split(".")[-1]
+            if subname != fullname and self.path is None:
+                return None
+            if self.path is None:
+                path = None
+            else:
+                # original: path = [os.path.realpath(self.path)]
+                path = [self.path]
+            try:
+                file, filename, etc = pkgutil.imp.find_module(subname,
+                                                              path)
+            except ImportError:
+                return None
+            return pkgutil.ImpLoader(fullname, file, filename, etc)
+
+        old_find_module = pkgutil.ImpImporter.find_module
+        pkgutil.ImpImporter.find_module = find_module_patched
+        try:
+            yield
+        finally:
+            pkgutil.ImpImporter.find_module = old_find_module
+    else:
+        yield
+
+
 class FSHookProxy:
     def __init__(self, fspath, pm, remove_mods):
         self.fspath = fspath
@@ -730,44 +770,6 @@ class Session(FSCollector):
         """Convert a dotted module name to path.
 
         """
-        @contextlib.contextmanager
-        def _patched_find_module():
-            """Patch bug in pkgutil.ImpImporter.find_module
-
-            When using pkgutil.find_loader on python<3.4 it removes symlinks
-            from the path due to a call to os.path.realpath. This is not consistent
-            with actually doing the import (in these versions, pkgutil and __import__
-            did not share the same underlying code). This can break conftest
-            discovery for pytest where symlinks are involved.
-
-            The only supported python<3.4 by pytest is python 2.7.
-            """
-            if six.PY2:  # python 3.4+ uses importlib instead
-                def find_module_patched(self, fullname, path=None):
-                    # Note: we ignore 'path' argument since it is only used via meta_path
-                    subname = fullname.split(".")[-1]
-                    if subname != fullname and self.path is None:
-                        return None
-                    if self.path is None:
-                        path = None
-                    else:
-                        # original: path = [os.path.realpath(self.path)]
-                        path = [self.path]
-                    try:
-                        file, filename, etc = pkgutil.imp.find_module(subname,
-                                                                      path)
-                    except ImportError:
-                        return None
-                    return pkgutil.ImpLoader(fullname, file, filename, etc)
-
-                old_find_module = pkgutil.ImpImporter.find_module
-                pkgutil.ImpImporter.find_module = find_module_patched
-                try:
-                    yield
-                finally:
-                    pkgutil.ImpImporter.find_module = old_find_module
-            else:
-                yield
 
         try:
             with _patched_find_module():
