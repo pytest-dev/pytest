@@ -1,2 +1,1 @@
-PYTEST_DONT_REWRITE is now checked for plugins too (rather than only for
-test modules).
+``PYTEST_DONT_REWRITE`` is now checked for plugins too rather than only for test modules.
