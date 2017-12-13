@@ -267,7 +267,6 @@ class FixtureRequest(FuncargnamesCompatAttr):
         self.fixturename = None
         #: Scope string, one of "function", "class", "module", "session"
         self.scope = "function"
-        self._fixture_values = {}  # argname -> fixture value
         self._fixture_defs = {}  # argname -> FixtureDef
         fixtureinfo = pyfuncitem._fixtureinfo
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs.copy()
@@ -450,8 +449,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
                 raise
         # remove indent to prevent the python3 exception
         # from leaking into the call
-        result = self._getfixturevalue(fixturedef)
-        self._fixture_values[argname] = result
+        self._compute_fixture_value(fixturedef)
         self._fixture_defs[argname] = fixturedef
         return fixturedef
 
@@ -466,7 +464,14 @@ class FixtureRequest(FuncargnamesCompatAttr):
             values.append(fixturedef)
             current = current._parent_request
 
-    def _getfixturevalue(self, fixturedef):
+    def _compute_fixture_value(self, fixturedef):
+        """
+        Creates a SubRequest based on "self" and calls the execute method of the given fixturedef object. This will
+        force the FixtureDef object to throw away any previous results and compute a new fixture value, which
+        will be stored into the FixtureDef object itself.
+
+        :param FixtureDef fixturedef:
+        """
         # prepare a subrequest object before calling fixture function
         # (latter managed by fixturedef)
         argname = fixturedef.argname
@@ -515,12 +520,11 @@ class FixtureRequest(FuncargnamesCompatAttr):
         exc_clear()
         try:
             # call the fixture function
-            val = fixturedef.execute(request=subrequest)
+            fixturedef.execute(request=subrequest)
         finally:
             # if fixture function failed it might have registered finalizers
             self.session._setupstate.addfinalizer(functools.partial(fixturedef.finish, request=subrequest),
                                                   subrequest.node)
-        return val
 
     def _check_scope(self, argname, invoking_scope, requested_scope):
         if argname == "request":
@@ -573,7 +577,6 @@ class SubRequest(FixtureRequest):
         self.scope = scope
         self._fixturedef = fixturedef
         self._pyfuncitem = request._pyfuncitem
-        self._fixture_values = request._fixture_values
         self._fixture_defs = request._fixture_defs
         self._arg2fixturedefs = request._arg2fixturedefs
         self._arg2index = request._arg2index
