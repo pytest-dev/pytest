@@ -347,7 +347,7 @@ class RunResult:
     :stdout: :py:class:`LineMatcher` of stdout, use ``stdout.str()`` to
        reconstruct stdout or the commonly used ``stdout.fnmatch_lines()``
        method
-    :stderrr: :py:class:`LineMatcher` of stderr
+    :stderr: :py:class:`LineMatcher` of stderr
     :duration: duration in seconds
 
     """
