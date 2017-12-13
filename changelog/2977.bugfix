@@ -1,0 +1,1 @@
+Lower the root logger's log level to --log-level instead of to NOTSET.

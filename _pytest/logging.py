@@ -242,6 +242,8 @@ class LoggingPlugin(object):
         The formatter can be safely shared across all handlers so
         create a single one for the entire test session here.
         """
+        self.log_level = get_actual_log_level(
+            config, 'log_level') or logging.WARNING
         self.log_cli_level = get_actual_log_level(
             config, 'log_cli_level', 'log_level') or logging.WARNING
 
@@ -287,7 +289,8 @@ class LoggingPlugin(object):
     def _runtest_for(self, item, when):
         """Implements the internals of pytest_runtest_xxx() hook."""
         with catching_logs(LogCaptureHandler(),
-                           formatter=self.formatter) as log_handler:
+                           formatter=self.formatter,
+                           level=self.log_level) as log_handler:
             item.catch_log_handler = log_handler
             try:
                 yield  # run test
