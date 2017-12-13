@@ -179,8 +179,9 @@ class AssertionRewritingHook(object):
         The named module or package as well as any nested modules will
         be rewritten on import.
         """
-        already_imported = (
-            (set(names) & set(sys.modules)) - set(self._rewritten_names))
+        already_imported = (set(names)
+                            .intersection(sys.modules)
+                            .difference(self._rewritten_names))
         for name in already_imported:
             if not AssertionRewriter.is_rewrite_disabled(
                     sys.modules[name].__doc__ or ""):
