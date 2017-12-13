@@ -151,7 +151,7 @@ def publish_release(ctx, version, user, pypi_name):
 
 @invoke.task(help={
     'version': 'version being released',
-    'write_out': 'write changes to the actial changelog'
+    'write_out': 'write changes to the actual changelog'
 })
 def changelog(ctx, version, write_out=False):
     if write_out:
