@@ -76,6 +76,9 @@ def pytest_addoption(parser):
         '--log-file-date-format',
         dest='log_file_date_format', default=DEFAULT_LOG_DATE_FORMAT,
         help='log date format as used by the logging module.')
+    add_option_ini(
+        '--capture-log', choices=['on-failure', 'off', 'live'],
+        dest='capture_log', default='on-failure')
 
 
 @contextmanager
@@ -115,6 +118,16 @@ class LogCaptureHandler(logging.StreamHandler):
         """Keep the log records in a list in addition to the log text."""
         self.records.append(record)
         logging.StreamHandler.emit(self, record)
+
+
+class TerminalWriterHandler(logging.Handler):
+    def __init__(self):
+        # TODO sys.stderr is captured by default ?!??!
+        self.tw = py.io.TerminalWriter(sys.stderr)
+        super(TerminalWriterHandler, self).__init__()
+
+    def emit(self, record):
+        self.tw.write(self.format(record))
 
 
 class LogCaptureFixture(object):
@@ -241,6 +254,8 @@ class LoggingPlugin(object):
         The formatter can be safely shared across all handlers so
         create a single one for the entire test session here.
         """
+        self.capture_log = get_option_ini(config, 'capture_log')
+
         self.log_cli_level = get_actual_log_level(
             config, 'log_cli_level', 'log_level') or logging.WARNING
 
@@ -249,18 +264,14 @@ class LoggingPlugin(object):
             get_option_ini(config, 'log_format'),
             get_option_ini(config, 'log_date_format'))
 
-        log_cli_handler = logging.StreamHandler(sys.stderr)
+
         log_cli_format = get_option_ini(
             config, 'log_cli_format', 'log_format')
         log_cli_date_format = get_option_ini(
             config, 'log_cli_date_format', 'log_date_format')
-        log_cli_formatter = logging.Formatter(
+        self.log_cli_formatter = logging.Formatter(
             log_cli_format,
             datefmt=log_cli_date_format)
-        self.log_cli_handler = log_cli_handler  # needed for a single unittest
-        self.live_logs = catching_logs(log_cli_handler,
-                                       formatter=log_cli_formatter,
-                                       level=self.log_cli_level)
 
         log_file = get_option_ini(config, 'log_file')
         if log_file:
@@ -316,7 +327,20 @@ class LoggingPlugin(object):
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtestloop(self, session):
         """Runs all collected test items."""
-        with self.live_logs:
+
+        # TODO what should happen at the end of the tests?
+        if self.capture_log == 'live':
+            with catching_logs(TerminalWriterHandler(),
+                               formatter=self.log_cli_formatter,
+                               level=self.log_cli_level):
+                if self.log_file_handler is not None:
+                    with closing(self.log_file_handler):
+                        with catching_logs(self.log_file_handler,
+                                           level=self.log_file_level):
+                            yield  # run all the tests
+                else:
+                    yield  # run all the tests
+        elif self.capture_log == 'on-failure':
             if self.log_file_handler is not None:
                 with closing(self.log_file_handler):
                     with catching_logs(self.log_file_handler,
@@ -324,3 +348,7 @@ class LoggingPlugin(object):
                         yield  # run all the tests
             else:
                 yield  # run all the tests
+        elif self.capture_log == 'off':
+            yield
+        else:
+            raise ValueError('capture_log: %s' % capture_log)
