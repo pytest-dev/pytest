@@ -653,6 +653,13 @@ class TestInvocationVariants(object):
         test --pyargs option with packages with path containing symlink can
         have conftest.py in their package (#2985)
         """
+        # dummy check that we can actually create symlinks: on Windows `os.symlink` is available,
+        # but normal users require special admin privileges to create symlinks.
+        if sys.platform == 'win32':
+            try:
+                os.symlink(str(testdir.tmpdir.ensure('tmpfile')), str(testdir.tmpdir.join('tmpfile2')))
+            except OSError as e:
+                pytest.skip(six.text_type(e.args[0]))
         monkeypatch.delenv('PYTHONDONTWRITEBYTECODE', raising=False)
 
         search_path = ["lib", os.path.join("local", "lib")]
