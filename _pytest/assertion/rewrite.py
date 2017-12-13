@@ -179,11 +179,12 @@ class AssertionRewritingHook(object):
         The named module or package as well as any nested modules will
         be rewritten on import.
         """
-        already_imported = set(names).intersection(set(sys.modules))
-        if already_imported:
-            for name in already_imported:
-                if name not in self._rewritten_names:
-                    self._warn_already_imported(name)
+        already_imported = (
+            (set(names) & set(sys.modules)) - set(self._rewritten_names))
+        for name in already_imported:
+            if not AssertionRewriter.is_rewrite_disabled(
+                    sys.modules[name].__doc__ or ""):
+                self._warn_already_imported(name)
         self._must_rewrite.update(names)
 
     def _warn_already_imported(self, name):
@@ -635,7 +636,8 @@ class AssertionRewriter(ast.NodeVisitor):
                       not isinstance(field, ast.expr)):
                     nodes.append(field)
 
-    def is_rewrite_disabled(self, docstring):
+    @staticmethod
+    def is_rewrite_disabled(docstring):
         return "PYTEST_DONT_REWRITE" in docstring
 
     def variable(self):
