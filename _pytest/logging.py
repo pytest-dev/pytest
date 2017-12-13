@@ -79,10 +79,9 @@ def pytest_addoption(parser):
 
 
 @contextmanager
-def catching_logs(handler, formatter=None,
-                  level=logging.NOTSET, logger=None):
+def catching_logs(handler, formatter=None, level=logging.NOTSET):
     """Context manager that prepares the whole logging machinery properly."""
-    logger = logger or logging.getLogger(logger)
+    root_logger = logging.getLogger()
 
     if formatter is not None:
         handler.setFormatter(formatter)
@@ -90,18 +89,18 @@ def catching_logs(handler, formatter=None,
 
     # Adding the same handler twice would confuse logging system.
     # Just don't do that.
-    add_new_handler = handler not in logger.handlers
+    add_new_handler = handler not in root_logger.handlers
 
     if add_new_handler:
-        logger.addHandler(handler)
-    orig_level = logger.level
-    logger.setLevel(min(orig_level, level))
+        root_logger.addHandler(handler)
+    orig_level = root_logger.level
+    root_logger.setLevel(min(orig_level, level))
     try:
         yield handler
     finally:
-        logger.setLevel(orig_level)
+        root_logger.setLevel(orig_level)
         if add_new_handler:
-            logger.removeHandler(handler)
+            root_logger.removeHandler(handler)
 
 
 class LogCaptureHandler(logging.StreamHandler):
