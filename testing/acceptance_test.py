@@ -913,3 +913,46 @@ def test_deferred_hook_checking(testdir):
     })
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(['* 1 passed *'])
+
+
+def test_fixture_values_leak(testdir):
+    """Ensure that fixture objects are properly destroyed by the garbage collector at the end of their expected
+    life-times (#2981).
+    """
+    testdir.makepyfile("""
+        import attr
+        import gc
+        import pytest
+        import weakref
+
+        @attr.s
+        class SomeObj(object):
+            name = attr.ib()
+
+        fix_of_test1_ref = None
+        session_ref = None
+
+        @pytest.fixture(scope='session')
+        def session_fix():
+            global session_ref
+            obj = SomeObj(name='session-fixture')
+            session_ref = weakref.ref(obj)
+            return obj
+
+        @pytest.fixture
+        def fix(session_fix):
+            global fix_of_test1_ref
+            obj = SomeObj(name='local-fixture')
+            fix_of_test1_ref = weakref.ref(obj)
+            return obj
+
+        def test1(fix):
+            assert fix_of_test1_ref() is fix
+
+        def test2():
+            gc.collect()
+            # fixture "fix" created during test1 must have been destroyed by now
+            assert fix_of_test1_ref() is None
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(['* 2 passed *'])
