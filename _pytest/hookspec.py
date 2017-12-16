@@ -12,22 +12,31 @@ hookspec = HookspecMarker("pytest")
 @hookspec(historic=True)
 def pytest_addhooks(pluginmanager):
     """called at plugin registration time to allow adding new hooks via a call to
-    pluginmanager.add_hookspecs(module_or_class, prefix)."""
+    ``pluginmanager.add_hookspecs(module_or_class, prefix)``.
+
+
+    :param _pytest.config.PytestPluginManager pluginmanager: pytest plugin manager
+    """
 
 
 @hookspec(historic=True)
 def pytest_namespace():
     """
-    DEPRECATED: this hook causes direct monkeypatching on pytest, its use is strongly discouraged
+    (**Deprecated**) this hook causes direct monkeypatching on pytest, its use is strongly discouraged
     return dict of name->object to be made globally available in
-    the pytest namespace.  This hook is called at plugin registration
-    time.
+    the pytest namespace.
+
+    This hook is called at plugin registration time.
     """
 
 
 @hookspec(historic=True)
 def pytest_plugin_registered(plugin, manager):
-    """ a new pytest plugin got registered. """
+    """ a new pytest plugin got registered.
+
+    :param plugin: the plugin module or instance
+    :param _pytest.config.PytestPluginManager manager: pytest plugin manager
+    """
 
 
 @hookspec(historic=True)
@@ -41,7 +50,7 @@ def pytest_addoption(parser):
         files situated at the tests root directory due to how pytest
         :ref:`discovers plugins during startup <pluginorder>`.
 
-    :arg parser: To add command line options, call
+    :arg _pytest.config.Parser parser: To add command line options, call
         :py:func:`parser.addoption(...) <_pytest.config.Parser.addoption>`.
         To add ini-file values call :py:func:`parser.addini(...)
         <_pytest.config.Parser.addini>`.
@@ -56,8 +65,7 @@ def pytest_addoption(parser):
       a value read from an ini-style file.
 
     The config object is passed around on many internal objects via the ``.config``
-    attribute or can be retrieved as the ``pytestconfig`` fixture or accessed
-    via (deprecated) ``pytest.config``.
+    attribute or can be retrieved as the ``pytestconfig`` fixture.
     """
 
 
@@ -72,8 +80,7 @@ def pytest_configure(config):
     After that, the hook is called for other conftest files as they are
     imported.
 
-    :arg config: pytest config object
-    :type config: _pytest.config.Config
+    :arg _pytest.config.Config config: pytest config object
     """
 
 # -------------------------------------------------------------------------
@@ -87,11 +94,22 @@ def pytest_configure(config):
 def pytest_cmdline_parse(pluginmanager, args):
     """return initialized config object, parsing the specified args.
 
-    Stops at first non-None result, see :ref:`firstresult` """
+    Stops at first non-None result, see :ref:`firstresult`
+
+    :param _pytest.config.PytestPluginManager pluginmanager: pytest plugin manager
+    :param list[str] args: list of arguments passed on the command line
+    """
 
 
 def pytest_cmdline_preparse(config, args):
-    """(deprecated) modify command line arguments before option parsing. """
+    """(**Deprecated**) modify command line arguments before option parsing.
+
+    This hook is considered deprecated and will be removed in a future pytest version. Consider
+    using :func:`pytest_load_initial_conftests` instead.
+
+    :param _pytest.config.Config config: pytest config object
+    :param list[str] args: list of arguments passed on the command line
+    """
 
 
 @hookspec(firstresult=True)
@@ -99,12 +117,20 @@ def pytest_cmdline_main(config):
     """ called for performing the main command line action. The default
     implementation will invoke the configure hooks and runtest_mainloop.
 
-    Stops at first non-None result, see :ref:`firstresult` """
+    Stops at first non-None result, see :ref:`firstresult`
+
+    :param _pytest.config.Config config: pytest config object
+    """
 
 
 def pytest_load_initial_conftests(early_config, parser, args):
     """ implements the loading of initial conftest files ahead
-    of command line option parsing. """
+    of command line option parsing.
+
+    :param _pytest.config.Config early_config: pytest config object
+    :param list[str] args: list of arguments passed on the command line
+    :param _pytest.config.Parser parser: to add command line options
+    """
 
 
 # -------------------------------------------------------------------------
@@ -113,18 +139,29 @@ def pytest_load_initial_conftests(early_config, parser, args):
 
 @hookspec(firstresult=True)
 def pytest_collection(session):
-    """ perform the collection protocol for the given session.
+    """Perform the collection protocol for the given session.
 
-    Stops at first non-None result, see :ref:`firstresult` """
+    Stops at first non-None result, see :ref:`firstresult`.
+
+    :param _pytest.main.Session session: the pytest session object
+    """
 
 
 def pytest_collection_modifyitems(session, config, items):
     """ called after collection has been performed, may filter or re-order
-    the items in-place."""
+    the items in-place.
+
+    :param _pytest.main.Session session: the pytest session object
+    :param _pytest.config.Config config: pytest config object
+    :param List[_pytest.main.Item] items: list of item objects
+    """
 
 
 def pytest_collection_finish(session):
-    """ called after collection has been performed and modified. """
+    """ called after collection has been performed and modified.
+
+    :param _pytest.main.Session session: the pytest session object
+    """
 
 
 @hookspec(firstresult=True)
@@ -134,6 +171,9 @@ def pytest_ignore_collect(path, config):
     more specific hooks.
 
     Stops at first non-None result, see :ref:`firstresult`
+
+    :param str path: the path to analyze
+    :param _pytest.config.Config config: pytest config object
     """
 
 
@@ -141,12 +181,18 @@ def pytest_ignore_collect(path, config):
 def pytest_collect_directory(path, parent):
     """ called before traversing a directory for collection files.
 
-    Stops at first non-None result, see :ref:`firstresult` """
+    Stops at first non-None result, see :ref:`firstresult`
+
+    :param str path: the path to analyze
+    """
 
 
 def pytest_collect_file(path, parent):
     """ return collection Node or None for the given path. Any new node
-    needs to have the specified ``parent`` as a parent."""
+    needs to have the specified ``parent`` as a parent.
+
+    :param str path: the path to collect
+    """
 
 # logging hooks for collection
 
@@ -212,7 +258,12 @@ def pytest_make_parametrize_id(config, val, argname):
     by @pytest.mark.parametrize calls. Return None if the hook doesn't know about ``val``.
     The parameter name is available as ``argname``, if required.
 
-    Stops at first non-None result, see :ref:`firstresult` """
+    Stops at first non-None result, see :ref:`firstresult`
+
+    :param _pytest.config.Config config: pytest config object
+    :param val: the parametrized value
+    :param str argname: the automatic parameter name produced by pytest
+    """
 
 # -------------------------------------------------------------------------
 # generic runtest related hooks
@@ -224,11 +275,14 @@ def pytest_runtestloop(session):
     """ called for performing the main runtest loop
     (after collection finished).
 
-    Stops at first non-None result, see :ref:`firstresult` """
+    Stops at first non-None result, see :ref:`firstresult`
+
+    :param _pytest.main.Session session: the pytest session object
+    """
 
 
 def pytest_itemstart(item, node):
-    """ (deprecated, use pytest_runtest_logstart). """
+    """(**Deprecated**) use pytest_runtest_logstart. """
 
 
 @hookspec(firstresult=True)
@@ -307,15 +361,25 @@ def pytest_fixture_post_finalizer(fixturedef, request):
 
 
 def pytest_sessionstart(session):
-    """ before session.main() is called. """
+    """ before session.main() is called.
+
+    :param _pytest.main.Session session: the pytest session object
+    """
 
 
 def pytest_sessionfinish(session, exitstatus):
-    """ whole test run finishes. """
+    """ whole test run finishes.
+
+    :param _pytest.main.Session session: the pytest session object
+    :param int exitstatus: the status which pytest will return to the system
+    """
 
 
 def pytest_unconfigure(config):
-    """ called before test process is exited.  """
+    """ called before test process is exited.
+
+    :param _pytest.config.Config config: pytest config object
+    """
 
 
 # -------------------------------------------------------------------------
@@ -329,6 +393,8 @@ def pytest_assertrepr_compare(config, op, left, right):
     of strings.  The strings will be joined by newlines but any newlines
     *in* a string will be escaped.  Note that all but the first line will
     be indented slightly, the intention is for the first line to be a summary.
+
+    :param _pytest.config.Config config: pytest config object
     """
 
 # -------------------------------------------------------------------------
@@ -339,7 +405,7 @@ def pytest_assertrepr_compare(config, op, left, right):
 def pytest_report_header(config, startdir):
     """ return a string or list of strings to be displayed as header info for terminal reporting.
 
-    :param config: the pytest config object.
+    :param _pytest.config.Config config: pytest config object
     :param startdir: py.path object with the starting dir
 
     .. note::
@@ -358,7 +424,7 @@ def pytest_report_collectionfinish(config, startdir, items):
 
     This strings will be displayed after the standard "collected X items" message.
 
-    :param config: the pytest config object.
+    :param _pytest.config.Config config: pytest config object
     :param startdir: py.path object with the starting dir
     :param items: list of pytest items that are going to be executed; this list should not be modified.
     """
@@ -418,6 +484,5 @@ def pytest_enter_pdb(config):
     """ called upon pdb.set_trace(), can be used by plugins to take special
     action just before the python debugger enters in interactive mode.
 
-    :arg config: pytest config object
-    :type config: _pytest.config.Config
+    :param _pytest.config.Config config: pytest config object
     """

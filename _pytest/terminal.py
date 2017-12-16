@@ -153,7 +153,8 @@ class TerminalReporter:
         self.hasmarkup = self._tw.hasmarkup
         self.isatty = file.isatty()
         self._progress_items_reported = 0
-        self._show_progress_info = self.config.getini('console_output_style') == 'progress'
+        self._show_progress_info = (self.config.getoption('capture') != 'no' and
+                                    self.config.getini('console_output_style') == 'progress')
 
     def hasopt(self, char):
         char = {'xfailed': 'x', 'skipped': 's'}.get(char, char)

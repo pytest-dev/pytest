@@ -3,6 +3,8 @@ from __future__ import absolute_import, division, print_function
 import os
 import sys
 
+import six
+
 import _pytest._code
 import py
 import pytest
@@ -645,6 +647,69 @@ class TestInvocationVariants(object):
             "*1 passed*"
         ])
 
+    @pytest.mark.skipif(not hasattr(os, "symlink"), reason="requires symlinks")
+    def test_cmdline_python_package_symlink(self, testdir, monkeypatch):
+        """
+        test --pyargs option with packages with path containing symlink can
+        have conftest.py in their package (#2985)
+        """
+        monkeypatch.delenv('PYTHONDONTWRITEBYTECODE', raising=False)
+
+        search_path = ["lib", os.path.join("local", "lib")]
+
+        dirname = "lib"
+        d = testdir.mkdir(dirname)
+        foo = d.mkdir("foo")
+        foo.ensure("__init__.py")
+        lib = foo.mkdir('bar')
+        lib.ensure("__init__.py")
+        lib.join("test_bar.py"). \
+            write("def test_bar(): pass\n"
+                  "def test_other(a_fixture):pass")
+        lib.join("conftest.py"). \
+            write("import pytest\n"
+                  "@pytest.fixture\n"
+                  "def a_fixture():pass")
+
+        d_local = testdir.mkdir("local")
+        symlink_location = os.path.join(str(d_local), "lib")
+        if six.PY2:
+            os.symlink(str(d), symlink_location)
+        else:
+            os.symlink(str(d), symlink_location, target_is_directory=True)
+
+        # The structure of the test directory is now:
+        # .
+        # ├── local
+        # │   └── lib -> ../lib
+        # └── lib
+        #     └── foo
+        #         ├── __init__.py
+        #         └── bar
+        #             ├── __init__.py
+        #             ├── conftest.py
+        #             └── test_bar.py
+
+        def join_pythonpath(*dirs):
+            cur = os.getenv('PYTHONPATH')
+            if cur:
+                dirs += (cur,)
+            return os.pathsep.join(str(p) for p in dirs)
+
+        monkeypatch.setenv('PYTHONPATH', join_pythonpath(*search_path))
+        for p in search_path:
+            monkeypatch.syspath_prepend(p)
+
+        # module picked up in symlink-ed directory:
+        result = testdir.runpytest("--pyargs", "-v", "foo.bar")
+        testdir.chdir()
+        assert result.ret == 0
+        result.stdout.fnmatch_lines([
+            "*lib/foo/bar/test_bar.py::test_bar*PASSED*",
+            "*lib/foo/bar/test_bar.py::test_other*PASSED*",
+            "*2 passed*"
+        ])
+
     def test_cmdline_python_package_not_exists(self, testdir):
         result = testdir.runpytest("--pyargs", "tpkgwhatv")
         assert result.ret
@@ -848,3 +913,46 @@ def test_deferred_hook_checking(testdir):
     })
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(['* 1 passed *'])
+
+
+def test_fixture_values_leak(testdir):
+    """Ensure that fixture objects are properly destroyed by the garbage collector at the end of their expected
+    life-times (#2981).
+    """
+    testdir.makepyfile("""
+        import attr
+        import gc
+        import pytest
+        import weakref
+
+        @attr.s
+        class SomeObj(object):
+            name = attr.ib()
+
+        fix_of_test1_ref = None
+        session_ref = None
+
+        @pytest.fixture(scope='session')
+        def session_fix():
+            global session_ref
+            obj = SomeObj(name='session-fixture')
+            session_ref = weakref.ref(obj)
+            return obj
+
+        @pytest.fixture
+        def fix(session_fix):
+            global fix_of_test1_ref
+            obj = SomeObj(name='local-fixture')
+            fix_of_test1_ref = weakref.ref(obj)
+            return obj
+
+        def test1(fix):
+            assert fix_of_test1_ref() is fix
+
+        def test2():
+            gc.collect()
+            # fixture "fix" created during test1 must have been destroyed by now
+            assert fix_of_test1_ref() is None
+    """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(['* 2 passed *'])

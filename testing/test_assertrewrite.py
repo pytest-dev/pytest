@@ -128,6 +128,16 @@ class TestAssertionRewrite(object):
             assert len(m.body) == 1
         assert m.body[0].msg is None
 
+    def test_dont_rewrite_plugin(self, testdir):
+        contents = {
+            "conftest.py": "pytest_plugins = 'plugin'; import plugin",
+            "plugin.py": "'PYTEST_DONT_REWRITE'",
+            "test_foo.py": "def test_foo(): pass",
+        }
+        testdir.makepyfile(**contents)
+        result = testdir.runpytest_subprocess()
+        assert "warnings" not in "".join(result.outlines)
+
     def test_name(self):
         def f():
             assert False
