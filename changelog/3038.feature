@@ -1,1 +1,1 @@
-Use classic console output when -s is used.
+Console output fallsback to "classic" mode when capture is disabled (``-s``), otherwise the output gets garbled to the point of being useless.
