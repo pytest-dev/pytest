@@ -1037,3 +1037,11 @@ class TestProgress:
             r'\[gw\d\] \[\s*\d+%\] PASSED test_foo.py::test_foo\[1\]',
             r'\[gw\d\] \[\s*\d+%\] PASSED test_foobar.py::test_foobar\[1\]',
         ])
+
+    def test_capture_no(self, many_tests_file, testdir):
+        output = testdir.runpytest('-s')
+        output.stdout.re_match_lines([
+            r'test_bar.py \.{10}',
+            r'test_foo.py \.{5}',
+            r'test_foobar.py \.{5}',
+        ])
