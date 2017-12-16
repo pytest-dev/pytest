@@ -126,21 +126,9 @@ To get all combinations of multiple parametrized arguments you can stack
 This will run the test with the arguments set to ``x=0/y=2``, ``x=0/y=3``, ``x=1/y=2`` and
 ``x=1/y=3``.
 
-Due to how decorators work it runs in reverse of expected order.
-In this case::
-
-    $ pytest
-    =========================== test session starts ============================
-    platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
-    rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 4 items
-
-    test.py::test_foo[2-0] PASSED                                        [ 25%]
-    test.py::test_foo[2-1] PASSED                                        [ 50%]
-    test.py::test_foo[3-0] PASSED                                        [ 75%]
-    test.py::test_foo[3-1] PASSED                                        [100%]
-
-    ========================== 4 passed in 0.01 seconds ========================
+Note that due to how decorators work in python the tests actually exhaust parameters in 
+the order of the decorators. For example this program run in the order ``x=0/y=2``,
+``x=1/y=2``, ``x=0/y=3``, and ``x=1/y=3``. 
 
 .. _`pytest_generate_tests`:
 
