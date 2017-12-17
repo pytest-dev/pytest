@@ -95,11 +95,17 @@ class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
 
 
 def get_empty_parameterset_mark(config, argnames, function):
-
+    requested_mark = config.getini('empty_parameterset')
+    if requested_mark in ('', None, 'skip'):
+        mark = MARK_GEN.skip
+    elif requested_mark == 'xfail':
+        mark = MARK_GEN.xfail(run=False)
+    else:
+        raise LookupError(requested_mark)
     fs, lineno = getfslineno(function)
     reason = "got empty parameter set %r, function %s at %s:%d" % (
         argnames, function.__name__, fs, lineno)
-    return MARK_GEN.skip(reason=reason)
+    return mark(reason=reason)
 
 
 class MarkerError(Exception):
@@ -141,6 +147,9 @@ def pytest_addoption(parser):
     )
 
     parser.addini("markers", "markers for test functions", 'linelist')
+    parser.addini(
+        "empty_parameterset",
+        "default marker for empty parametersets")
 
 
 def pytest_cmdline_main(config):
@@ -283,6 +292,14 @@ def pytest_configure(config):
     config._old_mark_config = MARK_GEN._config
     if config.option.strict:
         MARK_GEN._config = config
+
+    empty_parameterset = config.getini("empty_parameterset")
+
+    if empty_parameterset not in ('skip', 'xfail', None, ''):
+        from pytest import UsageError
+        raise UsageError(
+            "empty_parameterset must be one of skip and xfail,"
+            " but it is {!r}".format(empty_parameterset))
 
 
 def pytest_unconfigure(config):

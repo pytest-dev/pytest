@@ -1,0 +1,1 @@
+introduce a pytest ini option to pick the mark for empty parametersets and allow to use xfail(run=False)
