@@ -5,7 +5,6 @@ from contextlib import closing, contextmanager
 import sys
 import six
 
-import _pytest
 import pytest
 import py
 
@@ -121,15 +120,14 @@ class LogCaptureHandler(logging.StreamHandler):
         logging.StreamHandler.emit(self, record)
 
 
-class TerminalReporterHandler(logging.Handler):
-    def __init__(self, reporter):
-        self.reporter = reporter
-        super(TerminalReporterHandler, self).__init__()
+class TerminalWriterHandler(logging.Handler):
+    def __init__(self):
+        # TODO sys.stderr is captured by default ?!??!
+        self.tw = py.io.TerminalWriter(sys.stderr)
+        super(TerminalWriterHandler, self).__init__()
 
     def emit(self, record):
-        # FIXME: I don't get any output with the reporter obj
-        # self.reporter.write(self.format(record))
-        print(self.format(record))
+        self.tw.write(self.format(record))
 
 
 class LogCaptureFixture(object):
@@ -266,6 +264,7 @@ class LoggingPlugin(object):
             get_option_ini(config, 'log_format'),
             get_option_ini(config, 'log_date_format'))
 
+
         log_cli_format = get_option_ini(
             config, 'log_cli_format', 'log_format')
         log_cli_date_format = get_option_ini(
@@ -273,8 +272,6 @@ class LoggingPlugin(object):
         self.log_cli_formatter = logging.Formatter(
             log_cli_format,
             datefmt=log_cli_date_format)
-
-        self.reporter = _pytest.config.create_terminal_writer(config, sys.stdout)
 
         log_file = get_option_ini(config, 'log_file')
         if log_file:
@@ -299,10 +296,6 @@ class LoggingPlugin(object):
     @contextmanager
     def _runtest_for(self, item, when):
         """Implements the internals of pytest_runtest_xxx() hook."""
-        if self.capture_log != 'on-failure':
-            yield
-            return
-
         with catching_logs(LogCaptureHandler(),
                            formatter=self.formatter) as log_handler:
             item.catch_log_handler = log_handler
@@ -335,8 +328,9 @@ class LoggingPlugin(object):
     def pytest_runtestloop(self, session):
         """Runs all collected test items."""
 
+        # TODO what should happen at the end of the tests?
         if self.capture_log == 'live':
-            with catching_logs(TerminalReporterHandler(self.reporter),
+            with catching_logs(TerminalWriterHandler(),
                                formatter=self.log_cli_formatter,
                                level=self.log_cli_level):
                 if self.log_file_handler is not None:
