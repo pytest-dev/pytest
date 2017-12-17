@@ -6,11 +6,8 @@ from textwrap import dedent
 import _pytest._code
 import py
 import pytest
-from _pytest.main import (
-    Collector,
-    EXIT_NOTESTSCOLLECTED
-)
-
+from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.nodes import Collector
 
 ignore_parametrized_marks = pytest.mark.filterwarnings('ignore:Applying marks directly to parameters')
 

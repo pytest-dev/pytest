@@ -681,14 +681,14 @@ Reference of objects involved in hooks
 .. autoclass:: _pytest.config.Parser()
     :members:
 
-.. autoclass:: _pytest.main.Node()
+.. autoclass:: _pytest.nodes.Node()
     :members:
 
-.. autoclass:: _pytest.main.Collector()
+.. autoclass:: _pytest.nodes.Collector()
     :members:
     :show-inheritance:
 
-.. autoclass:: _pytest.main.FSCollector()
+.. autoclass:: _pytest.nodes.FSCollector()
     :members:
     :show-inheritance:
 
@@ -696,7 +696,7 @@ Reference of objects involved in hooks
     :members:
     :show-inheritance:
 
-.. autoclass:: _pytest.main.Item()
+.. autoclass:: _pytest.nodes.Item()
     :members:
     :show-inheritance:
 

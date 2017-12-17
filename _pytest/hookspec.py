@@ -153,7 +153,7 @@ def pytest_collection_modifyitems(session, config, items):
 
     :param _pytest.main.Session session: the pytest session object
     :param _pytest.config.Config config: pytest config object
-    :param List[_pytest.main.Item] items: list of item objects
+    :param List[_pytest.nodes.Item] items: list of item objects
     """
 
 

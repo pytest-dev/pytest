@@ -18,7 +18,8 @@ from _pytest.debugging import pytestPDB as __pytestPDB
 from _pytest.recwarn import warns, deprecated_call
 from _pytest.outcomes import fail, skip, importorskip, exit, xfail
 from _pytest.mark import MARK_GEN as mark, param
-from _pytest.main import Item, Collector, File, Session
+from _pytest.main import Session
+from _pytest.nodes import Item, Collector, File
 from _pytest.fixtures import fillfixtures as _fillfuncargs
 from _pytest.python import (
     Module, Class, Instance, Function, Generator,

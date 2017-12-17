@@ -19,7 +19,7 @@ from _pytest.config import hookimpl
 import _pytest
 import pluggy
 from _pytest import fixtures
-from _pytest import main
+from _pytest import nodes
 from _pytest import deprecated
 from _pytest.compat import (
     isclass, isfunction, is_generator, ascii_escaped,
@@ -261,7 +261,7 @@ class PyobjMixin(PyobjContext):
         return fspath, lineno, modpath
 
 
-class PyCollector(PyobjMixin, main.Collector):
+class PyCollector(PyobjMixin, nodes.Collector):
 
     def funcnamefilter(self, name):
         return self._matches_prefix_or_glob_option('python_functions', name)
@@ -386,7 +386,7 @@ class PyCollector(PyobjMixin, main.Collector):
                                )
 
 
-class Module(main.File, PyCollector):
+class Module(nodes.File, PyCollector):
     """ Collector for test classes and functions. """
 
     def _getobj(self):
@@ -1090,7 +1090,7 @@ def write_docstring(tw, doc):
             tw.write(INDENT + line + "\n")
 
 
-class Function(FunctionMixin, main.Item, fixtures.FuncargnamesCompatAttr):
+class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
     """ a Function Item is responsible for setting up and executing a
     Python test function.
     """
