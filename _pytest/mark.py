@@ -73,7 +73,7 @@ class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
         return cls(argval, marks=newmarks, id=None)
 
     @classmethod
-    def _for_parameterize(cls, argnames, argvalues, function):
+    def _for_parameterize(cls, argnames, argvalues, function, config):
         if not isinstance(argnames, (tuple, list)):
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
             force_tuple = len(argnames) == 1
@@ -85,16 +85,21 @@ class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
         del argvalues
 
         if not parameters:
-            fs, lineno = getfslineno(function)
-            reason = "got empty parameter set %r, function %s at %s:%d" % (
-                argnames, function.__name__, fs, lineno)
-            mark = MARK_GEN.skip(reason=reason)
+            mark = get_empty_parameterset_mark(config, argnames, function)
             parameters.append(ParameterSet(
                 values=(NOTSET,) * len(argnames),
                 marks=[mark],
                 id=None,
             ))
         return argnames, parameters
+
+
+def get_empty_parameterset_mark(config, argnames, function):
+
+    fs, lineno = getfslineno(function)
+    reason = "got empty parameter set %r, function %s at %s:%d" % (
+        argnames, function.__name__, fs, lineno)
+    return MARK_GEN.skip(reason=reason)
 
 
 class MarkerError(Exception):
