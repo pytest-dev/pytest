@@ -390,6 +390,35 @@ class RunResult:
         assert obtained == dict(passed=passed, skipped=skipped, failed=failed, error=error)
 
 
+class CwdSnapshot:
+    def __init__(self):
+        self.__saved = os.getcwd()
+
+    def restore(self):
+        os.chdir(self.__saved)
+
+
+class SysModulesSnapshot:
+    def __init__(self, preserve=None):
+        self.__preserve = preserve
+        self.__saved = dict(sys.modules)
+
+    def restore(self):
+        if self.__preserve:
+            self.__saved.update(
+                (k, m) for k, m in sys.modules.items() if self.__preserve(k))
+        sys.modules.clear()
+        sys.modules.update(self.__saved)
+
+
+class SysPathsSnapshot:
+    def __init__(self):
+        self.__saved = list(sys.path), list(sys.meta_path)
+
+    def restore(self):
+        sys.path[:], sys.meta_path[:] = self.__saved
+
+
 class Testdir:
     """Temporary test directory with tools to test/run pytest itself.
 
@@ -414,9 +443,10 @@ class Testdir:
         name = request.function.__name__
         self.tmpdir = tmpdir_factory.mktemp(name, numbered=True)
         self.plugins = []
-        self._savesyspath = (list(sys.path), list(sys.meta_path))
-        self._savemodulekeys = set(sys.modules)
-        self.chdir()  # always chdir
+        self._cwd_snapshot = CwdSnapshot()
+        self._sys_path_snapshot = SysPathsSnapshot()
+        self._sys_modules_snapshot = self.__take_sys_modules_snapshot()
+        self.chdir()
         self.request.addfinalizer(self.finalize)
         method = self.request.config.getoption("--runpytest")
         if method == "inprocess":
@@ -435,23 +465,17 @@ class Testdir:
         it can be looked at after the test run has finished.
 
         """
-        sys.path[:], sys.meta_path[:] = self._savesyspath
-        if hasattr(self, '_olddir'):
-            self._olddir.chdir()
-        self.delete_loaded_modules()
+        self._sys_modules_snapshot.restore()
+        self._sys_path_snapshot.restore()
+        self._cwd_snapshot.restore()
 
-    def delete_loaded_modules(self):
-        """Delete modules that have been loaded during a test.
-
-        This allows the interpreter to catch module changes in case
-        the module is re-imported.
-        """
-        for name in set(sys.modules).difference(self._savemodulekeys):
-            # some zope modules used by twisted-related tests keeps internal
-            # state and can't be deleted; we had some trouble in the past
-            # with zope.interface for example
-            if not name.startswith("zope"):
-                del sys.modules[name]
+    def __take_sys_modules_snapshot(self):
+        # some zope modules used by twisted-related tests keep internal state
+        # and can't be deleted; we had some trouble in the past with
+        # `zope.interface` for example
+        def preserve_module(name):
+            return name.startswith("zope")
+        return SysModulesSnapshot(preserve=preserve_module)
 
     def make_hook_recorder(self, pluginmanager):
         """Create a new :py:class:`HookRecorder` for a PluginManager."""
@@ -466,9 +490,7 @@ class Testdir:
         This is done automatically upon instantiation.
 
         """
-        old = self.tmpdir.chdir()
-        if not hasattr(self, '_olddir'):
-            self._olddir = old
+        self.tmpdir.chdir()
 
     def _makefile(self, ext, args, kwargs, encoding='utf-8'):
         items = list(kwargs.items())
@@ -683,42 +705,58 @@ class Testdir:
         :return: a :py:class:`HookRecorder` instance
 
         """
-        # When running py.test inline any plugins active in the main test
-        # process are already imported.  So this disables the warning which
-        # will trigger to say they can no longer be rewritten, which is fine as
-        # they have already been rewritten.
-        orig_warn = AssertionRewritingHook._warn_already_imported
+        finalizers = []
+        try:
+            # When running py.test inline any plugins active in the main test
+            # process are already imported.  So this disables the warning which
+            # will trigger to say they can no longer be rewritten, which is
+            # fine as they have already been rewritten.
+            orig_warn = AssertionRewritingHook._warn_already_imported
 
-        def revert():
-            AssertionRewritingHook._warn_already_imported = orig_warn
+            def revert_warn_already_imported():
+                AssertionRewritingHook._warn_already_imported = orig_warn
+            finalizers.append(revert_warn_already_imported)
+            AssertionRewritingHook._warn_already_imported = lambda *a: None
 
-        self.request.addfinalizer(revert)
-        AssertionRewritingHook._warn_already_imported = lambda *a: None
+            # Any sys.module or sys.path changes done while running py.test
+            # inline should be reverted after the test run completes to avoid
+            # clashing with later inline tests run within the same pytest test,
+            # e.g. just because they use matching test module names.
+            finalizers.append(self.__take_sys_modules_snapshot().restore)
+            finalizers.append(SysPathsSnapshot().restore)
 
-        rec = []
+            # Important note:
+            # - our tests should not leave any other references/registrations
+            #   laying around other than possibly loaded test modules
+            #   referenced from sys.modules, as nothing will clean those up
+            #   automatically
 
-        class Collect:
-            def pytest_configure(x, config):
-                rec.append(self.make_hook_recorder(config.pluginmanager))
+            rec = []
 
-        plugins = kwargs.get("plugins") or []
-        plugins.append(Collect())
-        ret = pytest.main(list(args), plugins=plugins)
-        self.delete_loaded_modules()
-        if len(rec) == 1:
-            reprec = rec.pop()
-        else:
-            class reprec:
-                pass
-        reprec.ret = ret
+            class Collect:
+                def pytest_configure(x, config):
+                    rec.append(self.make_hook_recorder(config.pluginmanager))
 
-        # typically we reraise keyboard interrupts from the child run because
-        # it's our user requesting interruption of the testing
-        if ret == 2 and not kwargs.get("no_reraise_ctrlc"):
-            calls = reprec.getcalls("pytest_keyboard_interrupt")
-            if calls and calls[-1].excinfo.type == KeyboardInterrupt:
-                raise KeyboardInterrupt()
-        return reprec
+            plugins = kwargs.get("plugins") or []
+            plugins.append(Collect())
+            ret = pytest.main(list(args), plugins=plugins)
+            if len(rec) == 1:
+                reprec = rec.pop()
+            else:
+                class reprec:
+                    pass
+            reprec.ret = ret
+
+            # typically we reraise keyboard interrupts from the child run
+            # because it's our user requesting interruption of the testing
+            if ret == 2 and not kwargs.get("no_reraise_ctrlc"):
+                calls = reprec.getcalls("pytest_keyboard_interrupt")
+                if calls and calls[-1].excinfo.type == KeyboardInterrupt:
+                    raise KeyboardInterrupt()
+            return reprec
+        finally:
+            for finalizer in finalizers:
+                finalizer()
 
     def runpytest_inprocess(self, *args, **kwargs):
         """Return result of running pytest in-process, providing a similar
