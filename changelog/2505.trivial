@@ -1,0 +1,1 @@
+Return the previous value in monkeypatch.setattr for easier wrapping.
