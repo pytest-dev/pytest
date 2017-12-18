@@ -1,11 +1,13 @@
 from __future__ import absolute_import, division, print_function
 from collections import MutableMapping as MappingMixin
-
 import os
 
 import six
 import py
+import attr
+
 import _pytest
+
 
 SEP = "/"
 
@@ -48,9 +50,9 @@ def ischildnode(baseid, nodeid):
     return node_parts[:len(base_parts)] == base_parts
 
 
+@attr.s
 class _CompatProperty(object):
-    def __init__(self, name):
-        self.name = name
+    name = attr.ib()
 
     def __get__(self, obj, owner):
         if obj is None:
