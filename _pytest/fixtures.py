@@ -26,11 +26,12 @@ from _pytest.outcomes import fail, TEST_OUTCOME
 
 def pytest_sessionstart(session):
     import _pytest.python
+    import _pytest.nodes
 
     scopename2class.update({
         'class': _pytest.python.Class,
         'module': _pytest.python.Module,
-        'function': _pytest.main.Item,
+        'function': _pytest.nodes.Item,
         'session': _pytest.main.Session,
     })
     session._fixturemanager = FixtureManager(session)

@@ -4,7 +4,7 @@ import os
 import _pytest._code
 import py
 import pytest
-from _pytest.main import Node, Item, FSCollector
+from _pytest.nodes import Node, Item, FSCollector
 from _pytest.resultlog import generic_path, ResultLog, \
     pytest_configure, pytest_unconfigure
 
