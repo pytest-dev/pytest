@@ -1,0 +1,1 @@
+pytester: ignore files used to obtain current user metadata in the fd leak detector.
