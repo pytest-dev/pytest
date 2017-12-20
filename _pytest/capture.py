@@ -162,7 +162,6 @@ class CaptureManager:
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_teardown(self, item):
         self.resume_global_capture()
-        self.activate_fixture(item)
         yield
         self.suspend_capture_item(item, "teardown")
 
