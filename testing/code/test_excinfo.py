@@ -542,7 +542,7 @@ raise ValueError()
         tb = FakeRawTB()
         excinfo.traceback = Traceback(tb)
 
-        fail = IOError()  # noqa
+        fail = IOError()
         repr = pr.repr_excinfo(excinfo)
         assert repr.reprtraceback.reprentries[0].lines[0] == ">   ???"
         if py.std.sys.version_info[0] >= 3:
