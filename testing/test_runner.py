@@ -32,7 +32,7 @@ class TestSetupState(object):
             def setup_module(mod):
                 raise ValueError(42)
             def test_func(): pass
-        """)  # noqa
+        """)
         ss = runner.SetupState()
         pytest.raises(ValueError, lambda: ss.prepare(item))
         pytest.raises(ValueError, lambda: ss.prepare(item))
@@ -564,7 +564,7 @@ def test_importorskip(monkeypatch):
         importorskip("asdlkj")
 
     try:
-        sys = importorskip("sys")  # noqa
+        sys = importorskip("sys")
         assert sys == py.std.sys
         # path = pytest.importorskip("os.path")
         # assert path == py.std.os.path
