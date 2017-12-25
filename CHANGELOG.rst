@@ -8,6 +8,44 @@
 
 .. towncrier release notes start
 
+Pytest 3.3.2 (2017-12-25)
+=========================
+
+Bug Fixes
+---------
+
+- pytester: ignore files used to obtain current user metadata in the fd leak
+  detector. (`#2784 <https://github.com/pytest-dev/pytest/issues/2784>`_)
+
+- Fix **memory leak** where objects returned by fixtures were never destructed
+  by the garbage collector. (`#2981
+  <https://github.com/pytest-dev/pytest/issues/2981>`_)
+
+- Fix conversion of pyargs to filename to not convert symlinks and not use
+  deprecated features on Python 3. (`#2985
+  <https://github.com/pytest-dev/pytest/issues/2985>`_)
+
+- ``PYTEST_DONT_REWRITE`` is now checked for plugins too rather than only for
+  test modules. (`#2995 <https://github.com/pytest-dev/pytest/issues/2995>`_)
+
+
+Improved Documentation
+----------------------
+
+- Add clarifying note about behavior of multiple parametrized arguments (`#3001
+  <https://github.com/pytest-dev/pytest/issues/3001>`_)
+
+
+Trivial/Internal Changes
+------------------------
+
+- Code cleanup. (`#3015 <https://github.com/pytest-dev/pytest/issues/3015>`_,
+  `#3021 <https://github.com/pytest-dev/pytest/issues/3021>`_)
+
+- Clean up code by replacing imports and references of `_ast` to `ast`. (`#3018
+  <https://github.com/pytest-dev/pytest/issues/3018>`_)
+
+
 Pytest 3.3.1 (2017-12-05)
 =========================
 
