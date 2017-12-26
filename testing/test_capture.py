@@ -1235,6 +1235,26 @@ def test_error_attribute_issue555(testdir):
     reprec = testdir.inline_run()
     reprec.assertoutcome(passed=1)
 
+def test_capfd_after_test(testdir):
+    testdir.makepyfile("""
+    import sys
+    import pytest
+    import os
+
+    @pytest.fixture()
+    def fix(capfd):
+        yield
+        out, err = capfd.readouterr()
+        assert out == 'lolcatz' + os.linesep
+        assert err == 'err'
+
+    def test_a(fix):
+        print("lolcatz")
+        sys.stderr.write("err")
+    """)
+    reprec = testdir.inline_run()
+    reprec.assertoutcome(passed=1)
+
 
 @pytest.mark.skipif(not sys.platform.startswith('win') and sys.version_info[:2] >= (3, 6),
                     reason='only py3.6+ on windows')
