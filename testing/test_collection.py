@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
+import pprint
+import sys
 import pytest
-import py
 
 import _pytest._code
 from _pytest.main import Session, EXIT_NOTESTSCOLLECTED, _in_venv
@@ -36,7 +37,7 @@ class TestCollector(object):
 
         assert fn1 == fn2
         assert fn1 != modcol
-        if py.std.sys.version_info < (3, 0):
+        if sys.version_info < (3, 0):
             assert cmp(fn1, fn2) == 0
         assert hash(fn1) == hash(fn2)
 
@@ -128,7 +129,7 @@ class TestCollectFS(object):
                              ("activate", "activate.csh", "activate.fish",
                               "Activate", "Activate.bat", "Activate.ps1"))
     def test_ignored_virtualenvs(self, testdir, fname):
-        bindir = "Scripts" if py.std.sys.platform.startswith("win") else "bin"
+        bindir = "Scripts" if sys.platform.startswith("win") else "bin"
         testdir.tmpdir.ensure("virtual", bindir, fname)
         testfile = testdir.tmpdir.ensure("virtual", "test_invenv.py")
         testfile.write("def test_hello(): pass")
@@ -147,7 +148,7 @@ class TestCollectFS(object):
                              ("activate", "activate.csh", "activate.fish",
                               "Activate", "Activate.bat", "Activate.ps1"))
     def test_ignored_virtualenvs_norecursedirs_precedence(self, testdir, fname):
-        bindir = "Scripts" if py.std.sys.platform.startswith("win") else "bin"
+        bindir = "Scripts" if sys.platform.startswith("win") else "bin"
         # norecursedirs takes priority
         testdir.tmpdir.ensure(".virtual", bindir, fname)
         testfile = testdir.tmpdir.ensure(".virtual", "test_invenv.py")
@@ -163,7 +164,7 @@ class TestCollectFS(object):
                               "Activate", "Activate.bat", "Activate.ps1"))
     def test__in_venv(self, testdir, fname):
         """Directly test the virtual env detection function"""
-        bindir = "Scripts" if py.std.sys.platform.startswith("win") else "bin"
+        bindir = "Scripts" if sys.platform.startswith("win") else "bin"
         # no bin/activate, not a virtualenv
         base_path = testdir.tmpdir.mkdir('venv')
         assert _in_venv(base_path) is False
@@ -436,7 +437,7 @@ class TestSession(object):
         assert item.name == "test_func"
         newid = item.nodeid
         assert newid == id
-        py.std.pprint.pprint(hookrec.calls)
+        pprint.pprint(hookrec.calls)
         topdir = testdir.tmpdir  # noqa
         hookrec.assert_contains([
             ("pytest_collectstart", "collector.fspath == topdir"),
@@ -486,7 +487,7 @@ class TestSession(object):
         id = p.basename
 
         items, hookrec = testdir.inline_genitems(id)
-        py.std.pprint.pprint(hookrec.calls)
+        pprint.pprint(hookrec.calls)
         assert len(items) == 2
         hookrec.assert_contains([
             ("pytest_collectstart",
@@ -508,7 +509,7 @@ class TestSession(object):
 
         items, hookrec = testdir.inline_genitems()
         assert len(items) == 1
-        py.std.pprint.pprint(hookrec.calls)
+        pprint.pprint(hookrec.calls)
         hookrec.assert_contains([
             ("pytest_collectstart", "collector.fspath == test_aaa"),
             ("pytest_pycollect_makeitem", "name == 'test_func'"),
@@ -529,7 +530,7 @@ class TestSession(object):
 
         items, hookrec = testdir.inline_genitems(id)
         assert len(items) == 2
-        py.std.pprint.pprint(hookrec.calls)
+        pprint.pprint(hookrec.calls)
         hookrec.assert_contains([
             ("pytest_collectstart", "collector.fspath == test_aaa"),
             ("pytest_pycollect_makeitem", "name == 'test_func'"),

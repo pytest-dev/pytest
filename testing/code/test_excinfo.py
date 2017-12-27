@@ -2,6 +2,8 @@
 from __future__ import absolute_import, division, print_function
 
 import operator
+import os
+import sys
 import _pytest
 import py
 import pytest
@@ -472,7 +474,7 @@ class TestFormattedExcinfo(object):
             excinfo = _pytest._code.ExceptionInfo()
         repr = pr.repr_excinfo(excinfo)
         assert repr.reprtraceback.reprentries[1].lines[0] == ">   ???"
-        if py.std.sys.version_info[0] >= 3:
+        if sys.version_info[0] >= 3:
             assert repr.chain[0][0].reprentries[1].lines[0] == ">   ???"
 
     def test_repr_many_line_source_not_existing(self):
@@ -487,7 +489,7 @@ raise ValueError()
             excinfo = _pytest._code.ExceptionInfo()
         repr = pr.repr_excinfo(excinfo)
         assert repr.reprtraceback.reprentries[1].lines[0] == ">   ???"
-        if py.std.sys.version_info[0] >= 3:
+        if sys.version_info[0] >= 3:
             assert repr.chain[0][0].reprentries[1].lines[0] == ">   ???"
 
     def test_repr_source_failing_fullsource(self):
@@ -545,13 +547,13 @@ raise ValueError()
         fail = IOError()
         repr = pr.repr_excinfo(excinfo)
         assert repr.reprtraceback.reprentries[0].lines[0] == ">   ???"
-        if py.std.sys.version_info[0] >= 3:
+        if sys.version_info[0] >= 3:
             assert repr.chain[0][0].reprentries[0].lines[0] == ">   ???"
 
         fail = py.error.ENOENT  # noqa
         repr = pr.repr_excinfo(excinfo)
         assert repr.reprtraceback.reprentries[0].lines[0] == ">   ???"
-        if py.std.sys.version_info[0] >= 3:
+        if sys.version_info[0] >= 3:
             assert repr.chain[0][0].reprentries[0].lines[0] == ">   ???"
 
     def test_repr_local(self):
@@ -738,7 +740,7 @@ raise ValueError()
             repr = p.repr_excinfo(excinfo)
             assert repr.reprtraceback
             assert len(repr.reprtraceback.reprentries) == len(reprtb.reprentries)
-            if py.std.sys.version_info[0] >= 3:
+            if sys.version_info[0] >= 3:
                 assert repr.chain[0][0]
                 assert len(repr.chain[0][0].reprentries) == len(reprtb.reprentries)
             assert repr.reprcrash.path.endswith("mod.py")
@@ -758,7 +760,7 @@ raise ValueError()
         def raiseos():
             raise OSError(2)
 
-        monkeypatch.setattr(py.std.os, 'getcwd', raiseos)
+        monkeypatch.setattr(os, 'getcwd', raiseos)
         assert p._makepath(__file__) == __file__
         p.repr_traceback(excinfo)
 
@@ -816,10 +818,10 @@ raise ValueError()
         for style in ("short", "long", "no"):
             for showlocals in (True, False):
                 repr = excinfo.getrepr(style=style, showlocals=showlocals)
-                if py.std.sys.version_info[0] < 3:
+                if sys.version_info[0] < 3:
                     assert isinstance(repr, ReprExceptionInfo)
                 assert repr.reprtraceback.style == style
-                if py.std.sys.version_info[0] >= 3:
+                if sys.version_info[0] >= 3:
                     assert isinstance(repr, ExceptionChainRepr)
                     for repr in repr.chain:
                         assert repr[0].style == style
