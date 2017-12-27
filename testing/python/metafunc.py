@@ -768,7 +768,7 @@ class TestMetafuncFunctional(object):
                 def test_method(self, metafunc, pytestconfig):
                     assert metafunc.config == pytestconfig
                     assert metafunc.module.__name__ == __name__
-                    if py.std.sys.version_info > (3, 0):
+                    if sys.version_info > (3, 0):
                         unbound = TestClass.test_method
                     else:
                         unbound = TestClass.test_method.im_func

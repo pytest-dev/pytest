@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, generators, print_function
 import ast
 from ast import PyCF_ONLY_AST as _AST_FLAG
 from bisect import bisect_right
+import linecache
 import sys
 import six
 import inspect
@@ -191,7 +192,7 @@ class Source(object):
             if flag & _AST_FLAG:
                 return co
             lines = [(x + "\n") for x in self.lines]
-            py.std.linecache.cache[filename] = (1, None, lines, filename)
+            linecache.cache[filename] = (1, None, lines, filename)
             return co
 
 #
@@ -223,8 +224,7 @@ def getfslineno(obj):
         code = _pytest._code.Code(obj)
     except TypeError:
         try:
-            fn = (py.std.inspect.getsourcefile(obj) or
-                  py.std.inspect.getfile(obj))
+            fn = inspect.getsourcefile(obj) or inspect.getfile(obj)
         except TypeError:
             return "", -1
 
@@ -248,7 +248,7 @@ def getfslineno(obj):
 
 def findsource(obj):
     try:
-        sourcelines, lineno = py.std.inspect.findsource(obj)
+        sourcelines, lineno = inspect.findsource(obj)
     except py.builtin._sysex:
         raise
     except:  # noqa
