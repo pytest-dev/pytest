@@ -1,8 +1,10 @@
 # encoding: UTF-8
 from __future__ import absolute_import, division, print_function
 import pytest
-import py
 import os
+import re
+import sys
+import types
 
 from _pytest.config import get_config, PytestPluginManager
 from _pytest.main import EXIT_NOTESTSCOLLECTED, Session
@@ -208,14 +210,14 @@ def test_importplugin_error_message(testdir, pytestpm):
 
     expected_message = '.*Error importing plugin "qwe": Not possible to import: .'
     expected_traceback = ".*in test_traceback"
-    assert py.std.re.match(expected_message, str(excinfo.value))
-    assert py.std.re.match(expected_traceback, str(excinfo.traceback[-1]))
+    assert re.match(expected_message, str(excinfo.value))
+    assert re.match(expected_traceback, str(excinfo.traceback[-1]))
 
 
 class TestPytestPluginManager(object):
     def test_register_imported_modules(self):
         pm = PytestPluginManager()
-        mod = py.std.types.ModuleType("x.y.pytest_hello")
+        mod = types.ModuleType("x.y.pytest_hello")
         pm.register(mod)
         assert pm.is_registered(mod)
         values = pm.get_plugins()
@@ -226,8 +228,8 @@ class TestPytestPluginManager(object):
         assert pm.get_plugins() == values
 
     def test_canonical_import(self, monkeypatch):
-        mod = py.std.types.ModuleType("pytest_xyz")
-        monkeypatch.setitem(py.std.sys.modules, 'pytest_xyz', mod)
+        mod = types.ModuleType("pytest_xyz")
+        monkeypatch.setitem(sys.modules, 'pytest_xyz', mod)
         pm = PytestPluginManager()
         pm.import_plugin('pytest_xyz')
         assert pm.get_plugin('pytest_xyz') == mod
@@ -237,7 +239,7 @@ class TestPytestPluginManager(object):
         testdir.syspathinsert()
         testdir.makepyfile(pytest_p1="#")
         testdir.makepyfile(pytest_p2="#")
-        mod = py.std.types.ModuleType("temp")
+        mod = types.ModuleType("temp")
         mod.pytest_plugins = ["pytest_p1", "pytest_p2"]
         pytestpm.consider_module(mod)
         assert pytestpm.get_plugin("pytest_p1").__name__ == "pytest_p1"
@@ -245,12 +247,12 @@ class TestPytestPluginManager(object):
 
     def test_consider_module_import_module(self, testdir):
         pytestpm = get_config().pluginmanager
-        mod = py.std.types.ModuleType("x")
+        mod = types.ModuleType("x")
         mod.pytest_plugins = "pytest_a"
         aplugin = testdir.makepyfile(pytest_a="#")
         reprec = testdir.make_hook_recorder(pytestpm)
         # syspath.prepend(aplugin.dirpath())
-        py.std.sys.path.insert(0, str(aplugin.dirpath()))
+        sys.path.insert(0, str(aplugin.dirpath()))
         pytestpm.consider_module(mod)
         call = reprec.getcall(pytestpm.hook.pytest_plugin_registered.name)
         assert call.plugin.__name__ == "pytest_a"

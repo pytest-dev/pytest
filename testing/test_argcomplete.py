@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
-import py
+import subprocess
+import sys
 import pytest
 
 # test for _argcomplete but not specific for any application
@@ -23,21 +24,21 @@ def equal_with_bash(prefix, ffc, fc, out=None):
 
 def _wrapcall(*args, **kargs):
     try:
-        if py.std.sys.version_info > (2, 7):
-            return py.std.subprocess.check_output(*args, **kargs).decode().splitlines()
+        if sys.version_info > (2, 7):
+            return subprocess.check_output(*args, **kargs).decode().splitlines()
         if 'stdout' in kargs:
             raise ValueError('stdout argument not allowed, it will be overridden.')
-        process = py.std.subprocess.Popen(
-            stdout=py.std.subprocess.PIPE, *args, **kargs)
+        process = subprocess.Popen(
+            stdout=subprocess.PIPE, *args, **kargs)
         output, unused_err = process.communicate()
         retcode = process.poll()
         if retcode:
             cmd = kargs.get("args")
             if cmd is None:
                 cmd = args[0]
-            raise py.std.subprocess.CalledProcessError(retcode, cmd)
+            raise subprocess.CalledProcessError(retcode, cmd)
         return output.decode().splitlines()
-    except py.std.subprocess.CalledProcessError:
+    except subprocess.CalledProcessError:
         return []
 
 
@@ -83,7 +84,7 @@ class TestArgComplete(object):
         ffc = FastFilesCompleter()
         fc = FilesCompleter()
         for x in ['/', '/d', '/data', 'qqq', '']:
-            assert equal_with_bash(x, ffc, fc, out=py.std.sys.stdout)
+            assert equal_with_bash(x, ffc, fc, out=sys.stdout)
 
     @pytest.mark.skipif("sys.platform in ('win32', 'darwin')")
     def test_remove_dir_prefix(self):
@@ -94,4 +95,4 @@ class TestArgComplete(object):
         ffc = FastFilesCompleter()
         fc = FilesCompleter()
         for x in '/usr/'.split():
-            assert not equal_with_bash(x, ffc, fc, out=py.std.sys.stdout)
+            assert not equal_with_bash(x, ffc, fc, out=sys.stdout)
