@@ -261,7 +261,7 @@ def pytest_runtest_makereport(item, call):
             else:
                 rep.outcome = "passed"
                 rep.wasxfail = explanation
-    elif item._skipped_by_mark and rep.skipped and type(rep.longrepr) is tuple:
+    elif getattr(item, '_skipped_by_mark', False) and rep.skipped and type(rep.longrepr) is tuple:
         # skipped by mark.skipif; change the location of the failure
         # to point to the item definition, otherwise it will display
         # the location of where the skip exception was raised within pytest
