@@ -1,1 +1,0 @@
-Fix **memory leak** where objects returned by fixtures were never destructed by the garbage collector.
