@@ -81,9 +81,9 @@ Also, :ref:`usefixtures` and :ref:`autouse` fixtures are supported
 when executing text doctest files.
 
 The standard ``doctest`` module provides some setting flags to configure the
-strictness of doctest tests. In pytest You can enable those flags those flags
-using the configuration file. To make pytest ignore trailing whitespaces and
-ignore lengthy exception stack traces you can just write:
+strictness of doctest tests. In pytest, you can enable those flags using the
+configuration file. To make pytest ignore trailing whitespaces and ignore
+lengthy exception stack traces you can just write:
 
 .. code-block:: ini
 
