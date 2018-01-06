@@ -1,0 +1,1 @@
+Fix skipping plugin reporting hook when test aborted before plugin setup hook.
