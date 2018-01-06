@@ -106,6 +106,4 @@ When distributing tests on the local machine, ``pytest`` takes care to
 configure a basetemp directory for the sub processes such that all temporary
 data lands below a single per-test run basetemp directory.
 
-.. _`py.path.local`: http://py.rtfd.org/en/latest/path.html
-
-
+.. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html

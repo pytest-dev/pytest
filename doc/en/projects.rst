@@ -37,7 +37,7 @@ Here are some examples of projects using ``pytest`` (please send notes via :ref:
 * `mwlib <http://pypi.python.org/pypi/mwlib>`_ mediawiki parser and utility library
 * `The Translate Toolkit <http://translate.sourceforge.net/wiki/toolkit/index>`_ for localization and conversion
 * `execnet <http://codespeak.net/execnet>`_ rapid multi-Python deployment
-* `pylib <http://py.rtfd.org>`_ cross-platform path, IO, dynamic code library
+* `pylib <https://py.readthedocs.io>`_ cross-platform path, IO, dynamic code library
 * `Pacha <http://pacha.cafepais.com/>`_ configuration management in five minutes
 * `bbfreeze <http://pypi.python.org/pypi/bbfreeze>`_ create standalone executables from Python scripts
 * `pdb++ <http://bitbucket.org/antocuni/pdb>`_ a fancier version of PDB
