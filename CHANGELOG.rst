@@ -21,8 +21,7 @@ Bug Fixes
   by the garbage collector. (`#2981
   <https://github.com/pytest-dev/pytest/issues/2981>`_)
 
-- Fix conversion of pyargs to filename to not convert symlinks and not use
-  deprecated features on Python 3. (`#2985
+- Fix conversion of pyargs to filename to not convert symlinks on Python 2. (`#2985
   <https://github.com/pytest-dev/pytest/issues/2985>`_)
 
 - ``PYTEST_DONT_REWRITE`` is now checked for plugins too rather than only for
