@@ -596,6 +596,7 @@ Generic "runtest" hooks
 
 All runtest related hooks receive a :py:class:`pytest.Item <_pytest.main.Item>` object.
 
+.. autofunction:: pytest_runtestloop
 .. autofunction:: pytest_runtest_protocol
 .. autofunction:: pytest_runtest_setup
 .. autofunction:: pytest_runtest_call

@@ -30,9 +30,17 @@ from _pytest.compat import (
 from _pytest.outcomes import fail
 from _pytest.mark import transfer_markers
 
-cutdir1 = py.path.local(pluggy.__file__.rstrip("oc"))
-cutdir2 = py.path.local(_pytest.__file__).dirpath()
-cutdir3 = py.path.local(py.__file__).dirpath()
+
+# relative paths that we use to filter traceback entries from appearing to the user;
+# see filter_traceback
+# note: if we need to add more paths than what we have now we should probably use a list
+# for better maintenance
+_pluggy_dir = py.path.local(pluggy.__file__.rstrip("oc"))
+# pluggy is either a package or a single module depending on the version
+if _pluggy_dir.basename == '__init__.py':
+    _pluggy_dir = _pluggy_dir.dirpath()
+_pytest_dir = py.path.local(_pytest.__file__).dirpath()
+_py_dir = py.path.local(py.__file__).dirpath()
 
 
 def filter_traceback(entry):
@@ -47,10 +55,10 @@ def filter_traceback(entry):
     is_generated = '<' in raw_filename and '>' in raw_filename
     if is_generated:
         return False
-    # entry.path might point to an inexisting file, in which case it will
-    # alsso return a str object. see #1133
+    # entry.path might point to an non-existing file, in which case it will
+    # also return a str object. see #1133
     p = py.path.local(entry.path)
-    return p != cutdir1 and not p.relto(cutdir2) and not p.relto(cutdir3)
+    return not p.relto(_pluggy_dir) and not p.relto(_pytest_dir) and not p.relto(_py_dir)
 
 
 def pyobj_property(name):
@@ -563,7 +571,6 @@ class FunctionMixin(PyobjMixin):
             if ntraceback == traceback:
                 ntraceback = ntraceback.cut(path=path)
                 if ntraceback == traceback:
-                    # ntraceback = ntraceback.cut(excludepath=cutdir2)
                     ntraceback = ntraceback.filter(filter_traceback)
                     if not ntraceback:
                         ntraceback = traceback
