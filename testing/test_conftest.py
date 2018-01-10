@@ -232,7 +232,7 @@ def test_fixture_dependency(testdir, monkeypatch):
     ct1.write("")
     sub = testdir.mkdir("sub")
     sub.join("__init__.py").write("")
-    sub.join("conftest.py").write(py.std.textwrap.dedent("""
+    sub.join("conftest.py").write(dedent("""
         import pytest
 
         @pytest.fixture
@@ -249,7 +249,7 @@ def test_fixture_dependency(testdir, monkeypatch):
     """))
     subsub = sub.mkdir("subsub")
     subsub.join("__init__.py").write("")
-    subsub.join("test_bar.py").write(py.std.textwrap.dedent("""
+    subsub.join("test_bar.py").write(dedent("""
         import pytest
 
         @pytest.fixture
@@ -265,7 +265,7 @@ def test_fixture_dependency(testdir, monkeypatch):
 
 def test_conftest_found_with_double_dash(testdir):
     sub = testdir.mkdir("sub")
-    sub.join("conftest.py").write(py.std.textwrap.dedent("""
+    sub.join("conftest.py").write(dedent("""
         def pytest_addoption(parser):
             parser.addoption("--hello-world", action="store_true")
     """))

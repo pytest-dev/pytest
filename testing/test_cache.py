@@ -410,8 +410,8 @@ class TestLastFailed(object):
     def test_lastfailed_collectfailure(self, testdir, monkeypatch):
 
         testdir.makepyfile(test_maybe="""
-            import py
-            env = py.std.os.environ
+            import os
+            env = os.environ
             if '1' == env['FAILIMPORT']:
                 raise ImportError('fail')
             def test_hello():
@@ -439,8 +439,8 @@ class TestLastFailed(object):
     def test_lastfailed_failure_subset(self, testdir, monkeypatch):
 
         testdir.makepyfile(test_maybe="""
-            import py
-            env = py.std.os.environ
+            import os
+            env = os.environ
             if '1' == env['FAILIMPORT']:
                 raise ImportError('fail')
             def test_hello():
@@ -448,8 +448,8 @@ class TestLastFailed(object):
         """)
 
         testdir.makepyfile(test_maybe2="""
-            import py
-            env = py.std.os.environ
+            import os
+            env = os.environ
             if '1' == env['FAILIMPORT']:
                 raise ImportError('fail')
             def test_hello():

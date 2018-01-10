@@ -1,5 +1,7 @@
 from __future__ import absolute_import, division, print_function
+import inspect
 import sys
+import traceback
 from inspect import CO_VARARGS, CO_VARKEYWORDS
 import re
 from weakref import ref
@@ -422,7 +424,7 @@ class ExceptionInfo(object):
         """
         if style == 'native':
             return ReprExceptionInfo(ReprTracebackNative(
-                py.std.traceback.format_exception(
+                traceback.format_exception(
                     self.type,
                     self.value,
                     self.traceback[0]._rawentry,
@@ -556,7 +558,7 @@ class FormattedExcinfo(object):
                     # else:
                     #    self._line("%-10s =\\" % (name,))
                     #    # XXX
-                    #    py.std.pprint.pprint(value, stream=self.excinfowriter)
+                    #    pprint.pprint(value, stream=self.excinfowriter)
             return ReprLocals(lines)
 
     def repr_traceback_entry(self, entry, excinfo=None):
@@ -669,7 +671,7 @@ class FormattedExcinfo(object):
                 else:
                     # fallback to native repr if the exception doesn't have a traceback:
                     # ExceptionInfo objects require a full traceback to work
-                    reprtraceback = ReprTracebackNative(py.std.traceback.format_exception(type(e), e, None))
+                    reprtraceback = ReprTracebackNative(traceback.format_exception(type(e), e, None))
                     reprcrash = None
 
                 repr_chain += [(reprtraceback, reprcrash, descr)]
@@ -886,7 +888,7 @@ def getrawcode(obj, trycall=True):
         obj = getattr(obj, 'f_code', obj)
         obj = getattr(obj, '__code__', obj)
         if trycall and not hasattr(obj, 'co_firstlineno'):
-            if hasattr(obj, '__call__') and not py.std.inspect.isclass(obj):
+            if hasattr(obj, '__call__') and not inspect.isclass(obj):
                 x = getrawcode(obj.__call__, trycall=False)
                 if hasattr(x, 'co_firstlineno'):
                     return x
