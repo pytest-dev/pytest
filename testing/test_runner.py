@@ -202,6 +202,18 @@ class BaseFunctionalTests(object):
         """)
         assert rec.ret == 1
 
+    def test_logstart_logfinish_hooks(self, testdir):
+        rec = testdir.inline_runsource("""
+            import pytest
+            def test_func():
+                pass
+        """)
+        reps = rec.getcalls("pytest_runtest_logstart pytest_runtest_logfinish")
+        assert [x._name for x in reps] == ['pytest_runtest_logstart', 'pytest_runtest_logfinish']
+        for rep in reps:
+            assert rep.nodeid == 'test_logstart_logfinish_hooks.py::test_func'
+            assert rep.location == ('test_logstart_logfinish_hooks.py', 1, 'test_func')
+
     def test_exact_teardown_issue90(self, testdir):
         rec = testdir.inline_runsource("""
             import pytest

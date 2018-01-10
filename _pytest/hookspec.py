@@ -304,7 +304,25 @@ def pytest_runtest_protocol(item, nextitem):
 
 
 def pytest_runtest_logstart(nodeid, location):
-    """ signal the start of running a single test item. """
+    """ signal the start of running a single test item.
+
+    This hook will be called **before** :func:`pytest_runtest_setup`, :func:`pytest_runtest_call` and
+    :func:`pytest_runtest_teardown` hooks.
+
+    :param str nodeid: full id of the item
+    :param location: a triple of ``(filename, linenum, testname)``
+    """
+
+
+def pytest_runtest_logfinish(nodeid, location):
+    """ signal the complete finish of running a single test item.
+
+    This hook will be called **after** :func:`pytest_runtest_setup`, :func:`pytest_runtest_call` and
+    :func:`pytest_runtest_teardown` hooks.
+
+    :param str nodeid: full id of the item
+    :param location: a triple of ``(filename, linenum, testname)``
+    """
 
 
 def pytest_runtest_setup(item):
@@ -445,7 +463,7 @@ def pytest_terminal_summary(terminalreporter, exitstatus):
 def pytest_logwarning(message, code, nodeid, fslocation):
     """ process a warning specified by a message, a code string,
     a nodeid and fslocation (both of which may be None
-    if the warning is not tied to a partilar node/location)."""
+    if the warning is not tied to a particular node/location)."""
 
 # -------------------------------------------------------------------------
 # doctest hooks

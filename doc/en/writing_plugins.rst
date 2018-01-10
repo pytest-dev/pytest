@@ -598,6 +598,8 @@ All runtest related hooks receive a :py:class:`pytest.Item <_pytest.main.Item>` 
 
 .. autofunction:: pytest_runtestloop
 .. autofunction:: pytest_runtest_protocol
+.. autofunction:: pytest_runtest_logstart
+.. autofunction:: pytest_runtest_logfinish
 .. autofunction:: pytest_runtest_setup
 .. autofunction:: pytest_runtest_call
 .. autofunction:: pytest_runtest_teardown
