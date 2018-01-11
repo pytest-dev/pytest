@@ -173,45 +173,40 @@ def reorder_items(items):
                 d[item] = keys
                 for key in keys:
                     item_d[key].append(item)
-    
+    items = OrderedDict.fromkeys(items)
     return list(reorder_items_atscope(items, set(), argkeys_cache, items_by_argkey, 0))
-    
+
 
 def reorder_items_atscope(items, ignore, argkeys_cache, items_by_argkey, scopenum):
     if scopenum >= scopenum_function or len(items) < 3:
         return items
-    items = deque(items)
+    items_deque = deque(items)
     items_done = OrderedDict()
     scoped_items_by_argkey = items_by_argkey[scopenum]
     scoped_argkeys_cache = argkeys_cache[scopenum]
-    while items:
-        
+    while items_deque:
         no_argkey_group = OrderedDict()
         slicing_argkey = None
-        
-        while items:
-            item = items.popleft()
-            if item in items_done:
+        while items_deque:
+            item = items_deque.popleft()
+            if item in items_done or item in no_argkey_group:
                 continue
-            
-            argkeys = OrderedDict.fromkeys(k for k in scoped_argkeys_cache.get(item, ()) if k not in ignore)
+            argkeys = OrderedDict.fromkeys(k for k in scoped_argkeys_cache.get(item, []) if k not in ignore)
             if not argkeys:
                 no_argkey_group[item] = None
-                
             else:
                 slicing_argkey, _ = argkeys.popitem()
-                #we don't have to remove relevant items from later in the deque because they'll just be ignored
-                items.extendleft(reversed(scoped_items_by_argkey[slicing_argkey]))
+                # we don't have to remove relevant items from later in the deque because they'll just be ignored
+                for i in reversed(scoped_items_by_argkey[slicing_argkey]):
+                    if i in items:
+                        items_deque.appendleft(i)
                 break
-                
         if no_argkey_group:
             no_argkey_group = reorder_items_atscope(
                                 no_argkey_group, set(), argkeys_cache, items_by_argkey, scopenum + 1)
             for item in no_argkey_group:
                 items_done[item] = None
-                
         ignore.add(slicing_argkey)
-        
     return items_done
 
 
