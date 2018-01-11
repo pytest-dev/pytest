@@ -152,9 +152,9 @@ class TerminalReporter:
         self.reportchars = getreportopt(config)
         self.hasmarkup = self._tw.hasmarkup
         self.isatty = file.isatty()
-        self._progress_items_reported = 0
-        self._show_progress_info = (self.config.getoption('capture') != 'no' and
-                                    self.config.getini('console_output_style') == 'progress')
+        self._progress_nodeids_reported = set()
+        self._show_progress_info = (self.config.getoption('capture') != 'no' and not self.config.getoption('setupshow')
+                                    and self.config.getini('console_output_style') == 'progress')
 
     def hasopt(self, char):
         char = {'xfailed': 'x', 'skipped': 's'}.get(char, char)
@@ -179,7 +179,6 @@ class TerminalReporter:
         if extra:
             self._tw.write(extra, **kwargs)
             self.currentfspath = -2
-            self._write_progress_information_filling_space()
 
     def ensure_newline(self):
         if self.currentfspath:
@@ -269,14 +268,13 @@ class TerminalReporter:
             # probably passed setup/teardown
             return
         running_xdist = hasattr(rep, 'node')
-        self._progress_items_reported += 1
         if self.verbosity <= 0:
             if not running_xdist and self.showfspath:
                 self.write_fspath_result(rep.nodeid, letter)
             else:
                 self._tw.write(letter)
-            self._write_progress_if_past_edge()
         else:
+            self._progress_nodeids_reported.add(rep.nodeid)
             if markup is None:
                 if rep.passed:
                     markup = {'green': True}
@@ -289,6 +287,8 @@ class TerminalReporter:
             line = self._locationline(rep.nodeid, *rep.location)
             if not running_xdist:
                 self.write_ensure_prefix(line, word, **markup)
+                if self._show_progress_info:
+                    self._write_progress_information_filling_space()
             else:
                 self.ensure_newline()
                 self._tw.write("[%s]" % rep.node.gateway.id)
@@ -300,31 +300,28 @@ class TerminalReporter:
                 self._tw.write(" " + line)
                 self.currentfspath = -2
 
-    def _write_progress_if_past_edge(self):
-        if not self._show_progress_info:
-            return
-        last_item = self._progress_items_reported == self._session.testscollected
-        if last_item:
-            self._write_progress_information_filling_space()
-            return
-
-        past_edge = self._tw.chars_on_current_line + self._PROGRESS_LENGTH + 1 >= self._screen_width
-        if past_edge:
-            msg = self._get_progress_information_message()
-            self._tw.write(msg + '\n', cyan=True)
+    def pytest_runtest_logfinish(self, nodeid):
+        if self.verbosity <= 0 and self._show_progress_info:
+            self._progress_nodeids_reported.add(nodeid)
+            last_item = len(self._progress_nodeids_reported) == self._session.testscollected
+            if last_item:
+                self._write_progress_information_filling_space()
+            else:
+                past_edge = self._tw.chars_on_current_line + self._PROGRESS_LENGTH + 1 >= self._screen_width
+                if past_edge:
+                    msg = self._get_progress_information_message()
+                    self._tw.write(msg + '\n', cyan=True)
 
     _PROGRESS_LENGTH = len(' [100%]')
 
     def _get_progress_information_message(self):
         collected = self._session.testscollected
         if collected:
-            progress = self._progress_items_reported * 100 // collected
+            progress = len(self._progress_nodeids_reported) * 100 // collected
             return ' [{:3d}%]'.format(progress)
         return ' [100%]'
 
     def _write_progress_information_filling_space(self):
-        if not self._show_progress_info:
-            return
         msg = self._get_progress_information_message()
         fill = ' ' * (self._tw.fullwidth - self._tw.chars_on_current_line - len(msg) - 1)
         self.write(fill + msg, cyan=True)
