@@ -1,1 +1,1 @@
-Optimize reorder_items in fixtures.py.
+Improve performance when collecting tests using many fixtures.
