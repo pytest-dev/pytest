@@ -153,8 +153,17 @@ class TerminalReporter:
         self.hasmarkup = self._tw.hasmarkup
         self.isatty = file.isatty()
         self._progress_nodeids_reported = set()
-        self._show_progress_info = (self.config.getoption('capture') != 'no' and not self.config.getoption('setupshow')
-                                    and self.config.getini('console_output_style') == 'progress')
+        self._show_progress_info = self._determine_show_progress_info()
+
+    def _determine_show_progress_info(self):
+        """Return True if we should display progress information based on the current config"""
+        # do not show progress if we are not capturing output (#3038)
+        if self.config.getoption('capture') == 'no':
+            return False
+        # do not show progress if we are showing fixture setup/teardown
+        if self.config.getoption('setupshow'):
+            return False
+        return self.config.getini('console_output_style') == 'progress'
 
     def hasopt(self, char):
         char = {'xfailed': 'x', 'skipped': 's'}.get(char, char)
