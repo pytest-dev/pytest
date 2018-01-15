@@ -1,0 +1,1 @@
+New member on the `_item` member of the `caplog` fixture: `catch_log_handlers`. This contains a dict for the logs for the different stages of the test (setup, call, teardown). So to access the logs for the setup phase in your tests you can get to them via `caplog._item.catch_log_handlers`.
