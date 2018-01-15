@@ -141,6 +141,26 @@ def test_disable_log_capturing_ini(testdir):
         result.stdout.fnmatch_lines(['*- Captured *log call -*'])
 
 
+@pytest.mark.parametrize('enabled', [True, False])
+def test_log_cli_enabled_disabled(testdir, enabled):
+    msg = 'critical message logged by test'
+    testdir.makepyfile('''
+        import logging
+        def test_log_cli():
+            logging.critical("{}")
+    '''.format(msg))
+    if enabled:
+        testdir.makeini('''
+            [pytest]
+            log_cli=true
+        ''')
+    result = testdir.runpytest('-s')
+    if enabled:
+        assert msg in result.stderr.str()
+    else:
+        assert msg not in result.stderr.str()
+
+
 def test_log_cli_default_level(testdir):
     # Default log file level
     testdir.makepyfile('''
@@ -152,6 +172,10 @@ def test_log_cli_default_level(testdir):
             logging.getLogger('catchlog').info("This log message won't be shown")
             logging.getLogger('catchlog').warning("This log message will be shown")
             print('PASSED')
+    ''')
+    testdir.makeini('''
+        [pytest]
+        log_cli=true
     ''')
 
     result = testdir.runpytest('-s')
@@ -185,6 +209,10 @@ def test_log_cli_level(testdir):
             logging.getLogger('catchlog').debug("This log message won't be shown")
             logging.getLogger('catchlog').info("This log message will be shown")
             print('PASSED')
+    ''')
+    testdir.makeini('''
+        [pytest]
+        log_cli=true
     ''')
 
     result = testdir.runpytest('-s', '--log-cli-level=INFO')
@@ -230,6 +258,7 @@ def test_log_cli_ini_level(testdir):
     testdir.makeini(
         """
         [pytest]
+        log_cli=true
         log_cli_level = INFO
         """)
     testdir.makepyfile('''

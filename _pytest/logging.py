@@ -48,6 +48,9 @@ def pytest_addoption(parser):
         '--log-date-format',
         dest='log_date_format', default=DEFAULT_LOG_DATE_FORMAT,
         help='log date format as used by the logging module.')
+    parser.addini(
+        'log_cli', default=False, type='bool',
+        help='enable log display during test run (also known as "live logging").')
     add_option_ini(
         '--log-cli-level',
         dest='log_cli_level', default=None,
@@ -234,8 +237,12 @@ def get_actual_log_level(config, *setting_names):
 
 
 def pytest_configure(config):
-    config.pluginmanager.register(LoggingPlugin(config),
-                                  'logging-plugin')
+    config.pluginmanager.register(LoggingPlugin(config), 'logging-plugin')
+
+
+@contextmanager
+def _dummy_context_manager():
+    yield
 
 
 class LoggingPlugin(object):
@@ -248,26 +255,29 @@ class LoggingPlugin(object):
         The formatter can be safely shared across all handlers so
         create a single one for the entire test session here.
         """
-        self.log_cli_level = get_actual_log_level(
-            config, 'log_cli_level', 'log_level') or logging.WARNING
-
         self.print_logs = get_option_ini(config, 'log_print')
         self.formatter = logging.Formatter(
             get_option_ini(config, 'log_format'),
             get_option_ini(config, 'log_date_format'))
 
-        log_cli_handler = logging.StreamHandler(sys.stderr)
-        log_cli_format = get_option_ini(
-            config, 'log_cli_format', 'log_format')
-        log_cli_date_format = get_option_ini(
-            config, 'log_cli_date_format', 'log_date_format')
-        log_cli_formatter = logging.Formatter(
-            log_cli_format,
-            datefmt=log_cli_date_format)
-        self.log_cli_handler = log_cli_handler  # needed for a single unittest
-        self.live_logs = catching_logs(log_cli_handler,
-                                       formatter=log_cli_formatter,
-                                       level=self.log_cli_level)
+        if config.getini('log_cli'):
+            log_cli_handler = logging.StreamHandler(sys.stderr)
+            log_cli_format = get_option_ini(
+                config, 'log_cli_format', 'log_format')
+            log_cli_date_format = get_option_ini(
+                config, 'log_cli_date_format', 'log_date_format')
+            log_cli_formatter = logging.Formatter(
+                log_cli_format,
+                datefmt=log_cli_date_format)
+            log_cli_level = get_actual_log_level(
+                config, 'log_cli_level', 'log_level') or logging.WARNING
+            self.log_cli_handler = log_cli_handler  # needed for a single unittest
+            self.live_logs_context = catching_logs(log_cli_handler,
+                                                   formatter=log_cli_formatter,
+                                                   level=log_cli_level)
+        else:
+            self.log_cli_handler = None
+            self.live_logs_context = _dummy_context_manager()
 
         log_file = get_option_ini(config, 'log_file')
         if log_file:
@@ -328,7 +338,7 @@ class LoggingPlugin(object):
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtestloop(self, session):
         """Runs all collected test items."""
-        with self.live_logs:
+        with self.live_logs_context:
             if self.log_file_handler is not None:
                 with closing(self.log_file_handler):
                     with catching_logs(self.log_file_handler,
