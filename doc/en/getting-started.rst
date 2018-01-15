@@ -7,32 +7,34 @@ Installation and Getting Started
 
 **PyPI package name**: `pytest <http://pypi.python.org/pypi/pytest>`_
 
-**dependencies**: `py <http://pypi.python.org/pypi/py>`_,
+**Dependencies**: `py <http://pypi.python.org/pypi/py>`_,
 `colorama (Windows) <http://pypi.python.org/pypi/colorama>`_,
 
-**documentation as PDF**: `download latest <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
+**Documentation as PDF**: `download latest <https://media.readthedocs.org/pdf/pytest/latest/pytest.pdf>`_
+
+``pytest`` is a framework that makes building simple and scalable tests easy. Tests are expressive and readable—no boilerplate code required. Get started in minutes with a small unit test or complex functional test for your application or library.
 
 .. _`getstarted`:
-.. _installation:
+.. _`installpytest`:
 
-Installation
+Install ``pytest``
 ----------------------------------------
 
-Installation::
+1. Run the following command in your command line::
 
     pip install -U pytest
 
-To check your installation has installed the correct version::
+2. Check that you installed the correct version::
 
     $ pytest --version
     This is pytest version 3.x.y, imported from $PYTHON_PREFIX/lib/python3.5/site-packages/pytest.py
 
-.. _`simpletest`:
+.. _`createyourfirsttest`:
 
-Our first test run
+Create your first test
 ----------------------------------------------------------
 
-Let's create a first test file with a simple test function::
+Create a simple test function with just four lines of code::
 
     # content of test_sample.py
     def func(x):
@@ -41,7 +43,7 @@ Let's create a first test file with a simple test function::
     def test_answer():
         assert func(3) == 5
 
-That's it. You can execute the test function now::
+That’s it. You can now execute the test function::
 
     $ pytest
     =========================== test session starts ============================
@@ -62,30 +64,26 @@ That's it. You can execute the test function now::
     test_sample.py:5: AssertionError
     ========================= 1 failed in 0.12 seconds =========================
 
-We got a failure report because our little ``func(3)`` call did not return ``5``.
+This test returns a failure report because ``func(3)`` does not return ``5``.
 
 .. note::
 
-    You can simply use the ``assert`` statement for asserting test
-    expectations.  pytest's :ref:`assert introspection` will intelligently
-    report intermediate values of the assert expression freeing
-    you from the need to learn the many names of `JUnit legacy methods`_.
+    You can use the ``assert`` statement to verify test expectations. pytest’s :ref:`Advanced assertion introspection` will intelligently report intermediate values of the assert expression so you can avoid the many names `of JUnit legacy methods`_.
 
 .. _`JUnit legacy methods`: http://docs.python.org/library/unittest.html#test-cases
 
-.. _`assert statement`: http://docs.python.org/reference/simple_stmts.html#the-assert-statement
+.. _`Advanced assertion introspection`: http://docs.python.org/reference/simple_stmts.html#the-assert-statement
 
-Running multiple tests
+Run multiple tests
 ----------------------------------------------------------
 
-``pytest`` will run all files in the current directory and its subdirectories of the form test_*.py or \*_test.py. More generally, it follows :ref:`standard test discovery rules <test discovery>`.
+``pytest`` will run all files of the form test_*.py or \*_test.py in the current directory and its subdirectories. More generally, it follows :ref:`standard test discovery rules <test discovery>`.
 
 
-Asserting that a certain exception is raised
+Assert that a certain exception is raised
 --------------------------------------------------------------
 
-If you want to assert that some code raises an exception you can
-use the ``raises`` helper::
+Use the ``raises`` helper to assert that some code raises an exception::
 
     # content of test_sysexit.py
     import pytest
@@ -96,18 +94,16 @@ use the ``raises`` helper::
         with pytest.raises(SystemExit):
             f()
 
-Running it with, this time in "quiet" reporting mode::
+Execute the test function with “quiet” reporting mode::
 
     $ pytest -q test_sysexit.py
     .                                                                    [100%]
     1 passed in 0.12 seconds
 
-Grouping multiple tests in a class
+Group multiple tests in a class
 --------------------------------------------------------------
 
-Once you start to have more than a few tests it often makes sense
-to group tests logically, in classes and modules.  Let's write a class
-containing two tests::
+Once you develop multiple tests, you may want to group them into a class. pytest makes it easy to create a class containing more than one test::
 
     # content of test_class.py
     class TestClass(object):
@@ -119,9 +115,7 @@ containing two tests::
             x = "hello"
             assert hasattr(x, 'check')
 
-The two tests are found because of the standard :ref:`test discovery`.
-There is no need to subclass anything.  We can simply
-run the module by passing its filename::
+``pytest`` discovers all tests following its :ref:`Conventions for Python test discovery <test discovery>`, so it finds both ``test_`` prefixed functions. There is no need to subclass anything. We can simply run the module by passing its filename:
 
     $ pytest -q test_class.py
     .F                                                                   [100%]
@@ -139,26 +133,19 @@ run the module by passing its filename::
     test_class.py:8: AssertionError
     1 failed, 1 passed in 0.12 seconds
 
-The first test passed, the second failed. Again we can easily see
-the intermediate values used in the assertion, helping us to
-understand the reason for the failure.
+The first test passed and the second failed. You can easily see the intermediate values in the assertion to help you understand the reason for the failure.
 
-Going functional: requesting a unique temporary directory
+Request a unique temporary directory for functional tests
 --------------------------------------------------------------
 
-For functional tests one often needs to create some files
-and pass them to application objects.  pytest provides
-:ref:`builtinfixtures` which allow to request arbitrary
-resources, for example a unique temporary directory::
+``pytest`` provides `Builtin fixtures/function arguments <https://docs.pytest.org/en/latest/builtin.html#builtinfixtures>`_ to request arbitrary resources, like a unique temporary directory:
 
     # content of test_tmpdir.py
     def test_needsfiles(tmpdir):
         print (tmpdir)
         assert 0
 
-We list the name ``tmpdir`` in the test function signature and
-``pytest`` will lookup and call a fixture factory to create the resource
-before performing the test function call.  Let's just run it::
+List the name ``tmpdir`` in the test function signature and ``pytest`` will lookup and call a fixture factory to create the resource before performing the test function call. Before the test runs, ``pytest`` creates a unique-per-test-invocation temporary directory::
 
     $ pytest -q test_tmpdir.py
     F                                                                    [100%]
@@ -177,22 +164,21 @@ before performing the test function call.  Let's just run it::
     PYTEST_TMPDIR/test_needsfiles0
     1 failed in 0.12 seconds
 
-Before the test runs, a unique-per-test-invocation temporary directory
-was created.  More info at :ref:`tmpdir handling`.
+More info on tmpdir handeling is available at `Temporary directories and files <tmpdir handling>`_.
 
-You can find out what kind of builtin :ref:`fixtures` exist by typing::
+Find out what kind of builtin ```pytest`` fixtures <fixtures>`_ exist with the command::
 
     pytest --fixtures   # shows builtin and custom fixtures
 
-Where to go next
+Continue reading
 -------------------------------------
 
-Here are a few suggestions where to go next:
+Check out additional pytest resources to help you customize tests for your unique workflow:
 
-* :ref:`cmdline` for command line invocation examples
-* :ref:`good practices <goodpractices>` for virtualenv, test layout
-* :ref:`existingtestsuite` for working with pre-existing tests
-* :ref:`fixtures` for providing a functional baseline to your tests
-* :ref:`plugins` managing and writing plugins
+* ":ref:`cmdline`" for command line invocation examples
+* ":ref:`goodpractices`" for virtualenv and test layouts
+* ":ref:`existingtestsuite`" for working with pre-existing tests
+* ":ref:`fixtures`" for providing a functional baseline to your tests
+* ":ref:`plugins`" for managing and writing plugins
 
 .. include:: links.inc
