@@ -15,7 +15,7 @@ Installation and Getting Started
 ``pytest`` is a framework that makes building simple and scalable tests easy. Tests are expressive and readable—no boilerplate code required. Get started in minutes with a small unit test or complex functional test for your application or library.
 
 .. _`getstarted`:
-.. _`installpytest`:
+.. _`installation`:
 
 Install ``pytest``
 ----------------------------------------
@@ -29,7 +29,7 @@ Install ``pytest``
     $ pytest --version
     This is pytest version 3.x.y, imported from $PYTHON_PREFIX/lib/python3.5/site-packages/pytest.py
 
-.. _`createyourfirsttest`:
+.. _`simpletest`:
 
 Create your first test
 ----------------------------------------------------------
@@ -68,11 +68,7 @@ This test returns a failure report because ``func(3)`` does not return ``5``.
 
 .. note::
 
-    You can use the ``assert`` statement to verify test expectations. pytest’s :ref:`Advanced assertion introspection` will intelligently report intermediate values of the assert expression so you can avoid the many names `of JUnit legacy methods`_.
-
-.. _`JUnit legacy methods`: http://docs.python.org/library/unittest.html#test-cases
-
-.. _`Advanced assertion introspection`: http://docs.python.org/reference/simple_stmts.html#the-assert-statement
+    You can use the ``assert`` statement to verify test expectations. pytest’s `Advanced assertion introspection <http://docs.python.org/reference/simple_stmts.html#the-assert-statement>`_ will intelligently report intermediate values of the assert expression so you can avoid the many names `of JUnit legacy methods <http://docs.python.org/library/unittest.html#test-cases>`_.
 
 Run multiple tests
 ----------------------------------------------------------
@@ -115,7 +111,7 @@ Once you develop multiple tests, you may want to group them into a class. pytest
             x = "hello"
             assert hasattr(x, 'check')
 
-``pytest`` discovers all tests following its :ref:`Conventions for Python test discovery <test discovery>`, so it finds both ``test_`` prefixed functions. There is no need to subclass anything. We can simply run the module by passing its filename:
+``pytest`` discovers all tests following its :ref:`Conventions for Python test discovery <test discovery>`, so it finds both ``test_`` prefixed functions. There is no need to subclass anything. We can simply run the module by passing its filename::
 
     $ pytest -q test_class.py
     .F                                                                   [100%]
@@ -138,7 +134,7 @@ The first test passed and the second failed. You can easily see the intermediate
 Request a unique temporary directory for functional tests
 --------------------------------------------------------------
 
-``pytest`` provides `Builtin fixtures/function arguments <https://docs.pytest.org/en/latest/builtin.html#builtinfixtures>`_ to request arbitrary resources, like a unique temporary directory:
+``pytest`` provides `Builtin fixtures/function arguments <https://docs.pytest.org/en/latest/builtin.html#builtinfixtures>`_ to request arbitrary resources, like a unique temporary directory::
 
     # content of test_tmpdir.py
     def test_needsfiles(tmpdir):
