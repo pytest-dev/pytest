@@ -344,6 +344,21 @@ def test_keyword_option_parametrize(spec, testdir):
     assert list(passed) == list(passed_result)
 
 
+@pytest.mark.parametrize("spec", [
+    ("foo or import", "AttributeError: Python keyword 'import' not accepted in expressions passed to '-k'"),
+    ("foo or", "AttributeError: Wrong expression passed to '-k': foo or")
+])
+def test_keyword_option_wrong_arguments(spec, testdir, capsys):
+    testdir.makepyfile("""
+            def test_func(arg):
+                pass
+        """)
+    opt, expected_result = spec
+    testdir.inline_run("-k", opt)
+    out = capsys.readouterr()[0]
+    assert expected_result in out
+
+
 def test_parametrized_collected_from_command_line(testdir):
     """Parametrized test not collected if test named specified
        in command line issue#649.

@@ -222,6 +222,12 @@ class KeywordMapping(object):
         return False
 
 
+# python keywords except or, and, not
+python_keywords_list = ["False", "None", "True", "as", "assert", "break", "class", "continue", "def", "del",
+                        "elif", "else", "except", "finally", "for", "from", "global", "if", "import", "in", "is",
+                        "lambda", "nonlocal", "pass", "raise", "return", "try", "while", "with", "yield"]
+
+
 def matchmark(colitem, markexpr):
     """Tries to match on any marker names, attached to the given colitem."""
     return eval(markexpr, {}, MarkMapping.from_keywords(colitem.keywords))
@@ -259,7 +265,13 @@ def matchkeyword(colitem, keywordexpr):
         return mapping[keywordexpr]
     elif keywordexpr.startswith("not ") and " " not in keywordexpr[4:]:
         return not mapping[keywordexpr[4:]]
-    return eval(keywordexpr, {}, mapping)
+    for keyword in keywordexpr.split():
+        if keyword in python_keywords_list:
+            raise AttributeError("Python keyword '{}' not accepted in expressions passed to '-k'".format(keyword))
+    try:
+        return eval(keywordexpr, {}, mapping)
+    except SyntaxError:
+        raise AttributeError("Wrong expression passed to '-k': {}".format(keywordexpr))
 
 
 def pytest_configure(config):
