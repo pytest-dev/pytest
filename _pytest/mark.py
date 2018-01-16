@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function
 
 import inspect
+import keyword
 import warnings
 import attr
 from collections import namedtuple
@@ -222,10 +223,7 @@ class KeywordMapping(object):
         return False
 
 
-# python keywords except or, and, not
-python_keywords_list = ["False", "None", "True", "as", "assert", "break", "class", "continue", "def", "del",
-                        "elif", "else", "except", "finally", "for", "from", "global", "if", "import", "in", "is",
-                        "lambda", "nonlocal", "pass", "raise", "return", "try", "while", "with", "yield"]
+python_keywords_allowed_list = ["or", "and", "not"]
 
 
 def matchmark(colitem, markexpr):
@@ -265,9 +263,9 @@ def matchkeyword(colitem, keywordexpr):
         return mapping[keywordexpr]
     elif keywordexpr.startswith("not ") and " " not in keywordexpr[4:]:
         return not mapping[keywordexpr[4:]]
-    for keyword in keywordexpr.split():
-        if keyword in python_keywords_list:
-            raise AttributeError("Python keyword '{}' not accepted in expressions passed to '-k'".format(keyword))
+    for kwd in keywordexpr.split():
+        if keyword.iskeyword(kwd) and kwd not in python_keywords_allowed_list:
+            raise AttributeError("Python keyword '{}' not accepted in expressions passed to '-k'".format(kwd))
     try:
         return eval(keywordexpr, {}, mapping)
     except SyntaxError:
