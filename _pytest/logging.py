@@ -129,6 +129,17 @@ class LogCaptureFixture(object):
     def __init__(self, item):
         """Creates a new funcarg."""
         self._item = item
+        self._initial_log_levels = {}  # type: Dict[str, int] # dict of log name -> log level
+
+    def _finalize(self):
+        """Finalizes the fixture.
+
+        This restores the log levels changed by :meth:`set_level`.
+        """
+        # restore log levels
+        for logger_name, level in self._initial_log_levels.items():
+            logger = logging.getLogger(logger_name)
+            logger.setLevel(level)
 
     @property
     def handler(self):
@@ -167,27 +178,30 @@ class LogCaptureFixture(object):
         self.handler.records = []
 
     def set_level(self, level, logger=None):
-        """Sets the level for capturing of logs.
+        """Sets the level for capturing of logs. The level will be restored to its previous value at the end of
+        the test.
+
+        :param int level: the logger to level.
+        :param str logger: the logger to update the level. If not given, the root logger level is updated.
+
+        .. versionchanged:: 3.4
+            The levels of the loggers changed by this function will be restored to their initial values at the
+            end of the test.
+        """
+        logger_name = logger
+        logger = logging.getLogger(logger_name)
+        self._initial_log_levels.setdefault(logger_name, logger.level)
+        logger.setLevel(level)
+
+    @contextmanager
+    def at_level(self, level, logger=None):
+        """Context manager that sets the level for capturing of logs. After the end of the 'with' statement the
+        level is restored to its original value.
 
         :param int level: the logger to level.
         :param str logger: the logger to update the level. If not given, the root logger level is updated.
         """
         logger = logging.getLogger(logger)
-        logger.setLevel(level)
-
-    @contextmanager
-    def at_level(self, level, logger=None):
-        """Context manager that sets the level for capturing of logs.
-
-        By default, the level is set on the handler used to capture
-        logs. Specify a logger name to instead set the level of any
-        logger.
-        """
-        if logger is None:
-            logger = self.handler
-        else:
-            logger = logging.getLogger(logger)
-
         orig_level = logger.level
         logger.setLevel(level)
         try:
@@ -206,7 +220,9 @@ def caplog(request):
     * caplog.records()       -> list of logging.LogRecord instances
     * caplog.record_tuples() -> list of (logger_name, level, message) tuples
     """
-    return LogCaptureFixture(request.node)
+    result = LogCaptureFixture(request.node)
+    yield result
+    result._finalize()
 
 
 def get_actual_log_level(config, *setting_names):

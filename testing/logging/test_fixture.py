@@ -27,6 +27,30 @@ def test_change_level(caplog):
     assert 'CRITICAL' in caplog.text
 
 
+def test_change_level_undo(testdir):
+    """Ensure that 'set_level' is undone after the end of the test"""
+    testdir.makepyfile('''
+        import logging
+
+        def test1(caplog):
+            caplog.set_level(logging.INFO)
+            # using + operator here so fnmatch_lines doesn't match the code in the traceback
+            logging.info('log from ' + 'test1')
+            assert 0
+
+        def test2(caplog):
+            # using + operator here so fnmatch_lines doesn't match the code in the traceback
+            logging.info('log from ' + 'test2')
+            assert 0
+    ''')
+    result = testdir.runpytest_subprocess()
+    result.stdout.fnmatch_lines([
+        '*log from test1*',
+        '*2 failed in *',
+    ])
+    assert 'log from test2' not in result.stdout.str()
+
+
 def test_with_statement(caplog):
     with caplog.at_level(logging.INFO):
         logger.debug('handler DEBUG level')
@@ -43,6 +67,7 @@ def test_with_statement(caplog):
 
 
 def test_log_access(caplog):
+    caplog.set_level(logging.INFO)
     logger.info('boo %s', 'arg')
     assert caplog.records[0].levelname == 'INFO'
     assert caplog.records[0].msg == 'boo %s'
@@ -50,6 +75,7 @@ def test_log_access(caplog):
 
 
 def test_record_tuples(caplog):
+    caplog.set_level(logging.INFO)
     logger.info('boo %s', 'arg')
 
     assert caplog.record_tuples == [
@@ -58,6 +84,7 @@ def test_record_tuples(caplog):
 
 
 def test_unicode(caplog):
+    caplog.set_level(logging.INFO)
     logger.info(u'bū')
     assert caplog.records[0].levelname == 'INFO'
     assert caplog.records[0].msg == u'bū'
@@ -65,6 +92,7 @@ def test_unicode(caplog):
 
 
 def test_clear(caplog):
+    caplog.set_level(logging.INFO)
     logger.info(u'bū')
     assert len(caplog.records)
     caplog.clear()
