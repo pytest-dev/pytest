@@ -82,13 +82,14 @@ def pytest_addoption(parser):
 
 
 @contextmanager
-def catching_logs(handler, formatter=None, level=logging.NOTSET):
+def catching_logs(handler, formatter=None, level=None):
     """Context manager that prepares the whole logging machinery properly."""
     root_logger = logging.getLogger()
 
     if formatter is not None:
         handler.setFormatter(formatter)
-    handler.setLevel(level)
+    if level is not None:
+        handler.setLevel(level)
 
     # Adding the same handler twice would confuse logging system.
     # Just don't do that.
@@ -96,12 +97,14 @@ def catching_logs(handler, formatter=None, level=logging.NOTSET):
 
     if add_new_handler:
         root_logger.addHandler(handler)
-    orig_level = root_logger.level
-    root_logger.setLevel(min(orig_level, level))
+    if level is not None:
+        orig_level = root_logger.level
+        root_logger.setLevel(level)
     try:
         yield handler
     finally:
-        root_logger.setLevel(orig_level)
+        if level is not None:
+            root_logger.setLevel(orig_level)
         if add_new_handler:
             root_logger.removeHandler(handler)
 
@@ -166,14 +169,10 @@ class LogCaptureFixture(object):
     def set_level(self, level, logger=None):
         """Sets the level for capturing of logs.
 
-        By default, the level is set on the handler used to capture
-        logs. Specify a logger name to instead set the level of any
-        logger.
+        :param int level: the logger to level.
+        :param str logger: the logger to update the level. If not given, the root logger level is updated.
         """
-        if logger is None:
-            logger = self.handler
-        else:
-            logger = logging.getLogger(logger)
+        logger = logging.getLogger(logger)
         logger.setLevel(level)
 
     @contextmanager
@@ -259,6 +258,7 @@ class LoggingPlugin(object):
         self.formatter = logging.Formatter(
             get_option_ini(config, 'log_format'),
             get_option_ini(config, 'log_date_format'))
+        self.log_level = get_actual_log_level(config, 'log_level')
 
         if config.getini('log_cli'):
             log_cli_handler = logging.StreamHandler(sys.stderr)
@@ -269,8 +269,7 @@ class LoggingPlugin(object):
             log_cli_formatter = logging.Formatter(
                 log_cli_format,
                 datefmt=log_cli_date_format)
-            log_cli_level = get_actual_log_level(
-                config, 'log_cli_level', 'log_level') or logging.WARNING
+            log_cli_level = get_actual_log_level(config, 'log_cli_level', 'log_level')
             self.log_cli_handler = log_cli_handler  # needed for a single unittest
             self.live_logs_context = catching_logs(log_cli_handler,
                                                    formatter=log_cli_formatter,
@@ -281,8 +280,7 @@ class LoggingPlugin(object):
 
         log_file = get_option_ini(config, 'log_file')
         if log_file:
-            self.log_file_level = get_actual_log_level(
-                config, 'log_file_level') or logging.WARNING
+            self.log_file_level = get_actual_log_level(config, 'log_file_level')
 
             log_file_format = get_option_ini(
                 config, 'log_file_format', 'log_format')
@@ -303,7 +301,7 @@ class LoggingPlugin(object):
     def _runtest_for(self, item, when):
         """Implements the internals of pytest_runtest_xxx() hook."""
         with catching_logs(LogCaptureHandler(),
-                           formatter=self.formatter) as log_handler:
+                           formatter=self.formatter, level=self.log_level) as log_handler:
             if not hasattr(item, 'catch_log_handlers'):
                 item.catch_log_handlers = {}
             item.catch_log_handlers[when] = log_handler

@@ -35,7 +35,7 @@ def test_messages_logged(testdir):
             logger.info('text going to logger')
             assert False
         ''')
-    result = testdir.runpytest()
+    result = testdir.runpytest('--log-level=INFO')
     assert result.ret == 1
     result.stdout.fnmatch_lines(['*- Captured *log call -*',
                                  '*text going to logger*'])
@@ -58,7 +58,7 @@ def test_setup_logging(testdir):
             logger.info('text going to logger from call')
             assert False
         ''')
-    result = testdir.runpytest()
+    result = testdir.runpytest('--log-level=INFO')
     assert result.ret == 1
     result.stdout.fnmatch_lines(['*- Captured *log setup -*',
                                  '*text going to logger from setup*',
@@ -79,7 +79,7 @@ def test_teardown_logging(testdir):
             logger.info('text going to logger from teardown')
             assert False
         ''')
-    result = testdir.runpytest()
+    result = testdir.runpytest('--log-level=INFO')
     assert result.ret == 1
     result.stdout.fnmatch_lines(['*- Captured *log call -*',
                                  '*text going to logger from call*',
@@ -168,9 +168,9 @@ def test_log_cli_default_level(testdir):
         import logging
         def test_log_cli(request):
             plugin = request.config.pluginmanager.getplugin('logging-plugin')
-            assert plugin.log_cli_handler.level == logging.WARNING
-            logging.getLogger('catchlog').info("This log message won't be shown")
-            logging.getLogger('catchlog').warning("This log message will be shown")
+            assert plugin.log_cli_handler.level == logging.NOTSET
+            logging.getLogger('catchlog').info("INFO message won't be shown")
+            logging.getLogger('catchlog').warning("WARNING message will be shown")
             print('PASSED')
     ''')
     testdir.makeini('''
@@ -185,15 +185,9 @@ def test_log_cli_default_level(testdir):
         'test_log_cli_default_level.py PASSED',
     ])
     result.stderr.fnmatch_lines([
-        "* This log message will be shown"
+        '*WARNING message will be shown*',
     ])
-    for line in result.errlines:
-        try:
-            assert "This log message won't be shown" in line
-            pytest.fail("A log message was shown and it shouldn't have been")
-        except AssertionError:
-            continue
-
+    assert "INFO message won't be shown" not in result.stderr.str()
     # make sure that that we get a '0' exit code for the testsuite
     assert result.ret == 0
 
@@ -307,7 +301,7 @@ def test_log_file_cli(testdir):
 
     log_file = testdir.tmpdir.join('pytest.log').strpath
 
-    result = testdir.runpytest('-s', '--log-file={0}'.format(log_file))
+    result = testdir.runpytest('-s', '--log-file={0}'.format(log_file), '--log-file-level=WARNING')
 
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines([
@@ -356,6 +350,16 @@ def test_log_file_cli_level(testdir):
         assert "This log message won't be shown" not in contents
 
 
+def test_log_level_not_changed_by_default(testdir):
+    testdir.makepyfile('''
+        import logging
+        def test_log_file():
+            assert logging.getLogger().level == logging.WARNING
+    ''')
+    result = testdir.runpytest('-s')
+    result.stdout.fnmatch_lines('* 1 passed in *')
+
+
 def test_log_file_ini(testdir):
     log_file = testdir.tmpdir.join('pytest.log').strpath
 
@@ -363,6 +367,7 @@ def test_log_file_ini(testdir):
         """
         [pytest]
         log_file={0}
+        log_file_level=WARNING
         """.format(log_file))
     testdir.makepyfile('''
         import pytest
