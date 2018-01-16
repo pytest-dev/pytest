@@ -1,1 +1,1 @@
-Show a simple and easy error when keyword expressions trigger a syntax error (for example, "-k foo and import" will show an error that you can not use import in expressions)
+Show a simple and easy error when keyword expressions trigger a syntax error (for example, ``"-k foo and import"`` will show an error that you can not use the ``import`` keyword in expressions).
