@@ -156,9 +156,9 @@ def test_log_cli_enabled_disabled(testdir, enabled):
         ''')
     result = testdir.runpytest('-s')
     if enabled:
-        assert msg in result.stderr.str()
+        assert msg in result.stdout.str()
     else:
-        assert msg not in result.stderr.str()
+        assert msg not in result.stdout.str()
 
 
 def test_log_cli_default_level(testdir):
@@ -182,12 +182,13 @@ def test_log_cli_default_level(testdir):
 
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines([
-        'test_log_cli_default_level.py PASSED',
+        'test_log_cli_default_level.py*',
+        'PASSED',  # 'PASSED' on its own line because the log message prints a new line
     ])
-    result.stderr.fnmatch_lines([
+    result.stdout.fnmatch_lines([
         '*WARNING message will be shown*',
     ])
-    assert "INFO message won't be shown" not in result.stderr.str()
+    assert "INFO message won't be shown" not in result.stdout.str()
     # make sure that that we get a '0' exit code for the testsuite
     assert result.ret == 0
 
@@ -213,12 +214,13 @@ def test_log_cli_level(testdir):
 
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines([
-        'test_log_cli_level.py PASSED',
+        'test_log_cli_level.py*',
+        'PASSED',  # 'PASSED' on its own line because the log message prints a new line
     ])
-    result.stderr.fnmatch_lines([
+    result.stdout.fnmatch_lines([
         "* This log message will be shown"
     ])
-    for line in result.errlines:
+    for line in result.outlines:
         try:
             assert "This log message won't be shown" in line
             pytest.fail("A log message was shown and it shouldn't have been")
@@ -232,12 +234,13 @@ def test_log_cli_level(testdir):
 
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines([
-        'test_log_cli_level.py PASSED',
+        'test_log_cli_level.py*',
+        'PASSED',  # 'PASSED' on its own line because the log message prints a new line
     ])
-    result.stderr.fnmatch_lines([
+    result.stdout.fnmatch_lines([
         "* This log message will be shown"
     ])
-    for line in result.errlines:
+    for line in result.outlines:
         try:
             assert "This log message won't be shown" in line
             pytest.fail("A log message was shown and it shouldn't have been")
@@ -270,12 +273,13 @@ def test_log_cli_ini_level(testdir):
 
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines([
-        'test_log_cli_ini_level.py PASSED',
+        'test_log_cli_ini_level.py*',
+        'PASSED',  # 'PASSED' on its own line because the log message prints a new line
     ])
-    result.stderr.fnmatch_lines([
+    result.stdout.fnmatch_lines([
         "* This log message will be shown"
     ])
-    for line in result.errlines:
+    for line in result.outlines:
         try:
             assert "This log message won't be shown" in line
             pytest.fail("A log message was shown and it shouldn't have been")

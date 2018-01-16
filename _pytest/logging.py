@@ -2,7 +2,6 @@ from __future__ import absolute_import, division, print_function
 
 import logging
 from contextlib import closing, contextmanager
-import sys
 import six
 
 import pytest
@@ -270,29 +269,12 @@ class LoggingPlugin(object):
         The formatter can be safely shared across all handlers so
         create a single one for the entire test session here.
         """
+        self._config = config
         self.print_logs = get_option_ini(config, 'log_print')
         self.formatter = logging.Formatter(
             get_option_ini(config, 'log_format'),
             get_option_ini(config, 'log_date_format'))
         self.log_level = get_actual_log_level(config, 'log_level')
-
-        if config.getini('log_cli'):
-            log_cli_handler = logging.StreamHandler(sys.stderr)
-            log_cli_format = get_option_ini(
-                config, 'log_cli_format', 'log_format')
-            log_cli_date_format = get_option_ini(
-                config, 'log_cli_date_format', 'log_date_format')
-            log_cli_formatter = logging.Formatter(
-                log_cli_format,
-                datefmt=log_cli_date_format)
-            log_cli_level = get_actual_log_level(config, 'log_cli_level', 'log_level')
-            self.log_cli_handler = log_cli_handler  # needed for a single unittest
-            self.live_logs_context = catching_logs(log_cli_handler,
-                                                   formatter=log_cli_formatter,
-                                                   level=log_cli_level)
-        else:
-            self.log_cli_handler = None
-            self.live_logs_context = _dummy_context_manager()
 
         log_file = get_option_ini(config, 'log_file')
         if log_file:
@@ -352,6 +334,7 @@ class LoggingPlugin(object):
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtestloop(self, session):
         """Runs all collected test items."""
+        self._setup_cli_logging()
         with self.live_logs_context:
             if self.log_file_handler is not None:
                 with closing(self.log_file_handler):
@@ -360,3 +343,27 @@ class LoggingPlugin(object):
                         yield  # run all the tests
             else:
                 yield  # run all the tests
+
+    def _setup_cli_logging(self):
+        """Setups the handler and logger for the Live Logs feature, if enabled.
+
+        This must be done right before starting the loop so we can access the terminal reporter plugin.
+        """
+        terminal_reporter = self._config.pluginmanager.get_plugin('terminalreporter')
+        if self._config.getini('log_cli') and terminal_reporter is not None:
+            log_cli_handler = logging.StreamHandler(terminal_reporter._tw)
+            log_cli_format = get_option_ini(
+                self._config, 'log_cli_format', 'log_format')
+            log_cli_date_format = get_option_ini(
+                self._config, 'log_cli_date_format', 'log_date_format')
+            log_cli_formatter = logging.Formatter(
+                log_cli_format,
+                datefmt=log_cli_date_format)
+            log_cli_level = get_actual_log_level(self._config, 'log_cli_level', 'log_level')
+            self.log_cli_handler = log_cli_handler  # needed for a single unittest
+            self.live_logs_context = catching_logs(log_cli_handler,
+                                                   formatter=log_cli_formatter,
+                                                   level=log_cli_level)
+        else:
+            self.log_cli_handler = None
+            self.live_logs_context = _dummy_context_manager()
