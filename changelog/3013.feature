@@ -1,0 +1,1 @@
+**Incompatible change**: after community feedback the `logging <https://docs.pytest.org/en/latest/logging.html>`_ functionality has undergone some changes. Please consult the `logging documentation <https://docs.pytest.org/en/latest/logging.html#incompatible-changes-in-pytest-3-4>`_ for details.
