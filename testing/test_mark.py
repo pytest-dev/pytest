@@ -345,8 +345,8 @@ def test_keyword_option_parametrize(spec, testdir):
 
 
 @pytest.mark.parametrize("spec", [
-    ("foo or import", "AttributeError: Python keyword 'import' not accepted in expressions passed to '-k'"),
-    ("foo or", "AttributeError: Wrong expression passed to '-k': foo or")
+    ("foo or import", "ERROR: Python keyword 'import' not accepted in expressions passed to '-k'"),
+    ("foo or", "ERROR: Wrong expression passed to '-k': foo or")
 ])
 def test_keyword_option_wrong_arguments(spec, testdir, capsys):
     testdir.makepyfile("""
@@ -355,7 +355,7 @@ def test_keyword_option_wrong_arguments(spec, testdir, capsys):
         """)
     opt, expected_result = spec
     testdir.inline_run("-k", opt)
-    out = capsys.readouterr()[0]
+    out = capsys.readouterr().err
     assert expected_result in out
 
 

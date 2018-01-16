@@ -8,6 +8,8 @@ import attr
 from collections import namedtuple
 from operator import attrgetter
 from six.moves import map
+
+from _pytest.config import UsageError
 from .deprecated import MARK_PARAMETERSET_UNPACKING
 from .compat import NOTSET, getfslineno
 
@@ -265,11 +267,11 @@ def matchkeyword(colitem, keywordexpr):
         return not mapping[keywordexpr[4:]]
     for kwd in keywordexpr.split():
         if keyword.iskeyword(kwd) and kwd not in python_keywords_allowed_list:
-            raise AttributeError("Python keyword '{}' not accepted in expressions passed to '-k'".format(kwd))
+            raise UsageError("Python keyword '{}' not accepted in expressions passed to '-k'".format(kwd))
     try:
         return eval(keywordexpr, {}, mapping)
     except SyntaxError:
-        raise AttributeError("Wrong expression passed to '-k': {}".format(keywordexpr))
+        raise UsageError("Wrong expression passed to '-k': {}".format(keywordexpr))
 
 
 def pytest_configure(config):
