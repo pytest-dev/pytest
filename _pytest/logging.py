@@ -271,6 +271,13 @@ class LoggingPlugin(object):
         create a single one for the entire test session here.
         """
         self._config = config
+
+        # enable verbose output automatically if live logging is enabled
+        if self._config.getini('log_cli') and not config.getoption('verbose'):
+            # sanity check: terminal reporter should not have been loaded at this point
+            assert self._config.pluginmanager.get_plugin('terminalreporter') is None
+            config.option.verbose = 1
+
         self.print_logs = get_option_ini(config, 'log_print')
         self.formatter = logging.Formatter(
             get_option_ini(config, 'log_format'),
@@ -352,7 +359,7 @@ class LoggingPlugin(object):
         """
         terminal_reporter = self._config.pluginmanager.get_plugin('terminalreporter')
         if self._config.getini('log_cli') and terminal_reporter is not None:
-            log_cli_handler = logging.StreamHandler(terminal_reporter._tw)
+            log_cli_handler = _LiveLoggingStreamHandler(terminal_reporter._tw)
             log_cli_format = get_option_ini(
                 self._config, 'log_cli_format', 'log_format')
             log_cli_date_format = get_option_ini(
@@ -368,3 +375,18 @@ class LoggingPlugin(object):
         else:
             self.log_cli_handler = None
             self.live_logs_context = _dummy_context_manager()
+
+
+class _LiveLoggingStreamHandler(logging.StreamHandler):
+    """
+    Custom StreamHandler used by the live logging feature: it will write a newline before the first log message
+    in each test.
+    """
+
+    def emit(self, record):
+        if not getattr(self, '_first_record_emitted', False):
+            self.stream.write('\n')
+            # we might consider adding a header at this point using self.stream.sep('-', 'live log') or something
+            # similar when we improve live logging output
+            self._first_record_emitted = True
+        logging.StreamHandler.emit(self, record)

@@ -156,7 +156,11 @@ def test_log_cli_enabled_disabled(testdir, enabled):
         ''')
     result = testdir.runpytest('-s')
     if enabled:
-        assert msg in result.stdout.str()
+        result.stdout.fnmatch_lines([
+            'test_log_cli_enabled_disabled.py::test_log_cli ',
+            'test_log_cli_enabled_disabled.py* CRITICAL critical message logged by test',
+            'PASSED',
+        ])
     else:
         assert msg not in result.stdout.str()
 
@@ -181,6 +185,7 @@ def test_log_cli_default_level(testdir):
 
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines([
+        'test_log_cli_default_level.py::test_log_cli ',
         'test_log_cli_default_level.py*WARNING message will be shown*',
     ])
     assert "INFO message won't be shown" not in result.stdout.str()

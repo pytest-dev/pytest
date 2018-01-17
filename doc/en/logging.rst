@@ -228,7 +228,8 @@ made in ``3.4`` after community feedback:
 * Log levels are no longer changed unless explicitly requested by the :confval:`log_level` configuration
   or ``--log-level`` command-line options. This allows users to configure logger objects themselves.
 * :ref:`Live Logs <live_logs>` is now disabled by default and can be enabled setting the
-  :confval:`log_cli` configuration option to ``true``.
+  :confval:`log_cli` configuration option to ``true``. When enabled, the verbosity is increased so logging for each
+  test is visible.
 * :ref:`Live Logs <live_logs>` are now sent to ``sys.stdout`` and no longer require the ``-s`` command-line option
   to work.
 
