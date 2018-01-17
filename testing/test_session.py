@@ -283,5 +283,4 @@ def test_rootdir_option_ini_file(testdir):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(["*1 passed*"])
     result = testdir.runpytest("--rootdir=ignored_argument")
-    print(result.stdout.str())
     result.stdout.fnmatch_lines(["*1 passed*"])
