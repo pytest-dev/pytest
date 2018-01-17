@@ -253,3 +253,35 @@ def test_sessionfinish_with_start(testdir):
     """)
     res = testdir.runpytest("--collect-only")
     assert res.ret == EXIT_NOTESTSCOLLECTED
+
+
+def test_rootdir_option_arg(testdir):
+    rootdir = testdir.mkdir("root")
+    rootdir.join("spoon.py").write("spoon_number = 1")
+    testsdir = rootdir.mkdir("tests")
+    testsdir.join("test_one.py").write("from spoon import spoon_number\ndef test_one():\n    assert spoon_number")
+
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["*No module named*spoon*"])
+
+    result = testdir.runpytest("--rootdir=root")
+    result.stdout.fnmatch_lines(["*1 passed*"])
+
+
+def test_rootdir_option_ini_file(testdir):
+    rootdir = testdir.mkdir("root")
+    rootdir.join("spoon.py").write("spoon_number = 1")
+    testsdir = rootdir.mkdir("tests")
+    testsdir.join("test_one.py").write("from spoon import spoon_number\ndef test_one():\n    assert spoon_number")
+
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["*No module named*spoon*"])
+    testdir.makeini("""
+            [pytest]
+            rootdir=root
+        """)
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines(["*1 passed*"])
+    result = testdir.runpytest("--rootdir=ignored_argument")
+    print(result.stdout.str())
+    result.stdout.fnmatch_lines(["*1 passed*"])
