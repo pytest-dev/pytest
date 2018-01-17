@@ -60,8 +60,9 @@ def main(args=None, plugins=None):
             finally:
                 config._ensure_unconfigure()
     except UsageError as e:
+        tw = py.io.TerminalWriter(sys.stderr)
         for msg in e.args:
-            sys.stderr.write("ERROR: %s\n" % (msg,))
+            tw.line("ERROR: {}\n".format(msg), red=True)
         return 4
 
 
