@@ -217,12 +217,7 @@ def test_log_cli_level(testdir):
         'test_log_cli_level.py*This log message will be shown',
         'PASSED',  # 'PASSED' on its own line because the log message prints a new line
     ])
-    for line in result.outlines:
-        try:
-            assert "This log message won't be shown" in line
-            pytest.fail("A log message was shown and it shouldn't have been")
-        except AssertionError:
-            continue
+    assert "This log message won't be shown" not in result.stdout.str()
 
     # make sure that that we get a '0' exit code for the testsuite
     assert result.ret == 0
@@ -234,12 +229,7 @@ def test_log_cli_level(testdir):
         'test_log_cli_level.py* This log message will be shown',
         'PASSED',  # 'PASSED' on its own line because the log message prints a new line
     ])
-    for line in result.outlines:
-        try:
-            assert "This log message won't be shown" in line
-            pytest.fail("A log message was shown and it shouldn't have been")
-        except AssertionError:
-            continue
+    assert "This log message won't be shown" not in result.stdout.str()
 
     # make sure that that we get a '0' exit code for the testsuite
     assert result.ret == 0
@@ -270,12 +260,7 @@ def test_log_cli_ini_level(testdir):
         'test_log_cli_ini_level.py* This log message will be shown',
         'PASSED',  # 'PASSED' on its own line because the log message prints a new line
     ])
-    for line in result.outlines:
-        try:
-            assert "This log message won't be shown" in line
-            pytest.fail("A log message was shown and it shouldn't have been")
-        except AssertionError:
-            continue
+    assert "This log message won't be shown" not in result.stdout.str()
 
     # make sure that that we get a '0' exit code for the testsuite
     assert result.ret == 0
