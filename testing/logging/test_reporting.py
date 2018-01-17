@@ -171,22 +171,17 @@ def test_log_cli_default_level(testdir):
             assert plugin.log_cli_handler.level == logging.NOTSET
             logging.getLogger('catchlog').info("INFO message won't be shown")
             logging.getLogger('catchlog').warning("WARNING message will be shown")
-            print('PASSED')
     ''')
     testdir.makeini('''
         [pytest]
         log_cli=true
     ''')
 
-    result = testdir.runpytest('-s')
+    result = testdir.runpytest()
 
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines([
-        'test_log_cli_default_level.py*',
-        'PASSED',  # 'PASSED' on its own line because the log message prints a new line
-    ])
-    result.stdout.fnmatch_lines([
-        '*WARNING message will be shown*',
+        'test_log_cli_default_level.py*WARNING message will be shown*',
     ])
     assert "INFO message won't be shown" not in result.stdout.str()
     # make sure that that we get a '0' exit code for the testsuite
@@ -214,11 +209,8 @@ def test_log_cli_level(testdir):
 
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines([
-        'test_log_cli_level.py*',
+        'test_log_cli_level.py*This log message will be shown',
         'PASSED',  # 'PASSED' on its own line because the log message prints a new line
-    ])
-    result.stdout.fnmatch_lines([
-        "* This log message will be shown"
     ])
     for line in result.outlines:
         try:
@@ -234,11 +226,8 @@ def test_log_cli_level(testdir):
 
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines([
-        'test_log_cli_level.py*',
+        'test_log_cli_level.py* This log message will be shown',
         'PASSED',  # 'PASSED' on its own line because the log message prints a new line
-    ])
-    result.stdout.fnmatch_lines([
-        "* This log message will be shown"
     ])
     for line in result.outlines:
         try:
@@ -273,11 +262,8 @@ def test_log_cli_ini_level(testdir):
 
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines([
-        'test_log_cli_ini_level.py*',
+        'test_log_cli_ini_level.py* This log message will be shown',
         'PASSED',  # 'PASSED' on its own line because the log message prints a new line
-    ])
-    result.stdout.fnmatch_lines([
-        "* This log message will be shown"
     ])
     for line in result.outlines:
         try:

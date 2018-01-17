@@ -189,6 +189,7 @@ class LogCaptureFixture(object):
         """
         logger_name = logger
         logger = logging.getLogger(logger_name)
+        # save the original log-level to restore it during teardown
         self._initial_log_levels.setdefault(logger_name, logger.level)
         logger.setLevel(level)
 
