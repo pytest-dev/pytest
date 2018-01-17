@@ -279,26 +279,19 @@ class LoggingPlugin(object):
             config.option.verbose = 1
 
         self.print_logs = get_option_ini(config, 'log_print')
-        self.formatter = logging.Formatter(
-            get_option_ini(config, 'log_format'),
-            get_option_ini(config, 'log_date_format'))
+        self.formatter = logging.Formatter(get_option_ini(config, 'log_format'),
+                                           get_option_ini(config, 'log_date_format'))
         self.log_level = get_actual_log_level(config, 'log_level')
 
         log_file = get_option_ini(config, 'log_file')
         if log_file:
             self.log_file_level = get_actual_log_level(config, 'log_file_level')
 
-            log_file_format = get_option_ini(
-                config, 'log_file_format', 'log_format')
-            log_file_date_format = get_option_ini(
-                config, 'log_file_date_format', 'log_date_format')
-            self.log_file_handler = logging.FileHandler(
-                log_file,
-                # Each pytest runtests session will write to a clean logfile
-                mode='w')
-            log_file_formatter = logging.Formatter(
-                log_file_format,
-                datefmt=log_file_date_format)
+            log_file_format = get_option_ini(config, 'log_file_format', 'log_format')
+            log_file_date_format = get_option_ini(config, 'log_file_date_format', 'log_date_format')
+            # Each pytest runtests session will write to a clean logfile
+            self.log_file_handler = logging.FileHandler(log_file, mode='w')
+            log_file_formatter = logging.Formatter(log_file_format, datefmt=log_file_date_format)
             self.log_file_handler.setFormatter(log_file_formatter)
         else:
             self.log_file_handler = None
@@ -360,18 +353,12 @@ class LoggingPlugin(object):
         terminal_reporter = self._config.pluginmanager.get_plugin('terminalreporter')
         if self._config.getini('log_cli') and terminal_reporter is not None:
             log_cli_handler = _LiveLoggingStreamHandler(terminal_reporter._tw)
-            log_cli_format = get_option_ini(
-                self._config, 'log_cli_format', 'log_format')
-            log_cli_date_format = get_option_ini(
-                self._config, 'log_cli_date_format', 'log_date_format')
-            log_cli_formatter = logging.Formatter(
-                log_cli_format,
-                datefmt=log_cli_date_format)
+            log_cli_format = get_option_ini(self._config, 'log_cli_format', 'log_format')
+            log_cli_date_format = get_option_ini(self._config, 'log_cli_date_format', 'log_date_format')
+            log_cli_formatter = logging.Formatter(log_cli_format, datefmt=log_cli_date_format)
             log_cli_level = get_actual_log_level(self._config, 'log_cli_level', 'log_level')
             self.log_cli_handler = log_cli_handler  # needed for a single unittest
-            self.live_logs_context = catching_logs(log_cli_handler,
-                                                   formatter=log_cli_formatter,
-                                                   level=log_cli_level)
+            self.live_logs_context = catching_logs(log_cli_handler, formatter=log_cli_formatter, level=log_cli_level)
         else:
             self.log_cli_handler = None
             self.live_logs_context = _dummy_context_manager()
