@@ -1,1 +1,3 @@
-Added option `--rootdir` for command line and `rootdir` for *.ini file. Define root directory for tests. Can be relative path: 'root_dir', './root_dir', 'root_dir/another_dir/'; absolute path: '/home/user/root_dir'; path with variables: '$HOME/root_dir'. If parameter 'rootdir' defined in *.ini file this argument will not work.
+Added option "--rootdir" for command line and "rootdir" for .ini file. Define root directory for tests.
+Can be relative path: "root_dir", "./root_dir", "root_dir/another_dir/"; absolute path: "/home/user/root_dir";
+path with variables: "$HOME/root_dir". If parameter "rootdir" defined in .ini file this argument will not work.
