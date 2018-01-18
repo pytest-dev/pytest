@@ -319,6 +319,8 @@ class LoggingPlugin(object):
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item):
+        if self.log_cli_handler is not None:
+            self.log_cli_handler.reset()
         with self._runtest_for(item, 'setup'):
             yield
 
@@ -352,12 +354,13 @@ class LoggingPlugin(object):
         """
         terminal_reporter = self._config.pluginmanager.get_plugin('terminalreporter')
         if self._config.getini('log_cli') and terminal_reporter is not None:
-            log_cli_handler = _LiveLoggingStreamHandler(terminal_reporter._tw)
+            capture_manager = self._config.pluginmanager.get_plugin('capturemanager')
+            log_cli_handler = _LiveLoggingStreamHandler(terminal_reporter, capture_manager)
             log_cli_format = get_option_ini(self._config, 'log_cli_format', 'log_format')
             log_cli_date_format = get_option_ini(self._config, 'log_cli_date_format', 'log_date_format')
             log_cli_formatter = logging.Formatter(log_cli_format, datefmt=log_cli_date_format)
             log_cli_level = get_actual_log_level(self._config, 'log_cli_level', 'log_level')
-            self.log_cli_handler = log_cli_handler  # needed for a single unittest
+            self.log_cli_handler = log_cli_handler
             self.live_logs_context = catching_logs(log_cli_handler, formatter=log_cli_formatter, level=log_cli_level)
         else:
             self.log_cli_handler = None
@@ -368,12 +371,33 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
     """
     Custom StreamHandler used by the live logging feature: it will write a newline before the first log message
     in each test.
+
+    During live logging we must also explicitly disable stdout/stderr capturing otherwise it will get captured
+    and won't appear in the terminal.
     """
 
+    def __init__(self, terminal_reporter, capture_manager):
+        """
+        :param _pytest.terminal.TerminalReporter terminal_reporter:
+        :param _pytest.capture.CaptureManager capture_manager:
+        """
+        logging.StreamHandler.__init__(self, stream=terminal_reporter)
+        self.capture_manager = capture_manager
+        self._first_record_emitted = False
+
+    def reset(self):
+        self._first_record_emitted = False
+
     def emit(self, record):
-        if not getattr(self, '_first_record_emitted', False):
-            self.stream.write('\n')
-            # we might consider adding a header at this point using self.stream.sep('-', 'live log') or something
-            # similar when we improve live logging output
-            self._first_record_emitted = True
-        logging.StreamHandler.emit(self, record)
+        if self.capture_manager is not None:
+            self.capture_manager.suspend_global_capture()
+        try:
+            if not self._first_record_emitted:
+                self.stream.write('\n')
+                # we might consider adding a header at this point using self.stream.section('live log', sep='-')
+                # or something similar when we improve live logging output
+                self._first_record_emitted = True
+            logging.StreamHandler.emit(self, record)
+        finally:
+            if self.capture_manager is not None:
+                self.capture_manager.resume_global_capture()

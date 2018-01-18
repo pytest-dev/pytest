@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
+
+import six
+
 import pytest
 
 
@@ -191,6 +194,36 @@ def test_log_cli_default_level(testdir):
     assert "INFO message won't be shown" not in result.stdout.str()
     # make sure that that we get a '0' exit code for the testsuite
     assert result.ret == 0
+
+
+def test_log_cli_default_level_multiple_tests(testdir):
+    """Ensure we reset the first newline added by the live logger between tests"""
+    # Default log file level
+    testdir.makepyfile('''
+        import pytest
+        import logging
+
+        def test_log_1(request):
+            logging.warning("log message from test_log_1")
+
+        def test_log_2(request):
+            logging.warning("log message from test_log_2")
+    ''')
+    testdir.makeini('''
+        [pytest]
+        log_cli=true
+    ''')
+
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        'test_log_cli_default_level_multiple_tests.py::test_log_1 ',
+        '*WARNING*log message from test_log_1*',
+        'PASSED *50%*',
+        'test_log_cli_default_level_multiple_tests.py::test_log_2 ',
+        '*WARNING*log message from test_log_2*',
+        'PASSED *100%*',
+        '=* 2 passed in *=',
+    ])
 
 
 def test_log_cli_level(testdir):
@@ -410,3 +443,55 @@ def test_log_file_ini_level(testdir):
         contents = rfh.read()
         assert "This log message will be shown" in contents
         assert "This log message won't be shown" not in contents
+
+
+@pytest.mark.parametrize('has_capture_manager', [True, False])
+def test_live_logging_suspends_capture(has_capture_manager, request):
+    """Test that capture manager is suspended when we emitting messages for live logging.
+
+    This tests the implementation calls instead of behavior because it is difficult/impossible to do it using
+    ``testdir`` facilities because they do their own capturing.
+
+    We parametrize the test to also make sure _LiveLoggingStreamHandler works correctly if no capture manager plugin
+    is installed.
+    """
+    import logging
+    from functools import partial
+    from _pytest.capture import CaptureManager
+    from _pytest.logging import _LiveLoggingStreamHandler
+
+    if six.PY2:
+        # need to use the 'generic' StringIO instead of io.StringIO because we might receive both bytes
+        # and unicode objects; io.StringIO only accepts unicode
+        from StringIO import StringIO
+    else:
+        from io import StringIO
+
+    class MockCaptureManager:
+        calls = []
+
+        def suspend_global_capture(self):
+            self.calls.append('suspend_global_capture')
+
+        def resume_global_capture(self):
+            self.calls.append('resume_global_capture')
+
+    # sanity check
+    assert CaptureManager.suspend_capture_item
+    assert CaptureManager.resume_global_capture
+
+    capture_manager = MockCaptureManager() if has_capture_manager else None
+    out_file = StringIO()
+
+    handler = _LiveLoggingStreamHandler(out_file, capture_manager)
+
+    logger = logging.getLogger(__file__ + '.test_live_logging_suspends_capture')
+    logger.addHandler(handler)
+    request.addfinalizer(partial(logger.removeHandler, handler))
+
+    logger.critical('some message')
+    if has_capture_manager:
+        assert MockCaptureManager.calls == ['suspend_global_capture', 'resume_global_capture']
+    else:
+        assert MockCaptureManager.calls == []
+    assert out_file.getvalue() == '\nsome message\n'
