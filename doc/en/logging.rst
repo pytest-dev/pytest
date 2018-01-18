@@ -69,7 +69,7 @@ with::
 
     pytest --no-print-logs
 
-Or in you ``pytest.ini``:
+Or in your ``pytest.ini``:
 
 .. code-block:: ini
 
