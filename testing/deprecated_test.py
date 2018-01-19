@@ -100,9 +100,8 @@ def test_metafunc_addcall_deprecated(testdir):
     ])
 
 
-def test_terminal_reporter_writer_attr(pytestconfig):
-    """Check that TerminalReporter._tw is also available as 'writer' (#2984)
-    This attribute is planned to be deprecated in 3.4.
+def test_terminal_reporter_writer_deprecated(pytestconfig):
+    """TerminalReporter.writer is deprecated and meant to be removed in a future release (#2984)
     """
     try:
         import xdist  # noqa
@@ -110,7 +109,12 @@ def test_terminal_reporter_writer_attr(pytestconfig):
     except ImportError:
         pass
     terminal_reporter = pytestconfig.pluginmanager.get_plugin('terminalreporter')
-    assert terminal_reporter.writer is terminal_reporter._tw
+    with pytest.deprecated_call():
+        # getter
+        _ = terminal_reporter.writer  # noqa
+    with pytest.deprecated_call():
+        # setter
+        terminal_reporter.writer = terminal_reporter._tw
 
 
 @pytest.mark.parametrize('plugin', ['catchlog', 'capturelog'])

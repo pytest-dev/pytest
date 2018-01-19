@@ -50,3 +50,6 @@ METAFUNC_ADD_CALL = (
     "Metafunc.addcall is deprecated and scheduled to be removed in pytest 4.0.\n"
     "Please use Metafunc.parametrize instead."
 )
+
+TERMINAL_REPORTER_WARNING = RemovedInPytest4Warning('The "writer" attribute is deprecated and '
+                                                    'will be removed in a future release.')
