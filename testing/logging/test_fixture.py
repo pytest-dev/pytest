@@ -101,6 +101,7 @@ def test_clear(caplog):
 
 @pytest.fixture
 def logging_during_setup_and_teardown(caplog):
+    caplog.set_level('INFO')
     logger.info('a_setup_log')
     yield
     logger.info('a_teardown_log')
