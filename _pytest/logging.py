@@ -128,6 +128,13 @@ class LogCaptureFixture(object):
     def handler(self):
         return self._item.catch_log_handler
 
+    def get_handler(self, when):
+        """
+        Get the handler for a specified state of the tests.
+        Valid values for the when parameter are: 'setup', 'call' and 'teardown'.
+        """
+        return self._item.catch_log_handlers.get(when)
+
     @property
     def text(self):
         """Returns the log text."""
@@ -287,11 +294,16 @@ class LoggingPlugin(object):
         """Implements the internals of pytest_runtest_xxx() hook."""
         with catching_logs(LogCaptureHandler(),
                            formatter=self.formatter) as log_handler:
+            if not hasattr(item, 'catch_log_handlers'):
+                item.catch_log_handlers = {}
+            item.catch_log_handlers[when] = log_handler
             item.catch_log_handler = log_handler
             try:
                 yield  # run test
             finally:
                 del item.catch_log_handler
+                if when == 'teardown':
+                    del item.catch_log_handlers
 
             if self.print_logs:
                 # Add a captured log section to the report.

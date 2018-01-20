@@ -190,3 +190,12 @@ option names are:
 * ``log_file_level``
 * ``log_file_format``
 * ``log_file_date_format``
+
+Accessing logs from other test stages
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``caplop.records`` fixture contains records from the current stage only. So
+inside the setup phase it contains only setup logs, same with the call and
+teardown phases. To access logs from other stages you can use
+``caplog.get_handler('setup').records``. Valid stages are ``setup``, ``call``
+and ``teardown``.
