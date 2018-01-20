@@ -85,8 +85,7 @@ def pytest_configure(config):
 
 # -------------------------------------------------------------------------
 # Bootstrapping hooks called for plugins registered early enough:
-# internal and 3rd party plugins as well as directly
-# discoverable conftest.py local plugins.
+# internal and 3rd party plugins.
 # -------------------------------------------------------------------------
 
 
@@ -95,6 +94,9 @@ def pytest_cmdline_parse(pluginmanager, args):
     """return initialized config object, parsing the specified args.
 
     Stops at first non-None result, see :ref:`firstresult`
+
+    .. note::
+        This hook will not be called for ``conftest.py`` files, only for setuptools plugins.
 
     :param _pytest.config.PytestPluginManager pluginmanager: pytest plugin manager
     :param list[str] args: list of arguments passed on the command line
@@ -107,6 +109,9 @@ def pytest_cmdline_preparse(config, args):
     This hook is considered deprecated and will be removed in a future pytest version. Consider
     using :func:`pytest_load_initial_conftests` instead.
 
+    .. note::
+        This hook will not be called for ``conftest.py`` files, only for setuptools plugins.
+
     :param _pytest.config.Config config: pytest config object
     :param list[str] args: list of arguments passed on the command line
     """
@@ -117,6 +122,9 @@ def pytest_cmdline_main(config):
     """ called for performing the main command line action. The default
     implementation will invoke the configure hooks and runtest_mainloop.
 
+    .. note::
+        This hook will not be called for ``conftest.py`` files, only for setuptools plugins.
+
     Stops at first non-None result, see :ref:`firstresult`
 
     :param _pytest.config.Config config: pytest config object
@@ -126,6 +134,9 @@ def pytest_cmdline_main(config):
 def pytest_load_initial_conftests(early_config, parser, args):
     """ implements the loading of initial conftest files ahead
     of command line option parsing.
+
+    .. note::
+        This hook will not be called for ``conftest.py`` files, only for setuptools plugins.
 
     :param _pytest.config.Config early_config: pytest config object
     :param list[str] args: list of arguments passed on the command line

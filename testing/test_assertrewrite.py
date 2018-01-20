@@ -5,6 +5,7 @@ import os
 import py_compile
 import stat
 import sys
+import textwrap
 import zipfile
 import py
 import pytest
@@ -911,7 +912,7 @@ class TestAssertionRewriteHookDetails(object):
     def test_reload_is_same(self, testdir):
         # A file that will be picked up during collecting.
         testdir.tmpdir.join("file.py").ensure()
-        testdir.tmpdir.join("pytest.ini").write(py.std.textwrap.dedent("""
+        testdir.tmpdir.join("pytest.ini").write(textwrap.dedent("""
             [pytest]
             python_files = *.py
         """))
@@ -997,7 +998,7 @@ class TestIssue2121():
 def test_simple_failure():
     assert 1 + 1 == 3
 """)
-        testdir.tmpdir.join("pytest.ini").write(py.std.textwrap.dedent("""
+        testdir.tmpdir.join("pytest.ini").write(textwrap.dedent("""
             [pytest]
             python_files = tests/**.py
         """))
