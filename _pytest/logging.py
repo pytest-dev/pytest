@@ -296,6 +296,9 @@ class LoggingPlugin(object):
         else:
             self.log_file_handler = None
 
+        # initialized during pytest_runtestloop
+        self.log_cli_handler = None
+
     @contextmanager
     def _runtest_for(self, item, when):
         """Implements the internals of pytest_runtest_xxx() hook."""
@@ -363,7 +366,6 @@ class LoggingPlugin(object):
             self.log_cli_handler = log_cli_handler
             self.live_logs_context = catching_logs(log_cli_handler, formatter=log_cli_formatter, level=log_cli_level)
         else:
-            self.log_cli_handler = None
             self.live_logs_context = _dummy_context_manager()
 
 
