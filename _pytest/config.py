@@ -990,11 +990,15 @@ class Config(object):
 
     def _initini(self, args):
         ns, unknown_args = self._parser.parse_known_and_unknown_args(args, namespace=self.option.copy())
-        r = determine_setup(ns.inifilename, ns.file_or_dir + unknown_args, warnfunc=self.warn)
+        rootdir = ns.rootdir if ns.rootdir else None
+        r = determine_setup(ns.inifilename, ns.file_or_dir + unknown_args, warnfunc=self.warn, rootdir_cmd_arg=rootdir)
         self.rootdir, self.inifile, self.inicfg = r
         self._parser.extra_info['rootdir'] = self.rootdir
         self._parser.extra_info['inifile'] = self.inifile
         self.invocation_dir = py.path.local()
+        if ns.rootdir:
+            self.invocation_dir = self.rootdir
+            sys.path.append(str(self.rootdir))
         self._parser.addini('addopts', 'extra command line options', 'args')
         self._parser.addini('minversion', 'minimally required pytest version')
         self._override_ini = ns.override_ini or ()
@@ -1323,7 +1327,7 @@ def get_dirs_from_args(args):
     ]
 
 
-def determine_setup(inifile, args, warnfunc=None):
+def determine_setup(inifile, args, warnfunc=None, rootdir_cmd_arg=None):
     dirs = get_dirs_from_args(args)
     if inifile:
         iniconfig = py.iniconfig.IniConfig(inifile)
@@ -1346,6 +1350,11 @@ def determine_setup(inifile, args, warnfunc=None):
                     is_fs_root = os.path.splitdrive(str(rootdir))[1] == '/'
                     if is_fs_root:
                         rootdir = ancestor
+    if rootdir_cmd_arg:
+        rootdir_abs_path = py.path.local(rootdir_cmd_arg)
+        if not os.path.isdir(str(rootdir_abs_path)):
+            raise UsageError("Directory '{}' not found. Check your '--rootdir' option.".format(rootdir_abs_path))
+        rootdir = rootdir_abs_path
     return rootdir, inifile, inicfg or {}
 
 

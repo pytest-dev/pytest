@@ -33,9 +33,6 @@ def pytest_addoption(parser):
     parser.addini("testpaths", "directories to search for tests when no files or directories are given in the "
                                "command line.",
                   type="args", default=[])
-    parser.addini("rootdir", "define root directory for tests. If this parameter defined command argument "
-                  "'--rootdir' will not work",
-                  type="args", default=[])
     # parser.addini("dirpatterns",
     #    "patterns specifying possible locations of test files",
     #    type="linelist", default=["**/test_*.txt",
@@ -60,7 +57,7 @@ def pytest_addoption(parser):
                      dest="rootdir",
                      help="Define root directory for tests. Can be relative path: 'root_dir', './root_dir', "
                           "'root_dir/another_dir/'; absolute path: '/home/user/root_dir'; path with variables: "
-                          "'$HOME/root_dir'. If parameter 'rootdir' defined in *.ini file this argument will not work")
+                          "'$HOME/root_dir'.")
 
     group = parser.getgroup("collect", "collection")
     group.addoption('--collectonly', '--collect-only', action="store_true",
@@ -291,16 +288,6 @@ class Session(nodes.FSCollector):
         self.trace = config.trace.root.get("collection")
         self._norecursepatterns = config.getini("norecursedirs")
         self.startdir = py.path.local()
-
-        rootdir_ini = config.getini('rootdir')
-        self.rootdir = rootdir_ini[0] if rootdir_ini else config.option.rootdir
-        if self.rootdir:
-            rootdir_abs_path = py.path.local(self.rootdir)
-            if not os.path.isdir(str(rootdir_abs_path)):
-                raise UsageError("Directory '{}' not found. Check your '--rootdir' option.".format(rootdir_abs_path))
-            config.invocation_dir = rootdir_abs_path
-            config.rootdir = rootdir_abs_path
-            sys.path.append(str(rootdir_abs_path))
 
         self.config.pluginmanager.register(self, name="session")
 
