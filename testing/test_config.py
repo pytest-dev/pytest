@@ -861,39 +861,11 @@ class TestOverrideIniArgs(object):
         config._preparse([], addopts=True)
         assert config._override_ini == [['cache_dir=%s' % cache_dir]]
 
-    def test_all_the_things(self, testdir):
-        testdir.makeconftest("""
-        def pytest_addoption(parser):
-            addini = parser.addini
-            addini("custom_option_1", "", default="o1")
-            addini("custom_option_2", "", default="o2")""")
-        testdir.makepyfile("""
-            def test_multiple_options(pytestconfig):
-                prefix = "custom_option"
-                for x in range(1, 3):
-                    ini_value=pytestconfig.getini("%s_%d" % (prefix, x))
-                    print('\\nini%d:%s' % (x, ini_value))""")
-
-        result = testdir.runpytest(
-            "--override-ini", 'custom_option_1=fulldir=/tmp/user1',
-            'custom_option_2=url=/tmp/user2?a=b&d=e',
-            "test_all_the_things.py")
-        assert "ERROR: -o/--override-ini expects option=value style." not in result.stderr.str()
-
-    def test_throw_exception_if_not_value_pair(self, testdir):
-        testdir.makeconftest("""
-        def pytest_addoption(parser):
-            addini = parser.addini
-            addini("custom_option_1", "", default="o1")
-            addini("custom_option_2", "", default="o2")""")
-        testdir.makepyfile("""
-            def test_multiple_options(pytestconfig):
-                prefix = "custom_option"
-                for x in range(1, 3):
-                    ini_value=pytestconfig.getini("%s_%d" % (prefix, x))
-                    print('\\nini%d:%s' % (x, ini_value))""")
-
-        result = testdir.runpytest(
-            "--override-ini", 'custom_option_1',
-            "test_all_the_things.py")
-        assert "ERROR: -o/--override-ini expects option=value style." in result.stderr.str()
+    def test_no_error_if_true_first_key_value_pair(self, testdir):
+        testdir.makeini("""
+            [pytest]
+            xdist_strict=False
+        """)
+        result = testdir.runpytest('--override-ini', 'xdist_strict=True',
+                                   'test_no_error_if_true_first_key_value_pair.py')
+        assert 'ERROR: -o/--override-ini expects option=value style.' not in result.stderr.str()
