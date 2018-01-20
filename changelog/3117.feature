@@ -1,1 +1,1 @@
-New member on the `_item` member of the `caplog` fixture: `catch_log_handlers`. This contains a dict for the logs for the different stages of the test (setup, call, teardown). So to access the logs for the setup phase in your tests you can get to them via `caplog._item.catch_log_handlers`.
+New ``caplog.get_handler(when)`` method which provides access to the underlying ``Handler`` class used to capture logging during each testing stage, allowing users to obtain the captured records during ``"setup"`` and ``"teardown"`` stages.
