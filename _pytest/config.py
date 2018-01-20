@@ -1191,12 +1191,15 @@ class Config(object):
         # and -o foo1=bar1 -o foo2=bar2 options
         # always use the last item if multiple value set for same ini-name,
         # e.g. -o foo=bar1 -o foo=bar2 will set foo to bar2
+        first_override_set = False
         for ini_config_list in self._override_ini:
             for ini_config in ini_config_list:
                 try:
                     (key, user_ini_value) = ini_config.split("=", 1)
+                    first_override_set = True
                 except ValueError:
-                    raise UsageError("-o/--override-ini expects option=value style.")
+                    if not first_override_set:
+                        raise UsageError("-o/--override-ini expects option=value style.")
                 if key == name:
                     value = user_ini_value
         return value
