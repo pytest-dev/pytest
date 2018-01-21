@@ -1,0 +1,1 @@
+Clarify a possible confusion when using pytest_fixture_setup with fixture functions that return None.

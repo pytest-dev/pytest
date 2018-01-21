@@ -358,7 +358,15 @@ def pytest_runtest_logreport(report):
 def pytest_fixture_setup(fixturedef, request):
     """ performs fixture setup execution.
 
-    Stops at first non-None result, see :ref:`firstresult` """
+    :return: The return value of the call to the fixture function
+
+    Stops at first non-None result, see :ref:`firstresult`
+
+    .. note::
+        If the fixture function returns None, other implementations of
+        this hook function will continue to be called, according to the
+        behavior of the :ref:`firstresult` option.
+    """
 
 
 def pytest_fixture_post_finalizer(fixturedef, request):
