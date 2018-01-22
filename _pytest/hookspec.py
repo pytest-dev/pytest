@@ -16,6 +16,9 @@ def pytest_addhooks(pluginmanager):
 
 
     :param _pytest.config.PytestPluginManager pluginmanager: pytest plugin manager
+
+    .. note::
+        This hook is incompatible with ``hookwrapper=True``.
     """
 
 
@@ -27,6 +30,9 @@ def pytest_namespace():
     the pytest namespace.
 
     This hook is called at plugin registration time.
+
+    .. note::
+        This hook is incompatible with ``hookwrapper=True``.
     """
 
 
@@ -36,6 +42,9 @@ def pytest_plugin_registered(plugin, manager):
 
     :param plugin: the plugin module or instance
     :param _pytest.config.PytestPluginManager manager: pytest plugin manager
+
+    .. note::
+        This hook is incompatible with ``hookwrapper=True``.
     """
 
 
@@ -66,6 +75,9 @@ def pytest_addoption(parser):
 
     The config object is passed around on many internal objects via the ``.config``
     attribute or can be retrieved as the ``pytestconfig`` fixture.
+
+    .. note::
+        This hook is incompatible with ``hookwrapper=True``.
     """
 
 
@@ -79,6 +91,9 @@ def pytest_configure(config):
 
     After that, the hook is called for other conftest files as they are
     imported.
+
+    .. note::
+        This hook is incompatible with ``hookwrapper=True``.
 
     :arg _pytest.config.Config config: pytest config object
     """
@@ -456,7 +471,11 @@ def pytest_terminal_summary(terminalreporter, exitstatus):
 def pytest_logwarning(message, code, nodeid, fslocation):
     """ process a warning specified by a message, a code string,
     a nodeid and fslocation (both of which may be None
-    if the warning is not tied to a partilar node/location)."""
+    if the warning is not tied to a partilar node/location).
+
+    .. note::
+        This hook is incompatible with ``hookwrapper=True``.
+    """
 
 # -------------------------------------------------------------------------
 # doctest hooks
