@@ -157,12 +157,12 @@ def test_log_cli_enabled_disabled(testdir, enabled):
             [pytest]
             log_cli=true
         ''')
-    result = testdir.runpytest('-s')
+    result = testdir.runpytest()
     if enabled:
         result.stdout.fnmatch_lines([
             'test_log_cli_enabled_disabled.py::test_log_cli ',
             'test_log_cli_enabled_disabled.py* CRITICAL critical message logged by test',
-            'PASSED',
+            'PASSED*',
         ])
     else:
         assert msg not in result.stdout.str()
