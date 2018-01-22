@@ -527,10 +527,7 @@ def test_live_logging_suspends_capture(has_capture_manager, request):
     out_file = DummyTerminal()
     capture_manager = MockCaptureManager() if has_capture_manager else None
     handler = _LiveLoggingStreamHandler(out_file, capture_manager)
-
-    class DummyItem:
-        name = 'test_foo'
-    handler.reset(DummyItem(), 'call')
+    handler.set_when('call')
 
     logger = logging.getLogger(__name__ + '.test_live_logging_suspends_capture')
     logger.addHandler(handler)

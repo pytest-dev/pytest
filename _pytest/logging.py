@@ -305,7 +305,7 @@ class LoggingPlugin(object):
         with catching_logs(LogCaptureHandler(),
                            formatter=self.formatter, level=self.log_level) as log_handler:
             if self.log_cli_handler:
-                self.log_cli_handler.reset(item, when)
+                self.log_cli_handler.set_when(when)
             if not hasattr(item, 'catch_log_handlers'):
                 item.catch_log_handlers = {}
             item.catch_log_handlers[when] = log_handler
@@ -336,6 +336,10 @@ class LoggingPlugin(object):
     def pytest_runtest_teardown(self, item):
         with self._runtest_for(item, 'teardown'):
             yield
+
+    def pytest_runtest_logstart(self):
+        if self.log_cli_handler:
+            self.log_cli_handler.reset()
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtestloop(self, session):
@@ -385,18 +389,17 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
         """
         logging.StreamHandler.__init__(self, stream=terminal_reporter)
         self.capture_manager = capture_manager
+        self.reset()
+        self.set_when(None)
+
+    def reset(self):
+        """Reset the handler; should be called before the start of each test"""
         self._first_record_emitted = False
 
-        self._section_name_shown = False
-        self._when = None
-        self._run_tests = set()
-
-    def reset(self, item, when):
+    def set_when(self, when):
+        """Prepares for the given test phase (setup/call/teardown)"""
         self._when = when
         self._section_name_shown = False
-        if item.name not in self._run_tests:
-            self._first_record_emitted = False
-            self._run_tests.add(item.name)
 
     def emit(self, record):
         if self.capture_manager is not None:
