@@ -304,6 +304,8 @@ class LoggingPlugin(object):
         """Implements the internals of pytest_runtest_xxx() hook."""
         with catching_logs(LogCaptureHandler(),
                            formatter=self.formatter, level=self.log_level) as log_handler:
+            if self.log_cli_handler:
+                self.log_cli_handler.reset(item, when)
             if not hasattr(item, 'catch_log_handlers'):
                 item.catch_log_handlers = {}
             item.catch_log_handlers[when] = log_handler
@@ -322,8 +324,6 @@ class LoggingPlugin(object):
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item):
-        if self.log_cli_handler is not None:
-            self.log_cli_handler.reset()
         with self._runtest_for(item, 'setup'):
             yield
 
@@ -387,18 +387,28 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
         self.capture_manager = capture_manager
         self._first_record_emitted = False
 
-    def reset(self):
-        self._first_record_emitted = False
+        self._section_name_shown = False
+        self._when = None
+        self._run_tests = set()
+
+    def reset(self, item, when):
+        self._when = when
+        self._section_name_shown = False
+        if item.name not in self._run_tests:
+            self._first_record_emitted = False
+            self._run_tests.add(item.name)
 
     def emit(self, record):
         if self.capture_manager is not None:
             self.capture_manager.suspend_global_capture()
         try:
-            if not self._first_record_emitted:
+            if not self._first_record_emitted or self._when == 'teardown':
                 self.stream.write('\n')
-                # we might consider adding a header at this point using self.stream.section('live log', sep='-')
-                # or something similar when we improve live logging output
                 self._first_record_emitted = True
+            if not self._section_name_shown:
+                header = 'live log' if self._when == 'call' else 'live log ' + self._when
+                self.stream.section(header, sep='-', bold=True)
+                self._section_name_shown = True
             logging.StreamHandler.emit(self, record)
         finally:
             if self.capture_manager is not None:

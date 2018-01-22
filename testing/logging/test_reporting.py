@@ -196,17 +196,16 @@ def test_log_cli_default_level(testdir):
     assert result.ret == 0
 
 
-def test_log_cli_default_level_multiple_tests(testdir):
+def test_log_cli_default_level_multiple_tests(testdir, request):
     """Ensure we reset the first newline added by the live logger between tests"""
-    # Default log file level
+    filename = request.node.name + '.py'
     testdir.makepyfile('''
-        import pytest
         import logging
 
-        def test_log_1(request):
+        def test_log_1():
             logging.warning("log message from test_log_1")
 
-        def test_log_2(request):
+        def test_log_2():
             logging.warning("log message from test_log_2")
     ''')
     testdir.makeini('''
@@ -216,12 +215,59 @@ def test_log_cli_default_level_multiple_tests(testdir):
 
     result = testdir.runpytest()
     result.stdout.fnmatch_lines([
-        'test_log_cli_default_level_multiple_tests.py::test_log_1 ',
+        '{}::test_log_1 '.format(filename),
         '*WARNING*log message from test_log_1*',
         'PASSED *50%*',
-        'test_log_cli_default_level_multiple_tests.py::test_log_2 ',
+        '{}::test_log_2 '.format(filename),
         '*WARNING*log message from test_log_2*',
         'PASSED *100%*',
+        '=* 2 passed in *=',
+    ])
+
+
+def test_log_cli_default_level_sections(testdir, request):
+    """Check that with live logging enable we are printing the correct headers during setup/call/teardown."""
+    filename = request.node.name + '.py'
+    testdir.makepyfile('''
+        import pytest
+        import logging
+
+        @pytest.fixture
+        def fix(request):
+            logging.warning("log message from setup of {}".format(request.node.name))
+            yield
+            logging.warning("log message from teardown of {}".format(request.node.name))
+
+        def test_log_1(fix):
+            logging.warning("log message from test_log_1")
+
+        def test_log_2(fix):
+            logging.warning("log message from test_log_2")
+    ''')
+    testdir.makeini('''
+        [pytest]
+        log_cli=true
+    ''')
+
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        '{}::test_log_1 '.format(filename),
+        '*-- live log setup --*',
+        '*WARNING*log message from setup of test_log_1*',
+        '*-- live log --*',
+        '*WARNING*log message from test_log_1*',
+        'PASSED *50%*',
+        '*-- live log teardown --*',
+        '*WARNING*log message from teardown of test_log_1*',
+
+        '{}::test_log_2 '.format(filename),
+        '*-- live log setup --*',
+        '*WARNING*log message from setup of test_log_2*',
+        '*-- live log --*',
+        '*WARNING*log message from test_log_2*',
+        'PASSED *100%*',
+        '*-- live log teardown --*',
+        '*WARNING*log message from teardown of test_log_2*',
         '=* 2 passed in *=',
     ])
 
@@ -473,10 +519,18 @@ def test_live_logging_suspends_capture(has_capture_manager, request):
     assert CaptureManager.suspend_capture_item
     assert CaptureManager.resume_global_capture
 
-    capture_manager = MockCaptureManager() if has_capture_manager else None
-    out_file = six.StringIO()
+    class DummyTerminal(six.StringIO):
 
+        def section(self, *args, **kwargs):
+            pass
+
+    out_file = DummyTerminal()
+    capture_manager = MockCaptureManager() if has_capture_manager else None
     handler = _LiveLoggingStreamHandler(out_file, capture_manager)
+
+    class DummyItem:
+        name = 'test_foo'
+    handler.reset(DummyItem(), 'call')
 
     logger = logging.getLogger(__name__ + '.test_live_logging_suspends_capture')
     logger.addHandler(handler)
