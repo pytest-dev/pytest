@@ -1,0 +1,1 @@
+Colorize the levelname column in the live-log output.
