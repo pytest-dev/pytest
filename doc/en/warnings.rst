@@ -114,6 +114,12 @@ decorator or to all tests in a module by setting the ``pytestmark`` variable:
 
 .. note::
 
+    Except for these features, pytest does not change the python warning filter; it only captures
+    and displays the warnings which are issued with respect to the currently configured filter,
+    including changes to the filter made by test functions or by the system under test.
+
+.. note::
+
     ``DeprecationWarning`` and ``PendingDeprecationWarning`` are hidden by the standard library
     by default so you have to explicitly configure them to be displayed in your ``pytest.ini``:
 
