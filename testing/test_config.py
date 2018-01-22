@@ -861,11 +861,16 @@ class TestOverrideIniArgs(object):
         config._preparse([], addopts=True)
         assert config._override_ini == [['cache_dir=%s' % cache_dir]]
 
-    def test_no_error_if_true_first_key_value_pair(self, testdir):
+    def test_no_error_if_true_first_key_value_pair(self, testdir, request):
+        """Ensure a file path following a '-o' option does not generate an error (#3103)"""
         testdir.makeini("""
             [pytest]
             xdist_strict=False
         """)
-        result = testdir.runpytest('--override-ini', 'xdist_strict=True',
-                                   'test_no_error_if_true_first_key_value_pair.py')
-        assert 'ERROR: -o/--override-ini expects option=value style.' not in result.stderr.str()
+        testdir.makepyfile("""
+            def test():
+                pass
+        """)
+        result = testdir.runpytest('--override-ini', 'xdist_strict=True', '{}.py'.format(request.node.name))
+        assert 'ERROR:' not in result.stderr.str()
+        result.stdout.fnmatch_lines('* 1 passed in *')
