@@ -1,1 +1,1 @@
-Fixed UsageError being raised when specifying config override options followed by test path
+Fix ``UsageError`` being raised when specifying ``-o/--override`` command-line option followed by a test path.
