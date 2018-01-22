@@ -409,8 +409,7 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
                 self.stream.write('\n')
                 self._first_record_emitted = True
             if not self._section_name_shown:
-                header = 'live log' if self._when == 'call' else 'live log ' + self._when
-                self.stream.section(header, sep='-', bold=True)
+                self.stream.section('live log ' + self._when, sep='-', bold=True)
                 self._section_name_shown = True
             logging.StreamHandler.emit(self, record)
         finally:
