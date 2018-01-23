@@ -1,1 +1,1 @@
-Fix ``UsageError`` being raised when specifying ``-o/--override`` command-line option followed by a test path.
+**Incompatible change**: ``-o/--override`` option no longer eats all the remaining options, which can lead to surprising behavior: for example, ``pytest -o foo=1 /path/to/test.py`` would fail because ``/path/to/test.py`` would be considered as part of the ``-o`` command-line argument. One consequence of this is that now multiple configuration overrides need multiple ``-o`` flags: ``pytest -o foo=1 -o bar=2``.

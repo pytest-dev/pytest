@@ -781,16 +781,18 @@ class TestOverrideIniArgs(object):
         testdir.makeini("""
             [pytest]
             custom_option_1=custom_option_1
-            custom_option_2=custom_option_2""")
+            custom_option_2=custom_option_2
+        """)
         testdir.makepyfile("""
             def test_multiple_options(pytestconfig):
                 prefix = "custom_option"
                 for x in range(1, 5):
                     ini_value=pytestconfig.getini("%s_%d" % (prefix, x))
-                    print('\\nini%d:%s' % (x, ini_value))""")
+                    print('\\nini%d:%s' % (x, ini_value))
+        """)
         result = testdir.runpytest(
             "--override-ini", 'custom_option_1=fulldir=/tmp/user1',
-            'custom_option_2=url=/tmp/user2?a=b&d=e',
+            '-o', 'custom_option_2=url=/tmp/user2?a=b&d=e',
             "-o", 'custom_option_3=True',
             "-o", 'custom_option_4=no', "-s")
         result.stdout.fnmatch_lines(["ini1:fulldir=/tmp/user1",
@@ -853,24 +855,42 @@ class TestOverrideIniArgs(object):
             assert rootdir == tmpdir
             assert inifile is None
 
-    def test_addopts_before_initini(self, testdir, tmpdir, monkeypatch):
+    def test_addopts_before_initini(self, monkeypatch):
         cache_dir = '.custom_cache'
         monkeypatch.setenv('PYTEST_ADDOPTS', '-o cache_dir=%s' % cache_dir)
         from _pytest.config import get_config
         config = get_config()
         config._preparse([], addopts=True)
-        assert config._override_ini == [['cache_dir=%s' % cache_dir]]
+        assert config._override_ini == ['cache_dir=%s' % cache_dir]
 
-    def test_no_error_if_true_first_key_value_pair(self, testdir, request):
+    def test_override_ini_does_not_contain_paths(self):
+        """Check that -o no longer swallows all options after it (#3103)"""
+        from _pytest.config import get_config
+        config = get_config()
+        config._preparse(['-o', 'cache_dir=/cache', '/some/test/path'])
+        assert config._override_ini == ['cache_dir=/cache']
+
+    def test_multiple_override_ini_options(self, testdir, request):
         """Ensure a file path following a '-o' option does not generate an error (#3103)"""
-        testdir.makeini("""
-            [pytest]
-            xdist_strict=False
-        """)
-        testdir.makepyfile("""
-            def test():
-                pass
-        """)
-        result = testdir.runpytest('--override-ini', 'xdist_strict=True', '{}.py'.format(request.node.name))
+        testdir.makepyfile(**{
+            "conftest.py": """
+                def pytest_addoption(parser):
+                    parser.addini('foo', default=None, help='some option')
+                    parser.addini('bar', default=None, help='some option')
+            """,
+            "test_foo.py": """
+                def test(pytestconfig):
+                    assert pytestconfig.getini('foo') == '1'
+                    assert pytestconfig.getini('bar') == '0'
+            """,
+            "test_bar.py": """
+                def test():
+                    assert False
+            """,
+        })
+        result = testdir.runpytest('-o', 'foo=1', '-o', 'bar=0', 'test_foo.py')
         assert 'ERROR:' not in result.stderr.str()
-        result.stdout.fnmatch_lines('* 1 passed in *')
+        result.stdout.fnmatch_lines([
+            'collected 1 item',
+            '*= 1 passed in *=',
+        ])
