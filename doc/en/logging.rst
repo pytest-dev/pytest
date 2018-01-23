@@ -6,7 +6,7 @@ Logging
 .. versionadded:: 3.3
 .. versionchanged:: 3.4
 
-Pytest captures log messages of level ``WARNING`` or above automatically and displays them in their own section
+pytest captures log messages of level ``WARNING`` or above automatically and displays them in their own section
 for each failed test in the same manner as captured stdout and stderr.
 
 Running without options::

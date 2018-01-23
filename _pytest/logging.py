@@ -355,7 +355,7 @@ class LoggingPlugin(object):
                 yield  # run all the tests
 
     def _setup_cli_logging(self):
-        """Setups the handler and logger for the Live Logs feature, if enabled.
+        """Sets up the handler and logger for the Live Logs feature, if enabled.
 
         This must be done right before starting the loop so we can access the terminal reporter plugin.
         """
