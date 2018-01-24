@@ -24,11 +24,10 @@ Shows failed tests like so::
     ==================== 2 failed in 0.02 seconds =====================
 
 By default each captured log message shows the module, line number, log level
-and message.  Showing the exact module and line number is useful for testing and
-debugging.  If desired the log format and date format can be specified to
-anything that the logging module supports.
+and message.
 
-Running pytest specifying formatting options::
+If desired the log and date format can be specified to
+anything that the logging module supports by passing specific formatting options::
 
     pytest --log-format="%(asctime)s %(levelname)s %(message)s" \
             --log-date-format="%Y-%m-%d %H:%M:%S"
@@ -43,7 +42,7 @@ Shows failed tests like so::
     text going to stderr
     ==================== 2 failed in 0.02 seconds =====================
 
-These options can also be customized through a configuration file:
+These options can also be customized through ``pytest.ini`` file:
 
 .. code-block:: ini
 
@@ -56,7 +55,7 @@ with::
 
     pytest --no-print-logs
 
-Or in you ``pytest.ini``:
+Or in the ``pytest.ini`` file:
 
 .. code-block:: ini
 
@@ -71,6 +70,10 @@ Shows failed tests in the normal manner as no logs were captured::
     ----------------------- Captured stderr call ----------------------
     text going to stderr
     ==================== 2 failed in 0.02 seconds =====================
+
+
+caplog fixture
+^^^^^^^^^^^^^^
 
 Inside tests it is possible to change the log level for the captured log
 messages.  This is supported by the ``caplog`` fixture::
@@ -136,24 +139,20 @@ You can call ``caplog.clear()`` to reset the captured log records in a test::
         assert ['Foo'] == [rec.message for rec in caplog.records]
 
 
-Accessing logs from other test stages
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The ``caplop.records`` attribute contains records from the current stage only, so
+inside the ``setup`` phase it contains only setup logs, same with the ``call`` and
+``teardown`` phases.
 
-The ``caplop.records`` fixture contains records from the current stage only. So
-inside the setup phase it contains only setup logs, same with the call and
-teardown phases. To access logs from other stages you can use
-``caplog.get_handler('setup').records``. Valid stages are ``setup``, ``call``
-and ``teardown``.
-
-
-.. _live_logs:
+It is possible to access logs from other stages with ``caplog.get_handler('setup').records``.
 
 
 caplog fixture API
-^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: _pytest.logging.LogCaptureFixture
     :members:
+
+.. _live_logs:
 
 Live Logs
 ^^^^^^^^^
