@@ -135,7 +135,7 @@ def test_makepyfile_utf8(testdir):
     assert u"mixed_encoding = u'São Paulo'".encode('utf-8') in p.read('rb')
 
 
-class TestInlineRunModulesCleanup:
+class TestInlineRunModulesCleanup(object):
     def test_inline_run_test_module_not_cleaned_up(self, testdir):
         test_mod = testdir.makepyfile("def test_foo(): assert True")
         result = testdir.inline_run(str(test_mod))
@@ -146,7 +146,7 @@ class TestInlineRunModulesCleanup:
         assert result2.ret == EXIT_TESTSFAILED
 
     def spy_factory(self):
-        class SysModulesSnapshotSpy:
+        class SysModulesSnapshotSpy(object):
             instances = []
 
             def __init__(self, preserve=None):
@@ -223,7 +223,7 @@ def test_inline_run_clean_sys_paths(testdir):
         assert sys.meta_path == original_meta_path
 
     def spy_factory(self):
-        class SysPathsSnapshotSpy:
+        class SysPathsSnapshotSpy(object):
             instances = []
 
             def __init__(self):
@@ -266,7 +266,7 @@ def test_cwd_snapshot(tmpdir):
     assert py.path.local() == foo
 
 
-class TestSysModulesSnapshot:
+class TestSysModulesSnapshot(object):
     key = 'my-test-module'
 
     def test_remove_added(self):
@@ -329,7 +329,7 @@ class TestSysModulesSnapshot:
 
 
 @pytest.mark.parametrize('path_type', ('path', 'meta_path'))
-class TestSysPathsSnapshot:
+class TestSysPathsSnapshot(object):
     other_path = {
         'path': 'meta_path',
         'meta_path': 'path'}

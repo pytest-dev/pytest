@@ -241,7 +241,7 @@ class TestMetafunc(object):
         """
         from _pytest.python import _idval
 
-        class TestClass:
+        class TestClass(object):
             pass
 
         def test_function():

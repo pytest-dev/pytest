@@ -880,10 +880,10 @@ class TestConftestCustomization(object):
             import sys, os, imp
             from _pytest.python import Module
 
-            class Loader:
+            class Loader(object):
                 def load_module(self, name):
                     return imp.load_source(name, name + ".narf")
-            class Finder:
+            class Finder(object):
                 def find_module(self, name, path=None):
                     if os.path.exists(name + ".narf"):
                         return Loader()
