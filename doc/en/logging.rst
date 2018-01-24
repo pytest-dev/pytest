@@ -143,7 +143,21 @@ The ``caplop.records`` attribute contains records from the current stage only, s
 inside the ``setup`` phase it contains only setup logs, same with the ``call`` and
 ``teardown`` phases.
 
-It is possible to access logs from other stages with ``caplog.get_handler('setup').records``.
+To access logs from other stages, use the ``caplog.get_records(when)`` method. As an example,
+if you want to make sure that tests which use a certain fixture never log any warnings, you can inspect
+the records for the ``setup`` and ``call`` stages during teardown like so:
+
+.. code-block:: python
+
+
+    @pytest.fixture
+    def window(caplog):
+        window = create_window()
+        yield window
+        for when in ('setup', 'call'):
+            messages = [x.message for x in caplog.get_records(when) if x.level == logging.WARNING]
+            if messages:
+                pytest.fail('warning messages encountered during testing: {}'.format(messages))
 
 
 caplog fixture API

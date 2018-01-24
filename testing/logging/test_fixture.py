@@ -105,16 +105,16 @@ def logging_during_setup_and_teardown(caplog):
     logger.info('a_setup_log')
     yield
     logger.info('a_teardown_log')
-    assert [x.message for x in caplog.get_handler('teardown').records] == ['a_teardown_log']
+    assert [x.message for x in caplog.get_records('teardown')] == ['a_teardown_log']
 
 
 def test_caplog_captures_for_all_stages(caplog, logging_during_setup_and_teardown):
     assert not caplog.records
-    assert not caplog.get_handler('call').records
+    assert not caplog.get_records('call')
     logger.info('a_call_log')
-    assert [x.message for x in caplog.get_handler('call').records] == ['a_call_log']
+    assert [x.message for x in caplog.get_records('call')] == ['a_call_log']
 
-    assert [x.message for x in caplog.get_handler('setup').records] == ['a_setup_log']
+    assert [x.message for x in caplog.get_records('setup')] == ['a_setup_log']
 
     # This reachers into private API, don't use this type of thing in real tests!
     assert set(caplog._item.catch_log_handlers.keys()) == {'setup', 'call'}

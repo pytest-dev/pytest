@@ -144,12 +144,23 @@ class LogCaptureFixture(object):
     def handler(self):
         return self._item.catch_log_handler
 
-    def get_handler(self, when):
+    def get_records(self, when):
         """
-        Get the handler for a specified state of the tests.
-        Valid values for the when parameter are: 'setup', 'call' and 'teardown'.
+        Get the logging records for one of the possible test phases.
+
+        :param str when:
+            Which test phase to obtain the records from. Valid values are: "setup", "call" and "teardown".
+
+        :rtype: List[logging.LogRecord]
+        :return: the list of captured records at the given stage
+
+        .. versionadded:: 3.4
         """
-        return self._item.catch_log_handlers.get(when)
+        handler = self._item.catch_log_handlers.get(when)
+        if handler:
+            return handler.records
+        else:
+            return []
 
     @property
     def text(self):
