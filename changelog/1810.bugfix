@@ -1,0 +1,1 @@
+If we fail to import doctest.UnexpectedException during postmortem, fail quietly and continue.
