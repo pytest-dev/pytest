@@ -56,7 +56,7 @@ class DummyRewriteHook(object):
         pass
 
 
-class AssertionState:
+class AssertionState(object):
     """State for the assertion plugin."""
 
     def __init__(self, config, mode):

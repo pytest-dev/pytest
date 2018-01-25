@@ -243,7 +243,7 @@ def _patched_find_module():
         yield
 
 
-class FSHookProxy:
+class FSHookProxy(object):
     def __init__(self, fspath, pm, remove_mods):
         self.fspath = fspath
         self.pm = pm

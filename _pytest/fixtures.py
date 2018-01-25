@@ -247,7 +247,7 @@ def get_direct_param_fixture_func(request):
     return request.param
 
 
-class FuncFixtureInfo:
+class FuncFixtureInfo(object):
     def __init__(self, argnames, names_closure, name2fixturedefs):
         self.argnames = argnames
         self.names_closure = names_closure
@@ -443,7 +443,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
                 fixturedef = self._getnextfixturedef(argname)
             except FixtureLookupError:
                 if argname == "request":
-                    class PseudoFixtureDef:
+                    class PseudoFixtureDef(object):
                         cached_result = (self, [0], None)
                         scope = "function"
                     return PseudoFixtureDef
@@ -719,7 +719,7 @@ def call_fixture_func(fixturefunc, request, kwargs):
     return res
 
 
-class FixtureDef:
+class FixtureDef(object):
     """ A container for a factory definition. """
 
     def __init__(self, fixturemanager, baseid, argname, func, scope, params,
@@ -925,7 +925,7 @@ def pytestconfig(request):
     return request.config
 
 
-class FixtureManager:
+class FixtureManager(object):
     """
     pytest fixtures definitions and information is stored and managed
     from this class.

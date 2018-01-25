@@ -901,7 +901,7 @@ def test_deferred_hook_checking(testdir):
     testdir.syspathinsert()
     testdir.makepyfile(**{
         'plugin.py': """
-        class Hooks:
+        class Hooks(object):
             def pytest_my_hook(self, config):
                 pass
 

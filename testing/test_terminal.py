@@ -966,7 +966,7 @@ def test_no_trailing_whitespace_after_inifile_word(testdir):
     assert 'inifile: tox.ini\n' in result.stdout.str()
 
 
-class TestProgress:
+class TestProgress(object):
 
     @pytest.fixture
     def many_tests_files(self, testdir):
@@ -1047,7 +1047,7 @@ class TestProgress:
         ])
 
 
-class TestProgressWithTeardown:
+class TestProgressWithTeardown(object):
     """Ensure we show the correct percentages for tests that fail during teardown (#3088)"""
 
     @pytest.fixture

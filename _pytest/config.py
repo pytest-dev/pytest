@@ -66,7 +66,7 @@ def main(args=None, plugins=None):
         return 4
 
 
-class cmdline:  # compatibility namespace
+class cmdline(object):  # compatibility namespace
     main = staticmethod(main)
 
 
@@ -463,7 +463,7 @@ def _get_plugin_specs_as_list(specs):
     return []
 
 
-class Parser:
+class Parser(object):
     """ Parser for command line arguments and ini-file values.
 
     :ivar extra_info: dict of generic param -> value to display in case
@@ -598,7 +598,7 @@ class ArgumentError(Exception):
             return self.msg
 
 
-class Argument:
+class Argument(object):
     """class that mimics the necessary behaviour of optparse.Option
 
     its currently a least effort implementation
@@ -728,7 +728,7 @@ class Argument:
         return 'Argument({0})'.format(', '.join(args))
 
 
-class OptionGroup:
+class OptionGroup(object):
     def __init__(self, name, description="", parser=None):
         self.name = name
         self.description = description
@@ -859,7 +859,7 @@ class CmdOptions(object):
         return CmdOptions(self.__dict__)
 
 
-class Notset:
+class Notset(object):
     def __repr__(self):
         return "<NOTSET>"
 

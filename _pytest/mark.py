@@ -284,7 +284,7 @@ def pytest_unconfigure(config):
     MARK_GEN._config = getattr(config, '_old_mark_config', None)
 
 
-class MarkGenerator:
+class MarkGenerator(object):
     """ Factory for :class:`MarkDecorator` objects - exposed as
     a ``pytest.mark`` singleton instance.  Example::
 
