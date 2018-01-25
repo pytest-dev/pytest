@@ -331,3 +331,9 @@ Builtin configuration file options
         # content of pytest.ini
         [pytest]
         console_output_style = classic
+
+.. confval:: rootdir
+
+   Sets a :ref:`rootdir <rootdir>` directory. Directory may be relative or absolute path.
+   Additionally path may contain environment variables, that will be expanded.
+   For more information about rootdir please refer to :ref:`rootdir <rootdir>`.
