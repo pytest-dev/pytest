@@ -114,7 +114,8 @@ class LFPlugin(object):
                 mode = "run all (no recorded failures)"
             else:
                 noun = 'failure' if self._previously_failed_count == 1 else 'failures'
-                suffix = " first" if self.config.getvalue("failedfirst") else ""
+                suffix = " first" if self.config.getvalue(
+                    "failedfirst") else ""
                 mode = "rerun previous {count} {noun}{suffix}".format(
                     count=self._previously_failed_count, suffix=suffix, noun=noun
                 )
@@ -185,7 +186,7 @@ def pytest_addoption(parser):
         '--cache-clear', action='store_true', dest="cacheclear",
         help="remove all cache contents at start of test run.")
     parser.addini(
-        "cache_dir", default='.cache',
+        "cache_dir", default='.pytest_cache',
         help="cache directory path.")
 
 
