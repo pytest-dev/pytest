@@ -257,12 +257,24 @@ def test_sessionfinish_with_start(testdir):
 
 def test_rootdir_option_arg(testdir):
     rootdir = testdir.mkdir("root")
-    rootdir.join("spoon.py").write("spoon_number = 1")
-    testsdir = rootdir.mkdir("tests")
-    testsdir.join("test_one.py").write("from spoon import spoon_number\ndef test_one():\n    assert spoon_number")
+    rootdir.mkdir("tests")
+    testdir.makepyfile("""
+        import os
+        def test_one():
+            assert os.path.isdir('.cache')
+    """)
 
     result = testdir.runpytest()
-    result.stdout.fnmatch_lines(["*No module named*spoon*"])
+    result.stdout.fnmatch_lines(["*AssertionError*"])
 
     result = testdir.runpytest("--rootdir=root")
     result.stdout.fnmatch_lines(["*1 passed*"])
+
+
+def test_rootdir_wrong_option_arg(testdir):
+    rootdir = testdir.mkdir("root")
+    testsdir = rootdir.mkdir("tests")
+    testsdir.join("test_one.py").write("def test_one():\n    assert 1")
+
+    result = testdir.runpytest("--rootdir=wrong_dir")
+    result.stderr.fnmatch_lines(["*Directory *wrong_dir* not found. Check your '--rootdir' option.*"])
