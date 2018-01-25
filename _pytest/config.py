@@ -1188,16 +1188,15 @@ class Config(object):
 
     def _get_override_ini_value(self, name):
         value = None
-        # override_ini is a list of list, to support both -o foo1=bar1 foo2=bar2 and
-        # and -o foo1=bar1 -o foo2=bar2 options
-        # always use the last item if multiple value set for same ini-name,
+        # override_ini is a list of "ini=value" options
+        # always use the last item if multiple values are set for same ini-name,
         # e.g. -o foo=bar1 -o foo=bar2 will set foo to bar2
-        for ini_config_list in self._override_ini:
-            for ini_config in ini_config_list:
-                try:
-                    (key, user_ini_value) = ini_config.split("=", 1)
-                except ValueError:
-                    raise UsageError("-o/--override-ini expects option=value style.")
+        for ini_config in self._override_ini:
+            try:
+                key, user_ini_value = ini_config.split("=", 1)
+            except ValueError:
+                raise UsageError("-o/--override-ini expects option=value style.")
+            else:
                 if key == name:
                     value = user_ini_value
         return value
