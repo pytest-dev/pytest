@@ -1,1 +1,0 @@
-Change default cache directory name from `.cache` to `.pytest_cache`
