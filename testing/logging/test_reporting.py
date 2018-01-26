@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
+
+import six
+
 import pytest
 
 
@@ -35,7 +38,7 @@ def test_messages_logged(testdir):
             logger.info('text going to logger')
             assert False
         ''')
-    result = testdir.runpytest()
+    result = testdir.runpytest('--log-level=INFO')
     assert result.ret == 1
     result.stdout.fnmatch_lines(['*- Captured *log call -*',
                                  '*text going to logger*'])
@@ -58,7 +61,7 @@ def test_setup_logging(testdir):
             logger.info('text going to logger from call')
             assert False
         ''')
-    result = testdir.runpytest()
+    result = testdir.runpytest('--log-level=INFO')
     assert result.ret == 1
     result.stdout.fnmatch_lines(['*- Captured *log setup -*',
                                  '*text going to logger from setup*',
@@ -79,7 +82,7 @@ def test_teardown_logging(testdir):
             logger.info('text going to logger from teardown')
             assert False
         ''')
-    result = testdir.runpytest()
+    result = testdir.runpytest('--log-level=INFO')
     assert result.ret == 1
     result.stdout.fnmatch_lines(['*- Captured *log call -*',
                                  '*text going to logger from call*',
@@ -141,6 +144,30 @@ def test_disable_log_capturing_ini(testdir):
         result.stdout.fnmatch_lines(['*- Captured *log call -*'])
 
 
+@pytest.mark.parametrize('enabled', [True, False])
+def test_log_cli_enabled_disabled(testdir, enabled):
+    msg = 'critical message logged by test'
+    testdir.makepyfile('''
+        import logging
+        def test_log_cli():
+            logging.critical("{}")
+    '''.format(msg))
+    if enabled:
+        testdir.makeini('''
+            [pytest]
+            log_cli=true
+        ''')
+    result = testdir.runpytest()
+    if enabled:
+        result.stdout.fnmatch_lines([
+            'test_log_cli_enabled_disabled.py::test_log_cli ',
+            'test_log_cli_enabled_disabled.py* CRITICAL critical message logged by test',
+            'PASSED*',
+        ])
+    else:
+        assert msg not in result.stdout.str()
+
+
 def test_log_cli_default_level(testdir):
     # Default log file level
     testdir.makepyfile('''
@@ -148,30 +175,101 @@ def test_log_cli_default_level(testdir):
         import logging
         def test_log_cli(request):
             plugin = request.config.pluginmanager.getplugin('logging-plugin')
-            assert plugin.log_cli_handler.level == logging.WARNING
-            logging.getLogger('catchlog').info("This log message won't be shown")
-            logging.getLogger('catchlog').warning("This log message will be shown")
-            print('PASSED')
+            assert plugin.log_cli_handler.level == logging.NOTSET
+            logging.getLogger('catchlog').info("INFO message won't be shown")
+            logging.getLogger('catchlog').warning("WARNING message will be shown")
+    ''')
+    testdir.makeini('''
+        [pytest]
+        log_cli=true
     ''')
 
-    result = testdir.runpytest('-s')
+    result = testdir.runpytest()
 
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines([
-        'test_log_cli_default_level.py PASSED',
+        'test_log_cli_default_level.py::test_log_cli ',
+        'test_log_cli_default_level.py*WARNING message will be shown*',
     ])
-    result.stderr.fnmatch_lines([
-        "* This log message will be shown"
-    ])
-    for line in result.errlines:
-        try:
-            assert "This log message won't be shown" in line
-            pytest.fail("A log message was shown and it shouldn't have been")
-        except AssertionError:
-            continue
-
+    assert "INFO message won't be shown" not in result.stdout.str()
     # make sure that that we get a '0' exit code for the testsuite
     assert result.ret == 0
+
+
+def test_log_cli_default_level_multiple_tests(testdir, request):
+    """Ensure we reset the first newline added by the live logger between tests"""
+    filename = request.node.name + '.py'
+    testdir.makepyfile('''
+        import logging
+
+        def test_log_1():
+            logging.warning("log message from test_log_1")
+
+        def test_log_2():
+            logging.warning("log message from test_log_2")
+    ''')
+    testdir.makeini('''
+        [pytest]
+        log_cli=true
+    ''')
+
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        '{}::test_log_1 '.format(filename),
+        '*WARNING*log message from test_log_1*',
+        'PASSED *50%*',
+        '{}::test_log_2 '.format(filename),
+        '*WARNING*log message from test_log_2*',
+        'PASSED *100%*',
+        '=* 2 passed in *=',
+    ])
+
+
+def test_log_cli_default_level_sections(testdir, request):
+    """Check that with live logging enable we are printing the correct headers during setup/call/teardown."""
+    filename = request.node.name + '.py'
+    testdir.makepyfile('''
+        import pytest
+        import logging
+
+        @pytest.fixture
+        def fix(request):
+            logging.warning("log message from setup of {}".format(request.node.name))
+            yield
+            logging.warning("log message from teardown of {}".format(request.node.name))
+
+        def test_log_1(fix):
+            logging.warning("log message from test_log_1")
+
+        def test_log_2(fix):
+            logging.warning("log message from test_log_2")
+    ''')
+    testdir.makeini('''
+        [pytest]
+        log_cli=true
+    ''')
+
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        '{}::test_log_1 '.format(filename),
+        '*-- live log setup --*',
+        '*WARNING*log message from setup of test_log_1*',
+        '*-- live log call --*',
+        '*WARNING*log message from test_log_1*',
+        'PASSED *50%*',
+        '*-- live log teardown --*',
+        '*WARNING*log message from teardown of test_log_1*',
+
+        '{}::test_log_2 '.format(filename),
+        '*-- live log setup --*',
+        '*WARNING*log message from setup of test_log_2*',
+        '*-- live log call --*',
+        '*WARNING*log message from test_log_2*',
+        'PASSED *100%*',
+        '*-- live log teardown --*',
+        '*WARNING*log message from teardown of test_log_2*',
+        '=* 2 passed in *=',
+    ])
 
 
 def test_log_cli_level(testdir):
@@ -186,22 +284,19 @@ def test_log_cli_level(testdir):
             logging.getLogger('catchlog').info("This log message will be shown")
             print('PASSED')
     ''')
+    testdir.makeini('''
+        [pytest]
+        log_cli=true
+    ''')
 
     result = testdir.runpytest('-s', '--log-cli-level=INFO')
 
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines([
-        'test_log_cli_level.py PASSED',
+        'test_log_cli_level.py*This log message will be shown',
+        'PASSED',  # 'PASSED' on its own line because the log message prints a new line
     ])
-    result.stderr.fnmatch_lines([
-        "* This log message will be shown"
-    ])
-    for line in result.errlines:
-        try:
-            assert "This log message won't be shown" in line
-            pytest.fail("A log message was shown and it shouldn't have been")
-        except AssertionError:
-            continue
+    assert "This log message won't be shown" not in result.stdout.str()
 
     # make sure that that we get a '0' exit code for the testsuite
     assert result.ret == 0
@@ -210,17 +305,10 @@ def test_log_cli_level(testdir):
 
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines([
-        'test_log_cli_level.py PASSED',
+        'test_log_cli_level.py* This log message will be shown',
+        'PASSED',  # 'PASSED' on its own line because the log message prints a new line
     ])
-    result.stderr.fnmatch_lines([
-        "* This log message will be shown"
-    ])
-    for line in result.errlines:
-        try:
-            assert "This log message won't be shown" in line
-            pytest.fail("A log message was shown and it shouldn't have been")
-        except AssertionError:
-            continue
+    assert "This log message won't be shown" not in result.stdout.str()
 
     # make sure that that we get a '0' exit code for the testsuite
     assert result.ret == 0
@@ -230,6 +318,7 @@ def test_log_cli_ini_level(testdir):
     testdir.makeini(
         """
         [pytest]
+        log_cli=true
         log_cli_level = INFO
         """)
     testdir.makepyfile('''
@@ -247,17 +336,10 @@ def test_log_cli_ini_level(testdir):
 
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines([
-        'test_log_cli_ini_level.py PASSED',
+        'test_log_cli_ini_level.py* This log message will be shown',
+        'PASSED',  # 'PASSED' on its own line because the log message prints a new line
     ])
-    result.stderr.fnmatch_lines([
-        "* This log message will be shown"
-    ])
-    for line in result.errlines:
-        try:
-            assert "This log message won't be shown" in line
-            pytest.fail("A log message was shown and it shouldn't have been")
-        except AssertionError:
-            continue
+    assert "This log message won't be shown" not in result.stdout.str()
 
     # make sure that that we get a '0' exit code for the testsuite
     assert result.ret == 0
@@ -278,7 +360,7 @@ def test_log_file_cli(testdir):
 
     log_file = testdir.tmpdir.join('pytest.log').strpath
 
-    result = testdir.runpytest('-s', '--log-file={0}'.format(log_file))
+    result = testdir.runpytest('-s', '--log-file={0}'.format(log_file), '--log-file-level=WARNING')
 
     # fnmatch_lines does an assertion internally
     result.stdout.fnmatch_lines([
@@ -327,6 +409,16 @@ def test_log_file_cli_level(testdir):
         assert "This log message won't be shown" not in contents
 
 
+def test_log_level_not_changed_by_default(testdir):
+    testdir.makepyfile('''
+        import logging
+        def test_log_file():
+            assert logging.getLogger().level == logging.WARNING
+    ''')
+    result = testdir.runpytest('-s')
+    result.stdout.fnmatch_lines('* 1 passed in *')
+
+
 def test_log_file_ini(testdir):
     log_file = testdir.tmpdir.join('pytest.log').strpath
 
@@ -334,6 +426,7 @@ def test_log_file_ini(testdir):
         """
         [pytest]
         log_file={0}
+        log_file_level=WARNING
         """.format(log_file))
     testdir.makepyfile('''
         import pytest
@@ -396,3 +489,53 @@ def test_log_file_ini_level(testdir):
         contents = rfh.read()
         assert "This log message will be shown" in contents
         assert "This log message won't be shown" not in contents
+
+
+@pytest.mark.parametrize('has_capture_manager', [True, False])
+def test_live_logging_suspends_capture(has_capture_manager, request):
+    """Test that capture manager is suspended when we emitting messages for live logging.
+
+    This tests the implementation calls instead of behavior because it is difficult/impossible to do it using
+    ``testdir`` facilities because they do their own capturing.
+
+    We parametrize the test to also make sure _LiveLoggingStreamHandler works correctly if no capture manager plugin
+    is installed.
+    """
+    import logging
+    from functools import partial
+    from _pytest.capture import CaptureManager
+    from _pytest.logging import _LiveLoggingStreamHandler
+
+    class MockCaptureManager:
+        calls = []
+
+        def suspend_global_capture(self):
+            self.calls.append('suspend_global_capture')
+
+        def resume_global_capture(self):
+            self.calls.append('resume_global_capture')
+
+    # sanity check
+    assert CaptureManager.suspend_capture_item
+    assert CaptureManager.resume_global_capture
+
+    class DummyTerminal(six.StringIO):
+
+        def section(self, *args, **kwargs):
+            pass
+
+    out_file = DummyTerminal()
+    capture_manager = MockCaptureManager() if has_capture_manager else None
+    handler = _LiveLoggingStreamHandler(out_file, capture_manager)
+    handler.set_when('call')
+
+    logger = logging.getLogger(__name__ + '.test_live_logging_suspends_capture')
+    logger.addHandler(handler)
+    request.addfinalizer(partial(logger.removeHandler, handler))
+
+    logger.critical('some message')
+    if has_capture_manager:
+        assert MockCaptureManager.calls == ['suspend_global_capture', 'resume_global_capture']
+    else:
+        assert MockCaptureManager.calls == []
+    assert out_file.getvalue() == '\nsome message\n'
