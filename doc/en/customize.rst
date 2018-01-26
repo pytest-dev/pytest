@@ -350,17 +350,23 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 .. confval:: empty_parameter_set_mark
 
-	.. versionadded:: 3.4
+    .. versionadded:: 3.4
 
-	allows to pick the action for empty parametersets in parameterization
+    Allows to pick the action for empty parametersets in parameterization
 
-	* ``skip`` skips tests with a empty parameterset
-	* ``xfail`` marks tests with a empty parameterset as xfail(run=False)
+    * ``skip`` skips tests with a empty parameterset (default)
+    * ``xfail`` marks tests with a empty parameterset as xfail(run=False)
 
-	The default is ``skip``, it will be shifted to xfail in future.
+    .. note::
 
-	.. code-block:: ini
+      it is planned to change the default to ``xfail`` in future releases
+      as this is considered less error prone. see `#3155`_
+
+    .. code-block:: ini
 
         # content of pytest.ini
         [pytest]
         empty_parameter_set_mark = xfail
+
+
+.. _`#3155`: https://github.com/pytest-dev/pytest/issues/3155

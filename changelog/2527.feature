@@ -1,1 +1,1 @@
-introduce a pytest ini option to pick the mark for empty parametersets and allow to use xfail(run=False)
+Introduce ``empty_parameter_set_mark`` ini option to select which mark to apply when ``@pytest.mark.parametrize`` is given an empty set of parameters. Valid options are ``skip`` (default) and ``xfail``. Note that it is planned to change the default to ``xfail`` in future releases as this is considered less error prone.
