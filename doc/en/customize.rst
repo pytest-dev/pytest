@@ -346,3 +346,21 @@ passed multiple times. The expected format is ``name=value``. For example::
         # content of pytest.ini
         [pytest]
         console_output_style = classic
+
+
+.. confval:: empty_parameterset
+
+	.. versionadded:: 3.4
+
+	allows to pick the action for empty parametersets in parameterization
+
+	* ``skip`` skips tests with a empty parameterset
+	* ``xfail`` marks tests with a empty parameterset as xfail(run=False)
+
+	The default is ``skip``, it will be shifted to xfail in future.
+
+	.. code-block:: ini
+
+        # content of pytest.ini
+        [pytest]
+        empty_parameterset = xfail
