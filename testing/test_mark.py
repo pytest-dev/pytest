@@ -906,7 +906,7 @@ def test_parameterset_for_parametrize_marks(testdir, mark):
         # normalize to the requested name
         mark = 'skip'
     assert result_mark.name == mark
-
+    assert result_mark.kwargs['reason'].startswith("got empty parameter set ")
     if mark == 'xfail':
         assert result_mark.kwargs.get('run') is False
 
