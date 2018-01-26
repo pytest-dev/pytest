@@ -893,16 +893,16 @@ class TestMarkDecorator(object):
         assert (lhs == rhs) == expected
 
 
-@pytest.mark.parametrize('mark', [None, 'skip', 'xfail'])
+@pytest.mark.parametrize('mark', [None, '', 'skip', 'xfail'])
 def test_parameterset_for_parametrize_marks(testdir, mark):
     if mark is not None:
-        testdir.makeini("[pytest]\nempty_parameterset=" + mark)
+        testdir.makeini("[pytest]\nempty_parameter_set_mark=" + mark)
 
     config = testdir.parseconfig()
     from _pytest.mark import pytest_configure, get_empty_parameterset_mark
     pytest_configure(config)
     result_mark = get_empty_parameterset_mark(config, ['a'], all)
-    if mark is None:
+    if mark in (None, ''):
         # normalize to the requested name
         mark = 'skip'
     assert result_mark.name == mark

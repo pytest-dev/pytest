@@ -293,7 +293,7 @@ def pytest_configure(config):
     if config.option.strict:
         MARK_GEN._config = config
 
-    empty_parameterset = config.getini("empty_parameterset")
+    empty_parameterset = config.getini("empty_parameter_set_mark")
 
     if empty_parameterset not in ('skip', 'xfail', None, ''):
         from pytest import UsageError
