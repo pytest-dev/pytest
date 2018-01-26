@@ -13,6 +13,8 @@ from _pytest.config import UsageError
 from .deprecated import MARK_PARAMETERSET_UNPACKING
 from .compat import NOTSET, getfslineno
 
+EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
+
 
 def alias(name, warning=None):
     getter = attrgetter(name)
@@ -95,7 +97,7 @@ class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
 
 
 def get_empty_parameterset_mark(config, argnames, function):
-    requested_mark = config.getini('empty_parameter_set_mark')
+    requested_mark = config.getini(EMPTY_PARAMETERSET_OPTION)
     if requested_mark in ('', None, 'skip'):
         mark = MARK_GEN.skip
     elif requested_mark == 'xfail':
@@ -148,7 +150,7 @@ def pytest_addoption(parser):
 
     parser.addini("markers", "markers for test functions", 'linelist')
     parser.addini(
-        "empty_parameter_set_mark",
+        EMPTY_PARAMETERSET_OPTION,
         "default marker for empty parametersets")
 
 
@@ -293,13 +295,12 @@ def pytest_configure(config):
     if config.option.strict:
         MARK_GEN._config = config
 
-    empty_parameterset = config.getini("empty_parameter_set_mark")
+    empty_parameterset = config.getini(EMPTY_PARAMETERSET_OPTION)
 
     if empty_parameterset not in ('skip', 'xfail', None, ''):
-        from pytest import UsageError
         raise UsageError(
-            "empty_parameterset must be one of skip and xfail,"
-            " but it is {!r}".format(empty_parameterset))
+            "{!s} must be one of skip and xfail,"
+            " but it is {!r}".format(EMPTY_PARAMETERSET_OPTION, empty_parameterset))
 
 
 def pytest_unconfigure(config):

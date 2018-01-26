@@ -3,7 +3,10 @@ import os
 import sys
 
 import pytest
-from _pytest.mark import MarkGenerator as Mark, ParameterSet, transfer_markers
+from _pytest.mark import (
+    MarkGenerator as Mark, ParameterSet, transfer_markers,
+    EMPTY_PARAMETERSET_OPTION,
+)
 
 
 class TestMark(object):
@@ -896,7 +899,8 @@ class TestMarkDecorator(object):
 @pytest.mark.parametrize('mark', [None, '', 'skip', 'xfail'])
 def test_parameterset_for_parametrize_marks(testdir, mark):
     if mark is not None:
-        testdir.makeini("[pytest]\nempty_parameter_set_mark=" + mark)
+        testdir.makeini(
+            "[pytest]\n{}={}".format(EMPTY_PARAMETERSET_OPTION, mark))
 
     config = testdir.parseconfig()
     from _pytest.mark import pytest_configure, get_empty_parameterset_mark
