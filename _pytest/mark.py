@@ -95,7 +95,7 @@ class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
 
 
 def get_empty_parameterset_mark(config, argnames, function):
-    requested_mark = config.getini('empty_parameterset')
+    requested_mark = config.getini('empty_parameter_set_mark')
     if requested_mark in ('', None, 'skip'):
         mark = MARK_GEN.skip
     elif requested_mark == 'xfail':
@@ -148,7 +148,7 @@ def pytest_addoption(parser):
 
     parser.addini("markers", "markers for test functions", 'linelist')
     parser.addini(
-        "empty_parameterset",
+        "empty_parameter_set_mark",
         "default marker for empty parametersets")
 
 

@@ -348,7 +348,7 @@ passed multiple times. The expected format is ``name=value``. For example::
         console_output_style = classic
 
 
-.. confval:: empty_parameterset
+.. confval:: empty_parameter_set_mark
 
 	.. versionadded:: 3.4
 
@@ -363,4 +363,4 @@ passed multiple times. The expected format is ``name=value``. For example::
 
         # content of pytest.ini
         [pytest]
-        empty_parameterset = xfail
+        empty_parameter_set_mark = xfail
