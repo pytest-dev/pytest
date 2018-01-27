@@ -17,7 +17,7 @@ class Cache(object):
         self.config = config
         self._cachedir = Cache.cache_dir_from_config(config)
         self.trace = config.trace.root.get("cache")
-        if config.getvalue("cacheclear"):
+        if config.getoption("cacheclear"):
             self.trace("clearing cachedir")
             if self._cachedir.check():
                 self._cachedir.remove()
@@ -104,7 +104,7 @@ class LFPlugin(object):
     def __init__(self, config):
         self.config = config
         active_keys = 'lf', 'failedfirst'
-        self.active = any(config.getvalue(key) for key in active_keys)
+        self.active = any(config.getoption(key) for key in active_keys)
         self.lastfailed = config.cache.get("cache/lastfailed", {})
         self._previously_failed_count = None
 
@@ -114,7 +114,7 @@ class LFPlugin(object):
                 mode = "run all (no recorded failures)"
             else:
                 noun = 'failure' if self._previously_failed_count == 1 else 'failures'
-                suffix = " first" if self.config.getvalue(
+                suffix = " first" if self.config.getoption(
                     "failedfirst") else ""
                 mode = "rerun previous {count} {noun}{suffix}".format(
                     count=self._previously_failed_count, suffix=suffix, noun=noun
@@ -152,7 +152,7 @@ class LFPlugin(object):
                 # running a subset of all tests with recorded failures outside
                 # of the set of tests currently executing
                 return
-            if self.config.getvalue("lf"):
+            if self.config.getoption("lf"):
                 items[:] = previously_failed
                 config.hook.pytest_deselected(items=previously_passed)
             else:
@@ -160,7 +160,7 @@ class LFPlugin(object):
 
     def pytest_sessionfinish(self, session):
         config = self.config
-        if config.getvalue("cacheshow") or hasattr(config, "slaveinput"):
+        if config.getoption("cacheshow") or hasattr(config, "slaveinput"):
             return
 
         saved_lastfailed = config.cache.get("cache/lastfailed", {})
