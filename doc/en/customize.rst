@@ -357,16 +357,17 @@ passed multiple times. The expected format is ``name=value``. For example::
     * ``skip`` skips tests with a empty parameterset (default)
     * ``xfail`` marks tests with a empty parameterset as xfail(run=False)
 
-    .. note::
-
-      it is planned to change the default to ``xfail`` in future releases
-      as this is considered less error prone. see `#3155`_
-
     .. code-block:: ini
 
-        # content of pytest.ini
-        [pytest]
-        empty_parameter_set_mark = xfail
+      # content of pytest.ini
+      [pytest]
+      empty_parameter_set_mark = xfail
+
+    .. note::
+
+      The default value of this option is planned to change to ``xfail`` in future releases
+      as this is considered less error prone, see `#3155`_ for more details.
+
 
 
 .. _`#3155`: https://github.com/pytest-dev/pytest/issues/3155
