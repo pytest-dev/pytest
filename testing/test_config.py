@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function
 import sys
-import py
+import textwrap
 import pytest
 
 import _pytest._code
@@ -57,7 +57,7 @@ class TestParseIni(object):
         ('pytest', 'pytest.ini')],
     )
     def test_ini_names(self, testdir, name, section):
-        testdir.tmpdir.join(name).write(py.std.textwrap.dedent("""
+        testdir.tmpdir.join(name).write(textwrap.dedent("""
             [{section}]
             minversion = 1.0
         """.format(section=section)))
@@ -66,11 +66,11 @@ class TestParseIni(object):
 
     def test_toxini_before_lower_pytestini(self, testdir):
         sub = testdir.tmpdir.mkdir("sub")
-        sub.join("tox.ini").write(py.std.textwrap.dedent("""
+        sub.join("tox.ini").write(textwrap.dedent("""
             [pytest]
             minversion = 2.0
         """))
-        testdir.tmpdir.join("pytest.ini").write(py.std.textwrap.dedent("""
+        testdir.tmpdir.join("pytest.ini").write(textwrap.dedent("""
             [pytest]
             minversion = 1.5
         """))
@@ -731,7 +731,7 @@ class TestRootdir(object):
 class TestOverrideIniArgs(object):
     @pytest.mark.parametrize("name", "setup.cfg tox.ini pytest.ini".split())
     def test_override_ini_names(self, testdir, name):
-        testdir.tmpdir.join(name).write(py.std.textwrap.dedent("""
+        testdir.tmpdir.join(name).write(textwrap.dedent("""
             [pytest]
             custom = 1.0"""))
         testdir.makeconftest("""

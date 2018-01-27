@@ -1,0 +1,1 @@
+Added note that calling pytest.main multiple times from the same process is not recommended because of import caching.

@@ -4,7 +4,6 @@ import sys
 from textwrap import dedent
 
 import _pytest._code
-import py
 import pytest
 from _pytest.main import EXIT_NOTESTSCOLLECTED
 from _pytest.nodes import Collector
@@ -22,7 +21,7 @@ class TestModule(object):
         b = testdir.mkdir("b")
         p = a.ensure("test_whatever.py")
         p.pyimport()
-        del py.std.sys.modules['test_whatever']
+        del sys.modules['test_whatever']
         b.ensure("test_whatever.py")
         result = testdir.runpytest()
         result.stdout.fnmatch_lines([
@@ -751,7 +750,7 @@ class TestSorting(object):
 
         assert fn1 == fn2
         assert fn1 != modcol
-        if py.std.sys.version_info < (3, 0):
+        if sys.version_info < (3, 0):
             assert cmp(fn1, fn2) == 0
         assert hash(fn1) == hash(fn2)
 

@@ -826,15 +826,20 @@ Instead of freezing the pytest runner as a separate executable, you can make
 your frozen program work as the pytest runner by some clever
 argument handling during program startup. This allows you to 
 have a single executable, which is usually more convenient.
+Please note that the mechanism for plugin discovery used by pytest
+(setupttools entry points) doesn't work with frozen executables so pytest
+can't find any third party plugins automatically. To include third party plugins 
+like ``pytest-timeout`` they must be imported explicitly and passed on to pytest.main.
 
 .. code-block:: python
 
     # contents of app_main.py
     import sys
+    import pytest_timeout  # Third party plugin
 
     if len(sys.argv) > 1 and sys.argv[1] == '--pytest':
         import pytest
-        sys.exit(pytest.main(sys.argv[2:]))
+        sys.exit(pytest.main(sys.argv[2:], plugins=[pytest_timeout]))
     else:
         # normal application execution: at this point argv can be parsed
         # by your argument-parsing library of choice as usual
@@ -845,3 +850,4 @@ This allows you to execute tests using the frozen
 application with standard ``pytest`` command-line options::
 
     ./app_main --pytest --verbose --tb=long --junitxml=results.xml test-suite/
+

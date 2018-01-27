@@ -16,6 +16,9 @@ def pytest_addhooks(pluginmanager):
 
 
     :param _pytest.config.PytestPluginManager pluginmanager: pytest plugin manager
+
+    .. note::
+        This hook is incompatible with ``hookwrapper=True``.
     """
 
 
@@ -27,6 +30,9 @@ def pytest_namespace():
     the pytest namespace.
 
     This hook is called at plugin registration time.
+
+    .. note::
+        This hook is incompatible with ``hookwrapper=True``.
     """
 
 
@@ -36,6 +42,9 @@ def pytest_plugin_registered(plugin, manager):
 
     :param plugin: the plugin module or instance
     :param _pytest.config.PytestPluginManager manager: pytest plugin manager
+
+    .. note::
+        This hook is incompatible with ``hookwrapper=True``.
     """
 
 
@@ -66,6 +75,9 @@ def pytest_addoption(parser):
 
     The config object is passed around on many internal objects via the ``.config``
     attribute or can be retrieved as the ``pytestconfig`` fixture.
+
+    .. note::
+        This hook is incompatible with ``hookwrapper=True``.
     """
 
 
@@ -80,13 +92,15 @@ def pytest_configure(config):
     After that, the hook is called for other conftest files as they are
     imported.
 
+    .. note::
+        This hook is incompatible with ``hookwrapper=True``.
+
     :arg _pytest.config.Config config: pytest config object
     """
 
 # -------------------------------------------------------------------------
 # Bootstrapping hooks called for plugins registered early enough:
-# internal and 3rd party plugins as well as directly
-# discoverable conftest.py local plugins.
+# internal and 3rd party plugins.
 # -------------------------------------------------------------------------
 
 
@@ -95,6 +109,9 @@ def pytest_cmdline_parse(pluginmanager, args):
     """return initialized config object, parsing the specified args.
 
     Stops at first non-None result, see :ref:`firstresult`
+
+    .. note::
+        This hook will not be called for ``conftest.py`` files, only for setuptools plugins.
 
     :param _pytest.config.PytestPluginManager pluginmanager: pytest plugin manager
     :param list[str] args: list of arguments passed on the command line
@@ -107,6 +124,9 @@ def pytest_cmdline_preparse(config, args):
     This hook is considered deprecated and will be removed in a future pytest version. Consider
     using :func:`pytest_load_initial_conftests` instead.
 
+    .. note::
+        This hook will not be called for ``conftest.py`` files, only for setuptools plugins.
+
     :param _pytest.config.Config config: pytest config object
     :param list[str] args: list of arguments passed on the command line
     """
@@ -117,6 +137,9 @@ def pytest_cmdline_main(config):
     """ called for performing the main command line action. The default
     implementation will invoke the configure hooks and runtest_mainloop.
 
+    .. note::
+        This hook will not be called for ``conftest.py`` files, only for setuptools plugins.
+
     Stops at first non-None result, see :ref:`firstresult`
 
     :param _pytest.config.Config config: pytest config object
@@ -126,6 +149,9 @@ def pytest_cmdline_main(config):
 def pytest_load_initial_conftests(early_config, parser, args):
     """ implements the loading of initial conftest files ahead
     of command line option parsing.
+
+    .. note::
+        This hook will not be called for ``conftest.py`` files, only for setuptools plugins.
 
     :param _pytest.config.Config early_config: pytest config object
     :param list[str] args: list of arguments passed on the command line
@@ -365,7 +391,15 @@ def pytest_runtest_logreport(report):
 def pytest_fixture_setup(fixturedef, request):
     """ performs fixture setup execution.
 
-    Stops at first non-None result, see :ref:`firstresult` """
+    :return: The return value of the call to the fixture function
+
+    Stops at first non-None result, see :ref:`firstresult`
+
+    .. note::
+        If the fixture function returns None, other implementations of
+        this hook function will continue to be called, according to the
+        behavior of the :ref:`firstresult` option.
+    """
 
 
 def pytest_fixture_post_finalizer(fixturedef, request):
@@ -463,7 +497,11 @@ def pytest_terminal_summary(terminalreporter, exitstatus):
 def pytest_logwarning(message, code, nodeid, fslocation):
     """ process a warning specified by a message, a code string,
     a nodeid and fslocation (both of which may be None
-    if the warning is not tied to a particular node/location)."""
+    if the warning is not tied to a particular node/location).
+
+    .. note::
+        This hook is incompatible with ``hookwrapper=True``.
+    """
 
 # -------------------------------------------------------------------------
 # doctest hooks

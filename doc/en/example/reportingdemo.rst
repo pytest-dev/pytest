@@ -413,10 +413,10 @@ get on the terminal - we are working on that)::
         def test_dynamic_compile_shows_nicely():
             src = 'def foo():\n assert 1 == 0\n'
             name = 'abc-123'
-            module = py.std.imp.new_module(name)
+            module = imp.new_module(name)
             code = _pytest._code.compile(src, name, 'exec')
             py.builtin.exec_(code, module.__dict__)
-            py.std.sys.modules[name] = module
+            sys.modules[name] = module
     >       module.foo()
     
     failure_demo.py:166: 

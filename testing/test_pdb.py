@@ -402,5 +402,4 @@ class TestPDB(object):
         child = testdir.spawn_pytest("--pdbcls=custom_pdb:CustomPdb %s" % str(p1))
 
         child.expect('custom set_trace>')
-        if child.isalive():
-            child.wait()
+        self.flush(child)

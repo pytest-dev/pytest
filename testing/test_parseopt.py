@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division, print_function
+import argparse
 import sys
 import os
 import py
@@ -189,7 +190,7 @@ class TestParser(object):
         assert option.no is False
 
     def test_drop_short_helper(self):
-        parser = py.std.argparse.ArgumentParser(formatter_class=parseopt.DropShorterLongHelpFormatter)
+        parser = argparse.ArgumentParser(formatter_class=parseopt.DropShorterLongHelpFormatter)
         parser.add_argument('-t', '--twoword', '--duo', '--two-word', '--two',
                             help='foo').map_long_option = {'two': 'two-word'}
         # throws error on --deux only!

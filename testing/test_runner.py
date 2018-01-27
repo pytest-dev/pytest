@@ -2,10 +2,12 @@
 from __future__ import absolute_import, division, print_function
 
 import _pytest._code
+import inspect
 import os
 import py
 import pytest
 import sys
+import types
 from _pytest import runner, main, outcomes
 
 
@@ -404,10 +406,10 @@ reporttypes = [
 
 @pytest.mark.parametrize('reporttype', reporttypes, ids=[x.__name__ for x in reporttypes])
 def test_report_extra_parameters(reporttype):
-    if hasattr(py.std.inspect, 'signature'):
-        args = list(py.std.inspect.signature(reporttype.__init__).parameters.keys())[1:]
+    if hasattr(inspect, 'signature'):
+        args = list(inspect.signature(reporttype.__init__).parameters.keys())[1:]
     else:
-        args = py.std.inspect.getargspec(reporttype.__init__)[0][1:]
+        args = inspect.getargspec(reporttype.__init__)[0][1:]
     basekw = dict.fromkeys(args, [])
     report = reporttype(newthing=1, **basekw)
     assert report.newthing == 1
@@ -576,10 +578,10 @@ def test_importorskip(monkeypatch):
         importorskip("asdlkj")
 
     try:
-        sys = importorskip("sys")
-        assert sys == py.std.sys
+        sysmod = importorskip("sys")
+        assert sysmod is sys
         # path = pytest.importorskip("os.path")
-        # assert path == py.std.os.path
+        # assert path == os.path
         excinfo = pytest.raises(pytest.skip.Exception, f)
         path = py.path.local(excinfo.getrepr().reprcrash.path)
         # check that importorskip reports the actual call
@@ -587,7 +589,7 @@ def test_importorskip(monkeypatch):
         assert path.purebasename == "test_runner"
         pytest.raises(SyntaxError, "pytest.importorskip('x y z')")
         pytest.raises(SyntaxError, "pytest.importorskip('x=y')")
-        mod = py.std.types.ModuleType("hello123")
+        mod = types.ModuleType("hello123")
         mod.__version__ = "1.3"
         monkeypatch.setitem(sys.modules, "hello123", mod)
         pytest.raises(pytest.skip.Exception, """
@@ -607,7 +609,7 @@ def test_importorskip_imports_last_module_part():
 
 def test_importorskip_dev_module(monkeypatch):
     try:
-        mod = py.std.types.ModuleType("mockmodule")
+        mod = types.ModuleType("mockmodule")
         mod.__version__ = '0.13.0.dev-43290'
         monkeypatch.setitem(sys.modules, 'mockmodule', mod)
         mod2 = pytest.importorskip('mockmodule', minversion='0.12.0')

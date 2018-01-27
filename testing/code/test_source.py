@@ -2,6 +2,7 @@
 # disable flake check on this file because some constructs are strange
 # or redundant on purpose and can't be disable on a line-by-line basis
 from __future__ import absolute_import, division, print_function
+import inspect
 import sys
 
 import _pytest._code
@@ -187,9 +188,9 @@ class TestSourceParsingAndCompiling(object):
             def f():
                 raise ValueError()
         """)
-        source1 = py.std.inspect.getsource(co1)
+        source1 = inspect.getsource(co1)
         assert 'KeyError' in source1
-        source2 = py.std.inspect.getsource(co2)
+        source2 = inspect.getsource(co2)
         assert 'ValueError' in source2
 
     def test_getstatement(self):
@@ -373,7 +374,6 @@ def test_deindent():
         c = '''while True:
     pass
 '''
-    import inspect
     lines = deindent(inspect.getsource(f).splitlines())
     assert lines == ["def f():", "    c = '''while True:", "    pass", "'''"]
 
@@ -461,7 +461,7 @@ def test_getfslineno():
 
     fspath, lineno = getfslineno(A)
 
-    _, A_lineno = py.std.inspect.findsource(A)
+    _, A_lineno = inspect.findsource(A)
     assert fspath.basename == "test_source.py"
     assert lineno == A_lineno
 

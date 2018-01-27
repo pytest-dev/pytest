@@ -1,0 +1,1 @@
+Fixed hanging pexpect test on MacOS by using flush() instead of wait().
