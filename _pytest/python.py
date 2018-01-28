@@ -112,7 +112,7 @@ def pytest_cmdline_main(config):
 def pytest_generate_tests(metafunc):
     # those alternative spellings are common - raise a specific error to alert
     # the user
-    alt_spellings = ['parameterize', 'parametrise', 'parameterise']
+    alt_spellings = ['parametrise', 'parameterise']
     for attr in alt_spellings:
         if hasattr(metafunc.function, attr):
             msg = "{0} has '{1}', spelling should be 'parametrize'"
@@ -742,6 +742,48 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         self._calls = []
         self._ids = set()
         self._arg2fixturedefs = fixtureinfo.name2fixturedefs
+
+    def parameterize(self, argnames, argvalues, indirect=False, ids=None,
+                     scope=None):
+        """An alias of ``parametrize``.
+        Add new invocations to the underlying test function using the list
+        of argvalues for the given argnames.  Parametrization is performed
+        during the collection phase.  If you need to setup expensive resources
+        see about setting indirect to do it rather at test setup time.
+
+        :arg argnames: a comma-separated string denoting one or more argument
+                       names, or a list/tuple of argument strings.
+
+        :arg argvalues: The list of argvalues determines how often a
+            test is invoked with different argument values.  If only one
+            argname was specified argvalues is a list of values.  If N
+            argnames were specified, argvalues must be a list of N-tuples,
+            where each tuple-element specifies a value for its respective
+            argname.
+
+        :arg indirect: The list of argnames or boolean. A list of arguments'
+            names (subset of argnames). If True the list contains all names from
+            the argnames. Each argvalue corresponding to an argname in this list will
+            be passed as request.param to its respective argname fixture
+            function so that it can perform more expensive setups during the
+            setup phase of a test rather than at collection time.
+
+        :arg ids: list of string ids, or a callable.
+            If strings, each is corresponding to the argvalues so that they are
+            part of the test id. If None is given as id of specific test, the
+            automatically generated id for that argument will be used.
+            If callable, it should take one argument (a single argvalue) and return
+            a string or return None. If None, the automatically generated id for that
+            argument will be used.
+            If no ids are provided they will be generated automatically from
+            the argvalues.
+
+        :arg scope: if specified it denotes the scope of the parameters.
+            The scope is used for grouping tests by parameter instances.
+            It will also override any fixture-function defined scope, allowing
+            to set a dynamic scope using test context or configuration.
+        """
+        self.parametrize(self, argnames, argvalues, indirect, ids, scope)
 
     def parametrize(self, argnames, argvalues, indirect=False, ids=None,
                     scope=None):
