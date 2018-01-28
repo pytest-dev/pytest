@@ -1,0 +1,1 @@
+Add ``parameterize()`` function call as an alias for ``parametrize()``
