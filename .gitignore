@@ -33,6 +33,7 @@ env/
 3rdparty/
 .tox
 .cache
+.pytest_cache
 .coverage
 .ropeproject
 .idea
