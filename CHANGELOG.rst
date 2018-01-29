@@ -14,7 +14,7 @@ Pytest 3.4.0 (2018-01-30)
 Deprecations and Removals
 -------------------------
 
-- All pytest classes now subclass ``object`` for better Python 3 compatibility.
+- All pytest classes now subclass ``object`` for better Python 2/3 compatibility.
   This should not affect user code except in very rare edge cases. (`#2147
   <https://github.com/pytest-dev/pytest/issues/2147>`_)
 
@@ -35,7 +35,7 @@ Features
   <https://docs.pytest.org/en/latest/logging.html#incompatible-changes-in-pytest-3-4>`_
   for details. (`#3013 <https://github.com/pytest-dev/pytest/issues/3013>`_)
 
-- Console output fallsback to "classic" mode when capture is disabled (``-s``),
+- Console output falls back to "classic" mode when capturing is disabled (``-s``),
   otherwise the output gets garbled to the point of being useless. (`#3038
   <https://github.com/pytest-dev/pytest/issues/3038>`_)
 
@@ -49,9 +49,9 @@ Features
 - Improve performance when collecting tests using many fixtures. (`#3107
   <https://github.com/pytest-dev/pytest/issues/3107>`_)
 
-- New ``caplog.get_records(when)`` method which provides access the captured
-  records during each testing stage: ``"setup"``, ``"call"`` and ``"teardown"``
-  stages. (`#3117 <https://github.com/pytest-dev/pytest/issues/3117>`_)
+- New ``caplog.get_records(when)`` method which provides access to the captured
+  records for the ``"setup"``, ``"call"`` and ``"teardown"``
+  testing stages. (`#3117 <https://github.com/pytest-dev/pytest/issues/3117>`_)
 
 - New fixture ``record_xml_attribute`` that allows modifying and inserting
   attributes on the ``<testcase>`` xml node in JUnit reports. (`#3130
@@ -69,11 +69,11 @@ Features
 Bug Fixes
 ---------
 
-- Fixed hanging pexpect test on MacOS by using flush() instead of wait().
+- Fix hanging pexpect test on MacOS by using flush() instead of wait().
   (`#2022 <https://github.com/pytest-dev/pytest/issues/2022>`_)
 
-- Fixed restoring Python state after in-process pytest runs with the
-  ``pytester`` plugin; this may break tests using making multiple inprocess
+- Fix restoring Python state after in-process pytest runs with the
+  ``pytester`` plugin; this may break tests using multiple inprocess
   pytest runs if later ones depend on earlier ones leaking global interpreter
   changes. (`#3016 <https://github.com/pytest-dev/pytest/issues/3016>`_)
 
@@ -106,7 +106,7 @@ Improved Documentation
   functions that return None. (`#2698
   <https://github.com/pytest-dev/pytest/issues/2698>`_)
 
-- Fix the wording of a sentence on doctest flags use in pytest. (`#3076
+- Fix the wording of a sentence on doctest flags used in pytest. (`#3076
   <https://github.com/pytest-dev/pytest/issues/3076>`_)
 
 - Prefer ``https://*.readthedocs.io`` over ``http://*.rtfd.org`` for links in
