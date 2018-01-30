@@ -1,1 +1,0 @@
-All pytest classes now subclass ``object`` for better Python 3 compatibility. This should not affect user code except in very rare edge cases.

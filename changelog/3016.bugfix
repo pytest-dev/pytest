@@ -1,2 +1,0 @@
-Fixed restoring Python state after in-process pytest runs with the ``pytester`` plugin; this may break tests using
-making multiple inprocess pytest runs if later ones depend on earlier ones leaking global interpreter changes.
