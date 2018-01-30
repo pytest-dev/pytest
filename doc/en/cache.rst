@@ -225,7 +225,7 @@ You can always peek at the content of the cache using the
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    cachedir: $REGENDOC_TMPDIR/.cache
+    cachedir: $REGENDOC_TMPDIR/.pytest_cache
     ------------------------------- cache values -------------------------------
     cache/lastfailed contains:
       {'test_caching.py::test_function': True}
