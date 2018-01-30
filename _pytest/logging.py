@@ -2,14 +2,68 @@ from __future__ import absolute_import, division, print_function
 
 import logging
 from contextlib import closing, contextmanager
+import re
 import six
 
+from _pytest.config import create_terminal_writer
 import pytest
 import py
 
 
 DEFAULT_LOG_FORMAT = '%(filename)-25s %(lineno)4d %(levelname)-8s %(message)s'
 DEFAULT_LOG_DATE_FORMAT = '%H:%M:%S'
+
+
+class ColoredLevelFormatter(logging.Formatter):
+    """
+    Colorize the %(levelname)..s part of the log format passed to __init__.
+    """
+
+    LOGLEVEL_COLOROPTS = {
+        logging.CRITICAL: {'red'},
+        logging.ERROR: {'red', 'bold'},
+        logging.WARNING: {'yellow'},
+        logging.WARN: {'yellow'},
+        logging.INFO: {'green'},
+        logging.DEBUG: {'purple'},
+        logging.NOTSET: set(),
+    }
+    LEVELNAME_FMT_REGEX = re.compile(r'%\(levelname\)([+-]?\d*s)')
+
+    def __init__(self, terminalwriter, *args, **kwargs):
+        super(ColoredLevelFormatter, self).__init__(
+            *args, **kwargs)
+        if six.PY2:
+            self._original_fmt = self._fmt
+        else:
+            self._original_fmt = self._style._fmt
+        self._level_to_fmt_mapping = {}
+
+        levelname_fmt_match = self.LEVELNAME_FMT_REGEX.search(self._fmt)
+        if not levelname_fmt_match:
+            return
+        levelname_fmt = levelname_fmt_match.group()
+
+        for level, color_opts in self.LOGLEVEL_COLOROPTS.items():
+            formatted_levelname = levelname_fmt % {
+                'levelname': logging.getLevelName(level)}
+
+            # add ANSI escape sequences around the formatted levelname
+            color_kwargs = {name: True for name in color_opts}
+            colorized_formatted_levelname = terminalwriter.markup(
+                formatted_levelname, **color_kwargs)
+            self._level_to_fmt_mapping[level] = self.LEVELNAME_FMT_REGEX.sub(
+                colorized_formatted_levelname,
+                self._fmt)
+
+    def format(self, record):
+        fmt = self._level_to_fmt_mapping.get(
+            record.levelno, self._original_fmt)
+        if six.PY2:
+            self._fmt = fmt
+        else:
+            self._style._fmt = fmt
+        return super(ColoredLevelFormatter, self).format(record)
 
 
 def get_option_ini(config, *names):
@@ -376,7 +430,11 @@ class LoggingPlugin(object):
             log_cli_handler = _LiveLoggingStreamHandler(terminal_reporter, capture_manager)
             log_cli_format = get_option_ini(self._config, 'log_cli_format', 'log_format')
             log_cli_date_format = get_option_ini(self._config, 'log_cli_date_format', 'log_date_format')
-            log_cli_formatter = logging.Formatter(log_cli_format, datefmt=log_cli_date_format)
+            if self._config.option.color != 'no' and ColoredLevelFormatter.LEVELNAME_FMT_REGEX.search(log_cli_format):
+                log_cli_formatter = ColoredLevelFormatter(create_terminal_writer(self._config),
+                                                          log_cli_format, datefmt=log_cli_date_format)
+            else:
+                log_cli_formatter = logging.Formatter(log_cli_format, datefmt=log_cli_date_format)
             log_cli_level = get_actual_log_level(self._config, 'log_cli_level', 'log_level')
             self.log_cli_handler = log_cli_handler
             self.live_logs_context = catching_logs(log_cli_handler, formatter=log_cli_formatter, level=log_cli_level)
