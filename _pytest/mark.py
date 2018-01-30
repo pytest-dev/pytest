@@ -75,7 +75,7 @@ class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
         return cls(argval, marks=newmarks, id=None)
 
     @classmethod
-    def _for_parameterize(cls, argnames, argvalues, function, config):
+    def _for_parametrize(cls, argnames, argvalues, function, config):
         if not isinstance(argnames, (tuple, list)):
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
             force_tuple = len(argnames) == 1
