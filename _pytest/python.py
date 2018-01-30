@@ -785,8 +785,8 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         from _pytest.fixtures import scope2index
         from _pytest.mark import ParameterSet
         from py.io import saferepr
-        argnames, parameters = ParameterSet._for_parameterize(
-            argnames, argvalues, self.function)
+        argnames, parameters = ParameterSet._for_parametrize(
+            argnames, argvalues, self.function, self.config)
         del argvalues
 
         if scope is None:

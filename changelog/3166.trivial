@@ -1,0 +1,1 @@
+Change the naming of ``_for_parameterize()`` to ``_for_parametrize()`` in order to comply with the naming convention.
