@@ -5,11 +5,8 @@ from textwrap import dedent
 
 import _pytest._code
 import pytest
-from _pytest.main import (
-    Collector,
-    EXIT_NOTESTSCOLLECTED
-)
-
+from _pytest.main import EXIT_NOTESTSCOLLECTED
+from _pytest.nodes import Collector
 
 ignore_parametrized_marks = pytest.mark.filterwarnings('ignore:Applying marks directly to parameters')
 
@@ -882,10 +879,10 @@ class TestConftestCustomization(object):
             import sys, os, imp
             from _pytest.python import Module
 
-            class Loader:
+            class Loader(object):
                 def load_module(self, name):
                     return imp.load_source(name, name + ".narf")
-            class Finder:
+            class Finder(object):
                 def find_module(self, name, path=None):
                     if os.path.exists(name + ".narf"):
                         return Loader()

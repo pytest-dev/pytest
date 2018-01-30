@@ -60,6 +60,9 @@ def pytest_runtest_protocol(item, nextitem):
         nodeid=item.nodeid, location=item.location,
     )
     runtestprotocol(item, nextitem=nextitem)
+    item.ihook.pytest_runtest_logfinish(
+        nodeid=item.nodeid, location=item.location,
+    )
     return True
 
 
@@ -175,7 +178,7 @@ def call_runtest_hook(item, when, **kwds):
     return CallInfo(lambda: ihook(item=item, **kwds), when=when)
 
 
-class CallInfo:
+class CallInfo(object):
     """ Result/Exception info a function invocation. """
     #: None or ExceptionInfo object.
     excinfo = None

@@ -14,7 +14,7 @@ PY3 = sys.version_info >= (3, 0)
 
 
 class TestMetafunc(object):
-    def Metafunc(self, func):
+    def Metafunc(self, func, config=None):
         # the unit tests of this class check if things work correctly
         # on the funcarg level, so we don't need a full blown
         # initiliazation
@@ -26,7 +26,7 @@ class TestMetafunc(object):
 
         names = fixtures.getfuncargnames(func)
         fixtureinfo = FixtureInfo(names)
-        return python.Metafunc(func, fixtureinfo, None)
+        return python.Metafunc(func, fixtureinfo, config)
 
     def test_no_funcargs(self, testdir):
         def function():
@@ -156,7 +156,19 @@ class TestMetafunc(object):
     def test_parametrize_empty_list(self):
         def func(y):
             pass
-        metafunc = self.Metafunc(func)
+
+        class MockConfig(object):
+            def getini(self, name):
+                return ''
+
+            @property
+            def hook(self):
+                return self
+
+            def pytest_make_parametrize_id(self, **kw):
+                pass
+
+        metafunc = self.Metafunc(func, MockConfig())
         metafunc.parametrize("y", [])
         assert 'skip' == metafunc._calls[0].marks[0].name
 
@@ -231,6 +243,25 @@ class TestMetafunc(object):
             (b'\xc3\xb4\xff\xe4', '\\xc3\\xb4\\xff\\xe4'),
             (b'ascii', 'ascii'),
             (u'αρά'.encode('utf-8'), '\\xce\\xb1\\xcf\\x81\\xce\\xac'),
+        ]
+        for val, expected in values:
+            assert _idval(val, 'a', 6, None) == expected
+
+    def test_class_or_function_idval(self):
+        """unittest for the expected behavior to obtain ids for parametrized
+        values that are classes or functions: their __name__.
+        """
+        from _pytest.python import _idval
+
+        class TestClass(object):
+            pass
+
+        def test_function():
+            pass
+
+        values = [
+            (TestClass, "TestClass"),
+            (test_function, "test_function"),
         ]
         for val, expected in values:
             assert _idval(val, 'a', 6, None) == expected

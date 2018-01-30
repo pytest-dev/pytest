@@ -3,7 +3,10 @@ import os
 import sys
 
 import pytest
-from _pytest.mark import MarkGenerator as Mark, ParameterSet, transfer_markers
+from _pytest.mark import (
+    MarkGenerator as Mark, ParameterSet, transfer_markers,
+    EMPTY_PARAMETERSET_OPTION,
+)
 
 
 class TestMark(object):
@@ -342,6 +345,21 @@ def test_keyword_option_parametrize(spec, testdir):
     passed = [x.nodeid.split("::")[-1] for x in passed]
     assert len(passed) == len(passed_result)
     assert list(passed) == list(passed_result)
+
+
+@pytest.mark.parametrize("spec", [
+    ("foo or import", "ERROR: Python keyword 'import' not accepted in expressions passed to '-k'"),
+    ("foo or", "ERROR: Wrong expression passed to '-k': foo or")
+])
+def test_keyword_option_wrong_arguments(spec, testdir, capsys):
+    testdir.makepyfile("""
+            def test_func(arg):
+                pass
+        """)
+    opt, expected_result = spec
+    testdir.inline_run("-k", opt)
+    out = capsys.readouterr().err
+    assert expected_result in out
 
 
 def test_parametrized_collected_from_command_line(testdir):
@@ -876,3 +894,27 @@ class TestMarkDecorator(object):
     ])
     def test__eq__(self, lhs, rhs, expected):
         assert (lhs == rhs) == expected
+
+
+@pytest.mark.parametrize('mark', [None, '', 'skip', 'xfail'])
+def test_parameterset_for_parametrize_marks(testdir, mark):
+    if mark is not None:
+        testdir.makeini(
+            "[pytest]\n{}={}".format(EMPTY_PARAMETERSET_OPTION, mark))
+
+    config = testdir.parseconfig()
+    from _pytest.mark import pytest_configure, get_empty_parameterset_mark
+    pytest_configure(config)
+    result_mark = get_empty_parameterset_mark(config, ['a'], all)
+    if mark in (None, ''):
+        # normalize to the requested name
+        mark = 'skip'
+    assert result_mark.name == mark
+    assert result_mark.kwargs['reason'].startswith("got empty parameter set ")
+    if mark == 'xfail':
+        assert result_mark.kwargs.get('run') is False
+
+
+def test_parameterset_for_parametrize_bad_markname(testdir):
+    with pytest.raises(pytest.UsageError):
+        test_parameterset_for_parametrize_marks(testdir, 'bad')

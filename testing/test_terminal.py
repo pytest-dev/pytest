@@ -966,10 +966,10 @@ def test_no_trailing_whitespace_after_inifile_word(testdir):
     assert 'inifile: tox.ini\n' in result.stdout.str()
 
 
-class TestProgress:
+class TestProgress(object):
 
     @pytest.fixture
-    def many_tests_file(self, testdir):
+    def many_tests_files(self, testdir):
         testdir.makepyfile(
             test_bar="""
                 import pytest
@@ -1006,7 +1006,7 @@ class TestProgress:
             '=* 2 passed in *=',
         ])
 
-    def test_normal(self, many_tests_file, testdir):
+    def test_normal(self, many_tests_files, testdir):
         output = testdir.runpytest()
         output.stdout.re_match_lines([
             r'test_bar.py \.{10} \s+ \[ 50%\]',
@@ -1014,7 +1014,7 @@ class TestProgress:
             r'test_foobar.py \.{5} \s+ \[100%\]',
         ])
 
-    def test_verbose(self, many_tests_file, testdir):
+    def test_verbose(self, many_tests_files, testdir):
         output = testdir.runpytest('-v')
         output.stdout.re_match_lines([
             r'test_bar.py::test_bar\[0\] PASSED \s+ \[  5%\]',
@@ -1022,18 +1022,101 @@ class TestProgress:
             r'test_foobar.py::test_foobar\[4\] PASSED \s+ \[100%\]',
         ])
 
-    def test_xdist_normal(self, many_tests_file, testdir):
+    def test_xdist_normal(self, many_tests_files, testdir):
         pytest.importorskip('xdist')
         output = testdir.runpytest('-n2')
         output.stdout.re_match_lines([
             r'\.{20} \s+ \[100%\]',
         ])
 
-    def test_xdist_verbose(self, many_tests_file, testdir):
+    def test_xdist_verbose(self, many_tests_files, testdir):
         pytest.importorskip('xdist')
         output = testdir.runpytest('-n2', '-v')
         output.stdout.re_match_lines_random([
             r'\[gw\d\] \[\s*\d+%\] PASSED test_bar.py::test_bar\[1\]',
             r'\[gw\d\] \[\s*\d+%\] PASSED test_foo.py::test_foo\[1\]',
             r'\[gw\d\] \[\s*\d+%\] PASSED test_foobar.py::test_foobar\[1\]',
+        ])
+
+    def test_capture_no(self, many_tests_files, testdir):
+        output = testdir.runpytest('-s')
+        output.stdout.re_match_lines([
+            r'test_bar.py \.{10}',
+            r'test_foo.py \.{5}',
+            r'test_foobar.py \.{5}',
+        ])
+
+
+class TestProgressWithTeardown(object):
+    """Ensure we show the correct percentages for tests that fail during teardown (#3088)"""
+
+    @pytest.fixture
+    def contest_with_teardown_fixture(self, testdir):
+        testdir.makeconftest('''
+            import pytest
+
+            @pytest.fixture
+            def fail_teardown():
+                yield
+                assert False
+        ''')
+
+    @pytest.fixture
+    def many_files(self, testdir, contest_with_teardown_fixture):
+        testdir.makepyfile(
+            test_bar='''
+                import pytest
+                @pytest.mark.parametrize('i', range(5))
+                def test_bar(fail_teardown, i):
+                    pass
+            ''',
+            test_foo='''
+                import pytest
+                @pytest.mark.parametrize('i', range(15))
+                def test_foo(fail_teardown, i):
+                    pass
+            ''',
+        )
+
+    def test_teardown_simple(self, testdir, contest_with_teardown_fixture):
+        testdir.makepyfile('''
+            def test_foo(fail_teardown):
+                pass
+        ''')
+        output = testdir.runpytest()
+        output.stdout.re_match_lines([
+            r'test_teardown_simple.py \.E\s+\[100%\]',
+        ])
+
+    def test_teardown_with_test_also_failing(self, testdir, contest_with_teardown_fixture):
+        testdir.makepyfile('''
+            def test_foo(fail_teardown):
+                assert False
+        ''')
+        output = testdir.runpytest()
+        output.stdout.re_match_lines([
+            r'test_teardown_with_test_also_failing.py FE\s+\[100%\]',
+        ])
+
+    def test_teardown_many(self, testdir, many_files):
+        output = testdir.runpytest()
+        output.stdout.re_match_lines([
+            r'test_bar.py (\.E){5}\s+\[ 25%\]',
+            r'test_foo.py (\.E){15}\s+\[100%\]',
+        ])
+
+    def test_teardown_many_verbose(self, testdir, many_files):
+        output = testdir.runpytest('-v')
+        output.stdout.re_match_lines([
+            r'test_bar.py::test_bar\[0\] PASSED\s+\[  5%\]',
+            r'test_bar.py::test_bar\[0\] ERROR\s+\[  5%\]',
+            r'test_bar.py::test_bar\[4\] PASSED\s+\[ 25%\]',
+            r'test_bar.py::test_bar\[4\] ERROR\s+\[ 25%\]',
+        ])
+
+    def test_xdist_normal(self, many_files, testdir):
+        pytest.importorskip('xdist')
+        output = testdir.runpytest('-n2')
+        output.stdout.re_match_lines([
+            r'[\.E]{40} \s+ \[100%\]',
         ])
