@@ -262,7 +262,10 @@ class BaseReport(object):
 
         .. versionadded:: 3.0
         """
-        return ''.join(content for (prefix, content) in self.get_sections('Captured stdout'))
+        try:
+            return ''.join(content for (prefix, content) in self.get_sections('Captured stdout'))
+        except UnicodeDecodeError:
+            return ''.join(content.decode('utf-8') for (prefix, content) in self.get_sections('Captured stdout'))
 
     @property
     def capstderr(self):
@@ -270,7 +273,10 @@ class BaseReport(object):
 
         .. versionadded:: 3.0
         """
-        return ''.join(content for (prefix, content) in self.get_sections('Captured stderr'))
+        try:
+            return ''.join(content for (prefix, content) in self.get_sections('Captured stderr'))
+        except UnicodeDecodeError:
+            return ''.join(content.decode('utf-8') for (prefix, content) in self.get_sections('Captured stderr'))
 
     passed = property(lambda x: x.outcome == "passed")
     failed = property(lambda x: x.outcome == "failed")
