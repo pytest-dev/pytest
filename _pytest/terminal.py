@@ -42,6 +42,9 @@ def pytest_addoption(parser):
                      action="store", dest="tbstyle", default='auto',
                      choices=['auto', 'long', 'short', 'no', 'line', 'native'],
                      help="traceback print mode (auto/long/short/line/native/no).")
+    group._addoption('--no-stdout',
+                     action="store_false", dest="nostdout",
+                     help="Do not print stdout")
     group._addoption('--fulltrace', '--full-trace',
                      action="store_true", default=False,
                      help="don't cut any tracebacks (default is to cut).")
@@ -623,6 +626,8 @@ class TerminalReporter:
     def _outrep_summary(self, rep):
         rep.toterminal(self._tw)
         for secname, content in rep.sections:
+            if not self.config.option.nostdout and 'stdout' in secname:
+                continue
             self._tw.sep("-", secname)
             if content[-1:] == "\n":
                 content = content[:-1]

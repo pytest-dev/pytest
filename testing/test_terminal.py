@@ -823,6 +823,19 @@ def pytest_report_header(config, startdir):
             str(testdir.tmpdir),
         ])
 
+    def test_no_stdout(self, testdir):
+        testdir.makepyfile("""
+            def test_one():
+                print('!This is stdout!')
+                assert False, 'Something failed'
+        """)
+
+        result = testdir.runpytest("--tb=short")
+        result.stdout.fnmatch_lines(["!This is stdout!"])
+
+        result = testdir.runpytest("--no-stdout", "--tb=short")
+        assert "!This is stdout!" not in result.stdout.str()
+
 
 @pytest.mark.xfail("not hasattr(os, 'dup')")
 def test_fdopen_kept_alive_issue124(testdir):
