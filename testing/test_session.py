@@ -279,9 +279,11 @@ def test_rootdir_option_arg(testdir, path):
 
 
 def test_rootdir_wrong_option_arg(testdir):
-    rootdir = testdir.mkdir("root")
-    testsdir = rootdir.mkdir("tests")
-    testsdir.join("test_one.py").write("def test_one():\n    assert 1")
+    testdir.makepyfile("""
+        import os
+        def test_one():
+            assert 1
+    """)
 
     result = testdir.runpytest("--rootdir=wrong_dir")
     result.stderr.fnmatch_lines(["*Directory *wrong_dir* not found. Check your '--rootdir' option.*"])
