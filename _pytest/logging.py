@@ -371,6 +371,11 @@ class LoggingPlugin(object):
                            formatter=self.formatter, level=self.log_level) as log_handler:
             if self.log_cli_handler:
                 self.log_cli_handler.set_when(when)
+
+            if item is None:
+                yield  # run the test
+                return
+
             if not hasattr(item, 'catch_log_handlers'):
                 item.catch_log_handlers = {}
             item.catch_log_handlers[when] = log_handler
@@ -402,9 +407,17 @@ class LoggingPlugin(object):
         with self._runtest_for(item, 'teardown'):
             yield
 
+    @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_logstart(self):
         if self.log_cli_handler:
             self.log_cli_handler.reset()
+        with self._runtest_for(None, 'start'):
+            yield
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_runtest_logfinish(self):
+        with self._runtest_for(None, 'finish'):
+            yield
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtestloop(self, session):
@@ -474,7 +487,7 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
         if self.capture_manager is not None:
             self.capture_manager.suspend_global_capture()
         try:
-            if not self._first_record_emitted or self._when == 'teardown':
+            if not self._first_record_emitted or self._when in ('teardown', 'finish'):
                 self.stream.write('\n')
                 self._first_record_emitted = True
             if not self._section_name_shown:
