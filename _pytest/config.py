@@ -996,8 +996,6 @@ class Config(object):
         self._parser.extra_info['rootdir'] = self.rootdir
         self._parser.extra_info['inifile'] = self.inifile
         self.invocation_dir = py.path.local()
-        if ns.rootdir:
-            self.invocation_dir = self.rootdir
         self._parser.addini('addopts', 'extra command line options', 'args')
         self._parser.addini('minversion', 'minimally required pytest version')
         self._override_ini = ns.override_ini or ()
