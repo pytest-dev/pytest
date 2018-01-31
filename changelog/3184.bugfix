@@ -1,0 +1,1 @@
+Don't traceback when logging on unknown(unhandled) sections.
