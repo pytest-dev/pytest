@@ -337,6 +337,11 @@ class LoggingPlugin(object):
         """
         self._config = config
 
+        # enable live logs if log_cli_level is explicitly set
+        log_cli_level = get_actual_log_level(self._config, 'log_cli_level', 'log_level')
+        if log_cli_level is not None:
+            # enable live logs if log_cli_level is explicitly set
+            config._inicache['log_cli'] = config._parser._inidict['log_cli'] = True
         # enable verbose output automatically if live logging is enabled
         if self._config.getini('log_cli') and not config.getoption('verbose'):
             # sanity check: terminal reporter should not have been loaded at this point
