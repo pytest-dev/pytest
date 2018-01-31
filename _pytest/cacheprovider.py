@@ -17,7 +17,7 @@ class Cache(object):
         self.config = config
         self._cachedir = Cache.cache_dir_from_config(config)
         self.trace = config.trace.root.get("cache")
-        if config.getvalue("cacheclear"):
+        if config.getoption("cacheclear"):
             self.trace("clearing cachedir")
             if self._cachedir.check():
                 self._cachedir.remove()
@@ -98,13 +98,13 @@ class Cache(object):
                 json.dump(value, f, indent=2, sort_keys=True)
 
 
-class LFPlugin:
+class LFPlugin(object):
     """ Plugin which implements the --lf (run last-failing) option """
 
     def __init__(self, config):
         self.config = config
         active_keys = 'lf', 'failedfirst'
-        self.active = any(config.getvalue(key) for key in active_keys)
+        self.active = any(config.getoption(key) for key in active_keys)
         self.lastfailed = config.cache.get("cache/lastfailed", {})
         self._previously_failed_count = None
 
@@ -114,7 +114,8 @@ class LFPlugin:
                 mode = "run all (no recorded failures)"
             else:
                 noun = 'failure' if self._previously_failed_count == 1 else 'failures'
-                suffix = " first" if self.config.getvalue("failedfirst") else ""
+                suffix = " first" if self.config.getoption(
+                    "failedfirst") else ""
                 mode = "rerun previous {count} {noun}{suffix}".format(
                     count=self._previously_failed_count, suffix=suffix, noun=noun
                 )
@@ -151,7 +152,7 @@ class LFPlugin:
                 # running a subset of all tests with recorded failures outside
                 # of the set of tests currently executing
                 return
-            if self.config.getvalue("lf"):
+            if self.config.getoption("lf"):
                 items[:] = previously_failed
                 config.hook.pytest_deselected(items=previously_passed)
             else:
@@ -159,7 +160,7 @@ class LFPlugin:
 
     def pytest_sessionfinish(self, session):
         config = self.config
-        if config.getvalue("cacheshow") or hasattr(config, "slaveinput"):
+        if config.getoption("cacheshow") or hasattr(config, "slaveinput"):
             return
 
         saved_lastfailed = config.cache.get("cache/lastfailed", {})
@@ -185,7 +186,7 @@ def pytest_addoption(parser):
         '--cache-clear', action='store_true', dest="cacheclear",
         help="remove all cache contents at start of test run.")
     parser.addini(
-        "cache_dir", default='.cache',
+        "cache_dir", default='.pytest_cache',
         help="cache directory path.")
 
 

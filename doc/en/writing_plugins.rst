@@ -583,11 +583,22 @@ pytest hook reference
 Initialization, command line and configuration hooks
 ----------------------------------------------------
 
+Bootstrapping hooks
+~~~~~~~~~~~~~~~~~~~
+
+Bootstrapping hooks called for plugins registered early enough (internal and setuptools plugins).
+
 .. autofunction:: pytest_load_initial_conftests
 .. autofunction:: pytest_cmdline_preparse
 .. autofunction:: pytest_cmdline_parse
-.. autofunction:: pytest_addoption
 .. autofunction:: pytest_cmdline_main
+
+Initialization hooks
+~~~~~~~~~~~~~~~~~~~~
+
+Initialization hooks called for plugins and ``conftest.py`` files.
+
+.. autofunction:: pytest_addoption
 .. autofunction:: pytest_configure
 .. autofunction:: pytest_unconfigure
 

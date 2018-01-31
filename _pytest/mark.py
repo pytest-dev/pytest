@@ -2,13 +2,18 @@
 from __future__ import absolute_import, division, print_function
 
 import inspect
+import keyword
 import warnings
 import attr
 from collections import namedtuple
 from operator import attrgetter
 from six.moves import map
+
+from _pytest.config import UsageError
 from .deprecated import MARK_PARAMETERSET_UNPACKING
 from .compat import NOTSET, getfslineno
+
+EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
 
 
 def alias(name, warning=None):
@@ -70,7 +75,7 @@ class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
         return cls(argval, marks=newmarks, id=None)
 
     @classmethod
-    def _for_parameterize(cls, argnames, argvalues, function):
+    def _for_parameterize(cls, argnames, argvalues, function, config):
         if not isinstance(argnames, (tuple, list)):
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
             force_tuple = len(argnames) == 1
@@ -82,16 +87,27 @@ class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
         del argvalues
 
         if not parameters:
-            fs, lineno = getfslineno(function)
-            reason = "got empty parameter set %r, function %s at %s:%d" % (
-                argnames, function.__name__, fs, lineno)
-            mark = MARK_GEN.skip(reason=reason)
+            mark = get_empty_parameterset_mark(config, argnames, function)
             parameters.append(ParameterSet(
                 values=(NOTSET,) * len(argnames),
                 marks=[mark],
                 id=None,
             ))
         return argnames, parameters
+
+
+def get_empty_parameterset_mark(config, argnames, function):
+    requested_mark = config.getini(EMPTY_PARAMETERSET_OPTION)
+    if requested_mark in ('', None, 'skip'):
+        mark = MARK_GEN.skip
+    elif requested_mark == 'xfail':
+        mark = MARK_GEN.xfail(run=False)
+    else:
+        raise LookupError(requested_mark)
+    fs, lineno = getfslineno(function)
+    reason = "got empty parameter set %r, function %s at %s:%d" % (
+        argnames, function.__name__, fs, lineno)
+    return mark(reason=reason)
 
 
 class MarkerError(Exception):
@@ -133,6 +149,9 @@ def pytest_addoption(parser):
     )
 
     parser.addini("markers", "markers for test functions", 'linelist')
+    parser.addini(
+        EMPTY_PARAMETERSET_OPTION,
+        "default marker for empty parametersets")
 
 
 def pytest_cmdline_main(config):
@@ -222,6 +241,9 @@ class KeywordMapping(object):
         return False
 
 
+python_keywords_allowed_list = ["or", "and", "not"]
+
+
 def matchmark(colitem, markexpr):
     """Tries to match on any marker names, attached to the given colitem."""
     return eval(markexpr, {}, MarkMapping.from_keywords(colitem.keywords))
@@ -259,7 +281,13 @@ def matchkeyword(colitem, keywordexpr):
         return mapping[keywordexpr]
     elif keywordexpr.startswith("not ") and " " not in keywordexpr[4:]:
         return not mapping[keywordexpr[4:]]
-    return eval(keywordexpr, {}, mapping)
+    for kwd in keywordexpr.split():
+        if keyword.iskeyword(kwd) and kwd not in python_keywords_allowed_list:
+            raise UsageError("Python keyword '{}' not accepted in expressions passed to '-k'".format(kwd))
+    try:
+        return eval(keywordexpr, {}, mapping)
+    except SyntaxError:
+        raise UsageError("Wrong expression passed to '-k': {}".format(keywordexpr))
 
 
 def pytest_configure(config):
@@ -267,12 +295,19 @@ def pytest_configure(config):
     if config.option.strict:
         MARK_GEN._config = config
 
+    empty_parameterset = config.getini(EMPTY_PARAMETERSET_OPTION)
+
+    if empty_parameterset not in ('skip', 'xfail', None, ''):
+        raise UsageError(
+            "{!s} must be one of skip and xfail,"
+            " but it is {!r}".format(EMPTY_PARAMETERSET_OPTION, empty_parameterset))
+
 
 def pytest_unconfigure(config):
     MARK_GEN._config = getattr(config, '_old_mark_config', None)
 
 
-class MarkGenerator:
+class MarkGenerator(object):
     """ Factory for :class:`MarkDecorator` objects - exposed as
     a ``pytest.mark`` singleton instance.  Example::
 

@@ -326,7 +326,7 @@ def test_repr_python_version(monkeypatch):
     try:
         monkeypatch.setattr(sys, 'version_info', (2, 5, 1, 'final', 0))
         assert repr_pythonversion() == "2.5.1-final-0"
-        py.std.sys.version_info = x = (2, 3)
+        sys.version_info = x = (2, 3)
         assert repr_pythonversion() == str(x)
     finally:
         monkeypatch.undo()  # do this early as pytest can get confused
@@ -475,11 +475,11 @@ class TestTerminalFunctional(object):
                 pass
         """)
         result = testdir.runpytest()
-        verinfo = ".".join(map(str, py.std.sys.version_info[:3]))
+        verinfo = ".".join(map(str, sys.version_info[:3]))
         result.stdout.fnmatch_lines([
             "*===== test session starts ====*",
             "platform %s -- Python %s*pytest-%s*py-%s*pluggy-%s" % (
-                py.std.sys.platform, verinfo,
+                sys.platform, verinfo,
                 pytest.__version__, py.__version__, pluggy.__version__),
             "*test_header_trailer_info.py .*",
             "=* 1 passed*in *.[0-9][0-9] seconds *=",
@@ -966,7 +966,7 @@ def test_no_trailing_whitespace_after_inifile_word(testdir):
     assert 'inifile: tox.ini\n' in result.stdout.str()
 
 
-class TestProgress:
+class TestProgress(object):
 
     @pytest.fixture
     def many_tests_files(self, testdir):
@@ -1047,7 +1047,7 @@ class TestProgress:
         ])
 
 
-class TestProgressWithTeardown:
+class TestProgressWithTeardown(object):
     """Ensure we show the correct percentages for tests that fail during teardown (#3088)"""
 
     @pytest.fixture

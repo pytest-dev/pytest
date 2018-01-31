@@ -256,6 +256,66 @@ This will add an extra property ``example_key="1"`` to the generated
     Also please note that using this feature will break any schema verification.
     This might be a problem when used with some CI servers.
 
+record_xml_attribute
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 3.4
+
+To add an additional xml attribute to a testcase element, you can use
+``record_xml_attribute`` fixture. This can also be used to override existing values:
+
+.. code-block:: python
+
+    def test_function(record_xml_attribute):
+        record_xml_attribute("assertions", "REQ-1234")
+        record_xml_attribute("classname", "custom_classname")
+        print('hello world')
+        assert True
+
+Unlike ``record_xml_property``, this will not add a new child element.
+Instead, this will add an attribute ``assertions="REQ-1234"`` inside the generated
+``testcase`` tag and override the default ``classname`` with ``"classname=custom_classname"``:
+
+.. code-block:: xml
+
+    <testcase classname="custom_classname" file="test_function.py" line="0" name="test_function" time="0.003" assertions="REQ-1234">
+        <system-out>
+            hello world
+        </system-out>
+    </testcase>
+
+.. warning::
+
+    ``record_xml_attribute`` is an experimental feature, and its interface might be replaced
+    by something more powerful and general in future versions. The
+    functionality per-se will be kept, however.
+
+    Using this over ``record_xml_property`` can help when using ci tools to parse the xml report.
+    However, some parsers are quite strict about the elements and attributes that are allowed.
+    Many tools use an xsd schema (like the example below) to validate incoming xml.
+    Make sure you are using attribute names that are allowed by your parser.
+
+    Below is the Scheme used by Jenkins to validate the XML report:
+
+    .. code-block:: xml
+
+        <xs:element name="testcase">
+            <xs:complexType>
+                <xs:sequence>
+                    <xs:element ref="skipped" minOccurs="0" maxOccurs="1"/>
+                    <xs:element ref="error" minOccurs="0" maxOccurs="unbounded"/>
+                    <xs:element ref="failure" minOccurs="0" maxOccurs="unbounded"/>
+                    <xs:element ref="system-out" minOccurs="0" maxOccurs="unbounded"/>
+                    <xs:element ref="system-err" minOccurs="0" maxOccurs="unbounded"/>
+                </xs:sequence>
+                <xs:attribute name="name" type="xs:string" use="required"/>
+                <xs:attribute name="assertions" type="xs:string" use="optional"/>
+                <xs:attribute name="time" type="xs:string" use="optional"/>
+                <xs:attribute name="classname" type="xs:string" use="optional"/>
+                <xs:attribute name="status" type="xs:string" use="optional"/>
+            </xs:complexType>
+        </xs:element>
+
 LogXML: add_global_property
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -388,5 +448,15 @@ hook was invoked::
     $ python myinvoke.py
     *** test run reporting finishing
     
+
+.. note::
+
+    Calling ``pytest.main()`` will result in importing your tests and any modules
+    that they import. Due to the caching mechanism of python's import system,
+    making subsequent calls to ``pytest.main()`` from the same process will not
+    reflect changes to those files between the calls. For this reason, making
+    multiple calls to ``pytest.main()`` from the same process (in order to re-run
+    tests, for example) is not recommended.
+
 
 .. include:: links.inc

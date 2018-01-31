@@ -60,12 +60,13 @@ def main(args=None, plugins=None):
             finally:
                 config._ensure_unconfigure()
     except UsageError as e:
+        tw = py.io.TerminalWriter(sys.stderr)
         for msg in e.args:
-            sys.stderr.write("ERROR: %s\n" % (msg,))
+            tw.line("ERROR: {}\n".format(msg), red=True)
         return 4
 
 
-class cmdline:  # compatibility namespace
+class cmdline(object):  # compatibility namespace
     main = staticmethod(main)
 
 
@@ -462,7 +463,7 @@ def _get_plugin_specs_as_list(specs):
     return []
 
 
-class Parser:
+class Parser(object):
     """ Parser for command line arguments and ini-file values.
 
     :ivar extra_info: dict of generic param -> value to display in case
@@ -597,7 +598,7 @@ class ArgumentError(Exception):
             return self.msg
 
 
-class Argument:
+class Argument(object):
     """class that mimics the necessary behaviour of optparse.Option
 
     its currently a least effort implementation
@@ -727,7 +728,7 @@ class Argument:
         return 'Argument({0})'.format(', '.join(args))
 
 
-class OptionGroup:
+class OptionGroup(object):
     def __init__(self, name, description="", parser=None):
         self.name = name
         self.description = description
@@ -858,7 +859,7 @@ class CmdOptions(object):
         return CmdOptions(self.__dict__)
 
 
-class Notset:
+class Notset(object):
     def __repr__(self):
         return "<NOTSET>"
 
@@ -1188,16 +1189,15 @@ class Config(object):
 
     def _get_override_ini_value(self, name):
         value = None
-        # override_ini is a list of list, to support both -o foo1=bar1 foo2=bar2 and
-        # and -o foo1=bar1 -o foo2=bar2 options
-        # always use the last item if multiple value set for same ini-name,
+        # override_ini is a list of "ini=value" options
+        # always use the last item if multiple values are set for same ini-name,
         # e.g. -o foo=bar1 -o foo=bar2 will set foo to bar2
-        for ini_config_list in self._override_ini:
-            for ini_config in ini_config_list:
-                try:
-                    (key, user_ini_value) = ini_config.split("=", 1)
-                except ValueError:
-                    raise UsageError("-o/--override-ini expects option=value style.")
+        for ini_config in self._override_ini:
+            try:
+                key, user_ini_value = ini_config.split("=", 1)
+            except ValueError:
+                raise UsageError("-o/--override-ini expects option=value style.")
+            else:
                 if key == name:
                     value = user_ini_value
         return value

@@ -2828,7 +2828,7 @@ class TestShowFixtures(object):
     def test_show_fixtures_indented_in_class(self, testdir):
         p = testdir.makepyfile(dedent('''
             import pytest
-            class TestClass:
+            class TestClass(object):
                 @pytest.fixture
                 def fixture1(self):
                     """line1

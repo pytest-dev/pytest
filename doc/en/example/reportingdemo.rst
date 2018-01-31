@@ -411,22 +411,24 @@ get on the terminal - we are working on that)::
     ____________________ test_dynamic_compile_shows_nicely _____________________
     
         def test_dynamic_compile_shows_nicely():
+            import imp
+            import sys
             src = 'def foo():\n assert 1 == 0\n'
             name = 'abc-123'
-            module = py.std.imp.new_module(name)
+            module = imp.new_module(name)
             code = _pytest._code.compile(src, name, 'exec')
             py.builtin.exec_(code, module.__dict__)
-            py.std.sys.modules[name] = module
+            sys.modules[name] = module
     >       module.foo()
     
-    failure_demo.py:166: 
+    failure_demo.py:168: 
     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
     
         def foo():
     >    assert 1 == 0
     E    AssertionError
     
-    <2-codegen 'abc-123' $REGENDOC_TMPDIR/assertion/failure_demo.py:163>:2: AssertionError
+    <2-codegen 'abc-123' $REGENDOC_TMPDIR/assertion/failure_demo.py:165>:2: AssertionError
     ____________________ TestMoreErrors.test_complex_error _____________________
     
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -438,7 +440,7 @@ get on the terminal - we are working on that)::
                 return 43
     >       somefunc(f(), g())
     
-    failure_demo.py:176: 
+    failure_demo.py:178: 
     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
     failure_demo.py:9: in somefunc
         otherfunc(x,y)
@@ -460,7 +462,7 @@ get on the terminal - we are working on that)::
     >       a,b  = l
     E       ValueError: not enough values to unpack (expected 2, got 0)
     
-    failure_demo.py:180: ValueError
+    failure_demo.py:182: ValueError
     ____________________ TestMoreErrors.test_z2_type_error _____________________
     
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -470,7 +472,7 @@ get on the terminal - we are working on that)::
     >       a,b  = l
     E       TypeError: 'int' object is not iterable
     
-    failure_demo.py:184: TypeError
+    failure_demo.py:186: TypeError
     ______________________ TestMoreErrors.test_startswith ______________________
     
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -483,7 +485,7 @@ get on the terminal - we are working on that)::
     E        +  where False = <built-in method startswith of str object at 0xdeadbeef>('456')
     E        +    where <built-in method startswith of str object at 0xdeadbeef> = '123'.startswith
     
-    failure_demo.py:189: AssertionError
+    failure_demo.py:191: AssertionError
     __________________ TestMoreErrors.test_startswith_nested ___________________
     
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -500,7 +502,7 @@ get on the terminal - we are working on that)::
     E        +      where '123' = <function TestMoreErrors.test_startswith_nested.<locals>.f at 0xdeadbeef>()
     E        +    and   '456' = <function TestMoreErrors.test_startswith_nested.<locals>.g at 0xdeadbeef>()
     
-    failure_demo.py:196: AssertionError
+    failure_demo.py:198: AssertionError
     _____________________ TestMoreErrors.test_global_func ______________________
     
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -511,7 +513,7 @@ get on the terminal - we are working on that)::
     E        +  where False = isinstance(43, float)
     E        +    where 43 = globf(42)
     
-    failure_demo.py:199: AssertionError
+    failure_demo.py:201: AssertionError
     _______________________ TestMoreErrors.test_instance _______________________
     
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -522,7 +524,7 @@ get on the terminal - we are working on that)::
     E       assert 42 != 42
     E        +  where 42 = <failure_demo.TestMoreErrors object at 0xdeadbeef>.x
     
-    failure_demo.py:203: AssertionError
+    failure_demo.py:205: AssertionError
     _______________________ TestMoreErrors.test_compare ________________________
     
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -532,7 +534,7 @@ get on the terminal - we are working on that)::
     E       assert 11 < 5
     E        +  where 11 = globf(10)
     
-    failure_demo.py:206: AssertionError
+    failure_demo.py:208: AssertionError
     _____________________ TestMoreErrors.test_try_finally ______________________
     
     self = <failure_demo.TestMoreErrors object at 0xdeadbeef>
@@ -543,7 +545,7 @@ get on the terminal - we are working on that)::
     >           assert x == 0
     E           assert 1 == 0
     
-    failure_demo.py:211: AssertionError
+    failure_demo.py:213: AssertionError
     ___________________ TestCustomAssertMsg.test_single_line ___________________
     
     self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef>
@@ -557,7 +559,7 @@ get on the terminal - we are working on that)::
     E       assert 1 == 2
     E        +  where 1 = <class 'failure_demo.TestCustomAssertMsg.test_single_line.<locals>.A'>.a
     
-    failure_demo.py:222: AssertionError
+    failure_demo.py:224: AssertionError
     ____________________ TestCustomAssertMsg.test_multiline ____________________
     
     self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef>
@@ -574,7 +576,7 @@ get on the terminal - we are working on that)::
     E       assert 1 == 2
     E        +  where 1 = <class 'failure_demo.TestCustomAssertMsg.test_multiline.<locals>.A'>.a
     
-    failure_demo.py:228: AssertionError
+    failure_demo.py:230: AssertionError
     ___________________ TestCustomAssertMsg.test_custom_repr ___________________
     
     self = <failure_demo.TestCustomAssertMsg object at 0xdeadbeef>
@@ -594,7 +596,7 @@ get on the terminal - we are working on that)::
     E       assert 1 == 2
     E        +  where 1 = This is JSON\n{\n  'foo': 'bar'\n}.a
     
-    failure_demo.py:238: AssertionError
+    failure_demo.py:240: AssertionError
     ============================= warnings summary =============================
     None
       Metafunc.addcall is deprecated and scheduled to be removed in pytest 4.0.

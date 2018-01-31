@@ -152,11 +152,25 @@ above will show verbose output because ``-v`` overwrites ``-q``.
 Builtin configuration file options
 ----------------------------------------------
 
+Here is a list of builtin configuration options that may be written in a ``pytest.ini``, ``tox.ini`` or ``setup.cfg``
+file, usually located at the root of your repository. All options must be under a ``[pytest]`` section
+(``[tool:pytest]`` for ``setup.cfg`` files).
+
+Configuration file options may be overwritten in the command-line by using ``-o/--override``, which can also be
+passed multiple times. The expected format is ``name=value``. For example::
+
+   pytest -o console_output_style=classic -o cache_dir=/tmp/mycache
+
+
 .. confval:: minversion
 
    Specifies a minimal pytest version required for running tests.
 
-        minversion = 2.1  # will fail if we run with pytest-2.0
+   .. code-block:: ini
+
+        # content of pytest.ini
+        [pytest]
+        minversion = 3.0  # will fail if we run with pytest-2.8
 
 .. confval:: addopts
 
@@ -165,6 +179,7 @@ Builtin configuration file options
 
    .. code-block:: ini
 
+        # content of pytest.ini
         [pytest]
         addopts = --maxfail=2 -rf  # exit after 2 failures, report fail info
 
@@ -331,6 +346,31 @@ Builtin configuration file options
         # content of pytest.ini
         [pytest]
         console_output_style = classic
+
+
+.. confval:: empty_parameter_set_mark
+
+    .. versionadded:: 3.4
+
+    Allows to pick the action for empty parametersets in parameterization
+
+    * ``skip`` skips tests with a empty parameterset (default)
+    * ``xfail`` marks tests with a empty parameterset as xfail(run=False)
+
+    .. code-block:: ini
+
+      # content of pytest.ini
+      [pytest]
+      empty_parameter_set_mark = xfail
+
+    .. note::
+
+      The default value of this option is planned to change to ``xfail`` in future releases
+      as this is considered less error prone, see `#3155`_ for more details.
+
+
+
+.. _`#3155`: https://github.com/pytest-dev/pytest/issues/3155
 
 .. confval:: rootdir
 

@@ -4,7 +4,7 @@ import functools
 import inspect
 import sys
 import warnings
-from collections import OrderedDict
+from collections import OrderedDict, deque, defaultdict
 
 import attr
 import py
@@ -163,62 +163,51 @@ def get_parametrized_fixture_keys(item, scopenum):
 
 def reorder_items(items):
     argkeys_cache = {}
+    items_by_argkey = {}
     for scopenum in range(0, scopenum_function):
         argkeys_cache[scopenum] = d = {}
+        items_by_argkey[scopenum] = item_d = defaultdict(list)
         for item in items:
             keys = OrderedDict.fromkeys(get_parametrized_fixture_keys(item, scopenum))
             if keys:
                 d[item] = keys
-    return reorder_items_atscope(items, set(), argkeys_cache, 0)
+                for key in keys:
+                    item_d[key].append(item)
+    items = OrderedDict.fromkeys(items)
+    return list(reorder_items_atscope(items, set(), argkeys_cache, items_by_argkey, 0))
 
 
-def reorder_items_atscope(items, ignore, argkeys_cache, scopenum):
+def reorder_items_atscope(items, ignore, argkeys_cache, items_by_argkey, scopenum):
     if scopenum >= scopenum_function or len(items) < 3:
         return items
-    items_done = []
-    while 1:
-        items_before, items_same, items_other, newignore = \
-            slice_items(items, ignore, argkeys_cache[scopenum])
-        items_before = reorder_items_atscope(
-            items_before, ignore, argkeys_cache, scopenum + 1)
-        if items_same is None:
-            # nothing to reorder in this scope
-            assert items_other is None
-            return items_done + items_before
-        items_done.extend(items_before)
-        items = items_same + items_other
-        ignore = newignore
-
-
-def slice_items(items, ignore, scoped_argkeys_cache):
-    # we pick the first item which uses a fixture instance in the
-    # requested scope and which we haven't seen yet.  We slice the input
-    # items list into a list of items_nomatch, items_same and
-    # items_other
-    if scoped_argkeys_cache:  # do we need to do work at all?
-        it = iter(items)
-        # first find a slicing key
-        for i, item in enumerate(it):
-            argkeys = scoped_argkeys_cache.get(item)
-            if argkeys is not None:
-                newargkeys = OrderedDict.fromkeys(k for k in argkeys if k not in ignore)
-                if newargkeys:  # found a slicing key
-                    slicing_argkey, _ = newargkeys.popitem()
-                    items_before = items[:i]
-                    items_same = [item]
-                    items_other = []
-                    # now slice the remainder of the list
-                    for item in it:
-                        argkeys = scoped_argkeys_cache.get(item)
-                        if argkeys and slicing_argkey in argkeys and \
-                                slicing_argkey not in ignore:
-                            items_same.append(item)
-                        else:
-                            items_other.append(item)
-                    newignore = ignore.copy()
-                    newignore.add(slicing_argkey)
-                    return (items_before, items_same, items_other, newignore)
-    return items, None, None, None
+    items_deque = deque(items)
+    items_done = OrderedDict()
+    scoped_items_by_argkey = items_by_argkey[scopenum]
+    scoped_argkeys_cache = argkeys_cache[scopenum]
+    while items_deque:
+        no_argkey_group = OrderedDict()
+        slicing_argkey = None
+        while items_deque:
+            item = items_deque.popleft()
+            if item in items_done or item in no_argkey_group:
+                continue
+            argkeys = OrderedDict.fromkeys(k for k in scoped_argkeys_cache.get(item, []) if k not in ignore)
+            if not argkeys:
+                no_argkey_group[item] = None
+            else:
+                slicing_argkey, _ = argkeys.popitem()
+                # we don't have to remove relevant items from later in the deque because they'll just be ignored
+                for i in reversed(scoped_items_by_argkey[slicing_argkey]):
+                    if i in items:
+                        items_deque.appendleft(i)
+                break
+        if no_argkey_group:
+            no_argkey_group = reorder_items_atscope(
+                                no_argkey_group, set(), argkeys_cache, items_by_argkey, scopenum + 1)
+            for item in no_argkey_group:
+                items_done[item] = None
+        ignore.add(slicing_argkey)
+    return items_done
 
 
 def fillfixtures(function):
@@ -247,7 +236,7 @@ def get_direct_param_fixture_func(request):
     return request.param
 
 
-class FuncFixtureInfo:
+class FuncFixtureInfo(object):
     def __init__(self, argnames, names_closure, name2fixturedefs):
         self.argnames = argnames
         self.names_closure = names_closure
@@ -443,7 +432,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
                 fixturedef = self._getnextfixturedef(argname)
             except FixtureLookupError:
                 if argname == "request":
-                    class PseudoFixtureDef:
+                    class PseudoFixtureDef(object):
                         cached_result = (self, [0], None)
                         scope = "function"
                     return PseudoFixtureDef
@@ -719,7 +708,7 @@ def call_fixture_func(fixturefunc, request, kwargs):
     return res
 
 
-class FixtureDef:
+class FixtureDef(object):
     """ A container for a factory definition. """
 
     def __init__(self, fixturemanager, baseid, argname, func, scope, params,
@@ -925,7 +914,7 @@ def pytestconfig(request):
     return request.config
 
 
-class FixtureManager:
+class FixtureManager(object):
     """
     pytest fixtures definitions and information is stored and managed
     from this class.

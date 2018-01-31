@@ -178,7 +178,7 @@ def call_runtest_hook(item, when, **kwds):
     return CallInfo(lambda: ihook(item=item, **kwds), when=when)
 
 
-class CallInfo:
+class CallInfo(object):
     """ Result/Exception info a function invocation. """
     #: None or ExceptionInfo object.
     excinfo = None

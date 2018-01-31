@@ -286,7 +286,7 @@ tests.
 Let's execute it::
 
     $ pytest -s -q --tb=no
-    FF                                                                   [100%]teardown smtp
+    FFteardown smtp
     
     2 failed in 0.12 seconds
 
@@ -391,7 +391,7 @@ We use the ``request.module`` attribute to optionally obtain an
 again, nothing much has changed::
 
     $ pytest -s -q --tb=no
-    FF                                                                   [100%]finalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
+    FFfinalizing <smtplib.SMTP object at 0xdeadbeef> (smtp.gmail.com)
     
     2 failed in 0.12 seconds
 
@@ -612,7 +612,7 @@ Here we declare an ``app`` fixture which receives the previously defined
     $ pytest -v test_appsetup.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
-    cachedir: .cache
+    cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 2 items
     
@@ -681,40 +681,40 @@ Let's run the tests in verbose mode and with looking at the print-output::
     $ pytest -v -s test_module.py
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
-    cachedir: .cache
+    cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 8 items
     
     test_module.py::test_0[1]   SETUP otherarg 1
       RUN test0 with otherarg 1
-    PASSED                                     [ 12%]  TEARDOWN otherarg 1
+    PASSED  TEARDOWN otherarg 1
     
     test_module.py::test_0[2]   SETUP otherarg 2
       RUN test0 with otherarg 2
-    PASSED                                     [ 25%]  TEARDOWN otherarg 2
+    PASSED  TEARDOWN otherarg 2
     
     test_module.py::test_1[mod1]   SETUP modarg mod1
       RUN test1 with modarg mod1
-    PASSED                                  [ 37%]
+    PASSED
     test_module.py::test_2[1-mod1]   SETUP otherarg 1
       RUN test2 with otherarg 1 and modarg mod1
-    PASSED                                [ 50%]  TEARDOWN otherarg 1
+    PASSED  TEARDOWN otherarg 1
     
     test_module.py::test_2[2-mod1]   SETUP otherarg 2
       RUN test2 with otherarg 2 and modarg mod1
-    PASSED                                [ 62%]  TEARDOWN otherarg 2
+    PASSED  TEARDOWN otherarg 2
     
     test_module.py::test_1[mod2]   TEARDOWN modarg mod1
       SETUP modarg mod2
       RUN test1 with modarg mod2
-    PASSED                                  [ 75%]
+    PASSED
     test_module.py::test_2[1-mod2]   SETUP otherarg 1
       RUN test2 with otherarg 1 and modarg mod2
-    PASSED                                [ 87%]  TEARDOWN otherarg 1
+    PASSED  TEARDOWN otherarg 1
     
     test_module.py::test_2[2-mod2]   SETUP otherarg 2
       RUN test2 with otherarg 2 and modarg mod2
-    PASSED                                [100%]  TEARDOWN otherarg 2
+    PASSED  TEARDOWN otherarg 2
       TEARDOWN modarg mod2
     
     

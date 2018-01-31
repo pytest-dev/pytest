@@ -14,7 +14,7 @@ PY3 = sys.version_info >= (3, 0)
 
 
 class TestMetafunc(object):
-    def Metafunc(self, func):
+    def Metafunc(self, func, config=None):
         # the unit tests of this class check if things work correctly
         # on the funcarg level, so we don't need a full blown
         # initiliazation
@@ -26,7 +26,7 @@ class TestMetafunc(object):
 
         names = fixtures.getfuncargnames(func)
         fixtureinfo = FixtureInfo(names)
-        return python.Metafunc(func, fixtureinfo, None)
+        return python.Metafunc(func, fixtureinfo, config)
 
     def test_no_funcargs(self, testdir):
         def function():
@@ -156,7 +156,19 @@ class TestMetafunc(object):
     def test_parametrize_empty_list(self):
         def func(y):
             pass
-        metafunc = self.Metafunc(func)
+
+        class MockConfig(object):
+            def getini(self, name):
+                return ''
+
+            @property
+            def hook(self):
+                return self
+
+            def pytest_make_parametrize_id(self, **kw):
+                pass
+
+        metafunc = self.Metafunc(func, MockConfig())
         metafunc.parametrize("y", [])
         assert 'skip' == metafunc._calls[0].marks[0].name
 
@@ -241,7 +253,7 @@ class TestMetafunc(object):
         """
         from _pytest.python import _idval
 
-        class TestClass:
+        class TestClass(object):
             pass
 
         def test_function():
@@ -749,7 +761,7 @@ class TestMetafuncFunctional(object):
     def test_attributes(self, testdir):
         p = testdir.makepyfile("""
             # assumes that generate/provide runs in the same process
-            import py, pytest
+            import sys, pytest
             def pytest_generate_tests(metafunc):
                 metafunc.addcall(param=metafunc)
 
@@ -768,7 +780,7 @@ class TestMetafuncFunctional(object):
                 def test_method(self, metafunc, pytestconfig):
                     assert metafunc.config == pytestconfig
                     assert metafunc.module.__name__ == __name__
-                    if py.std.sys.version_info > (3, 0):
+                    if sys.version_info > (3, 0):
                         unbound = TestClass.test_method
                     else:
                         unbound = TestClass.test_method.im_func

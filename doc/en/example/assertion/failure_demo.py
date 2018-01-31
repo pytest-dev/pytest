@@ -157,12 +157,14 @@ class TestRaises(object):
 
 # thanks to Matthew Scott for this test
 def test_dynamic_compile_shows_nicely():
+    import imp
+    import sys
     src = 'def foo():\n assert 1 == 0\n'
     name = 'abc-123'
-    module = py.std.imp.new_module(name)
+    module = imp.new_module(name)
     code = _pytest._code.compile(src, name, 'exec')
     py.builtin.exec_(code, module.__dict__)
-    py.std.sys.modules[name] = module
+    sys.modules[name] = module
     module.foo()
 
 

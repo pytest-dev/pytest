@@ -85,6 +85,9 @@ class _NodeReporter(object):
     def add_property(self, name, value):
         self.properties.append((str(name), bin_xml_escape(value)))
 
+    def add_attribute(self, name, value):
+        self.attrs[str(name)] = bin_xml_escape(value)
+
     def make_properties_node(self):
         """Return a Junit node containing custom properties, if any.
         """
@@ -98,6 +101,7 @@ class _NodeReporter(object):
     def record_testreport(self, testreport):
         assert not self.testcase
         names = mangle_test_address(testreport.nodeid)
+        existing_attrs = self.attrs
         classnames = names[:-1]
         if self.xml.prefix:
             classnames.insert(0, self.xml.prefix)
@@ -111,6 +115,7 @@ class _NodeReporter(object):
         if hasattr(testreport, "url"):
             attrs["url"] = testreport.url
         self.attrs = attrs
+        self.attrs.update(existing_attrs)  # restore any user-defined attributes
 
     def to_xml(self):
         testcase = Junit.testcase(time=self.duration, **self.attrs)
@@ -209,6 +214,27 @@ def record_xml_property(request):
             pass
 
         return add_property_noop
+
+
+@pytest.fixture
+def record_xml_attribute(request):
+    """Add extra xml attributes to the tag for the calling test.
+    The fixture is callable with ``(name, value)``, with value being automatically
+    xml-encoded
+    """
+    request.node.warn(
+        code='C3',
+        message='record_xml_attribute is an experimental feature',
+    )
+    xml = getattr(request.config, "_xml", None)
+    if xml is not None:
+        node_reporter = xml.node_reporter(request.node.nodeid)
+        return node_reporter.add_attribute
+    else:
+        def add_attr_noop(name, value):
+            pass
+
+        return add_attr_noop
 
 
 def pytest_addoption(parser):

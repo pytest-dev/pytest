@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function
 import os
 import sys
+import types
 
 import six
 
@@ -398,7 +399,7 @@ class TestGeneralUsage(object):
 
         p = tmpdir.join('test_test_plugins_given_as_strings.py')
         p.write('def test_foo(): pass')
-        mod = py.std.types.ModuleType("myplugin")
+        mod = types.ModuleType("myplugin")
         monkeypatch.setitem(sys.modules, 'myplugin', mod)
         assert pytest.main(args=[str(tmpdir)], plugins=['myplugin']) == 0
 
@@ -492,17 +493,17 @@ class TestInvocationVariants(object):
 
     def test_python_minus_m_invocation_ok(self, testdir):
         p1 = testdir.makepyfile("def test_hello(): pass")
-        res = testdir.run(py.std.sys.executable, "-m", "pytest", str(p1))
+        res = testdir.run(sys.executable, "-m", "pytest", str(p1))
         assert res.ret == 0
 
     def test_python_minus_m_invocation_fail(self, testdir):
         p1 = testdir.makepyfile("def test_fail(): 0/0")
-        res = testdir.run(py.std.sys.executable, "-m", "pytest", str(p1))
+        res = testdir.run(sys.executable, "-m", "pytest", str(p1))
         assert res.ret == 1
 
     def test_python_pytest_package(self, testdir):
         p1 = testdir.makepyfile("def test_pass(): pass")
-        res = testdir.run(py.std.sys.executable, "-m", "pytest", str(p1))
+        res = testdir.run(sys.executable, "-m", "pytest", str(p1))
         assert res.ret == 0
         res.stdout.fnmatch_lines(["*1 passed*"])
 
@@ -560,7 +561,7 @@ class TestInvocationVariants(object):
         ])
 
         def join_pythonpath(what):
-            cur = py.std.os.environ.get('PYTHONPATH')
+            cur = os.environ.get('PYTHONPATH')
             if cur:
                 return str(what) + os.pathsep + cur
             return what
@@ -618,7 +619,7 @@ class TestInvocationVariants(object):
         #             └── test_world.py
 
         def join_pythonpath(*dirs):
-            cur = py.std.os.environ.get('PYTHONPATH')
+            cur = os.environ.get('PYTHONPATH')
             if cur:
                 dirs += (cur,)
             return os.pathsep.join(str(p) for p in dirs)
@@ -901,7 +902,7 @@ def test_deferred_hook_checking(testdir):
     testdir.syspathinsert()
     testdir.makepyfile(**{
         'plugin.py': """
-        class Hooks:
+        class Hooks(object):
             def pytest_my_hook(self, config):
                 pass
 

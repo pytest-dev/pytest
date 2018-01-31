@@ -332,7 +332,7 @@ which will add info only when run with "--v"::
     $ pytest -v
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
-    cachedir: .cache
+    cachedir: .pytest_cache
     info1: did you know that ...
     did you?
     rootdir: $REGENDOC_TMPDIR, inifile:
@@ -385,9 +385,9 @@ Now we can profile which test functions execute the slowest::
     test_some_are_slow.py ...                                            [100%]
     
     ========================= slowest 3 test durations =========================
-    0.31s call     test_some_are_slow.py::test_funcslow2
-    0.20s call     test_some_are_slow.py::test_funcslow1
-    0.17s call     test_some_are_slow.py::test_funcfast
+    0.58s call     test_some_are_slow.py::test_funcslow2
+    0.41s call     test_some_are_slow.py::test_funcslow1
+    0.10s call     test_some_are_slow.py::test_funcfast
     ========================= 3 passed in 0.12 seconds =========================
 
 incremental testing - test steps
@@ -537,7 +537,7 @@ We can run this::
     file $REGENDOC_TMPDIR/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
     E       fixture 'db' not found
-    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, monkeypatch, pytestconfig, record_xml_property, recwarn, tmpdir, tmpdir_factory
+    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, monkeypatch, pytestconfig, record_xml_attribute, record_xml_property, recwarn, tmpdir, tmpdir_factory
     >       use 'pytest --fixtures [testpath]' for help on them.
     
     $REGENDOC_TMPDIR/b/test_error.py:1
@@ -731,7 +731,7 @@ and run it::
     
     test_module.py Esetting up a test failed! test_module.py::test_setup_fails
     Fexecuting test failed test_module.py::test_call_fails
-    F                                                   [100%]
+    F
     
     ================================== ERRORS ==================================
     ____________________ ERROR at setup of test_setup_fails ____________________
@@ -826,15 +826,20 @@ Instead of freezing the pytest runner as a separate executable, you can make
 your frozen program work as the pytest runner by some clever
 argument handling during program startup. This allows you to 
 have a single executable, which is usually more convenient.
+Please note that the mechanism for plugin discovery used by pytest
+(setupttools entry points) doesn't work with frozen executables so pytest
+can't find any third party plugins automatically. To include third party plugins 
+like ``pytest-timeout`` they must be imported explicitly and passed on to pytest.main.
 
 .. code-block:: python
 
     # contents of app_main.py
     import sys
+    import pytest_timeout  # Third party plugin
 
     if len(sys.argv) > 1 and sys.argv[1] == '--pytest':
         import pytest
-        sys.exit(pytest.main(sys.argv[2:]))
+        sys.exit(pytest.main(sys.argv[2:], plugins=[pytest_timeout]))
     else:
         # normal application execution: at this point argv can be parsed
         # by your argument-parsing library of choice as usual
@@ -845,3 +850,4 @@ This allows you to execute tests using the frozen
 application with standard ``pytest`` command-line options::
 
     ./app_main --pytest --verbose --tb=long --junitxml=results.xml test-suite/
+

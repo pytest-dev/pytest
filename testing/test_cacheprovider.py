@@ -31,7 +31,7 @@ class TestNewAPI(object):
 
     def test_cache_writefail_cachfile_silent(self, testdir):
         testdir.makeini("[pytest]")
-        testdir.tmpdir.join('.cache').write('gone wrong')
+        testdir.tmpdir.join('.pytest_cache').write('gone wrong')
         config = testdir.parseconfigure()
         cache = config.cache
         cache.set('test/broken', [])
@@ -39,14 +39,14 @@ class TestNewAPI(object):
     @pytest.mark.skipif(sys.platform.startswith('win'), reason='no chmod on windows')
     def test_cache_writefail_permissions(self, testdir):
         testdir.makeini("[pytest]")
-        testdir.tmpdir.ensure_dir('.cache').chmod(0)
+        testdir.tmpdir.ensure_dir('.pytest_cache').chmod(0)
         config = testdir.parseconfigure()
         cache = config.cache
         cache.set('test/broken', [])
 
     @pytest.mark.skipif(sys.platform.startswith('win'), reason='no chmod on windows')
     def test_cache_failure_warns(self, testdir):
-        testdir.tmpdir.ensure_dir('.cache').chmod(0)
+        testdir.tmpdir.ensure_dir('.pytest_cache').chmod(0)
         testdir.makepyfile("""
             def test_error():
                 raise Exception
@@ -127,7 +127,7 @@ def test_cache_reportheader(testdir):
     """)
     result = testdir.runpytest("-v")
     result.stdout.fnmatch_lines([
-        "cachedir: .cache"
+        "cachedir: .pytest_cache"
     ])
 
 
@@ -201,8 +201,8 @@ class TestLastFailed(object):
         ])
 
         # Run this again to make sure clear-cache is robust
-        if os.path.isdir('.cache'):
-            shutil.rmtree('.cache')
+        if os.path.isdir('.pytest_cache'):
+            shutil.rmtree('.pytest_cache')
         result = testdir.runpytest("--lf", "--cache-clear")
         result.stdout.fnmatch_lines([
             "*1 failed*2 passed*",
@@ -410,8 +410,8 @@ class TestLastFailed(object):
     def test_lastfailed_collectfailure(self, testdir, monkeypatch):
 
         testdir.makepyfile(test_maybe="""
-            import py
-            env = py.std.os.environ
+            import os
+            env = os.environ
             if '1' == env['FAILIMPORT']:
                 raise ImportError('fail')
             def test_hello():
@@ -439,8 +439,8 @@ class TestLastFailed(object):
     def test_lastfailed_failure_subset(self, testdir, monkeypatch):
 
         testdir.makepyfile(test_maybe="""
-            import py
-            env = py.std.os.environ
+            import os
+            env = os.environ
             if '1' == env['FAILIMPORT']:
                 raise ImportError('fail')
             def test_hello():
@@ -448,8 +448,8 @@ class TestLastFailed(object):
         """)
 
         testdir.makepyfile(test_maybe2="""
-            import py
-            env = py.std.os.environ
+            import os
+            env = os.environ
             if '1' == env['FAILIMPORT']:
                 raise ImportError('fail')
             def test_hello():
@@ -495,15 +495,15 @@ class TestLastFailed(object):
         # Issue #1342
         testdir.makepyfile(test_empty='')
         testdir.runpytest('-q', '--lf')
-        assert not os.path.exists('.cache')
+        assert not os.path.exists('.pytest_cache')
 
         testdir.makepyfile(test_successful='def test_success():\n    assert True')
         testdir.runpytest('-q', '--lf')
-        assert not os.path.exists('.cache')
+        assert not os.path.exists('.pytest_cache')
 
         testdir.makepyfile(test_errored='def test_error():\n    assert False')
         testdir.runpytest('-q', '--lf')
-        assert os.path.exists('.cache')
+        assert os.path.exists('.pytest_cache')
 
     def test_xfail_not_considered_failure(self, testdir):
         testdir.makepyfile('''

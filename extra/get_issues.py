@@ -1,6 +1,5 @@
 import json
 import py
-import textwrap
 
 issues_url = "https://api.github.com/repos/pytest-dev/pytest/issues"
 

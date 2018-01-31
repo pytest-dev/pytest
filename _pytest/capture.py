@@ -61,7 +61,7 @@ def pytest_load_initial_conftests(early_config, parser, args):
         sys.stderr.write(err)
 
 
-class CaptureManager:
+class CaptureManager(object):
     """
     Capture plugin, manages that the appropriate capture method is enabled/disabled during collection and each
     test phase (setup, call, teardown). After each of those points, the captured output is obtained and
@@ -271,7 +271,7 @@ def _install_capture_fixture_on_item(request, capture_class):
     del request.node._capture_fixture
 
 
-class CaptureFixture:
+class CaptureFixture(object):
     def __init__(self, captureclass, request):
         self.captureclass = captureclass
         self.request = request
@@ -416,11 +416,11 @@ class MultiCapture(object):
                              self.err.snap() if self.err is not None else "")
 
 
-class NoCapture:
+class NoCapture(object):
     __init__ = start = done = suspend = resume = lambda *args: None
 
 
-class FDCaptureBinary:
+class FDCaptureBinary(object):
     """Capture IO to/from a given os-level filedescriptor.
 
     snap() produces `bytes`
@@ -506,7 +506,7 @@ class FDCapture(FDCaptureBinary):
         return res
 
 
-class SysCapture:
+class SysCapture(object):
     def __init__(self, fd, tmpfile=None):
         name = patchsysdict[fd]
         self._old = getattr(sys, name)
@@ -551,7 +551,7 @@ class SysCaptureBinary(SysCapture):
         return res
 
 
-class DontReadFromInput:
+class DontReadFromInput(object):
     """Temporary stub class.  Ideally when stdin is accessed, the
     capturing should be turned off, with possibly all data captured
     so far sent to the screen.  This should be configurable, though,
