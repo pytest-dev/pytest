@@ -462,18 +462,23 @@ Here is an example definition of a hook wrapper::
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_pyfunc_call(pyfuncitem):
-        # do whatever you want before the next hook executes
+        do_something_before_next_hook_executes()
 
         outcome = yield
         # outcome.excinfo may be None or a (cls, val, tb) tuple
 
         res = outcome.get_result()  # will raise if outcome was exception
-        # postprocess result
+
+        post_process_result(res)
+
+        outcome.force_result(new_res)  # to override the return value to the plugin system
 
 Note that hook wrappers don't return results themselves, they merely
 perform tracing or other side effects around the actual hook implementations.
 If the result of the underlying hook is a mutable object, they may modify
 that result but it's probably better to avoid it.
+
+For more information, consult the `pluggy documentation <http://pluggy.readthedocs.io/en/latest/#wrappers>`_.
 
 
 Hook function ordering / call example
