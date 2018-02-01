@@ -1,7 +1,5 @@
 from __future__ import absolute_import, division, print_function
 
-import os
-
 import pytest
 
 from _pytest.main import EXIT_NOTESTSCOLLECTED
@@ -259,12 +257,10 @@ def test_sessionfinish_with_start(testdir):
 
 
 @pytest.mark.parametrize("path", ["root", "{relative}/root", "{environment}/root"])
-def test_rootdir_option_arg(testdir, path):
-    if 'relative' in path:
-        path = path.format(relative=os.getcwd())
-    if 'environment' in path:
-        os.environ['PY_ROOTDIR_PATH'] = os.getcwd()
-        path = path.format(environment='$PY_ROOTDIR_PATH')
+def test_rootdir_option_arg(testdir, monkeypatch, path):
+    monkeypatch.setenv('PY_ROOTDIR_PATH', str(testdir.tmpdir))
+    path = path.format(relative=str(testdir.tmpdir),
+                       environment='$PY_ROOTDIR_PATH')
 
     rootdir = testdir.mkdir("root")
     rootdir.mkdir("tests")
@@ -274,8 +270,8 @@ def test_rootdir_option_arg(testdir, path):
             assert 1
     """)
 
-    result = testdir.runpytest("--rootdir={}".format(os.path.expandvars(path)))
-    result.stdout.fnmatch_lines(['*rootdir: {}/root, inifile:*'.format(os.getcwd()), "*1 passed*"])
+    result = testdir.runpytest("--rootdir={}".format(path))
+    result.stdout.fnmatch_lines(['*rootdir: {}/root, inifile:*'.format(testdir.tmpdir), "*1 passed*"])
 
 
 def test_rootdir_wrong_option_arg(testdir):

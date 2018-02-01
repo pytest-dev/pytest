@@ -38,6 +38,9 @@ Here's a summary what ``pytest`` uses ``rootdir`` for:
 Important to emphasize that ``rootdir`` is **NOT** used to modify ``sys.path``/``PYTHONPATH`` or
 influence how modules are imported. See :ref:`pythonpath` for more details.
 
+``--rootdir=path`` command line option sets a ``rootdir`` directory. Directory may be relative or absolute path.
+Additionally path may contain environment variables, that will be expanded.
+
 Finding the ``rootdir``
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -371,9 +374,3 @@ passed multiple times. The expected format is ``name=value``. For example::
 
 
 .. _`#3155`: https://github.com/pytest-dev/pytest/issues/3155
-
-.. confval:: rootdir
-
-   Sets a :ref:`rootdir <rootdir>` directory. Directory may be relative or absolute path.
-   Additionally path may contain environment variables, that will be expanded.
-   For more information about rootdir please refer to :ref:`rootdir <rootdir>`.

@@ -991,8 +991,8 @@ class Config(object):
 
     def _initini(self, args):
         ns, unknown_args = self._parser.parse_known_and_unknown_args(args, namespace=self.option.copy())
-        rootdir = ns.rootdir if ns.rootdir else None
-        r = determine_setup(ns.inifilename, ns.file_or_dir + unknown_args, warnfunc=self.warn, rootdir_cmd_arg=rootdir)
+        r = determine_setup(ns.inifilename, ns.file_or_dir + unknown_args, warnfunc=self.warn,
+                            rootdir_cmd_arg=ns.rootdir or None)
         self.rootdir, self.inifile, self.inicfg = r
         self._parser.extra_info['rootdir'] = self.rootdir
         self._parser.extra_info['inifile'] = self.inifile
@@ -1348,7 +1348,7 @@ def determine_setup(inifile, args, warnfunc=None, rootdir_cmd_arg=None):
                     if is_fs_root:
                         rootdir = ancestor
     if rootdir_cmd_arg:
-        rootdir_abs_path = py.path.local(rootdir_cmd_arg)
+        rootdir_abs_path = py.path.local(os.path.expandvars(rootdir_cmd_arg))
         if not os.path.isdir(str(rootdir_abs_path)):
             raise UsageError("Directory '{}' not found. Check your '--rootdir' option.".format(rootdir_abs_path))
         rootdir = rootdir_abs_path
