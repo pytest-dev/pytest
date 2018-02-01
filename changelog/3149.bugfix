@@ -1,0 +1,1 @@
+Fix doctest failure output so that it will continue to run despite the first failure.

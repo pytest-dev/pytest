@@ -756,6 +756,25 @@ class TestDoctestSkips(object):
         reprec = testdir.inline_run("--doctest-modules")
         reprec.assertoutcome(passed=0, skipped=0)
 
+    def test_continue_on_failure(self, testdir):
+        testdir.maketxtfile(test_something="""
+            >>> i = 5
+            >>> def foo():
+            ...     raise ValueError('error1')
+            >>> foo()
+            >>> i
+            >>> i + 2
+            7
+            >>> i + 1
+        """)
+        result = testdir.runpytest("--doctest-modules")
+        result.assert_outcomes(passed=0, failed=1)
+        # We need to make sure we have two failure lines (4, 5, and 8) instead of
+        # one.
+        result.stdout.fnmatch_lines("*test_something.txt:4: DoctestUnexpectedException*")
+        result.stdout.fnmatch_lines("*test_something.txt:5: DocTestFailure*")
+        result.stdout.fnmatch_lines("*test_something.txt:8: DocTestFailure*")
+
 
 class TestDoctestAutoUseFixtures(object):
 
