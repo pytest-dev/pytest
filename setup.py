@@ -16,7 +16,7 @@ classifiers = [
     'Topic :: Utilities',
 ] + [
     ('Programming Language :: Python :: %s' % x)
-    for x in '2 2.7 3 3.4 3.5 3.6'.split()
+    for x in '2 2.7 3 3.4 3.5 3.6 3.7'.split()
 ]
 
 with open('README.rst') as fd:
