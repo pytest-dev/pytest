@@ -270,7 +270,7 @@ class TestPDB(object):
     # For some reason the interaction between doctest's and pytest's output
     # capturing mechanisms are messing up the stdout on mac. (See #985).
     # Should be solvable, but skipping until we have a chance to investigate.
-    @pytest.mark.skipif("sys.platform == 'darwin'")
+    @pytest.mark.xfail("sys.platform == 'darwin'", reason='See issue #985', run=False)
     def test_pdb_interaction_doctest(self, testdir):
         p1 = testdir.makepyfile("""
             import pytest
