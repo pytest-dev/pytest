@@ -267,6 +267,10 @@ class TestPDB(object):
         child.read()
         self.flush(child)
 
+    # For some reason the interaction between doctest's and pytest's output
+    # capturing mechanisms are messing up the stdout on mac. (See #985).
+    # Should be solvable, but skipping until we have a chance to investigate.
+    @pytest.mark.skipif("sys.platform == 'darwin'")
     def test_pdb_interaction_doctest(self, testdir):
         p1 = testdir.makepyfile("""
             import pytest
