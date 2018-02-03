@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function
 import pdb
 import sys
+from doctest import UnexpectedException
 
 
 def pytest_addoption(parser):
@@ -95,17 +96,12 @@ def _enter_pdb(node, excinfo, rep):
 
 
 def _postmortem_traceback(excinfo):
-    try:
-        from doctest import UnexpectedException
-        if isinstance(excinfo.value, UnexpectedException):
-            # A doctest.UnexpectedException is not useful for post_mortem.
-            # Use the underlying exception instead:
-            return excinfo.value.exc_info[2]
-    except ImportError:
-        # If we fail to import, continue quietly (if we ran out of file descriptors, for example: #1810)
-        pass
-
-    return excinfo._excinfo[2]
+    if isinstance(excinfo.value, UnexpectedException):
+        # A doctest.UnexpectedException is not useful for post_mortem.
+        # Use the underlying exception instead:
+        return excinfo.value.exc_info[2]
+    else:
+        return excinfo._excinfo[2]
 
 
 def _find_last_non_hidden_frame(stack):
