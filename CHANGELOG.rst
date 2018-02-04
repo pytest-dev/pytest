@@ -8,6 +8,138 @@
 
 .. towncrier release notes start
 
+Pytest 3.4.0 (2018-01-30)
+=========================
+
+Deprecations and Removals
+-------------------------
+
+- All pytest classes now subclass ``object`` for better Python 2/3 compatibility.
+  This should not affect user code except in very rare edge cases. (`#2147
+  <https://github.com/pytest-dev/pytest/issues/2147>`_)
+
+
+Features
+--------
+
+- Introduce ``empty_parameter_set_mark`` ini option to select which mark to
+  apply when ``@pytest.mark.parametrize`` is given an empty set of parameters.
+  Valid options are ``skip`` (default) and ``xfail``. Note that it is planned
+  to change the default to ``xfail`` in future releases as this is considered
+  less error prone. (`#2527
+  <https://github.com/pytest-dev/pytest/issues/2527>`_)
+
+- **Incompatible change**: after community feedback the `logging
+  <https://docs.pytest.org/en/latest/logging.html>`_ functionality has
+  undergone some changes. Please consult the `logging documentation
+  <https://docs.pytest.org/en/latest/logging.html#incompatible-changes-in-pytest-3-4>`_
+  for details. (`#3013 <https://github.com/pytest-dev/pytest/issues/3013>`_)
+
+- Console output falls back to "classic" mode when capturing is disabled (``-s``),
+  otherwise the output gets garbled to the point of being useless. (`#3038
+  <https://github.com/pytest-dev/pytest/issues/3038>`_)
+
+- New `pytest_runtest_logfinish
+  <https://docs.pytest.org/en/latest/writing_plugins.html#_pytest.hookspec.pytest_runtest_logfinish>`_
+  hook which is called when a test item has finished executing, analogous to
+  `pytest_runtest_logstart
+  <https://docs.pytest.org/en/latest/writing_plugins.html#_pytest.hookspec.pytest_runtest_start>`_.
+  (`#3101 <https://github.com/pytest-dev/pytest/issues/3101>`_)
+
+- Improve performance when collecting tests using many fixtures. (`#3107
+  <https://github.com/pytest-dev/pytest/issues/3107>`_)
+
+- New ``caplog.get_records(when)`` method which provides access to the captured
+  records for the ``"setup"``, ``"call"`` and ``"teardown"``
+  testing stages. (`#3117 <https://github.com/pytest-dev/pytest/issues/3117>`_)
+
+- New fixture ``record_xml_attribute`` that allows modifying and inserting
+  attributes on the ``<testcase>`` xml node in JUnit reports. (`#3130
+  <https://github.com/pytest-dev/pytest/issues/3130>`_)
+
+- The default cache directory has been renamed from ``.cache`` to
+  ``.pytest_cache`` after community feedback that the name ``.cache`` did not
+  make it clear that it was used by pytest. (`#3138
+  <https://github.com/pytest-dev/pytest/issues/3138>`_)
+
+- Colorize the levelname column in the live-log output. (`#3142
+  <https://github.com/pytest-dev/pytest/issues/3142>`_)
+
+
+Bug Fixes
+---------
+
+- Fix hanging pexpect test on MacOS by using flush() instead of wait().
+  (`#2022 <https://github.com/pytest-dev/pytest/issues/2022>`_)
+
+- Fix restoring Python state after in-process pytest runs with the
+  ``pytester`` plugin; this may break tests using multiple inprocess
+  pytest runs if later ones depend on earlier ones leaking global interpreter
+  changes. (`#3016 <https://github.com/pytest-dev/pytest/issues/3016>`_)
+
+- Fix skipping plugin reporting hook when test aborted before plugin setup
+  hook. (`#3074 <https://github.com/pytest-dev/pytest/issues/3074>`_)
+
+- Fix progress percentage reported when tests fail during teardown. (`#3088
+  <https://github.com/pytest-dev/pytest/issues/3088>`_)
+
+- **Incompatible change**: ``-o/--override`` option no longer eats all the
+  remaining options, which can lead to surprising behavior: for example,
+  ``pytest -o foo=1 /path/to/test.py`` would fail because ``/path/to/test.py``
+  would be considered as part of the ``-o`` command-line argument. One
+  consequence of this is that now multiple configuration overrides need
+  multiple ``-o`` flags: ``pytest -o foo=1 -o bar=2``. (`#3103
+  <https://github.com/pytest-dev/pytest/issues/3103>`_)
+
+
+Improved Documentation
+----------------------
+
+- Document hooks (defined with ``historic=True``) which cannot be used with
+  ``hookwrapper=True``. (`#2423
+  <https://github.com/pytest-dev/pytest/issues/2423>`_)
+
+- Clarify that warning capturing doesn't change the warning filter by default.
+  (`#2457 <https://github.com/pytest-dev/pytest/issues/2457>`_)
+
+- Clarify a possible confusion when using pytest_fixture_setup with fixture
+  functions that return None. (`#2698
+  <https://github.com/pytest-dev/pytest/issues/2698>`_)
+
+- Fix the wording of a sentence on doctest flags used in pytest. (`#3076
+  <https://github.com/pytest-dev/pytest/issues/3076>`_)
+
+- Prefer ``https://*.readthedocs.io`` over ``http://*.rtfd.org`` for links in
+  the documentation. (`#3092
+  <https://github.com/pytest-dev/pytest/issues/3092>`_)
+
+- Improve readability (wording, grammar) of Getting Started guide (`#3131
+  <https://github.com/pytest-dev/pytest/issues/3131>`_)
+
+- Added note that calling pytest.main multiple times from the same process is
+  not recommended because of import caching. (`#3143
+  <https://github.com/pytest-dev/pytest/issues/3143>`_)
+
+
+Trivial/Internal Changes
+------------------------
+
+- Show a simple and easy error when keyword expressions trigger a syntax error
+  (for example, ``"-k foo and import"`` will show an error that you can not use
+  the ``import`` keyword in expressions). (`#2953
+  <https://github.com/pytest-dev/pytest/issues/2953>`_)
+
+- Change parametrized automatic test id generation to use the ``__name__``
+  attribute of functions instead of the fallback argument name plus counter.
+  (`#2976 <https://github.com/pytest-dev/pytest/issues/2976>`_)
+
+- Replace py.std with stdlib imports. (`#3067
+  <https://github.com/pytest-dev/pytest/issues/3067>`_)
+
+- Corrected 'you' to 'your' in logging docs. (`#3129
+  <https://github.com/pytest-dev/pytest/issues/3129>`_)
+
+
 Pytest 3.3.2 (2017-12-25)
 =========================
 

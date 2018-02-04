@@ -57,9 +57,9 @@ def pytest_addoption(parser):
                     action="store_true", dest="debug", default=False,
                     help="store internal tracing debug information in 'pytestdebug.log'.")
     group._addoption(
-        '-o', '--override-ini', nargs='*', dest="override_ini",
+        '-o', '--override-ini', dest="override_ini",
         action="append",
-        help="override config option with option=value style, e.g. `-o xfail_strict=True`.")
+        help='override ini option with "option=value" style, e.g. `-o xfail_strict=True -o cache_dir=cache`.')
 
 
 @pytest.hookimpl(hookwrapper=True)

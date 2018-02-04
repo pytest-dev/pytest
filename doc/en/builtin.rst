@@ -116,6 +116,10 @@ You can ask for available builtin or project-custom
         Add extra xml properties to the tag for the calling test.
         The fixture is callable with ``(name, value)``, with value being automatically
         xml-encoded.
+    record_xml_attribute
+        Add extra xml attributes to the tag for the calling test.
+        The fixture is callable with ``(name, value)``, with value being automatically
+        xml-encoded
     caplog
         Access and control log capturing.
         

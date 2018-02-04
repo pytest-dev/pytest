@@ -879,6 +879,27 @@ def test_record_property_same_name(testdir):
     pnodes[1].assert_attr(name="foo", value="baz")
 
 
+def test_record_attribute(testdir):
+    testdir.makepyfile("""
+        import pytest
+
+        @pytest.fixture
+        def other(record_xml_attribute):
+            record_xml_attribute("bar", 1)
+        def test_record(record_xml_attribute, other):
+            record_xml_attribute("foo", "<1");
+    """)
+    result, dom = runandparse(testdir, '-rw')
+    node = dom.find_first_by_tag("testsuite")
+    tnode = node.find_first_by_tag("testcase")
+    tnode.assert_attr(bar="1")
+    tnode.assert_attr(foo="<1")
+    result.stdout.fnmatch_lines([
+        'test_record_attribute.py::test_record',
+        '*record_xml_attribute*experimental*',
+    ])
+
+
 def test_random_report_log_xdist(testdir):
     """xdist calls pytest_runtest_logreport as they are executed by the slaves,
     with nodes from several nodes overlapping, so junitxml must cope with that

@@ -32,7 +32,7 @@ You can then restrict a test run to only run tests marked with ``webtest``::
     $ pytest -v -m webtest
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
-    cachedir: .cache
+    cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items
     
@@ -46,7 +46,7 @@ Or the inverse, running all tests except the webtest ones::
     $ pytest -v -m "not webtest"
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
-    cachedir: .cache
+    cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items
     
@@ -67,7 +67,7 @@ tests based on their module, class, method, or function name::
     $ pytest -v test_server.py::TestClass::test_method
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
-    cachedir: .cache
+    cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 1 item
     
@@ -80,7 +80,7 @@ You can also select on the class::
     $ pytest -v test_server.py::TestClass
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
-    cachedir: .cache
+    cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 1 item
     
@@ -93,7 +93,7 @@ Or select multiple nodes::
   $ pytest -v test_server.py::TestClass test_server.py::test_send_http
   =========================== test session starts ============================
   platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
-  cachedir: .cache
+  cachedir: .pytest_cache
   rootdir: $REGENDOC_TMPDIR, inifile:
   collecting ... collected 2 items
   
@@ -131,7 +131,7 @@ select tests based on their names::
     $ pytest -v -k http  # running with the above defined example module
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
-    cachedir: .cache
+    cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items
     
@@ -145,7 +145,7 @@ And you can also run all tests except the ones that match the keyword::
     $ pytest -k "not send_http" -v
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
-    cachedir: .cache
+    cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items
     
@@ -161,7 +161,7 @@ Or to select "http" and "quick" tests::
     $ pytest -k "http or quick" -v
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
-    cachedir: .cache
+    cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
     collecting ... collected 4 items
     
@@ -432,7 +432,7 @@ The output is as follows::
 
     $ pytest -q -s
     Marker info name=my_marker args=(<function hello_world at 0xdeadbeef>,) kwars={}
-    .                                                                    [100%]
+    .
     1 passed in 0.12 seconds
 
 We can see that the custom marker has its argument set extended with the function ``hello_world``. This is the key difference between creating a custom marker as a callable, which invokes ``__call__`` behind the scenes, and using ``with_args``.
@@ -477,7 +477,7 @@ Let's run this without capturing output and see what we get::
     glob args=('function',) kwargs={'x': 3}
     glob args=('class',) kwargs={'x': 2}
     glob args=('module',) kwargs={'x': 1}
-    .                                                                    [100%]
+    .
     1 passed in 0.12 seconds
 
 marking platform specific tests with pytest

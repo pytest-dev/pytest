@@ -157,6 +157,8 @@ class TestRaises(object):
 
 # thanks to Matthew Scott for this test
 def test_dynamic_compile_shows_nicely():
+    import imp
+    import sys
     src = 'def foo():\n assert 1 == 0\n'
     name = 'abc-123'
     module = imp.new_module(name)

@@ -12,7 +12,7 @@ taking a lot of time to make a new one.
 
 #. Install development dependencies in a virtual environment with::
 
-    pip3 install -r tasks/requirements.txt
+    pip3 install -U -r tasks/requirements.txt
 
 #. Create a branch ``release-X.Y.Z`` with the version for the release.
 

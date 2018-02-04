@@ -1245,7 +1245,7 @@ def test_py36_windowsconsoleio_workaround_non_standard_streams():
     """
     from _pytest.capture import _py36_windowsconsoleio_workaround
 
-    class DummyStream:
+    class DummyStream(object):
         def write(self, s):
             pass
 
