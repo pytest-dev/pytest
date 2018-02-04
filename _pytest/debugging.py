@@ -97,11 +97,15 @@ def _enter_pdb(node, excinfo, rep):
 def _postmortem_traceback(excinfo):
     # A doctest.UnexpectedException is not useful for post_mortem.
     # Use the underlying exception instead:
+    from _pytest.doctest import MultipleDoctestFailures
     from doctest import UnexpectedException
-    if isinstance(excinfo.value, UnexpectedException):
-        return excinfo.value.exc_info[2]
-    else:
-        return excinfo._excinfo[2]
+    if isinstance(excinfo.value, MultipleDoctestFailures):
+        failures = excinfo.value.failures
+        for failure in failures:
+            if isinstance(failure, UnexpectedException):
+                return failure.exc_info[2]
+
+    return excinfo._excinfo[2]
 
 
 def _find_last_non_hidden_frame(stack):

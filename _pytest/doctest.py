@@ -125,8 +125,8 @@ def _init_runner_class():
         """
         def __init__(self, checker=None, verbose=None, optionflags=0,
                      continue_on_failure=True):
-            super(PytestDoctestRunner, self).__init__(
-                checker=checker, verbose=verbose, optionflags=optionflags)
+            doctest.DocTestRunner.__init__(
+                self, checker=checker, verbose=verbose, optionflags=optionflags)
             self.continue_on_failure = continue_on_failure
 
         def report_start(self, out, test, example):
