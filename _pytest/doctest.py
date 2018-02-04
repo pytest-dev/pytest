@@ -109,6 +109,12 @@ class DoctestUnexpectedExceptionContainer(object):
         self.exc_info = exc_info
 
 
+class MultipleDoctestFailures(Exception):
+    def __init__(self, failures):
+        super(MultipleDoctestFailures, self).__init__()
+        self.failures = failures
+
+
 def _init_runner_class():
     import doctest
 
@@ -117,6 +123,12 @@ def _init_runner_class():
         Runner to collect failures.  Note that the out variable in this case is
         a list instead of a stdout-like object
         """
+        def __init__(self, checker=None, verbose=None, optionflags=0,
+                     continue_on_failure=True):
+            super(PytestDoctestRunner, self).__init__(
+                checker=checker, verbose=verbose, optionflags=optionflags)
+            self.continue_on_failure = continue_on_failure
+
         def report_start(self, out, test, example):
             pass
 
@@ -124,26 +136,31 @@ def _init_runner_class():
             pass
 
         def report_failure(self, out, test, example, got):
-            out.append(DoctestFailureContainer(test, example, got))
+            failure = DoctestFailureContainer(test, example, got)
+            if self.continue_on_failure:
+                out.append(failure)
+            else:
+                raise MultipleDoctestFailures([failure])
 
         def report_unexpected_exception(self, out, test, example, exc_info):
-            out.append(DoctestUnexpectedExceptionContainer(test, example, exc_info))
+            failure = DoctestUnexpectedExceptionContainer(test, example, exc_info)
+            if self.continue_on_failure:
+                out.append(failure)
+            else:
+                raise MultipleDoctestFailures([failure])
 
     return PytestDoctestRunner
 
 
-def _get_runner(*args, **kwargs):
+def _get_runner(checker=None, verbose=None, optionflags=0,
+                continue_on_failure=True):
     # We need this in order to do a lazy import on doctest
     global RUNNER_CLASS
     if RUNNER_CLASS is None:
         RUNNER_CLASS = _init_runner_class()
-    return RUNNER_CLASS(*args, **kwargs)
-
-
-class DoctestFailure(Exception):
-    def __init__(self, failures):
-        super(DoctestFailure, self).__init__()
-        self.failures = failures
+    return RUNNER_CLASS(
+        checker=checker, verbose=verbose, optionflags=optionflags,
+        continue_on_failure=continue_on_failure)
 
 
 class DoctestItem(pytest.Item):
@@ -167,10 +184,10 @@ class DoctestItem(pytest.Item):
         failures = []
         self.runner.run(self.dtest, out=failures)
         if failures:
-            raise DoctestFailure(failures)
+            raise MultipleDoctestFailures(failures)
 
     def repr_failure(self, excinfo):
-        if excinfo.errisinstance(DoctestFailure):
+        if excinfo.errisinstance(MultipleDoctestFailures):
             doctestfailure = excinfo.value
             failures = doctestfailure.failures
             reprlocation_lines = []
@@ -254,8 +271,10 @@ class DoctestTextfile(pytest.Module):
         globs = {'__name__': '__main__'}
 
         optionflags = get_optionflags(self)
+        continue_on_failure = not self.config.getvalue("usepdb")
         runner = _get_runner(verbose=0, optionflags=optionflags,
-                             checker=_get_checker())
+                             checker=_get_checker(),
+                             continue_on_failure=continue_on_failure)
         _fix_spoof_python2(runner, encoding)
 
         parser = doctest.DocTestParser()
@@ -290,8 +309,10 @@ class DoctestModule(pytest.Module):
         # uses internal doctest module parsing mechanism
         finder = doctest.DocTestFinder()
         optionflags = get_optionflags(self)
+        continue_on_failure = not self.config.getvalue("usepdb")
         runner = _get_runner(verbose=0, optionflags=optionflags,
-                             checker=_get_checker())
+                             checker=_get_checker(),
+                             continue_on_failure=continue_on_failure)
 
         for test in finder.find(module, module.__name__):
             if test.examples:  # skip empty doctests
