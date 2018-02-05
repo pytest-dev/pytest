@@ -366,6 +366,48 @@ def test_log_cli_ini_level(testdir):
     assert result.ret == 0
 
 
+@pytest.mark.parametrize('cli_args', ['',
+                                      '--log-level=WARNING',
+                                      '--log-file-level=WARNING',
+                                      '--log-cli-level=WARNING'])
+def test_log_cli_auto_enable(testdir, request, cli_args):
+    """Check that live logs are enabled if --log-level or --log-cli-level is passed on the CLI.
+    It should not be auto enabled if the same configs are set on the INI file.
+    """
+    testdir.makepyfile('''
+        import pytest
+        import logging
+
+        def test_log_1():
+            logging.info("log message from test_log_1 not to be shown")
+            logging.warning("log message from test_log_1")
+
+    ''')
+    testdir.makeini('''
+        [pytest]
+        log_level=INFO
+        log_cli_level=INFO
+    ''')
+
+    result = testdir.runpytest(cli_args)
+    if cli_args == '--log-cli-level=WARNING':
+        result.stdout.fnmatch_lines([
+            '*::test_log_1 ',
+            '*-- live log call --*',
+            '*WARNING*log message from test_log_1*',
+            'PASSED *100%*',
+            '=* 1 passed in *=',
+        ])
+        assert 'INFO' not in result.stdout.str()
+    else:
+        result.stdout.fnmatch_lines([
+            '*test_log_cli_auto_enable*100%*',
+            '=* 1 passed in *=',
+        ])
+        assert 'INFO' not in result.stdout.str()
+        assert 'WARNING' not in result.stdout.str()
+
+
 def test_log_file_cli(testdir):
     # Default log file level
     testdir.makepyfile('''
