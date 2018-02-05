@@ -1,1 +1,1 @@
-Don't traceback when logging on unknown(unhandled) sections.
+Fix bug where logging happening at hooks outside of "test run" hooks would cause an internal error.
