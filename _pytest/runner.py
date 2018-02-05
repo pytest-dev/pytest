@@ -260,7 +260,7 @@ class BaseReport(object):
     def caplog(self):
         """Return captured log lines, if log capturing is enabled
 
-        .. versionadded:: 3.4
+        .. versionadded:: 3.5
         """
         return '\n'.join(content for (prefix, content) in self.get_sections('Captured log'))
 
