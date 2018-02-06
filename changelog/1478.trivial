@@ -1,1 +1,0 @@
-Added `--no-stdout` feature. Stdout will not shown in terminal if you use this option. Only Stderr will shown.
