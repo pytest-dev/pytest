@@ -328,23 +328,28 @@ class TestPython(object):
         fnode.assert_attr(message="internal error")
         assert "Division" in fnode.toxml()
 
-    def test_failure_function(self, testdir):
+    @pytest.mark.parametrize('junit_logging', ['no', 'system-out', 'system-err'])
+    def test_failure_function(self, testdir, junit_logging):
         testdir.makepyfile("""
+            import logging
             import sys
+
             def test_fail():
                 print ("hello-stdout")
                 sys.stderr.write("hello-stderr\\n")
+                logging.info('info msg')
+                logging.warning('warning msg')
                 raise ValueError(42)
         """)
 
-        result, dom = runandparse(testdir)
+        result, dom = runandparse(testdir, '-o', 'junit_logging=%s' % junit_logging)
         assert result.ret
         node = dom.find_first_by_tag("testsuite")
         node.assert_attr(failures=1, tests=1)
         tnode = node.find_first_by_tag("testcase")
         tnode.assert_attr(
             file="test_failure_function.py",
-            line="1",
+            line="3",
             classname="test_failure_function",
             name="test_fail")
         fnode = tnode.find_first_by_tag("failure")
@@ -353,9 +358,21 @@ class TestPython(object):
         systemout = fnode.next_siebling
         assert systemout.tag == "system-out"
         assert "hello-stdout" in systemout.toxml()
+        assert "info msg" not in systemout.toxml()
         systemerr = systemout.next_siebling
         assert systemerr.tag == "system-err"
         assert "hello-stderr" in systemerr.toxml()
+        assert "info msg" not in systemerr.toxml()
+
+        if junit_logging == 'system-out':
+            assert "warning msg" in systemout.toxml()
+            assert "warning msg" not in systemerr.toxml()
+        elif junit_logging == 'system-err':
+            assert "warning msg" not in systemout.toxml()
+            assert "warning msg" in systemerr.toxml()
+        elif junit_logging == 'no':
+            assert "warning msg" not in systemout.toxml()
+            assert "warning msg" not in systemerr.toxml()
 
     def test_failure_verbose_message(self, testdir):
         testdir.makepyfile("""

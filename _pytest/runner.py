@@ -257,6 +257,14 @@ class BaseReport(object):
         return exc.strip()
 
     @property
+    def caplog(self):
+        """Return captured log lines, if log capturing is enabled
+
+        .. versionadded:: 3.5
+        """
+        return '\n'.join(content for (prefix, content) in self.get_sections('Captured log'))
+
+    @property
     def capstdout(self):
         """Return captured text from stdout, if capturing is enabled
 
