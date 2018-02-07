@@ -31,6 +31,7 @@ Full pytest documentation
    plugins
    writing_plugins
    logging
+   reference
 
    goodpractices
    pythonpath
