@@ -53,6 +53,11 @@ def pytest_addoption(parser):
     group._addoption("--continue-on-collection-errors", action="store_true",
                      default=False, dest="continue_on_collection_errors",
                      help="Force test execution even if collection errors occur.")
+    group._addoption("--rootdir", action="store",
+                     dest="rootdir",
+                     help="Define root directory for tests. Can be relative path: 'root_dir', './root_dir', "
+                          "'root_dir/another_dir/'; absolute path: '/home/user/root_dir'; path with variables: "
+                          "'$HOME/root_dir'.")
 
     group = parser.getgroup("collect", "collection")
     group.addoption('--collectonly', '--collect-only', action="store_true",
@@ -283,6 +288,7 @@ class Session(nodes.FSCollector):
         self.trace = config.trace.root.get("collection")
         self._norecursepatterns = config.getini("norecursedirs")
         self.startdir = py.path.local()
+
         self.config.pluginmanager.register(self, name="session")
 
     def _makeid(self):
