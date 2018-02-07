@@ -337,6 +337,11 @@ class LoggingPlugin(object):
         """
         self._config = config
 
+        # enable live logs if log_cli_level is explicitly set
+        log_cli_level = get_actual_log_level(self._config, 'log_cli_level', 'log_level')
+        if log_cli_level is not None:
+            # enable live logs if log_cli_level is explicitly set
+            config._inicache['log_cli'] = config._parser._inidict['log_cli'] = True
         # enable verbose output automatically if live logging is enabled
         if self._config.getini('log_cli') and not config.getoption('verbose'):
             # sanity check: terminal reporter should not have been loaded at this point
@@ -371,18 +376,20 @@ class LoggingPlugin(object):
                            formatter=self.formatter, level=self.log_level) as log_handler:
             if self.log_cli_handler:
                 self.log_cli_handler.set_when(when)
-            if not hasattr(item, 'catch_log_handlers'):
+            if item and not hasattr(item, 'catch_log_handlers'):
                 item.catch_log_handlers = {}
-            item.catch_log_handlers[when] = log_handler
-            item.catch_log_handler = log_handler
+            if item:
+                item.catch_log_handlers[when] = log_handler
+                item.catch_log_handler = log_handler
             try:
                 yield  # run test
             finally:
-                del item.catch_log_handler
+                if item:
+                    del item.catch_log_handler
                 if when == 'teardown':
                     del item.catch_log_handlers
 
-            if self.print_logs:
+            if self.print_logs and item:
                 # Add a captured log section to the report.
                 log = log_handler.stream.getvalue().strip()
                 item.add_report_section(when, 'log', log)
@@ -402,9 +409,17 @@ class LoggingPlugin(object):
         with self._runtest_for(item, 'teardown'):
             yield
 
+    @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_logstart(self):
         if self.log_cli_handler:
             self.log_cli_handler.reset()
+        with self._runtest_for(None, 'start'):
+            yield
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_runtest_logfinish(self):
+        with self._runtest_for(None, 'finish'):
+            yield
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtestloop(self, session):
@@ -474,10 +489,10 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
         if self.capture_manager is not None:
             self.capture_manager.suspend_global_capture()
         try:
-            if not self._first_record_emitted or self._when == 'teardown':
+            if not self._first_record_emitted or self._when in ('teardown', 'finish'):
                 self.stream.write('\n')
                 self._first_record_emitted = True
-            if not self._section_name_shown:
+            if not self._section_name_shown and self._when:
                 self.stream.section('live log ' + self._when, sep='-', bold=True)
                 self._section_name_shown = True
             logging.StreamHandler.emit(self, record)

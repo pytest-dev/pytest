@@ -226,8 +226,20 @@ def test_log_cli_default_level_multiple_tests(testdir, request):
 
 
 def test_log_cli_default_level_sections(testdir, request):
-    """Check that with live logging enable we are printing the correct headers during setup/call/teardown."""
+    """Check that with live logging enable we are printing the correct headers during
+    start/setup/call/teardown/finish."""
     filename = request.node.name + '.py'
+    testdir.makeconftest('''
+        import pytest
+        import logging
+
+        def pytest_runtest_logstart():
+            logging.warning('>>>>> START >>>>>')
+
+        def pytest_runtest_logfinish():
+            logging.warning('<<<<< END <<<<<<<')
+    ''')
+
     testdir.makepyfile('''
         import pytest
         import logging
@@ -252,6 +264,8 @@ def test_log_cli_default_level_sections(testdir, request):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines([
         '{}::test_log_1 '.format(filename),
+        '*-- live log start --*',
+        '*WARNING* >>>>> START >>>>>*',
         '*-- live log setup --*',
         '*WARNING*log message from setup of test_log_1*',
         '*-- live log call --*',
@@ -259,8 +273,12 @@ def test_log_cli_default_level_sections(testdir, request):
         'PASSED *50%*',
         '*-- live log teardown --*',
         '*WARNING*log message from teardown of test_log_1*',
+        '*-- live log finish --*',
+        '*WARNING* <<<<< END <<<<<<<*',
 
         '{}::test_log_2 '.format(filename),
+        '*-- live log start --*',
+        '*WARNING* >>>>> START >>>>>*',
         '*-- live log setup --*',
         '*WARNING*log message from setup of test_log_2*',
         '*-- live log call --*',
@@ -268,7 +286,65 @@ def test_log_cli_default_level_sections(testdir, request):
         'PASSED *100%*',
         '*-- live log teardown --*',
         '*WARNING*log message from teardown of test_log_2*',
+        '*-- live log finish --*',
+        '*WARNING* <<<<< END <<<<<<<*',
         '=* 2 passed in *=',
+    ])
+
+
+def test_live_logs_unknown_sections(testdir, request):
+    """Check that with live logging enable we are printing the correct headers during
+    start/setup/call/teardown/finish."""
+    filename = request.node.name + '.py'
+    testdir.makeconftest('''
+        import pytest
+        import logging
+
+        def pytest_runtest_protocol(item, nextitem):
+            logging.warning('Unknown Section!')
+
+        def pytest_runtest_logstart():
+            logging.warning('>>>>> START >>>>>')
+
+        def pytest_runtest_logfinish():
+            logging.warning('<<<<< END <<<<<<<')
+    ''')
+
+    testdir.makepyfile('''
+        import pytest
+        import logging
+
+        @pytest.fixture
+        def fix(request):
+            logging.warning("log message from setup of {}".format(request.node.name))
+            yield
+            logging.warning("log message from teardown of {}".format(request.node.name))
+
+        def test_log_1(fix):
+            logging.warning("log message from test_log_1")
+
+    ''')
+    testdir.makeini('''
+        [pytest]
+        log_cli=true
+    ''')
+
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        '*WARNING*Unknown Section*',
+        '{}::test_log_1 '.format(filename),
+        '*-- live log start --*',
+        '*WARNING* >>>>> START >>>>>*',
+        '*-- live log setup --*',
+        '*WARNING*log message from setup of test_log_1*',
+        '*-- live log call --*',
+        '*WARNING*log message from test_log_1*',
+        'PASSED *100%*',
+        '*-- live log teardown --*',
+        '*WARNING*log message from teardown of test_log_1*',
+        '*-- live log finish --*',
+        '*WARNING* <<<<< END <<<<<<<*',
+        '=* 1 passed in *=',
     ])
 
 
