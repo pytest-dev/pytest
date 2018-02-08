@@ -59,6 +59,8 @@ Fixtures and requests
 To mark a fixture function:
 
 .. autofunction:: _pytest.fixtures.fixture
+    :noindex:
+    :decorator:
 
 Tutorial at :ref:`fixtures`.
 
