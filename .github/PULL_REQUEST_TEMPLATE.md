@@ -3,7 +3,7 @@ Thanks for submitting a PR, your contribution is really appreciated!
 Here's a quick checklist that should be present in PRs (you can delete this text from the final description, this is
 just a guideline):
 
-- [ ] Create a new changelog file into the `changelog` folder, with a name like `<ISSUE NUMBER>.<TYPE>.rst`. See [changelog/README.rst](/changelog/README.rst) for details.
+- [ ] Create a new changelog file in the `changelog` folder, with a name like `<ISSUE NUMBER>.<TYPE>.rst`. See [changelog/README.rst](/changelog/README.rst) for details.
 - [ ] Target the `master` branch for bug fixes, documentation updates and trivial changes.
 - [ ] Target the `features` branch for new features and removals/deprecations.
 - [ ] Include documentation when adding new features.
