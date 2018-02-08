@@ -260,6 +260,7 @@ capsys
 .. currentmodule:: _pytest.capture
 
 .. autofunction:: capsys()
+    :no-auto-options:
 
     Returns an instance of :py:class:`CaptureFixture`.
 
@@ -277,6 +278,7 @@ capsysbinary
 ~~~~~~~~~~~~
 
 .. autofunction:: capsysbinary()
+    :no-auto-options:
 
     Returns an instance of :py:class:`CaptureFixture`.
 
@@ -294,6 +296,7 @@ capfd
 ~~~~~~
 
 .. autofunction:: capfd()
+    :no-auto-options:
 
     Returns an instance of :py:class:`CaptureFixture`.
 
@@ -311,6 +314,7 @@ capfdbinary
 ~~~~~~~~~~~~
 
 .. autofunction:: capfdbinary()
+    :no-auto-options:
 
     Returns an instance of :py:class:`CaptureFixture`.
 
