@@ -858,7 +858,7 @@ class FixtureFunctionMarker(object):
 
 
 def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
-    """ (return a) decorator to mark a fixture factory function.
+    """Decorator to mark a fixture factory function.
 
     This decorator can be used (with or without parameters) to define a
     fixture function.  The name of the fixture function can later be

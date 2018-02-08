@@ -118,7 +118,6 @@ reporting or interaction with exceptions:
 .. autofunction:: pytest_enter_pdb
 
 
-
 Objects
 -------
 
@@ -195,4 +194,141 @@ Full reference to objects accessible from :ref:`fixtures <fixture>` or hooks
 
 .. autoclass:: LineMatcher()
     :members:
+
+.. autoclass:: _pytest.capture.CaptureFixture()
+    :members:
+
+
+Fixtures
+--------
+
+Fixtures are requested by test functions or other fixtures by declaring them as argument names.
+
+
+Example of a test requiring a fixture:
+
+.. code-block:: python
+
+    def test_output(capsys):
+        print('hello')
+        out, err = capsys.readouterr()
+        assert out == 'hello\n'
+
+
+Example of a fixture requiring another fixture:
+
+.. code-block:: python
+
+    @pytest.fixture
+    def db_session(tmpdir):
+        fn = tmpdir / 'db.file'
+        return connect(str(fn))
+
+For more details, consult the full :ref:`fixtures docs <fixture>`.
+
+
+fixture decorator signature
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: _pytest.fixtures
+.. autofunction:: fixture
+    :decorator:
+
+
+.. _`cache-api`:
+
+config.cache
+~~~~~~~~~~~~
+
+The ``config.cache`` object allows other plugins and fixtures
+to store and retrieve values across test runs. To access it from fixtures
+request ``pytestconfig`` into your fixture and get it with ``pytestconfig.cache``.
+
+Under the hood, the cache plugin uses the simple
+``dumps``/``loads`` API of the :py:mod:`json` stdlib module.
+
+.. currentmodule:: _pytest.cacheprovider
+
+.. automethod:: Cache.get
+.. automethod:: Cache.set
+.. automethod:: Cache.makedir
+
+
+capsys
+~~~~~~
+
+.. currentmodule:: _pytest.capture
+
+.. autofunction:: capsys()
+    :no-auto-options:
+    :decorator:
+
+    Returns an instance of :py:class:`CaptureFixture`.
+
+    Example:
+
+    .. code-block:: python
+
+        def test_output(capsys):
+            print("hello")
+            captured = capsys.readouterr()
+            assert captured.out == "hello\n"
+
+
+capsysbinary
+~~~~~~~~~~~~
+
+.. autofunction:: capsysbinary()
+    :no-auto-options:
+    :decorator:
+
+    Returns an instance of :py:class:`CaptureFixture`.
+
+    Example:
+
+    .. code-block:: python
+
+        def test_output(capsysbinary):
+            print("hello")
+            captured = capsysbinary.readouterr()
+            assert captured.out == b"hello\n"
+
+
+capfd
+~~~~~~
+
+.. autofunction:: capfd()
+    :no-auto-options:
+    :decorator:
+
+    Returns an instance of :py:class:`CaptureFixture`.
+
+    Example:
+
+    .. code-block:: python
+
+        def test_system_echo(capfd):
+            os.system('echo "hello"')
+            captured = capsys.readouterr()
+            assert captured.out == "hello\n"
+
+
+capfdbinary
+~~~~~~~~~~~~
+
+.. autofunction:: capfdbinary()
+    :no-auto-options:
+    :decorator:
+
+    Returns an instance of :py:class:`CaptureFixture`.
+
+    Example:
+
+    .. code-block:: python
+
+        def test_system_echo(capfdbinary):
+            os.system('echo "hello"')
+            captured = capfdbinary.readouterr()
+            assert captured.out == b"hello\n"
+
 
