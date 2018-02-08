@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import re
 import os
 
 import six
@@ -291,6 +292,64 @@ def test_log_cli_default_level_sections(testdir, request):
         '*WARNING* <<<<< END <<<<<<<*',
         '=* 2 passed in *=',
     ])
+
+
+def test_sections_single_new_line_after_test_outcome(testdir, request):
+    """Check that only a single new line is written between log messages during
+    teardown/finish."""
+    filename = request.node.name + '.py'
+    testdir.makeconftest('''
+        import pytest
+        import logging
+
+        def pytest_runtest_logstart():
+            logging.warning('>>>>> START >>>>>')
+
+        def pytest_runtest_logfinish():
+            logging.warning('<<<<< END <<<<<<<')
+            logging.warning('<<<<< END <<<<<<<')
+    ''')
+
+    testdir.makepyfile('''
+        import pytest
+        import logging
+
+        @pytest.fixture
+        def fix(request):
+            logging.warning("log message from setup of {}".format(request.node.name))
+            yield
+            logging.warning("log message from teardown of {}".format(request.node.name))
+            logging.warning("log message from teardown of {}".format(request.node.name))
+
+        def test_log_1(fix):
+            logging.warning("log message from test_log_1")
+    ''')
+    testdir.makeini('''
+        [pytest]
+        log_cli=true
+    ''')
+
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        '{}::test_log_1 '.format(filename),
+        '*-- live log start --*',
+        '*WARNING* >>>>> START >>>>>*',
+        '*-- live log setup --*',
+        '*WARNING*log message from setup of test_log_1*',
+        '*-- live log call --*',
+        '*WARNING*log message from test_log_1*',
+        'PASSED *100%*',
+        '*-- live log teardown --*',
+        '*WARNING*log message from teardown of test_log_1*',
+        '*-- live log finish --*',
+        '*WARNING* <<<<< END <<<<<<<*',
+        '*WARNING* <<<<< END <<<<<<<*',
+        '=* 1 passed in *=',
+    ])
+    assert re.search(r'(.+)live log teardown(.+)\n(.+)WARNING(.+)\n(.+)WARNING(.+)',
+                     result.stdout.str(), re.MULTILINE) is not None
+    assert re.search(r'(.+)live log finish(.+)\n(.+)WARNING(.+)\n(.+)WARNING(.+)',
+                     result.stdout.str(), re.MULTILINE) is not None
 
 
 def test_log_cli_level(testdir):
