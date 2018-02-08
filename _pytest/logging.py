@@ -338,7 +338,7 @@ class LoggingPlugin(object):
         self._config = config
 
         # enable verbose output automatically if live logging is enabled
-        if self._config.getini('log_cli') and not config.getoption('verbose'):
+        if self._log_cli_enabled() and not config.getoption('verbose'):
             # sanity check: terminal reporter should not have been loaded at this point
             assert self._config.pluginmanager.get_plugin('terminalreporter') is None
             config.option.verbose = 1
@@ -363,6 +363,13 @@ class LoggingPlugin(object):
 
         # initialized during pytest_runtestloop
         self.log_cli_handler = None
+
+    def _log_cli_enabled(self):
+        """Return True if log_cli should be considered enabled, either explicitly
+        or because --log-cli-level was given in the command-line.
+        """
+        return self._config.getoption('--log-cli-level') is not None or \
+            self._config.getini('log_cli')
 
     @contextmanager
     def _runtest_for(self, item, when):
@@ -438,7 +445,7 @@ class LoggingPlugin(object):
         This must be done right before starting the loop so we can access the terminal reporter plugin.
         """
         terminal_reporter = self._config.pluginmanager.get_plugin('terminalreporter')
-        if self._config.getini('log_cli') and terminal_reporter is not None:
+        if self._log_cli_enabled() and terminal_reporter is not None:
             capture_manager = self._config.pluginmanager.get_plugin('capturemanager')
             log_cli_handler = _LiveLoggingStreamHandler(terminal_reporter, capture_manager)
             log_cli_format = get_option_ini(self._config, 'log_cli_format', 'log_format')
