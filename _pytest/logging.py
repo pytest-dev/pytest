@@ -369,7 +369,7 @@ class LoggingPlugin(object):
         or because --log-cli-level was given in the command-line.
         """
         return self._config.getoption('--log-cli-level') is not None or \
-               self._config.getini('log_cli')
+            self._config.getini('log_cli')
 
     @contextmanager
     def _runtest_for(self, item, when):
