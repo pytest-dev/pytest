@@ -1,4 +1,1 @@
-Added `--show-capture` feature. You can choose 'no', 'stdout' or 'stderr' option.
-'no': stdout and stderr will now shown
-'stdout': stdout will shown in terminal if you use this option but stderr will not shown.
-'stderr': stderr will shown in terminal if you use this option but stdout will not shown.
+New ``--show-capture`` command-line option that allows to specify how to display captured output when tests fail: ``no``, ``stdout``, ``stderr`` or ``both`` (the default).

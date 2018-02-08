@@ -836,6 +836,10 @@ def pytest_report_header(config, startdir):
         result.stdout.fnmatch_lines(["!This is stdout!"])
         result.stdout.fnmatch_lines(["!This is stderr!"])
 
+        result = testdir.runpytest("--show-capture=both", "--tb=short")
+        result.stdout.fnmatch_lines(["!This is stdout!"])
+        result.stdout.fnmatch_lines(["!This is stderr!"])
+
         result = testdir.runpytest("--show-capture=stdout", "--tb=short")
         assert "!This is stderr!" not in result.stdout.str()
         assert "!This is stdout!" in result.stdout.str()
@@ -843,6 +847,10 @@ def pytest_report_header(config, startdir):
         result = testdir.runpytest("--show-capture=stderr", "--tb=short")
         assert "!This is stdout!" not in result.stdout.str()
         assert "!This is stderr!" in result.stdout.str()
+
+        result = testdir.runpytest("--show-capture=no", "--tb=short")
+        assert "!This is stdout!" not in result.stdout.str()
+        assert "!This is stderr!" not in result.stdout.str()
 
 
 @pytest.mark.xfail("not hasattr(os, 'dup')")
