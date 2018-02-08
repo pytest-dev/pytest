@@ -260,8 +260,6 @@ capsys
 .. currentmodule:: _pytest.capture
 
 .. autofunction:: capsys()
-    :no-auto-options:
-    :decorator:
 
     Returns an instance of :py:class:`CaptureFixture`.
 
@@ -279,8 +277,6 @@ capsysbinary
 ~~~~~~~~~~~~
 
 .. autofunction:: capsysbinary()
-    :no-auto-options:
-    :decorator:
 
     Returns an instance of :py:class:`CaptureFixture`.
 
@@ -298,8 +294,6 @@ capfd
 ~~~~~~
 
 .. autofunction:: capfd()
-    :no-auto-options:
-    :decorator:
 
     Returns an instance of :py:class:`CaptureFixture`.
 
@@ -317,8 +311,6 @@ capfdbinary
 ~~~~~~~~~~~~
 
 .. autofunction:: capfdbinary()
-    :no-auto-options:
-    :decorator:
 
     Returns an instance of :py:class:`CaptureFixture`.
 
@@ -332,3 +324,17 @@ capfdbinary
             assert captured.out == b"hello\n"
 
 
+doctest_namespace
+~~~~~~~~~~~~~~~~~
+
+.. autofunction:: _pytest.doctest.doctest_namespace()
+
+    Usually this fixture is used in conjunction with another ``autouse`` fixture:
+
+    .. code-block:: python
+
+        @pytest.fixture(autouse=True)
+        def add_np(doctest_namespace):
+            doctest_namespace['np'] = numpy
+
+    For more details: :ref:`doctest_namespace`.

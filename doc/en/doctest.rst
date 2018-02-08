@@ -116,6 +116,8 @@ itself::
     'Hello'
 
 
+.. _`doctest_namespace`:
+
 The 'doctest_namespace' fixture
 -------------------------------
 
