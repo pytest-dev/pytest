@@ -630,7 +630,6 @@ class TerminalReporter:
         if self.config.option.showcapture == 'no':
             return
         for secname, content in rep.sections:
-            print(self.config.option.showcapture)
             if self.config.option.showcapture != 'both':
                 if not (self.config.option.showcapture in secname):
                     continue
