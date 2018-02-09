@@ -66,6 +66,8 @@ def pytest_addoption(parser):
                     help="try to interpret all arguments as python packages.")
     group.addoption("--ignore", action="append", metavar="path",
                     help="ignore path during collection (multi-allowed).")
+    group.addoption("--deselect", action="append", metavar="nodeid_prefix",
+                    help="deselect item during collection (multi-allowed).")
     # when changing this to --conf-cut-dir, config.py Conftest.setinitial
     # needs upgrading as well
     group.addoption('--confcutdir', dest="confcutdir", default=None,
@@ -206,6 +208,24 @@ def pytest_ignore_collect(path, config):
             duplicate_paths.add(path)
 
     return False
+
+
+def pytest_collection_modifyitems(items, config):
+    deselect_prefixes = tuple(config.getoption("deselect") or [])
+    if not deselect_prefixes:
+        return
+
+    remaining = []
+    deselected = []
+    for colitem in items:
+        if colitem.nodeid.startswith(deselect_prefixes):
+            deselected.append(colitem)
+        else:
+            remaining.append(colitem)
+
+    if deselected:
+        config.hook.pytest_deselected(items=deselected)
+        items[:] = remaining
 
 
 @contextlib.contextmanager
