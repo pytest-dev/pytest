@@ -97,6 +97,11 @@ def _enter_pdb(node, excinfo, rep):
         tw.sep(">", "captured stderr")
         tw.line(captured_stderr)
 
+    captured_logs = rep.caplog
+    if len(captured_logs) > 0:
+        tw.sep(">", "captured logs")
+        tw.line(captured_logs)
+
     tw.sep(">", "traceback")
     rep.toterminal(tw)
     tw.sep(">", "entering PDB")
