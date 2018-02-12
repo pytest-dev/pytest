@@ -85,6 +85,17 @@ def _enter_pdb(node, excinfo, rep):
     # for not completely clear reasons.
     tw = node.config.pluginmanager.getplugin("terminalreporter")._tw
     tw.line()
+
+    captured_stdout = rep.capstdout
+    if len(captured_stdout) > 0:
+        tw.sep(">", "captured stdout")
+        tw.line(captured_stdout)
+
+    captured_stderr = rep.capstderr
+    if len(captured_stderr) > 0:
+        tw.sep(">", "captured stderr")
+        tw.line(captured_stderr)
+
     tw.sep(">", "traceback")
     rep.toterminal(tw)
     tw.sep(">", "entering PDB")

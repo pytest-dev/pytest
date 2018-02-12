@@ -1,0 +1,1 @@
+Added printing of captured stdout/stderr before entering pdb, and improved a test which was giving false negatives about output capturing.
