@@ -1,0 +1,1 @@
+Output item deselection count before tests are run.
