@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 
 import traceback
 import sys
+import platform
 
 import pytest
 from _pytest._code.code import ExceptionInfo, ReprFileLocation, TerminalRepr
@@ -111,6 +112,8 @@ class DoctestItem(pytest.Item):
         """
         Disable output capturing. Otherwise, stdout is lost to doctest (#985)
         """
+        if platform.system() != 'Darwin':
+            return
         capman = self.config.pluginmanager.getplugin("capturemanager")
         if capman:
             out, err = capman.suspend_global_capture(in_=True)
