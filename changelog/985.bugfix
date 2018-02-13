@@ -1,0 +1,1 @@
+Fixed output capture handling in doctests on macOS.
