@@ -1,5 +1,6 @@
-invoke
-tox
+devpi-client
 gitpython
+invoke
 towncrier
+tox
 wheel

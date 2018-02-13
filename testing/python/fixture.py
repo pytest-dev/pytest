@@ -2168,6 +2168,47 @@ class TestFixtureMarker(object):
             test_mod1.py::test_func1[m2] PASSED
         """)
 
+    def test_dynamic_parametrized_ordering(self, testdir):
+        testdir.makeini("""
+            [pytest]
+            console_output_style=classic
+        """)
+        testdir.makeconftest("""
+            import pytest
+
+            def pytest_configure(config):
+                class DynamicFixturePlugin(object):
+                    @pytest.fixture(scope='session', params=['flavor1', 'flavor2'])
+                    def flavor(self, request):
+                        return request.param
+                config.pluginmanager.register(DynamicFixturePlugin(), 'flavor-fixture')
+
+            @pytest.fixture(scope='session', params=['vxlan', 'vlan'])
+            def encap(request):
+                return request.param
+
+            @pytest.fixture(scope='session', autouse='True')
+            def reprovision(request, flavor, encap):
+                pass
+        """)
+        testdir.makepyfile("""
+            def test(reprovision):
+                pass
+            def test2(reprovision):
+                pass
+        """)
+        result = testdir.runpytest("-v")
+        result.stdout.fnmatch_lines("""
+            test_dynamic_parametrized_ordering.py::test[flavor1-vxlan] PASSED
+            test_dynamic_parametrized_ordering.py::test2[flavor1-vxlan] PASSED
+            test_dynamic_parametrized_ordering.py::test[flavor2-vxlan] PASSED
+            test_dynamic_parametrized_ordering.py::test2[flavor2-vxlan] PASSED
+            test_dynamic_parametrized_ordering.py::test[flavor2-vlan] PASSED
+            test_dynamic_parametrized_ordering.py::test2[flavor2-vlan] PASSED
+            test_dynamic_parametrized_ordering.py::test[flavor1-vlan] PASSED
+            test_dynamic_parametrized_ordering.py::test2[flavor1-vlan] PASSED
+        """)
+
     def test_class_ordering(self, testdir):
         testdir.makeini("""
             [pytest]
