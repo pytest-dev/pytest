@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function
 
 import traceback
+import sys
 
 import pytest
 from _pytest._code.code import ExceptionInfo, ReprFileLocation, TerminalRepr
@@ -103,7 +104,18 @@ class DoctestItem(pytest.Item):
 
     def runtest(self):
         _check_all_skipped(self.dtest)
+        self._disable_output_capturing()
         self.runner.run(self.dtest)
+
+    def _disable_output_capturing(self):
+        """
+        Disable output capturing. Otherwise, stdout is lost to doctest (#985)
+        """
+        capman = self.config.pluginmanager.getplugin("capturemanager")
+        if capman:
+            out, err = capman.suspend_global_capture(in_=True)
+            sys.stdout.write(out)
+        sys.stdout.write(err)
 
     def repr_failure(self, excinfo):
         import doctest
