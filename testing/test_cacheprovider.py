@@ -56,7 +56,7 @@ class TestNewAPI(object):
         assert result.ret == 1
         result.stdout.fnmatch_lines([
             "*could not create cache path*",
-            "*1 warnings*",
+            "*2 warnings*",
         ])
 
     def test_config_cache(self, testdir):
@@ -495,15 +495,15 @@ class TestLastFailed(object):
         # Issue #1342
         testdir.makepyfile(test_empty='')
         testdir.runpytest('-q', '--lf')
-        assert not os.path.exists('.pytest_cache')
+        assert not os.path.exists('.pytest_cache/v/cache/lastfailed')
 
         testdir.makepyfile(test_successful='def test_success():\n    assert True')
         testdir.runpytest('-q', '--lf')
-        assert not os.path.exists('.pytest_cache')
+        assert not os.path.exists('.pytest_cache/v/cache/lastfailed')
 
         testdir.makepyfile(test_errored='def test_error():\n    assert False')
         testdir.runpytest('-q', '--lf')
-        assert os.path.exists('.pytest_cache')
+        assert os.path.exists('.pytest_cache/v/cache/lastfailed')
 
     def test_xfail_not_considered_failure(self, testdir):
         testdir.makepyfile('''
@@ -603,3 +603,116 @@ class TestLastFailed(object):
         result = testdir.runpytest('--last-failed')
         result.stdout.fnmatch_lines('*4 passed*')
         assert self.get_cached_last_failed(testdir) == []
+
+
+class TestNewFirst(object):
+    def test_newfirst_usecase(self, testdir):
+        t1 = testdir.mkdir("test_1")
+        t2 = testdir.mkdir("test_2")
+
+        t1.join("test_1.py").write(
+            "def test_1(): assert 1\n"
+            "def test_2(): assert 1\n"
+            "def test_3(): assert 1\n"
+        )
+        t2.join("test_2.py").write(
+            "def test_1(): assert 1\n"
+            "def test_2(): assert 1\n"
+            "def test_3(): assert 1\n"
+        )
+
+        path_to_test_1 = str('{}/test_1/test_1.py'.format(testdir.tmpdir))
+        os.utime(path_to_test_1, (1, 1))
+
+        result = testdir.runpytest("-v")
+        result.stdout.fnmatch_lines([
+            "*test_1/test_1.py::test_1 PASSED*",
+            "*test_1/test_1.py::test_2 PASSED*",
+            "*test_1/test_1.py::test_3 PASSED*",
+            "*test_2/test_2.py::test_1 PASSED*",
+            "*test_2/test_2.py::test_2 PASSED*",
+            "*test_2/test_2.py::test_3 PASSED*",
+        ])
+
+        result = testdir.runpytest("-v", "--nf")
+
+        result.stdout.fnmatch_lines([
+            "*test_2/test_2.py::test_1 PASSED*",
+            "*test_2/test_2.py::test_2 PASSED*",
+            "*test_2/test_2.py::test_3 PASSED*",
+            "*test_1/test_1.py::test_1 PASSED*",
+            "*test_1/test_1.py::test_2 PASSED*",
+            "*test_1/test_1.py::test_3 PASSED*",
+        ])
+
+        t1.join("test_1.py").write(
+            "def test_1(): assert 1\n"
+            "def test_2(): assert 1\n"
+            "def test_3(): assert 1\n"
+            "def test_4(): assert 1\n"
+        )
+        os.utime(path_to_test_1, (1, 1))
+
+        result = testdir.runpytest("-v", "--nf")
+
+        result.stdout.fnmatch_lines([
+            "*test_1/test_1.py::test_4 PASSED*",
+            "*test_2/test_2.py::test_1 PASSED*",
+            "*test_2/test_2.py::test_2 PASSED*",
+            "*test_2/test_2.py::test_3 PASSED*",
+            "*test_1/test_1.py::test_1 PASSED*",
+            "*test_1/test_1.py::test_2 PASSED*",
+            "*test_1/test_1.py::test_3 PASSED*",
+        ])
+
+    def test_newfirst_parametrize(self, testdir):
+        t1 = testdir.mkdir("test_1")
+        t2 = testdir.mkdir("test_2")
+
+        t1.join("test_1.py").write(
+            "import pytest\n"
+            "@pytest.mark.parametrize('num', [1, 2])\n"
+            "def test_1(num): assert num\n"
+        )
+        t2.join("test_2.py").write(
+            "import pytest\n"
+            "@pytest.mark.parametrize('num', [1, 2])\n"
+            "def test_1(num): assert num\n"
+        )
+
+        path_to_test_1 = str('{}/test_1/test_1.py'.format(testdir.tmpdir))
+        os.utime(path_to_test_1, (1, 1))
+
+        result = testdir.runpytest("-v")
+        result.stdout.fnmatch_lines([
+            "*test_1/test_1.py::test_1[1*",
+            "*test_1/test_1.py::test_1[2*",
+            "*test_2/test_2.py::test_1[1*",
+            "*test_2/test_2.py::test_1[2*"
+        ])
+
+        result = testdir.runpytest("-v", "--nf")
+
+        result.stdout.fnmatch_lines([
+            "*test_2/test_2.py::test_1[1*",
+            "*test_2/test_2.py::test_1[2*",
+            "*test_1/test_1.py::test_1[1*",
+            "*test_1/test_1.py::test_1[2*",
+        ])
+
+        t1.join("test_1.py").write(
+            "import pytest\n"
+            "@pytest.mark.parametrize('num', [1, 2, 3])\n"
+            "def test_1(num): assert num\n"
+        )
+        os.utime(path_to_test_1, (1, 1))
+
+        result = testdir.runpytest("-v", "--nf")
+
+        result.stdout.fnmatch_lines([
+            "*test_1/test_1.py::test_1[3*",
+            "*test_2/test_2.py::test_1[1*",
+            "*test_2/test_2.py::test_1[2*",
+            "*test_1/test_1.py::test_1[1*",
+            "*test_1/test_1.py::test_1[2*",
+        ])

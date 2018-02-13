@@ -266,3 +266,13 @@ dumps/loads API of the json stdlib module
 .. automethod:: Cache.get
 .. automethod:: Cache.set
 .. automethod:: Cache.makedir
+
+
+New tests first
+-----------------
+
+The plugin provides command line options to run tests in another order:
+
+* ``--nf``, ``--new-first`` - to run tests in next order: first new tests, then
+  last modified files with tests in descending order (default order inside file).
+
