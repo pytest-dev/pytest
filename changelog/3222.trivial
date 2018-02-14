@@ -1,0 +1,1 @@
+The "matching '...'" part got removed from ``pytest.raises()`` error messages as it falsely implies that an exception was raised but it didn't match.

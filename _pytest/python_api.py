@@ -571,7 +571,6 @@ def raises(expected_exception, *args, **kwargs):
             message = kwargs.pop("message")
         if "match" in kwargs:
             match_expr = kwargs.pop("match")
-            message += " matching '{0}'".format(match_expr)
         return RaisesContext(expected_exception, message, match_expr)
     elif isinstance(args[0], str):
         code, = args
