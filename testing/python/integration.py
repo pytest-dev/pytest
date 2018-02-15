@@ -147,6 +147,28 @@ class TestMockDecoration(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
+    def test_unittest_mock_and_pypi_mock(self, testdir):
+        pytest.importorskip("unittest.mock")
+        pytest.importorskip("mock", "1.0.1")
+        testdir.makepyfile("""
+            import mock
+            import unittest.mock
+            class TestBoth(object):
+                @unittest.mock.patch("os.path.abspath")
+                def test_hello(self, abspath):
+                    import os
+                    os.path.abspath("hello")
+                    abspath.assert_any_call("hello")
+
+                @mock.patch("os.path.abspath")
+                def test_hello_mock(self, abspath):
+                    import os
+                    os.path.abspath("hello")
+                    abspath.assert_any_call("hello")
+        """)
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
+
     def test_mock(self, testdir):
         pytest.importorskip("mock", "1.0.1")
         testdir.makepyfile("""
