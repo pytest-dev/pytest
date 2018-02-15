@@ -105,10 +105,10 @@ class DoctestItem(pytest.Item):
 
     def runtest(self):
         _check_all_skipped(self.dtest)
-        self._disable_output_capturing()
+        self._disable_output_capturing_for_darwin()
         self.runner.run(self.dtest)
 
-    def _disable_output_capturing(self):
+    def _disable_output_capturing_for_darwin(self):
         """
         Disable output capturing. Otherwise, stdout is lost to doctest (#985)
         """
