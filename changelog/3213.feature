@@ -1,1 +1,1 @@
-Output item deselection count before tests are run.
+Deselected item count is now shown before tests are run, e.g. ``collected X items / Y deselected``.
