@@ -240,6 +240,20 @@ def test_exclude(testdir):
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 
+def test_deselect(testdir):
+    testdir.makepyfile(test_a="""
+        import pytest
+        def test_a1(): pass
+        @pytest.mark.parametrize('b', range(3))
+        def test_a2(b): pass
+    """)
+    result = testdir.runpytest("-v", "--deselect=test_a.py::test_a2[1]", "--deselect=test_a.py::test_a2[2]")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*2 passed, 2 deselected*"])
+    for line in result.stdout.lines:
+        assert not line.startswith(('test_a.py::test_a2[1]', 'test_a.py::test_a2[2]'))
+
+
 def test_sessionfinish_with_start(testdir):
     testdir.makeconftest("""
         import os
