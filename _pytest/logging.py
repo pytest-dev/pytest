@@ -504,7 +504,7 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
                 if not self._test_outcome_written:
                     self._test_outcome_written = True
                     self.stream.write('\n')
-            if not self._section_name_shown:
+            if not self._section_name_shown and self._when:
                 self.stream.section('live log ' + self._when, sep='-', bold=True)
                 self._section_name_shown = True
             logging.StreamHandler.emit(self, record)

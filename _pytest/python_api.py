@@ -453,6 +453,10 @@ def raises(expected_exception, *args, **kwargs):
     Assert that a code block/function call raises ``expected_exception``
     and raise a failure exception otherwise.
 
+    :arg message: if specified, provides a custom failure message if the
+        exception is not raised
+    :arg match: if specified, asserts that the exception matches a text or regex
+
     This helper produces a ``ExceptionInfo()`` object (see below).
 
     You may use this function as a context manager::

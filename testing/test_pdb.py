@@ -141,19 +141,50 @@ class TestPDB(object):
         child.sendeof()
         self.flush(child)
 
-    def test_pdb_interaction_capture(self, testdir):
+    def test_pdb_print_captured_stdout(self, testdir):
         p1 = testdir.makepyfile("""
             def test_1():
-                print("getrekt")
+                print("get\\x20rekt")
                 assert False
         """)
         child = testdir.spawn_pytest("--pdb %s" % p1)
-        child.expect("getrekt")
+        child.expect("captured stdout")
+        child.expect("get rekt")
         child.expect("(Pdb)")
         child.sendeof()
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
-        assert "getrekt" not in rest
+        assert "get rekt" not in rest
+        self.flush(child)
+
+    def test_pdb_print_captured_stderr(self, testdir):
+        p1 = testdir.makepyfile("""
+            def test_1():
+                import sys
+                sys.stderr.write("get\\x20rekt")
+                assert False
+        """)
+        child = testdir.spawn_pytest("--pdb %s" % p1)
+        child.expect("captured stderr")
+        child.expect("get rekt")
+        child.expect("(Pdb)")
+        child.sendeof()
+        rest = child.read().decode("utf8")
+        assert "1 failed" in rest
+        assert "get rekt" not in rest
+        self.flush(child)
+
+    def test_pdb_dont_print_empty_captured_stdout_and_stderr(self, testdir):
+        p1 = testdir.makepyfile("""
+            def test_1():
+                assert False
+        """)
+        child = testdir.spawn_pytest("--pdb %s" % p1)
+        child.expect("(Pdb)")
+        output = child.before.decode("utf8")
+        child.sendeof()
+        assert "captured stdout" not in output
+        assert "captured stderr" not in output
         self.flush(child)
 
     def test_pdb_interaction_exception(self, testdir):
@@ -267,6 +298,10 @@ class TestPDB(object):
         child.read()
         self.flush(child)
 
+    # For some reason the interaction between doctest's and pytest's output
+    # capturing mechanisms are messing up the stdout on mac. (See #985).
+    # Should be solvable, but skipping until we have a chance to investigate.
+    @pytest.mark.xfail("sys.platform == 'darwin'", reason='See issue #985', run=False)
     def test_pdb_interaction_doctest(self, testdir):
         p1 = testdir.makepyfile("""
             import pytest

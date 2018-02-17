@@ -206,13 +206,13 @@ class TestWarns(object):
             with pytest.warns(RuntimeWarning):
                 warnings.warn("user", UserWarning)
         excinfo.match(r"DID NOT WARN. No warnings of type \(.+RuntimeWarning.+,\) was emitted. "
-                      r"The list of emitted warnings is: \[UserWarning\('user',\)\].")
+                      r"The list of emitted warnings is: \[UserWarning\('user',?\)\].")
 
         with pytest.raises(pytest.fail.Exception) as excinfo:
             with pytest.warns(UserWarning):
                 warnings.warn("runtime", RuntimeWarning)
         excinfo.match(r"DID NOT WARN. No warnings of type \(.+UserWarning.+,\) was emitted. "
-                      r"The list of emitted warnings is: \[RuntimeWarning\('runtime',\)\].")
+                      r"The list of emitted warnings is: \[RuntimeWarning\('runtime',?\)\].")
 
         with pytest.raises(pytest.fail.Exception) as excinfo:
             with pytest.warns(UserWarning):
