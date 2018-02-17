@@ -477,7 +477,7 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
             if not self._first_record_emitted or self._when == 'teardown':
                 self.stream.write('\n')
                 self._first_record_emitted = True
-            if not self._section_name_shown:
+            if not self._section_name_shown and self._when:
                 self.stream.section('live log ' + self._when, sep='-', bold=True)
                 self._section_name_shown = True
             logging.StreamHandler.emit(self, record)
