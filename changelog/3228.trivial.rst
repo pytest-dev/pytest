@@ -1,0 +1,1 @@
+Change minimum requirement of ``attrs`` to ``17.4.0``.
