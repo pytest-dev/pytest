@@ -1,0 +1,1 @@
+Fix bug where logging happening at hooks outside of "test run" hooks would cause an internal error.
