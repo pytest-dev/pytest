@@ -361,7 +361,7 @@ class TestLastFailed(object):
 
         result = testdir.runpytest('--lf')
         result.stdout.fnmatch_lines([
-            'collected 4 items',
+            'collected 4 items / 2 deselected',
             'run-last-failure: rerun previous 2 failures',
             '*2 failed, 2 deselected in*',
         ])

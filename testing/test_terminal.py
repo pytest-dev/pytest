@@ -431,9 +431,34 @@ class TestTerminalFunctional(object):
                                       )
         result = testdir.runpytest("-k", "test_two:", testpath)
         result.stdout.fnmatch_lines([
+            "collected 3 items / 1 deselected",
             "*test_deselected.py ..*",
-            "=* 1 test*deselected *=",
         ])
+        assert result.ret == 0
+
+    def test_show_deselected_items_using_markexpr_before_test_execution(
+            self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.mark.foo
+            def test_foobar():
+                pass
+
+            @pytest.mark.bar
+            def test_bar():
+                pass
+
+            def test_pass():
+                pass
+        """)
+        result = testdir.runpytest('-m', 'not foo')
+        result.stdout.fnmatch_lines([
+            "collected 3 items / 1 deselected",
+            "*test_show_des*.py ..*",
+            "*= 2 passed, 1 deselected in * =*",
+        ])
+        assert "= 1 deselected =" not in result.stdout.str()
         assert result.ret == 0
 
     def test_no_skip_summary_if_failure(self, testdir):

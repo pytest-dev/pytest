@@ -361,6 +361,7 @@ class TerminalReporter(object):
 
         errors = len(self.stats.get('error', []))
         skipped = len(self.stats.get('skipped', []))
+        deselected = len(self.stats.get('deselected', []))
         if final:
             line = "collected "
         else:
@@ -368,6 +369,8 @@ class TerminalReporter(object):
         line += str(self._numcollected) + " item" + ('' if self._numcollected == 1 else 's')
         if errors:
             line += " / %d errors" % errors
+        if deselected:
+            line += " / %d deselected" % deselected
         if skipped:
             line += " / %d skipped" % skipped
         if self.isatty:
@@ -377,6 +380,7 @@ class TerminalReporter(object):
         else:
             self.write_line(line)
 
+    @pytest.hookimpl(trylast=True)
     def pytest_collection_modifyitems(self):
         self.report_collect(True)
 
@@ -484,7 +488,6 @@ class TerminalReporter(object):
         if exitstatus == EXIT_INTERRUPTED:
             self._report_keyboardinterrupt()
             del self._keyboardinterrupt_memo
-        self.summary_deselected()
         self.summary_stats()
 
     def pytest_keyboard_interrupt(self, excinfo):
@@ -648,11 +651,6 @@ class TerminalReporter(object):
             self.write_sep("=", msg, **markup)
         if self.verbosity == -1:
             self.write_line(msg, **markup)
-
-    def summary_deselected(self):
-        if 'deselected' in self.stats:
-            self.write_sep("=", "%d tests deselected" % (
-                len(self.stats['deselected'])), bold=True)
 
 
 def repr_pythonversion(v=None):
