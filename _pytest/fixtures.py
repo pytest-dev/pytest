@@ -839,9 +839,9 @@ def _ensure_immutable_ids(ids):
 @attr.s(frozen=True)
 class FixtureFunctionMarker(object):
     scope = attr.ib()
-    params = attr.ib(convert=attr.converters.optional(tuple))
+    params = attr.ib(converter=attr.converters.optional(tuple))
     autouse = attr.ib(default=False)
-    ids = attr.ib(default=None, convert=_ensure_immutable_ids)
+    ids = attr.ib(default=None, converter=_ensure_immutable_ids)
     name = attr.ib(default=None)
 
     def __call__(self, function):
