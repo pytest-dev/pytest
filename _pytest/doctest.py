@@ -118,7 +118,7 @@ class DoctestItem(pytest.Item):
         if capman:
             out, err = capman.suspend_global_capture(in_=True)
             sys.stdout.write(out)
-        sys.stdout.write(err)
+            sys.stdout.write(err)
 
     def repr_failure(self, excinfo):
         import doctest
