@@ -85,11 +85,6 @@ def pytest_addoption(parser):
         group.addoption(option, dest=dest, **kwargs)
 
     add_option_ini(
-        '--no-print-logs',
-        dest='log_print', action='store_const', const=False, default=True,
-        type='bool',
-        help='disable printing caught logs on failed tests.')
-    add_option_ini(
         '--log-level',
         dest='log_level', default=None,
         help='logging level used by the logging module')
@@ -343,7 +338,6 @@ class LoggingPlugin(object):
             assert self._config.pluginmanager.get_plugin('terminalreporter') is None
             config.option.verbose = 1
 
-        self.print_logs = get_option_ini(config, 'log_print')
         self.formatter = logging.Formatter(get_option_ini(config, 'log_format'),
                                            get_option_ini(config, 'log_date_format'))
         self.log_level = get_actual_log_level(config, 'log_level')
@@ -394,10 +388,9 @@ class LoggingPlugin(object):
                 if when == 'teardown':
                     del item.catch_log_handlers
 
-            if self.print_logs:
-                # Add a captured log section to the report.
-                log = log_handler.stream.getvalue().strip()
-                item.add_report_section(when, 'log', log)
+            # Add a captured log section to the report.
+            log = log_handler.stream.getvalue().strip()
+            item.add_report_section(when, 'log', log)
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_setup(self, item):
