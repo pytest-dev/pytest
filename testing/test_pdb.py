@@ -187,16 +187,18 @@ class TestPDB(object):
         assert "captured stderr" not in output
         self.flush(child)
 
-    def test_pdb_print_captured_logs(self, testdir):
+    @pytest.mark.parametrize('showcapture', ['all', 'no', 'log'])
+    def test_pdb_print_captured_logs(self, testdir, showcapture):
         p1 = testdir.makepyfile("""
             def test_1():
                 import logging
-                logging.warn("get rekt")
+                logging.warn("get " + "rekt")
                 assert False
         """)
-        child = testdir.spawn_pytest("--pdb %s" % p1)
-        child.expect("captured logs")
-        child.expect("get rekt")
+        child = testdir.spawn_pytest("--show-capture=%s --pdb %s" % (showcapture, p1))
+        if showcapture in ('all', 'log'):
+            child.expect("captured log")
+            child.expect("get rekt")
         child.expect("(Pdb)")
         child.sendeof()
         rest = child.read().decode("utf8")
