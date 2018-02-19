@@ -91,6 +91,60 @@ def test_teardown_logging(testdir):
                                  '*text going to logger from teardown*'])
 
 
+def test_disable_log_capturing(testdir):
+    testdir.makepyfile('''
+        import sys
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        def test_foo():
+            sys.stdout.write('text going to stdout')
+            logger.warning('catch me if you can!')
+            sys.stderr.write('text going to stderr')
+            assert False
+        ''')
+    result = testdir.runpytest('--no-print-logs')
+    print(result.stdout)
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(['*- Captured stdout call -*',
+                                 'text going to stdout'])
+    result.stdout.fnmatch_lines(['*- Captured stderr call -*',
+                                 'text going to stderr'])
+    with pytest.raises(pytest.fail.Exception):
+        result.stdout.fnmatch_lines(['*- Captured *log call -*'])
+
+
+def test_disable_log_capturing_ini(testdir):
+    testdir.makeini(
+        '''
+        [pytest]
+        log_print=False
+        '''
+    )
+    testdir.makepyfile('''
+        import sys
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        def test_foo():
+            sys.stdout.write('text going to stdout')
+            logger.warning('catch me if you can!')
+            sys.stderr.write('text going to stderr')
+            assert False
+        ''')
+    result = testdir.runpytest()
+    print(result.stdout)
+    assert result.ret == 1
+    result.stdout.fnmatch_lines(['*- Captured stdout call -*',
+                                 'text going to stdout'])
+    result.stdout.fnmatch_lines(['*- Captured stderr call -*',
+                                 'text going to stderr'])
+    with pytest.raises(pytest.fail.Exception):
+        result.stdout.fnmatch_lines(['*- Captured *log call -*'])
+
+
 @pytest.mark.parametrize('enabled', [True, False])
 def test_log_cli_enabled_disabled(testdir, enabled):
     msg = 'critical message logged by test'
