@@ -851,31 +851,47 @@ def pytest_report_header(config, startdir):
     def test_show_capture(self, testdir):
         testdir.makepyfile("""
             import sys
+            import logging
             def test_one():
                 sys.stdout.write('!This is stdout!')
                 sys.stderr.write('!This is stderr!')
+                logging.warning('!This is a warning log msg!')
                 assert False, 'Something failed'
         """)
 
         result = testdir.runpytest("--tb=short")
-        result.stdout.fnmatch_lines(["!This is stdout!"])
-        result.stdout.fnmatch_lines(["!This is stderr!"])
+        result.stdout.fnmatch_lines(["!This is stdout!",
+                                     "!This is stderr!",
+                                     "*WARNING*!This is a warning log msg!"])
 
-        result = testdir.runpytest("--show-capture=both", "--tb=short")
-        result.stdout.fnmatch_lines(["!This is stdout!"])
-        result.stdout.fnmatch_lines(["!This is stderr!"])
+        result = testdir.runpytest("--show-capture=all", "--tb=short")
+        result.stdout.fnmatch_lines(["!This is stdout!",
+                                     "!This is stderr!",
+                                     "*WARNING*!This is a warning log msg!"])
 
-        result = testdir.runpytest("--show-capture=stdout", "--tb=short")
-        assert "!This is stderr!" not in result.stdout.str()
-        assert "!This is stdout!" in result.stdout.str()
+        stdout = testdir.runpytest(
+            "--show-capture=stdout", "--tb=short").stdout.str()
+        assert "!This is stderr!" not in stdout
+        assert "!This is stdout!" in stdout
+        assert "!This is a warning log msg!" not in stdout
 
-        result = testdir.runpytest("--show-capture=stderr", "--tb=short")
-        assert "!This is stdout!" not in result.stdout.str()
-        assert "!This is stderr!" in result.stdout.str()
+        stdout = testdir.runpytest(
+            "--show-capture=stderr", "--tb=short").stdout.str()
+        assert "!This is stdout!" not in stdout
+        assert "!This is stderr!" in stdout
+        assert "!This is a warning log msg!" not in stdout
 
-        result = testdir.runpytest("--show-capture=no", "--tb=short")
-        assert "!This is stdout!" not in result.stdout.str()
-        assert "!This is stderr!" not in result.stdout.str()
+        stdout = testdir.runpytest(
+            "--show-capture=log", "--tb=short").stdout.str()
+        assert "!This is stdout!" not in stdout
+        assert "!This is stderr!" not in stdout
+        assert "!This is a warning log msg!" in stdout
+
+        stdout = testdir.runpytest(
+            "--show-capture=no", "--tb=short").stdout.str()
+        assert "!This is stdout!" not in stdout
+        assert "!This is stderr!" not in stdout
+        assert "!This is a warning log msg!" not in stdout
 
 
 @pytest.mark.xfail("not hasattr(os, 'dup')")
