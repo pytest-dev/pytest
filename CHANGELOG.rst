@@ -8,6 +8,67 @@
 
 .. towncrier release notes start
 
+Pytest 3.4.1 (2018-02-20)
+=========================
+
+Bug Fixes
+---------
+
+- Move import of ``doctest.UnexpectedException`` to top-level to avoid possible
+  errors when using ``--pdb``. (`#1810
+  <https://github.com/pytest-dev/pytest/issues/1810>`_)
+
+- Added printing of captured stdout/stderr before entering pdb, and improved a
+  test which was giving false negatives about output capturing. (`#3052
+  <https://github.com/pytest-dev/pytest/issues/3052>`_)
+
+- Fix ordering of tests using parametrized fixtures which can lead to fixtures
+  being created more than necessary. (`#3161
+  <https://github.com/pytest-dev/pytest/issues/3161>`_)
+
+- Fix bug where logging happening at hooks outside of "test run" hooks would
+  cause an internal error. (`#3184
+  <https://github.com/pytest-dev/pytest/issues/3184>`_)
+
+- Detect arguments injected by ``unittest.mock.patch`` decorator correctly when
+  pypi ``mock.patch`` is installed and imported. (`#3206
+  <https://github.com/pytest-dev/pytest/issues/3206>`_)
+
+- Errors shown when a ``pytest.raises()`` with ``match=`` fails are now cleaner
+  on what happened: When no exception was raised, the "matching '...'" part got
+  removed as it falsely implies that an exception was raised but it didn't
+  match. When a wrong exception was raised, it's now thrown (like
+  ``pytest.raised()`` without ``match=`` would) instead of complaining about
+  the unmatched text. (`#3222
+  <https://github.com/pytest-dev/pytest/issues/3222>`_)
+
+- Fixed output capture handling in doctests on macOS. (`#985
+  <https://github.com/pytest-dev/pytest/issues/985>`_)
+
+
+Improved Documentation
+----------------------
+
+- Add Sphinx parameter docs for ``match`` and ``message`` args to
+  ``pytest.raises``. (`#3202
+  <https://github.com/pytest-dev/pytest/issues/3202>`_)
+
+
+Trivial/Internal Changes
+------------------------
+
+- pytest has changed the publication procedure and is now being published to
+  PyPI directly from Travis. (`#3060
+  <https://github.com/pytest-dev/pytest/issues/3060>`_)
+
+- Rename ``ParameterSet._for_parameterize()`` to ``_for_parametrize()`` in
+  order to comply with the naming convention. (`#3166
+  <https://github.com/pytest-dev/pytest/issues/3166>`_)
+
+- Skip failing pdb/doctest test on mac. (`#985
+  <https://github.com/pytest-dev/pytest/issues/985>`_)
+
+
 Pytest 3.4.0 (2018-01-30)
 =========================
 

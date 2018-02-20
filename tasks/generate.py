@@ -103,4 +103,4 @@ def changelog(ctx, version, write_out=False):
         addopts = []
     else:
         addopts = ['--draft']
-    check_call(['towncrier', '--version', version] + addopts)
+    check_call(['towncrier', '--yes', '--version', version] + addopts)
