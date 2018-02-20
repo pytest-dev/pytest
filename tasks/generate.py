@@ -1,4 +1,6 @@
-import os
+"""
+Invoke development tasks.
+"""
 from pathlib import Path
 from subprocess import check_output, check_call
 
@@ -57,7 +59,7 @@ def regen(ctx):
 
 @invoke.task()
 def make_tag(ctx, version):
-    """Create a new (local) tag for the release, only if the repository is clean."""
+    """Create a new, local tag for the release, only if the repository is clean."""
     from git import Repo
 
     repo = Repo('.')
@@ -74,79 +76,22 @@ def make_tag(ctx, version):
     repo.create_tag(version)
 
 
-@invoke.task()
-def devpi_upload(ctx, version, user, password=None):
-    """Creates and uploads a package to devpi for testing."""
-    if password:
-        print("[generate.devpi_upload] devpi login {}".format(user))
-        check_call(['devpi', 'login', user, '--password', password])
-
-    check_call(['devpi', 'use', 'https://devpi.net/{}/dev'.format(user)])
-    
-    env = os.environ.copy()
-    env['SETUPTOOLS_SCM_PRETEND_VERSION'] = version
-    check_call(['devpi', 'upload', '--formats', 'sdist,bdist_wheel'], env=env)
-    print("[generate.devpi_upload] package uploaded")
-
-
 @invoke.task(help={
     'version': 'version being released',
-    'user': 'name of the user on devpi to stage the generated package',
-    'password': 'user password on devpi to stage the generated package '
-                '(if not given assumed logged in)',
 })
-def pre_release(ctx, version, user, password=None):
-    """Generates new docs, release announcements and uploads a new release to devpi for testing."""
+def pre_release(ctx, version):
+    """Generates new docs, release announcements and creates a local tag."""
     announce(ctx, version)
     regen(ctx)
     changelog(ctx, version, write_out=True)
 
     msg = 'Preparing release version {}'.format(version)
     check_call(['git', 'commit', '-a', '-m', msg])
-    
+
     make_tag(ctx, version)
 
-    devpi_upload(ctx, version=version, user=user, password=password)
-    
     print()
     print('[generate.pre_release] Please push your branch and open a PR.')
-
-
-@invoke.task(help={
-    'version': 'version being released',
-    'user': 'name of the user on devpi to stage the generated package',
-    'pypi_name': 'name of the pypi configuration section in your ~/.pypirc',
-})
-def publish_release(ctx, version, user, pypi_name):
-    """Publishes a package previously created by the 'pre_release' command."""
-    from git import Repo
-    repo = Repo('.')
-    tag_names = [x.name for x in repo.tags]
-    if version not in tag_names:
-        print('Could not find tag for version {}, exiting...'.format(version))
-        raise invoke.Exit(code=2)
-
-    check_call(['devpi', 'use', 'https://devpi.net/{}/dev'.format(user)])
-    check_call(['devpi', 'push', 'pytest=={}'.format(version), 'pypi:{}'.format(pypi_name)])
-    check_call(['git', 'push', 'git@github.com:pytest-dev/pytest.git', version])
-
-    emails = [
-        'pytest-dev@python.org',
-        'python-announce-list@python.org'
-    ]
-    if version.endswith('.0'):
-        emails.append('testing-in-python@lists.idyll.org')
-    print('Version {} has been published to PyPI!'.format(version))
-    print()
-    print('Please send an email announcement with the contents from:')
-    print()
-    print('  doc/en/announce/release-{}.rst'.format(version))
-    print()
-    print('To the following mail lists:')
-    print()
-    print(' ', ','.join(emails))
-    print()
-    print('And announce it on twitter adding the #pytest hash tag.')
 
 
 @invoke.task(help={
@@ -159,4 +104,3 @@ def changelog(ctx, version, write_out=False):
     else:
         addopts = ['--draft']
     check_call(['towncrier', '--version', version] + addopts)
-
