@@ -249,6 +249,7 @@ class TestApprox(object):
             (Decimal('-1.000001'), Decimal('-1.0')),
         ]
         for a, x in within_1e6:
+            assert a == approx(x)
             assert a == approx(x, rel=Decimal('5e-6'), abs=0)
             assert a != approx(x, rel=Decimal('5e-7'), abs=0)
             assert approx(x, rel=Decimal('5e-6'), abs=0) == a
