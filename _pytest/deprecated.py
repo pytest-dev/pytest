@@ -56,3 +56,9 @@ METAFUNC_ADD_CALL = (
     "Metafunc.addcall is deprecated and scheduled to be removed in pytest 4.0.\n"
     "Please use Metafunc.parametrize instead."
 )
+
+PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST = RemovedInPytest4Warning(
+    "Defining pytest_plugins in a non-top-level conftest is deprecated, "
+    "because it affects the entire directory tree in a non-explicit way.\n"
+    "Please move it to the top level conftest file instead."
+)

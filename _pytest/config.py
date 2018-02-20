@@ -201,6 +201,8 @@ class PytestPluginManager(PluginManager):
 
         # Config._consider_importhook will set a real object if required.
         self.rewrite_hook = _pytest.assertion.DummyRewriteHook()
+        # Used to know when we are importing conftests after the pytest_configure stage
+        self._configured = False
 
     def addhooks(self, module_or_class):
         """
@@ -276,6 +278,7 @@ class PytestPluginManager(PluginManager):
         config.addinivalue_line("markers",
                                 "trylast: mark a hook implementation function such that the "
                                 "plugin machinery will try to call it last/as late as possible.")
+        self._configured = True
 
     def _warn(self, message):
         kwargs = message if isinstance(message, dict) else {
@@ -366,6 +369,9 @@ class PytestPluginManager(PluginManager):
                 _ensure_removed_sysmodule(conftestpath.purebasename)
             try:
                 mod = conftestpath.pyimport()
+                if hasattr(mod, 'pytest_plugins') and self._configured:
+                    from _pytest.deprecated import PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST
+                    warnings.warn(PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST)
             except Exception:
                 raise ConftestImportFailure(conftestpath, sys.exc_info())
 

@@ -254,6 +254,18 @@ application modules:
 if ``myapp.testsupport.myplugin`` also declares ``pytest_plugins``, the contents
 of the variable will also be loaded as plugins, and so on.
 
+.. _`requiring plugins in non-noot conftests`:
+
+.. note::
+    Requiring plugins using a ``pytest_plugins`` variable in non-root
+    ``conftest.py`` files is deprecated.
+
+    This is important because ``conftest.py`` files implement per-directory
+    hook implementations, but once a plugin is imported, it will affect the
+    entire directory tree. In order to avoid confusion, defining
+    ``pytest_plugins`` in any ``conftest.py`` file which is not located in the
+    tests root directory is deprecated, and will raise a warning.
+
 This mechanism makes it easy to share fixtures within applications or even
 external applications without the need to create external plugins using
 the ``setuptools``'s entry point technique.

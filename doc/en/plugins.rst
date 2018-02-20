@@ -79,6 +79,12 @@ will be loaded as well.
 
 which will import the specified module as a ``pytest`` plugin.
 
+.. note::
+    Requiring plugins using a ``pytest_plugins`` variable in non-root
+    ``conftest.py`` files is deprecated. See
+    :ref:`full explanation <requiring plugins in non-noot conftests>`
+    in the Writing plugins section.
+
 .. _`findpluginname`:
 
 Finding out which plugins are active
