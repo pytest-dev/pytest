@@ -32,16 +32,19 @@ class Option(object):
         return values
 
 
-def pytest_generate_tests(metafunc):
-    if "option" in metafunc.fixturenames:
-        metafunc.addcall(id="default",
-                         funcargs={'option': Option(verbose=False)})
-        metafunc.addcall(id="verbose",
-                         funcargs={'option': Option(verbose=True)})
-        metafunc.addcall(id="quiet",
-                         funcargs={'option': Option(verbose=-1)})
-        metafunc.addcall(id="fulltrace",
-                         funcargs={'option': Option(fulltrace=True)})
+@pytest.fixture(params=[
+    Option(verbose=False),
+    Option(verbose=True),
+    Option(verbose=-1),
+    Option(fulltrace=True),
+], ids=[
+    "default",
+    "verbose",
+    "quiet",
+    "fulltrace",
+])
+def option(request):
+    return request.param
 
 
 @pytest.mark.parametrize('input,expected', [
@@ -682,10 +685,12 @@ def test_color_yes_collection_on_non_atty(testdir, verbose):
 
 
 def test_getreportopt():
-    class config(object):
-        class option(object):
+    class Config(object):
+        class Option(object):
             reportchars = ""
             disable_warnings = True
+        option = Option()
+    config = Config()
 
     config.option.reportchars = "sf"
     assert getreportopt(config) == "sf"
