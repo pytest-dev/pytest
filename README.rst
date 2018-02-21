@@ -25,6 +25,7 @@
 
 .. image:: https://www.codetriage.com/pytest-dev/pytest/badges/users.svg
     :target: https://www.codetriage.com/pytest-dev/pytest
+
 The ``pytest`` framework makes it easy to write small tests, yet
 scales to support complex functional testing for applications and libraries.
 
