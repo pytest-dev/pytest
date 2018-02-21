@@ -1,1 +1,1 @@
-Fix issue with approx on Decimal value.
+Fix ``TypeError`` issue when using ``approx`` with a ``Decimal`` value.
