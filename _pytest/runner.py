@@ -317,8 +317,7 @@ def pytest_runtest_makereport(item, call):
         sections.append(("Captured %s %s" % (key, rwhen), content))
     return TestReport(item.nodeid, item.location,
                       keywords, outcome, longrepr, when,
-                      item.user_properties,
-                      sections, duration)
+                      sections, duration, user_properties=item.user_properties)
 
 
 class TestReport(BaseReport):
@@ -327,8 +326,7 @@ class TestReport(BaseReport):
     """
 
     def __init__(self, nodeid, location, keywords, outcome,
-                 longrepr, when, user_properties,
-                 sections=(), duration=0, **extra):
+                 longrepr, when, sections=(), duration=0, user_properties=(), **extra):
         #: normalized collection node id
         self.nodeid = nodeid
 
