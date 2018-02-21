@@ -250,7 +250,7 @@ def record_property(request):
 
 
 @pytest.fixture
-def record_xml_property(request):
+def record_xml_property(record_property):
     """(Deprecated) use record_property."""
     import warnings
     from _pytest import deprecated
@@ -260,7 +260,7 @@ def record_xml_property(request):
         stacklevel=2
     )
 
-    return record_property(request)
+    return record_property
 
 
 @pytest.fixture
