@@ -1,1 +1,0 @@
-pytest has changed the publication procedure and is now being published to PyPI directly from Travis.
