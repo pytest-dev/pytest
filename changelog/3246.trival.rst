@@ -1,1 +1,1 @@
-remove usage of the deprecated addcall in our own tests
+Remove usage of deprecated ``metafunc.addcall`` in our own tests.
