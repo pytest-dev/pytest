@@ -1,0 +1,1 @@
+Remove usage of deprecated ``metafunc.addcall`` in our own tests.
