@@ -1,1 +1,0 @@
-Detect arguments injected by ``unittest.mock.patch`` decorator correctly when pypi ``mock.patch`` is installed and imported.

@@ -1,1 +1,0 @@
-Move import of ``doctest.UnexpectedException`` to top-level to avoid possible errors when using ``--pdb``.
