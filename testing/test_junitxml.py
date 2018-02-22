@@ -863,10 +863,10 @@ def test_record_property(testdir):
         import pytest
 
         @pytest.fixture
-        def other(record_xml_property):
-            record_xml_property("bar", 1)
-        def test_record(record_xml_property, other):
-            record_xml_property("foo", "<1");
+        def other(record_property):
+            record_property("bar", 1)
+        def test_record(record_property, other):
+            record_property("foo", "<1");
     """)
     result, dom = runandparse(testdir, '-rw')
     node = dom.find_first_by_tag("testsuite")
@@ -877,15 +877,15 @@ def test_record_property(testdir):
     pnodes[1].assert_attr(name="foo", value="<1")
     result.stdout.fnmatch_lines([
         'test_record_property.py::test_record',
-        '*record_xml_property*experimental*',
+        '*record_property*experimental*',
     ])
 
 
 def test_record_property_same_name(testdir):
     testdir.makepyfile("""
-        def test_record_with_same_name(record_xml_property):
-            record_xml_property("foo", "bar")
-            record_xml_property("foo", "baz")
+        def test_record_with_same_name(record_property):
+            record_property("foo", "bar")
+            record_property("foo", "baz")
     """)
     result, dom = runandparse(testdir, '-rw')
     node = dom.find_first_by_tag("testsuite")
