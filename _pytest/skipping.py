@@ -185,18 +185,8 @@ def pytest_terminal_summary(terminalreporter):
 
     lines = []
     for char in tr.reportchars:
-        if char == "x":
-            show_xfailed(terminalreporter, lines)
-        elif char == "X":
-            show_xpassed(terminalreporter, lines)
-        elif char in "fF":
-            show_simple(terminalreporter, lines, 'failed', "FAIL %s")
-        elif char in "sS":
-            show_skipped(terminalreporter, lines)
-        elif char == "E":
-            show_simple(terminalreporter, lines, 'error', "ERROR %s")
-        elif char == 'p':
-            show_simple(terminalreporter, lines, 'passed', "PASSED %s")
+        action = REPORTCHAR_ACTIONS.get(char, lambda tr, lines: None)
+        action(terminalreporter, lines)
 
     if lines:
         tr._tw.sep("=", "short test summary info")
@@ -274,3 +264,22 @@ def show_skipped(terminalreporter, lines):
                     lines.append(
                         "SKIP [%d] %s: %s" %
                         (num, fspath, reason))
+
+
+def shower(stat, format):
+    def show_(terminalreporter, lines):
+        return show_simple(terminalreporter, lines, stat, format)
+    return show_
+
+
+REPORTCHAR_ACTIONS = {
+    'x': show_xfailed,
+    'X': show_xpassed,
+    'f': shower('failed', "FAIL %s"),
+    'F': shower('failed', "FAIL %s"),
+    's': show_skipped,
+    'S': show_skipped,
+    'p': shower('passed', "PASSED %s"),
+    'E': shower('error', "ERROR %s")
+
+}
