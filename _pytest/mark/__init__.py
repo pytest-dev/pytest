@@ -10,8 +10,8 @@ from operator import attrgetter
 from six.moves import map
 
 from _pytest.config import UsageError
-from .deprecated import MARK_PARAMETERSET_UNPACKING
-from .compat import NOTSET, getfslineno
+from ..deprecated import MARK_PARAMETERSET_UNPACKING
+from ..compat import NOTSET, getfslineno
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
 
