@@ -3,11 +3,15 @@ from __future__ import absolute_import, division, print_function
 from _pytest.config import UsageError
 from .structures import (
     ParameterSet, EMPTY_PARAMETERSET_OPTION, MARK_GEN,
-    Mark, MarkInfo, MarkDecorator,
+    Mark, MarkInfo, MarkDecorator, MarkGenerator,
+    transfer_markers, get_empty_parameterset_mark
 )
 from .legacy import matchkeyword, matchmark
 
-__all__ = ['Mark', 'MarkInfo', 'MarkDecorator']
+__all__ = [
+    'Mark', 'MarkInfo', 'MarkDecorator', 'MarkGenerator',
+    'transfer_markers', 'get_empty_parameterset_mark'
+]
 
 
 class MarkerError(Exception):
