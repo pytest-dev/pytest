@@ -5,6 +5,8 @@ from .structures import (
     ParameterSet, EMPTY_PARAMETERSET_OPTION, MARK_GEN,
     Mark, MarkInfo, MarkDecorator,
 )
+from .legacy import matchkeyword, matchmark
+
 __all__ = ['Mark', 'MarkInfo', 'MarkDecorator']
 
 
@@ -71,15 +73,8 @@ def pytest_cmdline_main(config):
 pytest_cmdline_main.tryfirst = True
 
 
-def pytest_collection_modifyitems(items, config):
-    from .legacy import matchkeyword, matchmark
+def deselect_by_keyword(items, config):
     keywordexpr = config.option.keyword.lstrip()
-    matchexpr = config.option.markexpr
-    if not keywordexpr and not matchexpr:
-        return
-    # pytest used to allow "-" for negating
-    # but today we just allow "-" at the beginning, use "not" instead
-    # we probably remove "-" altogether soon
     if keywordexpr.startswith("-"):
         keywordexpr = "not " + keywordexpr[1:]
     selectuntil = False
@@ -95,15 +90,34 @@ def pytest_collection_modifyitems(items, config):
         else:
             if selectuntil:
                 keywordexpr = None
-            if matchexpr:
-                if not matchmark(colitem, matchexpr):
-                    deselected.append(colitem)
-                    continue
             remaining.append(colitem)
 
     if deselected:
         config.hook.pytest_deselected(items=deselected)
         items[:] = remaining
+
+
+def deselect_by_mark(items, config):
+    matchexpr = config.option.markexpr
+    if not matchexpr:
+        return
+
+    remaining = []
+    deselected = []
+    for item in items:
+        if matchmark(item, matchexpr):
+            remaining.append(item)
+        else:
+            deselected.append(item)
+
+    if deselected:
+        config.hook.pytest_deselected(items=deselected)
+        items[:] = remaining
+
+
+def pytest_collection_modifyitems(items, config):
+    deselect_by_keyword(items, config)
+    deselect_by_mark(items, config)
 
 
 def pytest_configure(config):
