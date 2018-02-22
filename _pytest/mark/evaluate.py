@@ -123,4 +123,3 @@ class MarkEvaluator(object):
             else:
                 return "condition: " + str(self.expr)
         return expl
-
