@@ -37,6 +37,27 @@ class KeywordMapping(object):
     def __init__(self, names):
         self._names = names
 
+    @classmethod
+    def from_item(cls, item):
+        mapped_names = set()
+
+        # Add the names of the current item and any parent items
+        import pytest
+        for item in item.listchain():
+            if not isinstance(item, pytest.Instance):
+                mapped_names.add(item.name)
+
+        # Add the names added as extra keywords to current or parent items
+        for name in item.listextrakeywords():
+            mapped_names.add(name)
+
+        # Add the names attached to the current function through direct assignment
+        if hasattr(item, 'function'):
+            for name in item.function.__dict__:
+                mapped_names.add(name)
+
+        return cls(mapped_names)
+
     def __getitem__(self, subname):
         for name in self._names:
             if subname in name:
@@ -61,24 +82,7 @@ def matchkeyword(colitem, keywordexpr):
     Additionally, matches on names in the 'extra_keyword_matches' set of
     any item, as well as names directly assigned to test functions.
     """
-    mapped_names = set()
-
-    # Add the names of the current item and any parent items
-    import pytest
-    for item in colitem.listchain():
-        if not isinstance(item, pytest.Instance):
-            mapped_names.add(item.name)
-
-    # Add the names added as extra keywords to current or parent items
-    for name in colitem.listextrakeywords():
-        mapped_names.add(name)
-
-    # Add the names attached to the current function through direct assignment
-    if hasattr(colitem, 'function'):
-        for name in colitem.function.__dict__:
-            mapped_names.add(name)
-
-    mapping = KeywordMapping(mapped_names)
+    mapping = KeywordMapping.from_item(colitem)
     if " " not in keywordexpr:
         # special case to allow for simple "-k pass" and "-k 1.3"
         return mapping[keywordexpr]
