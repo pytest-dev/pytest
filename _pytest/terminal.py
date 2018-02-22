@@ -480,15 +480,20 @@ class TerminalReporter(object):
             EXIT_NOTESTSCOLLECTED)
         if exitstatus in summary_exit_codes:
             self.config.hook.pytest_terminal_summary(terminalreporter=self,
+                                                     config=self.config,
                                                      exitstatus=exitstatus)
-            self.summary_errors()
-            self.summary_failures()
-            self.summary_warnings()
-            self.summary_passes()
         if exitstatus == EXIT_INTERRUPTED:
             self._report_keyboardinterrupt()
             del self._keyboardinterrupt_memo
         self.summary_stats()
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_terminal_summary(self):
+        self.summary_errors()
+        self.summary_failures()
+        yield
+        self.summary_warnings()
+        self.summary_passes()
 
     def pytest_keyboard_interrupt(self, excinfo):
         self._keyboardinterrupt_memo = excinfo.getrepr(funcargs=True)
