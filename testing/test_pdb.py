@@ -205,6 +205,24 @@ class TestPDB(object):
         assert "1 failed" in rest
         self.flush(child)
 
+    def test_pdb_print_captured_logs_nologging(self, testdir):
+        p1 = testdir.makepyfile("""
+            def test_1():
+                import logging
+                logging.warn("get " + "rekt")
+                assert False
+        """)
+        child = testdir.spawn_pytest("--show-capture=all --pdb "
+                                     "-p no:logging %s" % p1)
+        child.expect("get rekt")
+        output = child.before.decode("utf8")
+        assert "captured log" not in output
+        child.expect("(Pdb)")
+        child.sendeof()
+        rest = child.read().decode("utf8")
+        assert "1 failed" in rest
+        self.flush(child)
+
     def test_pdb_interaction_exception(self, testdir):
         p1 = testdir.makepyfile("""
             import pytest
