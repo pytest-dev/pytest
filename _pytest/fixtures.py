@@ -4,7 +4,7 @@ import functools
 import inspect
 import sys
 import warnings
-from collections import OrderedDict, deque, defaultdict
+from collections import OrderedDict, deque, defaultdict, namedtuple
 
 import attr
 import py
@@ -22,6 +22,8 @@ from _pytest.compat import (
     FuncargnamesCompatAttr,
 )
 from _pytest.outcomes import fail, TEST_OUTCOME
+
+PseudoFixtureDef = namedtuple('PseudoFixtureDef', ('cached_result', 'scope'))
 
 
 def pytest_sessionstart(session):
@@ -440,10 +442,9 @@ class FixtureRequest(FuncargnamesCompatAttr):
                 fixturedef = self._getnextfixturedef(argname)
             except FixtureLookupError:
                 if argname == "request":
-                    class PseudoFixtureDef(object):
-                        cached_result = (self, [0], None)
-                        scope = "function"
-                    return PseudoFixtureDef
+                    cached_result = (self, [0], None)
+                    scope = "function"
+                    return PseudoFixtureDef(cached_result, scope)
                 raise
         # remove indent to prevent the python3 exception
         # from leaking into the call
