@@ -2,7 +2,6 @@
 from __future__ import absolute_import, division, print_function
 
 import inspect
-import keyword
 import warnings
 import attr
 from collections import namedtuple
@@ -174,6 +173,7 @@ pytest_cmdline_main.tryfirst = True
 
 
 def pytest_collection_modifyitems(items, config):
+    from .legacy import matchkeyword, matchmark
     keywordexpr = config.option.keyword.lstrip()
     matchexpr = config.option.markexpr
     if not keywordexpr and not matchexpr:
@@ -205,89 +205,6 @@ def pytest_collection_modifyitems(items, config):
     if deselected:
         config.hook.pytest_deselected(items=deselected)
         items[:] = remaining
-
-
-@attr.s
-class MarkMapping(object):
-    """Provides a local mapping for markers where item access
-    resolves to True if the marker is present. """
-
-    own_mark_names = attr.ib()
-
-    @classmethod
-    def from_keywords(cls, keywords):
-        mark_names = set()
-        for key, value in keywords.items():
-            if isinstance(value, MarkInfo) or isinstance(value, MarkDecorator):
-                mark_names.add(key)
-        return cls(mark_names)
-
-    def __getitem__(self, name):
-        return name in self.own_mark_names
-
-
-class KeywordMapping(object):
-    """Provides a local mapping for keywords.
-    Given a list of names, map any substring of one of these names to True.
-    """
-
-    def __init__(self, names):
-        self._names = names
-
-    def __getitem__(self, subname):
-        for name in self._names:
-            if subname in name:
-                return True
-        return False
-
-
-python_keywords_allowed_list = ["or", "and", "not"]
-
-
-def matchmark(colitem, markexpr):
-    """Tries to match on any marker names, attached to the given colitem."""
-    return eval(markexpr, {}, MarkMapping.from_keywords(colitem.keywords))
-
-
-def matchkeyword(colitem, keywordexpr):
-    """Tries to match given keyword expression to given collector item.
-
-    Will match on the name of colitem, including the names of its parents.
-    Only matches names of items which are either a :class:`Class` or a
-    :class:`Function`.
-    Additionally, matches on names in the 'extra_keyword_matches' set of
-    any item, as well as names directly assigned to test functions.
-    """
-    mapped_names = set()
-
-    # Add the names of the current item and any parent items
-    import pytest
-    for item in colitem.listchain():
-        if not isinstance(item, pytest.Instance):
-            mapped_names.add(item.name)
-
-    # Add the names added as extra keywords to current or parent items
-    for name in colitem.listextrakeywords():
-        mapped_names.add(name)
-
-    # Add the names attached to the current function through direct assignment
-    if hasattr(colitem, 'function'):
-        for name in colitem.function.__dict__:
-            mapped_names.add(name)
-
-    mapping = KeywordMapping(mapped_names)
-    if " " not in keywordexpr:
-        # special case to allow for simple "-k pass" and "-k 1.3"
-        return mapping[keywordexpr]
-    elif keywordexpr.startswith("not ") and " " not in keywordexpr[4:]:
-        return not mapping[keywordexpr[4:]]
-    for kwd in keywordexpr.split():
-        if keyword.iskeyword(kwd) and kwd not in python_keywords_allowed_list:
-            raise UsageError("Python keyword '{}' not accepted in expressions passed to '-k'".format(kwd))
-    try:
-        return eval(keywordexpr, {}, mapping)
-    except SyntaxError:
-        raise UsageError("Wrong expression passed to '-k': {}".format(keywordexpr))
 
 
 def pytest_configure(config):
