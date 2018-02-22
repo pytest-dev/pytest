@@ -4,7 +4,7 @@ import functools
 import inspect
 import sys
 import warnings
-from collections import OrderedDict, deque, defaultdict, namedtuple
+from collections import OrderedDict, deque, defaultdict
 
 import attr
 import py
@@ -23,7 +23,11 @@ from _pytest.compat import (
 )
 from _pytest.outcomes import fail, TEST_OUTCOME
 
-PseudoFixtureDef = namedtuple('PseudoFixtureDef', ('cached_result', 'scope'))
+
+@attr.s(frozen=True)
+class PseudoFixtureDef(object):
+    cached_result = attr.ib()
+    scope = attr.ib()
 
 
 def pytest_sessionstart(session):
