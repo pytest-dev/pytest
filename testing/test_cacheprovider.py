@@ -607,22 +607,20 @@ class TestLastFailed(object):
 
 class TestNewFirst(object):
     def test_newfirst_usecase(self, testdir):
-        t1 = testdir.mkdir("test_1")
-        t2 = testdir.mkdir("test_2")
+        testdir.makepyfile(**{
+            'test_1/test_1.py': '''
+                def test_1(): assert 1
+                def test_2(): assert 1
+                def test_3(): assert 1
+            ''',
+            'test_2/test_2.py': '''
+                def test_1(): assert 1
+                def test_2(): assert 1
+                def test_3(): assert 1
+            '''
+        })
 
-        t1.join("test_1.py").write(
-            "def test_1(): assert 1\n"
-            "def test_2(): assert 1\n"
-            "def test_3(): assert 1\n"
-        )
-        t2.join("test_2.py").write(
-            "def test_1(): assert 1\n"
-            "def test_2(): assert 1\n"
-            "def test_3(): assert 1\n"
-        )
-
-        path_to_test_1 = str('{}/test_1/test_1.py'.format(testdir.tmpdir))
-        os.utime(path_to_test_1, (1, 1))
+        testdir.tmpdir.join('test_1/test_1.py').setmtime(1)
 
         result = testdir.runpytest("-v")
         result.stdout.fnmatch_lines([
@@ -645,13 +643,13 @@ class TestNewFirst(object):
             "*test_1/test_1.py::test_3 PASSED*",
         ])
 
-        t1.join("test_1.py").write(
+        testdir.tmpdir.join("test_1/test_1.py").write(
             "def test_1(): assert 1\n"
             "def test_2(): assert 1\n"
             "def test_3(): assert 1\n"
             "def test_4(): assert 1\n"
         )
-        os.utime(path_to_test_1, (1, 1))
+        testdir.tmpdir.join('test_1/test_1.py').setmtime(1)
 
         result = testdir.runpytest("-v", "--nf")
 
@@ -666,22 +664,20 @@ class TestNewFirst(object):
         ])
 
     def test_newfirst_parametrize(self, testdir):
-        t1 = testdir.mkdir("test_1")
-        t2 = testdir.mkdir("test_2")
+        testdir.makepyfile(**{
+            'test_1/test_1.py': '''
+                import pytest
+                @pytest.mark.parametrize('num', [1, 2])
+                def test_1(num): assert num
+            ''',
+            'test_2/test_2.py': '''
+                import pytest
+                @pytest.mark.parametrize('num', [1, 2])
+                def test_1(num): assert num
+            '''
+        })
 
-        t1.join("test_1.py").write(
-            "import pytest\n"
-            "@pytest.mark.parametrize('num', [1, 2])\n"
-            "def test_1(num): assert num\n"
-        )
-        t2.join("test_2.py").write(
-            "import pytest\n"
-            "@pytest.mark.parametrize('num', [1, 2])\n"
-            "def test_1(num): assert num\n"
-        )
-
-        path_to_test_1 = str('{}/test_1/test_1.py'.format(testdir.tmpdir))
-        os.utime(path_to_test_1, (1, 1))
+        testdir.tmpdir.join('test_1/test_1.py').setmtime(1)
 
         result = testdir.runpytest("-v")
         result.stdout.fnmatch_lines([
@@ -700,12 +696,12 @@ class TestNewFirst(object):
             "*test_1/test_1.py::test_1[2*",
         ])
 
-        t1.join("test_1.py").write(
+        testdir.tmpdir.join("test_1/test_1.py").write(
             "import pytest\n"
             "@pytest.mark.parametrize('num', [1, 2, 3])\n"
             "def test_1(num): assert num\n"
         )
-        os.utime(path_to_test_1, (1, 1))
+        testdir.tmpdir.join('test_1/test_1.py').setmtime(1)
 
         result = testdir.runpytest("-v", "--nf")
 

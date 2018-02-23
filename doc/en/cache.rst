@@ -152,6 +152,10 @@ of ``FF`` and dots)::
 
 .. _`config.cache`:
 
+New ``--nf``, ``--new-first`` options: run new tests first followed by the rest
+of the tests, in both cases tests are also sorted by the file modified time,
+with more recent files coming first.
+
 The new config.cache object
 --------------------------------
 
@@ -266,13 +270,3 @@ dumps/loads API of the json stdlib module
 .. automethod:: Cache.get
 .. automethod:: Cache.set
 .. automethod:: Cache.makedir
-
-
-New tests first
------------------
-
-The plugin provides command line options to run tests in another order:
-
-* ``--nf``, ``--new-first`` - to run tests in next order: first new tests, then
-  last modified files with tests in descending order (default order inside file).
-

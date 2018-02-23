@@ -5,8 +5,11 @@ the name cache was not chosen to ensure pluggy automatically
 ignores the external pytest-cache
 """
 from __future__ import absolute_import, division, print_function
+
+from collections import OrderedDict
+
 import py
-from _pytest.python import Function
+import six
 
 import pytest
 import json
@@ -176,33 +179,31 @@ class NFPlugin(object):
     def __init__(self, config):
         self.config = config
         self.active = config.option.newfirst
-        self.all_items = config.cache.get("cache/allitems", {})
+        self.cached_nodeids = config.cache.get("cache/nodeids", [])
 
     def pytest_collection_modifyitems(self, session, config, items):
         if self.active:
-            new_items = []
-            other_items = []
+            new_items = OrderedDict()
+            other_items = OrderedDict()
             for item in items:
-                mod_timestamp = os.path.getmtime(str(item.fspath))
-                if self.all_items and item.nodeid not in self.all_items:
-                    new_items.append((item, mod_timestamp))
+                if item.nodeid not in self.cached_nodeids:
+                    new_items[item.nodeid] = item
                 else:
-                    other_items.append((item, mod_timestamp))
+                    other_items[item.nodeid] = item
 
-            items[:] = self._get_increasing_order(new_items) + \
-                self._get_increasing_order(other_items)
-        self.all_items = items
+            items[:] = self._get_increasing_order(six.itervalues(new_items)) + \
+                self._get_increasing_order(six.itervalues(other_items))
+        self.cached_nodeids = [x.nodeid for x in items if isinstance(x, pytest.Item)]
 
-    def _get_increasing_order(self, test_list):
-        test_list = sorted(test_list, key=lambda x: x[1], reverse=True)
-        return [test[0] for test in test_list]
+    def _get_increasing_order(self, items):
+        return sorted(items, key=lambda item: item.fspath.mtime(), reverse=True)
 
     def pytest_sessionfinish(self, session):
         config = self.config
         if config.getoption("cacheshow") or hasattr(config, "slaveinput"):
             return
-        config.cache.set("cache/allitems",
-                         [item.nodeid for item in self.all_items if isinstance(item, Function)])
+
+        config.cache.set("cache/nodeids", self.cached_nodeids)
 
 
 def pytest_addoption(parser):
@@ -218,8 +219,8 @@ def pytest_addoption(parser):
              "repeated fixture setup/teardown")
     group.addoption(
         '--nf', '--new-first', action='store_true', dest="newfirst",
-        help="run all tests but run new tests first, then tests from "
-             "last modified files, then other tests")
+        help="run tests from new files first, then the rest of the tests "
+             "sorted by file mtime")
     group.addoption(
         '--cache-show', action='store_true', dest="cacheshow",
         help="show cache contents, don't perform collection or tests")
