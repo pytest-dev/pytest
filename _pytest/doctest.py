@@ -24,6 +24,9 @@ DOCTEST_REPORT_CHOICES = (
     DOCTEST_REPORT_CHOICE_ONLY_FIRST_FAILURE,
 )
 
+# Lazy definiton of runner class
+RUNNER_CLASS = None
+
 
 def pytest_addoption(parser):
     parser.addini('doctest_optionflags', 'option flags for doctests',
@@ -77,14 +80,91 @@ def _is_doctest(config, path, parent):
 
 class ReprFailDoctest(TerminalRepr):
 
-    def __init__(self, reprlocation, lines):
-        self.reprlocation = reprlocation
-        self.lines = lines
+    def __init__(self, reprlocation_lines):
+        # List of (reprlocation, lines) tuples
+        self.reprlocation_lines = reprlocation_lines
 
     def toterminal(self, tw):
-        for line in self.lines:
-            tw.line(line)
-        self.reprlocation.toterminal(tw)
+        for reprlocation, lines in self.reprlocation_lines:
+            for line in lines:
+                tw.line(line)
+            reprlocation.toterminal(tw)
+
+
+# class DoctestFailureContainer(object):
+#
+#     NAME = 'DocTestFailure'
+#
+#     def __init__(self, test, example, got):
+#         self.test = test
+#         self.example = example
+#         self.got = got
+#
+#
+# class DoctestUnexpectedExceptionContainer(object):
+#
+#     NAME = 'DoctestUnexpectedException'
+#
+#     def __init__(self, test, example, exc_info):
+#         self.test = test
+#         self.example = example
+#         self.exc_info = exc_info
+
+
+class MultipleDoctestFailures(Exception):
+    def __init__(self, failures):
+        super(MultipleDoctestFailures, self).__init__()
+        self.failures = failures
+
+
+def _init_runner_class():
+    import doctest
+
+    class PytestDoctestRunner(doctest.DocTestRunner):
+        """
+        Runner to collect failures.  Note that the out variable in this case is
+        a list instead of a stdout-like object
+        """
+        def __init__(self, checker=None, verbose=None, optionflags=0,
+                     continue_on_failure=True):
+            doctest.DocTestRunner.__init__(
+                self, checker=checker, verbose=verbose, optionflags=optionflags)
+            self.continue_on_failure = continue_on_failure
+
+        def report_start(self, out, test, example):
+            pass
+
+        def report_success(self, out, test, example, got):
+            pass
+
+        def report_failure(self, out, test, example, got):
+            # failure = DoctestFailureContainer(test, example, got)
+            failure = doctest.DocTestFailure(test, example, got)
+            if self.continue_on_failure:
+                out.append(failure)
+            else:
+                raise failure
+
+        def report_unexpected_exception(self, out, test, example, exc_info):
+            # failure = DoctestUnexpectedExceptionContainer(test, example, exc_info)
+            failure = doctest.UnexpectedException(test, example, exc_info)
+            if self.continue_on_failure:
+                out.append(failure)
+            else:
+                raise failure
+
+    return PytestDoctestRunner
+
+
+def _get_runner(checker=None, verbose=None, optionflags=0,
+                continue_on_failure=True):
+    # We need this in order to do a lazy import on doctest
+    global RUNNER_CLASS
+    if RUNNER_CLASS is None:
+        RUNNER_CLASS = _init_runner_class()
+    return RUNNER_CLASS(
+        checker=checker, verbose=verbose, optionflags=optionflags,
+        continue_on_failure=continue_on_failure)
 
 
 class DoctestItem(pytest.Item):
@@ -106,7 +186,10 @@ class DoctestItem(pytest.Item):
     def runtest(self):
         _check_all_skipped(self.dtest)
         self._disable_output_capturing_for_darwin()
-        self.runner.run(self.dtest)
+        failures = []
+        self.runner.run(self.dtest, out=failures)
+        if failures:
+            raise MultipleDoctestFailures(failures)
 
     def _disable_output_capturing_for_darwin(self):
         """
@@ -122,42 +205,51 @@ class DoctestItem(pytest.Item):
 
     def repr_failure(self, excinfo):
         import doctest
+        failures = None
         if excinfo.errisinstance((doctest.DocTestFailure,
                                   doctest.UnexpectedException)):
-            doctestfailure = excinfo.value
-            example = doctestfailure.example
-            test = doctestfailure.test
-            filename = test.filename
-            if test.lineno is None:
-                lineno = None
-            else:
-                lineno = test.lineno + example.lineno + 1
-            message = excinfo.type.__name__
-            reprlocation = ReprFileLocation(filename, lineno, message)
-            checker = _get_checker()
-            report_choice = _get_report_choice(self.config.getoption("doctestreport"))
-            if lineno is not None:
-                lines = doctestfailure.test.docstring.splitlines(False)
-                # add line numbers to the left of the error message
-                lines = ["%03d %s" % (i + test.lineno + 1, x)
-                         for (i, x) in enumerate(lines)]
-                # trim docstring error lines to 10
-                lines = lines[max(example.lineno - 9, 0):example.lineno + 1]
-            else:
-                lines = ['EXAMPLE LOCATION UNKNOWN, not showing all tests of that example']
-                indent = '>>>'
-                for line in example.source.splitlines():
-                    lines.append('??? %s %s' % (indent, line))
-                    indent = '...'
-            if excinfo.errisinstance(doctest.DocTestFailure):
-                lines += checker.output_difference(example,
-                                                   doctestfailure.got, report_choice).split("\n")
-            else:
-                inner_excinfo = ExceptionInfo(excinfo.value.exc_info)
-                lines += ["UNEXPECTED EXCEPTION: %s" %
-                          repr(inner_excinfo.value)]
-                lines += traceback.format_exception(*excinfo.value.exc_info)
-            return ReprFailDoctest(reprlocation, lines)
+            failures = [excinfo.value]
+        elif excinfo.errisinstance(MultipleDoctestFailures):
+            failures = excinfo.value.failures
+
+        if failures is not None:
+            reprlocation_lines = []
+            for failure in failures:
+                example = failure.example
+                test = failure.test
+                filename = test.filename
+                if test.lineno is None:
+                    lineno = None
+                else:
+                    lineno = test.lineno + example.lineno + 1
+                message = type(failure).__name__
+                reprlocation = ReprFileLocation(filename, lineno, message)
+                checker = _get_checker()
+                report_choice = _get_report_choice(self.config.getoption("doctestreport"))
+                if lineno is not None:
+                    lines = failure.test.docstring.splitlines(False)
+                    # add line numbers to the left of the error message
+                    lines = ["%03d %s" % (i + test.lineno + 1, x)
+                             for (i, x) in enumerate(lines)]
+                    # trim docstring error lines to 10
+                    lines = lines[max(example.lineno - 9, 0):example.lineno + 1]
+                else:
+                    lines = ['EXAMPLE LOCATION UNKNOWN, not showing all tests of that example']
+                    indent = '>>>'
+                    for line in example.source.splitlines():
+                        lines.append('??? %s %s' % (indent, line))
+                        indent = '...'
+                if isinstance(failure, doctest.DocTestFailure):
+                    lines += checker.output_difference(example,
+                                                       failure.got,
+                                                       report_choice).split("\n")
+                else:
+                    inner_excinfo = ExceptionInfo(failure.exc_info)
+                    lines += ["UNEXPECTED EXCEPTION: %s" %
+                              repr(inner_excinfo.value)]
+                    lines += traceback.format_exception(*failure.exc_info)
+                reprlocation_lines.append((reprlocation, lines))
+            return ReprFailDoctest(reprlocation_lines)
         else:
             return super(DoctestItem, self).repr_failure(excinfo)
 
@@ -202,8 +294,10 @@ class DoctestTextfile(pytest.Module):
         globs = {'__name__': '__main__'}
 
         optionflags = get_optionflags(self)
-        runner = doctest.DebugRunner(verbose=0, optionflags=optionflags,
-                                     checker=_get_checker())
+        continue_on_failure = not self.config.getvalue("usepdb")
+        runner = _get_runner(verbose=0, optionflags=optionflags,
+                             checker=_get_checker(),
+                             continue_on_failure=continue_on_failure)
         _fix_spoof_python2(runner, encoding)
 
         parser = doctest.DocTestParser()
@@ -238,8 +332,10 @@ class DoctestModule(pytest.Module):
         # uses internal doctest module parsing mechanism
         finder = doctest.DocTestFinder()
         optionflags = get_optionflags(self)
-        runner = doctest.DebugRunner(verbose=0, optionflags=optionflags,
-                                     checker=_get_checker())
+        continue_on_failure = not self.config.getvalue("usepdb")
+        runner = _get_runner(verbose=0, optionflags=optionflags,
+                             checker=_get_checker(),
+                             continue_on_failure=continue_on_failure)
 
         for test in finder.find(module, module.__name__):
             if test.examples:  # skip empty doctests
