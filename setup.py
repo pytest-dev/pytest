@@ -16,7 +16,7 @@ classifiers = [
     'Topic :: Utilities',
 ] + [
     ('Programming Language :: Python :: %s' % x)
-    for x in '2 2.7 3 3.4 3.5 3.6'.split()
+    for x in '2 2.7 3 3.4 3.5 3.6 3.7'.split()
 ]
 
 with open('README.rst') as fd:
@@ -59,7 +59,7 @@ def main():
         'py>=1.5.0',
         'six>=1.10.0',
         'setuptools',
-        'attrs>=17.2.0',
+        'attrs>=17.4.0',
     ]
     # if _PYTEST_SETUP_SKIP_PLUGGY_DEP is set, skip installing pluggy;
     # used by tox.ini to test with pluggy master

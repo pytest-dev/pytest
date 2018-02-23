@@ -141,19 +141,86 @@ class TestPDB(object):
         child.sendeof()
         self.flush(child)
 
-    def test_pdb_interaction_capture(self, testdir):
+    def test_pdb_print_captured_stdout(self, testdir):
         p1 = testdir.makepyfile("""
             def test_1():
-                print("getrekt")
+                print("get\\x20rekt")
                 assert False
         """)
         child = testdir.spawn_pytest("--pdb %s" % p1)
-        child.expect("getrekt")
+        child.expect("captured stdout")
+        child.expect("get rekt")
         child.expect("(Pdb)")
         child.sendeof()
         rest = child.read().decode("utf8")
         assert "1 failed" in rest
-        assert "getrekt" not in rest
+        assert "get rekt" not in rest
+        self.flush(child)
+
+    def test_pdb_print_captured_stderr(self, testdir):
+        p1 = testdir.makepyfile("""
+            def test_1():
+                import sys
+                sys.stderr.write("get\\x20rekt")
+                assert False
+        """)
+        child = testdir.spawn_pytest("--pdb %s" % p1)
+        child.expect("captured stderr")
+        child.expect("get rekt")
+        child.expect("(Pdb)")
+        child.sendeof()
+        rest = child.read().decode("utf8")
+        assert "1 failed" in rest
+        assert "get rekt" not in rest
+        self.flush(child)
+
+    def test_pdb_dont_print_empty_captured_stdout_and_stderr(self, testdir):
+        p1 = testdir.makepyfile("""
+            def test_1():
+                assert False
+        """)
+        child = testdir.spawn_pytest("--pdb %s" % p1)
+        child.expect("(Pdb)")
+        output = child.before.decode("utf8")
+        child.sendeof()
+        assert "captured stdout" not in output
+        assert "captured stderr" not in output
+        self.flush(child)
+
+    @pytest.mark.parametrize('showcapture', ['all', 'no', 'log'])
+    def test_pdb_print_captured_logs(self, testdir, showcapture):
+        p1 = testdir.makepyfile("""
+            def test_1():
+                import logging
+                logging.warn("get " + "rekt")
+                assert False
+        """)
+        child = testdir.spawn_pytest("--show-capture=%s --pdb %s" % (showcapture, p1))
+        if showcapture in ('all', 'log'):
+            child.expect("captured log")
+            child.expect("get rekt")
+        child.expect("(Pdb)")
+        child.sendeof()
+        rest = child.read().decode("utf8")
+        assert "1 failed" in rest
+        self.flush(child)
+
+    def test_pdb_print_captured_logs_nologging(self, testdir):
+        p1 = testdir.makepyfile("""
+            def test_1():
+                import logging
+                logging.warn("get " + "rekt")
+                assert False
+        """)
+        child = testdir.spawn_pytest("--show-capture=all --pdb "
+                                     "-p no:logging %s" % p1)
+        child.expect("get rekt")
+        output = child.before.decode("utf8")
+        assert "captured log" not in output
+        child.expect("(Pdb)")
+        child.sendeof()
+        rest = child.read().decode("utf8")
+        assert "1 failed" in rest
         self.flush(child)
 
     def test_pdb_interaction_exception(self, testdir):

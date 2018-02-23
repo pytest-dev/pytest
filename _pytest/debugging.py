@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function
 import pdb
 import sys
+from doctest import UnexpectedException
 
 
 def pytest_addoption(parser):
@@ -85,6 +86,18 @@ def _enter_pdb(node, excinfo, rep):
     # for not completely clear reasons.
     tw = node.config.pluginmanager.getplugin("terminalreporter")._tw
     tw.line()
+
+    showcapture = node.config.option.showcapture
+
+    for sectionname, content in (('stdout', rep.capstdout),
+                                 ('stderr', rep.capstderr),
+                                 ('log', rep.caplog)):
+        if showcapture in (sectionname, 'all') and content:
+            tw.sep(">", "captured " + sectionname)
+            if content[-1:] == "\n":
+                content = content[:-1]
+            tw.line(content)
+
     tw.sep(">", "traceback")
     rep.toterminal(tw)
     tw.sep(">", "entering PDB")
@@ -95,10 +108,9 @@ def _enter_pdb(node, excinfo, rep):
 
 
 def _postmortem_traceback(excinfo):
-    # A doctest.UnexpectedException is not useful for post_mortem.
-    # Use the underlying exception instead:
-    from doctest import UnexpectedException
     if isinstance(excinfo.value, UnexpectedException):
+        # A doctest.UnexpectedException is not useful for post_mortem.
+        # Use the underlying exception instead:
         return excinfo.value.exc_info[2]
     else:
         return excinfo._excinfo[2]

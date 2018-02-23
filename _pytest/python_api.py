@@ -453,6 +453,10 @@ def raises(expected_exception, *args, **kwargs):
     Assert that a code block/function call raises ``expected_exception``
     and raise a failure exception otherwise.
 
+    :arg message: if specified, provides a custom failure message if the
+        exception is not raised
+    :arg match: if specified, asserts that the exception matches a text or regex
+
     This helper produces a ``ExceptionInfo()`` object (see below).
 
     You may use this function as a context manager::
@@ -567,7 +571,6 @@ def raises(expected_exception, *args, **kwargs):
             message = kwargs.pop("message")
         if "match" in kwargs:
             match_expr = kwargs.pop("match")
-            message += " matching '{0}'".format(match_expr)
         return RaisesContext(expected_exception, message, match_expr)
     elif isinstance(args[0], str):
         code, = args
@@ -614,6 +617,6 @@ class RaisesContext(object):
         suppress_exception = issubclass(self.excinfo.type, self.expected_exception)
         if sys.version_info[0] == 2 and suppress_exception:
             sys.exc_clear()
-        if self.match_expr:
+        if self.match_expr and suppress_exception:
             self.excinfo.match(self.match_expr)
         return suppress_exception

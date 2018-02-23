@@ -166,7 +166,7 @@ def reorder_items(items):
     items_by_argkey = {}
     for scopenum in range(0, scopenum_function):
         argkeys_cache[scopenum] = d = {}
-        items_by_argkey[scopenum] = item_d = defaultdict(list)
+        items_by_argkey[scopenum] = item_d = defaultdict(deque)
         for item in items:
             keys = OrderedDict.fromkeys(get_parametrized_fixture_keys(item, scopenum))
             if keys:
@@ -174,12 +174,19 @@ def reorder_items(items):
                 for key in keys:
                     item_d[key].append(item)
     items = OrderedDict.fromkeys(items)
-    return list(reorder_items_atscope(items, set(), argkeys_cache, items_by_argkey, 0))
+    return list(reorder_items_atscope(items, argkeys_cache, items_by_argkey, 0))
 
 
-def reorder_items_atscope(items, ignore, argkeys_cache, items_by_argkey, scopenum):
+def fix_cache_order(item, argkeys_cache, items_by_argkey):
+    for scopenum in range(0, scopenum_function):
+        for key in argkeys_cache[scopenum].get(item, []):
+            items_by_argkey[scopenum][key].appendleft(item)
+
+
+def reorder_items_atscope(items, argkeys_cache, items_by_argkey, scopenum):
     if scopenum >= scopenum_function or len(items) < 3:
         return items
+    ignore = set()
     items_deque = deque(items)
     items_done = OrderedDict()
     scoped_items_by_argkey = items_by_argkey[scopenum]
@@ -197,13 +204,14 @@ def reorder_items_atscope(items, ignore, argkeys_cache, items_by_argkey, scopenu
             else:
                 slicing_argkey, _ = argkeys.popitem()
                 # we don't have to remove relevant items from later in the deque because they'll just be ignored
-                for i in reversed(scoped_items_by_argkey[slicing_argkey]):
-                    if i in items:
-                        items_deque.appendleft(i)
+                matching_items = [i for i in scoped_items_by_argkey[slicing_argkey] if i in items]
+                for i in reversed(matching_items):
+                    fix_cache_order(i, argkeys_cache, items_by_argkey)
+                    items_deque.appendleft(i)
                 break
         if no_argkey_group:
             no_argkey_group = reorder_items_atscope(
-                                no_argkey_group, set(), argkeys_cache, items_by_argkey, scopenum + 1)
+                                no_argkey_group, argkeys_cache, items_by_argkey, scopenum + 1)
             for item in no_argkey_group:
                 items_done[item] = None
         ignore.add(slicing_argkey)
@@ -831,9 +839,9 @@ def _ensure_immutable_ids(ids):
 @attr.s(frozen=True)
 class FixtureFunctionMarker(object):
     scope = attr.ib()
-    params = attr.ib(convert=attr.converters.optional(tuple))
+    params = attr.ib(converter=attr.converters.optional(tuple))
     autouse = attr.ib(default=False)
-    ids = attr.ib(default=None, convert=_ensure_immutable_ids)
+    ids = attr.ib(default=None, converter=_ensure_immutable_ids)
     name = attr.ib(default=None)
 
     def __call__(self, function):

@@ -2,6 +2,8 @@
 from __future__ import absolute_import, division, print_function
 
 import traceback
+import sys
+import platform
 
 import pytest
 from _pytest._code.code import ExceptionInfo, ReprFileLocation, TerminalRepr
@@ -103,7 +105,20 @@ class DoctestItem(pytest.Item):
 
     def runtest(self):
         _check_all_skipped(self.dtest)
+        self._disable_output_capturing_for_darwin()
         self.runner.run(self.dtest)
+
+    def _disable_output_capturing_for_darwin(self):
+        """
+        Disable output capturing. Otherwise, stdout is lost to doctest (#985)
+        """
+        if platform.system() != 'Darwin':
+            return
+        capman = self.config.pluginmanager.getplugin("capturemanager")
+        if capman:
+            out, err = capman.suspend_global_capture(in_=True)
+            sys.stdout.write(out)
+            sys.stderr.write(err)
 
     def repr_failure(self, excinfo):
         import doctest

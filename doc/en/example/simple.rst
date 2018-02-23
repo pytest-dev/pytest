@@ -385,8 +385,8 @@ Now we can profile which test functions execute the slowest::
     test_some_are_slow.py ...                                            [100%]
     
     ========================= slowest 3 test durations =========================
-    0.58s call     test_some_are_slow.py::test_funcslow2
-    0.41s call     test_some_are_slow.py::test_funcslow1
+    0.30s call     test_some_are_slow.py::test_funcslow2
+    0.20s call     test_some_are_slow.py::test_funcslow1
     0.10s call     test_some_are_slow.py::test_funcfast
     ========================= 3 passed in 0.12 seconds =========================
 
@@ -537,7 +537,7 @@ We can run this::
     file $REGENDOC_TMPDIR/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
     E       fixture 'db' not found
-    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, monkeypatch, pytestconfig, record_xml_attribute, record_xml_property, recwarn, tmpdir, tmpdir_factory
+    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, monkeypatch, pytestconfig, record_xml_attribute, record_property, recwarn, tmpdir, tmpdir_factory
     >       use 'pytest --fixtures [testpath]' for help on them.
     
     $REGENDOC_TMPDIR/b/test_error.py:1

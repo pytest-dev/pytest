@@ -132,3 +132,13 @@ class TestRaises(object):
         with pytest.raises(AssertionError, match=expr):
             with pytest.raises(ValueError, match=msg):
                 int('asdf', base=10)
+
+    def test_raises_match_wrong_type(self):
+        """Raising an exception with the wrong type and match= given.
+
+        pytest should throw the unexpected exception - the pattern match is not
+        really relevant if we got a different exception.
+        """
+        with pytest.raises(ValueError):
+            with pytest.raises(IndexError, match='nomatch'):
+                int('asdf')

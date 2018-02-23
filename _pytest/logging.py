@@ -480,6 +480,7 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
         self.capture_manager = capture_manager
         self.reset()
         self.set_when(None)
+        self._test_outcome_written = False
 
     def reset(self):
         """Reset the handler; should be called before the start of each test"""
@@ -489,15 +490,21 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
         """Prepares for the given test phase (setup/call/teardown)"""
         self._when = when
         self._section_name_shown = False
+        if when == 'start':
+            self._test_outcome_written = False
 
     def emit(self, record):
         if self.capture_manager is not None:
             self.capture_manager.suspend_global_capture()
         try:
-            if not self._first_record_emitted or self._when in ('teardown', 'finish'):
+            if not self._first_record_emitted:
                 self.stream.write('\n')
                 self._first_record_emitted = True
-            if not self._section_name_shown:
+            elif self._when in ('teardown', 'finish'):
+                if not self._test_outcome_written:
+                    self._test_outcome_written = True
+                    self.stream.write('\n')
+            if not self._section_name_shown and self._when:
                 self.stream.section('live log ' + self._when, sep='-', bold=True)
                 self._section_name_shown = True
             logging.StreamHandler.emit(self, record)
