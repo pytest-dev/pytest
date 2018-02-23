@@ -41,6 +41,12 @@ MARK_PARAMETERSET_UNPACKING = RemovedInPytest4Warning(
     "For more details, see: https://docs.pytest.org/en/latest/parametrize.html"
 )
 
+RECORD_XML_PROPERTY = (
+    'Fixture renamed from "record_xml_property" to "record_property" as user '
+    'properties are now available to all reporters.\n'
+    '"record_xml_property" is now deprecated.'
+)
+
 COLLECTOR_MAKEITEM = RemovedInPytest4Warning(
     "pycollector makeitem was removed "
     "as it is an accidentially leaked internal api"

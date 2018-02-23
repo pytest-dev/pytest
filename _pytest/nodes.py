@@ -360,6 +360,10 @@ class Item(Node):
         super(Item, self).__init__(name, parent, config, session)
         self._report_sections = []
 
+        #: user properties is a list of tuples (name, value) that holds user
+        #: defined properties for this test.
+        self.user_properties = []
+
     def add_report_section(self, when, key, content):
         """
         Adds a new report section, similar to what's done internally to add stdout and
