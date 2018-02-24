@@ -769,11 +769,13 @@ class TestDoctestSkips(object):
         """)
         result = testdir.runpytest("--doctest-modules")
         result.assert_outcomes(passed=0, failed=1)
-        # We need to make sure we have two failure lines (4, 5, and 8) instead of
-        # one.
-        result.stdout.fnmatch_lines("*test_something.txt:4: DoctestUnexpectedException*")
-        result.stdout.fnmatch_lines("*test_something.txt:5: DocTestFailure*")
-        result.stdout.fnmatch_lines("*test_something.txt:8: DocTestFailure*")
+        # The lines that contains the failure are 4, 5, and 8.  The first one
+        # is a stack trace and the other two are mismatches.
+        result.stdout.fnmatch_lines([
+            "*4: UnexpectedException*",
+            "*5: DocTestFailure*",
+            "*8: DocTestFailure*",
+        ])
 
 
 class TestDoctestAutoUseFixtures(object):

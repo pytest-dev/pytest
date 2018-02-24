@@ -91,26 +91,6 @@ class ReprFailDoctest(TerminalRepr):
             reprlocation.toterminal(tw)
 
 
-# class DoctestFailureContainer(object):
-#
-#     NAME = 'DocTestFailure'
-#
-#     def __init__(self, test, example, got):
-#         self.test = test
-#         self.example = example
-#         self.got = got
-#
-#
-# class DoctestUnexpectedExceptionContainer(object):
-#
-#     NAME = 'DoctestUnexpectedException'
-#
-#     def __init__(self, test, example, exc_info):
-#         self.test = test
-#         self.example = example
-#         self.exc_info = exc_info
-
-
 class MultipleDoctestFailures(Exception):
     def __init__(self, failures):
         super(MultipleDoctestFailures, self).__init__()
@@ -138,7 +118,6 @@ def _init_runner_class():
             pass
 
         def report_failure(self, out, test, example, got):
-            # failure = DoctestFailureContainer(test, example, got)
             failure = doctest.DocTestFailure(test, example, got)
             if self.continue_on_failure:
                 out.append(failure)
@@ -146,7 +125,6 @@ def _init_runner_class():
                 raise failure
 
         def report_unexpected_exception(self, out, test, example, exc_info):
-            # failure = DoctestUnexpectedExceptionContainer(test, example, exc_info)
             failure = doctest.UnexpectedException(test, example, exc_info)
             if self.continue_on_failure:
                 out.append(failure)
