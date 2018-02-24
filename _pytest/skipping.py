@@ -1,14 +1,11 @@
 """ support for skip/xfail functions and markers. """
 from __future__ import absolute_import, division, print_function
 
-import os
-import six
-import sys
-import traceback
 
 from _pytest.config import hookimpl
 from _pytest.mark import MarkInfo, MarkDecorator
-from _pytest.outcomes import fail, skip, xfail, TEST_OUTCOME
+from _pytest.mark.evaluate import MarkEvaluator
+from _pytest.outcomes import fail, skip, xfail
 
 
 def pytest_addoption(parser):
@@ -58,112 +55,6 @@ def pytest_configure(config):
                             "raises, and if the test fails in other ways, it will be reported as "
                             "a true failure. See http://pytest.org/latest/skipping.html"
                             )
-
-
-class MarkEvaluator(object):
-    def __init__(self, item, name):
-        self.item = item
-        self._marks = None
-        self._mark = None
-        self._mark_name = name
-
-    def __bool__(self):
-        self._marks = self._get_marks()
-        return bool(self._marks)
-    __nonzero__ = __bool__
-
-    def wasvalid(self):
-        return not hasattr(self, 'exc')
-
-    def _get_marks(self):
-
-        keyword = self.item.keywords.get(self._mark_name)
-        if isinstance(keyword, MarkDecorator):
-            return [keyword.mark]
-        elif isinstance(keyword, MarkInfo):
-            return [x.combined for x in keyword]
-        else:
-            return []
-
-    def invalidraise(self, exc):
-        raises = self.get('raises')
-        if not raises:
-            return
-        return not isinstance(exc, raises)
-
-    def istrue(self):
-        try:
-            return self._istrue()
-        except TEST_OUTCOME:
-            self.exc = sys.exc_info()
-            if isinstance(self.exc[1], SyntaxError):
-                msg = [" " * (self.exc[1].offset + 4) + "^", ]
-                msg.append("SyntaxError: invalid syntax")
-            else:
-                msg = traceback.format_exception_only(*self.exc[:2])
-            fail("Error evaluating %r expression\n"
-                 "    %s\n"
-                 "%s"
-                 % (self._mark_name, self.expr, "\n".join(msg)),
-                 pytrace=False)
-
-    def _getglobals(self):
-        d = {'os': os, 'sys': sys, 'config': self.item.config}
-        if hasattr(self.item, 'obj'):
-            d.update(self.item.obj.__globals__)
-        return d
-
-    def _istrue(self):
-        if hasattr(self, 'result'):
-            return self.result
-        self._marks = self._get_marks()
-
-        if self._marks:
-            self.result = False
-            for mark in self._marks:
-                self._mark = mark
-                if 'condition' in mark.kwargs:
-                    args = (mark.kwargs['condition'],)
-                else:
-                    args = mark.args
-
-                for expr in args:
-                    self.expr = expr
-                    if isinstance(expr, six.string_types):
-                        d = self._getglobals()
-                        result = cached_eval(self.item.config, expr, d)
-                    else:
-                        if "reason" not in mark.kwargs:
-                            # XXX better be checked at collection time
-                            msg = "you need to specify reason=STRING " \
-                                  "when using booleans as conditions."
-                            fail(msg)
-                        result = bool(expr)
-                    if result:
-                        self.result = True
-                        self.reason = mark.kwargs.get('reason', None)
-                        self.expr = expr
-                        return self.result
-
-                if not args:
-                    self.result = True
-                    self.reason = mark.kwargs.get('reason', None)
-                    return self.result
-        return False
-
-    def get(self, attr, default=None):
-        if self._mark is None:
-            return default
-        return self._mark.kwargs.get(attr, default)
-
-    def getexplanation(self):
-        expl = getattr(self, 'reason', None) or self.get('reason', None)
-        if not expl:
-            if not hasattr(self, 'expr'):
-                return ""
-            else:
-                return "condition: " + str(self.expr)
-        return expl
 
 
 @hookimpl(tryfirst=True)
@@ -294,18 +185,8 @@ def pytest_terminal_summary(terminalreporter):
 
     lines = []
     for char in tr.reportchars:
-        if char == "x":
-            show_xfailed(terminalreporter, lines)
-        elif char == "X":
-            show_xpassed(terminalreporter, lines)
-        elif char in "fF":
-            show_simple(terminalreporter, lines, 'failed', "FAIL %s")
-        elif char in "sS":
-            show_skipped(terminalreporter, lines)
-        elif char == "E":
-            show_simple(terminalreporter, lines, 'error', "ERROR %s")
-        elif char == 'p':
-            show_simple(terminalreporter, lines, 'passed', "PASSED %s")
+        action = REPORTCHAR_ACTIONS.get(char, lambda tr, lines: None)
+        action(terminalreporter, lines)
 
     if lines:
         tr._tw.sep("=", "short test summary info")
@@ -339,18 +220,6 @@ def show_xpassed(terminalreporter, lines):
             pos = terminalreporter.config.cwd_relative_nodeid(rep.nodeid)
             reason = rep.wasxfail
             lines.append("XPASS %s %s" % (pos, reason))
-
-
-def cached_eval(config, expr, d):
-    if not hasattr(config, '_evalcache'):
-        config._evalcache = {}
-    try:
-        return config._evalcache[expr]
-    except KeyError:
-        import _pytest._code
-        exprcode = _pytest._code.compile(expr, mode="eval")
-        config._evalcache[expr] = x = eval(exprcode, d)
-        return x
 
 
 def folded_skips(skipped):
@@ -395,3 +264,22 @@ def show_skipped(terminalreporter, lines):
                     lines.append(
                         "SKIP [%d] %s: %s" %
                         (num, fspath, reason))
+
+
+def shower(stat, format):
+    def show_(terminalreporter, lines):
+        return show_simple(terminalreporter, lines, stat, format)
+    return show_
+
+
+REPORTCHAR_ACTIONS = {
+    'x': show_xfailed,
+    'X': show_xpassed,
+    'f': shower('failed', "FAIL %s"),
+    'F': shower('failed', "FAIL %s"),
+    's': show_skipped,
+    'S': show_skipped,
+    'p': shower('passed', "PASSED %s"),
+    'E': shower('error', "ERROR %s")
+
+}
