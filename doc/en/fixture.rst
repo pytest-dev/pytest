@@ -369,7 +369,7 @@ ends, but ``addfinalizer`` has two key differences over ``yield``:
 Fixtures can introspect the requesting test context
 -------------------------------------------------------------
 
-Fixture function can accept the :py:class:`request <FixtureRequest>` object
+Fixture functions can accept the :py:class:`request <FixtureRequest>` object
 to introspect the "requesting" test function, class or module context.
 Further extending the previous ``smtp`` fixture example, let's
 read an optional server URL from the test module which uses our fixture::
