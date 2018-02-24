@@ -50,6 +50,10 @@ def pytest_addoption(parser):
                     action="store_true", default=False,
                     help="ignore doctest ImportErrors",
                     dest="doctest_ignore_import_errors")
+    group.addoption("--doctest-continue-on-failure",
+                    action="store_true", default=False,
+                    help="for a given doctest, continue to run after the first failure",
+                    dest="doctest_continue_on_failure")
 
 
 def pytest_collect_file(path, parent):
@@ -100,22 +104,16 @@ class MultipleDoctestFailures(Exception):
 def _init_runner_class():
     import doctest
 
-    class PytestDoctestRunner(doctest.DocTestRunner):
+    class PytestDoctestRunner(doctest.DebugRunner):
         """
         Runner to collect failures.  Note that the out variable in this case is
         a list instead of a stdout-like object
         """
         def __init__(self, checker=None, verbose=None, optionflags=0,
                      continue_on_failure=True):
-            doctest.DocTestRunner.__init__(
+            doctest.DebugRunner.__init__(
                 self, checker=checker, verbose=verbose, optionflags=optionflags)
             self.continue_on_failure = continue_on_failure
-
-        def report_start(self, out, test, example):
-            pass
-
-        def report_success(self, out, test, example, got):
-            pass
 
         def report_failure(self, out, test, example, got):
             failure = doctest.DocTestFailure(test, example, got)
@@ -257,6 +255,16 @@ def get_optionflags(parent):
     return flag_acc
 
 
+def _get_continue_on_failure(config):
+    continue_on_failure = config.getvalue('doctest_continue_on_failure')
+    if continue_on_failure:
+        # We need to turn off this if we use pdb since we should stop at
+        # the first failure
+        if config.getvalue("usepdb"):
+            continue_on_failure = False
+    return continue_on_failure
+
+
 class DoctestTextfile(pytest.Module):
     obj = None
 
@@ -272,10 +280,11 @@ class DoctestTextfile(pytest.Module):
         globs = {'__name__': '__main__'}
 
         optionflags = get_optionflags(self)
-        continue_on_failure = not self.config.getvalue("usepdb")
-        runner = _get_runner(verbose=0, optionflags=optionflags,
-                             checker=_get_checker(),
-                             continue_on_failure=continue_on_failure)
+
+        runner = _get_runner(
+            verbose=0, optionflags=optionflags,
+            checker=_get_checker(),
+            continue_on_failure=_get_continue_on_failure(self.config))
         _fix_spoof_python2(runner, encoding)
 
         parser = doctest.DocTestParser()
@@ -310,10 +319,10 @@ class DoctestModule(pytest.Module):
         # uses internal doctest module parsing mechanism
         finder = doctest.DocTestFinder()
         optionflags = get_optionflags(self)
-        continue_on_failure = not self.config.getvalue("usepdb")
-        runner = _get_runner(verbose=0, optionflags=optionflags,
-                             checker=_get_checker(),
-                             continue_on_failure=continue_on_failure)
+        runner = _get_runner(
+            verbose=0, optionflags=optionflags,
+            checker=_get_checker(),
+            continue_on_failure=_get_continue_on_failure(self.config))
 
         for test in finder.find(module, module.__name__):
             if test.examples:  # skip empty doctests

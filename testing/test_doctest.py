@@ -767,7 +767,7 @@ class TestDoctestSkips(object):
             7
             >>> i + 1
         """)
-        result = testdir.runpytest("--doctest-modules")
+        result = testdir.runpytest("--doctest-modules", "--doctest-continue-on-failure")
         result.assert_outcomes(passed=0, failed=1)
         # The lines that contains the failure are 4, 5, and 8.  The first one
         # is a stack trace and the other two are mismatches.
