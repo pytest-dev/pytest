@@ -115,6 +115,11 @@ itself::
     >>> get_unicode_greeting()  # doctest: +ALLOW_UNICODE
     'Hello'
 
+By default, pytest would report only the first failure for a given doctest.  If
+you want to continue the test even when you have failures, do::
+
+    pytest --doctest-modules --doctest-continue-on-failure
+
 
 The 'doctest_namespace' fixture
 -------------------------------
