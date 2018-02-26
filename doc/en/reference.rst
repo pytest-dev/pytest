@@ -53,7 +53,9 @@ main
 
 raises
 ------
+
 .. autofunction:: _pytest.python_api.raises
+    :with: excinfo
 
 Examples at :ref:`assertraises`.
 
@@ -61,7 +63,7 @@ deprecated_call
 ---------------
 
 .. autofunction:: _pytest.recwarn.deprecated_call
-
+    :with:
 
 .. _`hook-reference`:
 
