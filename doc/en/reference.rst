@@ -9,22 +9,56 @@ This page contains the full reference to pytest's API.
     :local:
 
 
+approx
+------
+
 .. autofunction:: _pytest.python_api.approx
+
+outcomes
+--------
 
 You can use the following functions in your test, fixture or setup
 functions to force a certain test outcome.  Note that most often
 you can rather use declarative marks, see :ref:`skipping`.
 
+fail
+~~~~
+
 .. autofunction:: _pytest.outcomes.fail
+
+skip
+~~~~
+
 .. autofunction:: _pytest.outcomes.skip
+
+importorskip
+~~~~~~~~~~~~
+
 .. autofunction:: _pytest.outcomes.importorskip
+
+xfail
+~~~~~
+
 .. autofunction:: _pytest.outcomes.xfail
+
+exit
+~~~~
+
 .. autofunction:: _pytest.outcomes.exit
+
+main
+~~~~
+
 .. autofunction:: _pytest.config.main
 
+raises
+------
 .. autofunction:: _pytest.python_api.raises
 
 Examples at :ref:`assertraises`.
+
+deprecated_call
+---------------
 
 .. autofunction:: _pytest.recwarn.deprecated_call
 
