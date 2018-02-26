@@ -1,6 +1,7 @@
 import os
 import six
 import sys
+import platform
 import traceback
 
 from . import MarkDecorator, MarkInfo
@@ -67,7 +68,7 @@ class MarkEvaluator(object):
                  pytrace=False)
 
     def _getglobals(self):
-        d = {'os': os, 'sys': sys, 'config': self.item.config}
+        d = {'os': os, 'sys': sys, 'platform': platform, 'config': self.item.config}
         if hasattr(self.item, 'obj'):
             d.update(self.item.obj.__globals__)
         return d

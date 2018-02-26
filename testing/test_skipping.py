@@ -612,6 +612,16 @@ class TestSkipif(object):
         ])
         assert result.ret == 0
 
+    def test_skipif_using_platform(self, testdir):
+        item = testdir.getitem("""
+            import pytest
+            @pytest.mark.skipif("platform.platform() == platform.platform()")
+            def test_func():
+                pass
+        """)
+        pytest.raises(pytest.skip.Exception, lambda:
+                      pytest_runtest_setup(item))
+
     @pytest.mark.parametrize('marker, msg1, msg2', [
         ('skipif', 'SKIP', 'skipped'),
         ('xfail', 'XPASS', 'xpassed'),
