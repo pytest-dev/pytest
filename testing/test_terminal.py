@@ -1045,6 +1045,7 @@ class TestProgress(object):
             r'test_foo.py \.{5}',
             r'test_foobar.py \.{5}',
         ])
+        assert "%]" not in output.stdout.str()
 
 
 class TestProgressWithTeardown(object):
