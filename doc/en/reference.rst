@@ -6,7 +6,27 @@ This page contains the full reference to pytest's API.
 
 .. contents::
     :depth: 2
-    :local: 
+    :local:
+
+
+.. autofunction:: _pytest.python_api.approx
+
+You can use the following functions in your test, fixture or setup
+functions to force a certain test outcome.  Note that most often
+you can rather use declarative marks, see :ref:`skipping`.
+
+.. autofunction:: _pytest.outcomes.fail
+.. autofunction:: _pytest.outcomes.skip
+.. autofunction:: _pytest.outcomes.importorskip
+.. autofunction:: _pytest.outcomes.xfail
+.. autofunction:: _pytest.outcomes.exit
+.. autofunction:: _pytest.config.main
+
+.. autofunction:: _pytest.python_api.raises
+
+Examples at :ref:`assertraises`.
+
+.. autofunction:: _pytest.recwarn.deprecated_call
 
 
 .. _`hook-reference`:
@@ -231,8 +251,8 @@ Example of a fixture requiring another fixture:
 For more details, consult the full :ref:`fixtures docs <fixture>`.
 
 
-fixture decorator signature
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+fixture decorator
+~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: _pytest.fixtures
 .. autofunction:: fixture
@@ -346,3 +366,12 @@ doctest_namespace
             doctest_namespace['np'] = numpy
 
     For more details: :ref:`doctest_namespace`.
+
+
+request
+~~~~~~~
+
+The ``request`` fixture is a special fixture providing information of the requesting test function.
+
+.. autoclass:: _pytest.fixtures.FixtureRequest()
+    :members:

@@ -14,7 +14,6 @@ Full pytest documentation
    usage
    existingtestsuite
    assert
-   builtin
    fixture
    monkeypatch
    tmpdir
