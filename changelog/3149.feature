@@ -1,1 +1,1 @@
-Doctest runs now show multiple failures for each doctest snippet, instead of stopping at the first failure.
+New ``--doctest-continue-on-failure`` command-line option to enable doctests to show multiple failures for each snippet, instead of stopping at the first failure.
