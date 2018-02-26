@@ -4,6 +4,10 @@ Reference
 
 This page contains the full reference to pytest's API.
 
+.. contents::
+    :depth: 2
+    :local: 
+
 
 .. _`hook-reference`:
 
