@@ -1045,6 +1045,8 @@ class TestProgress(object):
             r'test_foo.py \.{5}',
             r'test_foobar.py \.{5}',
         ])
+
+        output = testdir.runpytest('--capture=no')
         assert "%]" not in output.stdout.str()
 
 
