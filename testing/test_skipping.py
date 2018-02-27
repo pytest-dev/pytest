@@ -156,6 +156,21 @@ class TestXFail(object):
         assert callreport.passed
         assert callreport.wasxfail == "this is an xfail"
 
+    def test_xfail_use_platform(self, testdir):
+        """
+        Verify that platform can be used with xfail statements.
+        """
+        item = testdir.getitem("""
+            import pytest
+            @pytest.mark.xfail("platform.platform() == platform.platform()")
+            def test_func():
+                assert 0
+        """)
+        reports = runtestprotocol(item, log=False)
+        assert len(reports) == 3
+        callreport = reports[1]
+        assert callreport.wasxfail
+
     def test_xfail_xpassed_strict(self, testdir):
         item = testdir.getitem("""
             import pytest
