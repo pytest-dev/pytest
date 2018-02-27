@@ -5,7 +5,7 @@ Reference
 This page contains the full reference to pytest's API.
 
 .. contents::
-    :depth: 2
+    :depth: 3
     :local:
 
 
@@ -423,3 +423,14 @@ record_xml_property
 ~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: _pytest.junitxml.record_xml_property()
+
+caplog
+~~~~~~
+
+.. autofunction:: _pytest.logging.caplog()
+    :no-auto-options:
+
+    This returns a :class:`_pytest.logging.LogCaptureFixture`.
+
+.. autoclass:: _pytest.logging.LogCaptureFixture
+    :members:
