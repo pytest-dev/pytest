@@ -21,46 +21,46 @@ You can use the following functions in your test, fixture or setup
 functions to force a certain test outcome.  Note that most often
 you can rather use declarative marks, see :ref:`skipping`.
 
-fail
-~~~~
+pytest.fail
+~~~~~~~~~~~
 
 .. autofunction:: _pytest.outcomes.fail
 
-skip
-~~~~
+pytest.skip
+~~~~~~~~~~~
 
 .. autofunction:: _pytest.outcomes.skip
 
-importorskip
-~~~~~~~~~~~~
+pytest.importorskip
+~~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: _pytest.outcomes.importorskip
 
-xfail
-~~~~~
+pytest.xfail
+~~~~~~~~~~~~
 
 .. autofunction:: _pytest.outcomes.xfail
 
-exit
-~~~~
+pytest.exit
+~~~~~~~~~~~
 
 .. autofunction:: _pytest.outcomes.exit
 
-main
-~~~~
+pytest.main
+~~~~~~~~~~~
 
 .. autofunction:: _pytest.config.main
 
-raises
-------
+pytest.raises
+-------------
 
 .. autofunction:: _pytest.python_api.raises
     :with: excinfo
 
 Examples at :ref:`assertraises`.
 
-deprecated_call
----------------
+pytest.deprecated_call
+----------------------
 
 .. autofunction:: _pytest.recwarn.deprecated_call
     :with:
