@@ -9,8 +9,8 @@ This page contains the full reference to pytest's API.
     :local:
 
 
-approx
-------
+pytest.approx
+-------------
 
 .. autofunction:: _pytest.python_api.approx
 
@@ -66,6 +66,15 @@ pytest.deprecated_call
 
 .. autofunction:: _pytest.recwarn.deprecated_call
     :with:
+
+pytest.warns
+------------
+
+**Tutorial**: :ref:`assertwarnings`
+
+.. autofunction:: _pytest.recwarn.warns
+    :with:
+
 
 .. _`hook-reference`:
 
@@ -249,6 +258,10 @@ Full reference to objects accessible from :ref:`fixtures <fixture>` or hooks
 
 .. autoclass:: pluggy.PluginManager()
     :members:
+
+.. autoclass:: pluggy.PluginManager()
+    :members:
+
 
 
 Fixtures
@@ -485,3 +498,52 @@ To use it, include in your top-most ``conftest.py`` file::
 
 .. autoclass:: LineMatcher()
     :members:
+
+
+recwarn
+~~~~~~~
+
+**Tutorial**: :ref:`assertwarnings`
+
+.. currentmodule:: _pytest.recwarn
+
+.. autofunction:: recwarn()
+    :no-auto-options:
+
+.. autoclass:: _pytest.recwarn.WarningsRecorder()
+    :members:
+
+Each recorded warning is an instance of :class:`warnings.WarningMessage`.
+
+.. note::
+    :class:`RecordedWarning` was changed from a plain class to a namedtuple in pytest 3.1
+
+.. note::
+    ``DeprecationWarning`` and ``PendingDeprecationWarning`` are treated
+    differently; see :ref:`ensuring_function_triggers`.
+
+
+tmpdir
+~~~~~~
+
+**Tutorial**: :doc:`tmpdir`
+
+.. currentmodule:: _pytest.tmpdir
+
+.. autofunction:: tmpdir()
+    :no-auto-options:
+
+
+tmpdir_factory
+~~~~~~~~~~~~~~
+
+**Tutorial**: :ref:`tmpdir factory example`
+
+.. _`tmpdir factory api`:
+
+``tmpdir_factory`` instances have the following methods:
+
+.. currentmodule:: _pytest.tmpdir
+
+.. automethod:: TempdirFactory.mktemp
+.. automethod:: TempdirFactory.getbasetemp
