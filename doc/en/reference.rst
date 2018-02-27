@@ -416,5 +416,10 @@ The ``request`` fixture is a special fixture providing information of the reques
 pytestconfig
 ~~~~~~~~~~~~
 
-Scoped-session fixture which returns the internal :class:`_pytest.config.Config` object.
+.. autofunction:: _pytest.fixtures.pytestconfig()
     
+
+record_xml_property
+~~~~~~~~~~~~~~~~~~~
+
+.. autofunction:: _pytest.junitxml.record_xml_property()

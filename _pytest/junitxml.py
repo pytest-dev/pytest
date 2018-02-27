@@ -200,6 +200,11 @@ def record_xml_property(request):
     """Add extra xml properties to the tag for the calling test.
     The fixture is callable with ``(name, value)``, with value being automatically
     xml-encoded.
+
+    Example::
+
+        def test_function(record_xml_property):
+            record_xml_property("example_key", 1)
     """
     request.node.warn(
         code='C3',

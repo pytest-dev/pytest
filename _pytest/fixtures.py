@@ -923,7 +923,15 @@ defaultfuncargprefixmarker = fixture()
 
 @fixture(scope="session")
 def pytestconfig(request):
-    """ the pytest config object with access to command line opts."""
+    """Session-scoped fixture that returns the :class:`_pytest.config.Config` object.
+
+    Example::
+
+        def test_foo(pytestconfig):
+            if pytestconfig.getoption("verbose"):
+                ...
+
+    """
     return request.config
 
 
