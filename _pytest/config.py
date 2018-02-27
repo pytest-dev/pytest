@@ -1328,14 +1328,10 @@ def determine_setup(inifile, args, warnfunc=None):
     if inifile:
         iniconfig = py.iniconfig.IniConfig(inifile)
         is_cfg_file = str(inifile).endswith('.cfg')
-        # TODO: [pytest] section in *.cfg files is depricated. Need refactoring.
         sections = ['tool:pytest', 'pytest'] if is_cfg_file else ['pytest']
         for section in sections:
             try:
                 inicfg = iniconfig[section]
-                if is_cfg_file and section == 'pytest' and warnfunc:
-                    from _pytest.deprecated import SETUP_CFG_PYTEST
-                    warnfunc('C1', SETUP_CFG_PYTEST.replace('setup.cfg', str(inifile)))
                 break
             except KeyError:
                 inicfg = None
