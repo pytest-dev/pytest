@@ -250,20 +250,6 @@ Full reference to objects accessible from :ref:`fixtures <fixture>` or hooks
 .. autoclass:: pluggy.PluginManager()
     :members:
 
-.. currentmodule:: _pytest.pytester
-
-.. autoclass:: Testdir()
-    :members: runpytest,runpytest_subprocess,runpytest_inprocess,makeconftest,makepyfile
-
-.. autoclass:: RunResult()
-    :members:
-
-.. autoclass:: LineMatcher()
-    :members:
-
-.. autoclass:: _pytest.capture.CaptureFixture()
-    :members:
-
 
 Fixtures
 --------
@@ -465,13 +451,37 @@ caplog
 monkeypatch
 ~~~~~~~~~~~
 
+.. currentmodule:: _pytest.monkeypatch
+
 **Tutorial**: :doc:`monkeypatch`.
 
 .. autofunction:: _pytest.monkeypatch.monkeypatch()
     :no-auto-options:
 
-    This returns a :class:`_pytest.monkeypatch.MonkeyPatch` instance.
+    This returns a :class:`MonkeyPatch` instance.
 
 .. autoclass:: _pytest.monkeypatch.MonkeyPatch
     :members:
 
+testdir
+~~~~~~~
+
+.. currentmodule:: _pytest.pytester
+
+This fixture provides a :class:`Testdir` instance useful for black-box testing of test files, making it ideal to
+test plugins.
+
+To use it, include in your top-most ``conftest.py`` file::
+
+    pytest_plugins = 'pytester'
+
+
+
+.. autoclass:: Testdir()
+    :members: runpytest,runpytest_subprocess,runpytest_inprocess,makeconftest,makepyfile
+
+.. autoclass:: RunResult()
+    :members:
+
+.. autoclass:: LineMatcher()
+    :members:
