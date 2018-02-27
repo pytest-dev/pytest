@@ -1,7 +1,6 @@
 """ support for skip/xfail functions and markers. """
 from __future__ import absolute_import, division, print_function
 
-
 from _pytest.config import hookimpl
 from _pytest.mark import MarkInfo, MarkDecorator
 from _pytest.mark.evaluate import MarkEvaluator
@@ -14,11 +13,11 @@ def pytest_addoption(parser):
                     action="store_true", dest="runxfail", default=False,
                     help="run tests even if they are marked xfail")
 
-    parser.addini("xfail_strict", "default for the strict parameter of xfail "
-                                  "markers when not given explicitly (default: "
-                                  "False)",
-                                  default=False,
-                                  type="bool")
+    parser.addini("xfail_strict",
+                  "default for the strict parameter of xfail "
+                  "markers when not given explicitly (default: False)",
+                  default=False,
+                  type="bool")
 
 
 def pytest_configure(config):
@@ -130,7 +129,7 @@ def pytest_runtest_makereport(item, call):
             rep.outcome = "passed"
             rep.wasxfail = rep.longrepr
     elif item.config.option.runxfail:
-        pass   # don't interefere
+        pass  # don't interefere
     elif call.excinfo and call.excinfo.errisinstance(xfail.Exception):
         rep.wasxfail = "reason: " + call.excinfo.value.msg
         rep.outcome = "skipped"
@@ -160,6 +159,7 @@ def pytest_runtest_makereport(item, call):
         filename, line = item.location[:2]
         rep.longrepr = filename, line, reason
 
+
 # called by terminalreporter progress reporting
 
 
@@ -169,6 +169,7 @@ def pytest_report_teststatus(report):
             return "xfailed", "x", "xfail"
         elif report.passed:
             return "xpassed", "X", ("XPASS", {'yellow': True})
+
 
 # called by the terminalreporter instance/plugin
 
@@ -233,7 +234,7 @@ def folded_skips(skipped):
         # TODO: revisit after marks scope would be fixed
         when = getattr(event, 'when', None)
         if when == 'setup' and 'skip' in keywords and 'pytestmark' not in keywords:
-            key = (key[0], None, key[2], )
+            key = (key[0], None, key[2])
         d.setdefault(key, []).append(event)
     values = []
     for key, events in d.items():
@@ -269,6 +270,7 @@ def show_skipped(terminalreporter, lines):
 def shower(stat, format):
     def show_(terminalreporter, lines):
         return show_simple(terminalreporter, lines, stat, format)
+
     return show_
 
 

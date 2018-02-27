@@ -1090,3 +1090,18 @@ def test_mark_xfail_item(testdir):
     assert not failed
     xfailed = [r for r in skipped if hasattr(r, 'wasxfail')]
     assert xfailed
+
+
+def test_summary_list_after_errors(testdir):
+    """Ensure the list of errors/fails/xfails/skips appear after tracebacks in terminal reporting."""
+    testdir.makepyfile("""
+        import pytest
+        def test_fail():
+            assert 0
+    """)
+    result = testdir.runpytest('-ra')
+    result.stdout.fnmatch_lines([
+        '=* FAILURES *=',
+        '*= short test summary info =*',
+        'FAIL test_summary_list_after_errors.py::test_fail',
+    ])
