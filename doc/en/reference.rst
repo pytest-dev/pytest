@@ -196,6 +196,9 @@ Full reference to objects accessible from :ref:`fixtures <fixture>` or hooks
     :members:
     :show-inheritance:
 
+.. autoclass:: _pytest._code.ExceptionInfo
+    :members:
+
 .. autoclass:: _pytest.nodes.FSCollector()
     :members:
     :show-inheritance:
@@ -427,10 +430,27 @@ record_xml_property
 caplog
 ~~~~~~
 
+**Tutorial**: :doc:`logging`.
+
 .. autofunction:: _pytest.logging.caplog()
     :no-auto-options:
 
-    This returns a :class:`_pytest.logging.LogCaptureFixture`.
+    This returns a :class:`_pytest.logging.LogCaptureFixture` instance.
 
 .. autoclass:: _pytest.logging.LogCaptureFixture
     :members:
+
+
+monkeypatch
+~~~~~~~~~~~
+
+**Tutorial**: :doc:`monkeypatch`.
+
+.. autofunction:: _pytest.monkeypatch.monkeypatch()
+    :no-auto-options:
+
+    This returns a :class:`_pytest.monkeypatch.MonkeyPatch` instance.
+
+.. autoclass:: _pytest.monkeypatch.MonkeyPatch
+    :members:
+
