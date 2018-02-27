@@ -1,1 +1,1 @@
-Add the usage of ``platform`` in ``pytest.mark``
+The builtin module ``platform`` is now available for use in expressions in ``pytest.mark``.
