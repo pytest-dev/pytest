@@ -110,6 +110,13 @@ class TestConfigCmdlineParsing(object):
         config = testdir.parseconfig("-c", "custom.cfg")
         assert config.getini("custom") == "1"
 
+        testdir.makefile(".cfg", custom_tool_pytest_section="""
+            [tool:pytest]
+            custom = 1
+        """)
+        config = testdir.parseconfig("-c", "custom_tool_pytest_section.cfg")
+        assert config.getini("custom") == "1"
+
     def test_absolute_win32_path(self, testdir):
         temp_cfg_file = testdir.makefile(".cfg", custom="""
             [pytest]
