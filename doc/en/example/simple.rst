@@ -3,6 +3,8 @@
 Basic patterns and examples
 ==========================================================
 
+.. _request example:
+
 Pass different values to a test function, depending on command line options
 ----------------------------------------------------------------------------
 

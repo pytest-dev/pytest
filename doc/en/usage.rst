@@ -220,6 +220,8 @@ To set the name of the root test suite xml item, you can configure the ``junit_s
     [pytest]
     junit_suite_name = my_suite
 
+.. _record_xml_property example:
+
 record_xml_property
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

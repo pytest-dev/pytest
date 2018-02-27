@@ -54,13 +54,15 @@ pytest.main
 pytest.raises
 -------------
 
+**Tutorial**: :ref:`assertraises`.
+
 .. autofunction:: _pytest.python_api.raises
     :with: excinfo
 
-Examples at :ref:`assertraises`.
-
 pytest.deprecated_call
 ----------------------
+
+**Tutorial**: :ref:`ensuring_function_triggers`.
 
 .. autofunction:: _pytest.recwarn.deprecated_call
     :with:
@@ -70,6 +72,7 @@ pytest.deprecated_call
 Hooks
 -----
 
+**Tutorial**: :doc:`writing_plugins`.
 
 .. currentmodule:: _pytest.hookspec
 
@@ -265,6 +268,8 @@ Full reference to objects accessible from :ref:`fixtures <fixture>` or hooks
 Fixtures
 --------
 
+**Tutorial**: :ref:`fixture`.
+
 Fixtures are requested by test functions or other fixtures by declaring them as argument names.
 
 
@@ -303,6 +308,8 @@ fixture decorator
 config.cache
 ~~~~~~~~~~~~
 
+**Tutorial**: :ref:`cache`.
+
 The ``config.cache`` object allows other plugins and fixtures
 to store and retrieve values across test runs. To access it from fixtures
 request ``pytestconfig`` into your fixture and get it with ``pytestconfig.cache``.
@@ -319,6 +326,8 @@ Under the hood, the cache plugin uses the simple
 
 capsys
 ~~~~~~
+
+**Tutorial**: :doc:`capture`.
 
 .. currentmodule:: _pytest.capture
 
@@ -340,6 +349,8 @@ capsys
 capsysbinary
 ~~~~~~~~~~~~
 
+**Tutorial**: :doc:`capture`.
+
 .. autofunction:: capsysbinary()
     :no-auto-options:
 
@@ -357,6 +368,8 @@ capsysbinary
 
 capfd
 ~~~~~~
+
+**Tutorial**: :doc:`capture`.
 
 .. autofunction:: capfd()
     :no-auto-options:
@@ -376,6 +389,8 @@ capfd
 capfdbinary
 ~~~~~~~~~~~~
 
+**Tutorial**: :doc:`capture`.
+
 .. autofunction:: capfdbinary()
     :no-auto-options:
 
@@ -394,6 +409,8 @@ capfdbinary
 doctest_namespace
 ~~~~~~~~~~~~~~~~~
 
+**Tutorial**: :doc:`doctest`.
+
 .. autofunction:: _pytest.doctest.doctest_namespace()
 
     Usually this fixture is used in conjunction with another ``autouse`` fixture:
@@ -410,6 +427,8 @@ doctest_namespace
 request
 ~~~~~~~
 
+**Tutorial**: :ref:`request example`.
+
 The ``request`` fixture is a special fixture providing information of the requesting test function.
 
 .. autoclass:: _pytest.fixtures.FixtureRequest()
@@ -424,6 +443,8 @@ pytestconfig
 
 record_xml_property
 ~~~~~~~~~~~~~~~~~~~
+
+**Tutorial**: :ref:`record_xml_property example`.
 
 .. autofunction:: _pytest.junitxml.record_xml_property()
 
