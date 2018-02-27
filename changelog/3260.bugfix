@@ -1,0 +1,1 @@
+Fixed ``tool:pytest`` section when setup.cfg passed by option ``-c``
