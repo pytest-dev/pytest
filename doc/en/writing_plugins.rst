@@ -278,7 +278,7 @@ the plugin manager like this:
 
 .. sourcecode:: python
 
-    plugin = config.pluginmanager.getplugin("name_of_plugin")
+    plugin = config.pluginmanager.get_plugin("name_of_plugin")
 
 If you want to look at the names of existing plugins, use
 the ``--trace-config`` option.

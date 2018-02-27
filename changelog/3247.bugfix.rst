@@ -1,0 +1,1 @@
+Fix ``TypeError`` issue when using ``approx`` with a ``Decimal`` value.

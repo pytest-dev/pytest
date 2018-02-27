@@ -1328,10 +1328,14 @@ def determine_setup(inifile, args, warnfunc=None, rootdir_cmd_arg=None):
     dirs = get_dirs_from_args(args)
     if inifile:
         iniconfig = py.iniconfig.IniConfig(inifile)
-        try:
-            inicfg = iniconfig["pytest"]
-        except KeyError:
-            inicfg = None
+        is_cfg_file = str(inifile).endswith('.cfg')
+        sections = ['tool:pytest', 'pytest'] if is_cfg_file else ['pytest']
+        for section in sections:
+            try:
+                inicfg = iniconfig[section]
+                break
+            except KeyError:
+                inicfg = None
         rootdir = get_common_ancestor(dirs)
     else:
         ancestor = get_common_ancestor(dirs)

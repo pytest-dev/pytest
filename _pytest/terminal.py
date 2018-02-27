@@ -329,6 +329,8 @@ class TerminalReporter(object):
     _PROGRESS_LENGTH = len(' [100%]')
 
     def _get_progress_information_message(self):
+        if self.config.getoption('capture') == 'no':
+            return ''
         collected = self._session.testscollected
         if collected:
             progress = len(self._progress_nodeids_reported) * 100 // collected
