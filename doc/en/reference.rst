@@ -411,3 +411,10 @@ The ``request`` fixture is a special fixture providing information of the reques
 
 .. autoclass:: _pytest.fixtures.FixtureRequest()
     :members:
+
+
+pytestconfig
+~~~~~~~~~~~~
+
+Scoped-session fixture which returns the internal :class:`_pytest.config.Config` object.
+    
