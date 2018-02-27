@@ -156,6 +156,21 @@ class TestXFail(object):
         assert callreport.passed
         assert callreport.wasxfail == "this is an xfail"
 
+    def test_xfail_using_platform(self, testdir):
+        """
+        Verify that platform can be used with xfail statements.
+        """
+        item = testdir.getitem("""
+            import pytest
+            @pytest.mark.xfail("platform.platform() == platform.platform()")
+            def test_func():
+                assert 0
+        """)
+        reports = runtestprotocol(item, log=False)
+        assert len(reports) == 3
+        callreport = reports[1]
+        assert callreport.wasxfail
+
     def test_xfail_xpassed_strict(self, testdir):
         item = testdir.getitem("""
             import pytest
@@ -611,6 +626,16 @@ class TestSkipif(object):
             "*1 skipped*"
         ])
         assert result.ret == 0
+
+    def test_skipif_using_platform(self, testdir):
+        item = testdir.getitem("""
+            import pytest
+            @pytest.mark.skipif("platform.platform() == platform.platform()")
+            def test_func():
+                pass
+        """)
+        pytest.raises(pytest.skip.Exception, lambda:
+                      pytest_runtest_setup(item))
 
     @pytest.mark.parametrize('marker, msg1, msg2', [
         ('skipif', 'SKIP', 'skipped'),
