@@ -1093,7 +1093,7 @@ def test_mark_xfail_item(testdir):
 
 
 def test_summary_list_after_errors(testdir):
-    """Ensure the list of errors/fails/xfails/skips appear after tracebacks in terminal reporting."""
+    """Ensure the list of errors/fails/xfails/skips appears after tracebacks in terminal reporting."""
     testdir.makepyfile("""
         import pytest
         def test_fail():
