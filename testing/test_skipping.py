@@ -156,7 +156,7 @@ class TestXFail(object):
         assert callreport.passed
         assert callreport.wasxfail == "this is an xfail"
 
-    def test_xfail_use_platform(self, testdir):
+    def test_xfail_using_platform(self, testdir):
         """
         Verify that platform can be used with xfail statements.
         """

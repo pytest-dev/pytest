@@ -1,1 +1,1 @@
-Add the usage of ``platform`` in ``pytest.mark.skipif``
+Add the usage of ``platform`` in ``pytest.mark``
