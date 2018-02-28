@@ -80,266 +80,6 @@ pytest.warns
 .. autofunction:: _pytest.recwarn.warns
     :with:
 
-
-.. _`hook-reference`:
-
-Hooks
------
-
-**Tutorial**: :doc:`writing_plugins`.
-
-.. currentmodule:: _pytest.hookspec
-
-Reference to all hooks which can be implemented by :ref:`conftest.py files <localplugin>` and :ref:`plugins <plugins>`.
-
-Bootstrapping hooks
-~~~~~~~~~~~~~~~~~~~
-
-Bootstrapping hooks called for plugins registered early enough (internal and setuptools plugins).
-
-.. autofunction:: pytest_load_initial_conftests
-.. autofunction:: pytest_cmdline_preparse
-.. autofunction:: pytest_cmdline_parse
-.. autofunction:: pytest_cmdline_main
-
-Initialization hooks
-~~~~~~~~~~~~~~~~~~~~
-
-Initialization hooks called for plugins and ``conftest.py`` files.
-
-.. autofunction:: pytest_addoption
-.. autofunction:: pytest_configure
-.. autofunction:: pytest_unconfigure
-
-Test running hooks
-~~~~~~~~~~~~~~~~~~
-
-All runtest related hooks receive a :py:class:`pytest.Item <_pytest.main.Item>` object.
-
-.. autofunction:: pytest_runtestloop
-.. autofunction:: pytest_runtest_protocol
-.. autofunction:: pytest_runtest_logstart
-.. autofunction:: pytest_runtest_logfinish
-.. autofunction:: pytest_runtest_setup
-.. autofunction:: pytest_runtest_call
-.. autofunction:: pytest_runtest_teardown
-.. autofunction:: pytest_runtest_makereport
-
-For deeper understanding you may look at the default implementation of
-these hooks in :py:mod:`_pytest.runner` and maybe also
-in :py:mod:`_pytest.pdb` which interacts with :py:mod:`_pytest.capture`
-and its input/output capturing in order to immediately drop
-into interactive debugging when a test failure occurs.
-
-The :py:mod:`_pytest.terminal` reported specifically uses
-the reporting hook to print information about a test run.
-
-Collection hooks
-~~~~~~~~~~~~~~~~
-
-``pytest`` calls the following hooks for collecting files and directories:
-
-.. autofunction:: pytest_collection
-.. autofunction:: pytest_ignore_collect
-.. autofunction:: pytest_collect_directory
-.. autofunction:: pytest_collect_file
-
-For influencing the collection of objects in Python modules
-you can use the following hook:
-
-.. autofunction:: pytest_pycollect_makeitem
-.. autofunction:: pytest_generate_tests
-.. autofunction:: pytest_make_parametrize_id
-
-After collection is complete, you can modify the order of
-items, delete or otherwise amend the test items:
-
-.. autofunction:: pytest_collection_modifyitems
-
-Reporting hooks
-~~~~~~~~~~~~~~~
-
-Session related reporting hooks:
-
-.. autofunction:: pytest_collectstart
-.. autofunction:: pytest_itemcollected
-.. autofunction:: pytest_collectreport
-.. autofunction:: pytest_deselected
-.. autofunction:: pytest_report_header
-.. autofunction:: pytest_report_collectionfinish
-.. autofunction:: pytest_report_teststatus
-.. autofunction:: pytest_terminal_summary
-.. autofunction:: pytest_fixture_setup
-.. autofunction:: pytest_fixture_post_finalizer
-
-And here is the central hook for reporting about
-test execution:
-
-.. autofunction:: pytest_runtest_logreport
-
-You can also use this hook to customize assertion representation for some
-types:
-
-.. autofunction:: pytest_assertrepr_compare
-
-
-Debugging/Interaction hooks
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-There are few hooks which can be used for special
-reporting or interaction with exceptions:
-
-.. autofunction:: pytest_internalerror
-.. autofunction:: pytest_keyboard_interrupt
-.. autofunction:: pytest_exception_interact
-.. autofunction:: pytest_enter_pdb
-
-
-Objects
--------
-
-Full reference to objects accessible from :ref:`fixtures <fixture>` or hooks.
-
-
-CallInfo
-~~~~~~~~
-
-.. autoclass:: _pytest.runner.CallInfo()
-    :members:
-
-
-Class
-~~~~~
-
-.. autoclass:: _pytest.python.Class()
-    :members:
-    :show-inheritance:
-
-Collector
-~~~~~~~~~
-
-.. autoclass:: _pytest.nodes.Collector()
-    :members:
-    :show-inheritance:
-
-Config
-~~~~~~
-
-.. autoclass:: _pytest.config.Config()
-    :members:
-
-ExceptionInfo
-~~~~~~~~~~~~~
-
-.. autoclass:: _pytest._code.ExceptionInfo
-    :members:
-
-FixtureDef
-~~~~~~~~~~
-
-.. autoclass:: _pytest.fixtures.FixtureDef()
-    :members:
-    :show-inheritance:
-
-FSCollector
-~~~~~~~~~~~
-
-.. autoclass:: _pytest.nodes.FSCollector()
-    :members:
-    :show-inheritance:
-
-Function
-~~~~~~~~
-
-.. autoclass:: _pytest.python.Function()
-    :members:
-    :show-inheritance:
-
-Item
-~~~~
-
-.. autoclass:: _pytest.nodes.Item()
-    :members:
-    :show-inheritance:
-
-MarkDecorator
-~~~~~~~~~~~~~
-
-.. autoclass:: _pytest.mark.MarkDecorator
-    :members:
-
-MarkGenerator
-~~~~~~~~~~~~~
-
-.. autoclass:: _pytest.mark.MarkGenerator
-    :members:
-
-MarkInfo
-~~~~~~~~
-
-.. autoclass:: _pytest.mark.MarkInfo
-    :members:
-
-Metafunc
-~~~~~~~~
-
-.. autoclass:: _pytest.python.Metafunc
-    :members:
-
-Module
-~~~~~~
-
-.. autoclass:: _pytest.python.Module()
-    :members:
-    :show-inheritance:
-
-Node
-~~~~
-
-.. autoclass:: _pytest.nodes.Node()
-    :members:
-
-Parser
-~~~~~~
-
-.. autoclass:: _pytest.config.Parser()
-    :members:
-
-PluginManager
-~~~~~~~~~~~~~
-
-.. autoclass:: pluggy.PluginManager()
-    :members:
-
-
-PytestPluginManager
-~~~~~~~~~~~~~~~~~~~
-
-.. autoclass:: _pytest.config.PytestPluginManager()
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-Session
-~~~~~~~
-
-.. autoclass:: _pytest.main.Session()
-    :members:
-    :show-inheritance:
-
-TestReport
-~~~~~~~~~~
-
-.. autoclass:: _pytest.runner.TestReport()
-    :members:
-    :inherited-members:
-
-_Result
-~~~~~~~
-
-.. autoclass:: pluggy._Result
-    :members:
-
 Marks
 -----
 
@@ -612,7 +352,7 @@ pytestconfig
 ~~~~~~~~~~~~
 
 .. autofunction:: _pytest.fixtures.pytestconfig()
-    
+
 
 record_xml_property
 ~~~~~~~~~~~~~~~~~~~
@@ -721,3 +461,263 @@ tmpdir_factory
 
 .. automethod:: TempdirFactory.mktemp
 .. automethod:: TempdirFactory.getbasetemp
+
+
+.. _`hook-reference`:
+
+Hooks
+-----
+
+**Tutorial**: :doc:`writing_plugins`.
+
+.. currentmodule:: _pytest.hookspec
+
+Reference to all hooks which can be implemented by :ref:`conftest.py files <localplugin>` and :ref:`plugins <plugins>`.
+
+Bootstrapping hooks
+~~~~~~~~~~~~~~~~~~~
+
+Bootstrapping hooks called for plugins registered early enough (internal and setuptools plugins).
+
+.. autofunction:: pytest_load_initial_conftests
+.. autofunction:: pytest_cmdline_preparse
+.. autofunction:: pytest_cmdline_parse
+.. autofunction:: pytest_cmdline_main
+
+Initialization hooks
+~~~~~~~~~~~~~~~~~~~~
+
+Initialization hooks called for plugins and ``conftest.py`` files.
+
+.. autofunction:: pytest_addoption
+.. autofunction:: pytest_configure
+.. autofunction:: pytest_unconfigure
+
+Test running hooks
+~~~~~~~~~~~~~~~~~~
+
+All runtest related hooks receive a :py:class:`pytest.Item <_pytest.main.Item>` object.
+
+.. autofunction:: pytest_runtestloop
+.. autofunction:: pytest_runtest_protocol
+.. autofunction:: pytest_runtest_logstart
+.. autofunction:: pytest_runtest_logfinish
+.. autofunction:: pytest_runtest_setup
+.. autofunction:: pytest_runtest_call
+.. autofunction:: pytest_runtest_teardown
+.. autofunction:: pytest_runtest_makereport
+
+For deeper understanding you may look at the default implementation of
+these hooks in :py:mod:`_pytest.runner` and maybe also
+in :py:mod:`_pytest.pdb` which interacts with :py:mod:`_pytest.capture`
+and its input/output capturing in order to immediately drop
+into interactive debugging when a test failure occurs.
+
+The :py:mod:`_pytest.terminal` reported specifically uses
+the reporting hook to print information about a test run.
+
+Collection hooks
+~~~~~~~~~~~~~~~~
+
+``pytest`` calls the following hooks for collecting files and directories:
+
+.. autofunction:: pytest_collection
+.. autofunction:: pytest_ignore_collect
+.. autofunction:: pytest_collect_directory
+.. autofunction:: pytest_collect_file
+
+For influencing the collection of objects in Python modules
+you can use the following hook:
+
+.. autofunction:: pytest_pycollect_makeitem
+.. autofunction:: pytest_generate_tests
+.. autofunction:: pytest_make_parametrize_id
+
+After collection is complete, you can modify the order of
+items, delete or otherwise amend the test items:
+
+.. autofunction:: pytest_collection_modifyitems
+
+Reporting hooks
+~~~~~~~~~~~~~~~
+
+Session related reporting hooks:
+
+.. autofunction:: pytest_collectstart
+.. autofunction:: pytest_itemcollected
+.. autofunction:: pytest_collectreport
+.. autofunction:: pytest_deselected
+.. autofunction:: pytest_report_header
+.. autofunction:: pytest_report_collectionfinish
+.. autofunction:: pytest_report_teststatus
+.. autofunction:: pytest_terminal_summary
+.. autofunction:: pytest_fixture_setup
+.. autofunction:: pytest_fixture_post_finalizer
+
+And here is the central hook for reporting about
+test execution:
+
+.. autofunction:: pytest_runtest_logreport
+
+You can also use this hook to customize assertion representation for some
+types:
+
+.. autofunction:: pytest_assertrepr_compare
+
+
+Debugging/Interaction hooks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There are few hooks which can be used for special
+reporting or interaction with exceptions:
+
+.. autofunction:: pytest_internalerror
+.. autofunction:: pytest_keyboard_interrupt
+.. autofunction:: pytest_exception_interact
+.. autofunction:: pytest_enter_pdb
+
+
+Objects
+-------
+
+Full reference to objects accessible from :ref:`fixtures <fixture>` or :ref:`hooks <hook-reference>`.
+
+
+CallInfo
+~~~~~~~~
+
+.. autoclass:: _pytest.runner.CallInfo()
+    :members:
+
+
+Class
+~~~~~
+
+.. autoclass:: _pytest.python.Class()
+    :members:
+    :show-inheritance:
+
+Collector
+~~~~~~~~~
+
+.. autoclass:: _pytest.nodes.Collector()
+    :members:
+    :show-inheritance:
+
+Config
+~~~~~~
+
+.. autoclass:: _pytest.config.Config()
+    :members:
+
+ExceptionInfo
+~~~~~~~~~~~~~
+
+.. autoclass:: _pytest._code.ExceptionInfo
+    :members:
+
+FixtureDef
+~~~~~~~~~~
+
+.. autoclass:: _pytest.fixtures.FixtureDef()
+    :members:
+    :show-inheritance:
+
+FSCollector
+~~~~~~~~~~~
+
+.. autoclass:: _pytest.nodes.FSCollector()
+    :members:
+    :show-inheritance:
+
+Function
+~~~~~~~~
+
+.. autoclass:: _pytest.python.Function()
+    :members:
+    :show-inheritance:
+
+Item
+~~~~
+
+.. autoclass:: _pytest.nodes.Item()
+    :members:
+    :show-inheritance:
+
+MarkDecorator
+~~~~~~~~~~~~~
+
+.. autoclass:: _pytest.mark.MarkDecorator
+    :members:
+
+MarkGenerator
+~~~~~~~~~~~~~
+
+.. autoclass:: _pytest.mark.MarkGenerator
+    :members:
+
+MarkInfo
+~~~~~~~~
+
+.. autoclass:: _pytest.mark.MarkInfo
+    :members:
+
+Metafunc
+~~~~~~~~
+
+.. autoclass:: _pytest.python.Metafunc
+    :members:
+
+Module
+~~~~~~
+
+.. autoclass:: _pytest.python.Module()
+    :members:
+    :show-inheritance:
+
+Node
+~~~~
+
+.. autoclass:: _pytest.nodes.Node()
+    :members:
+
+Parser
+~~~~~~
+
+.. autoclass:: _pytest.config.Parser()
+    :members:
+
+PluginManager
+~~~~~~~~~~~~~
+
+.. autoclass:: pluggy.PluginManager()
+    :members:
+
+
+PytestPluginManager
+~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: _pytest.config.PytestPluginManager()
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Session
+~~~~~~~
+
+.. autoclass:: _pytest.main.Session()
+    :members:
+    :show-inheritance:
+
+TestReport
+~~~~~~~~~~
+
+.. autoclass:: _pytest.runner.TestReport()
+    :members:
+    :inherited-members:
+
+_Result
+~~~~~~~
+
+.. autoclass:: pluggy._Result
+    :members:
