@@ -160,9 +160,9 @@ List the name ``tmpdir`` in the test function signature and ``pytest`` will look
     PYTEST_TMPDIR/test_needsfiles0
     1 failed in 0.12 seconds
 
-More info on tmpdir handling is available at `Temporary directories and files <tmpdir handling>`_.
+More info on tmpdir handling is available at :ref:`Temporary directories and files <tmpdir handling>`.
 
-Find out what kind of builtin ```pytest`` fixtures <fixtures>`_ exist with the command::
+Find out what kind of builtin :ref:`pytest fixtures <fixtures>` exist with the command::
 
     pytest --fixtures   # shows builtin and custom fixtures
 

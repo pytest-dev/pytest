@@ -24,6 +24,12 @@ from _pytest.compat import (
 from _pytest.outcomes import fail, TEST_OUTCOME
 
 
+@attr.s(frozen=True)
+class PseudoFixtureDef(object):
+    cached_result = attr.ib()
+    scope = attr.ib()
+
+
 def pytest_sessionstart(session):
     import _pytest.python
     import _pytest.nodes
@@ -440,10 +446,9 @@ class FixtureRequest(FuncargnamesCompatAttr):
                 fixturedef = self._getnextfixturedef(argname)
             except FixtureLookupError:
                 if argname == "request":
-                    class PseudoFixtureDef(object):
-                        cached_result = (self, [0], None)
-                        scope = "function"
-                    return PseudoFixtureDef
+                    cached_result = (self, [0], None)
+                    scope = "function"
+                    return PseudoFixtureDef(cached_result, scope)
                 raise
         # remove indent to prevent the python3 exception
         # from leaking into the call

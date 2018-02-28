@@ -1121,6 +1121,9 @@ class TestProgress(object):
             r'test_foobar.py \.{5}',
         ])
 
+        output = testdir.runpytest('--capture=no')
+        assert "%]" not in output.stdout.str()
+
 
 class TestProgressWithTeardown(object):
     """Ensure we show the correct percentages for tests that fail during teardown (#3088)"""
