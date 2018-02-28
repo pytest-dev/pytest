@@ -198,87 +198,147 @@ reporting or interaction with exceptions:
 Objects
 -------
 
-Full reference to objects accessible from :ref:`fixtures <fixture>` or hooks
+Full reference to objects accessible from :ref:`fixtures <fixture>` or hooks.
 
-.. autoclass:: _pytest.config.Config()
+
+CallInfo
+~~~~~~~~
+
+.. autoclass:: _pytest.runner.CallInfo()
     :members:
 
-.. autoclass:: _pytest.config.Parser()
-    :members:
 
-.. autoclass:: _pytest.nodes.Node()
-    :members:
-
-.. autoclass:: _pytest.nodes.Collector()
-    :members:
-    :show-inheritance:
-
-.. autoclass:: _pytest._code.ExceptionInfo
-    :members:
-
-.. autoclass:: _pytest.nodes.FSCollector()
-    :members:
-    :show-inheritance:
-
-.. autoclass:: _pytest.main.Session()
-    :members:
-    :show-inheritance:
-
-.. autoclass:: _pytest.nodes.Item()
-    :members:
-    :show-inheritance:
-
-.. autoclass:: _pytest.python.Module()
-    :members:
-    :show-inheritance:
+Class
+~~~~~
 
 .. autoclass:: _pytest.python.Class()
     :members:
     :show-inheritance:
 
-.. autoclass:: _pytest.python.Function()
+Collector
+~~~~~~~~~
+
+.. autoclass:: _pytest.nodes.Collector()
     :members:
     :show-inheritance:
+
+Config
+~~~~~~
+
+.. autoclass:: _pytest.config.Config()
+    :members:
+
+ExceptionInfo
+~~~~~~~~~~~~~
+
+.. autoclass:: _pytest._code.ExceptionInfo
+    :members:
+
+FixtureDef
+~~~~~~~~~~
 
 .. autoclass:: _pytest.fixtures.FixtureDef()
     :members:
     :show-inheritance:
 
-.. autoclass:: _pytest.runner.CallInfo()
+FSCollector
+~~~~~~~~~~~
+
+.. autoclass:: _pytest.nodes.FSCollector()
+    :members:
+    :show-inheritance:
+
+Function
+~~~~~~~~
+
+.. autoclass:: _pytest.python.Function()
+    :members:
+    :show-inheritance:
+
+Item
+~~~~
+
+.. autoclass:: _pytest.nodes.Item()
+    :members:
+    :show-inheritance:
+
+MarkDecorator
+~~~~~~~~~~~~~
+
+.. autoclass:: _pytest.mark.MarkDecorator
     :members:
 
-.. autoclass:: _pytest.runner.TestReport()
-    :members:
-    :inherited-members:
+MarkGenerator
+~~~~~~~~~~~~~
 
-.. currentmodule:: _pytest.python
-.. autoclass:: Metafunc
+.. autoclass:: _pytest.mark.MarkGenerator
     :members:
 
-.. autoclass:: pluggy._Result
+MarkInfo
+~~~~~~~~
+
+.. autoclass:: _pytest.mark.MarkInfo
     :members:
 
-.. autofunction:: _pytest.config.get_plugin_manager()
+Metafunc
+~~~~~~~~
+
+.. autoclass:: _pytest.python.Metafunc
+    :members:
+
+Module
+~~~~~~
+
+.. autoclass:: _pytest.python.Module()
+    :members:
+    :show-inheritance:
+
+Node
+~~~~
+
+.. autoclass:: _pytest.nodes.Node()
+    :members:
+
+Parser
+~~~~~~
+
+.. autoclass:: _pytest.config.Parser()
+    :members:
+
+PluginManager
+~~~~~~~~~~~~~
+
+.. autoclass:: pluggy.PluginManager()
+    :members:
+
+
+PytestPluginManager
+~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: _pytest.config.PytestPluginManager()
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: pluggy.PluginManager()
+Session
+~~~~~~~
+
+.. autoclass:: _pytest.main.Session()
     :members:
+    :show-inheritance:
 
-.. currentmodule:: _pytest.mark
+TestReport
+~~~~~~~~~~
 
-.. autoclass:: MarkGenerator
+.. autoclass:: _pytest.runner.TestReport()
     :members:
+    :inherited-members:
 
-.. autoclass:: MarkDecorator
+_Result
+~~~~~~~
+
+.. autoclass:: pluggy._Result
     :members:
-
-.. autoclass:: MarkInfo
-    :members:
-
 
 Marks
 -----
