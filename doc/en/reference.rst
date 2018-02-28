@@ -51,6 +51,11 @@ pytest.main
 
 .. autofunction:: _pytest.config.main
 
+pytest.param
+~~~~~~~~~~~~
+
+.. autofunction:: _pytest.mark.param
+
 pytest.raises
 -------------
 
@@ -246,6 +251,10 @@ Full reference to objects accessible from :ref:`fixtures <fixture>` or hooks
     :members:
     :inherited-members:
 
+.. currentmodule:: _pytest.python
+.. autoclass:: Metafunc
+    :members:
+
 .. autoclass:: pluggy._Result
     :members:
 
@@ -259,9 +268,114 @@ Full reference to objects accessible from :ref:`fixtures <fixture>` or hooks
 .. autoclass:: pluggy.PluginManager()
     :members:
 
-.. autoclass:: pluggy.PluginManager()
+.. currentmodule:: _pytest.mark
+
+.. autoclass:: MarkGenerator
     :members:
 
+.. autoclass:: MarkDecorator
+    :members:
+
+.. autoclass:: MarkInfo
+    :members:
+
+
+Marks
+-----
+
+Marks can be used apply meta data to *test functions* (but not fixtures), which can then be accessed by
+fixtures or plugins.
+
+
+.. _`pytest.mark.parametrize ref`:
+
+pytest.mark.parametrize
+~~~~~~~~~~~~~~~~~~~~~~~
+
+**Tutorial**: :doc:`parametrize`.
+
+.. automethod:: _pytest.python.Metafunc.parametrize
+
+
+.. _`pytest.mark.skip ref`:
+
+pytest.mark.skip
+~~~~~~~~~~~~~~~~
+
+**Tutorial**: :ref:`skip`.
+
+Unconditionally skip a test function.
+
+.. py:function:: pytest.mark.skip(*, reason=None)
+
+    :keyword str reason: Reason why the test function is being skipped.
+
+
+.. _`pytest.mark.skipif ref`:
+
+pytest.mark.skipif
+~~~~~~~~~~~~~~~~~~
+
+**Tutorial**: :ref:`xfail`.
+
+Skip a test function if a condition is ``True``.
+
+.. py:function:: pytest.mark.skipif(condition, *, reason=None)
+
+    :type condition: bool or str
+    :param condition: ``True/False`` if the condition should be skipped or a :ref:`condition string <string conditions>`.
+    :keyword str reason: Reason why the test function is being skipped.
+
+
+.. _`pytest.mark.xfail ref`:
+
+pytest.mark.xfail
+~~~~~~~~~~~~~~~~~~
+
+**Tutorial**: :ref:`xfail`.
+
+Marks a test function as *expected to fail*.
+
+.. py:function:: pytest.mark.xfail(condition=None, *, reason=None, raises=None, run=True, strict=False)
+
+    :type condition: bool or str
+    :param condition: ``True/False`` if the condition should be marked as xfail or a :ref:`condition string <string conditions>`.
+    :keyword str reason: Reason why the test function is marked as xfail.
+    :keyword Exception raises: Exception subclass expected to be raised by the test function; other exceptions will fail the test.
+    :keyword bool run:
+        If the test function should actually be executed. If ``False``, the function will always xfail and will
+        not be executed (useful a function is segfaulting).
+    :keyword bool strict:
+        * If ``False`` (the default) the function will be shown in the terminal output as ``xfailed`` if it fails
+          and as ``xpass`` if it passes. In both cases this will not cause the test suite to fail as a whole. This
+          is particularly useful to mark *flaky* tests (tests that random at fail) to be tackled later.
+        * If ``True``, the function will be shown in the terminal output as ``xfailed`` if it fails, but if it
+          unexpectedly passes then it will **fail** the test suite. This is particularly useful to mark functions
+          that are always failing and there should be a clear indication if they unexpectedly start to pass (for example
+          a new release of a library fixes a known bug).
+
+
+custom marks
+~~~~~~~~~~~~
+
+Marks are created dynamically using the factory object ``pytest.mark`` and applied as a decorator.
+
+For example:
+
+.. code-block:: python
+
+    @pytest.mark.timeout(10, 'slow', method='thread')
+    def test_function():
+        ...
+
+Will create and attach a :class:`MarkInfo <_pytest.mark.MarkInfo>` object to the collected
+:class:`Item <_pytest.nodes.Item>`, which can then be accessed by fixtures or hooks with
+:meth:`Node.get_marker <_pytest.nodes.Node.get_marker>`. The ``mark`` object will have the following attributes:
+
+.. code-block:: python
+
+    mark.args == (10, 'slow')
+    mark.kwargs == {'method': 'thread'}
 
 
 Fixtures

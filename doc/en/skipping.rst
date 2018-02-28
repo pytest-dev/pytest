@@ -71,6 +71,8 @@ It is also possible to skip the whole module using
 The imperative method is useful when it is not possible to evaluate the skip condition
 during import time.
 
+**Reference**: :ref:`pytest.mark.skip ref`
+
 ``skipif``
 ~~~~~~~~~~
 
@@ -115,6 +117,8 @@ throughout your test suite.
 Alternatively, you can use :ref:`condition strings
 <string conditions>` instead of booleans, but they can't be shared between modules easily
 so they are supported mainly for backward compatibility reasons.
+
+**Reference**: :ref:`pytest.mark.skipif ref`
 
 
 Skip all test functions of a class or module
@@ -232,15 +236,7 @@ This will unconditionally make ``test_function`` ``XFAIL``. Note that no other c
 after ``pytest.xfail`` call, differently from the marker. That's because it is implemented
 internally by raising a known exception.
 
-Here's the signature of the ``xfail`` **marker** (not the function), using Python 3 keyword-only
-arguments syntax:
-
-.. code-block:: python
-
-    def xfail(condition=None, *, reason=None, raises=None, run=True, strict=False):
-
-
-
+**Reference**: :ref:`pytest.mark.xfail ref`
 
 ``strict`` parameter
 ~~~~~~~~~~~~~~~~~~~~
