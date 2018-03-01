@@ -176,6 +176,8 @@ If a package is installed this way, ``pytest`` will load
     to make it easy for users to find your plugin.
 
 
+.. _assertion-rewriting:
+
 Assertion Rewriting
 -------------------
 
@@ -196,6 +198,7 @@ assertion rewriting to be enabled you need to ask ``pytest``
 explicitly to rewrite this module before it gets imported.
 
 .. autofunction:: pytest.register_assert_rewrite
+    :noindex:
 
 This is especially important when you write a pytest plugin which is
 created using a package.  The import hook only treats ``conftest.py``

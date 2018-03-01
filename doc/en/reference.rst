@@ -29,7 +29,7 @@ pytest.fail
 pytest.skip
 ~~~~~~~~~~~
 
-.. autofunction:: _pytest.outcomes.skip
+.. autofunction:: _pytest.outcomes.skip(msg, [allow_module_level=False])
 
 pytest.importorskip
 ~~~~~~~~~~~~~~~~~~~
@@ -42,26 +42,26 @@ pytest.xfail
 .. autofunction:: _pytest.outcomes.xfail
 
 pytest.exit
-~~~~~~~~~~~
+-----------
 
 .. autofunction:: _pytest.outcomes.exit
 
 pytest.main
-~~~~~~~~~~~
+-----------
 
 .. autofunction:: _pytest.config.main
 
 pytest.param
-~~~~~~~~~~~~
+------------
 
-.. autofunction:: _pytest.mark.param
+.. autofunction:: pytest.param(*values, [id], [marks])
 
 pytest.raises
 -------------
 
 **Tutorial**: :ref:`assertraises`.
 
-.. autofunction:: _pytest.python_api.raises
+.. autofunction:: pytest.raises(expected_exception: Exception, [match], [message])
     :with: excinfo
 
 pytest.deprecated_call
@@ -69,15 +69,22 @@ pytest.deprecated_call
 
 **Tutorial**: :ref:`ensuring_function_triggers`.
 
-.. autofunction:: _pytest.recwarn.deprecated_call
+.. autofunction:: pytest.deprecated_call()
     :with:
+
+pytest.register_assert_rewrite
+------------------------------
+
+**Tutorial**: :ref:`assertion-rewriting`.
+
+.. autofunction:: pytest.register_assert_rewrite
 
 pytest.warns
 ------------
 
 **Tutorial**: :ref:`assertwarnings`
 
-.. autofunction:: _pytest.recwarn.warns
+.. autofunction:: pytest.warns(expected_warning: Exception, [match])
     :with:
 
 Marks
