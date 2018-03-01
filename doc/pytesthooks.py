@@ -1,39 +1,55 @@
 from anytree import Node, RenderTree
 from anytree.exporter import DotExporter
 
+def merge_similar(node):
+    unique_children = {}
+    for child in node.children:
+        if child.name in unique_children:
+            #unique_children[child.name].children.append(child.children)
+            for child2 in child.children:
+                child2.parent = unique_children[child.name]
+            child.parent = None
+        else:
+            unique_children[child.name] = child
+    for child in node.children:
+        merge_similar(child)
+
+
 with open("pytestdebug.log") as f:
     lines = f.readlines()
 
 lines2 = []
 for line in lines:
     if "[hook]" in line:
-        lines2.append(line.replace(" [hook]","").replace("\n","").lstrip())
+        lines2.append(line.replace("[hook]","").replace("\n","").lstrip().rstrip())
 
 root = Node("root")
 parent_hook = root
 previous_hook = None
-jumpfinish = False
 for hook in lines2:
-    if "finish " in hook:
-    #   if jumpfinish:
-    #        jumpfinish = False
-    #   else:
-    #        parent_hook = parent_hook.parent
-        parent_hook = parent_hook.parent
+    if "finish pytest_runtest_setup" in hook:
+        pass
+
+    if hook[:7] == "finish ":
+        current_hook = parent_hook.parent
+        parent_hook = current_hook
         continue
 
-    #if len(parent_hook.children) > 0:
-    #    if hook == parent_hook.children[-1].name:
-    #        jumpfinish = True
-    #        continue
+    if len(parent_hook.children) > 0:
+        if hook == parent_hook.children[-1].name:
+            current_hook = parent_hook.children[-1]
+            parent_hook = current_hook
+            continue
 
     current_hook = Node(hook, parent=parent_hook)
     parent_hook = current_hook
+
+merge_similar(root)
 
 #print(RenderTree(root, style=ContRoundStyle))
 for pre, _, node in RenderTree(root):
     print("%s%s" % (pre, node.name))
 
-#DotExporter(root).to_picture("root.png")
+DotExporter(root).to_picture("root.png")
 DotExporter(root).to_dotfile("rootdot")
 

@@ -1147,6 +1147,7 @@ All Rights Reserved., 'credits':     Thanks to CWI, CNRI, BeOpen.com, Zope Corpo
         finish pytest_runtest_logstart --> [] [hook]
         pytest_runtest_setup [hook]
             item: <Function 'test_harmonic_plot'>
+        finish pytest_runtest_setup --> [] [hook]
         pytest_runtest_makereport [hook]
             item: <Function 'test_harmonic_plot'>
             call: <CallInfo when='setup' exception: Only meant for manual testing>
