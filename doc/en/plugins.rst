@@ -61,9 +61,10 @@ status against different pytest and Python versions, please visit
 
 You may also discover more plugins through a `pytest- pypi.python.org search`_.
 
-.. _`available installable plugins`:
 .. _`pytest- pypi.python.org search`: http://pypi.python.org/pypi?%3Aaction=search&term=pytest-&submit=search
 
+
+.. _`available installable plugins`:
 
 Requiring/Loading plugins in a test module or conftest file
 -----------------------------------------------------------

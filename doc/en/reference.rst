@@ -84,6 +84,9 @@ pytest.warns
 .. autofunction:: pytest.warns(expected_warning: Exception, [match])
     :with:
 
+
+.. _`marks ref`:
+
 Marks
 -----
 
@@ -725,3 +728,47 @@ _Result
 
 .. autoclass:: pluggy._Result
     :members:
+
+Special Variables
+-----------------
+
+pytest treats some global variables in a special manner when defined in a test module.
+
+
+pytest_plugins
+~~~~~~~~~~~~~~
+
+**Tutorial**: :ref:`available installable plugins`
+
+Can be declared at the **global** level in *test modules* and *conftest.py files* to register additional plugins.
+Can be either a ``str`` or ``Sequence[str]``.
+
+.. code-block:: python
+
+    pytest_plugins = "myapp.testsupport.myplugin"
+
+.. code-block:: python
+
+    pytest_plugins = ("myapp.testsupport.tools", "myapp.testsupport.regression")
+
+
+pytest_mark
+~~~~~~~~~~~
+
+**Tutorial**: :ref:`scoped-marking`
+
+Can be declared at the **global** level in *test modules* to apply one or more :ref:`marks <marks ref>` to all
+test functions and methods. Can be either a single mark or a sequence of marks.
+
+.. code-block:: python
+
+    import pytest
+    pytestmark = pytest.mark.webtest
+
+
+.. code-block:: python
+
+    import pytest
+    pytestmark = (pytest.mark.integration, pytest.mark.slow)
+
+
