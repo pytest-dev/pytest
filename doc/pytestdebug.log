@@ -1,0 +1,1193 @@
+versions pytest-3.4.1, py-1.5.2, python-3.6.3.final.0
+cwd=D:\WORK\t_api\typhoon\analysis\tests
+args=['--alluredir=allure', '--debug', 'D:/WORK/t_api/typhoon/analysis/tests/test_harmonics.py']
+
+  pytest_cmdline_main [hook]
+      config: <_pytest.config.Config object at 0x000001DE697A60B8>
+    pytest_plugin_registered [hook]
+        plugin: <Session 't_api'>
+        manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+    finish pytest_plugin_registered --> [] [hook]
+    pytest_configure [hook]
+        config: <_pytest.config.Config object at 0x000001DE697A60B8>
+      pytest_plugin_registered [hook]
+          plugin: <_pytest.cacheprovider.LFPlugin object at 0x000001DE7B69F908>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <allure_pytest.listener.AllureListener object at 0x000001DE7B6A5588>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <teamcity.pytest_plugin.EchoTeamCityMessages object at 0x000001DE7B6A5CF8>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <_pytest.logging.LoggingPlugin object at 0x000001DE7B6A5FD0>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+    find_module called for: py._io [assertion]
+    find_module called for: py._io.terminalwriter [assertion]
+    find_module called for: termios [assertion]
+    find_module called for: termios [assertion]
+      pytest_plugin_registered [hook]
+          plugin: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <_pytest.config.Config object at 0x000001DE697A60B8>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.mark' from 'C:\\Python36\\lib\\site-packages\\_pytest\\mark.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.main' from 'C:\\Python36\\lib\\site-packages\\_pytest\\main.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.terminal' from 'C:\\Python36\\lib\\site-packages\\_pytest\\terminal.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.runner' from 'C:\\Python36\\lib\\site-packages\\_pytest\\runner.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.python' from 'C:\\Python36\\lib\\site-packages\\_pytest\\python.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.fixtures' from 'C:\\Python36\\lib\\site-packages\\_pytest\\fixtures.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.debugging' from 'C:\\Python36\\lib\\site-packages\\_pytest\\debugging.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.unittest' from 'C:\\Python36\\lib\\site-packages\\_pytest\\unittest.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.capture' from 'C:\\Python36\\lib\\site-packages\\_pytest\\capture.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.skipping' from 'C:\\Python36\\lib\\site-packages\\_pytest\\skipping.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.tmpdir' from 'C:\\Python36\\lib\\site-packages\\_pytest\\tmpdir.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.monkeypatch' from 'C:\\Python36\\lib\\site-packages\\_pytest\\monkeypatch.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.recwarn' from 'C:\\Python36\\lib\\site-packages\\_pytest\\recwarn.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.pastebin' from 'C:\\Python36\\lib\\site-packages\\_pytest\\pastebin.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.helpconfig' from 'C:\\Python36\\lib\\site-packages\\_pytest\\helpconfig.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.nose' from 'C:\\Python36\\lib\\site-packages\\_pytest\\nose.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.assertion' from 'C:\\Python36\\lib\\site-packages\\_pytest\\assertion\\__init__.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.junitxml' from 'C:\\Python36\\lib\\site-packages\\_pytest\\junitxml.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.resultlog' from 'C:\\Python36\\lib\\site-packages\\_pytest\\resultlog.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.doctest' from 'C:\\Python36\\lib\\site-packages\\_pytest\\doctest.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.cacheprovider' from 'C:\\Python36\\lib\\site-packages\\_pytest\\cacheprovider.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.freeze_support' from 'C:\\Python36\\lib\\site-packages\\_pytest\\freeze_support.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.setuponly' from 'C:\\Python36\\lib\\site-packages\\_pytest\\setuponly.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.setupplan' from 'C:\\Python36\\lib\\site-packages\\_pytest\\setupplan.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.warnings' from 'C:\\Python36\\lib\\site-packages\\_pytest\\warnings.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.logging' from 'C:\\Python36\\lib\\site-packages\\_pytest\\logging.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module 'teamcity.pytest_plugin' from 'C:\\Program Files\\JetBrains\\PyCharm Community Edition 2017.3.3\\helpers\\pycharm\\teamcity\\pytest_plugin.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module 'typhoon.pytest_typhoon' from 'D:\\WORK\\t_api\\typhoon\\pytest_typhoon\\__init__.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module 'allure_pytest.plugin' (<_pytest.assertion.rewrite.AssertionRewritingHook object at 0x000001DE697D1048>)>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <_pytest.capture.CaptureManager object at 0x000001DE7B68E358>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <Session 't_api'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <_pytest.cacheprovider.LFPlugin object at 0x000001DE7B69F908>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <allure_pytest.listener.AllureListener object at 0x000001DE7B6A5588>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <teamcity.pytest_plugin.EchoTeamCityMessages object at 0x000001DE7B6A5CF8>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <_pytest.logging.LoggingPlugin object at 0x000001DE7B6A5FD0>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <_pytest.terminal.TerminalReporter object at 0x000001DE7B6C1208>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <typhoon.pytest_typhoon.PytestTyphoon object at 0x000001DE7B6C9588>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+    finish pytest_configure --> [] [hook]
+    pytest_sessionstart [hook]
+        session: <Session 't_api'>
+      pytest_plugin_registered [hook]
+          plugin: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <_pytest.config.Config object at 0x000001DE697A60B8>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.mark' from 'C:\\Python36\\lib\\site-packages\\_pytest\\mark.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.main' from 'C:\\Python36\\lib\\site-packages\\_pytest\\main.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.terminal' from 'C:\\Python36\\lib\\site-packages\\_pytest\\terminal.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.runner' from 'C:\\Python36\\lib\\site-packages\\_pytest\\runner.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.python' from 'C:\\Python36\\lib\\site-packages\\_pytest\\python.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.fixtures' from 'C:\\Python36\\lib\\site-packages\\_pytest\\fixtures.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.debugging' from 'C:\\Python36\\lib\\site-packages\\_pytest\\debugging.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.unittest' from 'C:\\Python36\\lib\\site-packages\\_pytest\\unittest.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.capture' from 'C:\\Python36\\lib\\site-packages\\_pytest\\capture.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.skipping' from 'C:\\Python36\\lib\\site-packages\\_pytest\\skipping.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.tmpdir' from 'C:\\Python36\\lib\\site-packages\\_pytest\\tmpdir.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.monkeypatch' from 'C:\\Python36\\lib\\site-packages\\_pytest\\monkeypatch.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.recwarn' from 'C:\\Python36\\lib\\site-packages\\_pytest\\recwarn.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.pastebin' from 'C:\\Python36\\lib\\site-packages\\_pytest\\pastebin.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.helpconfig' from 'C:\\Python36\\lib\\site-packages\\_pytest\\helpconfig.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.nose' from 'C:\\Python36\\lib\\site-packages\\_pytest\\nose.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.assertion' from 'C:\\Python36\\lib\\site-packages\\_pytest\\assertion\\__init__.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.junitxml' from 'C:\\Python36\\lib\\site-packages\\_pytest\\junitxml.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.resultlog' from 'C:\\Python36\\lib\\site-packages\\_pytest\\resultlog.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.doctest' from 'C:\\Python36\\lib\\site-packages\\_pytest\\doctest.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.cacheprovider' from 'C:\\Python36\\lib\\site-packages\\_pytest\\cacheprovider.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.freeze_support' from 'C:\\Python36\\lib\\site-packages\\_pytest\\freeze_support.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.setuponly' from 'C:\\Python36\\lib\\site-packages\\_pytest\\setuponly.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.setupplan' from 'C:\\Python36\\lib\\site-packages\\_pytest\\setupplan.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.warnings' from 'C:\\Python36\\lib\\site-packages\\_pytest\\warnings.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module '_pytest.logging' from 'C:\\Python36\\lib\\site-packages\\_pytest\\logging.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module 'teamcity.pytest_plugin' from 'C:\\Program Files\\JetBrains\\PyCharm Community Edition 2017.3.3\\helpers\\pycharm\\teamcity\\pytest_plugin.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module 'typhoon.pytest_typhoon' from 'D:\\WORK\\t_api\\typhoon\\pytest_typhoon\\__init__.py'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <module 'allure_pytest.plugin' (<_pytest.assertion.rewrite.AssertionRewritingHook object at 0x000001DE697D1048>)>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <_pytest.capture.CaptureManager object at 0x000001DE7B68E358>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <Session 't_api'>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <_pytest.cacheprovider.LFPlugin object at 0x000001DE7B69F908>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <allure_pytest.listener.AllureListener object at 0x000001DE7B6A5588>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <teamcity.pytest_plugin.EchoTeamCityMessages object at 0x000001DE7B6A5CF8>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <_pytest.logging.LoggingPlugin object at 0x000001DE7B6A5FD0>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <_pytest.terminal.TerminalReporter object at 0x000001DE7B6C1208>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <typhoon.pytest_typhoon.PytestTyphoon object at 0x000001DE7B6C9588>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+      pytest_plugin_registered [hook]
+          plugin: <_pytest.fixtures.FixtureManager object at 0x000001DE7B724240>
+          manager: <_pytest.config.PytestPluginManager object at 0x000001DE696CD0F0>
+      finish pytest_plugin_registered --> [] [hook]
+    find_module called for: termios [assertion]
+      pytest_report_header [hook]
+          config: <_pytest.config.Config object at 0x000001DE697A60B8>
+          startdir: D:\WORK\t_api\typhoon\analysis\tests
+      finish pytest_report_header --> [['rootdir: D:\\WORK\\t_api, inifile:', 'plugins: Typhoon-HIL-API-1.0.1, allure-pytest-2.3.2b1'], ['using: pytest-3.4.1 pylib-1.5.2', 'setuptools registered plugins:', '  Typhoon-HIL-API-1.0.1 at D:\\WORK\\t_api\\typhoon\\pytest_typhoon\\__init__.py', '  allure-pytest-2.3.2b1 at C:\\Python36\\lib\\site-packages\\allure_pytest\\plugin.py']] [hook]
+    finish pytest_sessionstart --> [] [hook]
+    pytest_collection [hook]
+        session: <Session 't_api'>
+    perform_collect <Session 't_api'> ['D:/WORK/t_api/typhoon/analysis/tests/test_harmonics.py'] [collection]
+        pytest_collectstart [hook]
+            collector: <Session 't_api'>
+        finish pytest_collectstart --> [] [hook]
+        pytest_make_collect_report [hook]
+            collector: <Session 't_api'>
+        processing argument D:\WORK\t_api\typhoon\analysis\tests\test_harmonics.py [collection]
+            pytest_collect_file [hook]
+                path: D:\WORK\t_api\typhoon\analysis\tests\test_harmonics.py
+                parent: <Session 't_api'>
+              pytest_pycollect_makemodule [hook]
+                  path: D:\WORK\t_api\typhoon\analysis\tests\test_harmonics.py
+                  parent: <Session 't_api'>
+              finish pytest_pycollect_makemodule --> <Module 'typhoon/analysis/tests/test_harmonics.py'> [hook]
+            finish pytest_collect_file --> [<Module 'typhoon/analysis/tests/test_harmonics.py'>] [hook]
+          matchnodes [<Module 'typhoon/analysis/tests/test_harmonics.py'>] [] [collection]
+            matchnodes finished ->  1 nodes [collection]
+        finish pytest_make_collect_report --> <CollectReport '' lenresult=1 outcome='passed'> [hook]
+        pytest_collectreport [hook]
+            report: <CollectReport '' lenresult=1 outcome='passed'>
+        finish pytest_collectreport --> [] [hook]
+    genitems <Module 'typhoon/analysis/tests/test_harmonics.py'> [collection]
+      pytest_collectstart [hook]
+          collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+      finish pytest_collectstart --> [] [hook]
+      pytest_make_collect_report [hook]
+          collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+      find_module called for: test_harmonics [assertion]
+      matched test file (was specified on cmdline): 'D:\\WORK\\t_api\\typhoon\\analysis\\tests\\test_harmonics.py' [assertion]
+      rewriting 'D:\\WORK\\t_api\\typhoon\\analysis\\tests\\test_harmonics.py' [assertion]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __name__
+            obj: test_harmonics
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __doc__
+            obj: None
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __package__
+            obj: 
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __loader__
+            obj: <_pytest.assertion.rewrite.AssertionRewritingHook object at 0x000001DE697D1048>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __spec__
+            obj: ModuleSpec(name='test_harmonics', loader=<_pytest.assertion.rewrite.AssertionRewritingHook object at 0x000001DE697D1048>)
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __file__
+            obj: D:\WORK\t_api\typhoon\analysis\tests\test_harmonics.py
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __cached__
+            obj: D:\WORK\t_api\typhoon\analysis\tests\__pycache__\test_harmonics.cpython-36-PYTEST.pyc
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __builtins__
+            obj: {'__name__': 'builtins', '__doc__': "Built-in functions, exceptions, and other objects.\n\nNoteworthy: None is the `nil' object; Ellipsis represents `...' in slices.", '__package__': '', '__loader__': <class '_frozen_importlib.BuiltinImporter'>, '__spec__': ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>), '__build_class__': <built-in function __build_class__>, '__import__': <built-in function __import__>, 'abs': <built-in function abs>, 'all': <built-in function all>, 'any': <built-in function any>, 'ascii': <built-in function ascii>, 'bin': <built-in function bin>, 'callable': <built-in function callable>, 'chr': <built-in function chr>, 'compile': <built-in function compile>, 'delattr': <built-in function delattr>, 'dir': <built-in function dir>, 'divmod': <built-in function divmod>, 'eval': <built-in function eval>, 'exec': <built-in function exec>, 'format': <built-in function format>, 'getattr': <built-in function getattr>, 'globals': <built-in function globals>, 'hasattr': <built-in function hasattr>, 'hash': <built-in function hash>, 'hex': <built-in function hex>, 'id': <built-in function id>, 'input': <built-in function input>, 'isinstance': <built-in function isinstance>, 'issubclass': <built-in function issubclass>, 'iter': <built-in function iter>, 'len': <built-in function len>, 'locals': <built-in function locals>, 'max': <built-in function max>, 'min': <built-in function min>, 'next': <built-in function next>, 'oct': <built-in function oct>, 'ord': <built-in function ord>, 'pow': <built-in function pow>, 'print': <built-in function print>, 'repr': <built-in function repr>, 'round': <built-in function round>, 'setattr': <built-in function setattr>, 'sorted': <built-in function sorted>, 'sum': <built-in function sum>, 'vars': <built-in function vars>, 'None': None, 'Ellipsis': Ellipsis, 'NotImplemented': NotImplemented, 'False': False, 'True': True, 'bool': <class 'bool'>, 'memoryview': <class 'memoryview'>, 'bytearray': <class 'bytearray'>, 'bytes': <class 'bytes'>, 'classmethod': <class 'classmethod'>, 'complex': <class 'complex'>, 'dict': <class 'dict'>, 'enumerate': <class 'enumerate'>, 'filter': <class 'filter'>, 'float': <class 'float'>, 'frozenset': <class 'frozenset'>, 'property': <class 'property'>, 'int': <class 'int'>, 'list': <class 'list'>, 'map': <class 'map'>, 'object': <class 'object'>, 'range': <class 'range'>, 'reversed': <class 'reversed'>, 'set': <class 'set'>, 'slice': <class 'slice'>, 'staticmethod': <class 'staticmethod'>, 'str': <class 'str'>, 'super': <class 'super'>, 'tuple': <class 'tuple'>, 'type': <class 'type'>, 'zip': <class 'zip'>, '__debug__': True, 'BaseException': <class 'BaseException'>, 'Exception': <class 'Exception'>, 'TypeError': <class 'TypeError'>, 'StopAsyncIteration': <class 'StopAsyncIteration'>, 'StopIteration': <class 'StopIteration'>, 'GeneratorExit': <class 'GeneratorExit'>, 'SystemExit': <class 'SystemExit'>, 'KeyboardInterrupt': <class 'KeyboardInterrupt'>, 'ImportError': <class 'ImportError'>, 'ModuleNotFoundError': <class 'ModuleNotFoundError'>, 'OSError': <class 'OSError'>, 'EnvironmentError': <class 'OSError'>, 'IOError': <class 'OSError'>, 'WindowsError': <class 'OSError'>, 'EOFError': <class 'EOFError'>, 'RuntimeError': <class 'RuntimeError'>, 'RecursionError': <class 'RecursionError'>, 'NotImplementedError': <class 'NotImplementedError'>, 'NameError': <class 'NameError'>, 'UnboundLocalError': <class 'UnboundLocalError'>, 'AttributeError': <class 'AttributeError'>, 'SyntaxError': <class 'SyntaxError'>, 'IndentationError': <class 'IndentationError'>, 'TabError': <class 'TabError'>, 'LookupError': <class 'LookupError'>, 'IndexError': <class 'IndexError'>, 'KeyError': <class 'KeyError'>, 'ValueError': <class 'ValueError'>, 'UnicodeError': <class 'UnicodeError'>, 'UnicodeEncodeError': <class 'UnicodeEncodeError'>, 'UnicodeDecodeError': <class 'UnicodeDecodeError'>, 'UnicodeTranslateError': <class 'UnicodeTranslateError'>, 'AssertionError': <class 'AssertionError'>, 'ArithmeticError': <class 'ArithmeticError'>, 'FloatingPointError': <class 'FloatingPointError'>, 'OverflowError': <class 'OverflowError'>, 'ZeroDivisionError': <class 'ZeroDivisionError'>, 'SystemError': <class 'SystemError'>, 'ReferenceError': <class 'ReferenceError'>, 'BufferError': <class 'BufferError'>, 'MemoryError': <class 'MemoryError'>, 'Warning': <class 'Warning'>, 'UserWarning': <class 'UserWarning'>, 'DeprecationWarning': <class 'DeprecationWarning'>, 'PendingDeprecationWarning': <class 'PendingDeprecationWarning'>, 'SyntaxWarning': <class 'SyntaxWarning'>, 'RuntimeWarning': <class 'RuntimeWarning'>, 'FutureWarning': <class 'FutureWarning'>, 'ImportWarning': <class 'ImportWarning'>, 'UnicodeWarning': <class 'UnicodeWarning'>, 'BytesWarning': <class 'BytesWarning'>, 'ResourceWarning': <class 'ResourceWarning'>, 'ConnectionError': <class 'ConnectionError'>, 'BlockingIOError': <class 'BlockingIOError'>, 'BrokenPipeError': <class 'BrokenPipeError'>, 'ChildProcessError': <class 'ChildProcessError'>, 'ConnectionAbortedError': <class 'ConnectionAbortedError'>, 'ConnectionRefusedError': <class 'ConnectionRefusedError'>, 'ConnectionResetError': <class 'ConnectionResetError'>, 'FileExistsError': <class 'FileExistsError'>, 'FileNotFoundError': <class 'FileNotFoundError'>, 'IsADirectoryError': <class 'IsADirectoryError'>, 'NotADirectoryError': <class 'NotADirectoryError'>, 'InterruptedError': <class 'InterruptedError'>, 'PermissionError': <class 'PermissionError'>, 'ProcessLookupError': <class 'ProcessLookupError'>, 'TimeoutError': <class 'TimeoutError'>, 'open': <built-in function open>, 'quit': Use quit() or Ctrl-Z plus Return to exit, 'exit': Use exit() or Ctrl-Z plus Return to exit, 'copyright': Copyright (c) 2001-2017 Python Software Foundation.
+All Rights Reserved.
+
+Copyright (c) 2000 BeOpen.com.
+All Rights Reserved.
+
+Copyright (c) 1995-2001 Corporation for National Research Initiatives.
+All Rights Reserved.
+
+Copyright (c) 1991-1995 Stichting Mathematisch Centrum, Amsterdam.
+All Rights Reserved., 'credits':     Thanks to CWI, CNRI, BeOpen.com, Zope Corporation and a cast of thousands
+    for supporting Python development.  See www.python.org for more information., 'license': Type license() to see the full license text, 'help': Type help() for interactive help, or help(object) for help about object.}
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: @py_builtins
+            obj: <module 'builtins' (built-in)>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: @pytest_ar
+            obj: <module '_pytest.assertion.rewrite' from 'C:\\Python36\\lib\\site-packages\\_pytest\\assertion\\rewrite.py'>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: harmonic
+            obj: <module 'typhoon.analysis.harmonic' (<_pytest.assertion.rewrite.AssertionRewritingHook object at 0x000001DE697D1048>)>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: signals
+            obj: <module 'typhoon.analysis.signals' (<_pytest.assertion.rewrite.AssertionRewritingHook object at 0x000001DE697D1048>)>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: plotutils
+            obj: <module 'typhoon.analysis.plotutils' (<_pytest.assertion.rewrite.AssertionRewritingHook object at 0x000001DE697D1048>)>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: pytest
+            obj: <module 'pytest' from 'C:\\Python36\\lib\\site-packages\\pytest.py'>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: test_sine_harmonic_content
+            obj: <function test_sine_harmonic_content at 0x000001DE7B7278C8>
+          pytest_generate_tests [hook]
+              metafunc: <_pytest.python.Metafunc object at 0x000001DE7B754A20>
+          find_module called for: py._io.saferepr [assertion]
+          find_module called for: repr [assertion]
+            pytest_make_parametrize_id [hook]
+                config: <_pytest.config.Config object at 0x000001DE697A60B8>
+                val: 5e-07
+                argname: Ts
+            finish pytest_make_parametrize_id --> None [hook]
+            pytest_make_parametrize_id [hook]
+                config: <_pytest.config.Config object at 0x000001DE697A60B8>
+                val: 0.0001
+                argname: Ts
+            finish pytest_make_parametrize_id --> None [hook]
+            pytest_make_parametrize_id [hook]
+                config: <_pytest.config.Config object at 0x000001DE697A60B8>
+                val: 0.5
+                argname: duration
+            finish pytest_make_parametrize_id --> None [hook]
+            pytest_make_parametrize_id [hook]
+                config: <_pytest.config.Config object at 0x000001DE697A60B8>
+                val: 5
+                argname: duration
+            finish pytest_make_parametrize_id --> None [hook]
+            pytest_make_parametrize_id [hook]
+                config: <_pytest.config.Config object at 0x000001DE697A60B8>
+                val: {10: 10, 60: 60, 98: 98}
+                argname: harmonic_spec
+            finish pytest_make_parametrize_id --> None [hook]
+          finish pytest_generate_tests --> [] [hook]
+        finish pytest_pycollect_makeitem --> [<Function 'test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]'>, <Function 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]'>, <Function 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]'>, <Function 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]'>] [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: test_thd_zero
+            obj: <function test_thd_zero at 0x000001DE7B727A60>
+          pytest_generate_tests [hook]
+              metafunc: <_pytest.python.Metafunc object at 0x000001DE7B756518>
+          finish pytest_generate_tests --> [] [hook]
+        finish pytest_pycollect_makeitem --> [<Function 'test_thd_zero'>] [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: test_thd_nonzero
+            obj: <function test_thd_nonzero at 0x000001DE7B743048>
+          pytest_generate_tests [hook]
+              metafunc: <_pytest.python.Metafunc object at 0x000001DE7B756048>
+          finish pytest_generate_tests --> [] [hook]
+        finish pytest_pycollect_makeitem --> [<Function 'test_thd_nonzero'>] [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: test_harmonic_plot
+            obj: <function test_harmonic_plot at 0x000001DE7B7430D0>
+          pytest_generate_tests [hook]
+              metafunc: <_pytest.python.Metafunc object at 0x000001DE7B756198>
+          finish pytest_generate_tests --> [] [hook]
+        finish pytest_pycollect_makeitem --> [<Function 'test_harmonic_plot'>] [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __repr__
+            obj: <slot wrapper '__repr__' of 'module' objects>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __getattribute__
+            obj: <slot wrapper '__getattribute__' of 'module' objects>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __setattr__
+            obj: <slot wrapper '__setattr__' of 'module' objects>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __delattr__
+            obj: <slot wrapper '__delattr__' of 'module' objects>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __init__
+            obj: <slot wrapper '__init__' of 'module' objects>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __new__
+            obj: <built-in method __new__ of type object at 0x0000000075799020>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __dir__
+            obj: <method '__dir__' of 'module' objects>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __dict__
+            obj: <member '__dict__' of 'module' objects>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __hash__
+            obj: <slot wrapper '__hash__' of 'object' objects>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __str__
+            obj: <slot wrapper '__str__' of 'object' objects>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __lt__
+            obj: <slot wrapper '__lt__' of 'object' objects>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __le__
+            obj: <slot wrapper '__le__' of 'object' objects>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __eq__
+            obj: <slot wrapper '__eq__' of 'object' objects>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __ne__
+            obj: <slot wrapper '__ne__' of 'object' objects>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __gt__
+            obj: <slot wrapper '__gt__' of 'object' objects>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __ge__
+            obj: <slot wrapper '__ge__' of 'object' objects>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __reduce_ex__
+            obj: <method '__reduce_ex__' of 'object' objects>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __reduce__
+            obj: <method '__reduce__' of 'object' objects>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __subclasshook__
+            obj: <method '__subclasshook__' of 'object' objects>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __init_subclass__
+            obj: <method '__init_subclass__' of 'object' objects>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __format__
+            obj: <method '__format__' of 'object' objects>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __sizeof__
+            obj: <method '__sizeof__' of 'object' objects>
+        finish pytest_pycollect_makeitem --> None [hook]
+        pytest_pycollect_makeitem [hook]
+            collector: <Module 'typhoon/analysis/tests/test_harmonics.py'>
+            name: __class__
+            obj: <attribute '__class__' of 'object' objects>
+        finish pytest_pycollect_makeitem --> None [hook]
+      finish pytest_make_collect_report --> <CollectReport 'typhoon/analysis/tests/test_harmonics.py' lenresult=7 outcome='passed'> [hook]
+    genitems <Function 'test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]'> [collection]
+      pytest_itemcollected [hook]
+          item: <Function 'test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]'>
+      finish pytest_itemcollected --> [] [hook]
+    genitems <Function 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]'> [collection]
+      pytest_itemcollected [hook]
+          item: <Function 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]'>
+      finish pytest_itemcollected --> [] [hook]
+    genitems <Function 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]'> [collection]
+      pytest_itemcollected [hook]
+          item: <Function 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]'>
+      finish pytest_itemcollected --> [] [hook]
+    genitems <Function 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]'> [collection]
+      pytest_itemcollected [hook]
+          item: <Function 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]'>
+      finish pytest_itemcollected --> [] [hook]
+    genitems <Function 'test_thd_zero'> [collection]
+      pytest_itemcollected [hook]
+          item: <Function 'test_thd_zero'>
+      finish pytest_itemcollected --> [] [hook]
+    genitems <Function 'test_thd_nonzero'> [collection]
+      pytest_itemcollected [hook]
+          item: <Function 'test_thd_nonzero'>
+      finish pytest_itemcollected --> [] [hook]
+    genitems <Function 'test_harmonic_plot'> [collection]
+      pytest_itemcollected [hook]
+          item: <Function 'test_harmonic_plot'>
+      finish pytest_itemcollected --> [] [hook]
+      pytest_collectreport [hook]
+          report: <CollectReport 'typhoon/analysis/tests/test_harmonics.py' lenresult=7 outcome='passed'>
+      finish pytest_collectreport --> [] [hook]
+      pytest_collection_modifyitems [hook]
+          session: <Session 't_api'>
+          config: <_pytest.config.Config object at 0x000001DE697A60B8>
+          items: [<Function 'test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]'>, <Function 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]'>, <Function 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]'>, <Function 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]'>, <Function 'test_thd_zero'>, <Function 'test_thd_nonzero'>, <Function 'test_harmonic_plot'>]
+      finish pytest_collection_modifyitems --> [] [hook]
+      pytest_collection_finish [hook]
+          session: <Session 't_api'>
+        pytest_report_collectionfinish [hook]
+            config: <_pytest.config.Config object at 0x000001DE697A60B8>
+            startdir: D:\WORK\t_api\typhoon\analysis\tests
+            items: [<Function 'test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]'>, <Function 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]'>, <Function 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]'>, <Function 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]'>, <Function 'test_thd_zero'>, <Function 'test_thd_nonzero'>, <Function 'test_harmonic_plot'>]
+        finish pytest_report_collectionfinish --> [] [hook]
+      finish pytest_collection_finish --> [] [hook]
+    finish pytest_collection --> [<Function 'test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]'>, <Function 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]'>, <Function 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]'>, <Function 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]'>, <Function 'test_thd_zero'>, <Function 'test_thd_nonzero'>, <Function 'test_harmonic_plot'>] [hook]
+    pytest_runtestloop [hook]
+        session: <Session 't_api'>
+      pytest_runtest_protocol [hook]
+          item: <Function 'test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]'>
+          nextitem: <Function 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]'>
+      find_module called for: encodings.unicode_escape [assertion]
+        pytest_runtest_logstart [hook]
+            nodeid: typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]
+            location: ('typhoon\\analysis\\tests\\test_harmonics.py', 5, 'test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]')
+        find_module called for: logging.handlers [assertion]
+        find_module called for: queue [assertion]
+        find_module called for: zmq.utils.jsonapi [assertion]
+        find_module called for: simplejson [assertion]
+        find_module called for: jsonlib2 [assertion]
+        finish pytest_runtest_logstart --> [] [hook]
+        pytest_runtest_setup [hook]
+            item: <Function 'test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]'>
+        find_module called for: py._io.capture [assertion]
+          pytest_fixture_setup [hook]
+              fixturedef: <FixtureDef name='harmonic_spec' scope='function' baseid='' >
+              request: <SubRequest 'harmonic_spec' for <Function 'test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]'>>
+          finish pytest_fixture_setup --> [hook]
+              10: 10
+              60: 60
+              98: 98
+          pytest_fixture_setup [hook]
+              fixturedef: <FixtureDef name='duration' scope='function' baseid='' >
+              request: <SubRequest 'duration' for <Function 'test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]'>>
+          finish pytest_fixture_setup --> 0.5 [hook]
+          pytest_fixture_setup [hook]
+              fixturedef: <FixtureDef name='Ts' scope='function' baseid='' >
+              request: <SubRequest 'Ts' for <Function 'test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]'>>
+          finish pytest_fixture_setup --> 5e-07 [hook]
+        finish pytest_runtest_setup --> [] [hook]
+        pytest_runtest_makereport [hook]
+            item: <Function 'test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]'>
+            call: <CallInfo when='setup' result: []>
+        finish pytest_runtest_makereport --> <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]' when='setup' outcome='passed'> [hook]
+        pytest_runtest_logreport [hook]
+            report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]' when='setup' outcome='passed'>
+          pytest_report_teststatus [hook]
+              report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]' when='setup' outcome='passed'>
+          finish pytest_report_teststatus --> ('', '', '') [hook]
+        finish pytest_runtest_logreport --> [] [hook]
+        pytest_runtest_call [hook]
+            item: <Function 'test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]'>
+          pytest_pyfunc_call [hook]
+              pyfuncitem: <Function 'test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]'>
+          find_module called for: pandas.core.computation.expressions [assertion]
+          find_module called for: pandas.core.computation.check [assertion]
+          find_module called for: numexpr [assertion]
+          finish pytest_pyfunc_call --> True [hook]
+        finish pytest_runtest_call --> [] [hook]
+        pytest_runtest_makereport [hook]
+            item: <Function 'test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]'>
+            call: <CallInfo when='call' result: []>
+        finish pytest_runtest_makereport --> <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]' when='call' outcome='passed'> [hook]
+        pytest_runtest_logreport [hook]
+            report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]' when='call' outcome='passed'>
+          pytest_report_teststatus [hook]
+              report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]' when='call' outcome='passed'>
+          finish pytest_report_teststatus --> ('passed', '.', 'PASSED') [hook]
+        finish pytest_runtest_logreport --> [] [hook]
+        pytest_runtest_teardown [hook]
+            item: <Function 'test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]'>
+            nextitem: <Function 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]'>
+          pytest_fixture_post_finalizer [hook]
+              fixturedef: <FixtureDef name='Ts' scope='function' baseid='' >
+              request: <SubRequest 'Ts' for <Function 'test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]'>>
+          finish pytest_fixture_post_finalizer --> [] [hook]
+          pytest_fixture_post_finalizer [hook]
+              fixturedef: <FixtureDef name='duration' scope='function' baseid='' >
+              request: <SubRequest 'duration' for <Function 'test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]'>>
+          finish pytest_fixture_post_finalizer --> [] [hook]
+          pytest_fixture_post_finalizer [hook]
+              fixturedef: <FixtureDef name='harmonic_spec' scope='function' baseid='' >
+              request: <SubRequest 'harmonic_spec' for <Function 'test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]'>>
+          finish pytest_fixture_post_finalizer --> [] [hook]
+        finish pytest_runtest_teardown --> [] [hook]
+        pytest_runtest_makereport [hook]
+            item: <Function 'test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]'>
+            call: <CallInfo when='teardown' result: []>
+        finish pytest_runtest_makereport --> <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]' when='teardown' outcome='passed'> [hook]
+        pytest_runtest_logreport [hook]
+            report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]' when='teardown' outcome='passed'>
+          pytest_report_teststatus [hook]
+              report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]' when='teardown' outcome='passed'>
+          finish pytest_report_teststatus --> ('', '', '') [hook]
+        finish pytest_runtest_logreport --> [] [hook]
+        pytest_runtest_logfinish [hook]
+            nodeid: typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]
+            location: ('typhoon\\analysis\\tests\\test_harmonics.py', 5, 'test_sine_harmonic_content[5e-07-0.5-harmonic_spec0]')
+        finish pytest_runtest_logfinish --> [] [hook]
+      finish pytest_runtest_protocol --> True [hook]
+      pytest_runtest_protocol [hook]
+          item: <Function 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]'>
+          nextitem: <Function 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]'>
+        pytest_runtest_logstart [hook]
+            nodeid: typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[5e-07-5-harmonic_spec0]
+            location: ('typhoon\\analysis\\tests\\test_harmonics.py', 5, 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]')
+        finish pytest_runtest_logstart --> [] [hook]
+        pytest_runtest_setup [hook]
+            item: <Function 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]'>
+          pytest_fixture_setup [hook]
+              fixturedef: <FixtureDef name='harmonic_spec' scope='function' baseid='' >
+              request: <SubRequest 'harmonic_spec' for <Function 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]'>>
+          finish pytest_fixture_setup --> [hook]
+              10: 10
+              60: 60
+              98: 98
+          pytest_fixture_setup [hook]
+              fixturedef: <FixtureDef name='duration' scope='function' baseid='' >
+              request: <SubRequest 'duration' for <Function 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]'>>
+          finish pytest_fixture_setup --> 5 [hook]
+          pytest_fixture_setup [hook]
+              fixturedef: <FixtureDef name='Ts' scope='function' baseid='' >
+              request: <SubRequest 'Ts' for <Function 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]'>>
+          finish pytest_fixture_setup --> 5e-07 [hook]
+        finish pytest_runtest_setup --> [] [hook]
+        pytest_runtest_makereport [hook]
+            item: <Function 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]'>
+            call: <CallInfo when='setup' result: []>
+        finish pytest_runtest_makereport --> <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[5e-07-5-harmonic_spec0]' when='setup' outcome='passed'> [hook]
+        pytest_runtest_logreport [hook]
+            report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[5e-07-5-harmonic_spec0]' when='setup' outcome='passed'>
+          pytest_report_teststatus [hook]
+              report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[5e-07-5-harmonic_spec0]' when='setup' outcome='passed'>
+          finish pytest_report_teststatus --> ('', '', '') [hook]
+        finish pytest_runtest_logreport --> [] [hook]
+        pytest_runtest_call [hook]
+            item: <Function 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]'>
+          pytest_pyfunc_call [hook]
+              pyfuncitem: <Function 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]'>
+          finish pytest_pyfunc_call --> True [hook]
+        finish pytest_runtest_call --> [] [hook]
+        pytest_runtest_makereport [hook]
+            item: <Function 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]'>
+            call: <CallInfo when='call' result: []>
+        finish pytest_runtest_makereport --> <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[5e-07-5-harmonic_spec0]' when='call' outcome='passed'> [hook]
+        pytest_runtest_logreport [hook]
+            report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[5e-07-5-harmonic_spec0]' when='call' outcome='passed'>
+          pytest_report_teststatus [hook]
+              report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[5e-07-5-harmonic_spec0]' when='call' outcome='passed'>
+          finish pytest_report_teststatus --> ('passed', '.', 'PASSED') [hook]
+        finish pytest_runtest_logreport --> [] [hook]
+        pytest_runtest_teardown [hook]
+            item: <Function 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]'>
+            nextitem: <Function 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]'>
+          pytest_fixture_post_finalizer [hook]
+              fixturedef: <FixtureDef name='Ts' scope='function' baseid='' >
+              request: <SubRequest 'Ts' for <Function 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]'>>
+          finish pytest_fixture_post_finalizer --> [] [hook]
+          pytest_fixture_post_finalizer [hook]
+              fixturedef: <FixtureDef name='duration' scope='function' baseid='' >
+              request: <SubRequest 'duration' for <Function 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]'>>
+          finish pytest_fixture_post_finalizer --> [] [hook]
+          pytest_fixture_post_finalizer [hook]
+              fixturedef: <FixtureDef name='harmonic_spec' scope='function' baseid='' >
+              request: <SubRequest 'harmonic_spec' for <Function 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]'>>
+          finish pytest_fixture_post_finalizer --> [] [hook]
+        finish pytest_runtest_teardown --> [] [hook]
+        pytest_runtest_makereport [hook]
+            item: <Function 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]'>
+            call: <CallInfo when='teardown' result: []>
+        finish pytest_runtest_makereport --> <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[5e-07-5-harmonic_spec0]' when='teardown' outcome='passed'> [hook]
+        pytest_runtest_logreport [hook]
+            report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[5e-07-5-harmonic_spec0]' when='teardown' outcome='passed'>
+          pytest_report_teststatus [hook]
+              report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[5e-07-5-harmonic_spec0]' when='teardown' outcome='passed'>
+          finish pytest_report_teststatus --> ('', '', '') [hook]
+        finish pytest_runtest_logreport --> [] [hook]
+        pytest_runtest_logfinish [hook]
+            nodeid: typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[5e-07-5-harmonic_spec0]
+            location: ('typhoon\\analysis\\tests\\test_harmonics.py', 5, 'test_sine_harmonic_content[5e-07-5-harmonic_spec0]')
+        finish pytest_runtest_logfinish --> [] [hook]
+      finish pytest_runtest_protocol --> True [hook]
+      pytest_runtest_protocol [hook]
+          item: <Function 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]'>
+          nextitem: <Function 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]'>
+        pytest_runtest_logstart [hook]
+            nodeid: typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]
+            location: ('typhoon\\analysis\\tests\\test_harmonics.py', 5, 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]')
+        finish pytest_runtest_logstart --> [] [hook]
+        pytest_runtest_setup [hook]
+            item: <Function 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]'>
+          pytest_fixture_setup [hook]
+              fixturedef: <FixtureDef name='harmonic_spec' scope='function' baseid='' >
+              request: <SubRequest 'harmonic_spec' for <Function 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]'>>
+          finish pytest_fixture_setup --> [hook]
+              10: 10
+              60: 60
+              98: 98
+          pytest_fixture_setup [hook]
+              fixturedef: <FixtureDef name='duration' scope='function' baseid='' >
+              request: <SubRequest 'duration' for <Function 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]'>>
+          finish pytest_fixture_setup --> 0.5 [hook]
+          pytest_fixture_setup [hook]
+              fixturedef: <FixtureDef name='Ts' scope='function' baseid='' >
+              request: <SubRequest 'Ts' for <Function 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]'>>
+          finish pytest_fixture_setup --> 0.0001 [hook]
+        finish pytest_runtest_setup --> [] [hook]
+        pytest_runtest_makereport [hook]
+            item: <Function 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]'>
+            call: <CallInfo when='setup' result: []>
+        finish pytest_runtest_makereport --> <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]' when='setup' outcome='passed'> [hook]
+        pytest_runtest_logreport [hook]
+            report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]' when='setup' outcome='passed'>
+          pytest_report_teststatus [hook]
+              report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]' when='setup' outcome='passed'>
+          finish pytest_report_teststatus --> ('', '', '') [hook]
+        finish pytest_runtest_logreport --> [] [hook]
+        pytest_runtest_call [hook]
+            item: <Function 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]'>
+          pytest_pyfunc_call [hook]
+              pyfuncitem: <Function 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]'>
+          finish pytest_pyfunc_call --> True [hook]
+        finish pytest_runtest_call --> [] [hook]
+        pytest_runtest_makereport [hook]
+            item: <Function 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]'>
+            call: <CallInfo when='call' result: []>
+        finish pytest_runtest_makereport --> <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]' when='call' outcome='passed'> [hook]
+        pytest_runtest_logreport [hook]
+            report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]' when='call' outcome='passed'>
+          pytest_report_teststatus [hook]
+              report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]' when='call' outcome='passed'>
+          finish pytest_report_teststatus --> ('passed', '.', 'PASSED') [hook]
+        finish pytest_runtest_logreport --> [] [hook]
+        pytest_runtest_teardown [hook]
+            item: <Function 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]'>
+            nextitem: <Function 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]'>
+          pytest_fixture_post_finalizer [hook]
+              fixturedef: <FixtureDef name='Ts' scope='function' baseid='' >
+              request: <SubRequest 'Ts' for <Function 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]'>>
+          finish pytest_fixture_post_finalizer --> [] [hook]
+          pytest_fixture_post_finalizer [hook]
+              fixturedef: <FixtureDef name='duration' scope='function' baseid='' >
+              request: <SubRequest 'duration' for <Function 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]'>>
+          finish pytest_fixture_post_finalizer --> [] [hook]
+          pytest_fixture_post_finalizer [hook]
+              fixturedef: <FixtureDef name='harmonic_spec' scope='function' baseid='' >
+              request: <SubRequest 'harmonic_spec' for <Function 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]'>>
+          finish pytest_fixture_post_finalizer --> [] [hook]
+        finish pytest_runtest_teardown --> [] [hook]
+        pytest_runtest_makereport [hook]
+            item: <Function 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]'>
+            call: <CallInfo when='teardown' result: []>
+        finish pytest_runtest_makereport --> <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]' when='teardown' outcome='passed'> [hook]
+        pytest_runtest_logreport [hook]
+            report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]' when='teardown' outcome='passed'>
+          pytest_report_teststatus [hook]
+              report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]' when='teardown' outcome='passed'>
+          finish pytest_report_teststatus --> ('', '', '') [hook]
+        finish pytest_runtest_logreport --> [] [hook]
+        pytest_runtest_logfinish [hook]
+            nodeid: typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]
+            location: ('typhoon\\analysis\\tests\\test_harmonics.py', 5, 'test_sine_harmonic_content[0.0001-0.5-harmonic_spec0]')
+        finish pytest_runtest_logfinish --> [] [hook]
+      finish pytest_runtest_protocol --> True [hook]
+      pytest_runtest_protocol [hook]
+          item: <Function 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]'>
+          nextitem: <Function 'test_thd_zero'>
+        pytest_runtest_logstart [hook]
+            nodeid: typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[0.0001-5-harmonic_spec0]
+            location: ('typhoon\\analysis\\tests\\test_harmonics.py', 5, 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]')
+        finish pytest_runtest_logstart --> [] [hook]
+        pytest_runtest_setup [hook]
+            item: <Function 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]'>
+          pytest_fixture_setup [hook]
+              fixturedef: <FixtureDef name='harmonic_spec' scope='function' baseid='' >
+              request: <SubRequest 'harmonic_spec' for <Function 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]'>>
+          finish pytest_fixture_setup --> [hook]
+              10: 10
+              60: 60
+              98: 98
+          pytest_fixture_setup [hook]
+              fixturedef: <FixtureDef name='duration' scope='function' baseid='' >
+              request: <SubRequest 'duration' for <Function 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]'>>
+          finish pytest_fixture_setup --> 5 [hook]
+          pytest_fixture_setup [hook]
+              fixturedef: <FixtureDef name='Ts' scope='function' baseid='' >
+              request: <SubRequest 'Ts' for <Function 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]'>>
+          finish pytest_fixture_setup --> 0.0001 [hook]
+        finish pytest_runtest_setup --> [] [hook]
+        pytest_runtest_makereport [hook]
+            item: <Function 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]'>
+            call: <CallInfo when='setup' result: []>
+        finish pytest_runtest_makereport --> <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[0.0001-5-harmonic_spec0]' when='setup' outcome='passed'> [hook]
+        pytest_runtest_logreport [hook]
+            report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[0.0001-5-harmonic_spec0]' when='setup' outcome='passed'>
+          pytest_report_teststatus [hook]
+              report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[0.0001-5-harmonic_spec0]' when='setup' outcome='passed'>
+          finish pytest_report_teststatus --> ('', '', '') [hook]
+        finish pytest_runtest_logreport --> [] [hook]
+        pytest_runtest_call [hook]
+            item: <Function 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]'>
+          pytest_pyfunc_call [hook]
+              pyfuncitem: <Function 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]'>
+          finish pytest_pyfunc_call --> True [hook]
+        finish pytest_runtest_call --> [] [hook]
+        pytest_runtest_makereport [hook]
+            item: <Function 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]'>
+            call: <CallInfo when='call' result: []>
+        finish pytest_runtest_makereport --> <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[0.0001-5-harmonic_spec0]' when='call' outcome='passed'> [hook]
+        pytest_runtest_logreport [hook]
+            report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[0.0001-5-harmonic_spec0]' when='call' outcome='passed'>
+          pytest_report_teststatus [hook]
+              report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[0.0001-5-harmonic_spec0]' when='call' outcome='passed'>
+          finish pytest_report_teststatus --> ('passed', '.', 'PASSED') [hook]
+        finish pytest_runtest_logreport --> [] [hook]
+        pytest_runtest_teardown [hook]
+            item: <Function 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]'>
+            nextitem: <Function 'test_thd_zero'>
+          pytest_fixture_post_finalizer [hook]
+              fixturedef: <FixtureDef name='Ts' scope='function' baseid='' >
+              request: <SubRequest 'Ts' for <Function 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]'>>
+          finish pytest_fixture_post_finalizer --> [] [hook]
+          pytest_fixture_post_finalizer [hook]
+              fixturedef: <FixtureDef name='duration' scope='function' baseid='' >
+              request: <SubRequest 'duration' for <Function 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]'>>
+          finish pytest_fixture_post_finalizer --> [] [hook]
+          pytest_fixture_post_finalizer [hook]
+              fixturedef: <FixtureDef name='harmonic_spec' scope='function' baseid='' >
+              request: <SubRequest 'harmonic_spec' for <Function 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]'>>
+          finish pytest_fixture_post_finalizer --> [] [hook]
+        finish pytest_runtest_teardown --> [] [hook]
+        pytest_runtest_makereport [hook]
+            item: <Function 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]'>
+            call: <CallInfo when='teardown' result: []>
+        finish pytest_runtest_makereport --> <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[0.0001-5-harmonic_spec0]' when='teardown' outcome='passed'> [hook]
+        pytest_runtest_logreport [hook]
+            report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[0.0001-5-harmonic_spec0]' when='teardown' outcome='passed'>
+          pytest_report_teststatus [hook]
+              report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[0.0001-5-harmonic_spec0]' when='teardown' outcome='passed'>
+          finish pytest_report_teststatus --> ('', '', '') [hook]
+        finish pytest_runtest_logreport --> [] [hook]
+        pytest_runtest_logfinish [hook]
+            nodeid: typhoon/analysis/tests/test_harmonics.py::test_sine_harmonic_content[0.0001-5-harmonic_spec0]
+            location: ('typhoon\\analysis\\tests\\test_harmonics.py', 5, 'test_sine_harmonic_content[0.0001-5-harmonic_spec0]')
+        finish pytest_runtest_logfinish --> [] [hook]
+      finish pytest_runtest_protocol --> True [hook]
+      pytest_runtest_protocol [hook]
+          item: <Function 'test_thd_zero'>
+          nextitem: <Function 'test_thd_nonzero'>
+        pytest_runtest_logstart [hook]
+            nodeid: typhoon/analysis/tests/test_harmonics.py::test_thd_zero
+            location: ('typhoon\\analysis\\tests\\test_harmonics.py', 36, 'test_thd_zero')
+        finish pytest_runtest_logstart --> [] [hook]
+        pytest_runtest_setup [hook]
+            item: <Function 'test_thd_zero'>
+        finish pytest_runtest_setup --> [] [hook]
+        pytest_runtest_makereport [hook]
+            item: <Function 'test_thd_zero'>
+            call: <CallInfo when='setup' result: []>
+        finish pytest_runtest_makereport --> <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_thd_zero' when='setup' outcome='passed'> [hook]
+        pytest_runtest_logreport [hook]
+            report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_thd_zero' when='setup' outcome='passed'>
+          pytest_report_teststatus [hook]
+              report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_thd_zero' when='setup' outcome='passed'>
+          finish pytest_report_teststatus --> ('', '', '') [hook]
+        finish pytest_runtest_logreport --> [] [hook]
+        pytest_runtest_call [hook]
+            item: <Function 'test_thd_zero'>
+          pytest_pyfunc_call [hook]
+              pyfuncitem: <Function 'test_thd_zero'>
+          finish pytest_pyfunc_call --> True [hook]
+        finish pytest_runtest_call --> [] [hook]
+        pytest_runtest_makereport [hook]
+            item: <Function 'test_thd_zero'>
+            call: <CallInfo when='call' result: []>
+        finish pytest_runtest_makereport --> <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_thd_zero' when='call' outcome='passed'> [hook]
+        pytest_runtest_logreport [hook]
+            report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_thd_zero' when='call' outcome='passed'>
+          pytest_report_teststatus [hook]
+              report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_thd_zero' when='call' outcome='passed'>
+          finish pytest_report_teststatus --> ('passed', '.', 'PASSED') [hook]
+        finish pytest_runtest_logreport --> [] [hook]
+        pytest_runtest_teardown [hook]
+            item: <Function 'test_thd_zero'>
+            nextitem: <Function 'test_thd_nonzero'>
+        finish pytest_runtest_teardown --> [] [hook]
+        pytest_runtest_makereport [hook]
+            item: <Function 'test_thd_zero'>
+            call: <CallInfo when='teardown' result: []>
+        finish pytest_runtest_makereport --> <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_thd_zero' when='teardown' outcome='passed'> [hook]
+        pytest_runtest_logreport [hook]
+            report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_thd_zero' when='teardown' outcome='passed'>
+          pytest_report_teststatus [hook]
+              report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_thd_zero' when='teardown' outcome='passed'>
+          finish pytest_report_teststatus --> ('', '', '') [hook]
+        finish pytest_runtest_logreport --> [] [hook]
+        pytest_runtest_logfinish [hook]
+            nodeid: typhoon/analysis/tests/test_harmonics.py::test_thd_zero
+            location: ('typhoon\\analysis\\tests\\test_harmonics.py', 36, 'test_thd_zero')
+        finish pytest_runtest_logfinish --> [] [hook]
+      finish pytest_runtest_protocol --> True [hook]
+      pytest_runtest_protocol [hook]
+          item: <Function 'test_thd_nonzero'>
+          nextitem: <Function 'test_harmonic_plot'>
+        pytest_runtest_logstart [hook]
+            nodeid: typhoon/analysis/tests/test_harmonics.py::test_thd_nonzero
+            location: ('typhoon\\analysis\\tests\\test_harmonics.py', 41, 'test_thd_nonzero')
+        finish pytest_runtest_logstart --> [] [hook]
+        pytest_runtest_setup [hook]
+            item: <Function 'test_thd_nonzero'>
+        finish pytest_runtest_setup --> [] [hook]
+        pytest_runtest_makereport [hook]
+            item: <Function 'test_thd_nonzero'>
+            call: <CallInfo when='setup' result: []>
+        finish pytest_runtest_makereport --> <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_thd_nonzero' when='setup' outcome='passed'> [hook]
+        pytest_runtest_logreport [hook]
+            report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_thd_nonzero' when='setup' outcome='passed'>
+          pytest_report_teststatus [hook]
+              report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_thd_nonzero' when='setup' outcome='passed'>
+          finish pytest_report_teststatus --> ('', '', '') [hook]
+        finish pytest_runtest_logreport --> [] [hook]
+        pytest_runtest_call [hook]
+            item: <Function 'test_thd_nonzero'>
+          pytest_pyfunc_call [hook]
+              pyfuncitem: <Function 'test_thd_nonzero'>
+          finish pytest_pyfunc_call --> True [hook]
+        finish pytest_runtest_call --> [] [hook]
+        pytest_runtest_makereport [hook]
+            item: <Function 'test_thd_nonzero'>
+            call: <CallInfo when='call' result: []>
+        finish pytest_runtest_makereport --> <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_thd_nonzero' when='call' outcome='passed'> [hook]
+        pytest_runtest_logreport [hook]
+            report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_thd_nonzero' when='call' outcome='passed'>
+          pytest_report_teststatus [hook]
+              report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_thd_nonzero' when='call' outcome='passed'>
+          finish pytest_report_teststatus --> ('passed', '.', 'PASSED') [hook]
+        finish pytest_runtest_logreport --> [] [hook]
+        pytest_runtest_teardown [hook]
+            item: <Function 'test_thd_nonzero'>
+            nextitem: <Function 'test_harmonic_plot'>
+        finish pytest_runtest_teardown --> [] [hook]
+        pytest_runtest_makereport [hook]
+            item: <Function 'test_thd_nonzero'>
+            call: <CallInfo when='teardown' result: []>
+        finish pytest_runtest_makereport --> <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_thd_nonzero' when='teardown' outcome='passed'> [hook]
+        pytest_runtest_logreport [hook]
+            report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_thd_nonzero' when='teardown' outcome='passed'>
+          pytest_report_teststatus [hook]
+              report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_thd_nonzero' when='teardown' outcome='passed'>
+          finish pytest_report_teststatus --> ('', '', '') [hook]
+        finish pytest_runtest_logreport --> [] [hook]
+        pytest_runtest_logfinish [hook]
+            nodeid: typhoon/analysis/tests/test_harmonics.py::test_thd_nonzero
+            location: ('typhoon\\analysis\\tests\\test_harmonics.py', 41, 'test_thd_nonzero')
+        finish pytest_runtest_logfinish --> [] [hook]
+      finish pytest_runtest_protocol --> True [hook]
+      pytest_runtest_protocol [hook]
+          item: <Function 'test_harmonic_plot'>
+          nextitem: None
+        pytest_runtest_logstart [hook]
+            nodeid: typhoon/analysis/tests/test_harmonics.py::test_harmonic_plot
+            location: ('typhoon\\analysis\\tests\\test_harmonics.py', 47, 'test_harmonic_plot')
+        finish pytest_runtest_logstart --> [] [hook]
+        pytest_runtest_setup [hook]
+            item: <Function 'test_harmonic_plot'>
+        pytest_runtest_makereport [hook]
+            item: <Function 'test_harmonic_plot'>
+            call: <CallInfo when='setup' exception: Only meant for manual testing>
+        finish pytest_runtest_makereport --> <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_harmonic_plot' when='setup' outcome='skipped'> [hook]
+        pytest_runtest_logreport [hook]
+            report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_harmonic_plot' when='setup' outcome='skipped'>
+          pytest_report_teststatus [hook]
+              report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_harmonic_plot' when='setup' outcome='skipped'>
+          finish pytest_report_teststatus --> ('skipped', 's', 'SKIPPED') [hook]
+        finish pytest_runtest_logreport --> [] [hook]
+        pytest_runtest_teardown [hook]
+            item: <Function 'test_harmonic_plot'>
+            nextitem: None
+        finish pytest_runtest_teardown --> [] [hook]
+        pytest_runtest_makereport [hook]
+            item: <Function 'test_harmonic_plot'>
+            call: <CallInfo when='teardown' result: []>
+        finish pytest_runtest_makereport --> <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_harmonic_plot' when='teardown' outcome='passed'> [hook]
+        pytest_runtest_logreport [hook]
+            report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_harmonic_plot' when='teardown' outcome='passed'>
+          pytest_report_teststatus [hook]
+              report: <TestReport 'typhoon/analysis/tests/test_harmonics.py::test_harmonic_plot' when='teardown' outcome='passed'>
+          finish pytest_report_teststatus --> ('', '', '') [hook]
+        finish pytest_runtest_logreport --> [] [hook]
+        pytest_runtest_logfinish [hook]
+            nodeid: typhoon/analysis/tests/test_harmonics.py::test_harmonic_plot
+            location: ('typhoon\\analysis\\tests\\test_harmonics.py', 47, 'test_harmonic_plot')
+        find_module called for: termios [assertion]
+        finish pytest_runtest_logfinish --> [] [hook]
+      finish pytest_runtest_protocol --> True [hook]
+    finish pytest_runtestloop --> True [hook]
+    pytest_sessionfinish [hook]
+        session: <Session 't_api'>
+        exitstatus: 0
+      pytest_terminal_summary [hook]
+          terminalreporter: <_pytest.terminal.TerminalReporter object at 0x000001DE7B6C1208>
+          exitstatus: 0
+      finish pytest_terminal_summary --> [] [hook]
+    find_module called for: termios [assertion]
+    finish pytest_sessionfinish --> [] [hook]
+    pytest_unconfigure [hook]
+        config: <_pytest.config.Config object at 0x000001DE697A60B8>
+    finish pytest_unconfigure --> [] [hook]
+  finish [config:tmpdir]
