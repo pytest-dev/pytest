@@ -14,19 +14,14 @@ def merge_similar(node):
     for child in node.children:
         merge_similar(child)
 
-
 with open("pytestdebug.log") as f:
-    lines = f.readlines()
+    raw_lines = f.readlines()
 
-lines2 = []
-for line in lines:
-    if "[hook]" in line:
-        lines2.append(line.replace("[hook]","").replace("\n","").lstrip().rstrip())
-
+hooks = [line.replace("[hook]","").replace("\n","").lstrip().rstrip() for line in raw_lines if "[hook]" in line]
 root = Node("root")
 parent_hook = root
 previous_hook = None
-for hook in lines2:
+for hook in hooks:
     if "finish pytest_runtest_setup" in hook:
         pass
 
@@ -46,7 +41,6 @@ for hook in lines2:
 
 merge_similar(root)
 
-#print(RenderTree(root, style=ContRoundStyle))
 for pre, _, node in RenderTree(root):
     print("%s%s" % (pre, node.name))
 
