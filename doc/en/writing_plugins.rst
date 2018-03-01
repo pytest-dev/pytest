@@ -543,6 +543,7 @@ implemented by other plugins in order to alter behaviour or interact with
 the new plugin:
 
 .. autofunction:: pytest_addhooks
+    :noindex:
 
 Hooks are usually declared as do-nothing functions that contain only
 documentation describing when the hook will be called and what return values
