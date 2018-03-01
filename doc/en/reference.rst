@@ -8,21 +8,18 @@ This page contains the full reference to pytest's API.
     :depth: 3
     :local:
 
+Functions
+---------
 
 pytest.approx
--------------
+~~~~~~~~~~~~~
 
 .. autofunction:: _pytest.python_api.approx
 
-outcomes
---------
-
-You can use the following functions in your test, fixture or setup
-functions to force a certain test outcome.  Note that most often
-you can rather use declarative marks, see :ref:`skipping`.
-
 pytest.fail
 ~~~~~~~~~~~
+
+**Tutorial**: :ref:`skipping`
 
 .. autofunction:: _pytest.outcomes.fail
 
@@ -42,22 +39,22 @@ pytest.xfail
 .. autofunction:: _pytest.outcomes.xfail
 
 pytest.exit
------------
+~~~~~~~~~~~
 
 .. autofunction:: _pytest.outcomes.exit
 
 pytest.main
------------
+~~~~~~~~~~~
 
 .. autofunction:: _pytest.config.main
 
 pytest.param
-------------
+~~~~~~~~~~~~~
 
 .. autofunction:: pytest.param(*values, [id], [marks])
 
 pytest.raises
--------------
+~~~~~~~~~~~~~
 
 **Tutorial**: :ref:`assertraises`.
 
@@ -65,7 +62,7 @@ pytest.raises
     :with: excinfo
 
 pytest.deprecated_call
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 **Tutorial**: :ref:`ensuring_function_triggers`.
 
@@ -73,14 +70,14 @@ pytest.deprecated_call
     :with:
 
 pytest.register_assert_rewrite
-------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Tutorial**: :ref:`assertion-rewriting`.
 
 .. autofunction:: pytest.register_assert_rewrite
 
 pytest.warns
-------------
+~~~~~~~~~~~~
 
 **Tutorial**: :ref:`assertwarnings`
 
@@ -215,11 +212,10 @@ Example of a fixture requiring another fixture:
 For more details, consult the full :ref:`fixtures docs <fixture>`.
 
 
-fixture decorator
-~~~~~~~~~~~~~~~~~
+@pytest.fixture
+~~~~~~~~~~~~~~~
 
-.. currentmodule:: _pytest.fixtures
-.. autofunction:: fixture
+.. autofunction:: pytest.fixture
     :decorator:
 
 
