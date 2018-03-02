@@ -48,6 +48,15 @@ def test_pytest_setup_cfg_deprecated(testdir):
     result.stdout.fnmatch_lines(['*pytest*section in setup.cfg files is deprecated*use*tool:pytest*instead*'])
 
 
+def test_pytest_custom_cfg_deprecated(testdir):
+    testdir.makefile('.cfg', custom='''
+        [pytest]
+        addopts = --verbose
+    ''')
+    result = testdir.runpytest("-c", "custom.cfg")
+    result.stdout.fnmatch_lines(['*pytest*section in custom.cfg files is deprecated*use*tool:pytest*instead*'])
+
+
 def test_str_args_deprecated(tmpdir, testdir):
     """Deprecate passing strings to pytest.main(). Scheduled for removal in pytest-4.0."""
     from _pytest.main import EXIT_NOTESTSCOLLECTED
