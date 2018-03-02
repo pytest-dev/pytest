@@ -5,7 +5,12 @@ the name cache was not chosen to ensure pluggy automatically
 ignores the external pytest-cache
 """
 from __future__ import absolute_import, division, print_function
+
+from collections import OrderedDict
+
 import py
+import six
+
 import pytest
 import json
 import os
@@ -168,6 +173,39 @@ class LFPlugin(object):
             config.cache.set("cache/lastfailed", self.lastfailed)
 
 
+class NFPlugin(object):
+    """ Plugin which implements the --nf (run new-first) option """
+
+    def __init__(self, config):
+        self.config = config
+        self.active = config.option.newfirst
+        self.cached_nodeids = config.cache.get("cache/nodeids", [])
+
+    def pytest_collection_modifyitems(self, session, config, items):
+        if self.active:
+            new_items = OrderedDict()
+            other_items = OrderedDict()
+            for item in items:
+                if item.nodeid not in self.cached_nodeids:
+                    new_items[item.nodeid] = item
+                else:
+                    other_items[item.nodeid] = item
+
+            items[:] = self._get_increasing_order(six.itervalues(new_items)) + \
+                self._get_increasing_order(six.itervalues(other_items))
+        self.cached_nodeids = [x.nodeid for x in items if isinstance(x, pytest.Item)]
+
+    def _get_increasing_order(self, items):
+        return sorted(items, key=lambda item: item.fspath.mtime(), reverse=True)
+
+    def pytest_sessionfinish(self, session):
+        config = self.config
+        if config.getoption("cacheshow") or hasattr(config, "slaveinput"):
+            return
+
+        config.cache.set("cache/nodeids", self.cached_nodeids)
+
+
 def pytest_addoption(parser):
     group = parser.getgroup("general")
     group.addoption(
@@ -179,6 +217,10 @@ def pytest_addoption(parser):
         help="run all tests but run the last failures first.  "
              "This may re-order tests and thus lead to "
              "repeated fixture setup/teardown")
+    group.addoption(
+        '--nf', '--new-first', action='store_true', dest="newfirst",
+        help="run tests from new files first, then the rest of the tests "
+             "sorted by file mtime")
     group.addoption(
         '--cache-show', action='store_true', dest="cacheshow",
         help="show cache contents, don't perform collection or tests")
@@ -200,6 +242,7 @@ def pytest_cmdline_main(config):
 def pytest_configure(config):
     config.cache = Cache(config)
     config.pluginmanager.register(LFPlugin(config), "lfplugin")
+    config.pluginmanager.register(NFPlugin(config), "nfplugin")
 
 
 @pytest.fixture
