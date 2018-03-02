@@ -264,6 +264,9 @@ capsys
             captured = capsys.readouterr()
             assert captured.out == "hello\n"
 
+.. autoclass:: CaptureFixture()
+    :members:
+
 
 capsysbinary
 ~~~~~~~~~~~~

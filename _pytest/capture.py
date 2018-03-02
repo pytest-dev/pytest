@@ -292,10 +292,9 @@ class CaptureFixture(object):
             cap.stop_capturing()
 
     def readouterr(self):
-        """Read and return the captured output so far.
+        """Read and return the captured output so far, resetting the internal buffer.
 
-        :rtype: Tuple[str, str]
-        :return: captured content as a pair of (stdout, stdout) strings
+        :return: captured content as a namedtuple with  ``out`` and ``err`` string attributes
         """
         try:
             return self._capture.readouterr()
