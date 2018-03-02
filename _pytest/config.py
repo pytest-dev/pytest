@@ -1251,7 +1251,7 @@ def getcfg(args, warnfunc=None):
         This parameter should be removed when pytest
         adopts standard deprecation warnings (#1804).
     """
-    from _pytest.deprecated import SETUP_CFG_PYTEST
+    from _pytest.deprecated import CFG_PYTEST_SECTION
     inibasenames = ["pytest.ini", "tox.ini", "setup.cfg"]
     args = [x for x in args if not str(x).startswith("-")]
     if not args:
@@ -1265,7 +1265,7 @@ def getcfg(args, warnfunc=None):
                     iniconfig = py.iniconfig.IniConfig(p)
                     if 'pytest' in iniconfig.sections:
                         if inibasename == 'setup.cfg' and warnfunc:
-                            warnfunc('C1', SETUP_CFG_PYTEST)
+                            warnfunc('C1', CFG_PYTEST_SECTION.format(filename=inibasename))
                         return base, p, iniconfig['pytest']
                     if inibasename == 'setup.cfg' and 'tool:pytest' in iniconfig.sections:
                         return base, p, iniconfig['tool:pytest']
@@ -1329,10 +1329,14 @@ def determine_setup(inifile, args, warnfunc=None, rootdir_cmd_arg=None):
     if inifile:
         iniconfig = py.iniconfig.IniConfig(inifile)
         is_cfg_file = str(inifile).endswith('.cfg')
+        # TODO: [pytest] section in *.cfg files is depricated. Need refactoring.
         sections = ['tool:pytest', 'pytest'] if is_cfg_file else ['pytest']
         for section in sections:
             try:
                 inicfg = iniconfig[section]
+                if is_cfg_file and section == 'pytest' and warnfunc:
+                    from _pytest.deprecated import CFG_PYTEST_SECTION
+                    warnfunc('C1', CFG_PYTEST_SECTION.format(filename=str(inifile)))
                 break
             except KeyError:
                 inicfg = None
