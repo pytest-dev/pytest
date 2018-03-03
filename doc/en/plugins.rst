@@ -148,6 +148,7 @@ in the `pytest repository <https://github.com/pytest-dev/pytest>`_.
     _pytest.resultlog
     _pytest.runner
     _pytest.main
+    _pytest.logging
     _pytest.skipping
     _pytest.terminal
     _pytest.tmpdir
