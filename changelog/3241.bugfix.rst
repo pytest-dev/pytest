@@ -1,0 +1,2 @@
+Refactor check of bindir from `exists` to `isdir`.
+
