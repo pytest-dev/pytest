@@ -2,8 +2,7 @@ import math
 import sys
 
 import py
-from six.moves import zip, filterfalse
-from more_itertools.more import always_iterable
+from six.moves import zip
 
 from _pytest.compat import isclass
 from _pytest.outcomes import fail
@@ -567,10 +566,14 @@ def raises(expected_exception, *args, **kwargs):
 
     """
     __tracebackhide__ = True
-    for exc in filterfalse(isclass, always_iterable(expected_exception)):
-        msg = ("exceptions must be old-style classes or"
-               " derived from BaseException, not %s")
-        raise TypeError(msg % type(exc))
+    msg = ("exceptions must be old-style classes or"
+           " derived from BaseException, not %s")
+    if isinstance(expected_exception, tuple):
+        for exc in expected_exception:
+            if not isclass(exc):
+                raise TypeError(msg % type(exc))
+    elif not isclass(expected_exception):
+        raise TypeError(msg % type(expected_exception))
 
     message = "DID NOT RAISE {0}".format(expected_exception)
     match_expr = None
