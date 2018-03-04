@@ -1,2 +1,2 @@
-Refactor check of bindir from `exists` to `isdir`.
+Refactor check of bindir from ``exists`` to ``isdir`` regarding `#3241 <https://github.com/pytest-dev/pytest/issues/3241>`_.
 
