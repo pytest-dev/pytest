@@ -1,1 +1,0 @@
-Fix reference cycle generated when using the ``request`` fixture.
