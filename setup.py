@@ -60,7 +60,6 @@ def main():
         'six>=1.10.0',
         'setuptools',
         'attrs>=17.2.0',
-        'more_itertools>=4.0.0',
     ]
     # if _PYTEST_SETUP_SKIP_PLUGGY_DEP is set, skip installing pluggy;
     # used by tox.ini to test with pluggy master
