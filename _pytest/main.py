@@ -177,7 +177,7 @@ def _in_venv(path):
     """Attempts to detect if ``path`` is the root of a Virtual Environment by
     checking for the existence of the appropriate activate script"""
     bindir = path.join('Scripts' if sys.platform.startswith('win') else 'bin')
-    if not bindir.exists():
+    if not bindir.isdir():
         return False
     activates = ('activate', 'activate.csh', 'activate.fish',
                  'Activate', 'Activate.bat', 'Activate.ps1')
