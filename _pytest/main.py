@@ -5,6 +5,8 @@ import contextlib
 import functools
 import os
 import pkgutil
+import re
+
 import six
 import sys
 
@@ -308,6 +310,8 @@ class Session(nodes.FSCollector):
         self.trace = config.trace.root.get("collection")
         self._norecursepatterns = config.getini("norecursedirs")
         self.startdir = py.path.local()
+        self.line = None
+        self.nearest_func_name = None
 
         self.config.pluginmanager.register(self, name="session")
 
@@ -388,7 +392,10 @@ class Session(nodes.FSCollector):
         else:
             if rep.passed:
                 for node in rep.result:
-                    self.items.extend(self.genitems(node))
+                    if self.line and self.nearest_func_name:
+                        self.items.extend([item for item in self.genitems(node) if self.nearest_func_name in item.name])
+                    else:
+                        self.items.extend(self.genitems(node))
             return items
 
     def collect(self):
@@ -468,6 +475,11 @@ class Session(nodes.FSCollector):
         if self.config.option.pyargs:
             parts[0] = self._tryconvertpyarg(parts[0])
         relpath = parts[0].replace("/", os.sep)
+        pattern_line = r':(?P<line>[0-9]+)$'
+        match = re.search(pattern_line, relpath)
+        if match:
+            relpath = ''.join(relpath.split(':')[:-1])
+            self.line = match.group("line")
         path = self.config.invocation_dir.join(relpath, abs=True)
         if not path.check():
             if self.config.option.pyargs:
@@ -476,8 +488,38 @@ class Session(nodes.FSCollector):
                     " (missing __init__.py?)")
             else:
                 raise UsageError("file not found: " + arg)
+        if self.line:
+            self.nearest_func_name = self._get_nearest_func_name(self.line, path)
         parts[0] = path
         return parts
+
+    def _get_nearest_func_name(self, line, path):
+        path = str(path)
+        start_line = line = int(line) - 1
+        if not os.path.isfile(path):
+            raise UsageError("{} is not a file".format(path))
+        with open(path) as f:
+            content = f.readlines()
+        at_flag = False
+        pattern_func = r'[\t ]*?def test(?P<func_name>[a-zA-Z0-9_-]+)\(*'
+        pattern_at = r'[\t ]*?@'
+        if line < len(content) and re.match(pattern_at, content[line]):
+            at_flag = True
+
+        while 0 <= line < len(content):
+            match = re.match(pattern_func, content[line])
+            if match:
+                return "test" + match.group("func_name")
+            if at_flag:
+                if re.match(pattern_at, content[line]):
+                    line = line + 1
+                else:
+                    line = start_line - 1
+                    at_flag = False
+            else:
+                line = line - 1
+
+        raise UsageError("No test found near line {}".format(self.line))
 
     def matchnodes(self, matching, names):
         self.trace("matchnodes", matching, names)
