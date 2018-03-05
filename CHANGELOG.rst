@@ -8,6 +8,43 @@
 
 .. towncrier release notes start
 
+Pytest 3.4.2 (2018-03-04)
+=========================
+
+Bug Fixes
+---------
+
+- Removed progress information when capture option is ``no``. (`#3203
+  <https://github.com/pytest-dev/pytest/issues/3203>`_)
+
+- Refactor check of bindir from ``exists`` to ``isdir``. (`#3241
+  <https://github.com/pytest-dev/pytest/issues/3241>`_)
+
+- Fix ``TypeError`` issue when using ``approx`` with a ``Decimal`` value.
+  (`#3247 <https://github.com/pytest-dev/pytest/issues/3247>`_)
+
+- Fix reference cycle generated when using the ``request`` fixture. (`#3249
+  <https://github.com/pytest-dev/pytest/issues/3249>`_)
+
+- ``[tool:pytest]`` sections in ``*.cfg`` files passed by the ``-c`` option are
+  now properly recognized. (`#3260
+  <https://github.com/pytest-dev/pytest/issues/3260>`_)
+
+
+Improved Documentation
+----------------------
+
+- Add logging plugin to plugins list. (`#3209
+  <https://github.com/pytest-dev/pytest/issues/3209>`_)
+
+
+Trivial/Internal Changes
+------------------------
+
+- Fix minor typo in fixture.rst (`#3259
+  <https://github.com/pytest-dev/pytest/issues/3259>`_)
+
+
 Pytest 3.4.1 (2018-02-20)
 =========================
 
