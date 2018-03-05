@@ -699,6 +699,121 @@ def test_matchnodes_two_collections_same_file(testdir):
     ])
 
 
+class TestCollectLineOption(object):
+    @pytest.mark.parametrize("line", [4, 5, 6])
+    def test_collect_line(self, testdir, line):
+        p = testdir.makepyfile(test_1="""
+        def test_01():
+            assert 1
+            
+        def test_02():
+            assert 1
+        
+        def test_03():
+            assert 1
+        """)
+        result = testdir.runpytest("{}:{}".format(p, line), "-v")
+        result.stdout.fnmatch_lines("*test_1.py::test_02 PASSED*")
+        assert "test_1.py::test_01" not in result.stdout.str()
+        assert "test_1.py::test_03" not in result.stdout.str()
+
+    @pytest.mark.parametrize("line", [5, 6, 7, 8])
+    def test_collect_line_with_parametrize(self, testdir, line):
+        p = testdir.makepyfile(test_1="""
+        import pytest
+        def test_01():
+            assert 1
+            
+        @pytest.mark.parametrize('x', [1, 2])
+        def test_02(x):
+            assert 1
+        
+        def test_03():
+            assert 1
+        """)
+        result = testdir.runpytest("{}:{}".format(p, line), "-v")
+        result.stdout.fnmatch_lines("*test_1.py::test_02[1*")
+        result.stdout.fnmatch_lines("*test_1.py::test_02[2*")
+        assert "test_1.py::test_01" not in result.stdout.str()
+        assert "test_1.py::test_03" not in result.stdout.str()
+
+    @pytest.mark.parametrize("line", [5, 6, 7])
+    def test_collect_line_class(self, testdir, line):
+        p = testdir.makepyfile(test_1="""
+        class TestLine:
+            def test_01(self):
+                assert 1
+    
+            def test_02(self):
+                assert 1
+    
+            def test_03(self):
+                assert 1
+        """)
+        result = testdir.runpytest("{}:{}".format(p, line), "-v")
+        result.stdout.fnmatch_lines("*test_1.py::TestLine::test_02 PASSED*")
+        assert "test_1.py::test_01" not in result.stdout.str()
+        assert "test_1.py::test_03" not in result.stdout.str()
+
+    @pytest.mark.parametrize("line", [6, 7, 8])
+    def test_collect_line_class_parametrize(self, testdir, line):
+        p = testdir.makepyfile(test_1="""
+        import pytest
+        class TestLine:
+            def test_01(self):
+                assert 1
+    
+            @pytest.mark.parametrize('x', [1, 2])
+            def test_02(self, x):
+                assert 1
+    
+            def test_03(self):
+                assert 1
+        """)
+        result = testdir.runpytest("{}:{}".format(p, line), "-v")
+        result.stdout.fnmatch_lines("*test_1.py::TestLine::test_02[1*")
+        result.stdout.fnmatch_lines("*test_1.py::TestLine::test_02[2*")
+        assert "test_1.py::test_01" not in result.stdout.str()
+        assert "test_1.py::test_03" not in result.stdout.str()
+
+    def test_collect_line_no_test_found(self, testdir):
+        p = testdir.makepyfile(test_1="""
+        import pytest
+        class TestLine:
+            def test_01(self):
+                assert 1
+
+            def test_02(self, x):
+                assert 1
+
+            def test_03(self):
+                assert 1
+        """)
+        result = testdir.runpytest("{}:{}".format(p, 1), "-v")
+        result.stderr.fnmatch_lines("*No test found near line 1*")
+
+    @pytest.mark.parametrize("line", [9, 10, 11])
+    def test_collect_line_not_test(self, testdir, line):
+        p = testdir.makepyfile(test_1="""
+        import pytest
+        def test_01():
+            assert 1
+
+        @pytest.mark.parametrize('x', [1, 2])
+        def test_02(x):
+            assert 1
+
+        @pytest.mark.parametrize('x', [1, 2])
+        def not_a_test_03():
+            assert 1
+        """)
+        result = testdir.runpytest("{}:{}".format(p, line), "-v")
+        result.stdout.fnmatch_lines("*test_1.py::test_02[1*")
+        result.stdout.fnmatch_lines("*test_1.py::test_02[2*")
+        assert "test_1.py::test_01" not in result.stdout.str()
+        assert "test_1.py::test_03" not in result.stdout.str()
+
+
 class TestNodekeywords(object):
     def test_no_under(self, testdir):
         modcol = testdir.getmodulecol("""
