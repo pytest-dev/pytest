@@ -17,8 +17,7 @@ Bug Fixes
 - Removed progress information when capture option is ``no``. (`#3203
   <https://github.com/pytest-dev/pytest/issues/3203>`_)
 
-- Refactor check of bindir from ``exists`` to ``isdir`` regarding `#3241
-  <https://github.com/pytest-dev/pytest/issues/3241>`_. (`#3241
+- Refactor check of bindir from ``exists`` to ``isdir``. (`#3241
   <https://github.com/pytest-dev/pytest/issues/3241>`_)
 
 - Fix ``TypeError`` issue when using ``approx`` with a ``Decimal`` value.
