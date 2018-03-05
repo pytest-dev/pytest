@@ -705,10 +705,10 @@ class TestCollectLineOption(object):
         p = testdir.makepyfile(test_1="""
         def test_01():
             assert 1
-            
+
         def test_02():
             assert 1
-        
+
         def test_03():
             assert 1
         """)
@@ -723,11 +723,11 @@ class TestCollectLineOption(object):
         import pytest
         def test_01():
             assert 1
-            
+
         @pytest.mark.parametrize('x', [1, 2])
         def test_02(x):
             assert 1
-        
+
         def test_03():
             assert 1
         """)
@@ -743,10 +743,10 @@ class TestCollectLineOption(object):
         class TestLine:
             def test_01(self):
                 assert 1
-    
+
             def test_02(self):
                 assert 1
-    
+
             def test_03(self):
                 assert 1
         """)
@@ -762,11 +762,11 @@ class TestCollectLineOption(object):
         class TestLine:
             def test_01(self):
                 assert 1
-    
+
             @pytest.mark.parametrize('x', [1, 2])
             def test_02(self, x):
                 assert 1
-    
+
             def test_03(self):
                 assert 1
         """)
