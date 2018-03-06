@@ -774,4 +774,43 @@ test functions and methods. Can be either a single mark or a sequence of marks.
     import pytest
     pytestmark = (pytest.mark.integration, pytest.mark.slow)
 
+PYTEST_DONT_REWRITE (module docstring)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The text ``PYTEST_DONT_REWRITE`` can be add to any **module docstring** to disable
+:ref:`assertion rewriting <assert introspection>` for that module.
+
+
+Environment Variables
+---------------------
+
+Environment variables that can be used to change pytest's behavior.
+
+PYTEST_ADDOPTS
+~~~~~~~~~~~~~~
+
+This contains a command-line (parsed by the py:mod:`shlex` module) that will be **prepended** to the command line given
+by the user, see :ref:`adding default options` for more information.
+
+PYTEST_DEBUG
+~~~~~~~~~~~~
+
+When set, pytest will print tracing and debug information.
+
+PYTEST_PLUGINS
+~~~~~~~~~~~~~~
+
+Contains comma-separated list of modules that should be loaded as plugins:
+
+.. code-block:: bash
+
+    export PYTEST_PLUGINS=mymodule.plugin,xdisst
+
+
+PYTEST_CURRENT_TEST
+~~~~~~~~~~~~~~~~~~~
+
+This is not meant to be set by users, but is set by pytest internally with the name of the current test so other
+processes can inspect it, see :ref:`pytest current test env` for more information.
+
 

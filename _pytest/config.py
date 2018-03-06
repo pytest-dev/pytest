@@ -169,7 +169,7 @@ class PytestPluginManager(PluginManager):
     Overwrites :py:class:`pluggy.PluginManager <pluggy.PluginManager>` to add pytest-specific
     functionality:
 
-    * loading plugins from the command line, ``PYTEST_PLUGIN`` env variable and
+    * loading plugins from the command line, ``PYTEST_PLUGINS`` env variable and
       ``pytest_plugins`` global variables found in plugins being loaded;
     * ``conftest.py`` loading during start-up;
     """
