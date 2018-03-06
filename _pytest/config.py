@@ -11,6 +11,8 @@ import py
 # DON't import pytest here because it causes import cycle troubles
 import sys
 import os
+from _pytest.outcomes import Skipped
+
 import _pytest._code
 import _pytest.hookspec  # the extension point definitions
 import _pytest.assertion
@@ -52,7 +54,7 @@ def main(args=None, plugins=None):
             tw = py.io.TerminalWriter(sys.stderr)
             for line in traceback.format_exception(*e.excinfo):
                 tw.line(line.rstrip(), red=True)
-            tw.line("ERROR: could not load %s\n" % (e.path), red=True)
+            tw.line("ERROR: could not load %s\n" % (e.path,), red=True)
             return 4
         else:
             try:
@@ -435,10 +437,7 @@ class PytestPluginManager(PluginManager):
 
             six.reraise(new_exc_type, new_exc, sys.exc_info()[2])
 
-        except Exception as e:
-            import pytest
-            if not hasattr(pytest, 'skip') or not isinstance(e, pytest.skip.Exception):
-                raise
+        except Skipped as e:
             self._warn("skipped plugin %r: %s" % ((modname, e.msg)))
         else:
             mod = sys.modules[importspec]
@@ -1017,7 +1016,7 @@ class Config(object):
                 mode = 'plain'
             else:
                 self._mark_plugins_for_rewrite(hook)
-        self._warn_about_missing_assertion(mode)
+        _warn_about_missing_assertion(mode)
 
     def _mark_plugins_for_rewrite(self, hook):
         """
@@ -1043,23 +1042,6 @@ class Config(object):
 
         for name in _iter_rewritable_modules(package_files):
             hook.mark_rewrite(name)
-
-    def _warn_about_missing_assertion(self, mode):
-        try:
-            assert False
-        except AssertionError:
-            pass
-        else:
-            if mode == 'plain':
-                sys.stderr.write("WARNING: ASSERTIONS ARE NOT EXECUTED"
-                                 " and FAILING TESTS WILL PASS.  Are you"
-                                 " using python -O?")
-            else:
-                sys.stderr.write("WARNING: assertions not in test modules or"
-                                 " plugins will be ignored"
-                                 " because assert statements are not executed "
-                                 "by the underlying Python interpreter "
-                                 "(are you using python -O?)\n")
 
     def _preparse(self, args, addopts=True):
         if addopts:
@@ -1232,6 +1214,29 @@ class Config(object):
     def getvalueorskip(self, name, path=None):
         """ (deprecated, use getoption(skip=True)) """
         return self.getoption(name, skip=True)
+
+
+def _assertion_supported():
+    try:
+        assert False
+    except AssertionError:
+        return True
+    else:
+        return False
+
+
+def _warn_about_missing_assertion(mode):
+    if not _assertion_supported():
+        if mode == 'plain':
+            sys.stderr.write("WARNING: ASSERTIONS ARE NOT EXECUTED"
+                             " and FAILING TESTS WILL PASS.  Are you"
+                             " using python -O?")
+        else:
+            sys.stderr.write("WARNING: assertions not in test modules or"
+                             " plugins will be ignored"
+                             " because assert statements are not executed "
+                             "by the underlying Python interpreter "
+                             "(are you using python -O?)\n")
 
 
 def exists(path, ignore=EnvironmentError):
