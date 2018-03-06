@@ -11,6 +11,8 @@ import py
 # DON't import pytest here because it causes import cycle troubles
 import sys
 import os
+from _pytest.outcomes import Skipped
+
 import _pytest._code
 import _pytest.hookspec  # the extension point definitions
 import _pytest.assertion
@@ -435,10 +437,7 @@ class PytestPluginManager(PluginManager):
 
             six.reraise(new_exc_type, new_exc, sys.exc_info()[2])
 
-        except Exception as e:
-            import pytest
-            if not hasattr(pytest, 'skip') or not isinstance(e, pytest.skip.Exception):
-                raise
+        except Skipped as e:
             self._warn("skipped plugin %r: %s" % ((modname, e.msg)))
         else:
             mod = sys.modules[importspec]
