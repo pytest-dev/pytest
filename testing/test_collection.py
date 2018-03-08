@@ -773,24 +773,44 @@ class TestCollectLineOption(object):
         result = testdir.runpytest("{}:{}".format(p, line), "-v")
         result.stdout.fnmatch_lines("*test_1.py::TestLine::test_02[1*")
         result.stdout.fnmatch_lines("*test_1.py::TestLine::test_02[2*")
-        assert "test_1.py::test_01" not in result.stdout.str()
-        assert "test_1.py::test_03" not in result.stdout.str()
+        assert "test_1.py::TestLine::test_01" not in result.stdout.str()
+        assert "test_1.py::TestLine::test_03" not in result.stdout.str()
 
-    def test_collect_line_no_test_found(self, testdir):
+    def test_collect_line_boundary_values_min(self, testdir):
         p = testdir.makepyfile(test_1="""
         import pytest
         class TestLine:
             def test_01(self):
                 assert 1
 
-            def test_02(self, x):
+            def test_02(self):
                 assert 1
 
             def test_03(self):
                 assert 1
         """)
-        result = testdir.runpytest("{}:{}".format(p, 1), "-v")
-        result.stderr.fnmatch_lines("*No test found near line 1*")
+        result = testdir.runpytest("{}:{}".format(p, 0), "-v")
+        result.stdout.fnmatch_lines("*test_1.py::TestLine::test_01*")
+        assert "test_1.py::test_02" not in result.stdout.str()
+        assert "test_1.py::test_03" not in result.stdout.str()
+
+    def test_collect_line_boundary_values_max(self, testdir):
+        p = testdir.makepyfile(test_1="""
+        import pytest
+        class TestLine:
+            def test_01(self):
+                assert 1
+
+            def test_02(self):
+                assert 1
+
+            def test_03(self):
+                assert 1
+        """)
+        result = testdir.runpytest("{}:{}".format(p, 1000), "-v")
+        result.stdout.fnmatch_lines("*test_1.py::TestLine::test_03*")
+        assert "test_1.py::test_01" not in result.stdout.str()
+        assert "test_1.py::test_02" not in result.stdout.str()
 
     @pytest.mark.parametrize("line", [9, 10, 11])
     def test_collect_line_not_test(self, testdir, line):

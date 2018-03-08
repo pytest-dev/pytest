@@ -96,6 +96,14 @@ Another example specifying a test method in the command line::
 
     pytest test_mod.py::TestClass::test_method
 
+**Run tests by line number**
+
+::
+
+    pytest test_mod.py:5
+
+Will search nearest test to this line and run only this test.
+
 **Run tests by marker expressions**
 
 ::

@@ -310,9 +310,7 @@ class Session(nodes.FSCollector):
         self.trace = config.trace.root.get("collection")
         self._norecursepatterns = config.getini("norecursedirs")
         self.startdir = py.path.local()
-        self.line = None
-        self.nearest_func_name = None
-
+        self.file_line = None
         self.config.pluginmanager.register(self, name="session")
 
     def _makeid(self):
@@ -392,10 +390,13 @@ class Session(nodes.FSCollector):
         else:
             if rep.passed:
                 for node in rep.result:
-                    if self.line and self.nearest_func_name:
-                        self.items.extend([item for item in self.genitems(node) if self.nearest_func_name in item.name])
-                    else:
-                        self.items.extend(self.genitems(node))
+                    items_list = []
+                    items_list.extend(self.genitems(node))
+                    if self.file_line:
+                        # print('ITEM', items_list[1].location)
+                        # items_list = [item for item in items_list if self.select_by_function_name in item.name]
+                        items_list = self._find_nearest_test_function(items_list)
+                    self.items.extend(items_list)
             return items
 
     def collect(self):
@@ -475,51 +476,112 @@ class Session(nodes.FSCollector):
         if self.config.option.pyargs:
             parts[0] = self._tryconvertpyarg(parts[0])
         relpath = parts[0].replace("/", os.sep)
-        pattern_line = r':(?P<line>[0-9]+)$'
-        match = re.search(pattern_line, relpath)
-        if match:
-            relpath = ''.join(relpath.split(':')[:-1])
-            self.line = match.group("line")
+
+        # if match:
+        #     relpath = ''.join(relpath.split(':')[:-1])
+        #     self.line = match.group("line")
         path = self.config.invocation_dir.join(relpath, abs=True)
         if not path.check():
-            if self.config.option.pyargs:
-                raise UsageError(
-                    "file or package not found: " + arg +
-                    " (missing __init__.py?)")
-            else:
-                raise UsageError("file not found: " + arg)
-        if self.line:
-            self.nearest_func_name = self._get_nearest_func_name(self.line, path)
+            try:
+                path = self._filter_by_line(relpath)
+            except UsageError:
+                if self.config.option.pyargs:
+                    raise UsageError(
+                        "file or package not found: " + arg +
+                        " (missing __init__.py?)")
+                else:
+                    raise UsageError("file not found: " + arg)
         parts[0] = path
         return parts
 
-    def _get_nearest_func_name(self, line, path):
+    def _filter_by_line(self, path):
+        PATTERN_LINE = re.compile(r':(?P<line>[0-9]+)$')
+
         path = str(path)
-        start_line = line = int(line) - 1
-        if not os.path.isfile(path):
-            raise UsageError("{} is not a file".format(path))
-        with open(path) as f:
-            content = f.readlines()
-        at_flag = False
-        pattern_func = r'[\t ]*?def test(?P<func_name>[a-zA-Z0-9_-]+)\(*'
-        pattern_at = r'[\t ]*?@'
-        if line < len(content) and re.match(pattern_at, content[line]):
-            at_flag = True
+        match = re.search(PATTERN_LINE, path)
 
-        while 0 <= line < len(content):
-            match = re.match(pattern_func, content[line])
-            if match:
-                return "test" + match.group("func_name")
-            if at_flag:
-                if re.match(pattern_at, content[line]):
-                    line = line + 1
+        if match:
+            self.file_line = path[match.start() + 1:match.end()]
+            path = path[:match.start()]
+        path = self.config.invocation_dir.join(path, abs=True)
+        if not path.check():
+            raise UsageError()
+
+        return path
+
+    def _find_nearest_test_function(self, items):
+        """
+        Finds the nearest test function given a path in the form:
+
+        path/to/test.py:12
+
+        With ``12`` being a line number, search upwards or downwards in the file
+        until it finds a test function declaration.
+
+        :return: a filtered item list
+        """
+
+        items = sorted(items, key=lambda x: x.location)
+        mid = self._find_nearest_point_to_line(items)
+        return self._find_all_items_nearest_to_point(items, mid)
+
+    def _find_nearest_point_to_line(self, items):
+        """
+        Find nearest index of items list to file line
+        :param items:
+        :return: index of item list nearest to file line
+        """
+        line = int(self.file_line) - 1
+        mid = 0
+        lo = 0
+        hi = len(items)
+        while lo < hi:
+            mid = (lo+hi)//2
+            midval = items[mid].location[1]
+            next_to_midval = items[mid+1].location[1] if len(items) > mid + 1 else items[mid].location[1]
+            print('LO', lo, hi, midval, self.file_line)
+            if line not in list(range(midval, next_to_midval)):
+                if midval < line:
+                    lo = mid+1
+                elif midval > line:
+                    hi = mid
                 else:
-                    line = start_line - 1
-                    at_flag = False
+                    return mid
             else:
-                line = line - 1
+                return mid
+        return mid
 
-        raise UsageError("No test found near line {}".format(self.line))
+    def _find_all_items_nearest_to_point(self, items, point):
+        """
+        Find all items where location is equal as location of item[point]
+        :param items: items list
+        :param point: index of items list
+        :return: filtered items list
+        """
+        if not items:
+            return []
+        items_list = [items[point]]
+        loc = items[point].location[1]
+        start_point = point
+        up = True
+        down = True
+
+        while up or down:
+            if down:
+                point += 1
+                if point < len(items) and items[point].location[1] == loc:
+                    items_list.append(items[point])
+                else:
+                    point = start_point
+                    down = False
+            elif up:
+                point -= 1
+                if point > 0 and items[point].location[1] == loc:
+                    items_list.append(items[point])
+                else:
+                    point = start_point
+                    up = False
+        return items_list
 
     def matchnodes(self, matching, names):
         self.trace("matchnodes", matching, names)
