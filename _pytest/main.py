@@ -393,8 +393,6 @@ class Session(nodes.FSCollector):
                     items_list = []
                     items_list.extend(self.genitems(node))
                     if self.file_line:
-                        # print('ITEM', items_list[1].location)
-                        # items_list = [item for item in items_list if self.select_by_function_name in item.name]
                         items_list = self._find_nearest_test_function(items_list)
                     self.items.extend(items_list)
             return items
@@ -476,10 +474,6 @@ class Session(nodes.FSCollector):
         if self.config.option.pyargs:
             parts[0] = self._tryconvertpyarg(parts[0])
         relpath = parts[0].replace("/", os.sep)
-
-        # if match:
-        #     relpath = ''.join(relpath.split(':')[:-1])
-        #     self.line = match.group("line")
         path = self.config.invocation_dir.join(relpath, abs=True)
         if not path.check():
             try:
@@ -539,7 +533,6 @@ class Session(nodes.FSCollector):
             mid = (lo+hi)//2
             midval = items[mid].location[1]
             next_to_midval = items[mid+1].location[1] if len(items) > mid + 1 else items[mid].location[1]
-            print('LO', lo, hi, midval, self.file_line)
             if line not in list(range(midval, next_to_midval)):
                 if midval < line:
                     lo = mid+1
