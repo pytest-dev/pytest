@@ -131,13 +131,7 @@ class Source(object):
         """ return True if source is parseable, heuristically
             deindenting it by default.
         """
-        try:
-            import parser
-        except ImportError:
-            def syntax_checker(x):
-                return compile(x, 'asd', 'exec')
-        else:
-            syntax_checker = parser.suite
+        from parser import suite as syntax_checker
 
         if deindent:
             source = str(self.deindent())
@@ -219,9 +213,9 @@ def getfslineno(obj):
     """ Return source location (path, lineno) for the given object.
     If the source cannot be determined return ("", -1)
     """
-    import _pytest._code
+    from .code import Code
     try:
-        code = _pytest._code.Code(obj)
+        code = Code(obj)
     except TypeError:
         try:
             fn = inspect.getsourcefile(obj) or inspect.getfile(obj)
@@ -259,8 +253,8 @@ def findsource(obj):
 
 
 def getsource(obj, **kwargs):
-    import _pytest._code
-    obj = _pytest._code.getrawcode(obj)
+    from .code import getrawcode
+    obj = getrawcode(obj)
     try:
         strsrc = inspect.getsource(obj)
     except IndentationError:
