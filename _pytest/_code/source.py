@@ -26,7 +26,7 @@ class Source(object):
         for part in parts:
             if not part:
                 partlines = []
-            if isinstance(part, Source):
+            elif isinstance(part, Source):
                 partlines = part.lines
             elif isinstance(part, (tuple, list)):
                 partlines = [x.rstrip("\n") for x in part]
@@ -238,7 +238,6 @@ def getfslineno(obj):
 #
 # helper functions
 #
-
 
 def findsource(obj):
     try:
