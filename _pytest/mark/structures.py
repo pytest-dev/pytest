@@ -1,4 +1,4 @@
-from collections import namedtuple
+from collections import namedtuple, MutableMapping as MappingMixin
 import warnings
 from operator import attrgetter
 import inspect
@@ -328,3 +328,39 @@ class MarkGenerator(object):
 
 
 MARK_GEN = MarkGenerator()
+
+
+class NodeKeywords(MappingMixin):
+    def __init__(self, node):
+        self.node = node
+        self.parent = node.parent
+        self._markers = {node.name: True}
+
+    def __getitem__(self, key):
+        try:
+            return self._markers[key]
+        except KeyError:
+            if self.parent is None:
+                raise
+            return self.parent.keywords[key]
+
+    def __setitem__(self, key, value):
+        self._markers[key] = value
+
+    def __delitem__(self, key):
+        raise ValueError("cannot delete key in keywords dict")
+
+    def __iter__(self):
+        seen = set(self._markers)
+        if self.parent is not None:
+            seen.update(self.parent.keywords)
+        return iter(seen)
+
+    def __len__(self):
+        return len(self.__iter__())
+
+    def keys(self):
+        return list(self)
+
+    def __repr__(self):
+        return "<NodeKeywords for node %s>" % (self.node, )

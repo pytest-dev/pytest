@@ -1,5 +1,4 @@
 from __future__ import absolute_import, division, print_function
-from collections import MutableMapping as MappingMixin
 import os
 
 import six
@@ -7,7 +6,7 @@ import py
 import attr
 
 import _pytest
-
+from _pytest.mark.structures import NodeKeywords
 
 SEP = "/"
 
@@ -64,42 +63,6 @@ class _CompatProperty(object):
         #         name=self.name, owner=type(owner).__name__),
         #     PendingDeprecationWarning, stacklevel=2)
         return getattr(__import__('pytest'), self.name)
-
-
-class NodeKeywords(MappingMixin):
-    def __init__(self, node):
-        self.node = node
-        self.parent = node.parent
-        self._markers = {node.name: True}
-
-    def __getitem__(self, key):
-        try:
-            return self._markers[key]
-        except KeyError:
-            if self.parent is None:
-                raise
-            return self.parent.keywords[key]
-
-    def __setitem__(self, key, value):
-        self._markers[key] = value
-
-    def __delitem__(self, key):
-        raise ValueError("cannot delete key in keywords dict")
-
-    def __iter__(self):
-        seen = set(self._markers)
-        if self.parent is not None:
-            seen.update(self.parent.keywords)
-        return iter(seen)
-
-    def __len__(self):
-        return len(self.__iter__())
-
-    def keys(self):
-        return list(self)
-
-    def __repr__(self):
-        return "<NodeKeywords for node %s>" % (self.node, )
 
 
 class Node(object):
