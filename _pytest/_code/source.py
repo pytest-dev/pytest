@@ -280,8 +280,6 @@ def deindent(lines, offset=None):
     def readline_generator(lines):
         for line in lines:
             yield line + '\n'
-        while True:
-            yield ''
 
     it = readline_generator(lines)
 
