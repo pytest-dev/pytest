@@ -239,6 +239,7 @@ def getfslineno(obj):
 # helper functions
 #
 
+
 def findsource(obj):
     try:
         sourcelines, lineno = inspect.findsource(obj)
