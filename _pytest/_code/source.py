@@ -98,14 +98,14 @@ class Source(object):
         newsource.lines = [(indent + line) for line in self.lines]
         return newsource
 
-    def getstatement(self, lineno, assertion=False):
+    def getstatement(self, lineno):
         """ return Source statement which contains the
             given linenumber (counted from 0).
         """
-        start, end = self.getstatementrange(lineno, assertion)
+        start, end = self.getstatementrange(lineno)
         return self[start:end]
 
-    def getstatementrange(self, lineno, assertion=False):
+    def getstatementrange(self, lineno):
         """ return (start, end) tuple which spans the minimal
             statement region which containing the given lineno.
         """
@@ -310,9 +310,9 @@ def get_statement_startend2(lineno, node):
     # AST's line numbers start indexing at 1
     values = []
     for x in ast.walk(node):
-        if isinstance(x, ast.stmt) or isinstance(x, ast.ExceptHandler):
+        if isinstance(x, (ast.stmt, ast.ExceptHandler)):
             values.append(x.lineno - 1)
-            for name in "finalbody", "orelse":
+            for name in ("finalbody", "orelse"):
                 val = getattr(x, name, None)
                 if val:
                     # treat the finally/orelse part as its own statement
