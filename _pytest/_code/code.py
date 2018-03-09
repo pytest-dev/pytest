@@ -3,6 +3,8 @@ import inspect
 import sys
 import traceback
 from inspect import CO_VARARGS, CO_VARKEYWORDS
+
+import attr
 import re
 from weakref import ref
 from _pytest.compat import _PY2, _PY3, PY35, safe_str
@@ -458,19 +460,19 @@ class ExceptionInfo(object):
         return True
 
 
+@attr.s
 class FormattedExcinfo(object):
     """ presenting information about failing Functions and Generators. """
     # for traceback entries
     flow_marker = ">"
     fail_marker = "E"
 
-    def __init__(self, showlocals=False, style="long", abspath=True, tbfilter=True, funcargs=False):
-        self.showlocals = showlocals
-        self.style = style
-        self.tbfilter = tbfilter
-        self.funcargs = funcargs
-        self.abspath = abspath
-        self.astcache = {}
+    showlocals = attr.ib(default=False)
+    style = attr.ib(default="long")
+    abspath = attr.ib(default=True)
+    tbfilter = attr.ib(default=True)
+    funcargs = attr.ib(default=False)
+    astcache = attr.ib(default=attr.Factory(dict), init=False, repr=False)
 
     def _getindent(self, source):
         # figure out indent for given source
