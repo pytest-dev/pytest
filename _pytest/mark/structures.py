@@ -27,7 +27,7 @@ def istestfunc(func):
         getattr(func, "__name__", "<lambda>") != "<lambda>"
 
 
-def get_empty_parameterset_mark(config, argnames, function):
+def get_empty_parameterset_mark(config, argnames, func):
     requested_mark = config.getini(EMPTY_PARAMETERSET_OPTION)
     if requested_mark in ('', None, 'skip'):
         mark = MARK_GEN.skip
@@ -35,9 +35,9 @@ def get_empty_parameterset_mark(config, argnames, function):
         mark = MARK_GEN.xfail(run=False)
     else:
         raise LookupError(requested_mark)
-    fs, lineno = getfslineno(function)
+    fs, lineno = getfslineno(func)
     reason = "got empty parameter set %r, function %s at %s:%d" % (
-        argnames, function.__name__, fs, lineno)
+        argnames, func.__name__, fs, lineno)
     return mark(reason=reason)
 
 
@@ -53,8 +53,8 @@ class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
         def param_extract_id(id=None):
             return id
 
-        id = param_extract_id(**kw)
-        return cls(values, marks, id)
+        id_ = param_extract_id(**kw)
+        return cls(values, marks, id_)
 
     @classmethod
     def extract_from(cls, parameterset, legacy_force_tuple=False):
@@ -90,7 +90,7 @@ class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
         return cls(argval, marks=newmarks, id=None)
 
     @classmethod
-    def _for_parametrize(cls, argnames, argvalues, function, config):
+    def _for_parametrize(cls, argnames, argvalues, func, config):
         if not isinstance(argnames, (tuple, list)):
             argnames = [x.strip() for x in argnames.split(",") if x.strip()]
             force_tuple = len(argnames) == 1
@@ -102,7 +102,7 @@ class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
         del argvalues
 
         if not parameters:
-            mark = get_empty_parameterset_mark(config, argnames, function)
+            mark = get_empty_parameterset_mark(config, argnames, func)
             parameters.append(ParameterSet(
                 values=(NOTSET,) * len(argnames),
                 marks=[mark],
@@ -351,16 +351,17 @@ class NodeKeywords(MappingMixin):
         raise ValueError("cannot delete key in keywords dict")
 
     def __iter__(self):
+        seen = self._seen()
+        return iter(seen)
+
+    def _seen(self):
         seen = set(self._markers)
         if self.parent is not None:
             seen.update(self.parent.keywords)
-        return iter(seen)
+        return seen
 
     def __len__(self):
-        return len(self.__iter__())
-
-    def keys(self):
-        return list(self)
+        return len(self._seen())
 
     def __repr__(self):
         return "<NodeKeywords for node %s>" % (self.node, )
