@@ -227,7 +227,6 @@ class Node(object):
     def listextrakeywords(self):
         """ Return a set of all extra keywords in self and any parents."""
         extra_keywords = set()
-        item = self
         for item in self.listchain():
             extra_keywords.update(item.extra_keyword_matches)
         return extra_keywords
