@@ -156,6 +156,16 @@ New ``--nf``, ``--new-first`` options: run new tests first followed by the rest
 of the tests, in both cases tests are also sorted by the file modified time,
 with more recent files coming first.
 
+Behavior when no tests failed in the last run
+---------------------------------------------
+
+When no tests failed in the last run, or when no cached ``lastfailed`` data was
+found, ``pytest`` can be configured either to run all of the tests or no tests,
+using the ``--last-failed-no-failures`` option, which takes one of the following values::
+
+    pytest --last-failed-no-failures all    # run all tests (default behavior)
+    pytest --last-failed-no-failures none   # run no tests and exit
+
 The new config.cache object
 --------------------------------
 

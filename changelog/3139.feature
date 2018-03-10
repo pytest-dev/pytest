@@ -1,0 +1,1 @@
+New ``--last-failed-no-failures`` command-line option that allows to specify the behavior of the cache plugin's ```--last-failed`` feature when no tests failed in the last run (or no cache was found): ``none`` or ``all`` (the default).

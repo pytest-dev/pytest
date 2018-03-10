@@ -604,6 +604,36 @@ class TestLastFailed(object):
         result.stdout.fnmatch_lines('*4 passed*')
         assert self.get_cached_last_failed(testdir) == []
 
+    def test_lastfailed_no_failures_behavior_all_passed(self, testdir):
+        testdir.makepyfile("""
+            def test_1():
+                assert True
+            def test_2():
+                assert True
+        """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines(["*2 passed*"])
+        result = testdir.runpytest("--lf")
+        result.stdout.fnmatch_lines(["*2 passed*"])
+        result = testdir.runpytest("--lf", "--lfnf", "all")
+        result.stdout.fnmatch_lines(["*2 passed*"])
+        result = testdir.runpytest("--lf", "--lfnf", "none")
+        result.stdout.fnmatch_lines(["*2 desel*"])
+
+    def test_lastfailed_no_failures_behavior_empty_cache(self, testdir):
+        testdir.makepyfile("""
+            def test_1():
+                assert True
+            def test_2():
+                assert False
+        """)
+        result = testdir.runpytest("--lf", "--cache-clear")
+        result.stdout.fnmatch_lines(["*1 failed*1 passed*"])
+        result = testdir.runpytest("--lf", "--cache-clear", "--lfnf", "all")
+        result.stdout.fnmatch_lines(["*1 failed*1 passed*"])
+        result = testdir.runpytest("--lf", "--cache-clear", "--lfnf", "none")
+        result.stdout.fnmatch_lines(["*2 desel*"])
+
 
 class TestNewFirst(object):
     def test_newfirst_usecase(self, testdir):
