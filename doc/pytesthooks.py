@@ -31,22 +31,29 @@ def tree_from_indented_str(lines):
             indentations.pop(key)
     return root
 
-def merge_similar(node):
+def in_list(name, list_, inverse):
+    if inverse:
+        return name not in list_
+    else:
+        return name in list_
+
+def merge_similar(node, items, inverse=False):
     unique_children = {}
 
     for child in node.children:
         if child.name in unique_children:
-            # Repeated child. All its children (grandchildren) are attached to the already existing node.
-            for grandchild in child.children:
-                grandchild.parent = unique_children[child.name]
-            # Detach this repeated child from the Tree
-            child.parent = None
+            if in_list(child.name, items, inverse):
+                # Repeated child. All its children (grandchildren) are attached to the already existing node.
+                for grandchild in child.children:
+                    grandchild.parent = unique_children[child.name]
+                # Detach this repeated child from the Tree
+                child.parent = None
         else:
             unique_children[child.name] = child
 
     # Apply recursively for each unique children
     for child in node.children:
-        merge_similar(child)
+        merge_similar(child, items, inverse)
 
 with open("pytestdebug2.log") as f:
     raw_lines = f.readlines()
@@ -58,7 +65,13 @@ for line in raw_lines:
 
 root = tree_from_indented_str(hooks)
 
-merge_similar(root)
+items = [
+    "pytest_plugin_registered",
+    "pytest_runtest_protocol",
+                     ]
+#merge_similar(root, items)                 # Only merge items from list
+#merge_similar(root, items, inverse=False)  # Merge all items except ones from the list
+merge_similar(root, [], inverse=True)       # Merge all items
 
 for pre, _, node in RenderTree(root):
     print("%s%s" % (pre, node.name))
