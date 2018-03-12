@@ -1,0 +1,1 @@
+New ``--verbosity`` flag to set verbosity level explicitly.
