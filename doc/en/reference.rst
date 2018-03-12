@@ -954,6 +954,18 @@ passed multiple times. The expected format is ``name=value``. For example::
         junit_suite_name = my_suite
 
 
+.. confval:: markers
+
+    List of markers that are allowed in test functions, enforced when ``--strict`` command-line argument is used.
+    You can use a marker name per line, indented from the option name.
+
+    .. code-block:: ini
+
+        [pytest]
+        markers =
+            slow
+            serial
+
 .. confval:: minversion
 
    Specifies a minimal pytest version required for running tests.
@@ -1065,3 +1077,28 @@ passed multiple times. The expected format is ``name=value``. For example::
    This tells pytest to only look for tests in ``testing`` and ``doc``
    directories when executing from the root directory.
 
+
+.. confval:: usefixtures
+
+    List of fixtures that will be applied to all test functions; this is semantically the same to apply
+    the ``@pytest.mark.usefixtures`` marker to all test functions.
+
+
+    .. code-block:: ini
+
+        [pytest]
+        usefixtures =
+            clean_db
+
+
+.. confval:: xfail_strict
+
+    If set to ``True``, tests marked with ``@pytest.mark.xfail`` that actually succeed will by default fail the
+    test suite.
+    For more information, see :ref:`xfail strict tutorial`.
+
+
+    .. code-block:: ini
+
+        [pytest]
+        xfail_strict = True

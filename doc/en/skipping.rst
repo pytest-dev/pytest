@@ -238,6 +238,9 @@ internally by raising a known exception.
 
 **Reference**: :ref:`pytest.mark.xfail ref`
 
+
+.. _`xfail strict tutorial`:
+
 ``strict`` parameter
 ~~~~~~~~~~~~~~~~~~~~
 
