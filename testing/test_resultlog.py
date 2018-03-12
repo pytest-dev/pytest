@@ -13,7 +13,7 @@ def test_generic_path(testdir):
     from _pytest.main import Session
     config = testdir.parseconfig()
     session = Session(config)
-    p1 = Node('a', config=config, session=session)
+    p1 = Node('a', config=config, session=session, nodeid='a')
     # assert p1.fspath is None
     p2 = Node('B', parent=p1)
     p3 = Node('()', parent=p2)

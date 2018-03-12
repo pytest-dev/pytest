@@ -1,0 +1,1 @@
+``nodeids`` can now be passed explicitly to ``FSCollector`` and ``Node`` constructors.

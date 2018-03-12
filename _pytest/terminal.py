@@ -22,9 +22,9 @@ from _pytest.main import EXIT_OK, EXIT_TESTSFAILED, EXIT_INTERRUPTED, \
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "reporting", after="general")
     group._addoption('-v', '--verbose', action="count",
-                     dest="verbose", default=0, help="increase verbosity."),
+                     dest="verbose", default=0, help="increase verbosity.")
     group._addoption('-q', '--quiet', action="count",
-                     dest="quiet", default=0, help="decrease verbosity."),
+                     dest="quiet", default=0, help="decrease verbosity.")
     group._addoption('-r',
                      action="store", dest="reportchars", default='', metavar="chars",
                      help="show extra test summary info as specified by chars (f)ailed, "

@@ -300,7 +300,7 @@ class Session(nodes.FSCollector):
     def __init__(self, config):
         nodes.FSCollector.__init__(
             self, config.rootdir, parent=None,
-            config=config, session=self)
+            config=config, session=self, nodeid="")
         self.testsfailed = 0
         self.testscollected = 0
         self.shouldstop = False
@@ -310,9 +310,6 @@ class Session(nodes.FSCollector):
         self.startdir = py.path.local()
 
         self.config.pluginmanager.register(self, name="session")
-
-    def _makeid(self):
-        return ""
 
     @hookimpl(tryfirst=True)
     def pytest_collectstart(self):

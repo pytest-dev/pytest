@@ -1,5 +1,4 @@
 from __future__ import absolute_import, division, print_function
-from collections import MutableMapping as MappingMixin
 import os
 
 import six
@@ -7,7 +6,9 @@ import py
 import attr
 
 import _pytest
+import _pytest._code
 
+from _pytest.mark.structures import NodeKeywords
 
 SEP = "/"
 
@@ -66,47 +67,11 @@ class _CompatProperty(object):
         return getattr(__import__('pytest'), self.name)
 
 
-class NodeKeywords(MappingMixin):
-    def __init__(self, node):
-        self.node = node
-        self.parent = node.parent
-        self._markers = {node.name: True}
-
-    def __getitem__(self, key):
-        try:
-            return self._markers[key]
-        except KeyError:
-            if self.parent is None:
-                raise
-            return self.parent.keywords[key]
-
-    def __setitem__(self, key, value):
-        self._markers[key] = value
-
-    def __delitem__(self, key):
-        raise ValueError("cannot delete key in keywords dict")
-
-    def __iter__(self):
-        seen = set(self._markers)
-        if self.parent is not None:
-            seen.update(self.parent.keywords)
-        return iter(seen)
-
-    def __len__(self):
-        return len(self.__iter__())
-
-    def keys(self):
-        return list(self)
-
-    def __repr__(self):
-        return "<NodeKeywords for node %s>" % (self.node, )
-
-
 class Node(object):
     """ base class for Collector and Item the test collection tree.
     Collector subclasses have children, Items are terminal nodes."""
 
-    def __init__(self, name, parent=None, config=None, session=None):
+    def __init__(self, name, parent=None, config=None, session=None, fspath=None, nodeid=None):
         #: a unique name within the scope of the parent node
         self.name = name
 
@@ -120,7 +85,7 @@ class Node(object):
         self.session = session or parent.session
 
         #: filesystem path where this node was collected from (can be None)
-        self.fspath = getattr(parent, 'fspath', None)
+        self.fspath = fspath or getattr(parent, 'fspath', None)
 
         #: keywords/markers collected from all scopes
         self.keywords = NodeKeywords(self)
@@ -130,6 +95,12 @@ class Node(object):
 
         # used for storing artificial fixturedefs for direct parametrization
         self._name2pseudofixturedef = {}
+
+        if nodeid is not None:
+            self._nodeid = nodeid
+        else:
+            assert parent is not None
+            self._nodeid = self.parent.nodeid + "::" + self.name
 
     @property
     def ihook(self):
@@ -174,14 +145,7 @@ class Node(object):
     @property
     def nodeid(self):
         """ a ::-separated string denoting its collection tree address. """
-        try:
-            return self._nodeid
-        except AttributeError:
-            self._nodeid = x = self._makeid()
-            return x
-
-    def _makeid(self):
-        return self.parent.nodeid + "::" + self.name
+        return self._nodeid
 
     def __hash__(self):
         return hash(self.nodeid)
@@ -227,7 +191,6 @@ class Node(object):
     def listextrakeywords(self):
         """ Return a set of all extra keywords in self and any parents."""
         extra_keywords = set()
-        item = self
         for item in self.listchain():
             extra_keywords.update(item.extra_keyword_matches)
         return extra_keywords
@@ -319,8 +282,14 @@ class Collector(Node):
             excinfo.traceback = ntraceback.filter()
 
 
+def _check_initialpaths_for_relpath(session, fspath):
+    for initial_path in session._initialpaths:
+        if fspath.common(initial_path) == initial_path:
+            return fspath.relto(initial_path.dirname)
+
+
 class FSCollector(Collector):
-    def __init__(self, fspath, parent=None, config=None, session=None):
+    def __init__(self, fspath, parent=None, config=None, session=None, nodeid=None):
         fspath = py.path.local(fspath)  # xxx only for test_resultlog.py?
         name = fspath.basename
         if parent is not None:
@@ -328,22 +297,19 @@ class FSCollector(Collector):
             if rel:
                 name = rel
             name = name.replace(os.sep, SEP)
-        super(FSCollector, self).__init__(name, parent, config, session)
         self.fspath = fspath
 
-    def _check_initialpaths_for_relpath(self):
-        for initialpath in self.session._initialpaths:
-            if self.fspath.common(initialpath) == initialpath:
-                return self.fspath.relto(initialpath.dirname)
+        session = session or parent.session
 
-    def _makeid(self):
-        relpath = self.fspath.relto(self.config.rootdir)
+        if nodeid is None:
+            nodeid = self.fspath.relto(session.config.rootdir)
 
-        if not relpath:
-            relpath = self._check_initialpaths_for_relpath()
-        if os.sep != SEP:
-            relpath = relpath.replace(os.sep, SEP)
-        return relpath
+            if not nodeid:
+                nodeid = _check_initialpaths_for_relpath(session, fspath)
+            if os.sep != SEP:
+                nodeid = nodeid.replace(os.sep, SEP)
+
+        super(FSCollector, self).__init__(name, parent, config, session, nodeid=nodeid, fspath=fspath)
 
 
 class File(FSCollector):
@@ -356,8 +322,8 @@ class Item(Node):
     """
     nextitem = None
 
-    def __init__(self, name, parent=None, config=None, session=None):
-        super(Item, self).__init__(name, parent, config, session)
+    def __init__(self, name, parent=None, config=None, session=None, nodeid=None):
+        super(Item, self).__init__(name, parent, config, session, nodeid=nodeid)
         self._report_sections = []
 
         #: user properties is a list of tuples (name, value) that holds user
