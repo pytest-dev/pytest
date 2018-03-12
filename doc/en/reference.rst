@@ -957,6 +957,13 @@ passed multiple times. The expected format is ``name=value``. For example::
    One or more doctest flag names from the standard ``doctest`` module.
    :doc:`See how pytest handles doctests <doctest>`.
 
+.. confval:: doctest_encoding
+
+   .. versionadded:: 3.1
+
+   Default encoding to use to decode text files with docstrings.
+   :doc:`See how pytest handles doctests <doctest>`.
+
 .. confval:: confcutdir
 
    Sets a directory where search upwards for ``conftest.py`` files stops.
@@ -1034,6 +1041,18 @@ passed multiple times. The expected format is ``name=value``. For example::
 
       The default value of this option is planned to change to ``xfail`` in future releases
       as this is considered less error prone, see `#3155`_ for more details.
+
+
+.. confval:: junit_suite_name
+
+    .. versionadded:: 3.1
+
+    To set the name of the root test suite xml item, you can configure the ``junit_suite_name`` option in your config file:
+
+    .. code-block:: ini
+
+        [pytest]
+        junit_suite_name = my_suite
 
 
 
