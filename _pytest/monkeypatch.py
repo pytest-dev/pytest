@@ -113,7 +113,7 @@ class MonkeyPatch(object):
         For convenience you can specify a string as ``target`` which
         will be interpreted as a dotted import path, with the last part
         being the attribute name.  Example:
-        ``monkeypatch.setattr("os.getcwd", lambda x: "/")``
+        ``monkeypatch.setattr("os.getcwd", lambda: "/")``
         would set the ``getcwd`` function of the ``os`` module.
 
         The ``raising`` value determines if the setattr should fail
