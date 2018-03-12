@@ -254,7 +254,7 @@ application modules:
 if ``myapp.testsupport.myplugin`` also declares ``pytest_plugins``, the contents
 of the variable will also be loaded as plugins, and so on.
 
-.. _`requiring plugins in non-noot conftests`:
+.. _`requiring plugins in non-root conftests`:
 
 .. note::
     Requiring plugins using a ``pytest_plugins`` variable in non-root
