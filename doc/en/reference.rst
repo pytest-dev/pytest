@@ -954,6 +954,161 @@ passed multiple times. The expected format is ``name=value``. For example::
         junit_suite_name = my_suite
 
 
+.. confval:: log_cli_date_format
+
+    .. versionadded:: 3.3
+
+    Sets a :py:func:`time.strftime`-compatible string that will be used when formatting dates for live logging.
+
+    .. code-block:: ini
+
+        [pytest]
+        log_cli_date_format = %Y-%m-%d %H:%M:%S
+
+    For more information, see :ref:`live_logs`.
+
+.. confval:: log_cli_format
+
+    .. versionadded:: 3.3
+
+    Sets a :py:mod:`logging`-compatible string used to format live logging messages.
+
+    .. code-block:: ini
+
+        [pytest]
+        log_cli_format = %(asctime)s %(levelname)s %(message)s
+
+    For more information, see :ref:`live_logs`.
+
+
+.. confval:: log_cli_level
+
+    .. versionadded:: 3.3
+
+    Sets the minimum log message level that should be captured for live logging. The integer value or
+    the names of the levels can be used.
+
+    .. code-block:: ini
+
+        [pytest]
+        log_cli_level = INFO 
+
+    For more information, see :ref:`live_logs`.
+
+
+.. confval:: log_date_format
+
+    .. versionadded:: 3.3
+
+    Sets a :py:func:`time.strftime`-compatible string that will be used when formatting dates for logging capture.
+
+    .. code-block:: ini
+
+        [pytest]
+        log_date_format = %Y-%m-%d %H:%M:%S
+
+    For more information, see :ref:`logging`.
+
+
+.. confval:: log_file
+
+    .. versionadded:: 3.3
+
+    Sets a file name relative to the ``pytest.ini`` file where log messages should be written to, in addition
+    to the other logging facilities that are active.
+
+    .. code-block:: ini
+
+        [pytest]
+        log_file = logs/pytest-logs.txt
+
+    For more information, see :ref:`logging`.
+
+
+.. confval:: log_file_date_format
+
+    .. versionadded:: 3.3
+
+    Sets a :py:func:`time.strftime`-compatible string that will be used when formatting dates for the logging file.
+
+    .. code-block:: ini
+
+        [pytest]
+        log_file_date_format = %Y-%m-%d %H:%M:%S
+
+    For more information, see :ref:`logging`.
+
+.. confval:: log_file_format
+
+    .. versionadded:: 3.3
+
+    Sets a :py:mod:`logging`-compatible string used to format logging messages redirected to the logging file.
+
+    .. code-block:: ini
+
+        [pytest]
+        log_file_format = %(asctime)s %(levelname)s %(message)s
+
+    For more information, see :ref:`logging`.
+
+.. confval:: log_file_level
+
+    .. versionadded:: 3.3
+
+    Sets the minimum log message level that should be captured for the logging file. The integer value or
+    the names of the levels can be used.
+
+    .. code-block:: ini
+
+        [pytest]
+        log_file_level = INFO
+
+    For more information, see :ref:`logging`.
+
+
+.. confval:: log_format
+
+    .. versionadded:: 3.3
+
+    Sets a :py:mod:`logging`-compatible string used to format captured logging messages.
+
+    .. code-block:: ini
+
+        [pytest]
+        log_format = %(asctime)s %(levelname)s %(message)s
+
+    For more information, see :ref:`logging`.
+
+
+.. confval:: log_level
+
+    .. versionadded:: 3.3
+
+    Sets the minimum log message level that should be captured for logging capture. The integer value or
+    the names of the levels can be used.
+
+    .. code-block:: ini
+
+        [pytest]
+        log_level = INFO
+
+    For more information, see :ref:`logging`.
+
+
+.. confval:: log_print
+
+    .. versionadded:: 3.3
+
+    If set to ``False``, will disable displaying captured logging messages for failed tests.
+
+    .. code-block:: ini
+
+        [pytest]
+        log_print = False
+
+    For more information, see :ref:`logging`.
+
+
 .. confval:: markers
 
     List of markers that are allowed in test functions, enforced when ``--strict`` command-line argument is used.

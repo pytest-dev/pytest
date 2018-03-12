@@ -377,7 +377,7 @@ Features
 - Match ``warns`` signature to ``raises`` by adding ``match`` keyword. (`#2708
   <https://github.com/pytest-dev/pytest/issues/2708>`_)
 
-- Pytest now captures and displays output from the standard `logging` module.
+- Pytest now captures and displays output from the standard :py:mod:`logging` module.
   The user can control the logging level to be captured by specifying options
   in ``pytest.ini``, the command line and also during individual tests using
   markers. Also, a ``caplog`` fixture is available that enables users to test
