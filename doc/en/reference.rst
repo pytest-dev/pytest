@@ -829,16 +829,6 @@ passed multiple times. The expected format is ``name=value``. For example::
    pytest -o console_output_style=classic -o cache_dir=/tmp/mycache
 
 
-.. confval:: minversion
-
-   Specifies a minimal pytest version required for running tests.
-
-   .. code-block:: ini
-
-        # content of pytest.ini
-        [pytest]
-        minversion = 3.0  # will fail if we run with pytest-2.8
-
 .. confval:: addopts
 
    Add the specified ``OPTS`` to the set of command line arguments as if they
@@ -855,6 +845,125 @@ passed multiple times. The expected format is ``name=value``. For example::
         pytest --maxfail=2 -rf test_hello.py
 
    Default is to add no options.
+
+
+.. confval:: cache_dir
+
+   .. versionadded:: 3.2
+
+   Sets a directory where stores content of cache plugin. Default directory is
+   ``.cache`` which is created in :ref:`rootdir <rootdir>`. Directory may be
+   relative or absolute path. If setting relative path, then directory is created
+   relative to :ref:`rootdir <rootdir>`. Additionally path may contain environment
+   variables, that will be expanded. For more information about cache plugin
+   please refer to :ref:`cache_provider`.
+
+
+.. confval:: confcutdir
+
+   Sets a directory where search upwards for ``conftest.py`` files stops.
+   By default, pytest will stop searching for ``conftest.py`` files upwards
+   from ``pytest.ini``/``tox.ini``/``setup.cfg`` of the project if any,
+   or up to the file-system root.
+
+
+.. confval:: console_output_style
+
+   .. versionadded:: 3.3
+
+   Sets the console output style while running tests:
+
+   * ``classic``: classic pytest output.
+   * ``progress``: like classic pytest output, but with a progress indicator.
+
+   The default is ``progress``, but you can fallback to ``classic`` if you prefer or
+   the new mode is causing unexpected problems:
+
+   .. code-block:: ini
+
+        # content of pytest.ini
+        [pytest]
+        console_output_style = classic
+
+
+.. confval:: doctest_encoding
+
+   .. versionadded:: 3.1
+
+   Default encoding to use to decode text files with docstrings.
+   :doc:`See how pytest handles doctests <doctest>`.
+
+
+.. confval:: doctest_optionflags
+
+   One or more doctest flag names from the standard ``doctest`` module.
+   :doc:`See how pytest handles doctests <doctest>`.
+
+
+.. confval:: empty_parameter_set_mark
+
+    .. versionadded:: 3.4
+
+    Allows to pick the action for empty parametersets in parameterization
+
+    * ``skip`` skips tests with a empty parameterset (default)
+    * ``xfail`` marks tests with a empty parameterset as xfail(run=False)
+
+    .. code-block:: ini
+
+      # content of pytest.ini
+      [pytest]
+      empty_parameter_set_mark = xfail
+
+    .. note::
+
+      The default value of this option is planned to change to ``xfail`` in future releases
+      as this is considered less error prone, see `#3155 <https://github.com/pytest-dev/pytest/issues/3155>`_
+      for more details.
+
+
+.. confval:: filterwarnings
+
+   .. versionadded:: 3.1
+
+   Sets a list of filters and actions that should be taken for matched
+   warnings. By default all warnings emitted during the test session
+   will be displayed in a summary at the end of the test session.
+
+   .. code-block:: ini
+
+        # content of pytest.ini
+        [pytest]
+        filterwarnings =
+            error
+            ignore::DeprecationWarning
+
+   This tells pytest to ignore deprecation warnings and turn all other warnings
+   into errors. For more information please refer to :ref:`warnings`.
+
+
+.. confval:: junit_suite_name
+
+    .. versionadded:: 3.1
+
+    To set the name of the root test suite xml item, you can configure the ``junit_suite_name`` option in your config file:
+
+    .. code-block:: ini
+
+        [pytest]
+        junit_suite_name = my_suite
+
+
+.. confval:: minversion
+
+   Specifies a minimal pytest version required for running tests.
+
+   .. code-block:: ini
+
+        # content of pytest.ini
+        [pytest]
+        minversion = 3.0  # will fail if we run with pytest-2.8
+
 
 .. confval:: norecursedirs
 
@@ -890,31 +999,6 @@ passed multiple times. The expected format is ``name=value``. For example::
    ``'.*'`` you *must* override ``norecursedirs`` in addition to using the
    ``‑‑collect‑in‑virtualenv`` flag.
 
-.. confval:: testpaths
-
-   .. versionadded:: 2.8
-
-   Sets list of directories that should be searched for tests when
-   no specific directories, files or test ids are given in the command line when
-   executing pytest from the :ref:`rootdir <rootdir>` directory.
-   Useful when all project tests are in a known location to speed up
-   test collection and to avoid picking up undesired tests by accident.
-
-   .. code-block:: ini
-
-        # content of pytest.ini
-        [pytest]
-        testpaths = testing doc
-
-   This tells pytest to only look for tests in ``testing`` and ``doc``
-   directories when executing from the root directory.
-
-.. confval:: python_files
-
-   One or more Glob-style file patterns determining which python files
-   are considered as test modules. By default, pytest will consider
-   any file matching with ``test_*.py`` and ``*_test.py`` globs as a test
-   module.
 
 .. confval:: python_classes
 
@@ -932,6 +1016,15 @@ passed multiple times. The expected format is ``name=value``. For example::
    Note that ``unittest.TestCase`` derived classes are always collected
    regardless of this option, as ``unittest``'s own collection framework is used
    to collect those tests.
+
+
+.. confval:: python_files
+
+   One or more Glob-style file patterns determining which python files
+   are considered as test modules. By default, pytest will consider
+   any file matching with ``test_*.py`` and ``*_test.py`` globs as a test
+   module.
+
 
 .. confval:: python_functions
 
@@ -952,108 +1045,23 @@ passed multiple times. The expected format is ``name=value``. For example::
 
    See :ref:`change naming conventions` for more detailed examples.
 
-.. confval:: doctest_optionflags
 
-   One or more doctest flag names from the standard ``doctest`` module.
-   :doc:`See how pytest handles doctests <doctest>`.
+.. confval:: testpaths
 
-.. confval:: doctest_encoding
+   .. versionadded:: 2.8
 
-   .. versionadded:: 3.1
-
-   Default encoding to use to decode text files with docstrings.
-   :doc:`See how pytest handles doctests <doctest>`.
-
-.. confval:: confcutdir
-
-   Sets a directory where search upwards for ``conftest.py`` files stops.
-   By default, pytest will stop searching for ``conftest.py`` files upwards
-   from ``pytest.ini``/``tox.ini``/``setup.cfg`` of the project if any,
-   or up to the file-system root.
-
-
-.. confval:: filterwarnings
-
-   .. versionadded:: 3.1
-
-   Sets a list of filters and actions that should be taken for matched
-   warnings. By default all warnings emitted during the test session
-   will be displayed in a summary at the end of the test session.
+   Sets list of directories that should be searched for tests when
+   no specific directories, files or test ids are given in the command line when
+   executing pytest from the :ref:`rootdir <rootdir>` directory.
+   Useful when all project tests are in a known location to speed up
+   test collection and to avoid picking up undesired tests by accident.
 
    .. code-block:: ini
 
         # content of pytest.ini
         [pytest]
-        filterwarnings =
-            error
-            ignore::DeprecationWarning
+        testpaths = testing doc
 
-   This tells pytest to ignore deprecation warnings and turn all other warnings
-   into errors. For more information please refer to :ref:`warnings`.
+   This tells pytest to only look for tests in ``testing`` and ``doc``
+   directories when executing from the root directory.
 
-.. confval:: cache_dir
-
-   .. versionadded:: 3.2
-
-   Sets a directory where stores content of cache plugin. Default directory is
-   ``.cache`` which is created in :ref:`rootdir <rootdir>`. Directory may be
-   relative or absolute path. If setting relative path, then directory is created
-   relative to :ref:`rootdir <rootdir>`. Additionally path may contain environment
-   variables, that will be expanded. For more information about cache plugin
-   please refer to :ref:`cache_provider`.
-
-
-.. confval:: console_output_style
-
-   .. versionadded:: 3.3
-
-   Sets the console output style while running tests:
-
-   * ``classic``: classic pytest output.
-   * ``progress``: like classic pytest output, but with a progress indicator.
-
-   The default is ``progress``, but you can fallback to ``classic`` if you prefer or
-   the new mode is causing unexpected problems:
-
-   .. code-block:: ini
-
-        # content of pytest.ini
-        [pytest]
-        console_output_style = classic
-
-
-.. confval:: empty_parameter_set_mark
-
-    .. versionadded:: 3.4
-
-    Allows to pick the action for empty parametersets in parameterization
-
-    * ``skip`` skips tests with a empty parameterset (default)
-    * ``xfail`` marks tests with a empty parameterset as xfail(run=False)
-
-    .. code-block:: ini
-
-      # content of pytest.ini
-      [pytest]
-      empty_parameter_set_mark = xfail
-
-    .. note::
-
-      The default value of this option is planned to change to ``xfail`` in future releases
-      as this is considered less error prone, see `#3155`_ for more details.
-
-
-.. confval:: junit_suite_name
-
-    .. versionadded:: 3.1
-
-    To set the name of the root test suite xml item, you can configure the ``junit_suite_name`` option in your config file:
-
-    .. code-block:: ini
-
-        [pytest]
-        junit_suite_name = my_suite
-
-
-
-.. _`#3155`: https://github.com/pytest-dev/pytest/issues/3155
