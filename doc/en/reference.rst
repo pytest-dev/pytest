@@ -1150,7 +1150,6 @@ passed multiple times. The expected format is ``name=value``. For example::
 
    .. code-block:: ini
 
-        # content of pytest.ini
         [pytest]
         norecursedirs = .svn _build tmp*
 
@@ -1176,7 +1175,6 @@ passed multiple times. The expected format is ``name=value``. For example::
 
    .. code-block:: ini
 
-        # content of pytest.ini
         [pytest]
         python_classes = *Suite
 
@@ -1202,7 +1200,6 @@ passed multiple times. The expected format is ``name=value``. For example::
 
    .. code-block:: ini
 
-        # content of pytest.ini
         [pytest]
         python_functions = *_test
 
@@ -1225,7 +1222,6 @@ passed multiple times. The expected format is ``name=value``. For example::
 
    .. code-block:: ini
 
-        # content of pytest.ini
         [pytest]
         testpaths = testing doc
 
