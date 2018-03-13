@@ -5,7 +5,7 @@ import shlex
 import traceback
 import types
 import warnings
-
+import copy
 import six
 import py
 # DON't import pytest here because it causes import cycle troubles
@@ -68,7 +68,7 @@ def main(args=None, plugins=None):
         return 4
 
 
-class cmdline(object):  # compatibility namespace
+class cmdline(object):  # NOQA compatibility namespace
     main = staticmethod(main)
 
 
@@ -845,19 +845,6 @@ def _ensure_removed_sysmodule(modname):
         pass
 
 
-class CmdOptions(object):
-    """ holds cmdline options as attributes."""
-
-    def __init__(self, values=()):
-        self.__dict__.update(values)
-
-    def __repr__(self):
-        return "<CmdOptions %r>" % (self.__dict__,)
-
-    def copy(self):
-        return CmdOptions(self.__dict__)
-
-
 class Notset(object):
     def __repr__(self):
         return "<NOTSET>"
@@ -885,7 +872,7 @@ class Config(object):
     def __init__(self, pluginmanager):
         #: access to command line option as attributes.
         #: (deprecated), use :py:func:`getoption() <_pytest.config.Config.getoption>` instead
-        self.option = CmdOptions()
+        self.option = argparse.Namespace()
         _a = FILE_OR_DIR
         self._parser = Parser(
             usage="%%(prog)s [options] [%s] [%s] [...]" % (_a, _a),
@@ -989,7 +976,7 @@ class Config(object):
         self.pluginmanager._set_initial_conftests(early_config.known_args_namespace)
 
     def _initini(self, args):
-        ns, unknown_args = self._parser.parse_known_and_unknown_args(args, namespace=self.option.copy())
+        ns, unknown_args = self._parser.parse_known_and_unknown_args(args, namespace=copy.copy(self.option))
         r = determine_setup(ns.inifilename, ns.file_or_dir + unknown_args, warnfunc=self.warn,
                             rootdir_cmd_arg=ns.rootdir or None)
         self.rootdir, self.inifile, self.inicfg = r
@@ -1054,7 +1041,8 @@ class Config(object):
         self.pluginmanager.consider_preparse(args)
         self.pluginmanager.load_setuptools_entrypoints('pytest11')
         self.pluginmanager.consider_env()
-        self.known_args_namespace = ns = self._parser.parse_known_args(args, namespace=self.option.copy())
+        self.known_args_namespace = ns = self._parser.parse_known_args(
+            args, namespace=copy.copy(self.option))
         if self.known_args_namespace.confcutdir is None and self.inifile:
             confcutdir = py.path.local(self.inifile).dirname
             self.known_args_namespace.confcutdir = confcutdir
