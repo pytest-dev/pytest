@@ -19,12 +19,45 @@ from _pytest.main import EXIT_OK, EXIT_TESTSFAILED, EXIT_INTERRUPTED, \
     EXIT_USAGEERROR, EXIT_NOTESTSCOLLECTED
 
 
+import argparse
+
+
+class MoreQuietAction(argparse.Action):
+    """
+    a modified copy of the argparse count action which counts down and updates
+    the legacy quiet attribute at the same time
+
+    used to unify verbosity handling
+    """
+    def __init__(self,
+                 option_strings,
+                 dest,
+                 default=None,
+                 required=False,
+                 help=None):
+        super(MoreQuietAction, self).__init__(
+            option_strings=option_strings,
+            dest=dest,
+            nargs=0,
+            default=default,
+            required=required,
+            help=help)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        new_count = getattr(namespace, self.dest, 0) - 1
+        setattr(namespace, self.dest, new_count)
+        # todo Deprecate config.quiet
+        namespace.quiet = getattr(namespace, 'quiet', 0) + 1
+
+
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "reporting", after="general")
-    group._addoption('-v', '--verbose', action="count",
-                     dest="verbose", default=0, help="increase verbosity.")
-    group._addoption('-q', '--quiet', action="count",
-                     dest="quiet", default=0, help="decrease verbosity.")
+    group._addoption('-v', '--verbose', action="count", default=0,
+                     dest="verbose", help="increase verbosity."),
+    group._addoption('-q', '--quiet', action=MoreQuietAction, default=0,
+                     dest="verbose", help="decrease verbosity."),
+    group._addoption("--verbosity", dest='verbose', type=int, default=0,
+                     help="set verbosity")
     group._addoption('-r',
                      action="store", dest="reportchars", default='', metavar="chars",
                      help="show extra test summary info as specified by chars (f)ailed, "
@@ -61,7 +94,6 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-    config.option.verbose -= config.option.quiet
     reporter = TerminalReporter(config, sys.stdout)
     config.pluginmanager.register(reporter, 'terminalreporter')
     if config.option.debug or config.option.traceconfig:
