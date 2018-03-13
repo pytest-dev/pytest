@@ -2281,19 +2281,19 @@ class TestFixtureMarker(object):
                     pass
         """)
         result = testdir.runpytest("-vs")
-        result.stdout.fnmatch_lines("""
-            test_class_ordering.py::TestClass2::test_1[1-a] PASSED
-            test_class_ordering.py::TestClass2::test_1[2-a] PASSED
-            test_class_ordering.py::TestClass2::test_2[1-a] PASSED
-            test_class_ordering.py::TestClass2::test_2[2-a] PASSED
-            test_class_ordering.py::TestClass2::test_1[1-b] PASSED
-            test_class_ordering.py::TestClass2::test_1[2-b] PASSED
-            test_class_ordering.py::TestClass2::test_2[1-b] PASSED
-            test_class_ordering.py::TestClass2::test_2[2-b] PASSED
-            test_class_ordering.py::TestClass::test_3[1-a] PASSED
-            test_class_ordering.py::TestClass::test_3[2-a] PASSED
-            test_class_ordering.py::TestClass::test_3[1-b] PASSED
-            test_class_ordering.py::TestClass::test_3[2-b] PASSED
+        result.stdout.re_match_lines(r"""
+            test_class_ordering.py::TestClass2::test_1\[1-a\] PASSED
+            test_class_ordering.py::TestClass2::test_1\[2-a\] PASSED
+            test_class_ordering.py::TestClass2::test_2\[1-a\] PASSED
+            test_class_ordering.py::TestClass2::test_2\[2-a\] PASSED
+            test_class_ordering.py::TestClass2::test_1\[1-b\] PASSED
+            test_class_ordering.py::TestClass2::test_1\[2-b\] PASSED
+            test_class_ordering.py::TestClass2::test_2\[1-b\] PASSED
+            test_class_ordering.py::TestClass2::test_2\[2-b\] PASSED
+            test_class_ordering.py::TestClass::test_3\[1-a\] PASSED
+            test_class_ordering.py::TestClass::test_3\[2-a\] PASSED
+            test_class_ordering.py::TestClass::test_3\[1-b\] PASSED
+            test_class_ordering.py::TestClass::test_3\[2-b\] PASSED
         """)
 
     def test_parametrize_separated_order_higher_scope_first(self, testdir):
