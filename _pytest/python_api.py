@@ -88,12 +88,14 @@ class ApproxNumpy(ApproxBase):
     def __eq__(self, actual):
         import numpy as np
 
-        try:
-            actual = np.asarray(actual)
-        except:  # noqa
-            raise TypeError("cannot compare '{0}' to numpy.ndarray".format(actual))
+        if not np.isscalar(actual):
+            try:
+                actual = np.asarray(actual)
+            except:  # noqa
+                raise TypeError("cannot compare '{0}' to numpy.ndarray".format(actual))
 
-        if not np.isscalar(self.expected) and actual.shape != self.expected.shape:
+        if (not np.isscalar(self.expected) and not np.isscalar(actual)
+                and actual.shape != self.expected.shape):
             return False
 
         return ApproxBase.__eq__(self, actual)
@@ -108,6 +110,9 @@ class ApproxNumpy(ApproxBase):
         if np.isscalar(self.expected):
             for i in np.ndindex(actual.shape):
                 yield actual[i], self.expected
+        elif np.isscalar(actual):
+            for i in np.ndindex(self.expected.shape):
+                yield actual, self.expected[i]
         else:
             for i in np.ndindex(self.expected.shape):
                 yield actual[i], self.expected[i]
