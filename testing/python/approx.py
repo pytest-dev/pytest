@@ -391,3 +391,14 @@ class TestApprox(object):
         """
         with pytest.raises(TypeError):
             op(1, approx(1, rel=1e-6, abs=1e-12))
+
+    def test_numpy_array_with_scalar(self):
+        np = pytest.importorskip('numpy')
+
+        actual = np.array([1 + 1e-7, 1 - 1e-8])
+        expected = 1.0
+
+        assert actual == approx(expected, rel=5e-7, abs=0)
+        assert actual != approx(expected, rel=5e-8, abs=0)
+        assert approx(expected, rel=5e-7, abs=0) == actual
+        assert approx(expected, rel=5e-8, abs=0) != actual
