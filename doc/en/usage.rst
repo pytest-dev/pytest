@@ -337,7 +337,7 @@ to all testcases you can use ``LogXML.add_global_properties``
         my_junit.add_global_property('ARCH', 'PPC')
         my_junit.add_global_property('STORAGE_TYPE', 'CEPH')
 
-    @pytest.mark.usefixtures(log_global_env_facts)
+    @pytest.mark.usefixtures(log_global_env_facts.__name__)
     def start_and_prepare_env():
         pass
 
