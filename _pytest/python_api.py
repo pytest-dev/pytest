@@ -31,9 +31,9 @@ class ApproxBase(object):
     or sequences of numbers.
     """
 
-    # Tell numpy to use our `__eq__` operator instead of its when left side in a numpy array but right side is
-    # an instance of ApproxBase
+    # Tell numpy to use our `__eq__` operator instead of its
     __array_ufunc__ = None
+    __array_priority__ = 100
 
     def __init__(self, expected, rel=None, abs=None, nan_ok=False):
         self.expected = expected
@@ -73,9 +73,6 @@ class ApproxNumpy(ApproxBase):
     Perform approximate comparisons for numpy arrays.
     """
 
-    # Tell numpy to use our `__eq__` operator instead of its.
-    __array_priority__ = 100
-
     def __repr__(self):
         # It might be nice to rewrite this function to account for the
         # shape of the array...
@@ -109,13 +106,13 @@ class ApproxNumpy(ApproxBase):
 
         if np.isscalar(self.expected):
             for i in np.ndindex(actual.shape):
-                yield actual[i], self.expected
+                yield np.asscalar(actual[i]), self.expected
         elif np.isscalar(actual):
             for i in np.ndindex(self.expected.shape):
-                yield actual, self.expected[i]
+                yield actual, np.asscalar(self.expected[i])
         else:
             for i in np.ndindex(self.expected.shape):
-                yield actual[i], self.expected[i]
+                yield np.asscalar(actual[i]), np.asscalar(self.expected[i])
 
 
 class ApproxMapping(ApproxBase):
@@ -144,9 +141,6 @@ class ApproxSequence(ApproxBase):
     """
     Perform approximate comparisons for sequences of numbers.
     """
-
-    # Tell numpy to use our `__eq__` operator instead of its.
-    __array_priority__ = 100
 
     def __repr__(self):
         seq_type = type(self.expected)
