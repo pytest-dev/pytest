@@ -476,7 +476,7 @@ class FDCaptureBinary(object):
         os.dup2(targetfd_save, self.targetfd)
         os.close(targetfd_save)
         self.syscapture.done()
-        self.tmpfile.close()
+        _attempt_to_close_capture_file(self.tmpfile)
 
     def suspend(self):
         self.syscapture.suspend()
@@ -530,7 +530,7 @@ class SysCapture(object):
     def done(self):
         setattr(sys, self.name, self._old)
         del self._old
-        self.tmpfile.close()
+        _attempt_to_close_capture_file(self.tmpfile)
 
     def suspend(self):
         setattr(sys, self.name, self._old)
@@ -681,3 +681,14 @@ def _py36_windowsconsoleio_workaround(stream):
     sys.__stdin__ = sys.stdin = _reopen_stdio(sys.stdin, 'rb')
     sys.__stdout__ = sys.stdout = _reopen_stdio(sys.stdout, 'wb')
     sys.__stderr__ = sys.stderr = _reopen_stdio(sys.stderr, 'wb')
+
+
+def _attempt_to_close_capture_file(f):
+    """Suppress IOError when closing the temporary file used for capturing streams in py27 (#2370)"""
+    if six.PY2:
+        try:
+            f.close()
+        except IOError:
+            pass
+    else:
+        f.close()
