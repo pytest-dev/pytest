@@ -1,0 +1,1 @@
+Fixtures are now instantiated based on their scopes, with higher-scoped fixtures (such as ``session``) being instantiated first than lower-scoped fixtures (such as ``function``). The relative order of fixtures of the same scope is kept unchanged, based in their declaration order and their dependencies.
