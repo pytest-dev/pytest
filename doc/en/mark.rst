@@ -4,7 +4,6 @@
 Marking test functions with attributes
 =================================================================
 
-.. currentmodule:: _pytest.mark
 
 By using the ``pytest.mark`` helper you can easily set
 metadata on your test functions. There are
@@ -26,16 +25,4 @@ which also serve as documentation.
     Marks can only be applied to tests, having no effect on
     :ref:`fixtures <fixtures>`.
 
-
-API reference for mark related objects
-------------------------------------------------
-
-.. autoclass:: MarkGenerator
-    :members:
-
-.. autoclass:: MarkDecorator
-    :members:
-
-.. autoclass:: MarkInfo
-    :members:
 

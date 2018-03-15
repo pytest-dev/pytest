@@ -116,6 +116,8 @@ def tmpdir(request, tmpdir_factory):
     created as a sub directory of the base temporary
     directory.  The returned object is a `py.path.local`_
     path object.
+
+    .. _`py.path.local`: https://py.readthedocs.io/en/latest/path.html
     """
     name = request.node.name
     name = re.sub(r"[\W]", "_", name)

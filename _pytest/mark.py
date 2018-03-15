@@ -116,6 +116,21 @@ class MarkerError(Exception):
 
 
 def param(*values, **kw):
+    """Specify a parameter in a `pytest.mark.parametrize`_ call.
+
+    .. code-block:: python
+
+        @pytest.mark.parametrize("test_input,expected", [
+            ("3+5", 8),
+            pytest.param("6*9", 42, marks=pytest.mark.xfail),
+        ])
+        def test_eval(test_input, expected):
+            assert eval(test_input) == expected
+
+    :param values: variable args of the values of the parameter set, in order.
+    :keyword marks: a single mark or a list of marks to be applied to this parameter set.
+    :keyword str id: the id to attribute to this parameter set.
+    """
     return ParameterSet.param(*values, **kw)
 
 

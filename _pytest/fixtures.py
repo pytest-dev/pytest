@@ -858,7 +858,7 @@ class FixtureFunctionMarker(object):
 
 
 def fixture(scope="function", params=None, autouse=False, ids=None, name=None):
-    """ (return a) decorator to mark a fixture factory function.
+    """Decorator to mark a fixture factory function.
 
     This decorator can be used (with or without parameters) to define a
     fixture function.  The name of the fixture function can later be
@@ -923,7 +923,15 @@ defaultfuncargprefixmarker = fixture()
 
 @fixture(scope="session")
 def pytestconfig(request):
-    """ the pytest config object with access to command line opts."""
+    """Session-scoped fixture that returns the :class:`_pytest.config.Config` object.
+
+    Example::
+
+        def test_foo(pytestconfig):
+            if pytestconfig.getoption("verbose"):
+                ...
+
+    """
     return request.config
 
 

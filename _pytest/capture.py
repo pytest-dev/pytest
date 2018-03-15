@@ -197,9 +197,9 @@ def _ensure_only_one_capture_fixture(request, name):
 
 @pytest.fixture
 def capsys(request):
-    """Enable capturing of writes to sys.stdout/sys.stderr and make
+    """Enable capturing of writes to ``sys.stdout`` and ``sys.stderr`` and make
     captured output available via ``capsys.readouterr()`` method calls
-    which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be ``text``
+    which return a ``(out, err)`` namedtuple.  ``out`` and ``err`` will be ``text``
     objects.
     """
     _ensure_only_one_capture_fixture(request, 'capsys')
@@ -209,7 +209,7 @@ def capsys(request):
 
 @pytest.fixture
 def capsysbinary(request):
-    """Enable capturing of writes to sys.stdout/sys.stderr and make
+    """Enable capturing of writes to ``sys.stdout`` and ``sys.stderr`` and make
     captured output available via ``capsys.readouterr()`` method calls
     which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be ``bytes``
     objects.
@@ -225,7 +225,7 @@ def capsysbinary(request):
 
 @pytest.fixture
 def capfd(request):
-    """Enable capturing of writes to file descriptors 1 and 2 and make
+    """Enable capturing of writes to file descriptors ``1`` and ``2`` and make
     captured output available via ``capfd.readouterr()`` method calls
     which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be ``text``
     objects.
@@ -272,6 +272,10 @@ def _install_capture_fixture_on_item(request, capture_class):
 
 
 class CaptureFixture(object):
+    """
+    Object returned by :py:func:`capsys`, :py:func:`capsysbinary`, :py:func:`capfd` and :py:func:`capfdbinary`
+    fixtures.
+    """
     def __init__(self, captureclass, request):
         self.captureclass = captureclass
         self.request = request
@@ -288,6 +292,10 @@ class CaptureFixture(object):
             cap.stop_capturing()
 
     def readouterr(self):
+        """Read and return the captured output so far, resetting the internal buffer.
+
+        :return: captured content as a namedtuple with  ``out`` and ``err`` string attributes
+        """
         try:
             return self._capture.readouterr()
         except AttributeError:
@@ -295,6 +303,7 @@ class CaptureFixture(object):
 
     @contextlib.contextmanager
     def disabled(self):
+        """Temporarily disables capture while inside the 'with' block."""
         self._capture.suspend_capturing()
         capmanager = self.request.config.pluginmanager.getplugin('capturemanager')
         capmanager.suspend_global_capture(item=None, in_=False)

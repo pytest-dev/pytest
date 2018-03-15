@@ -160,11 +160,9 @@ the records for the ``setup`` and ``call`` stages during teardown like so:
                 pytest.fail('warning messages encountered during testing: {}'.format(messages))
 
 
-caplog fixture API
-~~~~~~~~~~~~~~~~~~
 
-.. autoclass:: _pytest.logging.LogCaptureFixture
-    :members:
+The full API is available at :class:`_pytest.logging.LogCaptureFixture`.
+
 
 .. _live_logs:
 
