@@ -76,8 +76,10 @@ class ApproxNumpy(ApproxBase):
     def __repr__(self):
         # It might be nice to rewrite this function to account for the
         # shape of the array...
+        import numpy as np
+
         return "approx({0!r})".format(list(
-            self._approx_scalar(x) for x in self.expected))
+            self._approx_scalar(x) for x in np.asarray(self.expected)))
 
     if sys.version_info[0] == 2:
         __cmp__ = _cmp_raises_type_error
@@ -100,9 +102,11 @@ class ApproxNumpy(ApproxBase):
     def _yield_comparisons(self, actual):
         import numpy as np
 
-        # We can be sure that `actual` is a numpy array, because it's
-        # casted in `__eq__` before being passed to `ApproxBase.__eq__`,
-        # which is the only method that calls this one.
+        # For both `actual` and `self.expected`, they can independently be
+        # either a `numpy.array` or a scalar (but both can't be scalar,
+        # in this case an `ApproxScalar` is used).
+        # They are treated in `__eq__` before being passed to
+        # `ApproxBase.__eq__`, which is the only method that calls this one.
 
         if np.isscalar(self.expected):
             for i in np.ndindex(actual.shape):
