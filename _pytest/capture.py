@@ -574,7 +574,10 @@ class DontReadFromInput(object):
         raise IOError("reading from stdin while output is captured")
     readline = read
     readlines = read
-    __iter__ = read
+    __next__ = read
+
+    def __iter__(self):
+        return self
 
     def fileno(self):
         raise UnsupportedOperation("redirected stdin is pseudofile, "
