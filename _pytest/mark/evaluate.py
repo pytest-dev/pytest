@@ -27,7 +27,8 @@ class MarkEvaluator(object):
         self._mark_name = name
 
     def __bool__(self):
-        return bool(self._marks)
+        # dont cache here to prevent staleness
+        return bool(self._get_marks())
     __nonzero__ = __bool__
 
     def wasvalid(self):
