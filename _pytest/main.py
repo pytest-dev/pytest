@@ -7,6 +7,7 @@ import os
 import pkgutil
 import six
 import sys
+import attr
 
 import _pytest
 from _pytest import nodes
@@ -293,6 +294,7 @@ class Failed(Exception):
     """ signals an stop as failed test run. """
 
 
+@attr.s(init=False)
 class Session(nodes.FSCollector):
     Interrupted = Interrupted
     Failed = Failed
