@@ -560,7 +560,7 @@ class SysCaptureBinary(SysCapture):
         return res
 
 
-class DontReadFromInput(object):
+class DontReadFromInput(six.Iterator):
     """Temporary stub class.  Ideally when stdin is accessed, the
     capturing should be turned off, with possibly all data captured
     so far sent to the screen.  This should be configurable, though,
@@ -574,7 +574,10 @@ class DontReadFromInput(object):
         raise IOError("reading from stdin while output is captured")
     readline = read
     readlines = read
-    __iter__ = read
+    __next__ = read
+
+    def __iter__(self):
+        return self
 
     def fileno(self):
         raise UnsupportedOperation("redirected stdin is pseudofile, "

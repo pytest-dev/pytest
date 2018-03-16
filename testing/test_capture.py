@@ -751,7 +751,8 @@ def test_dontreadfrominput():
     assert not f.isatty()
     pytest.raises(IOError, f.read)
     pytest.raises(IOError, f.readlines)
-    pytest.raises(IOError, iter, f)
+    iter_f = iter(f)
+    pytest.raises(IOError, next, iter_f)
     pytest.raises(UnsupportedOperation, f.fileno)
     f.close()  # just for completeness
 
@@ -764,7 +765,8 @@ def test_dontreadfrominput_buffer_python3():
     assert not fb.isatty()
     pytest.raises(IOError, fb.read)
     pytest.raises(IOError, fb.readlines)
-    pytest.raises(IOError, iter, fb)
+    iter_f = iter(f)
+    pytest.raises(IOError, next, iter_f)
     pytest.raises(ValueError, fb.fileno)
     f.close()  # just for completeness
 
