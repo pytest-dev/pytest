@@ -250,23 +250,11 @@ The ``recwarn`` fixture will record warnings for the whole function::
 Both ``recwarn`` and ``pytest.warns`` return the same interface for recorded
 warnings: a WarningsRecorder instance. To view the recorded warnings, you can
 iterate over this instance, call ``len`` on it to get the number of recorded
-warnings, or index into it to get a particular recorded warning. It also
-provides these methods:
+warnings, or index into it to get a particular recorded warning.
 
-.. autoclass:: _pytest.recwarn.WarningsRecorder()
-    :members:
+.. currentmodule:: _pytest.warnings
 
-Each recorded warning has the attributes ``message``, ``category``,
-``filename``, ``lineno``, ``file``, and ``line``. The ``category`` is the
-class of the warning. The ``message`` is the warning itself; calling
-``str(message)`` will return the actual message of the warning.
-
-.. note::
-    :class:`RecordedWarning` was changed from a plain class to a namedtuple in pytest 3.1
-
-.. note::
-    ``DeprecationWarning`` and ``PendingDeprecationWarning`` are treated
-    differently; see :ref:`ensuring_function_triggers`.
+Full API: :class:`WarningsRecorder`.
 
 .. _`ensuring a function triggers a deprecation warning`:
 

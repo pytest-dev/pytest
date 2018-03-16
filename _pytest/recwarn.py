@@ -16,10 +16,7 @@ from _pytest.outcomes import fail
 
 @yield_fixture
 def recwarn():
-    """Return a WarningsRecorder instance that provides these methods:
-
-    * ``pop(category=None)``: return last warning matching the category.
-    * ``clear()``: clear list of warnings
+    """Return a :class:`WarningsRecorder` instance that records all warnings emitted by test functions.
 
     See http://docs.python.org/library/warnings.html for information
     on warning categories.
@@ -88,11 +85,11 @@ class _DeprecatedCallContext(object):
 def warns(expected_warning, *args, **kwargs):
     """Assert that code raises a particular class of warning.
 
-    Specifically, the input @expected_warning can be a warning class or
-    tuple of warning classes, and the code must return that warning
-    (if a single class) or one of those warnings (if a tuple).
+    Specifically, the parameter ``expected_warning`` can be a warning class or
+    sequence of warning classes, and the inside the ``with`` block must issue a warning of that class or
+    classes.
 
-    This helper produces a list of ``warnings.WarningMessage`` objects,
+    This helper produces a list of :class:`warnings.WarningMessage` objects,
     one for each warning raised.
 
     This function can be used as a context manager, or any of the other ways

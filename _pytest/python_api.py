@@ -548,8 +548,9 @@ def raises(expected_exception, *args, **kwargs):
     The string will be evaluated using the same ``locals()`` and ``globals()``
     at the moment of the ``raises`` call.
 
-    .. autoclass:: _pytest._code.ExceptionInfo
-        :members:
+    .. currentmodule:: _pytest._code
+
+    Consult the API of ``excinfo`` objects: :class:`ExceptionInfo`.
 
     .. note::
         Similar to caught exception objects in Python, explicitly clearing

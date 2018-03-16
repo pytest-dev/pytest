@@ -216,7 +216,7 @@ the cache and this will be quick::
     test_caching.py:14: AssertionError
     1 failed in 0.12 seconds
 
-See the `cache-api`_ for more details.
+See the :ref:`cache-api` for more details.
 
 
 Inspecting Cache content
@@ -251,22 +251,3 @@ servers where isolation and correctness is more important
 than speed.
 
 
-.. _`cache-api`:
-
-config.cache API
-------------------
-
-The ``config.cache`` object allows other plugins,
-including ``conftest.py`` files,
-to safely and flexibly store and retrieve values across
-test runs because the ``config`` object is available
-in many places.
-
-Under the hood, the cache plugin uses the simple
-dumps/loads API of the json stdlib module
-
-.. currentmodule:: _pytest.cacheprovider
-
-.. automethod:: Cache.get
-.. automethod:: Cache.set
-.. automethod:: Cache.makedir

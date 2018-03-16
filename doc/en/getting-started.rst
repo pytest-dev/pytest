@@ -172,9 +172,10 @@ Continue reading
 Check out additional pytest resources to help you customize tests for your unique workflow:
 
 * ":ref:`cmdline`" for command line invocation examples
-* ":ref:`goodpractices`" for virtualenv and test layouts
 * ":ref:`existingtestsuite`" for working with pre-existing tests
+* ":ref:`mark`" for information on the ``pytest.mark`` mechanism
 * ":ref:`fixtures`" for providing a functional baseline to your tests
 * ":ref:`plugins`" for managing and writing plugins
+* ":ref:`goodpractices`" for virtualenv and test layouts
 
 .. include:: links.inc

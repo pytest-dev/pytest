@@ -462,6 +462,6 @@ def _fix_spoof_python2(runner, encoding):
 @pytest.fixture(scope='session')
 def doctest_namespace():
     """
-    Inject names into the doctest namespace.
+    Fixture that returns a :py:class:`dict` that will be injected into the namespace of doctests.
     """
     return dict()

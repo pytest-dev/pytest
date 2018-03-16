@@ -1,0 +1,1 @@
+Fix a python example when calling a fixture in doc/en/usage.rst

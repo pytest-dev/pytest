@@ -3,6 +3,8 @@
 Basic patterns and examples
 ==========================================================
 
+.. _request example:
+
 Pass different values to a test function, depending on command line options
 ----------------------------------------------------------------------------
 
@@ -763,6 +765,8 @@ and run it::
 
 You'll see that the fixture finalizers could use the precise reporting
 information.
+
+.. _pytest current test env:
 
 ``PYTEST_CURRENT_TEST`` environment variable
 --------------------------------------------

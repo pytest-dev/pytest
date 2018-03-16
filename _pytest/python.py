@@ -717,7 +717,7 @@ class CallSpec2(object):
 
 class Metafunc(fixtures.FuncargnamesCompatAttr):
     """
-    Metafunc objects are passed to the ``pytest_generate_tests`` hook.
+    Metafunc objects are passed to the :func:`pytest_generate_tests <_pytest.hookspec.pytest_generate_tests>` hook.
     They help to inspect a test function and to generate tests according to
     test configuration or values specified in the class or module where a
     test function is defined.

@@ -95,8 +95,10 @@ def test_clear(caplog):
     caplog.set_level(logging.INFO)
     logger.info(u'bū')
     assert len(caplog.records)
+    assert caplog.text
     caplog.clear()
     assert not len(caplog.records)
+    assert not caplog.text
 
 
 @pytest.fixture
