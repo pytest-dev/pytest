@@ -79,7 +79,7 @@ def from_parent(name, required=True):
     return attr.Factory(fetch_from_parent, takes_self=True)
 
 
-@attr.s(hash=False)
+@attr.s(hash=False, cmp=False)
 class Node(object):
     """ base class for Collector and Item the test collection tree.
     Collector subclasses have children, Items are terminal nodes."""
@@ -261,7 +261,7 @@ class Node(object):
     repr_failure = _repr_failure_py
 
 
-@attr.s
+@attr.s(hash=False, cmp=False)
 class Collector(Node):
     """ Collector instances create children through collect()
         and thus iteratively build a tree.
@@ -298,7 +298,7 @@ def _check_initialpaths_for_relpath(session, fspath):
             return fspath.relto(initial_path.dirname)
 
 
-@attr.s(init=False)
+@attr.s(init=False, hash=False, cmp=False)
 class FSCollector(Collector):
     def __init__(self, fspath, parent=None, config=None, session=None, nodeid=None):
         fspath = py.path.local(fspath)  # xxx only for test_resultlog.py?
@@ -323,12 +323,12 @@ class FSCollector(Collector):
         super(FSCollector, self).__init__(name, parent, config, session, nodeid=nodeid, fspath=fspath)
 
 
-@attr.s
+@attr.s(hash=False, cmp=False)
 class File(FSCollector):
     """ base class for collecting tests from a file. """
 
 
-@attr.s
+@attr.s(hash=False, cmp=False)
 class Item(Node):
     """ a basic test invocation item. Note that for a single function
     there might be multiple test invocation items.

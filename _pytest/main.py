@@ -294,7 +294,7 @@ class Failed(Exception):
     """ signals an stop as failed test run. """
 
 
-@attr.s(init=False)
+@attr.s(init=False, hash=False, cmp=False)
 class Session(nodes.FSCollector):
     Interrupted = Interrupted
     Failed = Failed
