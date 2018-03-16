@@ -28,7 +28,7 @@ from _pytest.compat import (
     safe_str, getlocation, enum,
 )
 from _pytest.outcomes import fail
-from _pytest.mark.structures import transfer_markers
+from _pytest.mark.structures import transfer_markers, get_unpacked_marks
 
 
 # relative paths that we use to filter traceback entries from appearing to the user;
@@ -212,11 +212,17 @@ class PyobjContext(object):
 
 
 class PyobjMixin(PyobjContext):
+
+    def __init__(self, *k, **kw):
+        super(PyobjMixin, self).__init__(*k, **kw)
+
     def obj():
         def fget(self):
             obj = getattr(self, '_obj', None)
             if obj is None:
                 self._obj = obj = self._getobj()
+                # XXX evil hacn
+                self._markers.update(get_unpacked_marks(self.obj))
             return obj
 
         def fset(self, value):
@@ -1114,6 +1120,7 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
             self.obj = callobj
 
         self.keywords.update(self.obj.__dict__)
+        self._markers.update(get_unpacked_marks(self.obj))
         if callspec:
             self.callspec = callspec
             # this is total hostile and a mess
@@ -1123,6 +1130,7 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
                 # feel free to cry, this was broken for years before
                 # and keywords cant fix it per design
                 self.keywords[mark.name] = mark
+            self._markers.update(callspec.marks)
         if keywords:
             self.keywords.update(keywords)
 

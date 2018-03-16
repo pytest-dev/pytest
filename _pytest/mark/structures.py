@@ -365,3 +365,28 @@ class NodeKeywords(MappingMixin):
 
     def __repr__(self):
         return "<NodeKeywords for node %s>" % (self.node, )
+
+
+@attr.s(cmp=False, hash=False)
+class NodeMarkers(object):
+    node = attr.ib(repr=False)
+    own_markers = attr.ib(default=attr.Factory(list))
+
+    @classmethod
+    def from_node(cls, node):
+        return cls(node=node)
+
+    def update(self, add_markers):
+        """update the own markers
+        """
+        self.own_markers.extend(add_markers)
+
+    def find(self, name):
+        """
+        find markers in own nodes or parent nodes
+        needs a better place
+        """
+        for node in reversed(self.node.listchain()):
+            for mark in node._markers.own_markers:
+                if mark.name == name:
+                    yield mark

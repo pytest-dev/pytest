@@ -4,11 +4,12 @@ import os
 import six
 import py
 import attr
+from more_itertools import first
 
 import _pytest
 import _pytest._code
 
-from _pytest.mark.structures import NodeKeywords
+from _pytest.mark.structures import NodeKeywords, NodeMarkers
 
 SEP = "/"
 
@@ -89,6 +90,7 @@ class Node(object):
 
         #: keywords/markers collected from all scopes
         self.keywords = NodeKeywords(self)
+        self._markers = NodeMarkers.from_node(self)
 
         #: allow adding of extra keywords to use for matching
         self.extra_keyword_matches = set()
@@ -178,15 +180,16 @@ class Node(object):
         elif not isinstance(marker, MarkDecorator):
             raise ValueError("is not a string or pytest.mark.* Marker")
         self.keywords[marker.name] = marker
+        self._markers.update([marker])
+
+    def find_markers(self, name):
+        """find all marks with the given name on the node and its parents"""
+        return self._markers.find(name)
 
     def get_marker(self, name):
         """ get a marker object from this node or None if
         the node doesn't have a marker with that name. """
-        val = self.keywords.get(name, None)
-        if val is not None:
-            from _pytest.mark import MarkInfo, MarkDecorator
-            if isinstance(val, (MarkDecorator, MarkInfo)):
-                return val
+        return first(self.find_markers(name), None)
 
     def listextrakeywords(self):
         """ Return a set of all extra keywords in self and any parents."""
