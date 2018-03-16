@@ -509,7 +509,6 @@ class TestFunctional(object):
         assert values[1].args == ()
         assert values[2].args == ("pos1", )
 
-    @pytest.mark.xfail(reason='unfixed')
     def test_merging_markers_deep(self, testdir):
         # issue 199 - propagate markers into nested classes
         p = testdir.makepyfile("""
@@ -526,7 +525,7 @@ class TestFunctional(object):
         items, rec = testdir.inline_genitems(p)
         for item in items:
             print(item, item.keywords)
-            assert 'a' in item.keywords
+            assert list(item.find_markers('a'))
 
     def test_mark_decorator_subclass_does_not_propagate_to_base(self, testdir):
         p = testdir.makepyfile("""
@@ -716,6 +715,7 @@ class TestFunctional(object):
             assert marker_names == set(expected_markers)
 
     @pytest.mark.issue1540
+    @pytest.mark.filterwarnings("ignore")
     def test_mark_from_parameters(self, testdir):
         testdir.makepyfile("""
             import pytest
