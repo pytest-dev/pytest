@@ -371,10 +371,7 @@ class FixtureRequest(FuncargnamesCompatAttr):
         :arg marker: a :py:class:`_pytest.mark.MarkDecorator` object
             created by a call to ``pytest.mark.NAME(...)``.
         """
-        try:
-            self.node.keywords[marker.markname] = marker
-        except AttributeError:
-            raise ValueError(marker)
+        self.node.add_marker(marker)
 
     def raiseerror(self, msg):
         """ raise a FixtureLookupError with the given message. """
