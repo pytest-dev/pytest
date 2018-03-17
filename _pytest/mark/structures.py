@@ -4,7 +4,7 @@ from operator import attrgetter
 import inspect
 
 import attr
-from ..deprecated import MARK_PARAMETERSET_UNPACKING
+from ..deprecated import MARK_PARAMETERSET_UNPACKING, MARK_INFO_ATTRIBUTE
 from ..compat import NOTSET, getfslineno
 from six.moves import map
 
@@ -260,10 +260,10 @@ def _marked(func, mark):
     invoked more than once.
     """
     try:
-        func_mark = getattr(func, mark.name)
+        func_mark = getattr(func, getattr(mark, 'combined', mark).name)
     except AttributeError:
         return False
-    return mark.args == func_mark.args and mark.kwargs == func_mark.kwargs
+    return any(mark == info.combined for info in func_mark)
 
 
 class MarkInfo(object):
@@ -274,9 +274,9 @@ class MarkInfo(object):
         self.combined = mark
         self._marks = [mark]
 
-    name = alias('combined.name')
-    args = alias('combined.args')
-    kwargs = alias('combined.kwargs')
+    name = alias('combined.name', warning=MARK_INFO_ATTRIBUTE)
+    args = alias('combined.args', warning=MARK_INFO_ATTRIBUTE)
+    kwargs = alias('combined.kwargs', warning=MARK_INFO_ATTRIBUTE)
 
     def __repr__(self):
         return "<MarkInfo {0!r}>".format(self.combined)

@@ -117,11 +117,7 @@ def pytest_generate_tests(metafunc):
         if hasattr(metafunc.function, attr):
             msg = "{0} has '{1}', spelling should be 'parametrize'"
             raise MarkerError(msg.format(metafunc.function.__name__, attr))
-    try:
-        markers = metafunc.function.parametrize
-    except AttributeError:
-        return
-    for marker in markers:
+    for marker in metafunc.definition.find_markers('parametrize'):
         metafunc.parametrize(*marker.args, **marker.kwargs)
 
 
@@ -212,6 +208,7 @@ class PyobjContext(object):
 
 
 class PyobjMixin(PyobjContext):
+    _ALLOW_MARKERS = True
 
     def __init__(self, *k, **kw):
         super(PyobjMixin, self).__init__(*k, **kw)
@@ -221,8 +218,9 @@ class PyobjMixin(PyobjContext):
             obj = getattr(self, '_obj', None)
             if obj is None:
                 self._obj = obj = self._getobj()
-                # XXX evil hacn
-                self._markers.update(get_unpacked_marks(self.obj))
+                # XXX evil hack
+                if self._ALLOW_MARKERS:
+                    self._markers.update(get_unpacked_marks(self.obj))
             return obj
 
         def fset(self, value):
@@ -370,8 +368,13 @@ class PyCollector(PyobjMixin, nodes.Collector):
         transfer_markers(funcobj, cls, module)
         fm = self.session._fixturemanager
         fixtureinfo = fm.getfixtureinfo(self, funcobj, cls)
-        metafunc = Metafunc(funcobj, fixtureinfo, self.config,
-                            cls=cls, module=module)
+
+        definition = FunctionDefinition(
+            name=name,
+            parent=self,
+            callobj=funcobj,
+        )
+        metafunc = Metafunc(definition, fixtureinfo, self.config, cls=cls, module=module)
         methods = []
         if hasattr(module, "pytest_generate_tests"):
             methods.append(module.pytest_generate_tests)
@@ -530,6 +533,8 @@ class Class(PyCollector):
 
 
 class Instance(PyCollector):
+    _ALLOW_MARKERS = False  # hack, destroy later
+
     def _getobj(self):
         return self.parent.obj()
 
@@ -729,15 +734,17 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
     test function is defined.
     """
 
-    def __init__(self, function, fixtureinfo, config, cls=None, module=None):
+    def __init__(self, definition, fixtureinfo, config, cls=None, module=None):
         #: access to the :class:`_pytest.config.Config` object for the test session
+        assert isinstance(definition, FunctionDefinition)
+        self.definition = definition
         self.config = config
 
         #: the module object where the test function is defined in.
         self.module = module
 
         #: underlying python test function
-        self.function = function
+        self.function = definition.obj
 
         #: set of fixture names required by the test function
         self.fixturenames = fixtureinfo.names_closure
@@ -1189,3 +1196,15 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
     def setup(self):
         super(Function, self).setup()
         fixtures.fillfixtures(self)
+
+
+class FunctionDefinition(Function):
+    """
+    internal hack until we get actual definition nodes instead of the
+    crappy metafunc hack
+    """
+
+    def runtest(self):
+        raise RuntimeError("function definitions are not supposed to be used")
+
+    setup = runtest

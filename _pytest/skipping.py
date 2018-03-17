@@ -2,7 +2,6 @@
 from __future__ import absolute_import, division, print_function
 
 from _pytest.config import hookimpl
-from _pytest.mark import MarkInfo, MarkDecorator
 from _pytest.mark.evaluate import MarkEvaluator
 from _pytest.outcomes import fail, skip, xfail
 
@@ -60,15 +59,12 @@ def pytest_configure(config):
 def pytest_runtest_setup(item):
     # Check if skip or skipif are specified as pytest marks
     item._skipped_by_mark = False
-    skipif_info = item.keywords.get('skipif')
-    if isinstance(skipif_info, (MarkInfo, MarkDecorator)):
-        eval_skipif = MarkEvaluator(item, 'skipif')
-        if eval_skipif.istrue():
-            item._skipped_by_mark = True
-            skip(eval_skipif.getexplanation())
+    eval_skipif = MarkEvaluator(item, 'skipif')
+    if eval_skipif.istrue():
+        item._skipped_by_mark = True
+        skip(eval_skipif.getexplanation())
 
-    skip_info = item.keywords.get('skip')
-    if isinstance(skip_info, (MarkInfo, MarkDecorator)):
+    for skip_info in item.find_markers('skip'):
         item._skipped_by_mark = True
         if 'reason' in skip_info.kwargs:
             skip(skip_info.kwargs['reason'])

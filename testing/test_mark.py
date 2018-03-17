@@ -8,6 +8,8 @@ from _pytest.mark import (
     EMPTY_PARAMETERSET_OPTION,
 )
 
+ignore_markinfo = pytest.mark.filterwarnings('ignore:MarkInfo objects:_pytest.deprecated.RemovedInPytest4Warning')
+
 
 class TestMark(object):
     def test_markinfo_repr(self):
@@ -51,6 +53,7 @@ class TestMark(object):
         mark.hello(f)
         assert f.hello
 
+    @ignore_markinfo
     def test_pytest_mark_keywords(self):
         mark = Mark()
 
@@ -62,6 +65,7 @@ class TestMark(object):
         assert f.world.kwargs['x'] == 3
         assert f.world.kwargs['y'] == 4
 
+    @ignore_markinfo
     def test_apply_multiple_and_merge(self):
         mark = Mark()
 
@@ -78,6 +82,7 @@ class TestMark(object):
         assert f.world.kwargs['y'] == 1
         assert len(f.world.args) == 0
 
+    @ignore_markinfo
     def test_pytest_mark_positional(self):
         mark = Mark()
 
@@ -88,6 +93,7 @@ class TestMark(object):
         assert f.world.args[0] == "hello"
         mark.world("world")(f)
 
+    @ignore_markinfo
     def test_pytest_mark_positional_func_and_keyword(self):
         mark = Mark()
 
@@ -103,6 +109,7 @@ class TestMark(object):
         assert g.world.args[0] is f
         assert g.world.kwargs["omega"] == "hello"
 
+    @ignore_markinfo
     def test_pytest_mark_reuse(self):
         mark = Mark()
 
@@ -484,6 +491,7 @@ class TestFunctional(object):
         assert 'hello' in keywords
         assert 'world' in keywords
 
+    @ignore_markinfo
     def test_merging_markers(self, testdir):
         p = testdir.makepyfile("""
             import pytest
@@ -621,6 +629,7 @@ class TestFunctional(object):
             "keyword: *hello*"
         ])
 
+    @ignore_markinfo
     def test_merging_markers_two_functions(self, testdir):
         p = testdir.makepyfile("""
             import pytest

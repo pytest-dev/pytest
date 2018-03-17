@@ -5,6 +5,7 @@ import inspect
 import sys
 import warnings
 from collections import OrderedDict, deque, defaultdict
+from more_itertools import flatten
 
 import attr
 import py
@@ -982,10 +983,10 @@ class FixtureManager(object):
             argnames = getfuncargnames(func, cls=cls)
         else:
             argnames = ()
-        usefixtures = getattr(func, "usefixtures", None)
+        usefixtures = flatten(uf_mark.args for uf_mark in node.find_markers("usefixtures"))
         initialnames = argnames
         if usefixtures is not None:
-            initialnames = usefixtures.args + initialnames
+            initialnames = tuple(usefixtures) + initialnames
         fm = node.session._fixturemanager
         names_closure, arg2fixturedefs = fm.getfixtureclosure(initialnames,
                                                               node)
@@ -1067,6 +1068,8 @@ class FixtureManager(object):
                 fixturedef = faclist[-1]
                 if fixturedef.params is not None:
                     parametrize_func = getattr(metafunc.function, 'parametrize', None)
+                    if parametrize_func is not None:
+                        parametrize_func = parametrize_func.combined
                     func_params = getattr(parametrize_func, 'args', [[None]])
                     func_kwargs = getattr(parametrize_func, 'kwargs', {})
                     # skip directly parametrized arguments

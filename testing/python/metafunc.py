@@ -26,11 +26,17 @@ class TestMetafunc(object):
 
         names = fixtures.getfuncargnames(func)
         fixtureinfo = FixtureInfo(names)
-        return python.Metafunc(func, fixtureinfo, config)
+        definition = python.FunctionDefinition(
+            name=func.__name__,
+            parent=None,
+            callobj=func,
+        )
+        return python.Metafunc(definition, fixtureinfo, config)
 
     def test_no_funcargs(self, testdir):
         def function():
             pass
+
         metafunc = self.Metafunc(function)
         assert not metafunc.fixturenames
         repr(metafunc._calls)
