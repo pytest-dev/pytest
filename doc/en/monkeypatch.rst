@@ -63,13 +63,9 @@ so that any attempts within tests to create http requests will fail.
     help although there's no guarantee.
     
 
-Method reference of the monkeypatch fixture
--------------------------------------------
+.. currentmodule:: _pytest.monkeypatch
 
-.. autoclass:: MonkeyPatch
-    :members:
+API Reference
+-------------
 
-``monkeypatch.setattr/delattr/delitem/delenv()`` all
-by default raise an Exception if the target does not exist.
-Pass ``raising=False`` if you want to skip this check.
-
+Consult the docs for the :class:`MonkeyPatch` class.

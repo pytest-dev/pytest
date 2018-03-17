@@ -220,8 +220,10 @@ To set the name of the root test suite xml item, you can configure the ``junit_s
     [pytest]
     junit_suite_name = my_suite
 
+.. _record_property example:
+
 record_property
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 .. versionadded:: 2.8
 .. versionchanged:: 3.5
@@ -306,7 +308,7 @@ To add an additional xml attribute to a testcase element, you can use
         print('hello world')
         assert True
 
-Unlike ``record_xml_property``, this will not add a new child element.
+Unlike ``record_property``, this will not add a new child element.
 Instead, this will add an attribute ``assertions="REQ-1234"`` inside the generated
 ``testcase`` tag and override the default ``classname`` with ``"classname=custom_classname"``:
 
@@ -371,7 +373,7 @@ to all testcases you can use ``LogXML.add_global_properties``
         my_junit.add_global_property('ARCH', 'PPC')
         my_junit.add_global_property('STORAGE_TYPE', 'CEPH')
 
-    @pytest.mark.usefixtures(log_global_env_facts)
+    @pytest.mark.usefixtures(log_global_env_facts.__name__)
     def start_and_prepare_env():
         pass
 

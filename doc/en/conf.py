@@ -18,8 +18,11 @@
 # The full version, including alpha/beta/rc tags.
 # The short X.Y version.
 
-import os, sys
+import os
+import sys
+
 from _pytest import __version__ as version
+
 release = ".".join(version.split(".")[:2])
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -38,7 +41,7 @@ todo_include_todos = 1
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.todo', 'sphinx.ext.autosummary',
-    'sphinx.ext.intersphinx', 'sphinx.ext.viewcode']
+              'sphinx.ext.intersphinx', 'sphinx.ext.viewcode', 'sphinxcontrib_trio']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -310,9 +313,7 @@ texinfo_documents = [
 
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'python': ('http://docs.python.org/', None),
-#                       'lib': ("http://docs.python.org/2.7library/", None),
-                    }
+intersphinx_mapping = {'python': ('http://docs.python.org/3', None)}
 
 
 def setup(app):

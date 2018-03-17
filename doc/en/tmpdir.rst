@@ -51,6 +51,9 @@ Running this would result in a passed test except for the last
     test_tmpdir.py:7: AssertionError
     ========================= 1 failed in 0.12 seconds =========================
 
+
+.. _`tmpdir factory example`:
+
 The 'tmpdir_factory' fixture
 ----------------------------
 
@@ -81,12 +84,8 @@ to save time:
         img = load_image(image_file)
         # compute and test histogram
 
-``tmpdir_factory`` instances have the following methods:
+See :ref:`tmpdir_factory API <tmpdir factory api>` for details.
 
-.. currentmodule:: _pytest.tmpdir
-
-.. automethod:: TempdirFactory.mktemp
-.. automethod:: TempdirFactory.getbasetemp
 
 .. _`base temporary directory`:
 

@@ -121,6 +121,8 @@ you want to continue the test even when you have failures, do::
     pytest --doctest-modules --doctest-continue-on-failure
 
 
+.. _`doctest_namespace`:
+
 The 'doctest_namespace' fixture
 -------------------------------
 

@@ -751,7 +751,8 @@ def test_dontreadfrominput():
     assert not f.isatty()
     pytest.raises(IOError, f.read)
     pytest.raises(IOError, f.readlines)
-    pytest.raises(IOError, iter, f)
+    iter_f = iter(f)
+    pytest.raises(IOError, next, iter_f)
     pytest.raises(UnsupportedOperation, f.fileno)
     f.close()  # just for completeness
 
@@ -764,7 +765,8 @@ def test_dontreadfrominput_buffer_python3():
     assert not fb.isatty()
     pytest.raises(IOError, fb.read)
     pytest.raises(IOError, fb.readlines)
-    pytest.raises(IOError, iter, fb)
+    iter_f = iter(f)
+    pytest.raises(IOError, next, iter_f)
     pytest.raises(ValueError, fb.fileno)
     f.close()  # just for completeness
 
@@ -1263,6 +1265,30 @@ def test_dontreadfrominput_has_encoding(testdir):
     """)
     reprec = testdir.inline_run()
     reprec.assertoutcome(passed=1)
+
+
+def test_crash_on_closing_tmpfile_py27(testdir):
+    testdir.makepyfile('''
+        from __future__ import print_function
+        import time
+        import threading
+        import sys
+
+        def spam():
+            f = sys.stderr
+            while True:
+                print('.', end='', file=f)
+
+        def test_silly():
+            t = threading.Thread(target=spam)
+            t.daemon = True
+            t.start()
+            time.sleep(0.5)
+
+    ''')
+    result = testdir.runpytest_subprocess()
+    assert result.ret == 0
+    assert 'IOError' not in result.stdout.str()
 
 
 def test_pickling_and_unpickling_encoded_file():

@@ -176,6 +176,10 @@ class LogCaptureHandler(logging.StreamHandler):
         self.records.append(record)
         logging.StreamHandler.emit(self, record)
 
+    def reset(self):
+        self.records = []
+        self.stream = py.io.TextIO()
+
 
 class LogCaptureFixture(object):
     """Provides access and control of log capturing."""
@@ -197,6 +201,9 @@ class LogCaptureFixture(object):
 
     @property
     def handler(self):
+        """
+        :rtype: LogCaptureHandler
+        """
         return self._item.catch_log_handler
 
     def get_records(self, when):
@@ -239,8 +246,8 @@ class LogCaptureFixture(object):
         return [(r.name, r.levelno, r.getMessage()) for r in self.records]
 
     def clear(self):
-        """Reset the list of log records."""
-        self.handler.records = []
+        """Reset the list of log records and the captured log text."""
+        self.handler.reset()
 
     def set_level(self, level, logger=None):
         """Sets the level for capturing of logs. The level will be restored to its previous value at the end of
@@ -285,6 +292,7 @@ def caplog(request):
     * caplog.text()          -> string containing formatted log output
     * caplog.records()       -> list of logging.LogRecord instances
     * caplog.record_tuples() -> list of (logger_name, level, message) tuples
+    * caplog.clear()         -> clear captured records and formatted log output string
     """
     result = LogCaptureFixture(request.node)
     yield result

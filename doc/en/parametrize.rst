@@ -33,7 +33,7 @@ pytest enables test parametrization at several levels:
 .. versionchanged:: 2.4
     Several improvements.
 
-The builtin ``pytest.mark.parametrize`` decorator enables
+The builtin :ref:`pytest.mark.parametrize ref` decorator enables
 parametrization of arguments for a test function.  Here is a typical example
 of a test function that implements checking that a certain input leads
 to an expected output::
@@ -206,12 +206,3 @@ More examples
 
 For further examples, you might want to look at :ref:`more
 parametrization examples <paramexamples>`.
-
-.. _`metafunc object`:
-
-The **metafunc** object
--------------------------------------------
-
-.. currentmodule:: _pytest.python
-.. autoclass:: Metafunc
-    :members:

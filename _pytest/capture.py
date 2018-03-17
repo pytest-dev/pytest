@@ -197,9 +197,9 @@ def _ensure_only_one_capture_fixture(request, name):
 
 @pytest.fixture
 def capsys(request):
-    """Enable capturing of writes to sys.stdout/sys.stderr and make
+    """Enable capturing of writes to ``sys.stdout`` and ``sys.stderr`` and make
     captured output available via ``capsys.readouterr()`` method calls
-    which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be ``text``
+    which return a ``(out, err)`` namedtuple.  ``out`` and ``err`` will be ``text``
     objects.
     """
     _ensure_only_one_capture_fixture(request, 'capsys')
@@ -209,7 +209,7 @@ def capsys(request):
 
 @pytest.fixture
 def capsysbinary(request):
-    """Enable capturing of writes to sys.stdout/sys.stderr and make
+    """Enable capturing of writes to ``sys.stdout`` and ``sys.stderr`` and make
     captured output available via ``capsys.readouterr()`` method calls
     which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be ``bytes``
     objects.
@@ -225,7 +225,7 @@ def capsysbinary(request):
 
 @pytest.fixture
 def capfd(request):
-    """Enable capturing of writes to file descriptors 1 and 2 and make
+    """Enable capturing of writes to file descriptors ``1`` and ``2`` and make
     captured output available via ``capfd.readouterr()`` method calls
     which return a ``(out, err)`` tuple.  ``out`` and ``err`` will be ``text``
     objects.
@@ -272,6 +272,10 @@ def _install_capture_fixture_on_item(request, capture_class):
 
 
 class CaptureFixture(object):
+    """
+    Object returned by :py:func:`capsys`, :py:func:`capsysbinary`, :py:func:`capfd` and :py:func:`capfdbinary`
+    fixtures.
+    """
     def __init__(self, captureclass, request):
         self.captureclass = captureclass
         self.request = request
@@ -288,6 +292,10 @@ class CaptureFixture(object):
             cap.stop_capturing()
 
     def readouterr(self):
+        """Read and return the captured output so far, resetting the internal buffer.
+
+        :return: captured content as a namedtuple with  ``out`` and ``err`` string attributes
+        """
         try:
             return self._capture.readouterr()
         except AttributeError:
@@ -295,6 +303,7 @@ class CaptureFixture(object):
 
     @contextlib.contextmanager
     def disabled(self):
+        """Temporarily disables capture while inside the 'with' block."""
         self._capture.suspend_capturing()
         capmanager = self.request.config.pluginmanager.getplugin('capturemanager')
         capmanager.suspend_global_capture(item=None, in_=False)
@@ -476,7 +485,7 @@ class FDCaptureBinary(object):
         os.dup2(targetfd_save, self.targetfd)
         os.close(targetfd_save)
         self.syscapture.done()
-        self.tmpfile.close()
+        _attempt_to_close_capture_file(self.tmpfile)
 
     def suspend(self):
         self.syscapture.suspend()
@@ -530,7 +539,7 @@ class SysCapture(object):
     def done(self):
         setattr(sys, self.name, self._old)
         del self._old
-        self.tmpfile.close()
+        _attempt_to_close_capture_file(self.tmpfile)
 
     def suspend(self):
         setattr(sys, self.name, self._old)
@@ -551,7 +560,7 @@ class SysCaptureBinary(SysCapture):
         return res
 
 
-class DontReadFromInput(object):
+class DontReadFromInput(six.Iterator):
     """Temporary stub class.  Ideally when stdin is accessed, the
     capturing should be turned off, with possibly all data captured
     so far sent to the screen.  This should be configurable, though,
@@ -565,7 +574,10 @@ class DontReadFromInput(object):
         raise IOError("reading from stdin while output is captured")
     readline = read
     readlines = read
-    __iter__ = read
+    __next__ = read
+
+    def __iter__(self):
+        return self
 
     def fileno(self):
         raise UnsupportedOperation("redirected stdin is pseudofile, "
@@ -681,3 +693,14 @@ def _py36_windowsconsoleio_workaround(stream):
     sys.__stdin__ = sys.stdin = _reopen_stdio(sys.stdin, 'rb')
     sys.__stdout__ = sys.stdout = _reopen_stdio(sys.stdout, 'wb')
     sys.__stderr__ = sys.stderr = _reopen_stdio(sys.stderr, 'wb')
+
+
+def _attempt_to_close_capture_file(f):
+    """Suppress IOError when closing the temporary file used for capturing streams in py27 (#2370)"""
+    if six.PY2:
+        try:
+            f.close()
+        except IOError:
+            pass
+    else:
+        f.close()

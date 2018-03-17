@@ -1,0 +1,2 @@
+Fixed ``clear()`` method on ``caplog`` fixture which cleared ``records``,
+but not the ``text`` property.
