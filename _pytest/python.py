@@ -367,13 +367,14 @@ class PyCollector(PyobjMixin, nodes.Collector):
         cls = clscol and clscol.obj or None
         transfer_markers(funcobj, cls, module)
         fm = self.session._fixturemanager
-        fixtureinfo = fm.getfixtureinfo(self, funcobj, cls)
 
         definition = FunctionDefinition(
             name=name,
             parent=self,
             callobj=funcobj,
         )
+        fixtureinfo = fm.getfixtureinfo(definition, funcobj, cls)
+
         metafunc = Metafunc(definition, fixtureinfo, self.config, cls=cls, module=module)
         methods = []
         if hasattr(module, "pytest_generate_tests"):
