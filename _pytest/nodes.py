@@ -90,7 +90,7 @@ class Node(object):
 
         #: keywords/markers collected from all scopes
         self.keywords = NodeKeywords(self)
-        self._markers = NodeMarkers.from_node(self)
+        self._markers = NodeMarkers()
 
         #: allow adding of extra keywords to use for matching
         self.extra_keyword_matches = set()
@@ -184,7 +184,9 @@ class Node(object):
 
     def find_markers(self, name):
         """find all marks with the given name on the node and its parents"""
-        return self._markers.find(name)
+        for node in reversed(self.listchain()):
+            for mark in node._markers.find(name):
+                yield mark
 
     def get_marker(self, name):
         """ get a marker object from this node or None if

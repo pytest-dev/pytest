@@ -369,12 +369,7 @@ class NodeKeywords(MappingMixin):
 
 @attr.s(cmp=False, hash=False)
 class NodeMarkers(object):
-    node = attr.ib(repr=False)
     own_markers = attr.ib(default=attr.Factory(list))
-
-    @classmethod
-    def from_node(cls, node):
-        return cls(node=node)
 
     def update(self, add_markers):
         """update the own markers
@@ -386,7 +381,6 @@ class NodeMarkers(object):
         find markers in own nodes or parent nodes
         needs a better place
         """
-        for node in reversed(self.node.listchain()):
-            for mark in node._markers.own_markers:
-                if mark.name == name:
-                    yield mark
+        for mark in self.own_markers:
+            if mark.name == name:
+                yield mark
