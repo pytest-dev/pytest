@@ -4,12 +4,11 @@ import os
 import six
 import py
 import attr
-from more_itertools import first
 
 import _pytest
 import _pytest._code
 
-from _pytest.mark.structures import NodeKeywords, NodeMarkers
+from _pytest.mark.structures import NodeKeywords, NodeMarkers, MarkInfo
 
 SEP = "/"
 
@@ -194,7 +193,9 @@ class Node(object):
     def get_marker(self, name):
         """ get a marker object from this node or None if
         the node doesn't have a marker with that name. """
-        return first(self.find_markers(name), None)
+        markers = list(self.find_markers(name))
+        if markers:
+            return MarkInfo(markers)
 
     def listextrakeywords(self):
         """ Return a set of all extra keywords in self and any parents."""

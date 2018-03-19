@@ -4,9 +4,10 @@ from operator import attrgetter
 import inspect
 
 import attr
+
 from ..deprecated import MARK_PARAMETERSET_UNPACKING, MARK_INFO_ATTRIBUTE
 from ..compat import NOTSET, getfslineno
-from six.moves import map
+from six.moves import map, reduce
 
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
@@ -233,7 +234,7 @@ def store_legacy_markinfo(func, mark):
         raise TypeError("got {mark!r} instead of a Mark".format(mark=mark))
     holder = getattr(func, mark.name, None)
     if holder is None:
-        holder = MarkInfo(mark)
+        holder = MarkInfo.for_mark(mark)
         setattr(func, mark.name, holder)
     else:
         holder.add_mark(mark)
@@ -266,17 +267,23 @@ def _marked(func, mark):
     return any(mark == info.combined for info in func_mark)
 
 
+@attr.s
 class MarkInfo(object):
     """ Marking object created by :class:`MarkDecorator` instances. """
 
-    def __init__(self, mark):
-        assert isinstance(mark, Mark), repr(mark)
-        self.combined = mark
-        self._marks = [mark]
+    _marks = attr.ib()
+    combined = attr.ib(
+        repr=False,
+        default=attr.Factory(lambda self: reduce(Mark.combined_with, self._marks),
+                             takes_self=True))
 
     name = alias('combined.name', warning=MARK_INFO_ATTRIBUTE)
     args = alias('combined.args', warning=MARK_INFO_ATTRIBUTE)
     kwargs = alias('combined.kwargs', warning=MARK_INFO_ATTRIBUTE)
+
+    @classmethod
+    def for_mark(cls, mark):
+        return cls([mark])
 
     def __repr__(self):
         return "<MarkInfo {0!r}>".format(self.combined)
@@ -288,7 +295,7 @@ class MarkInfo(object):
 
     def __iter__(self):
         """ yield MarkInfo objects each relating to a marking-call. """
-        return map(MarkInfo, self._marks)
+        return map(MarkInfo.for_mark, self._marks)
 
 
 class MarkGenerator(object):

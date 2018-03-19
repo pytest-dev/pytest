@@ -14,7 +14,7 @@ ignore_markinfo = pytest.mark.filterwarnings('ignore:MarkInfo objects:_pytest.de
 class TestMark(object):
     def test_markinfo_repr(self):
         from _pytest.mark import MarkInfo, Mark
-        m = MarkInfo(Mark("hello", (1, 2), {}))
+        m = MarkInfo.for_mark(Mark("hello", (1, 2), {}))
         repr(m)
 
     @pytest.mark.parametrize('attr', ['mark', 'param'])
@@ -684,6 +684,7 @@ class TestFunctional(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
+    @ignore_markinfo
     def test_keyword_added_for_session(self, testdir):
         testdir.makeconftest("""
             import pytest
