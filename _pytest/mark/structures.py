@@ -369,6 +369,14 @@ class NodeKeywords(MappingMixin):
 
 @attr.s(cmp=False, hash=False)
 class NodeMarkers(object):
+    """
+    internal strucutre for storing marks belongong to a node
+
+    ..warning::
+
+        unstable api
+
+    """
     own_markers = attr.ib(default=attr.Factory(list))
 
     def update(self, add_markers):

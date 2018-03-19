@@ -183,7 +183,10 @@ class Node(object):
         self._markers.update([marker])
 
     def find_markers(self, name):
-        """find all marks with the given name on the node and its parents"""
+        """find all marks with the given name on the node and its parents
+
+        :param str name: name of the marker
+        """
         for node in reversed(self.listchain()):
             for mark in node._markers.find(name):
                 yield mark
