@@ -185,6 +185,7 @@ class Node(object):
         """find all marks with the given name on the node and its parents
 
         :param str name: name of the marker
+        :returns: iterator over marks matching the name
         """
         for node in reversed(self.listchain()):
             for mark in node._markers.find(name):
