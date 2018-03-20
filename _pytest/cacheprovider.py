@@ -112,11 +112,12 @@ class LFPlugin(object):
         self.active = any(config.getoption(key) for key in active_keys)
         self.lastfailed = config.cache.get("cache/lastfailed", {})
         self._previously_failed_count = None
+        self._no_failures_behavior = self.config.getoption('last_failed_no_failures')
 
     def pytest_report_collectionfinish(self):
         if self.active:
             if not self._previously_failed_count:
-                mode = "run all (no recorded failures)"
+                mode = "run {} (no recorded failures)".format(self._no_failures_behavior)
             else:
                 noun = 'failure' if self._previously_failed_count == 1 else 'failures'
                 suffix = " first" if self.config.getoption(
@@ -144,24 +145,28 @@ class LFPlugin(object):
             self.lastfailed[report.nodeid] = True
 
     def pytest_collection_modifyitems(self, session, config, items):
-        if self.active and self.lastfailed:
-            previously_failed = []
-            previously_passed = []
-            for item in items:
-                if item.nodeid in self.lastfailed:
-                    previously_failed.append(item)
+        if self.active:
+            if self.lastfailed:
+                previously_failed = []
+                previously_passed = []
+                for item in items:
+                    if item.nodeid in self.lastfailed:
+                        previously_failed.append(item)
+                    else:
+                        previously_passed.append(item)
+                self._previously_failed_count = len(previously_failed)
+                if not previously_failed:
+                    # running a subset of all tests with recorded failures outside
+                    # of the set of tests currently executing
+                    return
+                if self.config.getoption("lf"):
+                    items[:] = previously_failed
+                    config.hook.pytest_deselected(items=previously_passed)
                 else:
-                    previously_passed.append(item)
-            self._previously_failed_count = len(previously_failed)
-            if not previously_failed:
-                # running a subset of all tests with recorded failures outside
-                # of the set of tests currently executing
-                return
-            if self.config.getoption("lf"):
-                items[:] = previously_failed
-                config.hook.pytest_deselected(items=previously_passed)
-            else:
-                items[:] = previously_failed + previously_passed
+                    items[:] = previously_failed + previously_passed
+            elif self._no_failures_behavior == 'none':
+                config.hook.pytest_deselected(items=items)
+                items[:] = []
 
     def pytest_sessionfinish(self, session):
         config = self.config
@@ -230,6 +235,12 @@ def pytest_addoption(parser):
     parser.addini(
         "cache_dir", default='.pytest_cache',
         help="cache directory path.")
+    group.addoption(
+        '--lfnf', '--last-failed-no-failures', action='store',
+        dest='last_failed_no_failures', choices=('all', 'none'), default='all',
+        help='change the behavior when no test failed in the last run or no '
+             'information about the last failures was found in the cache'
+    )
 
 
 def pytest_cmdline_main(config):
