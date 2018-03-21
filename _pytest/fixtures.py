@@ -1021,9 +1021,6 @@ class FixtureManager(object):
                     if nextchar and nextchar not in ":/":
                         continue
                 autousenames.extend(basenames)
-        # make sure autousenames are sorted by scope, scopenum 0 is session
-        autousenames.sort(
-            key=lambda x: self._arg2fixturedefs[x][-1].scopenum)
         return autousenames
 
     def getfixtureclosure(self, fixturenames, parentnode):
@@ -1054,6 +1051,16 @@ class FixtureManager(object):
                 if fixturedefs:
                     arg2fixturedefs[argname] = fixturedefs
                     merge(fixturedefs[-1].argnames)
+
+        def sort_by_scope(arg_name):
+            try:
+                fixturedefs = arg2fixturedefs[arg_name]
+            except KeyError:
+                return scopes.index('function')
+            else:
+                return fixturedefs[-1].scopenum
+
+        fixturenames_closure.sort(key=sort_by_scope)
         return fixturenames_closure, arg2fixturedefs
 
     def pytest_generate_tests(self, metafunc):

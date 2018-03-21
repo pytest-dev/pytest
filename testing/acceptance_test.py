@@ -964,3 +964,27 @@ def test_fixture_values_leak(testdir):
     """)
     result = testdir.runpytest()
     result.stdout.fnmatch_lines(['* 2 passed *'])
+
+
+def test_fixture_order_respects_scope(testdir):
+    """Ensure that fixtures are created according to scope order, regression test for #2405
+    """
+    testdir.makepyfile('''
+        import pytest
+
+        data = {}
+
+        @pytest.fixture(scope='module')
+        def clean_data():
+            data.clear()
+
+        @pytest.fixture(autouse=True)
+        def add_data():
+            data.update(value=True)
+
+        @pytest.mark.usefixtures('clean_data')
+        def test_value():
+            assert data.get('value')
+    ''')
+    result = testdir.runpytest()
+    assert result.ret == 0
