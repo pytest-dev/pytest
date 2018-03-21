@@ -985,8 +985,7 @@ class FixtureManager(object):
             argnames = ()
         usefixtures = flatten(uf_mark.args for uf_mark in node.find_markers("usefixtures"))
         initialnames = argnames
-        if usefixtures is not None:
-            initialnames = tuple(usefixtures) + initialnames
+        initialnames = tuple(usefixtures) + initialnames
         fm = node.session._fixturemanager
         names_closure, arg2fixturedefs = fm.getfixtureclosure(initialnames,
                                                               node)
