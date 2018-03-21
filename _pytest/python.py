@@ -219,6 +219,7 @@ class PyobjMixin(PyobjContext):
             if obj is None:
                 self._obj = obj = self._getobj()
                 # XXX evil hack
+                # used to avoid Instance collector marker duplication
                 if self._ALLOW_MARKERS:
                     self._markers.update(get_unpacked_marks(self.obj))
             return obj
@@ -535,6 +536,9 @@ class Class(PyCollector):
 
 class Instance(PyCollector):
     _ALLOW_MARKERS = False  # hack, destroy later
+    # instances share the object with their parents in a way
+    # that duplicates markers instances if not taken out
+    # can be removed at node strucutre reorganization time
 
     def _getobj(self):
         return self.parent.obj()
