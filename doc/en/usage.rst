@@ -482,7 +482,7 @@ Running it will show that ``MyPlugin`` was added and its
 hook was invoked::
 
     $ python myinvoke.py
-    *** test run reporting finishing
+    .                                                                    [100%]*** test run reporting finishing
     
 
 .. note::

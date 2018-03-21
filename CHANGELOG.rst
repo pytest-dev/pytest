@@ -8,6 +8,158 @@
 
 .. towncrier release notes start
 
+Pytest 3.5.0 (2018-03-21)
+=========================
+
+Deprecations and Removals
+-------------------------
+
+- ``record_xml_property`` fixture is now deprecated in favor of the more
+  generic ``record_property``. (`#2770
+  <https://github.com/pytest-dev/pytest/issues/2770>`_)
+
+- Defining ``pytest_plugins`` is now deprecated in non-top-level conftest.py
+  files, because they "leak" to the entire directory tree. (`#3084
+  <https://github.com/pytest-dev/pytest/issues/3084>`_)
+
+
+Features
+--------
+
+- New ``--show-capture`` command-line option that allows to specify how to
+  display captured output when tests fail: ``no``, ``stdout``, ``stderr``,
+  ``log`` or ``all`` (the default). (`#1478
+  <https://github.com/pytest-dev/pytest/issues/1478>`_)
+
+- New ``--rootdir`` command-line option to override the rules for discovering
+  the root directory. See `customize
+  <https://docs.pytest.org/en/latest/customize.html>`_ in the documentation for
+  details. (`#1642 <https://github.com/pytest-dev/pytest/issues/1642>`_)
+
+- Fixtures are now instantiated based on their scopes, with higher-scoped
+  fixtures (such as ``session``) being instantiated first than lower-scoped
+  fixtures (such as ``function``). The relative order of fixtures of the same
+  scope is kept unchanged, based in their declaration order and their
+  dependencies. (`#2405 <https://github.com/pytest-dev/pytest/issues/2405>`_)
+
+- ``record_xml_property`` renamed to ``record_property`` and is now compatible
+  with xdist, markers and any reporter. ``record_xml_property`` name is now
+  deprecated. (`#2770 <https://github.com/pytest-dev/pytest/issues/2770>`_)
+
+- New ``--nf``, ``--new-first`` options: run new tests first followed by the
+  rest of the tests, in both cases tests are also sorted by the file modified
+  time, with more recent files coming first. (`#3034
+  <https://github.com/pytest-dev/pytest/issues/3034>`_)
+
+- New ``--last-failed-no-failures`` command-line option that allows to specify
+  the behavior of the cache plugin's ```--last-failed`` feature when no tests
+  failed in the last run (or no cache was found): ``none`` or ``all`` (the
+  default). (`#3139 <https://github.com/pytest-dev/pytest/issues/3139>`_)
+
+- New ``--doctest-continue-on-failure`` command-line option to enable doctests
+  to show multiple failures for each snippet, instead of stopping at the first
+  failure. (`#3149 <https://github.com/pytest-dev/pytest/issues/3149>`_)
+
+- Captured log messages are added to the ``<system-out>`` tag in the generated
+  junit xml file if the ``junit_logging`` ini option is set to ``system-out``.
+  If the value of this ini option is ``system-err`, the logs are written to
+  ``<system-err>``. The default value for ``junit_logging`` is ``no``, meaning
+  captured logs are not written to the output file. (`#3156
+  <https://github.com/pytest-dev/pytest/issues/3156>`_)
+
+- Allow the logging plugin to handle ``pytest_runtest_logstart`` and
+  ``pytest_runtest_logfinish`` hooks when live logs are enabled. (`#3189
+  <https://github.com/pytest-dev/pytest/issues/3189>`_)
+
+- Passing `--log-cli-level` in the command-line now automatically activates
+  live logging. (`#3190 <https://github.com/pytest-dev/pytest/issues/3190>`_)
+
+- Add command line option ``--deselect`` to allow deselection of individual
+  tests at collection time. (`#3198
+  <https://github.com/pytest-dev/pytest/issues/3198>`_)
+
+- Captured logs are printed before entering pdb. (`#3204
+  <https://github.com/pytest-dev/pytest/issues/3204>`_)
+
+- Deselected item count is now shown before tests are run, e.g. ``collected X
+  items / Y deselected``. (`#3213
+  <https://github.com/pytest-dev/pytest/issues/3213>`_)
+
+- The builtin module ``platform`` is now available for use in expressions in
+  ``pytest.mark``. (`#3236
+  <https://github.com/pytest-dev/pytest/issues/3236>`_)
+
+- The *short test summary info* section now is displayed after tracebacks and
+  warnings in the terminal. (`#3255
+  <https://github.com/pytest-dev/pytest/issues/3255>`_)
+
+- New ``--verbosity`` flag to set verbosity level explicitly. (`#3296
+  <https://github.com/pytest-dev/pytest/issues/3296>`_)
+
+- ``pytest.approx`` now accepts comparing a numpy array with a scalar. (`#3312
+  <https://github.com/pytest-dev/pytest/issues/3312>`_)
+
+
+Bug Fixes
+---------
+
+- Suppress ``IOError`` when closing the temporary file used for capturing
+  streams in Python 2.7. (`#2370
+  <https://github.com/pytest-dev/pytest/issues/2370>`_)
+
+- Fixed ``clear()`` method on ``caplog`` fixture which cleared ``records``, but
+  not the ``text`` property. (`#3297
+  <https://github.com/pytest-dev/pytest/issues/3297>`_)
+
+- During test collection, when stdin is not allowed to be read, the
+  ``DontReadFromStdin`` object still allow itself to be iterable and resolved
+  to an iterator without crashing. (`#3314
+  <https://github.com/pytest-dev/pytest/issues/3314>`_)
+
+
+Improved Documentation
+----------------------
+
+- Added a `reference <https://docs.pytest.org/en/latest/reference.html>`_ page
+  to the docs. (`#1713 <https://github.com/pytest-dev/pytest/issues/1713>`_)
+
+
+Trivial/Internal Changes
+------------------------
+
+- Change minimum requirement of ``attrs`` to ``17.4.0``. (`#3228
+  <https://github.com/pytest-dev/pytest/issues/3228>`_)
+
+- Renamed example directories so all tests pass when ran from the base
+  directory. (`#3245 <https://github.com/pytest-dev/pytest/issues/3245>`_)
+
+- Internal ``mark.py`` module has been turned into a package. (`#3250
+  <https://github.com/pytest-dev/pytest/issues/3250>`_)
+
+- ``pytest`` now depends on the `more_itertools
+  <https://github.com/erikrose/more-itertools>`_ package. (`#3265
+  <https://github.com/pytest-dev/pytest/issues/3265>`_)
+
+- Added warning when ``[pytest]`` section is used in a ``.cfg`` file passed
+  with ``-c`` (`#3268 <https://github.com/pytest-dev/pytest/issues/3268>`_)
+
+- ``nodeids`` can now be passed explicitly to ``FSCollector`` and ``Node``
+  constructors. (`#3291 <https://github.com/pytest-dev/pytest/issues/3291>`_)
+
+- Internal refactoring of ``FormattedExcinfo`` to use ``attrs`` facilities and
+  remove old support code for legacy Python versions. (`#3292
+  <https://github.com/pytest-dev/pytest/issues/3292>`_)
+
+- Refactoring to unify how verbosity is handled internally. (`#3296
+  <https://github.com/pytest-dev/pytest/issues/3296>`_)
+
+- Internal refactoring to better integrate with argparse. (`#3304
+  <https://github.com/pytest-dev/pytest/issues/3304>`_)
+
+- Fix a python example when calling a fixture in doc/en/usage.rst (`#3308
+  <https://github.com/pytest-dev/pytest/issues/3308>`_)
+
+
 Pytest 3.4.2 (2018-03-04)
 =========================
 

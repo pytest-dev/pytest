@@ -34,11 +34,10 @@ You can then restrict a test run to only run tests marked with ``webtest``::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collecting ... collected 4 items
+    collecting ... collected 4 items / 3 deselected
     
     test_server.py::test_send_http PASSED                                [100%]
     
-    ============================ 3 tests deselected ============================
     ================== 1 passed, 3 deselected in 0.12 seconds ==================
 
 Or the inverse, running all tests except the webtest ones::
@@ -48,13 +47,12 @@ Or the inverse, running all tests except the webtest ones::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collecting ... collected 4 items
+    collecting ... collected 4 items / 1 deselected
     
     test_server.py::test_something_quick PASSED                          [ 33%]
     test_server.py::test_another PASSED                                  [ 66%]
     test_server.py::TestClass::test_method PASSED                        [100%]
     
-    ============================ 1 tests deselected ============================
     ================== 3 passed, 1 deselected in 0.12 seconds ==================
 
 Selecting tests based on their node ID
@@ -133,11 +131,10 @@ select tests based on their names::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collecting ... collected 4 items
+    collecting ... collected 4 items / 3 deselected
     
     test_server.py::test_send_http PASSED                                [100%]
     
-    ============================ 3 tests deselected ============================
     ================== 1 passed, 3 deselected in 0.12 seconds ==================
 
 And you can also run all tests except the ones that match the keyword::
@@ -147,13 +144,12 @@ And you can also run all tests except the ones that match the keyword::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collecting ... collected 4 items
+    collecting ... collected 4 items / 1 deselected
     
     test_server.py::test_something_quick PASSED                          [ 33%]
     test_server.py::test_another PASSED                                  [ 66%]
     test_server.py::TestClass::test_method PASSED                        [100%]
     
-    ============================ 1 tests deselected ============================
     ================== 3 passed, 1 deselected in 0.12 seconds ==================
 
 Or to select "http" and "quick" tests::
@@ -163,12 +159,11 @@ Or to select "http" and "quick" tests::
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y -- $PYTHON_PREFIX/bin/python3.5
     cachedir: .pytest_cache
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collecting ... collected 4 items
+    collecting ... collected 4 items / 2 deselected
     
     test_server.py::test_send_http PASSED                                [ 50%]
     test_server.py::test_something_quick PASSED                          [100%]
     
-    ============================ 2 tests deselected ============================
     ================== 2 passed, 2 deselected in 0.12 seconds ==================
 
 .. note::
@@ -547,11 +542,10 @@ Note that if you specify a platform via the marker-command line option like this
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 4 items
+    collected 4 items / 3 deselected
     
     test_plat.py .                                                       [100%]
     
-    ============================ 3 tests deselected ============================
     ================== 1 passed, 3 deselected in 0.12 seconds ==================
 
 then the unmarked-tests will not be run.  It is thus a way to restrict the run to the specific tests.
@@ -599,7 +593,7 @@ We can now use the ``-m option`` to select one set::
   =========================== test session starts ============================
   platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
   rootdir: $REGENDOC_TMPDIR, inifile:
-  collected 4 items
+  collected 4 items / 2 deselected
   
   test_module.py FF                                                    [100%]
   
@@ -612,7 +606,6 @@ We can now use the ``-m option`` to select one set::
   test_module.py:6: in test_interface_complex
       assert 0
   E   assert 0
-  ============================ 2 tests deselected ============================
   ================== 2 failed, 2 deselected in 0.12 seconds ==================
 
 or to select both "event" and "interface" tests::
@@ -621,7 +614,7 @@ or to select both "event" and "interface" tests::
   =========================== test session starts ============================
   platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
   rootdir: $REGENDOC_TMPDIR, inifile:
-  collected 4 items
+  collected 4 items / 1 deselected
   
   test_module.py FFF                                                   [100%]
   
@@ -638,5 +631,4 @@ or to select both "event" and "interface" tests::
   test_module.py:9: in test_event_simple
       assert 0
   E   assert 0
-  ============================ 1 tests deselected ============================
   ================== 3 failed, 1 deselected in 0.12 seconds ==================
