@@ -12,6 +12,7 @@ import time
 import pluggy
 import py
 import six
+from more_itertools import collapse
 
 import pytest
 from _pytest import nodes
@@ -442,7 +443,7 @@ class TerminalReporter(object):
 
     def _write_report_lines_from_hooks(self, lines):
         lines.reverse()
-        for line in flatten(lines):
+        for line in collapse(lines):
             self.write_line(line)
 
     def pytest_report_header(self, config):
@@ -698,15 +699,6 @@ def repr_pythonversion(v=None):
         return "%s.%s.%s-%s-%s" % v
     except (TypeError, ValueError):
         return str(v)
-
-
-def flatten(values):
-    for x in values:
-        if isinstance(x, (list, tuple)):
-            for y in flatten(x):
-                yield y
-        else:
-            yield x
 
 
 def build_summary_stats_line(stats):
