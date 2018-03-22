@@ -8,7 +8,8 @@ class TestDebugging(object):
 
     def test_supports_breakpoint_module_global(self):
         """
-        Test that supports breakpoint global marks on Python 3.7+
+        Test that supports breakpoint global marks on Python 3.7+ and not on 
+        CPython 3.5, 2.7
         """
         if sys.version_info.major == 3 and sys.version_info.minor >= 7:
             assert SUPPORTS_BREAKPOINT_BUILTIN is True

@@ -4,6 +4,12 @@ import pdb
 import sys
 from doctest import UnexpectedException
 
+try:
+    from builtins import breakpoint  # noqa
+    SUPPORTS_BREAKPOINT_BUILTIN = True
+except ImportError:
+    SUPPORTS_BREAKPOINT_BUILTIN = False
+
 
 def pytest_addoption(parser):
     group = parser.getgroup("general")
