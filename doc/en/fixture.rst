@@ -740,11 +740,11 @@ Let's run the tests in verbose mode and with looking at the print-output::
     test_module.py::test_1[mod1]   SETUP modarg mod1
       RUN test1 with modarg mod1
     PASSED
-    test_module.py::test_2[1-mod1]   SETUP otherarg 1
+    test_module.py::test_2[mod1-1]   SETUP otherarg 1
       RUN test2 with otherarg 1 and modarg mod1
     PASSED  TEARDOWN otherarg 1
     
-    test_module.py::test_2[2-mod1]   SETUP otherarg 2
+    test_module.py::test_2[mod1-2]   SETUP otherarg 2
       RUN test2 with otherarg 2 and modarg mod1
     PASSED  TEARDOWN otherarg 2
     
@@ -752,11 +752,11 @@ Let's run the tests in verbose mode and with looking at the print-output::
       SETUP modarg mod2
       RUN test1 with modarg mod2
     PASSED
-    test_module.py::test_2[1-mod2]   SETUP otherarg 1
+    test_module.py::test_2[mod2-1]   SETUP otherarg 1
       RUN test2 with otherarg 1 and modarg mod2
     PASSED  TEARDOWN otherarg 1
     
-    test_module.py::test_2[2-mod2]   SETUP otherarg 2
+    test_module.py::test_2[mod2-2]   SETUP otherarg 2
       RUN test2 with otherarg 2 and modarg mod2
     PASSED  TEARDOWN otherarg 2
       TEARDOWN modarg mod2

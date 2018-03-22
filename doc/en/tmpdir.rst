@@ -51,7 +51,6 @@ Running this would result in a passed test except for the last
     test_tmpdir.py:7: AssertionError
     ========================= 1 failed in 0.12 seconds =========================
 
-
 .. _`tmpdir factory example`:
 
 The 'tmpdir_factory' fixture
