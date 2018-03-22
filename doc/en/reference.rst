@@ -94,6 +94,31 @@ Marks can be used apply meta data to *test functions* (but not fixtures), which 
 fixtures or plugins.
 
 
+.. _`pytest.mark.filterwarnings ref`:
+
+pytest.mark.filterwarnings
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**Tutorial**: :ref:`filterwarnings`.
+
+Add warning filters to marked test items.
+
+.. py:function:: pytest.mark.filterwarnings(filter)
+
+    :keyword str filter:
+        A *warning specification string*, which is composed of contents of the tuple ``(action, message, category, module, lineno)``
+        as specified in `The Warnings filter <https://docs.python.org/3/library/warnings.html#warning-filter>`_ section of
+        the Python documentation, separated by ``":"``. Optional fields can be omitted.
+
+        For example:
+
+        .. code-block:: python
+
+            @pytest.mark.warnings("ignore:.*usage will be deprecated.*:DeprecationWarning")
+            def test_foo():
+                ...
+
+
 .. _`pytest.mark.parametrize ref`:
 
 pytest.mark.parametrize
@@ -991,7 +1016,7 @@ passed multiple times. The expected format is ``name=value``. For example::
     .. code-block:: ini
 
         [pytest]
-        log_cli_level = INFO 
+        log_cli_level = INFO
 
     For more information, see :ref:`live_logs`.
 
