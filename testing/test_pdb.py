@@ -504,7 +504,7 @@ class TestDebuggingBreakpoints(object):
         """)
         result = testdir.runpytest_inprocess("", p1)
         result.stdout.fnmatch_lines([
-            "*1 passed*",
+            "* passed*",
         ])
         assert sys.breakpointhook != pytestPDB.set_trace
 
