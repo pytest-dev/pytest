@@ -1,0 +1,1 @@
+New ``--rootdir`` command-line option to override the rules for discovering the root directory. See `customize <https://docs.pytest.org/en/latest/customize.html>`_ in the documentation for details.

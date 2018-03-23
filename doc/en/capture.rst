@@ -9,7 +9,8 @@ Default stdout/stderr/stdin capturing behaviour
 
 During test execution any output sent to ``stdout`` and ``stderr`` is
 captured.  If a test or a setup method fails its according captured
-output will usually be shown along with the failure traceback.
+output will usually be shown along with the failure traceback. (this
+behavior can be configured by the ``--show-capture`` command-line option).
 
 In addition, ``stdin`` is set to a "null" object which will
 fail on attempts to read from it because it is rarely desired

@@ -2,7 +2,8 @@ import math
 import sys
 
 import py
-from six.moves import zip
+from six.moves import zip, filterfalse
+from more_itertools.more import always_iterable
 
 from _pytest.compat import isclass
 from _pytest.outcomes import fail
@@ -29,6 +30,10 @@ class ApproxBase(object):
     Provide shared utilities for making approximate comparisons between numbers
     or sequences of numbers.
     """
+
+    # Tell numpy to use our `__eq__` operator instead of its
+    __array_ufunc__ = None
+    __array_priority__ = 100
 
     def __init__(self, expected, rel=None, abs=None, nan_ok=False):
         self.expected = expected
@@ -68,14 +73,13 @@ class ApproxNumpy(ApproxBase):
     Perform approximate comparisons for numpy arrays.
     """
 
-    # Tell numpy to use our `__eq__` operator instead of its.
-    __array_priority__ = 100
-
     def __repr__(self):
         # It might be nice to rewrite this function to account for the
         # shape of the array...
+        import numpy as np
+
         return "approx({0!r})".format(list(
-            self._approx_scalar(x) for x in self.expected))
+            self._approx_scalar(x) for x in np.asarray(self.expected)))
 
     if sys.version_info[0] == 2:
         __cmp__ = _cmp_raises_type_error
@@ -83,12 +87,15 @@ class ApproxNumpy(ApproxBase):
     def __eq__(self, actual):
         import numpy as np
 
-        try:
-            actual = np.asarray(actual)
-        except:  # noqa
-            raise TypeError("cannot compare '{0}' to numpy.ndarray".format(actual))
+        # self.expected is supposed to always be an array here
 
-        if actual.shape != self.expected.shape:
+        if not np.isscalar(actual):
+            try:
+                actual = np.asarray(actual)
+            except:  # noqa
+                raise TypeError("cannot compare '{0}' to numpy.ndarray".format(actual))
+
+        if not np.isscalar(actual) and actual.shape != self.expected.shape:
             return False
 
         return ApproxBase.__eq__(self, actual)
@@ -96,11 +103,16 @@ class ApproxNumpy(ApproxBase):
     def _yield_comparisons(self, actual):
         import numpy as np
 
-        # We can be sure that `actual` is a numpy array, because it's
-        # casted in `__eq__` before being passed to `ApproxBase.__eq__`,
-        # which is the only method that calls this one.
-        for i in np.ndindex(self.expected.shape):
-            yield actual[i], self.expected[i]
+        # `actual` can either be a numpy array or a scalar, it is treated in
+        # `__eq__` before being passed to `ApproxBase.__eq__`, which is the
+        # only method that calls this one.
+
+        if np.isscalar(actual):
+            for i in np.ndindex(self.expected.shape):
+                yield actual, np.asscalar(self.expected[i])
+        else:
+            for i in np.ndindex(self.expected.shape):
+                yield np.asscalar(actual[i]), np.asscalar(self.expected[i])
 
 
 class ApproxMapping(ApproxBase):
@@ -129,9 +141,6 @@ class ApproxSequence(ApproxBase):
     """
     Perform approximate comparisons for sequences of numbers.
     """
-
-    # Tell numpy to use our `__eq__` operator instead of its.
-    __array_priority__ = 100
 
     def __repr__(self):
         seq_type = type(self.expected)
@@ -188,6 +197,8 @@ class ApproxScalar(ApproxBase):
         Return true if the given value is equal to the expected value within
         the pre-specified tolerance.
         """
+        if _is_numpy_array(actual):
+            return ApproxNumpy(actual, self.abs, self.rel, self.nan_ok) == self.expected
 
         # Short-circuit exact equality.
         if actual == self.expected:
@@ -307,10 +318,16 @@ def approx(expected, rel=None, abs=None, nan_ok=False):
         >>> {'a': 0.1 + 0.2, 'b': 0.2 + 0.4} == approx({'a': 0.3, 'b': 0.6})
         True
 
-    And ``numpy`` arrays::
+    ``numpy`` arrays::
 
         >>> import numpy as np                                                          # doctest: +SKIP
         >>> np.array([0.1, 0.2]) + np.array([0.2, 0.4]) == approx(np.array([0.3, 0.6])) # doctest: +SKIP
+        True
+
+    And for a ``numpy`` array against a scalar::
+
+        >>> import numpy as np                                         # doctest: +SKIP
+        >>> np.array([0.1, 0.2]) + np.array([0.2, 0.1]) == approx(0.3) # doctest: +SKIP
         True
 
     By default, ``approx`` considers numbers within a relative tolerance of
@@ -567,14 +584,10 @@ def raises(expected_exception, *args, **kwargs):
 
     """
     __tracebackhide__ = True
-    msg = ("exceptions must be old-style classes or"
-           " derived from BaseException, not %s")
-    if isinstance(expected_exception, tuple):
-        for exc in expected_exception:
-            if not isclass(exc):
-                raise TypeError(msg % type(exc))
-    elif not isclass(expected_exception):
-        raise TypeError(msg % type(expected_exception))
+    for exc in filterfalse(isclass, always_iterable(expected_exception)):
+        msg = ("exceptions must be old-style classes or"
+               " derived from BaseException, not %s")
+        raise TypeError(msg % type(exc))
 
     message = "DID NOT RAISE {0}".format(expected_exception)
     match_expr = None

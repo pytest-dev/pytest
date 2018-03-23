@@ -22,7 +22,7 @@ FUNCARG_PREFIX = (
     'and scheduled to be removed in pytest 4.0.  '
     'Please remove the prefix and use the @pytest.fixture decorator instead.')
 
-SETUP_CFG_PYTEST = '[pytest] section in setup.cfg files is deprecated, use [tool:pytest] instead.'
+CFG_PYTEST_SECTION = '[pytest] section in {filename} files is deprecated, use [tool:pytest] instead.'
 
 GETFUNCARGVALUE = "use of getfuncargvalue is deprecated, use getfixturevalue"
 
@@ -41,6 +41,12 @@ MARK_PARAMETERSET_UNPACKING = RemovedInPytest4Warning(
     "For more details, see: https://docs.pytest.org/en/latest/parametrize.html"
 )
 
+RECORD_XML_PROPERTY = (
+    'Fixture renamed from "record_xml_property" to "record_property" as user '
+    'properties are now available to all reporters.\n'
+    '"record_xml_property" is now deprecated.'
+)
+
 COLLECTOR_MAKEITEM = RemovedInPytest4Warning(
     "pycollector makeitem was removed "
     "as it is an accidentially leaked internal api"
@@ -49,4 +55,10 @@ COLLECTOR_MAKEITEM = RemovedInPytest4Warning(
 METAFUNC_ADD_CALL = (
     "Metafunc.addcall is deprecated and scheduled to be removed in pytest 4.0.\n"
     "Please use Metafunc.parametrize instead."
+)
+
+PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST = RemovedInPytest4Warning(
+    "Defining pytest_plugins in a non-top-level conftest is deprecated, "
+    "because it affects the entire directory tree in a non-explicit way.\n"
+    "Please move it to the top level conftest file instead."
 )

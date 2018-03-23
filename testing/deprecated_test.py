@@ -48,6 +48,15 @@ def test_pytest_setup_cfg_deprecated(testdir):
     result.stdout.fnmatch_lines(['*pytest*section in setup.cfg files is deprecated*use*tool:pytest*instead*'])
 
 
+def test_pytest_custom_cfg_deprecated(testdir):
+    testdir.makefile('.cfg', custom='''
+        [pytest]
+        addopts = --verbose
+    ''')
+    result = testdir.runpytest("-c", "custom.cfg")
+    result.stdout.fnmatch_lines(['*pytest*section in custom.cfg files is deprecated*use*tool:pytest*instead*'])
+
+
 def test_str_args_deprecated(tmpdir, testdir):
     """Deprecate passing strings to pytest.main(). Scheduled for removal in pytest-4.0."""
     from _pytest.main import EXIT_NOTESTSCOLLECTED
@@ -125,3 +134,70 @@ def test_pytest_catchlog_deprecated(testdir, plugin):
         "*pytest-*log plugin has been merged into the core*",
         "*1 passed, 1 warnings*",
     ])
+
+
+def test_pytest_plugins_in_non_top_level_conftest_deprecated(testdir):
+    from _pytest.deprecated import PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST
+    subdirectory = testdir.tmpdir.join("subdirectory")
+    subdirectory.mkdir()
+    # create the inner conftest with makeconftest and then move it to the subdirectory
+    testdir.makeconftest("""
+        pytest_plugins=['capture']
+    """)
+    testdir.tmpdir.join("conftest.py").move(subdirectory.join("conftest.py"))
+    # make the top level conftest
+    testdir.makeconftest("""
+        import warnings
+        warnings.filterwarnings('always', category=DeprecationWarning)
+    """)
+    testdir.makepyfile("""
+        def test_func():
+            pass
+    """)
+    res = testdir.runpytest_subprocess()
+    assert res.ret == 0
+    res.stderr.fnmatch_lines('*' + str(PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST).splitlines()[0])
+
+
+def test_pytest_plugins_in_non_top_level_conftest_deprecated_no_top_level_conftest(testdir):
+    from _pytest.deprecated import PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST
+    subdirectory = testdir.tmpdir.join('subdirectory')
+    subdirectory.mkdir()
+    testdir.makeconftest("""
+        import warnings
+        warnings.filterwarnings('always', category=DeprecationWarning)
+        pytest_plugins=['capture']
+    """)
+    testdir.tmpdir.join("conftest.py").move(subdirectory.join("conftest.py"))
+
+    testdir.makepyfile("""
+        def test_func():
+            pass
+    """)
+
+    res = testdir.runpytest_subprocess()
+    assert res.ret == 0
+    res.stderr.fnmatch_lines('*' + str(PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST).splitlines()[0])
+
+
+def test_pytest_plugins_in_non_top_level_conftest_deprecated_no_false_positives(testdir):
+    from _pytest.deprecated import PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST
+    subdirectory = testdir.tmpdir.join('subdirectory')
+    subdirectory.mkdir()
+    testdir.makeconftest("""
+        pass
+    """)
+    testdir.tmpdir.join("conftest.py").move(subdirectory.join("conftest.py"))
+
+    testdir.makeconftest("""
+        import warnings
+        warnings.filterwarnings('always', category=DeprecationWarning)
+        pytest_plugins=['capture']
+    """)
+    testdir.makepyfile("""
+        def test_func():
+            pass
+    """)
+    res = testdir.runpytest_subprocess()
+    assert res.ret == 0
+    assert str(PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST).splitlines()[0] not in res.stderr.str()

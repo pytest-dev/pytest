@@ -5,12 +5,14 @@ import shlex
 import traceback
 import types
 import warnings
-
+import copy
 import six
 import py
 # DON't import pytest here because it causes import cycle troubles
 import sys
 import os
+from _pytest.outcomes import Skipped
+
 import _pytest._code
 import _pytest.hookspec  # the extension point definitions
 import _pytest.assertion
@@ -52,7 +54,7 @@ def main(args=None, plugins=None):
             tw = py.io.TerminalWriter(sys.stderr)
             for line in traceback.format_exception(*e.excinfo):
                 tw.line(line.rstrip(), red=True)
-            tw.line("ERROR: could not load %s\n" % (e.path), red=True)
+            tw.line("ERROR: could not load %s\n" % (e.path,), red=True)
             return 4
         else:
             try:
@@ -66,7 +68,7 @@ def main(args=None, plugins=None):
         return 4
 
 
-class cmdline(object):  # compatibility namespace
+class cmdline(object):  # NOQA compatibility namespace
     main = staticmethod(main)
 
 
@@ -199,6 +201,8 @@ class PytestPluginManager(PluginManager):
 
         # Config._consider_importhook will set a real object if required.
         self.rewrite_hook = _pytest.assertion.DummyRewriteHook()
+        # Used to know when we are importing conftests after the pytest_configure stage
+        self._configured = False
 
     def addhooks(self, module_or_class):
         """
@@ -274,6 +278,7 @@ class PytestPluginManager(PluginManager):
         config.addinivalue_line("markers",
                                 "trylast: mark a hook implementation function such that the "
                                 "plugin machinery will try to call it last/as late as possible.")
+        self._configured = True
 
     def _warn(self, message):
         kwargs = message if isinstance(message, dict) else {
@@ -364,6 +369,9 @@ class PytestPluginManager(PluginManager):
                 _ensure_removed_sysmodule(conftestpath.purebasename)
             try:
                 mod = conftestpath.pyimport()
+                if hasattr(mod, 'pytest_plugins') and self._configured:
+                    from _pytest.deprecated import PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST
+                    warnings.warn(PYTEST_PLUGINS_FROM_NON_TOP_LEVEL_CONFTEST)
             except Exception:
                 raise ConftestImportFailure(conftestpath, sys.exc_info())
 
@@ -435,10 +443,7 @@ class PytestPluginManager(PluginManager):
 
             six.reraise(new_exc_type, new_exc, sys.exc_info()[2])
 
-        except Exception as e:
-            import pytest
-            if not hasattr(pytest, 'skip') or not isinstance(e, pytest.skip.Exception):
-                raise
+        except Skipped as e:
             self._warn("skipped plugin %r: %s" % ((modname, e.msg)))
         else:
             mod = sys.modules[importspec]
@@ -846,19 +851,6 @@ def _ensure_removed_sysmodule(modname):
         pass
 
 
-class CmdOptions(object):
-    """ holds cmdline options as attributes."""
-
-    def __init__(self, values=()):
-        self.__dict__.update(values)
-
-    def __repr__(self):
-        return "<CmdOptions %r>" % (self.__dict__,)
-
-    def copy(self):
-        return CmdOptions(self.__dict__)
-
-
 class Notset(object):
     def __repr__(self):
         return "<NOTSET>"
@@ -886,7 +878,7 @@ class Config(object):
     def __init__(self, pluginmanager):
         #: access to command line option as attributes.
         #: (deprecated), use :py:func:`getoption() <_pytest.config.Config.getoption>` instead
-        self.option = CmdOptions()
+        self.option = argparse.Namespace()
         _a = FILE_OR_DIR
         self._parser = Parser(
             usage="%%(prog)s [options] [%s] [%s] [...]" % (_a, _a),
@@ -990,8 +982,9 @@ class Config(object):
         self.pluginmanager._set_initial_conftests(early_config.known_args_namespace)
 
     def _initini(self, args):
-        ns, unknown_args = self._parser.parse_known_and_unknown_args(args, namespace=self.option.copy())
-        r = determine_setup(ns.inifilename, ns.file_or_dir + unknown_args, warnfunc=self.warn)
+        ns, unknown_args = self._parser.parse_known_and_unknown_args(args, namespace=copy.copy(self.option))
+        r = determine_setup(ns.inifilename, ns.file_or_dir + unknown_args, warnfunc=self.warn,
+                            rootdir_cmd_arg=ns.rootdir or None)
         self.rootdir, self.inifile, self.inicfg = r
         self._parser.extra_info['rootdir'] = self.rootdir
         self._parser.extra_info['inifile'] = self.inifile
@@ -1016,7 +1009,7 @@ class Config(object):
                 mode = 'plain'
             else:
                 self._mark_plugins_for_rewrite(hook)
-        self._warn_about_missing_assertion(mode)
+        _warn_about_missing_assertion(mode)
 
     def _mark_plugins_for_rewrite(self, hook):
         """
@@ -1043,23 +1036,6 @@ class Config(object):
         for name in _iter_rewritable_modules(package_files):
             hook.mark_rewrite(name)
 
-    def _warn_about_missing_assertion(self, mode):
-        try:
-            assert False
-        except AssertionError:
-            pass
-        else:
-            if mode == 'plain':
-                sys.stderr.write("WARNING: ASSERTIONS ARE NOT EXECUTED"
-                                 " and FAILING TESTS WILL PASS.  Are you"
-                                 " using python -O?")
-            else:
-                sys.stderr.write("WARNING: assertions not in test modules or"
-                                 " plugins will be ignored"
-                                 " because assert statements are not executed "
-                                 "by the underlying Python interpreter "
-                                 "(are you using python -O?)\n")
-
     def _preparse(self, args, addopts=True):
         if addopts:
             args[:] = shlex.split(os.environ.get('PYTEST_ADDOPTS', '')) + args
@@ -1071,7 +1047,8 @@ class Config(object):
         self.pluginmanager.consider_preparse(args)
         self.pluginmanager.load_setuptools_entrypoints('pytest11')
         self.pluginmanager.consider_env()
-        self.known_args_namespace = ns = self._parser.parse_known_args(args, namespace=self.option.copy())
+        self.known_args_namespace = ns = self._parser.parse_known_args(
+            args, namespace=copy.copy(self.option))
         if self.known_args_namespace.confcutdir is None and self.inifile:
             confcutdir = py.path.local(self.inifile).dirname
             self.known_args_namespace.confcutdir = confcutdir
@@ -1233,6 +1210,29 @@ class Config(object):
         return self.getoption(name, skip=True)
 
 
+def _assertion_supported():
+    try:
+        assert False
+    except AssertionError:
+        return True
+    else:
+        return False
+
+
+def _warn_about_missing_assertion(mode):
+    if not _assertion_supported():
+        if mode == 'plain':
+            sys.stderr.write("WARNING: ASSERTIONS ARE NOT EXECUTED"
+                             " and FAILING TESTS WILL PASS.  Are you"
+                             " using python -O?")
+        else:
+            sys.stderr.write("WARNING: assertions not in test modules or"
+                             " plugins will be ignored"
+                             " because assert statements are not executed "
+                             "by the underlying Python interpreter "
+                             "(are you using python -O?)\n")
+
+
 def exists(path, ignore=EnvironmentError):
     try:
         return path.check()
@@ -1250,7 +1250,7 @@ def getcfg(args, warnfunc=None):
         This parameter should be removed when pytest
         adopts standard deprecation warnings (#1804).
     """
-    from _pytest.deprecated import SETUP_CFG_PYTEST
+    from _pytest.deprecated import CFG_PYTEST_SECTION
     inibasenames = ["pytest.ini", "tox.ini", "setup.cfg"]
     args = [x for x in args if not str(x).startswith("-")]
     if not args:
@@ -1264,7 +1264,7 @@ def getcfg(args, warnfunc=None):
                     iniconfig = py.iniconfig.IniConfig(p)
                     if 'pytest' in iniconfig.sections:
                         if inibasename == 'setup.cfg' and warnfunc:
-                            warnfunc('C1', SETUP_CFG_PYTEST)
+                            warnfunc('C1', CFG_PYTEST_SECTION.format(filename=inibasename))
                         return base, p, iniconfig['pytest']
                     if inibasename == 'setup.cfg' and 'tool:pytest' in iniconfig.sections:
                         return base, p, iniconfig['tool:pytest']
@@ -1323,15 +1323,19 @@ def get_dirs_from_args(args):
     ]
 
 
-def determine_setup(inifile, args, warnfunc=None):
+def determine_setup(inifile, args, warnfunc=None, rootdir_cmd_arg=None):
     dirs = get_dirs_from_args(args)
     if inifile:
         iniconfig = py.iniconfig.IniConfig(inifile)
         is_cfg_file = str(inifile).endswith('.cfg')
+        # TODO: [pytest] section in *.cfg files is depricated. Need refactoring.
         sections = ['tool:pytest', 'pytest'] if is_cfg_file else ['pytest']
         for section in sections:
             try:
                 inicfg = iniconfig[section]
+                if is_cfg_file and section == 'pytest' and warnfunc:
+                    from _pytest.deprecated import CFG_PYTEST_SECTION
+                    warnfunc('C1', CFG_PYTEST_SECTION.format(filename=str(inifile)))
                 break
             except KeyError:
                 inicfg = None
@@ -1350,6 +1354,11 @@ def determine_setup(inifile, args, warnfunc=None):
                     is_fs_root = os.path.splitdrive(str(rootdir))[1] == '/'
                     if is_fs_root:
                         rootdir = ancestor
+    if rootdir_cmd_arg:
+        rootdir_abs_path = py.path.local(os.path.expandvars(rootdir_cmd_arg))
+        if not os.path.isdir(str(rootdir_abs_path)):
+            raise UsageError("Directory '{}' not found. Check your '--rootdir' option.".format(rootdir_abs_path))
+        rootdir = rootdir_abs_path
     return rootdir, inifile, inicfg or {}
 
 

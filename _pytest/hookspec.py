@@ -490,7 +490,14 @@ def pytest_report_teststatus(report):
 
 
 def pytest_terminal_summary(terminalreporter, exitstatus):
-    """ add additional section in terminal summary reporting.  """
+    """Add a section to terminal summary reporting.
+
+    :param _pytest.terminal.TerminalReporter terminalreporter: the internal terminal reporter object
+    :param int exitstatus: the exit status that will be reported back to the OS
+
+    .. versionadded:: 3.5
+        The ``config`` parameter.
+    """
 
 
 @hookspec(historic=True)

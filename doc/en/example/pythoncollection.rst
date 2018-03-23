@@ -39,6 +39,14 @@ you will see that ``pytest`` only collects test-modules, which do not match the 
 
     ======= 5 passed in 0.02 seconds =======
 
+Deselect tests during test collection
+-------------------------------------
+
+Tests can individually be deselected during collection by passing the ``--deselect=item`` option.
+For example, say ``tests/foobar/test_foobar_01.py`` contains ``test_a`` and ``test_b``.
+You can run all of the tests within ``tests/`` *except* for ``tests/foobar/test_foobar_01.py::test_a``
+by invoking ``pytest`` with ``--deselect tests/foobar/test_foobar_01.py::test_a``.
+``pytest`` allows multiple ``--deselect`` options.
 
 Keeping duplicate paths specified from command line
 ----------------------------------------------------

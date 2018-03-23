@@ -28,7 +28,7 @@ from _pytest.compat import (
     safe_str, getlocation, enum,
 )
 from _pytest.outcomes import fail
-from _pytest.mark import transfer_markers
+from _pytest.mark.structures import transfer_markers
 
 
 # relative paths that we use to filter traceback entries from appearing to the user;

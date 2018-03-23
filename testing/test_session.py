@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division, print_function
+
 import pytest
 
 from _pytest.main import EXIT_NOTESTSCOLLECTED
@@ -239,6 +240,20 @@ def test_exclude(testdir):
     result.stdout.fnmatch_lines(["*1 passed*"])
 
 
+def test_deselect(testdir):
+    testdir.makepyfile(test_a="""
+        import pytest
+        def test_a1(): pass
+        @pytest.mark.parametrize('b', range(3))
+        def test_a2(b): pass
+    """)
+    result = testdir.runpytest("-v", "--deselect=test_a.py::test_a2[1]", "--deselect=test_a.py::test_a2[2]")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*2 passed, 2 deselected*"])
+    for line in result.stdout.lines:
+        assert not line.startswith(('test_a.py::test_a2[1]', 'test_a.py::test_a2[2]'))
+
+
 def test_sessionfinish_with_start(testdir):
     testdir.makeconftest("""
         import os
@@ -253,3 +268,32 @@ def test_sessionfinish_with_start(testdir):
     """)
     res = testdir.runpytest("--collect-only")
     assert res.ret == EXIT_NOTESTSCOLLECTED
+
+
+@pytest.mark.parametrize("path", ["root", "{relative}/root", "{environment}/root"])
+def test_rootdir_option_arg(testdir, monkeypatch, path):
+    monkeypatch.setenv('PY_ROOTDIR_PATH', str(testdir.tmpdir))
+    path = path.format(relative=str(testdir.tmpdir),
+                       environment='$PY_ROOTDIR_PATH')
+
+    rootdir = testdir.mkdir("root")
+    rootdir.mkdir("tests")
+    testdir.makepyfile("""
+        import os
+        def test_one():
+            assert 1
+    """)
+
+    result = testdir.runpytest("--rootdir={}".format(path))
+    result.stdout.fnmatch_lines(['*rootdir: {}/root, inifile:*'.format(testdir.tmpdir), "*1 passed*"])
+
+
+def test_rootdir_wrong_option_arg(testdir):
+    testdir.makepyfile("""
+        import os
+        def test_one():
+            assert 1
+    """)
+
+    result = testdir.runpytest("--rootdir=wrong_dir")
+    result.stderr.fnmatch_lines(["*Directory *wrong_dir* not found. Check your '--rootdir' option.*"])

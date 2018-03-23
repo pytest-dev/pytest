@@ -389,7 +389,7 @@ Now we can profile which test functions execute the slowest::
     ========================= slowest 3 test durations =========================
     0.30s call     test_some_are_slow.py::test_funcslow2
     0.20s call     test_some_are_slow.py::test_funcslow1
-    0.10s call     test_some_are_slow.py::test_funcfast
+    0.16s call     test_some_are_slow.py::test_funcfast
     ========================= 3 passed in 0.12 seconds =========================
 
 incremental testing - test steps
@@ -451,9 +451,6 @@ If we run this::
     collected 4 items
     
     test_step.py .Fx.                                                    [100%]
-    ========================= short test summary info ==========================
-    XFAIL test_step.py::TestUserHandling::()::test_deletion
-      reason: previous test failed (test_modification)
     
     ================================= FAILURES =================================
     ____________________ TestUserHandling.test_modification ____________________
@@ -465,6 +462,9 @@ If we run this::
     E       assert 0
     
     test_step.py:9: AssertionError
+    ========================= short test summary info ==========================
+    XFAIL test_step.py::TestUserHandling::()::test_deletion
+      reason: previous test failed (test_modification)
     ============== 1 failed, 2 passed, 1 xfailed in 0.12 seconds ===============
 
 We'll see that ``test_deletion`` was not executed because ``test_modification``
@@ -539,7 +539,7 @@ We can run this::
     file $REGENDOC_TMPDIR/b/test_error.py, line 1
       def test_root(db):  # no db here, will error out
     E       fixture 'db' not found
-    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, monkeypatch, pytestconfig, record_xml_attribute, record_xml_property, recwarn, tmpdir, tmpdir_factory
+    >       available fixtures: cache, capfd, capfdbinary, caplog, capsys, capsysbinary, doctest_namespace, monkeypatch, pytestconfig, record_property, record_xml_attribute, record_xml_property, recwarn, tmpdir, tmpdir_factory
     >       use 'pytest --fixtures [testpath]' for help on them.
     
     $REGENDOC_TMPDIR/b/test_error.py:1

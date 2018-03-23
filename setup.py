@@ -59,7 +59,8 @@ def main():
         'py>=1.5.0',
         'six>=1.10.0',
         'setuptools',
-        'attrs>=17.2.0',
+        'attrs>=17.4.0',
+        'more_itertools>=4.0.0',
     ]
     # if _PYTEST_SETUP_SKIP_PLUGGY_DEP is set, skip installing pluggy;
     # used by tox.ini to test with pluggy master
@@ -101,7 +102,7 @@ def main():
         python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
         install_requires=install_requires,
         extras_require=extras_require,
-        packages=['_pytest', '_pytest.assertion', '_pytest._code'],
+        packages=['_pytest', '_pytest.assertion', '_pytest._code', '_pytest.mark'],
         py_modules=['pytest'],
         zip_safe=False,
     )

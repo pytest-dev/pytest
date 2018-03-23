@@ -1,0 +1,1 @@
+Added warning when ``[pytest]`` section is used in a ``.cfg`` file passed with ``-c``

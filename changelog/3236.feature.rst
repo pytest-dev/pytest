@@ -1,0 +1,1 @@
+The builtin module ``platform`` is now available for use in expressions in ``pytest.mark``.

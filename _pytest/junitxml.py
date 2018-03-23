@@ -130,10 +130,47 @@ class _NodeReporter(object):
         self.append(node)
 
     def write_captured_output(self, report):
-        for capname in ('out', 'err'):
-            content = getattr(report, 'capstd' + capname)
+        content_out = report.capstdout
+        content_log = report.caplog
+        content_err = report.capstderr
+
+        if content_log or content_out:
+            if content_log and self.xml.logging == 'system-out':
+                if content_out:
+                    # syncing stdout and the log-output is not done yet. It's
+                    # probably not worth the effort. Therefore, first the captured
+                    # stdout is shown and then the captured logs.
+                    content = '\n'.join([
+                        ' Captured Stdout '.center(80, '-'),
+                        content_out,
+                        '',
+                        ' Captured Log '.center(80, '-'),
+                        content_log])
+                else:
+                    content = content_log
+            else:
+                content = content_out
+
             if content:
-                tag = getattr(Junit, 'system-' + capname)
+                tag = getattr(Junit, 'system-out')
+                self.append(tag(bin_xml_escape(content)))
+
+        if content_log or content_err:
+            if content_log and self.xml.logging == 'system-err':
+                if content_err:
+                    content = '\n'.join([
+                        ' Captured Stderr '.center(80, '-'),
+                        content_err,
+                        '',
+                        ' Captured Log '.center(80, '-'),
+                        content_log])
+                else:
+                    content = content_log
+            else:
+                content = content_err
+
+            if content:
+                tag = getattr(Junit, 'system-err')
                 self.append(tag(bin_xml_escape(content)))
 
     def append_pass(self, report):
@@ -196,36 +233,47 @@ class _NodeReporter(object):
 
 
 @pytest.fixture
-def record_xml_property(request):
-    """Add extra xml properties to the tag for the calling test.
+def record_property(request):
+    """Add an extra properties the calling test.
+    User properties become part of the test report and are available to the
+    configured reporters, like JUnit XML.
     The fixture is callable with ``(name, value)``, with value being automatically
     xml-encoded.
 
     Example::
 
-        def test_function(record_xml_property):
-            record_xml_property("example_key", 1)
+        def test_function(record_property):
+            record_property("example_key", 1)
     """
     request.node.warn(
         code='C3',
-        message='record_xml_property is an experimental feature',
+        message='record_property is an experimental feature',
     )
-    xml = getattr(request.config, "_xml", None)
-    if xml is not None:
-        node_reporter = xml.node_reporter(request.node.nodeid)
-        return node_reporter.add_property
-    else:
-        def add_property_noop(name, value):
-            pass
 
-        return add_property_noop
+    def append_property(name, value):
+        request.node.user_properties.append((name, value))
+    return append_property
+
+
+@pytest.fixture
+def record_xml_property(record_property):
+    """(Deprecated) use record_property."""
+    import warnings
+    from _pytest import deprecated
+    warnings.warn(
+        deprecated.RECORD_XML_PROPERTY,
+        DeprecationWarning,
+        stacklevel=2
+    )
+
+    return record_property
 
 
 @pytest.fixture
 def record_xml_attribute(request):
     """Add extra xml attributes to the tag for the calling test.
-    The fixture is callable with ``(name, value)``, with value being automatically
-    xml-encoded
+    The fixture is callable with ``(name, value)``, with value being
+    automatically xml-encoded
     """
     request.node.warn(
         code='C3',
@@ -259,13 +307,18 @@ def pytest_addoption(parser):
         default=None,
         help="prepend prefix to classnames in junit-xml output")
     parser.addini("junit_suite_name", "Test suite name for JUnit report", default="pytest")
+    parser.addini("junit_logging", "Write captured log messages to JUnit report: "
+                  "one of no|system-out|system-err",
+                  default="no")  # choices=['no', 'stdout', 'stderr'])
 
 
 def pytest_configure(config):
     xmlpath = config.option.xmlpath
     # prevent opening xmllog on slave nodes (xdist)
     if xmlpath and not hasattr(config, 'slaveinput'):
-        config._xml = LogXML(xmlpath, config.option.junitprefix, config.getini("junit_suite_name"))
+        config._xml = LogXML(xmlpath, config.option.junitprefix,
+                             config.getini("junit_suite_name"),
+                             config.getini("junit_logging"))
         config.pluginmanager.register(config._xml)
 
 
@@ -292,11 +345,12 @@ def mangle_test_address(address):
 
 
 class LogXML(object):
-    def __init__(self, logfile, prefix, suite_name="pytest"):
+    def __init__(self, logfile, prefix, suite_name="pytest", logging="no"):
         logfile = os.path.expanduser(os.path.expandvars(logfile))
         self.logfile = os.path.normpath(os.path.abspath(logfile))
         self.prefix = prefix
         self.suite_name = suite_name
+        self.logging = logging
         self.stats = dict.fromkeys([
             'error',
             'passed',
@@ -404,6 +458,10 @@ class LogXML(object):
         if report.when == "teardown":
             reporter = self._opentestcase(report)
             reporter.write_captured_output(report)
+
+            for propname, propvalue in report.user_properties:
+                reporter.add_property(propname, propvalue)
+
             self.finalize(report)
             report_wid = getattr(report, "worker_id", None)
             report_ii = getattr(report, "item_index", None)

@@ -3,7 +3,7 @@ from textwrap import dedent
 import _pytest._code
 import pytest
 from _pytest.pytester import get_public_names
-from _pytest.fixtures import FixtureLookupError
+from _pytest.fixtures import FixtureLookupError, FixtureRequest
 from _pytest import fixtures
 
 
@@ -2281,19 +2281,19 @@ class TestFixtureMarker(object):
                     pass
         """)
         result = testdir.runpytest("-vs")
-        result.stdout.fnmatch_lines("""
-            test_class_ordering.py::TestClass2::test_1[1-a] PASSED
-            test_class_ordering.py::TestClass2::test_1[2-a] PASSED
-            test_class_ordering.py::TestClass2::test_2[1-a] PASSED
-            test_class_ordering.py::TestClass2::test_2[2-a] PASSED
-            test_class_ordering.py::TestClass2::test_1[1-b] PASSED
-            test_class_ordering.py::TestClass2::test_1[2-b] PASSED
-            test_class_ordering.py::TestClass2::test_2[1-b] PASSED
-            test_class_ordering.py::TestClass2::test_2[2-b] PASSED
-            test_class_ordering.py::TestClass::test_3[1-a] PASSED
-            test_class_ordering.py::TestClass::test_3[2-a] PASSED
-            test_class_ordering.py::TestClass::test_3[1-b] PASSED
-            test_class_ordering.py::TestClass::test_3[2-b] PASSED
+        result.stdout.re_match_lines(r"""
+            test_class_ordering.py::TestClass2::test_1\[a-1\] PASSED
+            test_class_ordering.py::TestClass2::test_1\[a-2\] PASSED
+            test_class_ordering.py::TestClass2::test_2\[a-1\] PASSED
+            test_class_ordering.py::TestClass2::test_2\[a-2\] PASSED
+            test_class_ordering.py::TestClass2::test_1\[b-1\] PASSED
+            test_class_ordering.py::TestClass2::test_1\[b-2\] PASSED
+            test_class_ordering.py::TestClass2::test_2\[b-1\] PASSED
+            test_class_ordering.py::TestClass2::test_2\[b-2\] PASSED
+            test_class_ordering.py::TestClass::test_3\[a-1\] PASSED
+            test_class_ordering.py::TestClass::test_3\[a-2\] PASSED
+            test_class_ordering.py::TestClass::test_3\[b-1\] PASSED
+            test_class_ordering.py::TestClass::test_3\[b-2\] PASSED
         """)
 
     def test_parametrize_separated_order_higher_scope_first(self, testdir):
@@ -3245,3 +3245,188 @@ def test_pytest_fixture_setup_and_post_finalizer_hook(testdir):
         "*TESTS finalizer hook called for my_fixture from test_func*",
         "*ROOT finalizer hook called for my_fixture from test_func*",
     ])
+
+
+class TestScopeOrdering(object):
+    """Class of tests that ensure fixtures are ordered based on their scopes (#2405)"""
+
+    @pytest.mark.parametrize('use_mark', [True, False])
+    def test_func_closure_module_auto(self, testdir, use_mark):
+        """Semantically identical to the example posted in #2405 when ``use_mark=True``"""
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture(scope='module', autouse={autouse})
+            def m1(): pass
+
+            if {use_mark}:
+                pytestmark = pytest.mark.usefixtures('m1')
+
+            @pytest.fixture(scope='function', autouse=True)
+            def f1(): pass
+
+            def test_func(m1):
+                pass
+        """.format(autouse=not use_mark, use_mark=use_mark))
+        items, _ = testdir.inline_genitems()
+        request = FixtureRequest(items[0])
+        assert request.fixturenames == 'm1 f1'.split()
+
+    def test_func_closure_with_native_fixtures(self, testdir, monkeypatch):
+        """Sanity check that verifies the order returned by the closures and the actual fixture execution order:
+        The execution order may differ because of fixture inter-dependencies.
+        """
+        monkeypatch.setattr(pytest, 'FIXTURE_ORDER', [], raising=False)
+        testdir.makepyfile("""
+            import pytest
+
+            FIXTURE_ORDER = pytest.FIXTURE_ORDER
+
+            @pytest.fixture(scope="session")
+            def s1():
+                FIXTURE_ORDER.append('s1')
+
+            @pytest.fixture(scope="module")
+            def m1():
+                FIXTURE_ORDER.append('m1')
+
+            @pytest.fixture(scope='session')
+            def my_tmpdir_factory():
+                FIXTURE_ORDER.append('my_tmpdir_factory')
+
+            @pytest.fixture
+            def my_tmpdir(my_tmpdir_factory):
+                FIXTURE_ORDER.append('my_tmpdir')
+
+            @pytest.fixture
+            def f1(my_tmpdir):
+                FIXTURE_ORDER.append('f1')
+
+            @pytest.fixture
+            def f2():
+                FIXTURE_ORDER.append('f2')
+
+            def test_foo(f1, m1, f2, s1): pass
+        """)
+        items, _ = testdir.inline_genitems()
+        request = FixtureRequest(items[0])
+        # order of fixtures based on their scope and position in the parameter list
+        assert request.fixturenames == 's1 my_tmpdir_factory m1 f1 f2 my_tmpdir'.split()
+        testdir.runpytest()
+        # actual fixture execution differs: dependent fixtures must be created first ("my_tmpdir")
+        assert pytest.FIXTURE_ORDER == 's1 my_tmpdir_factory m1 my_tmpdir f1 f2'.split()
+
+    def test_func_closure_module(self, testdir):
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture(scope='module')
+            def m1(): pass
+
+            @pytest.fixture(scope='function')
+            def f1(): pass
+
+            def test_func(f1, m1):
+                pass
+        """)
+        items, _ = testdir.inline_genitems()
+        request = FixtureRequest(items[0])
+        assert request.fixturenames == 'm1 f1'.split()
+
+    def test_func_closure_scopes_reordered(self, testdir):
+        """Test ensures that fixtures are ordered by scope regardless of the order of the parameters, although
+        fixtures of same scope keep the declared order
+        """
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture(scope='session')
+            def s1(): pass
+
+            @pytest.fixture(scope='module')
+            def m1(): pass
+
+            @pytest.fixture(scope='function')
+            def f1(): pass
+
+            @pytest.fixture(scope='function')
+            def f2(): pass
+
+            class Test:
+
+                @pytest.fixture(scope='class')
+                def c1(cls): pass
+
+                def test_func(self, f2, f1, c1, m1, s1):
+                    pass
+        """)
+        items, _ = testdir.inline_genitems()
+        request = FixtureRequest(items[0])
+        assert request.fixturenames == 's1 m1 c1 f2 f1'.split()
+
+    def test_func_closure_same_scope_closer_root_first(self, testdir):
+        """Auto-use fixtures of same scope are ordered by closer-to-root first"""
+        testdir.makeconftest("""
+            import pytest
+
+            @pytest.fixture(scope='module', autouse=True)
+            def m_conf(): pass
+        """)
+        testdir.makepyfile(**{
+            'sub/conftest.py': """
+                import pytest
+
+                @pytest.fixture(scope='module', autouse=True)
+                def m_sub(): pass
+            """,
+            'sub/test_func.py': """
+                import pytest
+
+                @pytest.fixture(scope='module', autouse=True)
+                def m_test(): pass
+
+                @pytest.fixture(scope='function')
+                def f1(): pass
+
+                def test_func(m_test, f1):
+                    pass
+        """})
+        items, _ = testdir.inline_genitems()
+        request = FixtureRequest(items[0])
+        assert request.fixturenames == 'm_conf m_sub m_test f1'.split()
+
+    def test_func_closure_all_scopes_complex(self, testdir):
+        """Complex test involving all scopes and mixing autouse with normal fixtures"""
+        testdir.makeconftest("""
+            import pytest
+
+            @pytest.fixture(scope='session')
+            def s1(): pass
+        """)
+        testdir.makepyfile("""
+            import pytest
+
+            @pytest.fixture(scope='module', autouse=True)
+            def m1(): pass
+
+            @pytest.fixture(scope='module')
+            def m2(s1): pass
+
+            @pytest.fixture(scope='function')
+            def f1(): pass
+
+            @pytest.fixture(scope='function')
+            def f2(): pass
+
+            class Test:
+
+                @pytest.fixture(scope='class', autouse=True)
+                def c1(self):
+                    pass
+
+                def test_func(self, f2, f1, m2):
+                    pass
+        """)
+        items, _ = testdir.inline_genitems()
+        request = FixtureRequest(items[0])
+        assert request.fixturenames == 's1 m1 m2 c1 f2 f1'.split()

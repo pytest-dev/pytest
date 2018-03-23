@@ -12,6 +12,7 @@ import time
 import pluggy
 import py
 import six
+from more_itertools import collapse
 
 import pytest
 from _pytest import nodes
@@ -19,12 +20,45 @@ from _pytest.main import EXIT_OK, EXIT_TESTSFAILED, EXIT_INTERRUPTED, \
     EXIT_USAGEERROR, EXIT_NOTESTSCOLLECTED
 
 
+import argparse
+
+
+class MoreQuietAction(argparse.Action):
+    """
+    a modified copy of the argparse count action which counts down and updates
+    the legacy quiet attribute at the same time
+
+    used to unify verbosity handling
+    """
+    def __init__(self,
+                 option_strings,
+                 dest,
+                 default=None,
+                 required=False,
+                 help=None):
+        super(MoreQuietAction, self).__init__(
+            option_strings=option_strings,
+            dest=dest,
+            nargs=0,
+            default=default,
+            required=required,
+            help=help)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        new_count = getattr(namespace, self.dest, 0) - 1
+        setattr(namespace, self.dest, new_count)
+        # todo Deprecate config.quiet
+        namespace.quiet = getattr(namespace, 'quiet', 0) + 1
+
+
 def pytest_addoption(parser):
     group = parser.getgroup("terminal reporting", "reporting", after="general")
-    group._addoption('-v', '--verbose', action="count",
-                     dest="verbose", default=0, help="increase verbosity."),
-    group._addoption('-q', '--quiet', action="count",
-                     dest="quiet", default=0, help="decrease verbosity."),
+    group._addoption('-v', '--verbose', action="count", default=0,
+                     dest="verbose", help="increase verbosity."),
+    group._addoption('-q', '--quiet', action=MoreQuietAction, default=0,
+                     dest="verbose", help="decrease verbosity."),
+    group._addoption("--verbosity", dest='verbose', type=int, default=0,
+                     help="set verbosity")
     group._addoption('-r',
                      action="store", dest="reportchars", default='', metavar="chars",
                      help="show extra test summary info as specified by chars (f)ailed, "
@@ -42,6 +76,11 @@ def pytest_addoption(parser):
                      action="store", dest="tbstyle", default='auto',
                      choices=['auto', 'long', 'short', 'no', 'line', 'native'],
                      help="traceback print mode (auto/long/short/line/native/no).")
+    group._addoption('--show-capture',
+                     action="store", dest="showcapture",
+                     choices=['no', 'stdout', 'stderr', 'log', 'all'], default='all',
+                     help="Controls how captured stdout/stderr/log is shown on failed tests. "
+                          "Default is 'all'.")
     group._addoption('--fulltrace', '--full-trace',
                      action="store_true", default=False,
                      help="don't cut any tracebacks (default is to cut).")
@@ -56,7 +95,6 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-    config.option.verbose -= config.option.quiet
     reporter = TerminalReporter(config, sys.stdout)
     config.pluginmanager.register(reporter, 'terminalreporter')
     if config.option.debug or config.option.traceconfig:
@@ -358,6 +396,7 @@ class TerminalReporter(object):
 
         errors = len(self.stats.get('error', []))
         skipped = len(self.stats.get('skipped', []))
+        deselected = len(self.stats.get('deselected', []))
         if final:
             line = "collected "
         else:
@@ -365,6 +404,8 @@ class TerminalReporter(object):
         line += str(self._numcollected) + " item" + ('' if self._numcollected == 1 else 's')
         if errors:
             line += " / %d errors" % errors
+        if deselected:
+            line += " / %d deselected" % deselected
         if skipped:
             line += " / %d skipped" % skipped
         if self.isatty:
@@ -374,6 +415,7 @@ class TerminalReporter(object):
         else:
             self.write_line(line)
 
+    @pytest.hookimpl(trylast=True)
     def pytest_collection_modifyitems(self):
         self.report_collect(True)
 
@@ -401,7 +443,7 @@ class TerminalReporter(object):
 
     def _write_report_lines_from_hooks(self, lines):
         lines.reverse()
-        for line in flatten(lines):
+        for line in collapse(lines):
             self.write_line(line)
 
     def pytest_report_header(self, config):
@@ -474,15 +516,18 @@ class TerminalReporter(object):
         if exitstatus in summary_exit_codes:
             self.config.hook.pytest_terminal_summary(terminalreporter=self,
                                                      exitstatus=exitstatus)
-            self.summary_errors()
-            self.summary_failures()
-            self.summary_warnings()
-            self.summary_passes()
         if exitstatus == EXIT_INTERRUPTED:
             self._report_keyboardinterrupt()
             del self._keyboardinterrupt_memo
-        self.summary_deselected()
         self.summary_stats()
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_terminal_summary(self):
+        self.summary_errors()
+        self.summary_failures()
+        yield
+        self.summary_warnings()
+        self.summary_passes()
 
     def pytest_keyboard_interrupt(self, excinfo):
         self._keyboardinterrupt_memo = excinfo.getrepr(funcargs=True)
@@ -624,7 +669,12 @@ class TerminalReporter(object):
 
     def _outrep_summary(self, rep):
         rep.toterminal(self._tw)
+        showcapture = self.config.option.showcapture
+        if showcapture == 'no':
+            return
         for secname, content in rep.sections:
+            if showcapture != 'all' and showcapture not in secname:
+                continue
             self._tw.sep("-", secname)
             if content[-1:] == "\n":
                 content = content[:-1]
@@ -641,11 +691,6 @@ class TerminalReporter(object):
         if self.verbosity == -1:
             self.write_line(msg, **markup)
 
-    def summary_deselected(self):
-        if 'deselected' in self.stats:
-            self.write_sep("=", "%d tests deselected" % (
-                len(self.stats['deselected'])), bold=True)
-
 
 def repr_pythonversion(v=None):
     if v is None:
@@ -654,15 +699,6 @@ def repr_pythonversion(v=None):
         return "%s.%s.%s-%s-%s" % v
     except (TypeError, ValueError):
         return str(v)
-
-
-def flatten(values):
-    for x in values:
-        if isinstance(x, (list, tuple)):
-            for y in flatten(x):
-                yield y
-        else:
-            yield x
 
 
 def build_summary_stats_line(stats):

@@ -1,0 +1,1 @@
+Internal refactoring of ``FormattedExcinfo`` to use ``attrs`` facilities and remove old support code for legacy Python versions.

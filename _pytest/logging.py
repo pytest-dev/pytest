@@ -347,7 +347,7 @@ class LoggingPlugin(object):
         self._config = config
 
         # enable verbose output automatically if live logging is enabled
-        if self._config.getini('log_cli') and not config.getoption('verbose'):
+        if self._log_cli_enabled() and not config.getoption('verbose'):
             # sanity check: terminal reporter should not have been loaded at this point
             assert self._config.pluginmanager.get_plugin('terminalreporter') is None
             config.option.verbose = 1
@@ -373,6 +373,13 @@ class LoggingPlugin(object):
         # initialized during pytest_runtestloop
         self.log_cli_handler = None
 
+    def _log_cli_enabled(self):
+        """Return True if log_cli should be considered enabled, either explicitly
+        or because --log-cli-level was given in the command-line.
+        """
+        return self._config.getoption('--log-cli-level') is not None or \
+            self._config.getini('log_cli')
+
     @contextmanager
     def _runtest_for(self, item, when):
         """Implements the internals of pytest_runtest_xxx() hook."""
@@ -380,6 +387,11 @@ class LoggingPlugin(object):
                            formatter=self.formatter, level=self.log_level) as log_handler:
             if self.log_cli_handler:
                 self.log_cli_handler.set_when(when)
+
+            if item is None:
+                yield  # run the test
+                return
+
             if not hasattr(item, 'catch_log_handlers'):
                 item.catch_log_handlers = {}
             item.catch_log_handlers[when] = log_handler
@@ -411,9 +423,17 @@ class LoggingPlugin(object):
         with self._runtest_for(item, 'teardown'):
             yield
 
+    @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_logstart(self):
         if self.log_cli_handler:
             self.log_cli_handler.reset()
+        with self._runtest_for(None, 'start'):
+            yield
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_runtest_logfinish(self):
+        with self._runtest_for(None, 'finish'):
+            yield
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_runtestloop(self, session):
@@ -434,7 +454,7 @@ class LoggingPlugin(object):
         This must be done right before starting the loop so we can access the terminal reporter plugin.
         """
         terminal_reporter = self._config.pluginmanager.get_plugin('terminalreporter')
-        if self._config.getini('log_cli') and terminal_reporter is not None:
+        if self._log_cli_enabled() and terminal_reporter is not None:
             capture_manager = self._config.pluginmanager.get_plugin('capturemanager')
             log_cli_handler = _LiveLoggingStreamHandler(terminal_reporter, capture_manager)
             log_cli_format = get_option_ini(self._config, 'log_cli_format', 'log_format')
@@ -469,6 +489,7 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
         self.capture_manager = capture_manager
         self.reset()
         self.set_when(None)
+        self._test_outcome_written = False
 
     def reset(self):
         """Reset the handler; should be called before the start of each test"""
@@ -478,14 +499,20 @@ class _LiveLoggingStreamHandler(logging.StreamHandler):
         """Prepares for the given test phase (setup/call/teardown)"""
         self._when = when
         self._section_name_shown = False
+        if when == 'start':
+            self._test_outcome_written = False
 
     def emit(self, record):
         if self.capture_manager is not None:
             self.capture_manager.suspend_global_capture()
         try:
-            if not self._first_record_emitted or self._when == 'teardown':
+            if not self._first_record_emitted:
                 self.stream.write('\n')
                 self._first_record_emitted = True
+            elif self._when in ('teardown', 'finish'):
+                if not self._test_outcome_written:
+                    self._test_outcome_written = True
+                    self.stream.write('\n')
             if not self._section_name_shown and self._when:
                 self.stream.section('live log ' + self._when, sep='-', bold=True)
                 self._section_name_shown = True

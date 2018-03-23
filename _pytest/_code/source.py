@@ -26,7 +26,7 @@ class Source(object):
         for part in parts:
             if not part:
                 partlines = []
-            if isinstance(part, Source):
+            elif isinstance(part, Source):
                 partlines = part.lines
             elif isinstance(part, (tuple, list)):
                 partlines = [x.rstrip("\n") for x in part]
@@ -98,14 +98,14 @@ class Source(object):
         newsource.lines = [(indent + line) for line in self.lines]
         return newsource
 
-    def getstatement(self, lineno, assertion=False):
+    def getstatement(self, lineno):
         """ return Source statement which contains the
             given linenumber (counted from 0).
         """
-        start, end = self.getstatementrange(lineno, assertion)
+        start, end = self.getstatementrange(lineno)
         return self[start:end]
 
-    def getstatementrange(self, lineno, assertion=False):
+    def getstatementrange(self, lineno):
         """ return (start, end) tuple which spans the minimal
             statement region which containing the given lineno.
         """
@@ -131,13 +131,7 @@ class Source(object):
         """ return True if source is parseable, heuristically
             deindenting it by default.
         """
-        try:
-            import parser
-        except ImportError:
-            def syntax_checker(x):
-                return compile(x, 'asd', 'exec')
-        else:
-            syntax_checker = parser.suite
+        from parser import suite as syntax_checker
 
         if deindent:
             source = str(self.deindent())
@@ -219,9 +213,9 @@ def getfslineno(obj):
     """ Return source location (path, lineno) for the given object.
     If the source cannot be determined return ("", -1)
     """
-    import _pytest._code
+    from .code import Code
     try:
-        code = _pytest._code.Code(obj)
+        code = Code(obj)
     except TypeError:
         try:
             fn = inspect.getsourcefile(obj) or inspect.getfile(obj)
@@ -259,8 +253,8 @@ def findsource(obj):
 
 
 def getsource(obj, **kwargs):
-    import _pytest._code
-    obj = _pytest._code.getrawcode(obj)
+    from .code import getrawcode
+    obj = getrawcode(obj)
     try:
         strsrc = inspect.getsource(obj)
     except IndentationError:
@@ -286,8 +280,6 @@ def deindent(lines, offset=None):
     def readline_generator(lines):
         for line in lines:
             yield line + '\n'
-        while True:
-            yield ''
 
     it = readline_generator(lines)
 
@@ -318,9 +310,9 @@ def get_statement_startend2(lineno, node):
     # AST's line numbers start indexing at 1
     values = []
     for x in ast.walk(node):
-        if isinstance(x, ast.stmt) or isinstance(x, ast.ExceptHandler):
+        if isinstance(x, (ast.stmt, ast.ExceptHandler)):
             values.append(x.lineno - 1)
-            for name in "finalbody", "orelse":
+            for name in ("finalbody", "orelse"):
                 val = getattr(x, name, None)
                 if val:
                     # treat the finally/orelse part as its own statement
@@ -338,11 +330,8 @@ def get_statement_startend2(lineno, node):
 def getstatementrange_ast(lineno, source, assertion=False, astnode=None):
     if astnode is None:
         content = str(source)
-        try:
-            astnode = compile(content, "source", "exec", 1024)  # 1024 for AST
-        except ValueError:
-            start, end = getstatementrange_old(lineno, source, assertion)
-            return None, start, end
+        astnode = compile(content, "source", "exec", 1024)  # 1024 for AST
+
     start, end = get_statement_startend2(lineno, astnode)
     # we need to correct the end:
     # - ast-parsing strips comments
@@ -374,38 +363,3 @@ def getstatementrange_ast(lineno, source, assertion=False, astnode=None):
         else:
             break
     return astnode, start, end
-
-
-def getstatementrange_old(lineno, source, assertion=False):
-    """ return (start, end) tuple which spans the minimal
-        statement region which containing the given lineno.
-        raise an IndexError if no such statementrange can be found.
-    """
-    # XXX this logic is only used on python2.4 and below
-    # 1. find the start of the statement
-    from codeop import compile_command
-    for start in range(lineno, -1, -1):
-        if assertion:
-            line = source.lines[start]
-            # the following lines are not fully tested, change with care
-            if 'super' in line and 'self' in line and '__init__' in line:
-                raise IndexError("likely a subclass")
-            if "assert" not in line and "raise" not in line:
-                continue
-        trylines = source.lines[start:lineno + 1]
-        # quick hack to prepare parsing an indented line with
-        # compile_command() (which errors on "return" outside defs)
-        trylines.insert(0, 'def xxx():')
-        trysource = '\n '.join(trylines)
-        #              ^ space here
-        try:
-            compile_command(trysource)
-        except (SyntaxError, OverflowError, ValueError):
-            continue
-
-        # 2. find the end of the statement
-        for end in range(lineno + 1, len(source) + 1):
-            trysource = source[start:end]
-            if trysource.isparseable():
-                return start, end
-    raise SyntaxError("no valid source range around line %d " % (lineno,))

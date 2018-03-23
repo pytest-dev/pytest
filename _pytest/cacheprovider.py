@@ -5,7 +5,12 @@ the name cache was not chosen to ensure pluggy automatically
 ignores the external pytest-cache
 """
 from __future__ import absolute_import, division, print_function
+
+from collections import OrderedDict
+
 import py
+import six
+
 import pytest
 import json
 import os
@@ -107,11 +112,12 @@ class LFPlugin(object):
         self.active = any(config.getoption(key) for key in active_keys)
         self.lastfailed = config.cache.get("cache/lastfailed", {})
         self._previously_failed_count = None
+        self._no_failures_behavior = self.config.getoption('last_failed_no_failures')
 
     def pytest_report_collectionfinish(self):
         if self.active:
             if not self._previously_failed_count:
-                mode = "run all (no recorded failures)"
+                mode = "run {} (no recorded failures)".format(self._no_failures_behavior)
             else:
                 noun = 'failure' if self._previously_failed_count == 1 else 'failures'
                 suffix = " first" if self.config.getoption(
@@ -139,24 +145,28 @@ class LFPlugin(object):
             self.lastfailed[report.nodeid] = True
 
     def pytest_collection_modifyitems(self, session, config, items):
-        if self.active and self.lastfailed:
-            previously_failed = []
-            previously_passed = []
-            for item in items:
-                if item.nodeid in self.lastfailed:
-                    previously_failed.append(item)
+        if self.active:
+            if self.lastfailed:
+                previously_failed = []
+                previously_passed = []
+                for item in items:
+                    if item.nodeid in self.lastfailed:
+                        previously_failed.append(item)
+                    else:
+                        previously_passed.append(item)
+                self._previously_failed_count = len(previously_failed)
+                if not previously_failed:
+                    # running a subset of all tests with recorded failures outside
+                    # of the set of tests currently executing
+                    return
+                if self.config.getoption("lf"):
+                    items[:] = previously_failed
+                    config.hook.pytest_deselected(items=previously_passed)
                 else:
-                    previously_passed.append(item)
-            self._previously_failed_count = len(previously_failed)
-            if not previously_failed:
-                # running a subset of all tests with recorded failures outside
-                # of the set of tests currently executing
-                return
-            if self.config.getoption("lf"):
-                items[:] = previously_failed
-                config.hook.pytest_deselected(items=previously_passed)
-            else:
-                items[:] = previously_failed + previously_passed
+                    items[:] = previously_failed + previously_passed
+            elif self._no_failures_behavior == 'none':
+                config.hook.pytest_deselected(items=items)
+                items[:] = []
 
     def pytest_sessionfinish(self, session):
         config = self.config
@@ -166,6 +176,39 @@ class LFPlugin(object):
         saved_lastfailed = config.cache.get("cache/lastfailed", {})
         if saved_lastfailed != self.lastfailed:
             config.cache.set("cache/lastfailed", self.lastfailed)
+
+
+class NFPlugin(object):
+    """ Plugin which implements the --nf (run new-first) option """
+
+    def __init__(self, config):
+        self.config = config
+        self.active = config.option.newfirst
+        self.cached_nodeids = config.cache.get("cache/nodeids", [])
+
+    def pytest_collection_modifyitems(self, session, config, items):
+        if self.active:
+            new_items = OrderedDict()
+            other_items = OrderedDict()
+            for item in items:
+                if item.nodeid not in self.cached_nodeids:
+                    new_items[item.nodeid] = item
+                else:
+                    other_items[item.nodeid] = item
+
+            items[:] = self._get_increasing_order(six.itervalues(new_items)) + \
+                self._get_increasing_order(six.itervalues(other_items))
+        self.cached_nodeids = [x.nodeid for x in items if isinstance(x, pytest.Item)]
+
+    def _get_increasing_order(self, items):
+        return sorted(items, key=lambda item: item.fspath.mtime(), reverse=True)
+
+    def pytest_sessionfinish(self, session):
+        config = self.config
+        if config.getoption("cacheshow") or hasattr(config, "slaveinput"):
+            return
+
+        config.cache.set("cache/nodeids", self.cached_nodeids)
 
 
 def pytest_addoption(parser):
@@ -180,6 +223,10 @@ def pytest_addoption(parser):
              "This may re-order tests and thus lead to "
              "repeated fixture setup/teardown")
     group.addoption(
+        '--nf', '--new-first', action='store_true', dest="newfirst",
+        help="run tests from new files first, then the rest of the tests "
+             "sorted by file mtime")
+    group.addoption(
         '--cache-show', action='store_true', dest="cacheshow",
         help="show cache contents, don't perform collection or tests")
     group.addoption(
@@ -188,6 +235,12 @@ def pytest_addoption(parser):
     parser.addini(
         "cache_dir", default='.pytest_cache',
         help="cache directory path.")
+    group.addoption(
+        '--lfnf', '--last-failed-no-failures', action='store',
+        dest='last_failed_no_failures', choices=('all', 'none'), default='all',
+        help='change the behavior when no test failed in the last run or no '
+             'information about the last failures was found in the cache'
+    )
 
 
 def pytest_cmdline_main(config):
@@ -200,6 +253,7 @@ def pytest_cmdline_main(config):
 def pytest_configure(config):
     config.cache = Cache(config)
     config.pluginmanager.register(LFPlugin(config), "lfplugin")
+    config.pluginmanager.register(NFPlugin(config), "nfplugin")
 
 
 @pytest.fixture

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import re
 import os
 
 import six
@@ -161,6 +162,7 @@ def test_log_cli_enabled_disabled(testdir, enabled):
     if enabled:
         result.stdout.fnmatch_lines([
             'test_log_cli_enabled_disabled.py::test_log_cli ',
+            '*-- live log call --*',
             'test_log_cli_enabled_disabled.py* CRITICAL critical message logged by test',
             'PASSED*',
         ])
@@ -226,8 +228,20 @@ def test_log_cli_default_level_multiple_tests(testdir, request):
 
 
 def test_log_cli_default_level_sections(testdir, request):
-    """Check that with live logging enable we are printing the correct headers during setup/call/teardown."""
+    """Check that with live logging enable we are printing the correct headers during
+    start/setup/call/teardown/finish."""
     filename = request.node.name + '.py'
+    testdir.makeconftest('''
+        import pytest
+        import logging
+
+        def pytest_runtest_logstart():
+            logging.warning('>>>>> START >>>>>')
+
+        def pytest_runtest_logfinish():
+            logging.warning('<<<<< END <<<<<<<')
+    ''')
+
     testdir.makepyfile('''
         import pytest
         import logging
@@ -252,6 +266,8 @@ def test_log_cli_default_level_sections(testdir, request):
     result = testdir.runpytest()
     result.stdout.fnmatch_lines([
         '{}::test_log_1 '.format(filename),
+        '*-- live log start --*',
+        '*WARNING* >>>>> START >>>>>*',
         '*-- live log setup --*',
         '*WARNING*log message from setup of test_log_1*',
         '*-- live log call --*',
@@ -259,8 +275,12 @@ def test_log_cli_default_level_sections(testdir, request):
         'PASSED *50%*',
         '*-- live log teardown --*',
         '*WARNING*log message from teardown of test_log_1*',
+        '*-- live log finish --*',
+        '*WARNING* <<<<< END <<<<<<<*',
 
         '{}::test_log_2 '.format(filename),
+        '*-- live log start --*',
+        '*WARNING* >>>>> START >>>>>*',
         '*-- live log setup --*',
         '*WARNING*log message from setup of test_log_2*',
         '*-- live log call --*',
@@ -268,6 +288,8 @@ def test_log_cli_default_level_sections(testdir, request):
         'PASSED *100%*',
         '*-- live log teardown --*',
         '*WARNING*log message from teardown of test_log_2*',
+        '*-- live log finish --*',
+        '*WARNING* <<<<< END <<<<<<<*',
         '=* 2 passed in *=',
     ])
 
@@ -324,6 +346,64 @@ def test_live_logs_unknown_sections(testdir, request):
         '*WARNING* <<<<< END <<<<<<<*',
         '=* 1 passed in *=',
     ])
+
+
+def test_sections_single_new_line_after_test_outcome(testdir, request):
+    """Check that only a single new line is written between log messages during
+    teardown/finish."""
+    filename = request.node.name + '.py'
+    testdir.makeconftest('''
+        import pytest
+        import logging
+
+        def pytest_runtest_logstart():
+            logging.warning('>>>>> START >>>>>')
+
+        def pytest_runtest_logfinish():
+            logging.warning('<<<<< END <<<<<<<')
+            logging.warning('<<<<< END <<<<<<<')
+    ''')
+
+    testdir.makepyfile('''
+        import pytest
+        import logging
+
+        @pytest.fixture
+        def fix(request):
+            logging.warning("log message from setup of {}".format(request.node.name))
+            yield
+            logging.warning("log message from teardown of {}".format(request.node.name))
+            logging.warning("log message from teardown of {}".format(request.node.name))
+
+        def test_log_1(fix):
+            logging.warning("log message from test_log_1")
+    ''')
+    testdir.makeini('''
+        [pytest]
+        log_cli=true
+    ''')
+
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines([
+        '{}::test_log_1 '.format(filename),
+        '*-- live log start --*',
+        '*WARNING* >>>>> START >>>>>*',
+        '*-- live log setup --*',
+        '*WARNING*log message from setup of test_log_1*',
+        '*-- live log call --*',
+        '*WARNING*log message from test_log_1*',
+        'PASSED *100%*',
+        '*-- live log teardown --*',
+        '*WARNING*log message from teardown of test_log_1*',
+        '*-- live log finish --*',
+        '*WARNING* <<<<< END <<<<<<<*',
+        '*WARNING* <<<<< END <<<<<<<*',
+        '=* 1 passed in *=',
+    ])
+    assert re.search(r'(.+)live log teardown(.+)\n(.+)WARNING(.+)\n(.+)WARNING(.+)',
+                     result.stdout.str(), re.MULTILINE) is not None
+    assert re.search(r'(.+)live log finish(.+)\n(.+)WARNING(.+)\n(.+)WARNING(.+)',
+                     result.stdout.str(), re.MULTILINE) is not None
 
 
 def test_log_cli_level(testdir):
@@ -397,6 +477,48 @@ def test_log_cli_ini_level(testdir):
 
     # make sure that that we get a '0' exit code for the testsuite
     assert result.ret == 0
+
+
+@pytest.mark.parametrize('cli_args', ['',
+                                      '--log-level=WARNING',
+                                      '--log-file-level=WARNING',
+                                      '--log-cli-level=WARNING'])
+def test_log_cli_auto_enable(testdir, request, cli_args):
+    """Check that live logs are enabled if --log-level or --log-cli-level is passed on the CLI.
+    It should not be auto enabled if the same configs are set on the INI file.
+    """
+    testdir.makepyfile('''
+        import pytest
+        import logging
+
+        def test_log_1():
+            logging.info("log message from test_log_1 not to be shown")
+            logging.warning("log message from test_log_1")
+
+    ''')
+    testdir.makeini('''
+        [pytest]
+        log_level=INFO
+        log_cli_level=INFO
+    ''')
+
+    result = testdir.runpytest(cli_args)
+    if cli_args == '--log-cli-level=WARNING':
+        result.stdout.fnmatch_lines([
+            '*::test_log_1 ',
+            '*-- live log call --*',
+            '*WARNING*log message from test_log_1*',
+            'PASSED *100%*',
+            '=* 1 passed in *=',
+        ])
+        assert 'INFO' not in result.stdout.str()
+    else:
+        result.stdout.fnmatch_lines([
+            '*test_log_cli_auto_enable*100%*',
+            '=* 1 passed in *=',
+        ])
+        assert 'INFO' not in result.stdout.str()
+        assert 'WARNING' not in result.stdout.str()
 
 
 def test_log_file_cli(testdir):

@@ -78,7 +78,7 @@ If you then run it with ``--lf``::
     =========================== test session starts ============================
     platform linux -- Python 3.x.y, pytest-3.x.y, py-1.x.y, pluggy-0.x.y
     rootdir: $REGENDOC_TMPDIR, inifile:
-    collected 50 items
+    collected 50 items / 48 deselected
     run-last-failure: rerun previous 2 failures
     
     test_50.py FF                                                        [100%]
@@ -106,7 +106,6 @@ If you then run it with ``--lf``::
     E          Failed: bad luck
     
     test_50.py:6: Failed
-    =========================== 48 tests deselected ============================
     ================= 2 failed, 48 deselected in 0.12 seconds ==================
 
 You have run only the two failing test from the last run, while 48 tests have
@@ -151,6 +150,20 @@ of ``FF`` and dots)::
     =================== 2 failed, 48 passed in 0.12 seconds ====================
 
 .. _`config.cache`:
+
+New ``--nf``, ``--new-first`` options: run new tests first followed by the rest
+of the tests, in both cases tests are also sorted by the file modified time,
+with more recent files coming first.
+
+Behavior when no tests failed in the last run
+---------------------------------------------
+
+When no tests failed in the last run, or when no cached ``lastfailed`` data was
+found, ``pytest`` can be configured either to run all of the tests or no tests,
+using the ``--last-failed-no-failures`` option, which takes one of the following values::
+
+    pytest --last-failed-no-failures all    # run all tests (default behavior)
+    pytest --last-failed-no-failures none   # run no tests and exit
 
 The new config.cache object
 --------------------------------
@@ -229,6 +242,8 @@ You can always peek at the content of the cache using the
     ------------------------------- cache values -------------------------------
     cache/lastfailed contains:
       {'test_caching.py::test_function': True}
+    cache/nodeids contains:
+      ['test_caching.py::test_function']
     example/value contains:
       42
     

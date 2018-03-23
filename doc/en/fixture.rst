@@ -256,6 +256,50 @@ instance, you can simply declare it:
 
 Finally, the ``class`` scope will invoke the fixture once per test *class*.
 
+
+Higher-scoped fixtures are instantiated first
+---------------------------------------------
+
+.. versionadded:: 3.5
+
+Within a function request for features, fixture of higher-scopes (such as ``session``) are instantiated first than
+lower-scoped fixtures (such as ``function`` or ``class``). The relative order of fixtures of same scope follows
+the declared order in the test function and honours dependencies between fixtures.
+
+Consider the code below:
+
+.. code-block:: python
+
+    @pytest.fixture(scope="session")
+    def s1():
+        pass
+
+    @pytest.fixture(scope="module")
+    def m1():
+        pass
+
+    @pytest.fixture
+    def f1(tmpdir):
+        pass
+
+    @pytest.fixture
+    def f2():
+        pass
+
+    def test_foo(f1, m1, f2, s1):
+        ...
+
+
+The fixtures requested by ``test_foo`` will be instantiated in the following order:
+
+1. ``s1``: is the highest-scoped fixture (``session``).
+2. ``m1``: is the second highest-scoped fixture (``module``).
+3. ``tempdir``: is a ``function``-scoped fixture, required by ``f1``: it needs to be instantiated at this point
+   because it is a dependency of ``f1``.
+4. ``f1``: is the first ``function``-scoped fixture in ``test_foo`` parameter list.
+5. ``f2``: is the last ``function``-scoped fixture in ``test_foo`` parameter list.
+
+
 .. _`finalization`:
 
 Fixture finalization / executing teardown code
@@ -696,11 +740,11 @@ Let's run the tests in verbose mode and with looking at the print-output::
     test_module.py::test_1[mod1]   SETUP modarg mod1
       RUN test1 with modarg mod1
     PASSED
-    test_module.py::test_2[1-mod1]   SETUP otherarg 1
+    test_module.py::test_2[mod1-1]   SETUP otherarg 1
       RUN test2 with otherarg 1 and modarg mod1
     PASSED  TEARDOWN otherarg 1
     
-    test_module.py::test_2[2-mod1]   SETUP otherarg 2
+    test_module.py::test_2[mod1-2]   SETUP otherarg 2
       RUN test2 with otherarg 2 and modarg mod1
     PASSED  TEARDOWN otherarg 2
     
@@ -708,11 +752,11 @@ Let's run the tests in verbose mode and with looking at the print-output::
       SETUP modarg mod2
       RUN test1 with modarg mod2
     PASSED
-    test_module.py::test_2[1-mod2]   SETUP otherarg 1
+    test_module.py::test_2[mod2-1]   SETUP otherarg 1
       RUN test2 with otherarg 1 and modarg mod2
     PASSED  TEARDOWN otherarg 1
     
-    test_module.py::test_2[2-mod2]   SETUP otherarg 2
+    test_module.py::test_2[mod2-2]   SETUP otherarg 2
       RUN test2 with otherarg 2 and modarg mod2
     PASSED  TEARDOWN otherarg 2
       TEARDOWN modarg mod2

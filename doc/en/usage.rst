@@ -220,21 +220,26 @@ To set the name of the root test suite xml item, you can configure the ``junit_s
     [pytest]
     junit_suite_name = my_suite
 
-.. _record_xml_property example:
+.. _record_property example:
 
-record_xml_property
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+record_property
+^^^^^^^^^^^^^^^
 
 .. versionadded:: 2.8
+.. versionchanged:: 3.5
+
+   Fixture renamed from ``record_xml_property`` to ``record_property`` as user
+   properties are now available to all reporters.
+   ``record_xml_property`` is now deprecated.
 
 If you want to log additional information for a test, you can use the
-``record_xml_property`` fixture:
+``record_property`` fixture:
 
 .. code-block:: python
 
-    def test_function(record_xml_property):
-        record_xml_property("example_key", 1)
-        assert 0
+    def test_function(record_property):
+        record_property("example_key", 1)
+        assert True
 
 This will add an extra property ``example_key="1"`` to the generated
 ``testcase`` tag:
@@ -247,13 +252,42 @@ This will add an extra property ``example_key="1"`` to the generated
       </properties>
     </testcase>
 
+Alternatively, you can integrate this functionality with custom markers:
+
+.. code-block:: python
+
+    # content of conftest.py
+
+    def pytest_collection_modifyitems(session, config, items):
+        for item in items:
+            marker = item.get_marker('test_id')
+            if marker is not None:
+                test_id = marker.args[0]
+                item.user_properties.append(('test_id', test_id))
+
+And in your tests:
+
+.. code-block:: python
+
+    # content of test_function.py
+    import pytest
+    @pytest.mark.test_id(1501)
+    def test_function():
+        assert True
+
+Will result in:
+
+.. code-block:: xml
+
+    <testcase classname="test_function" file="test_function.py" line="0" name="test_function" time="0.0009">
+      <properties>
+        <property name="test_id" value="1501" />
+      </properties>
+    </testcase>
+
 .. warning::
 
-    ``record_xml_property`` is an experimental feature, and its interface might be replaced
-    by something more powerful and general in future versions. The
-    functionality per-se will be kept, however.
-
-    Currently it does not work when used with the ``pytest-xdist`` plugin.
+    ``record_property`` is an experimental feature and may change in the future.
 
     Also please note that using this feature will break any schema verification.
     This might be a problem when used with some CI servers.
@@ -274,7 +308,7 @@ To add an additional xml attribute to a testcase element, you can use
         print('hello world')
         assert True
 
-Unlike ``record_xml_property``, this will not add a new child element.
+Unlike ``record_property``, this will not add a new child element.
 Instead, this will add an attribute ``assertions="REQ-1234"`` inside the generated
 ``testcase`` tag and override the default ``classname`` with ``"classname=custom_classname"``:
 
@@ -448,7 +482,7 @@ Running it will show that ``MyPlugin`` was added and its
 hook was invoked::
 
     $ python myinvoke.py
-    *** test run reporting finishing
+    .                                                                    [100%]*** test run reporting finishing
     
 
 .. note::

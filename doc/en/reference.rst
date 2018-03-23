@@ -388,12 +388,12 @@ pytestconfig
 .. autofunction:: _pytest.fixtures.pytestconfig()
 
 
-record_xml_property
+record_property
 ~~~~~~~~~~~~~~~~~~~
 
-**Tutorial**: :ref:`record_xml_property example`.
+**Tutorial**: :ref:`record_property example`.
 
-.. autofunction:: _pytest.junitxml.record_xml_property()
+.. autofunction:: _pytest.junitxml.record_property()
 
 caplog
 ~~~~~~

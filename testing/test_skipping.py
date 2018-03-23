@@ -156,6 +156,21 @@ class TestXFail(object):
         assert callreport.passed
         assert callreport.wasxfail == "this is an xfail"
 
+    def test_xfail_using_platform(self, testdir):
+        """
+        Verify that platform can be used with xfail statements.
+        """
+        item = testdir.getitem("""
+            import pytest
+            @pytest.mark.xfail("platform.platform() == platform.platform()")
+            def test_func():
+                assert 0
+        """)
+        reports = runtestprotocol(item, log=False)
+        assert len(reports) == 3
+        callreport = reports[1]
+        assert callreport.wasxfail
+
     def test_xfail_xpassed_strict(self, testdir):
         item = testdir.getitem("""
             import pytest
@@ -612,6 +627,16 @@ class TestSkipif(object):
         ])
         assert result.ret == 0
 
+    def test_skipif_using_platform(self, testdir):
+        item = testdir.getitem("""
+            import pytest
+            @pytest.mark.skipif("platform.platform() == platform.platform()")
+            def test_func():
+                pass
+        """)
+        pytest.raises(pytest.skip.Exception, lambda:
+                      pytest_runtest_setup(item))
+
     @pytest.mark.parametrize('marker, msg1, msg2', [
         ('skipif', 'SKIP', 'skipped'),
         ('xfail', 'XPASS', 'xpassed'),
@@ -1065,3 +1090,18 @@ def test_mark_xfail_item(testdir):
     assert not failed
     xfailed = [r for r in skipped if hasattr(r, 'wasxfail')]
     assert xfailed
+
+
+def test_summary_list_after_errors(testdir):
+    """Ensure the list of errors/fails/xfails/skips appears after tracebacks in terminal reporting."""
+    testdir.makepyfile("""
+        import pytest
+        def test_fail():
+            assert 0
+    """)
+    result = testdir.runpytest('-ra')
+    result.stdout.fnmatch_lines([
+        '=* FAILURES *=',
+        '*= short test summary info =*',
+        'FAIL test_summary_list_after_errors.py::test_fail',
+    ])

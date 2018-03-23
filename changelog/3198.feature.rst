@@ -1,0 +1,1 @@
+Add command line option ``--deselect`` to allow deselection of individual tests at collection time.

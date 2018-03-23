@@ -1,0 +1,1 @@
+Defining ``pytest_plugins`` is now deprecated in non-top-level conftest.py files, because they "leak" to the entire directory tree.
