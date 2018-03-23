@@ -39,6 +39,29 @@ def custom_pdb_calls():
     return called
 
 
+@pytest.fixture
+def custom_debugger_hook():
+    called = []
+
+    # install dummy debugger class and track which methods were called on it
+    class _CustomDebugger(object):
+        def __init__(self, *args, **kwargs):
+            called.append("init")
+
+        def reset(self):
+            called.append("reset")
+
+        def interaction(self, *args):
+            called.append("interaction")
+
+        def set_trace(self, frame):
+            print("**CustomDebugger**")
+            called.append("set_trace")
+
+    _pytest._CustomDebugger = _CustomDebugger
+    return called
+
+
 class TestPDB(object):
 
     @pytest.fixture
@@ -490,6 +513,36 @@ class TestDebuggingBreakpoints(object):
         """)
         result = testdir.runpytest_inprocess("", p1)
         assert sys.breakpointhook != pytestPDB.set_trace
+
+
+    @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
+    def test_sys_breakpointhook_configure_and_unconfigure_with_pdb_flag(self, testdir):
+        config = testdir.parseconfig()
+
+        pytest_configure(config)
+        assert sys.breakpointhook == pytestPDB.set_trace
+
+        p1 = testdir.makepyfile("""
+        def test_nothing():
+            a = 0
+            assert a == 0
+        """)
+        result = testdir.runpytest_inprocess("--pdb", p1)
+        assert sys.breakpointhook != pytestPDB.set_trace
+
+    @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
+    def test_pdb_custom_cls(self, testdir, custom_debugger_hook):
+        p1 = testdir.makepyfile("""
+        def test_nothing():
+            breakpoint()
+        """)
+        result = testdir.runpytest_inprocess(
+            "--pdb", "--pdbcls=_pytest:_CustomDebugger", p1)
+        result.stdout.fnmatch_lines([
+            "*CustomDebugger*",
+            "*1 passed*",
+        ])
+        assert custom_debugger_hook == ["init", "set_trace"]
 
 
     @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
