@@ -469,7 +469,7 @@ class TestDebuggingBreakpoints(object):
 
     def test_supports_breakpoint_module_global(self):
         """
-        Test that supports breakpoint global marks on Python 3.7+ and not on 
+        Test that supports breakpoint global marks on Python 3.7+ and not on
         CPython 3.5, 2.7
         """
         if sys.version_info.major == 3 and sys.version_info.minor >= 7:
@@ -485,15 +485,6 @@ class TestDebuggingBreakpoints(object):
         Test that sys.breakpointhook is not set to the custom Pdb class
         """
         assert sys.breakpointhook != pytestPDB.set_trace
-
-
-    @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
-    def test_sys_breakpointhook_not_custom_pdb(self):
-        """
-        Test that sys.breakpointhook is not set to the custom Pdb class without configuration
-        """
-        assert sys.breakpointhook != pytestPDB.set_trace
-
 
     @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
     def test_sys_breakpointhook_configure_and_unconfigure(self, testdir):
@@ -512,8 +503,10 @@ class TestDebuggingBreakpoints(object):
             assert a == 0
         """)
         result = testdir.runpytest_inprocess("", p1)
+        result.stdout.fnmatch_lines([
+            "*1 passed*",
+        ])
         assert sys.breakpointhook != pytestPDB.set_trace
-
 
     @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
     def test_sys_breakpointhook_configure_and_unconfigure_with_pdb_flag(self, testdir):
@@ -528,6 +521,9 @@ class TestDebuggingBreakpoints(object):
             assert a == 0
         """)
         result = testdir.runpytest_inprocess("--pdb", p1)
+        result.stdout.fnmatch_lines([
+            "*1 passed*",
+        ])
         assert sys.breakpointhook != pytestPDB.set_trace
 
     @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
@@ -544,9 +540,8 @@ class TestDebuggingBreakpoints(object):
         ])
         assert custom_debugger_hook == ["init", "set_trace"]
 
-
     @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
-    @pytest.mark.skipif(not _ENVIRON_PYTHONBREAKPOINT=='', reason="Requires breakpoint() default value")
+    @pytest.mark.skipif(not _ENVIRON_PYTHONBREAKPOINT == '', reason="Requires breakpoint() default value")
     def test_sys_breakpoint_interception(self, testdir):
         p1 = testdir.makepyfile("""
             def test_1():
@@ -560,7 +555,6 @@ class TestDebuggingBreakpoints(object):
         assert "1 failed" in rest
         assert "reading from stdin while output" not in rest
         TestPDB.flush(child)
-
 
     @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
     def test_pdb_not_altered(self, testdir):
