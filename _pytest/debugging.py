@@ -46,7 +46,8 @@ def pytest_configure(config):
         pdb.set_trace, pytestPDB._pluginmanager = old
         pytestPDB._config = None
         pytestPDB._pdb_cls = pdb.Pdb
-        sys.breakpointhook = sys.__breakpointhook__
+        if SUPPORTS_BREAKPOINT_BUILTIN:
+            sys.breakpointhook = sys.__breakpointhook__
 
     pdb.set_trace = pytestPDB.set_trace
     pytestPDB._pluginmanager = config.pluginmanager
