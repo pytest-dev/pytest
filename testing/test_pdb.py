@@ -4,8 +4,12 @@ import platform
 import os
 
 import _pytest._code
-from _pytest.debugging import SUPPORTS_BREAKPOINT_BUILTIN, pytestPDB
+from _pytest.debugging import (SUPPORTS_BREAKPOINT_BUILTIN, pytestPDB,
+                               pytest_configure)
 import pytest
+
+
+_ENVIRON_PYTHONBREAKPOINT = getattr(os.environ, 'PYTHONBREAKPOINT', '')
 
 
 def runpdb_and_get_report(testdir, source):
@@ -452,10 +456,75 @@ class TestDebuggingBreakpoints(object):
         if sys.version_info.major == 2 and sys.version_info.minor == 7:
             assert SUPPORTS_BREAKPOINT_BUILTIN is False
 
-    @pytest.mark.skipif(sys.version_info < (3,7), reason="Requires python3.7")
-    def test_sys_breakpointhook(self):
+    @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
+    def test_sys_breakpointhook_not_custom_pdb(self):
         """
-        Test that sys.breakpointhook is set to the custom Pdb class
+        Test that sys.breakpointhook is not set to the custom Pdb class
         """
-        if 'PYTHONBREAKPOINT' not in os.environ or os.environ['PYTHONBREAKPOINT'] == '':
-            assert isinstance(sys.breakpointhook, pytestPDB)
+        assert sys.breakpointhook != pytestPDB.set_trace
+
+
+    @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
+    def test_sys_breakpointhook_not_custom_pdb(self):
+        """
+        Test that sys.breakpointhook is not set to the custom Pdb class without configuration
+        """
+        assert sys.breakpointhook != pytestPDB.set_trace
+
+
+    @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
+    def test_sys_breakpointhook_configure_and_unconfigure(self, testdir):
+        """
+        Test that sys.breakpointhook is set to the custom Pdb class once configured, test that
+        hook is reset to system value once pytest has been unconfigured
+        """
+        config = testdir.parseconfig()
+
+        pytest_configure(config)
+        assert sys.breakpointhook == pytestPDB.set_trace
+
+        p1 = testdir.makepyfile("""
+        def test_nothing():
+            a = 0
+            assert a == 0
+        """)
+        result = testdir.runpytest_inprocess("", p1)
+        assert sys.breakpointhook != pytestPDB.set_trace
+
+
+    @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
+    @pytest.mark.skipif(not _ENVIRON_PYTHONBREAKPOINT=='', reason="Requires breakpoint() default value")
+    def test_sys_breakpoint_interception(self, testdir):
+        p1 = testdir.makepyfile("""
+            def test_1():
+                breakpoint()
+        """)
+        child = testdir.spawn_pytest(str(p1))
+        child.expect("test_1")
+        child.expect("(Pdb)")
+        child.sendeof()
+        rest = child.read().decode("utf8")
+        assert "1 failed" in rest
+        assert "reading from stdin while output" not in rest
+        TestPDB.flush(child)
+
+
+    @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
+    def test_pdb_not_altered(self, testdir):
+        """
+        Test that calling PDB set_trace() is not affected
+        when PYTHONBREAKPOINT=0
+        """
+        p1 = testdir.makepyfile("""
+            import pdb
+            def test_1():
+                pdb.set_trace()
+        """)
+        child = testdir.spawn_pytest(str(p1))
+        child.expect("test_1")
+        child.expect("(Pdb)")
+        child.sendeof()
+        rest = child.read().decode("utf8")
+        assert "1 failed" in rest
+        assert "reading from stdin while output" not in rest
+        TestPDB.flush(child)
