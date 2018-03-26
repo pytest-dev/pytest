@@ -294,7 +294,7 @@ The fixtures requested by ``test_foo`` will be instantiated in the following ord
 
 1. ``s1``: is the highest-scoped fixture (``session``).
 2. ``m1``: is the second highest-scoped fixture (``module``).
-3. ``tempdir``: is a ``function``-scoped fixture, required by ``f1``: it needs to be instantiated at this point
+3. ``tmpdir``: is a ``function``-scoped fixture, required by ``f1``: it needs to be instantiated at this point
    because it is a dependency of ``f1``.
 4. ``f1``: is the first ``function``-scoped fixture in ``test_foo`` parameter list.
 5. ``f2``: is the last ``function``-scoped fixture in ``test_foo`` parameter list.
