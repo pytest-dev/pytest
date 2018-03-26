@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function
 import os
 
 from itertools import chain
-
+from operator import itemgetter
 import six
 import py
 import attr
@@ -187,17 +187,33 @@ class Node(object):
         """find all marks with the given name on the node and its parents
 
         :param str name: name of the marker
-        :returns: iterator over marks matching the name
+        :returns: iterator over marks matching the name"""
+        return map(itemgetter(1), self.find_markers_with_node(name))
+
+    def find_markers_with_node(self, name):
+        """find all marks with the given name on the node and its parents
+
+        :param str name: name of the marker
+        :returns: iterator over (node, mark) matching the name
         """
         for node in reversed(self.listchain()):
             for mark in node._markers.find(name):
-                yield mark
+                yield node, mark
 
     def iter_markers(self):
         """
         iterate over all markers of the node
         """
         return chain.from_iterable(x._markers for x in reversed(self.listchain()))
+
+    def iter_markers_with_node(self):
+        """
+        iterate over all markers of the node
+        returns sequence of tuples (node, mark)
+        """
+        for node in reversed(self.listchain()):
+            for mark in node._markers:
+                yield node, mark
 
     def get_marker(self, name):
         """ get a marker object from this node or None if
