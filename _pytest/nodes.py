@@ -1,6 +1,8 @@
 from __future__ import absolute_import, division, print_function
 import os
 
+from itertools import chain
+
 import six
 import py
 import attr
@@ -191,9 +193,20 @@ class Node(object):
             for mark in node._markers.find(name):
                 yield mark
 
+    def iter_markers(self):
+        """
+        iterate over all markers of the node
+        """
+        return chain.from_iterable(x._markers for x in reversed(self.listchain()))
+
     def get_marker(self, name):
         """ get a marker object from this node or None if
-        the node doesn't have a marker with that name. """
+        the node doesn't have a marker with that name.
+
+        ..warning::
+
+          deprecated
+        """
         markers = list(self.find_markers(name))
         if markers:
             return MarkInfo(markers)

@@ -399,3 +399,6 @@ class NodeMarkers(object):
         for mark in self.own_markers:
             if mark.name == name:
                 yield mark
+
+    def __iter__(self):
+        return iter(self.own_markers)
