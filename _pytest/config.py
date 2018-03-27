@@ -36,7 +36,7 @@ class ConftestImportFailure(Exception):
         etype, evalue, etb = self.excinfo
         formatted = traceback.format_tb(etb)
         # The level of the tracebacks we want to print is hand crafted :(
-        return repr(evalue) + '\n' + ''.join(formatted[2:])
+        return ''.join(formatted[2:]) + '\nE    ' + etype.__name__ + ': ' + str(evalue)
 
 
 def main(args=None, plugins=None):
@@ -52,9 +52,15 @@ def main(args=None, plugins=None):
             config = _prepareconfig(args, plugins)
         except ConftestImportFailure as e:
             tw = py.io.TerminalWriter(sys.stderr)
-            for line in traceback.format_exception(*e.excinfo):
-                tw.line(line.rstrip(), red=True)
-            tw.line("ERROR: could not load %s\n" % (e.path,), red=True)
+            formatted_tb = safe_str(e)
+            tw.line(
+                "ImportError while importing test module '{path}'.\n"
+                "Hint: make sure your test modules/packages have valid Python names.\n"
+                "Traceback:\n"
+                "{traceback}".format(path=e.path, traceback=formatted_tb),
+                red=True
+            )
+
             return 4
         else:
             try:
