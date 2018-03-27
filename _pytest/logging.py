@@ -153,7 +153,7 @@ def catching_logs(handler, formatter=None, level=None):
         root_logger.addHandler(handler)
     if level is not None:
         orig_level = root_logger.level
-        root_logger.setLevel(level)
+        root_logger.setLevel(min(orig_level, level))
     try:
         yield handler
     finally:
