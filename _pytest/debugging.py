@@ -36,7 +36,7 @@ def pytest_configure(config):
 
     # Use custom Pdb class set_trace instead of default Pdb on breakpoint() call
     if SUPPORTS_BREAKPOINT_BUILTIN:
-        _environ_pythonbreakpoint = getattr(os.environ, 'PYTHONBREAKPOINT', '')
+        _environ_pythonbreakpoint = os.environ.get('PYTHONBREAKPOINT', '')
         if _environ_pythonbreakpoint == '':
             sys.breakpointhook = pytestPDB.set_trace
 
