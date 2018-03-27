@@ -1,1 +1,1 @@
-Added ``doc`` to norecursedirs in tox.ini
+Renamed example directories so all tests pass when ran from the base directory.
