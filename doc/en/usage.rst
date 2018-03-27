@@ -190,7 +190,7 @@ in your code and pytest automatically disables its output capture for that test:
   and continue with the regular test run.
 
 
-.. _breakpoint-builtin:
+.. _`breakpoint-builtin`:
 
 Using the builtin breakpoint function
 -------------------------------------
@@ -200,8 +200,7 @@ Pytest supports the use of ``breakpoint()`` with the following behaviours:
 
  - When breakpoint() is called and PYTHONBREAKPOINT is set to the default value, PyTest will use the Custom PDB trace UI instead of the system default Pdb.
  - When tests are complete, the system will default back to the system Pdb trace UI.
- - If --pdb is called on execution of Pytest, the custom Pdb interface is used on both
-breakpoint() and failed tests/unhandled exceptions.
+ - If --pdb is called on execution of Pytest, the custom Pdb interface is used on bothbreakpoint() and failed tests/unhandled exceptions.
  - If --pdbcls is used, the custom class will be executed when a test fails (as expected within existing behaviour), but also when breakpoint() is called from within a test, the custom class debugger will be instantiated.
 
 .. _durations:
