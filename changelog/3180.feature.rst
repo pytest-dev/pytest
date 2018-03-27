@@ -1,1 +1,1 @@
-Support for Python 3.7's builtin ``breakpoint()`` method, see :ref:`breakpoint-builtin` for details.
+Support for Python 3.7's builtin ``breakpoint()`` method, see `Using the builtin breakpoint function <https://docs.pytest.org/en/latest/usage.html#breakpoint-builtin>`_ for details.
