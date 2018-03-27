@@ -145,7 +145,7 @@ class TestGeneralUsage(object):
             *warning*conftest.py*
         """)
         result = testdir.runpytest()
-        result.stderr.fnmatch_lines(["*ImportError while importing test module*conftest.py*",
+        result.stderr.fnmatch_lines(["*ImportError while importing conftest module*conftest.py*",
                                     "E    *Error: No module named*qwerty*"]
                                     )
 

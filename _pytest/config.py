@@ -54,7 +54,7 @@ def main(args=None, plugins=None):
             tw = py.io.TerminalWriter(sys.stderr)
             formatted_tb = safe_str(e)
             tw.line(
-                "ImportError while importing test module '{path}'.\n"
+                "ImportError while importing conftest module '{path}'.\n"
                 "Hint: make sure your test modules/packages have valid Python names.\n"
                 "Traceback:\n"
                 "{traceback}".format(path=e.path, traceback=formatted_tb),
