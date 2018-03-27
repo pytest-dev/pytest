@@ -545,6 +545,30 @@ class TestDebuggingBreakpoints(object):
         ])
         assert custom_debugger_hook == ["init", "set_trace"]
 
+    @pytest.mark.parametrize('args', [('',), ()])
+    @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
+    def test_environ_custom_class(self, testdir, custom_debugger_hook, args):
+        testdir.makeconftest("""
+            from pytest import hookimpl
+            from _pytest.debugging import pytestPDB
+            import os
+
+            @hookimpl(hookwrapper=True)
+            def pytest_configure(config):
+                os.environ['PYTHONBREAKPOINT'] = '_pytest._CustomDebugger.set_trace'
+                yield
+                assert sys.breakpointhook is not pytestPDB.set_trace
+
+            @hookimpl(hookwrapper=True)
+            def pytest_unconfigure(config):
+                yield
+                assert sys.breakpointhook is sys.__breakpoint__
+                os.environ['PYTHONBREAKPOINT'] = ''
+        """)
+        testdir.makepyfile("""
+            def test_nothing(): pass
+        """)
+
     @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
     @pytest.mark.skipif(not _ENVIRON_PYTHONBREAKPOINT == '', reason="Requires breakpoint() default value")
     def test_sys_breakpoint_interception(self, testdir):
