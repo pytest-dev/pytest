@@ -4,8 +4,7 @@ import platform
 import os
 
 import _pytest._code
-from _pytest.debugging import (SUPPORTS_BREAKPOINT_BUILTIN, pytestPDB,
-                               pytest_configure)
+from _pytest.debugging import SUPPORTS_BREAKPOINT_BUILTIN, pytestPDB
 import pytest
 
 
@@ -481,14 +480,15 @@ class TestDebuggingBreakpoints(object):
             assert SUPPORTS_BREAKPOINT_BUILTIN is False
 
     @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
-    def test_sys_breakpointhook_not_custom_pdb(self):
+    def test_sys_breakpointhook_is_pytest_PDB(self):
         """
-        Test that sys.breakpointhook is not set to the custom Pdb class
+        Test that sys.breakpointhook by default is set to pytest's internal class.
         """
-        assert sys.breakpointhook != pytestPDB.set_trace
+        assert sys.breakpointhook == pytestPDB.set_trace
 
     @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
-    def test_sys_breakpointhook_configure_and_unconfigure(self, testdir):
+    @pytest.mark.parametrize('arg', ['--pdb', ''])
+    def test_sys_breakpointhook_configure_and_unconfigure(self, testdir, arg):
         """
         Test that sys.breakpointhook is set to the custom Pdb class once configured, test that
         hook is reset to system value once pytest has been unconfigured
@@ -499,47 +499,28 @@ class TestDebuggingBreakpoints(object):
             from _pytest.debugging import pytestPDB
 
             def pytest_configure(config):
-                yield
-                assert sys.breakpointhook is pytestPDB.set_trace
+                config._cleanup.append(check_restored)
 
-            @hookimpl(hookwrapper=True)
-            def pytest_unconfigure(config):
-                yield
-                assert sys.breakpointhook is sys.__breakpointhook__
+            def check_restored():
+                assert sys.breakpointhook == sys.__breakpointhook__
 
+            def test_check():
+                assert sys.breakpointhook == pytestPDB.set_trace
         """)
         testdir.makepyfile("""
             def test_nothing(): pass
         """)
-        result = testdir.runpytest()
+        args = (arg,) if arg else ()
+        result = testdir.runpytest_subprocess(*args)
         result.stdout.fnmatch_lines([
             '*1 passed in *',
         ])
 
-    @pytest.mark.parametrize('args', [('--pdb',), ()])
-    @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
-    def test_sys_breakpointhook_configure_and_unconfigure_with_pdb_flag(self, testdir, args):
-        config = testdir.parseconfig()
-
-        pytest_configure(config)
-        assert sys.breakpointhook == pytestPDB.set_trace
-
-        testdir.makepyfile("""
-        def test_nothing():
-            a = 0
-            assert a == 0
-        """)
-        result = testdir.runpytest_inprocess(*args)
-        result.stdout.fnmatch_lines([
-            "*1 passed*",
-        ])
-        assert sys.breakpointhook != pytestPDB.set_trace
-
     @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
     def test_pdb_custom_cls(self, testdir, custom_debugger_hook):
         p1 = testdir.makepyfile("""
-        def test_nothing():
-            breakpoint()
+            def test_nothing():
+                breakpoint()
         """)
         result = testdir.runpytest_inprocess(
             "--pdb", "--pdbcls=_pytest:_CustomDebugger", p1)
@@ -549,31 +530,30 @@ class TestDebuggingBreakpoints(object):
         ])
         assert custom_debugger_hook == ["init", "set_trace"]
 
-    @pytest.mark.parametrize('args', [('',), ()])
+    @pytest.mark.parametrize('arg', ['--pdb', ''])
     @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
-    def test_environ_custom_class(self, testdir, custom_debugger_hook, args):
+    def test_environ_custom_class(self, testdir, custom_debugger_hook, arg):
         testdir.makeconftest("""
-            from pytest import hookimpl
-            from _pytest.debugging import pytestPDB
             import os
             import sys
 
-            @hookimpl()
-            def pytest_configure(config):
-                os.environ['PYTHONBREAKPOINT'] = '_pytest._CustomDebugger.set_trace'
-                yield
-                assert sys.breakpointhook is not pytestPDB.set_trace
+            os.environ['PYTHONBREAKPOINT'] = '_pytest._CustomDebugger.set_trace'
 
-            @hookimpl(hookwrapper=True)
-            def pytest_unconfigure(config):
-                yield
-                assert sys.breakpointhook is sys.__breakpointhook__
-                os.environ['PYTHONBREAKPOINT'] = ''
+            def pytest_configure(config):
+                config._cleanup.append(check_restored)
+
+            def check_restored():
+                assert sys.breakpointhook == sys.__breakpointhook__
+
+            def test_check():
+                import _pytest
+                assert sys.breakpointhook is _pytest._CustomDebugger.set_trace
         """)
         testdir.makepyfile("""
             def test_nothing(): pass
         """)
-        result = testdir.runpytest()
+        args = (arg,) if arg else ()
+        result = testdir.runpytest_subprocess(*args)
         result.stdout.fnmatch_lines([
             '*1 passed in *',
         ])
