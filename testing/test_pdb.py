@@ -494,10 +494,10 @@ class TestDebuggingBreakpoints(object):
         hook is reset to system value once pytest has been unconfigured
         """
         testdir.makeconftest("""
+            import sys
             from pytest import hookimpl
             from _pytest.debugging import pytestPDB
 
-            @hookimpl(hookwrapper=True)
             def pytest_configure(config):
                 yield
                 assert sys.breakpointhook is pytestPDB.set_trace
@@ -505,12 +505,16 @@ class TestDebuggingBreakpoints(object):
             @hookimpl(hookwrapper=True)
             def pytest_unconfigure(config):
                 yield
-                assert sys.breakpointhook is sys.__breakpoint__
+                assert sys.breakpointhook is sys.__breakpointhook__
 
         """)
         testdir.makepyfile("""
             def test_nothing(): pass
         """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            '*1 passed in *',
+        ])
 
     @pytest.mark.parametrize('args', [('--pdb',), ()])
     @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
@@ -552,8 +556,9 @@ class TestDebuggingBreakpoints(object):
             from pytest import hookimpl
             from _pytest.debugging import pytestPDB
             import os
+            import sys
 
-            @hookimpl(hookwrapper=True)
+            @hookimpl()
             def pytest_configure(config):
                 os.environ['PYTHONBREAKPOINT'] = '_pytest._CustomDebugger.set_trace'
                 yield
@@ -562,12 +567,16 @@ class TestDebuggingBreakpoints(object):
             @hookimpl(hookwrapper=True)
             def pytest_unconfigure(config):
                 yield
-                assert sys.breakpointhook is sys.__breakpoint__
+                assert sys.breakpointhook is sys.__breakpointhook__
                 os.environ['PYTHONBREAKPOINT'] = ''
         """)
         testdir.makepyfile("""
             def test_nothing(): pass
         """)
+        result = testdir.runpytest()
+        result.stdout.fnmatch_lines([
+            '*1 passed in *',
+        ])
 
     @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
     @pytest.mark.skipif(not _ENVIRON_PYTHONBREAKPOINT == '', reason="Requires breakpoint() default value")
