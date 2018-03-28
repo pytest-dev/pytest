@@ -113,7 +113,7 @@ class TestDeprecatedCall(object):
             pass
 
         msg = 'Did not produce DeprecationWarning or PendingDeprecationWarning'
-        with pytest.raises(AssertionError, matches=msg):
+        with pytest.raises(AssertionError, match=msg):
             if mode == 'call':
                 pytest.deprecated_call(f)
             else:
