@@ -1,0 +1,1 @@
+Updated `pytest.raises` to raise a TypeError when an invalid keyword argument is passed.

@@ -597,6 +597,10 @@ def raises(expected_exception, *args, **kwargs):
             message = kwargs.pop("message")
         if "match" in kwargs:
             match_expr = kwargs.pop("match")
+        if len(kwargs.keys()) > 0:
+            msg = 'Unexpected keyword arguments passed to pytest.raises: '
+            msg += ', '.join(kwargs.keys())
+            raise TypeError(msg)
         return RaisesContext(expected_exception, message, match_expr)
     elif isinstance(args[0], str):
         code, = args
