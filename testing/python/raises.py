@@ -61,6 +61,11 @@ class TestRaises(object):
         with pytest.raises(TypeError):
             pytest.raises('wrong', lambda: None)
 
+    def test_invalid_arguments_to_raises(self):
+        with pytest.raises(TypeError, match='unknown'):
+            with pytest.raises(TypeError, unknown='bogus'):
+                raise ValueError()
+
     def test_tuple(self):
         with pytest.raises((KeyError, ValueError)):
             raise KeyError('oops')
