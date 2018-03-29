@@ -1,4 +1,9 @@
-from collections import namedtuple, MutableMapping as MappingMixin
+import sys
+if sys.version_info >= (3, 4):
+    from collections.abc import MutableMapping as MappingMixin
+else:
+    from collections import MutableMapping as MappingMixin
+from collections import namedtuple
 import warnings
 from operator import attrgetter
 import inspect
