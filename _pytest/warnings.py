@@ -60,9 +60,10 @@ def catch_warnings_for_item(item):
         for arg in inifilters:
             _setoption(warnings, arg)
 
-        for mark in item.find_markers('filterwarnings'):
-            for arg in mark.args:
-                warnings._setoption(arg)
+        for mark in item.iter_markers():
+            if mark.name == 'filterwarnings':
+                for arg in mark.args:
+                    warnings._setoption(arg)
 
         yield
 

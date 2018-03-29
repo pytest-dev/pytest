@@ -533,7 +533,7 @@ class TestFunctional(object):
         items, rec = testdir.inline_genitems(p)
         for item in items:
             print(item, item.keywords)
-            assert list(item.find_markers('a'))
+            assert [x for x in item.iter_markers() if x.name == 'a']
 
     def test_mark_decorator_subclass_does_not_propagate_to_base(self, testdir):
         p = testdir.makepyfile("""

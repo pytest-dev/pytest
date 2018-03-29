@@ -1,8 +1,6 @@
 from __future__ import absolute_import, division, print_function
 import os
 
-from itertools import chain
-from operator import itemgetter
 import six
 import py
 import attr
@@ -10,7 +8,7 @@ import attr
 import _pytest
 import _pytest._code
 
-from _pytest.mark.structures import NodeKeywords, NodeMarkers, MarkInfo
+from _pytest.mark.structures import NodeKeywords, MarkInfo
 
 SEP = "/"
 
@@ -91,7 +89,9 @@ class Node(object):
 
         #: keywords/markers collected from all scopes
         self.keywords = NodeKeywords(self)
-        self._markers = NodeMarkers()
+
+        #: the marker objects belonging to this node
+        self.own_markers = []
 
         #: allow adding of extra keywords to use for matching
         self.extra_keyword_matches = set()
@@ -181,30 +181,13 @@ class Node(object):
         elif not isinstance(marker, MarkDecorator):
             raise ValueError("is not a string or pytest.mark.* Marker")
         self.keywords[marker.name] = marker
-        self._markers.update([marker])
-
-    def find_markers(self, name):
-        """find all marks with the given name on the node and its parents
-
-        :param str name: name of the marker
-        :returns: iterator over marks matching the name"""
-        return map(itemgetter(1), self.find_markers_with_node(name))
-
-    def find_markers_with_node(self, name):
-        """find all marks with the given name on the node and its parents
-
-        :param str name: name of the marker
-        :returns: iterator over (node, mark) matching the name
-        """
-        for node in reversed(self.listchain()):
-            for mark in node._markers.find(name):
-                yield node, mark
+        self.own_markers.append(marker)
 
     def iter_markers(self):
         """
         iterate over all markers of the node
         """
-        return chain.from_iterable(x._markers for x in reversed(self.listchain()))
+        return (x[1] for x in self.iter_markers_with_node())
 
     def iter_markers_with_node(self):
         """
@@ -212,7 +195,7 @@ class Node(object):
         returns sequence of tuples (node, mark)
         """
         for node in reversed(self.listchain()):
-            for mark in node._markers:
+            for mark in node.own_markers:
                 yield node, mark
 
     def get_marker(self, name):
@@ -223,7 +206,7 @@ class Node(object):
 
           deprecated
         """
-        markers = list(self.find_markers(name))
+        markers = [x for x in self.iter_markers() if x.name == name]
         if markers:
             return MarkInfo(markers)
 

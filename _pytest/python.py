@@ -117,8 +117,9 @@ def pytest_generate_tests(metafunc):
         if hasattr(metafunc.function, attr):
             msg = "{0} has '{1}', spelling should be 'parametrize'"
             raise MarkerError(msg.format(metafunc.function.__name__, attr))
-    for marker in metafunc.definition.find_markers('parametrize'):
-        metafunc.parametrize(*marker.args, **marker.kwargs)
+    for marker in metafunc.definition.iter_markers():
+        if marker.name == 'parametrize':
+            metafunc.parametrize(*marker.args, **marker.kwargs)
 
 
 def pytest_configure(config):
@@ -221,7 +222,7 @@ class PyobjMixin(PyobjContext):
                 # XXX evil hack
                 # used to avoid Instance collector marker duplication
                 if self._ALLOW_MARKERS:
-                    self._markers.update(get_unpacked_marks(self.obj))
+                    self.own_markers.extend(get_unpacked_marks(self.obj))
             return obj
 
         def fset(self, value):
@@ -1132,7 +1133,7 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
             self.obj = callobj
 
         self.keywords.update(self.obj.__dict__)
-        self._markers.update(get_unpacked_marks(self.obj))
+        self.own_markers.extend(get_unpacked_marks(self.obj))
         if callspec:
             self.callspec = callspec
             # this is total hostile and a mess
@@ -1142,7 +1143,7 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
                 # feel free to cry, this was broken for years before
                 # and keywords cant fix it per design
                 self.keywords[mark.name] = mark
-            self._markers.update(callspec.marks)
+            self.own_markers.extend(callspec.marks)
         if keywords:
             self.keywords.update(keywords)
 
