@@ -1,1 +1,0 @@
-Suppress ``IOError`` when closing the temporary file used for capturing streams in Python 2.7.
