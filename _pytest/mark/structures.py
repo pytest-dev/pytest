@@ -1,18 +1,13 @@
-import sys
-if sys.version_info >= (3, 4):
-    from collections.abc import MutableMapping as MappingMixin
-else:
-    from collections import MutableMapping as MappingMixin
-from collections import namedtuple
-import warnings
-from operator import attrgetter
 import inspect
+import warnings
+from collections import namedtuple
+from operator import attrgetter
 
 import attr
-from ..deprecated import MARK_PARAMETERSET_UNPACKING
-from ..compat import NOTSET, getfslineno
 from six.moves import map
 
+from ..compat import NOTSET, getfslineno, MappingMixin
+from ..deprecated import MARK_PARAMETERSET_UNPACKING
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
 
