@@ -5,11 +5,7 @@ import pprint
 import _pytest._code
 import py
 import six
-import sys
-if sys.version_info >= (3, 4):
-    from collections.abc import Sequence
-else:
-    from collections import Sequence
+from ..compat import Sequence
 
 u = six.text_type
 
