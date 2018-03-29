@@ -1,3 +1,0 @@
-During test collection, when stdin is not allowed to be read, the
-``DontReadFromStdin`` object still allow itself to be iterable and
-resolved to an iterator without crashing.
