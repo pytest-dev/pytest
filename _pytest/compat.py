@@ -38,11 +38,11 @@ PY35 = sys.version_info[:2] >= (3, 5)
 PY36 = sys.version_info[:2] >= (3, 6)
 MODULE_NOT_FOUND_ERROR = 'ModuleNotFoundError' if PY36 else 'ImportError'
 
-if _PY2:
-    # those raise DeprecationWarnings in Python >=3.7
+if _PY3:
     from collections.abc import MutableMapping as MappingMixin  # noqa
     from collections.abc import Sequence  # noqa
 else:
+    # those raise DeprecationWarnings in Python >=3.7
     from collections import MutableMapping as MappingMixin  # noqa
     from collections import Sequence  # noqa
 
