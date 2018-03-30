@@ -1122,6 +1122,8 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
     Python test function.
     """
     _genid = None
+    # disable since functions handle it themselfes
+    _ALLOW_MARKERS = False
 
     def __init__(self, name, parent, args=None, config=None,
                  callspec=None, callobj=NOTSET, keywords=None, session=None,
