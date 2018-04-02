@@ -1,13 +1,13 @@
-from collections import namedtuple, MutableMapping as MappingMixin
-import warnings
-from operator import attrgetter
 import inspect
+import warnings
+from collections import namedtuple
+from operator import attrgetter
 
 import attr
-from ..deprecated import MARK_PARAMETERSET_UNPACKING
-from ..compat import NOTSET, getfslineno
 from six.moves import map
 
+from ..compat import NOTSET, getfslineno, MappingMixin
+from ..deprecated import MARK_PARAMETERSET_UNPACKING
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
 

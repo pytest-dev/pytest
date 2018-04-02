@@ -5,7 +5,7 @@ import pprint
 import _pytest._code
 import py
 import six
-from collections import Sequence
+from ..compat import Sequence
 
 u = six.text_type
 
