@@ -1,0 +1,1 @@
+Added the exception object to the ``TestReport``, for reference in hook functions.
