@@ -67,40 +67,53 @@ class _CompatProperty(object):
         return getattr(__import__('pytest'), self.name)
 
 
+def from_parent(name, required=True):
+    def fetch_from_parent(self):
+        parent = self.parent
+        if parent is None:
+            raise ValueError("cant get %s from parent %r" % (name, parent))
+        if required:
+            return getattr(parent, name)
+        else:
+            return getattr(parent, name, None)
+    return attr.Factory(fetch_from_parent, takes_self=True)
+
+
+@attr.s(hash=False, cmp=False)
 class Node(object):
     """ base class for Collector and Item the test collection tree.
     Collector subclasses have children, Items are terminal nodes."""
 
-    def __init__(self, name, parent=None, config=None, session=None, fspath=None, nodeid=None):
-        #: a unique name within the scope of the parent node
-        self.name = name
+    #: a unique name within the scope of the parent node
+    name = attr.ib(hash=False)
+    #: the parent collector node.
+    parent = attr.ib(default=None, repr=False, hash=False)
+    #: the pytest config object
+    config = attr.ib(default=from_parent('config'), repr=False, hash=False)
+    #: the session this node is part of
+    session = attr.ib(default=from_parent('session'), repr=False, hash=False)
+    #: filesystem path where this node was collected from (can be None)
+    fspath = attr.ib(default=from_parent('session', required=False),
+                     repr=False, hash=False)
+    #: keywords/markers collected from all scopes
+    #  deprecated
+    keywords = attr.ib(default=attr.Factory(NodeKeywords, takes_self=True),
+                       repr=False, init=False, hash=False)
+    #: allow adding of extra keywords to use for matching
+    #  deprecated
+    extra_keyword_matches = attr.ib(default=attr.Factory(set),
+                                    repr=False, init=False, hash=False)
 
-        #: the parent collector node.
-        self.parent = parent
+    # used for storing artificial fixturedefs for direct parametrization
+    _name2pseudofixturedef = attr.ib(default=attr.Factory(dict),
+                                     repr=False, init=False, hash=False)
+    _nodeid = attr.ib(
+        default=attr.Factory(
+            lambda self: self.parent.nodeid + "::" + self.name,
+            takes_self=True),
+        hash=True)
 
-        #: the pytest config object
-        self.config = config or parent.config
-
-        #: the session this node is part of
-        self.session = session or parent.session
-
-        #: filesystem path where this node was collected from (can be None)
-        self.fspath = fspath or getattr(parent, 'fspath', None)
-
-        #: keywords/markers collected from all scopes
-        self.keywords = NodeKeywords(self)
-
-        #: allow adding of extra keywords to use for matching
-        self.extra_keyword_matches = set()
-
-        # used for storing artificial fixturedefs for direct parametrization
-        self._name2pseudofixturedef = {}
-
-        if nodeid is not None:
-            self._nodeid = nodeid
-        else:
-            assert parent is not None
-            self._nodeid = self.parent.nodeid + "::" + self.name
+    __hash__ = None
 
     @property
     def ihook(self):
@@ -125,10 +138,6 @@ class Node(object):
             #    "use pytest_pycollect_makeitem(...) to create custom "
             #    "collection nodes" % name, category=DeprecationWarning)
         return cls
-
-    def __repr__(self):
-        return "<%s %r>" % (self.__class__.__name__,
-                            getattr(self, 'name', None))
 
     def warn(self, code, message):
         """ generate a warning with the given code and message for this
@@ -252,6 +261,7 @@ class Node(object):
     repr_failure = _repr_failure_py
 
 
+@attr.s(hash=False, cmp=False)
 class Collector(Node):
     """ Collector instances create children through collect()
         and thus iteratively build a tree.
@@ -288,6 +298,7 @@ def _check_initialpaths_for_relpath(session, fspath):
             return fspath.relto(initial_path.dirname)
 
 
+@attr.s(init=False, hash=False, cmp=False)
 class FSCollector(Collector):
     def __init__(self, fspath, parent=None, config=None, session=None, nodeid=None):
         fspath = py.path.local(fspath)  # xxx only for test_resultlog.py?
@@ -312,23 +323,23 @@ class FSCollector(Collector):
         super(FSCollector, self).__init__(name, parent, config, session, nodeid=nodeid, fspath=fspath)
 
 
+@attr.s(hash=False, cmp=False)
 class File(FSCollector):
     """ base class for collecting tests from a file. """
 
 
+@attr.s(hash=False, cmp=False)
 class Item(Node):
     """ a basic test invocation item. Note that for a single function
     there might be multiple test invocation items.
     """
     nextitem = None
-
-    def __init__(self, name, parent=None, config=None, session=None, nodeid=None):
-        super(Item, self).__init__(name, parent, config, session, nodeid=nodeid)
-        self._report_sections = []
-
-        #: user properties is a list of tuples (name, value) that holds user
-        #: defined properties for this test.
-        self.user_properties = []
+    _report_sections = attr.ib(default=attr.Factory(list),
+                               hash=False, init=False, repr=False)
+    #: user properties is a list of tuples (name, value) that holds user
+    #: defined properties for this test.
+    user_properties = attr.ib(default=attr.Factory(list),
+                              hash=False, init=False, repr=False)
 
     def add_report_section(self, when, key, content):
         """
