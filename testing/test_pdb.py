@@ -4,7 +4,7 @@ import platform
 import os
 
 import _pytest._code
-from _pytest.debugging import SUPPORTS_BREAKPOINT_BUILTIN, pytestPDB
+from _pytest.debugging import SUPPORTS_BREAKPOINT_BUILTIN
 import pytest
 
 
