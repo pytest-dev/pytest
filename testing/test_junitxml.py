@@ -877,7 +877,6 @@ def test_record_property(testdir):
     pnodes[1].assert_attr(name="foo", value="<1")
     result.stdout.fnmatch_lines([
         'test_record_property.py::test_record',
-        '*record_property*experimental*',
     ])
 
 
