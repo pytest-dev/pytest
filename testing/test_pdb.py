@@ -480,13 +480,6 @@ class TestDebuggingBreakpoints(object):
             assert SUPPORTS_BREAKPOINT_BUILTIN is False
 
     @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
-    def test_sys_breakpointhook_is_pytest_PDB(self):
-        """
-        Test that sys.breakpointhook by default is set to pytest's internal class.
-        """
-        assert sys.breakpointhook == pytestPDB.set_trace
-
-    @pytest.mark.skipif(not SUPPORTS_BREAKPOINT_BUILTIN, reason="Requires breakpoint() builtin")
     @pytest.mark.parametrize('arg', ['--pdb', ''])
     def test_sys_breakpointhook_configure_and_unconfigure(self, testdir, arg):
         """
