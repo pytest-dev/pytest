@@ -136,7 +136,7 @@ Trivial/Internal Changes
 - Internal ``mark.py`` module has been turned into a package. (`#3250
   <https://github.com/pytest-dev/pytest/issues/3250>`_)
 
-- ``pytest`` now depends on the `more_itertools
+- ``pytest`` now depends on the `more-itertools
   <https://github.com/erikrose/more-itertools>`_ package. (`#3265
   <https://github.com/pytest-dev/pytest/issues/3265>`_)
 
