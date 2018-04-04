@@ -3,8 +3,10 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import copy
 import logging
 import re
+import sys
 from contextlib import contextmanager
 
 import py
@@ -19,9 +21,10 @@ DEFAULT_LOG_FORMAT = "%(filename)-25s %(lineno)4d %(levelname)-8s %(message)s"
 DEFAULT_LOG_DATE_FORMAT = "%H:%M:%S"
 
 
-class ColoredLevelFormatter(logging.Formatter):
+class CustomFormatter(logging.Formatter):
     """
-    Colorize the %(levelname)..s part of the log format passed to __init__.
+    Colorize the %(levelname)..s part of the log format passed to __init__
+    and support proper aligning of multline log messages.
     """
 
     LOGLEVEL_COLOROPTS = {
@@ -36,11 +39,7 @@ class ColoredLevelFormatter(logging.Formatter):
     LEVELNAME_FMT_REGEX = re.compile(r"%\(levelname\)([+-]?\d*s)")
 
     def __init__(self, terminalwriter, *args, **kwargs):
-        super(ColoredLevelFormatter, self).__init__(*args, **kwargs)
-        if six.PY2:
-            self._original_fmt = self._fmt
-        else:
-            self._original_fmt = self._style._fmt
+        super(CustomFormatter, self).__init__(*args, **kwargs)
         self._level_to_fmt_mapping = {}
 
         levelname_fmt_match = self.LEVELNAME_FMT_REGEX.search(self._fmt)
@@ -62,13 +61,62 @@ class ColoredLevelFormatter(logging.Formatter):
                 colorized_formatted_levelname, self._fmt
             )
 
+    def formatMessage(self, record):
+        fmt = self._level_to_fmt_mapping.get(record.levelno, self._fmt)
+
+        rdict = copy.copy(record.__dict__)
+        # improve this hacky code, which calculates the
+        # 'continuation'-column for every record with a multiline message.
+        rdict["message"] = "MARKER"
+        logstr = self._fmt % rdict
+        continuation_col = logstr.find("MARKER")
+        rdict["message"] = record.message
+
+        record.continuation_col = continuation_col
+        return fmt % rdict
+
     def format(self, record):
-        fmt = self._level_to_fmt_mapping.get(record.levelno, self._original_fmt)
         if six.PY2:
-            self._fmt = fmt
+            fmtmessage = self._format27(record)
         else:
-            self._style._fmt = fmt
-        return super(ColoredLevelFormatter, self).format(record)
+            fmtmessage = super(CustomFormatter, self).format(record)
+
+        if "\n" in fmtmessage:
+            return ("\n" + record.continuation_col * " ").join(fmtmessage.splitlines())
+        return fmtmessage
+
+    def _format27(self, record):
+        """
+        Copied from stdlib version of logging.Formatter.format.
+
+        Use self.formatMessage instead of directly using old style str
+        formatting as used in the stdlib.
+        """
+        record.message = record.getMessage()
+        if self.usesTime():
+            record.asctime = self.formatTime(record, self.datefmt)
+
+        s = self.formatMessage(record)
+
+        if record.exc_info:
+            # Cache the traceback text to avoid converting it multiple times
+            # (it's constant anyway)
+            if not record.exc_text:
+                record.exc_text = self.formatException(record.exc_info)
+        if record.exc_text:
+            if s[-1:] != "\n":
+                s = s + "\n"
+            try:
+                s = s + record.exc_text
+            except UnicodeError:
+                # Sometimes filenames have non-ASCII chars, which can lead
+                # to errors when s is Unicode and record.exc_text is str
+                # See issue 8924.
+                # We also use replace for when there are multiple
+                # encodings, e.g. UTF-8 for the filesystem and latin-1
+                # for a script. See issue 13232.
+                s = s + record.exc_text.decode(sys.getfilesystemencoding(), "replace")
+        return s
 
 
 def get_option_ini(config, *names):
@@ -547,11 +595,8 @@ class LoggingPlugin(object):
             log_cli_date_format = get_option_ini(
                 self._config, "log_cli_date_format", "log_date_format"
             )
-            if (
-                self._config.option.color != "no"
-                and ColoredLevelFormatter.LEVELNAME_FMT_REGEX.search(log_cli_format)
-            ):
-                log_cli_formatter = ColoredLevelFormatter(
+            if self._config.option.color != "no":
+                log_cli_formatter = CustomFormatter(
                     create_terminal_writer(self._config),
                     log_cli_format,
                     datefmt=log_cli_date_format,
