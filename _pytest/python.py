@@ -14,7 +14,7 @@ from itertools import count
 import py
 import six
 from _pytest.mark import MarkerError
-from _pytest.config import hookimpl
+from _pytest.config import hookimpl, print_short_traceback
 
 import _pytest
 import pluggy
@@ -25,7 +25,7 @@ from _pytest.compat import (
     isclass, isfunction, is_generator, ascii_escaped,
     REGEX_TYPE, STRING_TYPES, NoneType, NOTSET,
     get_real_func, getfslineno, safe_getattr,
-    safe_str, getlocation, enum,
+    getlocation, enum,
 )
 from _pytest.outcomes import fail
 from _pytest.mark.structures import transfer_markers
@@ -424,19 +424,8 @@ class Module(nodes.File, PyCollector):
                 "unique basename for your test file modules"
                 % e.args
             )
-        except ImportError:
-            from _pytest._code.code import ExceptionInfo
-            exc_info = ExceptionInfo()
-            if self.config.getoption('verbose') < 2:
-                exc_info.traceback = exc_info.traceback.filter(filter_traceback)
-            exc_repr = exc_info.getrepr(style='short') if exc_info.traceback else exc_info.exconly()
-            formatted_tb = safe_str(exc_repr)
-            raise self.CollectError(
-                "ImportError while importing test module '{fspath}'.\n"
-                "Hint: make sure your test modules/packages have valid Python names.\n"
-                "Traceback:\n"
-                "{traceback}".format(fspath=self.fspath, traceback=formatted_tb)
-            )
+        except ImportError as e:
+            print_short_traceback(e, self.config)
         except _pytest.runner.Skipped as e:
             if e.allow_module_level:
                 raise
