@@ -25,7 +25,7 @@ from _pytest.compat import (
     isclass, isfunction, is_generator, ascii_escaped,
     REGEX_TYPE, STRING_TYPES, NoneType, NOTSET,
     get_real_func, getfslineno, safe_getattr,
-    safe_str, getlocation, enum,
+    safe_str, getlocation, enum, get_default_arg_names
 )
 from _pytest.outcomes import fail
 from _pytest.mark.structures import transfer_markers
@@ -789,6 +789,7 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         argnames, parameters = ParameterSet._for_parametrize(
             argnames, argvalues, self.function, self.config)
         del argvalues
+        default_arg_names = set(get_default_arg_names(self.function))
 
         if scope is None:
             scope = _find_parametrized_scope(argnames, self._arg2fixturedefs, indirect)
@@ -797,13 +798,16 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
         valtypes = {}
         for arg in argnames:
             if arg not in self.fixturenames:
-                if isinstance(indirect, (tuple, list)):
-                    name = 'fixture' if arg in indirect else 'argument'
+                if arg in default_arg_names:
+                    raise ValueError("%r already takes an argument %r with a default value" % (self.function, arg))
                 else:
-                    name = 'fixture' if indirect else 'argument'
-                raise ValueError(
-                    "%r uses no %s %r" % (
-                        self.function, name, arg))
+                    if isinstance(indirect, (tuple, list)):
+                        name = 'fixture' if arg in indirect else 'argument'
+                    else:
+                        name = 'fixture' if indirect else 'argument'
+                    raise ValueError(
+                        "%r uses no %s %r" % (
+                            self.function, name, arg))
 
         if indirect is True:
             valtypes = dict.fromkeys(argnames, "params")
