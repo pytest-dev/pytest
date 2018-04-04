@@ -719,24 +719,33 @@ def test_makereport_getsource_dynamic_code(testdir, monkeypatch):
     result.stdout.fnmatch_lines(["*test_fix*", "*fixture*'missing'*not found*"])
 
 
-def test_store_except_info_on_eror():
+def test_store_except_info_on_error():
     """ Test that upon test failure, the exception info is stored on
     sys.last_traceback and friends.
     """
-    # Simulate item that raises a specific exception
-    class ItemThatRaises(object):
+    # Simulate item that might raise a specific exception, depending on `raise_error` class var
+    class ItemMightRaise(object):
         nodeid = 'item_that_raises'
+        raise_error = True
 
         def runtest(self):
-            raise IndexError('TEST')
+            if self.raise_error:
+                raise IndexError('TEST')
     try:
-        runner.pytest_runtest_call(ItemThatRaises())
+        runner.pytest_runtest_call(ItemMightRaise())
     except IndexError:
         pass
     # Check that exception info is stored on sys
     assert sys.last_type is IndexError
     assert sys.last_value.args[0] == 'TEST'
     assert sys.last_traceback
+
+    # The next run should clear the exception info stored by the previous run
+    ItemMightRaise.raise_error = False
+    runner.pytest_runtest_call(ItemMightRaise())
+    assert sys.last_type is None
+    assert sys.last_value is None
+    assert sys.last_traceback is None
 
 
 def test_current_test_env_var(testdir, monkeypatch):
