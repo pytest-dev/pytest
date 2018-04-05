@@ -245,11 +245,6 @@ def record_property(request):
         def test_function(record_property):
             record_property("example_key", 1)
     """
-    request.node.warn(
-        code='C3',
-        message='record_property is an experimental feature',
-    )
-
     def append_property(name, value):
         request.node.user_properties.append((name, value))
     return append_property
