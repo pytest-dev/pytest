@@ -26,15 +26,9 @@ which also serve as documentation.
     :ref:`fixtures <fixtures>`.
 
 
-
-
-
 .. currentmodule:: _pytest.mark.structures
 .. autoclass:: Mark
 	:members:
-
-
-
 
 
 .. `marker-iteration`
@@ -44,17 +38,13 @@ Marker iteration
 
 .. versionadded:: 3.6
 
-A new api to access markers was introduced in order to elevate the inherent design mistakes
-which accumulated over the evolution of markers from simply updating the ``__dict__`` attribute of functions to something more powerful.
+pytest's marker implementation traditionally worked by simply updating the ``__dict__`` attribute of functions to add markers, in a cumulative manner. As a result of the this, markers would unintendely be passed along class hierarchies in surprising ways plus the API for retriving them was inconsistent, as markers from parameterization would be stored differently than markers applied using the ``@pytest.mark`` decorator and markers added via ``node.add_marker``.
 
-At the end of this evolution Markers would unintenedly pass along in class hierachies and the api for retriving them was inconsistent,
-as markers from parameterization would store differently than markers from objects and markers added via ``node.add_marker``
+This state of things made it technically next to impossible to use data from markers correctly (``args`` and ``kwargs``) without having a deep understanding of the internals, leading to subtle and hard to understand bugs in more advanced usages.
 
-This in turnd made it technically next to impossible to use the data of markers correctly without having a deep understanding of the broken internals.
+A new API to access markers has been introduced in pytest 3.6 in order to solve the problems with the initial design, providing :func:`_pytest.nodes.Node.iter_markers` method to iterate over markers in a consistent manner and reworking the internals, which solved great deal of problems with the initial design.
 
-The new api is provides :func:`_pytest.nodes.Node.iter_markers` on :py:class:`_pytest.nodes.node`  method to iterate over markers in a consistent manner.
-
-.. warning::
+.. note::
 
 	in a future major relase of pytest we will introduce class based markers,
 	at which points markers will no longer be limited to instances of :py:class:`Mark`
