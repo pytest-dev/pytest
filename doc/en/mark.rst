@@ -27,5 +27,35 @@ which also serve as documentation.
 
 
 
+
+
 .. currentmodule:: _pytest.mark.structures
 .. autoclass:: Mark
+	:members:
+
+
+
+
+
+.. `marker-iteration`
+
+Marker iteration
+=================
+
+.. versionadded:: 3.6
+
+A new api to access markers was introduced in order to elevate the inherent design mistakes
+which accumulated over the evolution of markers from simply updating the ``__dict__`` attribute of functions to something more powerful.
+
+At the end of this evolution Markers would unintenedly pass along in class hierachies and the api for retriving them was inconsistent,
+as markers from parameterization would store differently than markers from objects and markers added via ``node.add_marker``
+
+This in turnd made it technically next to impossible to use the data of markers correctly without having a deep understanding of the broken internals.
+
+The new api is provides :func:`_pytest.nodes.Node.iter_markers` on :py:class:`_pytest.nodes.node`  method to iterate over markers in a consistent manner.
+
+.. warning::
+
+	in a future major relase of pytest we will introduce class based markers,
+	at which points markers will no longer be limited to instances of :py:class:`Mark`
+

@@ -114,11 +114,21 @@ class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
 
 @attr.s(frozen=True)
 class Mark(object):
-    name = attr.ib()
-    args = attr.ib()
-    kwargs = attr.ib()
+    #: name of the mark
+    name = attr.ib(type=str)
+    #: positional arguments of the mark decorator
+    args = attr.ib(type="List[object]")
+    #: keyword arguments of the mark decorator
+    kwargs = attr.ib(type="Dict[str, object]")
 
     def combined_with(self, other):
+        """
+        :param other: the mark to combine with
+        :type other: Mark
+        :rtype: Mark
+
+        combines by appending aargs and merging the mappings
+        """
         assert self.name == other.name
         return Mark(
             self.name, self.args + other.args,
