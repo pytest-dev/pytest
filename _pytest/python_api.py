@@ -584,7 +584,7 @@ def raises(expected_exception, *args, **kwargs):
 
     """
     __tracebackhide__ = True
-    if not issubclass(expected_exception, BaseException):
+    if not isclass(expected_exception) or not issubclass(expected_exception, BaseException):
         for exc in filterfalse(isclass, always_iterable(expected_exception)):
             msg = ("exceptions must be old-style classes or"
                    " derived from BaseException, not %s")
