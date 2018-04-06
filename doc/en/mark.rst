@@ -29,6 +29,7 @@ which also serve as documentation.
 .. currentmodule:: _pytest.mark.structures
 .. autoclass:: Mark
 	:members:
+	:noindex:
 
 
 .. `marker-iteration`
