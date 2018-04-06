@@ -584,10 +584,11 @@ def raises(expected_exception, *args, **kwargs):
 
     """
     __tracebackhide__ = True
-    for exc in filterfalse(isclass, always_iterable(expected_exception)):
-        msg = ("exceptions must be old-style classes or"
-               " derived from BaseException, not %s")
-        raise TypeError(msg % type(exc))
+    if not issubclass(expected_exception, BaseException):
+        for exc in filterfalse(isclass, always_iterable(expected_exception)):
+            msg = ("exceptions must be old-style classes or"
+                   " derived from BaseException, not %s")
+            raise TypeError(msg % type(exc))
 
     message = "DID NOT RAISE {0}".format(expected_exception)
     match_expr = None
