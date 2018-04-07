@@ -896,11 +896,6 @@ class Config(object):
         self.pluginmanager.register(self, "pytestconfig")
         self._configured = False
 
-        def do_setns(dic):
-            import pytest
-            setns(pytest, dic)
-
-        self.hook.pytest_namespace.call_historic(do_setns, {})
         self.hook.pytest_addoption.call_historic(kwargs=dict(parser=self._parser))
 
     def add_cleanup(self, func):
@@ -1360,27 +1355,6 @@ def determine_setup(inifile, args, warnfunc=None, rootdir_cmd_arg=None):
             raise UsageError("Directory '{}' not found. Check your '--rootdir' option.".format(rootdir_abs_path))
         rootdir = rootdir_abs_path
     return rootdir, inifile, inicfg or {}
-
-
-def setns(obj, dic):
-    import pytest
-    for name, value in dic.items():
-        if isinstance(value, dict):
-            mod = getattr(obj, name, None)
-            if mod is None:
-                modname = "pytest.%s" % name
-                mod = types.ModuleType(modname)
-                sys.modules[modname] = mod
-                mod.__all__ = []
-                setattr(obj, name, mod)
-            obj.__all__.append(name)
-            setns(mod, value)
-        else:
-            setattr(obj, name, value)
-            obj.__all__.append(name)
-            # if obj != pytest:
-            #    pytest.__all__.append(name)
-            setattr(pytest, name, value)
 
 
 def create_terminal_writer(config, *args, **kwargs):

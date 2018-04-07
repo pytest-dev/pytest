@@ -59,21 +59,6 @@ class TestPytestPluginInteractions(object):
         result = testdir.runpython(p)
         assert result.ret == 0
 
-    def test_do_ext_namespace(self, testdir):
-        testdir.makeconftest("""
-            def pytest_namespace():
-                return {'hello': 'world'}
-        """)
-        p = testdir.makepyfile("""
-            from pytest import hello
-            import pytest
-            def test_hello():
-                assert hello == "world"
-                assert 'hello' in pytest.__all__
-        """)
-        reprec = testdir.inline_run(p)
-        reprec.assertoutcome(passed=1)
-
     def test_do_option_postinitialize(self, testdir):
         config = testdir.parseconfigure()
         assert not hasattr(config.option, 'test123')

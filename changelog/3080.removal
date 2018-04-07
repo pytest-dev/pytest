@@ -1,0 +1,1 @@
+removed the pytest_namespace hook - it was never a good idea and prevented fixing bugs in pytest's initialization.
