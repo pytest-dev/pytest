@@ -759,8 +759,9 @@ class TestInvocationVariants(object):
 
     def test_core_backward_compatibility(self):
         """Test backward compatibility for get_plugin_manager function. See #787."""
-        import _pytest.config
-        assert type(_pytest.config.get_plugin_manager()) is _pytest.config.PytestPluginManager
+        from _pytest.config import get_plugin_manager
+        from _pytest.config.pluginmanager import PytestPluginManager
+        assert type(get_plugin_manager()) is PytestPluginManager
 
     def test_has_plugin(self, request):
         """Test hasplugin function of the plugin manager (#932)."""
