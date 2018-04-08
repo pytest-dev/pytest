@@ -4,7 +4,7 @@ from textwrap import dedent
 import _pytest._code
 import py
 import pytest
-from _pytest.config import PytestPluginManager
+from _pytest.config.pluginmanager import PytestPluginManager
 from _pytest.main import EXIT_NOTESTSCOLLECTED, EXIT_USAGEERROR
 
 
@@ -107,7 +107,7 @@ def test_conftest_global_import(testdir):
     testdir.makeconftest("x=3")
     p = testdir.makepyfile("""
         import py, pytest
-        from _pytest.config import PytestPluginManager
+        from _pytest.config.pluginmanager import PytestPluginManager
         conf = PytestPluginManager()
         mod = conf._importconftest(py.path.local("conftest.py"))
         assert mod.x == 3

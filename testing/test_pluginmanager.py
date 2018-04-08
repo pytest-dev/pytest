@@ -6,7 +6,8 @@ import re
 import sys
 import types
 
-from _pytest.config import get_config, PytestPluginManager
+from _pytest.config import get_config
+from _pytest.config.pluginmanager import PytestPluginManager
 from _pytest.main import EXIT_NOTESTSCOLLECTED, Session
 
 
