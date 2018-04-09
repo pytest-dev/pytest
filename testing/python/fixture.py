@@ -1781,6 +1781,8 @@ class TestAutouseManagement(object):
             import pytest
             values = []
             def pytest_generate_tests(metafunc):
+                if metafunc.cls is None:
+                    assert metafunc.function is test_finish
                 if metafunc.cls is not None:
                     metafunc.parametrize("item", [1,2], scope="class")
             class TestClass(object):
@@ -1798,7 +1800,7 @@ class TestAutouseManagement(object):
                 assert values == ["setup-1", "step1-1", "step2-1", "teardown-1",
                              "setup-2", "step1-2", "step2-2", "teardown-2",]
         """)
-        reprec = testdir.inline_run()
+        reprec = testdir.inline_run('-s')
         reprec.assertoutcome(passed=5)
 
     def test_ordering_autouse_before_explicit(self, testdir):

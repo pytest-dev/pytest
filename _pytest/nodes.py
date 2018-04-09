@@ -8,7 +8,7 @@ import attr
 import _pytest
 import _pytest._code
 
-from _pytest.mark.structures import NodeKeywords
+from _pytest.mark.structures import NodeKeywords, MarkInfo
 
 SEP = "/"
 
@@ -89,6 +89,9 @@ class Node(object):
 
         #: keywords/markers collected from all scopes
         self.keywords = NodeKeywords(self)
+
+        #: the marker objects belonging to this node
+        self.own_markers = []
 
         #: allow adding of extra keywords to use for matching
         self.extra_keyword_matches = set()
@@ -178,15 +181,34 @@ class Node(object):
         elif not isinstance(marker, MarkDecorator):
             raise ValueError("is not a string or pytest.mark.* Marker")
         self.keywords[marker.name] = marker
+        self.own_markers.append(marker)
+
+    def iter_markers(self):
+        """
+        iterate over all markers of the node
+        """
+        return (x[1] for x in self.iter_markers_with_node())
+
+    def iter_markers_with_node(self):
+        """
+        iterate over all markers of the node
+        returns sequence of tuples (node, mark)
+        """
+        for node in reversed(self.listchain()):
+            for mark in node.own_markers:
+                yield node, mark
 
     def get_marker(self, name):
         """ get a marker object from this node or None if
-        the node doesn't have a marker with that name. """
-        val = self.keywords.get(name, None)
-        if val is not None:
-            from _pytest.mark import MarkInfo, MarkDecorator
-            if isinstance(val, (MarkDecorator, MarkInfo)):
-                return val
+        the node doesn't have a marker with that name.
+
+        ..warning::
+
+          deprecated
+        """
+        markers = [x for x in self.iter_markers() if x.name == name]
+        if markers:
+            return MarkInfo(markers)
 
     def listextrakeywords(self):
         """ Return a set of all extra keywords in self and any parents."""

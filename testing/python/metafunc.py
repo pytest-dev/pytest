@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 import sys
-
+import attr
 import _pytest._code
 import py
 import pytest
@@ -24,13 +24,19 @@ class TestMetafunc(object):
             def __init__(self, names):
                 self.names_closure = names
 
+        @attr.s
+        class DefinitionMock(object):
+            obj = attr.ib()
+
         names = fixtures.getfuncargnames(func)
         fixtureinfo = FixtureInfo(names)
-        return python.Metafunc(func, fixtureinfo, config)
+        definition = DefinitionMock(func)
+        return python.Metafunc(definition, fixtureinfo, config)
 
     def test_no_funcargs(self, testdir):
         def function():
             pass
+
         metafunc = self.Metafunc(function)
         assert not metafunc.fixturenames
         repr(metafunc._calls)

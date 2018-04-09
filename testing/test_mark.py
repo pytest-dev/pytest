@@ -8,11 +8,13 @@ from _pytest.mark import (
     EMPTY_PARAMETERSET_OPTION,
 )
 
+ignore_markinfo = pytest.mark.filterwarnings('ignore:MarkInfo objects:_pytest.deprecated.RemovedInPytest4Warning')
+
 
 class TestMark(object):
     def test_markinfo_repr(self):
         from _pytest.mark import MarkInfo, Mark
-        m = MarkInfo(Mark("hello", (1, 2), {}))
+        m = MarkInfo.for_mark(Mark("hello", (1, 2), {}))
         repr(m)
 
     @pytest.mark.parametrize('attr', ['mark', 'param'])
@@ -51,6 +53,7 @@ class TestMark(object):
         mark.hello(f)
         assert f.hello
 
+    @ignore_markinfo
     def test_pytest_mark_keywords(self):
         mark = Mark()
 
@@ -62,6 +65,7 @@ class TestMark(object):
         assert f.world.kwargs['x'] == 3
         assert f.world.kwargs['y'] == 4
 
+    @ignore_markinfo
     def test_apply_multiple_and_merge(self):
         mark = Mark()
 
@@ -78,6 +82,7 @@ class TestMark(object):
         assert f.world.kwargs['y'] == 1
         assert len(f.world.args) == 0
 
+    @ignore_markinfo
     def test_pytest_mark_positional(self):
         mark = Mark()
 
@@ -88,6 +93,7 @@ class TestMark(object):
         assert f.world.args[0] == "hello"
         mark.world("world")(f)
 
+    @ignore_markinfo
     def test_pytest_mark_positional_func_and_keyword(self):
         mark = Mark()
 
@@ -103,6 +109,7 @@ class TestMark(object):
         assert g.world.args[0] is f
         assert g.world.kwargs["omega"] == "hello"
 
+    @ignore_markinfo
     def test_pytest_mark_reuse(self):
         mark = Mark()
 
@@ -484,6 +491,7 @@ class TestFunctional(object):
         assert 'hello' in keywords
         assert 'world' in keywords
 
+    @ignore_markinfo
     def test_merging_markers(self, testdir):
         p = testdir.makepyfile("""
             import pytest
@@ -509,7 +517,6 @@ class TestFunctional(object):
         assert values[1].args == ()
         assert values[2].args == ("pos1", )
 
-    @pytest.mark.xfail(reason='unfixed')
     def test_merging_markers_deep(self, testdir):
         # issue 199 - propagate markers into nested classes
         p = testdir.makepyfile("""
@@ -526,7 +533,7 @@ class TestFunctional(object):
         items, rec = testdir.inline_genitems(p)
         for item in items:
             print(item, item.keywords)
-            assert 'a' in item.keywords
+            assert [x for x in item.iter_markers() if x.name == 'a']
 
     def test_mark_decorator_subclass_does_not_propagate_to_base(self, testdir):
         p = testdir.makepyfile("""
@@ -622,6 +629,7 @@ class TestFunctional(object):
             "keyword: *hello*"
         ])
 
+    @ignore_markinfo
     def test_merging_markers_two_functions(self, testdir):
         p = testdir.makepyfile("""
             import pytest
@@ -676,6 +684,7 @@ class TestFunctional(object):
         reprec = testdir.inline_run()
         reprec.assertoutcome(passed=1)
 
+    @ignore_markinfo
     def test_keyword_added_for_session(self, testdir):
         testdir.makeconftest("""
             import pytest
@@ -715,8 +724,8 @@ class TestFunctional(object):
                                 if isinstance(v, MarkInfo)])
             assert marker_names == set(expected_markers)
 
-    @pytest.mark.xfail(reason='callspec2.setmulti misuses keywords')
     @pytest.mark.issue1540
+    @pytest.mark.filterwarnings("ignore")
     def test_mark_from_parameters(self, testdir):
         testdir.makepyfile("""
             import pytest

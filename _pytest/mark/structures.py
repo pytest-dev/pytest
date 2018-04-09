@@ -4,9 +4,10 @@ from operator import attrgetter
 import inspect
 
 import attr
-from ..deprecated import MARK_PARAMETERSET_UNPACKING
+
+from ..deprecated import MARK_PARAMETERSET_UNPACKING, MARK_INFO_ATTRIBUTE
 from ..compat import NOTSET, getfslineno
-from six.moves import map
+from six.moves import map, reduce
 
 
 EMPTY_PARAMETERSET_OPTION = "empty_parameter_set_mark"
@@ -113,11 +114,21 @@ class ParameterSet(namedtuple('ParameterSet', 'values, marks, id')):
 
 @attr.s(frozen=True)
 class Mark(object):
-    name = attr.ib()
-    args = attr.ib()
-    kwargs = attr.ib()
+    #: name of the mark
+    name = attr.ib(type=str)
+    #: positional arguments of the mark decorator
+    args = attr.ib(type="List[object]")
+    #: keyword arguments of the mark decorator
+    kwargs = attr.ib(type="Dict[str, object]")
 
     def combined_with(self, other):
+        """
+        :param other: the mark to combine with
+        :type other: Mark
+        :rtype: Mark
+
+        combines by appending aargs and merging the mappings
+        """
         assert self.name == other.name
         return Mark(
             self.name, self.args + other.args,
@@ -233,7 +244,7 @@ def store_legacy_markinfo(func, mark):
         raise TypeError("got {mark!r} instead of a Mark".format(mark=mark))
     holder = getattr(func, mark.name, None)
     if holder is None:
-        holder = MarkInfo(mark)
+        holder = MarkInfo.for_mark(mark)
         setattr(func, mark.name, holder)
     else:
         holder.add_mark(mark)
@@ -260,23 +271,29 @@ def _marked(func, mark):
     invoked more than once.
     """
     try:
-        func_mark = getattr(func, mark.name)
+        func_mark = getattr(func, getattr(mark, 'combined', mark).name)
     except AttributeError:
         return False
-    return mark.args == func_mark.args and mark.kwargs == func_mark.kwargs
+    return any(mark == info.combined for info in func_mark)
 
 
+@attr.s
 class MarkInfo(object):
     """ Marking object created by :class:`MarkDecorator` instances. """
 
-    def __init__(self, mark):
-        assert isinstance(mark, Mark), repr(mark)
-        self.combined = mark
-        self._marks = [mark]
+    _marks = attr.ib()
+    combined = attr.ib(
+        repr=False,
+        default=attr.Factory(lambda self: reduce(Mark.combined_with, self._marks),
+                             takes_self=True))
 
-    name = alias('combined.name')
-    args = alias('combined.args')
-    kwargs = alias('combined.kwargs')
+    name = alias('combined.name', warning=MARK_INFO_ATTRIBUTE)
+    args = alias('combined.args', warning=MARK_INFO_ATTRIBUTE)
+    kwargs = alias('combined.kwargs', warning=MARK_INFO_ATTRIBUTE)
+
+    @classmethod
+    def for_mark(cls, mark):
+        return cls([mark])
 
     def __repr__(self):
         return "<MarkInfo {0!r}>".format(self.combined)
@@ -288,7 +305,7 @@ class MarkInfo(object):
 
     def __iter__(self):
         """ yield MarkInfo objects each relating to a marking-call. """
-        return map(MarkInfo, self._marks)
+        return map(MarkInfo.for_mark, self._marks)
 
 
 class MarkGenerator(object):
@@ -365,3 +382,33 @@ class NodeKeywords(MappingMixin):
 
     def __repr__(self):
         return "<NodeKeywords for node %s>" % (self.node, )
+
+
+@attr.s(cmp=False, hash=False)
+class NodeMarkers(object):
+    """
+    internal strucutre for storing marks belongong to a node
+
+    ..warning::
+
+        unstable api
+
+    """
+    own_markers = attr.ib(default=attr.Factory(list))
+
+    def update(self, add_markers):
+        """update the own markers
+        """
+        self.own_markers.extend(add_markers)
+
+    def find(self, name):
+        """
+        find markers in own nodes or parent nodes
+        needs a better place
+        """
+        for mark in self.own_markers:
+            if mark.name == name:
+                yield mark
+
+    def __iter__(self):
+        return iter(self.own_markers)

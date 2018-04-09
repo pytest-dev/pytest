@@ -32,7 +32,8 @@ RESULT_LOG = (
 )
 
 MARK_INFO_ATTRIBUTE = RemovedInPytest4Warning(
-    "MarkInfo objects are deprecated as they contain the merged marks"
+    "MarkInfo objects are deprecated as they contain the merged marks.\n"
+    "Please use node.iter_markers to iterate over markers correctly"
 )
 
 MARK_PARAMETERSET_UNPACKING = RemovedInPytest4Warning(

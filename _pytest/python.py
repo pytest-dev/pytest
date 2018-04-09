@@ -28,7 +28,7 @@ from _pytest.compat import (
     safe_str, getlocation, enum,
 )
 from _pytest.outcomes import fail
-from _pytest.mark.structures import transfer_markers
+from _pytest.mark.structures import transfer_markers, get_unpacked_marks
 
 
 # relative paths that we use to filter traceback entries from appearing to the user;
@@ -117,12 +117,9 @@ def pytest_generate_tests(metafunc):
         if hasattr(metafunc.function, attr):
             msg = "{0} has '{1}', spelling should be 'parametrize'"
             raise MarkerError(msg.format(metafunc.function.__name__, attr))
-    try:
-        markers = metafunc.function.parametrize
-    except AttributeError:
-        return
-    for marker in markers:
-        metafunc.parametrize(*marker.args, **marker.kwargs)
+    for marker in metafunc.definition.iter_markers():
+        if marker.name == 'parametrize':
+            metafunc.parametrize(*marker.args, **marker.kwargs)
 
 
 def pytest_configure(config):
@@ -212,11 +209,20 @@ class PyobjContext(object):
 
 
 class PyobjMixin(PyobjContext):
+    _ALLOW_MARKERS = True
+
+    def __init__(self, *k, **kw):
+        super(PyobjMixin, self).__init__(*k, **kw)
+
     def obj():
         def fget(self):
             obj = getattr(self, '_obj', None)
             if obj is None:
                 self._obj = obj = self._getobj()
+                # XXX evil hack
+                # used to avoid Instance collector marker duplication
+                if self._ALLOW_MARKERS:
+                    self.own_markers.extend(get_unpacked_marks(self.obj))
             return obj
 
         def fset(self, value):
@@ -363,9 +369,15 @@ class PyCollector(PyobjMixin, nodes.Collector):
         cls = clscol and clscol.obj or None
         transfer_markers(funcobj, cls, module)
         fm = self.session._fixturemanager
-        fixtureinfo = fm.getfixtureinfo(self, funcobj, cls)
-        metafunc = Metafunc(funcobj, fixtureinfo, self.config,
-                            cls=cls, module=module)
+
+        definition = FunctionDefinition(
+            name=name,
+            parent=self,
+            callobj=funcobj,
+        )
+        fixtureinfo = fm.getfixtureinfo(definition, funcobj, cls)
+
+        metafunc = Metafunc(definition, fixtureinfo, self.config, cls=cls, module=module)
         methods = []
         if hasattr(module, "pytest_generate_tests"):
             methods.append(module.pytest_generate_tests)
@@ -524,6 +536,11 @@ class Class(PyCollector):
 
 
 class Instance(PyCollector):
+    _ALLOW_MARKERS = False  # hack, destroy later
+    # instances share the object with their parents in a way
+    # that duplicates markers instances if not taken out
+    # can be removed at node strucutre reorganization time
+
     def _getobj(self):
         return self.parent.obj()
 
@@ -723,15 +740,17 @@ class Metafunc(fixtures.FuncargnamesCompatAttr):
     test function is defined.
     """
 
-    def __init__(self, function, fixtureinfo, config, cls=None, module=None):
+    def __init__(self, definition, fixtureinfo, config, cls=None, module=None):
         #: access to the :class:`_pytest.config.Config` object for the test session
+        assert isinstance(definition, FunctionDefinition) or type(definition).__name__ == "DefinitionMock"
+        self.definition = definition
         self.config = config
 
         #: the module object where the test function is defined in.
         self.module = module
 
         #: underlying python test function
-        self.function = function
+        self.function = definition.obj
 
         #: set of fixture names required by the test function
         self.fixturenames = fixtureinfo.names_closure
@@ -1103,6 +1122,8 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
     Python test function.
     """
     _genid = None
+    # disable since functions handle it themselfes
+    _ALLOW_MARKERS = False
 
     def __init__(self, name, parent, args=None, config=None,
                  callspec=None, callobj=NOTSET, keywords=None, session=None,
@@ -1114,6 +1135,7 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
             self.obj = callobj
 
         self.keywords.update(self.obj.__dict__)
+        self.own_markers.extend(get_unpacked_marks(self.obj))
         if callspec:
             self.callspec = callspec
             # this is total hostile and a mess
@@ -1123,6 +1145,7 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
                 # feel free to cry, this was broken for years before
                 # and keywords cant fix it per design
                 self.keywords[mark.name] = mark
+            self.own_markers.extend(callspec.marks)
         if keywords:
             self.keywords.update(keywords)
 
@@ -1181,3 +1204,15 @@ class Function(FunctionMixin, nodes.Item, fixtures.FuncargnamesCompatAttr):
     def setup(self):
         super(Function, self).setup()
         fixtures.fillfixtures(self)
+
+
+class FunctionDefinition(Function):
+    """
+    internal hack until we get actual definition nodes instead of the
+    crappy metafunc hack
+    """
+
+    def runtest(self):
+        raise RuntimeError("function definitions are not supposed to be used")
+
+    setup = runtest

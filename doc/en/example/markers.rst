@@ -330,11 +330,10 @@ specifies via named environments::
             "env(name): mark test to run only on named environment")
 
     def pytest_runtest_setup(item):
-        envmarker = item.get_marker("env")
-        if envmarker is not None:
-            envname = envmarker.args[0]
-            if envname != item.config.getoption("-E"):
-                pytest.skip("test requires env %r" % envname)
+        envnames = [mark.args[0] for mark in item.iter_markers() if mark.name == "env"]
+        if envnames:
+            if item.config.getoption("-E") not in envnames:
+                pytest.skip("test requires env in %r" % envnames)
 
 A test file using this local plugin::
 
@@ -403,10 +402,9 @@ Below is the config file that will be used in the next examples::
     import sys
 
     def pytest_runtest_setup(item):
-        marker = item.get_marker('my_marker')
-        if marker is not None:
-            for info in marker:
-                print('Marker info name={} args={} kwars={}'.format(info.name, info.args, info.kwargs))
+        for marker in item.iter_markers():
+            if marker.name == 'my_marker':
+                print(marker)
                 sys.stdout.flush()
 
 A custom marker can have its argument set, i.e. ``args`` and ``kwargs`` properties, defined by either invoking it as a callable or using ``pytest.mark.MARKER_NAME.with_args``. These two methods achieve the same effect most of the time.
@@ -426,7 +424,7 @@ However, if there is a callable as the single positional argument with no keywor
 The output is as follows::
 
     $ pytest -q -s
-    Marker info name=my_marker args=(<function hello_world at 0xdeadbeef>,) kwars={}
+    Mark(name='my_marker', args=(<function hello_world at 0xdeadbeef>,), kwargs={})
     .
     1 passed in 0.12 seconds
 
@@ -460,10 +458,9 @@ test function.  From a conftest file we can read it like this::
     import sys
 
     def pytest_runtest_setup(item):
-        g = item.get_marker("glob")
-        if g is not None:
-            for info in g:
-                print ("glob args=%s kwargs=%s" %(info.args, info.kwargs))
+        for mark in item.iter_markers():
+            if mark.name == 'glob':
+                print ("glob args=%s kwargs=%s" %(mark.args, mark.kwargs))
                 sys.stdout.flush()
 
 Let's run this without capturing output and see what we get::
@@ -494,11 +491,10 @@ for your particular platform, you could use the following plugin::
     ALL = set("darwin linux win32".split())
 
     def pytest_runtest_setup(item):
-        if isinstance(item, item.Function):
-            plat = sys.platform
-            if not item.get_marker(plat):
-                if ALL.intersection(item.keywords):
-                    pytest.skip("cannot run on platform %s" %(plat))
+        supported_platforms = ALL.intersection(mark.name for mark in item.iter_markers())
+        plat = sys.platform
+        if supported_platforms and plat not in supported_platforms:
+            pytest.skip("cannot run on platform %s" % (plat))
 
 then tests will be skipped if they were specified for a different platform.
 Let's do a little test file to show how this looks like::
@@ -532,7 +528,7 @@ then you will see two tests skipped and two executed tests as expected::
     
     test_plat.py s.s.                                                    [100%]
     ========================= short test summary info ==========================
-    SKIP [2] $REGENDOC_TMPDIR/conftest.py:13: cannot run on platform linux
+    SKIP [2] $REGENDOC_TMPDIR/conftest.py:12: cannot run on platform linux
     
     =================== 2 passed, 2 skipped in 0.12 seconds ====================
 
