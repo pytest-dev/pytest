@@ -215,7 +215,16 @@ class TerminalReporter(object):
             self.currentfspath = fspath
             fspath = self.startdir.bestrelpath(fspath)
             self._tw.line()
-            self._tw.write(fspath + " ")
+            if len(fspath) > (self._tw.fullwidth - self._tw.chars_on_current_line - 10):
+                line = self._tw.fullwidth - self._tw.chars_on_current_line - 10
+                while len(fspath) > 0:
+                    self._tw.write(fspath[:line] + " ")
+                    fspath = fspath[line:]
+                    if not fspath:
+                        break
+                    self._tw.line()
+            else:
+                self._tw.write(fspath + " ")
         self._tw.write(res)
 
     def write_ensure_prefix(self, prefix, extra="", **kwargs):
