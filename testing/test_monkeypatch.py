@@ -327,3 +327,16 @@ def test_issue1338_name_resolving():
         monkeypatch.delattr('requests.sessions.Session.request')
     finally:
         monkeypatch.undo()
+
+
+def test_context(testdir):
+    testdir.makepyfile("""
+    import functools
+    def test_partial(monkeypatch):
+        with monkeypatch.context() as m:
+            m.setattr(functools, "partial", 3)
+            assert functools.partial == 3
+    """)
+
+    result = testdir.runpytest()
+    result.stdout.fnmatch_lines("*1 passed*")
