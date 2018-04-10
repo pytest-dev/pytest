@@ -4,6 +4,8 @@ from __future__ import absolute_import, division, print_function
 import os
 import sys
 import re
+from contextlib import contextmanager
+
 import six
 from _pytest.fixtures import fixture
 
@@ -105,6 +107,14 @@ class MonkeyPatch(object):
         self._setitem = []
         self._cwd = None
         self._savesyspath = None
+
+    @contextmanager
+    def context(self):
+        m = MonkeyPatch()
+        try:
+            yield m
+        finally:
+            m.undo()
 
     def setattr(self, target, name, value=notset, raising=True):
         """ Set attribute value on target, memorizing the old value.
