@@ -61,6 +61,17 @@ so that any attempts within tests to create http requests will fail.
     ``compile``, etc., because it might break pytest's internals. If that's
     unavoidable, passing ``--tb=native``, ``--assert=plain`` and ``--capture=no`` might 
     help although there's no guarantee.
+
+    To avoid damage of pytest from patching python stdlib functions use ``with``
+    construction::
+
+        # content of test_module.py
+
+        import functools
+        def test_partial(monkeypatch):
+            with monkeypatch.context() as m:
+                m.setattr(functools, "partial", 3)
+                assert functools.partial == 3
     
 
 .. currentmodule:: _pytest.monkeypatch
