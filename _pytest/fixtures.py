@@ -36,6 +36,7 @@ def pytest_sessionstart(session):
     import _pytest.nodes
 
     scopename2class.update({
+        'package': _pytest.python.Package,
         'class': _pytest.python.Class,
         'module': _pytest.python.Module,
         'function': _pytest.nodes.Item,
@@ -48,6 +49,7 @@ scopename2class = {}
 
 
 scope2props = dict(session=())
+scope2props["package"] = ("fspath",)
 scope2props["module"] = ("fspath", "module")
 scope2props["class"] = scope2props["module"] + ("cls",)
 scope2props["instance"] = scope2props["class"] + ("instance", )
@@ -156,9 +158,11 @@ def get_parametrized_fixture_keys(item, scopenum):
                 continue
             if scopenum == 0:    # session
                 key = (argname, param_index)
-            elif scopenum == 1:  # module
+            elif scopenum == 1:  # package
                 key = (argname, param_index, item.fspath)
-            elif scopenum == 2:  # class
+            elif scopenum == 2:  # module
+                key = (argname, param_index, item.fspath)
+            elif scopenum == 3:  # class
                 key = (argname, param_index, item.fspath, item.cls)
             yield key
 
@@ -596,7 +600,7 @@ class ScopeMismatchError(Exception):
     """
 
 
-scopes = "session module class function".split()
+scopes = "session package module class function".split()
 scopenum_function = scopes.index("function")
 
 

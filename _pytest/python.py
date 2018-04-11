@@ -17,6 +17,7 @@ from _pytest.mark import MarkerError
 from _pytest.config import hookimpl
 
 import _pytest
+from _pytest.main import Session
 import pluggy
 from _pytest import fixtures
 from _pytest import nodes
@@ -157,7 +158,7 @@ def pytest_collect_file(path, parent):
     ext = path.ext
     if ext == ".py":
         if not parent.session.isinitpath(path):
-            for pat in parent.config.getini('python_files'):
+            for pat in parent.config.getini('python_files') + ['__init__.py']:
                 if path.fnmatch(pat):
                     break
             else:
@@ -167,7 +168,21 @@ def pytest_collect_file(path, parent):
 
 
 def pytest_pycollect_makemodule(path, parent):
+    if path.basename == '__init__.py':
+        return Package(path, parent)
     return Module(path, parent)
+
+
+def pytest_ignore_collect(path, config):
+    # Skip duplicate packages.
+    keepduplicates = config.getoption("keepduplicates")
+    if keepduplicates:
+        duplicate_paths = config.pluginmanager._duplicatepaths
+        if path.basename == '__init__.py':
+            if path in duplicate_paths:
+                return True
+            else:
+                duplicate_paths.add(path)
 
 
 @hookimpl(hookwrapper=True)
@@ -474,6 +489,36 @@ class Module(nodes.File, PyCollector):
         if teardown_module is not None:
             self.addfinalizer(teardown_module)
 
+
+class Package(Session, Module):
+
+    def __init__(self, fspath, parent=None, config=None, session=None, nodeid=None):
+        session = parent.session
+        nodes.FSCollector.__init__(
+            self, fspath, parent=parent,
+            config=config, session=session, nodeid=nodeid)
+        self.name = fspath.pyimport().__name__
+        self.trace = session.trace
+        self._norecursepatterns = session._norecursepatterns
+        for path in list(session.config.pluginmanager._duplicatepaths):
+            if path.dirname == fspath.dirname and path != fspath:
+                session.config.pluginmanager._duplicatepaths.remove(path)
+        pass
+
+    def isinitpath(self, path):
+        return path in self.session._initialpaths
+
+    def collect(self):
+        path = self.fspath.dirpath()
+        pkg_prefix = None
+        for path in path.visit(fil=lambda x: 1,
+                               rec=self._recurse, bf=True, sort=True):
+            if pkg_prefix and pkg_prefix in path.parts():
+                continue
+            for x in self._collectfile(path):
+                yield x
+                if isinstance(x, Package):
+                    pkg_prefix = path.dirpath()
 
 def _get_xunit_setup_teardown(holder, attr_name, param_obj=None):
     """

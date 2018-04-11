@@ -835,7 +835,7 @@ def test_continue_on_collection_errors_maxfail(testdir):
 
 def test_fixture_scope_sibling_conftests(testdir):
     """Regression test case for https://github.com/pytest-dev/pytest/issues/2836"""
-    foo_path = testdir.mkpydir("foo")
+    foo_path = testdir.mkdir("foo")
     foo_path.join("conftest.py").write(_pytest._code.Source("""
         import pytest
         @pytest.fixture
