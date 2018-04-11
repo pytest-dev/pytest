@@ -1,1 +1,0 @@
-Added a `reference <https://docs.pytest.org/en/latest/reference.html>`_ page to the docs.

@@ -1,0 +1,1 @@
+``pytest.raises`` now works with exception classes that look like iterables.

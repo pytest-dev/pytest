@@ -1,1 +1,0 @@
-The *short test summary info* section now is displayed after tracebacks and warnings in the terminal.

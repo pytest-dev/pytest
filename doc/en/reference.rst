@@ -529,6 +529,8 @@ Initialization hooks called for plugins and ``conftest.py`` files.
 .. autofunction:: pytest_addhooks
 .. autofunction:: pytest_configure
 .. autofunction:: pytest_unconfigure
+.. autofunction:: pytest_sessionstart
+.. autofunction:: pytest_sessionfinish
 
 Test running hooks
 ~~~~~~~~~~~~~~~~~~

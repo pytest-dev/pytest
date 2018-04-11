@@ -1,0 +1,1 @@
+Import some modules from ``collections`` instead of ``collections.abc`` as the former modules trigger ``DeprecationWarning`` in Python 3.7.
