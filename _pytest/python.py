@@ -520,6 +520,7 @@ class Package(Session, Module):
                 if isinstance(x, Package):
                     pkg_prefix = path.dirpath()
 
+
 def _get_xunit_setup_teardown(holder, attr_name, param_obj=None):
     """
     Return a callable to perform xunit-style setup or teardown if
