@@ -1,0 +1,1 @@
+``pytest`` now depends on the `python-atomicwrites <https://github.com/untitaker/python-atomicwrites>`_ library.
