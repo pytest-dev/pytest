@@ -2,6 +2,7 @@ import math
 import sys
 
 import py
+from six import binary_type, text_type
 from six.moves import zip, filterfalse
 from more_itertools.more import always_iterable
 
@@ -584,7 +585,8 @@ def raises(expected_exception, *args, **kwargs):
 
     """
     __tracebackhide__ = True
-    for exc in filterfalse(isclass, always_iterable(expected_exception)):
+    base_type = (type, text_type, binary_type)
+    for exc in filterfalse(isclass, always_iterable(expected_exception, base_type)):
         msg = ("exceptions must be old-style classes or"
                " derived from BaseException, not %s")
         raise TypeError(msg % type(exc))
@@ -597,6 +599,10 @@ def raises(expected_exception, *args, **kwargs):
             message = kwargs.pop("message")
         if "match" in kwargs:
             match_expr = kwargs.pop("match")
+        if kwargs:
+            msg = 'Unexpected keyword arguments passed to pytest.raises: '
+            msg += ', '.join(kwargs.keys())
+            raise TypeError(msg)
         return RaisesContext(expected_exception, message, match_expr)
     elif isinstance(args[0], str):
         code, = args

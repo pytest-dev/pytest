@@ -1,1 +1,0 @@
-``record_xml_property`` fixture is now deprecated in favor of the more generic ``record_property``.

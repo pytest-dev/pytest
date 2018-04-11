@@ -868,17 +868,13 @@ def test_record_property(testdir):
         def test_record(record_property, other):
             record_property("foo", "<1");
     """)
-    result, dom = runandparse(testdir, '-rw')
+    result, dom = runandparse(testdir, '-rwv')
     node = dom.find_first_by_tag("testsuite")
     tnode = node.find_first_by_tag("testcase")
     psnode = tnode.find_first_by_tag('properties')
     pnodes = psnode.find_by_tag('property')
     pnodes[0].assert_attr(name="bar", value="1")
     pnodes[1].assert_attr(name="foo", value="<1")
-    result.stdout.fnmatch_lines([
-        'test_record_property.py::test_record',
-        '*record_property*experimental*',
-    ])
 
 
 def test_record_property_same_name(testdir):
