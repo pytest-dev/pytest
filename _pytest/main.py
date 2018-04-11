@@ -405,17 +405,30 @@ class Session(nodes.FSCollector):
 
     def _collect(self, arg):
         names = self._parsearg(arg)
-        path = names.pop(0)
-        if path.check(dir=1):
+        argpath = names.pop(0)
+        paths = []
+        if argpath.check(dir=1):
             assert not names, "invalid arg %r" % (arg,)
-            for path in path.visit(fil=lambda x: x.check(file=1),
-                                   rec=self._recurse, bf=True, sort=True):
-                for x in self._collectfile(path):
-                    yield x
+            for path in argpath.visit(fil=lambda x: x.check(file=1),
+                                      rec=self._recurse, bf=True, sort=True):
+                pkginit = path.dirpath().join('__init__.py')
+                if pkginit.exists() and not any(x in pkginit.parts() for x in paths):
+                    for x in self._collectfile(pkginit):
+                        yield x
+                        paths.append(x.fspath.dirpath())
+
+                if not any(x in path.parts() for x in paths):
+                    for x in self._collectfile(path):
+                        yield x
         else:
-            assert path.check(file=1)
-            for x in self.matchnodes(self._collectfile(path), names):
-                yield x
+            assert argpath.check(file=1)
+            pkginit = argpath.dirpath().join('__init__.py')
+            if not self.isinitpath(argpath) and pkginit.exists():
+                for x in self._collectfile(pkginit):
+                    yield x
+            else:
+                for x in self.matchnodes(self._collectfile(argpath), names):
+                    yield x
 
     def _collectfile(self, path):
         ihook = self.gethookproxy(path)

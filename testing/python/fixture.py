@@ -1448,6 +1448,39 @@ class TestFixtureManagerParseFactories(object):
             reprec = testdir.inline_run("..")
             reprec.assertoutcome(passed=2)
 
+    def test_package_xunit_fixture(self, testdir):
+        testdir.makepyfile(__init__="""\
+            values = []
+        """)
+        package = testdir.mkdir("package")
+        package.join("__init__.py").write(dedent("""\
+            from .. import values
+            def setup_module():
+                values.append("package")
+            def teardown_module():
+                values[:] = []
+        """))
+        package.join("test_x.py").write(dedent("""\
+            from .. import values
+            def test_x():
+                assert values == ["package"]
+        """))
+        package = testdir.mkdir("package2")
+        package.join("__init__.py").write(dedent("""\
+            from .. import values
+            def setup_module():
+                values.append("package2")
+            def teardown_module():
+                values[:] = []
+        """))
+        package.join("test_x.py").write(dedent("""\
+            from .. import values
+            def test_x():
+                assert values == ["package2"]
+        """))
+        reprec = testdir.inline_run()
+        reprec.assertoutcome(passed=2)
+
 
 class TestAutouseDiscovery(object):
 
