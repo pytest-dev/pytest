@@ -61,7 +61,7 @@ Implement features
 ------------------
 
 Look through the GitHub issues for enhancements.  Here is a filter you can use:
-https://github.com/pytest-dev/pytest/labels/enhancement
+https://github.com/pytest-dev/pytest/labels/type:%20enhancement
 
 :ref:`Talk <contact>` to developers to find out how you can implement specific
 features.
