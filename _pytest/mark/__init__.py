@@ -20,7 +20,8 @@ class MarkerError(Exception):
 
 
 def param(*values, **kw):
-    """Specify a parameter in a `pytest.mark.parametrize`_ call.
+    """Specify a parameter in `pytest.mark.parametrize`_ calls or
+    :ref:`parametrized fixtures <fixture-parametrize-marks>`.
 
     .. code-block:: python
 

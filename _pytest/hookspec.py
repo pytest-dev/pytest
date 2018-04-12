@@ -413,14 +413,15 @@ def pytest_fixture_post_finalizer(fixturedef, request):
 
 
 def pytest_sessionstart(session):
-    """ before session.main() is called.
+    """ called after the ``Session`` object has been created and before performing collection
+    and entering the run test loop.
 
     :param _pytest.main.Session session: the pytest session object
     """
 
 
 def pytest_sessionfinish(session, exitstatus):
-    """ whole test run finishes.
+    """ called after whole test run finished, right before returning the exit status to the system.
 
     :param _pytest.main.Session session: the pytest session object
     :param int exitstatus: the status which pytest will return to the system

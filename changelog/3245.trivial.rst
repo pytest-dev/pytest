@@ -1,1 +1,0 @@
-Renamed example directories so all tests pass when ran from the base directory.
