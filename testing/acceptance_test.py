@@ -988,3 +988,33 @@ def test_fixture_order_respects_scope(testdir):
     ''')
     result = testdir.runpytest()
     assert result.ret == 0
+
+
+def test_frame_leak_on_failing_test(testdir):
+    """pytest would leak garbage referencing the frames of tests that failed that could never be reclaimed (#2798)
+
+    Unfortunately it was not possible to remove the actual circles because most of them
+    are made of traceback objects which cannot be weakly referenced. Those objects at least
+    can be eventually claimed by the garbage collector.
+    """
+    testdir.makepyfile('''
+        import gc
+        import weakref
+
+        class Obj:
+            pass
+
+        ref = None
+
+        def test1():
+            obj = Obj()
+            global ref
+            ref = weakref.ref(obj)
+            assert 0
+
+        def test2():
+            gc.collect()
+            assert ref() is None
+    ''')
+    result = testdir.runpytest_subprocess()
+    result.stdout.fnmatch_lines(['*1 failed, 1 passed in*'])
