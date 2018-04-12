@@ -48,8 +48,8 @@ fix the bug itself.
 Fix bugs
 --------
 
-Look through the GitHub issues for bugs.  Here is a filter you can use:
-https://github.com/pytest-dev/pytest/labels/type%3A%20bug
+Look through the `GitHub issues for bugs <https://github.com/pytest-dev/pytest/labels/type:%20bug>`_.  Here is a filter you can use:
+
 
 :ref:`Talk <contact>` to developers to find out how you can fix specific bugs.
 
@@ -60,8 +60,7 @@ Don't forget to check the issue trackers of your favourite plugins, too!
 Implement features
 ------------------
 
-Look through the GitHub issues for enhancements.  Here is a filter you can use:
-https://github.com/pytest-dev/pytest/labels/type:%20enhancement
+Look through the `GitHub issues for enhancements <https://github.com/pytest-dev/pytest/labels/type:%20enhancement>`_.  Here is a 
 
 :ref:`Talk <contact>` to developers to find out how you can implement specific
 features.
