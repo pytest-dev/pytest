@@ -294,6 +294,7 @@ def pytest_runtest_makereport(item, call):
     duration = call.stop - call.start
     keywords = dict([(x, 1) for x in item.keywords])
     excinfo = call.excinfo
+    exception = None
     sections = []
     if not call.excinfo:
         outcome = "passed"
@@ -308,6 +309,7 @@ def pytest_runtest_makereport(item, call):
             longrepr = (str(r.path), r.lineno, r.message)
         else:
             outcome = "failed"
+            exception = excinfo.value
             if call.when == "call":
                 longrepr = item.repr_failure(excinfo)
             else:  # exception in setup or teardown
@@ -317,7 +319,7 @@ def pytest_runtest_makereport(item, call):
         sections.append(("Captured %s %s" % (key, rwhen), content))
     return TestReport(item.nodeid, item.location,
                       keywords, outcome, longrepr, when,
-                      sections, duration, user_properties=item.user_properties)
+                      sections, duration, exception=exception, user_properties=item.user_properties)
 
 
 class TestReport(BaseReport):
@@ -326,7 +328,7 @@ class TestReport(BaseReport):
     """
 
     def __init__(self, nodeid, location, keywords, outcome,
-                 longrepr, when, sections=(), duration=0, user_properties=(), **extra):
+                 longrepr, when, sections=(), duration=0, user_properties=(), exception=None, **extra):
         #: normalized collection node id
         self.nodeid = nodeid
 
@@ -344,6 +346,9 @@ class TestReport(BaseReport):
 
         #: None or a failure representation.
         self.longrepr = longrepr
+
+        #: None or the exception which caused the failure
+        self.exception = exception
 
         #: one of 'setup', 'call', 'teardown' to indicate runtest phase.
         self.when = when

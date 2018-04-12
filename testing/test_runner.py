@@ -825,3 +825,61 @@ class TestReportContents(object):
         rep = reports[1]
         assert rep.capstdout == ''
         assert rep.capstderr == ''
+
+    def test_exception(self, testdir):
+        reports = testdir.runitem("""
+            def test_func():
+                x = 1
+                assert x == 4
+        """)
+        rep = reports[1]
+        assert rep.failed
+        assert rep.when == "call"
+        assert isinstance(rep.exception, AssertionError)
+        assert str(rep.exception) == 'assert 1 == 4'
+
+    def test_setup_exception(self, testdir):
+        reports = testdir.runitem("""
+            import pytest
+
+            @pytest.fixture
+            def fix():
+                assert False
+                yield
+
+            def test_func(fix):
+                pass
+        """)
+        rep = reports[0]
+        assert rep.failed
+        assert rep.when == "setup"
+        assert isinstance(rep.exception, AssertionError)
+        assert str(rep.exception) == 'assert False'
+
+    def test_teardown_exception(self, testdir):
+        reports = testdir.runitem("""
+            import pytest
+
+            @pytest.fixture
+            def fix():
+                yield
+                assert False
+
+            def test_func(fix):
+                pass
+        """)
+        rep = reports[2]
+        assert rep.failed
+        assert rep.when == "teardown"
+        assert isinstance(rep.exception, AssertionError)
+        assert str(rep.exception) == 'assert False'
+
+    def test_no_exception(self, testdir):
+        reports = testdir.runitem("""
+            def test_func():
+                x = 1
+                assert x == 1
+        """)
+        rep = reports[1]
+        assert not rep.failed
+        assert rep.exception is None
