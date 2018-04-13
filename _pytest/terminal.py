@@ -186,6 +186,7 @@ class TerminalReporter(object):
         # self.writer will be deprecated in pytest-3.4
         self.writer = self._tw
         self._screen_width = self._tw.fullwidth
+        self.is_fspath_extra_width = False
         self.currentfspath = None
         self.reportchars = getreportopt(config)
         self.hasmarkup = self._tw.hasmarkup
@@ -215,16 +216,12 @@ class TerminalReporter(object):
             self.currentfspath = fspath
             fspath = self.startdir.bestrelpath(fspath)
             self._tw.line()
-            if len(fspath) > (self._tw.fullwidth - self._tw.chars_on_current_line - 10):
-                line = self._tw.fullwidth - self._tw.chars_on_current_line - 10
-                while len(fspath) > 0:
-                    self._tw.write(fspath[:line] + " ")
-                    fspath = fspath[line:]
-                    if not fspath:
-                        break
-                    self._tw.line()
-            else:
-                self._tw.write(fspath + " ")
+            self._tw.write(fspath + " ")
+            width = self._tw.fullwidth - self._tw.chars_on_current_line
+            if 0 < width < 10:
+                self._tw.line()
+            elif width < 0:
+                self.is_fspath_extra_width = True
         self._tw.write(res)
 
     def write_ensure_prefix(self, prefix, extra="", **kwargs):
@@ -364,7 +361,10 @@ class TerminalReporter(object):
                 self._write_progress_information_filling_space()
             else:
                 past_edge = self._tw.chars_on_current_line + self._PROGRESS_LENGTH + 1 >= self._screen_width
-                if past_edge:
+                width = self._tw.chars_on_current_line % self._screen_width + 9
+                if past_edge and self.is_fspath_extra_width and width >= self._screen_width:
+                    self.is_fspath_extra_width = False
+                elif past_edge and not self.is_fspath_extra_width:
                     msg = self._get_progress_information_message()
                     self._tw.write(msg + '\n', cyan=True)
 
@@ -381,7 +381,10 @@ class TerminalReporter(object):
 
     def _write_progress_information_filling_space(self):
         msg = self._get_progress_information_message()
-        fill = ' ' * (self._tw.fullwidth - self._tw.chars_on_current_line - len(msg) - 1)
+        if self.is_fspath_extra_width:
+            fill = ' ' * (self._tw.fullwidth - self._tw.chars_on_current_line % self._screen_width - len(msg) - 1)
+        else:
+            fill = ' ' * (self._tw.fullwidth - self._tw.chars_on_current_line - len(msg) - 1)
         self.write(fill + msg, cyan=True)
 
     def pytest_collection(self):

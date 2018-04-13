@@ -1063,29 +1063,6 @@ class TestProgress(object):
             """,
         )
 
-    @pytest.fixture
-    def many_tests_files_long_names(self, testdir):
-        testdir.makepyfile(
-            test_bar_with_very_long_name_bar_with_very_long_name_bar_with_very_long_name_with_very_long_name="""
-                import pytest
-                @pytest.mark.parametrize('i', range(10))
-                def test_bar(i):
-                    pass
-            """,
-            test_foo_with_very_long_name_foo_with_very_long_name_foo_with_very_long_name_with_very_long_name="""
-                import pytest
-                @pytest.mark.parametrize('i', range(5))
-                def test_foo(i):
-                    pass
-            """,
-            test_fooba_with_very_long_name_foobar_with_very_long_name_foobar_with_very_long_name_with_very_long_name="""
-                import pytest
-                @pytest.mark.parametrize('i', range(5))
-                def test_foobar(i):
-                    pass
-            """,
-        )
-
     def test_zero_tests_collected(self, testdir):
         """Some plugins (testmon for example) might issue pytest_runtest_logreport without any tests being
         actually collected (#2971)."""
@@ -1110,17 +1087,6 @@ class TestProgress(object):
             r'test_bar.py \.{10} \s+ \[ 50%\]',
             r'test_foo.py \.{5} \s+ \[ 75%\]',
             r'test_foobar.py \.{5} \s+ \[100%\]',
-        ])
-
-    def test_normal_long_names(self, many_tests_files_long_names, testdir):
-        output = testdir.runpytest()
-        output.stdout.fnmatch_lines([
-            '*test_bar_with*',
-            '*long_name.py* 50%]',
-            '*test_foo_with*',
-            '*long_name.py* 75%]',
-            '*test_fooba_with*',
-            '*long_name.py*100%]',
         ])
 
     def test_verbose(self, many_tests_files, testdir):
