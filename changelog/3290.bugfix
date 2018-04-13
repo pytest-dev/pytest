@@ -1,2 +1,0 @@
-Improved `monkeypatch` to support some form of with statement. Now you can use `with monkeypatch.context() as m:`
-construction to avoid damage of Pytest.

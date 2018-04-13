@@ -110,6 +110,21 @@ class MonkeyPatch(object):
 
     @contextmanager
     def context(self):
+        """
+        Context manager that returns a new :class:`MonkeyPatch` object which
+        undoes any patching done inside the ``with`` block upon exit:
+
+        .. code-block:: python
+
+            import functools
+            def test_partial(monkeypatch):
+                with monkeypatch.context() as m:
+                    m.setattr(functools, "partial", 3)
+
+        Useful in situations where it is desired to undo some patches before the test ends,
+        such as mocking ``stdlib`` functions that might break pytest itself if mocked (for examples
+        of this see `#3290 <https://github.com/pytest-dev/pytest/issues/3290>`_.
+        """
         m = MonkeyPatch()
         try:
             yield m

@@ -329,14 +329,13 @@ def test_issue1338_name_resolving():
         monkeypatch.undo()
 
 
-def test_context(testdir):
-    testdir.makepyfile("""
-    import functools
-    def test_partial(monkeypatch):
-        with monkeypatch.context() as m:
-            m.setattr(functools, "partial", 3)
-            assert functools.partial == 3
-    """)
+def test_context():
+    monkeypatch = MonkeyPatch()
 
-    result = testdir.runpytest()
-    result.stdout.fnmatch_lines("*1 passed*")
+    import functools
+    import inspect
+
+    with monkeypatch.context() as m:
+        m.setattr(functools, "partial", 3)
+        assert not inspect.isclass(functools.partial)
+    assert inspect.isclass(functools.partial)
