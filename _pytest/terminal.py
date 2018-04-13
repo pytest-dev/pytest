@@ -218,7 +218,7 @@ class TerminalReporter(object):
             self._tw.line()
             self._tw.write(fspath + " ")
             width = self._tw.fullwidth - self._tw.chars_on_current_line
-            if 0 < width < 10:
+            if 0 < width < 10 or self._tw.chars_on_current_line % self._screen_width > self._screen_width - 10:
                 self._tw.line()
             elif width < 0:
                 self.is_fspath_extra_width = True
@@ -383,6 +383,7 @@ class TerminalReporter(object):
         msg = self._get_progress_information_message()
         if self.is_fspath_extra_width:
             fill = ' ' * (self._tw.fullwidth - self._tw.chars_on_current_line % self._screen_width - len(msg) - 1)
+            self.is_fspath_extra_width = False
         else:
             fill = ' ' * (self._tw.fullwidth - self._tw.chars_on_current_line - len(msg) - 1)
         self.write(fill + msg, cyan=True)
