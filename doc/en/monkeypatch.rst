@@ -69,6 +69,7 @@ so that any attempts within tests to create http requests will fail.
     :meth:`MonkeyPatch.context` to limit the patching to the block you want tested:
 
     .. code-block:: python
+
         import functools
         def test_partial(monkeypatch):
             with monkeypatch.context() as m:
