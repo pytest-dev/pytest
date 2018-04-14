@@ -111,11 +111,11 @@ with a list of available function arguments.
 
 .. note::
 
-    You can always issue::
+    You can always issue ::
 
         pytest --fixtures test_simplefactory.py
 
-    to see available fixtures.
+    to see available fixtures (fixtures with leading ``_`` are only shown if you add the ``-v`` option).
 
 Fixtures: a prime example of dependency injection
 ---------------------------------------------------
@@ -141,7 +141,7 @@ automatically gets discovered by pytest. The discovery of
 fixture functions starts at test classes, then test modules, then
 ``conftest.py`` files and finally builtin and third party plugins.
 
-You can also use the ``conftest.py`` file to implement 
+You can also use the ``conftest.py`` file to implement
 :ref:`local per-directory plugins <conftest.py plugins>`.
 
 Sharing test data

@@ -1,0 +1,1 @@
+Mention in documentation and CLI help that fixtures with leading ``_`` are printed by ``pytest --fixtures`` only if the ``-v`` option is added.

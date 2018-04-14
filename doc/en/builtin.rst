@@ -12,7 +12,7 @@ For information on plugin hooks and objects, see :ref:`plugins`.
 
 For information on the ``pytest.mark`` mechanism, see :ref:`mark`.
 
-For information about fixtures, see :ref:`fixtures`. To see a complete list of available fixtures, type::
+For information about fixtures, see :ref:`fixtures`. To see a complete list of available fixtures (add ``-v`` to also see fixtures with leading ``_``), type ::
 
     $ pytest -q --fixtures
     cache
