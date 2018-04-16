@@ -75,7 +75,8 @@ def pytest_addoption(parser):
     group = parser.getgroup("general")
     group.addoption('--fixtures', '--funcargs',
                     action="store_true", dest="showfixtures", default=False,
-                    help="show available fixtures, sorted by plugin appearance")
+                    help="show available fixtures, sorted by plugin appearance "
+                    "(fixtures with leading '_' are only shown with '-v')")
     group.addoption(
         '--fixtures-per-test',
         action="store_true",
